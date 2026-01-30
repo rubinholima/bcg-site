@@ -23,7 +23,18 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+API NestJS do monorepo BCG (empresas, tipos/tenant-kinds, auth).
+
+**Para Empresas e Tipos funcionarem no dashboard:** a API precisa estar rodando na mesma máquina. O frontend (`apps/web`) chama `http://localhost:3001` por padrão.
+
+### Rodar a API (necessário para /dashboard, /dashboard/empresas, /dashboard/tipos)
+
+1. Em um terminal: `cd apps/api && pnpm install`
+2. Crie um `.env` em `apps/api` com `DATABASE_URL` (PostgreSQL).
+3. Rode as migrations: `npx prisma migrate deploy` (ou `npx prisma migrate dev` em desenvolvimento).
+4. Inicie a API: `pnpm run start:dev` — sobe em **http://localhost:3001**.
+
+Com a API no ar, o dashboard passa a carregar empresas e tipos normalmente. Se aparecer "fetch failed" / ECONNREFUSED, é porque a API não está rodando.
 
 ## Project setup
 

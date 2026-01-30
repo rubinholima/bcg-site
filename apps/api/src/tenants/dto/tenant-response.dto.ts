@@ -8,6 +8,6 @@ export class TenantResponseDto {
     id: string;
     name: string;
   };
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

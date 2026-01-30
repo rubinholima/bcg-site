@@ -68,10 +68,9 @@ export class TenantKindsService {
   }
 
   async remove(id: string): Promise<void> {
-    // Verificar se existe
     await this.findOne(id);
 
-    // Verificar se há tenants usando este tipo
+    // Verificar se há tenants usando este tipo (Tenant.kindId)
     const tenantsUsingKind = await this.prisma.tenant.findFirst({
       where: { kindId: id },
     });
