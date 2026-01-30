@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { getHostedUiLoginUrl, isCognitoConfigured } from "@/lib/cognito-hosted-ui";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +10,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 /**
  * Login via Cognito Hosted UI.
- * Apenas redirect (window.location). Nenhum fetch no browser para Cognito.
+ * Após logout, o usuário volta para esta tela (nossa página, não a da AWS).
  */
 export default function LoginPage() {
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const hasError = searchParams?.get("error") === "auth" || searchParams?.get("error") === "missing";
+  const [hasError, setHasError] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setHasError(params.get("error") === "auth" || params.get("error") === "missing");
+  }, [mounted]);
 
   function handleEntrar() {
     const url = getHostedUiLoginUrl();
@@ -26,47 +37,48 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
-        {/* Brand */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-            <Building2 className="h-8 w-8" />
-          </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
-            Boston City Group
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Área restrita
-          </p>
-        </div>
-
-        <Card className="border-border/80 shadow-xl">
-          <CardHeader className="space-y-1 pb-2">
-            <CardTitle className="text-xl">Login</CardTitle>
-            <CardDescription>
-              Use o botão abaixo para entrar. Você será redirecionado à tela de autenticação.
-              Se for seu primeiro acesso, use a senha temporária e defina uma nova na próxima tela.
-            </CardDescription>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="w-full max-w-[400px]">
+        {/* Card central */}
+        <Card className="border-border/80 shadow-2xl shadow-black/10 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="space-y-3 pb-2 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
+              <LogIn className="h-8 w-8" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-semibold tracking-tight">
+                Entrar
+              </CardTitle>
+              <CardDescription className="mt-1.5 text-balance">
+                Use o botão abaixo. Você será redirecionado para fazer login de forma segura.
+                No primeiro acesso, use a senha temporária e defina uma nova.
+              </CardDescription>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4 pt-4">
+          <CardContent className="space-y-4 pt-2">
             {hasError && (
-              <div className="text-sm px-3 py-2 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive">
-                Falha na autenticação. Tente novamente.
+              <div
+                role="alert"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+              >
+                Não foi possível concluir o login. Verifique seus dados e tente novamente.
               </div>
             )}
             <Button
-              className="w-full h-11 text-base font-medium"
+              className="w-full h-12 text-base font-medium"
               onClick={handleEntrar}
               disabled={!isCognitoConfigured()}
             >
               Entrar
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Login e troca de senha são feitos de forma segura pelo provedor de identidade.
+              Login e senha são tratados de forma segura pelo provedor de identidade.
             </p>
           </CardContent>
         </Card>
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Área restrita · Boston City Group
+        </p>
       </div>
     </div>
   );

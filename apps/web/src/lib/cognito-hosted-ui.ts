@@ -19,10 +19,12 @@ export function getHostedUiLoginUrl(): string {
   return `${cognitoDomain}/oauth2/authorize?${params.toString()}`;
 }
 
+/** URL para onde o usuário vai após o logout (nossa tela de login). */
 export function getHostedUiLogoutUrl(): string {
+  const logoutRedirect = `${appUrl.replace(/\/$/, "")}/login`;
   const params = new URLSearchParams({
     client_id: clientId,
-    logout_uri: appUrl,
+    logout_uri: logoutRedirect,
   });
   return `${cognitoDomain}/logout?${params.toString()}`;
 }

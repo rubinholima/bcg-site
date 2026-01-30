@@ -101,7 +101,7 @@ export default function NovaEmpresaPage() {
         <CardHeader>
           <CardTitle>Informações da Empresa</CardTitle>
           <CardDescription>
-            Preencha os dados abaixo para cadastrar a empresa
+            Preencha os dados abaixo para cadastrar a empresa. O logo pode ser adicionado após criar, na tela de edição.
           </CardDescription>
         </CardHeader>
         <CardContent>

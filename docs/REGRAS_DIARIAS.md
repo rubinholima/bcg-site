@@ -49,6 +49,20 @@ O layout do dashboard DEVE sempre conter:
 
 ---
 
+## 📦 MÓDULOS DO DASHBOARD
+
+**Todo novo módulo do dashboard deve vir para a tela Configurações → Módulos.**
+
+Ao criar uma nova página/módulo no dashboard:
+
+1. Cadastrar no backend: tabelas **Module** e **ModuleRole** (slug, name, sortOrder; permissões por role).
+2. Incluir o item no menu da sidebar com o mesmo **moduleSlug** usado no backend.
+3. Proteger a página com `canAccessModule("slug_do_modulo")`.
+
+Assim o módulo aparece em **Configurações → Módulos** e o super admin pode definir se Company Admin e Editor podem acessá-lo. Detalhes: **`docs/MODULOS_DASHBOARD.md`**.
+
+---
+
 ## 🔀 GIT — BRANCH E COMMIT
 
 - **Sempre trabalhar em branch** (não commitar direto em `main`).

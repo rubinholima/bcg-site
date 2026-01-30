@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,13 +32,16 @@ export default function EditEmpresaPage() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [loadingTipos, setLoadingTipos] = useState(true);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tipos, setTipos] = useState<TenantKind[]>([]);
+  const [empresa, setEmpresa] = useState<Tenant | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: "",
     slug: "",
     kindId: "",
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -48,6 +51,7 @@ export default function EditEmpresaPage() {
           api.get<TenantKind[]>("/tenant-kinds"),
         ]);
         if (empresa) {
+          setEmpresa(empresa);
           setFormData({
             name: empresa.name,
             slug: empresa.slug,
@@ -93,6 +97,37 @@ export default function EditEmpresaPage() {
     }
   };
 
+  const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) {
+      setError("Selecione uma imagem (PNG, JPG, WebP ou SVG).");
+      return;
+    }
+    setUploadingLogo(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("scope", id);
+      const res = await fetch("/api/upload/logo", {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error ?? "Erro no upload");
+      }
+      const { url } = (await res.json()) as { url: string };
+      setEmpresa((prev) => (prev ? { ...prev, logoUrl: url } : null));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao subir logo");
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = "";
+    }
+  };
+
   if (loadingData) {
     return (
       <div className="space-y-6">
@@ -133,6 +168,65 @@ export default function EditEmpresaPage() {
           </p>
         </div>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Logo da empresa</CardTitle>
+          <CardDescription>
+            Imagem do logo (PNG, JPG, WebP ou SVG, máx. 2 MB).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {empresa?.logoUrl ? (
+            <div className="flex items-center gap-4">
+              <img
+                src={empresa.logoUrl}
+                alt={`Logo ${empresa.name}`}
+                className="h-20 w-auto object-contain rounded border"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingLogo}
+              >
+                {uploadingLogo ? "Enviando..." : "Alterar logo"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleUploadLogo}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex h-20 w-20 items-center justify-center rounded border bg-muted">
+                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingLogo}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingLogo ? "Enviando..." : "Subir logo"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleUploadLogo}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

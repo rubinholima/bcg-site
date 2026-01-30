@@ -1,4 +1,10 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Garante que .env seja carregado do diretório apps/api (mesmo rodando da raiz do monorepo)
+config({ path: resolve(process.cwd(), '.env') });
+config({ path: resolve(__dirname, '..', '.env') });
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';

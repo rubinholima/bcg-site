@@ -1,73 +1,273 @@
+import { cookies } from "next/headers";
+import Link from "next/link";
+import {
+  Building2,
+  Users,
+  Tag,
+  FileText,
+  ArrowRight,
+  Plus,
+  Newspaper,
+  Image,
+  Settings,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import type { Group } from "@/types/group";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+interface DashboardStats {
+  tenantsCount: number;
+  tenantKindsCount: number;
+  usersCount: number;
+}
+
+async function getGroup(): Promise<Group | null> {
+  try {
+    const { data } = await api.get<Group>("/group");
+    return data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function getStats(token: string | undefined): Promise<DashboardStats | null> {
+  if (!token) return null;
+  try {
+    const res = await fetch(`${apiUrl}/dashboard/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as DashboardStats;
+  } catch {
+    return null;
+  }
+}
 
 async function getTenants(): Promise<Tenant[]> {
   try {
     const { data } = await api.get<Tenant[]>("/tenants");
     return data ?? [];
-  } catch (error) {
-    console.error("Erro ao carregar empresas:", error);
+  } catch {
     return [];
   }
 }
 
+const QUICK_LINKS = [
+  { title: "Empresas", href: "/dashboard/empresas", icon: Building2 },
+  { title: "Usuários", href: "/dashboard/usuarios", icon: Users },
+  { title: "Tipos", href: "/dashboard/tipos", icon: Tag },
+  { title: "Páginas", href: "/dashboard/paginas", icon: FileText },
+  { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper },
+  { title: "Mídia", href: "/dashboard/midia", icon: Image },
+  { title: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
+] as const;
+
+const STAT_CARDS = [
+  {
+    key: "tenants" as const,
+    label: "Empresas",
+    icon: Building2,
+    href: "/dashboard/empresas",
+    accent: "from-blue-500/10 to-blue-600/5 border-blue-500/20",
+    iconClass: "text-blue-600 dark:text-blue-400",
+  },
+  {
+    key: "users" as const,
+    label: "Usuários",
+    icon: Users,
+    href: "/dashboard/usuarios",
+    accent: "from-emerald-500/10 to-emerald-600/5 border-emerald-500/20",
+    iconClass: "text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    key: "kinds" as const,
+    label: "Tipos de empresa",
+    icon: Tag,
+    href: "/dashboard/tipos",
+    accent: "from-violet-500/10 to-violet-600/5 border-violet-500/20",
+    iconClass: "text-violet-600 dark:text-violet-400",
+  },
+  {
+    key: "pages" as const,
+    label: "Páginas publicadas",
+    icon: FileText,
+    href: "/dashboard/paginas",
+    accent: "from-amber-500/10 to-amber-600/5 border-amber-500/20",
+    iconClass: "text-amber-600 dark:text-amber-400",
+  },
+] as const;
+
+function getStatValue(
+  stats: DashboardStats | null,
+  tenantsCount: number,
+  key: (typeof STAT_CARDS)[number]["key"]
+): number | null {
+  if (!stats) {
+    if (key === "tenants") return tenantsCount;
+    return null;
+  }
+  if (key === "tenants") return stats.tenantsCount;
+  if (key === "users") return stats.usersCount;
+  if (key === "kinds") return stats.tenantKindsCount;
+  if (key === "pages") return 0; // placeholder até existir conteúdo
+  return null;
+}
+
 export default async function DashboardPage() {
-  const tenants = await getTenants();
-  const totalEmpresas = tenants.length;
+  const cookieStore = await cookies();
+  const token =
+    cookieStore.get("access_token")?.value ?? cookieStore.get("id_token")?.value;
+
+  const [group, stats, tenants] = await Promise.all([
+    getGroup(),
+    getStats(token ?? undefined),
+    getTenants(),
+  ]);
+
+  const tenantsCount = stats?.tenantsCount ?? tenants.length;
+  const recentTenants = tenants.slice(0, 5);
+  const groupName = group?.name ?? "Boston City Group";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Bem-vindo à plataforma Boston City Group
+    <div className="space-y-8">
+      {/* Welcome */}
+      <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-border p-6 md:p-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+          Olá, bem-vindo ao {groupName} Platform
+        </h1>
+        <p className="mt-1 text-muted-foreground">
+          Resumo da sua plataforma e atalhos rápidos.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total de Empresas
-              </p>
-              <p className="text-2xl font-bold">{totalEmpresas}</p>
-            </div>
-          </div>
+      {/* Stats */}
+      <div>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Resumo</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {STAT_CARDS.map(({ key, label, icon: Icon, href, accent, iconClass }) => {
+            const value = getStatValue(stats, tenantsCount, key);
+            return (
+              <Link key={key} href={href} className="block group">
+                <Card
+                  className={`overflow-hidden border bg-gradient-to-br ${accent} transition-all hover:shadow-md hover:border-primary/30`}
+                >
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-muted-foreground">
+                      {label}
+                    </CardTitle>
+                    <span className={`rounded-lg p-2 bg-background/70 ${iconClass}`}>
+                      <Icon className="h-4 w-4" />
+                    </span>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">
+                      {value !== null ? value : "—"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 group-hover:text-foreground transition-colors">
+                      Ver detalhes <ArrowRight className="h-3 w-3" />
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
+      </div>
 
-        <div className="rounded-lg border border-border bg-card p-6">
-          <div className="flex items-center justify-between">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Últimas empresas */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Páginas Publicadas
-              </p>
-              <p className="text-2xl font-bold">0</p>
+              <CardTitle>Últimas empresas</CardTitle>
+              <CardDescription>
+                Empresas cadastradas na plataforma
+              </CardDescription>
             </div>
-          </div>
-        </div>
+            <Link href="/dashboard/empresas">
+              <Button variant="outline" size="sm">
+                Ver todas
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {recentTenants.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">
+                Nenhuma empresa cadastrada ainda.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {recentTenants.map((t) => (
+                  <li key={t.id} className="py-3 first:pt-0 last:pb-0">
+                    <Link
+                      href={`/dashboard/empresas/${t.id}/edit`}
+                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                    >
+                      {t.logoUrl ? (
+                        <img
+                          src={t.logoUrl}
+                          alt=""
+                          className="h-9 w-9 rounded-md object-contain bg-muted"
+                        />
+                      ) : (
+                        <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{t.name}</p>
+                        <p className="text-xs text-muted-foreground">{t.kind.name}</p>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link
+              href="/dashboard/empresas/new"
+              className="mt-4 flex items-center gap-2 text-sm text-primary hover:underline"
+            >
+              <Plus className="h-4 w-4" /> Nova empresa
+            </Link>
+          </CardContent>
+        </Card>
 
-        <div className="rounded-lg border border-border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Notícias Publicadas
-              </p>
-              <p className="text-2xl font-bold">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-border bg-card p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Usuários Ativos
-              </p>
-              <p className="text-2xl font-bold">0</p>
-            </div>
-          </div>
-        </div>
+        {/* Atalhos */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Atalhos</CardTitle>
+            <CardDescription>
+              Acesso rápido às áreas do dashboard
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <nav className="flex flex-col gap-1">
+              {QUICK_LINKS.map(({ title, href, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                  {title}
+                  <ArrowRight className="h-3.5 w-3 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              ))}
+            </nav>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

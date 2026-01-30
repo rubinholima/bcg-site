@@ -1,12 +1,30 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
+import { CognitoModule } from './cognito/cognito.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { GroupModule } from './group/group.module';
+import { ModulesModule } from './modules/modules.module';
 import { TenantKindsModule } from './tenant-kinds/tenant-kinds.module';
 import { TenantsModule } from './tenants/tenants.module';
+import { UploadModule } from './upload/upload.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [PrismaModule, TenantsModule, TenantKindsModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    CognitoModule,
+    DashboardModule,
+    GroupModule,
+    ModulesModule,
+    TenantsModule,
+    TenantKindsModule,
+    UploadModule,
+    UsersModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

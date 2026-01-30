@@ -184,3 +184,85 @@ Auth em todas as rotas protegidas, Tenant Switch, deploy.
 4. Branch `develop` criada para fluxo de trabalho.
 
 ---
+
+### 📌 **Credenciais AWS (Cognito) — DEV local**
+
+Para o endpoint **GET /users** (e criar/alterar usuários) funcionar, a API precisa de credenciais AWS com permissão no User Pool.
+
+- **Opção 1 (recomendada):** Instalar AWS CLI v2, rodar `aws configure --profile bcg-dev`, e no `apps/api/.env` setar `AWS_PROFILE=bcg-dev`. Não usar `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`.
+- **Opção 2:** Preencher `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY` no `.env` (nunca commitar).
+
+Se não houver credenciais, a API retorna 500 com mensagem orientando. Ver **`docs/AWS_CREDENTIALS.md`** (IAM policy mínima e comando de teste: GET /users com Bearer token).
+
+---
+
+### 📌 **Regra: Módulos do dashboard (resumo diário e regras)**
+
+**Todo novo módulo do dashboard deve vir para a tela Configurações → Módulos.**  
+Regra registrada em **`docs/REGRAS_DIARIAS.md`** (seção Módulos do dashboard) e detalhada em **`docs/MODULOS_DASHBOARD.md`**. Ao criar um novo módulo: cadastrar em Module + ModuleRole no backend, adicionar no menu da sidebar com o mesmo `moduleSlug`, e proteger a página com `canAccessModule("slug")`.
+
+---
+
+# <span style="color: red; font-size: 28px;">📅 31 DE JANEIRO DE 2026</span>
+
+## **LOGO S3, GRUPO MASTER, MÓDULOS, LOGOUT E DASHBOARD INFORMATIVO**
+
+### 🎯 **O QUE FOI FEITO:**
+
+#### 1. **Upload de logo (S3)**
+- **Backend:** `S3Module` + `S3Service`; endpoint `POST /upload/logo` (multipart, `scope`: `'group'` ou `tenantId`); bucket configurável via `AWS_S3_BUCKET`.
+- **Banco:** Campo `logoUrl` em `Tenant`; migration aplicada.
+- **Frontend:** Página editar empresa com upload de logo; lista de empresas com coluna Logo; Grupo Master com upload de logo do grupo.
+- **Doc:** `docs/S3_BUCKET_POLICY.md` (política S3 e Block Public Access).
+
+#### 2. **Grupo Master (Group)**
+- **Backend:** Modelo `Group` (name, slug, logoUrl, description); `GET /group` e `PATCH /group`; `GET` público para header/sidebar; `PATCH` e upload de logo do grupo restritos a `super_admin`.
+- **Frontend:** Sidebar e Header exibem nome e logo do grupo; página "Grupo Master" para editar nome, descrição e logo; `DashboardHead` define título e favicon dinâmicos.
+
+#### 3. **Permissões por módulo**
+- **Backend:** Modelos `Module` e `ModuleRole`; seed de módulos (dashboard, grupo_master, usuarios, empresas, tipos, paginas, noticias, midia, configuracoes); `GET /me/modules` (módulos do usuário); `GET/PATCH /settings/modules` (super_admin).
+- **Frontend:** Sidebar filtra itens por `canAccessModule(moduleSlug)`; página Configurações → Módulos (super_admin) com checkboxes por role; páginas protegidas com redirect para `/403`.
+- **Doc:** `docs/MODULOS_DASHBOARD.md`.
+
+#### 4. **Logout e URL de saída**
+- **Frontend:** `getHostedUiLogoutUrl()` redireciona para `/login` após logout no Cognito.
+- **Cognito:** Para evitar tela "Invalid request", adicionar `http://localhost:3000/login` (e URL de produção) em **Sign out URL(s)** do App Client (Hosted UI).
+- **Doc:** `docs/TOKEN_STORAGE.md` atualizado com passos no AWS Console.
+
+#### 5. **Criação de usuário — confirmação de senha**
+- **Frontend:** Campo "Confirmar senha temporária" na página Novo Usuário; validação client-side (match e mínimo 8 caracteres) antes de enviar à API.
+
+#### 6. **Dashboard informativo e visual**
+- **Backend:** `GET /dashboard/stats` (JwtAuthGuard + DashboardRolesGuard) retorna `tenantsCount`, `tenantKindsCount`, `usersCount`.
+- **Frontend:** Dashboard redesenhado: faixa de boas-vindas com nome do grupo; 4 cards de resumo (Empresas, Usuários, Tipos de empresa, Páginas) com ícones e gradientes; seção "Últimas empresas" (5 primeiras com logo e link); coluna "Atalhos" com links rápidos para as áreas do dashboard.
+
+---
+
+### 📁 **ARQUIVOS CRIADOS/MODIFICADOS (31/01):**
+
+**Backend (api):**  
+`src/dashboard/` (controller, service, module), `src/upload/`, `src/group/`, `src/modules/`, `src/s3/`, Prisma schema (Group, Module, ModuleRole, Tenant.logoUrl), migrations; `app.module.ts` (DashboardModule).
+
+**Frontend (web):**  
+Dashboard page (resumo, cards, últimas empresas, atalhos); sidebar e header (grupo/logo); página Grupo Master; Configurações e Configurações/Módulos; páginas empresas (logo, upload); login; `cognito-hosted-ui.ts` (logout_uri); `DashboardHead.tsx`; AuthContext (modules); `TOKEN_STORAGE.md`, `S3_BUCKET_POLICY.md`, `MODULOS_DASHBOARD.md`.
+
+---
+
+### 📊 **STATUS ATUAL:**
+
+**✅ Funcionando:**  
+Monorepo, CRUD Empresas/Tipos/Usuários, Auth Cognito, Grupo Master (nome/logo), upload de logos (S3), permissões por módulo (sidebar + Configurações → Módulos), logout para nossa tela de login (com Sign out URL no Cognito), dashboard com estatísticas e atalhos.
+
+**⏳ Pendente:**  
+Deploy, páginas de conteúdo (Páginas, Notícias, Mídia) com dados reais.
+
+---
+
+### 🎉 **CONQUISTAS DO DIA (31/01):**
+
+1. Dashboard com resumo útil e visual mais claro.
+2. Grupo Master configurável (nome e logo) com acesso controlado.
+3. Controle de acesso por módulo (super_admin define quem vê o quê).
+4. Logout sem tela de erro da AWS quando Sign out URL está configurada.
+
+---

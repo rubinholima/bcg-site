@@ -7,6 +7,25 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id         String   @id @default(cuid())
+  cognitoSub String?  @unique
+  email      String   @unique
+  name       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String   // Nome do grupo/holding (ex.: Boston City Group)
+  slug        String   @unique // ex.: bcg
+  logoUrl     String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model TenantKind {
   id        String   @id @default(cuid())
   name      String   @unique
@@ -21,6 +40,26 @@ model Tenant {
   slug      String   @unique
   kindId    String
   kind      TenantKind @relation(fields: [kindId], references: [id])
+  logoUrl   String?  // URL do logo no S3 (ex.: https://bcg-platform-assets.s3.us-east-1.amazonaws.com/logos/tenants/{id}/logo.png)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Módulos do dashboard (Grupo Master, Empresas, Usuários, etc.)
+model Module {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  sortOrder Int      @default(0)
+  roles     ModuleRole[]
+}
+
+// Quais roles podem acessar cada módulo (super_admin sempre pode)
+model ModuleRole {
+  id       String  @id @default(cuid())
+  moduleId String
+  module   Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  role     String  // super_admin | company_admin | editor
+  canAccess Boolean @default(true)
+  @@unique([moduleId, role])
 }

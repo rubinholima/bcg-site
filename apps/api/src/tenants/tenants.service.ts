@@ -15,6 +15,7 @@ interface TenantRow {
   slug: string;
   kindId: string | null;
   kindName: string | null;
+  logoUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ function mapRow(row: TenantRow): TenantResponseDto {
     location: null,
     kindId: row.kindId ?? '',
     kind: { id: row.kindId ?? '', name: row.kindName ?? '' },
+    logoUrl: row.logoUrl ?? null,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
     updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
   };
@@ -39,7 +41,7 @@ export class TenantsService {
   async findAll(): Promise<TenantResponseDto[]> {
     try {
       const tenants = await this.prisma.$queryRaw<TenantRow[]>`
-        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."createdAt", t."updatedAt"
+        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl", t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
         ORDER BY t.name ASC
@@ -56,7 +58,7 @@ export class TenantsService {
   async findOne(id: string): Promise<TenantResponseDto> {
     try {
       const rows = await this.prisma.$queryRaw<TenantRow[]>`
-        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."createdAt", t."updatedAt"
+        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl", t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
         WHERE t.id = ${id}
@@ -115,6 +117,10 @@ export class TenantsService {
         updates.push(`"kindId" = $${++idx}`);
         values.push(dto.kindId);
       }
+      if (dto.logoUrl !== undefined) {
+        updates.push(`"logoUrl" = $${++idx}`);
+        values.push(dto.logoUrl);
+      }
       if (updates.length === 0) return this.findOne(id);
       updates.push(`"updatedAt" = $${++idx}`);
       values.push(now);
@@ -135,6 +141,10 @@ export class TenantsService {
         `TenantsService.update failed: ${message}`,
       );
     }
+  }
+
+  async updateLogoUrl(tenantId: string, logoUrl: string): Promise<TenantResponseDto> {
+    return this.update(tenantId, { logoUrl });
   }
 
   async remove(id: string): Promise<void> {

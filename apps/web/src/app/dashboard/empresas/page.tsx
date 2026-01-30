@@ -78,6 +78,7 @@ export default async function EmpresasPage({
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-14">Logo</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Tipo</TableHead>
@@ -88,6 +89,17 @@ export default async function EmpresasPage({
               <TableBody>
                 {tenants.map((t) => (
                   <TableRow key={t.id}>
+                    <TableCell>
+                      {t.logoUrl ? (
+                        <img
+                          src={t.logoUrl}
+                          alt=""
+                          className="h-8 w-8 object-contain rounded border"
+                        />
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="font-medium">{t.name}</TableCell>
                     <TableCell className="text-muted-foreground">{t.slug}</TableCell>
                     <TableCell>{t.kind?.name ?? t.kindId ?? "—"}</TableCell>

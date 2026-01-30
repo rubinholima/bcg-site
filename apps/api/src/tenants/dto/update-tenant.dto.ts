@@ -23,4 +23,9 @@ export class UpdateTenantDto {
   @IsOptional()
   @MaxLength(255)
   location?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(2048)
+  logoUrl?: string;
 }
