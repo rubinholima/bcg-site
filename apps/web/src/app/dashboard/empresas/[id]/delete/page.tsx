@@ -7,29 +7,29 @@ import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { TenantKind } from "@/types/tenant-kind";
+import { Tenant } from "@/types/tenant";
 
-export default function DeleteTipoPage() {
+export default function DeleteEmpresaPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tipo, setTipo] = useState<TenantKind | null>(null);
+  const [empresa, setEmpresa] = useState<Tenant | null>(null);
 
   useEffect(() => {
-    async function loadTipo() {
+    async function load() {
       try {
-        const { data } = await api.get<TenantKind>(`/tenant-kinds/${id}`);
-        setTipo(data ?? null);
+        const { data } = await api.get<Tenant>(`/tenants/${id}`);
+        setEmpresa(data ?? null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao carregar tipo");
+        setError(err instanceof Error ? err.message : "Erro ao carregar empresa");
       } finally {
         setLoadingData(false);
       }
     }
-    loadTipo();
+    load();
   }, [id]);
 
   const handleDelete = async () => {
@@ -37,10 +37,10 @@ export default function DeleteTipoPage() {
     setError(null);
 
     try {
-      await api.delete(`/tenant-kinds/${id}`);
-      router.push("/dashboard/tipos?success=true");
+      await api.delete(`/tenants/${id}`);
+      router.push("/dashboard/empresas?success=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir tipo");
+      setError(err instanceof Error ? err.message : "Erro ao excluir empresa");
       setLoading(false);
     }
   };
@@ -55,12 +55,12 @@ export default function DeleteTipoPage() {
     );
   }
 
-  if (!tipo) {
+  if (!empresa) {
     return (
       <div className="space-y-6">
         <div className="text-center py-8 text-destructive">
-          <p>Tipo não encontrado.</p>
-          <Link href="/dashboard/tipos">
+          <p>{error ?? "Empresa não encontrada."}</p>
+          <Link href="/dashboard/empresas">
             <Button variant="outline" className="mt-4">
               Voltar
             </Button>
@@ -73,15 +73,15 @@ export default function DeleteTipoPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/tipos">
+        <Link href="/dashboard/empresas">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Excluir Tipo</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Excluir Empresa</h1>
           <p className="text-muted-foreground">
-            Confirme a exclusão do tipo
+            Confirme a exclusão da empresa
           </p>
         </div>
       </div>
@@ -105,10 +105,10 @@ export default function DeleteTipoPage() {
 
           <div className="space-y-4">
             <p>
-              Você está prestes a excluir o tipo: <strong>{tipo.name}</strong>
+              Você está prestes a excluir a empresa: <strong>{empresa.name}</strong> ({empresa.slug})
             </p>
             <p className="text-sm text-muted-foreground">
-              Certifique-se de que nenhuma empresa está usando este tipo antes de excluir.
+              Todos os dados vinculados a esta empresa podem ser afetados.
             </p>
 
             <div className="flex gap-4 pt-4">
@@ -120,7 +120,7 @@ export default function DeleteTipoPage() {
               >
                 {loading ? "Excluindo..." : "Confirmar Exclusão"}
               </Button>
-              <Link href="/dashboard/tipos">
+              <Link href="/dashboard/empresas">
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>

@@ -25,8 +25,8 @@ export default function EditTipoPage() {
   useEffect(() => {
     async function loadTipo() {
       try {
-        const tipo = await api.get<TenantKind>(`/tenant-kinds/${id}`);
-        setFormData({ name: tipo.name });
+        const { data } = await api.get<TenantKind>(`/tenant-kinds/${id}`);
+        setFormData({ name: data?.name ?? "" });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar tipo");
       } finally {

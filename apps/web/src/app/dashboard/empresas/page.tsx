@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Building2 } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,11 +23,22 @@ async function getTenants(): Promise<Tenant[]> {
   }
 }
 
-export default async function EmpresasPage() {
+export default async function EmpresasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string }>;
+}) {
   const tenants = await getTenants();
+  const params = await searchParams;
+  const showSuccess = params.success === "true";
 
   return (
     <div className="space-y-6">
+      {showSuccess && (
+        <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 flex items-center gap-2 text-green-500">
+          <span>Operação realizada com sucesso!</span>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
@@ -71,6 +82,7 @@ export default async function EmpresasPage() {
                   <TableHead>Slug</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Criado em</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -87,6 +99,20 @@ export default async function EmpresasPage() {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/dashboard/empresas/${t.id}/edit`}>
+                          <Button variant="ghost" size="icon">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Link href={`/dashboard/empresas/${t.id}/delete`}>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

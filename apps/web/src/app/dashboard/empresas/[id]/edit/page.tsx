@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
 
 interface FormData {
@@ -24,9 +25,12 @@ interface FormData {
   kindId: string;
 }
 
-export default function NovaEmpresaPage() {
+export default function EditEmpresaPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tipos, setTipos] = useState<TenantKind[]>([]);
@@ -37,21 +41,29 @@ export default function NovaEmpresaPage() {
   });
 
   useEffect(() => {
-    async function loadTipos() {
+    async function load() {
       try {
-        const { data } = await api.get<TenantKind[]>("/tenant-kinds");
-        setTipos(data ?? []);
-        if ((data?.length ?? 0) > 0 && !formData.kindId) {
-          setFormData((prev) => ({ ...prev, kindId: data![0].id }));
+        const [{ data: empresa }, { data: tiposList }] = await Promise.all([
+          api.get<Tenant>(`/tenants/${id}`),
+          api.get<TenantKind[]>("/tenant-kinds"),
+        ]);
+        if (empresa) {
+          setFormData({
+            name: empresa.name,
+            slug: empresa.slug,
+            kindId: empresa.kindId || empresa.kind?.id || "",
+          });
         }
-      } catch {
-        setTipos([]);
+        setTipos(tiposList ?? []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar empresa");
       } finally {
+        setLoadingData(false);
         setLoadingTipos(false);
       }
     }
-    loadTipos();
-  }, []);
+    load();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,10 +71,10 @@ export default function NovaEmpresaPage() {
     setError(null);
 
     try {
-      await api.post("/tenants", formData);
+      await api.patch(`/tenants/${id}`, formData);
       router.push("/dashboard/empresas?success=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar empresa");
+      setError(err instanceof Error ? err.message : "Erro ao atualizar empresa");
       setLoading(false);
     }
   };
@@ -81,18 +93,43 @@ export default function NovaEmpresaPage() {
     }
   };
 
+  if (loadingData) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8 text-muted-foreground">
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !formData.name) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8 text-destructive">
+          <p>{error}</p>
+          <Link href="/dashboard/empresas">
+            <Button variant="outline" className="mt-4">
+              Voltar
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/empresas">
+        <Link href="/dashboard/empresas">
+          <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
+          </Button>
+        </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nova Empresa</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Editar Empresa</h1>
           <p className="text-muted-foreground">
-            Cadastre uma nova empresa do grupo
+            Atualize as informações da empresa
           </p>
         </div>
       </div>
@@ -101,7 +138,7 @@ export default function NovaEmpresaPage() {
         <CardHeader>
           <CardTitle>Informações da Empresa</CardTitle>
           <CardDescription>
-            Preencha os dados abaixo para cadastrar a empresa
+            Altere os dados abaixo e salve
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -138,9 +175,6 @@ export default function NovaEmpresaPage() {
                 placeholder="Ex: boston-city-futebol"
                 disabled={loading}
               />
-              <p className="text-xs text-muted-foreground">
-                Apenas letras minúsculas, números e hífens (gerado automaticamente pelo nome)
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -167,7 +201,7 @@ export default function NovaEmpresaPage() {
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading || !formData.kindId}>
-                {loading ? "Cadastrando..." : "Cadastrar Empresa"}
+                {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
               <Link href="/dashboard/empresas">
                 <Button type="button" variant="outline" disabled={loading}>

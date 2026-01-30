@@ -1,10 +1,17 @@
 import {
   Controller,
   Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from './tenants.service';
+import { CreateTenantDto } from './dto/create-tenant.dto';
+import { UpdateTenantDto } from './dto/update-tenant.dto';
 
 @Controller('tenants')
 export class TenantsController {
@@ -38,5 +45,25 @@ export class TenantsController {
       const msg = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(`GET /tenants: ${msg}`);
     }
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.tenantsService.findOne(id);
+  }
+
+  @Post()
+  async create(@Body() dto: CreateTenantDto) {
+    return this.tenantsService.create(dto);
+  }
+
+  @Patch(':id')
+  async update(@Param('id') id: string, @Body() dto: UpdateTenantDto) {
+    return this.tenantsService.update(id, dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    await this.tenantsService.remove(id);
   }
 }
