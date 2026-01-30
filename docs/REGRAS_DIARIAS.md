@@ -63,8 +63,17 @@ O layout do dashboard DEVE sempre conter:
 
 **Vincular ao Git externo (uma vez):**
 ```bash
+cd "E:\DEV\BCG SITE"
 git remote add origin <URL_DO_SEU_REPOSITORIO>
-git push -u origin main   # ou o nome da branch atual
+git branch -M main
+git push -u origin main
+```
+
+**Abrir branch para próximas features:**
+```bash
+git checkout -b develop
+# ou: git checkout -b feature/nome-da-feature
+# quando acertar: git add . && git commit -m "descrição" && git push -u origin develop
 ```
 
 ---
