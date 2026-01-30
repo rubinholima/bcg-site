@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste API - Tenants</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0a0a0a;
+      color: #ededed;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      margin-bottom: 2rem;
+      color: #fff;
+    }
+    
+    .section {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .section h2 {
+      margin-bottom: 1rem;
+      color: #fff;
+      font-size: 1.25rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #ccc;
+      font-size: 0.9rem;
+    }
+    
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 1rem;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #4a9eff;
+    }
+    
+    button {
+      padding: 0.75rem 1.5rem;
+      background: #4a9eff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #3a8eef;
+    }
+    
+    button:disabled {
+      background: #2a2a2a;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: #2a2a2a;
+    }
+    
+    .btn-secondary:hover {
+      background: #3a3a3a;
+    }
+    
+    .result {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .result.success {
+      border-color: #4a9eff;
+      color: #4a9eff;
+    }
+    
+    .result.error {
+      border-color: #ff4a4a;
+      color: #ff4a4a;
+    }
+    
+    .tenants-list {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .tenant-card {
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      padding: 1rem;
+    }
+    
+    .tenant-card h3 {
+      color: #4a9eff;
+      margin-bottom: 0.5rem;
+    }
+    
+    .tenant-card p {
+      color: #ccc;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+    }
+    
+    .empty {
+      text-align: center;
+      color: #666;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏢 Teste API - Tenants</h1>
+    
+    <!-- Criar Tenant -->
+    <div class="section">
+      <h2>Criar Novo Tenant</h2>
+      <form id="createForm">
+        <div class="form-group">
+          <label for="name">Nome:</label>
+          <input type="text" id="name" required placeholder="Ex: Boston City FC">
+        </div>
+        <div class="form-group">
+          <label for="slug">Slug:</label>
+          <input type="text" id="slug" required placeholder="Ex: boston-city-fc">
+        </div>
+        <div class="form-group">
+          <label for="kind">Tipo:</label>
+          <input type="text" id="kind" required placeholder="Ex: futebol">
+        </div>
+        <button type="submit">Criar Tenant</button>
+      </form>
+      <div id="createResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <!-- Listar Tenants -->
+    <div class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Lista de Tenants</h2>
+        <button class="btn-secondary" onclick="loadTenants()">🔄 Atualizar</button>
+      </div>
+      <div id="tenantsList" class="tenants-list">
+        <div class="empty">Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/tenants';
+
+    // Criar tenant
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const resultDiv = document.getElementById('createResult');
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'result';
+      resultDiv.textContent = 'Criando...';
+
+      const data = {
+        name: document.getElementById('name').value,
+        slug: document.getElementById('slug').value,
+        kind: document.getElementById('kind').value,
+      };
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          resultDiv.className = 'result success';
+          resultDiv.textContent = JSON.stringify(result, null, 2);
+          document.getElementById('createForm').reset();
+          loadTenants();
+        } else {
+          resultDiv.className = 'result error';
+          resultDiv.textContent = `Erro: ${JSON.stringify(result, null, 2)}`;
+        }
+      } catch (error) {
+        resultDiv.className = 'result error';
+        resultDiv.textContent = `Erro: ${error.message}`;
+      }
+    });
+
+    // Carregar lista de tenants
+    async function loadTenants() {
+      const listDiv = document.getElementById('tenantsList');
+      listDiv.innerHTML = '<div class="empty">Carregando...</div>';
+
+      try {
+        const response = await fetch(API_URL);
+        const tenants = await response.json();
+
+        if (tenants.length === 0) {
+          listDiv.innerHTML = '<div class="empty">Nenhum tenant encontrado. Crie um novo acima!</div>';
+          return;
+        }
+
+        listDiv.innerHTML = tenants.map(tenant => `
+          <div class="tenant-card">
+            <h3>${tenant.name}</h3>
+            <p><strong>Slug:</strong> ${tenant.slug}</p>
+            <p><strong>Tipo:</strong> ${tenant.kind}</p>
+            <p><strong>ID:</strong> ${tenant.id}</p>
+            <p><strong>Criado em:</strong> ${new Date(tenant.createdAt).toLocaleString('pt-BR')}</p>
+          </div>
+        `).join('');
+      } catch (error) {
+        listDiv.innerHTML = `<div class="result error">Erro ao carregar: ${error.message}</div>`;
+      }
+    }
+
+    // Carregar lista ao abrir a página
+    loadTenants();
+  </script>
+</body>
+</html>

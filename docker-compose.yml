@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: bcg_db
+    environment:
+      POSTGRES_USER: bcg
+      POSTGRES_PASSWORD: bcg_password
+      POSTGRES_DB: bcg_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - bcg_pgdata:/var/lib/postgresql/data
+
+volumes:
+  bcg_pgdata:
