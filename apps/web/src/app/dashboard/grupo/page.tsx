@@ -21,6 +21,9 @@ export default function GrupoPage() {
   const [group, setGroup] = useState<Group | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [logoLoadError, setLogoLoadError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +40,9 @@ export default function GrupoPage() {
         setGroup(data);
         setName(data.name ?? "");
         setDescription(data.description ?? "");
+        setAddress(data.address ?? "");
+        setContactName(data.contactName ?? "");
+        setContactPhone(data.contactPhone ?? "");
         setLogoLoadError(false);
       } catch {
         setError("Erro ao carregar dados do grupo.");
@@ -56,7 +62,7 @@ export default function GrupoPage() {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({ name, description, address: address || undefined, contactName: contactName || undefined, contactPhone: contactPhone || undefined }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -269,6 +275,43 @@ export default function GrupoPage() {
                 placeholder="Breve descrição do grupo ou holding"
                 disabled={loading}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Endereço</Label>
+              <textarea
+                id="address"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Endereço completo da empresa"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contactName">Nome do contato</Label>
+                <Input
+                  id="contactName"
+                  type="text"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  placeholder="Ex: João Silva"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contactPhone">Telefone do contato</Label>
+                <Input
+                  id="contactPhone"
+                  type="text"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  placeholder="Ex: +55 11 99999-9999"
+                  disabled={loading}
+                />
+              </div>
             </div>
 
             <div className="flex gap-4 pt-4">

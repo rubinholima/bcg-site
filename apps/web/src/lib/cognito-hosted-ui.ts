@@ -7,15 +7,15 @@ const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-export function getHostedUiLoginUrl(): string {
+export function getHostedUiLoginUrl(state?: string): string {
   const redirectUri = `${appUrl.replace(/\/$/, "")}/api/auth/callback`;
-  // Scope: use "openid" (mínimo). Se no App Client estiverem habilitados email/profile, pode usar "openid email profile".
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",
-    scope: "openid",
+    scope: "openid offline_access",
     redirect_uri: redirectUri,
   });
+  if (state) params.set("state", state);
   return `${cognitoDomain}/oauth2/authorize?${params.toString()}`;
 }
 

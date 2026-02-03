@@ -23,6 +23,10 @@ interface FormData {
   name: string;
   slug: string;
   kindId: string;
+  location?: string;
+  address?: string;
+  contactName?: string;
+  contactPhone?: string;
 }
 
 export default function EditEmpresaPage() {
@@ -56,6 +60,10 @@ export default function EditEmpresaPage() {
             name: empresa.name,
             slug: empresa.slug,
             kindId: empresa.kindId || empresa.kind?.id || "",
+            location: empresa.location ?? "",
+            address: empresa.address ?? "",
+            contactName: empresa.contactName ?? "",
+            contactPhone: empresa.contactPhone ?? "",
           });
         }
         setTipos(tiposList ?? []);
@@ -291,6 +299,59 @@ export default function EditEmpresaPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">Localização (cidade, país)</Label>
+              <Input
+                id="location"
+                name="location"
+                type="text"
+                value={formData.location ?? ""}
+                onChange={handleChange}
+                placeholder="Ex: Boston, EUA"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Endereço</Label>
+              <textarea
+                id="address"
+                name="address"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.address ?? ""}
+                onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
+                placeholder="Endereço completo"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="contactName">Nome do contato</Label>
+                <Input
+                  id="contactName"
+                  name="contactName"
+                  type="text"
+                  value={formData.contactName ?? ""}
+                  onChange={handleChange}
+                  placeholder="Ex: Maria Silva"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contactPhone">Telefone do contato</Label>
+                <Input
+                  id="contactPhone"
+                  name="contactPhone"
+                  type="text"
+                  value={formData.contactPhone ?? ""}
+                  onChange={handleChange}
+                  placeholder="Ex: +55 11 99999-9999"
+                  disabled={loading}
+                />
+              </div>
             </div>
 
             <div className="flex gap-4 pt-4">

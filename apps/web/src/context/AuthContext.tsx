@@ -40,9 +40,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
   });
 
-  const fetchMe = useCallback(async () => {
+  const fetchMe = useCallback(async (skipRefresh = false) => {
     try {
       const res = await fetch("/api/me", { credentials: "include" });
+      if (res.status === 401 && !skipRefresh) {
+        const refreshRes = await fetch("/api/auth/refresh", {
+          method: "POST",
+          credentials: "include",
+        });
+        if (refreshRes.ok) {
+          return fetchMe(true);
+        }
+      }
       if (!res.ok) {
         setState({ user: null, groups: [], role: null, modules: [], loading: false });
         return;

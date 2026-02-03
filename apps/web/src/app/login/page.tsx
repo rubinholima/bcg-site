@@ -31,9 +31,11 @@ export default function LoginPage() {
   }, [mounted]);
 
   function handleEntrar() {
-    const url = getHostedUiLoginUrl();
-    if (!url || !isCognitoConfigured()) return;
-    window.location.href = url;
+    if (!isCognitoConfigured()) return;
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const next = params.get("next")?.trim() || "/dashboard";
+    const url = getHostedUiLoginUrl(next);
+    if (url) window.location.href = url;
   }
 
   return (

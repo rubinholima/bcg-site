@@ -4,6 +4,15 @@ const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+const MAX_STATE_LENGTH = 500;
+
+function isValidInternalPath(value: string | null): value is string {
+  if (value == null || value.length > MAX_STATE_LENGTH) return false;
+  if (!value.startsWith("/") || value.startsWith("//")) return false;
+  if (value.includes("://") || value.includes("\\")) return false;
+  return true;
+}
+
 /**
  * Callback do Cognito Hosted UI.
  * Cognito redireciona aqui com ?code=xxx&state=yyy.
@@ -51,7 +60,9 @@ export async function GET(request: NextRequest) {
     expires_in?: number;
   };
 
-  const redirect = NextResponse.redirect(new URL("/dashboard", appUrl));
+  const state = searchParams.get("state");
+  const nextPath = isValidInternalPath(state) ? state : "/dashboard";
+  const redirect = NextResponse.redirect(new URL(nextPath, appUrl));
   const cookieOpts = { path: "/", httpOnly: true, sameSite: "lax" as const, maxAge: 60 * 60 * 24 * 7 };
 
   if (tokens.id_token) {

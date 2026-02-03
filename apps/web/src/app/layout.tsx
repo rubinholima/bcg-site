@@ -14,10 +14,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Platform",
-  description: "Portal do grupo",
-};
+/** Nome e logo vêm da API do Grupo Master (dashboard). */
+async function getGroupMetadata(): Promise<{ name?: string; logoUrl?: string }> {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+  try {
+    const res = await fetch(`${apiUrl}/group`, { cache: "no-store" });
+    if (!res.ok) return {};
+    const group = (await res.json()) as { name?: string | null; logoUrl?: string | null };
+    return {
+      name: group?.name && typeof group.name === "string" ? group.name : undefined,
+      logoUrl: group?.logoUrl && typeof group.logoUrl === "string" ? group.logoUrl : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { name, logoUrl } = await getGroupMetadata();
+  const siteName = name ?? "Boston City Group";
+  return {
+    title: siteName,
+    description: `Portal ${siteName} — empresas, usuários, emails e configurações.`,
+    icons: {
+      icon: logoUrl ?? "/favicon.ico",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

@@ -10,6 +10,9 @@ import {
   Newspaper,
   Image,
   Settings,
+  Mail,
+  Bell,
+  Clock,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
@@ -25,10 +28,19 @@ import { Button } from "@/components/ui/button";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+interface LastActivity {
+  name: string;
+  createdAt: string;
+}
+
 interface DashboardStats {
   tenantsCount: number;
   tenantKindsCount: number;
   usersCount: number;
+  workmailOrgsCount?: number;
+  workmailAccountsCount?: number;
+  lastTenant?: LastActivity | null;
+  lastUser?: LastActivity | null;
 }
 
 async function getGroup(): Promise<Group | null> {
@@ -66,6 +78,7 @@ async function getTenants(): Promise<Tenant[]> {
 const QUICK_LINKS = [
   { title: "Empresas", href: "/dashboard/empresas", icon: Building2 },
   { title: "Usuários", href: "/dashboard/usuarios", icon: Users },
+  { title: "Emails", href: "/dashboard/emails", icon: Mail },
   { title: "Tipos", href: "/dashboard/tipos", icon: Tag },
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper },
@@ -89,6 +102,14 @@ const STAT_CARDS = [
     href: "/dashboard/usuarios",
     accent: "from-emerald-500/10 to-emerald-600/5 border-emerald-500/20",
     iconClass: "text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    key: "emails" as const,
+    label: "Contas de email",
+    icon: Mail,
+    href: "/dashboard/emails",
+    accent: "from-cyan-500/10 to-cyan-600/5 border-cyan-500/20",
+    iconClass: "text-cyan-600 dark:text-cyan-400",
   },
   {
     key: "kinds" as const,
@@ -119,9 +140,19 @@ function getStatValue(
   }
   if (key === "tenants") return stats.tenantsCount;
   if (key === "users") return stats.usersCount;
+  if (key === "emails") return stats.workmailAccountsCount ?? null;
   if (key === "kinds") return stats.tenantKindsCount;
   if (key === "pages") return 0; // placeholder até existir conteúdo
   return null;
+}
+
+function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  return `${day}/${month} ${hours}:${minutes}`;
 }
 
 export default async function DashboardPage() {
@@ -139,22 +170,33 @@ export default async function DashboardPage() {
   const recentTenants = tenants.slice(0, 5);
   const groupName = group?.name ?? "Boston City Group";
 
+  // Resumo por tipo: agrupa empresas por kind.name
+  const countsByKind = tenants.reduce<Record<string, number>>((acc, t) => {
+    const name = t.kind?.name ?? "Sem tipo";
+    acc[name] = (acc[name] ?? 0) + 1;
+    return acc;
+  }, {});
+  const kindEntries = Object.entries(countsByKind).sort((a, b) => b[1] - a[1]);
+
+  const updatedAt = new Date();
+  const updatedAtLabel = formatDateTime(updatedAt.toISOString());
+
   return (
     <div className="space-y-8">
       {/* Welcome */}
       <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-border p-6 md:p-8">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-          Olá, bem-vindo ao {groupName} Platform
+          Dashboard — {groupName}
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Resumo da sua plataforma e atalhos rápidos.
+          Central de gestão: empresas, usuários, emails corporativos e configurações.
         </p>
       </div>
 
       {/* Stats */}
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-4">Resumo</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {STAT_CARDS.map(({ key, label, icon: Icon, href, accent, iconClass }) => {
             const value = getStatValue(stats, tenantsCount, key);
             return (
@@ -269,6 +311,104 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Última atividade + Resumo por tipo */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              Última atividade
+            </CardTitle>
+            <CardDescription>
+              Última empresa e último usuário cadastrados
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {stats?.lastTenant ? (
+              <p className="text-sm">
+                <span className="font-medium">Última empresa:</span>{" "}
+                {stats.lastTenant.name}{" "}
+                <span className="text-muted-foreground">
+                  em {formatDateTime(stats.lastTenant.createdAt)}
+                </span>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma empresa cadastrada ainda.
+              </p>
+            )}
+            {stats?.lastUser ? (
+              <p className="text-sm">
+                <span className="font-medium">Último usuário:</span>{" "}
+                {stats.lastUser.name}{" "}
+                <span className="text-muted-foreground">
+                  em {formatDateTime(stats.lastUser.createdAt)}
+                </span>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Nenhum usuário cadastrado ainda.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-muted-foreground" />
+              Resumo por tipo
+            </CardTitle>
+            <CardDescription>
+              Empresas agrupadas por tipo
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {kindEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma empresa cadastrada ainda.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {kindEntries.map(([kindName, count]) => (
+                  <li
+                    key={kindName}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <span>{kindName}</span>
+                    <span className="font-medium tabular-nums">{count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Avisos / Notificações */}
+      <Card className="border-amber-500/20 bg-amber-500/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            Avisos
+          </CardTitle>
+          <CardDescription>
+            Alertas e notificações do sistema (em breve)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Nenhum aviso no momento. Aqui poderão aparecer alertas como token
+            WorkMail próximo do vencimento, entre outros.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Data da última atualização */}
+      <p className="text-xs text-muted-foreground text-right">
+        Dados atualizados em {updatedAtLabel}
+      </p>
     </div>
   );
 }

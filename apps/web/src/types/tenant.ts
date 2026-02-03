@@ -3,6 +3,9 @@ export interface Tenant {
   name: string;
   slug: string;
   location: string | null;
+  address: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
   kindId: string;
   kind: {
     id: string;

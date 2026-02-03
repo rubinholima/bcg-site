@@ -17,13 +17,16 @@ model User {
 }
 
 model Group {
-  id          String   @id @default(cuid())
-  name        String   // Nome do grupo/holding (ex.: Boston City Group)
-  slug        String   @unique // ex.: bcg
-  logoUrl     String?
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String   // Nome do grupo/holding (ex.: Boston City Group)
+  slug         String   @unique // ex.: bcg
+  logoUrl      String?
+  description  String?  @db.Text
+  address      String?  @db.Text // Endereço da empresa
+  contactName  String?  // Nome do contato
+  contactPhone String?  // Telefone do contato
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model TenantKind {
@@ -35,13 +38,54 @@ model TenantKind {
 }
 
 model Tenant {
+  id                      String   @id @default(cuid())
+  name                    String
+  slug                    String   @unique
+  kindId                  String
+  kind                    TenantKind @relation(fields: [kindId], references: [id])
+  logoUrl                 String?  // URL do logo no S3
+  location                String?  // Localização (ex.: cidade, país)
+  address                 String?  @db.Text // Endereço da empresa
+  contactName             String?  // Nome do contato
+  contactPhone            String?  // Telefone do contato
+  workmailOrganizationId  String?  // ID da organização WorkMail na AWS (ex.: m-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+  domain                  String?  // Domínio de email (ex.: bostoncitygroup.com)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  workmailAccounts        WorkMailAccount[]
+}
+
+// Contas de email gerenciadas via WorkMail (por empresa)
+model WorkMailAccount {
+  id            String   @id @default(cuid())
+  organizationId String  // id da empresa (Tenant) no nosso sistema
+  organization   Tenant  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String   // localPart@domain
+  localPart      String
+  displayName    String?
+  workmailUserId String   // ID retornado pela AWS WorkMail
+  status         String   // ACTIVE | DISABLED | DELETED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@unique([organizationId, email])
+}
+
+// Audit simples: quem fez, quando, ação (WorkMail)
+model WorkMailAuditLog {
+  id          String   @id @default(cuid())
+  performedBy String   // sub ou email do JWT
+  action      String   // CREATE_ACCOUNT | RESET_PASSWORD | DELETE_ACCOUNT
+  targetType  String   // account
+  targetId    String?
+  details     String?  @db.Text
+  createdAt   DateTime @default(now())
+}
+
+// Conteúdo editável da home pública (textos PT/EN e URLs de imagens)
+model HomeContent {
   id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  kindId    String
-  kind      TenantKind @relation(fields: [kindId], references: [id])
-  logoUrl   String?  // URL do logo no S3 (ex.: https://bcg-platform-assets.s3.us-east-1.amazonaws.com/logos/tenants/{id}/logo.png)
-  createdAt DateTime @default(now())
+  slug      String   @unique // "home"
+  content   Json     // { pt: {...}, en: {...}, images: { hero?, what?, founder?, cta? } }
   updatedAt DateTime @updatedAt
 }
 

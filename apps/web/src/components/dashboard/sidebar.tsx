@@ -15,14 +15,18 @@ import {
   Newspaper,
   Tag,
   Users,
+  Mail,
+  Home,
 } from "lucide-react";
 import type { Group } from "@/types/group";
 
 const menuItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, moduleSlug: "dashboard" },
   { title: "Grupo Master", href: "/dashboard/grupo", icon: Globe, moduleSlug: "grupo_master" },
+  { title: "Conteúdo da Home", href: "/dashboard/conteudo", icon: Home, moduleSlug: "dashboard" },
   { title: "Usuários", href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
   { title: "Empresas", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
+  { title: "Emails", href: "/dashboard/emails", icon: Mail, moduleSlug: "emails" },
   { title: "Tipos", href: "/dashboard/tipos", icon: Tag, moduleSlug: "tipos" },
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
@@ -32,7 +36,7 @@ const menuItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { canAccessModule } = useAuth();
+  const { canAccessModule, canAccessDashboard } = useAuth();
   const [group, setGroup] = useState<Group | null>(null);
   const [logoError, setLogoError] = useState(false);
 
@@ -75,7 +79,7 @@ export function Sidebar() {
             </div>
           )}
           <span className="text-lg font-semibold truncate">
-            {name} <span className="text-muted-foreground">Platform</span>
+            <span className="text-muted-foreground">Dashboard</span> {name}
           </span>
         </Link>
       </div>
@@ -83,7 +87,11 @@ export function Sidebar() {
       {/* Menu */}
       <nav className="flex-1 space-y-1 p-4">
         {menuItems
-          .filter((item) => canAccessModule(item.moduleSlug))
+          .filter(
+            (item) =>
+              canAccessModule(item.moduleSlug) ||
+              (item.moduleSlug === "emails" && canAccessDashboard),
+          )
           .map((item) => {
           const Icon = item.icon;
           // Considera ativo se a rota atual corresponde ou é /dashboard/tenants (rota técnica)
@@ -94,7 +102,9 @@ export function Sidebar() {
             (item.href === "/dashboard/empresas" &&
               pathname?.startsWith("/dashboard/tenants")) ||
             (item.href === "/dashboard/usuarios" &&
-              pathname?.startsWith("/dashboard/usuarios"));
+              pathname?.startsWith("/dashboard/usuarios")) ||
+            (item.href === "/dashboard/emails" &&
+              pathname?.startsWith("/dashboard/emails"));
 
           return (
             <Link

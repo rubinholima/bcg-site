@@ -11,6 +11,9 @@ import { TenantKindsModule } from './tenant-kinds/tenant-kinds.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
+import { WorkmailModule } from './workmail/workmail.module';
+import { HomeContentModule } from './home-content/home-content.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { UsersModule } from './users/users.module';
     TenantKindsModule,
     UploadModule,
     UsersModule,
+    WorkmailModule,
+    PublicModule,
+    HomeContentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

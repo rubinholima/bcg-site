@@ -13,6 +13,9 @@ export interface GroupDto {
   slug: string;
   logoUrl: string | null;
   description: string | null;
+  address: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +40,9 @@ export class GroupService {
       slug: row.slug,
       logoUrl: row.logoUrl ?? null,
       description: row.description ?? null,
+      address: row.address ?? null,
+      contactName: row.contactName ?? null,
+      contactPhone: row.contactPhone ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -44,7 +50,14 @@ export class GroupService {
 
   async update(
     slug: string,
-    dto: { name?: string; logoUrl?: string; description?: string },
+    dto: {
+      name?: string;
+      logoUrl?: string;
+      description?: string;
+      address?: string;
+      contactName?: string;
+      contactPhone?: string;
+    },
   ): Promise<GroupDto> {
     const existing = await this.prisma.group.findUnique({ where: { slug } });
     if (!existing) {
@@ -57,6 +70,9 @@ export class GroupService {
           ...(dto.name !== undefined && { name: dto.name }),
           ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl }),
           ...(dto.description !== undefined && { description: dto.description }),
+          ...(dto.address !== undefined && { address: dto.address }),
+          ...(dto.contactName !== undefined && { contactName: dto.contactName }),
+          ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
         },
       });
       return {
@@ -65,6 +81,9 @@ export class GroupService {
         slug: updated.slug,
         logoUrl: updated.logoUrl ?? null,
         description: updated.description ?? null,
+        address: updated.address ?? null,
+        contactName: updated.contactName ?? null,
+        contactPhone: updated.contactPhone ?? null,
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),
       };

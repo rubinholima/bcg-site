@@ -25,8 +25,8 @@ export function DashboardHead() {
   }, []);
 
   useEffect(() => {
-    const name = group?.name ?? "Grupo Master";
-    const title = `${name} Platform`;
+    const name = group?.name ?? "Boston City Group";
+    const title = name ? `Dashboard - BCG | ${name}` : "Dashboard - BCG";
     if (document.title !== title) {
       document.title = title;
     }

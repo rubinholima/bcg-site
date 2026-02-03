@@ -16,6 +16,10 @@ interface TenantRow {
   kindId: string | null;
   kindName: string | null;
   logoUrl: string | null;
+  location: string | null;
+  address: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,7 +29,10 @@ function mapRow(row: TenantRow): TenantResponseDto {
     id: row.id,
     name: row.name,
     slug: row.slug,
-    location: null,
+    location: row.location ?? null,
+    address: row.address ?? null,
+    contactName: row.contactName ?? null,
+    contactPhone: row.contactPhone ?? null,
     kindId: row.kindId ?? '',
     kind: { id: row.kindId ?? '', name: row.kindName ?? '' },
     logoUrl: row.logoUrl ?? null,
@@ -41,7 +48,8 @@ export class TenantsService {
   async findAll(): Promise<TenantResponseDto[]> {
     try {
       const tenants = await this.prisma.$queryRaw<TenantRow[]>`
-        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl", t."createdAt", t."updatedAt"
+        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
+          t.location, t.address, t."contactName", t."contactPhone", t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
         ORDER BY t.name ASC
@@ -58,7 +66,8 @@ export class TenantsService {
   async findOne(id: string): Promise<TenantResponseDto> {
     try {
       const rows = await this.prisma.$queryRaw<TenantRow[]>`
-        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl", t."createdAt", t."updatedAt"
+        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
+          t.location, t.address, t."contactName", t."contactPhone", t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
         WHERE t.id = ${id}
@@ -82,8 +91,8 @@ export class TenantsService {
       const id = crypto.randomUUID();
       const now = new Date();
       await this.prisma.$executeRaw`
-        INSERT INTO "Tenant" (id, name, slug, "kindId", "createdAt", "updatedAt")
-        VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${now}, ${now})
+        INSERT INTO "Tenant" (id, name, slug, "kindId", location, address, "contactName", "contactPhone", "createdAt", "updatedAt")
+        VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${dto.location ?? null}, ${dto.address ?? null}, ${dto.contactName ?? null}, ${dto.contactPhone ?? null}, ${now}, ${now})
       `;
       return this.findOne(id);
     } catch (err) {
@@ -120,6 +129,22 @@ export class TenantsService {
       if (dto.logoUrl !== undefined) {
         updates.push(`"logoUrl" = $${++idx}`);
         values.push(dto.logoUrl);
+      }
+      if (dto.location !== undefined) {
+        updates.push(`location = $${++idx}`);
+        values.push(dto.location);
+      }
+      if (dto.address !== undefined) {
+        updates.push(`address = $${++idx}`);
+        values.push(dto.address);
+      }
+      if (dto.contactName !== undefined) {
+        updates.push(`"contactName" = $${++idx}`);
+        values.push(dto.contactName);
+      }
+      if (dto.contactPhone !== undefined) {
+        updates.push(`"contactPhone" = $${++idx}`);
+        values.push(dto.contactPhone);
       }
       if (updates.length === 0) return this.findOne(id);
       updates.push(`"updatedAt" = $${++idx}`);

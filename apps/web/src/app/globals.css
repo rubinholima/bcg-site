@@ -67,3 +67,135 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Home: animações */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(4%, -4%) scale(1.02);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gradientShift {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.7s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-float {
+  animation: floatSoft 8s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatSoft 12s ease-in-out infinite;
+}
+
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+.animate-delay-400 {
+  animation-delay: 400ms;
+}
+.animate-delay-500 {
+  animation-delay: 500ms;
+}
+.animate-delay-600 {
+  animation-delay: 600ms;
+}
+.animate-delay-700 {
+  animation-delay: 700ms;
+}
+.animate-delay-800 {
+  animation-delay: 800ms;
+}
+.animate-delay-1000 {
+  animation-delay: 1000ms;
+}
+.animate-delay-1200 {
+  animation-delay: 1200ms;
+}
+.animate-delay-1500 {
+  animation-delay: 1500ms;
+}
+
+/* Scroll-in: filhos animam quando o wrapper entra em view */
+.animate-on-scroll {
+  opacity: 0;
+}
+.in-view .animate-on-scroll {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+.in-view .animate-on-scroll.animate-delay-100 {
+  animation-delay: 100ms;
+}
+.in-view .animate-on-scroll.animate-delay-200 {
+  animation-delay: 200ms;
+}
+.in-view .animate-on-scroll.animate-delay-300 {
+  animation-delay: 300ms;
+}
+.in-view .animate-on-scroll.animate-delay-400 {
+  animation-delay: 400ms;
+}
+.in-view .animate-on-scroll.animate-delay-500 {
+  animation-delay: 500ms;
+}
+.in-view .animate-on-scroll.animate-delay-600 {
+  animation-delay: 600ms;
+}
+.in-view .animate-on-scroll.animate-delay-700 {
+  animation-delay: 700ms;
+}
+.in-view .animate-on-scroll.animate-delay-800 {
+  animation-delay: 800ms;
+}

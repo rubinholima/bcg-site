@@ -14,4 +14,18 @@ export class UpdateGroupDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  contactName?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(50)
+  contactPhone?: string;
 }
