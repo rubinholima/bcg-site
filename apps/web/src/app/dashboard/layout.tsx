@@ -36,12 +36,12 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Header */}
           <Header />
 
-          {/* Page Content */}
-          <main className="flex-1 overflow-y-auto bg-background p-6">
+          {/* Page Content - único scroll */}
+          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-background p-6">
             {children}
           </main>
         </div>

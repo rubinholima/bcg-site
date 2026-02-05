@@ -1,0 +1,11 @@
+---
+description: Sempre executar comandos necessários (build, migrate, seed, install) em vez de apenas sugerir
+alwaysApply: true
+---
+
+# Executar comandos
+
+- **Sempre rode os comandos** quando forem necessários para a tarefa: install, build, migrate, seed, lint, testes, etc.
+- Não apenas diga "rode X" — execute você mesmo no terminal (a menos que o usuário peça explicitamente só as instruções).
+- Use o diretório correto do monorepo (ex.: `apps/api`, `apps/web`) ou raiz conforme o comando.
+- Exemplos: `pnpm install`, `pnpm exec prisma migrate dev`, `pnpm exec prisma generate`, `pnpm run seed:group-home`, `pnpm build`, `pnpm --filter api start:dev`.

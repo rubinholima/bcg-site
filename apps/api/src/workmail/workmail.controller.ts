@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Query,
+  Param,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -14,6 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { PrismaService } from '../prisma/prisma.service';
 import { WorkMailService } from './workmail.service';
+import { WorkMailInboxService } from './workmail-inbox.service';
 import { CreateWorkmailAccountDto } from './dto/create-workmail-account.dto';
 import { ResetPasswordWorkmailDto } from './dto/reset-password-workmail.dto';
 import { DeleteWorkmailAccountDto } from './dto/delete-workmail-account.dto';
@@ -35,6 +37,7 @@ export class WorkmailController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workmailService: WorkMailService,
+    private readonly inboxService: WorkMailInboxService,
   ) {}
 
   /**
@@ -160,5 +163,37 @@ export class WorkmailController {
       dto.workmailOrganizationId.trim(),
       dto.workmailUserId.trim(),
     );
+  }
+
+  /**
+   * GET /api/workmail/inbox?tenantSlug=...
+   * Lista mensagens da INBOX do mailbox do clube/empresa (requer JWT).
+   * Senha do mailbox: WORKMAIL_<SLUG>_PASSWORD no servidor.
+   */
+  @Get('inbox')
+  async listInbox(@Query('tenantSlug') tenantSlug: string | undefined) {
+    if (!tenantSlug?.trim()) {
+      throw new BadRequestException('tenantSlug é obrigatório');
+    }
+    return this.inboxService.listInbox(tenantSlug.trim(), 50);
+  }
+
+  /**
+   * GET /api/workmail/inbox/:uid?tenantSlug=...
+   * Obtém uma mensagem pelo UID (corpo completo).
+   */
+  @Get('inbox/:uid')
+  async getMessage(
+    @Param('uid') uid: string,
+    @Query('tenantSlug') tenantSlug: string | undefined,
+  ) {
+    if (!tenantSlug?.trim()) {
+      throw new BadRequestException('tenantSlug é obrigatório');
+    }
+    const uidNum = parseInt(uid, 10);
+    if (Number.isNaN(uidNum) || uidNum < 1) {
+      throw new BadRequestException('uid inválido');
+    }
+    return this.inboxService.getMessage(tenantSlug.trim(), uidNum);
   }
 }

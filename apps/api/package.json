@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "seed:group-home": "ts-node -r tsconfig-paths/register scripts/seed-group-home.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -30,6 +31,7 @@
     "@prisma/client": "^7.3.0",
     "class-validator": "^0.14.1",
     "dotenv": "^16.4.5",
+    "imapflow": "^1.2.8",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
     "pg": "^8.13.0",

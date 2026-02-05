@@ -76,12 +76,11 @@ export default function PaginasPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Páginas</h1>
-        <p className="text-muted-foreground">
-          Escolha a página que deseja editar: Home (grupo) ou a página específica de cada empresa.
-          Monte a página com módulos (Hero, Destaque, Texto, etc.).
+        <h1 className="text-2xl font-bold tracking-tight">Páginas</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Edite a Home (grupo) ou a página de cada empresa. Monte com módulos: Hero, Destaques, Texto, etc.
         </p>
       </div>
 
@@ -104,10 +103,10 @@ export default function PaginasPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard/conteudo">
+            <Link href="/dashboard/paginas/group-home/editar">
               <Button variant="outline" className="w-full">
                 <Pencil className="mr-2 h-4 w-4" />
-                Editar conteúdo
+                Editar página
               </Button>
             </Link>
           </CardContent>

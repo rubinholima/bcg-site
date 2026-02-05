@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
+import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -114,7 +115,7 @@ export default async function PortfolioSlugPage({
   if (!page?.content?.blocks?.length) {
     return (
       <>
-        <PortfolioFavicon logoUrl={page?.tenant?.logoUrl} />
+        <PortfolioFavicon slug={slug} logoUrl={page?.tenant?.logoUrl} />
         <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4 text-zinc-100">
           <p className="text-lg text-zinc-400">
             {page ? "Esta página ainda não tem conteúdo. Edite em Dashboard → Páginas." : "Perfil em breve / Profile coming soon"}
@@ -137,35 +138,14 @@ export default async function PortfolioSlugPage({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <PortfolioFavicon logoUrl={tenant?.logoUrl} />
-      {/* 1. Cabeçalho fixo: cor de fundo e texto do bloco header */}
-      <header
-        className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl"
-        style={{
-          backgroundColor: (headerBlock?.config?.backgroundColor as string)?.trim() || "#18181b",
-          color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined,
-        }}
-      >
-        <div className="container mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold hover:opacity-90" style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}>
-            {tenant?.logoUrl ? (
-              <img src={tenant.logoUrl} alt="" className="h-8 w-8 object-contain" referrerPolicy="no-referrer" />
-            ) : null}
-            <span>{tenant?.name ?? slug}</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href={`/portfolio/${slug}?lang=pt`}>
-              <Button variant={lang === "pt" ? "default" : "ghost"} size="sm">PT</Button>
-            </Link>
-            <Link href={`/portfolio/${slug}?lang=en`}>
-              <Button variant={lang === "en" ? "default" : "ghost"} size="sm">EN</Button>
-            </Link>
-            <Link href="/">
-              <Button variant="ghost" size="sm">← Home</Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PortfolioFavicon slug={slug} logoUrl={tenant?.logoUrl} />
+      <PublicPortfolioHeader
+        slug={slug}
+        tenantName={tenant?.name ?? slug}
+        logoUrl={tenant?.logoUrl}
+        headerBlock={headerBlock}
+        lang={lang}
+      />
 
       {/* Módulos no meio */}
       <main>

@@ -16,8 +16,19 @@ export interface GroupDto {
   address: string | null;
   contactName: string | null;
   contactPhone: string | null;
+  homeContent: { blocks?: unknown[] } | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Formato "página" para a home do grupo (frontend espera content.blocks e tenant). */
+export interface GroupHomePageShape {
+  id: string;
+  tenantId: string;
+  slug: string;
+  title: string | null;
+  content: { blocks?: unknown[] };
+  tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
 }
 
 @Injectable()
@@ -29,11 +40,12 @@ export class GroupService {
     if (!row) {
       row = await this.prisma.group.create({
         data: {
-          name: 'Grupo Master',
+          name: 'Boston City Group',
           slug,
         },
       });
     }
+    const content = row.homeContent as { blocks?: unknown[] } | null;
     return {
       id: row.id,
       name: row.name,
@@ -43,8 +55,30 @@ export class GroupService {
       address: row.address ?? null,
       contactName: row.contactName ?? null,
       contactPhone: row.contactPhone ?? null,
+      homeContent: content ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
+    };
+  }
+
+  /** Retorna o grupo no formato de "página" para a home pública e para o editor. */
+  async getGroupHomePageShape(slug: string = DEFAULT_SLUG): Promise<GroupHomePageShape | null> {
+    const group = await this.findOne(slug);
+    const content = group.homeContent ?? { blocks: [] };
+    return {
+      id: group.id,
+      tenantId: group.id,
+      slug: 'group-home',
+      title: group.name,
+      content: Array.isArray((content as { blocks?: unknown[] }).blocks)
+        ? content as { blocks: unknown[] }
+        : { blocks: [] },
+      tenant: {
+        id: group.id,
+        name: group.name,
+        slug: group.slug,
+        logoUrl: group.logoUrl,
+      },
     };
   }
 
@@ -57,6 +91,7 @@ export class GroupService {
       address?: string;
       contactName?: string;
       contactPhone?: string;
+      homeContent?: { blocks?: unknown[] } | null;
     },
   ): Promise<GroupDto> {
     const existing = await this.prisma.group.findUnique({ where: { slug } });
@@ -73,8 +108,10 @@ export class GroupService {
           ...(dto.address !== undefined && { address: dto.address }),
           ...(dto.contactName !== undefined && { contactName: dto.contactName }),
           ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
+          ...(dto.homeContent !== undefined && { homeContent: dto.homeContent as object }),
         },
       });
+      const content = updated.homeContent as { blocks?: unknown[] } | null;
       return {
         id: updated.id,
         name: updated.name,
@@ -84,6 +121,7 @@ export class GroupService {
         address: updated.address ?? null,
         contactName: updated.contactName ?? null,
         contactPhone: updated.contactPhone ?? null,
+        homeContent: content ?? null,
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),
       };

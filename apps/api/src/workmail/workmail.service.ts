@@ -8,6 +8,7 @@ import {
   ResetPasswordCommand,
   DeleteUserCommand,
   DeregisterFromWorkMailCommand,
+  DescribeOrganizationCommand,
 } from '@aws-sdk/client-workmail';
 import { getAwsClientConfig } from '../common/aws-credentials';
 import { isCustomDomain } from './workmail-domain.util';
@@ -101,6 +102,25 @@ export class WorkMailService {
       ...config,
       region: config.region || getRegion(),
     });
+  }
+
+  /**
+   * Retorna a URL do cliente web WorkMail (tela de login do usuário) para a organização.
+   * Formato: https://{Alias}.awsapps.com/mail
+   */
+  async getWebClientUrl(organizationId: string): Promise<string | null> {
+    const id = (organizationId ?? '').trim();
+    if (!id) return null;
+    try {
+      const client = this.getClient();
+      const cmd = new DescribeOrganizationCommand({ OrganizationId: id });
+      const out = await client.send(cmd);
+      const alias = (out.Alias ?? '').trim();
+      if (!alias) return null;
+      return `https://${alias}.awsapps.com/mail`;
+    } catch {
+      return null;
+    }
   }
 
   /**

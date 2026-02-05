@@ -121,6 +121,22 @@ export interface HomeBlockConfig {
   headerLinks?: Array<{ label: string; href: string }>;
   /** Header: cor do texto/links (hex). */
   headerTextColor?: string;
+  /** Header: cor de fundo do idioma selecionado (PT/EN) — hex ou rgba. */
+  headerLanguageSelectedBg?: string;
+  /** Header: cor do texto do idioma selecionado (PT/EN) — hex. */
+  headerLanguageSelectedText?: string;
+  /** Header: modelo do cabeçalho (fallback classic para páginas antigas). */
+  headerPreset?: "classic" | "centered" | "minimal" | "overlay" | "sticky" | "split";
+  showLanguage?: boolean;
+  showHomeLink?: boolean;
+  backgroundMode?: "solid" | "transparent" | "blur";
+  /** borderBottom: exibir borda inferior. */
+  borderBottom?: boolean;
+  borderColor?: string;
+  /** sticky: fixo no topo ao scroll (preset sticky). */
+  sticky?: boolean;
+  logoSize?: "sm" | "md" | "lg";
+  linkStyle?: "text" | "pill" | "button";
   /** Footer: texto principal (ex: copyright). */
   footerText?: string;
   /** Footer: links (label, href). */

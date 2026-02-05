@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength, IsObject } from 'class-validator';
 
 export class UpdateGroupDto {
   @IsString()
@@ -28,4 +28,9 @@ export class UpdateGroupDto {
   @IsOptional()
   @MaxLength(50)
   contactPhone?: string;
+
+  /** Conteúdo modular da página inicial (blocos). Grupo Master apenas. */
+  @IsObject()
+  @IsOptional()
+  homeContent?: { blocks?: unknown[] };
 }

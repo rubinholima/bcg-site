@@ -45,6 +45,9 @@ function mapRow(row: TenantRow): TenantResponseDto {
 export class TenantsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Slug do Grupo Master — não é empresa; nunca listar na lista de tenants. */
+  private static readonly GROUP_MASTER_SLUG = 'bcg';
+
   async findAll(): Promise<TenantResponseDto[]> {
     try {
       const tenants = await this.prisma.$queryRaw<TenantRow[]>`
@@ -52,6 +55,7 @@ export class TenantsService {
           t.location, t.address, t."contactName", t."contactPhone", t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
+        WHERE t.slug != ${TenantsService.GROUP_MASTER_SLUG}
         ORDER BY t.name ASC
       `;
       return tenants.map(mapRow);

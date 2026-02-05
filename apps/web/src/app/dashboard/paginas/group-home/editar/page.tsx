@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -171,10 +170,7 @@ function applyHeaderPresetOverwrite(
   return merged;
 }
 
-export default function EditarPaginaTenantPage() {
-  const params = useParams();
-  const router = useRouter();
-  const tenantId = params.tenantId as string;
+export default function EditarGroupHomePage() {
   const [page, setPage] = useState<Page | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -187,9 +183,7 @@ export default function EditarPaginaTenantPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/pages/tenant/${encodeURIComponent(tenantId)}`, {
-      credentials: "include",
-    })
+    fetch("/api/pages/group-home", { credentials: "include" })
       .then((r) => {
         if (r.status === 404) return null;
         if (!r.ok) throw new Error("Erro ao carregar página");
@@ -217,7 +211,7 @@ export default function EditarPaginaTenantPage() {
     return () => {
       cancelled = true;
     };
-  }, [tenantId]);
+  }, []);
 
   const setBlocks = (newBlocks: HomeContentBlock[]) => {
     const normalized = normalizeBlocks(newBlocks);
@@ -285,12 +279,12 @@ export default function EditarPaginaTenantPage() {
     setError(null);
     setSuccess(false);
     try {
-      const res = await fetch(`/api/pages/${page.id}`, {
+      const res = await fetch("/api/group", {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: { blocks },
+          homeContent: { blocks },
         }),
       });
       if (!res.ok) {
@@ -317,7 +311,8 @@ export default function EditarPaginaTenantPage() {
     return (
       <div className="space-y-6">
         <p className="text-destructive">
-          Página não encontrada. Crie a página desta empresa em Páginas.
+          Home do Grupo não configurada. Execute o seed do grupo:{" "}
+          <code className="text-xs bg-muted px-1 rounded">pnpm --filter api run seed:group-home</code>
         </p>
         <Link href="/dashboard/paginas">
           <Button variant="outline">Voltar para Páginas</Button>
@@ -326,7 +321,7 @@ export default function EditarPaginaTenantPage() {
     );
   }
 
-  const tenantName = page.tenant?.name ?? "Empresa";
+  const tenantName = page.tenant?.name ?? "Home (Grupo)";
 
   return (
     <div className="flex flex-col gap-6">
@@ -347,7 +342,7 @@ export default function EditarPaginaTenantPage() {
         </div>
         <div className="flex items-center gap-2">
           {error && (
-            <span className="max-w-[200px] truncate text-sm text-destructive" title={error}>
+            <span className="text-sm text-destructive max-w-[200px] truncate" title={error}>
               {error}
             </span>
           )}
@@ -359,7 +354,7 @@ export default function EditarPaginaTenantPage() {
               Voltar
             </Button>
           </Link>
-          <Button type="submit" form="editor-tenant-page-form" disabled={saving}>
+          <Button type="submit" form="editor-group-home-form" disabled={saving}>
             {saving ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -370,6 +365,7 @@ export default function EditarPaginaTenantPage() {
         </div>
       </div>
 
+      {/* Alertas em destaque abaixo da barra */}
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
@@ -381,7 +377,7 @@ export default function EditarPaginaTenantPage() {
         </div>
       )}
 
-      <form id="editor-tenant-page-form" onSubmit={handleSubmit} className="space-y-6">
+      <form id="editor-group-home-form" onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Módulos da página</CardTitle>

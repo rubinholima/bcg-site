@@ -214,3 +214,155 @@ export function mergeHomeContent(content: HomeContentDto | null) {
   const blocks = getOrderedBlocks(content);
   return { pt, en, images, blocks };
 }
+
+function getBlockByType(
+  blocks: HomeContentBlock[],
+  type: string
+): HomeContentBlock | undefined {
+  return blocks.find((b) => b.type === type);
+}
+
+/** Extrai URLs de imagens dos blocos (hero, what, founder, cta) para a Home. */
+export function getImagesFromBlocks(blocks: HomeContentBlock[]): {
+  hero: string;
+  what: string;
+  founder: string;
+  cta: string;
+} {
+  const heroBlock = getBlockByType(blocks, "hero");
+  const whatBlock = getBlockByType(blocks, "what");
+  const founderBlock = getBlockByType(blocks, "founder");
+  const ctaBlock = getBlockByType(blocks, "cta");
+
+  const heroSlides = Array.isArray(heroBlock?.config?.heroSlides)
+    ? heroBlock.config.heroSlides
+    : [];
+  const heroImagesLegacy = Array.isArray(heroBlock?.config?.heroImages)
+    ? heroBlock.config.heroImages
+    : [];
+  const heroFirstUrl =
+    heroSlides[0]?.url?.trim() ||
+    heroImagesLegacy[0]?.trim() ||
+    (heroBlock?.config?.backgroundImage as string)?.trim() ||
+    undefined;
+
+  return {
+    hero: heroFirstUrl || DEFAULT_HERO,
+    what: (whatBlock?.config?.imageUrl as string) || DEFAULT_WHAT,
+    founder: (founderBlock?.config?.imageUrl as string) || DEFAULT_FOUNDER,
+    cta: (ctaBlock?.config?.backgroundImage as string) || DEFAULT_CTA,
+  };
+}
+
+type CopyLang = typeof copy.pt;
+
+/** Constrói o objeto de textos (t) a partir dos blocos, com fallback no copy. */
+export function buildTFromBlocks(
+  blocks: HomeContentBlock[],
+  copyLang: CopyLang,
+  lang: "pt" | "en"
+): CopyLang {
+  const isPt = lang === "pt";
+  const titleKey = isPt ? "titlePt" : "titleEn";
+  const bodyKey = isPt ? "bodyPt" : "bodyEn";
+
+  const heroBlock = getBlockByType(blocks, "hero");
+  const highlightsBlock = getBlockByType(blocks, "highlights");
+  const whatBlock = getBlockByType(blocks, "what");
+  const clubsBlock = getBlockByType(blocks, "clubs");
+  const companiesBlock = getBlockByType(blocks, "companies");
+  const founderBlock = getBlockByType(blocks, "founder");
+  const howBlock = getBlockByType(blocks, "how");
+  const ctaBlock = getBlockByType(blocks, "cta");
+
+  const headline =
+    (heroBlock?.config?.[titleKey] as string)?.trim() || copyLang.hero?.headline || "";
+  const subheadline =
+    (heroBlock?.config?.[bodyKey] as string)?.trim() || copyLang.hero?.subheadline || "";
+  const ctaClubs =
+    (heroBlock?.config as Record<string, string>)?.[isPt ? "ctaClubsPt" : "ctaClubsEn"]?.trim() ||
+    copyLang.hero?.ctaClubs ||
+    "";
+  const ctaCompanies =
+    (heroBlock?.config as Record<string, string>)?.[isPt ? "ctaCompaniesPt" : "ctaCompaniesEn"]?.trim() ||
+    copyLang.hero?.ctaCompanies ||
+    "";
+
+  const highlightsArr = (highlightsBlock?.config as Record<string, string[] | undefined>)?.[
+    isPt ? "highlightsPt" : "highlightsEn"
+  ];
+  const highlights: [string?, string?, string?] = Array.isArray(highlightsArr) && highlightsArr.length >= 3
+    ? [highlightsArr[0], highlightsArr[1], highlightsArr[2]]
+    : copyLang.highlights ?? ["", "", ""];
+
+  const whatTitle = (whatBlock?.config?.[titleKey] as string)?.trim() || copyLang.what?.title || "";
+  const whatBody = (whatBlock?.config?.[bodyKey] as string)?.trim() || copyLang.what?.body || "";
+  const cardsKey = isPt ? "cardsPt" : "cardsEn";
+  const cardsRaw = (whatBlock?.config as Record<string, Array<{ title?: string; body?: string }>>)?.[cardsKey];
+  const whatCards = Array.isArray(cardsRaw) && cardsRaw.length > 0
+    ? cardsRaw.map((c) => ({ title: c?.title ?? "", body: c?.body ?? "" }))
+    : copyLang.what?.cards ?? [];
+
+  const clubsTitle = (clubsBlock?.config?.[titleKey] as string)?.trim() || copyLang.clubs?.title || "";
+  const clubsSubtext = (clubsBlock?.config?.[bodyKey] as string)?.trim() || copyLang.clubs?.subtext || "";
+
+  const companiesTitle = (companiesBlock?.config?.[titleKey] as string)?.trim() || copyLang.companies?.title || "";
+  const companiesSubtext = (companiesBlock?.config?.[bodyKey] as string)?.trim() || copyLang.companies?.subtext || "";
+
+  const founderTitle = (founderBlock?.config?.[titleKey] as string)?.trim() || copyLang.founder?.title || "";
+  const founderBody = (founderBlock?.config?.[bodyKey] as string)?.trim() || copyLang.founder?.body || "";
+  const founderBulletsKey = isPt ? "bulletsPt" : "bulletsEn";
+  const founderBulletsRaw = (founderBlock?.config as Record<string, string[] | undefined>)?.[founderBulletsKey];
+  const founderBullets: [string?, string?, string?] = Array.isArray(founderBulletsRaw) && founderBulletsRaw.length >= 3
+    ? [founderBulletsRaw[0], founderBulletsRaw[1], founderBulletsRaw[2]]
+    : copyLang.founder?.bullets ?? ["", "", ""];
+  const founderQuote =
+    (founderBlock?.config as Record<string, string>)?.[isPt ? "quotePt" : "quoteEn"]?.trim() ||
+    copyLang.founder?.quote ||
+    "";
+
+  const howTitle = (howBlock?.config?.[titleKey] as string)?.trim() || copyLang.how?.title || "";
+  const howBody = (howBlock?.config?.[bodyKey] as string)?.trim() || copyLang.how?.body || "";
+  const howBulletsKey = isPt ? "bulletsPt" : "bulletsEn";
+  const howBulletsRaw = (howBlock?.config as Record<string, string[] | undefined>)?.[howBulletsKey];
+  const howBullets: [string?, string?, string?, string?] = Array.isArray(howBulletsRaw) && howBulletsRaw.length >= 4
+    ? [howBulletsRaw[0], howBulletsRaw[1], howBulletsRaw[2], howBulletsRaw[3]]
+    : copyLang.how?.bullets ?? ["", "", "", ""];
+
+  const ctaTitle = (ctaBlock?.config?.[titleKey] as string)?.trim() || copyLang.cta?.title || "";
+  const ctaBody = (ctaBlock?.config?.[bodyKey] as string)?.trim() || copyLang.cta?.body || "";
+
+  return {
+    ...copyLang,
+    nav: copyLang.nav,
+    hero: { headline, subheadline, ctaClubs, ctaCompanies },
+    highlights,
+    what: { title: whatTitle, body: whatBody, cards: whatCards },
+    clubs: {
+      title: clubsTitle,
+      subtext: clubsSubtext,
+      visitSite: copyLang.clubs?.visitSite ?? "",
+      openProfile: copyLang.clubs?.openProfile ?? "",
+    },
+    companies: {
+      title: companiesTitle,
+      subtext: companiesSubtext,
+      visitWebsite: copyLang.companies?.visitWebsite ?? "",
+      openProfile: copyLang.companies?.openProfile ?? "",
+    },
+    founder: {
+      title: founderTitle,
+      body: founderBody,
+      bullets: founderBullets,
+      quote: founderQuote,
+    },
+    how: { title: howTitle, body: howBody, bullets: howBullets },
+    cta: {
+      title: ctaTitle,
+      body: ctaBody,
+      contact: copyLang.cta?.contact ?? "",
+      dashboard: copyLang.cta?.dashboard ?? "",
+    },
+    errorBanner: copyLang.errorBanner ?? "",
+  };
+}

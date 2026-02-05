@@ -11,14 +11,20 @@ import {
   formatPhone,
   type PortfolioItem,
 } from "@/lib/public-portfolio";
-import { fetchGroup } from "@/lib/home-data";
 import { copy, type Lang } from "@/lib/home-copy";
-import { fetchHomeContent, mergeHomeContent } from "@/lib/home-content";
+import {
+  getOrderedBlocks,
+  getImagesFromBlocks,
+  buildTFromBlocks,
+} from "@/lib/home-content";
+import { fetchGroup } from "@/lib/home-data";
 import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
 import type { HomeContentBlock } from "@/types/home-content";
+import type { Page } from "@/types/page";
 import { Button } from "@/components/ui/button";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
+import { LanguageSelector } from "@/components/home/LanguageSelector";
 import {
   Building2,
   ChevronDown,
@@ -44,8 +50,8 @@ const CONTACT_ID = "contact";
 export default function Home() {
   const [lang, setLang] = useState<Lang>("pt");
   const [portfolio, setPortfolio] = useState<PortfolioItem[] | null>(null);
-  const [homeContent, setHomeContent] = useState<Awaited<ReturnType<typeof fetchHomeContent>>>(null);
-  const [group, setGroup] = useState<Awaited<ReturnType<typeof fetchGroup>>>(null);
+  const [groupHome, setGroupHome] = useState<Page | null>(null);
+  const [groupMaster, setGroupMaster] = useState<Awaited<ReturnType<typeof fetchGroup>>>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -54,16 +60,51 @@ export default function Home() {
     if (stored === "en" || stored === "pt") setLang(stored);
   }, []);
 
-  useEffect(() => {
-    if (typeof document !== "undefined") document.title = group?.name ?? "Boston City Group";
-  }, [group]);
+  const group = groupMaster;
+  const blocks = getOrderedBlocks(groupHome?.content ?? null);
+  const t = buildTFromBlocks(blocks, lang === "pt" ? copy.pt : copy.en, lang);
+  const images = getImagesFromBlocks(blocks);
+  const contentBlocks = blocks.filter(
+    (b) => b.type !== "header" && b.type !== "footer",
+  );
+  const headerBlock = blocks.find((b) => b.type === "header");
+  const footerBlock = blocks.find((b) => b.type === "footer");
+
+  const rawBlocks = groupHome?.content?.blocks;
+  const rawHeader = Array.isArray(rawBlocks)
+    ? rawBlocks.find((b: { type?: string }) => b.type === "header")
+    : null;
+  const rawConfig = (rawHeader as { config?: Record<string, unknown> } | null)?.config ?? {};
+  const headerLanguageSelectedBg =
+    typeof rawConfig.headerLanguageSelectedBg === "string" && rawConfig.headerLanguageSelectedBg.trim() !== ""
+      ? rawConfig.headerLanguageSelectedBg.trim()
+      : undefined;
+  const headerLanguageSelectedText =
+    typeof rawConfig.headerLanguageSelectedText === "string" && rawConfig.headerLanguageSelectedText.trim() !== ""
+      ? rawConfig.headerLanguageSelectedText.trim()
+      : undefined;
+  const clubs = portfolio?.filter((p) => p.type === "club") ?? [];
+  const companies = portfolio?.filter((p) => p.type === "company") ?? [];
 
   useEffect(() => {
-    Promise.all([fetchPublicPortfolio(), fetchHomeContent(), fetchGroup()])
-      .then(([portfolioData, contentData, groupData]) => {
+    if (typeof document !== "undefined")
+      document.title = group?.name ?? "Boston City Group";
+  }, [group?.name]);
+
+  useEffect(() => {
+    const groupHomeUrl = "/api/public/group-home";
+    Promise.all([
+      fetchPublicPortfolio(),
+      fetch(`${groupHomeUrl}?nocache=${Date.now()}`, {
+        cache: "no-store",
+        headers: { Pragma: "no-cache" },
+      }).then((r) => (r.ok ? r.json() : null)),
+      fetchGroup(),
+    ])
+      .then(([portfolioData, pageData, groupData]: [PortfolioItem[], Page | null, Awaited<ReturnType<typeof fetchGroup>>]) => {
         setPortfolio(portfolioData);
-        setHomeContent(contentData);
-        setGroup(groupData ?? null);
+        setGroupHome(pageData);
+        setGroupMaster(groupData ?? null);
         setError(false);
       })
       .catch(() => setError(true))
@@ -74,18 +115,6 @@ export default function Home() {
     setLang(l);
     if (typeof window !== "undefined") localStorage.setItem(LANG_KEY, l);
   };
-
-  const merged = mergeHomeContent(homeContent ?? null);
-  const t = merged[lang];
-  const images = merged.images;
-  const blocks = merged.blocks;
-  const contentBlocks = blocks.filter(
-    (b) => b.type !== "header" && b.type !== "footer",
-  );
-  const headerBlock = blocks.find((b) => b.type === "header");
-  const footerBlock = blocks.find((b) => b.type === "footer");
-  const clubs = portfolio?.filter((p) => p.type === "club") ?? [];
-  const companies = portfolio?.filter((p) => p.type === "company") ?? [];
 
   const blockTitle = (block: HomeContentBlock, fallback: string) => {
     const override = lang === "pt" ? block.config?.titlePt : block.config?.titleEn;
@@ -105,6 +134,19 @@ export default function Home() {
     return 0.75;
   };
 
+  if (!loading && !groupHome) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center px-4">
+        <p className="text-zinc-400 text-center">
+          Group Home not configured.
+        </p>
+        <Link href="/dashboard" className="mt-4 text-amber-400 hover:text-amber-300 text-sm">
+          Dashboard
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* 1. Cabeçalho fixo: cor de fundo e texto vêm do bloco header (se existir) */}
@@ -121,45 +163,32 @@ export default function Home() {
             className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-90"
             style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}
           >
-            {group?.logoUrl ? (
-              <>
-                <img
-                  src={group.logoUrl}
-                  alt=""
-                  className="h-8 w-8 object-contain flex-shrink-0"
-                  referrerPolicy="no-referrer"
-                />
-                <span className="text-lg">{group.name || "Boston City Group"}</span>
-              </>
-            ) : (
-              <span className="text-lg">Boston City Group</span>
-            )}
+            {(() => {
+              const logoUrl = group?.logoUrl?.trim() ?? "";
+              const logoSrc = logoUrl ? getPublicImageUrl(logoUrl) : "/bcg-logo.svg";
+              return (
+                <>
+                  <img
+                    src={logoSrc}
+                    alt=""
+                    className="h-8 w-8 object-contain flex-shrink-0"
+                    referrerPolicy="no-referrer"
+                  />
+                  <span className="text-lg">{group?.name || "Boston City Group"}</span>
+                </>
+              );
+            })()}
           </Link>
           <nav className="flex items-center gap-2 sm:gap-4">
-            <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
-              <button
-                type="button"
-                onClick={() => setLangAndStore("pt")}
-                className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
-                  lang === "pt"
-                    ? "bg-white/10 text-white"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                PT
-              </button>
-              <button
-                type="button"
-                onClick={() => setLangAndStore("en")}
-                className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 ${
-                  lang === "en"
-                    ? "bg-white/10 text-white"
-                    : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                EN
-              </button>
-            </div>
+            <LanguageSelector
+              key={`lang-${headerLanguageSelectedBg ?? ""}-${headerLanguageSelectedText ?? ""}`}
+              lang={lang}
+              onSelect={setLangAndStore}
+              headerBg={(headerBlock?.config?.backgroundColor as string)?.trim() || "#18181b"}
+              headerTextColor={(headerBlock?.config?.headerTextColor as string)?.trim() || "#ffffff"}
+              selectedBg={headerLanguageSelectedBg}
+              selectedTextColor={headerLanguageSelectedText}
+            />
             <a
               href={`#${CLUBS_ID}`}
               className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"

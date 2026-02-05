@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
+import { GroupService } from '../group/group.service';
 import { PagesService } from './pages.service';
 import type {
   CreatePageDto,
@@ -18,11 +19,20 @@ import type {
 @Controller('pages')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class PagesController {
-  constructor(private readonly pagesService: PagesService) {}
+  constructor(
+    private readonly pagesService: PagesService,
+    private readonly groupService: GroupService,
+  ) {}
 
   @Get()
   findAll() {
     return this.pagesService.findAll();
+  }
+
+  /** Página da Home do Grupo Master — dados do Group (NÃO é empresa). */
+  @Get('group-home')
+  async getGroupHome() {
+    return this.groupService.getGroupHomePageShape();
   }
 
   @Get('tenant/:tenantId')
