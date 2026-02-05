@@ -177,6 +177,29 @@ export class WorkMailService {
   }
 
   /**
+   * Retorna o total de contas de email em todas as organizações WorkMail (AWS).
+   * Usado pelo dashboard para exibir o número no card "Contas de email".
+   */
+  async getTotalAccountsCount(): Promise<number> {
+    try {
+      const orgs = await this.listOrganizationsFromAws();
+      const activeOrgs = orgs.filter(
+        (o) => (o.state ?? 'ENABLED').toUpperCase() === 'ENABLED' || (o.state ?? '').toUpperCase() === 'ACTIVE',
+      );
+      if (activeOrgs.length === 0) return 0;
+      const counts = await Promise.all(
+        activeOrgs.map((org) =>
+          this.listUsers(org.workmailOrganizationId).then((users) => users.length),
+        ),
+      );
+      return counts.reduce((a, b) => a + b, 0);
+    } catch (err) {
+      console.error('[WorkMailService] getTotalAccountsCount error', err);
+      throw err;
+    }
+  }
+
+  /**
    * Lista usuários da organização WorkMail com paginação.
    */
   async listUsers(workmailOrganizationId: string): Promise<WorkMailUserListItem[]> {

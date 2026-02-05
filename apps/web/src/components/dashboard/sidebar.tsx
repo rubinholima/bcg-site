@@ -104,7 +104,9 @@ export function Sidebar() {
             (item.href === "/dashboard/usuarios" &&
               pathname?.startsWith("/dashboard/usuarios")) ||
             (item.href === "/dashboard/emails" &&
-              pathname?.startsWith("/dashboard/emails"));
+              pathname?.startsWith("/dashboard/emails")) ||
+            (item.href === "/dashboard/midia" &&
+              pathname?.startsWith("/dashboard/midia"));
 
           return (
             <Link

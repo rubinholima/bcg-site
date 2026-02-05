@@ -14,9 +14,11 @@ import {
 import { fetchGroup } from "@/lib/home-data";
 import { copy, type Lang } from "@/lib/home-copy";
 import { fetchHomeContent, mergeHomeContent } from "@/lib/home-content";
+import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
 import type { HomeContentBlock } from "@/types/home-content";
 import { Button } from "@/components/ui/button";
 import { AnimateInView } from "@/components/home/AnimateInView";
+import { HeroCarousel } from "@/components/home/HeroCarousel";
 import {
   Building2,
   ChevronDown,
@@ -77,6 +79,11 @@ export default function Home() {
   const t = merged[lang];
   const images = merged.images;
   const blocks = merged.blocks;
+  const contentBlocks = blocks.filter(
+    (b) => b.type !== "header" && b.type !== "footer",
+  );
+  const headerBlock = blocks.find((b) => b.type === "header");
+  const footerBlock = blocks.find((b) => b.type === "footer");
   const clubs = portfolio?.filter((p) => p.type === "club") ?? [];
   const companies = portfolio?.filter((p) => p.type === "company") ?? [];
 
@@ -100,12 +107,19 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* Navbar */}
-      <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 bg-zinc-950/90 backdrop-blur-xl">
+      {/* 1. Cabeçalho fixo: cor de fundo e texto vêm do bloco header (se existir) */}
+      <header
+        className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 backdrop-blur-xl"
+        style={{
+          backgroundColor: (headerBlock?.config?.backgroundColor as string)?.trim() || "#18181b",
+          color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined,
+        }}
+      >
         <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="flex items-center gap-2 font-semibold text-white transition-opacity hover:opacity-90"
+            className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-90"
+            style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}
           >
             {group?.logoUrl ? (
               <>
@@ -178,6 +192,7 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Módulos (hero, destaques, clubes, etc.) no meio */}
       <main>
         {/* Error banner */}
         {error && (
@@ -189,55 +204,125 @@ export default function Home() {
           </div>
         )}
 
-        {blocks.map((block) => {
+        {contentBlocks.map((block) => {
           if (block.type === "hero") {
-            const heroBg = blockImage(block, "hero");
+            const heroSlidesRaw = block.config?.heroSlides as Array<{ url?: string; titlePt?: string; titleEn?: string }> | undefined;
+            const heroImagesLegacy = (block.config?.heroImages as string[] | undefined)?.filter((u) => u?.trim()) ?? [];
+            const heroSlidesBase =
+              Array.isArray(heroSlidesRaw) && heroSlidesRaw.length > 0
+                ? heroSlidesRaw.filter((s) => s?.url?.trim()).map((s) => ({ url: s.url!, titlePt: s.titlePt, titleEn: s.titleEn }))
+                : heroImagesLegacy.map((url) => ({ url, titlePt: "", titleEn: "" }));
+            const heroSlides = heroSlidesBase.map((s) => ({
+              url: getPublicImageUrl(s.url),
+              titlePt: s.titlePt,
+              titleEn: s.titleEn,
+            }));
+            const heroBg =
+              heroSlidesBase.length > 0
+                ? getPublicImageUrl(heroSlidesBase[0].url)
+                : getPublicImageUrl(blockImage(block, "hero") as string);
             const overlay = blockOverlayOpacity(block);
+            const effect = (block.config?.heroCarouselEffect as "fade" | "slide" | "zoom") ?? "fade";
+            const intervalSeconds = (block.config?.heroCarouselIntervalSeconds as 5 | 10 | 15) ?? 10;
             return (
-              <section key={block.id} className="relative min-h-[90vh] overflow-hidden px-4 pt-24 pb-20 sm:px-6 sm:pt-28 lg:px-8" style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}>
-          <div className="absolute inset-0">
-            <Image
-              src={heroBg}
-              alt=""
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-            />
-            <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlay }} />
-          </div>
-          <div className="absolute left-1/2 top-1/3 h-[350px] w-[350px] -translate-x-1/2 rounded-full bg-amber-500/15 blur-[100px] animate-float" />
-          <div className="absolute bottom-1/4 right-1/4 h-[250px] w-[250px] rounded-full bg-emerald-500/10 blur-[80px] animate-float-slow" />
-          <div className="absolute top-1/2 left-1/4 h-[200px] w-[200px] rounded-full bg-amber-600/10 blur-[60px] animate-float" style={{ animationDelay: "2s" }} />
-          <div className="container relative mx-auto flex min-h-[80vh] flex-col justify-center text-center">
-            <h1 className="animate-fade-in-up text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-              {t.hero.headline}
-            </h1>
-            <p className="mt-6 animate-fade-in-up text-base leading-relaxed text-zinc-300 sm:text-lg animate-delay-200">
-              {t.hero.subheadline}
-            </p>
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-4 animate-fade-in-up animate-delay-400">
-              <a href={`#${CLUBS_ID}`}>
-                <Button
-                  size="lg"
-                  className="h-12 rounded-xl bg-amber-500 px-8 text-base font-semibold text-black shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:bg-amber-400 hover:shadow-amber-500/30"
-                >
-                  {t.hero.ctaClubs}
-                  <ChevronDown className="ml-2 h-5 w-5" />
-                </Button>
-              </a>
-              <a href={`#${COMPANIES_ID}`}>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="h-12 rounded-xl border-white/20 bg-white/5 px-8 text-white transition hover:scale-105 hover:bg-white/10"
-                >
-                  {t.hero.ctaCompanies}
-                </Button>
-              </a>
-            </div>
-          </div>
-        </section>
+              <section
+                key={block.id}
+                className="relative min-h-[90vh] overflow-hidden px-4 pt-24 pb-20 sm:px-6 sm:pt-28 lg:px-8"
+                style={
+                  blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined
+                }
+              >
+                {heroSlides.length > 0 ? (
+                  <HeroCarousel
+                    slides={heroSlides}
+                    effect={effect}
+                    overlayOpacity={overlay}
+                    intervalSeconds={intervalSeconds}
+                    lang={lang}
+                  >
+                    <div className="container relative mx-auto flex min-h-[80vh] flex-col justify-center text-center">
+                      <h1 className="animate-fade-in-up text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+                        {t.hero.headline}
+                      </h1>
+                      <p className="mt-6 animate-fade-in-up text-base leading-relaxed text-zinc-300 sm:text-lg animate-delay-200">
+                        {t.hero.subheadline}
+                      </p>
+                      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 animate-fade-in-up animate-delay-400">
+                        <a href={`#${CLUBS_ID}`}>
+                          <Button
+                            size="lg"
+                            className="h-12 rounded-xl bg-amber-500 px-8 text-base font-semibold text-black shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:bg-amber-400 hover:shadow-amber-500/30"
+                          >
+                            {t.hero.ctaClubs}
+                            <ChevronDown className="ml-2 h-5 w-5" />
+                          </Button>
+                        </a>
+                        <a href={`#${COMPANIES_ID}`}>
+                          <Button
+                            variant="outline"
+                            size="lg"
+                            className="h-12 rounded-xl border-white/20 bg-white/5 px-8 text-white transition hover:scale-105 hover:bg-white/10"
+                          >
+                            {t.hero.ctaCompanies}
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  </HeroCarousel>
+                ) : (
+                  <>
+                    <div className="absolute inset-0">
+                      <Image
+                        src={heroBg}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        priority
+                        sizes="100vw"
+                        unoptimized={isProxyImageUrl(heroBg)}
+                      />
+                      <div
+                        className="absolute inset-0 bg-zinc-950"
+                        style={{ opacity: overlay }}
+                      />
+                    </div>
+                    <div className="absolute left-1/2 top-1/3 h-[350px] w-[350px] -translate-x-1/2 rounded-full bg-amber-500/15 blur-[100px] animate-float" />
+                    <div className="absolute bottom-1/4 right-1/4 h-[250px] w-[250px] rounded-full bg-emerald-500/10 blur-[80px] animate-float-slow" />
+                    <div
+                      className="absolute top-1/2 left-1/4 h-[200px] w-[200px] rounded-full bg-amber-600/10 blur-[60px] animate-float"
+                      style={{ animationDelay: "2s" }}
+                    />
+                    <div className="container relative mx-auto flex min-h-[80vh] flex-col justify-center text-center">
+                      <h1 className="animate-fade-in-up text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+                        {t.hero.headline}
+                      </h1>
+                      <p className="mt-6 animate-fade-in-up text-base leading-relaxed text-zinc-300 sm:text-lg animate-delay-200">
+                        {t.hero.subheadline}
+                      </p>
+                      <div className="mt-10 flex flex-wrap items-center justify-center gap-4 animate-fade-in-up animate-delay-400">
+                        <a href={`#${CLUBS_ID}`}>
+                          <Button
+                            size="lg"
+                            className="h-12 rounded-xl bg-amber-500 px-8 text-base font-semibold text-black shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:bg-amber-400 hover:shadow-amber-500/30"
+                          >
+                            {t.hero.ctaClubs}
+                            <ChevronDown className="ml-2 h-5 w-5" />
+                          </Button>
+                        </a>
+                        <a href={`#${COMPANIES_ID}`}>
+                          <Button
+                            variant="outline"
+                            size="lg"
+                            className="h-12 rounded-xl border-white/20 bg-white/5 px-8 text-white transition hover:scale-105 hover:bg-white/10"
+                          >
+                            {t.hero.ctaCompanies}
+                          </Button>
+                        </a>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </section>
             );
           }
           if (block.type === "highlights") {
@@ -642,23 +727,71 @@ export default function Home() {
               </AnimateInView>
             );
           }
+          // Módulos clube/empresa: próximos jogos, times, notícias, sobre, serviços, etc. (título + corpo; depois dados específicos)
+          const genericTypes = [
+            "proximos_jogos", "times_categorias", "noticias", "calendario", "tabela",
+            "patrocinadores", "galeria", "sobre", "servicos", "produtos", "equipe", "clientes", "contato",
+          ];
+          if (genericTypes.includes(block.type)) {
+            const genTitle = blockTitle(block, "");
+            const genBody = (lang === "pt" ? block.config?.bodyPt : block.config?.bodyEn) as string | undefined;
+            const genImg = (block.config?.imageUrl as string) || undefined;
+            return (
+              <AnimateInView key={block.id}>
+                <section
+                  id={block.id}
+                  className="relative scroll-mt-24 overflow-hidden border-b border-white/5 py-16 sm:py-20"
+                  style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}
+                >
+                  {block.config?.backgroundImage && (
+                    <div className="absolute inset-0">
+                      <Image src={block.config.backgroundImage as string} alt="" fill className="object-cover" sizes="100vw" />
+                      <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
+                    </div>
+                  )}
+                  <div className={`container relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 ${block.config?.backgroundImage ? "text-center" : ""}`}>
+                    {genTitle && (
+                      <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                        {genTitle}
+                      </h2>
+                    )}
+                    {genBody?.trim() && (
+                      <p className="mt-4 text-zinc-300 whitespace-pre-wrap">{genBody}</p>
+                    )}
+                    {genImg && (
+                      <div className="relative mx-auto mt-8 w-full max-w-2xl aspect-video overflow-hidden rounded-2xl border border-white/10">
+                        <Image src={genImg} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 672px" />
+                      </div>
+                    )}
+                  </div>
+                </section>
+              </AnimateInView>
+            );
+          }
           return null;
         })}
 
-        <footer className="border-t border-white/5 px-4 py-8 sm:px-6">
+        {/* Rodapé fixo: cor de fundo e texto vêm do bloco footer (se existir) */}
+        <footer
+          className="border-t border-white/5 px-4 py-8 sm:px-6"
+          style={{
+            backgroundColor: (footerBlock?.config?.backgroundColor as string)?.trim() || undefined,
+            color: (footerBlock?.config?.footerTextColor as string)?.trim() || undefined,
+          }}
+        >
           <div className="container mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row lg:px-8">
-            <span className="text-sm text-zinc-500">{group?.name ?? "Boston City Group"}</span>
-            <nav className="flex gap-6 text-sm text-zinc-500">
-              <a href={`#${CLUBS_ID}`} className="hover:text-white">
+            <span className="text-sm opacity-90">{group?.name ?? "Boston City Group"}</span>
+            <nav className="flex gap-6 text-sm opacity-90">
+              <a href={`#${CLUBS_ID}`} className="hover:opacity-100">
                 {t.nav.clubs}
               </a>
-              <a href={`#${COMPANIES_ID}`} className="hover:text-white">
+              <a href={`#${COMPANIES_ID}`} className="hover:opacity-100">
                 {t.nav.companies}
               </a>
-              <a href={`#${CONTACT_ID}`} className="hover:text-white">
+              <a href={`#${CONTACT_ID}`} className="hover:opacity-100">
                 {t.nav.contact}
               </a>
-              <Link href="/dashboard" className="hover:text-white">
+              <Link href="/dashboard" className="hover:opacity-100">
                 {t.nav.dashboard}
               </Link>
             </nav>

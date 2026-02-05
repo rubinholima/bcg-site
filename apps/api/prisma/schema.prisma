@@ -53,6 +53,20 @@ model Tenant {
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]
+  pages                   Page[]
+}
+
+// Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)
+model Page {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  slug       String   @default("main") // ex.: main, sobre
+  title      String?  // Título para o dashboard
+  content    Json     // { blocks: [{ id, type, sortOrder, config }] }
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([tenantId, slug])
 }
 
 // Contas de email gerenciadas via WorkMail (por empresa)

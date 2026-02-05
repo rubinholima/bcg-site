@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { WorkMailService } from '../workmail/workmail.service';
 
 export interface LastActivityDto {
   name: string;
@@ -18,7 +19,10 @@ export interface DashboardStatsDto {
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workMailService: WorkMailService,
+  ) {}
 
   async getStats(): Promise<DashboardStatsDto> {
     const [
@@ -26,7 +30,7 @@ export class DashboardService {
       tenantKindsCount,
       usersCount,
       workmailOrgsCount,
-      workmailAccountsCount,
+      workmailAccountsCountFromDb,
       lastTenantRow,
       lastUserRow,
     ] = await Promise.all([
@@ -44,6 +48,13 @@ export class DashboardService {
         select: { name: true, email: true, createdAt: true },
       }),
     ]);
+
+    let workmailAccountsCount = workmailAccountsCountFromDb;
+    try {
+      workmailAccountsCount = await this.workMailService.getTotalAccountsCount();
+    } catch {
+      // Se AWS falhar (credenciais, rede, etc.), mantém o valor do banco
+    }
 
     const lastTenant: LastActivityDto | null = lastTenantRow
       ? {

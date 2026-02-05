@@ -33,6 +33,14 @@ O layout do dashboard DEVE sempre conter:
 
 ## 🌅 ROTINA DE INÍCIO DO DIA (OBRIGATÓRIA)
 
+**Primeira ação — banco de dados (fazer sem o usuário pedir):**
+
+1. Verificar se o banco está no ar: `docker ps` (procurar container `bcg_db` ou serviço `db`).
+2. Se **não** estiver rodando: subir o banco com `docker compose up -d db` na raiz do projeto (`E:\DEV\BCG SITE`).
+3. Só então seguir com o resto do desenvolvimento.
+
+Demais passos:
+
 - Ler `docs/REGRAS_DIARIAS.md`
 - Ler `docs/DESENVOLVIMENTO_DIARIO.md`
 - Confirmar o objetivo do dia antes de codar
@@ -46,6 +54,19 @@ O layout do dashboard DEVE sempre conter:
 - Não quebrar monorepo
 - Não apagar arquivos essenciais
 - Não avançar passos sem validação
+
+---
+
+## 📄 MÓDULOS DE PÁGINA (HOME / PORTFOLIO)
+
+**Ao implementar ou alterar blocos da Home ou das páginas por tenant, seguir:**
+**`docs/MODULOS_PAGINA.md`**
+
+Regras resumidas:
+
+- **Padrão de todos os módulos:** cor de fundo, opacidade do overlay e títulos (PT/EN) disponíveis quando aplicável.
+- **Hero:** múltiplas fotos em carrossel; 2–3 efeitos (fade, slide, zoom); indicar tamanho da tela no enunciado (ex: 1920×1080) para arte.
+- **Cabeçalho e Rodapé:** módulos dedicados com opções de header e footer.
 
 ---
 
@@ -70,12 +91,14 @@ Assim o módulo aparece em **Configurações → Módulos** e o super admin pode
 - **Repositório externo:** linkar com `git remote add origin <URL>` e dar push da branch.
 
 **Fluxo:**
+
 1. Abrir/criar branch: `git checkout -b feature/nome-da-feature`
 2. Desenvolver e testar
 3. Quando estiver ok: `git add .` → `git commit -m "descrição"` → `git push -u origin <branch>`
 4. No Git externo: abrir PR ou merge quando validado
 
 **Vincular ao Git externo (uma vez):**
+
 ```bash
 cd "E:\DEV\BCG SITE"
 git remote add origin <URL_DO_SEU_REPOSITORIO>
@@ -84,6 +107,7 @@ git push -u origin main
 ```
 
 **Abrir branch para próximas features:**
+
 ```bash
 git checkout -b develop
 # ou: git checkout -b feature/nome-da-feature
@@ -95,8 +119,12 @@ git checkout -b develop
 ## 🎯 COMANDOS PRINCIPAIS
 
 ```bash
+# Banco (subir primeiro se não estiver rodando)
+docker compose up -d db
+docker ps   # conferir se bcg_db está Up
+
+# App
 cd apps/web && pnpm dev
 cd apps/api && pnpm start:dev
-docker ps
 pnpm dlx prisma studio
 ```

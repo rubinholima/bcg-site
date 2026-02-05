@@ -13,7 +13,9 @@ import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
 import { WorkmailModule } from './workmail/workmail.module';
 import { HomeContentModule } from './home-content/home-content.module';
+import { PagesModule } from './pages/pages.module';
 import { PublicModule } from './public/public.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { PublicModule } from './public/public.module';
     WorkmailModule,
     PublicModule,
     HomeContentModule,
+    PagesModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

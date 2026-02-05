@@ -47,8 +47,10 @@ export interface HomeContentEn {
   errorBanner?: string;
 }
 
-/** Tipos de bloco/módulo na home (seções editáveis, ordem e títulos) */
+/** Tipos de bloco/módulo (home, clube, empresa) */
 export type HomeBlockType =
+  | "header"
+  | "footer"
   | "hero"
   | "highlights"
   | "what"
@@ -58,7 +60,38 @@ export type HomeBlockType =
   | "how"
   | "cta"
   | "custom"
-  | "text";
+  | "text"
+  // Clubes (futebol)
+  | "proximos_jogos"
+  | "times_categorias"
+  | "noticias"
+  | "calendario"
+  | "tabela"
+  | "patrocinadores"
+  | "galeria"
+  // Empresas
+  | "sobre"
+  | "servicos"
+  | "produtos"
+  | "equipe"
+  | "clientes"
+  | "contato";
+
+/** Efeitos do carrossel do Hero */
+export type HeroCarouselEffect = "fade" | "slide" | "zoom";
+
+/** Intervalo em segundos entre slides (temporizador). */
+export type HeroCarouselIntervalSeconds = 5 | 10 | 15;
+
+/** Um slide do Hero: URL e títulos opcionais por idioma. */
+export interface HeroSlide {
+  url: string;
+  titlePt?: string;
+  titleEn?: string;
+}
+
+/** Dimensão recomendada da arte do Hero (para exibir no editor) */
+export const HERO_RECOMMENDED_DIMENSIONS = "1920×1080";
 
 /** Config de aparência e conteúdo de um bloco (controle total por módulo) */
 export interface HomeBlockConfig {
@@ -74,6 +107,26 @@ export interface HomeBlockConfig {
   bodyEn?: string;
   /** Imagem dentro do conteúdo (custom/text) */
   imageUrl?: string;
+  /** Hero: múltiplas imagens para carrossel (URLs). @deprecated Use heroSlides. */
+  heroImages?: string[];
+  /** Hero: slides com URL e título por idioma. */
+  heroSlides?: HeroSlide[];
+  /** Hero: efeito do carrossel (fade, slide, zoom). */
+  heroCarouselEffect?: HeroCarouselEffect;
+  /** Hero: tempo em segundos em cada foto (5, 10 ou 15). */
+  heroCarouselIntervalSeconds?: HeroCarouselIntervalSeconds;
+  /** Header: URL do logo. */
+  headerLogoUrl?: string;
+  /** Header: links de navegação (label, href). */
+  headerLinks?: Array<{ label: string; href: string }>;
+  /** Header: cor do texto/links (hex). */
+  headerTextColor?: string;
+  /** Footer: texto principal (ex: copyright). */
+  footerText?: string;
+  /** Footer: links (label, href). */
+  footerLinks?: Array<{ label: string; href: string }>;
+  /** Footer: cor do texto/links (hex). */
+  footerTextColor?: string;
   [key: string]: unknown;
 }
 

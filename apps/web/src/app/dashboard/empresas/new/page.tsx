@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
+import type { Tenant } from "@/types/tenant";
 
 interface FormData {
   name: string;
@@ -30,10 +31,13 @@ interface FormData {
 
 export default function NovaEmpresaPage() {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tipos, setTipos] = useState<TenantKind[]>([]);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: "",
     slug: "",
@@ -67,12 +71,48 @@ export default function NovaEmpresaPage() {
     setError(null);
 
     try {
-      await api.post("/tenants", formData);
+      const { data: tenant } = await api.post<Tenant>("/tenants", formData);
+      if (logoFile && tenant?.id) {
+        const form = new FormData();
+        form.append("file", logoFile);
+        form.append("scope", tenant.id);
+        const res = await fetch("/api/upload/logo", {
+          method: "POST",
+          credentials: "include",
+          body: form,
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error ?? "Empresa criada, mas falha ao enviar logo.");
+        }
+      }
       router.push("/dashboard/empresas?success=true");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar empresa");
       setLoading(false);
     }
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoPreview(null);
+    setLogoFile(null);
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Selecione uma imagem (PNG, JPG, WebP ou SVG).");
+      return;
+    }
+    setError(null);
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+    e.target.value = "";
+  };
+
+  const handleRemoveLogo = () => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoPreview(null);
+    setLogoFile(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,9 +147,79 @@ export default function NovaEmpresaPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Logo da empresa</CardTitle>
+          <CardDescription>
+            Imagem do logo (PNG, JPG, WebP ou SVG, máx. 2 MB). Opcional; pode ser alterado depois na edição.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {logoPreview ? (
+            <div className="flex items-center gap-4">
+              <img
+                src={logoPreview}
+                alt="Preview do logo"
+                className="h-20 w-auto object-contain rounded border"
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading}
+                >
+                  Trocar
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveLogo}
+                  disabled={loading}
+                >
+                  Remover
+                </Button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleLogoChange}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex h-20 w-20 items-center justify-center rounded border bg-muted">
+                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Selecionar logo
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleLogoChange}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Informações da Empresa</CardTitle>
           <CardDescription>
-            Preencha os dados abaixo para cadastrar a empresa. O logo pode ser adicionado após criar, na tela de edição.
+            Preencha os dados abaixo para cadastrar a empresa.
           </CardDescription>
         </CardHeader>
         <CardContent>

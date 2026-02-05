@@ -1,7 +1,25 @@
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { DashboardHead } from "@/components/dashboard/DashboardHead";
 import { DashboardGuard } from "@/components/auth/DashboardGuard";
+
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+export async function generateMetadata(): Promise<Metadata> {
+  try {
+    const res = await fetch(`${apiUrl}/group`, { cache: "no-store" });
+    if (!res.ok) return {};
+    const group = (await res.json()) as { name?: string | null; logoUrl?: string | null };
+    const name = group?.name ?? "Boston City Group";
+    return {
+      title: `Dashboard · ${name}`,
+      icons: group?.logoUrl ? { icon: group.logoUrl } : undefined,
+    };
+  } catch {
+    return { title: "Dashboard" };
+  }
+}
 
 export default function DashboardLayout({
   children,

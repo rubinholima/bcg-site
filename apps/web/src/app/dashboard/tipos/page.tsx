@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Pencil, Trash2, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
+import { TiposFilters } from "@/components/dashboard/TiposFilters";
 
 async function getTenantKinds(): Promise<TenantKind[]> {
   try {
@@ -23,14 +24,22 @@ async function getTenantKinds(): Promise<TenantKind[]> {
   }
 }
 
+function filterTipos(tipos: TenantKind[], q: string | null): TenantKind[] {
+  if (!q || !q.trim()) return tipos;
+  const lower = q.trim().toLowerCase();
+  return tipos.filter((t) => t.name.toLowerCase().includes(lower));
+}
+
 export default async function TiposPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string }>;
+  searchParams: Promise<{ success?: string; q?: string }>;
 }) {
   const tipos = await getTenantKinds();
   const params = await searchParams;
   const showSuccess = params.success === "true";
+  const q = params.q ?? null;
+  const filtered = filterTipos(tipos, q);
 
   return (
     <div className="space-y-6">
@@ -54,24 +63,40 @@ export default async function TiposPage({
         </Link>
       </div>
 
+      <TiposFilters currentQ={q} />
+
       <Card>
         <CardHeader>
           <CardTitle>Lista de Tipos</CardTitle>
           <CardDescription>
             {tipos.length === 0
               ? "Nenhum tipo cadastrado"
-              : `${tipos.length} tipo${tipos.length > 1 ? "s" : ""} cadastrado${tipos.length > 1 ? "s" : ""}`}
+              : filtered.length === tipos.length
+                ? `${tipos.length} tipo${tipos.length > 1 ? "s" : ""} cadastrado${tipos.length > 1 ? "s" : ""}`
+                : `${filtered.length} de ${tipos.length} tipo${tipos.length > 1 ? "s" : ""}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {tipos.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Nenhum tipo encontrado.</p>
-              <Link href="/dashboard/tipos/new">
-                <Button variant="outline" className="mt-4">
-                  Criar primeiro tipo
-                </Button>
-              </Link>
+              <p>
+                {tipos.length === 0
+                  ? "Nenhum tipo encontrado."
+                  : "Nenhum tipo corresponde à busca."}
+              </p>
+              {tipos.length > 0 && q ? (
+                <Link href="/dashboard/tipos">
+                  <Button variant="outline" className="mt-4">
+                    Limpar filtro
+                  </Button>
+                </Link>
+              ) : tipos.length === 0 ? (
+                <Link href="/dashboard/tipos/new">
+                  <Button variant="outline" className="mt-4">
+                    Criar primeiro tipo
+                  </Button>
+                </Link>
+              ) : null}
             </div>
           ) : (
             <Table>
@@ -83,7 +108,7 @@ export default async function TiposPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tipos.map((tipo) => (
+                {filtered.map((tipo) => (
                   <TableRow key={tipo.id}>
                     <TableCell className="font-medium">{tipo.name}</TableCell>
                     <TableCell className="text-muted-foreground">

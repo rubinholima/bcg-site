@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Building2, Pencil, Trash2 } from "lucide-react";
+import { Plus, Building2, Pencil, Trash2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,6 +12,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import { TenantKind } from "@/types/tenant-kind";
+import { EmpresasFilters } from "@/components/dashboard/EmpresasFilters";
 
 async function getTenants(): Promise<Tenant[]> {
   try {
@@ -23,14 +25,45 @@ async function getTenants(): Promise<Tenant[]> {
   }
 }
 
+async function getTenantKinds(): Promise<TenantKind[]> {
+  try {
+    const { data } = await api.get<TenantKind[]>("/tenant-kinds");
+    return data ?? [];
+  } catch (error) {
+    console.error("Erro ao carregar tipos:", error);
+    return [];
+  }
+}
+
+function filterTenants(
+  tenants: Tenant[],
+  tipo: string | null,
+  q: string | null,
+): Tenant[] {
+  let list = tenants;
+  if (tipo) list = list.filter((t) => t.kindId === tipo);
+  if (q && q.trim()) {
+    const lower = q.trim().toLowerCase();
+    list = list.filter(
+      (t) =>
+        t.name.toLowerCase().includes(lower) ||
+        (t.slug ?? "").toLowerCase().includes(lower),
+    );
+  }
+  return list;
+}
+
 export default async function EmpresasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string }>;
+  searchParams: Promise<{ success?: string; tipo?: string; q?: string }>;
 }) {
-  const tenants = await getTenants();
+  const [tenants, kinds] = await Promise.all([getTenants(), getTenantKinds()]);
   const params = await searchParams;
   const showSuccess = params.success === "true";
+  const tipo = params.tipo ?? null;
+  const q = params.q ?? null;
+  const filtered = filterTenants(tenants, tipo, q);
 
   return (
     <div className="space-y-6">
@@ -54,25 +87,43 @@ export default async function EmpresasPage({
         </Link>
       </div>
 
+      {kinds.length > 0 && (
+        <EmpresasFilters kinds={kinds} currentTipo={tipo} currentQ={q} />
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Lista de Empresas</CardTitle>
           <CardDescription>
             {tenants.length === 0
               ? "Nenhuma empresa cadastrada. Verifique se a API está rodando em " + (process.env.NEXT_PUBLIC_API_URL ?? "localhost:3001") + "."
-              : `${tenants.length} empresa${tenants.length > 1 ? "s" : ""} cadastrada${tenants.length > 1 ? "s" : ""}`}
+              : filtered.length === tenants.length
+                ? `${tenants.length} empresa${tenants.length > 1 ? "s" : ""} cadastrada${tenants.length > 1 ? "s" : ""}`
+                : `${filtered.length} de ${tenants.length} empresa${tenants.length > 1 ? "s" : ""}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {tenants.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Building2 className="mx-auto h-12 w-12 opacity-50 mb-4" />
-              <p>Nenhuma empresa encontrada.</p>
-              <Link href="/dashboard/empresas/new">
-                <Button variant="outline" className="mt-4">
-                  Criar primeira empresa
-                </Button>
-              </Link>
+              <p>
+                {tenants.length === 0
+                  ? "Nenhuma empresa encontrada."
+                  : "Nenhuma empresa corresponde aos filtros. Tente outro tipo ou busca."}
+              </p>
+              {tenants.length > 0 && (tipo || (q && q.trim())) ? (
+                <Link href="/dashboard/empresas">
+                  <Button variant="outline" className="mt-4">
+                    Limpar filtros
+                  </Button>
+                </Link>
+              ) : tenants.length === 0 ? (
+                <Link href="/dashboard/empresas/new">
+                  <Button variant="outline" className="mt-4">
+                    Criar primeira empresa
+                  </Button>
+                </Link>
+              ) : null}
             </div>
           ) : (
             <Table>
@@ -87,7 +138,7 @@ export default async function EmpresasPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tenants.map((t) => (
+                {filtered.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell>
                       {t.logoUrl ? (
@@ -114,6 +165,11 @@ export default async function EmpresasPage({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
+                        <Link href={`/dashboard/paginas/tenant/${t.id}/editar`} title="Página da empresa">
+                          <Button variant="ghost" size="icon">
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Link href={`/dashboard/empresas/${t.id}/edit`}>
                           <Button variant="ghost" size="icon">
                             <Pencil className="h-4 w-4" />

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, UserCircle, Pencil, Trash2 } from "lucide-react";
+import { Plus, UserCircle, Pencil, Trash2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -30,13 +32,59 @@ const ROLE_LABELS: Record<UserRole, string> = {
   user: "Usuário",
 };
 
+function filterUsers(
+  users: UserListItem[],
+  role: string | null,
+  q: string | null,
+): UserListItem[] {
+  let list = users;
+  if (role && role !== "all") list = list.filter((u) => u.role === role);
+  if (q && q.trim()) {
+    const lower = q.trim().toLowerCase();
+    list = list.filter(
+      (u) =>
+        (u.email ?? "").toLowerCase().includes(lower) ||
+        (u.name ?? "").toLowerCase().includes(lower) ||
+        (u.username ?? "").toLowerCase().includes(lower),
+    );
+  }
+  return list;
+}
+
 export default function UsuariosPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [filterRole, setFilterRole] = useState<string | null>(
+    () => searchParams.get("role"),
+  );
+  const [filterQ, setFilterQ] = useState<string>(() => searchParams.get("q") ?? "");
   const showSuccess = searchParams.get("success") === "true";
+
+  useEffect(() => {
+    setFilterRole(searchParams.get("role"));
+    setFilterQ(searchParams.get("q") ?? "");
+  }, [searchParams]);
+
+  const filteredUsers = useMemo(
+    () => filterUsers(users, filterRole, filterQ.trim() || null),
+    [users, filterRole, filterQ],
+  );
+
+  const applyFiltersToUrl = useCallback(
+    (role: string | null, q: string | null) => {
+      const next = new URLSearchParams(searchParams.toString());
+      if (role && role !== "all") next.set("role", role);
+      else next.delete("role");
+      if (q && q.trim()) next.set("q", q.trim());
+      else next.delete("q");
+      router.push(`/dashboard/usuarios?${next.toString()}`);
+    },
+    [router, searchParams],
+  );
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -108,6 +156,54 @@ export default function UsuariosPage() {
         </Link>
       </div>
 
+      <div className="flex flex-wrap items-end gap-4 rounded-lg border bg-muted/30 p-4">
+        <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          Filtros
+        </span>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="filtro-role" className="text-xs">
+              Role
+            </Label>
+            <Select
+              value={filterRole ?? "all"}
+              onValueChange={(v) => {
+                const r = v === "all" ? null : v;
+                setFilterRole(r);
+                applyFiltersToUrl(r, filterQ.trim() || null);
+              }}
+            >
+              <SelectTrigger id="filtro-role" className="w-[160px]">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {(Object.keys(ROLE_LABELS) as UserRole[]).map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {ROLE_LABELS[r]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="filtro-usuarios-busca" className="text-xs">
+              Buscar (email ou nome)
+            </Label>
+            <Input
+              id="filtro-usuarios-busca"
+              type="search"
+              placeholder="Email ou nome..."
+              className="w-[200px]"
+              value={filterQ}
+              onChange={(e) => setFilterQ(e.target.value)}
+              onBlur={() => applyFiltersToUrl(filterRole, filterQ.trim() || null)}
+            />
+          </div>
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Lista de Usuários</CardTitle>
@@ -116,7 +212,9 @@ export default function UsuariosPage() {
               ? "Carregando..."
               : users.length === 0
                 ? "Nenhum usuário no pool."
-                : `${users.length} usuário(s). Altere o role no select.`}
+                : filteredUsers.length === users.length
+                  ? `${users.length} usuário(s). Altere o role no select.`
+                  : `${filteredUsers.length} de ${users.length} usuário(s)`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -129,15 +227,33 @@ export default function UsuariosPage() {
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               Carregando usuários...
             </div>
-          ) : users.length === 0 ? (
+          ) : filteredUsers.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <UserCircle className="mx-auto h-12 w-12 opacity-50 mb-4" />
-              <p>Nenhum usuário encontrado.</p>
-              <Link href="/dashboard/usuarios/new">
-                <Button variant="outline" className="mt-4">
-                  Cadastrar primeiro usuário
+              <p>
+                {users.length === 0
+                  ? "Nenhum usuário encontrado."
+                  : "Nenhum usuário corresponde aos filtros."}
+              </p>
+              {users.length > 0 && (filterRole || filterQ.trim()) ? (
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    setFilterRole(null);
+                    setFilterQ("");
+                    router.push("/dashboard/usuarios");
+                  }}
+                >
+                  Limpar filtros
                 </Button>
-              </Link>
+              ) : users.length === 0 ? (
+                <Link href="/dashboard/usuarios/new">
+                  <Button variant="outline" className="mt-4">
+                    Cadastrar primeiro usuário
+                  </Button>
+                </Link>
+              ) : null}
             </div>
           ) : (
             <Table>
@@ -150,7 +266,7 @@ export default function UsuariosPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((u) => (
+                {filteredUsers.map((u) => (
                   <TableRow key={u.username}>
                     <TableCell className="font-medium">{u.email}</TableCell>
                     <TableCell className="text-muted-foreground">

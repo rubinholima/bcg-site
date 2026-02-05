@@ -13,13 +13,32 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { HomeContentDto, HomeContentBlock, HomeBlockType } from "@/types/home-content";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type {
+  HomeContentDto,
+  HomeContentBlock,
+  HomeBlockType,
+  HeroCarouselEffect,
+  HeroSlide,
+  HeroCarouselIntervalSeconds,
+} from "@/types/home-content";
+import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
 import { copy } from "@/lib/home-copy";
 import {
   DEFAULT_BLOCK_IDS,
   getOrderedBlocks,
   getBlockLabel,
+  MODULE_OPTIONS,
+  createBlock,
+  BLOCK_TYPES_WITH_BODY,
 } from "@/lib/home-content";
+import { MediaPicker } from "@/components/dashboard/MediaPicker";
 
 const emptyContent = (): HomeContentDto => ({
   pt: {},
@@ -152,46 +171,34 @@ export default function ConteudoPage() {
     });
   };
 
-  const addCustomBlock = () => {
-    const id = `custom-${Date.now()}`;
-    const newBlock: HomeContentBlock = {
-      id,
-      type: "custom",
-      sortOrder: blocks.length,
-      config: { titlePt: "", titleEn: "", bodyPt: "", bodyEn: "" },
-    };
-    setContent((prev) => ({
-      ...prev,
-      blocks: [...(getOrderedBlocks(prev)), newBlock].map((b, i) => ({ ...b, sortOrder: i })),
-    }));
+  const updateBlockConfigValue = (
+    index: number,
+    key: string,
+    value: string | number | string[] | HeroSlide[] | undefined,
+  ) => {
+    setContent((prev) => {
+      const list = getOrderedBlocks(prev);
+      const block = list[index];
+      if (!block) return prev;
+      const config = { ...(block.config ?? {}), [key]: value };
+      const updated = list.map((b, i) => (i === index ? { ...b, config } : b));
+      return { ...prev, blocks: updated.map((b, i) => ({ ...b, sortOrder: i })) };
+    });
   };
 
-  const addTextBlock = () => {
-    const id = `text-${Date.now()}`;
-    const newBlock: HomeContentBlock = {
-      id,
-      type: "text",
-      sortOrder: blocks.length,
-      config: { titlePt: "", titleEn: "", bodyPt: "", bodyEn: "" },
-    };
+  const addModule = (type: HomeBlockType) => {
+    const list = getOrderedBlocks(content);
+    const newBlock = createBlock(type, list.length);
     setContent((prev) => ({
       ...prev,
-      blocks: [...(getOrderedBlocks(prev)), newBlock].map((b, i) => ({ ...b, sortOrder: i })),
+      blocks: [...list, newBlock].map((b, i) => ({ ...b, sortOrder: i })),
     }));
   };
 
   const removeBlock = (index: number) => {
-    const block = blocks[index];
-    if (!block) return;
-    const isUserAdded = block.type === "custom" || block.type === "text";
-    if (isUserAdded) {
-      const next = blocks.filter((_, i) => i !== index);
-      setBlocks(next);
-    }
+    const next = blocks.filter((_, i) => i !== index);
+    setBlocks(next);
   };
-
-  const isUserAddedBlock = (block: HomeContentBlock) =>
-    block.type === "custom" || block.type === "text";
 
   const getPt = (path: string) =>
     (getNested<string>(content.pt as Record<string, unknown>, path) ?? "") as string;
@@ -268,7 +275,7 @@ export default function ConteudoPage() {
           <CardHeader>
             <CardTitle>Módulos da página</CardTitle>
             <CardDescription>
-              Controle total por módulo: ordem, cor de fundo, imagem de fundo e overlay. Títulos sobrescrevem o texto da seção. Adicione novos blocos (texto ou custom com imagem).
+              Escolha o módulo no dropdown (Hero, Destaque, Texto, etc.). Em cada módulo: aparência (cor de fundo, opacidade, imagem de fundo), título PT/EN e, quando aplicável, corpo e imagem.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -305,17 +312,15 @@ export default function ConteudoPage() {
                       >
                         <ChevronDown className="h-4 w-4" />
                       </Button>
-                      {isUserAddedBlock(block) && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => removeBlock(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => removeBlock(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                   <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
@@ -354,30 +359,348 @@ export default function ConteudoPage() {
                       />
                     </div>
                     <div className="space-y-2 sm:col-span-2">
-                      <Label>Imagem de fundo (URL)</Label>
+                      <MediaPicker
+                        label="Imagem de fundo"
+                        sizeKey="section_bg"
+                        allowAllFolders
+                        value={(block.config?.backgroundImage as string) ?? ""}
+                        onChange={(url) => updateBlockConfig(index, "backgroundImage", url)}
+                        placeholder="Escolher da mídia (fundo de seção)"
+                      />
                       <Input
-                        placeholder="https://... (opcional)"
+                        className="mt-1"
+                        placeholder="Ou cole a URL manualmente"
                         value={(block.config?.backgroundImage as string) ?? ""}
                         onChange={(e) => updateBlockConfig(index, "backgroundImage", e.target.value)}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Título (PT)</Label>
-                      <Input
-                        placeholder="Título da seção em PT"
-                        value={(block.config?.titlePt as string) ?? ""}
-                        onChange={(e) => updateBlockConfig(index, "titlePt", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Título (EN)</Label>
-                      <Input
-                        placeholder="Section title (EN)"
-                        value={(block.config?.titleEn as string) ?? ""}
-                        onChange={(e) => updateBlockConfig(index, "titleEn", e.target.value)}
-                      />
-                    </div>
-                    {(block.type === "custom" || block.type === "text") && (
+                    {block.type === "hero" && (() => {
+                      const heroSlides: HeroSlide[] = Array.isArray(block.config?.heroSlides)
+                        ? block.config.heroSlides
+                        : (Array.isArray(block.config?.heroImages)
+                          ? (block.config.heroImages as string[]).map((url) => ({ url, titlePt: "", titleEn: "" }))
+                          : []);
+                      const interval = (block.config?.heroCarouselIntervalSeconds as HeroCarouselIntervalSeconds) ?? 10;
+                      return (
+                        <>
+                          <p className="sm:col-span-2 text-sm text-muted-foreground">
+                            Tamanho recomendado para as artes: <strong>{HERO_RECOMMENDED_DIMENSIONS} px</strong> (use para criar os placeholders).
+                          </p>
+                          <div className="sm:col-span-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const arr = [...heroSlides, { url: "", titlePt: "", titleEn: "" }];
+                                updateBlockConfigValue(index, "heroSlides", arr);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Adicionar imagem
+                            </Button>
+                          </div>
+                          <div className="space-y-2 sm:col-span-2">
+                            <Label>Tempo em cada foto (temporizador)</Label>
+                            <Select
+                              value={String(interval)}
+                              onValueChange={(v) =>
+                                updateBlockConfigValue(index, "heroCarouselIntervalSeconds", Number(v) as HeroCarouselIntervalSeconds)
+                              }
+                            >
+                              <SelectTrigger className="w-full max-w-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="5">5 segundos</SelectItem>
+                                <SelectItem value="10">10 segundos</SelectItem>
+                                <SelectItem value="15">15 segundos</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2 sm:col-span-2">
+                            <Label>Efeito do carrossel</Label>
+                            <Select
+                              value={(block.config?.heroCarouselEffect as HeroCarouselEffect) ?? "fade"}
+                              onValueChange={(v) =>
+                                updateBlockConfigValue(index, "heroCarouselEffect", v as HeroCarouselEffect)
+                              }
+                            >
+                              <SelectTrigger className="w-full max-w-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="fade">Fade</SelectItem>
+                                <SelectItem value="slide">Slide</SelectItem>
+                                <SelectItem value="zoom">Zoom</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2 sm:col-span-2">
+                            <Label>Slides do carrossel (URL + título por foto)</Label>
+                            {heroSlides.map((slide, i) => (
+                              <div key={i} className="rounded-lg border border-border p-3 space-y-2">
+                                <MediaPicker
+                                  label={`Imagem ${i + 1}`}
+                                  sizeKey="hero"
+                                  allowAllFolders
+                                  value={slide.url}
+                                  onChange={(url) => {
+                                    const arr = [...heroSlides];
+                                    arr[i] = { ...arr[i], url };
+                                    updateBlockConfigValue(index, "heroSlides", arr);
+                                  }}
+                                  placeholder="Escolher da mídia (hero)"
+                                />
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Ou cole a URL manualmente"
+                                    value={slide.url}
+                                    onChange={(e) => {
+                                      const arr = [...heroSlides];
+                                      arr[i] = { ...arr[i], url: e.target.value };
+                                      updateBlockConfigValue(index, "heroSlides", arr);
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0 text-destructive"
+                                    onClick={() => {
+                                      const arr = heroSlides.filter((_, j) => j !== i);
+                                      updateBlockConfigValue(index, "heroSlides", arr);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  <Input
+                                    placeholder="Título da foto (PT)"
+                                    value={slide.titlePt ?? ""}
+                                    onChange={(e) => {
+                                      const arr = [...heroSlides];
+                                      arr[i] = { ...arr[i], titlePt: e.target.value };
+                                      updateBlockConfigValue(index, "heroSlides", arr);
+                                    }}
+                                  />
+                                  <Input
+                                    placeholder="Title (EN)"
+                                    value={slide.titleEn ?? ""}
+                                    onChange={(e) => {
+                                      const arr = [...heroSlides];
+                                      arr[i] = { ...arr[i], titleEn: e.target.value };
+                                      updateBlockConfigValue(index, "heroSlides", arr);
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
+                    {block.type === "header" && (
+                      <>
+                        <div className="space-y-2 sm:col-span-2">
+                          <p className="text-sm text-muted-foreground">
+                            O logo exibido é sempre o do grupo. Configure apenas os links.
+                          </p>
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label>Links do cabeçalho (label, href)</Label>
+                          {(Array.isArray(block.config?.headerLinks)
+                            ? block.config.headerLinks
+                            : []
+                          ).map((link: { label?: string; href?: string }, i: number) => (
+                            <div key={i} className="flex flex-wrap gap-2">
+                              <Input
+                                placeholder="Texto do link"
+                                className="flex-1 min-w-[120px]"
+                                value={link?.label ?? ""}
+                                onChange={(e) => {
+                                  const arr = [...(block.config?.headerLinks ?? [])];
+                                  arr[i] = { ...arr[i], label: e.target.value };
+                                  updateBlockConfigValue(index, "headerLinks", arr);
+                                }}
+                              />
+                              <Input
+                                placeholder="#seção ou /url"
+                                className="flex-1 min-w-[120px]"
+                                value={link?.href ?? ""}
+                                onChange={(e) => {
+                                  const arr = [...(block.config?.headerLinks ?? [])];
+                                  arr[i] = { ...arr[i], href: e.target.value };
+                                  updateBlockConfigValue(index, "headerLinks", arr);
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 text-destructive"
+                                onClick={() => {
+                                  const arr = (block.config?.headerLinks ?? []).filter((_, j) => j !== i);
+                                  updateBlockConfigValue(index, "headerLinks", arr);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const arr = [...(block.config?.headerLinks ?? []), { label: "", href: "" }];
+                                updateBlockConfigValue(index, "headerLinks", arr);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Adicionar link
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const url = typeof process.env.NEXT_PUBLIC_AWS_EMAIL_URL === "string"
+                                  ? process.env.NEXT_PUBLIC_AWS_EMAIL_URL
+                                  : "";
+                                const arr = [...(block.config?.headerLinks ?? []), { label: "Email AWS", href: url }];
+                                updateBlockConfigValue(index, "headerLinks", arr);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Adicionar: Email AWS
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    {block.type === "footer" && (
+                      <>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label>Cor do texto e links (hex)</Label>
+                          <div className="flex gap-2">
+                            <input
+                              type="color"
+                              className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                              value={(block.config?.footerTextColor as string) || "#71717a"}
+                              onChange={(e) => updateBlockConfig(index, "footerTextColor", e.target.value)}
+                            />
+                            <Input
+                              placeholder="#71717a ou vazio"
+                              value={(block.config?.footerTextColor as string) ?? ""}
+                              onChange={(e) => updateBlockConfig(index, "footerTextColor", e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label>Texto do rodapé</Label>
+                          <Input
+                            placeholder="Ex: © 2025 Nome do grupo"
+                            value={(block.config?.footerText as string) ?? ""}
+                            onChange={(e) => updateBlockConfig(index, "footerText", e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <Label>Links do rodapé (label, href)</Label>
+                          {(Array.isArray(block.config?.footerLinks)
+                            ? block.config.footerLinks
+                            : []
+                          ).map((link: { label?: string; href?: string }, i: number) => (
+                            <div key={i} className="flex flex-wrap gap-2">
+                              <Input
+                                placeholder="Texto do link"
+                                className="flex-1 min-w-[120px]"
+                                value={link?.label ?? ""}
+                                onChange={(e) => {
+                                  const arr = [...(block.config?.footerLinks ?? [])];
+                                  arr[i] = { ...arr[i], label: e.target.value };
+                                  updateBlockConfigValue(index, "footerLinks", arr);
+                                }}
+                              />
+                              <Input
+                                placeholder="#seção ou /url"
+                                className="flex-1 min-w-[120px]"
+                                value={link?.href ?? ""}
+                                onChange={(e) => {
+                                  const arr = [...(block.config?.footerLinks ?? [])];
+                                  arr[i] = { ...arr[i], href: e.target.value };
+                                  updateBlockConfigValue(index, "footerLinks", arr);
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 text-destructive"
+                                onClick={() => {
+                                  const arr = (block.config?.footerLinks ?? []).filter((_, j) => j !== i);
+                                  updateBlockConfigValue(index, "footerLinks", arr);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const arr = [...(block.config?.footerLinks ?? []), { label: "", href: "" }];
+                                updateBlockConfigValue(index, "footerLinks", arr);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Adicionar link
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const url = typeof process.env.NEXT_PUBLIC_AWS_EMAIL_URL === "string"
+                                  ? process.env.NEXT_PUBLIC_AWS_EMAIL_URL
+                                  : "";
+                                const arr = [...(block.config?.footerLinks ?? []), { label: "Email AWS", href: url }];
+                                updateBlockConfigValue(index, "footerLinks", arr);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Adicionar: Email AWS
+                            </Button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    {block.type !== "header" && block.type !== "footer" && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Título (PT)</Label>
+                          <Input
+                            placeholder="Título da seção em PT"
+                            value={(block.config?.titlePt as string) ?? ""}
+                            onChange={(e) => updateBlockConfig(index, "titlePt", e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Título (EN)</Label>
+                          <Input
+                            placeholder="Section title (EN)"
+                            value={(block.config?.titleEn as string) ?? ""}
+                            onChange={(e) => updateBlockConfig(index, "titleEn", e.target.value)}
+                          />
+                        </div>
+                      </>
+                    )}
+                    {BLOCK_TYPES_WITH_BODY.includes(block.type as HomeBlockType) && (
                       <>
                         <div className="space-y-2 sm:col-span-2">
                           <Label>Corpo (PT)</Label>
@@ -397,11 +720,19 @@ export default function ConteudoPage() {
                         </div>
                       </>
                     )}
-                    {block.type === "custom" && (
+                    {(block.type === "custom" || block.type === "galeria") && (
                       <div className="space-y-2 sm:col-span-2">
-                        <Label>Imagem da seção (URL, opcional)</Label>
+                        <MediaPicker
+                          label="Imagem da seção"
+                          sizeKey="card"
+                          allowAllFolders
+                          value={(block.config?.imageUrl as string) ?? ""}
+                          onChange={(url) => updateBlockConfig(index, "imageUrl", url)}
+                          placeholder="Escolher da mídia (card)"
+                        />
                         <Input
-                          placeholder="https://..."
+                          className="mt-1"
+                          placeholder="Ou cole a URL manualmente"
                           value={(block.config?.imageUrl as string) ?? ""}
                           onChange={(e) => updateBlockConfig(index, "imageUrl", e.target.value)}
                         />
@@ -411,15 +742,25 @@ export default function ConteudoPage() {
                 </div>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={addTextBlock}>
-                <Plus className="mr-2 h-4 w-4" />
-                Bloco de texto
-              </Button>
-              <Button type="button" variant="outline" onClick={addCustomBlock}>
-                <Plus className="mr-2 h-4 w-4" />
-                Módulo customizado (com imagem)
-              </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Adicionar módulo:</span>
+              <Select
+                value=""
+                onValueChange={(value) => {
+                  if (value) addModule(value as HomeBlockType);
+                }}
+              >
+                <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Escolha o módulo (Hero, Destaque, Texto…)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {MODULE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.type} value={opt.type}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

@@ -61,15 +61,31 @@
 - Migração `add-address-contact-group-tenant` para colunas em Group e Tenant.
 - Docker: `docker-compose up -d db` para subir PostgreSQL quando necessário.
 
+#### 6. **Cores do cabeçalho e rodapé (blocos header/footer)**
+
+- Home e portfólio passam a usar `backgroundColor`, `headerTextColor` e `footerTextColor` dos blocos header/footer para estilizar a barra fixa do topo e o rodapé.
+- Editor: card do cabeçalho com fundo/borda em azul (sky), rodapé em verde (emerald) para identificar onde é cab e rodapé; no header/rodapé escondidos "Imagem de fundo" e "Opacidade overlay"; adicionado "Cor do texto" (hex) no cabeçalho.
+- Dropdown "Adicionar módulo (entre cabeçalho e rodapé)" posicionado **antes** do card do rodapé, deixando claro que os módulos entram no meio.
+- **Arquivos:** `apps/web/src/app/page.tsx`, `apps/web/src/app/portfolio/[slug]/page.tsx`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`
+
+#### 7. **Favicon do portfólio nunca sumir ao dar refresh**
+
+- **Problema:** Favicon (logo do tenant) sumia ao atualizar a página.
+- **Causa:** Layout raiz definia `icons: "/favicon.ico"` e podia sobrescrever o favicon do portfólio.
+- **Solução:** Removido `icons` do `generateMetadata` do layout raiz; criado `apps/web/src/app/portfolio/[slug]/layout.tsx` que define o favicon no segmento (sempre logo do tenant). Assim o favicon do portfólio nunca é sobrescrito.
+- **Arquivos:** `apps/web/src/app/layout.tsx`, `apps/web/src/app/portfolio/[slug]/layout.tsx` (novo)
+- **Status:** ✅ RESOLVIDO
+
 ---
 
 ### 📁 **ARQUIVOS CRIADOS/MODIFICADOS (02/02):**
 
 **Criados:**
 `apps/web/src/app/api/auth/refresh/route.ts`
+`apps/web/src/app/portfolio/[slug]/layout.tsx`
 
 **Modificados:**
-Schema e API (group, tenants, public); tipos e libs do front (home-content, group, tenant, public-portfolio); páginas home, dashboard/conteudo, dashboard/grupo, empresas new/edit; AuthContext e cognito-hosted-ui; sidebar e header do dashboard; layout e LayoutWithNav.
+Schema e API (group, tenants, public); tipos e libs do front (home-content, group, tenant, public-portfolio); páginas home, dashboard/conteudo, dashboard/grupo, empresas new/edit; AuthContext e cognito-hosted-ui; sidebar e header do dashboard; layout e LayoutWithNav; page.tsx (home e portfolio) para cores header/footer; editar página tenant (editor cab/rodapé e "Adicionar módulo" antes do rodapé); layout raiz (removido icons).
 
 ---
 

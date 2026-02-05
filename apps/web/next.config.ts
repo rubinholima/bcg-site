@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
+    localPatterns: [
+      { pathname: "/api/media/proxy" },
+    ],
   },
 };
 

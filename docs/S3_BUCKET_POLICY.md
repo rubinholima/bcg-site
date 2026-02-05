@@ -1,8 +1,8 @@
-# S3 — Bucket policy para logos públicos
+# S3 — Bucket policy para logos e mídia públicos
 
 Bucket: **bcg-platform-assets**
 
-Para que o site público e o dashboard exibam os logos por URL direta (sem signed URL), é preciso liberar **leitura pública** apenas na pasta `logos/`. Sem essa policy, as imagens retornam 403 e aparecem **quebradas** no navegador. A escrita/remoção continua restrita ao IAM da API.
+Para que o site público e o dashboard exibam os **logos** e as **imagens de mídia** (hero, fundos, cards) por URL direta (sem signed URL), é preciso liberar **leitura pública** nas pastas `logos/` e `media/`. Sem essa policy, as imagens retornam 403 e aparecem **quebradas** no navegador. A escrita/remoção continua restrita ao IAM da API.
 
 ## 1. No Console S3
 
@@ -10,7 +10,7 @@ Para que o site público e o dashboard exibam os logos por URL direta (sem signe
 2. Aba **Permissions** → **Bucket policy** → **Edit**.
 3. Cole a policy abaixo (substitua `BUCKET_ARN` pelo ARN do bucket, ex.: `arn:aws:s3:::bcg-platform-assets`).
 
-## 2. Policy (leitura pública só em `logos/*`)
+## 2. Policy (leitura pública em `logos/*` e `media/*`)
 
 ```json
 {
@@ -22,14 +22,22 @@ Para que o site público e o dashboard exibam os logos por URL direta (sem signe
       "Principal": "*",
       "Action": "s3:GetObject",
       "Resource": "arn:aws:s3:::bcg-platform-assets/logos/*"
+    },
+    {
+      "Sid": "PublicReadMedia",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::bcg-platform-assets/media/*"
     }
   ]
 }
 ```
 
-- **Principal**: `*` = qualquer um pode **ler** objetos em `logos/*`.
+- **Principal**: `*` = qualquer um pode **ler** objetos em `logos/*` e `media/*`.
 - **Action**: só `s3:GetObject` (leitura).
-- **Resource**: só o prefixo `logos/*`; o resto do bucket continua privado.
+- **Resource**: prefixos `logos/*` e `media/*`; o resto do bucket continua privado.
+- **Mídia**: imagens enviadas pela página **Dashboard → Mídia** ficam em `media/{sizeKey}/` (ex.: `media/hero/`, `media/card/`). Usadas como placeholders no Conteúdo e nas Páginas por tenant.
 
 ## 3. Block Public Access
 
@@ -41,14 +49,12 @@ Se o bucket tiver **Block all public access** ativado, a bucket policy acima **n
 
 Assim, apenas a policy define o que é público (só `logos/*`).
 
-## 4. URLs dos logos
+## 4. URLs
 
 Após a policy ativa:
 
-- Logo BCG: `https://bcg-platform-assets.s3.us-east-1.amazonaws.com/logos/group/logo.{png|jpg|...}`
-- Logo empresa (tenant): `https://bcg-platform-assets.s3.us-east-1.amazonaws.com/logos/tenants/{tenantId}/logo.{png|jpg|...}`
-
-A API retorna essa URL no `POST /upload/logo` (campo `url`).
+- **Logos**: Logo BCG: `.../logos/group/logo.{ext}`; logo empresa: `.../logos/tenants/{tenantId}/logo.{ext}`. Retornados por `POST /upload/logo`.
+- **Mídia**: `.../media/{sizeKey}/{uuid}.{ext}` (ex.: `media/hero/...`, `media/card/...`). Retornados por `GET /media` e `POST /media`. Usados nos editores via dropdown “Escolher da mídia”.
 
 ## 5. Logo quebrado (imagem não carrega)
 
