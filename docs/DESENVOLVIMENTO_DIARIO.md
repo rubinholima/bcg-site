@@ -6,6 +6,101 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 10 DE FEVEREIRO DE 2026</span>
+
+## **PRESENÇA GLOBAL DINÂMICA, AJUSTES NO BUILDER E FECHAMENTO DO CICLO**
+
+### 🎯 **PROBLEMAS RESOLVIDOS HOJE:**
+
+#### 1. **Contadores da Presença Global sem “Empresas” e com valores antigos**
+
+- **Problema:** O card de **Empresas** não aparecia em alguns cenários e os números de Clubes/Empresas podiam refletir conteúdo salvo antigo.
+- **Causa:** O enriquecimento atualizava apenas contadores já existentes no JSON; quando `companies` não existia, não era criado.
+- **Solução:** Backend passou a garantir os **5 contadores padrão** (`clubs`, `companies`, `athletes`, `projects`, `countries`) no enriquecimento, atualizando automaticamente os valores de clubes/empresas/países a partir do cadastro.
+- **Arquivos:** `apps/api/src/home-content/home-content.service.ts`
+- **Status:** ✅ RESOLVIDO
+
+#### 2. **Dados divergentes entre editor/dashboard e home pública**
+
+- **Problema:** Dashboard e home pública podiam mostrar dados diferentes no bloco Global Presence.
+- **Causa:** Fluxos distintos: parte carregava conteúdo bruto sem enriquecimento.
+- **Solução:** Reuso da lógica de enriquecimento para:
+  - `GET /home-content` (dashboard) retornar conteúdo enriquecido;
+  - `GET /public/group-home` (home pública e editor de group-home) retornar blocos enriquecidos.
+- **Arquivos:** `apps/api/src/home-content/home-content.controller.ts`, `apps/api/src/group/group.service.ts`, `apps/api/src/group/group.module.ts`
+- **Status:** ✅ RESOLVIDO
+
+#### 3. **Edição manual de “Localizações (mapa)” gerando redundância**
+
+- **Problema:** O editor permitia manter lista manual de localizações, mas a regra passou a ser “mapa vem do cadastro”.
+- **Solução:** Removida a seção manual **“Localizações (mapa)”** dos editores de página (grupo e tenant).
+- **Arquivos:** `apps/web/src/app/dashboard/paginas/group-home/editar/page.tsx`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`
+- **Status:** ✅ RESOLVIDO
+
+---
+
+### 🛠️ **MELHORIAS IMPLEMENTADAS:**
+
+#### 1. **Mapa Leaflet e experiência do bloco Presença Global**
+
+- Componente dedicado de mapa (`GlobalPresenceLeafletMap`) com hover/popup e tema dark.
+- Lista “Presença por país” com contagem por país.
+- Ajuste visual de altura/proporção do mapa para melhor alinhamento com os cards de contadores.
+- **Arquivos:** `apps/web/src/components/home/GlobalPresenceLeafletMap.tsx`, `apps/web/src/components/home/GlobalPresenceSection.tsx`, `apps/web/src/app/globals.css`
+
+#### 2. **Cadastro de empresas/clubes para alimentar o mapa**
+
+- Inclusão de campos de presença global no cadastro: `lat`, `lng`, `city`, `country`, `websiteUrl`.
+- Remoção do campo **Localização** do formulário (fonte única passa a ser os campos estruturados).
+- Campo de URL aceitando valor sem exigir `http://` (normalização no submit).
+- **Arquivos:** `apps/web/src/app/dashboard/empresas/new/page.tsx`, `apps/web/src/app/dashboard/empresas/[id]/edit/page.tsx`, `apps/api/src/tenants/dto/*`, `apps/api/src/tenants/tenants.service.ts`, `apps/web/src/types/tenant.ts`
+
+#### 3. **Builder/Home com expansão estrutural**
+
+- Evoluções no editor da home (group-home e tenant), presets e refinamentos de blocos.
+- Novos utilitários de suporte (`cta-presets`, `authFetch`) e componentes auxiliares (`FounderBioExpandable`).
+- **Arquivos:** `apps/web/src/app/dashboard/paginas/group-home/editar/page.tsx`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/lib/cta-presets.ts`, `apps/web/src/lib/authFetch.ts`, `apps/web/src/components/founder/FounderBioExpandable.tsx`
+
+---
+
+### 📁 **ARQUIVOS CRIADOS/MODIFICADOS (10/02):**
+
+**Criados (destaques):**
+`apps/web/src/components/home/GlobalPresenceLeafletMap.tsx`
+`apps/web/src/components/home/GlobalPresenceSection.tsx`
+`apps/web/src/components/founder/FounderBioExpandable.tsx`
+`apps/web/src/lib/authFetch.ts`
+`apps/web/src/lib/cta-presets.ts`
+`apps/web/public/maps/world-fifa.svg`
+`apps/web/scripts/generate-world-svg.cjs`
+`apps/api/src/media/media-meta.service.ts`
+`apps/api/prisma/migrations/20260205000000_add_media_meta/migration.sql`
+`apps/api/prisma/migrations/20260206000000_add_tenant_global_presence_fields/migration.sql`
+
+**Modificados (destaques):**
+`apps/api/src/home-content/home-content.service.ts`, `apps/api/src/home-content/home-content.controller.ts`, `apps/api/src/group/group.service.ts`, `apps/api/src/group/group.module.ts`, `apps/api/src/tenants/*`, `apps/web/src/app/page.tsx`, `apps/web/src/app/dashboard/conteudo/page.tsx`, `apps/web/src/app/dashboard/empresas/*`, `apps/web/src/app/dashboard/paginas/group-home/editar/page.tsx`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/lib/home-content.ts`, `apps/web/src/types/home-content.ts`, `apps/web/src/app/globals.css`.
+
+---
+
+### 📊 **STATUS ATUAL DO SISTEMA:**
+
+**✅ Funcionando:**
+Global Presence com mapa e contadores dinâmicos; card de Empresas garantido; Clubes/Empresas/Países vindos do cadastro; Atletas/Projetos manuais; edição de páginas (grupo/tenant) sem localizações manuais redundantes.
+
+**⏳ Pendente:**
+Refino fino de layout/UX pós-validação em produção e testes E2E completos.
+
+---
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commit:** `2aaff41`
+- **Mensagem:** `feat: consolidate home builder updates and dynamic global presence`
+- **Branch:** `develop`
+- **Push:** ✅ `origin/develop` atualizado
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 2 DE FEVEREIRO DE 2026</span>
 
 ## **CONTEÚDO MODULAR DA HOME, LOGO/FAVICON, ENDEREÇO/CONTATO, REFRESH JWT**
