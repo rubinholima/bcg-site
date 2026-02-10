@@ -50,7 +50,7 @@
 
 ### 🚀 **FECHAMENTO DO DIA (GIT):**
 
-- **Commit:** `b2ea018`
+- **Commit:** `d2d1adb`
 - **Mensagem:** `feat: Próximos Jogos carrossel, config padrão, details por jogo, logos SofaScore; vault; resumo do dia`
 - **Branch:** `develop`
 - **Push:** ✅ para repositório externo (origin)
