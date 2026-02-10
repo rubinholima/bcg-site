@@ -51,6 +51,35 @@ export class PublicController {
   }
 
   /**
+   * GET /public/tenants?type=club|company&limit=50
+   * Lista tenants públicos para carrossel de logos (só ativos, com logo por padrão).
+   */
+  @Get('tenants')
+  async getPublicTenants(
+    @Query('type') type: string | undefined,
+    @Query('limit') limitStr: string | undefined,
+  ) {
+    const t = (type ?? '').toLowerCase();
+    if (t !== 'club' && t !== 'company') {
+      throw new BadRequestException('Query "type" must be "club" or "company"');
+    }
+    const limit = limitStr ? Math.min(200, Math.max(1, parseInt(limitStr, 10) || 50)) : 50;
+    return this.publicService.getPublicTenantsForCarousel(t as 'club' | 'company', {
+      withLogoOnly: true,
+      limit,
+    });
+  }
+
+  /**
+   * GET /public/tenants/:slug/fixtures
+   * Próximos jogos do tenant (clube). Usado pelo módulo "Próximos Jogos" na página pública.
+   */
+  @Get('tenants/:slug/fixtures')
+  async getTenantFixtures(@Param('slug') slug: string) {
+    return this.publicService.getFixturesForTenantSlug(slug);
+  }
+
+  /**
    * GET /public/workmail-web-url?slug=...
    * Retorna a URL do cliente web WorkMail (tela de login do usuário) para o tenant.
    * Uso: quando o usuário acessa /portfolio/[slug]/email sem estar logado, redirecionar para essa URL.

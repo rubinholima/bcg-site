@@ -6,6 +6,57 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 2 DE FEVEREIRO DE 2026 — ENCERRAMENTO</span>
+
+## **PRÓXIMOS JOGOS: CARROSSEL, CONFIG PADRÃO, DETAILS POR JOGO, LOGOS SOFASCORE**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+#### 1. **Carrossel “slide passando e parando” (Próximos Jogos)**
+
+- Seção pública de Próximos Jogos passou a exibir os jogos em **carrossel horizontal** com scroll-snap.
+- Cada jogo em card com: competição, data/hora, data em destaque (ex.: 14 SÁB), times com logos, botão Comprar ingresso/Assistir, local.
+- Setas anterior/próximo; auto-avanço a cada 5s (pausa ao passar o mouse).
+- Filtro por data (Todos + datas específicas) mantido.
+- **Arquivo:** `apps/web/src/components/portfolio/modules/ProximosJogosSection.tsx`
+
+#### 2. **Configurações padrão de fundo/cor para o módulo Próximos Jogos**
+
+- O módulo **Próximos jogos** passou a ter as mesmas opções de aparência dos outros: **cor de fundo (hex)**, **opacidade do overlay**, **imagem de fundo** e **tamanho do módulo** (compacto/normal/grande).
+- **Arquivo:** `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`
+
+#### 3. **Cada jogo como `<details>` no editor (lista manual)**
+
+- Na lista manual de jogos, cada jogo virou um **`<details>`** com resumo (ex.: "Jogo 1: Casa x Visitante — 14/02 18:00") e conteúdo expandível com todos os campos.
+- O último jogo da lista fica aberto por padrão; os demais fechados para não poluir quando há muitos jogos.
+- **Arquivo:** `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`
+
+#### 4. **Logos no modo automático (SofaScore)**
+
+- Backend passou a tentar incluir **logos dos times e da competição** quando a fonte é SofaScore.
+- Uso de campos da API (ex.: `homeTeam.image`, `homeTeam.logo`, `tournament.image`) ou montagem de URL por id (`/team/{id}/image`, `/unique-tournament/{id}/image`).
+- **isOurTeamHome** derivado no backend (comparando `homeTeam.id` com o teamId da requisição) e repassado ao front.
+- **Arquivos:** `apps/api/src/public/sofascore.service.ts`, `apps/api/src/public/public.service.ts`
+
+---
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**API:** `apps/api/src/public/sofascore.service.ts`, `apps/api/src/public/public.service.ts`, `apps/api/src/public/dto/fixture.dto.ts`, e demais já modificados (migrations, tenants, media, vault, etc.).
+
+**Web:** `apps/web/src/components/portfolio/modules/ProximosJogosSection.tsx`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/app/api/public/tenants/[slug]/fixtures/route.ts`, e demais (context, sidebar, portfolio, etc.).
+
+---
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commit:** `b2ea018`
+- **Mensagem:** `feat: Próximos Jogos carrossel, config padrão, details por jogo, logos SofaScore; vault; resumo do dia`
+- **Branch:** `develop`
+- **Push:** ✅ para repositório externo (origin)
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 10 DE FEVEREIRO DE 2026</span>
 
 ## **PRESENÇA GLOBAL DINÂMICA, AJUSTES NO BUILDER E FECHAMENTO DO CICLO**

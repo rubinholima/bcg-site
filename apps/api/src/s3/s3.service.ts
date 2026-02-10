@@ -122,6 +122,42 @@ export class S3Service {
   }
 
   /**
+   * Upload de logo de time adversário/externo para logos/external/.
+   * Usado no módulo Próximos Jogos (lista manual) para logos de visitantes/casa contrária.
+   */
+  async uploadLogoExternal(
+    buffer: Buffer,
+    contentType: string,
+  ): Promise<{ key: string; url: string }> {
+    if (!ALLOWED_TYPES.includes(contentType as (typeof ALLOWED_TYPES)[number])) {
+      throw new InternalServerErrorException(
+        `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}`,
+      );
+    }
+    const ext = EXT_BY_MIME[contentType] ?? 'png';
+    const key = `logos/external/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar logo para S3: ${message}`,
+      );
+    }
+
+    const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+    return { key, url };
+  }
+
+  /**
    * Lista objetos na pasta media/ (ou media/{sizeKey}/).
    * Retorna key, url, size (bytes), lastModified.
    */

@@ -17,6 +17,7 @@ export interface Tenant {
   city: string | null;
   country: string | null;
   websiteUrl: string | null;
+  sofascoreTeamId: string | null;
   createdAt: string;
   updatedAt: string;
 }

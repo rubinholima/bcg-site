@@ -25,6 +25,7 @@ interface TenantRow {
   city: string | null;
   country: string | null;
   websiteUrl: string | null;
+  sofascoreTeamId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +47,7 @@ function mapRow(row: TenantRow): TenantResponseDto {
     city: row.city ?? null,
     country: row.country ?? null,
     websiteUrl: row.websiteUrl ?? null,
+    sofascoreTeamId: row.sofascoreTeamId ?? null,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
     updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
   };
@@ -63,7 +65,7 @@ export class TenantsService {
       const tenants = await this.prisma.$queryRaw<TenantRow[]>`
         SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
           t.location, t.address, t."contactName", t."contactPhone",
-          t.lat, t.lng, t.city, t.country, t."websiteUrl",
+          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId",
           t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
@@ -84,7 +86,7 @@ export class TenantsService {
       const rows = await this.prisma.$queryRaw<TenantRow[]>`
         SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
           t.location, t.address, t."contactName", t."contactPhone",
-          t.lat, t.lng, t.city, t.country, t."websiteUrl",
+          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId",
           t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
@@ -179,6 +181,10 @@ export class TenantsService {
       if (dto.websiteUrl !== undefined) {
         updates.push(`"websiteUrl" = $${++idx}`);
         values.push(dto.websiteUrl);
+      }
+      if (dto.sofascoreTeamId !== undefined) {
+        updates.push(`"sofascoreTeamId" = $${++idx}`);
+        values.push(dto.sofascoreTeamId);
       }
       if (updates.length === 0) return this.findOne(id);
       updates.push(`"updatedAt" = $${++idx}`);

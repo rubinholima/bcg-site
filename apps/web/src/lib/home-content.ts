@@ -102,6 +102,7 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   clientes: { pt: "Clientes / Cases", en: "Clients / Cases" },
   contato: { pt: "Contato", en: "Contact" },
   global_presence: { pt: "Presença Global / Expansão", en: "Global Presence" },
+  logo_carousel: { pt: "Carrossel — Logos (Clubes & Empresas)", en: "Logo Carousel (Clubs & Companies)" },
 };
 
 /** Opções para o dropdown "Adicionar módulo" — clubes de futebol e empresas */
@@ -134,6 +135,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string }[] = [
   { type: "clientes", label: "Clientes / Cases" },
   { type: "contato", label: "Contato" },
   { type: "global_presence", label: "Presença Global / Expansão" },
+  { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)" },
 ];
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
@@ -261,6 +263,35 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.subtitleEN = "We are not local. We are a platform.";
     config.counters = [...DEFAULT_GLOBAL_PRESENCE_COUNTERS];
     config.locations = [] as GlobalPresenceLocation[];
+  }
+  if (type === "proximos_jogos") {
+    config.proximosJogosDataSource = "manual";
+    config.proximosJogosManualFixtures = [];
+    config.proximosJogosOverrides = {};
+  }
+  if (type === "logo_carousel") {
+    config.backgroundColor = "#0f0f12";
+    config.logoCarouselSectionPadding = "normal";
+    config.logoCarouselCardStyle = "fifa";
+    config.logoCarouselCardHeight = 80;
+    config.logoCarouselCardRadius = 12;
+    config.logoCarouselCardBackground = "#FFFFFF";
+    config.logoCarouselShowShadow = true;
+    config.logoCarouselGapBetweenCards = 16;
+    config.logoCarouselAnimationSpeed = "normal";
+    config.logoCarouselPauseOnHover = true;
+    config.logoCarouselDirection = "left-to-right";
+    config.logoCarouselOpenInNewTab = true;
+    config.logoCarouselClubsEnabled = true;
+    config.logoCarouselClubsTitlePT = "Clubes";
+    config.logoCarouselClubsTitleEN = "Clubs";
+    config.logoCarouselClubsLimit = 50;
+    config.logoCarouselClubsSorting = "alphabetical";
+    config.logoCarouselCompaniesEnabled = true;
+    config.logoCarouselCompaniesTitlePT = "Empresas";
+    config.logoCarouselCompaniesTitleEN = "Companies";
+    config.logoCarouselCompaniesLimit = 50;
+    config.logoCarouselCompaniesSorting = "alphabetical";
   }
   return { id, type, sortOrder, config };
 }

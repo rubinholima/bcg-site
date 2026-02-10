@@ -17,6 +17,7 @@ export class TenantResponseDto {
   city: string | null;
   country: string | null;
   websiteUrl: string | null;
+  sofascoreTeamId: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }

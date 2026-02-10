@@ -278,3 +278,46 @@
 .global-presence-map-dark .leaflet-tile-pane {
   filter: brightness(1.35);
 }
+
+/* Carrossel de logos — marquee infinito (2 cópias = -50%) */
+@keyframes logo-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+/* 6 cópias: loop contínuo sem parte escura (move 1/6 por ciclo) */
+@keyframes logo-marquee-6x {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-16.666%);
+  }
+}
+/* Strobe: para, avança um passo, para (espera 0.5s) */
+@keyframes logo-marquee-strobe-05 {
+  0% { transform: translateX(0); }
+  55.5% { transform: translateX(0); }
+  100% { transform: translateX(-16.666%); }
+}
+/* Strobe: espera 1s */
+@keyframes logo-marquee-strobe-1 {
+  0% { transform: translateX(0); }
+  71.4% { transform: translateX(0); }
+  100% { transform: translateX(-16.666%); }
+}
+/* Strobe: espera 2s */
+@keyframes logo-marquee-strobe-2 {
+  0% { transform: translateX(0); }
+  83.3% { transform: translateX(0); }
+  100% { transform: translateX(-16.666%); }
+}
+.logo-carousel-marquee {
+  animation: logo-marquee 40s linear infinite;
+}
+.logo-carousel-marquee-reverse {
+  animation: logo-marquee 40s linear infinite reverse;
+}

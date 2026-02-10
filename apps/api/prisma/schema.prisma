@@ -57,6 +57,7 @@ model Tenant {
   city                    String?  // Cidade (ex.: Boston)
   country                 String?  // País (ex.: EUA)
   websiteUrl              String?  // Site da empresa/clube (ex.: https://...)
+  sofascoreTeamId         String?  // ID do time no SofaScore (para módulo Próximos Jogos AUTO)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]
@@ -136,4 +137,32 @@ model ModuleRole {
   role     String  // super_admin | company_admin | editor
   canAccess Boolean @default(true)
   @@unique([moduleId, role])
+}
+
+// Vault: itens com senha/segredos (sempre criptografados em repouso)
+model VaultItem {
+  id              String   @id @default(cuid())
+  tenantId        String?  // null = grupo; preenchido = empresa
+  title           String
+  category        String   // ex: Email, Servidor, App
+  username        String?
+  url             String?
+  encryptedSecret String   @db.Text
+  encryptedNotes  String?  @db.Text
+  iv              String   // IV para AES-GCM (hex)
+  notesIv         String?  // IV para notes (hex)
+  status          String   @default("active") // active | archived
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?  // sub ou email do JWT
+}
+
+// Auditoria do Vault (nunca logar o secret)
+model VaultAuditLog {
+  id          String   @id @default(cuid())
+  action      String   // VIEW_LIST | VIEW_DETAILS | REVEAL_SECRET | COPY_SECRET | CREATE | UPDATE | DELETE
+  performedBy String
+  itemId      String?
+  details     String?  @db.Text
+  createdAt   DateTime @default(now())
 }

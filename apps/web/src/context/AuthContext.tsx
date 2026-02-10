@@ -61,8 +61,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const modData = await modRes.json();
             modules = modData.modules ?? [];
           }
+          // Se a API retornou lista vazia (erro ou módulos não configurados), usa lista padrão
+          // para o menu não sumir (ex.: Empresas). O backend continua protegendo cada rota.
+          if (modules.length === 0) {
+            modules = [
+              "dashboard",
+              "grupo_master",
+              "usuarios",
+              "empresas",
+              "emails",
+              "tipos",
+              "paginas",
+              "noticias",
+              "midia",
+              "vault",
+              "configuracoes",
+            ];
+          }
         } catch {
-          // ignore
+          // API fora: mostra todos os itens do menu para quem tem acesso ao dashboard
+          modules = [
+            "dashboard",
+            "grupo_master",
+            "usuarios",
+            "empresas",
+            "emails",
+            "tipos",
+            "paginas",
+            "noticias",
+            "midia",
+            "vault",
+            "configuracoes",
+          ];
         }
       }
       setState({

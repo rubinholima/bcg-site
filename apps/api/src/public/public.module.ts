@@ -7,10 +7,11 @@ import { S3Module } from '../s3/s3.module';
 import { WorkmailModule } from '../workmail/workmail.module';
 import { PublicController } from './public.controller';
 import { PublicService } from './public.service';
+import { SofaScoreService } from './sofascore.service';
 
 @Module({
   imports: [PrismaModule, GroupModule, HomeContentModule, PagesModule, S3Module, WorkmailModule],
   controllers: [PublicController],
-  providers: [PublicService],
+  providers: [PublicService, SofaScoreService],
 })
 export class PublicModule {}

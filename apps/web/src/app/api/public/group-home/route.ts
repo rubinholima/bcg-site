@@ -29,6 +29,9 @@ export async function GET() {
       return NextResponse.json(null);
     }
   } catch {
-    return NextResponse.json(null);
+    return NextResponse.json(
+      { error: "api_unavailable" },
+      { status: 503 }
+    );
   }
 }

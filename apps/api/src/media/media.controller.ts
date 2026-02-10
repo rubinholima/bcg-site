@@ -86,7 +86,10 @@ export class MediaController {
       throw new BadRequestException('Envie um arquivo (campo "file").');
     }
     const size = typeof sizeKey === 'string' && sizeKey.trim() ? sizeKey.trim() : 'custom';
-    const { key, url } = await this.s3.uploadMedia(file.buffer, file.mimetype, size);
+    const isExternalLogos = size.toLowerCase() === 'external_logos';
+    const { key, url } = isExternalLogos
+      ? await this.s3.uploadLogoExternal(file.buffer, file.mimetype)
+      : await this.s3.uploadMedia(file.buffer, file.mimetype, size);
     const name = typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
     if (name) await this.mediaMeta.setDisplayName(key, name);
     return { url, key };

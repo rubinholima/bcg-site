@@ -42,6 +42,8 @@ const HIGHLIGHTS_ICON_MAP: Record<string, LucideIcon> = {
   Briefcase,
 };
 import { FounderBioExpandable } from "@/components/founder/FounderBioExpandable";
+import { LogoCarouselSection } from "@/components/portfolio/modules/LogoCarouselSection";
+import { ProximosJogosSection } from "@/components/portfolio/modules/ProximosJogosSection";
 import { Button } from "@/components/ui/button";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -100,6 +102,7 @@ const GENERIC_BLOCK_TYPES = [
   "founder",
   "how",
   "cta",
+  "logo_carousel",
 ];
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
@@ -378,6 +381,25 @@ export default async function PortfolioSlugPage({
                   </div>
                 </section>
               </AnimateInView>
+            );
+          }
+
+          if (block.type === "logo_carousel") {
+            return (
+              <LogoCarouselSection key={block.id} block={block} lang={lang} />
+            );
+          }
+
+          if (block.type === "proximos_jogos") {
+            return (
+              <ProximosJogosSection
+                key={block.id}
+                block={block}
+                slug={slug}
+                lang={lang}
+                ourTeamName={tenant?.name}
+                ourTeamLogoUrl={tenant?.logoUrl}
+              />
             );
           }
 

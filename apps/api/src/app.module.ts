@@ -16,6 +16,7 @@ import { HomeContentModule } from './home-content/home-content.module';
 import { PagesModule } from './pages/pages.module';
 import { PublicModule } from './public/public.module';
 import { MediaModule } from './media/media.module';
+import { VaultModule } from './vault/vault.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MediaModule } from './media/media.module';
     HomeContentModule,
     PagesModule,
     MediaModule,
+    VaultModule,
   ],
   controllers: [AppController],
   providers: [AppService],

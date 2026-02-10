@@ -533,7 +533,7 @@ export default function EditarGroupHomePage() {
                         Aparência (todos os módulos)
                       </Label>
                     </div>
-                    {block.type !== "hero" && block.type !== "global_presence" && (
+                    {block.type !== "hero" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <div className="space-y-2">
                         <Label>Cor de fundo (hex)</Label>
                         <div className="flex gap-2">
@@ -567,7 +567,7 @@ export default function EditarGroupHomePage() {
                         </div>
                       </div>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <>
                         <div className="space-y-2">
                           <Label>Opacidade overlay (0-1)</Label>
@@ -611,7 +611,7 @@ export default function EditarGroupHomePage() {
                         </div>
                       </>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Tamanho do módulo</summary>
                         <div className="border-t border-border px-3 py-3 space-y-2">
@@ -659,7 +659,7 @@ export default function EditarGroupHomePage() {
                                   size="sm"
                                   onClick={() => {
                                     const arr = [...heroSlides, { url: "", titlePt: "", titleEn: "" }];
-                                    updateBlockConfigValue(index, "heroSlides", arr);
+                                    updateBlockConfig(index, "heroSlides", arr);
                                   }}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
@@ -671,7 +671,7 @@ export default function EditarGroupHomePage() {
                                 <Select
                                   value={String(interval)}
                                   onValueChange={(v) =>
-                                    updateBlockConfigValue(index, "heroCarouselIntervalSeconds", Number(v) as HeroCarouselIntervalSeconds)
+                                    updateBlockConfig(index, "heroCarouselIntervalSeconds", Number(v) as HeroCarouselIntervalSeconds)
                                   }
                                 >
                                   <SelectTrigger className="w-full max-w-xs">
@@ -689,7 +689,7 @@ export default function EditarGroupHomePage() {
                                 <Select
                                   value={(block.config?.heroCarouselEffect as HeroCarouselEffect) ?? "fade"}
                                   onValueChange={(v) =>
-                                    updateBlockConfigValue(index, "heroCarouselEffect", v as HeroCarouselEffect)
+                                    updateBlockConfig(index, "heroCarouselEffect", v as HeroCarouselEffect)
                                   }
                                 >
                                   <SelectTrigger className="w-full max-w-xs">
@@ -714,7 +714,7 @@ export default function EditarGroupHomePage() {
                                       onChange={(url) => {
                                         const arr = [...heroSlides];
                                         arr[i] = { ...arr[i], url };
-                                        updateBlockConfigValue(index, "heroSlides", arr);
+                                        updateBlockConfig(index, "heroSlides", arr);
                                       }}
                                       placeholder="Escolher da mídia (hero)"
                                     />
@@ -725,7 +725,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...heroSlides];
                                           arr[i] = { ...arr[i], url: e.target.value };
-                                          updateBlockConfigValue(index, "heroSlides", arr);
+                                          updateBlockConfig(index, "heroSlides", arr);
                                         }}
                                       />
                                       <Button
@@ -735,7 +735,7 @@ export default function EditarGroupHomePage() {
                                         className="shrink-0 text-destructive"
                                         onClick={() => {
                                           const arr = heroSlides.filter((_, j) => j !== i);
-                                          updateBlockConfigValue(index, "heroSlides", arr);
+                                          updateBlockConfig(index, "heroSlides", arr);
                                         }}
                                       >
                                         <Trash2 className="h-4 w-4" />
@@ -748,7 +748,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...heroSlides];
                                           arr[i] = { ...arr[i], titlePt: e.target.value };
-                                          updateBlockConfigValue(index, "heroSlides", arr);
+                                          updateBlockConfig(index, "heroSlides", arr);
                                         }}
                                       />
                                       <Input
@@ -757,7 +757,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...heroSlides];
                                           arr[i] = { ...arr[i], titleEn: e.target.value };
-                                          updateBlockConfigValue(index, "heroSlides", arr);
+                                          updateBlockConfig(index, "heroSlides", arr);
                                         }}
                                       />
                                     </div>
@@ -793,19 +793,19 @@ export default function EditarGroupHomePage() {
                               <div className="space-y-2">
                                 <Label>Botão primário</Label>
                                 <div className="grid gap-2 sm:grid-cols-2">
-                                  <Input placeholder="Label (PT)" value={(block.config?.primaryCTA as { labelPT?: string })?.labelPT ?? ""} onChange={(e) => updateBlockConfigValue(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelPT: e.target.value })} />
-                                  <Input placeholder="Label (EN)" value={(block.config?.primaryCTA as { labelEN?: string })?.labelEN ?? ""} onChange={(e) => updateBlockConfigValue(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelEN: e.target.value })} />
+                                  <Input placeholder="Label (PT)" value={(block.config?.primaryCTA as { labelPT?: string })?.labelPT ?? ""} onChange={(e) => updateBlockConfig(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelPT: e.target.value })} />
+                                  <Input placeholder="Label (EN)" value={(block.config?.primaryCTA as { labelEN?: string })?.labelEN ?? ""} onChange={(e) => updateBlockConfig(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelEN: e.target.value })} />
                                 </div>
-                                <Input placeholder="Link (href)" value={(block.config?.primaryCTA as { href?: string })?.href ?? ""} onChange={(e) => updateBlockConfigValue(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), href: e.target.value })} />
+                                <Input placeholder="Link (href)" value={(block.config?.primaryCTA as { href?: string })?.href ?? ""} onChange={(e) => updateBlockConfig(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), href: e.target.value })} />
                               </div>
                               <div className="space-y-2">
                                 <Label>Botão secundário (opcional)</Label>
                                 <div className="grid gap-2 sm:grid-cols-2">
-                                  <Input placeholder="Label (PT)" value={(block.config?.secondaryCTA as { labelPT?: string })?.labelPT ?? ""} onChange={(e) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), labelPT: e.target.value })} />
-                                  <Input placeholder="Label (EN)" value={(block.config?.secondaryCTA as { labelEN?: string })?.labelEN ?? ""} onChange={(e) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), labelEN: e.target.value })} />
+                                  <Input placeholder="Label (PT)" value={(block.config?.secondaryCTA as { labelPT?: string })?.labelPT ?? ""} onChange={(e) => updateBlockConfig(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), labelPT: e.target.value })} />
+                                  <Input placeholder="Label (EN)" value={(block.config?.secondaryCTA as { labelEN?: string })?.labelEN ?? ""} onChange={(e) => updateBlockConfig(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), labelEN: e.target.value })} />
                                 </div>
-                                <Input placeholder="Link (href)" value={(block.config?.secondaryCTA as { href?: string })?.href ?? ""} onChange={(e) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), href: e.target.value })} />
-                                <Select value={(block.config?.secondaryCTA as { variant?: string })?.variant ?? "outline"} onValueChange={(v) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), variant: v })}>
+                                <Input placeholder="Link (href)" value={(block.config?.secondaryCTA as { href?: string })?.href ?? ""} onChange={(e) => updateBlockConfig(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), href: e.target.value })} />
+                                <Select value={(block.config?.secondaryCTA as { variant?: string })?.variant ?? "outline"} onValueChange={(v) => updateBlockConfig(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), variant: v })}>
                                   <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="outline">Outline</SelectItem>
@@ -1007,7 +1007,7 @@ export default function EditarGroupHomePage() {
                                   <Label>Modo de fundo</Label>
                                   <Select
                                     value={(block.config?.backgroundMode as string) || "solid"}
-                                    onValueChange={(v) => updateBlockConfigValue(index, "backgroundMode", v)}
+                                    onValueChange={(v) => updateBlockConfig(index, "backgroundMode", v)}
                                   >
                                     <SelectTrigger className="w-full max-w-xs">
                                       <SelectValue />
@@ -1025,7 +1025,7 @@ export default function EditarGroupHomePage() {
                                   <input
                                     type="checkbox"
                                     checked={!!block.config?.sticky}
-                                    onChange={(e) => updateBlockConfigValue(index, "sticky", e.target.checked)}
+                                    onChange={(e) => updateBlockConfig(index, "sticky", e.target.checked)}
                                   />
                                   <Label>Fixo no topo ao scroll</Label>
                                 </div>
@@ -1036,7 +1036,7 @@ export default function EditarGroupHomePage() {
                                     <Label>Tamanho do logo</Label>
                                     <Select
                                       value={(block.config?.logoSize as string) || "md"}
-                                      onValueChange={(v) => updateBlockConfigValue(index, "logoSize", v)}
+                                      onValueChange={(v) => updateBlockConfig(index, "logoSize", v)}
                                     >
                                       <SelectTrigger className="w-full">
                                         <SelectValue />
@@ -1052,7 +1052,7 @@ export default function EditarGroupHomePage() {
                                     <Label>Estilo dos links</Label>
                                     <Select
                                       value={(block.config?.linkStyle as string) || "text"}
-                                      onValueChange={(v) => updateBlockConfigValue(index, "linkStyle", v)}
+                                      onValueChange={(v) => updateBlockConfig(index, "linkStyle", v)}
                                     >
                                       <SelectTrigger className="w-full">
                                         <SelectValue />
@@ -1077,7 +1077,7 @@ export default function EditarGroupHomePage() {
                                     <Label>Tamanho do logo</Label>
                                     <Select
                                       value={(block.config?.logoSize as string) || "md"}
-                                      onValueChange={(v) => updateBlockConfigValue(index, "logoSize", v)}
+                                      onValueChange={(v) => updateBlockConfig(index, "logoSize", v)}
                                     >
                                       <SelectTrigger className="w-full max-w-xs">
                                         <SelectValue />
@@ -1093,7 +1093,7 @@ export default function EditarGroupHomePage() {
                                     <Label>Estilo dos links</Label>
                                     <Select
                                       value={(block.config?.linkStyle as string) || "text"}
-                                      onValueChange={(v) => updateBlockConfigValue(index, "linkStyle", v)}
+                                      onValueChange={(v) => updateBlockConfig(index, "linkStyle", v)}
                                     >
                                       <SelectTrigger className="w-full max-w-xs">
                                         <SelectValue />
@@ -1110,7 +1110,7 @@ export default function EditarGroupHomePage() {
                                       type="checkbox"
                                       id="header-show-lang"
                                       checked={block.config?.showLanguage !== false}
-                                      onChange={(e) => updateBlockConfigValue(index, "showLanguage", e.target.checked)}
+                                      onChange={(e) => updateBlockConfig(index, "showLanguage", e.target.checked)}
                                     />
                                     <Label htmlFor="header-show-lang">Exibir idiomas (PT/EN)</Label>
                                   </div>
@@ -1119,7 +1119,7 @@ export default function EditarGroupHomePage() {
                                       type="checkbox"
                                       id="header-show-home"
                                       checked={block.config?.showHomeLink !== false}
-                                      onChange={(e) => updateBlockConfigValue(index, "showHomeLink", e.target.checked)}
+                                      onChange={(e) => updateBlockConfig(index, "showHomeLink", e.target.checked)}
                                     />
                                     <Label htmlFor="header-show-home">Exibir link Home</Label>
                                   </div>
@@ -1132,7 +1132,7 @@ export default function EditarGroupHomePage() {
                                     <Label>Modo de fundo</Label>
                                     <Select
                                       value={(block.config?.backgroundMode as string) || "solid"}
-                                      onValueChange={(v) => updateBlockConfigValue(index, "backgroundMode", v)}
+                                      onValueChange={(v) => updateBlockConfig(index, "backgroundMode", v)}
                                     >
                                       <SelectTrigger className="w-full max-w-xs">
                                         <SelectValue />
@@ -1229,7 +1229,7 @@ export default function EditarGroupHomePage() {
                                       type="checkbox"
                                       id="header-border"
                                       checked={!!block.config?.borderBottom}
-                                      onChange={(e) => updateBlockConfigValue(index, "borderBottom", e.target.checked)}
+                                      onChange={(e) => updateBlockConfig(index, "borderBottom", e.target.checked)}
                                     />
                                     <Label htmlFor="header-border">Borda inferior</Label>
                                   </div>
@@ -1276,7 +1276,7 @@ export default function EditarGroupHomePage() {
                                       <input
                                         type="checkbox"
                                         checked={!!block.config?.sticky}
-                                        onChange={(e) => updateBlockConfigValue(index, "sticky", e.target.checked)}
+                                        onChange={(e) => updateBlockConfig(index, "sticky", e.target.checked)}
                                       />
                                       <Label>Fixo no topo (sticky)</Label>
                                     </div>
@@ -1299,7 +1299,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...(block.config?.headerLinks ?? [])];
                                           arr[i] = { ...arr[i], label: e.target.value };
-                                          updateBlockConfigValue(index, "headerLinks", arr);
+                                          updateBlockConfig(index, "headerLinks", arr);
                                         }}
                                       />
                                       <Input
@@ -1309,7 +1309,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...(block.config?.headerLinks ?? [])];
                                           arr[i] = { ...arr[i], href: e.target.value };
-                                          updateBlockConfigValue(index, "headerLinks", arr);
+                                          updateBlockConfig(index, "headerLinks", arr);
                                         }}
                                       />
                                       <Button
@@ -1319,7 +1319,7 @@ export default function EditarGroupHomePage() {
                                         className="shrink-0 text-destructive"
                                         onClick={() => {
                                           const arr = (block.config?.headerLinks ?? []).filter((_: unknown, j: number) => j !== i);
-                                          updateBlockConfigValue(index, "headerLinks", arr);
+                                          updateBlockConfig(index, "headerLinks", arr);
                                         }}
                                       >
                                         <Trash2 className="h-4 w-4" />
@@ -1332,7 +1332,7 @@ export default function EditarGroupHomePage() {
                                     size="sm"
                                     onClick={() => {
                                       const arr = [...(block.config?.headerLinks ?? []), { label: "", href: "" }];
-                                      updateBlockConfigValue(index, "headerLinks", arr);
+                                      updateBlockConfig(index, "headerLinks", arr);
                                     }}
                                   >
                                     <Plus className="h-4 w-4 mr-1" />
@@ -1357,7 +1357,7 @@ export default function EditarGroupHomePage() {
                                     onChange={(e) => {
                                       const arr = [...(block.config?.headerLinks ?? [])];
                                       arr[i] = { ...arr[i], label: e.target.value };
-                                      updateBlockConfigValue(index, "headerLinks", arr);
+                                      updateBlockConfig(index, "headerLinks", arr);
                                     }}
                                   />
                                   <Input
@@ -1367,7 +1367,7 @@ export default function EditarGroupHomePage() {
                                     onChange={(e) => {
                                       const arr = [...(block.config?.headerLinks ?? [])];
                                       arr[i] = { ...arr[i], href: e.target.value };
-                                      updateBlockConfigValue(index, "headerLinks", arr);
+                                      updateBlockConfig(index, "headerLinks", arr);
                                     }}
                                   />
                                   <Button
@@ -1377,7 +1377,7 @@ export default function EditarGroupHomePage() {
                                     className="shrink-0 text-destructive"
                                     onClick={() => {
                                       const arr = (block.config?.headerLinks ?? []).filter((_: unknown, j: number) => j !== i);
-                                      updateBlockConfigValue(index, "headerLinks", arr);
+                                      updateBlockConfig(index, "headerLinks", arr);
                                     }}
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -1390,7 +1390,7 @@ export default function EditarGroupHomePage() {
                                 size="sm"
                                 onClick={() => {
                                   const arr = [...(block.config?.headerLinks ?? []), { label: "", href: "" }];
-                                  updateBlockConfigValue(index, "headerLinks", arr);
+                                  updateBlockConfig(index, "headerLinks", arr);
                                 }}
                               >
                                 <Plus className="h-4 w-4 mr-1" />
@@ -1441,7 +1441,7 @@ export default function EditarGroupHomePage() {
                                 onChange={(e) => {
                                   const arr = [...(block.config?.footerLinks ?? [])];
                                   arr[i] = { ...arr[i], label: e.target.value };
-                                  updateBlockConfigValue(index, "footerLinks", arr);
+                                  updateBlockConfig(index, "footerLinks", arr);
                                 }}
                               />
                               <Input
@@ -1451,7 +1451,7 @@ export default function EditarGroupHomePage() {
                                 onChange={(e) => {
                                   const arr = [...(block.config?.footerLinks ?? [])];
                                   arr[i] = { ...arr[i], href: e.target.value };
-                                  updateBlockConfigValue(index, "footerLinks", arr);
+                                  updateBlockConfig(index, "footerLinks", arr);
                                 }}
                               />
                               <Button
@@ -1461,7 +1461,7 @@ export default function EditarGroupHomePage() {
                                 className="shrink-0 text-destructive"
                                 onClick={() => {
                                   const arr = (block.config?.footerLinks ?? []).filter((_: unknown, j: number) => j !== i);
-                                  updateBlockConfigValue(index, "footerLinks", arr);
+                                  updateBlockConfig(index, "footerLinks", arr);
                                 }}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -1475,7 +1475,7 @@ export default function EditarGroupHomePage() {
                               size="sm"
                               onClick={() => {
                                 const arr = [...(block.config?.footerLinks ?? []), { label: "", href: "" }];
-                                updateBlockConfigValue(index, "footerLinks", arr);
+                                updateBlockConfig(index, "footerLinks", arr);
                               }}
                             >
                               <Plus className="h-4 w-4 mr-1" />
@@ -1490,7 +1490,7 @@ export default function EditarGroupHomePage() {
                       const updateCounter = (i: number, field: keyof GlobalPresenceCounter, value: string | number | boolean) => {
                         const arr = [...counters];
                         arr[i] = { ...arr[i], [field]: value };
-                        updateBlockConfigValue(index, "counters", arr);
+                        updateBlockConfig(index, "counters", arr);
                       };
                       return (
                         <div className="space-y-3 sm:col-span-2">
@@ -1540,10 +1540,10 @@ export default function EditarGroupHomePage() {
                               <div className="flex flex-wrap gap-4">
                                 <div className="space-y-1">
                                   <Label>Overlay (0–1)</Label>
-                                  <Input type="number" min={0} max={1} step={0.1} className="w-20" value={(block.config?.overlayOpacity as number) ?? 0.4} onChange={(e) => { const v = e.target.value; updateBlockConfigValue(index, "overlayOpacity", v === "" ? undefined : Number(e.target.value)); }} />
+                                  <Input type="number" min={0} max={1} step={0.1} className="w-20" value={(block.config?.overlayOpacity as number) ?? 0.4} onChange={(e) => { const v = e.target.value; updateBlockConfig(index, "overlayOpacity", v === "" ? undefined : Number(e.target.value)); }} />
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <input type="checkbox" id="gp-grid" checked={!!block.config?.showGridLines} onChange={(e) => updateBlockConfigValue(index, "showGridLines", e.target.checked)} />
+                                  <input type="checkbox" id="gp-grid" checked={!!block.config?.showGridLines} onChange={(e) => updateBlockConfig(index, "showGridLines", e.target.checked)} />
                                   <Label htmlFor="gp-grid">Linhas de grid</Label>
                                 </div>
                                 <div className="space-y-1">
@@ -1582,6 +1582,117 @@ export default function EditarGroupHomePage() {
                         </div>
                       );
                     })()}
+                    {block.type === "logo_carousel" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <p className="text-xs text-muted-foreground">
+                          Dados puxados automaticamente: clubes e empresas com logo em uma única faixa contínua.
+                        </p>
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Geral (faixa e cards)</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <div className="space-y-1">
+                              <Label>Cor de fundo da seção (hex)</Label>
+                              <div className="flex gap-2">
+                                <input type="color" className="h-10 w-12 cursor-pointer rounded border border-input bg-background shrink-0" value={(block.config?.backgroundColor as string)?.trim() || "#0f0f12"} onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)} />
+                                <Input placeholder="#0f0f12" value={(block.config?.backgroundColor as string) ?? ""} onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)} className="flex-1" />
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label>Estilo do card</Label>
+                                <Select value={(block.config?.logoCarouselCardStyle as string) ?? "fifa"} onValueChange={(v) => updateBlockConfig(index, "logoCarouselCardStyle", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="fifa">FIFA (claro)</SelectItem>
+                                    <SelectItem value="minimal">Minimal</SelectItem>
+                                    <SelectItem value="glass">Glass (vidro)</SelectItem>
+                                    <SelectItem value="dark">Escuro</SelectItem>
+                                    <SelectItem value="bordered">Com borda</SelectItem>
+                                    <SelectItem value="outline">Contorno (transparente)</SelectItem>
+                                    <SelectItem value="gradient">Gradiente</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Altura do card (px)</Label>
+                                <Input type="number" min={80} max={400} value={(block.config?.logoCarouselCardHeight as number) ?? 260} onChange={(e) => updateBlockConfig(index, "logoCarouselCardHeight", parseInt(e.target.value, 10) || 260)} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Largura do card (× altura)</Label>
+                                <Input type="number" min={1} max={3} step={0.2} placeholder="1.6" value={(block.config?.logoCarouselCardWidthRatio as number) ?? 1.6} onChange={(e) => updateBlockConfig(index, "logoCarouselCardWidthRatio", parseFloat(e.target.value) || 1.6)} />
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label>Cor dos cards (hex)</Label>
+                                <div className="flex gap-2">
+                                  <input type="color" className="h-10 w-12 cursor-pointer rounded border border-input bg-background shrink-0" value={(block.config?.logoCarouselCardBackground as string)?.trim() || "#FFFFFF"} onChange={(e) => updateBlockConfig(index, "logoCarouselCardBackground", e.target.value)} />
+                                  <Input placeholder="#FFFFFF" value={(block.config?.logoCarouselCardBackground as string) ?? ""} onChange={(e) => updateBlockConfig(index, "logoCarouselCardBackground", e.target.value)} />
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Raio do card (px)</Label>
+                                <Input type="number" min={0} max={32} value={(block.config?.logoCarouselCardRadius as number) ?? 12} onChange={(e) => updateBlockConfig(index, "logoCarouselCardRadius", parseInt(e.target.value, 10) ?? 12)} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Espaço entre cards (px)</Label>
+                                <Input type="number" min={0} max={48} value={(block.config?.logoCarouselGapBetweenCards as number) ?? 16} onChange={(e) => updateBlockConfig(index, "logoCarouselGapBetweenCards", parseInt(e.target.value, 10) ?? 16)} />
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <Label>Espaço em cima (px)</Label>
+                                <Input type="number" min={0} max={120} placeholder="24" value={(block.config?.logoCarouselPaddingTop as number) ?? 24} onChange={(e) => updateBlockConfig(index, "logoCarouselPaddingTop", e.target.value === "" ? undefined : parseInt(e.target.value, 10))} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Espaço em baixo (px)</Label>
+                                <Input type="number" min={0} max={120} placeholder="24" value={(block.config?.logoCarouselPaddingBottom as number) ?? 24} onChange={(e) => updateBlockConfig(index, "logoCarouselPaddingBottom", e.target.value === "" ? undefined : parseInt(e.target.value, 10))} />
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-4">
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" id={`lc-shadow-gh-${block.id}`} checked={block.config?.logoCarouselShowShadow !== false} onChange={(e) => updateBlockConfig(index, "logoCarouselShowShadow", e.target.checked)} />
+                                <Label htmlFor={`lc-shadow-gh-${block.id}`}>Sombra no card</Label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" id={`lc-pause-gh-${block.id}`} checked={block.config?.logoCarouselPauseOnHover !== false} onChange={(e) => updateBlockConfig(index, "logoCarouselPauseOnHover", e.target.checked)} />
+                                <Label htmlFor={`lc-pause-gh-${block.id}`}>Pausar ao passar o mouse</Label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" id={`lc-newtab-gh-${block.id}`} checked={block.config?.logoCarouselOpenInNewTab !== false} onChange={(e) => updateBlockConfig(index, "logoCarouselOpenInNewTab", e.target.checked)} />
+                                <Label htmlFor={`lc-newtab-gh-${block.id}`}>Abrir link em nova aba</Label>
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <Label>Velocidade do carrossel</Label>
+                                <Select value={(block.config?.logoCarouselAnimationSpeed as string) ?? "normal"} onValueChange={(v) => updateBlockConfig(index, "logoCarouselAnimationSpeed", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="slow">Lento</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="fast">Rápido</SelectItem>
+                                    <SelectItem value="strobe-05">Strobe (espera 0,5 s)</SelectItem>
+                                    <SelectItem value="strobe-1">Strobe (espera 1 s)</SelectItem>
+                                    <SelectItem value="strobe-2">Strobe (espera 2 s)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Direção</Label>
+                                <Select value={(block.config?.logoCarouselDirection as string) ?? "left-to-right"} onValueChange={(v) => updateBlockConfig(index, "logoCarouselDirection", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="left-to-right">Esquerda → Direita</SelectItem>
+                                    <SelectItem value="right-to-left">Direita → Esquerda</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    )}
                     {block.type === "founder" && (
                       <div className="space-y-3 sm:col-span-2">
                         <details className="rounded-lg border border-border bg-muted/20" open>
@@ -1759,7 +1870,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...pt];
                                           arr[i] = e.target.value;
-                                          updateBlockConfigValue(index, "highlightsPt", arr);
+                                          updateBlockConfig(index, "highlightsPt", arr);
                                         }}
                                       />
                                     </div>
@@ -1771,7 +1882,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...en];
                                           arr[i] = e.target.value;
-                                          updateBlockConfigValue(index, "highlightsEn", arr);
+                                          updateBlockConfig(index, "highlightsEn", arr);
                                         }}
                                       />
                                     </div>
@@ -1782,7 +1893,7 @@ export default function EditarGroupHomePage() {
                                         onValueChange={(v) => {
                                           const arr = [...icons];
                                           arr[i] = v;
-                                          updateBlockConfigValue(index, "highlightsIcons", arr);
+                                          updateBlockConfig(index, "highlightsIcons", arr);
                                         }}
                                       >
                                         <SelectTrigger className="w-full">
@@ -1829,12 +1940,12 @@ export default function EditarGroupHomePage() {
                                     <div key={i} className="rounded-lg border border-border p-3 space-y-2">
                                       <p className="text-xs font-medium text-muted-foreground">Card {i + 1}</p>
                                       <div className="grid gap-2 sm:grid-cols-2">
-                                        <Input placeholder="Título (PT)" value={pt[i]?.title ?? ""} onChange={(e) => { const arr = [...pt]; arr[i] = { ...arr[i], title: e.target.value }; updateBlockConfigValue(index, "cardsPt", arr); }} />
-                                        <Input placeholder="Title (EN)" value={en[i]?.title ?? ""} onChange={(e) => { const arr = [...en]; arr[i] = { ...arr[i], title: e.target.value }; updateBlockConfigValue(index, "cardsEn", arr); }} />
+                                        <Input placeholder="Título (PT)" value={pt[i]?.title ?? ""} onChange={(e) => { const arr = [...pt]; arr[i] = { ...arr[i], title: e.target.value }; updateBlockConfig(index, "cardsPt", arr); }} />
+                                        <Input placeholder="Title (EN)" value={en[i]?.title ?? ""} onChange={(e) => { const arr = [...en]; arr[i] = { ...arr[i], title: e.target.value }; updateBlockConfig(index, "cardsEn", arr); }} />
                                       </div>
                                       <div className="grid gap-2 sm:grid-cols-2">
-                                        <Input placeholder="Descrição (PT)" value={pt[i]?.body ?? ""} onChange={(e) => { const arr = [...pt]; arr[i] = { ...arr[i], body: e.target.value }; updateBlockConfigValue(index, "cardsPt", arr); }} />
-                                        <Input placeholder="Description (EN)" value={en[i]?.body ?? ""} onChange={(e) => { const arr = [...en]; arr[i] = { ...arr[i], body: e.target.value }; updateBlockConfigValue(index, "cardsEn", arr); }} />
+                                        <Input placeholder="Descrição (PT)" value={pt[i]?.body ?? ""} onChange={(e) => { const arr = [...pt]; arr[i] = { ...arr[i], body: e.target.value }; updateBlockConfig(index, "cardsPt", arr); }} />
+                                        <Input placeholder="Description (EN)" value={en[i]?.body ?? ""} onChange={(e) => { const arr = [...en]; arr[i] = { ...arr[i], body: e.target.value }; updateBlockConfig(index, "cardsEn", arr); }} />
                                       </div>
                                     </div>
                                   ))}
@@ -1900,10 +2011,10 @@ export default function EditarGroupHomePage() {
                                     <div key={i} className="rounded-lg border border-border p-3 space-y-2">
                                       <p className="text-xs font-medium text-muted-foreground">Item {i + 1}</p>
                                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                                        <Input placeholder="Texto (PT)" value={pt[i] ?? ""} onChange={(e) => { const arr = [...pt]; arr[i] = e.target.value; updateBlockConfigValue(index, "bulletsPt", arr); }} />
-                                        <Input placeholder="Text (EN)" value={en[i] ?? ""} onChange={(e) => { const arr = [...en]; arr[i] = e.target.value; updateBlockConfigValue(index, "bulletsEn", arr); }} />
+                                        <Input placeholder="Texto (PT)" value={pt[i] ?? ""} onChange={(e) => { const arr = [...pt]; arr[i] = e.target.value; updateBlockConfig(index, "bulletsPt", arr); }} />
+                                        <Input placeholder="Text (EN)" value={en[i] ?? ""} onChange={(e) => { const arr = [...en]; arr[i] = e.target.value; updateBlockConfig(index, "bulletsEn", arr); }} />
                                         <div className="sm:col-span-2 lg:col-span-1">
-                                          <Select value={icons[i] ?? "CheckCircle"} onValueChange={(v) => { const arr = [...icons]; arr[i] = v; updateBlockConfigValue(index, "howBulletsIcons", arr); }}>
+                                          <Select value={icons[i] ?? "CheckCircle"} onValueChange={(v) => { const arr = [...icons]; arr[i] = v; updateBlockConfig(index, "howBulletsIcons", arr); }}>
                                             <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                                             <SelectContent>
                                               {HOW_ICON_OPTIONS.map((opt) => (
@@ -1976,7 +2087,7 @@ export default function EditarGroupHomePage() {
                                   <Label>Fundo</Label>
                                   <div className="flex flex-wrap gap-4">
                                     <div><Label className="text-xs text-muted-foreground">Tipo</Label><Select value={(cfg.ctaBackgroundMode as string) ?? "image"} onValueChange={(v) => updateBlockConfig(index, "ctaBackgroundMode", v)}><SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="image">Imagem</SelectItem><SelectItem value="gradient">Gradiente</SelectItem><SelectItem value="solid">Cor sólida</SelectItem></SelectContent></Select></div>
-                                    <div className="flex items-center gap-2"><input type="checkbox" id="cta-blur" checked={!!cfg.ctaBlur} onChange={(e) => updateBlockConfigValue(index, "ctaBlur", e.target.checked)} /><Label htmlFor="cta-blur">Blur</Label></div>
+                                    <div className="flex items-center gap-2"><input type="checkbox" id="cta-blur" checked={!!cfg.ctaBlur} onChange={(e) => updateBlockConfig(index, "ctaBlur", e.target.checked)} /><Label htmlFor="cta-blur">Blur</Label></div>
                                   </div>
                                   {(cfg.ctaBackgroundMode as string) === "image" && (
                                     <div className="space-y-1"><MediaPicker sizeKey="section_bg" allowAllFolders value={(cfg.backgroundImage as string) ?? ""} onChange={(url) => updateBlockConfig(index, "backgroundImage", url)} placeholder="Imagem de fundo" /><Input placeholder="Ou URL" value={(cfg.backgroundImage as string) ?? ""} onChange={(e) => updateBlockConfig(index, "backgroundImage", e.target.value)} /></div>
@@ -1995,17 +2106,17 @@ export default function EditarGroupHomePage() {
                                     const btn = buttons[i] ?? {};
                                     return (
                                       <div key={i} className="rounded-lg border border-border p-3 space-y-2">
-                                        <div className="grid gap-2 sm:grid-cols-2"><Input placeholder="Label (PT)" value={btn.labelPT ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], labelPT: e.target.value }; updateBlockConfigValue(index, "ctaButtons", arr); }} /><Input placeholder="Label (EN)" value={btn.labelEN ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], labelEN: e.target.value }; updateBlockConfigValue(index, "ctaButtons", arr); }} /></div>
+                                        <div className="grid gap-2 sm:grid-cols-2"><Input placeholder="Label (PT)" value={btn.labelPT ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], labelPT: e.target.value }; updateBlockConfig(index, "ctaButtons", arr); }} /><Input placeholder="Label (EN)" value={btn.labelEN ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], labelEN: e.target.value }; updateBlockConfig(index, "ctaButtons", arr); }} /></div>
                                         <div className="flex flex-wrap gap-2">
-                                          <Select value={(btn.type as string) ?? "primary"} onValueChange={(v) => { const arr = [...buttons]; arr[i] = { ...arr[i], type: v as "primary" | "secondary" | "ghost" }; updateBlockConfigValue(index, "ctaButtons", arr); }}><SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Primary</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem></SelectContent></Select>
-                                          <Input placeholder="URL ou #âncora" className="flex-1 min-w-[120px]" value={btn.href ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], href: e.target.value }; updateBlockConfigValue(index, "ctaButtons", arr); }} />
-                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], openInNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
-                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.highlighted} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], highlighted: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Destaque</label>
+                                          <Select value={(btn.type as string) ?? "primary"} onValueChange={(v) => { const arr = [...buttons]; arr[i] = { ...arr[i], type: v as "primary" | "secondary" | "ghost" }; updateBlockConfig(index, "ctaButtons", arr); }}><SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Primary</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem></SelectContent></Select>
+                                          <Input placeholder="URL ou #âncora" className="flex-1 min-w-[120px]" value={btn.href ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], href: e.target.value }; updateBlockConfig(index, "ctaButtons", arr); }} />
+                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], openInNewTab: e.target.checked }; updateBlockConfig(index, "ctaButtons", arr); }} /> Nova aba</label>
+                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.highlighted} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], highlighted: e.target.checked }; updateBlockConfig(index, "ctaButtons", arr); }} /> Destaque</label>
                                         </div>
                                       </div>
                                     );
                                   })}
-                                  <Button type="button" variant="outline" size="sm" onClick={() => { const arr = [...buttons, { labelPT: "", labelEN: "", type: "secondary" as const, href: "" }].slice(0, 3); updateBlockConfigValue(index, "ctaButtons", arr); }} disabled={buttons.length >= 3}><Plus className="h-4 w-4 mr-1" /> Adicionar botão</Button>
+                                  <Button type="button" variant="outline" size="sm" onClick={() => { const arr = [...buttons, { labelPT: "", labelEN: "", type: "secondary" as const, href: "" }].slice(0, 3); updateBlockConfig(index, "ctaButtons", arr); }} disabled={buttons.length >= 3}><Plus className="h-4 w-4 mr-1" /> Adicionar botão</Button>
                                 </div>
                               </div>
                             );

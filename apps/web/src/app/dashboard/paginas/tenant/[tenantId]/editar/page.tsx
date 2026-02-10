@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,6 +17,7 @@ import {
   Twitter,
   Globe,
   User,
+  CalendarIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -195,6 +196,7 @@ export default function EditarPaginaTenantPage() {
   const [headerAdvanced, setHeaderAdvanced] = useState(false);
   const [headerDebug, setHeaderDebug] = useState(false);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
+  const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
 
@@ -537,7 +539,7 @@ export default function EditarPaginaTenantPage() {
                         Aparência (todos os módulos)
                       </Label>
                     </div>
-                    {block.type !== "hero" && block.type !== "global_presence" && (
+                    {block.type !== "hero" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <div className="space-y-2">
                         <Label>Cor de fundo (hex)</Label>
                         <div className="flex gap-2">
@@ -571,7 +573,7 @@ export default function EditarPaginaTenantPage() {
                         </div>
                       </div>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <>
                         <div className="space-y-2">
                           <Label>Opacidade overlay (0-1)</Label>
@@ -615,7 +617,7 @@ export default function EditarPaginaTenantPage() {
                         </div>
                       </>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Tamanho do módulo</summary>
                         <div className="border-t border-border px-3 py-3 space-y-2">
@@ -638,6 +640,256 @@ export default function EditarPaginaTenantPage() {
                           </p>
                         </div>
                       </details>
+                    )}
+                    {block.type === "proximos_jogos" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <p className="text-xs text-muted-foreground">
+                          Os jogos exibidos são sempre do clube desta página. Fonte: Manual (lista editada) ou AUTO (SofaScore).
+                        </p>
+                        <div className="space-y-2">
+                          <Label>Fonte de dados</Label>
+                          <Select
+                            value={(block.config?.proximosJogosDataSource as string) ?? "manual"}
+                            onValueChange={(v) => updateBlockConfigValue(index, "proximosJogosDataSource", v)}
+                          >
+                            <SelectTrigger className="w-full max-w-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="manual">Manual (lista editada)</SelectItem>
+                              <SelectItem value="sofascore">AUTO (SofaScore)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {(block.config?.proximosJogosDataSource as string) === "sofascore" && (
+                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm">
+                            <p className="font-medium text-amber-800 dark:text-amber-200">Fonte: SofaScore (teamId do clube)</p>
+                            <p className="mt-1 text-muted-foreground">
+                              Configure o SofaScore Team ID na edição do clube:{" "}
+                              <Link href={`/dashboard/empresas/${tenantId}/edit`} className="underline text-amber-700 dark:text-amber-300">
+                                Empresas → [este clube] → Editar → SofaScore Team ID
+                              </Link>
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Os próximos jogos serão buscados automaticamente. Use overrides abaixo para ocultar, destacar ou adicionar links (Assistir / Ingresso) por jogo.
+                            </p>
+                          </div>
+                        )}
+                        {(block.config?.proximosJogosDataSource as string) === "manual" && (
+                          <details open className="rounded-lg border border-border bg-muted/20">
+                            <summary className="cursor-pointer px-3 py-2 font-medium">Lista manual de jogos</summary>
+                            <div className="border-t border-border px-3 py-3 space-y-3">
+                              {page?.tenant?.slug && (
+                                <p className="text-xs text-muted-foreground">
+                                  <Link href={`/portfolio/${page.tenant.slug}`} target="_blank" rel="noopener noreferrer" className="underline text-primary">
+                                    Ver na página pública →
+                                  </Link>
+                                </p>
+                              )}
+                              {((block.config?.proximosJogosManualFixtures as Array<{ startISO?: string; homeTeamName?: string; awayTeamName?: string; competitionName?: string; venueName?: string; watchUrl?: string; ticketUrl?: string; isOurTeamHome?: boolean; homeTeamLogoUrl?: string; awayTeamLogoUrl?: string }>) ?? []).map((f, fi) => {
+                                const posValue = f.isOurTeamHome === false ? "away" : "home";
+                                const fromISO = (iso: string | undefined) => {
+                                  if (!iso?.trim()) return { date: "", time: "20:00" };
+                                  const d = new Date(iso);
+                                  if (Number.isNaN(d.getTime())) return { date: "", time: "20:00" };
+                                  const pad = (n: number) => String(n).padStart(2, "0");
+                                  return {
+                                    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+                                    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+                                  };
+                                };
+                                const { date: dateVal, time: timeVal } = fromISO(f.startISO);
+                                const manualList = (block.config?.proximosJogosManualFixtures as object[]) ?? [];
+                                const isLastGame = fi === manualList.length - 1;
+                                const summaryText = dateVal
+                                  ? `Jogo ${fi + 1}: ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — ${dateVal} ${timeVal}`
+                                  : `Jogo ${fi + 1}: ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — (sem data)`;
+                                return (
+                                <details key={fi} open={isLastGame} className="rounded border border-border bg-muted/10">
+                                  <summary className="cursor-pointer px-3 py-2 font-medium hover:bg-muted/20">
+                                    {summaryText}
+                                  </summary>
+                                <div className="rounded border-t border-border p-3 space-y-2 grid gap-2 sm:grid-cols-2">
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Data</Label>
+                                    <div className="flex gap-1">
+                                      <input
+                                        ref={(el) => { dateInputRefs.current[fi] = el; }}
+                                        type="date"
+                                        className="flex h-10 flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        value={dateVal}
+                                        onChange={(e) => {
+                                          const date = e.target.value;
+                                          const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                          const current = fromISO((list[fi] as Record<string, string>).startISO);
+                                          const iso = date && current.time ? new Date(`${date}T${current.time}`).toISOString() : "";
+                                          (list[fi] as Record<string, string>).startISO = iso;
+                                          updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                        }}
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-10 w-10 shrink-0"
+                                        title="Abrir calendário"
+                                        onClick={() => dateInputRefs.current[fi]?.showPicker?.()}
+                                      >
+                                        <CalendarIcon className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Hora</Label>
+                                    <input
+                                      type="time"
+                                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                      value={timeVal}
+                                      onChange={(e) => {
+                                        const time = e.target.value;
+                                        const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                        const current = fromISO((list[fi] as Record<string, string>).startISO);
+                                        const date = current.date || new Date().toISOString().slice(0, 10);
+                                        const iso = time ? new Date(`${date}T${time}`).toISOString() : (list[fi] as Record<string, string>).startISO || "";
+                                        (list[fi] as Record<string, string>).startISO = iso;
+                                        updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Posição do clube neste jogo</Label>
+                                    <Select
+                                      value={posValue}
+                                      onValueChange={(v) => {
+                                        const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                        const row = list[fi] as Record<string, string | boolean>;
+                                        row.isOurTeamHome = v === "home";
+                                        if (v === "home") row.homeTeamName = tenantName;
+                                        else row.awayTeamName = tenantName;
+                                        updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                      }}
+                                    >
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="home">Casa (nosso time é o mandante)</SelectItem>
+                                        <SelectItem value="away">Visitante (nosso time joga fora)</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-1" />
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Time da casa</Label>
+                                    <Input placeholder="Time da casa" value={f.homeTeamName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).homeTeamName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Time visitante</Label>
+                                    <Input placeholder="Time visitante" value={f.awayTeamName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).awayTeamName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                  </div>
+                                  <div className="space-y-1 sm:col-span-2">
+                                    <Label className="text-xs">
+                                      {posValue === "home"
+                                        ? "Logo do visitante (adversário)"
+                                        : "Logo do time da casa (adversário)"}
+                                    </Label>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <MediaPicker
+                                        sizeKey="card"
+                                        folder="logos"
+                                        value={posValue === "home" ? (f.awayTeamLogoUrl as string) ?? "" : (f.homeTeamLogoUrl as string) ?? ""}
+                                        onChange={(url) => {
+                                          const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                          const row = list[fi] as Record<string, string>;
+                                          if (posValue === "home") row.awayTeamLogoUrl = url;
+                                          else row.homeTeamLogoUrl = url;
+                                          updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                        }}
+                                        placeholder="Escolher da pasta de logos"
+                                      />
+                                      <Input
+                                        className="flex-1 min-w-[160px]"
+                                        placeholder="Ou colar URL"
+                                        value={posValue === "home" ? (f.awayTeamLogoUrl as string) ?? "" : (f.homeTeamLogoUrl as string) ?? ""}
+                                        onChange={(e) => {
+                                          const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                          const row = list[fi] as Record<string, string>;
+                                          if (posValue === "home") row.awayTeamLogoUrl = e.target.value;
+                                          else row.homeTeamLogoUrl = e.target.value;
+                                          updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                        }}
+                                      />
+                                      <input
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                        className="hidden"
+                                        id={`logo-upload-${block.id}-${fi}`}
+                                        onChange={async (e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                          const row = list[fi] as Record<string, string>;
+                                          try {
+                                            const form = new FormData();
+                                            form.append("file", file);
+                                            form.append("sizeKey", "external_logos");
+                                            const res = await fetch("/api/media", {
+                                              method: "POST",
+                                              credentials: "include",
+                                              body: form,
+                                            });
+                                            if (!res.ok) return;
+                                            const data = (await res.json()) as { url?: string };
+                                            if (data?.url) {
+                                              if (posValue === "home") row.awayTeamLogoUrl = data.url;
+                                              else row.homeTeamLogoUrl = data.url;
+                                              updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                            }
+                                          } finally {
+                                            e.target.value = "";
+                                          }
+                                        }}
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => document.getElementById(`logo-upload-${block.id}-${fi}`)?.click()}
+                                      >
+                                        Enviar logo (pasta visitantes)
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Competição</Label>
+                                    <Input placeholder="Competição" value={f.competitionName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).competitionName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Local (opcional)</Label>
+                                    <Input placeholder="Local (opcional)" value={f.venueName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).venueName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">URL Assistir (opcional)</Label>
+                                    <Input placeholder="URL Assistir (opcional)" value={f.watchUrl ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).watchUrl = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">URL Ingresso (opcional)</Label>
+                                    <Input placeholder="URL Ingresso (opcional)" value={f.ticketUrl ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).ticketUrl = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                  </div>
+                                  <div className="flex items-end">
+                                    <Button type="button" variant="destructive" size="sm" onClick={() => { const list = ((block.config?.proximosJogosManualFixtures as object[]) ?? []).filter((_, i) => i !== fi); updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }}>Remover</Button>
+                                  </div>
+                                </div>
+                                </details>
+                                );
+                              })}
+                              <Button type="button" variant="outline" size="sm" onClick={() => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? []), { startISO: "", homeTeamName: tenantName, awayTeamName: "", competitionName: "", venueName: "", watchUrl: "", ticketUrl: "", isOurTeamHome: true, homeTeamLogoUrl: "", awayTeamLogoUrl: "" }]; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }}>
+                                <Plus className="h-4 w-4 mr-1" /> Adicionar jogo
+                              </Button>
+                            </div>
+                          </details>
+                        )}
+                      </div>
                     )}
                     {block.type === "hero" && (() => {
                       const heroSlides: HeroSlide[] = Array.isArray(block.config?.heroSlides)
@@ -1606,6 +1858,117 @@ export default function EditarPaginaTenantPage() {
                         </div>
                       );
                     })()}
+                    {block.type === "logo_carousel" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <p className="text-xs text-muted-foreground">
+                          Dados puxados automaticamente: clubes e empresas com logo em uma única faixa contínua.
+                        </p>
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Geral (faixa e cards)</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <div className="space-y-1">
+                              <Label>Cor de fundo da seção (hex)</Label>
+                              <div className="flex gap-2">
+                                <input type="color" className="h-10 w-12 cursor-pointer rounded border border-input bg-background shrink-0" value={(block.config?.backgroundColor as string)?.trim() || "#0f0f12"} onChange={(e) => updateBlockConfigValue(index, "backgroundColor", e.target.value)} />
+                                <Input placeholder="#0f0f12" value={(block.config?.backgroundColor as string) ?? ""} onChange={(e) => updateBlockConfigValue(index, "backgroundColor", e.target.value)} className="flex-1" />
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label>Estilo do card</Label>
+                                <Select value={(block.config?.logoCarouselCardStyle as string) ?? "fifa"} onValueChange={(v) => updateBlockConfigValue(index, "logoCarouselCardStyle", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="fifa">FIFA (claro)</SelectItem>
+                                    <SelectItem value="minimal">Minimal</SelectItem>
+                                    <SelectItem value="glass">Glass (vidro)</SelectItem>
+                                    <SelectItem value="dark">Escuro</SelectItem>
+                                    <SelectItem value="bordered">Com borda</SelectItem>
+                                    <SelectItem value="outline">Contorno (transparente)</SelectItem>
+                                    <SelectItem value="gradient">Gradiente</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Altura do card (px)</Label>
+                                <Input type="number" min={80} max={400} value={(block.config?.logoCarouselCardHeight as number) ?? 260} onChange={(e) => updateBlockConfigValue(index, "logoCarouselCardHeight", parseInt(e.target.value, 10) || 260)} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Largura do card (× altura)</Label>
+                                <Input type="number" min={1} max={3} step={0.2} placeholder="1.6" value={(block.config?.logoCarouselCardWidthRatio as number) ?? 1.6} onChange={(e) => updateBlockConfigValue(index, "logoCarouselCardWidthRatio", parseFloat(e.target.value) || 1.6)} />
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              <div className="space-y-1">
+                                <Label>Cor dos cards (hex)</Label>
+                                <div className="flex gap-2">
+                                  <input type="color" className="h-10 w-12 cursor-pointer rounded border border-input bg-background shrink-0" value={(block.config?.logoCarouselCardBackground as string)?.trim() || "#FFFFFF"} onChange={(e) => updateBlockConfigValue(index, "logoCarouselCardBackground", e.target.value)} />
+                                  <Input placeholder="#FFFFFF" value={(block.config?.logoCarouselCardBackground as string) ?? ""} onChange={(e) => updateBlockConfigValue(index, "logoCarouselCardBackground", e.target.value)} />
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Raio do card (px)</Label>
+                                <Input type="number" min={0} max={32} value={(block.config?.logoCarouselCardRadius as number) ?? 12} onChange={(e) => updateBlockConfigValue(index, "logoCarouselCardRadius", parseInt(e.target.value, 10) ?? 12)} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Espaço entre cards (px)</Label>
+                                <Input type="number" min={0} max={48} value={(block.config?.logoCarouselGapBetweenCards as number) ?? 16} onChange={(e) => updateBlockConfigValue(index, "logoCarouselGapBetweenCards", parseInt(e.target.value, 10) ?? 16)} />
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <Label>Espaço em cima (px)</Label>
+                                <Input type="number" min={0} max={120} placeholder="24" value={(block.config?.logoCarouselPaddingTop as number) ?? 24} onChange={(e) => updateBlockConfigValue(index, "logoCarouselPaddingTop", e.target.value === "" ? undefined : parseInt(e.target.value, 10))} />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Espaço em baixo (px)</Label>
+                                <Input type="number" min={0} max={120} placeholder="24" value={(block.config?.logoCarouselPaddingBottom as number) ?? 24} onChange={(e) => updateBlockConfigValue(index, "logoCarouselPaddingBottom", e.target.value === "" ? undefined : parseInt(e.target.value, 10))} />
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-4">
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" id={`lc-shadow-${block.id}`} checked={block.config?.logoCarouselShowShadow !== false} onChange={(e) => updateBlockConfigValue(index, "logoCarouselShowShadow", e.target.checked)} />
+                                <Label htmlFor={`lc-shadow-${block.id}`}>Sombra no card</Label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" id={`lc-pause-${block.id}`} checked={block.config?.logoCarouselPauseOnHover !== false} onChange={(e) => updateBlockConfigValue(index, "logoCarouselPauseOnHover", e.target.checked)} />
+                                <Label htmlFor={`lc-pause-${block.id}`}>Pausar ao passar o mouse</Label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input type="checkbox" id={`lc-newtab-${block.id}`} checked={block.config?.logoCarouselOpenInNewTab !== false} onChange={(e) => updateBlockConfigValue(index, "logoCarouselOpenInNewTab", e.target.checked)} />
+                                <Label htmlFor={`lc-newtab-${block.id}`}>Abrir link em nova aba</Label>
+                              </div>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <Label>Velocidade do carrossel</Label>
+                                <Select value={(block.config?.logoCarouselAnimationSpeed as string) ?? "normal"} onValueChange={(v) => updateBlockConfigValue(index, "logoCarouselAnimationSpeed", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="slow">Lento</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="fast">Rápido</SelectItem>
+                                    <SelectItem value="strobe-05">Strobe (espera 0,5 s)</SelectItem>
+                                    <SelectItem value="strobe-1">Strobe (espera 1 s)</SelectItem>
+                                    <SelectItem value="strobe-2">Strobe (espera 2 s)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Direção</Label>
+                                <Select value={(block.config?.logoCarouselDirection as string) ?? "left-to-right"} onValueChange={(v) => updateBlockConfigValue(index, "logoCarouselDirection", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="left-to-right">Esquerda → Direita</SelectItem>
+                                    <SelectItem value="right-to-left">Direita → Esquerda</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    )}
                     {block.type === "founder" && (
                       <div className="space-y-3 sm:col-span-2">
                         <details className="rounded-lg border border-border bg-muted/20" open>

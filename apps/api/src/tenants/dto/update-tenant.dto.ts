@@ -60,4 +60,9 @@ export class UpdateTenantDto {
   @IsOptional()
   @MaxLength(2048)
   websiteUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  sofascoreTeamId?: string | null;
 }

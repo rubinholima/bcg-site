@@ -76,7 +76,8 @@ export type HomeBlockType =
   | "equipe"
   | "clientes"
   | "contato"
-  | "global_presence";
+  | "global_presence"
+  | "logo_carousel";
 
 /** Efeitos do carrossel do Hero */
 export type HeroCarouselEffect = "fade" | "slide" | "zoom";
@@ -248,7 +249,68 @@ export interface HomeBlockConfig {
   counters?: GlobalPresenceCounter[];
   /** Global Presence: lista de localizações no mapa */
   locations?: GlobalPresenceLocation[];
+  /** Logo Carousel: configuração do módulo inteiro */
+  logoCarouselSectionPadding?: "compact" | "normal" | "large";
+  logoCarouselCardStyle?: "fifa" | "minimal" | "glass";
+  logoCarouselCardHeight?: number;
+  logoCarouselCardRadius?: number;
+  logoCarouselCardBackground?: string;
+  logoCarouselShowShadow?: boolean;
+  logoCarouselGapBetweenCards?: number;
+  logoCarouselAnimationSpeed?: "slow" | "normal" | "fast";
+  logoCarouselPauseOnHover?: boolean;
+  logoCarouselDirection?: "left-to-right" | "right-to-left";
+  logoCarouselOpenInNewTab?: boolean;
+  /** Logo Carousel: bloco Clubes */
+  logoCarouselClubsEnabled?: boolean;
+  logoCarouselClubsTitlePT?: string;
+  logoCarouselClubsTitleEN?: string;
+  logoCarouselClubsSubtitlePT?: string;
+  logoCarouselClubsSubtitleEN?: string;
+  logoCarouselClubsLimit?: number;
+  logoCarouselClubsSorting?: "alphabetical" | "newest" | "manual";
+  logoCarouselClubsFallbackLogo?: string;
+  /** Logo Carousel: bloco Empresas */
+  logoCarouselCompaniesEnabled?: boolean;
+  logoCarouselCompaniesTitlePT?: string;
+  logoCarouselCompaniesTitleEN?: string;
+  logoCarouselCompaniesSubtitlePT?: string;
+  logoCarouselCompaniesSubtitleEN?: string;
+  logoCarouselCompaniesLimit?: number;
+  logoCarouselCompaniesSorting?: "alphabetical" | "newest" | "manual";
+  logoCarouselCompaniesFallbackLogo?: string;
+  /** Próximos Jogos: fonte dos dados (manual = lista editada; sofascore = auto pelo tenant.sofascoreTeamId) */
+  proximosJogosDataSource?: "manual" | "sofascore";
+  /** Próximos Jogos: lista manual (quando dataSource=manual) */
+  proximosJogosManualFixtures?: ProximosJogosFixtureItem[];
+  /** Próximos Jogos: overrides por externalId (quando dataSource=sofascore) */
+  proximosJogosOverrides?: Record<string, ProximosJogosFixtureOverride>;
   [key: string]: unknown;
+}
+
+/** Item de fixture (manual ou retorno da API) */
+export interface ProximosJogosFixtureItem {
+  externalId?: string;
+  startISO: string;
+  status?: "SCHEDULED" | "LIVE" | "FINAL";
+  competitionName?: string;
+  competitionLogoUrl?: string;
+  venueName?: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  watchUrl?: string;
+  ticketUrl?: string;
+  featured?: boolean;
+}
+
+/** Override por jogo (SofaScore) no editor */
+export interface ProximosJogosFixtureOverride {
+  hidden?: boolean;
+  featured?: boolean;
+  watchUrl?: string;
+  ticketUrl?: string;
+  venueName?: string;
+  competitionLogoUrl?: string;
 }
 
 /** Localização no mapa Presença Global (lat/lng, nome, tipo, etc.) */

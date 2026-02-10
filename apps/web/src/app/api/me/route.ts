@@ -16,20 +16,33 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const res = await fetch(`${apiUrl}/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-  });
+  try {
+    const res = await fetch(`${apiUrl}/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
 
-  if (!res.ok) {
-    return NextResponse.json(
-      { error: res.status === 401 ? "Unauthorized" : "Error" },
-      { status: res.status },
-    );
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: res.status === 401 ? "Unauthorized" : "Error" },
+        { status: res.status },
+      );
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (err) {
+    const code =
+      (err as NodeJS.ErrnoException)?.code ??
+      (err as { cause?: { code?: string } })?.cause?.code;
+    if (code === "ECONNREFUSED" || code === "ECONNRESET") {
+      return NextResponse.json(
+        { error: "api_unavailable" },
+        { status: 503 },
+      );
+    }
+    throw err;
   }
-
-  const data = await res.json();
-  return NextResponse.json(data);
 }

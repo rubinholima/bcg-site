@@ -31,6 +31,7 @@ interface FormData {
   city?: string;
   country?: string;
   websiteUrl?: string;
+  sofascoreTeamId?: string;
 }
 
 export default function EditEmpresaPage() {
@@ -72,6 +73,7 @@ export default function EditEmpresaPage() {
             city: empresa.city ?? "",
             country: empresa.country ?? "",
             websiteUrl: empresa.websiteUrl ?? "",
+            sofascoreTeamId: (empresa as { sofascoreTeamId?: string | null })?.sofascoreTeamId ?? "",
           });
         }
         setTipos(tiposList ?? []);
@@ -100,6 +102,7 @@ export default function EditEmpresaPage() {
         websiteUrl: websiteUrl || undefined,
         lat: formData.lat === "" || formData.lat === undefined ? undefined : Number(formData.lat),
         lng: formData.lng === "" || formData.lng === undefined ? undefined : Number(formData.lng),
+        sofascoreTeamId: (formData.sofascoreTeamId ?? "").trim() || null,
       };
       await api.patch(`/tenants/${id}`, payload);
       router.push("/dashboard/empresas?success=true");
@@ -439,6 +442,22 @@ export default function EditEmpresaPage() {
                   disabled={loading}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t">
+              <Label htmlFor="sofascoreTeamId">SofaScore Team ID (Integrações)</Label>
+              <Input
+                id="sofascoreTeamId"
+                name="sofascoreTeamId"
+                type="text"
+                value={formData.sofascoreTeamId ?? ""}
+                onChange={handleChange}
+                placeholder="Ex: 12345 (para módulo Próximos Jogos — AUTO)"
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">
+                Obrigatório para o módulo &quot;Próximos Jogos&quot; com fonte AUTO (SofaScore). Encontre o ID na URL do time no site SofaScore.
+              </p>
             </div>
 
             <div className="flex gap-4 pt-4">

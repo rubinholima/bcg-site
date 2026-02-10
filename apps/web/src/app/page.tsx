@@ -26,6 +26,7 @@ import { AnimateInView } from "@/components/home/AnimateInView";
 import { FounderBioExpandable } from "@/components/founder/FounderBioExpandable";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { GlobalPresenceSection } from "@/components/home/GlobalPresenceSection";
+import { LogoCarouselSection } from "@/components/portfolio/modules/LogoCarouselSection";
 import { LanguageSelector } from "@/components/home/LanguageSelector";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -85,6 +86,7 @@ export default function Home() {
   const [groupMaster, setGroupMaster] = useState<Awaited<ReturnType<typeof fetchGroup>>>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [apiUnavailable, setApiUnavailable] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(LANG_KEY);
@@ -124,21 +126,37 @@ export default function Home() {
 
   useEffect(() => {
     const groupHomeUrl = "/api/public/group-home";
+    setApiUnavailable(false);
     Promise.all([
       fetchPublicPortfolio(),
       fetch(`${groupHomeUrl}?nocache=${Date.now()}`, {
         cache: "no-store",
         headers: { Pragma: "no-cache" },
-      }).then((r) => (r.ok ? r.json() : null)),
+      }).then(async (r) => {
+        if (r.status === 503) {
+          const body = await r.json().catch(() => ({}));
+          if (body?.error === "api_unavailable") return { __apiUnavailable: true };
+        }
+        return r.ok ? r.json() : null;
+      }),
       fetchGroup(),
     ])
-      .then(([portfolioData, pageData, groupData]: [PortfolioItem[], Page | null, Awaited<ReturnType<typeof fetchGroup>>]) => {
-        setPortfolio(portfolioData);
-        setGroupHome(pageData);
+      .then(([portfolioData, pageData, groupData]: [PortfolioItem[] | null, Page | null | { __apiUnavailable: true }, Awaited<ReturnType<typeof fetchGroup>>]) => {
+        const isUnavailable = pageData && typeof pageData === "object" && "__apiUnavailable" in pageData;
+        if (isUnavailable) {
+          setApiUnavailable(true);
+          setGroupHome(null);
+        } else {
+          setGroupHome(pageData as Page | null);
+        }
+        setPortfolio(portfolioData ?? null);
         setGroupMaster(groupData ?? null);
         setError(false);
       })
-      .catch(() => setError(true))
+      .catch(() => {
+        setError(true);
+        setApiUnavailable(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -202,7 +220,9 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center px-4">
         <p className="text-zinc-400 text-center">
-          Group Home not configured.
+          {apiUnavailable
+            ? "Serviço temporariamente indisponível. Inicie o backend (ex: pnpm --filter api dev na raiz do projeto)."
+            : "Group Home not configured."}
         </p>
         <Link href="/dashboard" className="mt-4 text-amber-400 hover:text-amber-300 text-sm">
           Dashboard
@@ -493,6 +513,9 @@ export default function Home() {
           </section>
         </AnimateInView>
             );
+          }
+          if (block.type === "logo_carousel") {
+            return <LogoCarouselSection key={block.id} block={block} lang={lang} />;
           }
           if (block.type === "what") {
             const imageOnLeft = (block.config?.whatImagePosition as string) === "left";
@@ -859,6 +882,11 @@ export default function Home() {
               <AnimateInView key={block.id}>
                 <GlobalPresenceSection block={block} lang={lang} />
               </AnimateInView>
+            );
+          }
+          if (block.type === "logo_carousel") {
+            return (
+              <LogoCarouselSection key={block.id} block={block} lang={lang} />
             );
           }
           if (block.type === "cta") {

@@ -16,6 +16,7 @@ import {
   Tag,
   Users,
   Mail,
+  KeyRound,
 } from "lucide-react";
 import type { Group } from "@/types/group";
 
@@ -29,6 +30,7 @@ const menuItems = [
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
   { title: "Mídia", href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
+  { title: "Senhas", href: "/dashboard/senhas", icon: KeyRound, moduleSlug: "vault" },
   { title: "Configurações", href: "/dashboard/configuracoes", icon: Settings, moduleSlug: "configuracoes" },
 ];
 
@@ -104,7 +106,9 @@ export function Sidebar() {
             (item.href === "/dashboard/emails" &&
               pathname?.startsWith("/dashboard/emails")) ||
             (item.href === "/dashboard/midia" &&
-              pathname?.startsWith("/dashboard/midia"));
+              pathname?.startsWith("/dashboard/midia")) ||
+            (item.href === "/dashboard/senhas" &&
+              pathname?.startsWith("/dashboard/senhas"));
 
           return (
             <Link
