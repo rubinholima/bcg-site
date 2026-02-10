@@ -39,12 +39,15 @@ export async function POST(request: NextRequest) {
     expires_in?: number;
   };
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const isLocalhost = appUrl.startsWith("http://localhost") || appUrl.startsWith("http://127.0.0.1");
   const res = NextResponse.json({ ok: true });
   const cookieOpts = {
     path: "/",
     httpOnly: true,
     sameSite: "lax" as const,
     maxAge: 60 * 60 * 24 * 7,
+    secure: !isLocalhost,
   };
 
   if (tokens.id_token) {

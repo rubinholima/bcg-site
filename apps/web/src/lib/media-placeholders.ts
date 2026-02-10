@@ -28,4 +28,6 @@ export interface MediaItem {
   sizeKey?: string;
   /** Preenchido quando listagem é "Tudo" (logos + media): "logos" | "media". */
   folder?: string;
+  /** Nome amigável para exibir no menu e listagem (editável no dashboard Mídia). */
+  displayName?: string | null;
 }

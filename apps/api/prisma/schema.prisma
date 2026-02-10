@@ -45,12 +45,18 @@ model Tenant {
   kindId                  String
   kind                    TenantKind @relation(fields: [kindId], references: [id])
   logoUrl                 String?  // URL do logo no S3
-  location                String?  // Localização (ex.: cidade, país)
+  location                String?  // Localização (ex.: cidade, país) — texto livre
   address                 String?  @db.Text // Endereço da empresa
   contactName             String?  // Nome do contato
   contactPhone            String?  // Telefone do contato
   workmailOrganizationId  String?  // ID da organização WorkMail na AWS (ex.: m-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
   domain                  String?  // Domínio de email (ex.: bostoncitygroup.com)
+  // Presença Global (mapa e lista): coordenadas e dados para o pin
+  lat                     Float?   // Latitude para o mapa
+  lng                     Float?   // Longitude para o mapa
+  city                    String?  // Cidade (ex.: Boston)
+  country                 String?  // País (ex.: EUA)
+  websiteUrl              String?  // Site da empresa/clube (ex.: https://...)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]
@@ -102,6 +108,15 @@ model HomeContent {
   slug      String   @unique // "home"
   content   Json     // { pt: {...}, en: {...}, images: { hero?, what?, founder?, cta? } }
   updatedAt DateTime @updatedAt
+}
+
+// Nome exibido para arquivos de mídia no S3 (key = caminho no bucket, displayName = nome amigável)
+model MediaMeta {
+  id          String   @id @default(cuid())
+  key         String   @unique // ex: media/hero/uuid.jpg
+  displayName String?  // nome para exibir no menu e listagem
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // Módulos do dashboard (Grupo Master, Empresas, Usuários, etc.)

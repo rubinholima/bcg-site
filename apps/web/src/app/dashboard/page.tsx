@@ -39,6 +39,7 @@ interface DashboardStats {
   usersCount: number;
   workmailOrgsCount?: number;
   workmailAccountsCount?: number;
+  pagesCount?: number;
   lastTenant?: LastActivity | null;
   lastUser?: LastActivity | null;
 }
@@ -142,7 +143,7 @@ function getStatValue(
   if (key === "users") return stats.usersCount;
   if (key === "emails") return stats.workmailAccountsCount ?? null;
   if (key === "kinds") return stats.tenantKindsCount;
-  if (key === "pages") return 0; // placeholder até existir conteúdo
+  if (key === "pages") return stats.pagesCount ?? 0;
   return null;
 }
 

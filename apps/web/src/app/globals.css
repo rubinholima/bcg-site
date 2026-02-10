@@ -122,6 +122,30 @@
   animation: fadeInUp 0.7s ease-out forwards;
 }
 
+/* Hero: título de impacto (sombra + legibilidade em qualquer fundo) */
+.hero-title {
+  text-shadow:
+    0 0 40px rgba(0, 0, 0, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 4px 24px rgba(0, 0, 0, 0.35);
+  letter-spacing: -0.02em;
+}
+
+@keyframes heroReveal {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-hero-reveal {
+  animation: heroReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 .animate-fade-in {
   animation: fadeIn 0.6s ease-out forwards;
 }
@@ -198,4 +222,59 @@
 }
 .in-view .animate-on-scroll.animate-delay-800 {
   animation-delay: 800ms;
+}
+
+/* Global Presence: marker pulse */
+@keyframes global-presence-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.2;
+  }
+}
+
+/* Leaflet: marcador customizado (sem borda/fundo padrão) + hover */
+.global-presence-leaflet-marker.leaflet-div-icon {
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  transform-origin: center center;
+}
+.global-presence-leaflet-marker.leaflet-div-icon:hover {
+  transform: scale(1.35);
+}
+.global-presence-leaflet-marker.leaflet-div-icon:hover span {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+/* Leaflet: popup retângulo tema escuro */
+.global-presence-map-dark .leaflet-popup-content-wrapper {
+  background: #18181b;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.global-presence-map-dark .leaflet-popup-tip {
+  background: #18181b;
+}
+.global-presence-map-dark .leaflet-popup-content {
+  margin: 0;
+  min-width: 200px;
+}
+.global-presence-map-dark .leaflet-container a.leaflet-popup-close-button {
+  color: #a1a1aa;
+}
+.global-presence-map-dark .leaflet-container a.leaflet-popup-close-button:hover {
+  color: #fff;
+}
+
+/* Leaflet: clarear um pouco o mapa escuro */
+.global-presence-map-dark .leaflet-tile-pane {
+  filter: brightness(1.35);
 }

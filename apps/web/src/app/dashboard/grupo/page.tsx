@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
+import { authFetch } from "@/lib/authFetch";
 import type { Group } from "@/types/group";
 
 export default function GrupoPage() {
@@ -30,8 +31,7 @@ export default function GrupoPage() {
   useEffect(() => {
     async function load() {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-        const res = await fetch(`${baseUrl}/group`);
+        const res = await authFetch("/api/group");
         if (!res.ok) {
           setError("Erro ao carregar dados do grupo.");
           return;
@@ -58,9 +58,8 @@ export default function GrupoPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/group", {
+      const res = await authFetch("/api/group", {
         method: "PATCH",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, description, address: address || undefined, contactName: contactName || undefined, contactPhone: contactPhone || undefined }),
       });
@@ -89,9 +88,8 @@ export default function GrupoPage() {
       const form = new FormData();
       form.append("file", file);
       form.append("scope", "group");
-      const res = await fetch("/api/upload/logo", {
+      const res = await authFetch("/api/upload/logo", {
         method: "POST",
-        credentials: "include",
         body: form,
       });
       if (!res.ok) {

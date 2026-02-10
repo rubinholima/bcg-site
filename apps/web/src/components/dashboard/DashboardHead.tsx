@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { authFetch } from "@/lib/authFetch";
 import type { Group } from "@/types/group";
 
 /**
@@ -12,8 +13,7 @@ export function DashboardHead() {
 
   useEffect(() => {
     let cancelled = false;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-    fetch(`${baseUrl}/group`)
+    authFetch("/api/group")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Group | null) => {
         if (!cancelled && data) setGroup(data);

@@ -16,14 +16,12 @@ import {
   Tag,
   Users,
   Mail,
-  Home,
 } from "lucide-react";
 import type { Group } from "@/types/group";
 
 const menuItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, moduleSlug: "dashboard" },
   { title: "Grupo Master", href: "/dashboard/grupo", icon: Globe, moduleSlug: "grupo_master" },
-  { title: "Conteúdo da Home", href: "/dashboard/conteudo", icon: Home, moduleSlug: "dashboard" },
   { title: "Usuários", href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
   { title: "Empresas", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
   { title: "Emails", href: "/dashboard/emails", icon: Mail, moduleSlug: "emails" },

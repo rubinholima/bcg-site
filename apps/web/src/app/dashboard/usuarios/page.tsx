@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetch } from "@/lib/authFetch";
 import type { UserListItem, UserRole } from "@/types/user";
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -90,7 +91,7 @@ export default function UsuariosPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/users", { credentials: "include" });
+      const res = await authFetch("/api/users");
       if (!res.ok) {
         if (res.status === 401) setError("Não autorizado.");
         else setError("Erro ao carregar usuários.");
@@ -114,9 +115,8 @@ export default function UsuariosPage() {
   const handleRoleChange = async (username: string, role: UserRole) => {
     setUpdating(username);
     try {
-      const res = await fetch(`/api/users/${encodeURIComponent(username)}/role`, {
+      const res = await authFetch(`/api/users/${encodeURIComponent(username)}/role`, {
         method: "PATCH",
-        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
       });

@@ -8,14 +8,36 @@ import { isProxyImageUrl } from "@/lib/media-url";
 import { Button } from "@/components/ui/button";
 
 interface HeroCarouselProps {
-  /** Slides com URL e títulos (titlePt / titleEn). */
   slides: HeroSlide[];
   effect: HeroCarouselEffect;
   overlayOpacity: number;
-  /** Tempo em segundos em cada foto (5, 10 ou 15). */
   intervalSeconds: 5 | 10 | 15;
   lang: "pt" | "en";
   children: React.ReactNode;
+  /** overlayMode: solid | gradient-bottom | gradient-right */
+  overlayMode?: "solid" | "gradient-bottom" | "gradient-right";
+  overlayColor?: string;
+}
+
+function overlayStyle(
+  overlayOpacity: number,
+  mode?: "solid" | "gradient-bottom" | "gradient-right",
+  color?: string
+): React.CSSProperties {
+  const c = color && /^#[0-9A-Fa-f]{3,8}$/.test(color) ? color : "rgb(9 9 11)";
+  if (mode === "gradient-bottom") {
+    return {
+      background: `linear-gradient(to bottom, transparent 0%, ${c} ${100 - overlayOpacity * 100}%)`,
+      opacity: 1,
+    };
+  }
+  if (mode === "gradient-right") {
+    return {
+      background: `linear-gradient(to right, transparent 0%, ${c} ${100 - overlayOpacity * 100}%)`,
+      opacity: 1,
+    };
+  }
+  return { backgroundColor: c, opacity: overlayOpacity };
 }
 
 export function HeroCarousel({
@@ -25,6 +47,8 @@ export function HeroCarousel({
   intervalSeconds,
   lang,
   children,
+  overlayMode = "solid",
+  overlayColor,
 }: HeroCarouselProps) {
   const [index, setIndex] = useState(0);
   const validSlides = slides.filter((s) => s?.url?.trim());
@@ -65,7 +89,7 @@ export function HeroCarousel({
           sizes="100vw"
           unoptimized={isProxyImageUrl(src)}
         />
-        <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
+        <div className="absolute inset-0" style={overlayStyle(overlayOpacity, overlayMode, overlayColor)} />
         {children}
       </div>
     );
@@ -100,8 +124,8 @@ export function HeroCarousel({
         </div>
       ))}
       <div
-        className="absolute inset-0 bg-zinc-950 transition-opacity duration-700"
-        style={{ opacity: overlayOpacity, zIndex: 1 }}
+        className="absolute inset-0 transition-opacity duration-700"
+        style={{ ...overlayStyle(overlayOpacity, overlayMode, overlayColor), zIndex: 1 }}
       />
       <div className="absolute inset-0 z-10 flex flex-col">
         {currentSlide && (currentSlide.titlePt || currentSlide.titleEn) && (

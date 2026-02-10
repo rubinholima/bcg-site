@@ -1,4 +1,4 @@
-import { IsString, IsOptional, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsString, IsOptional, Matches, MaxLength, MinLength, IsNumber } from 'class-validator';
 
 export class UpdateTenantDto {
   @IsString()
@@ -21,11 +21,6 @@ export class UpdateTenantDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(255)
-  location?: string;
-
-  @IsString()
-  @IsOptional()
   @MaxLength(2048)
   logoUrl?: string;
 
@@ -42,4 +37,27 @@ export class UpdateTenantDto {
   @IsOptional()
   @MaxLength(50)
   contactPhone?: string;
+
+  @IsOptional()
+  @IsNumber()
+  lat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  lng?: number;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  country?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(2048)
+  websiteUrl?: string;
 }

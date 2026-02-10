@@ -33,7 +33,7 @@ export class PublicController {
 
   @Get('home-content')
   getHomeContent() {
-    return this.homeContentService.get();
+    return this.homeContentService.getPublic();
   }
 
   /** Página modular do tenant (clube/empresa) pelo slug — para /portfolio/[slug] */

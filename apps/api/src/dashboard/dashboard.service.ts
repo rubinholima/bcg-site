@@ -13,6 +13,7 @@ export interface DashboardStatsDto {
   usersCount: number;
   workmailOrgsCount: number;
   workmailAccountsCount: number;
+  pagesCount: number;
   lastTenant: LastActivityDto | null;
   lastUser: LastActivityDto | null;
 }
@@ -31,6 +32,7 @@ export class DashboardService {
       usersCount,
       workmailOrgsCount,
       workmailAccountsCountFromDb,
+      pagesCountFromDb,
       lastTenantRow,
       lastUserRow,
     ] = await Promise.all([
@@ -39,6 +41,7 @@ export class DashboardService {
       this.prisma.user.count(),
       this.prisma.tenant.count({ where: { workmailOrganizationId: { not: null } } }),
       this.prisma.workMailAccount.count(),
+      this.prisma.page.count(),
       this.prisma.tenant.findFirst({
         orderBy: { createdAt: 'desc' },
         select: { name: true, createdAt: true },
@@ -48,6 +51,9 @@ export class DashboardService {
         select: { name: true, email: true, createdAt: true },
       }),
     ]);
+
+    // Páginas publicadas = home do grupo (1) + páginas de empresas (tenant pages)
+    const pagesCount = 1 + pagesCountFromDb;
 
     let workmailAccountsCount = workmailAccountsCountFromDb;
     try {
@@ -76,6 +82,7 @@ export class DashboardService {
       usersCount,
       workmailOrgsCount,
       workmailAccountsCount,
+      pagesCount,
       lastTenant,
       lastUser,
     };

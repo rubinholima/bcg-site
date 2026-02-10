@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
+import { authFetch } from "@/lib/authFetch";
 import type { MeResponse } from "@/types/auth";
 
 interface AuthState {
@@ -40,18 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
   });
 
-  const fetchMe = useCallback(async (skipRefresh = false) => {
+  const fetchMe = useCallback(async () => {
     try {
-      const res = await fetch("/api/me", { credentials: "include" });
-      if (res.status === 401 && !skipRefresh) {
-        const refreshRes = await fetch("/api/auth/refresh", {
-          method: "POST",
-          credentials: "include",
-        });
-        if (refreshRes.ok) {
-          return fetchMe(true);
-        }
-      }
+      const res = await authFetch("/api/me");
       if (!res.ok) {
         setState({ user: null, groups: [], role: null, modules: [], loading: false });
         return;
@@ -64,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let modules: string[] = [];
       if (canAccessDashboard) {
         try {
-          const modRes = await fetch("/api/me/modules", { credentials: "include" });
+          const modRes = await authFetch("/api/me/modules");
           if (modRes.ok) {
             const modData = await modRes.json();
             modules = modData.modules ?? [];

@@ -7,11 +7,11 @@
 
 ## Cookies
 
-| Nome           | Conteúdo      | Opções                          |
-|----------------|---------------|----------------------------------|
-| `id_token`     | JWT ID token  | path=/, httpOnly, sameSite=lax, maxAge=7d |
-| `access_token` | JWT access    | path=/, httpOnly, sameSite=lax, maxAge=7d |
-| `refresh_token`| Refresh token | path=/, httpOnly, sameSite=lax, maxAge=30d |
+| Nome            | Conteúdo      | Opções                                     |
+| --------------- | ------------- | ------------------------------------------ |
+| `id_token`      | JWT ID token  | path=/, httpOnly, sameSite=lax, maxAge=7d  |
+| `access_token`  | JWT access    | path=/, httpOnly, sameSite=lax, maxAge=7d  |
+| `refresh_token` | Refresh token | path=/, httpOnly, sameSite=lax, maxAge=30d |
 
 ## Como recuperar
 
@@ -28,6 +28,16 @@
 5. Define os cookies e redireciona para `/dashboard`.
 
 Nenhum fetch/axios para `cognito-idp.amazonaws.com` no browser.
+
+## Renovação automática (evitar erro de token)
+
+Para o token expirado **não** derrubar o usuário:
+
+1. **Refresh token:** o login pede `scope: "openid offline_access"`. O Cognito devolve `refresh_token` e o callback grava em cookie. No **App Client** do Cognito (Hosted UI) é preciso ter os scopes **OpenID** e **offline_access** (ou o que permitir refresh) habilitados; caso contrário pode dar `invalid_scope`.
+2. **Rota de refresh:** `POST /api/auth/refresh` lê o cookie `refresh_token`, troca por novos `id_token` e `access_token` no Cognito e atualiza os cookies.
+3. **authFetch:** no frontend, use `authFetch` de `@/lib/authFetch` em vez de `fetch` para chamadas à nossa API (`/api/...`). Em **401**, o `authFetch` chama `/api/auth/refresh` e repete a requisição uma vez. Assim a sessão é renovada em background e o usuário não vê "token invalid".
+
+**Resumo:** use `authFetch` em todas as chamadas autenticadas ao Next (ex.: `/api/me`, `/api/users`, `/api/group`). Novas páginas do dashboard devem usar `authFetch` para não depender de token “fresco” manualmente.
 
 ## Logout e URL de saída
 

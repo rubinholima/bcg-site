@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code || !cognitoDomain || !clientId) {
+    console.error("[auth/callback] missing code or config", { hasCode: !!code, hasDomain: !!cognitoDomain, hasClientId: !!clientId });
     return NextResponse.redirect(new URL("/login?error=missing", appUrl));
   }
 
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
   if (!tokenRes.ok) {
     const text = await tokenRes.text();
     console.error("[auth/callback] token exchange failed", tokenRes.status, text);
+    console.error("[auth/callback] redirect_uri usado:", redirectUri);
     return NextResponse.redirect(new URL("/login?error=auth", appUrl));
   }
 
@@ -63,7 +65,14 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get("state");
   const nextPath = isValidInternalPath(state) ? state : "/dashboard";
   const redirect = NextResponse.redirect(new URL(nextPath, appUrl));
-  const cookieOpts = { path: "/", httpOnly: true, sameSite: "lax" as const, maxAge: 60 * 60 * 24 * 7 };
+  const isLocalhost = appUrl.startsWith("http://localhost") || appUrl.startsWith("http://127.0.0.1");
+  const cookieOpts = {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    maxAge: 60 * 60 * 24 * 7,
+    secure: !isLocalhost,
+  };
 
   if (tokens.id_token) {
     redirect.cookies.set("id_token", tokens.id_token, cookieOpts);

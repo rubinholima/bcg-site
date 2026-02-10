@@ -22,6 +22,8 @@ interface MediaPickerProps {
   sizeKey: MediaPlaceholderSizeKey;
   /** Se true, lista imagens de todas as pastas (não só sizeKey). Assim o que foi enviado em qualquer pasta aparece. */
   allowAllFolders?: boolean;
+  /** Se "logos", lista apenas a pasta de logos (empresas/clubes). Ignora sizeKey. */
+  folder?: "logos" | "all";
   placeholder?: string;
   label?: string;
   className?: string;
@@ -41,6 +43,7 @@ export function MediaPicker({
   onChange,
   sizeKey,
   allowAllFolders = false,
+  folder = "all",
   placeholder = "Escolher da mídia…",
   label,
   className,
@@ -50,14 +53,22 @@ export function MediaPicker({
 
   useEffect(() => {
     setLoading(true);
-    const qs = allowAllFolders ? "" : `?sizeKey=${encodeURIComponent(sizeKey)}`;
+    const useLogosOnly = folder === "logos";
+    const qs = useLogosOnly ? "?all=1" : allowAllFolders ? "" : `?sizeKey=${encodeURIComponent(sizeKey)}`;
     fetch(`/api/media${qs}`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : { items: [] }))
-      .then((data: { items: MediaItem[] }) => setItems(data.items ?? []))
+      .then((data: { items: MediaItem[] }) => {
+        const list = data.items ?? [];
+        if (useLogosOnly) {
+          return list.filter((item) => item.folder === "logos");
+        }
+        return list;
+      })
+      .then(setItems)
       .finally(() => setLoading(false));
-  }, [sizeKey, allowAllFolders]);
+  }, [sizeKey, allowAllFolders, folder]);
 
-  const dimensions = MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";
+  const dimensions = folder === "logos" ? "Logo" : MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";
   const validItems = items.filter((item) => item.url?.trim());
   const valueInList = validItems.some((item) => item.url === value);
   const displayValue = value?.trim() || "__none__";
@@ -67,7 +78,7 @@ export function MediaPicker({
       {label && (
         <Label className="text-muted-foreground">
           {label}
-          {dimensions !== "—" && (
+          {dimensions !== "—" && folder !== "logos" && (
             <span className="ml-1 font-normal text-muted-foreground">
               ({dimensions})
             </span>
@@ -93,7 +104,7 @@ export function MediaPicker({
             {validItems.map((item) => (
               <SelectItem key={item.key} value={item.url}>
                 <span className="truncate block max-w-[280px]" title={item.url}>
-                  {item.key.split("/").pop() ?? item.url}
+                  {item.displayName?.trim() || item.key.split("/").pop() || item.url}
                 </span>
               </SelectItem>
             ))}

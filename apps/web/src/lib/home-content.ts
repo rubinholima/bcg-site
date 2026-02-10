@@ -1,4 +1,4 @@
-import type { HomeContentDto, HomeContentBlock, HomeBlockType } from "@/types/home-content";
+import type { HomeContentDto, HomeContentBlock, HomeBlockType, GlobalPresenceCounter, GlobalPresenceLocation } from "@/types/home-content";
 import { copy } from "@/lib/home-copy";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -101,6 +101,7 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   equipe: { pt: "Nossa equipe", en: "Our team" },
   clientes: { pt: "Clientes / Cases", en: "Clients / Cases" },
   contato: { pt: "Contato", en: "Contact" },
+  global_presence: { pt: "Presença Global / Expansão", en: "Global Presence" },
 };
 
 /** Opções para o dropdown "Adicionar módulo" — clubes de futebol e empresas */
@@ -132,6 +133,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string }[] = [
   { type: "equipe", label: "Nossa equipe" },
   { type: "clientes", label: "Clientes / Cases" },
   { type: "contato", label: "Contato" },
+  { type: "global_presence", label: "Presença Global / Expansão" },
 ];
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
@@ -159,6 +161,39 @@ export const BLOCK_TYPES_WITH_BODY: HomeBlockType[] = [
   "contato",
 ];
 
+/** Contadores padrão do Presença Global (para merge no dashboard quando faltar algum). */
+export const DEFAULT_GLOBAL_PRESENCE_COUNTERS: GlobalPresenceCounter[] = [
+  { key: "clubs", labelPT: "Clubes", labelEN: "Clubs", value: 0, enabled: true },
+  { key: "companies", labelPT: "Empresas", labelEN: "Companies", value: 0, enabled: true },
+  { key: "athletes", labelPT: "Atletas", labelEN: "Athletes", value: 0, enabled: true },
+  { key: "projects", labelPT: "Projetos", labelEN: "Projects", value: 0, enabled: true },
+  { key: "countries", labelPT: "Países", labelEN: "Countries", value: 0, enabled: true },
+];
+
+/** Garante que a lista de contadores tenha todos os 5 (clubes, empresas, atletas, projetos, países). */
+export function mergeGlobalPresenceCounters(
+  counters: GlobalPresenceCounter[] | undefined
+): GlobalPresenceCounter[] {
+  const byKey = new Map<string, GlobalPresenceCounter>();
+  for (const c of DEFAULT_GLOBAL_PRESENCE_COUNTERS) {
+    byKey.set(c.key, { ...c });
+  }
+  if (Array.isArray(counters)) {
+    for (const c of counters) {
+      if (c && typeof c.key === "string") {
+        byKey.set(c.key, {
+          key: c.key as GlobalPresenceCounter["key"],
+          labelPT: c.labelPT ?? (DEFAULT_GLOBAL_PRESENCE_COUNTERS.find((d) => d.key === c.key)?.labelPT ?? c.key),
+          labelEN: c.labelEN ?? (DEFAULT_GLOBAL_PRESENCE_COUNTERS.find((d) => d.key === c.key)?.labelEN ?? c.key),
+          value: typeof c.value === "number" ? c.value : 0,
+          enabled: c.enabled !== false,
+        });
+      }
+    }
+  }
+  return DEFAULT_GLOBAL_PRESENCE_COUNTERS.map((d) => byKey.get(d.key) ?? d);
+}
+
 /** Cria um novo bloco do tipo indicado (para adicionar à página). */
 export function createBlock(type: HomeBlockType, sortOrder: number): HomeContentBlock {
   const needsUniqueId =
@@ -184,6 +219,48 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.footerText = "";
     config.footerLinks = [];
     config.footerTextColor = "";
+  }
+  if (type === "highlights") {
+    config.highlightsPt = ["", "", ""];
+    config.highlightsEn = ["", "", ""];
+    config.highlightsIcons = ["Trophy", "Globe", "Layers"];
+  }
+  if (type === "what") {
+    config.imageUrl = "";
+    config.whatImagePosition = "right";
+    config.cardsPt = [{ title: "", body: "" }, { title: "", body: "" }, { title: "", body: "" }, { title: "", body: "" }];
+    config.cardsEn = [{ title: "", body: "" }, { title: "", body: "" }, { title: "", body: "" }, { title: "", body: "" }];
+  }
+  if (type === "how") {
+    config.bulletsPt = ["", "", "", ""];
+    config.bulletsEn = ["", "", "", ""];
+    config.howBulletsIcons = ["CheckCircle", "CheckCircle", "CheckCircle", "CheckCircle"];
+  }
+  if (type === "cta") {
+    config.ctaLayout = "centered";
+    config.ctaTextAlign = "center";
+    config.ctaContentWidth = "normal";
+    config.ctaBackgroundMode = "image";
+    config.ctaOverlayOpacity = 0.75;
+    config.ctaBlur = false;
+    config.ctaPreset = "custom";
+    config.ctaButtons = [
+      { labelPT: "Acessar Dashboard", labelEN: "Access Dashboard", type: "primary", href: "/dashboard", openInNewTab: false, highlighted: true },
+      { labelPT: "Explorar Empresas", labelEN: "Explore Companies", type: "secondary", href: "#companies", openInNewTab: false },
+    ];
+  }
+  if (type === "global_presence") {
+    config.themePreset = "fifa";
+    config.backgroundColor = "#0a0a0f";
+    config.accentColor = "#38bdf8";
+    config.mapTint = "#334155";
+    config.overlayOpacity = 0.4;
+    config.showGridLines = false;
+    config.sectionHeight = "normal";
+    config.subtitlePT = "Não somos locais. Somos plataforma.";
+    config.subtitleEN = "We are not local. We are a platform.";
+    config.counters = [...DEFAULT_GLOBAL_PRESENCE_COUNTERS];
+    config.locations = [] as GlobalPresenceLocation[];
   }
   return { id, type, sortOrder, config };
 }
@@ -249,7 +326,10 @@ export function getImagesFromBlocks(blocks: HomeContentBlock[]): {
   return {
     hero: heroFirstUrl || DEFAULT_HERO,
     what: (whatBlock?.config?.imageUrl as string) || DEFAULT_WHAT,
-    founder: (founderBlock?.config?.imageUrl as string) || DEFAULT_FOUNDER,
+    founder:
+      (founderBlock?.config?.founderPhoto as string) ||
+      (founderBlock?.config?.imageUrl as string) ||
+      DEFAULT_FOUNDER,
     cta: (ctaBlock?.config?.backgroundImage as string) || DEFAULT_CTA,
   };
 }

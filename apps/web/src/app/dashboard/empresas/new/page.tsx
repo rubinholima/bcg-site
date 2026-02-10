@@ -23,10 +23,14 @@ interface FormData {
   name: string;
   slug: string;
   kindId: string;
-  location?: string;
   address?: string;
   contactName?: string;
   contactPhone?: string;
+  lat?: number | "";
+  lng?: number | "";
+  city?: string;
+  country?: string;
+  websiteUrl?: string;
 }
 
 export default function NovaEmpresaPage() {
@@ -42,10 +46,14 @@ export default function NovaEmpresaPage() {
     name: "",
     slug: "",
     kindId: "",
-    location: "",
     address: "",
     contactName: "",
     contactPhone: "",
+    lat: "",
+    lng: "",
+    city: "",
+    country: "",
+    websiteUrl: "",
   });
 
   useEffect(() => {
@@ -71,7 +79,17 @@ export default function NovaEmpresaPage() {
     setError(null);
 
     try {
-      const { data: tenant } = await api.post<Tenant>("/tenants", formData);
+      let websiteUrl = (formData.websiteUrl ?? "").trim();
+      if (websiteUrl && !/^https?:\/\//i.test(websiteUrl)) {
+        websiteUrl = "https://" + websiteUrl;
+      }
+      const payload = {
+        ...formData,
+        websiteUrl: websiteUrl || undefined,
+        lat: formData.lat === "" || formData.lat === undefined ? undefined : Number(formData.lat),
+        lng: formData.lng === "" || formData.lng === undefined ? undefined : Number(formData.lng),
+      };
+      const { data: tenant } = await api.post<Tenant>("/tenants", payload);
       if (logoFile && tenant?.id) {
         const form = new FormData();
         form.append("file", logoFile);
@@ -283,15 +301,84 @@ export default function NovaEmpresaPage() {
               </Select>
             </div>
 
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="lat">Latitude (mapa Presença Global)</Label>
+                <Input
+                  id="lat"
+                  name="lat"
+                  type="number"
+                  step="any"
+                  value={formData.lat === "" ? "" : formData.lat}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      lat: e.target.value === "" ? "" : Number(e.target.value),
+                    }))
+                  }
+                  placeholder="Ex: -23.55"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lng">Longitude (mapa Presença Global)</Label>
+                <Input
+                  id="lng"
+                  name="lng"
+                  type="number"
+                  step="any"
+                  value={formData.lng === "" ? "" : formData.lng}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      lng: e.target.value === "" ? "" : Number(e.target.value),
+                    }))
+                  }
+                  placeholder="Ex: -46.63"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Preencha lat/lng para que a empresa/clube apareça no mapa e na lista &quot;Presença por país&quot; da home.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="city">Cidade, Estado</Label>
+                <Input
+                  id="city"
+                  name="city"
+                  type="text"
+                  value={formData.city ?? ""}
+                  onChange={handleChange}
+                  placeholder="Ex: Boston, MA ou São Paulo, SP"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="country">País</Label>
+                <Input
+                  id="country"
+                  name="country"
+                  type="text"
+                  value={formData.country ?? ""}
+                  onChange={handleChange}
+                  placeholder="Ex: EUA"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="location">Localização (cidade, país)</Label>
+              <Label htmlFor="websiteUrl">Site (URL)</Label>
               <Input
-                id="location"
-                name="location"
+                id="websiteUrl"
+                name="websiteUrl"
                 type="text"
-                value={formData.location ?? ""}
+                value={formData.websiteUrl ?? ""}
                 onChange={handleChange}
-                placeholder="Ex: Boston, EUA"
+                placeholder="Ex: site.com (não precisa de http://)"
                 disabled={loading}
               />
             </div>

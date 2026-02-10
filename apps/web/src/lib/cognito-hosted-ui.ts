@@ -1,6 +1,7 @@
 /**
  * URLs do Cognito Hosted UI.
  * Nenhum fetch no browser — apenas montagem de URL para redirect.
+ * Scopes: openid + offline_access (refresh). No App Client do Cognito, habilite esses scopes no Hosted UI para evitar invalid_scope.
  */
 
 const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";

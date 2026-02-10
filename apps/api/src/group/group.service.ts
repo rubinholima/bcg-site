@@ -3,6 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { HomeContentService } from '../home-content/home-content.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const DEFAULT_SLUG = 'bcg';
@@ -33,7 +34,10 @@ export interface GroupHomePageShape {
 
 @Injectable()
 export class GroupService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly homeContentService: HomeContentService,
+  ) {}
 
   async findOne(slug: string = DEFAULT_SLUG): Promise<GroupDto> {
     let row = await this.prisma.group.findUnique({ where: { slug } });
@@ -61,18 +65,22 @@ export class GroupService {
     };
   }
 
-  /** Retorna o grupo no formato de "página" para a home pública e para o editor. */
+  /** Retorna o grupo no formato de "página" para a home pública e para o editor. Blocos enriquecidos com clubes/empresas/países do cadastro. */
   async getGroupHomePageShape(slug: string = DEFAULT_SLUG): Promise<GroupHomePageShape | null> {
     const group = await this.findOne(slug);
     const content = group.homeContent ?? { blocks: [] };
+    const rawBlocks = Array.isArray((content as { blocks?: unknown[] }).blocks)
+      ? (content as { blocks: unknown[] }).blocks
+      : [];
+    const blocks = await this.homeContentService.enrichBlocksWithGlobalPresence(
+      rawBlocks as { id: string; type: string; sortOrder: number; config?: Record<string, unknown> }[],
+    );
     return {
       id: group.id,
       tenantId: group.id,
       slug: 'group-home',
       title: group.name,
-      content: Array.isArray((content as { blocks?: unknown[] }).blocks)
-        ? content as { blocks: unknown[] }
-        : { blocks: [] },
+      content: { blocks },
       tenant: {
         id: group.id,
         name: group.name,

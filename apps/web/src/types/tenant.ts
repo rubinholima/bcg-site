@@ -12,6 +12,11 @@ export interface Tenant {
     name: string;
   };
   logoUrl: string | null;
+  lat: number | null;
+  lng: number | null;
+  city: string | null;
+  country: string | null;
+  websiteUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

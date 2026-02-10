@@ -9,9 +9,10 @@ import type { HomeContentDto } from './home-content.service';
 export class HomeContentController {
   constructor(private readonly homeContentService: HomeContentService) {}
 
+  /** Retorna conteúdo já enriquecido (clubes/empresas/países do cadastro) para o dashboard ver valores atuais. */
   @Get()
   get() {
-    return this.homeContentService.get();
+    return this.homeContentService.getPublic();
   }
 
   @Patch()

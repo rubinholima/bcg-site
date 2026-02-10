@@ -20,6 +20,11 @@ interface TenantRow {
   address: string | null;
   contactName: string | null;
   contactPhone: string | null;
+  lat: number | null;
+  lng: number | null;
+  city: string | null;
+  country: string | null;
+  websiteUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +41,11 @@ function mapRow(row: TenantRow): TenantResponseDto {
     kindId: row.kindId ?? '',
     kind: { id: row.kindId ?? '', name: row.kindName ?? '' },
     logoUrl: row.logoUrl ?? null,
+    lat: row.lat ?? null,
+    lng: row.lng ?? null,
+    city: row.city ?? null,
+    country: row.country ?? null,
+    websiteUrl: row.websiteUrl ?? null,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
     updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
   };
@@ -52,7 +62,9 @@ export class TenantsService {
     try {
       const tenants = await this.prisma.$queryRaw<TenantRow[]>`
         SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
-          t.location, t.address, t."contactName", t."contactPhone", t."createdAt", t."updatedAt"
+          t.location, t.address, t."contactName", t."contactPhone",
+          t.lat, t.lng, t.city, t.country, t."websiteUrl",
+          t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
         WHERE t.slug != ${TenantsService.GROUP_MASTER_SLUG}
@@ -71,7 +83,9 @@ export class TenantsService {
     try {
       const rows = await this.prisma.$queryRaw<TenantRow[]>`
         SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
-          t.location, t.address, t."contactName", t."contactPhone", t."createdAt", t."updatedAt"
+          t.location, t.address, t."contactName", t."contactPhone",
+          t.lat, t.lng, t.city, t.country, t."websiteUrl",
+          t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
         WHERE t.id = ${id}
@@ -95,8 +109,8 @@ export class TenantsService {
       const id = crypto.randomUUID();
       const now = new Date();
       await this.prisma.$executeRaw`
-        INSERT INTO "Tenant" (id, name, slug, "kindId", location, address, "contactName", "contactPhone", "createdAt", "updatedAt")
-        VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${dto.location ?? null}, ${dto.address ?? null}, ${dto.contactName ?? null}, ${dto.contactPhone ?? null}, ${now}, ${now})
+        INSERT INTO "Tenant" (id, name, slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "createdAt", "updatedAt")
+        VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${dto.address ?? null}, ${dto.contactName ?? null}, ${dto.contactPhone ?? null}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${dto.city ?? null}, ${dto.country ?? null}, ${dto.websiteUrl ?? null}, ${now}, ${now})
       `;
       return this.findOne(id);
     } catch (err) {
@@ -134,10 +148,6 @@ export class TenantsService {
         updates.push(`"logoUrl" = $${++idx}`);
         values.push(dto.logoUrl);
       }
-      if (dto.location !== undefined) {
-        updates.push(`location = $${++idx}`);
-        values.push(dto.location);
-      }
       if (dto.address !== undefined) {
         updates.push(`address = $${++idx}`);
         values.push(dto.address);
@@ -149,6 +159,26 @@ export class TenantsService {
       if (dto.contactPhone !== undefined) {
         updates.push(`"contactPhone" = $${++idx}`);
         values.push(dto.contactPhone);
+      }
+      if (dto.lat !== undefined) {
+        updates.push(`lat = $${++idx}`);
+        values.push(dto.lat);
+      }
+      if (dto.lng !== undefined) {
+        updates.push(`lng = $${++idx}`);
+        values.push(dto.lng);
+      }
+      if (dto.city !== undefined) {
+        updates.push(`city = $${++idx}`);
+        values.push(dto.city);
+      }
+      if (dto.country !== undefined) {
+        updates.push(`country = $${++idx}`);
+        values.push(dto.country);
+      }
+      if (dto.websiteUrl !== undefined) {
+        updates.push(`"websiteUrl" = $${++idx}`);
+        values.push(dto.websiteUrl);
       }
       if (updates.length === 0) return this.findOne(id);
       updates.push(`"updatedAt" = $${++idx}`);

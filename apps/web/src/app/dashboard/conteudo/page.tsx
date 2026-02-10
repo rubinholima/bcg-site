@@ -27,6 +27,7 @@ import type {
   HeroCarouselEffect,
   HeroSlide,
   HeroCarouselIntervalSeconds,
+  GlobalPresenceCounter,
 } from "@/types/home-content";
 import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
 import { copy } from "@/lib/home-copy";
@@ -37,6 +38,7 @@ import {
   MODULE_OPTIONS,
   createBlock,
   BLOCK_TYPES_WITH_BODY,
+  mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 
@@ -738,6 +740,47 @@ export default function ConteudoPage() {
                         />
                       </div>
                     )}
+                    {block.type === "global_presence" && (() => {
+                      const counters = mergeGlobalPresenceCounters(block.config?.counters as GlobalPresenceCounter[] | undefined);
+                      const updateCounterValue = (key: GlobalPresenceCounter["key"], value: number) => {
+                        const next = counters.map((c) => (c.key === key ? { ...c, value } : c));
+                        updateBlockConfigValue(index, "counters", next);
+                      };
+                      return (
+                        <div className="space-y-3 sm:col-span-2 border-t pt-3">
+                          <p className="text-xs text-muted-foreground">
+                            Clubes e Empresas vêm do cadastro (empresas/clubes). Atletas e Projetos são manuais. O mapa e a lista &quot;Presença por país&quot; usam as empresas/clubes que têm lat/lng no cadastro.
+                          </p>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {counters.map((c) => {
+                              const isManual = c.key === "athletes" || c.key === "projects";
+                              return (
+                                <div key={c.key} className="space-y-1.5">
+                                  <Label className="text-xs">
+                                    {c.labelPT}
+                                    {!isManual && (
+                                      <span className="ml-1 text-muted-foreground font-normal">(cadastro)</span>
+                                    )}
+                                  </Label>
+                                  {isManual ? (
+                                    <Input
+                                      type="number"
+                                      min={0}
+                                      value={c.value}
+                                      onChange={(e) =>
+                                        updateCounterValue(c.key, Math.max(0, parseInt(e.target.value, 10) || 0))
+                                      }
+                                    />
+                                  ) : (
+                                    <Input type="number" min={0} value={c.value} disabled className="bg-muted" />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

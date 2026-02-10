@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Upload, Copy, Check, ImageOff } from "lucide-react";
+import { ArrowLeft, Upload, Copy, Check, ImageOff, Pencil, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -47,22 +48,44 @@ export default function MidiaPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadSizeKey, setUploadSizeKey] = useState<MediaPlaceholderSizeKey>("hero");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDisplayName, setUploadDisplayName] = useState("");
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+  const [savingName, setSavingName] = useState(false);
   const [dimensions, setDimensions] = useState<Record<string, { w: number; h: number }>>({});
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+  const [tenants, setTenants] = useState<Array<{ id: string; name?: string }>>([]);
+  const [logoScope, setLogoScope] = useState<string>("group");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  useEffect(() => {
+    if (!canAccessModule("midia")) return;
+    fetch("/api/tenants", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((list: Array<{ id: string; name?: string }>) => setTenants(Array.isArray(list) ? list : []))
+      .catch(() => setTenants([]));
+  }, [canAccessModule]);
 
   const fetchList = (filter: string) => {
     setLoading(true);
     setError(null);
-    const sizeKey = filter === "media_all" ? undefined : (filter || undefined);
-    const qs = sizeKey ? `?sizeKey=${encodeURIComponent(sizeKey)}` : "";
+    const useAll = filter === "logos" || filter === "all_with_logos";
+    const qs = useAll ? "?all=1" : filter === "media_all" ? "" : `?sizeKey=${encodeURIComponent(filter)}`;
     fetch(`/api/media${qs}`, { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error("Falha ao carregar mídia");
         return res.json();
       })
       .then((data: { items: MediaItem[] }) => {
-        setItems(data.items ?? []);
+        let list = data.items ?? [];
+        if (filter === "logos") {
+          list = list.filter((i) => i.folder === "logos");
+        } else if (filter === "all_with_logos") {
+          list = list;
+        }
+        setItems(list);
         setDimensions({});
         setImgErrors({});
       })
@@ -82,6 +105,54 @@ export default function MidiaPage() {
     });
   };
 
+  const startEditName = (item: MediaItem) => {
+    setEditingKey(item.key);
+    setEditingValue(item.displayName?.trim() ?? "");
+  };
+
+  const saveDisplayName = () => {
+    if (editingKey == null) return;
+    setSavingName(true);
+    fetch("/api/media", {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: editingKey, displayName: editingValue.trim() || null }),
+    })
+      .then((res) => {
+        if (!res.ok) return res.json().then((d) => Promise.reject(new Error(d?.error ?? "Erro")));
+        return res.json();
+      })
+      .then(() => {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.key === editingKey ? { ...i, displayName: editingValue.trim() || null } : i,
+          ),
+        );
+        setEditingKey(null);
+        setEditingValue("");
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Erro ao salvar nome"))
+      .finally(() => setSavingName(false));
+  };
+
+  const cancelEditName = () => {
+    setEditingKey(null);
+    setEditingValue("");
+  };
+
+  const displayNameOrFallback = (item: MediaItem) => {
+    if (item.displayName?.trim()) return item.displayName.trim();
+    if (item.folder === "logos" || item.key.startsWith("logos/")) {
+      const parts = item.key.split("/");
+      if (parts[1] === "group") return "Logo grupo";
+      if (parts[1] === "tenants" && parts[2]) return `Logo ${parts[2]}`;
+      return parts.slice(1, -1).join(" / ") || "Logo";
+    }
+    const last = item.key.split("/").pop() ?? "";
+    return last.length > 24 ? `${last.slice(0, 20)}…` : last;
+  };
+
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) return;
@@ -90,6 +161,7 @@ export default function MidiaPage() {
     const formData = new FormData();
     formData.append("file", uploadFile);
     formData.append("sizeKey", uploadSizeKey);
+    if (uploadDisplayName.trim()) formData.append("displayName", uploadDisplayName.trim());
     fetch("/api/media", {
       method: "POST",
       credentials: "include",
@@ -101,10 +173,36 @@ export default function MidiaPage() {
       })
       .then(() => {
         setUploadFile(null);
+        setUploadDisplayName("");
         fetchList(filterSizeKey);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro no upload"))
       .finally(() => setUploading(false));
+  };
+
+  const handleUploadLogo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!logoFile || !logoScope.trim()) return;
+    setUploadingLogo(true);
+    setError(null);
+    const formData = new FormData();
+    formData.append("file", logoFile);
+    formData.append("scope", logoScope.trim());
+    fetch("/api/upload/logo", {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    })
+      .then((res) => {
+        if (!res.ok) return res.json().then((d) => Promise.reject(new Error(d?.error ?? "Erro")));
+        return res.json();
+      })
+      .then(() => {
+        setLogoFile(null);
+        if (filterSizeKey === "logos" || filterSizeKey === "all_with_logos") fetchList(filterSizeKey);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Erro no upload do logo"))
+      .finally(() => setUploadingLogo(false));
   };
 
   if (!canAccessModule("midia")) {
@@ -170,6 +268,15 @@ export default function MidiaPage() {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>Nome da imagem (opcional)</Label>
+              <Input
+                placeholder="Ex: Banner principal, Foto do fundador"
+                value={uploadDisplayName}
+                onChange={(e) => setUploadDisplayName(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
+            <div className="space-y-2">
               <Label>Arquivo</Label>
               <input
                 type="file"
@@ -188,9 +295,51 @@ export default function MidiaPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Enviar logo (empresa/clube)</CardTitle>
+          <CardDescription>
+            Logos ficam na pasta <strong>logos/</strong> do bucket (logos/group/ ou logos/tenants/ID/). Escolha o escopo e envie a imagem. Depois use o filtro &quot;Logos (empresas/clubes)&quot; para ver e editar o nome.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleUploadLogo} className="flex flex-wrap items-end gap-4">
+            <div className="space-y-2">
+              <Label>Escopo</Label>
+              <Select value={logoScope} onValueChange={setLogoScope}>
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="group">Grupo (BCG)</SelectItem>
+                  {tenants.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name?.trim() || t.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Arquivo</Label>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
+                onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+              />
+            </div>
+            <Button type="submit" disabled={!logoFile || uploadingLogo}>
+              <Upload className="h-4 w-4 mr-2" />
+              {uploadingLogo ? "Enviando…" : "Enviar logo"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Imagens no S3</CardTitle>
           <CardDescription>
-            Bucket bcg-platform-assets, pasta media/. Lista: miniatura, nome, tamanho (KB), tamanho em pixels e URL.
+            Bucket bcg-platform-assets: pasta <strong>media/</strong> (hero, cards, etc.) e pasta <strong>logos/</strong> (empresas/clubes). Clique no nome para editar e identificar nos seletores.
           </CardDescription>
           <div className="pt-2">
             <Label className="text-muted-foreground">Filtrar por tamanho</Label>
@@ -199,7 +348,9 @@ export default function MidiaPage() {
                 <SelectValue placeholder="Escolha" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="media_all">Todas as pastas</SelectItem>
+                <SelectItem value="media_all">Mídia — todas as pastas</SelectItem>
+                <SelectItem value="logos">Logos (empresas/clubes)</SelectItem>
+                <SelectItem value="all_with_logos">Tudo (mídia + logos)</SelectItem>
                 {MEDIA_PLACEHOLDER_KEYS.map((key) => (
                   <SelectItem key={key} value={key}>
                     {MEDIA_PLACEHOLDER_SIZES[key].label} — {MEDIA_PLACEHOLDER_SIZES[key].dimensions}
@@ -214,7 +365,9 @@ export default function MidiaPage() {
             <p className="text-muted-foreground">Carregando…</p>
           ) : items.length === 0 ? (
             <p className="text-muted-foreground">
-              Nenhuma imagem nesta pasta. Envie uma acima.
+              {filterSizeKey === "logos"
+                ? "Nenhum logo. Use o formulário “Enviar logo (empresa/clube)” acima."
+                : "Nenhuma imagem nesta pasta. Envie uma acima."}
             </p>
           ) : (
             <div className="rounded-md border border-border">
@@ -253,8 +406,53 @@ export default function MidiaPage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-1.5 px-3 font-mono text-muted-foreground truncate max-w-[180px]" title={item.key}>
-                        {item.key.split("/").pop()}
+                      <td className="py-1.5 px-3 max-w-[220px]">
+                        {editingKey === item.key ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Input
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              placeholder="Nome da imagem"
+                              className="h-8 text-sm max-w-[160px]"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveDisplayName();
+                                if (e.key === "Escape") cancelEditName();
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="h-8"
+                              disabled={savingName}
+                              onClick={saveDisplayName}
+                            >
+                              {savingName ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar"}
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" className="h-8" onClick={cancelEditName}>
+                              Cancelar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <span
+                              className="truncate text-muted-foreground cursor-pointer hover:text-foreground"
+                              title={item.key}
+                              onClick={() => startEditName(item)}
+                            >
+                              {displayNameOrFallback(item)}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 shrink-0"
+                              onClick={() => startEditName(item)}
+                              title="Editar nome"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        )}
                       </td>
                       <td className="py-1.5 px-3 text-muted-foreground">
                         {formatBytes(item.size)}

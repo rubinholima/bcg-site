@@ -75,7 +75,8 @@ export type HomeBlockType =
   | "produtos"
   | "equipe"
   | "clientes"
-  | "contato";
+  | "contato"
+  | "global_presence";
 
 /** Efeitos do carrossel do Hero */
 export type HeroCarouselEffect = "fade" | "slide" | "zoom";
@@ -90,11 +91,13 @@ export interface HeroSlide {
   titleEn?: string;
 }
 
-/** Dimensão recomendada da arte do Hero (para exibir no editor) */
+/** Dimensão recomendada da arte do Hero (para exibir no editor). */
 export const HERO_RECOMMENDED_DIMENSIONS = "1920×1080";
 
 /** Config de aparência e conteúdo de um bloco (controle total por módulo) */
 export interface HomeBlockConfig {
+  /** Tamanho/altura da seção (compact = menos padding, normal, large = mais padding). Aplica a todos os módulos. */
+  sectionSize?: "compact" | "normal" | "large";
   /** Cor de fundo (hex, ex: #18181b). Vazio = padrão da seção. */
   backgroundColor?: string;
   /** Imagem de fundo (URL). Opcional; usa overlay se também tiver backgroundColor. */
@@ -115,6 +118,32 @@ export interface HomeBlockConfig {
   heroCarouselEffect?: HeroCarouselEffect;
   /** Hero: tempo em segundos em cada foto (5, 10 ou 15). */
   heroCarouselIntervalSeconds?: HeroCarouselIntervalSeconds;
+  /** Hero: subtítulo (PT/EN). */
+  subtitlePT?: string;
+  subtitleEN?: string;
+  /** Hero: descrição curta (PT/EN). */
+  descriptionPT?: string;
+  descriptionEN?: string;
+  /** Hero: CTA primário. */
+  primaryCTA?: { labelPT?: string; labelEN?: string; href?: string };
+  /** Hero: CTA secundário (opcional). */
+  secondaryCTA?: { labelPT?: string; labelEN?: string; href?: string; variant?: "outline" | "ghost" };
+  /** Hero: alinhamento horizontal do conteúdo (left | center | right). */
+  contentAlign?: "left" | "center" | "right";
+  /** Hero: alinhamento vertical (top | center | bottom). */
+  verticalAlign?: "top" | "center" | "bottom";
+  /** Hero: largura máxima do conteúdo (narrow | normal | wide). */
+  maxContentWidth?: "narrow" | "normal" | "wide";
+  /** Hero: tamanho do título (xl | 2xl | 3xl). */
+  titleSize?: "xl" | "2xl" | "3xl";
+  /** Hero: estilo do subtítulo (normal | uppercase | highlighted). */
+  subtitleStyle?: "normal" | "uppercase" | "highlighted";
+  /** Hero: modo do overlay (solid | gradient). */
+  overlayMode?: "solid" | "gradient-bottom" | "gradient-right";
+  /** Hero: cor do overlay (hex). */
+  overlayColor?: string;
+  /** Hero: altura da seção (screen | large | medium | compact). */
+  heroHeight?: "screen" | "large" | "medium" | "compact";
   /** Header: URL do logo. */
   headerLogoUrl?: string;
   /** Header: links de navegação (label, href). */
@@ -143,7 +172,116 @@ export interface HomeBlockConfig {
   footerLinks?: Array<{ label: string; href: string }>;
   /** Footer: cor do texto/links (hex). */
   footerTextColor?: string;
+  /** Fundador: biografia longa (PT/EN). */
+  biographyPT?: string;
+  biographyEN?: string;
+  /** Fundador: frase de destaque / citação (PT/EN). */
+  highlightQuotePT?: string;
+  highlightQuoteEN?: string;
+  /** Fundador: foto (mediaId ou URL). */
+  founderPhoto?: string;
+  /** Fundador: cargo/função (PT/EN). */
+  rolePT?: string;
+  roleEN?: string;
+  /** Fundador: ano de fundação (ex: 2015). */
+  foundedYear?: string;
+  /** Fundador: redes sociais (opcional). */
+  socialLinkedIn?: string;
+  socialInstagram?: string;
+  socialTwitter?: string;
+  socialWebsite?: string;
+  /** Destaques: 3 frases em PT. */
+  highlightsPt?: string[];
+  /** Destaques: 3 frases em EN. */
+  highlightsEn?: string[];
+  /** Destaques: 3 ícones (nomes: Trophy, Globe, Layers, Award, Target, etc.). */
+  highlightsIcons?: [string, string, string];
+  /** O que fazemos: posição da foto (esquerda ou direita). */
+  whatImagePosition?: "left" | "right";
+  /** O que fazemos: cards em PT (título + corpo por card). */
+  cardsPt?: Array<{ title?: string; body?: string }>;
+  /** O que fazemos: cards em EN (título + corpo por card). */
+  cardsEn?: Array<{ title?: string; body?: string }>;
+  /** Como funciona: 4 bullets em PT. */
+  bulletsPt?: string[];
+  /** Como funciona: 4 bullets em EN. */
+  bulletsEn?: string[];
+  /** Como funciona: 4 ícones (nomes: CheckCircle, Trophy, Globe, etc.). */
+  howBulletsIcons?: [string, string, string, string];
+  /** CTA Final: subtítulo (PT/EN). */
+  ctaSubtitlePT?: string;
+  ctaSubtitleEN?: string;
+  /** CTA Final: texto de apoio opcional (PT/EN). */
+  ctaSupportTextPT?: string;
+  ctaSupportTextEN?: string;
+  /** CTA Final: layout da seção. */
+  ctaLayout?: "centered" | "split" | "boxed";
+  /** CTA Final: alinhamento do texto. */
+  ctaTextAlign?: "left" | "center";
+  /** CTA Final: largura do conteúdo. */
+  ctaContentWidth?: "normal" | "wide";
+  /** CTA Final: tipo de fundo. */
+  ctaBackgroundMode?: "image" | "gradient" | "solid";
+  /** CTA Final: opacidade do overlay (0-1). */
+  ctaOverlayOpacity?: number;
+  /** CTA Final: blur no fundo (quando imagem). */
+  ctaBlur?: boolean;
+  /** CTA Final: preset (preenche só campos vazios). */
+  ctaPreset?: "partnerships" | "media" | "investors" | "talents" | "custom";
+  /** CTA Final: gradiente (quando backgroundMode = gradient). */
+  ctaGradientStart?: string;
+  ctaGradientEnd?: string;
+  /** CTA Final: até 3 botões. */
+  ctaButtons?: CtaButtonConfig[];
+  /** Global Presence: descrição opcional (título/subtítulo usam titlePt/titleEn e subtitlePT/subtitleEN) */
+  descriptionPT?: string;
+  descriptionEN?: string;
+  /** Global Presence: tema e cores FIFA */
+  themePreset?: "fifa";
+  /** backgroundColor já existe; accentColor e mapTint para pontos e mapa */
+  accentColor?: string;
+  mapTint?: string;
+  overlayOpacity?: number;
+  showGridLines?: boolean;
+  sectionHeight?: "compact" | "normal" | "tall";
+  /** Global Presence: contadores (clubes, atletas, projetos, países) */
+  counters?: GlobalPresenceCounter[];
+  /** Global Presence: lista de localizações no mapa */
+  locations?: GlobalPresenceLocation[];
   [key: string]: unknown;
+}
+
+/** Localização no mapa Presença Global (lat/lng, nome, tipo, etc.) */
+export interface GlobalPresenceLocation {
+  id: string;
+  name: string;
+  type: "Club" | "Company" | "Academy" | "Media" | "Technology";
+  city: string;
+  country: string;
+  lat: number;
+  lng: number;
+  logoMediaId?: string;
+  websiteUrl?: string;
+  active: boolean;
+}
+
+/** Contador do módulo Presença Global (Clubes, Empresas, Atletas, Projetos, Países) */
+export interface GlobalPresenceCounter {
+  key: "clubs" | "companies" | "athletes" | "projects" | "countries";
+  labelPT: string;
+  labelEN: string;
+  value: number;
+  enabled: boolean;
+}
+
+/** Um botão do CTA Final (até 3). */
+export interface CtaButtonConfig {
+  labelPT?: string;
+  labelEN?: string;
+  type?: "primary" | "secondary" | "ghost";
+  href?: string;
+  openInNewTab?: boolean;
+  highlighted?: boolean;
 }
 
 /** Um bloco da home: tipo, ordem e config (aparência + conteúdo) */
