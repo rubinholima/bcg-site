@@ -18,6 +18,9 @@ export interface Tenant {
   country: string | null;
   websiteUrl: string | null;
   sofascoreTeamId: string | null;
+  footballDataTeamId: string | null;
+  apiFutebolTeamId: string | null;
+  categories: string[] | null;
   createdAt: string;
   updatedAt: string;
 }

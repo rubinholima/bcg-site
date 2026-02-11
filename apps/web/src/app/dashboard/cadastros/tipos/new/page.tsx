@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,32 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { UpdateTenantKindDto, TenantKind } from "@/types/tenant-kind";
+import { CreateTenantKindDto } from "@/types/tenant-kind";
 
-export default function EditTipoPage() {
+export default function NewTipoPage() {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
   const [loading, setLoading] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<UpdateTenantKindDto>({
+  const [formData, setFormData] = useState<CreateTenantKindDto>({
     name: "",
   });
-
-  useEffect(() => {
-    async function loadTipo() {
-      try {
-        const { data } = await api.get<TenantKind>(`/tenant-kinds/${id}`);
-        setFormData({ name: data?.name ?? "" });
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao carregar tipo");
-      } finally {
-        setLoadingData(false);
-      }
-    }
-    loadTipo();
-  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,10 +25,10 @@ export default function EditTipoPage() {
     setError(null);
 
     try {
-      await api.patch(`/tenant-kinds/${id}`, formData);
-      router.push("/dashboard/tipos?success=true");
+      await api.post("/tenant-kinds", formData);
+      router.push("/dashboard/cadastros/tipos?success=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao atualizar tipo");
+      setError(err instanceof Error ? err.message : "Erro ao criar tipo");
       setLoading(false);
     }
   };
@@ -55,28 +38,18 @@ export default function EditTipoPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  if (loadingData) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-8 text-muted-foreground">
-          <p>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/tipos">
+        <Link href="/dashboard/cadastros/tipos">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Tipo</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Novo Tipo</h1>
           <p className="text-muted-foreground">
-            Atualize as informações do tipo
+            Adicione um novo tipo de empresa
           </p>
         </div>
       </div>
@@ -85,7 +58,7 @@ export default function EditTipoPage() {
         <CardHeader>
           <CardTitle>Informações do Tipo</CardTitle>
           <CardDescription>
-            Preencha os dados abaixo para atualizar o tipo
+            Preencha os dados abaixo para criar um novo tipo
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -112,9 +85,9 @@ export default function EditTipoPage() {
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading}>
-                {loading ? "Salvando..." : "Salvar Alterações"}
+                {loading ? "Criando..." : "Criar Tipo"}
               </Button>
-              <Link href="/dashboard/tipos">
+              <Link href="/dashboard/cadastros/tipos">
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>

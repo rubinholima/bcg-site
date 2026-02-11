@@ -23,7 +23,7 @@ export function TiposFilters({ currentQ }: { currentQ: string | null }) {
       const next = new URLSearchParams(searchParams.toString());
       if (!value.trim()) next.delete("q");
       else next.set("q", value.trim());
-      router.push(`/dashboard/tipos?${next.toString()}`);
+      router.push(`/dashboard/cadastros/tipos?${next.toString()}`);
     }, 300);
   };
 

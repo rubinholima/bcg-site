@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,15 +9,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { CreateTenantKindDto } from "@/types/tenant-kind";
 
-export default function NewTipoPage() {
+export default function EditCampeonatoPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<CreateTenantKindDto>({
-    name: "",
-  });
+  const [name, setName] = useState("");
+
+  useEffect(() => {
+    async function loadCampeonato() {
+      try {
+        const { data } = await api.get<{ name: string }>(`/championships/${id}`);
+        setName(data?.name ?? "");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao carregar campeonato");
+      } finally {
+        setLoadingData(false);
+      }
+    }
+    loadCampeonato();
+  }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,40 +39,45 @@ export default function NewTipoPage() {
     setError(null);
 
     try {
-      await api.post("/tenant-kinds", formData);
-      router.push("/dashboard/tipos?success=true");
+      await api.patch(`/championships/${id}`, { name: name.trim() });
+      router.push("/dashboard/cadastros/campeonatos?success=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar tipo");
+      setError(err instanceof Error ? err.message : "Erro ao atualizar campeonato");
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  if (loadingData) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8 text-muted-foreground">
+          <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/tipos">
+        <Link href="/dashboard/cadastros/campeonatos">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Tipo</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Editar Campeonato</h1>
           <p className="text-muted-foreground">
-            Adicione um novo tipo de empresa
+            Atualize as informações do campeonato
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Informações do Tipo</CardTitle>
+          <CardTitle>Informações do Campeonato</CardTitle>
           <CardDescription>
-            Preencha os dados abaixo para criar um novo tipo
+            Preencha os dados abaixo para atualizar o campeonato
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,21 +92,20 @@ export default function NewTipoPage() {
               <Label htmlFor="name">Nome *</Label>
               <Input
                 id="name"
-                name="name"
                 type="text"
                 required
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Ex: Futebol"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Campeonato Paulista"
                 disabled={loading}
               />
             </div>
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading}>
-                {loading ? "Criando..." : "Criar Tipo"}
+                {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
-              <Link href="/dashboard/tipos">
+              <Link href="/dashboard/cadastros/campeonatos">
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>

@@ -49,23 +49,32 @@ export function MediaPicker({
   className,
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
     const useLogosOnly = folder === "logos";
     const qs = useLogosOnly ? "?all=1" : allowAllFolders ? "" : `?sizeKey=${encodeURIComponent(sizeKey)}`;
+    let cancelled = false;
+    queueMicrotask(() => setLoading(true));
     fetch(`/api/media${qs}`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : { items: [] }))
       .then((data: { items: MediaItem[] }) => {
+        if (cancelled) return [];
         const list = data.items ?? [];
         if (useLogosOnly) {
           return list.filter((item) => item.folder === "logos");
         }
         return list;
       })
-      .then(setItems)
-      .finally(() => setLoading(false));
+      .then((list) => {
+        if (!cancelled) setItems(list);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [sizeKey, allowAllFolders, folder]);
 
   const dimensions = folder === "logos" ? "Logo" : MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";

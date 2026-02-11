@@ -17,16 +17,29 @@ import {
   Users,
   Mail,
   KeyRound,
+  ChevronDown,
+  ChevronRight,
+  Trophy,
+  MapPin,
+  Shirt,
+  Layers,
 } from "lucide-react";
 import type { Group } from "@/types/group";
+
+const cadastrosItems = [
+  { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers },
+  { title: "Tipos Emp/Clubes", href: "/dashboard/cadastros/tipos", icon: Tag },
+  { title: "Campeonatos", href: "/dashboard/cadastros/campeonatos", icon: Trophy },
+  { title: "Estádios", href: "/dashboard/cadastros/estadios", icon: MapPin },
+  { title: "Times adversários", href: "/dashboard/cadastros/times", icon: Shirt },
+];
 
 const menuItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, moduleSlug: "dashboard" },
   { title: "Grupo Master", href: "/dashboard/grupo", icon: Globe, moduleSlug: "grupo_master" },
   { title: "Usuários", href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
-  { title: "Empresas", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
+  { title: "Empresas / Clubes", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
   { title: "Emails", href: "/dashboard/emails", icon: Mail, moduleSlug: "emails" },
-  { title: "Tipos", href: "/dashboard/tipos", icon: Tag, moduleSlug: "tipos" },
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
   { title: "Mídia", href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
@@ -39,6 +52,9 @@ export function Sidebar() {
   const { canAccessModule, canAccessDashboard } = useAuth();
   const [group, setGroup] = useState<Group | null>(null);
   const [logoError, setLogoError] = useState(false);
+  const [cadastrosOpen, setCadastrosOpen] = useState(
+    () => pathname?.startsWith("/dashboard/cadastros") ?? false
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +101,7 @@ export function Sidebar() {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         {menuItems
           .filter(
             (item) =>
@@ -94,21 +110,14 @@ export function Sidebar() {
           )
           .map((item) => {
           const Icon = item.icon;
-          // Considera ativo se a rota atual corresponde ou é /dashboard/tenants (rota técnica)
           const isActive =
             pathname === item.href ||
-            (item.href === "/dashboard/grupo" &&
-              pathname?.startsWith("/dashboard/grupo")) ||
-            (item.href === "/dashboard/empresas" &&
-              pathname?.startsWith("/dashboard/tenants")) ||
-            (item.href === "/dashboard/usuarios" &&
-              pathname?.startsWith("/dashboard/usuarios")) ||
-            (item.href === "/dashboard/emails" &&
-              pathname?.startsWith("/dashboard/emails")) ||
-            (item.href === "/dashboard/midia" &&
-              pathname?.startsWith("/dashboard/midia")) ||
-            (item.href === "/dashboard/senhas" &&
-              pathname?.startsWith("/dashboard/senhas"));
+            (item.href === "/dashboard/grupo" && pathname?.startsWith("/dashboard/grupo")) ||
+            (item.href === "/dashboard/empresas" && pathname?.startsWith("/dashboard/tenants")) ||
+            (item.href === "/dashboard/usuarios" && pathname?.startsWith("/dashboard/usuarios")) ||
+            (item.href === "/dashboard/emails" && pathname?.startsWith("/dashboard/emails")) ||
+            (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia")) ||
+            (item.href === "/dashboard/senhas" && pathname?.startsWith("/dashboard/senhas"));
 
           return (
             <Link
@@ -126,6 +135,55 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Cadastros (expandível) */}
+        {canAccessModule("tipos") && (
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setCadastrosOpen((o) => !o)}
+              className={cn(
+                "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                cadastrosOpen || pathname?.startsWith("/dashboard/cadastros")
+                  ? "bg-accent/50 text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <span className="flex items-center gap-3">
+                <Tag className="h-5 w-5" />
+                Cadastros
+              </span>
+              {cadastrosOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </button>
+            {cadastrosOpen && (
+              <div className="mt-1 ml-4 space-y-0.5 border-l border-border pl-3">
+                {cadastrosItems.map((sub) => {
+                  const SubIcon = sub.icon;
+                  const isSubActive = pathname === sub.href || pathname?.startsWith(sub.href + "/");
+                  return (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      className={cn(
+                        "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
+                        isSubActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      )}
+                    >
+                      <SubIcon className="h-4 w-4" />
+                      {sub.title}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
     </div>
   );

@@ -18,6 +18,9 @@ export class TenantResponseDto {
   country: string | null;
   websiteUrl: string | null;
   sofascoreTeamId: string | null;
+  footballDataTeamId: string | null;
+  apiFutebolTeamId: string | null;
+  categories: string[] | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 }

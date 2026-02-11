@@ -17,6 +17,7 @@ import { PagesModule } from './pages/pages.module';
 import { PublicModule } from './public/public.module';
 import { MediaModule } from './media/media.module';
 import { VaultModule } from './vault/vault.module';
+import { CadastrosModule } from './cadastros/cadastros.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { VaultModule } from './vault/vault.module';
     PagesModule,
     MediaModule,
     VaultModule,
+    CadastrosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

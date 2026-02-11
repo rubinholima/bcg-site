@@ -58,6 +58,9 @@ model Tenant {
   country                 String?  // País (ex.: EUA)
   websiteUrl              String?  // Site da empresa/clube (ex.: https://...)
   sofascoreTeamId         String?  // ID do time no SofaScore (para módulo Próximos Jogos AUTO)
+  footballDataTeamId      String?  // ID do time no football-data.org (API gratuita, mais estável)
+  apiFutebolTeamId        String?  // ID do time na API Futebol (estaduais, amador, categorias de base)
+  categories              Json?    // Categorias que o clube joga: ["principal","sub20","sub17","sub15","feminino"]
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]
@@ -155,6 +158,31 @@ model VaultItem {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   createdBy       String?  // sub ou email do JWT
+}
+
+// Cadastros: campeonatos, estádios, times visitantes
+model Championship {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Stadium {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  city      String?
+  address   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VisitingTeam {
+  id       String   @id @default(cuid())
+  name     String   @unique
+  logoUrl  String?  // pasta logos
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Auditoria do Vault (nunca logar o secret)

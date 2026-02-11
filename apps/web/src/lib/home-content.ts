@@ -268,6 +268,8 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.proximosJogosDataSource = "manual";
     config.proximosJogosManualFixtures = [];
     config.proximosJogosOverrides = {};
+    config.proximosJogosPaddingTop = "compact";
+    config.proximosJogosPaddingBottom = "compact";
   }
   if (type === "logo_carousel") {
     config.backgroundColor = "#0f0f12";

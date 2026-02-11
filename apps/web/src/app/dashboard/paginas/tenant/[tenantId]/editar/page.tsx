@@ -57,8 +57,10 @@ import {
   mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
   return [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -358,9 +360,9 @@ export default function EditarPaginaTenantPage() {
   const tenantName = page.tenant?.name ?? "Empresa";
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Barra fixa: voltar, título e salvar */}
-      <div className="sticky top-0 z-10 -mx-6 -mt-6 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <div className="flex flex-col gap-4 min-h-0">
+      {/* Barra fixa: voltar, título e salvar — sempre visível ao rolar */}
+      <div className="sticky top-0 z-30 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-2 shadow-sm">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/paginas">
             <Button variant="ghost" size="icon" type="button">
@@ -418,8 +420,8 @@ export default function EditarPaginaTenantPage() {
               Adicione módulos no dropdown. Em cada módulo: cor de fundo, opacidade do overlay, imagem de fundo, título em PT e EN (e corpo/imagem para texto e custom).
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+          <CardContent className="space-y-4 pb-6">
+            <div className="space-y-4">
               {blocks.map((block, index) => {
                 const isHeader = index === 0;
                 const isFooter = index === blocks.length - 1;
@@ -432,12 +434,12 @@ export default function EditarPaginaTenantPage() {
                     : `Módulo — ${getBlockLabel(block.id, block.type as HomeBlockType, "pt")}`;
                 const isExpanded = !collapsedBlockIds.has(block.id);
                 const cardClassName = isHeader || isFooter
-                  ? `module-card flex flex-col gap-3 rounded-lg border-2 border-emerald-500/50 bg-emerald-950/30 p-3 ${isExpanded ? "ring-2 ring-white/90" : ""}`
-                  : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
+                  ? `module-card flex flex-col gap-3 rounded-lg border-2 border-emerald-500/50 bg-emerald-950/30 p-3 overflow-hidden ${isExpanded ? "ring-2 ring-white/90" : ""}`
+                  : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 overflow-hidden ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
                 return (
                 <Fragment key={block.id}>
                   {isLastBlock && (
-                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-3">
+                    <div key="add-module" className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-4">
                       <span className="text-sm font-semibold text-muted-foreground">
                         Adicionar módulo:
                       </span>
@@ -643,6 +645,46 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "proximos_jogos" && (
                       <div className="space-y-3 sm:col-span-2">
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Espaço no topo e embaixo</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Ajuste o tamanho do espaço vertical da seção Próximos Jogos.
+                            </p>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <Label>Espaço no topo</Label>
+                                <Select
+                                  value={(block.config?.proximosJogosPaddingTop as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "proximosJogosPaddingTop", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Espaço embaixo</Label>
+                                <Select
+                                  value={(block.config?.proximosJogosPaddingBottom as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "proximosJogosPaddingBottom", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
                         <p className="text-xs text-muted-foreground">
                           Os jogos exibidos são sempre do clube desta página. Fonte: Manual (lista editada) ou AUTO (SofaScore).
                         </p>
@@ -662,17 +704,22 @@ export default function EditarPaginaTenantPage() {
                           </Select>
                         </div>
                         {(block.config?.proximosJogosDataSource as string) === "sofascore" && (
-                          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm">
-                            <p className="font-medium text-amber-800 dark:text-amber-200">Fonte: SofaScore (teamId do clube)</p>
-                            <p className="mt-1 text-muted-foreground">
-                              Configure o SofaScore Team ID na edição do clube:{" "}
-                              <Link href={`/dashboard/empresas/${tenantId}/edit`} className="underline text-amber-700 dark:text-amber-300">
-                                Empresas → [este clube] → Editar → SofaScore Team ID
-                              </Link>
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Os próximos jogos serão buscados automaticamente. Use overrides abaixo para ocultar, destacar ou adicionar links (Assistir / Ingresso) por jogo.
-                            </p>
+                          <div className="space-y-2">
+                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-sm">
+                              <p className="font-medium text-amber-800 dark:text-amber-200">Fonte: SofaScore (teamId do clube)</p>
+                              <p className="mt-1 text-muted-foreground">
+                                Configure o SofaScore Team ID na edição do clube:{" "}
+                                <Link href={`/dashboard/empresas/${tenantId}/edit`} className="underline text-amber-700 dark:text-amber-300">
+                                  Empresas → [este clube] → Editar → SofaScore Team ID
+                                </Link>
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Os próximos jogos serão buscados automaticamente. Use overrides abaixo para ocultar, destacar ou adicionar links (Assistir / Ingresso) por jogo.
+                              </p>
+                            </div>
+                            <div className="rounded-lg border border-amber-500/50 bg-amber-500/15 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+                              <strong>Atenção:</strong> A API do SofaScore pode bloquear requisições de servidor (erro 403).
+                            </div>
                           </div>
                         )}
                         {(block.config?.proximosJogosDataSource as string) === "manual" && (
@@ -686,7 +733,7 @@ export default function EditarPaginaTenantPage() {
                                   </Link>
                                 </p>
                               )}
-                              {((block.config?.proximosJogosManualFixtures as Array<{ startISO?: string; homeTeamName?: string; awayTeamName?: string; competitionName?: string; venueName?: string; watchUrl?: string; ticketUrl?: string; isOurTeamHome?: boolean; homeTeamLogoUrl?: string; awayTeamLogoUrl?: string }>) ?? []).map((f, fi) => {
+                              {((block.config?.proximosJogosManualFixtures as Array<{ startISO?: string; homeTeamName?: string; awayTeamName?: string; competitionName?: string; venueName?: string; watchUrl?: string; ticketUrl?: string; isOurTeamHome?: boolean; homeTeamLogoUrl?: string; awayTeamLogoUrl?: string; category?: string }>) ?? []).map((f, fi) => {
                                 const posValue = f.isOurTeamHome === false ? "away" : "home";
                                 const fromISO = (iso: string | undefined) => {
                                   if (!iso?.trim()) return { date: "", time: "20:00" };
@@ -701,12 +748,13 @@ export default function EditarPaginaTenantPage() {
                                 const { date: dateVal, time: timeVal } = fromISO(f.startISO);
                                 const manualList = (block.config?.proximosJogosManualFixtures as object[]) ?? [];
                                 const isLastGame = fi === manualList.length - 1;
+                                const catLabel = getCategoryLabel((f as { category?: string }).category ?? "principal", "pt");
                                 const summaryText = dateVal
-                                  ? `Jogo ${fi + 1}: ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — ${dateVal} ${timeVal}`
-                                  : `Jogo ${fi + 1}: ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — (sem data)`;
+                                  ? `Jogo ${fi + 1}: ${catLabel} · ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — ${dateVal} ${timeVal}`
+                                  : `Jogo ${fi + 1}: ${catLabel} · ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — (sem data)`;
                                 return (
-                                <details key={fi} open={isLastGame} className="rounded border border-border bg-muted/10">
-                                  <summary className="cursor-pointer px-3 py-2 font-medium hover:bg-muted/20">
+                                <details key={fi} open={isLastGame} className="rounded border border-amber-500/40 bg-amber-500/20">
+                                  <summary className="cursor-pointer px-3 py-2 font-medium hover:bg-amber-500/30">
                                     {summaryText}
                                   </summary>
                                 <div className="rounded border-t border-border p-3 space-y-2 grid gap-2 sm:grid-cols-2">
@@ -778,95 +826,74 @@ export default function EditarPaginaTenantPage() {
                                       </SelectContent>
                                     </Select>
                                   </div>
-                                  <div className="space-y-1" />
                                   <div className="space-y-1">
-                                    <Label className="text-xs">Time da casa</Label>
-                                    <Input placeholder="Time da casa" value={f.homeTeamName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).homeTeamName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
-                                  </div>
-                                  <div className="space-y-1">
-                                    <Label className="text-xs">Time visitante</Label>
-                                    <Input placeholder="Time visitante" value={f.awayTeamName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).awayTeamName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                    <Label className="text-xs">Categoria</Label>
+                                    <Select
+                                      value={(f as { category?: string }).category ?? "principal"}
+                                      onValueChange={(v) => {
+                                        const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                        (list[fi] as Record<string, string>).category = v;
+                                        updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                      }}
+                                    >
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {FIXTURE_CATEGORIES.map((c) => (
+                                          <SelectItem key={c.value} value={c.value}>
+                                            {c.labelPT}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   </div>
                                   <div className="space-y-1 sm:col-span-2">
-                                    <Label className="text-xs">
-                                      {posValue === "home"
-                                        ? "Logo do visitante (adversário)"
-                                        : "Logo do time da casa (adversário)"}
-                                    </Label>
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <MediaPicker
-                                        sizeKey="card"
-                                        folder="logos"
-                                        value={posValue === "home" ? (f.awayTeamLogoUrl as string) ?? "" : (f.homeTeamLogoUrl as string) ?? ""}
-                                        onChange={(url) => {
-                                          const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
-                                          const row = list[fi] as Record<string, string>;
-                                          if (posValue === "home") row.awayTeamLogoUrl = url;
-                                          else row.homeTeamLogoUrl = url;
-                                          updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
-                                        }}
-                                        placeholder="Escolher da pasta de logos"
-                                      />
-                                      <Input
-                                        className="flex-1 min-w-[160px]"
-                                        placeholder="Ou colar URL"
-                                        value={posValue === "home" ? (f.awayTeamLogoUrl as string) ?? "" : (f.homeTeamLogoUrl as string) ?? ""}
-                                        onChange={(e) => {
-                                          const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
-                                          const row = list[fi] as Record<string, string>;
-                                          if (posValue === "home") row.awayTeamLogoUrl = e.target.value;
-                                          else row.homeTeamLogoUrl = e.target.value;
-                                          updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
-                                        }}
-                                      />
-                                      <input
-                                        type="file"
-                                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                                        className="hidden"
-                                        id={`logo-upload-${block.id}-${fi}`}
-                                        onChange={async (e) => {
-                                          const file = e.target.files?.[0];
-                                          if (!file) return;
-                                          const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
-                                          const row = list[fi] as Record<string, string>;
-                                          try {
-                                            const form = new FormData();
-                                            form.append("file", file);
-                                            form.append("sizeKey", "external_logos");
-                                            const res = await fetch("/api/media", {
-                                              method: "POST",
-                                              credentials: "include",
-                                              body: form,
-                                            });
-                                            if (!res.ok) return;
-                                            const data = (await res.json()) as { url?: string };
-                                            if (data?.url) {
-                                              if (posValue === "home") row.awayTeamLogoUrl = data.url;
-                                              else row.homeTeamLogoUrl = data.url;
-                                              updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
-                                            }
-                                          } finally {
-                                            e.target.value = "";
-                                          }
-                                        }}
-                                      />
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => document.getElementById(`logo-upload-${block.id}-${fi}`)?.click()}
-                                      >
-                                        Enviar logo (pasta visitantes)
-                                      </Button>
-                                    </div>
+                                    <Label className="text-xs">Adversário (time da casa ou visitante)</Label>
+                                    <SelectWithCreate
+                                      type="visiting-team"
+                                      value={posValue === "home" ? (f.awayTeamName ?? "") : (f.homeTeamName ?? "")}
+                                      logoUrl={posValue === "home" ? (f.awayTeamLogoUrl as string) ?? "" : (f.homeTeamLogoUrl as string) ?? ""}
+                                      onChange={(name, logoUrl) => {
+                                        const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                        const row = list[fi] as Record<string, string>;
+                                        if (posValue === "home") {
+                                          row.awayTeamName = name;
+                                          row.awayTeamLogoUrl = logoUrl ?? "";
+                                        } else {
+                                          row.homeTeamName = name;
+                                          row.homeTeamLogoUrl = logoUrl ?? "";
+                                        }
+                                        updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                      }}
+                                      placeholder="Selecione o time adversário"
+                                    />
                                   </div>
                                   <div className="space-y-1">
                                     <Label className="text-xs">Competição</Label>
-                                    <Input placeholder="Competição" value={f.competitionName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).competitionName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                    <SelectWithCreate
+                                      type="championship"
+                                      value={f.competitionName ?? ""}
+                                      onChange={(name) => {
+                                        const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                        (list[fi] as Record<string, string>).competitionName = name;
+                                        updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                      }}
+                                      placeholder="Selecione a competição"
+                                    />
                                   </div>
                                   <div className="space-y-1">
                                     <Label className="text-xs">Local (opcional)</Label>
-                                    <Input placeholder="Local (opcional)" value={f.venueName ?? ""} onChange={(e) => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])]; (list[fi] as Record<string, string>).venueName = e.target.value; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }} />
+                                    <SelectWithCreate
+                                      type="stadium"
+                                      value={f.venueName ?? ""}
+                                      onChange={(name) => {
+                                        const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
+                                        (list[fi] as Record<string, string>).venueName = name;
+                                        updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                      }}
+                                      placeholder="Selecione o estádio"
+                                    />
                                   </div>
                                   <div className="space-y-1">
                                     <Label className="text-xs">URL Assistir (opcional)</Label>
@@ -883,7 +910,7 @@ export default function EditarPaginaTenantPage() {
                                 </details>
                                 );
                               })}
-                              <Button type="button" variant="outline" size="sm" onClick={() => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? []), { startISO: "", homeTeamName: tenantName, awayTeamName: "", competitionName: "", venueName: "", watchUrl: "", ticketUrl: "", isOurTeamHome: true, homeTeamLogoUrl: "", awayTeamLogoUrl: "" }]; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }}>
+                              <Button type="button" variant="outline" size="sm" onClick={() => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? []), { startISO: "", homeTeamName: tenantName, awayTeamName: "", competitionName: "", venueName: "", watchUrl: "", ticketUrl: "", isOurTeamHome: true, homeTeamLogoUrl: "", awayTeamLogoUrl: "", category: "principal" }]; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }}>
                                 <Plus className="h-4 w-4 mr-1" /> Adicionar jogo
                               </Button>
                             </div>

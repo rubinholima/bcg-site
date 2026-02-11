@@ -11,6 +11,8 @@ export interface FixtureDto {
   watchUrl?: string;
   ticketUrl?: string;
   featured?: boolean;
+  /** Categoria: principal, sub20, sub17, sub15, feminino — para filtro. */
+  category?: string;
   /** Manual: posição do clube (true = casa, false = fora). */
   isOurTeamHome?: boolean;
   /** Manual: logo do time da casa (URL). */

@@ -50,12 +50,12 @@ export default async function TiposPage({
       )}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tipos de Empresa</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Tipos Emp/Clubes</h1>
           <p className="text-muted-foreground">
-            Gerencie os tipos de empresas disponíveis
+            Gerencie os tipos de empresas e clubes
           </p>
         </div>
-        <Link href="/dashboard/tipos/new">
+        <Link href="/dashboard/cadastros/tipos/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Novo Tipo
@@ -85,13 +85,13 @@ export default async function TiposPage({
                   : "Nenhum tipo corresponde à busca."}
               </p>
               {tipos.length > 0 && q ? (
-                <Link href="/dashboard/tipos">
+                <Link href="/dashboard/cadastros/tipos">
                   <Button variant="outline" className="mt-4">
                     Limpar filtro
                   </Button>
                 </Link>
               ) : tipos.length === 0 ? (
-                <Link href="/dashboard/tipos/new">
+                <Link href="/dashboard/cadastros/tipos/new">
                   <Button variant="outline" className="mt-4">
                     Criar primeiro tipo
                   </Button>
@@ -122,12 +122,12 @@ export default async function TiposPage({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Link href={`/dashboard/tipos/${tipo.id}/edit`}>
+                        <Link href={`/dashboard/cadastros/tipos/${tipo.id}/edit`}>
                           <Button variant="ghost" size="icon">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Link href={`/dashboard/tipos/${tipo.id}/delete`}>
+                        <Link href={`/dashboard/cadastros/tipos/${tipo.id}/delete`}>
                           <Button variant="ghost" size="icon">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

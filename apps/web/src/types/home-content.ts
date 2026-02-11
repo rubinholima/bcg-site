@@ -279,6 +279,10 @@ export interface HomeBlockConfig {
   logoCarouselCompaniesLimit?: number;
   logoCarouselCompaniesSorting?: "alphabetical" | "newest" | "manual";
   logoCarouselCompaniesFallbackLogo?: string;
+  /** Próximos Jogos: padding topo da seção */
+  proximosJogosPaddingTop?: "compact" | "normal" | "large";
+  /** Próximos Jogos: padding base da seção */
+  proximosJogosPaddingBottom?: "compact" | "normal" | "large";
   /** Próximos Jogos: fonte dos dados (manual = lista editada; sofascore = auto pelo tenant.sofascoreTeamId) */
   proximosJogosDataSource?: "manual" | "sofascore";
   /** Próximos Jogos: lista manual (quando dataSource=manual) */
@@ -301,6 +305,8 @@ export interface ProximosJogosFixtureItem {
   watchUrl?: string;
   ticketUrl?: string;
   featured?: boolean;
+  /** Categoria: principal, sub20, sub17, sub15, feminino */
+  category?: string;
 }
 
 /** Override por jogo (SofaScore) no editor */
@@ -311,6 +317,7 @@ export interface ProximosJogosFixtureOverride {
   ticketUrl?: string;
   venueName?: string;
   competitionLogoUrl?: string;
+  category?: string;
 }
 
 /** Localização no mapa Presença Global (lat/lng, nome, tipo, etc.) */

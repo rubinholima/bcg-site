@@ -65,4 +65,17 @@ export class UpdateTenantDto {
   @IsOptional()
   @MaxLength(64)
   sofascoreTeamId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  footballDataTeamId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  apiFutebolTeamId?: string | null;
+
+  @IsOptional()
+  categories?: string[] | null;
 }

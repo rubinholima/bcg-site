@@ -4,8 +4,16 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 
 export interface FixtureItem {
   externalId: string;
@@ -19,6 +27,7 @@ export interface FixtureItem {
   watchUrl?: string;
   ticketUrl?: string;
   featured?: boolean;
+  category?: string;
   /** Manual: posição do clube (true = casa, false = fora). */
   isOurTeamHome?: boolean;
   /** Manual: logo do time da casa. */
@@ -218,10 +227,19 @@ export function ProximosJogosSection({
   const [fixtures, setFixtures] = useState<FixtureItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const title =
     (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const bgColor = (block.config?.backgroundColor as string)?.trim() || "#0f0f12";
+  const cardStyle = (block.config?.proximosJogosCardStyle as "box" | "flat") || "flat";
+  const paddingTop = (block.config?.proximosJogosPaddingTop as "minimal" | "compact" | "normal" | "large") || "compact";
+  const paddingBottom = (block.config?.proximosJogosPaddingBottom as "minimal" | "compact" | "normal" | "large") || "compact";
+
+  const paddingTopClass =
+    paddingTop === "minimal" ? "pt-4 sm:pt-5" : paddingTop === "compact" ? "pt-6 sm:pt-8" : paddingTop === "large" ? "pt-20 sm:pt-24" : "pt-12 sm:pt-16";
+  const paddingBottomClass =
+    paddingBottom === "minimal" ? "pb-4 sm:pb-5" : paddingBottom === "compact" ? "pb-6 sm:pb-8" : paddingBottom === "large" ? "pb-20 sm:pb-24" : "pb-12 sm:pb-16";
 
   useEffect(() => {
     let cancelled = false;
@@ -236,16 +254,38 @@ export function ProximosJogosSection({
     };
   }, [slug]);
 
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTick((x) => x + 1), 60000);
+    return () => clearInterval(t);
+  }, []);
+  const upcomingFixtures = useMemo(
+    () => fixtures.filter((f) => new Date(f.startISO) > new Date()),
+    [fixtures, tick],
+  );
+
   const datesWithGames = useMemo(() => {
     const set = new Set<string>();
-    fixtures.forEach((f) => set.add(dateKey(f.startISO)));
+    upcomingFixtures.forEach((f) => set.add(dateKey(f.startISO)));
     return Array.from(set).sort();
-  }, [fixtures]);
+  }, [upcomingFixtures]);
+
+  /** Categorias para o filtro: sempre exibe todas, para o usuário poder filtrar (ex: Sub-15) mesmo sem jogos. */
+  const categoriesForFilter = useMemo(
+    () => FIXTURE_CATEGORIES.map((c) => c.value),
+    [],
+  );
 
   const filteredFixtures = useMemo(() => {
-    if (!selectedDate) return fixtures;
-    return fixtures.filter((f) => dateKey(f.startISO) === selectedDate);
-  }, [fixtures, selectedDate]);
+    let list = upcomingFixtures;
+    if (selectedDate) {
+      list = list.filter((f) => dateKey(f.startISO) === selectedDate);
+    }
+    if (selectedCategory) {
+      list = list.filter((f) => (f.category ?? "principal") === selectedCategory);
+    }
+    return list;
+  }, [upcomingFixtures, selectedDate, selectedCategory]);
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -254,7 +294,7 @@ export function ProximosJogosSection({
 
   useEffect(() => {
     setCurrentIndex(0);
-  }, [selectedDate, cardCount]);
+  }, [selectedDate, selectedCategory, cardCount]);
 
   useEffect(() => {
     if (cardCount <= 1 || carouselHover) return;
@@ -288,14 +328,17 @@ export function ProximosJogosSection({
       ? (lang === "pt" ? "Casa" : "Home")
       : (lang === "pt" ? "Fora" : "Away");
 
+  const cardClassName =
+    "min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl border border-white/10 bg-zinc-900/60 p-4 transition hover:border-white/20 sm:min-w-[300px]";
+
   return (
     <section
-      className="relative overflow-hidden border-b border-white/5 py-16 sm:py-20"
+      className={`relative overflow-hidden border-b border-white/5 ${paddingTopClass} ${paddingBottomClass}`}
       style={{ backgroundColor: bgColor }}
     >
       <div className="container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {title && (
-          <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl mb-6">
+          <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl mb-6 text-center">
             {title}
           </h2>
         )}
@@ -304,121 +347,160 @@ export function ProximosJogosSection({
           <div className="flex justify-center py-12 text-zinc-500">
             <span>{lang === "pt" ? "Carregando jogos…" : "Loading fixtures…"}</span>
           </div>
-        ) : fixtures.length === 0 ? (
+        ) : upcomingFixtures.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-zinc-900/40 px-6 py-12 text-center text-zinc-400">
             <Calendar className="mx-auto h-12 w-12 opacity-50 mb-3" />
             <p>
-              {lang === "pt"
-                ? "Nenhum jogo cadastrado no momento."
-                : "No fixtures at the moment."}
+              {fixtures.length > 0
+                ? (lang === "pt" ? "Nenhum próximo jogo no momento." : "No upcoming fixtures.")
+                : (lang === "pt" ? "Nenhum jogo cadastrado no momento." : "No fixtures at the moment.")}
             </p>
           </div>
         ) : (
           <>
-            {/* Calendário: filtro por data */}
-            <div className="mb-6 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-zinc-500 mr-1">
-                {lang === "pt" ? "Data:" : "Date:"}
-              </span>
-              <Button
-                variant={selectedDate === null ? "default" : "outline"}
-                size="sm"
-                className={
-                  selectedDate === null
-                    ? "bg-amber-500/90 text-black hover:bg-amber-400"
-                    : "border-white/20 text-zinc-300 hover:bg-white/10"
-                }
-                onClick={() => setSelectedDate(null)}
-              >
-                {lang === "pt" ? "Todos" : "All"}
-              </Button>
-              <div className="flex flex-wrap gap-1.5">
-                {datesWithGames.map((d) => {
-                  const [y, m, day] = d.split("-");
-                  const dateObj = new Date(Number(y), Number(m) - 1, Number(day));
-                  const label = dateObj.toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB", {
-                    day: "numeric",
-                    month: "short",
-                  });
-                  const active = selectedDate === d;
-                  return (
-                    <Button
-                      key={d}
-                      variant="outline"
-                      size="sm"
-                      className={
-                        active
-                          ? "border-amber-500/50 bg-amber-500/20 text-amber-200"
-                          : "border-white/15 text-zinc-400 hover:bg-white/10 hover:text-white"
-                      }
-                      onClick={() => setSelectedDate(d)}
-                    >
-                      {label}
-                    </Button>
-                  );
-                })}
+            {/* Filtros: data e categoria em dropdowns */}
+            <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-500">
+                  {lang === "pt" ? "Data:" : "Date:"}
+                </span>
+                <Select
+                  value={selectedDate ?? "all"}
+                  onValueChange={(v) => setSelectedDate(v === "all" ? null : v)}
+                >
+                  <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {lang === "pt" ? "Todas" : "All"}
+                    </SelectItem>
+                    {datesWithGames.map((d) => {
+                      const [y, m, day] = d.split("-");
+                      const dateObj = new Date(Number(y), Number(m) - 1, Number(day));
+                      const label = dateObj.toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB", {
+                        day: "numeric",
+                        month: "short",
+                      });
+                      return (
+                        <SelectItem key={d} value={d}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-500">
+                  {lang === "pt" ? "Categoria:" : "Category:"}
+                </span>
+                <Select
+                  value={selectedCategory ?? "all"}
+                  onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}
+                >
+                  <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {lang === "pt" ? "Todas" : "All"}
+                    </SelectItem>
+                    {categoriesForFilter.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {getCategoryLabel(cat, lang)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+          </>
+        )}
+      </div>
 
-            {/* Carrossel: slide passando e parando */}
-            <div
-              className="relative"
-              onMouseEnter={() => setCarouselHover(true)}
-              onMouseLeave={() => setCarouselHover(false)}
-            >
-              {cardCount > 1 && (
-                <>
-                  <button
-                    type="button"
-                    aria-label={lang === "pt" ? "Jogo anterior" : "Previous"}
-                    onClick={() => scrollToIndex(currentIndex - 1)}
-                    className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white shadow-lg backdrop-blur hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={lang === "pt" ? "Próximo jogo" : "Next"}
-                    onClick={() => scrollToIndex(currentIndex + 1)}
-                    className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white shadow-lg backdrop-blur hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-              <div
-                ref={carouselRef}
-                className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 scroll-smooth scrollbar-thin"
-                style={{
-                  scrollSnapType: "x mandatory",
-                  scrollbarWidth: "thin",
-                }}
-                onScroll={() => {
-                  const el = carouselRef.current;
-                  if (!el || cardCount === 0) return;
-                  const scrollLeft = el.scrollLeft;
-                  const cardWidth = (el.querySelector("[data-card-index]") as HTMLElement)?.offsetWidth ?? 320;
-                  const gap = 16;
-                  const index = Math.round(scrollLeft / (cardWidth + gap));
-                  setCurrentIndex(Math.max(0, Math.min(index, cardCount - 1)));
-                }}
+      {/* Carrossel full-width: toma a extensão da página, sem box. Cards separados com borda. */}
+      {!loading && upcomingFixtures.length > 0 && (
+        <div
+          className="relative overflow-hidden"
+          style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)" }}
+          onMouseEnter={() => setCarouselHover(true)}
+          onMouseLeave={() => setCarouselHover(false)}
+        >
+          {cardCount > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label={lang === "pt" ? "Jogo anterior" : "Previous"}
+                onClick={() => scrollToIndex(currentIndex - 1)}
+                className="absolute left-2 sm:left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white shadow-lg backdrop-blur hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                aria-label={lang === "pt" ? "Próximo jogo" : "Next"}
+                onClick={() => scrollToIndex(currentIndex + 1)}
+                className="absolute right-2 sm:right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white shadow-lg backdrop-blur hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </>
+          )}
+          <div
+            ref={carouselRef}
+            className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 pl-14 pr-14 sm:pl-16 sm:pr-16 scroll-smooth scrollbar-thin"
+            style={{
+              scrollSnapType: "x mandatory",
+              scrollbarWidth: "thin",
+            }}
+            onScroll={() => {
+              const el = carouselRef.current;
+              if (!el || cardCount === 0) return;
+              const scrollLeft = el.scrollLeft;
+              const cardWidth = (el.querySelector("[data-card-index]") as HTMLElement)?.offsetWidth ?? 320;
+              const gap = 16;
+              const index = Math.round(scrollLeft / (cardWidth + gap));
+              setCurrentIndex(Math.max(0, Math.min(index, cardCount - 1)));
+            }}
+          >
                 {filteredFixtures.map((f, index) => (
                   <div
                     key={f.externalId}
                     data-card-index={index}
-                    className="min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl border border-white/10 bg-zinc-900/60 p-4 transition hover:border-white/20 sm:min-w-[300px]"
+                    className={`${cardClassName} relative`}
                     style={{ scrollSnapAlign: "start" }}
                   >
-                    {/* Competição + data/hora */}
-                    <div className="mb-3 flex flex-col gap-0.5">
-                      {f.competitionName && (
-                        <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-                          {f.competitionName}
+                    {/* Topo: competição + categoria + data à esquerda, Casa/Fora à direita */}
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {f.competitionName && (
+                            <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+                              {f.competitionName}
+                            </span>
+                          )}
+                          <span className="text-xs font-medium text-amber-400/90">
+                            {getCategoryLabel(f.category ?? "principal", lang)}
+                          </span>
+                        </div>
+                        <span className="text-xs text-zinc-500">
+                          {formatDate(f.startISO, lang)}
                         </span>
-                      )}
-                      <span className="text-xs text-zinc-500">
-                        {formatDate(f.startISO, lang)}
+                      </div>
+                      <span
+                        className={`shrink-0 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs ${
+                          isHome(f)
+                            ? "bg-emerald-500/15 text-emerald-300"
+                            : "bg-sky-500/15 text-sky-300"
+                        }`}
+                      >
+                        {isHome(f) ? (
+                          <Home className="h-3 w-3" />
+                        ) : (
+                          <Plane className="h-3 w-3" />
+                        )}
+                        {homeAwayLabel(f)}
                       </span>
                     </div>
                     {/* Data em destaque */}
@@ -448,22 +530,8 @@ export function ProximosJogosSection({
                       <span className="font-semibold text-white text-sm">
                         {f.awayTeamName}
                       </span>
-                      <span
-                        className={`ml-1 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs ${
-                          isHome(f)
-                            ? "bg-emerald-500/15 text-emerald-300"
-                            : "bg-sky-500/15 text-sky-300"
-                        }`}
-                      >
-                        {isHome(f) ? (
-                          <Home className="h-3 w-3" />
-                        ) : (
-                          <Plane className="h-3 w-3" />
-                        )}
-                        {homeAwayLabel(f)}
-                      </span>
                     </div>
-                    {/* CTA + local */}
+                    {/* CTA + local: ambos botões quando ambas URLs existirem */}
                     <div className="flex flex-col gap-2">
                       {f.status === "LIVE" && f.watchUrl && (
                         <a
@@ -481,38 +549,46 @@ export function ProximosJogosSection({
                           </Button>
                         </a>
                       )}
-                      {f.status !== "LIVE" && f.ticketUrl && (
-                        <a
-                          href={f.ticketUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block"
-                        >
-                          <Button
-                            size="sm"
-                            className="w-full bg-red-600 text-white hover:bg-red-500"
-                          >
-                            <Ticket className="mr-1.5 h-4 w-4" />
-                            {lang === "pt" ? "Comprar ingresso" : "Buy ticket"}
-                          </Button>
-                        </a>
-                      )}
-                      {f.status !== "LIVE" && !f.ticketUrl && f.watchUrl && (
-                        <a
-                          href={f.watchUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block"
-                        >
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full border-white/20 text-white hover:bg-white/10"
-                          >
-                            <Tv className="mr-1.5 h-4 w-4" />
-                            {lang === "pt" ? "Assistir" : "Watch"}
-                          </Button>
-                        </a>
+                      {f.status !== "LIVE" && (
+                        <>
+                          {f.ticketUrl && (
+                            <a
+                              href={f.ticketUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <Button
+                                size="sm"
+                                className="w-full bg-red-600 text-white hover:bg-red-500"
+                              >
+                                <Ticket className="mr-1.5 h-4 w-4" />
+                                {lang === "pt" ? "Comprar ingresso" : "Buy ticket"}
+                              </Button>
+                            </a>
+                          )}
+                          {f.watchUrl && (
+                            <a
+                              href={f.watchUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block"
+                            >
+                              <Button
+                                size="sm"
+                                variant={f.ticketUrl ? "outline" : "default"}
+                                className={
+                                  f.ticketUrl
+                                    ? "w-full border-white/20 text-white hover:bg-white/10"
+                                    : "w-full bg-amber-500 text-black hover:bg-amber-400"
+                                }
+                              >
+                                <Tv className="mr-1.5 h-4 w-4" />
+                                {lang === "pt" ? "Assistir ao jogo" : "Watch"}
+                              </Button>
+                            </a>
+                          )}
+                        </>
                       )}
                       {f.venueName && (
                         <span className="flex items-center gap-1 text-xs text-zinc-500">
@@ -523,11 +599,9 @@ export function ProximosJogosSection({
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -64,11 +64,16 @@ export class SofaScoreService {
       const res = await fetch(url, {
         headers: {
           Accept: 'application/json',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
           'User-Agent':
-            'Mozilla/5.0 (compatible; BCGSite/1.0; +https://bostoncitygroup.biz)',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Referer: 'https://www.sofascore.com/',
+          Origin: 'https://www.sofascore.com',
         },
       });
       if (!res.ok) {
+        const errBody = await res.text();
+        console.warn(`[sofascore] HTTP ${res.status} para team ${teamId}`, errBody.slice(0, 200));
         return [];
       }
       const json = (await res.json()) as {

@@ -26,11 +26,22 @@ interface TenantRow {
   country: string | null;
   websiteUrl: string | null;
   sofascoreTeamId: string | null;
+  footballDataTeamId: string | null;
+  apiFutebolTeamId: string | null;
+  categories: unknown;
   createdAt: Date;
   updatedAt: Date;
 }
 
 function mapRow(row: TenantRow): TenantResponseDto {
+  let categories: string[] | null;
+  if (Array.isArray(row.categories)) {
+    categories = row.categories as string[];
+  } else if (row.categories != null && typeof row.categories === 'object') {
+    categories = JSON.parse(JSON.stringify(row.categories)) as string[];
+  } else {
+    categories = null;
+  }
   return {
     id: row.id,
     name: row.name,
@@ -48,6 +59,9 @@ function mapRow(row: TenantRow): TenantResponseDto {
     country: row.country ?? null,
     websiteUrl: row.websiteUrl ?? null,
     sofascoreTeamId: row.sofascoreTeamId ?? null,
+    footballDataTeamId: row.footballDataTeamId ?? null,
+    apiFutebolTeamId: row.apiFutebolTeamId ?? null,
+    categories,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
     updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
   };
@@ -65,7 +79,7 @@ export class TenantsService {
       const tenants = await this.prisma.$queryRaw<TenantRow[]>`
         SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
           t.location, t.address, t."contactName", t."contactPhone",
-          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId",
+          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId", t."footballDataTeamId", t."apiFutebolTeamId", t.categories,
           t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
@@ -86,7 +100,7 @@ export class TenantsService {
       const rows = await this.prisma.$queryRaw<TenantRow[]>`
         SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
           t.location, t.address, t."contactName", t."contactPhone",
-          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId",
+          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId", t."footballDataTeamId", t."apiFutebolTeamId", t.categories,
           t."createdAt", t."updatedAt"
         FROM "Tenant" t
         LEFT JOIN "TenantKind" k ON k.id = t."kindId"
@@ -185,6 +199,22 @@ export class TenantsService {
       if (dto.sofascoreTeamId !== undefined) {
         updates.push(`"sofascoreTeamId" = $${++idx}`);
         values.push(dto.sofascoreTeamId);
+      }
+      if (dto.footballDataTeamId !== undefined) {
+        updates.push(`"footballDataTeamId" = $${++idx}`);
+        values.push(dto.footballDataTeamId);
+      }
+      if (dto.apiFutebolTeamId !== undefined) {
+        updates.push(`"apiFutebolTeamId" = $${++idx}`);
+        values.push(dto.apiFutebolTeamId);
+      }
+      if (dto.categories !== undefined) {
+        updates.push(`categories = $${++idx}::jsonb`);
+        values.push(
+          dto.categories === null || (Array.isArray(dto.categories) && dto.categories.length === 0)
+            ? null
+            : JSON.stringify(Array.isArray(dto.categories) ? dto.categories : []),
+        );
       }
       if (updates.length === 0) return this.findOne(id);
       updates.push(`"updatedAt" = $${++idx}`);

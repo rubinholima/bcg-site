@@ -40,9 +40,11 @@ export default function DashboardLayout({
           {/* Header */}
           <Header />
 
-          {/* Page Content - único scroll */}
-          <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-background p-6">
-            {children}
+          {/* Page Content - scroll contido para não passar do rodapé */}
+          <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background px-6 pb-6 pt-0">
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-none bg-background">
+              {children}
+            </div>
           </main>
         </div>
       </div>

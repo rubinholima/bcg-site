@@ -3,26 +3,30 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { TenantKind } from "@/types/tenant-kind";
+import { UpdateTenantKindDto, TenantKind } from "@/types/tenant-kind";
 
-export default function DeleteTipoPage() {
+export default function EditTipoPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tipo, setTipo] = useState<TenantKind | null>(null);
+  const [formData, setFormData] = useState<UpdateTenantKindDto>({
+    name: "",
+  });
 
   useEffect(() => {
     async function loadTipo() {
       try {
         const { data } = await api.get<TenantKind>(`/tenant-kinds/${id}`);
-        setTipo(data ?? null);
+        setFormData({ name: data?.name ?? "" });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar tipo");
       } finally {
@@ -32,17 +36,23 @@ export default function DeleteTipoPage() {
     loadTipo();
   }, [id]);
 
-  const handleDelete = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      await api.delete(`/tenant-kinds/${id}`);
-      router.push("/dashboard/tipos?success=true");
+      await api.patch(`/tenant-kinds/${id}`, formData);
+      router.push("/dashboard/cadastros/tipos?success=true");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir tipo");
+      setError(err instanceof Error ? err.message : "Erro ao atualizar tipo");
       setLoading(false);
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   if (loadingData) {
@@ -55,78 +65,62 @@ export default function DeleteTipoPage() {
     );
   }
 
-  if (!tipo) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-8 text-destructive">
-          <p>Tipo não encontrado.</p>
-          <Link href="/dashboard/tipos">
-            <Button variant="outline" className="mt-4">
-              Voltar
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/tipos">
+        <Link href="/dashboard/cadastros/tipos">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Excluir Tipo</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Editar Tipo</h1>
           <p className="text-muted-foreground">
-            Confirme a exclusão do tipo
+            Atualize as informações do tipo
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
-            Atenção
-          </CardTitle>
+          <CardTitle>Informações do Tipo</CardTitle>
           <CardDescription>
-            Esta ação não pode ser desfeita
+            Preencha os dados abaixo para atualizar o tipo
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
-            <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive mb-4">
-              {error}
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
 
-          <div className="space-y-4">
-            <p>
-              Você está prestes a excluir o tipo: <strong>{tipo.name}</strong>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Certifique-se de que nenhuma empresa está usando este tipo antes de excluir.
-            </p>
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome *</Label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Ex: Futebol"
+                disabled={loading}
+              />
+            </div>
 
             <div className="flex gap-4 pt-4">
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={loading}
-              >
-                {loading ? "Excluindo..." : "Confirmar Exclusão"}
+              <Button type="submit" disabled={loading}>
+                {loading ? "Salvando..." : "Salvar Alterações"}
               </Button>
-              <Link href="/dashboard/tipos">
+              <Link href="/dashboard/cadastros/tipos">
                 <Button type="button" variant="outline" disabled={loading}>
                   Cancelar
                 </Button>
               </Link>
             </div>
-          </div>
+          </form>
         </CardContent>
       </Card>
     </div>
