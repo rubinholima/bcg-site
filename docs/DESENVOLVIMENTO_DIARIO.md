@@ -42,8 +42,8 @@
 
 ### 🚀 **FECHAMENTO DO DIA (GIT):**
 
-- **Commit:** *(será preenchido após o commit)*
-- **Mensagem:** `fix: dashboard — evita corte do conteúdo à direita (scrollbar, body lock, layout)`
+- **Commit:** `7bd120b`
+- **Mensagem:** `fix: dashboard — evita corte do conteúdo à direita; módulos portfolio, notícias, SectionTitle`
 - **Branch:** `develop`
 - **Push:** ✅ para repositório externo (origin)
 
