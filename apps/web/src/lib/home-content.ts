@@ -74,6 +74,7 @@ export const DEFAULT_BLOCK_IDS: string[] = [
 ];
 
 const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
+  section: { pt: "Seção (colunas)", en: "Section (columns)" },
   header: { pt: "Cabeçalho", en: "Header" },
   footer: { pt: "Rodapé", en: "Footer" },
   hero: { pt: "Hero (manchete e fundo)", en: "Hero" },
@@ -136,6 +137,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string }[] = [
   { type: "contato", label: "Contato" },
   { type: "global_presence", label: "Presença Global / Expansão" },
   { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)" },
+  { type: "section", label: "Seção em 2 colunas" },
 ];
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
@@ -201,6 +203,7 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
   const needsUniqueId =
     type === "custom" ||
     type === "text" ||
+    type === "section" ||
     BLOCK_TYPES_WITH_BODY.includes(type);
   const id = needsUniqueId ? `${type}-${Date.now()}` : type;
   const config: Record<string, unknown> = BLOCK_TYPES_WITH_BODY.includes(type)
@@ -264,12 +267,28 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.counters = [...DEFAULT_GLOBAL_PRESENCE_COUNTERS];
     config.locations = [] as GlobalPresenceLocation[];
   }
+  if (type === "section") {
+    config.sectionColumns = 2;
+    config.sectionLayout = "50-50";
+    config.sectionLeftModules = [];
+    config.sectionRightModules = [];
+    config.sectionPaddingTop = "compact";
+    config.sectionPaddingBottom = "compact";
+  }
   if (type === "proximos_jogos") {
     config.proximosJogosDataSource = "manual";
     config.proximosJogosManualFixtures = [];
     config.proximosJogosOverrides = {};
     config.proximosJogosPaddingTop = "compact";
     config.proximosJogosPaddingBottom = "compact";
+  }
+  if (type === "noticias") {
+    config.noticiasDataSource = "rss";
+    config.noticiasRssUrl = "";
+    config.noticiasManualItems = [];
+    config.noticiasMaxItems = 10;
+    config.noticiasPaddingTop = "compact";
+    config.noticiasPaddingBottom = "compact";
   }
   if (type === "logo_carousel") {
     config.backgroundColor = "#0f0f12";

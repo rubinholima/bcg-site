@@ -6,6 +6,49 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 11 DE FEVEREIRO DE 2026 — ENCERRAMENTO</span>
+
+## **CORREÇÃO DO CORTE DO CONTEÚDO À DIREITA NO DASHBOARD**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+#### 1. **Dashboard cortando conteúdo à direita (cards, Atalhos, Resumo por tipo, Avisos)**
+
+- **Problema:** O lado direito da página do dashboard estava sendo cortado — cards de estatísticas, painel Atalhos, Resumo por tipo e Avisos ficavam parcialmente ocultos ou sobrepostos pela barra de rolagem.
+- **Causa:** Scroll do `body` vs. scroll na área de conteúdo; barra de rolagem sobrepondo o conteúdo.
+- **Solução:**
+  - **DashboardBodyLock:** componente que adiciona `dashboard-active` ao `body` quando o dashboard está ativo; com `overflow: hidden` e `height: 100vh` no body, o scroll fica **apenas** na área de conteúdo.
+  - **scrollbar-gutter: stable** + **overflow-y: scroll** na área de conteúdo — reserva espaço para a scrollbar e evita que o conteúdo seja cortado.
+  - **CSS global:** `overflow-x: clip` em `html` e `body`; `margin: 0`; `width: 100%` e `max-width: 100%`.
+  - **Layout:** `flex-[1_1_0%]` no container principal; `overflow-clip` na hierarquia; padding direito (`pr-6`) no conteúdo; wrapper com `min-w-0 max-w-full`.
+  - **Header:** `min-w-0`, `truncate` no título; `shrink-0` nos botões.
+  - **Grid de stats:** breakpoints ajustados (`2xl:grid-cols-5`) para evitar colunas apertadas.
+- **Arquivos:** `apps/web/src/components/dashboard/DashboardBodyLock.tsx` (novo), `apps/web/src/app/dashboard/layout.tsx`, `apps/web/src/app/dashboard/page.tsx`, `apps/web/src/app/globals.css`, `apps/web/src/components/dashboard/header.tsx`
+- **Status:** ✅ RESOLVIDO
+
+---
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Criados:**
+`apps/web/src/components/dashboard/DashboardBodyLock.tsx`
+
+**Modificados:**
+`apps/web/src/app/dashboard/layout.tsx`, `apps/web/src/app/dashboard/page.tsx`, `apps/web/src/app/globals.css`, `apps/web/src/components/dashboard/header.tsx`
+
+*Nota: O commit inclui também alterações de outras sessões (módulos portfolio, notícias, etc.) conforme o status do repositório.*
+
+---
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commit:** *(será preenchido após o commit)*
+- **Mensagem:** `fix: dashboard — evita corte do conteúdo à direita (scrollbar, body lock, layout)`
+- **Branch:** `develop`
+- **Push:** ✅ para repositório externo (origin)
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 2 DE FEVEREIRO DE 2026 — ENCERRAMENTO</span>
 
 ## **PRÓXIMOS JOGOS: CARROSSEL, CONFIG PADRÃO, DETAILS POR JOGO, LOGOS SOFASCORE**

@@ -1,8 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useRef, useEffect, useState } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
+import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
 import type { GlobalPresenceLocation, GlobalPresenceCounter } from "@/types/home-content";
 import { MapPin } from "lucide-react";
 
@@ -107,6 +109,16 @@ export function GlobalPresenceSection({
   const description = (lang === "pt" ? (config.descriptionPT as string) : (config.descriptionEN as string))?.trim() ?? "";
 
   const bgColor = (config.backgroundColor as string)?.trim() || "#0a0a0f";
+  const bgImage = (config.backgroundImage as string)?.trim();
+  const bgOverlayOpacity = (() => {
+    const v = config.backgroundOverlayOpacity;
+    if (typeof v === "number" && v >= 0 && v <= 1) return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (!Number.isNaN(n) && n >= 0 && n <= 1) return n;
+    }
+    return 0.75;
+  })();
   const accentColor = (config.accentColor as string)?.trim() || "#38bdf8";
   const mapTint = (config.mapTint as string)?.trim() || "#334155";
   const overlayOpacity = typeof config.overlayOpacity === "number" ? config.overlayOpacity : 0.4;
@@ -148,6 +160,19 @@ export function GlobalPresenceSection({
       className={`relative overflow-hidden border-b border-white/5 ${heightClass}`}
       style={{ backgroundColor: bgColor }}
     >
+      {bgImage && (
+        <div className="absolute inset-0">
+          <Image
+            src={getPublicImageUrl(bgImage)}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="100vw"
+            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
+          />
+          <div className="absolute inset-0 bg-zinc-950" style={{ opacity: bgOverlayOpacity }} />
+        </div>
+      )}
       <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-10 sm:mb-14">

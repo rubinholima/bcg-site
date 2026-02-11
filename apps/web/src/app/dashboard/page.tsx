@@ -183,7 +183,7 @@ export default async function DashboardPage() {
   const updatedAtLabel = formatDateTime(updatedAt.toISOString());
 
   return (
-    <div className="space-y-8">
+    <div className="w-full min-w-0 max-w-full space-y-8">
       {/* Welcome */}
       <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-border p-6 md:p-8">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
@@ -197,13 +197,13 @@ export default async function DashboardPage() {
       {/* Stats */}
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-4">Resumo</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {STAT_CARDS.map(({ key, label, icon: Icon, href, accent, iconClass }) => {
             const value = getStatValue(stats, tenantsCount, key);
             return (
-              <Link key={key} href={href} className="block group">
+              <Link key={key} href={href} className="block group min-w-0">
                 <Card
-                  className={`overflow-hidden border bg-gradient-to-br ${accent} transition-all hover:shadow-md hover:border-primary/30`}
+                  className={`min-w-0 overflow-hidden border bg-gradient-to-br ${accent} transition-all hover:shadow-md hover:border-primary/30`}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -228,9 +228,9 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Últimas empresas */}
-        <Card className="lg:col-span-2">
+        <Card className="min-w-0 lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Últimas empresas</CardTitle>
@@ -288,7 +288,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Atalhos */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Atalhos</CardTitle>
             <CardDescription>
@@ -314,8 +314,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* Última atividade + Resumo por tipo */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-muted-foreground" />
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-muted-foreground" />
@@ -388,7 +388,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Avisos / Notificações */}
-      <Card className="border-amber-500/20 bg-amber-500/5">
+      <Card className="min-w-0 border-amber-500/20 bg-amber-500/5">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />

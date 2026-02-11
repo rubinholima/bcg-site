@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
-import { fetchPublicTenants, type PublicTenantCarouselItem } from "@/lib/public-tenants";
 import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { fetchPublicTenants, type PublicTenantCarouselItem } from "@/lib/public-tenants";
 
 function buildTenantUrl(item: PublicTenantCarouselItem): string {
   if (item.websiteUrl?.trim()) return item.websiteUrl.trim();
@@ -207,6 +207,16 @@ export function LogoCarouselSection({
   }, [clubsEnabled, companiesEnabled, clubsLimit, companiesLimit]);
 
   const bgColor = (config.backgroundColor as string)?.trim() || "#0f0f12";
+  const bgImage = (config.backgroundImage as string)?.trim();
+  const overlayOpacity = (() => {
+    const v = config.backgroundOverlayOpacity;
+    if (typeof v === "number" && v >= 0 && v <= 1) return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (!Number.isNaN(n) && n >= 0 && n <= 1) return n;
+    }
+    return 0.75;
+  })();
 
   if (!clubsEnabled && !companiesEnabled) return null;
 
@@ -220,6 +230,19 @@ export function LogoCarouselSection({
         minHeight: `${cardHeight + paddingTop + paddingBottom}px`,
       }}
     >
+      {bgImage && (
+        <div className="absolute inset-0">
+          <Image
+            src={getPublicImageUrl(bgImage)}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="100vw"
+            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
+          />
+          <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
+        </div>
+      )}
       {loading ? (
         <div className="flex items-center justify-center w-full py-12 text-zinc-500">
           <span>Carregando…</span>
@@ -229,6 +252,7 @@ export function LogoCarouselSection({
           <span>Nenhum clube ou empresa publicado com logo.</span>
         </div>
       ) : (
+        <div className="relative">
         <LogoStrip
           items={allItems}
           fallbackLogo={fallbackLogo}
@@ -244,6 +268,7 @@ export function LogoCarouselSection({
           pauseOnHover={pauseOnHover}
           openInNewTab={openInNewTab}
         />
+        </div>
       )}
     </section>
   );

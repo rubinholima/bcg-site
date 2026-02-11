@@ -1,0 +1,43 @@
+---
+description: Padrão obrigatório para todos os módulos da página (clubes, empresas)
+alwaysApply: true
+---
+
+# Padrão de Módulos da Página
+
+Todo módulo de seção na página deve, por padrão, expor as seguintes opções no editor e implementá-las na renderização:
+
+## 1. Aparência (obrigatório)
+
+| Opção | Config key | Padrão | Descrição |
+|-------|------------|--------|-----------|
+| **Cor de fundo** | `backgroundColor` | `#18181b` ou `#0f0f12` | Cor de fundo da seção (hex) |
+| **Opacidade overlay** | `backgroundOverlayOpacity` | `0.75` | Quando há imagem de fundo, opacidade do overlay escuro (0–1) |
+| **Imagem de fundo** | `backgroundImage` | vazio | URL da imagem de fundo (MediaPicker ou URL manual) |
+
+**Exceções:** `header` e `footer` têm configuração própria de preset (não usam o bloco padrão de aparência).
+
+## 2. Título (quando o módulo tiver título)
+
+| Opção | Config key | Padrão | Descrição |
+|-------|------------|--------|-----------|
+| **Título (PT)** | `titlePt` | vazio | Título em português |
+| **Título (EN)** | `titleEn` | vazio | Título em inglês |
+| **Cor inicial do gradiente** | `titleGradientStart` | `#fcd34d` (âmbar) | Cor inicial do gradiente do título (hex) |
+| **Cor final do gradiente** | `titleGradientEnd` | `#ffffff` | Cor final do gradiente do título (hex) |
+
+Use o componente `SectionTitle` para renderizar títulos com gradiente e linha animada.
+
+## 3. Implementação
+
+- **Imagem de fundo:** quando `backgroundImage` existir, renderizar `<Image>` em `absolute inset-0` com `object-cover`, e um overlay `<div className="absolute inset-0 bg-zinc-950" style={{ opacity: backgroundOverlayOpacity }} />`.
+- **Container:** use `relative` no container do conteúdo para que fique acima do fundo.
+- **Media URL:** use `getPublicImageUrl()` e `isProxyImageUrl()` para imagens.
+
+## 4. Módulos que já seguem o padrão
+
+- `proximos_jogos`, `noticias`, `section`, `text`, `custom`
+- `highlights`, `what`, `how`, `cta`, `founder`, `clubs`, `companies`
+- `logo_carousel`, `global_presence`
+
+Ao criar novos módulos, inclua sempre: cor de fundo, opacidade overlay, imagem de fundo e (se tiver título) cores do gradiente do título.

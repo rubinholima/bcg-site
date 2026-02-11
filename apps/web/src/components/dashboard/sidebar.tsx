@@ -27,23 +27,23 @@ import {
 import type { Group } from "@/types/group";
 
 const cadastrosItems = [
-  { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers },
-  { title: "Tipos Emp/Clubes", href: "/dashboard/cadastros/tipos", icon: Tag },
-  { title: "Campeonatos", href: "/dashboard/cadastros/campeonatos", icon: Trophy },
-  { title: "Estádios", href: "/dashboard/cadastros/estadios", icon: MapPin },
-  { title: "Times adversários", href: "/dashboard/cadastros/times", icon: Shirt },
+  { title: "Usuários", href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
+  { title: "Empresas / Clubes", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
+  { title: "Senhas", href: "/dashboard/senhas", icon: KeyRound, moduleSlug: "vault" },
+  { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers, moduleSlug: "tipos" },
+  { title: "Tipos Emp/Clubes", href: "/dashboard/cadastros/tipos", icon: Tag, moduleSlug: "tipos" },
+  { title: "Campeonatos", href: "/dashboard/cadastros/campeonatos", icon: Trophy, moduleSlug: "tipos" },
+  { title: "Estádios", href: "/dashboard/cadastros/estadios", icon: MapPin, moduleSlug: "tipos" },
+  { title: "Times adversários", href: "/dashboard/cadastros/times", icon: Shirt, moduleSlug: "tipos" },
 ];
 
 const menuItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, moduleSlug: "dashboard" },
   { title: "Grupo Master", href: "/dashboard/grupo", icon: Globe, moduleSlug: "grupo_master" },
-  { title: "Usuários", href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
-  { title: "Empresas / Clubes", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
   { title: "Emails", href: "/dashboard/emails", icon: Mail, moduleSlug: "emails" },
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
   { title: "Mídia", href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
-  { title: "Senhas", href: "/dashboard/senhas", icon: KeyRound, moduleSlug: "vault" },
   { title: "Configurações", href: "/dashboard/configuracoes", icon: Settings, moduleSlug: "configuracoes" },
 ];
 
@@ -53,7 +53,13 @@ export function Sidebar() {
   const [group, setGroup] = useState<Group | null>(null);
   const [logoError, setLogoError] = useState(false);
   const [cadastrosOpen, setCadastrosOpen] = useState(
-    () => pathname?.startsWith("/dashboard/cadastros") ?? false
+    () =>
+      (pathname?.startsWith("/dashboard/cadastros") ||
+        pathname?.startsWith("/dashboard/usuarios") ||
+        pathname?.startsWith("/dashboard/empresas") ||
+        pathname?.startsWith("/dashboard/tenants") ||
+        pathname?.startsWith("/dashboard/senhas")) ??
+      false
   );
 
   useEffect(() => {
@@ -108,18 +114,16 @@ export function Sidebar() {
               canAccessModule(item.moduleSlug) ||
               (item.moduleSlug === "emails" && canAccessDashboard),
           )
-          .map((item) => {
+          .flatMap((item) => {
           const Icon = item.icon;
           const isActive =
             pathname === item.href ||
             (item.href === "/dashboard/grupo" && pathname?.startsWith("/dashboard/grupo")) ||
-            (item.href === "/dashboard/empresas" && pathname?.startsWith("/dashboard/tenants")) ||
-            (item.href === "/dashboard/usuarios" && pathname?.startsWith("/dashboard/usuarios")) ||
             (item.href === "/dashboard/emails" && pathname?.startsWith("/dashboard/emails")) ||
-            (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia")) ||
-            (item.href === "/dashboard/senhas" && pathname?.startsWith("/dashboard/senhas"));
+            (item.href === "/dashboard/noticias" && pathname?.startsWith("/dashboard/noticias")) ||
+            (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia"));
 
-          return (
+          const linkEl = (
             <Link
               key={item.href}
               href={item.href}
@@ -134,17 +138,24 @@ export function Sidebar() {
               <span>{item.title}</span>
             </Link>
           );
-        })}
 
-        {/* Cadastros (expandível) */}
-        {canAccessModule("tipos") && (
-          <div className="pt-2">
+          // Cadastros logo após Grupo Master
+          if (item.href === "/dashboard/grupo" &&
+              (canAccessModule("tipos") || canAccessModule("usuarios") || canAccessModule("empresas") || canAccessModule("vault"))) {
+            return [
+              linkEl,
+              <div key="cadastros" className="pt-2">
             <button
               type="button"
               onClick={() => setCadastrosOpen((o) => !o)}
               className={cn(
                 "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                cadastrosOpen || pathname?.startsWith("/dashboard/cadastros")
+                cadastrosOpen ||
+                  pathname?.startsWith("/dashboard/cadastros") ||
+                  pathname?.startsWith("/dashboard/usuarios") ||
+                  pathname?.startsWith("/dashboard/empresas") ||
+                  pathname?.startsWith("/dashboard/tenants") ||
+                  pathname?.startsWith("/dashboard/senhas")
                   ? "bg-accent/50 text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}
@@ -161,9 +172,14 @@ export function Sidebar() {
             </button>
             {cadastrosOpen && (
               <div className="mt-1 ml-4 space-y-0.5 border-l border-border pl-3">
-                {cadastrosItems.map((sub) => {
+                {cadastrosItems
+                  .filter((sub) => canAccessModule(sub.moduleSlug))
+                  .map((sub) => {
                   const SubIcon = sub.icon;
-                  const isSubActive = pathname === sub.href || pathname?.startsWith(sub.href + "/");
+                  const isSubActive =
+                    pathname === sub.href ||
+                    pathname?.startsWith(sub.href + "/") ||
+                    (sub.href === "/dashboard/empresas" && pathname?.startsWith("/dashboard/tenants"));
                   return (
                     <Link
                       key={sub.href}
@@ -182,8 +198,11 @@ export function Sidebar() {
                 })}
               </div>
             )}
-          </div>
-        )}
+              </div>,
+            ];
+          }
+          return [linkEl];
+        })}
       </nav>
     </div>
   );

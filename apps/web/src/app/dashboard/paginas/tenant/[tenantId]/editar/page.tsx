@@ -286,7 +286,7 @@ export default function EditarPaginaTenantPage() {
   const updateBlockConfigValue = (
     index: number,
     key: string,
-    value: string | number | boolean | string[] | Record<string, string>[] | undefined,
+    value: string | number | boolean | string[] | Record<string, string>[] | HomeContentBlock[] | unknown,
   ) => {
     const list = [...blocks];
     const block = list[index];
@@ -307,6 +307,40 @@ export default function EditarPaginaTenantPage() {
   const removeBlock = (index: number) => {
     if (index <= 0 || index >= blocks.length - 1) return;
     setBlocks(blocks.filter((_, i) => i !== index));
+  };
+
+  const addModuleToSection = (
+    sectionIndex: number,
+    column: "left" | "right",
+    type: HomeBlockType,
+  ) => {
+    if (type === "header" || type === "footer" || type === "section") return;
+    const list = [...blocks];
+    const block = list[sectionIndex];
+    if (!block || block.type !== "section") return;
+    const key = column === "left" ? "sectionLeftModules" : "sectionRightModules";
+    const modules = ((block.config?.[key] as HomeContentBlock[]) ?? []) as HomeContentBlock[];
+    const newBlock = createBlock(type, modules.length);
+    const updated = [...modules, newBlock];
+    const config = { ...(block.config ?? {}), [key]: updated };
+    list[sectionIndex] = { ...block, config };
+    setBlocks(list);
+  };
+
+  const removeModuleFromSection = (
+    sectionIndex: number,
+    column: "left" | "right",
+    moduleIndex: number,
+  ) => {
+    const list = [...blocks];
+    const block = list[sectionIndex];
+    if (!block || block.type !== "section") return;
+    const key = column === "left" ? "sectionLeftModules" : "sectionRightModules";
+    const modules = ((block.config?.[key] as HomeContentBlock[]) ?? []) as HomeContentBlock[];
+    const updated = modules.filter((_, i) => i !== moduleIndex);
+    const config = { ...(block.config ?? {}), [key]: updated };
+    list[sectionIndex] = { ...block, config };
+    setBlocks(list);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -541,7 +575,7 @@ export default function EditarPaginaTenantPage() {
                         Aparência (todos os módulos)
                       </Label>
                     </div>
-                    {block.type !== "hero" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
+                    {(block.type !== "header" && block.type !== "footer") && (
                       <div className="space-y-2">
                         <Label>Cor de fundo (hex)</Label>
                         <div className="flex gap-2">
@@ -575,7 +609,7 @@ export default function EditarPaginaTenantPage() {
                         </div>
                       </div>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
+                    {block.type !== "header" && block.type !== "footer" && (
                       <>
                         <div className="space-y-2">
                           <Label>Opacidade overlay (0-1)</Label>
@@ -619,7 +653,7 @@ export default function EditarPaginaTenantPage() {
                         </div>
                       </>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && block.type !== "section" && block.type !== "noticias" && (
                       <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Tamanho do módulo</summary>
                         <div className="border-t border-border px-3 py-3 space-y-2">
@@ -642,6 +676,214 @@ export default function EditarPaginaTenantPage() {
                           </p>
                         </div>
                       </details>
+                    )}
+                    {block.type === "section" && (
+                      <div className="space-y-4 sm:col-span-2">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label>Colunas</Label>
+                            <Select
+                              value={String((block.config?.sectionColumns as number) ?? 2)}
+                              onValueChange={(v) => updateBlockConfigValue(index, "sectionColumns", v === "1" ? 1 : 2)}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1">1 coluna (empilhado)</SelectItem>
+                                <SelectItem value="2">2 colunas</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {(block.config?.sectionColumns as number) === 2 && (
+                            <div className="space-y-2">
+                              <Label>Proporção das colunas</Label>
+                              <Select
+                                value={(block.config?.sectionLayout as string) ?? "50-50"}
+                                onValueChange={(v) => updateBlockConfigValue(index, "sectionLayout", v)}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="50-50">50% / 50%</SelectItem>
+                                  <SelectItem value="33-66">33% / 66%</SelectItem>
+                                  <SelectItem value="66-33">66% / 33%</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <Label>Espaço no topo</Label>
+                            <Select
+                              value={(block.config?.sectionPaddingTop as string) ?? "compact"}
+                              onValueChange={(v) => updateBlockConfigValue(index, "sectionPaddingTop", v)}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="minimal">Mínimo</SelectItem>
+                                <SelectItem value="compact">Compacto</SelectItem>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="large">Grande</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Espaço embaixo</Label>
+                            <Select
+                              value={(block.config?.sectionPaddingBottom as string) ?? "compact"}
+                              onValueChange={(v) => updateBlockConfigValue(index, "sectionPaddingBottom", v)}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="minimal">Mínimo</SelectItem>
+                                <SelectItem value="compact">Compacto</SelectItem>
+                                <SelectItem value="normal">Normal</SelectItem>
+                                <SelectItem value="large">Grande</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div className={`grid gap-4 ${(block.config?.sectionColumns as number) === 2 ? "sm:grid-cols-2" : ""}`}>
+                          <details open className="rounded-lg border border-amber-500/40 bg-amber-500/10">
+                            <summary className="cursor-pointer px-3 py-2 font-medium">
+                              {(block.config?.sectionColumns as number) === 1 ? "Módulos" : "Coluna esquerda"} — {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length} módulo(s)
+                            </summary>
+                            <div className="border-t border-border px-3 py-3 space-y-2">
+                              {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).map((m, mi) => (
+                                <div key={m.id} className="flex items-center justify-between rounded border border-border bg-muted/30 px-2 py-2">
+                                  <span className="text-sm font-medium">{getBlockLabel(m.id, m.type as HomeBlockType, "pt")}</span>
+                                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeModuleFromSection(index, "left", mi)}>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Select key={`section-${index}-left-${((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "left", v as HomeBlockType); }}>
+                                <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
+                                <SelectContent>
+                                  {MIDDLE_MODULE_OPTIONS.filter((o) => o.type !== "section").map((opt) => (
+                                    <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </details>
+                          {(block.config?.sectionColumns as number) === 2 && (
+                            <details open className="rounded-lg border border-amber-500/40 bg-amber-500/10">
+                              <summary className="cursor-pointer px-3 py-2 font-medium">
+                                Coluna direita — {((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).length} módulo(s)
+                              </summary>
+                              <div className="border-t border-border px-3 py-3 space-y-2">
+                                {((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).map((m, mi) => (
+                                  <div key={m.id} className="flex items-center justify-between rounded border border-border bg-muted/30 px-2 py-2">
+                                    <span className="text-sm font-medium">{getBlockLabel(m.id, m.type as HomeBlockType, "pt")}</span>
+                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeModuleFromSection(index, "right", mi)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                                <Select key={`section-${index}-right-${((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "right", v as HomeBlockType); }}>
+                                  <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
+                                  <SelectContent>
+                                    {MIDDLE_MODULE_OPTIONS.filter((o) => o.type !== "section").map((opt) => (
+                                      <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {block.type === "noticias" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Feed de notícias</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Use RSS para Google News, Instagram (via RSS.app) ou site do clube. Cole a URL do feed em RSS.
+                            </p>
+                            <div className="space-y-2">
+                              <Label>Fonte</Label>
+                              <Select
+                                value={(block.config?.noticiasDataSource as string) ?? "rss"}
+                                onValueChange={(v) => updateBlockConfigValue(index, "noticiasDataSource", v)}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="rss">RSS (feed externo — Google News, Instagram, site)</SelectItem>
+                                  <SelectItem value="manual">Manual (lista editada)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {(block.config?.noticiasDataSource as string) !== "manual" && (
+                              <>
+                                <div className="space-y-2">
+                                  <Label>URL do feed RSS</Label>
+                                  <Input
+                                    placeholder="https://rss.app/feed/... ou https://..."
+                                    value={(block.config?.noticiasRssUrl as string) ?? ""}
+                                    onChange={(e) => updateBlockConfig(index, "noticiasRssUrl", e.target.value)}
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Crie em <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="underline text-primary">rss.app</a> — Google News ou Instagram.
+                                  </p>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Máx. itens</Label>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={20}
+                                    value={(block.config?.noticiasMaxItems as number) ?? 10}
+                                    onChange={(e) => {
+                                      const v = parseInt(e.target.value, 10);
+                                      updateBlockConfigValue(index, "noticiasMaxItems", Number.isNaN(v) ? 10 : Math.min(20, Math.max(1, v)));
+                                    }}
+                                  />
+                                </div>
+                              </>
+                            )}
+                            {(block.config?.noticiasDataSource as string) === "manual" && (
+                              <div className="space-y-2">
+                                <Label>Itens manuais</Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Adicione notícias manualmente (título, link, resumo). Em breve.
+                                </p>
+                              </div>
+                            )}
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label>Espaço no topo</Label>
+                                <Select
+                                  value={(block.config?.noticiasPaddingTop as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "noticiasPaddingTop", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Espaço embaixo</Label>
+                                <Select
+                                  value={(block.config?.noticiasPaddingBottom as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "noticiasPaddingBottom", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                      </div>
                     )}
                     {block.type === "proximos_jogos" && (
                       <div className="space-y-3 sm:col-span-2">
@@ -2446,6 +2688,48 @@ export default function EditarPaginaTenantPage() {
                               }
                             />
                           </div>
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                            <summary className="cursor-pointer px-3 py-2 font-medium">Cores do título (padrão do time)</summary>
+                            <div className="border-t border-border px-3 py-3 space-y-3">
+                              <p className="text-xs text-muted-foreground">
+                                Personalize o gradiente do título para seguir as cores do seu time. Deixe vazio para o padrão (âmbar/branco).
+                              </p>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                  <Label>Cor inicial (início do gradiente)</Label>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="color"
+                                      className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                                      value={(block.config?.titleGradientStart as string) || "#fcd34d"}
+                                      onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)}
+                                    />
+                                    <Input
+                                      placeholder="#fcd34d"
+                                      value={(block.config?.titleGradientStart as string) ?? ""}
+                                      onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Cor final (fim do gradiente)</Label>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="color"
+                                      className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                                      value={(block.config?.titleGradientEnd as string) || "#ffffff"}
+                                      onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)}
+                                    />
+                                    <Input
+                                      placeholder="#ffffff"
+                                      value={(block.config?.titleGradientEnd as string) ?? ""}
+                                      onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </details>
                           </>
                           )}
                           {block.type !== "global_presence" && BLOCK_TYPES_WITH_BODY.includes(block.type as HomeBlockType) && (

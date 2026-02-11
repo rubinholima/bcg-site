@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { DashboardHead } from "@/components/dashboard/DashboardHead";
 import { DashboardGuard } from "@/components/auth/DashboardGuard";
+import { DashboardBodyLock } from "@/components/dashboard/DashboardBodyLock";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -28,22 +29,25 @@ export default function DashboardLayout({
 }) {
   return (
     <DashboardGuard>
+      <DashboardBodyLock />
       <DashboardHead />
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen w-full min-w-0 overflow-clip">
         {/* Sidebar */}
         <aside className="w-64 shrink-0">
           <Sidebar />
         </aside>
 
-        {/* Main Content */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {/* Main Content - flex-basis:0 força o item a não ultrapassar o espaço disponível */}
+        <div className="flex min-h-0 min-w-0 flex-[1_1_0%] flex-col overflow-clip">
           {/* Header */}
           <Header />
 
           {/* Page Content - scroll contido para não passar do rodapé */}
-          <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background px-6 pb-6 pt-0">
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-none bg-background">
-              {children}
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-clip bg-background px-4 pb-6 pt-0 sm:px-6">
+            <div className="dashboard-scroll min-h-0 min-w-0 flex-1 overflow-x-hidden overscroll-none bg-background">
+              <div className="min-w-0 max-w-full pr-6">
+                {children}
+              </div>
             </div>
           </main>
         </div>

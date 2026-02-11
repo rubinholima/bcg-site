@@ -31,27 +31,27 @@ export function Header() {
   const logoUrl = logoError ? undefined : group?.logoUrl ?? undefined;
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
-      <div className="flex items-center gap-3">
+    <header className="flex h-16 min-w-0 items-center justify-between gap-4 border-b border-border bg-card px-4 sm:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
         {logoUrl ? (
           <img
             src={logoUrl}
             alt=""
-            className="h-8 w-8 object-contain rounded flex-shrink-0"
+            className="h-8 w-8 shrink-0 object-contain rounded"
             onError={() => setLogoError(true)}
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground flex-shrink-0 text-xs font-bold">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
             {name.charAt(0)}
           </div>
         )}
-        <span className="text-sm font-medium">
+        <span className="truncate text-sm font-medium">
           <span className="text-muted-foreground">Dashboard</span> · {name}
         </span>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground hidden sm:inline">
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="hidden truncate text-sm text-muted-foreground sm:inline">
           Dashboard · {name}
         </span>
         <Button variant="ghost" size="sm" asChild>

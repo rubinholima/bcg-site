@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2, ChevronLeft, ChevronRight } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 
@@ -232,6 +233,16 @@ export function ProximosJogosSection({
   const title =
     (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const bgColor = (block.config?.backgroundColor as string)?.trim() || "#0f0f12";
+  const bgImage = (block.config?.backgroundImage as string)?.trim();
+  const overlayOpacity = (() => {
+    const v = block.config?.backgroundOverlayOpacity;
+    if (typeof v === "number" && v >= 0 && v <= 1) return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (!Number.isNaN(n) && n >= 0 && n <= 1) return n;
+    }
+    return 0.75;
+  })();
   const cardStyle = (block.config?.proximosJogosCardStyle as "box" | "flat") || "flat";
   const paddingTop = (block.config?.proximosJogosPaddingTop as "minimal" | "compact" | "normal" | "large") || "compact";
   const paddingBottom = (block.config?.proximosJogosPaddingBottom as "minimal" | "compact" | "normal" | "large") || "compact";
@@ -336,30 +347,45 @@ export function ProximosJogosSection({
       className={`relative overflow-hidden border-b border-white/5 ${paddingTopClass} ${paddingBottomClass}`}
       style={{ backgroundColor: bgColor }}
     >
-      <div className="container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      {bgImage && (
+        <div className="absolute inset-0">
+          <Image
+            src={getPublicImageUrl(bgImage)}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="100vw"
+            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
+          />
+          <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
+        </div>
+      )}
+      <div className="container relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         {title && (
-          <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl mb-6 text-center">
-            {title}
-          </h2>
-        )}
+            <SectionTitle
+              title={title}
+              gradientStart={(block.config?.titleGradientStart as string)?.trim()}
+              gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
+            />
+          )}
 
-        {loading ? (
-          <div className="flex justify-center py-12 text-zinc-500">
-            <span>{lang === "pt" ? "Carregando jogos…" : "Loading fixtures…"}</span>
-          </div>
-        ) : upcomingFixtures.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-zinc-900/40 px-6 py-12 text-center text-zinc-400">
-            <Calendar className="mx-auto h-12 w-12 opacity-50 mb-3" />
-            <p>
-              {fixtures.length > 0
-                ? (lang === "pt" ? "Nenhum próximo jogo no momento." : "No upcoming fixtures.")
-                : (lang === "pt" ? "Nenhum jogo cadastrado no momento." : "No fixtures at the moment.")}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Filtros: data e categoria em dropdowns */}
-            <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
+          {loading ? (
+            <div className="flex justify-center py-12 text-zinc-500">
+              <span>{lang === "pt" ? "Carregando jogos…" : "Loading fixtures…"}</span>
+            </div>
+          ) : upcomingFixtures.length === 0 ? (
+            <div className="rounded-xl border border-white/10 bg-zinc-900/60 px-6 py-12 text-center text-zinc-400">
+              <Calendar className="mx-auto h-12 w-12 opacity-50 mb-3" />
+              <p>
+                {fixtures.length > 0
+                  ? (lang === "pt" ? "Nenhum próximo jogo no momento." : "No upcoming fixtures.")
+                  : (lang === "pt" ? "Nenhum jogo cadastrado no momento." : "No fixtures at the moment.")}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Filtros: data e categoria em dropdowns */}
+              <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-zinc-500">
                   {lang === "pt" ? "Data:" : "Date:"}
@@ -417,16 +443,14 @@ export function ProximosJogosSection({
             </div>
           </>
         )}
-      </div>
 
-      {/* Carrossel full-width: toma a extensão da página, sem box. Cards separados com borda. */}
-      {!loading && upcomingFixtures.length > 0 && (
-        <div
-          className="relative overflow-hidden"
-          style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)" }}
-          onMouseEnter={() => setCarouselHover(true)}
-          onMouseLeave={() => setCarouselHover(false)}
-        >
+        {/* Carrossel */}
+        {!loading && upcomingFixtures.length > 0 && (
+          <div
+            className="relative overflow-hidden mt-6"
+            onMouseEnter={() => setCarouselHover(true)}
+            onMouseLeave={() => setCarouselHover(false)}
+          >
           {cardCount > 1 && (
             <>
               <button
@@ -449,7 +473,7 @@ export function ProximosJogosSection({
           )}
           <div
             ref={carouselRef}
-            className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 pl-14 pr-14 sm:pl-16 sm:pr-16 scroll-smooth scrollbar-thin"
+            className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 pl-12 pr-12 sm:pl-14 sm:pr-14 scroll-smooth scrollbar-thin"
             style={{
               scrollSnapType: "x mandatory",
               scrollbarWidth: "thin",
@@ -602,6 +626,7 @@ export function ProximosJogosSection({
           </div>
         </div>
       )}
+      </div>
     </section>
   );
 }

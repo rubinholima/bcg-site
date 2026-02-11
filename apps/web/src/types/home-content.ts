@@ -77,7 +77,9 @@ export type HomeBlockType =
   | "clientes"
   | "contato"
   | "global_presence"
-  | "logo_carousel";
+  | "logo_carousel"
+  // Container: seção com colunas
+  | "section";
 
 /** Efeitos do carrossel do Hero */
 export type HeroCarouselEffect = "fade" | "slide" | "zoom";
@@ -107,6 +109,9 @@ export interface HomeBlockConfig {
   backgroundOverlayOpacity?: number;
   titlePt?: string;
   titleEn?: string;
+  /** Cores do gradiente do título (hex). Vazio = padrão âmbar/branco. */
+  titleGradientStart?: string;
+  titleGradientEnd?: string;
   bodyPt?: string;
   bodyEn?: string;
   /** Imagem dentro do conteúdo (custom/text) */
@@ -279,6 +284,30 @@ export interface HomeBlockConfig {
   logoCarouselCompaniesLimit?: number;
   logoCarouselCompaniesSorting?: "alphabetical" | "newest" | "manual";
   logoCarouselCompaniesFallbackLogo?: string;
+  /** Section: colunas (1 = full, 2 = duas colunas) */
+  sectionColumns?: 1 | 2;
+  /** Section: layout quando 2 colunas (50-50, 33-66, 66-33) */
+  sectionLayout?: "50-50" | "33-66" | "66-33";
+  /** Section: módulos da coluna esquerda */
+  sectionLeftModules?: HomeContentBlock[];
+  /** Section: módulos da coluna direita (só quando columns=2) */
+  sectionRightModules?: HomeContentBlock[];
+  /** Section: padding topo (minimal, compact, normal, large) */
+  sectionPaddingTop?: "minimal" | "compact" | "normal" | "large";
+  /** Section: padding base */
+  sectionPaddingBottom?: "minimal" | "compact" | "normal" | "large";
+  /** Notícias: fonte (rss = feed externo; manual = lista editada) */
+  noticiasDataSource?: "rss" | "manual";
+  /** Notícias: URL do feed RSS (quando dataSource=rss). Ex: RSS.app, Google News, site do clube */
+  noticiasRssUrl?: string;
+  /** Notícias: itens manuais (quando dataSource=manual ou fallback) */
+  noticiasManualItems?: NoticiasItem[];
+  /** Notícias: máx. itens a exibir (default 10) */
+  noticiasMaxItems?: number;
+  /** Notícias: padding topo da seção */
+  noticiasPaddingTop?: "minimal" | "compact" | "normal" | "large";
+  /** Notícias: padding base */
+  noticiasPaddingBottom?: "minimal" | "compact" | "normal" | "large";
   /** Próximos Jogos: padding topo da seção */
   proximosJogosPaddingTop?: "compact" | "normal" | "large";
   /** Próximos Jogos: padding base da seção */
@@ -290,6 +319,17 @@ export interface HomeBlockConfig {
   /** Próximos Jogos: overrides por externalId (quando dataSource=sofascore) */
   proximosJogosOverrides?: Record<string, ProximosJogosFixtureOverride>;
   [key: string]: unknown;
+}
+
+/** Item de notícia (manual ou retorno do RSS) */
+export interface NoticiasItem {
+  id?: string;
+  title: string;
+  link: string;
+  excerpt?: string;
+  dateISO?: string;
+  imageUrl?: string;
+  source?: string;
 }
 
 /** Item de fixture (manual ou retorno da API) */
