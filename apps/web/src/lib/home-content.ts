@@ -89,6 +89,7 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   text: { pt: "Bloco de texto (título + corpo)", en: "Text block (title + body)" },
   // Clubes
   proximos_jogos: { pt: "Próximos jogos", en: "Upcoming matches" },
+  ultimos_resultados: { pt: "Últimos resultados", en: "Last results" },
   times_categorias: { pt: "Times por categorias", en: "Teams by category" },
   noticias: { pt: "Notícias", en: "News" },
   calendario: { pt: "Calendário / Agenda", en: "Calendar" },
@@ -122,6 +123,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string }[] = [
   { type: "cta", label: "CTA final" },
   // Clubes (futebol)
   { type: "proximos_jogos", label: "Próximos jogos" },
+  { type: "ultimos_resultados", label: "Últimos resultados" },
   { type: "times_categorias", label: "Times por categorias" },
   { type: "noticias", label: "Notícias" },
   { type: "calendario", label: "Calendário / Agenda" },
@@ -151,6 +153,7 @@ export const BLOCK_TYPES_WITH_BODY: HomeBlockType[] = [
   "text",
   "custom",
   "proximos_jogos",
+  "ultimos_resultados",
   "times_categorias",
   "noticias",
   "calendario",
@@ -270,6 +273,10 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
   if (type === "section") {
     config.sectionColumns = 2;
     config.sectionLayout = "50-50";
+    config.sectionLeftColumnTitlePt = "";
+    config.sectionLeftColumnTitleEn = "";
+    config.sectionRightColumnTitlePt = "";
+    config.sectionRightColumnTitleEn = "";
     config.sectionLeftModules = [];
     config.sectionRightModules = [];
     config.sectionPaddingTop = "compact";
@@ -282,6 +289,12 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.proximosJogosPaddingTop = "compact";
     config.proximosJogosPaddingBottom = "compact";
   }
+  if (type === "ultimos_resultados") {
+    config.ultimosResultadosPaddingTop = "compact";
+    config.ultimosResultadosPaddingBottom = "compact";
+    config.ultimosResultadosMaxItems = 10;
+    config.resultadosManuais = {};
+  }
   if (type === "noticias") {
     config.noticiasDataSource = "rss";
     config.noticiasRssUrl = "";
@@ -289,6 +302,19 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.noticiasMaxItems = 10;
     config.noticiasPaddingTop = "compact";
     config.noticiasPaddingBottom = "compact";
+  }
+  if (type === "galeria") {
+    config.galeriaDataSource = "rss";
+    config.galeriaRssUrl = "";
+    config.galeriaManualItems = [];
+    config.galeriaMaxItems = 12;
+    config.galeriaPaddingTop = "compact";
+    config.galeriaPaddingBottom = "compact";
+  }
+  if (type === "patrocinadores") {
+    config.patrocinadoresManualItems = [];
+    config.patrocinadoresPaddingTop = "compact";
+    config.patrocinadoresPaddingBottom = "compact";
   }
   if (type === "logo_carousel") {
     config.backgroundColor = "#0f0f12";

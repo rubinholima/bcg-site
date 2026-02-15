@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
 import { BlockRenderer } from "@/components/portfolio/modules/BlockRenderer";
@@ -46,6 +47,7 @@ const GENERIC_BLOCK_TYPES = [
   "text",
   "custom",
   "proximos_jogos",
+  "ultimos_resultados",
   "times_categorias",
   "noticias",
   "calendario",
@@ -85,14 +87,21 @@ export default async function PortfolioSlugPage({
   const page = await getPageBySlug(slug);
 
   if (!page?.content?.blocks?.length) {
+    const emptyTheme = page?.content?.theme ?? {};
+    const emptyBg = (emptyTheme.backgroundColor as string)?.trim() || "#0f0f12";
+    const emptyText = (emptyTheme.textColor as string)?.trim() || "#fafafa";
+    const emptyAccent = (emptyTheme.accentColor as string)?.trim() || "#fbbf24";
     return (
       <>
         <PortfolioFavicon slug={slug} logoUrl={page?.tenant?.logoUrl} />
-        <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4 text-zinc-100">
-          <p className="text-lg text-zinc-400">
+        <div
+          className="flex min-h-screen flex-col items-center justify-center px-4"
+          style={{ backgroundColor: emptyBg, color: emptyText }}
+        >
+          <p className="text-lg opacity-80">
             {page ? "Esta página ainda não tem conteúdo. Edite em Dashboard → Páginas." : "Perfil em breve / Profile coming soon"}
           </p>
-          <Link href="/" className="mt-4 text-sm font-medium text-amber-400 hover:text-amber-300">
+          <Link href="/" className="mt-4 text-sm font-medium hover:opacity-90" style={{ color: emptyAccent }}>
             ← Voltar / Back
           </Link>
         </div>
@@ -101,6 +110,7 @@ export default async function PortfolioSlugPage({
   }
 
   const tenant = page.tenant;
+  const theme = page.content.theme ?? {};
   const blocks = sortBlocks(page.content.blocks);
   const contentBlocks = blocks.filter((b) => {
     const t = String(b.type ?? "").toLowerCase();
@@ -110,8 +120,44 @@ export default async function PortfolioSlugPage({
   const headerBlock = blocks.find((b) => b.type === "header");
   const footerBlock = blocks.find((b) => b.type === "footer");
 
+  const bgColor = (theme.backgroundColor as string)?.trim() || "#0f0f12";
+  const bgImage = (theme.backgroundImage as string)?.trim();
+  const overlayOpacity = typeof theme.backgroundOverlayOpacity === "number"
+    ? theme.backgroundOverlayOpacity
+    : typeof theme.backgroundOverlayOpacity === "string"
+      ? parseFloat(theme.backgroundOverlayOpacity) || 0.75
+      : 0.75;
+  const textColor = (theme.textColor as string)?.trim() || "#fafafa";
+  const accentColor = (theme.accentColor as string)?.trim() || "#fbbf24";
+  const fontFamily = (theme.fontFamily as string)?.trim();
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: bgImage ? undefined : bgColor,
+        color: textColor,
+        fontFamily: fontFamily || undefined,
+        ["--portfolio-accent" as string]: accentColor,
+      }}
+    >
+      {bgImage && (
+        <div className="fixed inset-0 -z-10">
+          <Image
+            src={getPublicImageUrl(bgImage)}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
+            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
+          />
+          <div
+            className="absolute inset-0 bg-zinc-950"
+            style={{ opacity: overlayOpacity }}
+          />
+        </div>
+      )}
       <PortfolioFavicon slug={slug} logoUrl={tenant?.logoUrl} />
       <PublicPortfolioHeader
         slug={slug}
@@ -137,7 +183,11 @@ export default async function PortfolioSlugPage({
         >
           <div className="container mx-auto flex flex-col items-center gap-2 text-center text-sm">
             <span>{tenant?.name ?? slug}</span>
-            <Link href="/" className="text-amber-400 hover:text-amber-300">
+            <Link
+              href="/"
+              className="hover:opacity-90"
+              style={{ color: accentColor }}
+            >
               Boston City Group
             </Link>
           </div>

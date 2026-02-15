@@ -94,9 +94,10 @@ export class PublicService {
   }
 
   /**
-   * Próximos jogos do tenant (pelo slug). Usado pelo módulo "Próximos Jogos" na página do clube.
+   * Próximos jogos do tenant (pelo slug). Usado pelos módulos "Próximos Jogos" e "Últimos Resultados".
    * Lê o bloco proximos_jogos da página; se dataSource=manual retorna lista manual;
    * se dataSource=sofascore usa tenant.sofascoreTeamId e aplica overrides.
+   * Mescla placares de resultadosManuais (bloco ultimos_resultados) para jogos passados.
    */
   async getFixturesForTenantSlug(slug: string): Promise<FixtureDto[]> {
     const page = await this.pagesService.findByTenantSlug(slug);
@@ -113,6 +114,14 @@ export class PublicService {
       return [];
     }
 
+    const resultadosBlock = page.content.blocks.find(
+      (b) => String(b.type).toLowerCase() === 'ultimos_resultados',
+    );
+    const resultadosManuais =
+      (resultadosBlock?.config as Record<string, unknown>)?.resultadosManuais as
+        | Record<string, { homeScore?: number; awayScore?: number }>
+        | undefined;
+
     const config = block.config as Record<string, unknown>;
     const dataSource = (config.proximosJogosDataSource as string) || 'manual';
     // api_futebol e football_data removidos — treat as manual
@@ -121,31 +130,41 @@ export class PublicService {
 
     if (effectiveSource === 'manual') {
       const manual = (config.proximosJogosManualFixtures as FixtureDto[]) ?? [];
-      return Array.isArray(manual)
+      const list = Array.isArray(manual)
         ? manual
             .filter((f) => f && f.startISO)
-            .map((f) => ({
-              externalId: f.externalId ?? `manual-${f.startISO}`,
-              startISO: f.startISO,
-              status: (f.status as FixtureDto['status']) ?? 'SCHEDULED',
-              competitionName: f.competitionName ?? '',
-              competitionLogoUrl: f.competitionLogoUrl,
-              venueName: f.venueName,
-              homeTeamName: f.homeTeamName ?? '',
-              awayTeamName: f.awayTeamName ?? '',
-              watchUrl: f.watchUrl,
-              ticketUrl: f.ticketUrl,
-              featured: f.featured,
-              category: (f as { category?: string }).category ?? 'principal',
-              isOurTeamHome: f.isOurTeamHome,
-              homeTeamLogoUrl: f.homeTeamLogoUrl,
-              awayTeamLogoUrl: f.awayTeamLogoUrl,
-            }))
+            .map((f, i) => {
+              const extId =
+                (f as { id?: string }).id ??
+                f.externalId ??
+                `manual-${i}-${f.startISO}`;
+              const manualScore = resultadosManuais?.[extId];
+              return {
+                externalId: extId,
+                startISO: f.startISO,
+                status: (f.status as FixtureDto['status']) ?? 'SCHEDULED',
+                competitionName: f.competitionName ?? '',
+                competitionLogoUrl: f.competitionLogoUrl,
+                venueName: f.venueName,
+                homeTeamName: f.homeTeamName ?? '',
+                awayTeamName: f.awayTeamName ?? '',
+                watchUrl: f.watchUrl,
+                ticketUrl: f.ticketUrl,
+                featured: f.featured,
+                category: (f as { category?: string }).category ?? 'principal',
+                isOurTeamHome: f.isOurTeamHome,
+                homeTeamLogoUrl: f.homeTeamLogoUrl,
+                awayTeamLogoUrl: f.awayTeamLogoUrl,
+                homeScore: manualScore?.homeScore,
+                awayScore: manualScore?.awayScore,
+              };
+            })
             .sort(
               (a, b) =>
                 new Date(a.startISO).getTime() - new Date(b.startISO).getTime(),
             )
         : [];
+      return list;
     }
 
     // effectiveSource === 'sofascore'
@@ -183,6 +202,7 @@ export class PublicService {
       .map((f) => {
         const o = overrides[f.externalId];
         const inferred = inferCategoryFromCompetition(f.competitionName);
+        const manualScore = resultadosManuais?.[f.externalId];
         return {
           externalId: f.externalId,
           startISO: f.startISO,
@@ -199,6 +219,8 @@ export class PublicService {
           isOurTeamHome: f.isOurTeamHome,
           homeTeamLogoUrl: f.homeTeamLogoUrl,
           awayTeamLogoUrl: f.awayTeamLogoUrl,
+          homeScore: manualScore?.homeScore ?? (f as { homeScore?: number }).homeScore,
+          awayScore: manualScore?.awayScore ?? (f as { awayScore?: number }).awayScore,
         };
       })
       .sort(

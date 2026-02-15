@@ -26,7 +26,10 @@ import {
 import { FounderBioExpandable } from "@/components/founder/FounderBioExpandable";
 import { LogoCarouselSection } from "@/components/portfolio/modules/LogoCarouselSection";
 import { ProximosJogosSection } from "@/components/portfolio/modules/ProximosJogosSection";
+import { UltimosResultadosSection } from "@/components/portfolio/modules/UltimosResultadosSection";
 import { NoticiasSection } from "@/components/portfolio/modules/NoticiasSection";
+import { GaleriaSection } from "@/components/portfolio/modules/GaleriaSection";
+import { PatrocinadoresSection } from "@/components/portfolio/modules/PatrocinadoresSection";
 import { SectionBlockRenderer } from "@/components/portfolio/modules/SectionBlockRenderer";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Button } from "@/components/ui/button";
@@ -83,17 +86,46 @@ function getHeroOverlayStyle(block: HomeContentBlock): CSSProperties {
   return { backgroundColor: color, opacity: op };
 }
 
+function getEffectiveFullWidth(
+  block: HomeContentBlock,
+  page: Page,
+  inSection?: boolean,
+): boolean {
+  if (inSection) return true;
+  const blockMode = block.config?.contentWidth as "box" | "full" | undefined;
+  const themeMode = page.content?.theme?.contentWidth as "box" | "full" | undefined;
+  if (blockMode === "full") return true;
+  if (blockMode === "box") return false;
+  return themeMode === "full";
+}
+
+function getEffectiveTitleAlign(
+  block: HomeContentBlock,
+  page: Page,
+): "left" | "center" | "right" {
+  const blockAlign = block.config?.titleAlign as "left" | "center" | "right" | undefined;
+  const themeAlign = page.content?.theme?.titleAlign as "left" | "center" | "right" | undefined;
+  return blockAlign ?? themeAlign ?? "left";
+}
+
 export function BlockRenderer({
   block,
   slug,
   lang,
   page,
+  inSection,
 }: {
   block: HomeContentBlock;
   slug: string;
   lang: "pt" | "en";
   page: Page;
+  inSection?: boolean;
 }) {
+  const visible = block.config?.visible !== false;
+  if (!visible) return null;
+
+  const fullWidth = getEffectiveFullWidth(block, page, inSection);
+  const titleAlign = getEffectiveTitleAlign(block, page);
   const tenant = page.tenant;
   const title = blockTitle(block, lang);
   const body = blockBody(block, lang);
@@ -252,13 +284,14 @@ export function BlockRenderer({
     ];
     const iconNames = (Array.isArray(block.config?.highlightsIcons) ? block.config.highlightsIcons : ["Trophy", "Globe", "Layers"]) as string[];
     const defaultIcons = [Trophy, Globe, Layers] as const;
+    const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8";
     return (
       <AnimateInView key={block.id}>
         <section
           className={`border-b border-white/5 py-14 sm:py-20`}
           style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(39 39 42 / 0.3)" }}
         >
-          <div className="container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className={containerClass}>
             <ul className="grid gap-6 sm:grid-cols-3">
               {texts.map((text, i) => {
                 const IconComponent = HIGHLIGHTS_ICON_MAP[iconNames[i] ?? ""] ?? defaultIcons[i];
@@ -282,11 +315,19 @@ export function BlockRenderer({
   }
 
   if (block.type === "logo_carousel") {
-    return <LogoCarouselSection key={block.id} block={block} lang={lang} />;
+    return <LogoCarouselSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} />;
   }
 
   if (block.type === "noticias") {
-    return <NoticiasSection key={block.id} block={block} lang={lang} />;
+    return <NoticiasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
+  }
+
+  if (block.type === "galeria") {
+    return <GaleriaSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
+  }
+
+  if (block.type === "patrocinadores") {
+    return <PatrocinadoresSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
   }
 
   if (block.type === "proximos_jogos") {
@@ -298,6 +339,23 @@ export function BlockRenderer({
         lang={lang}
         ourTeamName={tenant?.name}
         ourTeamLogoUrl={tenant?.logoUrl}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+      />
+    );
+  }
+
+  if (block.type === "ultimos_resultados") {
+    return (
+      <UltimosResultadosSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        ourTeamName={tenant?.name}
+        ourTeamLogoUrl={tenant?.logoUrl}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
       />
     );
   }
@@ -337,7 +395,7 @@ export function BlockRenderer({
               <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
             </div>
           )}
-          <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className={`relative px-4 sm:px-6 lg:px-8 ${fullWidth ? "w-full" : "container mx-auto max-w-6xl"}`}>
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-14 lg:items-center">
               <div className="order-2 space-y-5 lg:order-1 lg:col-span-7 lg:min-h-0">
                 <div>
@@ -439,12 +497,13 @@ export function BlockRenderer({
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
           </div>
         )}
-        <div className={`container relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 ${bgImg ? "text-center" : ""}`}>
+        <div className={`relative px-4 sm:px-6 lg:px-8 ${fullWidth ? "w-full" : "container mx-auto max-w-4xl"} ${bgImg ? "text-center" : ""}`}>
           {title && (
             <SectionTitle
               title={title}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
+              align={titleAlign}
             />
           )}
           {body?.trim() && (

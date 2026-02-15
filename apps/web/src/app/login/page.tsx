@@ -24,10 +24,16 @@ export default function LoginPage() {
     setMounted(true);
   }, []);
 
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [invalidScope, setInvalidScope] = useState(false);
+
   useEffect(() => {
     if (!mounted || typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    setHasError(params.get("error") === "auth" || params.get("error") === "missing");
+    const err = params.get("error");
+    setHasError(err === "auth" || err === "missing" || err === "invalid_scope");
+    setInvalidScope(err === "invalid_scope");
+    setSessionExpired(params.get("reason") === "session_expired");
   }, [mounted]);
 
   function handleEntrar() {
@@ -58,12 +64,27 @@ export default function LoginPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
+            {sessionExpired && (
+              <div
+                role="alert"
+                className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400"
+              >
+                Sua sessão expirou. Faça login novamente para continuar.
+              </div>
+            )}
             {hasError && (
               <div
                 role="alert"
-                className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive space-y-1"
               >
-                Não foi possível concluir o login. Verifique seus dados e tente novamente.
+                <p>
+                  {invalidScope
+                    ? "A última tentativa falhou por scopes incompatíveis. O app usa agora openid, email, phone. Clique em Entrar novamente ou acesse /login para tentar de novo."
+                    : "Não foi possível concluir o login. Verifique seus dados e tente novamente."}
+                </p>
+                <p className="text-xs opacity-90">
+                  Se persistir: Allowed callback URLs deve ter <code className="bg-black/20 px-1 rounded">http://localhost:3000/api/auth/callback</code>. Ver <code className="bg-black/20 px-1 rounded">docs/TOKEN_STORAGE.md</code>.
+                </p>
               </div>
             )}
             <Button

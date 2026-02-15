@@ -20,6 +20,7 @@ export default function EditTimePage() {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoRefreshKey, setLogoRefreshKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,7 +52,10 @@ export default function EditTimePage() {
       });
       if (!res.ok) return;
       const data = (await res.json()) as { url?: string };
-      if (data?.url) setLogoUrl(data.url);
+      if (data?.url) {
+        setLogoUrl(data.url);
+        setLogoRefreshKey((k) => k + 1);
+      }
     } finally {
       e.target.value = "";
     }
@@ -137,6 +141,7 @@ export default function EditTimePage() {
                   value={logoUrl}
                   onChange={setLogoUrl}
                   placeholder="Escolher da pasta de logos"
+                  refreshTrigger={logoRefreshKey}
                 />
                 <input
                   ref={fileInputRef}

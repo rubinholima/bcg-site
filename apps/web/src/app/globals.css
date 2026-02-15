@@ -77,15 +77,19 @@
   }
 }
 
-/* Dashboard: quando ativo, body não scrolla - scroll só na área de conteúdo */
-body.dashboard-active {
-  overflow: hidden;
+/* Dashboard: quando ativo, html e body não scrollam - UMA ÚNICA scrollbar em dashboard-scroll */
+html.dashboard-active {
+  overflow: hidden !important;
   height: 100vh;
 }
-/* Dashboard: scrollbar sempre visível = espaço reservado, conteúdo não cortado */
+body.dashboard-active {
+  overflow: hidden !important;
+  height: 100vh;
+  max-height: 100vh;
+}
+/* Dashboard: única área que rola */
 .dashboard-scroll {
-  overflow-y: scroll !important;
-  scrollbar-gutter: stable;
+  overflow-y: auto !important;
 }
 
 /* Home: animações */

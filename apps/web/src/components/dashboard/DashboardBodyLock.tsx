@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 /**
- * Bloqueia o scroll do body quando o dashboard está ativo.
- * Assim a scrollbar fica apenas na área de conteúdo, evitando corte à direita.
+ * Bloqueia o scroll do html/body quando o dashboard está ativo.
+ * Aplica antes do paint para evitar flash de segunda scrollbar.
  */
 export function DashboardBodyLock() {
-  useEffect(() => {
+  useLayoutEffect(() => {
+    document.documentElement.classList.add("dashboard-active");
     document.body.classList.add("dashboard-active");
     return () => {
+      document.documentElement.classList.remove("dashboard-active");
       document.body.classList.remove("dashboard-active");
     };
   }, []);

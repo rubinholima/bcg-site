@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus } from "lucide-react";
 import {
   Select,
@@ -22,7 +22,7 @@ interface BaseItem {
 }
 
 interface VisitingTeamItem extends BaseItem {
-  logoUrl?: string;
+  logoUrl?: string | null;
 }
 
 interface SelectWithCreateProps<T extends BaseItem> {
@@ -62,11 +62,15 @@ export function SelectWithCreate<T extends BaseItem>({
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
+  const [createLogoFile, setCreateLogoFile] = useState<File | null>(null);
+  const [createLogoPreview, setCreateLogoPreview] = useState<string | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const config = API_MAP[type];
   const labels = LABEL_MAP[type];
+  const isVisitingTeam = type === "visiting-team";
 
   const loadItems = async () => {
     setLoading(true);
@@ -84,26 +88,89 @@ export function SelectWithCreate<T extends BaseItem>({
     loadItems();
   }, [type]);
 
+  const uploadLogoToMedia = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("sizeKey", "external_logos");
+    const res = await fetch("/api/media", {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(text || "Erro ao enviar logo");
+    }
+    const data = (await res.json()) as { url?: string };
+    if (!data?.url) throw new Error("Resposta sem URL");
+    return data.url;
+  };
+
   const handleCreate = async () => {
     const name = createName.trim();
     if (!name) return;
     setCreateLoading(true);
     setCreateError(null);
     try {
-      const body = type === "stadium" ? { name, city: "", address: "" } : { name };
-      const { data } = await api.post<{ id: string; name: string }>(config.create, body);
+      let logoUrl: string | undefined;
+      if (isVisitingTeam && createLogoFile) {
+        logoUrl = await uploadLogoToMedia(createLogoFile);
+      }
+      const body =
+        type === "stadium"
+          ? { name, city: "", address: "" }
+          : isVisitingTeam
+            ? { name, logoUrl: logoUrl ?? undefined }
+            : { name };
+      const { data } = await api.post<{ id: string; name: string; logoUrl?: string | null }>(
+        config.create,
+        body,
+      );
       if (data?.id) {
-        const newItem = { id: data.id, name: data.name } as T;
+        const newItem = {
+          id: data.id,
+          name: data.name,
+          ...(isVisitingTeam && { logoUrl: data.logoUrl }),
+        } as T;
         setItems((prev) => [...prev, newItem]);
-        onChange(data.name);
+        onChange(data.name, data.logoUrl ?? undefined);
         setCreateOpen(false);
         setCreateName("");
+        setCreateLogoFile(null);
+        setCreateLogoPreview(null);
       }
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : "Erro ao criar");
     } finally {
       setCreateLoading(false);
     }
+  };
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        setCreateError("Selecione uma imagem (PNG, JPG, WebP ou SVG)");
+        return;
+      }
+      setCreateLogoFile(file);
+      const reader = new FileReader();
+      reader.onload = () => setCreateLogoPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setCreateLogoFile(null);
+      setCreateLogoPreview(null);
+    }
+    setCreateError(null);
+  };
+
+  const resetCreateForm = () => {
+    setCreateOpen(false);
+    setCreateName("");
+    setCreateLogoFile(null);
+    setCreateLogoPreview(null);
+    setCreateError(null);
+    fileInputRef.current?.value && (fileInputRef.current.value = "");
   };
 
   const valueMatch = value?.trim();
@@ -128,7 +195,7 @@ export function SelectWithCreate<T extends BaseItem>({
               return;
             } else {
               const item = items.find((i) => i.id === v) as VisitingTeamItem | undefined;
-              if (item) onChange(item.name, item.logoUrl);
+              if (item) onChange(item.name, item.logoUrl ?? undefined);
             }
           }}
         >
@@ -141,14 +208,39 @@ export function SelectWithCreate<T extends BaseItem>({
             </SelectItem>
             {valueMatch && !items.some((i) => i.name === valueMatch) && (
               <SelectItem value="__custom__">
-                {valueMatch} (manual)
+                {logoUrlProp ? (
+                  <span className="flex items-center gap-2">
+                    <img
+                      src={logoUrlProp}
+                      alt=""
+                      className="h-5 w-5 object-contain rounded shrink-0"
+                    />
+                    {valueMatch} (manual)
+                  </span>
+                ) : (
+                  `${valueMatch} (manual)`
+                )}
               </SelectItem>
             )}
-            {items.map((item) => (
-              <SelectItem key={item.id} value={item.id}>
-                {item.name}
-              </SelectItem>
-            ))}
+            {items.map((item) => {
+              const vt = item as VisitingTeamItem;
+              return (
+                <SelectItem key={item.id} value={item.id}>
+                  {vt.logoUrl ? (
+                    <span className="flex items-center gap-2">
+                      <img
+                        src={vt.logoUrl}
+                        alt=""
+                        className="h-5 w-5 object-contain rounded shrink-0"
+                      />
+                      {item.name}
+                    </span>
+                  ) : (
+                    item.name
+                  )}
+                </SelectItem>
+              );
+            })}
             <SelectItem value="__create__" className="text-primary font-medium">
               <Plus className="h-4 w-4 inline mr-1" />
               Cadastrar novo
@@ -159,23 +251,68 @@ export function SelectWithCreate<T extends BaseItem>({
 
       {createOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-background rounded-lg border shadow-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-background rounded-lg border shadow-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="font-semibold text-lg mb-4">{labels.modal}</h3>
             {createError && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive mb-4">
                 {createError}
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="create-name">{labels.field} *</Label>
-              <Input
-                id="create-name"
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-                placeholder="Ex: Nome do item"
-                disabled={createLoading}
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="create-name">{labels.field} *</Label>
+                <Input
+                  id="create-name"
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
+                  placeholder="Ex: Nome do time"
+                  disabled={createLoading}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                />
+              </div>
+              {isVisitingTeam && (
+                <div className="space-y-2">
+                  <Label>Logo (opcional)</Label>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                      onChange={handleLogoFileChange}
+                      className="text-sm file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                      disabled={createLoading}
+                    />
+                    {createLogoPreview && (
+                      <div className="flex items-center gap-2 p-2 rounded border bg-muted/50">
+                        <img
+                          src={createLogoPreview}
+                          alt="Preview"
+                          className="h-12 w-12 object-contain rounded"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          Logo selecionado
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setCreateLogoFile(null);
+                            setCreateLogoPreview(null);
+                            fileInputRef.current?.value && (fileInputRef.current.value = "");
+                          }}
+                          disabled={createLoading}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    PNG, JPG, WebP ou SVG. Será salvo na pasta de logos externos.
+                  </p>
+                </div>
+              )}
             </div>
             <div className="flex gap-2 mt-4">
               <Button onClick={handleCreate} disabled={createLoading || !createName.trim()}>
@@ -183,11 +320,7 @@ export function SelectWithCreate<T extends BaseItem>({
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setCreateOpen(false);
-                  setCreateName("");
-                  setCreateError(null);
-                }}
+                onClick={resetCreateForm}
                 disabled={createLoading}
               >
                 Cancelar

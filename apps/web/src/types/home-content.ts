@@ -63,6 +63,7 @@ export type HomeBlockType =
   | "text"
   // Clubes (futebol)
   | "proximos_jogos"
+  | "ultimos_resultados"
   | "times_categorias"
   | "noticias"
   | "calendario"
@@ -97,12 +98,24 @@ export interface HeroSlide {
 /** Dimensão recomendada da arte do Hero (para exibir no editor). */
 export const HERO_RECOMMENDED_DIMENSIONS = "1920×1080";
 
+/** Largura do conteúdo: box = centralizado, full = largura total. Sobrescreve o padrão do tema. */
+export type ContentWidthMode = "box" | "full";
+
+/** Alinhamento do título do módulo: left | center | right. */
+export type TitleAlignMode = "left" | "center" | "right";
+
 /** Config de aparência e conteúdo de um bloco (controle total por módulo) */
 export interface HomeBlockConfig {
+  /** Largura do conteúdo: box ou full. Se não definido, usa o padrão do tema da página. */
+  contentWidth?: ContentWidthMode;
+  /** Alinhamento do título. Se não definido, usa o padrão do tema da página. */
+  titleAlign?: TitleAlignMode;
   /** Tamanho/altura da seção (compact = menos padding, normal, large = mais padding). Aplica a todos os módulos. */
   sectionSize?: "compact" | "normal" | "large";
-  /** Cor de fundo (hex, ex: #18181b). Vazio = padrão da seção. */
+  /** Cor de fundo (hex, ex: #18181b). Vazio = transparente (herda do tema). */
   backgroundColor?: string;
+  /** Se false, o bloco não aparece na página pública (mas continua editável). */
+  visible?: boolean;
   /** Imagem de fundo (URL). Opcional; usa overlay se também tiver backgroundColor. */
   backgroundImage?: string;
   /** Opacidade do overlay sobre a imagem (0-1). Ex: 0.8 = escurece 80%. */
@@ -288,6 +301,20 @@ export interface HomeBlockConfig {
   sectionColumns?: 1 | 2;
   /** Section: layout quando 2 colunas (50-50, 33-66, 66-33) */
   sectionLayout?: "50-50" | "33-66" | "66-33";
+  /** Section: título da coluna esquerda (PT/EN) */
+  sectionLeftColumnTitlePt?: string;
+  sectionLeftColumnTitleEn?: string;
+  /** Section: cor/imagem de fundo da coluna esquerda */
+  sectionLeftColumnBackgroundColor?: string;
+  sectionLeftColumnBackgroundImage?: string;
+  sectionLeftColumnBackgroundOverlayOpacity?: number;
+  /** Section: título da coluna direita (PT/EN) */
+  sectionRightColumnTitlePt?: string;
+  sectionRightColumnTitleEn?: string;
+  /** Section: cor/imagem de fundo da coluna direita */
+  sectionRightColumnBackgroundColor?: string;
+  sectionRightColumnBackgroundImage?: string;
+  sectionRightColumnBackgroundOverlayOpacity?: number;
   /** Section: módulos da coluna esquerda */
   sectionLeftModules?: HomeContentBlock[];
   /** Section: módulos da coluna direita (só quando columns=2) */
@@ -308,6 +335,24 @@ export interface HomeBlockConfig {
   noticiasPaddingTop?: "minimal" | "compact" | "normal" | "large";
   /** Notícias: padding base */
   noticiasPaddingBottom?: "minimal" | "compact" | "normal" | "large";
+  /** Galeria: fonte (rss = feed Instagram/RSS.app; manual = lista editada) */
+  galeriaDataSource?: "rss" | "manual";
+  /** Galeria: URL do feed RSS (Instagram via rss.app, etc.) */
+  galeriaRssUrl?: string;
+  /** Galeria: itens manuais (imagem + link + legenda) */
+  galeriaManualItems?: GaleriaItem[];
+  /** Galeria: máx. fotos a exibir (default 12) */
+  galeriaMaxItems?: number;
+  /** Galeria: padding topo da seção */
+  galeriaPaddingTop?: "minimal" | "compact" | "normal" | "large";
+  /** Galeria: padding base */
+  galeriaPaddingBottom?: "minimal" | "compact" | "normal" | "large";
+  /** Patrocinadores: lista manual (logo, nome, link) */
+  patrocinadoresManualItems?: PatrocinadorItem[];
+  /** Patrocinadores: padding topo da seção */
+  patrocinadoresPaddingTop?: "minimal" | "compact" | "normal" | "large";
+  /** Patrocinadores: padding base */
+  patrocinadoresPaddingBottom?: "minimal" | "compact" | "normal" | "large";
   /** Próximos Jogos: padding topo da seção */
   proximosJogosPaddingTop?: "compact" | "normal" | "large";
   /** Próximos Jogos: padding base da seção */
@@ -330,6 +375,23 @@ export interface NoticiasItem {
   dateISO?: string;
   imageUrl?: string;
   source?: string;
+}
+
+/** Item da galeria (manual ou retorno do RSS — Instagram, etc.) */
+export interface GaleriaItem {
+  id?: string;
+  imageUrl: string;
+  link?: string;
+  title?: string;
+  caption?: string;
+}
+
+/** Item de patrocinador (logo, nome, link) */
+export interface PatrocinadorItem {
+  id?: string;
+  name?: string;
+  logoUrl: string;
+  link?: string;
 }
 
 /** Item de fixture (manual ou retorno da API) */

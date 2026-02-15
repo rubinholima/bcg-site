@@ -1,0 +1,22 @@
+---
+description: Nunca alterar o que já está funcionando
+alwaysApply: true
+---
+
+# NUNCA MUDAR O QUE JÁ ESTÁ FUNCIONANDO
+
+**Regra obrigatória:** Não altere código ou comportamento que já está funcionando.
+
+- ❌ NÃO modifique o que o usuário confirmou que está ok
+- ❌ NÃO adicione scrollbars, overflow ou mudanças de layout em áreas que já funcionam
+- ❌ NÃO "melhore" ou "otimize" sem pedido explícito
+- ✅ Só altere o que o usuário pediu
+- ✅ Em dúvida, pergunte antes de mudar
+
+**Se algo funciona, deixe como está.**
+
+---
+
+## Carrosséis — nunca scrollIntoView
+
+Em carrosséis horizontais (Próximos Jogos, Últimos Resultados): usar `el.scrollTo({ left: ... })` no container. NUNCA `scrollIntoView` (quebra o scroll vertical da página).

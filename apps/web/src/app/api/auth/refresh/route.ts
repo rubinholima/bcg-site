@@ -11,7 +11,12 @@ export async function POST(request: NextRequest) {
   const refreshToken = request.cookies.get("refresh_token")?.value;
 
   if (!refreshToken || !cognitoDomain || !clientId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const res = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const clearOpts = { path: "/", httpOnly: true, sameSite: "lax" as const, maxAge: 0 };
+    res.cookies.set("id_token", "", clearOpts);
+    res.cookies.set("access_token", "", clearOpts);
+    res.cookies.set("refresh_token", "", clearOpts);
+    return res;
   }
 
   const tokenUrl = `${cognitoDomain}/oauth2/token`;
@@ -30,7 +35,12 @@ export async function POST(request: NextRequest) {
   if (!tokenRes.ok) {
     const text = await tokenRes.text();
     console.error("[auth/refresh] Cognito refresh failed", tokenRes.status, text);
-    return NextResponse.json({ error: "Refresh failed" }, { status: 401 });
+    const res = NextResponse.json({ error: "Refresh failed", code: "invalid_grant" }, { status: 401 });
+    const clearOpts = { path: "/", httpOnly: true, sameSite: "lax" as const, maxAge: 0 };
+    res.cookies.set("id_token", "", clearOpts);
+    res.cookies.set("access_token", "", clearOpts);
+    res.cookies.set("refresh_token", "", clearOpts);
+    return res;
   }
 
   const tokens = (await tokenRes.json()) as {

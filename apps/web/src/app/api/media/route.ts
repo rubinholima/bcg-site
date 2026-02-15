@@ -69,6 +69,34 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * DELETE /api/media?key=media/hero/xxx.jpg — remove imagem ou logo do S3.
+ */
+export async function DELETE(request: NextRequest) {
+  const token = getToken(request);
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { searchParams } = new URL(request.url);
+  const key = searchParams.get("key");
+  if (!key?.trim()) {
+    return NextResponse.json({ error: "Query 'key' é obrigatória" }, { status: 400 });
+  }
+  const res = await fetch(`${apiUrl}/media?key=${encodeURIComponent(key.trim())}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    return NextResponse.json(
+      { error: res.status === 401 ? "Unauthorized" : text || "Error" },
+      { status: res.status },
+    );
+  }
+  const data = await res.json();
+  return NextResponse.json(data);
+}
+
+/**
  * PATCH /api/media — atualiza o nome exibido de um item.
  * Body: JSON { key: string, displayName: string | null }
  */

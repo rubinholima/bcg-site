@@ -29,7 +29,6 @@ import type { Group } from "@/types/group";
 const cadastrosItems = [
   { title: "Usuários", href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
   { title: "Empresas / Clubes", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
-  { title: "Senhas", href: "/dashboard/senhas", icon: KeyRound, moduleSlug: "vault" },
   { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers, moduleSlug: "tipos" },
   { title: "Tipos Emp/Clubes", href: "/dashboard/cadastros/tipos", icon: Tag, moduleSlug: "tipos" },
   { title: "Campeonatos", href: "/dashboard/cadastros/campeonatos", icon: Trophy, moduleSlug: "tipos" },
@@ -41,6 +40,7 @@ const menuItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, moduleSlug: "dashboard" },
   { title: "Grupo Master", href: "/dashboard/grupo", icon: Globe, moduleSlug: "grupo_master" },
   { title: "Emails", href: "/dashboard/emails", icon: Mail, moduleSlug: "emails" },
+  { title: "Senhas", href: "/dashboard/senhas", icon: KeyRound, moduleSlug: "vault" },
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
   { title: "Mídia", href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
@@ -57,8 +57,7 @@ export function Sidebar() {
       (pathname?.startsWith("/dashboard/cadastros") ||
         pathname?.startsWith("/dashboard/usuarios") ||
         pathname?.startsWith("/dashboard/empresas") ||
-        pathname?.startsWith("/dashboard/tenants") ||
-        pathname?.startsWith("/dashboard/senhas")) ??
+        pathname?.startsWith("/dashboard/tenants")) ??
       false
   );
 
@@ -120,6 +119,7 @@ export function Sidebar() {
             pathname === item.href ||
             (item.href === "/dashboard/grupo" && pathname?.startsWith("/dashboard/grupo")) ||
             (item.href === "/dashboard/emails" && pathname?.startsWith("/dashboard/emails")) ||
+            (item.href === "/dashboard/senhas" && pathname?.startsWith("/dashboard/senhas")) ||
             (item.href === "/dashboard/noticias" && pathname?.startsWith("/dashboard/noticias")) ||
             (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia"));
 
@@ -154,8 +154,7 @@ export function Sidebar() {
                   pathname?.startsWith("/dashboard/cadastros") ||
                   pathname?.startsWith("/dashboard/usuarios") ||
                   pathname?.startsWith("/dashboard/empresas") ||
-                  pathname?.startsWith("/dashboard/tenants") ||
-                  pathname?.startsWith("/dashboard/senhas")
+                  pathname?.startsWith("/dashboard/tenants")
                   ? "bg-accent/50 text-accent-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
               )}

@@ -19,4 +19,8 @@ export interface FixtureDto {
   homeTeamLogoUrl?: string;
   /** Manual: logo do time visitante (URL). */
   awayTeamLogoUrl?: string;
+  /** Placar casa (jogos passados — de resultadosManuais ou SofaScore). */
+  homeScore?: number;
+  /** Placar visitante (jogos passados). */
+  awayScore?: number;
 }

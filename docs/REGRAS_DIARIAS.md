@@ -5,6 +5,33 @@
 
 ---
 
+## 🚫 REGRA OBRIGATÓRIA — NUNCA MUDAR O QUE JÁ ESTÁ FUNCIONANDO
+
+**NUNCA altere código ou comportamento que já está funcionando.**
+
+- ❌ NÃO modifique o que o usuário confirmou que está ok
+- ❌ NÃO adicione scrollbars, overflow ou mudanças de layout em áreas que já funcionam
+- ❌ NÃO "melhore" ou "otimize" sem pedido explícito
+- ✅ Só altere o que o usuário pediu
+- ✅ Em dúvida, pergunte antes de mudar
+
+**Se algo funciona, deixe como está.**
+
+---
+
+## 📜 CARROSSES E PÁGINAS PÚBLICAS — NUNCA VOLTAR AO MEIO
+
+**Nenhuma página pública pode ter o scroll voltando para o meio.**
+
+Em carrosséis horizontais (Próximos Jogos, Últimos Resultados, etc.):
+
+- ❌ NUNCA usar `scrollIntoView` — altera o scroll vertical da página
+- ✅ SEMPRE usar `el.scrollTo({ left: idx * (cardWidth + gap), behavior: "smooth" })` no container do carrossel
+
+Assim só o carrossel rola na horizontal; o scroll da página permanece intacto.
+
+---
+
 ## ⚠️ REGRA CRÍTICA — IDENTIDADE DO DASHBOARD (NÃO QUEBRAR O SHELL)
 
 **NUNCA ALTERE A ESTRUTURA BASE DO DASHBOARD**

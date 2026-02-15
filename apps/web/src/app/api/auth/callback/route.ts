@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 const MAX_STATE_LENGTH = 500;
 
@@ -22,17 +21,22 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
   const error = searchParams.get("error");
+  const errorDesc = searchParams.get("error_description") ?? "";
+
+  const requestOrigin = request.nextUrl.origin;
 
   if (error) {
-    return NextResponse.redirect(new URL("/login?error=auth", appUrl));
+    const errParam = errorDesc.includes("invalid_scope") ? "invalid_scope" : "auth";
+    return NextResponse.redirect(new URL(`/login?error=${errParam}`, requestOrigin));
   }
 
   if (!code || !cognitoDomain || !clientId) {
     console.error("[auth/callback] missing code or config", { hasCode: !!code, hasDomain: !!cognitoDomain, hasClientId: !!clientId });
-    return NextResponse.redirect(new URL("/login?error=missing", appUrl));
+    return NextResponse.redirect(new URL("/login?error=missing", requestOrigin));
   }
 
-  const redirectUri = `${appUrl.replace(/\/$/, "")}/api/auth/callback`;
+  // Usa a origem real da requisição (onde o Cognito redirecionou) — evita mismatch com localhost vs 127.0.0.1
+  const redirectUri = `${requestOrigin.replace(/\/$/, "")}/api/auth/callback`;
   const tokenUrl = `${cognitoDomain}/oauth2/token`;
 
   const body = new URLSearchParams({
@@ -51,8 +55,8 @@ export async function GET(request: NextRequest) {
   if (!tokenRes.ok) {
     const text = await tokenRes.text();
     console.error("[auth/callback] token exchange failed", tokenRes.status, text);
-    console.error("[auth/callback] redirect_uri usado:", redirectUri);
-    return NextResponse.redirect(new URL("/login?error=auth", appUrl));
+    console.error("[auth/callback] redirect_uri usado:", redirectUri, "| requestOrigin:", requestOrigin);
+    return NextResponse.redirect(new URL("/login?error=auth", requestOrigin));
   }
 
   const tokens = (await tokenRes.json()) as {
@@ -64,8 +68,8 @@ export async function GET(request: NextRequest) {
 
   const state = searchParams.get("state");
   const nextPath = isValidInternalPath(state) ? state : "/dashboard";
-  const redirect = NextResponse.redirect(new URL(nextPath, appUrl));
-  const isLocalhost = appUrl.startsWith("http://localhost") || appUrl.startsWith("http://127.0.0.1");
+  const redirect = NextResponse.redirect(new URL(nextPath, requestOrigin));
+  const isLocalhost = requestOrigin.startsWith("http://localhost") || requestOrigin.startsWith("http://127.0.0.1");
   const cookieOpts = {
     path: "/",
     httpOnly: true,

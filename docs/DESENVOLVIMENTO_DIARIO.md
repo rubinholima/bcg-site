@@ -6,6 +6,51 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 12 DE FEVEREIRO DE 2026 — ENCERRAMENTO</span>
+
+## **MÓDULO PATROCINADORES, PASTA MÍDIA, SIDEBAR SENHAS**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+#### 1. **Módulo Patrocinadores (páginas por tenant)**
+
+- Seção de patrocinadores na página pública: grid responsivo, logos em grayscale com efeito colorido no hover; título e subtítulo (PT/EN); fundo e padding configuráveis.
+- Tipos e config em `home-content` (`PatrocinadorItem`, `patrocinadoresManualItems`, `patrocinadoresPaddingTop/Bottom`); `createBlock("patrocinadores")` e `BlockRenderer` passaram a renderizar o bloco.
+- **Editor no dashboard:** bloco "Patrocinadores" na edição de página com lista de itens (logo via MediaPicker, nome, link opcional), botão "Adicionar patrocinador", controles de espaço no topo/embaixo.
+- **Arquivos:** `apps/web/src/types/home-content.ts`, `apps/web/src/lib/home-content.ts`, `apps/web/src/components/portfolio/modules/PatrocinadoresSection.tsx`, `apps/web/src/components/portfolio/modules/BlockRenderer.tsx`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`
+
+#### 2. **Pasta Mídia "Patrocinadores" e upload de logos**
+
+- Pasta **Patrocinadores (logos)** já existia em `media-placeholders` (400×400). Editor de patrocinadores passou a usar `sizeKey="patrocinadores"` e `uploadFolderHint="patrocinadores"`; adicionado `allowAllFolders` para poder escolher logo de qualquer pasta.
+- Texto na página Mídia explicando o uso da pasta "Patrocinadores (logos)" para logos de patrocinadores.
+- **Arquivos:** `apps/web/src/lib/media-placeholders.ts`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/app/dashboard/midia/page.tsx`
+
+#### 3. **Sidebar — Senhas fora de Cadastros**
+
+- Item **Senhas** removido de dentro do submenu "Cadastros" e colocado no menu principal, **acima de Páginas** (ordem: Dashboard, Grupo Master, Emails, **Senhas**, Páginas, Notícias, Mídia, Configurações). Destaque ativo e abertura do Cadastros ajustados para não depender da rota `/dashboard/senhas`.
+- **Arquivos:** `apps/web/src/components/dashboard/sidebar.tsx`
+
+---
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Criados:**  
+`apps/web/src/components/portfolio/modules/PatrocinadoresSection.tsx`
+
+**Modificados:**  
+`apps/web/src/types/home-content.ts`, `apps/web/src/lib/home-content.ts`, `apps/web/src/components/portfolio/modules/BlockRenderer.tsx`, `apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/app/dashboard/midia/page.tsx`, `apps/web/src/components/dashboard/sidebar.tsx`
+
+*Nota: O commit inclui também demais alterações pendentes no repositório (mídia, auth, portfolio, etc.).*
+
+---
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Branch:** `develop`
+- **Ação:** `git add .` → `git commit -m "..."` → `git push origin develop`
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 11 DE FEVEREIRO DE 2026 — ENCERRAMENTO</span>
 
 ## **CORREÇÃO DO CORTE DO CONTEÚDO À DIREITA NO DASHBOARD**

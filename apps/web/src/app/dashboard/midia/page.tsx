@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, Copy, Check, ImageOff, Pencil, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, Copy, Check, ImageOff, Pencil, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,16 @@ import {
   type MediaPlaceholderSizeKey,
 } from "@/lib/media-placeholders";
 import { useAuth } from "@/context/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -41,12 +52,17 @@ function thumbSrc(key: string): string {
 
 export default function MidiaPage() {
   const { canAccessModule } = useAuth();
+  const searchParams = useSearchParams();
+  const folderParam = searchParams.get("folder");
+  const initialFolder = (folderParam && MEDIA_PLACEHOLDER_KEYS.includes(folderParam as MediaPlaceholderSizeKey))
+    ? (folderParam as MediaPlaceholderSizeKey)
+    : null;
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterSizeKey, setFilterSizeKey] = useState<string>("media_all");
+  const [filterSizeKey, setFilterSizeKey] = useState<string>(initialFolder ?? "media_all");
   const [uploading, setUploading] = useState(false);
-  const [uploadSizeKey, setUploadSizeKey] = useState<MediaPlaceholderSizeKey>("hero");
+  const [uploadSizeKey, setUploadSizeKey] = useState<MediaPlaceholderSizeKey>(initialFolder ?? "hero");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadDisplayName, setUploadDisplayName] = useState("");
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
@@ -59,6 +75,8 @@ export default function MidiaPage() {
   const [logoScope, setLogoScope] = useState<string>("group");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [confirmDeleteItem, setConfirmDeleteItem] = useState<MediaItem | null>(null);
 
   useEffect(() => {
     if (!canAccessModule("midia")) return;
@@ -71,8 +89,8 @@ export default function MidiaPage() {
   const fetchList = (filter: string) => {
     setLoading(true);
     setError(null);
-    const useAll = filter === "logos" || filter === "all_with_logos";
-    const qs = useAll ? "?all=1" : filter === "media_all" ? "" : `?sizeKey=${encodeURIComponent(filter)}`;
+    const useAll = filter === "logos" || filter === "media_all" || filter === "all_with_logos";
+    const qs = useAll ? "?all=1" : `?sizeKey=${encodeURIComponent(filter)}`;
     fetch(`/api/media${qs}`, { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error("Falha ao carregar mídia");
@@ -82,8 +100,6 @@ export default function MidiaPage() {
         let list = data.items ?? [];
         if (filter === "logos") {
           list = list.filter((i) => i.folder === "logos");
-        } else if (filter === "all_with_logos") {
-          list = list;
         }
         setItems(list);
         setDimensions({});
@@ -139,6 +155,33 @@ export default function MidiaPage() {
   const cancelEditName = () => {
     setEditingKey(null);
     setEditingValue("");
+  };
+
+  const openDeleteConfirm = (item: MediaItem) => setConfirmDeleteItem(item);
+
+  const closeDeleteConfirm = () => setConfirmDeleteItem(null);
+
+  const executeDelete = async () => {
+    const item = confirmDeleteItem;
+    if (!item) return;
+    closeDeleteConfirm();
+    setDeletingKey(item.key);
+    setError(null);
+    try {
+      const res = await fetch(`/api/media?key=${encodeURIComponent(item.key)}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string })?.error ?? "Falha ao apagar");
+      }
+      setItems((prev) => prev.filter((i) => i.key !== item.key));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao apagar");
+    } finally {
+      setDeletingKey(null);
+    }
   };
 
   const displayNameOrFallback = (item: MediaItem) => {
@@ -244,7 +287,7 @@ export default function MidiaPage() {
         <CardHeader>
           <CardTitle>Enviar imagem</CardTitle>
           <CardDescription>
-            Escolha o tamanho do placeholder (pasta no S3). A imagem ficará disponível na listagem e poderá ser escolhida nos editores.
+            Escolha o tamanho do placeholder (pasta no S3). A imagem ficará disponível na listagem e poderá ser escolhida nos editores. Use a pasta <strong>Patrocinadores (logos)</strong> para logos de patrocinadores.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -348,7 +391,7 @@ export default function MidiaPage() {
                 <SelectValue placeholder="Escolha" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="media_all">Mídia — todas as pastas</SelectItem>
+                <SelectItem value="media_all">Todas as pastas (mídia + logos)</SelectItem>
                 <SelectItem value="logos">Logos (empresas/clubes)</SelectItem>
                 <SelectItem value="all_with_logos">Tudo (mídia + logos)</SelectItem>
                 {MEDIA_PLACEHOLDER_KEYS.map((key) => (
@@ -379,7 +422,7 @@ export default function MidiaPage() {
                     <th className="text-left py-2 px-3 font-medium w-20">KB</th>
                     <th className="text-left py-2 px-3 font-medium w-28">Pixels</th>
                     <th className="text-left py-2 px-3 font-medium min-w-0">URL</th>
-                    <th className="w-10 py-2 px-1" />
+                    <th className="w-24 py-2 px-1 text-center">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -471,20 +514,37 @@ export default function MidiaPage() {
                         />
                       </td>
                       <td className="py-1.5 px-1 align-middle">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0"
-                          onClick={() => handleCopyUrl(item.url)}
-                          title="Copiar URL"
-                        >
-                          {copiedUrl === item.url ? (
-                            <Check className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
+                        <div className="flex items-center justify-center gap-0.5">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => handleCopyUrl(item.url)}
+                            title="Copiar URL"
+                          >
+                            {copiedUrl === item.url ? (
+                              <Check className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => openDeleteConfirm(item)}
+                            disabled={deletingKey === item.key}
+                            title="Apagar imagem"
+                          >
+                            {deletingKey === item.key ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -494,6 +554,33 @@ export default function MidiaPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!confirmDeleteItem} onOpenChange={(open) => !open && closeDeleteConfirm()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar imagem?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDeleteItem && (
+                <>
+                  Apagar &quot;{displayNameOrFallback(confirmDeleteItem)}&quot;?
+                  <br />
+                  <br />
+                  Esta ação não pode ser desfeita. A imagem será removida do S3.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void executeDelete()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Apagar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

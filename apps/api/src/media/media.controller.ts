@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Query,
   UseInterceptors,
   UploadedFile,
@@ -93,6 +94,17 @@ export class MediaController {
     const name = typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
     if (name) await this.mediaMeta.setDisplayName(key, name);
     return { url, key };
+  }
+
+  /**
+   * DELETE /media?key=media/hero/xxx.jpg — remove imagem ou logo do S3.
+   */
+  @Delete()
+  async delete(@Query('key') key?: string) {
+    const k = typeof key === 'string' ? key.trim() : '';
+    if (!k) throw new BadRequestException('Query "key" é obrigatória.');
+    await this.s3.deleteObject(k);
+    return { ok: true };
   }
 
   /**

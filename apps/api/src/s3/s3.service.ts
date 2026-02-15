@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PutObjectCommand, S3Client, ListObjectsV2Command, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client, ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import type { Readable } from 'stream';
 import { getAwsClientConfig } from '../common/aws-credentials';
 import { randomUUID } from 'crypto';
@@ -239,6 +239,30 @@ export class S3Service {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Falha ao listar assets no S3: ${message}`,
+      );
+    }
+  }
+
+  /**
+   * Remove um objeto do S3 (imagem ou logo).
+   * Key deve começar com media/ ou logos/.
+   */
+  async deleteObject(key: string): Promise<void> {
+    const safeKey = key.replace(/^\/+/, '').replace(/\.\./g, '');
+    if (!safeKey.startsWith(MEDIA_PREFIX) && !safeKey.startsWith(LOGOS_PREFIX)) {
+      throw new InternalServerErrorException('Key inválida');
+    }
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: safeKey,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao remover objeto do S3: ${message}`,
       );
     }
   }

@@ -9,6 +9,7 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
+  ChevronRight,
   Trash2,
   Loader2,
   Plus,
@@ -18,6 +19,8 @@ import {
   Globe,
   User,
   CalendarIcon,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +51,7 @@ import type {
 } from "@/types/home-content";
 import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
 import { getCtaPresetContent, CTA_PRESET_OPTIONS, type CtaPresetId } from "@/lib/cta-presets";
-import type { Page } from "@/types/page";
+import type { Page, PageTheme } from "@/types/page";
 import {
   getBlockLabel,
   MODULE_OPTIONS,
@@ -61,6 +64,7 @@ import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
+import { fetchFixtures, type FixtureItem } from "@/lib/fixtures-shared";
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
   return [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -198,6 +202,11 @@ export default function EditarPaginaTenantPage() {
   const [headerAdvanced, setHeaderAdvanced] = useState(false);
   const [headerDebug, setHeaderDebug] = useState(false);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
+  const [globalAppearanceOpen, setGlobalAppearanceOpen] = useState(false);
+  const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
+  const [pastFixturesByBlock, setPastFixturesByBlock] = useState<Record<string, FixtureItem[]>>({});
+  const [loadingPastFixtures, setLoadingPastFixtures] = useState<string | null>(null);
+  const [openFixtureByBlockId, setOpenFixtureByBlockId] = useState<Record<string, number>>({});
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
@@ -254,6 +263,22 @@ export default function EditarPaginaTenantPage() {
         ? {
             ...prev,
             content: { ...prev.content, blocks: normalized },
+          }
+        : null,
+    );
+  };
+
+  const theme = page?.content?.theme ?? {};
+  const updateTheme = (key: keyof PageTheme, value: string | number | undefined) => {
+    const normalized = value === undefined || value === null || value === "" ? undefined : value;
+    setPage((prev) =>
+      prev
+        ? {
+            ...prev,
+            content: {
+              ...prev.content,
+              theme: { ...(prev.content.theme ?? {}), [key]: normalized },
+            },
           }
         : null,
     );
@@ -343,6 +368,26 @@ export default function EditarPaginaTenantPage() {
     setBlocks(list);
   };
 
+  const updateSectionModuleConfig = (
+    sectionIndex: number,
+    column: "left" | "right",
+    moduleIndex: number,
+    key: string,
+    value: unknown,
+  ) => {
+    const list = [...blocks];
+    const block = list[sectionIndex];
+    if (!block || block.type !== "section") return;
+    const configKey = column === "left" ? "sectionLeftModules" : "sectionRightModules";
+    const modules = [...((block.config?.[configKey] as HomeContentBlock[]) ?? [])];
+    const mod = modules[moduleIndex];
+    if (!mod) return;
+    modules[moduleIndex] = { ...mod, config: { ...(mod.config ?? {}), [key]: value } };
+    const config = { ...(block.config ?? {}), [configKey]: modules };
+    list[sectionIndex] = { ...block, config };
+    setBlocks(list);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!page) return;
@@ -355,7 +400,7 @@ export default function EditarPaginaTenantPage() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: { blocks },
+          content: { theme: page.content.theme, blocks },
         }),
       });
       if (!res.ok) {
@@ -447,6 +492,188 @@ export default function EditarPaginaTenantPage() {
       )}
 
       <form id="editor-tenant-page-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Aparência geral da página — fundo, cores, fontes. Módulos podem sobrescrever. */}
+        <Card className="border-violet-500/30 bg-violet-950/20">
+          <CardHeader
+            className="cursor-pointer select-none border-b border-transparent hover:border-violet-500/30 transition-colors"
+            onClick={() => setGlobalAppearanceOpen((o) => !o)}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <CardTitle className="flex items-center gap-2">
+                  <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-sm">Global</span>
+                  Aparência geral da página
+                </CardTitle>
+                <CardDescription>
+                  Fundo, cores, largura (box/full) e fontes aplicados a toda a página. Cada módulo pode sobrescrever em Aparência.
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 border-violet-500/40"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setGlobalAppearanceOpen((o) => !o);
+                }}
+                aria-expanded={globalAppearanceOpen}
+                aria-label={globalAppearanceOpen ? "Recolher" : "Expandir"}
+              >
+                {globalAppearanceOpen ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Recolher
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    Expandir
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          {globalAppearanceOpen && (
+          <CardContent className="space-y-4">
+            <div className="space-y-3 rounded-lg border border-violet-500/30 bg-violet-500/10 p-3">
+              <Label className="text-sm font-medium">Padrões (todos os módulos)</Label>
+              <p className="text-xs text-muted-foreground">
+                Defina aqui para não precisar configurar em cada módulo. Cada módulo pode sobrescrever em Aparência.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Largura do conteúdo</Label>
+                  <Select
+                    value={(theme.contentWidth as string) ?? "box"}
+                    onValueChange={(v) => updateTheme("contentWidth", v as "box" | "full")}
+                  >
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="box">Box (centralizado)</SelectItem>
+                      <SelectItem value="full">Full width</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Alinhamento dos títulos</Label>
+                  <Select
+                    value={(theme.titleAlign as string) ?? "left"}
+                    onValueChange={(v) => updateTheme("titleAlign", v as "left" | "center" | "right")}
+                  >
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Esquerda</SelectItem>
+                      <SelectItem value="center">Centro</SelectItem>
+                      <SelectItem value="right">Direita</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Cor de fundo do corpo (hex)</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                    value={(theme.backgroundColor as string)?.trim() || "#0f0f12"}
+                    onChange={(e) => updateTheme("backgroundColor", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="#0f0f12"
+                    className="flex-1 min-w-[120px]"
+                    value={(theme.backgroundColor as string) ?? ""}
+                    onChange={(e) => updateTheme("backgroundColor", e.target.value.trim() || undefined)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Imagem de fundo do corpo</Label>
+                <MediaPicker
+                  value={(theme.backgroundImage as string) ?? ""}
+                  onChange={(url) => updateTheme("backgroundImage", url || undefined)}
+                  sizeKey="backgrounds"
+                  uploadFolderHint="backgrounds"
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Opacidade do overlay sobre a imagem (0–1)</Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0.75"
+                  value={overlayOpacityDraft ?? String(theme.backgroundOverlayOpacity ?? "")}
+                  onChange={(e) => setOverlayOpacityDraft(e.target.value)}
+                  onBlur={() => {
+                    const v = (overlayOpacityDraft ?? "").trim();
+                    const n = v === "" ? undefined : parseFloat(v);
+                    const valid = typeof n === "number" && !Number.isNaN(n) && n >= 0 && n <= 1;
+                    updateTheme("backgroundOverlayOpacity", valid ? n : undefined);
+                    setOverlayOpacityDraft(null);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cor do texto principal (hex)</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                    value={(theme.textColor as string)?.trim() || "#fafafa"}
+                    onChange={(e) => updateTheme("textColor", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="#fafafa"
+                    className="flex-1 min-w-[120px]"
+                    value={(theme.textColor as string) ?? ""}
+                    onChange={(e) => updateTheme("textColor", e.target.value.trim() || undefined)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Cor de destaque / links (hex)</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                    value={(theme.accentColor as string)?.trim() || "#fbbf24"}
+                    onChange={(e) => updateTheme("accentColor", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="#fbbf24"
+                    className="flex-1 min-w-[120px]"
+                    value={(theme.accentColor as string) ?? ""}
+                    onChange={(e) => updateTheme("accentColor", e.target.value.trim() || undefined)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Família de fontes</Label>
+                <Input
+                  type="text"
+                  placeholder="Inter, system-ui"
+                  value={(theme.fontFamily as string) ?? ""}
+                  onChange={(e) => updateTheme("fontFamily", e.target.value.trim() || undefined)}
+                />
+              </div>
+            </div>
+          </CardContent>
+          )}
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Módulos da página</CardTitle>
@@ -456,48 +683,74 @@ export default function EditarPaginaTenantPage() {
           </CardHeader>
           <CardContent className="space-y-4 pb-6">
             <div className="space-y-4">
-              {blocks.map((block, index) => {
-                const isHeader = index === 0;
-                const isFooter = index === blocks.length - 1;
-                const isLastBlock = index === blocks.length - 1;
-                const isFixed = isHeader || isFooter;
-                const sectionLabel = isHeader
-                  ? "Cabeçalho"
-                  : isFooter
-                    ? "Rodapé"
-                    : `Módulo — ${getBlockLabel(block.id, block.type as HomeBlockType, "pt")}`;
-                const isExpanded = !collapsedBlockIds.has(block.id);
-                const cardClassName = isHeader || isFooter
-                  ? `module-card flex flex-col gap-3 rounded-lg border-2 border-emerald-500/50 bg-emerald-950/30 p-3 overflow-hidden ${isExpanded ? "ring-2 ring-white/90" : ""}`
-                  : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 overflow-hidden ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
-                return (
-                <Fragment key={block.id}>
-                  {isLastBlock && (
-                    <div key="add-module" className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-4">
-                      <span className="text-sm font-semibold text-muted-foreground">
-                        Adicionar módulo:
-                      </span>
-                      <Select
-                        value=""
-                        onValueChange={(value) => {
-                          if (value) addModule(value as HomeBlockType);
-                        }}
+              {((() => {
+                const header = blocks[0];
+                const footer = blocks[blocks.length - 1];
+                const middleBlocks = blocks.slice(1, -1).map((block, i) => ({ block, index: i + 1 }));
+                const visibleMiddle = middleBlocks.filter(({ block }) => block.config?.visible !== false);
+                const hiddenMiddle = middleBlocks.filter(({ block }) => block.config?.visible === false);
+                const rows: Array<
+                  | { type: "block"; block: HomeContentBlock; index: number; hidden: boolean }
+                  | { type: "add" }
+                > = [
+                  ...(header ? [{ type: "block" as const, block: header, index: 0, hidden: false }] : []),
+                  ...visibleMiddle.map(({ block, index }) => ({ type: "block" as const, block, index, hidden: false })),
+                  { type: "add" },
+                  ...hiddenMiddle.map(({ block, index }) => ({ type: "block" as const, block, index, hidden: true })),
+                  ...(footer ? [{ type: "block" as const, block: footer, index: blocks.length - 1, hidden: false }] : []),
+                ];
+                return rows.map((row) => {
+                  if (row.type === "add") {
+                    return (
+                      <div key="add-module" className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-4">
+                        <span className="text-sm font-semibold text-muted-foreground">
+                          Adicionar módulo:
+                        </span>
+                        <Select
+                          value=""
+                          onValueChange={(value) => {
+                            if (value) addModule(value as HomeBlockType);
+                          }}
+                        >
+                          <SelectTrigger className="w-[280px]">
+                            <SelectValue placeholder="Hero, Destaques, Texto…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MIDDLE_MODULE_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.type} value={opt.type}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  }
+                  const { block, index, hidden } = row;
+                  const isHeader = index === 0;
+                  const isFooter = index === blocks.length - 1;
+                  const isFixed = isHeader || isFooter;
+                  const sectionLabel = isHeader
+                    ? "Cabeçalho"
+                    : isFooter
+                      ? "Rodapé"
+                      : `Módulo — ${getBlockLabel(block.id, block.type as HomeBlockType, "pt")}`;
+                  const isExpanded = !collapsedBlockIds.has(block.id);
+                  const cardClassName = isHeader || isFooter
+                    ? `module-card flex flex-col gap-3 rounded-lg border-2 border-emerald-500/50 bg-emerald-950/30 p-3 overflow-hidden ${isExpanded ? "ring-2 ring-white/90" : ""}`
+                    : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 overflow-hidden ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
+                  return (
+                    <Fragment key={block.id}>
+                      <div
+                        className={hidden ? "rounded-lg border-2 border-dashed border-amber-500/40 bg-amber-950/20 p-2 opacity-60" : ""}
                       >
-                        <SelectTrigger className="w-[280px]">
-                          <SelectValue placeholder="Hero, Destaques, Texto…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MIDDLE_MODULE_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.type} value={opt.type}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                <div
-                  className={cardClassName}
+                        {hidden && (
+                          <p className="mb-2 text-center text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                            Fora da página (oculto) — clique no olho para exibir de novo
+                          </p>
+                        )}
+                        <div
+                          className={cardClassName}
                   onDragEnter={!isFixed ? (e) => e.preventDefault() : undefined}
                   onDragOver={!isFixed ? (e) => {
                     e.preventDefault();
@@ -541,6 +794,23 @@ export default function EditarPaginaTenantPage() {
                       </span>
                     ) : null}
                     <div className="ml-auto flex items-center gap-1">
+                      {!isFixed && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={`h-8 w-8 ${block.config?.visible === false ? "text-muted-foreground" : "text-amber-500"}`}
+                          onClick={() => updateBlockConfigValue(index, "visible", block.config?.visible === false ? true : false)}
+                          title={block.config?.visible === false ? "Exibir na página pública" : "Ocultar da página pública"}
+                          aria-label={block.config?.visible === false ? "Exibir" : "Ocultar"}
+                        >
+                          {block.config?.visible === false ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
@@ -574,16 +844,58 @@ export default function EditarPaginaTenantPage() {
                       <Label className="text-muted-foreground">
                         Aparência (todos os módulos)
                       </Label>
+                      {(block.type === "proximos_jogos" || block.type === "noticias" || block.type === "ultimos_resultados") && (
+                        <p className="text-xs text-muted-foreground">
+                          Deixe cor e imagem de fundo vazios para o fundo da página aparecer continuado (sem bloco separado).
+                        </p>
+                      )}
                     </div>
                     {(block.type !== "header" && block.type !== "footer") && (
+                      <>
+                      <div className="space-y-2">
+                        <Label>Largura do conteúdo (box ou full width)</Label>
+                        <Select
+                          value={(block.config?.contentWidth as string) ?? "inherit"}
+                          onValueChange={(v) => updateBlockConfig(index, "contentWidth", v === "inherit" ? undefined : v)}
+                        >
+                          <SelectTrigger className="max-w-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inherit">Padrão da página ({theme.contentWidth === "full" ? "full width" : "box"})</SelectItem>
+                            <SelectItem value="box">Box (centralizado)</SelectItem>
+                            <SelectItem value="full">Full width</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Alinhamento do título</Label>
+                        <Select
+                          value={(block.config?.titleAlign as string) ?? "inherit"}
+                          onValueChange={(v) => updateBlockConfig(index, "titleAlign", v === "inherit" ? undefined : v)}
+                        >
+                          <SelectTrigger className="max-w-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inherit">Padrão da página ({((theme.titleAlign as string) === "center" ? "centro" : (theme.titleAlign as string) === "right" ? "direita" : "esquerda")})</SelectItem>
+                            <SelectItem value="left">Esquerda</SelectItem>
+                            <SelectItem value="center">Centro</SelectItem>
+                            <SelectItem value="right">Direita</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="space-y-2">
                         <Label>Cor de fundo (hex)</Label>
-                        <div className="flex gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          Deixe vazio ou clique em Limpar para fundo transparente (herda do tema da página).
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
                           <input
                             type="color"
                             className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
                             value={
-                              (block.config?.backgroundColor as string) || "#18181b"
+                              (block.config?.backgroundColor as string)?.trim() || "#18181b"
                             }
                             onChange={(e) =>
                               updateBlockConfig(
@@ -594,7 +906,8 @@ export default function EditarPaginaTenantPage() {
                             }
                           />
                           <Input
-                            placeholder="#18181b ou vazio"
+                            placeholder="Vazio = transparente"
+                            className="flex-1 min-w-[120px]"
                             value={
                               (block.config?.backgroundColor as string) ?? ""
                             }
@@ -606,8 +919,17 @@ export default function EditarPaginaTenantPage() {
                               )
                             }
                           />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateBlockConfig(index, "backgroundColor", "")}
+                          >
+                            Limpar
+                          </Button>
                         </div>
                       </div>
+                      </>
                     )}
                     {block.type !== "header" && block.type !== "footer" && (
                       <>
@@ -653,7 +975,7 @@ export default function EditarPaginaTenantPage() {
                         </div>
                       </>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && block.type !== "section" && block.type !== "noticias" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "global_presence" && block.type !== "logo_carousel" && block.type !== "section" && block.type !== "noticias" && block.type !== "ultimos_resultados" && (
                       <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Tamanho do módulo</summary>
                         <div className="border-t border-border px-3 py-3 space-y-2">
@@ -743,16 +1065,58 @@ export default function EditarPaginaTenantPage() {
                         <div className={`grid gap-4 ${(block.config?.sectionColumns as number) === 2 ? "sm:grid-cols-2" : ""}`}>
                           <details open className="rounded-lg border border-amber-500/40 bg-amber-500/10">
                             <summary className="cursor-pointer px-3 py-2 font-medium">
-                              {(block.config?.sectionColumns as number) === 1 ? "Módulos" : "Coluna esquerda"} — {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length} módulo(s)
+                              {(block.config?.sectionColumns as number) === 1 ? "Conteúdo" : "Coluna esquerda"} — {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length} módulo(s)
                             </summary>
                             <div className="border-t border-border px-3 py-3 space-y-2">
-                              {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).map((m, mi) => (
-                                <div key={m.id} className="flex items-center justify-between rounded border border-border bg-muted/30 px-2 py-2">
-                                  <span className="text-sm font-medium">{getBlockLabel(m.id, m.type as HomeBlockType, "pt")}</span>
-                                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeModuleFromSection(index, "left", mi)}>
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                              <div className="grid gap-2 sm:grid-cols-2 pb-2 border-b border-border/50">
+                                <div className="space-y-1"><Label className="text-xs">Título da coluna (PT)</Label><Input placeholder="Ex: Próximos jogos" value={(block.config?.sectionLeftColumnTitlePt as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionLeftColumnTitlePt", e.target.value)} className="h-8" /></div>
+                                <div className="space-y-1"><Label className="text-xs">Título da coluna (EN)</Label><Input placeholder="Ex: Upcoming matches" value={(block.config?.sectionLeftColumnTitleEn as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionLeftColumnTitleEn", e.target.value)} className="h-8" /></div>
+                              </div>
+                              <div className="pb-2 border-b border-border/50 space-y-2">
+                                <Label className="text-xs">Fundo da coluna (cor ou imagem)</Label>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <input type="color" className="h-8 w-10 cursor-pointer rounded border" value={((block.config?.sectionLeftColumnBackgroundColor as string)?.trim()) || "#18181b"} onChange={(e) => updateBlockConfig(index, "sectionLeftColumnBackgroundColor", e.target.value)} />
+                                  <Input placeholder="Cor (hex) — vazio = transparente" className="h-8 flex-1 min-w-[140px]" value={(block.config?.sectionLeftColumnBackgroundColor as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionLeftColumnBackgroundColor", e.target.value)} />
+                                  <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateBlockConfig(index, "sectionLeftColumnBackgroundColor", "")}>Limpar cor</Button>
                                 </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <MediaPicker sizeKey="section_bg" allowAllFolders value={(block.config?.sectionLeftColumnBackgroundImage as string) ?? ""} onChange={(url) => updateBlockConfig(index, "sectionLeftColumnBackgroundImage", url)} placeholder="Imagem de fundo" />
+                                  <Input placeholder="Ou URL da imagem" className="h-8 flex-1 min-w-0" value={(block.config?.sectionLeftColumnBackgroundImage as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionLeftColumnBackgroundImage", e.target.value)} />
+                                  <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateBlockConfig(index, "sectionLeftColumnBackgroundImage", "")}>Limpar img</Button>
+                                </div>
+                                {(block.config?.sectionLeftColumnBackgroundImage as string)?.trim() && (
+                                  <div className="flex items-center gap-2">
+                                    <Label className="text-xs shrink-0">Overlay (0–1):</Label>
+                                    <Input type="number" min={0} max={1} step={0.1} className="h-8 w-20" placeholder="0.75" value={(block.config?.sectionLeftColumnBackgroundOverlayOpacity as number) ?? ""} onChange={(e) => { const v = e.target.value; updateBlockConfigValue(index, "sectionLeftColumnBackgroundOverlayOpacity", v === "" ? undefined : Number(v)); }} />
+                                  </div>
+                                )}
+                              </div>
+                              {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).map((m, mi) => (
+                                <details key={m.id} className="rounded border border-border bg-muted/30 group/mod">
+                                  <summary className="flex cursor-pointer items-center justify-between px-2 py-2 list-none [&::-webkit-details-marker]:hidden">
+                                    <span className="text-sm font-medium">{getBlockLabel(m.id, m.type as HomeBlockType, "pt")}</span>
+                                    <div className="flex items-center gap-1">
+                                      <Button type="button" variant="ghost" size="icon" className={`h-7 w-7 ${m.config?.visible === false ? "text-muted-foreground" : "text-amber-500"}`} onClick={(e) => { e.preventDefault(); updateSectionModuleConfig(index, "left", mi, "visible", m.config?.visible === false); }} title={m.config?.visible === false ? "Exibir" : "Ocultar"}>
+                                        {m.config?.visible === false ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                      </Button>
+                                      <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.preventDefault(); removeModuleFromSection(index, "left", mi); }}>
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </summary>
+                                  <div className="border-t border-border px-2 py-3 space-y-2">
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                      <div className="space-y-1"><Label className="text-xs">Título (PT)</Label><Input placeholder="Título da seção" value={(m.config?.titlePt as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "left", mi, "titlePt", e.target.value)} className="h-8" /></div>
+                                      <div className="space-y-1"><Label className="text-xs">Título (EN)</Label><Input placeholder="Section title" value={(m.config?.titleEn as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "left", mi, "titleEn", e.target.value)} className="h-8" /></div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-xs shrink-0">Cor de fundo:</Label>
+                                      <input type="color" className="h-8 w-10 cursor-pointer rounded border" value={(m.config?.backgroundColor as string)?.trim() || "#18181b"} onChange={(e) => updateSectionModuleConfig(index, "left", mi, "backgroundColor", e.target.value)} />
+                                      <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "left", mi, "backgroundColor", e.target.value)} />
+                                      <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "left", mi, "backgroundColor", "")}>Limpar</Button>
+                                    </div>
+                                  </div>
+                                </details>
                               ))}
                               <Select key={`section-${index}-left-${((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "left", v as HomeBlockType); }}>
                                 <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
@@ -770,13 +1134,55 @@ export default function EditarPaginaTenantPage() {
                                 Coluna direita — {((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).length} módulo(s)
                               </summary>
                               <div className="border-t border-border px-3 py-3 space-y-2">
-                                {((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).map((m, mi) => (
-                                  <div key={m.id} className="flex items-center justify-between rounded border border-border bg-muted/30 px-2 py-2">
-                                    <span className="text-sm font-medium">{getBlockLabel(m.id, m.type as HomeBlockType, "pt")}</span>
-                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => removeModuleFromSection(index, "right", mi)}>
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                <div className="grid gap-2 sm:grid-cols-2 pb-2 border-b border-border/50">
+                                  <div className="space-y-1"><Label className="text-xs">Título da coluna (PT)</Label><Input placeholder="Ex: Últimos resultados" value={(block.config?.sectionRightColumnTitlePt as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionRightColumnTitlePt", e.target.value)} className="h-8" /></div>
+                                  <div className="space-y-1"><Label className="text-xs">Título da coluna (EN)</Label><Input placeholder="Ex: Last results" value={(block.config?.sectionRightColumnTitleEn as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionRightColumnTitleEn", e.target.value)} className="h-8" /></div>
+                                </div>
+                                <div className="pb-2 border-b border-border/50 space-y-2">
+                                  <Label className="text-xs">Fundo da coluna (cor ou imagem)</Label>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <input type="color" className="h-8 w-10 cursor-pointer rounded border" value={((block.config?.sectionRightColumnBackgroundColor as string)?.trim()) || "#18181b"} onChange={(e) => updateBlockConfig(index, "sectionRightColumnBackgroundColor", e.target.value)} />
+                                    <Input placeholder="Cor (hex) — vazio = transparente" className="h-8 flex-1 min-w-[140px]" value={(block.config?.sectionRightColumnBackgroundColor as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionRightColumnBackgroundColor", e.target.value)} />
+                                    <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateBlockConfig(index, "sectionRightColumnBackgroundColor", "")}>Limpar cor</Button>
                                   </div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <MediaPicker sizeKey="section_bg" allowAllFolders value={(block.config?.sectionRightColumnBackgroundImage as string) ?? ""} onChange={(url) => updateBlockConfig(index, "sectionRightColumnBackgroundImage", url)} placeholder="Imagem de fundo" />
+                                    <Input placeholder="Ou URL da imagem" className="h-8 flex-1 min-w-0" value={(block.config?.sectionRightColumnBackgroundImage as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionRightColumnBackgroundImage", e.target.value)} />
+                                    <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateBlockConfig(index, "sectionRightColumnBackgroundImage", "")}>Limpar img</Button>
+                                  </div>
+                                  {(block.config?.sectionRightColumnBackgroundImage as string)?.trim() && (
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-xs shrink-0">Overlay (0–1):</Label>
+                                      <Input type="number" min={0} max={1} step={0.1} className="h-8 w-20" placeholder="0.75" value={(block.config?.sectionRightColumnBackgroundOverlayOpacity as number) ?? ""} onChange={(e) => { const v = e.target.value; updateBlockConfigValue(index, "sectionRightColumnBackgroundOverlayOpacity", v === "" ? undefined : Number(v)); }} />
+                                    </div>
+                                  )}
+                                </div>
+                                {((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).map((m, mi) => (
+                                  <details key={m.id} className="rounded border border-border bg-muted/30 group/mod">
+                                    <summary className="flex cursor-pointer items-center justify-between px-2 py-2 list-none [&::-webkit-details-marker]:hidden">
+                                      <span className="text-sm font-medium">{getBlockLabel(m.id, m.type as HomeBlockType, "pt")}</span>
+                                      <div className="flex items-center gap-1">
+                                        <Button type="button" variant="ghost" size="icon" className={`h-7 w-7 ${m.config?.visible === false ? "text-muted-foreground" : "text-amber-500"}`} onClick={(e) => { e.preventDefault(); updateSectionModuleConfig(index, "right", mi, "visible", m.config?.visible === false); }} title={m.config?.visible === false ? "Exibir" : "Ocultar"}>
+                                          {m.config?.visible === false ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.preventDefault(); removeModuleFromSection(index, "right", mi); }}>
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </summary>
+                                    <div className="border-t border-border px-2 py-3 space-y-2">
+                                      <div className="grid gap-2 sm:grid-cols-2">
+                                        <div className="space-y-1"><Label className="text-xs">Título (PT)</Label><Input placeholder="Título da seção" value={(m.config?.titlePt as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "right", mi, "titlePt", e.target.value)} className="h-8" /></div>
+                                        <div className="space-y-1"><Label className="text-xs">Título (EN)</Label><Input placeholder="Section title" value={(m.config?.titleEn as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "right", mi, "titleEn", e.target.value)} className="h-8" /></div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Label className="text-xs shrink-0">Cor de fundo:</Label>
+                                        <input type="color" className="h-8 w-10 cursor-pointer rounded border" value={(m.config?.backgroundColor as string)?.trim() || "#18181b"} onChange={(e) => updateSectionModuleConfig(index, "right", mi, "backgroundColor", e.target.value)} />
+                                        <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "right", mi, "backgroundColor", e.target.value)} />
+                                        <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "right", mi, "backgroundColor", "")}>Limpar</Button>
+                                      </div>
+                                    </div>
+                                  </details>
                                 ))}
                                 <Select key={`section-${index}-right-${((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "right", v as HomeBlockType); }}>
                                   <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
@@ -790,6 +1196,290 @@ export default function EditarPaginaTenantPage() {
                             </details>
                           )}
                         </div>
+                      </div>
+                    )}
+                    {block.type === "patrocinadores" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Patrocinadores</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Adicione os logos e links dos patrocinadores. Na página, os logos aparecem em grid com efeito grayscale que vira colorido no hover.
+                            </p>
+                            {((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? []).map((item, pi) => (
+                              <div key={item.id ?? pi} className="rounded-lg border border-border p-3 space-y-2">
+                                <div className="flex items-start gap-2">
+                                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted border border-border">
+                                    {item.logoUrl ? (
+                                      <img src={getPublicImageUrl(item.logoUrl)} alt="" className="h-full w-full object-contain p-1" />
+                                    ) : (
+                                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                        <Plus className="h-6 w-6" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0 space-y-2">
+                                    <MediaPicker
+                                      label="Logo"
+                                      sizeKey="patrocinadores"
+                                      allowAllFolders
+                                      uploadFolderHint="patrocinadores"
+                                      value={item.logoUrl ?? ""}
+                                      onChange={(url) => {
+                                        const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? [])];
+                                        if (!arr[pi]) arr[pi] = { logoUrl: "" };
+                                        arr[pi] = { ...arr[pi], logoUrl: url };
+                                        updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
+                                      }}
+                                      placeholder="Logo do patrocinador"
+                                    />
+                                    <Input
+                                      placeholder="Nome (opcional)"
+                                      value={item.name ?? ""}
+                                      onChange={(e) => {
+                                        const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? [])];
+                                        if (!arr[pi]) arr[pi] = {};
+                                        arr[pi] = { ...arr[pi], name: e.target.value };
+                                        updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
+                                      }}
+                                    />
+                                    <Input
+                                      placeholder="Link (site do patrocinador — opcional)"
+                                      value={item.link ?? ""}
+                                      onChange={(e) => {
+                                        const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? [])];
+                                        if (!arr[pi]) arr[pi] = {};
+                                        arr[pi] = { ...arr[pi], link: e.target.value };
+                                        updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
+                                      }}
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0 text-destructive"
+                                    onClick={() => {
+                                      const arr = ((block.config?.patrocinadoresManualItems as Array<unknown>) ?? []).filter((_, j) => j !== pi);
+                                      updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const arr = [...((block.config?.patrocinadoresManualItems as Array<{ id?: string; name?: string; logoUrl?: string; link?: string }>) ?? []), { id: `p-${Date.now()}`, name: "", logoUrl: "", link: "" }];
+                                updateBlockConfigValue(index, "patrocinadoresManualItems", arr);
+                              }}
+                            >
+                              <Plus className="h-4 w-4 mr-1" /> Adicionar patrocinador
+                            </Button>
+                            <div className="grid gap-2 sm:grid-cols-2 pt-2 border-t border-border">
+                              <div className="space-y-2">
+                                <Label>Espaço no topo</Label>
+                                <Select
+                                  value={(block.config?.patrocinadoresPaddingTop as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "patrocinadoresPaddingTop", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Espaço embaixo</Label>
+                                <Select
+                                  value={(block.config?.patrocinadoresPaddingBottom as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "patrocinadoresPaddingBottom", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                    {block.type === "galeria" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Galeria de fotos</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Use RSS para Instagram (via rss.app) ou outro feed com fotos. Cole a URL do feed em RSS.
+                            </p>
+                            <div className="space-y-2">
+                              <Label>Fonte</Label>
+                              <Select
+                                value={(block.config?.galeriaDataSource as string) ?? "rss"}
+                                onValueChange={(v) => updateBlockConfigValue(index, "galeriaDataSource", v)}
+                              >
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="rss">RSS (Instagram via rss.app, etc.)</SelectItem>
+                                  <SelectItem value="manual">Manual (lista editada)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {(block.config?.galeriaDataSource as string) !== "manual" && (
+                              <>
+                                <div className="space-y-2">
+                                  <Label>URL do feed RSS (Instagram)</Label>
+                                  <Input
+                                    placeholder="https://rss.app/feed/... (Instagram)"
+                                    value={(block.config?.galeriaRssUrl as string) ?? ""}
+                                    onChange={(e) => updateBlockConfig(index, "galeriaRssUrl", e.target.value)}
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Crie em <a href="https://rss.app/rss-feed/create-instagram-rss-feed" target="_blank" rel="noopener noreferrer" className="underline text-primary">rss.app</a> — cole a URL do perfil do Instagram.
+                                  </p>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Máx. fotos</Label>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={24}
+                                    value={(block.config?.galeriaMaxItems as number) ?? 12}
+                                    onChange={(e) => {
+                                      const v = parseInt(e.target.value, 10);
+                                      updateBlockConfigValue(index, "galeriaMaxItems", Number.isNaN(v) ? 12 : Math.min(24, Math.max(1, v)));
+                                    }}
+                                  />
+                                </div>
+                              </>
+                            )}
+                            {(block.config?.galeriaDataSource as string) === "manual" && (
+                              <div className="space-y-2">
+                                <Label>Fotos manuais</Label>
+                                <p className="text-xs text-muted-foreground">
+                                  Adicione fotos manualmente. Use o MediaPicker para cada item.
+                                </p>
+                                {((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? []).map((item, gi) => (
+                                  <div key={gi} className="rounded-lg border border-border p-3 space-y-2">
+                                    <div className="flex items-start gap-2">
+                                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                                        {item.imageUrl ? (
+                                          <img src={getPublicImageUrl(item.imageUrl)} alt="" className="h-full w-full object-cover" />
+                                        ) : (
+                                          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                            <Plus className="h-6 w-6" />
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0 space-y-2">
+                                        <MediaPicker
+                                          label=""
+                                          sizeKey="card"
+                                          allowAllFolders
+                                          value={item.imageUrl ?? ""}
+                                          onChange={(url) => {
+                                            const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? [])];
+                                            if (!arr[gi]) arr[gi] = {};
+                                            arr[gi] = { ...arr[gi], imageUrl: url };
+                                            updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                          }}
+                                          placeholder="Escolher foto"
+                                        />
+                                        <Input
+                                          placeholder="Link (opcional — ex: Instagram)"
+                                          value={item.link ?? ""}
+                                          onChange={(e) => {
+                                            const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? [])];
+                                            if (!arr[gi]) arr[gi] = {};
+                                            arr[gi] = { ...arr[gi], link: e.target.value };
+                                            updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                          }}
+                                        />
+                                        <Input
+                                          placeholder="Legenda (opcional)"
+                                          value={item.title ?? ""}
+                                          onChange={(e) => {
+                                            const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? [])];
+                                            if (!arr[gi]) arr[gi] = {};
+                                            arr[gi] = { ...arr[gi], title: e.target.value };
+                                            updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                          }}
+                                        />
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="shrink-0 text-destructive"
+                                        onClick={() => {
+                                          const arr = ((block.config?.galeriaManualItems as Array<unknown>) ?? []).filter((_, j) => j !== gi);
+                                          updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? []), { imageUrl: "", link: "", title: "" }];
+                                    updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4 mr-1" /> Adicionar foto
+                                </Button>
+                              </div>
+                            )}
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label>Espaço no topo</Label>
+                                <Select
+                                  value={(block.config?.galeriaPaddingTop as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "galeriaPaddingTop", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Espaço embaixo</Label>
+                                <Select
+                                  value={(block.config?.galeriaPaddingBottom as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "galeriaPaddingBottom", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        </details>
                       </div>
                     )}
                     {block.type === "noticias" && (
@@ -988,16 +1678,48 @@ export default function EditarPaginaTenantPage() {
                                   };
                                 };
                                 const { date: dateVal, time: timeVal } = fromISO(f.startISO);
-                                const manualList = (block.config?.proximosJogosManualFixtures as object[]) ?? [];
-                                const isLastGame = fi === manualList.length - 1;
                                 const catLabel = getCategoryLabel((f as { category?: string }).category ?? "principal", "pt");
                                 const summaryText = dateVal
                                   ? `Jogo ${fi + 1}: ${catLabel} · ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — ${dateVal} ${timeVal}`
                                   : `Jogo ${fi + 1}: ${catLabel} · ${f.homeTeamName || "Casa"} x ${f.awayTeamName || "Visitante"} — (sem data)`;
                                 return (
-                                <details key={fi} open={isLastGame} className="rounded border border-amber-500/40 bg-amber-500/20">
-                                  <summary className="cursor-pointer px-3 py-2 font-medium hover:bg-amber-500/30">
-                                    {summaryText}
+                                <details
+                                  key={fi}
+                                  className="rounded border border-amber-500/40 bg-amber-500/20"
+                                  open={fi === (openFixtureByBlockId[block.id] ?? -1)}
+                                  onToggle={(e) => {
+                                    const el = e.currentTarget;
+                                    setOpenFixtureByBlockId((prev) => {
+                                      const next = { ...prev };
+                                      if (el.open) next[block.id] = fi;
+                                      else if (next[block.id] === fi) delete next[block.id];
+                                      return next;
+                                    });
+                                  }}
+                                >
+                                  <summary className="cursor-pointer px-3 py-2 font-medium hover:bg-amber-500/30 flex items-center justify-between gap-2">
+                                    <span>{summaryText}</span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 shrink-0 text-destructive hover:bg-destructive/20"
+                                      title="Remover jogo"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        const list = ((block.config?.proximosJogosManualFixtures as object[]) ?? []).filter((_, i) => i !== fi);
+                                        updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                        setOpenFixtureByBlockId((prev) => {
+                                          const next = { ...prev };
+                                          if (next[block.id] === fi) delete next[block.id];
+                                          else if ((next[block.id] ?? -1) > fi) next[block.id] = (next[block.id] ?? 0) - 1;
+                                          return next;
+                                        });
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                   </summary>
                                 <div className="rounded border-t border-border p-3 space-y-2 grid gap-2 sm:grid-cols-2">
                                   <div className="space-y-1">
@@ -1152,12 +1874,304 @@ export default function EditarPaginaTenantPage() {
                                 </details>
                                 );
                               })}
-                              <Button type="button" variant="outline" size="sm" onClick={() => { const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? []), { startISO: "", homeTeamName: tenantName, awayTeamName: "", competitionName: "", venueName: "", watchUrl: "", ticketUrl: "", isOurTeamHome: true, homeTeamLogoUrl: "", awayTeamLogoUrl: "", category: "principal" }]; updateBlockConfigValue(index, "proximosJogosManualFixtures", list); }}>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const manualList = (block.config?.proximosJogosManualFixtures as object[]) ?? [];
+                                  const id = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+                                  const list = [...manualList, { id, startISO: "", homeTeamName: tenantName, awayTeamName: "", competitionName: "", venueName: "", watchUrl: "", ticketUrl: "", isOurTeamHome: true, homeTeamLogoUrl: "", awayTeamLogoUrl: "", category: "principal" }];
+                                  updateBlockConfigValue(index, "proximosJogosManualFixtures", list);
+                                  setOpenFixtureByBlockId((prev) => ({ ...prev, [block.id]: list.length - 1 }));
+                                }}
+                              >
                                 <Plus className="h-4 w-4 mr-1" /> Adicionar jogo
                               </Button>
                             </div>
                           </details>
                         )}
+                      </div>
+                    )}
+                    {block.type === "ultimos_resultados" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Últimos resultados</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Mesma base de Próximos Jogos. Exibe jogos já realizados com placar. Placar vem da API (SofaScore) ou pode ser informado manualmente abaixo.
+                            </p>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <Label>Máx. resultados exibidos</Label>
+                                <Input
+                                  type="number"
+                                  min={3}
+                                  max={30}
+                                  value={(block.config?.ultimosResultadosMaxItems as number) ?? 10}
+                                  onChange={(e) => {
+                                    const v = parseInt(e.target.value, 10);
+                                    updateBlockConfigValue(index, "ultimosResultadosMaxItems", Number.isNaN(v) ? 10 : Math.min(30, Math.max(3, v)));
+                                  }}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Espaço no topo</Label>
+                                <Select
+                                  value={(block.config?.ultimosResultadosPaddingTop as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "ultimosResultadosPaddingTop", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Espaço embaixo</Label>
+                                <Select
+                                  value={(block.config?.ultimosResultadosPaddingBottom as string) ?? "compact"}
+                                  onValueChange={(v) => updateBlockConfigValue(index, "ultimosResultadosPaddingBottom", v)}
+                                >
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="minimal">Mínimo</SelectItem>
+                                    <SelectItem value="compact">Compacto</SelectItem>
+                                    <SelectItem value="normal">Normal</SelectItem>
+                                    <SelectItem value="large">Grande</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <details className="rounded-lg border border-amber-500/40 bg-amber-500/10 mt-3">
+                              <summary className="cursor-pointer px-3 py-2 font-medium">Placares manuais (quando a API não tem)</summary>
+                              <div className="border-t border-border px-3 py-3 space-y-3">
+                                <p className="text-xs text-muted-foreground">
+                                  Se o placar não vier da API, informe aqui. Clique em &quot;Carregar jogos&quot; para listar os jogos passados. Expanda cada jogo para registrar gols, cartões, substituições, pênaltis, formações, estatísticas (posse, finalizações, xG, distância) e vídeos.
+                                </p>
+                                {!page?.tenant?.slug ? (
+                                  <p className="text-xs text-amber-600">Carregue a página primeiro.</p>
+                                ) : (
+                                  <>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={loadingPastFixtures === block.id}
+                                      onClick={async () => {
+                                        setLoadingPastFixtures(block.id);
+                                        const list = await fetchFixtures(page!.tenant!.slug!);
+                                        const now = new Date();
+                                        const past = list
+                                          .filter((f) => new Date(f.startISO) < now)
+                                          .sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime())
+                                          .slice(0, 20);
+                                        setPastFixturesByBlock((prev) => ({ ...prev, [block.id]: past }));
+                                        setLoadingPastFixtures(null);
+                                      }}
+                                    >
+                                      {loadingPastFixtures === block.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CalendarIcon className="h-4 w-4 mr-1" />}
+                                      {loadingPastFixtures === block.id ? "Carregando…" : "Carregar jogos passados"}
+                                    </Button>
+                                    {(pastFixturesByBlock[block.id] ?? []).length > 0 && (
+                                      <div className="space-y-2">
+                                        {(pastFixturesByBlock[block.id] ?? []).map((f) => {
+                                          const resultados = (block.config?.resultadosManuais as Record<string, { homeScore: number; awayScore: number }>) ?? {};
+                                          const manual = resultados[f.externalId] ?? { homeScore: f.homeScore ?? 0, awayScore: f.awayScore ?? 0 };
+                                          const detalhes = ((block.config?.resultadosDetalhes as Record<string, Record<string, unknown>>) ?? {})[f.externalId] ?? {};
+                                          const goals = (detalhes.goals as Array<{ minute: number; scorerName: string; team: string }>) ?? [];
+                                          const redCards = (detalhes.redCards as Array<{ minute: number; playerName: string; team: string }>) ?? [];
+                                          const yellowCards = (detalhes.yellowCards as Array<{ minute: number; playerName: string; team: string }>) ?? [];
+                                          const substitutions = (detalhes.substitutions as Array<{ minute: number; playerOut: string; playerIn: string; team: string }>) ?? [];
+                                          const penalties = (detalhes.penalties as Array<{ minute: number; playerName: string; team: string; scored: boolean }>) ?? [];
+                                          const formations = (detalhes.formations as { home?: string; away?: string }) ?? {};
+                                          const stats = (detalhes.stats as Record<string, number>) ?? {};
+                                          const videoUrls = (detalhes.videoUrls as string[]) ?? [];
+                                          const catLabel = getCategoryLabel(f.category ?? "principal", "pt");
+                                          const updateDetalhes = (upd: Record<string, unknown>) => {
+                                            const next = { ...((block.config?.resultadosDetalhes as Record<string, unknown>) ?? {}), [f.externalId]: { ...detalhes, ...upd } };
+                                            updateBlockConfigValue(index, "resultadosDetalhes", next);
+                                          };
+                                          return (
+                                            <details key={f.externalId} className="rounded border border-border bg-background/50 overflow-hidden group/details">
+                                              <summary className="flex flex-wrap items-center gap-2 p-2 text-sm cursor-pointer hover:bg-muted/50 list-none [&::-webkit-details-marker]:hidden">
+                                                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open/details:rotate-90" />
+                                                <span className="text-xs text-muted-foreground shrink-0 w-14">{catLabel}</span>
+                                                {(goals.length > 0 || redCards.length > 0 || yellowCards.length > 0 || (stats.possessionHome != null) || formations.home) && (
+                                                  <span className="text-xs bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded px-1.5 py-0.5">
+                                                    {goals.length > 0 && `${goals.length} gol${goals.length !== 1 ? "s" : ""}`}
+                                                    {redCards.length > 0 && `${goals.length > 0 ? " · " : ""}${redCards.length} exp.`}
+                                                    {yellowCards.length > 0 && `${goals.length > 0 || redCards.length > 0 ? " · " : ""}${yellowCards.length} am.`}
+                                                    {(stats.possessionHome != null || formations.home) && " · +"}
+                                                  </span>
+                                                )}
+                                                <span className="min-w-0 truncate flex-1">{f.homeTeamName}</span>
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                  <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={99}
+                                                    className="w-12 h-8 text-center text-sm"
+                                                    value={manual.homeScore}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => {
+                                                      const v = parseInt(e.target.value, 10);
+                                                      const next = { ...resultados, [f.externalId]: { ...manual, homeScore: Number.isNaN(v) ? 0 : v } };
+                                                      updateBlockConfigValue(index, "resultadosManuais", next);
+                                                    }}
+                                                  />
+                                                  <span className="text-muted-foreground">×</span>
+                                                  <Input
+                                                    type="number"
+                                                    min={0}
+                                                    max={99}
+                                                    className="w-12 h-8 text-center text-sm"
+                                                    value={manual.awayScore}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => {
+                                                      const v = parseInt(e.target.value, 10);
+                                                      const next = { ...resultados, [f.externalId]: { ...manual, awayScore: Number.isNaN(v) ? 0 : v } };
+                                                      updateBlockConfigValue(index, "resultadosManuais", next);
+                                                    }}
+                                                  />
+                                                </div>
+                                                <span className="min-w-0 truncate flex-1 text-right">{f.awayTeamName}</span>
+                                              </summary>
+                                              <div className="border-t border-border p-3 space-y-4 bg-muted/20">
+                                                <div>
+                                                  <Label className="text-xs font-medium">Gols (minuto, autor, time)</Label>
+                                                  <div className="mt-1 space-y-2">
+                                                    {goals.map((g, gi) => (
+                                                      <div key={gi} className="flex flex-wrap items-center gap-2">
+                                                        <Input type="number" min={0} max={120} placeholder="Min" className="w-16 h-8" value={g.minute || ""} onChange={(e) => { const arr = [...goals]; arr[gi] = { ...arr[gi], minute: parseInt(e.target.value, 10) || 0 }; updateDetalhes({ goals: arr }); }} />
+                                                        <Input placeholder="Autor do gol" className="flex-1 min-w-[100px] h-8" value={g.scorerName || ""} onChange={(e) => { const arr = [...goals]; arr[gi] = { ...arr[gi], scorerName: e.target.value }; updateDetalhes({ goals: arr }); }} />
+                                                        <Select value={g.team || "home"} onValueChange={(v) => { const arr = [...goals]; arr[gi] = { ...arr[gi], team: v }; updateDetalhes({ goals: arr }); }}>
+                                                          <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+                                                          <SelectContent><SelectItem value="home">{f.homeTeamName}</SelectItem><SelectItem value="away">{f.awayTeamName}</SelectItem></SelectContent>
+                                                        </Select>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => updateDetalhes({ goals: goals.filter((_, i) => i !== gi) })}><Trash2 className="h-4 w-4" /></Button>
+                                                      </div>
+                                                    ))}
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateDetalhes({ goals: [...goals, { minute: 0, scorerName: "", team: "home" }] })}><Plus className="h-4 w-4 mr-1" />Adicionar gol</Button>
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-medium">Expulsões (minuto, jogador, time)</Label>
+                                                  <div className="mt-1 space-y-2">
+                                                    {redCards.map((r, ri) => (
+                                                      <div key={ri} className="flex flex-wrap items-center gap-2">
+                                                        <Input type="number" min={0} max={120} placeholder="Min" className="w-16 h-8" value={r.minute || ""} onChange={(e) => { const arr = [...redCards]; arr[ri] = { ...arr[ri], minute: parseInt(e.target.value, 10) || 0 }; updateDetalhes({ redCards: arr }); }} />
+                                                        <Input placeholder="Jogador expulso" className="flex-1 min-w-[100px] h-8" value={r.playerName || ""} onChange={(e) => { const arr = [...redCards]; arr[ri] = { ...arr[ri], playerName: e.target.value }; updateDetalhes({ redCards: arr }); }} />
+                                                        <Select value={r.team || "home"} onValueChange={(v) => { const arr = [...redCards]; arr[ri] = { ...arr[ri], team: v }; updateDetalhes({ redCards: arr }); }}>
+                                                          <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+                                                          <SelectContent><SelectItem value="home">{f.homeTeamName}</SelectItem><SelectItem value="away">{f.awayTeamName}</SelectItem></SelectContent>
+                                                        </Select>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => updateDetalhes({ redCards: redCards.filter((_, i) => i !== ri) })}><Trash2 className="h-4 w-4" /></Button>
+                                                      </div>
+                                                    ))}
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateDetalhes({ redCards: [...redCards, { minute: 0, playerName: "", team: "home" }] })}><Plus className="h-4 w-4 mr-1" />Adicionar expulsão</Button>
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-medium">Cartões amarelos</Label>
+                                                  <div className="mt-1 space-y-2">
+                                                    {yellowCards.map((y, yi) => (
+                                                      <div key={yi} className="flex flex-wrap items-center gap-2">
+                                                        <Input type="number" min={0} max={120} placeholder="Min" className="w-16 h-8" value={y.minute || ""} onChange={(e) => { const arr = [...yellowCards]; arr[yi] = { ...arr[yi], minute: parseInt(e.target.value, 10) || 0 }; updateDetalhes({ yellowCards: arr }); }} />
+                                                        <Input placeholder="Jogador" className="flex-1 min-w-[100px] h-8" value={y.playerName || ""} onChange={(e) => { const arr = [...yellowCards]; arr[yi] = { ...arr[yi], playerName: e.target.value }; updateDetalhes({ yellowCards: arr }); }} />
+                                                        <Select value={y.team || "home"} onValueChange={(v) => { const arr = [...yellowCards]; arr[yi] = { ...arr[yi], team: v }; updateDetalhes({ yellowCards: arr }); }}>
+                                                          <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+                                                          <SelectContent><SelectItem value="home">{f.homeTeamName}</SelectItem><SelectItem value="away">{f.awayTeamName}</SelectItem></SelectContent>
+                                                        </Select>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => updateDetalhes({ yellowCards: yellowCards.filter((_, i) => i !== yi) })}><Trash2 className="h-4 w-4" /></Button>
+                                                      </div>
+                                                    ))}
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateDetalhes({ yellowCards: [...yellowCards, { minute: 0, playerName: "", team: "home" }] })}><Plus className="h-4 w-4 mr-1" />Adicionar amarelo</Button>
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-medium">Substituições (min, sai, entra, time)</Label>
+                                                  <div className="mt-1 space-y-2">
+                                                    {substitutions.map((s, si) => (
+                                                      <div key={si} className="flex flex-wrap items-center gap-2">
+                                                        <Input type="number" min={0} max={120} placeholder="Min" className="w-16 h-8" value={s.minute || ""} onChange={(e) => { const arr = [...substitutions]; arr[si] = { ...arr[si], minute: parseInt(e.target.value, 10) || 0 }; updateDetalhes({ substitutions: arr }); }} />
+                                                        <Input placeholder="Sai" className="w-24 h-8" value={s.playerOut || ""} onChange={(e) => { const arr = [...substitutions]; arr[si] = { ...arr[si], playerOut: e.target.value }; updateDetalhes({ substitutions: arr }); }} />
+                                                        <Input placeholder="Entra" className="w-24 h-8" value={s.playerIn || ""} onChange={(e) => { const arr = [...substitutions]; arr[si] = { ...arr[si], playerIn: e.target.value }; updateDetalhes({ substitutions: arr }); }} />
+                                                        <Select value={s.team || "home"} onValueChange={(v) => { const arr = [...substitutions]; arr[si] = { ...arr[si], team: v }; updateDetalhes({ substitutions: arr }); }}>
+                                                          <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+                                                          <SelectContent><SelectItem value="home">{f.homeTeamName}</SelectItem><SelectItem value="away">{f.awayTeamName}</SelectItem></SelectContent>
+                                                        </Select>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => updateDetalhes({ substitutions: substitutions.filter((_, i) => i !== si) })}><Trash2 className="h-4 w-4" /></Button>
+                                                      </div>
+                                                    ))}
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateDetalhes({ substitutions: [...substitutions, { minute: 0, playerOut: "", playerIn: "", team: "home" }] })}><Plus className="h-4 w-4 mr-1" />Adicionar substituição</Button>
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-medium">Pênaltis (min, jogador, time, convertido?)</Label>
+                                                  <div className="mt-1 space-y-2">
+                                                    {penalties.map((p, pi) => (
+                                                      <div key={pi} className="flex flex-wrap items-center gap-2">
+                                                        <Input type="number" min={0} max={120} placeholder="Min" className="w-16 h-8" value={p.minute || ""} onChange={(e) => { const arr = [...penalties]; arr[pi] = { ...arr[pi], minute: parseInt(e.target.value, 10) || 0 }; updateDetalhes({ penalties: arr }); }} />
+                                                        <Input placeholder="Cobrador" className="flex-1 min-w-[80px] h-8" value={p.playerName || ""} onChange={(e) => { const arr = [...penalties]; arr[pi] = { ...arr[pi], playerName: e.target.value }; updateDetalhes({ penalties: arr }); }} />
+                                                        <Select value={p.team || "home"} onValueChange={(v) => { const arr = [...penalties]; arr[pi] = { ...arr[pi], team: v }; updateDetalhes({ penalties: arr }); }}>
+                                                          <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+                                                          <SelectContent><SelectItem value="home">{f.homeTeamName}</SelectItem><SelectItem value="away">{f.awayTeamName}</SelectItem></SelectContent>
+                                                        </Select>
+                                                        <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={!!p.scored} onChange={(e) => { const arr = [...penalties]; arr[pi] = { ...arr[pi], scored: e.target.checked }; updateDetalhes({ penalties: arr }); }} />Gol</label>
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => updateDetalhes({ penalties: penalties.filter((_, i) => i !== pi) })}><Trash2 className="h-4 w-4" /></Button>
+                                                      </div>
+                                                    ))}
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateDetalhes({ penalties: [...penalties, { minute: 0, playerName: "", team: "home", scored: true }] })}><Plus className="h-4 w-4 mr-1" />Adicionar pênalti</Button>
+                                                  </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                  <div>
+                                                    <Label className="text-xs font-medium">Formação casa (ex: 4-3-3)</Label>
+                                                    <Input className="h-8 mt-1" placeholder="4-3-3" value={formations.home ?? ""} onChange={(e) => updateDetalhes({ formations: { ...formations, home: e.target.value } })} />
+                                                  </div>
+                                                  <div>
+                                                    <Label className="text-xs font-medium">Formação visitante</Label>
+                                                    <Input className="h-8 mt-1" placeholder="3-5-2" value={formations.away ?? ""} onChange={(e) => updateDetalhes({ formations: { ...formations, away: e.target.value } })} />
+                                                  </div>
+                                                </div>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                  <div><Label className="text-xs">Posse casa %</Label><Input type="number" min={0} max={100} className="h-8 mt-0.5" value={stats.possessionHome ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, possessionHome: e.target.value === "" ? undefined : parseInt(e.target.value, 10) } })} /></div>
+                                                  <div><Label className="text-xs">Posse visit. %</Label><Input type="number" min={0} max={100} className="h-8 mt-0.5" value={stats.possessionAway ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, possessionAway: e.target.value === "" ? undefined : parseInt(e.target.value, 10) } })} /></div>
+                                                  <div><Label className="text-xs">Finaliz. no alvo casa</Label><Input type="number" min={0} className="h-8 mt-0.5" value={stats.shotsOnTargetHome ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, shotsOnTargetHome: e.target.value === "" ? undefined : parseInt(e.target.value, 10) } })} /></div>
+                                                  <div><Label className="text-xs">Finaliz. no alvo visit.</Label><Input type="number" min={0} className="h-8 mt-0.5" value={stats.shotsOnTargetAway ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, shotsOnTargetAway: e.target.value === "" ? undefined : parseInt(e.target.value, 10) } })} /></div>
+                                                  <div><Label className="text-xs">xG casa</Label><Input type="number" min={0} step={0.1} className="h-8 mt-0.5" placeholder="0.0" value={stats.xgHome ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, xgHome: e.target.value === "" ? undefined : parseFloat(e.target.value) } })} /></div>
+                                                  <div><Label className="text-xs">xG visitante</Label><Input type="number" min={0} step={0.1} className="h-8 mt-0.5" placeholder="0.0" value={stats.xgAway ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, xgAway: e.target.value === "" ? undefined : parseFloat(e.target.value) } })} /></div>
+                                                  <div><Label className="text-xs">Distância casa (km)</Label><Input type="number" min={0} step={0.1} className="h-8 mt-0.5" placeholder="0" value={stats.distanceHome ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, distanceHome: e.target.value === "" ? undefined : parseFloat(e.target.value) } })} /></div>
+                                                  <div><Label className="text-xs">Distância visit. (km)</Label><Input type="number" min={0} step={0.1} className="h-8 mt-0.5" placeholder="0" value={stats.distanceAway ?? ""} onChange={(e) => updateDetalhes({ stats: { ...stats, distanceAway: e.target.value === "" ? undefined : parseFloat(e.target.value) } })} /></div>
+                                                </div>
+                                                <div>
+                                                  <Label className="text-xs font-medium">URLs de vídeos (gols, lances)</Label>
+                                                  <div className="mt-1 space-y-1">
+                                                    {videoUrls.map((url, ui) => (
+                                                      <div key={ui} className="flex gap-2">
+                                                        <Input placeholder="https://..." className="h-8 flex-1" value={url} onChange={(e) => { const arr = [...videoUrls]; arr[ui] = e.target.value; updateDetalhes({ videoUrls: arr }); }} />
+                                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive shrink-0" onClick={() => updateDetalhes({ videoUrls: videoUrls.filter((_, i) => i !== ui) })}><Trash2 className="h-4 w-4" /></Button>
+                                                      </div>
+                                                    ))}
+                                                    <Button type="button" variant="outline" size="sm" onClick={() => updateDetalhes({ videoUrls: [...videoUrls, ""] })}><Plus className="h-4 w-4 mr-1" />Adicionar vídeo</Button>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </details>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </details>
+                          </div>
+                        </details>
                       </div>
                     )}
                     {block.type === "hero" && (() => {
@@ -2382,7 +3396,7 @@ export default function EditarPaginaTenantPage() {
                       </div>
                     )}
                     {block.type !== "header" && block.type !== "footer" && block.type !== "hero" && (
-                      <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
+                      <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (textos e ícones)</summary>
                         <div className="border-t border-border px-3 py-3 space-y-4">
                           {block.type === "highlights" && (() => {
@@ -2790,9 +3804,11 @@ export default function EditarPaginaTenantPage() {
                   </div>
                   )}
                 </div>
+                </div>
                 </Fragment>
                 );
-              })}
+              });
+            })())}
             </div>
           </CardContent>
         </Card>

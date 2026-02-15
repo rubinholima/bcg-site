@@ -218,12 +218,16 @@ export function ProximosJogosSection({
   lang,
   ourTeamName,
   ourTeamLogoUrl,
+  fullWidth,
+  titleAlign = "left",
 }: {
   block: HomeContentBlock;
   slug: string;
   lang: "pt" | "en";
   ourTeamName?: string | null;
   ourTeamLogoUrl?: string | null;
+  fullWidth?: boolean;
+  titleAlign?: "left" | "center" | "right";
 }) {
   const [fixtures, setFixtures] = useState<FixtureItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -232,7 +236,7 @@ export function ProximosJogosSection({
 
   const title =
     (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
-  const bgColor = (block.config?.backgroundColor as string)?.trim() || "#0f0f12";
+  const bgColor = (block.config?.backgroundColor as string)?.trim() || undefined;
   const bgImage = (block.config?.backgroundImage as string)?.trim();
   const overlayOpacity = (() => {
     const v = block.config?.backgroundOverlayOpacity;
@@ -312,24 +316,28 @@ export function ProximosJogosSection({
     const t = setInterval(() => {
       setCurrentIndex((i) => {
         const next = i + 1 >= cardCount ? 0 : i + 1;
-        const el = carouselRef.current;
-        if (el) {
-          const card = el.querySelector(`[data-card-index="${next}"]`);
-          (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
-        }
+        scrollCarouselToIndex(next);
         return next;
       });
     }, 5000);
     return () => clearInterval(t);
   }, [cardCount, carouselHover]);
 
+  const scrollCarouselToIndex = (idx: number) => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const card = el.querySelector(`[data-card-index="${idx}"]`) as HTMLElement;
+    if (card) {
+      const cardWidth = card.offsetWidth;
+      const gap = 16;
+      el.scrollTo({ left: idx * (cardWidth + gap), behavior: "smooth" });
+    }
+  };
+
   const scrollToIndex = (index: number) => {
     const i = Math.max(0, Math.min(index, cardCount - 1));
     setCurrentIndex(i);
-    const el = carouselRef.current;
-    if (!el) return;
-    const card = el.querySelector(`[data-card-index="${i}"]`);
-    (card as HTMLElement)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+    scrollCarouselToIndex(i);
   };
 
   const isHome = (f: FixtureItem) =>
@@ -340,12 +348,12 @@ export function ProximosJogosSection({
       : (lang === "pt" ? "Fora" : "Away");
 
   const cardClassName =
-    "min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl border border-white/10 bg-zinc-900/60 p-4 transition hover:border-white/20 sm:min-w-[300px]";
+    `min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:min-w-[300px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
 
   return (
     <section
-      className={`relative overflow-hidden border-b border-white/5 ${paddingTopClass} ${paddingBottomClass}`}
-      style={{ backgroundColor: bgColor }}
+      className={`relative overflow-hidden ${fullWidth ? "" : "border-b border-white/5"} ${paddingTopClass} ${paddingBottomClass}`}
+      style={bgColor ? { backgroundColor: bgColor } : undefined}
     >
       {bgImage && (
         <div className="absolute inset-0">
@@ -360,12 +368,13 @@ export function ProximosJogosSection({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <div className="container relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className={`relative w-full px-4 sm:px-6 lg:px-8 ${fullWidth ? "" : "container mx-auto max-w-5xl"}`}>
         {title && (
             <SectionTitle
               title={title}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
+              align={titleAlign}
             />
           )}
 
@@ -374,7 +383,7 @@ export function ProximosJogosSection({
               <span>{lang === "pt" ? "Carregando jogos…" : "Loading fixtures…"}</span>
             </div>
           ) : upcomingFixtures.length === 0 ? (
-            <div className="rounded-xl border border-white/10 bg-zinc-900/60 px-6 py-12 text-center text-zinc-400">
+            <div className={`rounded-xl bg-zinc-900/60 px-6 py-12 text-center text-zinc-400 ${fullWidth ? "" : "border border-white/10"}`}>
               <Calendar className="mx-auto h-12 w-12 opacity-50 mb-3" />
               <p>
                 {fixtures.length > 0

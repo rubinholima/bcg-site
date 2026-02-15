@@ -206,7 +206,7 @@ export function LogoCarouselSection({
     };
   }, [clubsEnabled, companiesEnabled, clubsLimit, companiesLimit]);
 
-  const bgColor = (config.backgroundColor as string)?.trim() || "#0f0f12";
+  const bgColor = (config.backgroundColor as string)?.trim() || undefined;
   const bgImage = (config.backgroundImage as string)?.trim();
   const overlayOpacity = (() => {
     const v = config.backgroundOverlayOpacity;
@@ -224,7 +224,7 @@ export function LogoCarouselSection({
     <section
       className="relative w-full overflow-hidden border-b border-white/5"
       style={{
-        backgroundColor: bgColor,
+        ...(bgColor ? { backgroundColor: bgColor } : {}),
         paddingTop: `${paddingTop}px`,
         paddingBottom: `${paddingBottom}px`,
         minHeight: `${cardHeight + paddingTop + paddingBottom}px`,

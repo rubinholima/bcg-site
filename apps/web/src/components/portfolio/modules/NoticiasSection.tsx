@@ -64,9 +64,13 @@ function formatDate(iso: string | undefined, lang: "pt" | "en"): string {
 export function NoticiasSection({
   block,
   lang,
+  fullWidth,
+  titleAlign = "left",
 }: {
   block: HomeContentBlock;
   lang: "pt" | "en";
+  fullWidth?: boolean;
+  titleAlign?: "left" | "center" | "right";
 }) {
   const [items, setItems] = useState<NoticiasItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,11 +80,14 @@ export function NoticiasSection({
   const dataSource = (block.config?.noticiasDataSource as "rss" | "manual") ?? "rss";
   const rssUrl = (block.config?.noticiasRssUrl as string)?.trim() ?? "";
   const manualItems = (block.config?.noticiasManualItems as NoticiasItem[] | undefined) ?? [];
-  const maxItems = Math.min(20, Math.max(1, (block.config?.noticiasMaxItems as number) ?? 10));
+  const maxItems = 6; // Somente as 6 últimas notícias
   const padTop = (block.config?.noticiasPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.noticiasPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
-  const bgColor = (block.config?.backgroundColor as string)?.trim();
-  const bgImage = (block.config?.backgroundImage as string)?.trim();
+  const blockBg = (block.config?.backgroundColor as string)?.trim();
+  const blockBgImg = (block.config?.backgroundImage as string)?.trim();
+  // Só usa fundo do bloco: NUNCA herda do tema — a página já tem fundo único; seção transparente = continuidade
+  const bgColor = blockBg || undefined;
+  const bgImage = blockBgImg || undefined;
   const overlayOpacity = (() => {
     const v = block.config?.backgroundOverlayOpacity;
     if (typeof v === "number" && v >= 0 && v <= 1) return v;
@@ -158,6 +165,7 @@ export function NoticiasSection({
               title={title}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
+              align={titleAlign}
             />
           )}
           {loading && (

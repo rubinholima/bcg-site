@@ -2,6 +2,7 @@ import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { BlockRenderer } from "./BlockRenderer";
 
 const PADDING_CLASSES = {
@@ -43,7 +44,58 @@ export function SectionBlockRenderer({
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
 
-  const allModules = columns === 1 ? leftModules : [...leftModules, ...rightModules];
+  const visibleLeft = leftModules.filter((m) => m.config?.visible !== false);
+  const visibleRight = rightModules.filter((m) => m.config?.visible !== false);
+  const allModules = columns === 1 ? visibleLeft : [...visibleLeft, ...visibleRight];
+
+  const leftColumnTitle = (lang === "pt" ? block.config?.sectionLeftColumnTitlePt : block.config?.sectionLeftColumnTitleEn) as string;
+  const rightColumnTitle = (lang === "pt" ? block.config?.sectionRightColumnTitlePt : block.config?.sectionRightColumnTitleEn) as string;
+  const titleAlign = (block.config?.titleAlign as "left" | "center" | "right") ?? (page.content?.theme?.titleAlign as "left" | "center" | "right") ?? "left";
+
+  const leftColBgColor = (block.config?.sectionLeftColumnBackgroundColor as string)?.trim();
+  const leftColBgImage = (block.config?.sectionLeftColumnBackgroundImage as string)?.trim();
+  const leftColOverlay = (() => {
+    const v = block.config?.sectionLeftColumnBackgroundOverlayOpacity;
+    if (typeof v === "number" && v >= 0 && v <= 1) return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (!Number.isNaN(n) && n >= 0 && n <= 1) return n;
+    }
+    return 0.75;
+  })();
+  const rightColBgColor = (block.config?.sectionRightColumnBackgroundColor as string)?.trim();
+  const rightColBgImage = (block.config?.sectionRightColumnBackgroundImage as string)?.trim();
+  const rightColOverlay = (() => {
+    const v = block.config?.sectionRightColumnBackgroundOverlayOpacity;
+    if (typeof v === "number" && v >= 0 && v <= 1) return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (!Number.isNaN(n) && n >= 0 && n <= 1) return n;
+    }
+    return 0.75;
+  })();
+
+  function ColumnBg({ bgColor: colBg, bgImage: colImg, overlayOp }: { bgColor?: string; bgImage?: string; overlayOp: number }) {
+    if (!colBg && !colImg) return null;
+    return (
+      <div className="absolute inset-0 overflow-hidden rounded-lg">
+        {colBg && <div className="absolute inset-0" style={{ backgroundColor: colBg }} />}
+        {colImg && (
+          <>
+            <Image
+              src={getPublicImageUrl(colImg)}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="50vw"
+              unoptimized={isProxyImageUrl(getPublicImageUrl(colImg))}
+            />
+            <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOp }} />
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <section
@@ -64,28 +116,67 @@ export function SectionBlockRenderer({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className={`relative w-full px-4 sm:px-6 lg:px-8 ${columns === 1 ? "mx-auto max-w-6xl" : ""}`}>
         {columns === 1 ? (
-          <div className="space-y-12">
-            {allModules.map((m) => (
-              <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} />
-            ))}
-          </div>
-        ) : (
-          <div
-            className={`grid grid-cols-1 gap-8 lg:gap-12 ${
-              layout === "50-50" ? "lg:grid-cols-2" : layout === "33-66" ? "lg:grid-cols-[1fr_2fr]" : "lg:grid-cols-[2fr_1fr]"
-            }`}
-          >
-            <div className="min-w-0 space-y-12">
-              {leftModules.map((m) => (
+          <div className={`relative min-h-[1px] rounded-lg ${(leftColBgColor || leftColBgImage) ? "p-4 sm:p-6" : ""}`}>
+            {(leftColBgColor || leftColBgImage) && (
+              <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
+            )}
+            <div className="relative space-y-12">
+              {leftColumnTitle?.trim() && (
+                <SectionTitle
+                  title={leftColumnTitle}
+                  gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
+                  gradientEnd={(block.config?.sectionLeftColumnTitleGradientEnd as string)?.trim()}
+                  align={titleAlign}
+                />
+              )}
+              {allModules.map((m) => (
                 <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} />
               ))}
             </div>
-            <div className="min-w-0 space-y-12">
-              {rightModules.map((m) => (
-                <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} />
-              ))}
+          </div>
+        ) : (
+          <div
+            className={`grid w-full grid-cols-1 gap-8 lg:gap-12 ${
+              layout === "50-50" ? "lg:grid-cols-2" : layout === "33-66" ? "lg:grid-cols-[1fr_2fr]" : "lg:grid-cols-[2fr_1fr]"
+            }`}
+          >
+            <div className={`relative min-w-0 rounded-lg ${(leftColBgColor || leftColBgImage) ? "p-4 sm:p-6" : ""}`}>
+              {(leftColBgColor || leftColBgImage) && (
+                <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
+              )}
+              <div className="relative space-y-12">
+                {leftColumnTitle?.trim() && (
+                  <SectionTitle
+                    title={leftColumnTitle}
+                    gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
+                    gradientEnd={(block.config?.sectionLeftColumnTitleGradientEnd as string)?.trim()}
+                    align={titleAlign}
+                  />
+                )}
+                {visibleLeft.map((m) => (
+                  <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} inSection />
+                ))}
+              </div>
+            </div>
+            <div className={`relative min-w-0 rounded-lg ${(rightColBgColor || rightColBgImage) ? "p-4 sm:p-6" : ""}`}>
+              {(rightColBgColor || rightColBgImage) && (
+                <ColumnBg bgColor={rightColBgColor} bgImage={rightColBgImage} overlayOp={rightColOverlay} />
+              )}
+              <div className="relative space-y-12">
+                {rightColumnTitle?.trim() && (
+                  <SectionTitle
+                    title={rightColumnTitle}
+                    gradientStart={(block.config?.sectionRightColumnTitleGradientStart as string)?.trim()}
+                    gradientEnd={(block.config?.sectionRightColumnTitleGradientEnd as string)?.trim()}
+                    align={titleAlign}
+                  />
+                )}
+                {visibleRight.map((m) => (
+                  <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} inSection />
+                ))}
+              </div>
             </div>
           </div>
         )}

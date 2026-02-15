@@ -17,6 +17,7 @@ export default function NewTimePage() {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoRefreshKey, setLogoRefreshKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,7 +34,10 @@ export default function NewTimePage() {
       });
       if (!res.ok) return;
       const data = (await res.json()) as { url?: string };
-      if (data?.url) setLogoUrl(data.url);
+      if (data?.url) {
+        setLogoUrl(data.url);
+        setLogoRefreshKey((k) => k + 1);
+      }
     } finally {
       e.target.value = "";
     }
@@ -109,6 +113,7 @@ export default function NewTimePage() {
                   value={logoUrl}
                   onChange={setLogoUrl}
                   placeholder="Escolher da pasta de logos"
+                  refreshTrigger={logoRefreshKey}
                 />
                 <input
                   ref={fileInputRef}
