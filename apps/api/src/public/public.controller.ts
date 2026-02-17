@@ -80,6 +80,15 @@ export class PublicController {
   }
 
   /**
+   * GET /public/tenants/:slug
+   * Dados públicos do tenant (nome, logo) pelo slug. Usado quando a página não traz tenant (ex.: nosso clube em Últimos Resultados).
+   */
+  @Get('tenants/:slug')
+  async getTenantBySlug(@Param('slug') slug: string) {
+    return this.publicService.getTenantBySlug(slug);
+  }
+
+  /**
    * GET /public/workmail-web-url?slug=...
    * Retorna a URL do cliente web WorkMail (tela de login do usuário) para o tenant.
    * Uso: quando o usuário acessa /portfolio/[slug]/email sem estar logado, redirecionar para essa URL.

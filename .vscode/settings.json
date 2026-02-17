@@ -28,5 +28,6 @@
     "**/.next/**": true,
     "**/coverage/**": true,
     "**/_tmp*": true
-  }
+  },
+  "editor.largeFileOptimizations": true
 }

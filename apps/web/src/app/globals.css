@@ -77,6 +77,27 @@
   }
 }
 
+/* Section: full-bleed do carrossel Próximos Jogos (encosta nas bordas do box azul) */
+.fullbleed-carousel-module section > div.mt-6.w-full.overflow-hidden {
+  margin-left: -1rem;
+  margin-right: -1rem;
+}
+@media (min-width: 640px) {
+  .fullbleed-carousel-module section > div.mt-6.w-full.overflow-hidden {
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+  }
+}
+
+/* Esconde scrollbar mas mantém scroll (arrastar/rodinha) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Dashboard: quando ativo, html e body não scrollam - UMA ÚNICA scrollbar em dashboard-scroll */
 html.dashboard-active {
   overflow: hidden !important;
@@ -372,4 +393,14 @@ body.dashboard-active {
 }
 .logo-carousel-marquee-reverse {
   animation: logo-marquee 40s linear infinite reverse;
+}
+
+/* Próximos Jogos — marquee contínuo (3 cópias = -33.333% por ciclo), igual ao carrossel de logos */
+@keyframes proximos-jogos-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
 }

@@ -10,13 +10,28 @@ import { BlockRenderer } from "@/components/portfolio/modules/BlockRenderer";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+async function getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
+  try {
+    const res = await fetch(`${apiUrl}/public/tenants/${encodeURIComponent(slug)}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as { id: string; name: string; slug: string; logoUrl: string | null };
+  } catch {
+    return null;
+  }
+}
+
 async function getPageBySlug(slug: string): Promise<Page | null> {
   try {
     const res = await fetch(`${apiUrl}/public/page-by-slug/${encodeURIComponent(slug)}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
-    return (await res.json()) as Page;
+    const page = (await res.json()) as Page;
+    if (!page.tenant && slug) {
+      const tenant = await getTenantBySlug(slug);
+      if (tenant) (page as Page & { tenant?: { id: string; name: string; slug: string; logoUrl: string | null } }).tenant = tenant;
+    }
+    return page;
   } catch {
     return null;
   }

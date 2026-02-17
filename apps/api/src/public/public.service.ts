@@ -59,6 +59,21 @@ export class PublicService {
     private readonly sofaScore: SofaScoreService,
   ) {}
 
+  /** Dados públicos do tenant pelo slug (nome e logo para "nosso clube" nos módulos). */
+  async getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
+    const t = await this.prisma.tenant.findUnique({
+      where: { slug },
+      select: { id: true, name: true, slug: true, logoUrl: true },
+    });
+    if (!t) return null;
+    return {
+      id: t.id,
+      name: t.name,
+      slug: t.slug,
+      logoUrl: t.logoUrl ?? null,
+    };
+  }
+
   /** Lista tenants públicos por tipo (club | company) para carrossel. Exclui grupo master; opcionalmente só com logo. */
   async getPublicTenantsForCarousel(
     type: 'club' | 'company',
@@ -180,10 +195,16 @@ export class PublicService {
 
     let list: NormalizedFixture[] = [];
     try {
-      list = await this.sofaScore.getUpcomingByTeamId(teamId, {
-        daysAhead: 60,
-        maxItems: 30,
-      });
+      const [upcoming, last] = await Promise.all([
+        this.sofaScore.getUpcomingByTeamId(teamId, { daysAhead: 60, maxItems: 30 }),
+        this.sofaScore.getLastByTeamId(teamId, { maxItems: 30 }),
+      ]);
+      const byId = new Map<string, NormalizedFixture>();
+      last.forEach((f) => byId.set(f.externalId, f));
+      upcoming.forEach((f) => byId.set(f.externalId, f));
+      list = Array.from(byId.values()).sort(
+        (a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime(),
+      );
       if (list.length === 0) {
         console.warn(`[fixtures] SofaScore retornou 0 jogos para teamId=${teamId} (slug=${slug})`);
       }

@@ -47,10 +47,16 @@ export class UploadController {
     }
     if (!scope || typeof scope !== 'string' || !scope.trim()) {
       throw new BadRequestException(
-        'Envie "scope": "group" (logo BCG) ou o ID da empresa (tenantId).',
+        'Envie "scope": "group" (logo BCG), "external" (Clubes Adv) ou o ID da empresa (tenantId).',
       );
     }
     const scopeTrim = scope.trim();
+
+    if (scopeTrim === 'external') {
+      const { key, url } = await this.s3.uploadLogoExternal(file.buffer, file.mimetype);
+      return { url, key };
+    }
+
     if (scopeTrim === 'group') {
       const user = (req as Request & { user?: { 'cognito:groups'?: string[] } }).user;
       const groups = user?.['cognito:groups'] ?? [];
@@ -68,7 +74,7 @@ export class UploadController {
       }
     }
 
-    const { url } = await this.s3.uploadLogo(
+    const { key, url } = await this.s3.uploadLogo(
       file.buffer,
       file.mimetype,
       scopeTrim,
@@ -80,6 +86,6 @@ export class UploadController {
       await this.tenantsService.updateLogoUrl(scopeTrim, url);
     }
 
-    return { url };
+    return { url, key };
   }
 }

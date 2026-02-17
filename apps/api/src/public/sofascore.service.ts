@@ -18,6 +18,9 @@ export interface NormalizedFixture {
   homeTeamLogoUrl?: string;
   /** Logo do time visitante (SofaScore ou montada a partir do id). */
   awayTeamLogoUrl?: string;
+  /** Placar (jogos já realizados). */
+  homeScore?: number;
+  awayScore?: number;
 }
 
 /** Cache em memória: key = teamId, value = { at, data } */
@@ -133,6 +136,84 @@ export class SofaScoreService {
           isOurTeamHome,
           homeTeamLogoUrl: homeLogo,
           awayTeamLogoUrl: awayLogo,
+        };
+      });
+      cache.set(cacheKey, { at: Date.now(), data: list });
+      return list;
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Busca últimos jogos do time (já realizados). Usado para "Carregar jogos passados" no dashboard.
+   * Endpoint /team/:id/events/last. Cache 10 min.
+   */
+  async getLastByTeamId(
+    teamId: string,
+    options?: { maxItems?: number },
+  ): Promise<NormalizedFixture[]> {
+    const maxItems = options?.maxItems ?? 20;
+    const cacheKey = `last:${teamId}:${maxItems}`;
+    const hit = cache.get(cacheKey);
+    if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+      return hit.data;
+    }
+    try {
+      const url = `${this.baseUrl}/team/${teamId}/events/last`;
+      const res = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          Referer: 'https://www.sofascore.com/',
+          Origin: 'https://www.sofascore.com',
+        },
+      });
+      if (!res.ok) {
+        console.warn(`[sofascore] last HTTP ${res.status} team ${teamId}`);
+        return [];
+      }
+      const json = (await res.json()) as {
+        events?: Array<{
+          id?: number;
+          startTimestamp?: number;
+          homeScore?: { current?: number };
+          awayScore?: { current?: number };
+          tournament?: { name?: string; category?: { name?: string }; image?: string; uniqueId?: number; id?: number };
+          homeTeam?: { id?: number; name?: string; image?: string; logo?: string };
+          awayTeam?: { id?: number; name?: string; image?: string; logo?: string };
+          venue?: { name?: string; stadium?: { name?: string } };
+          status?: { type?: string };
+        }>;
+      };
+      const events = Array.isArray(json?.events) ? json.events : [];
+      const list: NormalizedFixture[] = events.slice(0, maxItems).map((e) => {
+        const startTimestamp = e.startTimestamp ?? 0;
+        const status: NormalizedFixture['status'] = 'FINAL';
+        const tournamentName = e.tournament?.name ?? e.tournament?.category?.name ?? '';
+        const venueName = e.venue?.name ?? e.venue?.stadium?.name ?? undefined;
+        const homeId = e.homeTeam?.id;
+        const awayId = e.awayTeam?.id;
+        const isOurTeamHome = String(homeId) === String(teamId);
+        const homeLogo = e.homeTeam?.image ?? e.homeTeam?.logo ?? toLogoUrl(this.baseUrl, 'team', homeId);
+        const awayLogo = e.awayTeam?.image ?? e.awayTeam?.logo ?? toLogoUrl(this.baseUrl, 'team', awayId);
+        const tournamentLogo = e.tournament?.image ?? toLogoUrl(this.baseUrl, 'unique-tournament', e.tournament?.uniqueId ?? e.tournament?.id);
+        return {
+          externalId: String(e.id ?? ''),
+          startISO: new Date(startTimestamp * 1000).toISOString(),
+          status,
+          competitionName: tournamentName,
+          competitionLogoUrl: tournamentLogo,
+          venueName: venueName || undefined,
+          homeTeamName: e.homeTeam?.name ?? '',
+          awayTeamName: e.awayTeam?.name ?? '',
+          isOurTeamHome,
+          homeTeamLogoUrl: homeLogo,
+          awayTeamLogoUrl: awayLogo,
+          homeScore: e.homeScore?.current,
+          awayScore: e.awayScore?.current,
         };
       });
       cache.set(cacheKey, { at: Date.now(), data: list });

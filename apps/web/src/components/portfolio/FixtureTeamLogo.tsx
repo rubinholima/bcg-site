@@ -17,11 +17,19 @@ function slugFromTeamName(name: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
+const PLACEHOLDER_OUR_TEAM_NAMES = ["nosso clube", "nosso", "our club", "our team", "nosso time"];
+
+function isPlaceholderOurTeam(teamName: string): boolean {
+  const t = teamName.trim().toLowerCase();
+  return PLACEHOLDER_OUR_TEAM_NAMES.some((p) => t === p || t.startsWith(p + " ") || t.includes(p));
+}
+
 export function isOurTeam(teamName: string, ourTeamName: string | null | undefined): boolean {
   if (!ourTeamName?.trim()) return false;
   const a = teamName.trim().toLowerCase();
   const b = ourTeamName.trim().toLowerCase();
   if (a === b) return true;
+  if (isPlaceholderOurTeam(teamName)) return true;
   return a.includes(b) || b.includes(a);
 }
 

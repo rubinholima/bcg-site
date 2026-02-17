@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2 } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 
 export interface FixtureItem {
@@ -92,49 +92,53 @@ function slugFromTeamName(name: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
+/** "Nosso Clube" / "Our Club" = placeholder do clube da página (sempre nosso time). */
+const OUR_CLUB_PLACEHOLDERS = ["nosso clube", "our club"];
+
 /** Compara se o nome do time é o nosso (página/tenant). */
 function isOurTeam(teamName: string, ourTeamName: string | null | undefined): boolean {
-  if (!ourTeamName?.trim()) return false;
   const a = teamName.trim().toLowerCase();
+  if (OUR_CLUB_PLACEHOLDERS.includes(a)) return true;
+  if (!ourTeamName?.trim()) return false;
   const b = ourTeamName.trim().toLowerCase();
   if (a === b) return true;
-  // match se um contém o outro (ex: "Boston City" vs "Boston City FC")
   return a.includes(b) || b.includes(a);
 }
 
 const EXTERNAL_LOGO_EXTENSIONS = [".png", ".webp", ".svg"] as const;
+
+/** Tamanho fixo de todos os logos nos cards (casa e visitante) para ficarem uniformes. */
+const FIXTURE_LOGO_SIZE = 40;
 
 function TeamLogo({
   teamName,
   ourTeamName,
   ourTeamLogoUrl,
   logoUrlOverride,
-  size = 40,
 }: {
   teamName: string;
   ourTeamName: string | null | undefined;
   ourTeamLogoUrl: string | null | undefined;
-  /** Se definido (ex.: manual no editor), usa este logo e ignora nossa base / pasta externa. */
   logoUrlOverride?: string | null;
-  size?: number;
 }) {
+  const size = FIXTURE_LOGO_SIZE;
   const [externalExtIndex, setExternalExtIndex] = useState(0);
   const [showPlaceholder, setShowPlaceholder] = useState(false);
+
+  const logoBoxClass = "relative shrink-0 overflow-hidden rounded-lg bg-zinc-800 flex items-center justify-center";
+  const logoBoxStyle = { width: size, height: size, minWidth: size, minHeight: size };
 
   if (logoUrlOverride?.trim()) {
     const src = getPublicImageUrl(logoUrlOverride);
     if (src) {
       return (
-        <div
-          className="relative shrink-0 overflow-hidden rounded-lg bg-zinc-800"
-          style={{ width: size, height: size }}
-        >
+        <div className={logoBoxClass} style={logoBoxStyle}>
           <Image
             src={src}
             alt=""
             width={size}
             height={size}
-            className="object-contain"
+            className="object-contain max-h-full max-w-full"
             unoptimized={isProxyImageUrl(src)}
           />
         </div>
@@ -147,34 +151,33 @@ function TeamLogo({
 
   if (isOurs && ourTeamLogoUrl) {
     const src = getPublicImageUrl(ourTeamLogoUrl);
-    if (!src) {
+    if (src) {
       return (
-        <div
-          className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-zinc-400"
-          style={{ width: size, height: size }}
-        >
-          <Building2 className="h-5 w-5" />
+        <div className={logoBoxClass} style={logoBoxStyle}>
+          <Image
+            src={src}
+            alt=""
+            width={size}
+            height={size}
+            className="object-contain max-h-full max-w-full"
+            unoptimized={isProxyImageUrl(src)}
+          />
         </div>
       );
     }
+  }
+
+  if (isOurs) {
     return (
       <div
-        className="relative shrink-0 overflow-hidden rounded-lg bg-zinc-800"
-        style={{ width: size, height: size }}
+        className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-zinc-400"
+        style={logoBoxStyle}
       >
-        <Image
-          src={src}
-          alt=""
-          width={size}
-          height={size}
-          className="object-contain"
-          unoptimized={isProxyImageUrl(src)}
-        />
+        <Building2 className="h-5 w-5" aria-hidden />
       </div>
     );
   }
 
-  // Time externo: /logos/teams-externos/{slug}.png | .webp | .svg
   const base = "/logos/teams-externos/" + slug;
   const externalSrc = base + EXTERNAL_LOGO_EXTENSIONS[externalExtIndex];
 
@@ -182,24 +185,22 @@ function TeamLogo({
     return (
       <div
         className="flex shrink-0 items-center justify-center rounded-lg bg-zinc-700 text-zinc-400"
-        style={{ width: size, height: size }}
+        style={logoBoxStyle}
       >
-        <Building2 className="h-5 w-5" />
+        <Building2 className="h-5 w-5" aria-hidden />
       </div>
     );
   }
 
   return (
-    <div
-      className="relative shrink-0 overflow-hidden rounded-lg bg-zinc-800"
-      style={{ width: size, height: size }}
-    >
-      <img
+    <div className={logoBoxClass} style={logoBoxStyle}>
+      <Image
         src={externalSrc}
         alt=""
         width={size}
         height={size}
-        className="h-full w-full object-contain"
+        className="h-full w-full object-contain max-h-[100%] max-w-[100%]"
+        unoptimized
         onError={() => {
           if (externalExtIndex < EXTERNAL_LOGO_EXTENSIONS.length - 1) {
             setExternalExtIndex((i) => i + 1);
@@ -233,6 +234,11 @@ export function ProximosJogosSection({
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [carouselHover, setCarouselHover] = useState(false);
+  const [tenantBySlug, setTenantBySlug] = useState<{ name: string; logoUrl: string | null } | null>(null);
+
+  const displayOurTeamName = tenantBySlug?.name ?? ourTeamName ?? undefined;
+  const displayOurTeamLogoUrl = tenantBySlug?.logoUrl ?? ourTeamLogoUrl ?? undefined;
 
   const title =
     (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
@@ -247,7 +253,6 @@ export function ProximosJogosSection({
     }
     return 0.75;
   })();
-  const cardStyle = (block.config?.proximosJogosCardStyle as "box" | "flat") || "flat";
   const paddingTop = (block.config?.proximosJogosPaddingTop as "minimal" | "compact" | "normal" | "large") || "compact";
   const paddingBottom = (block.config?.proximosJogosPaddingBottom as "minimal" | "compact" | "normal" | "large") || "compact";
 
@@ -269,6 +274,22 @@ export function ProximosJogosSection({
     };
   }, [slug]);
 
+  useEffect(() => {
+    if (!slug?.trim()) return;
+    let cancelled = false;
+    fetch(`/api/public/tenants/${encodeURIComponent(slug)}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { name?: string; logoUrl?: string | null } | null) => {
+        if (cancelled || !data) return;
+        setTenantBySlug({
+          name: (data.name && String(data.name).trim()) || "",
+          logoUrl: data.logoUrl != null ? String(data.logoUrl) : null,
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [slug]);
+
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setTick((x) => x + 1), 60000);
@@ -276,6 +297,7 @@ export function ProximosJogosSection({
   }, []);
   const upcomingFixtures = useMemo(
     () => fixtures.filter((f) => new Date(f.startISO) > new Date()),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tick forces re-run every 60s so past fixtures drop off
     [fixtures, tick],
   );
 
@@ -302,46 +324,15 @@ export function ProximosJogosSection({
     return list;
   }, [upcomingFixtures, selectedDate, selectedCategory]);
 
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [carouselHover, setCarouselHover] = useState(false);
   const cardCount = filteredFixtures.length;
-
-  useEffect(() => {
-    setCurrentIndex(0);
-  }, [selectedDate, selectedCategory, cardCount]);
-
-  useEffect(() => {
-    if (cardCount <= 1 || carouselHover) return;
-    const t = setInterval(() => {
-      setCurrentIndex((i) => {
-        const next = i + 1 >= cardCount ? 0 : i + 1;
-        scrollCarouselToIndex(next);
-        return next;
-      });
-    }, 5000);
-    return () => clearInterval(t);
-  }, [cardCount, carouselHover]);
-
-  const scrollCarouselToIndex = (idx: number) => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const card = el.querySelector(`[data-card-index="${idx}"]`) as HTMLElement;
-    if (card) {
-      const cardWidth = card.offsetWidth;
-      const gap = 16;
-      el.scrollTo({ left: idx * (cardWidth + gap), behavior: "smooth" });
-    }
-  };
-
-  const scrollToIndex = (index: number) => {
-    const i = Math.max(0, Math.min(index, cardCount - 1));
-    setCurrentIndex(i);
-    scrollCarouselToIndex(i);
-  };
+  /** Marquee contínuo como o carrossel de logos: 3 cópias para loop fluido sem parar. */
+  const MARQUEE_COPIES = 3;
+  const carouselItems = cardCount > 1
+    ? Array.from({ length: MARQUEE_COPIES }, () => filteredFixtures).flat()
+    : filteredFixtures;
 
   const isHome = (f: FixtureItem) =>
-    f.isOurTeamHome !== undefined ? f.isOurTeamHome : isOurTeam(f.homeTeamName, ourTeamName);
+    f.isOurTeamHome !== undefined ? f.isOurTeamHome : isOurTeam(f.homeTeamName, displayOurTeamName);
   const homeAwayLabel = (f: FixtureItem) =>
     isHome(f)
       ? (lang === "pt" ? "Casa" : "Home")
@@ -368,141 +359,90 @@ export function ProximosJogosSection({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <div className={`relative w-full px-4 sm:px-6 lg:px-8 ${fullWidth ? "" : "container mx-auto max-w-5xl"}`}>
+      <div className={`relative w-full ${fullWidth ? "" : "container mx-auto max-w-5xl px-0 sm:px-6 lg:px-8"}`}>
         {title && (
-            <SectionTitle
-              title={title}
-              gradientStart={(block.config?.titleGradientStart as string)?.trim()}
-              gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
-              align={titleAlign}
-            />
-          )}
-
-          {loading ? (
-            <div className="flex justify-center py-12 text-zinc-500">
-              <span>{lang === "pt" ? "Carregando jogos…" : "Loading fixtures…"}</span>
-            </div>
-          ) : upcomingFixtures.length === 0 ? (
-            <div className={`rounded-xl bg-zinc-900/60 px-6 py-12 text-center text-zinc-400 ${fullWidth ? "" : "border border-white/10"}`}>
-              <Calendar className="mx-auto h-12 w-12 opacity-50 mb-3" />
-              <p>
-                {fixtures.length > 0
-                  ? (lang === "pt" ? "Nenhum próximo jogo no momento." : "No upcoming fixtures.")
-                  : (lang === "pt" ? "Nenhum jogo cadastrado no momento." : "No fixtures at the moment.")}
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Filtros: data e categoria em dropdowns */}
-              <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-zinc-500">
-                  {lang === "pt" ? "Data:" : "Date:"}
-                </span>
-                <Select
-                  value={selectedDate ?? "all"}
-                  onValueChange={(v) => setSelectedDate(v === "all" ? null : v)}
-                >
-                  <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {lang === "pt" ? "Todas" : "All"}
-                    </SelectItem>
-                    {datesWithGames.map((d) => {
-                      const [y, m, day] = d.split("-");
-                      const dateObj = new Date(Number(y), Number(m) - 1, Number(day));
-                      const label = dateObj.toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB", {
-                        day: "numeric",
-                        month: "short",
-                      });
-                      return (
-                        <SelectItem key={d} value={d}>
-                          {label}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-zinc-500">
-                  {lang === "pt" ? "Categoria:" : "Category:"}
-                </span>
-                <Select
-                  value={selectedCategory ?? "all"}
-                  onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}
-                >
-                  <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {lang === "pt" ? "Todas" : "All"}
-                    </SelectItem>
-                    {categoriesForFilter.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {getCategoryLabel(cat, lang)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </>
+          <SectionTitle
+            title={title}
+            gradientStart={(block.config?.titleGradientStart as string)?.trim()}
+            gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
+            align={titleAlign}
+          />
         )}
 
-        {/* Carrossel */}
-        {!loading && upcomingFixtures.length > 0 && (
+        {loading ? (
+          <div className="flex justify-center py-12 text-zinc-500">
+            <span>{lang === "pt" ? "Carregando jogos…" : "Loading fixtures…"}</span>
+          </div>
+        ) : upcomingFixtures.length === 0 ? (
+          <div className={`rounded-xl bg-zinc-900/60 px-6 py-12 text-center text-zinc-400 ${fullWidth ? "" : "border border-white/10"}`}>
+            <Calendar className="mx-auto h-12 w-12 opacity-50 mb-3" />
+            <p>
+              {fixtures.length > 0
+                ? (lang === "pt" ? "Nenhum próximo jogo no momento." : "No upcoming fixtures.")
+                : (lang === "pt" ? "Nenhum jogo cadastrado no momento." : "No fixtures at the moment.")}
+            </p>
+          </div>
+        ) : (
+          <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-zinc-500">{lang === "pt" ? "Data:" : "Date:"}</span>
+              <Select value={selectedDate ?? "all"} onValueChange={(v) => setSelectedDate(v === "all" ? null : v)}>
+                <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{lang === "pt" ? "Todas" : "All"}</SelectItem>
+                  {datesWithGames.map((d) => {
+                    const [y, m, day] = d.split("-");
+                    const dateObj = new Date(Number(y), Number(m) - 1, Number(day));
+                    const label = dateObj.toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB", { day: "numeric", month: "short" });
+                    return <SelectItem key={d} value={d}>{label}</SelectItem>;
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-zinc-500">{lang === "pt" ? "Categoria:" : "Category:"}</span>
+              <Select value={selectedCategory ?? "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}>
+                <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{lang === "pt" ? "Todas" : "All"}</SelectItem>
+                  {categoriesForFilter.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{getCategoryLabel(cat, lang)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Marquee quando 2+ cards; um único card exibe sem animação para não cortar */}
+      {!loading && upcomingFixtures.length > 0 && (
+        <div
+          className={`mt-6 w-full ${cardCount > 1 ? "overflow-hidden" : ""}`}
+          onMouseEnter={() => setCarouselHover(true)}
+          onMouseLeave={() => setCarouselHover(false)}
+          title={cardCount > 1 ? (lang === "pt" ? "Passar o mouse pausa o carrossel" : "Hover to pause carousel") : undefined}
+        >
           <div
-            className="relative overflow-hidden mt-6"
-            onMouseEnter={() => setCarouselHover(true)}
-            onMouseLeave={() => setCarouselHover(false)}
-          >
-          {cardCount > 1 && (
-            <>
-              <button
-                type="button"
-                aria-label={lang === "pt" ? "Jogo anterior" : "Previous"}
-                onClick={() => scrollToIndex(currentIndex - 1)}
-                className="absolute left-2 sm:left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white shadow-lg backdrop-blur hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                aria-label={lang === "pt" ? "Próximo jogo" : "Next"}
-                onClick={() => scrollToIndex(currentIndex + 1)}
-                className="absolute right-2 sm:right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white shadow-lg backdrop-blur hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </>
-          )}
-          <div
-            ref={carouselRef}
-            className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 pl-12 pr-12 sm:pl-14 sm:pr-14 scroll-smooth scrollbar-thin"
+            className="flex gap-4 py-2"
             style={{
-              scrollSnapType: "x mandatory",
-              scrollbarWidth: "thin",
-            }}
-            onScroll={() => {
-              const el = carouselRef.current;
-              if (!el || cardCount === 0) return;
-              const scrollLeft = el.scrollLeft;
-              const cardWidth = (el.querySelector("[data-card-index]") as HTMLElement)?.offsetWidth ?? 320;
-              const gap = 16;
-              const index = Math.round(scrollLeft / (cardWidth + gap));
-              setCurrentIndex(Math.max(0, Math.min(index, cardCount - 1)));
+              width: "max-content",
+              ...(cardCount > 1
+                ? {
+                    animation: "proximos-jogos-marquee 50s linear infinite",
+                    animationPlayState: carouselHover ? "paused" : "running",
+                  }
+                : {}),
             }}
           >
-                {filteredFixtures.map((f, index) => (
+                {carouselItems.map((f, index) => (
                   <div
-                    key={f.externalId}
-                    data-card-index={index}
+                    key={`${f.externalId}-${index}`}
                     className={`${cardClassName} relative`}
-                    style={{ scrollSnapAlign: "start" }}
                   >
                     {/* Topo: competição + categoria + data à esquerda, Casa/Fora à direita */}
                     <div className="mb-3 flex items-start justify-between gap-2">
@@ -540,29 +480,31 @@ export function ProximosJogosSection({
                     <div className="mb-3 text-2xl font-bold text-white">
                       {formatBigDate(f.startISO, lang)}
                     </div>
-                    {/* Times */}
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
-                      <TeamLogo
-                        teamName={f.homeTeamName}
-                        ourTeamName={ourTeamName}
-                        ourTeamLogoUrl={ourTeamLogoUrl}
-                        logoUrlOverride={f.homeTeamLogoUrl}
-                        size={28}
-                      />
-                      <span className="font-semibold text-white text-sm">
-                        {f.homeTeamName}
-                      </span>
-                      <span className="text-zinc-500">×</span>
-                      <TeamLogo
-                        teamName={f.awayTeamName}
-                        ourTeamName={ourTeamName}
-                        ourTeamLogoUrl={ourTeamLogoUrl}
-                        logoUrlOverride={f.awayTeamLogoUrl}
-                        size={28}
-                      />
-                      <span className="font-semibold text-white text-sm">
-                        {f.awayTeamName}
-                      </span>
+                    {/* Times — uma linha só; nomes em text-xs e truncados para não quebrar */}
+                    <div className="mb-4 flex flex-nowrap items-center gap-1.5 min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0 shrink">
+                        <TeamLogo
+                          teamName={f.homeTeamName}
+                          ourTeamName={displayOurTeamName}
+                          ourTeamLogoUrl={displayOurTeamLogoUrl}
+                          logoUrlOverride={f.homeTeamLogoUrl}
+                        />
+                        <span className="font-semibold text-white text-xs truncate">
+                          {isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}
+                        </span>
+                      </div>
+                      <span className="text-zinc-500 shrink-0 text-xs">×</span>
+                      <div className="flex items-center gap-1.5 min-w-0 shrink">
+                        <TeamLogo
+                          teamName={f.awayTeamName}
+                          ourTeamName={displayOurTeamName}
+                          ourTeamLogoUrl={displayOurTeamLogoUrl}
+                          logoUrlOverride={f.awayTeamLogoUrl}
+                        />
+                        <span className="font-semibold text-white text-xs truncate">
+                          {isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}
+                        </span>
+                      </div>
                     </div>
                     {/* CTA + local: ambos botões quando ambas URLs existirem */}
                     <div className="flex flex-col gap-2">
@@ -635,7 +577,6 @@ export function ProximosJogosSection({
           </div>
         </div>
       )}
-      </div>
     </section>
   );
 }

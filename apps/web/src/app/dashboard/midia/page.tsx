@@ -73,6 +73,7 @@ export default function MidiaPage() {
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
   const [tenants, setTenants] = useState<Array<{ id: string; name?: string }>>([]);
   const [logoScope, setLogoScope] = useState<string>("group");
+  const [logoDisplayName, setLogoDisplayName] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
@@ -231,6 +232,7 @@ export default function MidiaPage() {
     const formData = new FormData();
     formData.append("file", logoFile);
     formData.append("scope", logoScope.trim());
+    const displayNameToSet = logoDisplayName.trim();
     fetch("/api/upload/logo", {
       method: "POST",
       credentials: "include",
@@ -240,8 +242,21 @@ export default function MidiaPage() {
         if (!res.ok) return res.json().then((d) => Promise.reject(new Error(d?.error ?? "Erro")));
         return res.json();
       })
+      .then((data: { url?: string; key?: string }) => {
+        if (data.key && displayNameToSet) {
+          return fetch("/api/media", {
+            method: "PATCH",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: data.key, displayName: displayNameToSet }),
+          }).then((r) => {
+            if (!r.ok) return r.json().then((d) => Promise.reject(new Error(d?.error ?? "Erro ao salvar nome")));
+          });
+        }
+      })
       .then(() => {
         setLogoFile(null);
+        setLogoDisplayName("");
         if (filterSizeKey === "logos" || filterSizeKey === "all_with_logos") fetchList(filterSizeKey);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro no upload do logo"))
@@ -340,7 +355,7 @@ export default function MidiaPage() {
         <CardHeader>
           <CardTitle>Enviar logo (empresa/clube)</CardTitle>
           <CardDescription>
-            Logos ficam na pasta <strong>logos/</strong> do bucket (logos/group/ ou logos/tenants/ID/). Escolha o escopo e envie a imagem. Depois use o filtro &quot;Logos (empresas/clubes)&quot; para ver e editar o nome.
+            Logos ficam na pasta <strong>logos/</strong> do bucket (logos/group/, logos/tenants/ID/ ou logos/external/ para Clubes Adv). Escolha o escopo e envie a imagem. Depois use o filtro &quot;Logos (empresas/clubes)&quot; para ver e editar o nome.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -353,6 +368,7 @@ export default function MidiaPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="group">Grupo (BCG)</SelectItem>
+                  <SelectItem value="external">Clubes Adv</SelectItem>
                   {tenants.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.name?.trim() || t.id}
@@ -360,6 +376,15 @@ export default function MidiaPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input
+                placeholder="Ex.: Nome do clube adversário"
+                value={logoDisplayName}
+                onChange={(e) => setLogoDisplayName(e.target.value)}
+                className="max-w-xs"
+              />
             </div>
             <div className="space-y-2">
               <Label>Arquivo</Label>

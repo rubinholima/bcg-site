@@ -195,6 +195,18 @@ git checkout -b develop
 
 ---
 
+## 💻 CURSOR — SE DER "OUT OF MEMORY" (OOM)
+
+Se o Cursor fechar com *"The window terminated unexpectedly (reason: 'oom')"*:
+
+- **Solução definitiva:** definir variável de ambiente `NODE_OPTIONS=--max-old-space-size=8192` (ou 16384) no Windows, ou usar o script **`scripts/cursor-launch-com-mais-memoria.bat`** para abrir o Cursor com mais memória.
+- Ao reabrir, **marque "Don't restore editors"** e abra só os arquivos que for usar.
+- Mantenha **poucas abas** e **uma janela por projeto**.
+
+Guia completo: **`docs/CURSOR_EVITAR_OOM.md`**.
+
+---
+
 ## 🎯 COMANDOS PRINCIPAIS
 
 ```bash

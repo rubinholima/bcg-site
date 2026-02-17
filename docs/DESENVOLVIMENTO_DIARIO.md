@@ -6,6 +6,55 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 2 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Últimos Resultados: nosso clube, card, marquee)</span>
+
+## **MÓDULO ÚLTIMOS RESULTADOS: NOME/LOGO DO CLUBE PELO SLUG, CARD E MARQUEE CONDICIONAL**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+#### 1. **Nosso clube (nome e logo) pelo slug**
+
+- **API:** `GET /public/tenants/:slug` no Nest (public.controller + public.service) retorna `{ id, name, slug, logoUrl }`. Rota Next.js `GET /api/public/tenants/[slug]` faz proxy para o backend.
+- **Página portfolio:** se `page.tenant` não vier na resposta, chama `getTenantBySlug(slug)` e preenche para o BlockRenderer.
+- **Cliente:** `UltimosResultadosSection` e `ProximosJogosSection` buscam `/api/public/tenants/${slug}` ao montar e usam `tenantBySlug` como fonte principal de nome/logo (`displayOurTeamName`, `displayOurTeamLogoUrl`). Fallback de nome: slug formatado (ex.: "Americano Fc") quando a API do tenant ainda não respondeu.
+
+#### 2. **FixtureTeamLogo e placeholders “Nosso clube”**
+
+- Nomes como "Nosso clube", "Nosso", "Our club", "Our team" passam a ser tratados como nosso time em `FixtureTeamLogo.tsx` (`isPlaceholderOurTeam`), para exibir sempre o nome e o logo do tenant quando a API devolver esses placeholders.
+
+#### 3. **Card Últimos Resultados: layout e tamanho**
+
+- Logo sempre à **esquerda** do nome nos dois times (casa e visitante).
+- Nome em **uma linha** (`whitespace-nowrap` + `truncate`/`text-ellipsis`); tooltip com nome completo.
+- Largura do card: 340px (mobile) e 400px (desktop) para caber melhor o nome; padding e placar compactos.
+- Correção de build: uso de `??` com `||` em parênteses na linha do `displayOurTeamName` para evitar erro de parsing.
+
+#### 4. **Marquee só com mais de 3 jogos**
+
+- **Mais de 3 jogos:** carrossel em marquee contínuo (animação CSS `proximos-jogos-marquee`, 3 cópias dos cards); hover pausa a animação; sem setas.
+- **3 jogos ou menos:** exibição parada, sem marquee; setas de anterior/próximo para scroll manual quando houver mais de um jogo.
+
+---
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Criados:**  
+`apps/web/src/app/api/public/tenants/[slug]/route.ts`
+
+**Modificados:**  
+`apps/api/src/public/public.controller.ts`, `apps/api/src/public/public.service.ts`, `apps/web/src/app/portfolio/[slug]/page.tsx`, `apps/web/src/components/portfolio/FixtureTeamLogo.tsx`, `apps/web/src/components/portfolio/modules/UltimosResultadosSection.tsx`, `apps/web/src/components/portfolio/modules/ProximosJogosSection.tsx`, `docs/DESENVOLVIMENTO_DIARIO.md`
+
+---
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commit:** _(a ser preenchido ao commitar)_
+- **Mensagem sugerida:** `feat: Últimos Resultados — nosso clube por slug, card e marquee >3 jogos; resumo 02/02`
+- **Branch:** `develop`
+- **Push:** após o commit, dar push para o repositório externo (origin) se desejar.
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 16 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Times por Categorias / Google Sheets / Posições)</span>
 
 ## **MÓDULO TIMES POR CATEGORIAS: GOOGLE SHEETS, POSIÇÕES COMPLETAS, PÉ DOMINANTE, SALVAR POSIÇÃO**

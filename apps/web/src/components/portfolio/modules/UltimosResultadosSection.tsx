@@ -348,6 +348,13 @@ export function UltimosResultadosSection({
   const carouselRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [carouselHover, setCarouselHover] = useState(false);
+  const [tenantBySlug, setTenantBySlug] = useState<{ name: string; logoUrl: string | null } | null>(null);
+
+  const slugAsName = slug?.trim()
+    ? slug.trim().replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+    : "";
+  const displayOurTeamName = tenantBySlug?.name ?? ourTeamName ?? (slugAsName || undefined);
+  const displayOurTeamLogoUrl = tenantBySlug?.logoUrl ?? ourTeamLogoUrl ?? undefined;
 
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const blockBg = (block.config?.backgroundColor as string)?.trim();
@@ -384,6 +391,22 @@ export function UltimosResultadosSection({
     return () => { cancelled = true; };
   }, [slug]);
 
+  useEffect(() => {
+    if (!slug?.trim()) return;
+    let cancelled = false;
+    fetch(`/api/public/tenants/${encodeURIComponent(slug)}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { name?: string; logoUrl?: string | null } | null) => {
+        if (cancelled || !data) return;
+        setTenantBySlug({
+          name: (data.name && String(data.name).trim()) || "",
+          logoUrl: data.logoUrl != null ? String(data.logoUrl) : null,
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [slug]);
+
   const pastFixtures = useMemo(() => {
     const now = new Date();
     return fixtures
@@ -402,6 +425,11 @@ export function UltimosResultadosSection({
   }, [pastFixtures, selectedCategory, maxItems]);
 
   const cardCount = filteredFixtures.length;
+  const useMarquee = cardCount > 3;
+  const MARQUEE_COPIES = 3;
+  const carouselItems = useMarquee
+    ? Array.from({ length: MARQUEE_COPIES }, () => filteredFixtures).flat()
+    : filteredFixtures;
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -417,18 +445,6 @@ export function UltimosResultadosSection({
       el.scrollTo({ left: idx * (cardWidth + gap), behavior: "smooth" });
     }
   };
-
-  useEffect(() => {
-    if (cardCount <= 1 || carouselHover) return;
-    const t = setInterval(() => {
-      setCurrentIndex((i) => {
-        const next = i + 1 >= cardCount ? 0 : i + 1;
-        scrollCarouselToIndex(next);
-        return next;
-      });
-    }, 5000);
-    return () => clearInterval(t);
-  }, [cardCount, carouselHover]);
 
   const scrollToIndex = (index: number) => {
     const i = Math.max(0, Math.min(index, cardCount - 1));
@@ -446,7 +462,7 @@ export function UltimosResultadosSection({
   };
 
   const cardClassName =
-    `min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:min-w-[300px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
+    `w-[340px] min-w-[340px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:w-[400px] sm:min-w-[400px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
 
   return (
     <section
@@ -464,7 +480,7 @@ export function UltimosResultadosSection({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <div className={`relative w-full px-4 sm:px-6 lg:px-8 ${fullWidth ? "" : "container mx-auto max-w-5xl"}`}>
+      <div className={`relative w-full ${fullWidth ? "" : "container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8"}`}>
         {title && (
           <SectionTitle
             title={title}
@@ -512,11 +528,12 @@ export function UltimosResultadosSection({
             </div>
 
             <div
-              className="relative overflow-hidden mt-6"
+              className={`relative mt-6 ${useMarquee ? "overflow-hidden" : ""}`}
               onMouseEnter={() => setCarouselHover(true)}
               onMouseLeave={() => setCarouselHover(false)}
+              title={useMarquee ? (lang === "pt" ? "Passar o mouse pausa o carrossel" : "Hover to pause carousel") : undefined}
             >
-              {cardCount > 1 && (
+              {!useMarquee && cardCount > 1 && (
                 <>
                   <button
                     type="button"
@@ -538,30 +555,32 @@ export function UltimosResultadosSection({
               )}
               <div
                 ref={carouselRef}
-                className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 pl-12 pr-12 sm:pl-14 sm:pr-14 scroll-smooth scrollbar-thin"
-                style={{ scrollSnapType: "x mandatory", scrollbarWidth: "thin" }}
-                onScroll={() => {
+                className={`flex gap-4 py-2 ${useMarquee ? "" : "overflow-x-auto overflow-y-hidden pb-2 pl-12 pr-12 sm:pl-14 sm:pr-14 scroll-smooth scrollbar-thin"}`}
+                style={{
+                  ...(useMarquee ? { width: "max-content", animation: "proximos-jogos-marquee 50s linear infinite", animationPlayState: carouselHover ? "paused" : "running" } : { scrollSnapType: "x mandatory", scrollbarWidth: "thin" }),
+                }}
+                onScroll={useMarquee ? undefined : () => {
                   const el = carouselRef.current;
                   if (!el || cardCount === 0) return;
                   const scrollLeft = el.scrollLeft;
-                  const cardWidth = (el.querySelector("[data-card-index]") as HTMLElement)?.offsetWidth ?? 320;
+                  const cardWidth = (el.querySelector("[data-card-index]") as HTMLElement)?.offsetWidth ?? 340;
                   const gap = 16;
                   const index = Math.round(scrollLeft / (cardWidth + gap));
                   setCurrentIndex(Math.max(0, Math.min(index, cardCount - 1)));
                 }}
               >
-                {filteredFixtures.map((f, index) => {
+                {carouselItems.map((f, index) => {
                   const score = getScore(f);
                   const weWon =
-                    score && isOurTeam(f.homeTeamName, ourTeamName)
+                    score && isOurTeam(f.homeTeamName, displayOurTeamName)
                       ? score.home > score.away
-                      : score && isOurTeam(f.awayTeamName, ourTeamName)
+                      : score && isOurTeam(f.awayTeamName, displayOurTeamName)
                         ? score.away > score.home
                         : null;
                   return (
                     <div
-                      key={f.externalId}
-                      data-card-index={index}
+                      key={useMarquee ? `${f.externalId}-${index}` : f.externalId}
+                      data-card-index={useMarquee ? undefined : index}
                       className={`${cardClassName} relative`}
                       style={{ scrollSnapAlign: "start" }}
                     >
@@ -581,31 +600,35 @@ export function UltimosResultadosSection({
                         <div className="flex min-w-0 flex-1 items-center gap-2">
                           <FixtureTeamLogo
                             teamName={f.homeTeamName}
-                            ourTeamName={ourTeamName}
-                            ourTeamLogoUrl={ourTeamLogoUrl}
+                            ourTeamName={displayOurTeamName}
+                            ourTeamLogoUrl={displayOurTeamLogoUrl}
                             logoUrlOverride={f.homeTeamLogoUrl}
                             size={40}
                           />
-                          <span className="truncate text-sm font-medium text-white">{f.homeTeamName}</span>
+                          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis text-sm font-semibold text-white whitespace-nowrap" title={isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}>
+                            {isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}
+                          </span>
                         </div>
-                        <div className="flex shrink-0 items-center justify-center rounded-xl bg-white/10 px-4 py-2 min-w-[72px]">
+                        <div className="flex shrink-0 items-center justify-center rounded-lg bg-white/10 px-3 py-1.5 min-w-[56px]">
                           {score ? (
-                            <span className="text-lg font-bold tabular-nums text-white">
+                            <span className="text-base font-bold tabular-nums text-white">
                               {score.home} <span className="text-zinc-500">–</span> {score.away}
                             </span>
                           ) : (
-                            <span className="text-sm text-zinc-500">–</span>
+                            <span className="text-xs text-zinc-500">–</span>
                           )}
                         </div>
                         <div className="flex min-w-0 flex-1 items-center gap-2 justify-end">
-                          <span className="truncate text-sm font-medium text-white">{f.awayTeamName}</span>
                           <FixtureTeamLogo
                             teamName={f.awayTeamName}
-                            ourTeamName={ourTeamName}
-                            ourTeamLogoUrl={ourTeamLogoUrl}
+                            ourTeamName={displayOurTeamName}
+                            ourTeamLogoUrl={displayOurTeamLogoUrl}
                             logoUrlOverride={f.awayTeamLogoUrl}
                             size={40}
                           />
+                          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis text-right text-sm font-semibold text-white whitespace-nowrap" title={isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}>
+                            {isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}
+                          </span>
                         </div>
                       </div>
                       {weWon !== null && (
@@ -643,9 +666,9 @@ export function UltimosResultadosSection({
             (() => {
               const s = getScore(detailsFixture);
               if (!s) return null;
-              return isOurTeam(detailsFixture.homeTeamName, ourTeamName)
+              return isOurTeam(detailsFixture.homeTeamName, displayOurTeamName)
                 ? s.home > s.away
-                : isOurTeam(detailsFixture.awayTeamName, ourTeamName)
+                : isOurTeam(detailsFixture.awayTeamName, displayOurTeamName)
                   ? s.away > s.home
                   : null;
             })()
@@ -658,8 +681,8 @@ export function UltimosResultadosSection({
           formations={((block.config?.resultadosDetalhes as Record<string, { formations?: { home?: string; away?: string } }>) ?? {})[detailsFixture.externalId]?.formations}
           stats={((block.config?.resultadosDetalhes as Record<string, { stats?: MatchStats }>) ?? {})[detailsFixture.externalId]?.stats}
           videoUrls={((block.config?.resultadosDetalhes as Record<string, { videoUrls?: string[] }>) ?? {})[detailsFixture.externalId]?.videoUrls ?? []}
-          ourTeamName={ourTeamName}
-          ourTeamLogoUrl={ourTeamLogoUrl}
+          ourTeamName={displayOurTeamName}
+          ourTeamLogoUrl={displayOurTeamLogoUrl}
           lang={lang}
           onClose={() => setDetailsFixture(null)}
         />

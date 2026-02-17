@@ -322,7 +322,10 @@ export default function EditarPaginaTenantPage() {
   const [loadingPastFixtures, setLoadingPastFixtures] = useState<string | null>(null);
   const [openFixtureByBlockId, setOpenFixtureByBlockId] = useState<Record<string, number>>({});
   const [syncingTimesCategoriasBlockIndex, setSyncingTimesCategoriasBlockIndex] = useState<number | null>(null);
+  const [syncingProximosJogosBlockIndex, setSyncingProximosJogosBlockIndex] = useState<number | null>(null);
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const proximosJogosUrlRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const proximosJogosGidRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
 
@@ -1230,6 +1233,58 @@ export default function EditarPaginaTenantPage() {
                                       <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "left", mi, "backgroundColor", e.target.value)} />
                                       <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "left", mi, "backgroundColor", "")}>Limpar</Button>
                                     </div>
+                                    {m.type === "ultimos_resultados" && (
+                                      <details className="rounded-lg border border-amber-500/40 bg-amber-500/10 mt-3">
+                                        <summary className="cursor-pointer px-3 py-2 font-medium text-sm">Placares manuais</summary>
+                                        <div className="border-t border-border px-3 py-3 space-y-3">
+                                          {!page?.tenant?.slug ? (
+                                            <p className="text-xs text-amber-600">Carregue a página primeiro.</p>
+                                          ) : (
+                                            <>
+                                              <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={loadingPastFixtures === m.id}
+                                                onClick={async () => {
+                                                  setLoadingPastFixtures(m.id);
+                                                  try {
+                                                    const list = await fetchFixtures(page!.tenant!.slug!);
+                                                    const now = new Date();
+                                                    const past = list.filter((f) => new Date(f.startISO) < now).sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime()).slice(0, 20);
+                                                    setPastFixturesByBlock((prev) => ({ ...prev, [m.id]: past }));
+                                                  } catch (err) {
+                                                    console.error("Erro ao carregar jogos passados:", err);
+                                                  } finally {
+                                                    setLoadingPastFixtures(null);
+                                                  }
+                                                }}
+                                              >
+                                                {loadingPastFixtures === m.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CalendarIcon className="h-4 w-4 mr-1" />}
+                                                {loadingPastFixtures === m.id ? "Carregando…" : "Carregar jogos passados"}
+                                              </Button>
+                                              {(pastFixturesByBlock[m.id] ?? []).length > 0 && (
+                                                <div className="space-y-2 mt-2">
+                                                  {(pastFixturesByBlock[m.id] ?? []).map((f) => {
+                                                    const resultados = (m.config?.resultadosManuais as Record<string, { homeScore: number; awayScore: number }>) ?? {};
+                                                    const manual = resultados[f.externalId] ?? { homeScore: f.homeScore ?? 0, awayScore: f.awayScore ?? 0 };
+                                                    return (
+                                                      <div key={f.externalId} className="flex items-center gap-2 p-2 rounded border bg-background/50 text-sm">
+                                                        <span className="min-w-0 truncate flex-1">{f.homeTeamName}</span>
+                                                        <Input type="number" min={0} max={99} className="w-12 h-8 text-center" value={manual.homeScore} onChange={(e) => { const v = parseInt(e.target.value, 10); const next = { ...resultados, [f.externalId]: { ...manual, homeScore: Number.isNaN(v) ? 0 : v } }; updateSectionModuleConfig(index, "left", mi, "resultadosManuais", next); }} />
+                                                        <span className="text-muted-foreground">×</span>
+                                                        <Input type="number" min={0} max={99} className="w-12 h-8 text-center" value={manual.awayScore} onChange={(e) => { const v = parseInt(e.target.value, 10); const next = { ...resultados, [f.externalId]: { ...manual, awayScore: Number.isNaN(v) ? 0 : v } }; updateSectionModuleConfig(index, "left", mi, "resultadosManuais", next); }} />
+                                                        <span className="min-w-0 truncate flex-1 text-right">{f.awayTeamName}</span>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                </div>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+                                      </details>
+                                    )}
                                   </div>
                                 </details>
                               ))}
@@ -1296,6 +1351,58 @@ export default function EditarPaginaTenantPage() {
                                         <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "right", mi, "backgroundColor", e.target.value)} />
                                         <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "right", mi, "backgroundColor", "")}>Limpar</Button>
                                       </div>
+                                      {m.type === "ultimos_resultados" && (
+                                        <details className="rounded-lg border border-amber-500/40 bg-amber-500/10 mt-3">
+                                          <summary className="cursor-pointer px-3 py-2 font-medium text-sm">Placares manuais</summary>
+                                          <div className="border-t border-border px-3 py-3 space-y-3">
+                                            {!page?.tenant?.slug ? (
+                                              <p className="text-xs text-amber-600">Carregue a página primeiro.</p>
+                                            ) : (
+                                              <>
+                                                <Button
+                                                  type="button"
+                                                  variant="outline"
+                                                  size="sm"
+                                                  disabled={loadingPastFixtures === m.id}
+                                                  onClick={async () => {
+                                                    setLoadingPastFixtures(m.id);
+                                                    try {
+                                                      const list = await fetchFixtures(page!.tenant!.slug!);
+                                                      const now = new Date();
+                                                      const past = list.filter((f) => new Date(f.startISO) < now).sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime()).slice(0, 20);
+                                                      setPastFixturesByBlock((prev) => ({ ...prev, [m.id]: past }));
+                                                    } catch (err) {
+                                                      console.error("Erro ao carregar jogos passados:", err);
+                                                    } finally {
+                                                      setLoadingPastFixtures(null);
+                                                    }
+                                                  }}
+                                                >
+                                                  {loadingPastFixtures === m.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CalendarIcon className="h-4 w-4 mr-1" />}
+                                                  {loadingPastFixtures === m.id ? "Carregando…" : "Carregar jogos passados"}
+                                                </Button>
+                                                {(pastFixturesByBlock[m.id] ?? []).length > 0 && (
+                                                  <div className="space-y-2 mt-2">
+                                                    {(pastFixturesByBlock[m.id] ?? []).map((f) => {
+                                                      const resultados = (m.config?.resultadosManuais as Record<string, { homeScore: number; awayScore: number }>) ?? {};
+                                                      const manual = resultados[f.externalId] ?? { homeScore: f.homeScore ?? 0, awayScore: f.awayScore ?? 0 };
+                                                      return (
+                                                        <div key={f.externalId} className="flex items-center gap-2 p-2 rounded border bg-background/50 text-sm">
+                                                          <span className="min-w-0 truncate flex-1">{f.homeTeamName}</span>
+                                                          <Input type="number" min={0} max={99} className="w-12 h-8 text-center" value={manual.homeScore} onChange={(e) => { const v = parseInt(e.target.value, 10); const next = { ...resultados, [f.externalId]: { ...manual, homeScore: Number.isNaN(v) ? 0 : v } }; updateSectionModuleConfig(index, "right", mi, "resultadosManuais", next); }} />
+                                                          <span className="text-muted-foreground">×</span>
+                                                          <Input type="number" min={0} max={99} className="w-12 h-8 text-center" value={manual.awayScore} onChange={(e) => { const v = parseInt(e.target.value, 10); const next = { ...resultados, [f.externalId]: { ...manual, awayScore: Number.isNaN(v) ? 0 : v } }; updateSectionModuleConfig(index, "right", mi, "resultadosManuais", next); }} />
+                                                          <span className="min-w-0 truncate flex-1 text-right">{f.awayTeamName}</span>
+                                                        </div>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                )}
+                                              </>
+                                            )}
+                                          </div>
+                                        </details>
+                                      )}
                                     </div>
                                   </details>
                                 ))}
@@ -2673,6 +2780,33 @@ export default function EditarPaginaTenantPage() {
                                 </Select>
                               </div>
                             </div>
+                            <div className="space-y-2 pt-2">
+                              <Label>Carrossel full-bleed</Label>
+                              <Select
+                                value={(block.config?.fullBleedCarousel as boolean) === true ? "true" : "false"}
+                                onValueChange={(v) => updateBlockConfigValue(index, "fullBleedCarousel", v === "true")}
+                              >
+                                <SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="false">Não (com padding lateral)</SelectItem>
+                                  <SelectItem value="true">Sim (encosta nas bordas do box azul)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <p className="text-xs text-muted-foreground">
+                                Quando Sim, o carrossel ocupa toda a largura da coluna azul, sem espaço nas laterais.
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 pt-2">
+                              <input
+                                type="checkbox"
+                                id={`pj-fullbleed-${block.id}`}
+                                checked={!!block.config?.fullBleedCarousel}
+                                onChange={(e) => updateBlockConfigValue(index, "fullBleedCarousel", e.target.checked)}
+                              />
+                              <Label htmlFor={`pj-fullbleed-${block.id}`}>
+                                Carrossel full-bleed (encosta nas bordas do box azul)
+                              </Label>
+                            </div>
                           </div>
                         </details>
                         <p className="text-xs text-muted-foreground">
@@ -2712,17 +2846,179 @@ export default function EditarPaginaTenantPage() {
                             </div>
                           </div>
                         )}
-                        {(block.config?.proximosJogosDataSource as string) === "manual" && (
-                          <details open className="rounded-lg border border-border bg-muted/20">
-                            <summary className="cursor-pointer px-3 py-2 font-medium">Lista manual de jogos</summary>
-                            <div className="border-t border-border px-3 py-3 space-y-3">
-                              {page?.tenant?.slug && (
-                                <p className="text-xs text-muted-foreground">
-                                  <Link href={`/portfolio/${page.tenant.slug}`} target="_blank" rel="noopener noreferrer" className="underline text-primary">
-                                    Ver na página pública →
-                                  </Link>
-                                </p>
+                        <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Dados dinâmicos (Google Sheets)</p>
+                              <div className="grid gap-2 sm:grid-cols-[1fr,auto]">
+                                <div className="space-y-1">
+                                  <label className="text-xs text-muted-foreground">URL ou ID da planilha</label>
+                                  <Input
+                                    type="text"
+                                    className="h-9"
+                                    placeholder="https://docs.google.com/spreadsheets/d/... ou ID da planilha"
+                                    value={((block.config?.proximosJogosSpreadsheetUrl as string) ?? "").toString()}
+                                    onChange={(e) => updateBlockConfigValue(index, "proximosJogosSpreadsheetUrl", e.target.value)}
+                                    onPaste={(e) => {
+                                      const pasted = (e.clipboardData?.getData?.("text/plain") ?? "").trim();
+                                      if (!pasted) return;
+                                      const gidMatch = pasted.match(/[?&]gid=(\d+)/i) || pasted.match(/#gid=(\d+)/i);
+                                      if (gidMatch) {
+                                        updateBlockConfigValue(index, "proximosJogosSheetGid", gidMatch[1]);
+                                      }
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex items-end gap-2">
+                                  <div className="space-y-1">
+                                    <label className="text-xs text-muted-foreground">Aba (gid)</label>
+                                    <Input
+                                      type="text"
+                                      className="h-9 w-20"
+                                      placeholder="0"
+                                      value={((block.config?.proximosJogosSheetGid as string) ?? "0").toString()}
+                                      onChange={(e) => updateBlockConfigValue(index, "proximosJogosSheetGid", e.target.value)}
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    disabled={syncingProximosJogosBlockIndex === index}
+                                    onClick={() => {
+                                      const urlOrId = (block.config?.proximosJogosSpreadsheetUrl as string)?.trim();
+                                      const gid = ((block.config?.proximosJogosSheetGid as string)?.trim() || "0").toString();
+                                      if (!urlOrId) {
+                                        setError("Cole ou digite a URL (ou ID) da planilha no campo acima e clique em Atualizar.");
+                                        return;
+                                      }
+                                      setError(null);
+                                      updateBlockConfigValue(index, "proximosJogosSpreadsheetUrl", urlOrId);
+                                      updateBlockConfigValue(index, "proximosJogosSheetGid", gid);
+                                      setSyncingProximosJogosBlockIndex(index);
+                                      const params = new URLSearchParams({ spreadsheetId: urlOrId, gid });
+                                      authFetch(`/api/google-sheets/proximos-jogos?${params}`, { credentials: "include" })
+                                        .then((r) => {
+                                          if (!r.ok) return r.json().then((d) => Promise.reject(new Error((d as { error?: string })?.error ?? "Erro ao importar")));
+                                          return r.json();
+                                        })
+                                        .then((data: { fixtures?: object[] }) => {
+                                          setError(null);
+                                          if (data.fixtures?.length) {
+                                            updateBlockConfigValue(index, "proximosJogosManualFixtures", data.fixtures);
+                                          } else if (Array.isArray(data.fixtures)) {
+                                            updateBlockConfigValue(index, "proximosJogosManualFixtures", []);
+                                          }
+                                        })
+                                        .catch((err) => setError(err instanceof Error ? err.message : "Erro ao importar da planilha"))
+                                        .finally(() => setSyncingProximosJogosBlockIndex(null));
+                                    }}
+                                  >
+                                    {syncingProximosJogosBlockIndex === index ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      "Atualizar com Google Sheets"
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                              {((block.config?.proximosJogosManualFixtures as object[]) ?? []).length > 0 && (
+                                <div className="mt-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const fixtures = (block.config?.proximosJogosManualFixtures as Array<{
+                                        startISO?: string;
+                                        homeTeamName?: string;
+                                        awayTeamName?: string;
+                                        competitionName?: string;
+                                        venueName?: string;
+                                        watchUrl?: string;
+                                        ticketUrl?: string;
+                                        category?: string;
+                                        featured?: boolean;
+                                      }>) ?? [];
+                                      const csvRows: string[] = [
+                                        "data,hora,time_casa,time_visitante,competicao,local,url_assistir,url_ingresso,categoria,destaque,logo_casa,logo_visitante,nosso_time",
+                                      ];
+                                      fixtures.forEach((f) => {
+                                        const d = f.startISO ? new Date(f.startISO) : null;
+                                        const date = d && !Number.isNaN(d.getTime())
+                                          ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+                                          : "";
+                                        const time = d && !Number.isNaN(d.getTime())
+                                          ? `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+                                          : "";
+                                        csvRows.push(
+                                          [
+                                            date,
+                                            time,
+                                            f.homeTeamName || "",
+                                            f.awayTeamName || "",
+                                            f.competitionName || "",
+                                            f.venueName || "",
+                                            f.watchUrl || "",
+                                            f.ticketUrl || "",
+                                            f.category || "principal",
+                                            f.featured ? "sim" : "não",
+                                            "",
+                                            "",
+                                            "",
+                                          ].join(",")
+                                        );
+                                      });
+                                      const csv = csvRows.join("\n");
+                                      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                                      const link = document.createElement("a");
+                                      const url = URL.createObjectURL(blob);
+                                      link.setAttribute("href", url);
+                                      link.setAttribute("download", `proximos-jogos-export-${new Date().toISOString().slice(0, 10)}.csv`);
+                                      link.style.visibility = "hidden";
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    }}
+                                  >
+                                    Exportar jogos cadastrados para CSV
+                                  </Button>
+                                </div>
                               )}
+                              <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                                <p className="font-medium">Opções (cole no campo acima):</p>
+                                <ul className="list-disc pl-4 space-y-0.5">
+                                  <li>
+                                    <strong>Link &quot;Publicado na Web&quot;</strong> — Arquivo &gt; Compartilhar &gt; Publicar na Web &gt; escolha a aba &gt; Formato: CSV &gt; copie o link e cole no campo abaixo (Aba pode ficar 0).
+                                  </li>
+                                  <li>
+                                    <strong>URL normal da planilha</strong> — Link de edição (docs.google.com/spreadsheets/d/.../edit). Compartilhar &gt; Qualquer pessoa com o link pode ver. Se der erro, use a opção &quot;Publicar na Web&quot; acima.
+                                  </li>
+                                  <li>
+                                    <strong>ID da planilha</strong> — Só o ID (~44 caracteres) e o gid da aba desejada.
+                                  </li>
+                                </ul>
+                                <p>
+                                  Primeira linha = cabeçalho. Use <code className="rounded bg-muted px-1">categoria</code> com: principal, sub20, sub17, sub15, sub13, sub11, sub9, feminino.{" "}
+                                  <a href="/api/public/templates/proximos-jogos" download="proximos-jogos-template.csv" className="text-primary underline hover:no-underline">
+                                    Baixar template CSV
+                                  </a>
+                                  {" | "}
+                                  <a href="/api/public/cadastros/all?format=csv" download="listas-dropdowns.csv" className="text-primary underline hover:no-underline">
+                                    Baixar listas para dropdowns
+                                  </a>
+                                </p>
+                              </div>
+                        </div>
+                        {(block.config?.proximosJogosDataSource as string) === "manual" && (
+                            <details open className="rounded-lg border border-border bg-muted/20 mt-2">
+                              <summary className="cursor-pointer px-3 py-2 font-medium">Lista manual de jogos</summary>
+                              <div className="border-t border-border px-3 py-3 space-y-3">
+                                {page?.tenant?.slug && (
+                                  <p className="text-xs text-muted-foreground">
+                                    <Link href={`/portfolio/${page.tenant.slug}`} target="_blank" rel="noopener noreferrer" className="underline text-primary">
+                                      Ver na página pública →
+                                    </Link>
+                                  </p>
+                                )}
                               {((block.config?.proximosJogosManualFixtures as Array<{ startISO?: string; homeTeamName?: string; awayTeamName?: string; competitionName?: string; venueName?: string; watchUrl?: string; ticketUrl?: string; isOurTeamHome?: boolean; homeTeamLogoUrl?: string; awayTeamLogoUrl?: string; category?: string }>) ?? []).map((f, fi) => {
                                 const posValue = f.isOurTeamHome === false ? "away" : "home";
                                 const fromISO = (iso: string | undefined) => {
@@ -3021,14 +3317,19 @@ export default function EditarPaginaTenantPage() {
                                       disabled={loadingPastFixtures === block.id}
                                       onClick={async () => {
                                         setLoadingPastFixtures(block.id);
-                                        const list = await fetchFixtures(page!.tenant!.slug!);
-                                        const now = new Date();
-                                        const past = list
-                                          .filter((f) => new Date(f.startISO) < now)
-                                          .sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime())
-                                          .slice(0, 20);
-                                        setPastFixturesByBlock((prev) => ({ ...prev, [block.id]: past }));
-                                        setLoadingPastFixtures(null);
+                                        try {
+                                          const list = await fetchFixtures(page!.tenant!.slug!);
+                                          const now = new Date();
+                                          const past = list
+                                            .filter((f) => new Date(f.startISO) < now)
+                                            .sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime())
+                                            .slice(0, 20);
+                                          setPastFixturesByBlock((prev) => ({ ...prev, [block.id]: past }));
+                                        } catch (err) {
+                                          console.error("Erro ao carregar jogos passados:", err);
+                                        } finally {
+                                          setLoadingPastFixtures(null);
+                                        }
                                       }}
                                     >
                                       {loadingPastFixtures === block.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <CalendarIcon className="h-4 w-4 mr-1" />}

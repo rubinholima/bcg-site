@@ -75,6 +75,16 @@ export function SectionBlockRenderer({
     return 0.75;
   })();
 
+  /** Respeita "Largura do conteúdo (box ou full width)" da seção — igual aos outros módulos. */
+  const sectionContentWidth = block.config?.contentWidth as "box" | "full" | undefined;
+  const themeContentWidth = page.content?.theme?.contentWidth as "box" | "full" | undefined;
+  const sectionFullWidth =
+    sectionContentWidth === "full" || (sectionContentWidth !== "box" && themeContentWidth === "full");
+
+  const sectionWrapperClass = sectionFullWidth
+    ? "relative w-full px-4 sm:px-6 lg:px-8"
+    : `relative w-full px-4 sm:px-6 lg:px-8 mx-auto ${columns === 1 ? "max-w-6xl" : "max-w-7xl"}`;
+
   function ColumnBg({ bgColor: colBg, bgImage: colImg, overlayOp }: { bgColor?: string; bgImage?: string; overlayOp: number }) {
     if (!colBg && !colImg) return null;
     return (
@@ -116,7 +126,7 @@ export function SectionBlockRenderer({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <div className={`relative w-full px-4 sm:px-6 lg:px-8 ${columns === 1 ? "mx-auto max-w-6xl" : ""}`}>
+      <div className={sectionWrapperClass}>
         {columns === 1 ? (
           <div className={`relative min-h-[1px] rounded-lg ${(leftColBgColor || leftColBgImage) ? "p-4 sm:p-6" : ""}`}>
             {(leftColBgColor || leftColBgImage) && (
@@ -131,9 +141,14 @@ export function SectionBlockRenderer({
                   align={titleAlign}
                 />
               )}
-              {allModules.map((m) => (
-                <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} />
-              ))}
+              {allModules.map((m) => {
+                const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                return (
+                  <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
+                    <BlockRenderer block={m} slug={slug} lang={lang} page={page} />
+                  </div>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -155,9 +170,14 @@ export function SectionBlockRenderer({
                     align={titleAlign}
                   />
                 )}
-                {visibleLeft.map((m) => (
-                  <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} inSection />
-                ))}
+                {visibleLeft.map((m) => {
+                  const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                  return (
+                    <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
+                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection />
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div className={`relative min-w-0 rounded-lg ${(rightColBgColor || rightColBgImage) ? "p-4 sm:p-6" : ""}`}>
@@ -173,9 +193,14 @@ export function SectionBlockRenderer({
                     align={titleAlign}
                   />
                 )}
-                {visibleRight.map((m) => (
-                  <BlockRenderer key={m.id} block={m} slug={slug} lang={lang} page={page} inSection />
-                ))}
+                {visibleRight.map((m) => {
+                  const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                  return (
+                    <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
+                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -1,0 +1,3 @@
+data,hora,time_casa,time_visitante,competicao,local,url_assistir,url_ingresso,categoria,destaque,logo_casa,logo_visitante,nosso_time
+2025-03-15,20:00,Nosso Clube,Adversário A,Campeonato Estadual,Estádio Municipal,,,principal,não,,,casa
+2025-03-22,16:00,Adversário B,Nosso Clube,Copa Regional,,https://tv.exemplo.com,,principal,sim,,,visitante
