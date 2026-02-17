@@ -287,7 +287,7 @@ export default function MidiaPage() {
         <CardHeader>
           <CardTitle>Enviar imagem</CardTitle>
           <CardDescription>
-            Escolha o tamanho do placeholder (pasta no S3). A imagem ficará disponível na listagem e poderá ser escolhida nos editores. Use a pasta <strong>Patrocinadores (logos)</strong> para logos de patrocinadores.
+            Escolha o tamanho do placeholder (pasta no S3). A imagem ficará disponível na listagem e poderá ser escolhida nos editores. Use a pasta <strong>Patrocinadores (logos)</strong> para logos de patrocinadores. Use a pasta <strong>Jogadores (fotos)</strong> para fotos dos jogadores.
           </CardDescription>
         </CardHeader>
         <CardContent>

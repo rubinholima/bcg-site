@@ -316,6 +316,11 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.patrocinadoresPaddingTop = "compact";
     config.patrocinadoresPaddingBottom = "compact";
   }
+  if (type === "times_categorias") {
+    config.timesCategoriasCategories = [];
+    config.timesCategoriasPaddingTop = "compact";
+    config.timesCategoriasPaddingBottom = "compact";
+  }
   if (type === "logo_carousel") {
     config.backgroundColor = "#0f0f12";
     config.logoCarouselSectionPadding = "normal";

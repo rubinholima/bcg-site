@@ -349,10 +349,21 @@ export interface HomeBlockConfig {
   galeriaPaddingBottom?: "minimal" | "compact" | "normal" | "large";
   /** Patrocinadores: lista manual (logo, nome, link) */
   patrocinadoresManualItems?: PatrocinadorItem[];
+  /** Patrocinadores: logo do título (substitui o texto do título se preenchido) */
+  patrocinadoresTitleLogo?: string;
+  /** Patrocinadores: subtítulo (PT/EN) */
+  patrocinadoresSubtitlePt?: string;
+  patrocinadoresSubtitleEn?: string;
   /** Patrocinadores: padding topo da seção */
   patrocinadoresPaddingTop?: "minimal" | "compact" | "normal" | "large";
   /** Patrocinadores: padding base */
   patrocinadoresPaddingBottom?: "minimal" | "compact" | "normal" | "large";
+  /** Times por Categorias: categorias e jogadores */
+  timesCategoriasCategories?: TeamCategory[];
+  /** Times por Categorias: padding topo da seção */
+  timesCategoriasPaddingTop?: "minimal" | "compact" | "normal" | "large";
+  /** Times por Categorias: padding base */
+  timesCategoriasPaddingBottom?: "minimal" | "compact" | "normal" | "large";
   /** Próximos Jogos: padding topo da seção */
   proximosJogosPaddingTop?: "compact" | "normal" | "large";
   /** Próximos Jogos: padding base da seção */
@@ -392,6 +403,107 @@ export interface PatrocinadorItem {
   name?: string;
   logoUrl: string;
   link?: string;
+}
+
+/** Histórico de temporada do jogador */
+export interface PlayerSeasonHistory {
+  id?: string;
+  /** Ano da temporada */
+  year: number;
+  /** Nome do time */
+  team: string;
+  /** Nome da competição */
+  competition: string;
+  /** Número de partidas jogadas */
+  matches?: number;
+  /** Número de partidas como titular */
+  starts?: number;
+  /** Número de substituições (entrou do banco) */
+  substitutions?: number;
+  /** Gols marcados */
+  goals?: number;
+  /** Assistências */
+  assists?: number;
+  /** Tempo total jogado em minutos */
+  minutesPlayed?: number;
+  /** Cartões amarelos */
+  yellowCards?: number;
+  /** Cartões vermelhos */
+  redCards?: number;
+}
+
+/** Redes sociais do jogador */
+export interface PlayerSocialMedia {
+  /** URL do Instagram */
+  instagram?: string;
+  /** URL do Twitter/X */
+  twitter?: string;
+  /** URL do Facebook */
+  facebook?: string;
+  /** URL do TikTok */
+  tiktok?: string;
+  /** URL do YouTube */
+  youtube?: string;
+  /** URL personalizada (site pessoal, etc.) */
+  website?: string;
+}
+
+/** Item de jogador (Times por Categorias) */
+export interface PlayerItem {
+  id?: string;
+  /** Nome completo do jogador */
+  name: string;
+  /** Foto do jogador */
+  photoUrl?: string;
+  /** Data de nascimento (ISO: YYYY-MM-DD) */
+  birthDate?: string;
+  /** Nacionalidade */
+  nationality?: string;
+  /** Altura em cm */
+  height?: number;
+  /** Peso em kg */
+  weight?: number;
+  /** Pé predominante */
+  preferredFoot?: "left" | "right" | "both";
+  /** Número da camisa */
+  jerseyNumber?: number;
+  /** Posição em campo */
+  position?: string;
+  /** Posição no campo (coordenadas X/Y de 0 a 100) */
+  fieldPosition?: { x: number; y: number };
+  /** Time atual */
+  currentTeam?: string;
+  /** Histórico de equipes (array de strings) */
+  previousTeams?: string[];
+  /** Histórico detalhado por temporada */
+  seasonHistory?: PlayerSeasonHistory[];
+  /** Redes sociais */
+  socialMedia?: PlayerSocialMedia;
+  /** Estatísticas: partidas jogadas */
+  matchesPlayed?: number;
+  /** Estatísticas: gols marcados */
+  goals?: number;
+  /** Estatísticas: assistências */
+  assists?: number;
+  /** Estatísticas: cartões amarelos */
+  yellowCards?: number;
+  /** Estatísticas: cartões vermelhos */
+  redCards?: number;
+  /** Valor de mercado (em euros) */
+  marketValue?: number;
+  /** Melhores momentos (array de URLs de vídeos ou imagens) */
+  highlights?: string[];
+  /** Biografia curta (PT/EN) */
+  bioPT?: string;
+  bioEN?: string;
+}
+
+/** Categoria de time (ex: Sub-20, Sub-17, Principal, Feminino) */
+export interface TeamCategory {
+  id: string;
+  namePT: string;
+  nameEN: string;
+  players: PlayerItem[];
 }
 
 /** Item de fixture (manual ou retorno da API) */

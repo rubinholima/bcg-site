@@ -97,6 +97,43 @@ Regras resumidas:
 
 ---
 
+## 📐 PADRÃO OBRIGATÓRIO — MÓDULOS PÚBLICOS (PORTFOLIO)
+
+**Todo módulo novo daqui pra frente (seções da página pública por tenant) DEVE seguir este padrão:**
+
+1. **Título da seção**
+   - Usar sempre o componente **`SectionTitle`** (`@/components/portfolio/SectionTitle`).
+   - O título deve ter a **linha completa** embaixo (gradiente amarelo/branco). O `SectionTitle` já aplica `w-full` quando `align` é `left` ou `right` para a linha ir de ponta a ponta do container.
+
+2. **Container do conteúdo**
+   - Mesmo container em **todos** os módulos:
+     - `fullWidth === true`: `"w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"`
+     - `fullWidth === false`: `"container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"`
+   - Assim os títulos de **Equipe**, **Patrocinadores**, **Notícias**, **Galeria**, etc. ficam alinhados na mesma coluna.
+
+3. **Subtítulos (ex.: nome de categoria dentro do módulo)**
+   - Usar `w-full text-left` (ou o alinhamento desejado) para alinhar com o título principal da seção.
+
+4. **Não alterar layout aprovado**
+   - Se o usuário aprovou um layout (ex.: cards dos patrocinadores **centralizados**), não mudar para outro alinhamento sem pedido explícito.
+
+**Referência de implementação:** `TimesCategoriasSection`, `PatrocinadoresSection`, `NoticiasSection`, `GaleriaSection` em `apps/web/src/components/portfolio/modules/`.
+
+---
+
+## 📊 DADOS DINÂMICOS — GOOGLE SHEETS / FORMS
+
+**Todo módulo que precisar de dados preenchidos por operadores ou olheiros (classificação, jogadores, jogos, notícias manuais, patrocinadores, etc.) deve usar Google Sheets ou Google Forms como fonte dinâmica.**
+
+- **Padrão:** integração com **Google Sheets API** (ou Form ligado a uma planilha): o backend lê a planilha (por ID/link configurado no módulo) e atualiza os dados do módulo — em agendamento (ex.: a cada X horas) e/ou sob demanda (botão “Atualizar com Google Sheets” no dashboard).
+- **Alternativa:** Google Form para cadastro guiado; as respostas vão para uma planilha que o sistema lê da mesma forma.
+- **Objetivo:** tabelas dinâmicas em todos os módulos; olheiros/operadores preenchem no Sheets (ou Form) e o site reflete os dados sem precisar baixar/ subir CSV manualmente.
+- **Complemento:** manter também **upload de CSV/XLS** (template por módulo) para quem preferir importar arquivo em vez de usar Sheets.
+
+**Referência futura:** documentar em `docs/GOOGLE_SHEETS_INTEGRACAO.md` (ou equivalente) quando a integração for implementada.
+
+---
+
 ## 📦 MÓDULOS DO DASHBOARD
 
 **Todo novo módulo do dashboard deve vir para a tela Configurações → Módulos.**
@@ -108,6 +145,21 @@ Ao criar uma nova página/módulo no dashboard:
 3. Proteger a página com `canAccessModule("slug_do_modulo")`.
 
 Assim o módulo aparece em **Configurações → Módulos** e o super admin pode definir se Company Admin e Editor podem acessá-lo. Detalhes: **`docs/MODULOS_DASHBOARD.md`**.
+
+---
+
+## 🌙 ENCERRAR O DIA
+
+**Quando o usuário escrever "encerre o dia", executar nesta ordem:**
+
+1. **Comitar tudo** — `git add .` e `git commit -m "..."` com mensagem que descreva o que foi feito no dia.
+2. **Atualizar o resumo do dia** — Em `docs/DESENVOLVIMENTO_DIARIO.md`, adicionar no topo (após o título do arquivo) uma nova seção **📅 [DATA] — ENCERRAMENTO** com:
+   - O que foi feito hoje (lista objetiva).
+   - Arquivos criados/modificados (resumo).
+   - Commit e branch usados; confirmação de push.
+3. **Subir para o Git externo** — `git push origin <branch>` (ex.: `develop`).
+
+**Frase que dispara esta rotina:** `encerre o dia`
 
 ---
 

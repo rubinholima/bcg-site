@@ -28,10 +28,11 @@ export function SectionTitle({
     backgroundClip: "text",
   } as React.CSSProperties;
   const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
+  const widthClass = align === "left" || align === "right" ? "w-full" : "";
 
   return (
     <h2
-      className={`title-gradient-line text-2xl font-bold tracking-tight sm:text-3xl mb-6 text-transparent ${alignClass} ${className}`}
+      className={`title-gradient-line text-2xl font-bold tracking-tight sm:text-3xl mb-6 text-transparent ${alignClass} ${widthClass} ${className}`}
       style={gradientStyle}
     >
       {title}

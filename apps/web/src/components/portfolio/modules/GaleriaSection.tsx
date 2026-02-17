@@ -154,6 +154,7 @@ export function GaleriaSection({
 
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
+  const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
   useEffect(() => {
     if (dataSource === "manual") {
@@ -230,7 +231,7 @@ export function GaleriaSection({
             />
           </div>
         )}
-        <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className={`relative ${containerClass}`}>
           {title && (
             <SectionTitle
               title={title}

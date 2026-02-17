@@ -10,6 +10,7 @@ export const MEDIA_PLACEHOLDER_SIZES = {
   backgrounds: { label: "Backgrounds (fundo da página)", dimensions: "1920×1080" },
   card: { label: "Card / bloco", dimensions: "800×600" },
   patrocinadores: { label: "Patrocinadores (logos)", dimensions: "400×400" },
+  jogadores: { label: "Jogadores (fotos)", dimensions: "800×600" },
   cta: { label: "CTA / chamada", dimensions: "1200×630" },
   gallery: { label: "Galeria", dimensions: "1200×800" },
   custom: { label: "Outro (sem filtro)", dimensions: "—" },

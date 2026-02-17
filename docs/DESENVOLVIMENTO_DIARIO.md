@@ -6,6 +6,58 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 2 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Times por Categorias / Google Sheets / Posições)</span>
+
+## **MÓDULO TIMES POR CATEGORIAS: GOOGLE SHEETS, POSIÇÕES COMPLETAS, PÉ DOMINANTE, SALVAR POSIÇÃO**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+#### 1. **Integração Google Sheets — Times por Categorias**
+
+- API `GET /api/google-sheets/times-categorias`: importa CSV da planilha (por URL ou ID; suporta link "Publicado na Web" com `/d/e/2PACX-.../pub?output=csv`). Extrai `gid` da URL quando presente; mensagens de erro claras (403, 404, HTML).
+- Dashboard: campo URL/ID da planilha, campo Aba (gid), botão "Atualizar com Google Sheets"; pré-preenchimento de gid ao colar URL; exibição do erro da API. Dados importados salvos no config do bloco ao clicar Salvar.
+- Template CSV `public/templates/times-categorias-template.csv` com todas as colunas, incluindo `pe_dominante`.
+
+#### 2. **Posições com nomes completos e sem corte**
+
+- Lib `football-positions.ts`: nomes completos (Zagueiro Central, Meio-Campista); aliases (MEI, Meia → Meio-Campista; VOL, ATA, etc.). `getPositionLabel()` para exibição.
+- `TimesCategoriasSection.tsx`: usa `getPositionLabel()` no card e no modal; card com `min-h`, `break-words`, `line-clamp-2` para posição não cortar.
+
+#### 3. **Pé dominante na planilha e no salvamento**
+
+- API: colunas `pe_dominante`, `preferred_foot`, `pe` mapeadas para `preferredFoot` (Esquerdo/Direito/Ambos normalizados).
+- Template CSV e texto de ajuda no dashboard atualizados. Campo "Pé predominante" no formulário do jogador continua disponível para edição manual.
+
+#### 4. **Salvar posição no dashboard**
+
+- Correção de atualização imutável: `updateCategoryPlayers` e `updatePlayerField` passaram a criar novos objetos/arrays em vez de mutar, para a posição (e demais campos) persistirem ao salvar a página.
+
+#### 5. **Guia da planilha e regra "Encerre o dia"**
+
+- `docs/PLANILHA_TIMES_CATEGORIAS_GOOGLE_SHEETS.md`: como usar dropdowns (Validação de dados), congelar linha, listas para categoria/posição/pe_dominante.
+- `docs/REGRAS_DIARIAS.md`: nova seção **Encerrar o dia** — quando o usuário escrever "encerre o dia", commitar tudo, atualizar resumo em `DESENVOLVIMENTO_DIARIO.md` e dar push para o Git externo.
+
+---
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Criados:**  
+`apps/web/src/app/api/google-sheets/times-categorias/route.ts`, `apps/web/public/templates/times-categorias-template.csv`, `docs/PLANILHA_TIMES_CATEGORIAS_GOOGLE_SHEETS.md`
+
+**Modificados:**  
+`apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/components/portfolio/modules/TimesCategoriasSection.tsx`, `apps/web/src/lib/football-positions.ts`, `docs/REGRAS_DIARIAS.md`, `docs/DESENVOLVIMENTO_DIARIO.md`
+
+---
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commit:** (a ser preenchido após o commit)
+- **Mensagem:** `feat: Times por Categorias Google Sheets, posições completas, pé dominante, salvar posição; regra encerre o dia; resumo 02/02`
+- **Branch:** `develop`
+- **Push:** para repositório externo (origin)
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 12 DE FEVEREIRO DE 2026 — ENCERRAMENTO</span>
 
 ## **MÓDULO PATROCINADORES, PASTA MÍDIA, SIDEBAR SENHAS**

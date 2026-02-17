@@ -30,6 +30,7 @@ import { UltimosResultadosSection } from "@/components/portfolio/modules/Ultimos
 import { NoticiasSection } from "@/components/portfolio/modules/NoticiasSection";
 import { GaleriaSection } from "@/components/portfolio/modules/GaleriaSection";
 import { PatrocinadoresSection } from "@/components/portfolio/modules/PatrocinadoresSection";
+import { TimesCategoriasSection } from "@/components/portfolio/modules/TimesCategoriasSection";
 import { SectionBlockRenderer } from "@/components/portfolio/modules/SectionBlockRenderer";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Button } from "@/components/ui/button";
@@ -328,6 +329,10 @@ export function BlockRenderer({
 
   if (block.type === "patrocinadores") {
     return <PatrocinadoresSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
+  }
+
+  if (block.type === "times_categorias") {
+    return <TimesCategoriasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
   }
 
   if (block.type === "proximos_jogos") {

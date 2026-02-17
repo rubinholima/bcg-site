@@ -26,7 +26,7 @@ function SponsorLogo({
   const href = item.link?.trim();
 
   const content = (
-    <div className="flex h-full min-h-[80px] w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 p-4 transition-all duration-300 hover:border-amber-500/30 hover:bg-white/10 hover:shadow-lg hover:shadow-amber-500/5">
+    <div className="flex h-full w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 p-4 transition-all duration-300 hover:border-amber-500/30 hover:bg-white/10 hover:shadow-lg hover:shadow-amber-500/5">
       <div className="relative h-full w-full grayscale transition-all duration-300 group-hover:grayscale-0">
         <Image
           src={src}
@@ -70,7 +70,9 @@ export function PatrocinadoresSection({
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
 }) {
-  const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
+  const title = ((lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string)?.trim();
+  const titleLogo = (block.config?.patrocinadoresTitleLogo as string)?.trim();
+  const hasTitle = title && title.length > 0;
   const items = (block.config?.patrocinadoresManualItems as PatrocinadorItem[] | undefined) ?? [];
   const padTop = (block.config?.patrocinadoresPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.patrocinadoresPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
@@ -88,7 +90,7 @@ export function PatrocinadoresSection({
 
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
-  const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8";
+  const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
   const displayItems = items.filter((i) => i.logoUrl?.trim());
 
@@ -115,22 +117,30 @@ export function PatrocinadoresSection({
           </div>
         )}
         <div className={`relative ${containerClass}`}>
-          {title && (
+          {titleLogo ? (
+            <div className="mb-6 flex items-center justify-start">
+              <div className="relative h-16 w-auto max-w-xs sm:h-20">
+                <Image
+                  src={getPublicImageUrl(titleLogo)}
+                  alt={title || "Patrocinadores"}
+                  fill
+                  className="object-contain object-center"
+                  sizes="(max-width: 640px) 200px, 300px"
+                  unoptimized={isProxyImageUrl(getPublicImageUrl(titleLogo))}
+                />
+              </div>
+            </div>
+          ) : hasTitle ? (
             <SectionTitle
               title={title}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
-              align={titleAlign}
+              align="left"
             />
-          )}
-          <p className="mb-8 text-center text-sm text-zinc-400 sm:text-base">
-            {lang === "pt"
-              ? "Marcas que acreditam no nosso projeto e nos apoiam."
-              : "Brands that believe in our project and support us."}
-          </p>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 md:grid-cols-4 lg:grid-cols-5">
+          ) : null}
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             {displayItems.map((item, idx) => (
-              <div key={item.id ?? idx} className="h-[100px] sm:h-[120px]">
+              <div key={item.id ?? idx} className="h-[100px] w-[140px] sm:h-[120px] sm:w-[160px] md:w-[180px] lg:w-[200px]">
                 <SponsorLogo item={item} lang={lang} />
               </div>
             ))}

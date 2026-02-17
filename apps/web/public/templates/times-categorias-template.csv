@@ -1,0 +1,4 @@
+categoria,nome,foto_url,data_nascimento,nacionalidade,altura,peso,numero_camisa,posicao,pe_dominante,time_atual,partidas,gols,assistencias,amarelos,vermelhos,bio_pt,bio_en,instagram,twitter,facebook,tiktok,youtube,website,melhores_momentos
+principal,Jogador Exemplo 1,https://exemplo.com/foto1.jpg,2000-05-15,Brasil,180,75,10,Meia,Direito,Seu Clube,25,5,8,2,0,Bio em português,Bio in English,@jogador1,,,,"",,
+principal,Jogador Exemplo 2,,1998-03-20,Brasil,175,70,7,Ponta,Esquerdo,Seu Clube,30,12,4,1,0,,,,,,,,
+sub20,Jogador Sub-20,,2006-08-10,Brasil,170,65,9,Atacante,Ambos,Seu Clube,15,3,2,0,0,,,,,,,,

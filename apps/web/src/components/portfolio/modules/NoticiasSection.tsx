@@ -100,6 +100,7 @@ export function NoticiasSection({
 
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
+  const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
   useEffect(() => {
     if (dataSource === "manual") {
@@ -159,7 +160,7 @@ export function NoticiasSection({
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
           </div>
         )}
-        <div className="container relative mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className={`relative ${containerClass}`}>
           {title && (
             <SectionTitle
               title={title}
@@ -180,14 +181,14 @@ export function NoticiasSection({
             </div>
           )}
           {hasContent && !loading && (
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
               {displayItems.map((item, idx) => (
                 <a
                   key={item.id ?? item.link ?? idx}
                   href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 transition-all hover:border-amber-500/20 hover:shadow-lg hover:shadow-amber-500/5"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 transition-all hover:border-amber-500/20 hover:shadow-lg hover:shadow-amber-500/5 h-full"
                 >
                   {item.imageUrl ? (
                     <NewsCardImage src={item.imageUrl} />
@@ -196,16 +197,16 @@ export function NoticiasSection({
                       <Newspaper className="h-12 w-12 text-zinc-500" />
                     </div>
                   )}
-                  <div className="flex flex-1 flex-col p-4">
+                  <div className="flex flex-1 flex-col min-h-[120px] p-4">
                     <h3 className="line-clamp-2 font-semibold text-white group-hover:text-amber-400">
                       {item.title}
                     </h3>
                     {item.excerpt && (
-                      <p className="mt-2 line-clamp-2 text-sm text-zinc-400">
+                      <p className="mt-2 line-clamp-2 text-sm text-zinc-400 flex-1">
                         {item.excerpt}
                       </p>
                     )}
-                    <div className="mt-auto flex items-center justify-between pt-3 text-xs text-zinc-500">
+                    <div className="mt-auto flex items-center justify-between pt-3 text-xs text-zinc-500 shrink-0">
                       {item.dateISO && (
                         <span>{formatDate(item.dateISO, lang)}</span>
                       )}
