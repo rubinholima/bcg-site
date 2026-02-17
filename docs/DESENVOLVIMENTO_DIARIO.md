@@ -51,10 +51,10 @@
 
 ### 🚀 **FECHAMENTO DO DIA (GIT):**
 
-- **Commit:** (a ser preenchido após o commit)
+- **Commit:** `837fa98`
 - **Mensagem:** `feat: Times por Categorias Google Sheets, posições completas, pé dominante, salvar posição; regra encerre o dia; resumo 02/02`
 - **Branch:** `develop`
-- **Push:** para repositório externo (origin)
+- **Push:** ✅ para repositório externo (origin)
 
 ---
 
