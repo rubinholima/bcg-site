@@ -6,7 +6,7 @@
 
 ---
 
-# <span style="color: red; font-size: 28px;">📅 2 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Times por Categorias / Google Sheets / Posições)</span>
+# <span style="color: red; font-size: 28px;">📅 16 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Times por Categorias / Google Sheets / Posições)</span>
 
 ## **MÓDULO TIMES POR CATEGORIAS: GOOGLE SHEETS, POSIÇÕES COMPLETAS, PÉ DOMINANTE, SALVAR POSIÇÃO**
 
@@ -52,7 +52,7 @@
 ### 🚀 **FECHAMENTO DO DIA (GIT):**
 
 - **Commit:** `837fa98`
-- **Mensagem:** `feat: Times por Categorias Google Sheets, posições completas, pé dominante, salvar posição; regra encerre o dia; resumo 02/02`
+- **Mensagem:** `feat: Times por Categorias Google Sheets, posições completas, pé dominante, salvar posição; regra encerre o dia; resumo 16/02`
 - **Branch:** `develop`
 - **Push:** ✅ para repositório externo (origin)
 
