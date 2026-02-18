@@ -11,18 +11,18 @@ function csvEscape(value: string): string {
  * Retorna o template CSV de Próximos Jogos já preenchido com competições,
  * estádios e times cadastrados no site (para baixar e ajustar o restante).
  */
-export async function GET() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
+export async function GET() {
   let championships: string[] = [];
   let stadiums: string[] = [];
   let teams: Array<{ name: string; logoUrl?: string | null }> = [];
 
   try {
     const [champRes, stadiumRes, teamsRes] = await Promise.all([
-      fetch(`${apiUrl}/championships`, { cache: "no-store", headers: { Accept: "application/json" } }),
-      fetch(`${apiUrl}/stadiums`, { cache: "no-store", headers: { Accept: "application/json" } }),
-      fetch(`${apiUrl}/visiting-teams`, { cache: "no-store", headers: { Accept: "application/json" } }),
+      fetch(buildBackendUrl("/championships"), { cache: "no-store", headers: { Accept: "application/json" } }),
+      fetch(buildBackendUrl("/stadiums"), { cache: "no-store", headers: { Accept: "application/json" } }),
+      fetch(buildBackendUrl("/visiting-teams"), { cache: "no-store", headers: { Accept: "application/json" } }),
     ]);
     if (champRes.ok) {
       const data = (await champRes.json()) as Array<{ name: string }>;

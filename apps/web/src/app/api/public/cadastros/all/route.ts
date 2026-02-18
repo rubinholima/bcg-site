@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 function csvEscape(value: string): string {
   if (/[,"\r\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
@@ -11,14 +12,13 @@ function csvEscape(value: string): string {
  * Retorna todos os cadastros. ?format=csv → CSV único para colar na aba "Listas" da planilha.
  */
 export async function GET(request: NextRequest) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
   const wantCsv = request.nextUrl.searchParams.get("format") === "csv";
 
   try {
     const [championshipsRes, stadiumsRes, teamsRes] = await Promise.all([
-      fetch(`${apiUrl}/championships`, { cache: "no-store", headers: { Accept: "application/json" } }),
-      fetch(`${apiUrl}/stadiums`, { cache: "no-store", headers: { Accept: "application/json" } }),
-      fetch(`${apiUrl}/visiting-teams`, { cache: "no-store", headers: { Accept: "application/json" } }),
+      fetch(buildBackendUrl("/championships"), { cache: "no-store", headers: { Accept: "application/json" } }),
+      fetch(buildBackendUrl("/stadiums"), { cache: "no-store", headers: { Accept: "application/json" } }),
+      fetch(buildBackendUrl("/visiting-teams"), { cache: "no-store", headers: { Accept: "application/json" } }),
     ]);
 
     const championships = championshipsRes.ok

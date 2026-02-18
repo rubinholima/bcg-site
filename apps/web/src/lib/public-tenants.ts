@@ -8,6 +8,8 @@ export interface PublicTenantCarouselItem {
   country: string | null;
 }
 
+import { buildBackendUrl } from "@/lib/apiProxy";
+
 export async function fetchPublicTenants(
   type: "club" | "company",
   limit = 50
@@ -15,7 +17,7 @@ export async function fetchPublicTenants(
   const isClient = typeof window !== "undefined";
   const url = isClient
     ? `/api/public/tenants?type=${type}&limit=${limit}`
-    : `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/public/tenants?type=${type}&limit=${limit}`;
+    : buildBackendUrl(`/public/tenants?type=${type}&limit=${limit}`);
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json();

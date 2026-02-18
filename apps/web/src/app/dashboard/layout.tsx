@@ -4,12 +4,11 @@ import { Header } from "@/components/dashboard/header";
 import { DashboardHead } from "@/components/dashboard/DashboardHead";
 import { DashboardGuard } from "@/components/auth/DashboardGuard";
 import { DashboardBodyLock } from "@/components/dashboard/DashboardBodyLock";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
-    const res = await fetch(`${apiUrl}/group`, { cache: "no-store" });
+    const res = await fetch(buildBackendUrl("/group"), { cache: "no-store" });
     if (!res.ok) return {};
     const group = (await res.json()) as { name?: string | null; logoUrl?: string | null };
     const name = group?.name ?? "Boston City Group";

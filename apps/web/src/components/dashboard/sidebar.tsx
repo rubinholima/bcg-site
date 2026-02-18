@@ -63,8 +63,7 @@ export function Sidebar() {
 
   useEffect(() => {
     let cancelled = false;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-    fetch(`${baseUrl}/group`)
+    fetch("/api/group")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Group | null) => {
         if (!cancelled && data) {

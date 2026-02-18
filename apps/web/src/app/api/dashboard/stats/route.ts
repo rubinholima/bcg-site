@@ -2,5 +2,5 @@ import { NextRequest } from "next/server";
 import { forwardRequest } from "@/lib/apiProxy";
 
 export async function GET(request: NextRequest) {
-  return forwardRequest(request, "/tenants", { requireAuth: true });
+  return forwardRequest(request, "/dashboard/stats", { requireAuth: true });
 }

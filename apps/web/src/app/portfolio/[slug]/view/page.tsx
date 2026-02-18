@@ -6,12 +6,11 @@ import type { HomeContentBlock } from "@/types/home-content";
 import { Button } from "@/components/ui/button";
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 async function getPageBySlug(slug: string): Promise<Page | null> {
   try {
-    const res = await fetch(`${apiUrl}/public/page-by-slug/${encodeURIComponent(slug)}`, {
+    const res = await fetch(buildBackendUrl(`/public/page-by-slug/${encodeURIComponent(slug)}`), {
       cache: "no-store",
     });
     if (!res.ok) return null;

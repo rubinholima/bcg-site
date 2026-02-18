@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const ALLOWED_ORIGIN = "https://bcg-platform-assets.s3.";
 const ALLOWED_ORIGIN_ALT = "https://bcg-platform-assets.s3.amazonaws.com";
 
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const res = await fetch(
-      `${apiUrl}/public/media?key=${encodeURIComponent(key)}`,
+      buildBackendUrl(`/public/media?key=${encodeURIComponent(key)}`),
       { cache: "force-cache" },
     );
     if (!res.ok) {

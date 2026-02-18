@@ -1,6 +1,20 @@
 # Como evitar erro "Out of Memory" (OOM) no Cursor
 
-O Cursor pode fechar com **"The window terminated unexpectedly (reason: 'oom', code: '-536870904')"** mesmo com bastante RAM livre. O limite costuma ser do processo Electron/IDE, não da máquina.
+O Cursor pode fechar com **"The window terminated unexpectedly (reason: 'oom', code: '-536870904')"** mesmo com bastante RAM livre. A ventoinha sobe e trava. O limite costuma ser do processo Electron/IDE, não da máquina.
+
+---
+
+## ⚡ Faça isso primeiro (mais impacto)
+
+1. **Abra só UM projeto por vez.**  
+   Se você usa um workspace com várias pastas (BCG SITE + ATRIUM + WISPER + etc.), **feche esse workspace** e abra só a pasta do projeto em que está trabalhando (ex.: **File → Open Folder → BCG SITE**). Vários projetos na mesma janela = memória dispara.
+
+2. **Defina NODE_OPTIONS para SEMPRE** (assim vale mesmo abrindo o Cursor pelo ícone):
+   - **Win + R** → `sysdm.cpl` → Enter → Aba **Avançado** → **Variáveis de Ambiente**.
+   - Em **Variáveis do usuário** (ou do sistema), **Novo** → Nome: `NODE_OPTIONS`, Valor: `--max-old-space-size=8192` (ou `16384` se tiver 16 GB+ RAM).
+   - **OK** em tudo, **feche o Cursor por completo** e abra de novo.
+
+3. **Quando der OOM e aparecer o diálogo:** marque **"Don't restore editors"** antes de Reopen. Assim não reabre dezenas de abas e já começa com uso menor de memória.
 
 ---
 
@@ -14,30 +28,32 @@ O Cursor usa Node/Electron. Dá para **aumentar o heap do Node** de duas formas.
 2. Aba **Avançado** → **Variáveis de Ambiente**.
 3. Em **Variáveis do sistema** (ou do usuário), clique em **Novo**:
    - Nome: `NODE_OPTIONS`
-   - Valor: `--max-old-space-size=8192`  
+   - Valor: `--max-old-space-size=8192`
      (8192 = 8 GB; com 64 GB RAM pode usar `16384` para 16 GB.)
 4. **OK** em tudo e **reinicie o Cursor** (feche e abra de novo).
 
 A partir daí todo processo Node usado pelo Cursor pode usar até esse limite.
 
-**Como testar se a variável está em 16 GB:**  
-- Abra um **novo** terminal (PowerShell ou CMD) **dentro do Cursor** (Terminal → Novo Terminal).  
-- Rode: `echo %NODE_OPTIONS%` (CMD) ou `echo $env:NODE_OPTIONS` (PowerShell).  
-  Deve aparecer: `--max-old-space-size=16384` (16384 MB = 16 GB).  
-- Para ver o limite que o Node está usando de fato, rode no mesmo terminal:  
-  `node -e "console.log(require('v8').getHeapStatistics().heap_size_limit / 1024**3, 'GB')"`  
-  Deve mostrar um número próximo de 16 (ex.: 15.99...) se estiver com 16384.  
+**Como testar se a variável está em 16 GB:**
+
+- Abra um **novo** terminal (PowerShell ou CMD) **dentro do Cursor** (Terminal → Novo Terminal).
+- Rode: `echo %NODE_OPTIONS%` (CMD) ou `echo $env:NODE_OPTIONS` (PowerShell).
+  Deve aparecer: `--max-old-space-size=16384` (16384 MB = 16 GB).
+- Para ver o limite que o Node está usando de fato, rode no mesmo terminal:
+  `node -e "console.log(require('v8').getHeapStatistics().heap_size_limit / 1024**3, 'GB')"`
+  Deve mostrar um número próximo de 16 (ex.: 15.99...) se estiver com 16384.
 - Ou execute o script **`scripts\verificar-node-options.ps1`** no PowerShell (mostra a variável e o limite em GB). Não apague essa variável se usar Node no terminal para outras coisas; 8–16 GB só para o Cursor costuma ser aceitável.
 
 ### Opção B — Script que abre o Cursor com mais memória (só quando usar esse script)
 
 1. Feche o Cursor.
-2. No projeto, execute o script:  
-   **`scripts\cursor-launch-com-mais-memoria.bat`**  
+2. No projeto, execute o script:
+   **`scripts\cursor-launch-com-mais-memoria.bat`**
    (duplo clique ou pelo terminal).
 3. O Cursor abre já com `NODE_OPTIONS=--max-old-space-size=8192` só para essa execução.
 
 Dentro do script você pode alterar:
+
 - `HEAP_MB` (ex.: 16384 para 16 GB).
 - `CURSOR_EXE` se o Cursor estiver em outro caminho.
 - **Por padrão o script não passa pasta:** o Cursor abre e restaura a última sessão (e o chat continua lá). Se passar uma pasta, abre uma janela “nova” e o chat pode sumir nessa janela. Para abrir direto numa pasta, descomente a linha `set "PROJETO=..."` no .bat.
@@ -53,14 +69,14 @@ Dentro do script você pode alterar:
 
 ## Hábitos que reduzem OOM
 
-| Ação | Por quê |
-|------|--------|
-| **Uma janela por projeto** | Evite workspace com várias pastas (ex.: BCG SITE + outros). Abra só a pasta do projeto em que está trabalhando. |
-| **Poucas abas abertas** | Feche abas que não está usando (Ctrl+K W fecha as outras). |
-| **Chat / Agent com escopo menor** | Evite @ em pastas enormes ou "tudo do projeto". Use @ em arquivos ou pastas específicas. |
-| **Reiniciar o Cursor de tempos em tempos** | Especialmente depois de sessões longas de chat ou Agent. |
-| **Desativar extensões que não usa** | Extensões pesadas aumentam o uso de memória. Teste com `cursor --disable-extensions` para ver se melhora. |
-| **Privacy Mode** | Em Settings do Cursor, ativar Privacy Mode pode reduzir retenção de dados e um pouco de uso de memória. |
+| Ação                                       | Por quê                                                                                                         |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| **Uma janela por projeto**                 | Evite workspace com várias pastas (ex.: BCG SITE + outros). Abra só a pasta do projeto em que está trabalhando. |
+| **Poucas abas abertas**                    | Feche abas que não está usando (Ctrl+K W fecha as outras).                                                      |
+| **Chat / Agent com escopo menor**          | Evite @ em pastas enormes ou "tudo do projeto". Use @ em arquivos ou pastas específicas.                        |
+| **Reiniciar o Cursor de tempos em tempos** | Especialmente depois de sessões longas de chat ou Agent.                                                        |
+| **Desativar extensões que não usa**        | Extensões pesadas aumentam o uso de memória. Teste com `cursor --disable-extensions` para ver se melhora.       |
+| **Privacy Mode**                           | Em Settings do Cursor, ativar Privacy Mode pode reduzir retenção de dados e um pouco de uso de memória.         |
 
 ## Configurações do projeto
 
@@ -68,12 +84,12 @@ O `.vscode/settings.json` deste repositório já exclui `node_modules`, `.next`,
 
 ## Se continuar travando
 
-- Use **modo seguro** para testar: feche o Cursor e abra pelo terminal com:  
-  `cursor --disable-extensions "e:\DEV\BCG SITE"`  
+- Use **modo seguro** para testar: feche o Cursor e abra pelo terminal com:
+  `cursor --disable-extensions "e:\DEV\BCG SITE"`
   (ajuste o caminho se for outro.)
 - Trabalhe em **tarefas menores** no chat: em vez de "refatore todo o módulo X", use "refatore a função Y no arquivo Z".
 - Em último caso, use outro editor (VS Code) para edição pesada e o Cursor só para perguntas pontuais.
 
 ---
 
-*Referência: [Reduce Cursor IDE's RAM usage](https://forum.cursor.com/t/reduce-cursor-ides-ram-usage/54292), [OOM code -536870904](https://forum.cursor.com/t/oom-cursor-the-window-terminated-unexpectedly-reason-oom-code-536870904-we-are-sorry-for-the-inconvenience-you-can-reopen-the-window-to-continue-where-you-left-off/143579).*
+_Referência: [Reduce Cursor IDE's RAM usage](https://forum.cursor.com/t/reduce-cursor-ides-ram-usage/54292), [OOM code -536870904](https://forum.cursor.com/t/oom-cursor-the-window-terminated-unexpectedly-reason-oom-code-536870904-we-are-sorry-for-the-inconvenience-you-can-reopen-the-window-to-continue-where-you-left-off/143579)._

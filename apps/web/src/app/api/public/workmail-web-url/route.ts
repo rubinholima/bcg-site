@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 /**
  * GET /api/public/workmail-web-url?slug=...
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const res = await fetch(
-      `${apiUrl}/public/workmail-web-url?slug=${encodeURIComponent(slug)}`,
+      buildBackendUrl(`/public/workmail-web-url?slug=${encodeURIComponent(slug)}`),
       { cache: "no-store" }
     );
     if (!res.ok) {

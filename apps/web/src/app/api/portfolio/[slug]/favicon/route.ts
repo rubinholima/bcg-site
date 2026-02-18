@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const S3_PREFIX = "https://bcg-platform-assets.s3.";
 const S3_ALT = "https://bcg-platform-assets.s3.amazonaws.com";
 
@@ -27,7 +27,7 @@ export async function GET(
   }
   try {
     const res = await fetch(
-      `${apiUrl}/public/page-by-slug/${encodeURIComponent(slug)}`,
+      buildBackendUrl(`/public/page-by-slug/${encodeURIComponent(slug)}`),
       { cache: "force-cache" }
     );
     if (!res.ok) return NextResponse.redirect(new URL("/favicon.ico", _request.url));
@@ -41,7 +41,7 @@ export async function GET(
       const key = s3UrlToKey(logoUrl);
       if (!key) return NextResponse.redirect(new URL("/favicon.ico", _request.url));
       const mediaRes = await fetch(
-        `${apiUrl}/public/media?key=${encodeURIComponent(key)}`,
+        buildBackendUrl(`/public/media?key=${encodeURIComponent(key)}`),
         { cache: "force-cache" }
       );
       if (!mediaRes.ok) return NextResponse.redirect(new URL("/favicon.ico", _request.url));

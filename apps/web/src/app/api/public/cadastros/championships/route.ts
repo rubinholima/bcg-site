@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 /** Escapa um valor para CSV (aspas se tiver vírgula, aspas ou quebra de linha). */
 function csvEscape(value: string): string {
@@ -12,11 +13,10 @@ function csvEscape(value: string): string {
  * ?format=csv → retorna CSV (uma coluna "name") para IMPORTDATA na planilha.
  */
 export async function GET(request: NextRequest) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
   const wantCsv = request.nextUrl.searchParams.get("format") === "csv";
 
   try {
-    const res = await fetch(`${apiUrl}/championships`, {
+    const res = await fetch(buildBackendUrl("/championships"), {
       cache: "no-store",
       headers: { Accept: "application/json" },
     });

@@ -1,8 +1,6 @@
 import type { HomeContentDto, HomeContentBlock, HomeBlockType, GlobalPresenceCounter, GlobalPresenceLocation } from "@/types/home-content";
 import { copy } from "@/lib/home-copy";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
 const DEFAULT_HERO =
   "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1920&q=80";
 const DEFAULT_WHAT =
@@ -14,7 +12,7 @@ const DEFAULT_CTA =
 
 export async function fetchHomeContent(): Promise<HomeContentDto | null> {
   try {
-    const res = await fetch(`${apiUrl}/public/home-content`, {
+    const res = await fetch("/api/public/group-home", {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });

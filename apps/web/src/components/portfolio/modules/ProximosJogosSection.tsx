@@ -38,10 +38,7 @@ export interface FixtureItem {
 }
 
 async function fetchFixtures(slug: string): Promise<FixtureItem[]> {
-  const url =
-    typeof window !== "undefined"
-      ? `/api/public/tenants/${encodeURIComponent(slug)}/fixtures`
-      : `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/public/tenants/${encodeURIComponent(slug)}/fixtures`;
+  const url = `/api/public/tenants/${encodeURIComponent(slug)}/fixtures`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json();

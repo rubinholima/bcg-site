@@ -1,11 +1,10 @@
 import type { Group } from "@/types/group";
 import type { Tenant } from "@/types/tenant";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 export async function fetchGroup(): Promise<Group | null> {
   try {
-    const res = await fetch(`${apiUrl}/group`, {
+    const res = await fetch(buildBackendUrl("/group"), {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });
@@ -18,7 +17,7 @@ export async function fetchGroup(): Promise<Group | null> {
 
 export async function fetchTenants(): Promise<Tenant[]> {
   try {
-    const res = await fetch(`${apiUrl}/tenants`, {
+    const res = await fetch(buildBackendUrl("/tenants"), {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });

@@ -14,7 +14,6 @@ import {
   Bell,
   Clock,
 } from "lucide-react";
-import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import type { Group } from "@/types/group";
 import {
@@ -25,8 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 interface LastActivity {
   name: string;
@@ -46,8 +44,12 @@ interface DashboardStats {
 
 async function getGroup(): Promise<Group | null> {
   try {
-    const { data } = await api.get<Group>("/group");
-    return data ?? null;
+    const res = await fetch(buildBackendUrl("/group"), {
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as Group;
   } catch {
     return null;
   }
@@ -56,8 +58,11 @@ async function getGroup(): Promise<Group | null> {
 async function getStats(token: string | undefined): Promise<DashboardStats | null> {
   if (!token) return null;
   try {
-    const res = await fetch(`${apiUrl}/dashboard/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
+    const res = await fetch(buildBackendUrl("/dashboard/stats"), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -67,10 +72,18 @@ async function getStats(token: string | undefined): Promise<DashboardStats | nul
   }
 }
 
-async function getTenants(): Promise<Tenant[]> {
+async function getTenants(token: string | undefined): Promise<Tenant[]> {
+  if (!token) return [];
   try {
-    const { data } = await api.get<Tenant[]>("/tenants");
-    return data ?? [];
+    const res = await fetch(buildBackendUrl("/tenants"), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    return (await res.json()) as Tenant[];
   } catch {
     return [];
   }
@@ -164,7 +177,7 @@ export default async function DashboardPage() {
   const [group, stats, tenants] = await Promise.all([
     getGroup(),
     getStats(token ?? undefined),
-    getTenants(),
+    getTenants(token ?? undefined),
   ]);
 
   const tenantsCount = stats?.tenantsCount ?? tenants.length;

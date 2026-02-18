@@ -23,10 +23,12 @@ export interface PortfolioItem {
   isActive: boolean;
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { buildBackendUrl } from "@/lib/apiProxy";
 
 export async function fetchPublicPortfolio(): Promise<PortfolioItem[]> {
-  const res = await fetch(`${apiUrl}/public/portfolio`, {
+  const isClient = typeof window !== "undefined";
+  const url = isClient ? "/api/public/portfolio" : buildBackendUrl("/public/portfolio");
+  const res = await fetch(url, {
     cache: "no-store",
     headers: { "Content-Type": "application/json" },
   });

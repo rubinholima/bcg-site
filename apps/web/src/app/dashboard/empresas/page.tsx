@@ -96,7 +96,7 @@ export default async function EmpresasPage({
           <CardTitle>Lista de Empresas</CardTitle>
           <CardDescription>
             {tenants.length === 0
-              ? "Nenhuma empresa cadastrada. Verifique se a API está rodando em " + (process.env.NEXT_PUBLIC_API_URL ?? "localhost:3001") + "."
+              ? "Nenhuma empresa cadastrada."
               : filtered.length === tenants.length
                 ? `${tenants.length} empresa${tenants.length > 1 ? "s" : ""} cadastrada${tenants.length > 1 ? "s" : ""}`
                 : `${filtered.length} de ${tenants.length} empresa${tenants.length > 1 ? "s" : ""}`}

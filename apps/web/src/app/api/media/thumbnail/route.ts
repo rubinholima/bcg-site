@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-function getToken(request: NextRequest): string | null {
-  const idToken = request.cookies.get("id_token")?.value;
-  const accessToken = request.cookies.get("access_token")?.value;
-  return accessToken ?? idToken ?? null;
-}
+import { buildBackendUrl, getToken } from "@/lib/apiProxy";
 
 /**
  * GET /api/media/thumbnail?key=media/hero/xxx.jpg
@@ -24,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
   try {
     const res = await fetch(
-      `${apiUrl}/media/thumbnail?key=${encodeURIComponent(key.trim())}`,
+      buildBackendUrl(`/media/thumbnail?key=${encodeURIComponent(key.trim())}`),
       {
         headers: { Authorization: `Bearer ${token}` },
       },

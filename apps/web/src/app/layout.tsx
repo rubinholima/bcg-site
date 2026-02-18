@@ -14,11 +14,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { buildBackendUrl } from "@/lib/apiProxy";
+
 /** Nome e logo vêm da API do Grupo Master (dashboard). */
 async function getGroupMetadata(): Promise<{ name?: string; logoUrl?: string }> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
   try {
-    const res = await fetch(`${apiUrl}/group`, { cache: "no-store" });
+    const res = await fetch(buildBackendUrl("/group"), { cache: "no-store" });
     if (!res.ok) return {};
     const group = (await res.json()) as { name?: string | null; logoUrl?: string | null };
     return {
