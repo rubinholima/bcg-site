@@ -176,7 +176,7 @@ export default function ConteudoPage() {
   const updateBlockConfigValue = (
     index: number,
     key: string,
-    value: string | number | string[] | HeroSlide[] | undefined,
+    value: string | number | string[] | HeroSlide[] | { label: string; href: string }[] | GlobalPresenceCounter[] | undefined,
   ) => {
     setContent((prev) => {
       const list = getOrderedBlocks(prev);

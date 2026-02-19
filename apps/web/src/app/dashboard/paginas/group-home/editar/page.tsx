@@ -276,7 +276,7 @@ export default function EditarGroupHomePage() {
   const updateBlockConfigValue = (
     index: number,
     key: string,
-    value: string | number | boolean | string[] | Record<string, string>[] | undefined,
+    value: string | number | boolean | string[] | Record<string, string>[] | HeroSlide[] | undefined,
   ) => {
     const list = [...blocks];
     const block = list[index];
@@ -659,7 +659,7 @@ export default function EditarGroupHomePage() {
                                   size="sm"
                                   onClick={() => {
                                     const arr = [...heroSlides, { url: "", titlePt: "", titleEn: "" }];
-                                    updateBlockConfig(index, "heroSlides", arr);
+                                    updateBlockConfigValue(index, "heroSlides", arr);
                                   }}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
@@ -671,7 +671,7 @@ export default function EditarGroupHomePage() {
                                 <Select
                                   value={String(interval)}
                                   onValueChange={(v) =>
-                                    updateBlockConfig(index, "heroCarouselIntervalSeconds", Number(v) as HeroCarouselIntervalSeconds)
+                                    updateBlockConfigValue(index, "heroCarouselIntervalSeconds", Number(v) as HeroCarouselIntervalSeconds)
                                   }
                                 >
                                   <SelectTrigger className="w-full max-w-xs">
@@ -714,7 +714,7 @@ export default function EditarGroupHomePage() {
                                       onChange={(url) => {
                                         const arr = [...heroSlides];
                                         arr[i] = { ...arr[i], url };
-                                        updateBlockConfig(index, "heroSlides", arr);
+                                        updateBlockConfigValue(index, "heroSlides", arr);
                                       }}
                                       placeholder="Escolher da mídia (hero)"
                                     />
@@ -725,7 +725,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...heroSlides];
                                           arr[i] = { ...arr[i], url: e.target.value };
-                                          updateBlockConfig(index, "heroSlides", arr);
+                                          updateBlockConfigValue(index, "heroSlides", arr);
                                         }}
                                       />
                                       <Button
@@ -735,7 +735,7 @@ export default function EditarGroupHomePage() {
                                         className="shrink-0 text-destructive"
                                         onClick={() => {
                                           const arr = heroSlides.filter((_, j) => j !== i);
-                                          updateBlockConfig(index, "heroSlides", arr);
+                                          updateBlockConfigValue(index, "heroSlides", arr);
                                         }}
                                       >
                                         <Trash2 className="h-4 w-4" />
@@ -748,7 +748,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...heroSlides];
                                           arr[i] = { ...arr[i], titlePt: e.target.value };
-                                          updateBlockConfig(index, "heroSlides", arr);
+                                          updateBlockConfigValue(index, "heroSlides", arr);
                                         }}
                                       />
                                       <Input
@@ -757,7 +757,7 @@ export default function EditarGroupHomePage() {
                                         onChange={(e) => {
                                           const arr = [...heroSlides];
                                           arr[i] = { ...arr[i], titleEn: e.target.value };
-                                          updateBlockConfig(index, "heroSlides", arr);
+                                          updateBlockConfigValue(index, "heroSlides", arr);
                                         }}
                                       />
                                     </div>
@@ -793,10 +793,10 @@ export default function EditarGroupHomePage() {
                               <div className="space-y-2">
                                 <Label>Botão primário</Label>
                                 <div className="grid gap-2 sm:grid-cols-2">
-                                  <Input placeholder="Label (PT)" value={(block.config?.primaryCTA as { labelPT?: string })?.labelPT ?? ""} onChange={(e) => updateBlockConfig(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelPT: e.target.value })} />
-                                  <Input placeholder="Label (EN)" value={(block.config?.primaryCTA as { labelEN?: string })?.labelEN ?? ""} onChange={(e) => updateBlockConfig(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelEN: e.target.value })} />
+                                  <Input placeholder="Label (PT)" value={(block.config?.primaryCTA as { labelPT?: string })?.labelPT ?? ""} onChange={(e) => updateBlockConfigValue(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelPT: e.target.value })} />
+                                  <Input placeholder="Label (EN)" value={(block.config?.primaryCTA as { labelEN?: string })?.labelEN ?? ""} onChange={(e) => updateBlockConfigValue(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), labelEN: e.target.value })} />
                                 </div>
-                                <Input placeholder="Link (href)" value={(block.config?.primaryCTA as { href?: string })?.href ?? ""} onChange={(e) => updateBlockConfig(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), href: e.target.value })} />
+                                <Input placeholder="Link (href)" value={(block.config?.primaryCTA as { href?: string })?.href ?? ""} onChange={(e) => updateBlockConfigValue(index, "primaryCTA", { ...(block.config?.primaryCTA as object || {}), href: e.target.value })} />
                               </div>
                               <div className="space-y-2">
                                 <Label>Botão secundário (opcional)</Label>

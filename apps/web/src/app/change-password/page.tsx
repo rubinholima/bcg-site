@@ -24,7 +24,7 @@ export default function ChangePasswordPage() {
   const [noUser, setNoUser] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !window.__cognitoChallengeUser) {
+    if (typeof window !== "undefined" && !(window as any)["__cognitoChallengeUser"]) {
       setNoUser(true);
     }
   }, []);
@@ -32,7 +32,7 @@ export default function ChangePasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const user = typeof window !== "undefined" ? window.__cognitoChallengeUser : undefined;
+    const user = typeof window !== "undefined" ? (window as any)["__cognitoChallengeUser"] : undefined;
     if (!user) {
       setError("Sessão expirada. Faça login novamente.");
       return;
@@ -52,7 +52,7 @@ export default function ChangePasswordPage() {
     }
     setLoading(true);
     try {
-      const requiredAttrs = window.__cognitoChallengeRequiredAttrs || {};
+      const requiredAttrs = (window as any)["__cognitoChallengeRequiredAttrs"] || {};
       await new Promise<void>((resolve, reject) => {
         (user as CognitoUser).completeNewPasswordChallenge(
           newPassword,
@@ -63,8 +63,8 @@ export default function ChangePasswordPage() {
           }
         );
       });
-      delete window.__cognitoChallengeUser;
-      delete window.__cognitoChallengeRequiredAttrs;
+      delete (window as any)["__cognitoChallengeUser"];
+      delete (window as any)["__cognitoChallengeRequiredAttrs"];
       router.replace("/dashboard");
     } catch (err: unknown) {
       const code =
