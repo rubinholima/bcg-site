@@ -293,16 +293,18 @@ export default function Home() {
             >
               {t.nav.contact}
             </a>
-            <Link href="/dashboard">
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-2 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"
-              >
+            {/* Guardrail: use Button asChild + Link so the link is the clickable element (avoid <a><button> invalid markup that can block navigation in some browsers). */}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="ml-2 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/dashboard">
                 <LayoutDashboard className="mr-1.5 h-4 w-4" />
                 {t.nav.dashboard}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </nav>
         </div>
       </header>
@@ -463,7 +465,8 @@ export default function Home() {
                   </HeroCarousel>
                 ) : (
                   <>
-                    <div className="absolute inset-0">
+                    {/* Guardrail: pointer-events-none so background/overlay never capture clicks (nav/links must remain clickable). */}
+                    <div className="absolute inset-0 pointer-events-none">
                       <Image
                         src={heroBg}
                         alt=""
@@ -477,8 +480,8 @@ export default function Home() {
                     </div>
                     {heroBg && (
                       <>
-                        <div className="absolute left-1/2 top-1/3 h-[350px] w-[350px] -translate-x-1/2 rounded-full bg-amber-500/15 blur-[100px] animate-float" />
-                        <div className="absolute bottom-1/4 right-1/4 h-[250px] w-[250px] rounded-full bg-emerald-500/10 blur-[80px] animate-float-slow" />
+                        <div className="absolute left-1/2 top-1/3 h-[350px] w-[350px] -translate-x-1/2 rounded-full bg-amber-500/15 blur-[100px] animate-float pointer-events-none" />
+                        <div className="absolute bottom-1/4 right-1/4 h-[250px] w-[250px] rounded-full bg-emerald-500/10 blur-[80px] animate-float-slow pointer-events-none" />
                       </>
                     )}
                     {heroContent}

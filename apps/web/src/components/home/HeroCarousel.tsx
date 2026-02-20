@@ -80,16 +80,18 @@ export function HeroCarousel({
     const src = currentSlide!.url;
     return (
       <div className="absolute inset-0">
-        <Image
-          src={src}
-          alt=""
-          fill
-          className="object-cover"
-          priority
-          sizes="100vw"
-          unoptimized={isProxyImageUrl(src)}
-        />
-        <div className="absolute inset-0" style={overlayStyle(overlayOpacity, overlayMode, overlayColor)} />
+        <div className="absolute inset-0 pointer-events-none">
+          <Image
+            src={src}
+            alt=""
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+            unoptimized={isProxyImageUrl(src)}
+          />
+          <div className="absolute inset-0" style={overlayStyle(overlayOpacity, overlayMode, overlayColor)} />
+        </div>
         {children}
       </div>
     );
@@ -100,7 +102,7 @@ export function HeroCarousel({
       {validSlides.map((slide, i) => (
         <div
           key={i}
-          className="absolute inset-0 transition-all duration-700 ease-in-out"
+          className="absolute inset-0 pointer-events-none transition-all duration-700 ease-in-out"
           style={{
             zIndex: 0,
             opacity: i === index ? 1 : 0,
@@ -124,7 +126,7 @@ export function HeroCarousel({
         </div>
       ))}
       <div
-        className="absolute inset-0 transition-opacity duration-700"
+        className="absolute inset-0 pointer-events-none transition-opacity duration-700"
         style={{ ...overlayStyle(overlayOpacity, overlayMode, overlayColor), zIndex: 1 }}
       />
       <div className="absolute inset-0 z-10 flex flex-col">
