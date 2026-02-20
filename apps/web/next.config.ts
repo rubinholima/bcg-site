@@ -23,7 +23,6 @@ const nextConfig: NextConfig = {
     ],
     localPatterns: [
       { pathname: "/api/media/proxy" },
-      { pathname: "/media/proxy" },
     ],
   },
 };

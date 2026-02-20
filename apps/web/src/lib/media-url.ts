@@ -28,7 +28,7 @@ export function getPublicImageUrl(url: string | undefined | null): string {
 
 /** Retorna true se a URL é do nosso proxy (evita otimização que quebra). */
 export function isProxyImageUrl(url: string): boolean {
-  return typeof url === "string" && (url.startsWith("/api/media/proxy") || url.startsWith("/media/proxy"));
+  return typeof url === "string" && url.startsWith("/api/media/proxy");
 }
 
 /** Retorna true se a URL aponta para SVG (next/image retorna 400 para SVG em produção). */
