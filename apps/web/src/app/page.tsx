@@ -249,7 +249,7 @@ export default function Home() {
           >
             {(() => {
               const logoUrl = group?.logoUrl?.trim() ?? "";
-              const logoSrc = logoUrl ? getPublicImageUrl(logoUrl) : "/bcg-logo.svg";
+              const logoSrc = logoUrl ? getPublicImageUrl(logoUrl) : "/bcg-logo.png";
               return (
                 <>
                   <img
