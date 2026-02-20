@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { PatrocinadorItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 
 const PADDING_CLASSES = {
   minimal: { top: "pt-4 sm:pt-5", bottom: "pb-4 sm:pb-5" },
@@ -38,13 +38,12 @@ function SponsorLogo({
             }}
           />
         ) : (
-          <Image
+          <SmartImage
             src={src}
             alt={name}
             fill
             className="object-contain object-center p-2"
             sizes="(max-width: 640px) 120px, (max-width: 1024px) 160px, 200px"
-            unoptimized={isProxyImageUrl(src)}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
             }}
@@ -116,13 +115,12 @@ export function PatrocinadoresSection({
       >
         {bgImage && (
           <div className="absolute inset-0">
-            <Image
+            <SmartImage
               src={getPublicImageUrl(bgImage)}
               alt=""
               fill
               className="object-cover"
               sizes="100vw"
-              unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
             />
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
           </div>
@@ -131,13 +129,12 @@ export function PatrocinadoresSection({
           {titleLogo ? (
             <div className="mb-6 flex items-center justify-start">
               <div className="relative h-16 w-auto max-w-xs sm:h-20">
-                <Image
+                <SmartImage
                   src={getPublicImageUrl(titleLogo)}
                   alt={title || "Patrocinadores"}
                   fill
                   className="object-contain object-center"
                   sizes="(max-width: 640px) 200px, 300px"
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(titleLogo))}
                 />
               </div>
             </div>

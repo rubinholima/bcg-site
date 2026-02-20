@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { NoticiasItem, GaleriaItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { ImageIcon, Loader2, X } from "lucide-react";
 
 function GalleryPhoto({ src, alt }: { src: string; alt?: string }) {
@@ -217,13 +217,12 @@ export function GaleriaSection({
       >
         {bgImage && (
           <div className="absolute inset-0">
-            <Image
+            <SmartImage
               src={getPublicImageUrl(bgImage)}
               alt=""
               fill
               className="object-cover"
               sizes="100vw"
-              unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
             />
             <div
               className="absolute inset-0 bg-zinc-950"

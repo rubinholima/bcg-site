@@ -1,7 +1,7 @@
-import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { BlockRenderer } from "./BlockRenderer";
 
@@ -92,13 +92,12 @@ export function SectionBlockRenderer({
         {colBg && <div className="absolute inset-0" style={{ backgroundColor: colBg }} />}
         {colImg && (
           <>
-            <Image
+            <SmartImage
               src={getPublicImageUrl(colImg)}
               alt=""
               fill
               className="object-cover"
               sizes="50vw"
-              unoptimized={isProxyImageUrl(getPublicImageUrl(colImg))}
             />
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOp }} />
           </>
@@ -115,13 +114,12 @@ export function SectionBlockRenderer({
     >
       {bgImage && (
         <div className="absolute inset-0">
-          <Image
+          <SmartImage
             src={getPublicImageUrl(bgImage)}
             alt=""
             fill
             className="object-cover"
             sizes="100vw"
-            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
           />
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>

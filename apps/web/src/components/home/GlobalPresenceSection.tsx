@@ -1,10 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useRef, useEffect, useState } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import type { GlobalPresenceLocation, GlobalPresenceCounter } from "@/types/home-content";
 import { MapPin } from "lucide-react";
 
@@ -162,13 +162,12 @@ export function GlobalPresenceSection({
     >
       {bgImage && (
         <div className="absolute inset-0">
-          <Image
+          <SmartImage
             src={getPublicImageUrl(bgImage)}
             alt=""
             fill
             className="object-cover"
             sizes="100vw"
-            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
           />
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: bgOverlayOpacity }} />
         </div>

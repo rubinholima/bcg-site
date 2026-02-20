@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { NoticiasItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 
 function NewsCardImage({ src }: { src: string }) {
@@ -149,13 +149,12 @@ export function NoticiasSection({
       >
         {bgImage && (
           <div className="absolute inset-0">
-            <Image
+            <SmartImage
               src={getPublicImageUrl(bgImage)}
               alt=""
               fill
               className="object-cover"
               sizes="100vw"
-              unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
             />
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
           </div>

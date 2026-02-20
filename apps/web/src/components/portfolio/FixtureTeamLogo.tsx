@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Building2 } from "lucide-react";
-import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 
 const EXTERNAL_LOGO_EXTENSIONS = [".png", ".webp", ".svg"] as const;
 
@@ -67,13 +67,12 @@ export function FixtureTeamLogo({
               className="max-h-full max-w-full object-contain"
             />
           ) : (
-            <Image
+            <SmartImage
               src={src}
               alt=""
               width={size}
               height={size}
               className="max-h-full max-w-full object-contain"
-              unoptimized={isProxyImageUrl(src)}
             />
           )}
         </div>
@@ -111,13 +110,12 @@ export function FixtureTeamLogo({
             className="max-h-full max-w-full object-contain"
           />
         ) : (
-          <Image
+          <SmartImage
             src={src}
             alt=""
             width={size}
             height={size}
             className="max-h-full max-w-full object-contain"
-            unoptimized={isProxyImageUrl(src)}
           />
         )}
       </div>

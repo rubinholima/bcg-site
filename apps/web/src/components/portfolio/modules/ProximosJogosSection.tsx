@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
+import Image from "next/image";
+import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2 } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
@@ -140,13 +141,12 @@ function TeamLogo({
               className="object-contain max-h-full max-w-full"
             />
           ) : (
-            <Image
+            <SmartImage
               src={src}
               alt=""
               width={size}
               height={size}
               className="object-contain max-h-full max-w-full"
-              unoptimized={isProxyImageUrl(src)}
             />
           )}
         </div>
@@ -172,13 +172,12 @@ function TeamLogo({
               className="object-contain max-h-full max-w-full"
             />
           ) : (
-            <Image
+            <SmartImage
               src={src}
               alt=""
               width={size}
               height={size}
               className="object-contain max-h-full max-w-full"
-              unoptimized={isProxyImageUrl(src)}
             />
           )}
         </div>
@@ -385,13 +384,12 @@ export function ProximosJogosSection({
     >
       {bgImage && (
         <div className="absolute inset-0">
-          <Image
+          <SmartImage
             src={getPublicImageUrl(bgImage)}
             alt=""
             fill
             className="object-cover"
             sizes="100vw"
-            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
           />
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>

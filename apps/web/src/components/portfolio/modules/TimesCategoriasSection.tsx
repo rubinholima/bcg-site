@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { PlayerItem, TeamCategory, PlayerSeasonHistory, PlayerSocialMedia } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
 import { X, Calendar, Ruler, Weight, Shirt, Trophy, TrendingUp, Video, Instagram, Twitter, Facebook, Youtube, Music, Globe } from "lucide-react";
@@ -101,13 +101,12 @@ function PlayerCard({
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden">
         {player.photoUrl ? (
-          <Image
+          <SmartImage
             src={getPublicImageUrl(player.photoUrl)}
             alt={player.name}
             fill
             className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            unoptimized={isProxyImageUrl(getPublicImageUrl(player.photoUrl))}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-zinc-800">
@@ -172,13 +171,12 @@ function PlayerModal({
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-white/10">
               {player.photoUrl ? (
-                <Image
+                <SmartImage
                   src={getPublicImageUrl(player.photoUrl)}
                   alt={player.name}
                   fill
                   className="object-cover object-top"
                   sizes="(max-width: 768px) 100vw, 300px"
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(player.photoUrl))}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-zinc-800">
@@ -447,13 +445,12 @@ function PlayerModal({
                   return (
                     <div key={idx} className="relative aspect-video w-full overflow-hidden rounded-lg border border-white/10 group">
                       {isImage ? (
-                        <Image
+                        <SmartImage
                           src={getPublicImageUrl(url)}
                           alt={`${player.name} - ${lang === "pt" ? "Momento" : "Moment"} ${idx + 1}`}
                           fill
                           className="object-cover"
                           sizes="(max-width: 640px) 100vw, 50vw"
-                          unoptimized={isProxyImageUrl(getPublicImageUrl(url))}
                         />
                       ) : isYouTube && youtubeId ? (
                         <>
@@ -655,13 +652,12 @@ export function TimesCategoriasSection({
       >
         {bgImage && (
           <div className="absolute inset-0">
-            <Image
+            <SmartImage
               src={getPublicImageUrl(bgImage)}
               alt=""
               fill
               className="object-cover"
               sizes="100vw"
-              unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
             />
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
           </div>

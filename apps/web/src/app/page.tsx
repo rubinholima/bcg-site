@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   fetchPublicPortfolio,
   getClubSiteUrl,
@@ -18,7 +17,8 @@ import {
   buildTFromBlocks,
 } from "@/lib/home-content";
 import { fetchGroup } from "@/lib/home-data";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { Button } from "@/components/ui/button";
@@ -461,14 +461,13 @@ export default function Home() {
                   <>
                     {/* Guardrail: pointer-events-none so background/overlay never capture clicks (nav/links must remain clickable). */}
                     <div className="absolute inset-0 pointer-events-none">
-                      <Image
+                      <SmartImage
                         src={heroBg}
                         alt=""
                         fill
                         className="object-cover"
                         priority
                         sizes="100vw"
-                        unoptimized={isProxyImageUrl(heroBg)}
                       />
                       <div className="absolute inset-0" style={getHeroOverlayStyle(block)} />
                     </div>
@@ -529,13 +528,12 @@ export default function Home() {
           >
             {block.config?.backgroundImage && (
               <div className="absolute inset-0">
-                <Image
+                <SmartImage
                   src={getPublicImageUrl(block.config.backgroundImage as string)}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="100vw"
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(block.config.backgroundImage as string))}
                 />
                 <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
               </div>
@@ -561,13 +559,12 @@ export default function Home() {
                 </div>
                 <div className={`animate-on-scroll ${imageOrder} animate-delay-100 h-full min-h-[280px]`}>
                   <div className="relative w-full h-full min-h-[280px] overflow-hidden rounded-2xl border border-white/10 bg-zinc-800 shadow-2xl">
-                    <Image
+                    <SmartImage
                       src={getPublicImageUrl(images.what)}
                       alt=""
                       fill
                       className="object-cover"
                       sizes="(max-width: 1024px) 100vw, 50vw"
-                      unoptimized={isProxyImageUrl(getPublicImageUrl(images.what))}
                     />
                   </div>
                 </div>
@@ -587,13 +584,12 @@ export default function Home() {
           >
             {block.config?.backgroundImage && (
               <div className="absolute inset-0">
-                <Image
+                <SmartImage
                   src={getPublicImageUrl(block.config.backgroundImage as string)}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="100vw"
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(block.config.backgroundImage as string))}
                 />
                 <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
               </div>
@@ -646,13 +642,12 @@ export default function Home() {
           >
             {block.config?.backgroundImage && (
               <div className="absolute inset-0">
-                <Image
+                <SmartImage
                   src={getPublicImageUrl(block.config.backgroundImage as string)}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="100vw"
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(block.config.backgroundImage as string))}
                 />
                 <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
               </div>
@@ -720,13 +715,12 @@ export default function Home() {
           >
             {block.config?.backgroundImage && (
               <div className="absolute inset-0">
-                <Image
+                <SmartImage
                   src={getPublicImageUrl(block.config.backgroundImage as string)}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="100vw"
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(block.config.backgroundImage as string))}
                 />
                 <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
               </div>
@@ -792,13 +786,12 @@ export default function Home() {
                   {founderImgSrc ? (
                     <div className="relative w-full max-w-md sm:max-w-lg">
                       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl shadow-2xl shadow-black/40 ring-2 ring-amber-500/20 ring-offset-2 ring-offset-zinc-900">
-                        <Image
+                        <SmartImage
                           src={founderImgSrc}
                           alt={founderName || "Fundador"}
                           fill
                           className="object-cover object-top"
                           sizes="(max-width: 1024px) 100vw, 480px"
-                          unoptimized={isProxyImageUrl(founderImgSrc)}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 via-transparent to-transparent pointer-events-none" />
                       </div>
@@ -830,13 +823,12 @@ export default function Home() {
           >
             {block.config?.backgroundImage && (
               <div className="absolute inset-0">
-                <Image
+                <SmartImage
                   src={getPublicImageUrl(block.config.backgroundImage as string)}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="100vw"
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(block.config.backgroundImage as string))}
                 />
                 <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
               </div>
@@ -955,13 +947,12 @@ export default function Home() {
                     const ctaBg = (cfg.backgroundImage as string)?.trim() || blockImage(block, "cta");
                     return (
                       <div className="absolute inset-0">
-                        <Image
+                        <SmartImage
                           src={getPublicImageUrl(ctaBg)}
                           alt=""
                           fill
                           className={`object-cover ${cfg.ctaBlur ? "blur-sm" : ""}`}
                           sizes="100vw"
-                          unoptimized={isProxyImageUrl(getPublicImageUrl(ctaBg))}
                         />
                         <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlay }} />
                       </div>
@@ -1005,13 +996,12 @@ export default function Home() {
                 >
                   {customBg && (
                     <div className="absolute inset-0">
-                      <Image
+                      <SmartImage
                         src={getPublicImageUrl(customBg)}
                         alt=""
                         fill
                         className="object-cover"
                         sizes="100vw"
-                        unoptimized={isProxyImageUrl(getPublicImageUrl(customBg))}
                       />
                       <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
                     </div>
@@ -1027,13 +1017,12 @@ export default function Home() {
                     )}
                     {customImg && (
                       <div className="relative mx-auto mt-8 w-full max-w-2xl aspect-video overflow-hidden rounded-2xl border border-white/10">
-                        <Image
+                        <SmartImage
                           src={getPublicImageUrl(customImg)}
                           alt=""
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 100vw, 672px"
-                          unoptimized={isProxyImageUrl(getPublicImageUrl(customImg))}
                         />
                       </div>
                     )}
@@ -1055,13 +1044,12 @@ export default function Home() {
                 >
                   {block.config?.backgroundImage && (
                     <div className="absolute inset-0">
-                      <Image
+                      <SmartImage
                         src={getPublicImageUrl(block.config.backgroundImage as string)}
                         alt=""
                         fill
                         className="object-cover"
                         sizes="100vw"
-                        unoptimized={isProxyImageUrl(getPublicImageUrl(block.config.backgroundImage as string))}
                       />
                       <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
                     </div>
@@ -1098,13 +1086,12 @@ export default function Home() {
                 >
                   {block.config?.backgroundImage && (
                     <div className="absolute inset-0">
-                      <Image
+                      <SmartImage
                         src={getPublicImageUrl(block.config.backgroundImage as string)}
                         alt=""
                         fill
                         className="object-cover"
                         sizes="100vw"
-                        unoptimized={isProxyImageUrl(getPublicImageUrl(block.config.backgroundImage as string))}
                       />
                       <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
                     </div>
@@ -1120,13 +1107,12 @@ export default function Home() {
                     )}
                     {genImg && (
                       <div className="relative mx-auto mt-8 w-full max-w-2xl aspect-video overflow-hidden rounded-2xl border border-white/10">
-                        <Image
+                        <SmartImage
                           src={getPublicImageUrl(genImg)}
                           alt=""
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 100vw, 672px"
-                          unoptimized={isProxyImageUrl(getPublicImageUrl(genImg))}
                         />
                       </div>
                     )}

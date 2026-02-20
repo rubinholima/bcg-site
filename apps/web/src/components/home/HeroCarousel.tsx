@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HeroCarouselEffect, HeroSlide } from "@/types/home-content";
-import { isProxyImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { Button } from "@/components/ui/button";
 
 interface HeroCarouselProps {
@@ -81,14 +80,13 @@ export function HeroCarousel({
     return (
       <div className="absolute inset-0">
         <div className="absolute inset-0 pointer-events-none">
-          <Image
+          <SmartImage
             src={src}
             alt=""
             fill
             className="object-cover"
             priority
             sizes="100vw"
-            unoptimized={isProxyImageUrl(src)}
           />
           <div className="absolute inset-0" style={overlayStyle(overlayOpacity, overlayMode, overlayColor)} />
         </div>
@@ -114,14 +112,13 @@ export function HeroCarousel({
                   : undefined,
           }}
         >
-          <Image
+          <SmartImage
             src={slide.url}
             alt=""
             fill
             className="object-cover"
             priority={i === 0}
             sizes="100vw"
-            unoptimized={isProxyImageUrl(slide.url)}
           />
         </div>
       ))}

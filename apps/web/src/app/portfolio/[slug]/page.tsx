@@ -1,9 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
 import { BlockRenderer } from "@/components/portfolio/modules/BlockRenderer";
@@ -157,14 +157,13 @@ export default async function PortfolioSlugPage({
     >
       {bgImage && (
         <div className="fixed inset-0 -z-10">
-          <Image
+          <SmartImage
             src={getPublicImageUrl(bgImage)}
             alt=""
             fill
             className="object-cover"
             sizes="100vw"
             priority
-            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
           />
           <div
             className="absolute inset-0 bg-zinc-950"

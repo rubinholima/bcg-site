@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
-import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { fetchPublicTenants, type PublicTenantCarouselItem } from "@/lib/public-tenants";
 
 function buildTenantUrl(item: PublicTenantCarouselItem): string {
@@ -116,14 +116,13 @@ function LogoStrip({
                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
                   />
                 ) : (
-                  <Image
+                  <SmartImage
                     src={getPublicImageUrl(item.logoUrl)}
                     alt={item.name}
                     width={Math.round(logoSize)}
                     height={Math.round(logoSize)}
                     className="object-contain"
                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                    unoptimized={isProxyImageUrl(getPublicImageUrl(item.logoUrl))}
                   />
                 )}
               </span>
@@ -145,14 +144,13 @@ function LogoStrip({
                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
                   />
                 ) : (
-                  <Image
+                  <SmartImage
                     src={getPublicImageUrl(fallbackLogo)}
                     alt={item.name}
                     width={Math.round(logoSize)}
                     height={Math.round(logoSize)}
                     className="object-contain"
                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                    unoptimized={isProxyImageUrl(getPublicImageUrl(fallbackLogo))}
                   />
                 )}
               </span>
@@ -254,13 +252,12 @@ export function LogoCarouselSection({
     >
       {bgImage && (
         <div className="absolute inset-0">
-          <Image
+          <SmartImage
             src={getPublicImageUrl(bgImage)}
             alt=""
             fill
             className="object-cover"
             sizes="100vw"
-            unoptimized={isProxyImageUrl(getPublicImageUrl(bgImage))}
           />
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>

@@ -1,8 +1,8 @@
-import Image from "next/image";
 import type { CSSProperties } from "react";
 import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import type { LucideIcon } from "lucide-react";
@@ -258,13 +258,12 @@ export function BlockRenderer({
           <>
             {singleBg && (
               <div className="absolute inset-0">
-                <Image
+                <SmartImage
                   src={singleBg}
                   alt=""
                   fill
                   className="object-cover"
                   sizes="100vw"
-                  unoptimized={isProxyImageUrl(singleBg)}
                 />
                 <div className="absolute inset-0" style={getHeroOverlayStyle(block)} />
               </div>
@@ -389,13 +388,12 @@ export function BlockRenderer({
         >
           {bgImg && (
             <div className="absolute inset-0">
-              <Image
+              <SmartImage
                 src={getPublicImageUrl(bgImg)}
                 alt=""
                 fill
                 className="object-cover"
                 sizes="100vw"
-                unoptimized={isProxyImageUrl(getPublicImageUrl(bgImg))}
               />
               <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
             </div>
@@ -451,13 +449,12 @@ export function BlockRenderer({
                 {photoUrl ? (
                   <div className="relative w-full max-w-md sm:max-w-lg">
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl shadow-2xl shadow-black/40 ring-2 ring-amber-500/20 ring-offset-2 ring-offset-zinc-900">
-                      <Image
+                      <SmartImage
                         src={getPublicImageUrl(photoUrl)}
                         alt={founderName || "Fundador"}
                         fill
                         className="object-cover object-top"
                         sizes="(max-width: 1024px) 100vw, 480px"
-                        unoptimized={isProxyImageUrl(getPublicImageUrl(photoUrl))}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/40 via-transparent to-transparent pointer-events-none" />
                     </div>
@@ -491,13 +488,12 @@ export function BlockRenderer({
       >
         {bgImg && (
           <div className="absolute inset-0">
-            <Image
+            <SmartImage
               src={getPublicImageUrl(bgImg)}
               alt=""
               fill
               className="object-cover"
               sizes="100vw"
-              unoptimized={isProxyImageUrl(getPublicImageUrl(bgImg))}
             />
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
           </div>
@@ -516,13 +512,12 @@ export function BlockRenderer({
           )}
           {imgUrl && (
             <div className="relative mx-auto mt-8 aspect-video w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10">
-              <Image
+              <SmartImage
                 src={getPublicImageUrl(imgUrl)}
                 alt=""
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 672px"
-                unoptimized={isProxyImageUrl(getPublicImageUrl(imgUrl))}
               />
             </div>
           )}
