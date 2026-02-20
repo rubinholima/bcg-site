@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { Building2, LayoutDashboard, Home } from "lucide-react";
+import { LayoutDashboard, Home } from "lucide-react";
 import { fetchGroup } from "@/lib/home-data";
 
 /** Páginas públicas que usam a navbar do portal. "/" (home) tem navbar própria e não entra aqui. */
@@ -37,9 +37,13 @@ export function LayoutWithNav({ children }: { children: React.ReactNode }) {
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <Building2 className="h-5 w-5" />
-                </div>
+                <img
+                  src="/bcg-logo.png"
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 object-contain flex-shrink-0 rounded"
+                />
               )}
               <span>{group?.name ?? "Boston City Group"}</span>
             </Link>

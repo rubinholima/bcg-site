@@ -36,12 +36,25 @@ export default function LoginPage() {
     setSessionExpired(params.get("reason") === "session_expired");
   }, [mounted]);
 
+  const [redirecting, setRedirecting] = useState(false);
+
   function handleEntrar() {
-    if (!isCognitoConfigured()) return;
     const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
     const next = params.get("next")?.trim() || "/dashboard";
-    const url = getHostedUiLoginUrl(next);
-    if (url) window.location.href = url;
+    if (isCognitoConfigured()) {
+      const url = getHostedUiLoginUrl(next);
+      if (url) {
+        setRedirecting(true);
+        window.location.href = url;
+        return;
+      }
+    }
+    setRedirecting(true);
+    try {
+      window.location.href = next;
+    } catch {
+      window.location.href = "/dashboard";
+    }
   }
 
   return (
@@ -88,11 +101,12 @@ export default function LoginPage() {
               </div>
             )}
             <Button
+              type="button"
               className="w-full h-12 text-base font-medium"
               onClick={handleEntrar}
-              disabled={!isCognitoConfigured()}
+              disabled={redirecting}
             >
-              Entrar
+              {redirecting ? "Redirecionando…" : "Entrar"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
               Login e senha são tratados de forma segura pelo provedor de identidade.
