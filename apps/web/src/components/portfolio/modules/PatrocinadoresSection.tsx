@@ -5,7 +5,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { PatrocinadorItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
 
 const PADDING_CLASSES = {
   minimal: { top: "pt-4 sm:pt-5", bottom: "pb-4 sm:pb-5" },
@@ -28,17 +28,28 @@ function SponsorLogo({
   const content = (
     <div className="flex h-full w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 p-4 transition-all duration-300 hover:border-amber-500/30 hover:bg-white/10 hover:shadow-lg hover:shadow-amber-500/5">
       <div className="relative h-full w-full grayscale transition-all duration-300 group-hover:grayscale-0">
-        <Image
-          src={src}
-          alt={name}
-          fill
-          className="object-contain object-center p-2"
-          sizes="(max-width: 640px) 120px, (max-width: 1024px) 160px, 200px"
-          unoptimized={isProxyImageUrl(src)}
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
+        {isSvgUrl(item.logoUrl) ? (
+          <img
+            src={src}
+            alt={name}
+            className="h-full w-full object-contain object-center p-2"
+            onError={(e) => {
+              (e.currentTarget).style.display = "none";
+            }}
+          />
+        ) : (
+          <Image
+            src={src}
+            alt={name}
+            fill
+            className="object-contain object-center p-2"
+            sizes="(max-width: 640px) 120px, (max-width: 1024px) 160px, 200px"
+            unoptimized={isProxyImageUrl(src)}
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+        )}
       </div>
     </div>
   );

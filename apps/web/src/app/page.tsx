@@ -254,7 +254,9 @@ export default function Home() {
                 <>
                   <img
                     src={logoSrc}
-                    alt=""
+                    alt="Boston City Group"
+                    width={32}
+                    height={32}
                     className="h-8 w-8 object-contain flex-shrink-0"
                     referrerPolicy="no-referrer"
                   />

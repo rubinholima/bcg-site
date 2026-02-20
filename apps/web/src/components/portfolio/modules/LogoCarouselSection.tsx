@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { HomeContentBlock } from "@/types/home-content";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
 import { fetchPublicTenants, type PublicTenantCarouselItem } from "@/lib/public-tenants";
 
 function buildTenantUrl(item: PublicTenantCarouselItem): string {
@@ -106,15 +106,26 @@ function LogoStrip({
                   height: logoSize,
                 }}
               >
-                <Image
-                  src={getPublicImageUrl(item.logoUrl)}
-                  alt={item.name}
-                  width={Math.round(logoSize)}
-                  height={Math.round(logoSize)}
-                  className="object-contain"
-                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(item.logoUrl))}
-                />
+                {isSvgUrl(item.logoUrl) ? (
+                  <img
+                    src={getPublicImageUrl(item.logoUrl)}
+                    alt={item.name}
+                    width={Math.round(logoSize)}
+                    height={Math.round(logoSize)}
+                    className="object-contain"
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  />
+                ) : (
+                  <Image
+                    src={getPublicImageUrl(item.logoUrl)}
+                    alt={item.name}
+                    width={Math.round(logoSize)}
+                    height={Math.round(logoSize)}
+                    className="object-contain"
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    unoptimized={isProxyImageUrl(getPublicImageUrl(item.logoUrl))}
+                  />
+                )}
               </span>
             ) : fallbackLogo ? (
               <span
@@ -124,15 +135,26 @@ function LogoStrip({
                   height: logoSize,
                 }}
               >
-                <Image
-                  src={getPublicImageUrl(fallbackLogo)}
-                  alt={item.name}
-                  width={Math.round(logoSize)}
-                  height={Math.round(logoSize)}
-                  className="object-contain"
-                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                  unoptimized={isProxyImageUrl(getPublicImageUrl(fallbackLogo))}
-                />
+                {isSvgUrl(fallbackLogo) ? (
+                  <img
+                    src={getPublicImageUrl(fallbackLogo)}
+                    alt={item.name}
+                    width={Math.round(logoSize)}
+                    height={Math.round(logoSize)}
+                    className="object-contain"
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  />
+                ) : (
+                  <Image
+                    src={getPublicImageUrl(fallbackLogo)}
+                    alt={item.name}
+                    width={Math.round(logoSize)}
+                    height={Math.round(logoSize)}
+                    className="object-contain"
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    unoptimized={isProxyImageUrl(getPublicImageUrl(fallbackLogo))}
+                  />
+                )}
               </span>
             ) : (
               <span className="text-sm font-medium text-zinc-500 truncate">{item.name}</span>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Building2 } from "lucide-react";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
 
 const EXTERNAL_LOGO_EXTENSIONS = [".png", ".webp", ".svg"] as const;
 
@@ -52,19 +52,30 @@ export function FixtureTeamLogo({
   if (logoUrlOverride?.trim()) {
     const src = getPublicImageUrl(logoUrlOverride);
     if (src) {
+      const useImg = isSvgUrl(logoUrlOverride);
       return (
         <div
           className="relative flex shrink-0 items-center justify-center rounded-lg bg-zinc-800 p-1.5"
           style={{ width: size, height: size }}
         >
-          <Image
-            src={src}
-            alt=""
-            width={size}
-            height={size}
-            className="max-h-full max-w-full object-contain"
-            unoptimized={isProxyImageUrl(src)}
-          />
+          {useImg ? (
+            <img
+              src={src}
+              alt=""
+              width={size}
+              height={size}
+              className="max-h-full max-w-full object-contain"
+            />
+          ) : (
+            <Image
+              src={src}
+              alt=""
+              width={size}
+              height={size}
+              className="max-h-full max-w-full object-contain"
+              unoptimized={isProxyImageUrl(src)}
+            />
+          )}
         </div>
       );
     }
@@ -85,19 +96,30 @@ export function FixtureTeamLogo({
         </div>
       );
     }
+    const useImg = isSvgUrl(ourTeamLogoUrl);
     return (
       <div
         className="relative flex shrink-0 items-center justify-center rounded-lg bg-zinc-800 p-1.5"
         style={{ width: size, height: size }}
       >
-        <Image
-          src={src}
-          alt=""
-          width={size}
-          height={size}
-          className="max-h-full max-w-full object-contain"
-          unoptimized={isProxyImageUrl(src)}
-        />
+        {useImg ? (
+          <img
+            src={src}
+            alt=""
+            width={size}
+            height={size}
+            className="max-h-full max-w-full object-contain"
+          />
+        ) : (
+          <Image
+            src={src}
+            alt=""
+            width={size}
+            height={size}
+            className="max-h-full max-w-full object-contain"
+            unoptimized={isProxyImageUrl(src)}
+          />
+        )}
       </div>
     );
   }

@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getPublicImageUrl, isProxyImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isProxyImageUrl, isSvgUrl } from "@/lib/media-url";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2 } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
@@ -128,16 +128,27 @@ function TeamLogo({
   if (logoUrlOverride?.trim()) {
     const src = getPublicImageUrl(logoUrlOverride);
     if (src) {
+      const useImg = isSvgUrl(logoUrlOverride);
       return (
         <div className={logoBoxClass} style={logoBoxStyle}>
-          <Image
-            src={src}
-            alt=""
-            width={size}
-            height={size}
-            className="object-contain max-h-full max-w-full"
-            unoptimized={isProxyImageUrl(src)}
-          />
+          {useImg ? (
+            <img
+              src={src}
+              alt=""
+              width={size}
+              height={size}
+              className="object-contain max-h-full max-w-full"
+            />
+          ) : (
+            <Image
+              src={src}
+              alt=""
+              width={size}
+              height={size}
+              className="object-contain max-h-full max-w-full"
+              unoptimized={isProxyImageUrl(src)}
+            />
+          )}
         </div>
       );
     }
@@ -149,16 +160,27 @@ function TeamLogo({
   if (isOurs && ourTeamLogoUrl) {
     const src = getPublicImageUrl(ourTeamLogoUrl);
     if (src) {
+      const useImg = isSvgUrl(ourTeamLogoUrl);
       return (
         <div className={logoBoxClass} style={logoBoxStyle}>
-          <Image
-            src={src}
-            alt=""
-            width={size}
-            height={size}
-            className="object-contain max-h-full max-w-full"
-            unoptimized={isProxyImageUrl(src)}
-          />
+          {useImg ? (
+            <img
+              src={src}
+              alt=""
+              width={size}
+              height={size}
+              className="object-contain max-h-full max-w-full"
+            />
+          ) : (
+            <Image
+              src={src}
+              alt=""
+              width={size}
+              height={size}
+              className="object-contain max-h-full max-w-full"
+              unoptimized={isProxyImageUrl(src)}
+            />
+          )}
         </div>
       );
     }
@@ -189,23 +211,41 @@ function TeamLogo({
     );
   }
 
+  const useImg = isSvgUrl(externalSrc);
   return (
     <div className={logoBoxClass} style={logoBoxStyle}>
-      <Image
-        src={externalSrc}
-        alt=""
-        width={size}
-        height={size}
-        className="h-full w-full object-contain max-h-[100%] max-w-[100%]"
-        unoptimized
-        onError={() => {
-          if (externalExtIndex < EXTERNAL_LOGO_EXTENSIONS.length - 1) {
-            setExternalExtIndex((i) => i + 1);
-          } else {
-            setShowPlaceholder(true);
-          }
-        }}
-      />
+      {useImg ? (
+        <img
+          src={externalSrc}
+          alt=""
+          width={size}
+          height={size}
+          className="h-full w-full object-contain max-h-[100%] max-w-[100%]"
+          onError={() => {
+            if (externalExtIndex < EXTERNAL_LOGO_EXTENSIONS.length - 1) {
+              setExternalExtIndex((i) => i + 1);
+            } else {
+              setShowPlaceholder(true);
+            }
+          }}
+        />
+      ) : (
+        <Image
+          src={externalSrc}
+          alt=""
+          width={size}
+          height={size}
+          className="h-full w-full object-contain max-h-[100%] max-w-[100%]"
+          unoptimized
+          onError={() => {
+            if (externalExtIndex < EXTERNAL_LOGO_EXTENSIONS.length - 1) {
+              setExternalExtIndex((i) => i + 1);
+            } else {
+              setShowPlaceholder(true);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
