@@ -1,56 +1,105 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildBackendUrl } from "@/lib/apiProxy";
 
-const ALLOWED_ORIGIN = "https://bcg-platform-assets.s3.";
-const ALLOWED_ORIGIN_ALT = "https://bcg-platform-assets.s3.amazonaws.com";
+const ALLOWED_HOSTS = [
+  "bcg-platform-assets.s3.us-east-1.amazonaws.com",
+  "bcg-platform-assets.s3.amazonaws.com",
+  "images.unsplash.com",
+];
 
-function s3UrlToKey(url: string): string | null {
+const BLOCKED_HOSTS = ["localhost", "127.0.0.1", "169.254.169.254", "[::1]"];
+
+function isHostAllowed(host: string): boolean {
+  const lower = host.toLowerCase();
+  if (BLOCKED_HOSTS.some((b) => lower === b || lower.endsWith("." + b)))
+    return false;
+  return ALLOWED_HOSTS.some((a) => lower === a || lower.endsWith("." + a));
+}
+
+/**
+ * Decode URL param; support single and double encoding.
+ */
+function decodeUrlParam(raw: string): string {
+  let u = decodeURIComponent(raw);
   try {
-    const u = new URL(url);
-    const path = u.pathname.replace(/^\/+/, "");
-    return path || null;
+    if (/%[0-9A-Fa-f]{2}/.test(u)) u = decodeURIComponent(u);
   } catch {
-    return null;
+    // keep u as is
   }
+  return u;
 }
 
 /**
  * GET /media/proxy?url=...
- * Proxy para imagens do S3. Rota no Next (fora de /api) para que Nginx envie
- * para o Next e não para o backend. Usa o backend internamente para buscar o blob.
+ * Proxy para imagens (S3, Unsplash, etc.). Rota no Next (fora de /api) para
+ * que Nginx envie ao Next. Erros retornam JSON com motivo.
  */
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
-  const url = request.nextUrl.searchParams.get("url");
-  if (!url || typeof url !== "string") {
-    return NextResponse.json({ error: "Missing url" }, { status: 400 });
+  const raw = request.nextUrl.searchParams.get("url");
+  if (!raw || typeof raw !== "string") {
+    return NextResponse.json({ error: "missing_url" }, { status: 400 });
   }
-  const trimmed = url.trim();
-  const isS3 =
-    trimmed.startsWith(ALLOWED_ORIGIN) || trimmed.startsWith(ALLOWED_ORIGIN_ALT);
-  if (!isS3) {
-    return NextResponse.json({ error: "URL not allowed" }, { status: 403 });
-  }
-  const key = s3UrlToKey(trimmed);
-  if (!key) {
-    return NextResponse.json({ error: "Invalid S3 URL" }, { status: 400 });
-  }
+
+  let u: string;
   try {
-    const res = await fetch(
-      buildBackendUrl(`/public/media?key=${encodeURIComponent(key)}`),
-      { cache: "force-cache" },
+    u = decodeUrlParam(raw.trim());
+  } catch {
+    return NextResponse.json(
+      { error: "invalid_url", value: raw.substring(0, 200) },
+      { status: 400 }
     );
+  }
+
+  let target: URL;
+  try {
+    target = new URL(u);
+  } catch {
+    return NextResponse.json(
+      { error: "invalid_url", value: u.substring(0, 200) },
+      { status: 400 }
+    );
+  }
+
+  if (!["http:", "https:"].includes(target.protocol)) {
+    return NextResponse.json(
+      { error: "invalid_protocol" },
+      { status: 400 }
+    );
+  }
+
+  if (!isHostAllowed(target.hostname)) {
+    return NextResponse.json(
+      { error: "url_not_allowed", host: target.hostname },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const res = await fetch(target.toString(), {
+      headers: { "User-Agent": "bcg-media-proxy" },
+    });
+
     if (!res.ok) {
-      return new NextResponse(null, { status: res.status });
+      return NextResponse.json(
+        { error: "upstream_failed", status: res.status },
+        { status: res.status }
+      );
     }
-    const contentType = res.headers.get("content-type") ?? "image/jpeg";
-    const body = await res.arrayBuffer();
-    return new NextResponse(body, {
+
+    const contentType =
+      res.headers.get("content-type") || "application/octet-stream";
+    return new Response(res.body, {
+      status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": "public, max-age=86400",
       },
     });
-  } catch {
-    return NextResponse.json({ error: "Proxy failed" }, { status: 502 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "proxy_failed" },
+      { status: 502 }
+    );
   }
 }
