@@ -34,14 +34,12 @@ async function getGroupMetadata(): Promise<{ name?: string; logoUrl?: string }> 
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { name, logoUrl } = await getGroupMetadata();
+  const { name } = await getGroupMetadata();
   const siteName = name ?? "Boston City Group";
   return {
     title: siteName,
     description: `Portal ${siteName} — empresas, usuários, emails e configurações.`,
-    icons: logoUrl
-      ? { icon: "/api/public/group-favicon" }
-      : { icon: "/favicon.ico" },
+    icons: { icon: "/bcg-logo.png" },
   };
 }
 

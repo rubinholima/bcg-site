@@ -51,7 +51,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const { canAccessModule, canAccessDashboard } = useAuth();
   const [group, setGroup] = useState<Group | null>(null);
-  const [logoError, setLogoError] = useState(false);
   const [cadastrosOpen, setCadastrosOpen] = useState(
     () =>
       (pathname?.startsWith("/dashboard/cadastros") ||
@@ -66,10 +65,7 @@ export function Sidebar() {
     fetch("/api/group")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Group | null) => {
-        if (!cancelled && data) {
-          setGroup(data);
-          setLogoError(false);
-        }
+        if (!cancelled && data) setGroup(data);
       })
       .catch(() => {});
     return () => {
@@ -78,26 +74,19 @@ export function Sidebar() {
   }, []);
 
   const name = group?.name ?? "Grupo Master";
-  const showLogo = group?.logoUrl && !logoError;
 
   return (
     <div className="flex h-full flex-col border-r border-border bg-card">
       {/* Logo + nome do grupo + Platform */}
       <div className="flex h-16 items-center border-b border-border px-6">
         <Link href="/dashboard" className="flex items-center gap-2 min-w-0">
-          {showLogo && group?.logoUrl ? (
-            <img
-              src={group.logoUrl}
-              alt=""
-              className="h-8 w-8 object-contain rounded flex-shrink-0"
-              onError={() => setLogoError(true)}
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground flex-shrink-0 text-xs font-bold">
-              <Building2 className="h-4 w-4" />
-            </div>
-          )}
+          <img
+            src="/bcg-logo.png"
+            alt=""
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain rounded flex-shrink-0"
+          />
           <span className="text-lg font-semibold truncate">
             <span className="text-muted-foreground">Dashboard</span> {name}
           </span>

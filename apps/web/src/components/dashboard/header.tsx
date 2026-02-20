@@ -8,17 +8,13 @@ import type { Group } from "@/types/group";
 
 export function Header() {
   const [group, setGroup] = useState<Group | null>(null);
-  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/group")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Group | null) => {
-        if (!cancelled && data) {
-          setGroup(data);
-          setLogoError(false);
-        }
+        if (!cancelled && data) setGroup(data);
       })
       .catch(() => {});
     return () => {
@@ -27,24 +23,17 @@ export function Header() {
   }, []);
 
   const name = group?.name ?? "Grupo Master";
-  const logoUrl = logoError ? undefined : group?.logoUrl ?? undefined;
 
   return (
     <header className="flex h-16 min-w-0 items-center justify-between gap-4 border-b border-border bg-card px-4 sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
-        {logoUrl ? (
-          <img
-            src={logoUrl}
-            alt=""
-            className="h-8 w-8 shrink-0 object-contain rounded"
-            onError={() => setLogoError(true)}
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
-            {name.charAt(0)}
-          </div>
-        )}
+        <img
+          src="/bcg-logo.png"
+          alt=""
+          width={32}
+          height={32}
+          className="h-8 w-8 shrink-0 object-contain rounded"
+        />
         <span className="truncate text-sm font-medium">
           <span className="text-muted-foreground">Dashboard</span> · {name}
         </span>

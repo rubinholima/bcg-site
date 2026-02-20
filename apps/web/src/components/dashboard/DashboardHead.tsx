@@ -33,7 +33,6 @@ export function DashboardHead() {
   }, [group?.name]);
 
   useEffect(() => {
-    if (!group?.logoUrl) return;
     let link = document.querySelector<HTMLLinkElement>('link[rel="icon"][data-dashboard-favicon]');
     if (!link) {
       link = document.createElement("link");
@@ -41,14 +40,12 @@ export function DashboardHead() {
       link.setAttribute("data-dashboard-favicon", "true");
       document.head.appendChild(link);
     }
-    if (link.href !== group.logoUrl) {
-      link.href = group.logoUrl;
-    }
+    link.href = "/bcg-logo.png";
     return () => {
       const el = document.querySelector('link[rel="icon"][data-dashboard-favicon]');
       if (el) el.remove();
     };
-  }, [group?.logoUrl]);
+  }, []);
 
   return null;
 }

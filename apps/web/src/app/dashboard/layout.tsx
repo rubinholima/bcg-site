@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     const name = group?.name ?? "Boston City Group";
     return {
       title: `Dashboard · ${name}`,
-      icons: group?.logoUrl ? { icon: group.logoUrl } : undefined,
+      icons: { icon: "/bcg-logo.png" },
     };
   } catch {
     return { title: "Dashboard" };

@@ -247,23 +247,17 @@ export default function Home() {
             className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-90"
             style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}
           >
-            {(() => {
-              const logoUrl = group?.logoUrl?.trim() ?? "";
-              const logoSrc = logoUrl ? getPublicImageUrl(logoUrl) : "/bcg-logo.png";
-              return (
-                <>
-                  <img
-                    src={logoSrc}
-                    alt="Boston City Group"
-                    width={32}
-                    height={32}
-                    className="h-8 w-8 object-contain flex-shrink-0"
-                    referrerPolicy="no-referrer"
-                  />
-                  <span className="text-lg">{group?.name || "Boston City Group"}</span>
-                </>
-              );
-            })()}
+            <>
+              <img
+                src="/bcg-logo.png"
+                alt="Boston City Group"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain flex-shrink-0"
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-lg">{group?.name || "Boston City Group"}</span>
+            </>
           </Link>
           <nav className="flex items-center gap-2 sm:gap-4">
             <LanguageSelector

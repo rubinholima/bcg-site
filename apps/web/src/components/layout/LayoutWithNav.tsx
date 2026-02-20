@@ -29,22 +29,13 @@ export function LayoutWithNav({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur">
           <div className="container flex h-14 items-center justify-between px-4">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              {group?.logoUrl ? (
-                <img
-                  src={group.logoUrl}
-                  alt=""
-                  className="h-8 w-8 object-contain flex-shrink-0 rounded"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <img
-                  src="/bcg-logo.png"
-                  alt=""
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 object-contain flex-shrink-0 rounded"
-                />
-              )}
+              <img
+                src="/bcg-logo.png"
+                alt=""
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain flex-shrink-0 rounded"
+              />
               <span>{group?.name ?? "Boston City Group"}</span>
             </Link>
             <nav className="flex items-center gap-4">
