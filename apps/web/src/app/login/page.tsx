@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getHostedUiLoginUrl, isCognitoConfigured } from "@/lib/cognito-hosted-ui";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,50 +12,21 @@ import {
 } from "@/components/ui/card";
 import { LogIn } from "lucide-react";
 
-/**
- * Login via Cognito Hosted UI.
- * Após logout, o usuário volta para esta tela (nossa página, não a da AWS).
- */
-export default function LoginPage() {
+function LoginPageContent() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next")?.trim() || "/dashboard";
+  const loginHref = `/api/auth/login?next=${encodeURIComponent(next)}`;
+
   const [hasError, setHasError] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const [sessionExpired, setSessionExpired] = useState(false);
   const [invalidScope, setInvalidScope] = useState(false);
 
   useEffect(() => {
-    if (!mounted || typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const err = params.get("error");
+    const err = searchParams.get("error");
     setHasError(err === "auth" || err === "missing" || err === "invalid_scope");
     setInvalidScope(err === "invalid_scope");
-    setSessionExpired(params.get("reason") === "session_expired");
-  }, [mounted]);
-
-  const [redirecting, setRedirecting] = useState(false);
-
-  function handleEntrar() {
-    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-    const next = params.get("next")?.trim() || "/dashboard";
-    if (isCognitoConfigured()) {
-      const url = getHostedUiLoginUrl(next);
-      if (url) {
-        setRedirecting(true);
-        window.location.href = url;
-        return;
-      }
-    }
-    setRedirecting(true);
-    try {
-      window.location.href = next;
-    } catch {
-      window.location.href = "/dashboard";
-    }
-  }
+    setSessionExpired(searchParams.get("reason") === "session_expired");
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
@@ -100,13 +71,8 @@ export default function LoginPage() {
                 </p>
               </div>
             )}
-            <Button
-              type="button"
-              className="w-full h-12 text-base font-medium"
-              onClick={handleEntrar}
-              disabled={redirecting}
-            >
-              {redirecting ? "Redirecionando…" : "Entrar"}
+            <Button asChild className="w-full h-12 text-base font-medium">
+              <a href={loginHref}>Entrar</a>
             </Button>
             <p className="text-center text-xs text-muted-foreground">
               Login e senha são tratados de forma segura pelo provedor de identidade.
@@ -118,5 +84,26 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+/**
+ * Login via Cognito Hosted UI.
+ * O botão "Entrar" leva a GET /api/auth/login?next=... que responde 302 para o Cognito (server-side).
+ * Assim não dependemos de env no browser e o redirect funciona atrás de CloudFront/Nginx.
+ */
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
+          <div className="w-full max-w-[400px] text-center text-muted-foreground">
+            Carregando…
+          </div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

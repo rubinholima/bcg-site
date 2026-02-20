@@ -15,6 +15,17 @@ Esta variável é usada apenas no servidor (API Routes do Next.js) para fazer pr
 
 **Fallback:** Se não definida, assume `http://localhost:3001` (apenas para desenvolvimento local).
 
+### Cognito (login Hosted UI)
+
+Para o botão "Entrar" redirecionar para o Cognito, configure no **servidor** (não é necessário expor ao client):
+
+- **`COGNITO_DOMAIN`** — domínio do User Pool (ex: `https://xxxx.auth.us-east-1.amazoncognito.com`, sem barra final)
+- **`COGNITO_CLIENT_ID`** — Client ID do App Client
+
+Alternativa (compatível com código legado): use `NEXT_PUBLIC_COGNITO_DOMAIN` e `NEXT_PUBLIC_COGNITO_CLIENT_ID` (o Route Handler `/api/auth/login` aceita ambos). Opcionais: `COGNITO_SCOPE` / `NEXT_PUBLIC_COGNITO_SCOPES` (default: `openid email phone`).
+
+O redirect de login é feito pelo GET `/api/auth/login?next=/dashboard`, que responde 302 para o Cognito; assim não há dependência de env no browser em produção.
+
 ### `NEXT_PUBLIC_APP_URL`
 
 **Opcional** — URL pública da aplicação web.
