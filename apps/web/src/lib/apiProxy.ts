@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Obtém a URL base da API backend (NestJS).
+ * Nunca use getApiBaseUrl/buildBackendUrl para assets (imagens, logos); use buildAssetUrl (lib/assetUrl.ts).
  *
  * - No browser: retorna "/api" para que fetches usem as rotas Next.js (Nginx proxy para o backend).
  * - No server: retorna API_BASE_URL ou fallback para dev (127.0.0.1:3001).
- * API_BASE_URL não está disponível no client (não é NEXT_PUBLIC_), por isso a detecção.
  */
 export function getApiBaseUrl(): string {
   const isBrowser = typeof window !== "undefined";

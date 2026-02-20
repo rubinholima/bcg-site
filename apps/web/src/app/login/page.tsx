@@ -15,7 +15,7 @@ import { LogIn } from "lucide-react";
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next")?.trim() || "/dashboard";
-  const loginHref = `/api/auth/login?next=${encodeURIComponent(next)}`;
+  const loginHref = `/auth/login?next=${encodeURIComponent(next)}`;
 
   const [hasError, setHasError] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);

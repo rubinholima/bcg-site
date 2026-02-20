@@ -8,23 +8,23 @@ export function isS3Url(url: string | undefined | null): boolean {
 }
 
 /**
- * Converte URL de mídia do S3 para o proxy da aplicação, para que
- * Next/Image e carregamento de imagens funcionem sem CORS e sem
- * precisar adicionar o domínio S3 em remotePatterns.
+ * Converte URL de mídia do S3 para o proxy da aplicação.
+ * Usa /media/proxy (Next) e não /api/* para que Nginx envie ao Next e não ao backend.
+ * Nunca use buildBackendUrl/getApiBaseUrl para assets; use buildAssetUrl (ver assetUrl.ts).
  */
 export function getPublicImageUrl(url: string | undefined | null): string {
   if (!url || typeof url !== "string") return "";
   const trimmed = url.trim();
   if (!trimmed) return "";
   if (isS3Url(trimmed)) {
-    return `/api/media/proxy?url=${encodeURIComponent(trimmed)}`;
+    return `/media/proxy?url=${encodeURIComponent(trimmed)}`;
   }
   return trimmed;
 }
 
 /** Retorna true se a URL é do nosso proxy (evita otimização que quebra). */
 export function isProxyImageUrl(url: string): boolean {
-  return typeof url === "string" && url.startsWith("/api/media/proxy");
+  return typeof url === "string" && (url.startsWith("/api/media/proxy") || url.startsWith("/media/proxy"));
 }
 
 /** Retorna true se a URL aponta para SVG (next/image retorna 400 para SVG em produção). */

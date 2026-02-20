@@ -12,10 +12,10 @@ function isValidInternalPath(value: string | null | undefined): boolean {
 }
 
 /**
- * GET /api/auth/login?next=/dashboard
- * Redireciona (302) para o Cognito Hosted UI (oauth2/authorize).
- * Toda a config é lida no server (process.env); nada no client.
- * Em produção, o botão "Entrar" aponta para esta rota para evitar env vars no browser.
+ * GET /auth/login?next=/dashboard
+ * Redireciona (302) para o Cognito Hosted UI.
+ * Rota no Next (fora de /api) para que Nginx não envie ao backend — em produção
+ * location /api/ -> backend; location / -> Next.
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     process.env.COGNITO_SCOPE ||
     process.env.COGNITO_SCOPES ||
     process.env.NEXT_PUBLIC_COGNITO_SCOPES ||
-    "openid email phone";
+    "openid email profile";
   const responseType =
     process.env.COGNITO_RESPONSE_TYPE || "code";
 
