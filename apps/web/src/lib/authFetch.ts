@@ -19,7 +19,8 @@ export async function authFetch(
     });
     if (refreshRes.ok) {
       res = await fetch(input, opts);
-    } else if (typeof window !== "undefined") {
+    } else if (typeof window !== "undefined" && window.location.pathname.startsWith("/dashboard")) {
+      // Só redireciona para login em rotas protegidas; páginas públicas (/, /portfolio, etc.) não exigem sessão
       const next = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.href = `/login?reason=session_expired&next=${next}`;
       return res;
