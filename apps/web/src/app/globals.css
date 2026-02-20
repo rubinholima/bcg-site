@@ -70,6 +70,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     overflow-x: clip;
     width: 100%;
     max-width: 100%;
