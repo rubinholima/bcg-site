@@ -252,9 +252,6 @@ export interface HomeBlockConfig {
   ctaGradientEnd?: string;
   /** CTA Final: até 3 botões. */
   ctaButtons?: CtaButtonConfig[];
-  /** Global Presence: descrição opcional (título/subtítulo usam titlePt/titleEn e subtitlePT/subtitleEN) */
-  descriptionPT?: string;
-  descriptionEN?: string;
   /** Global Presence: tema e cores FIFA */
   themePreset?: "fifa";
   /** backgroundColor já existe; accentColor e mapTint para pontos e mapa */

@@ -40,10 +40,10 @@ export interface Page {
   content: PageContent;
   createdAt: string;
   updatedAt: string;
-    tenant?: {
-      id: string;
-      name: string;
-      slug: string;
-      logoUrl?: string | null;
-    } | null;
+  tenant?: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl?: string | null;
+  } | null;
 }

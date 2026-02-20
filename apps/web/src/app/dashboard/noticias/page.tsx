@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import type { Page } from "@/types/page";
 import type { Tenant } from "@/types/tenant";
 
-type PageWithNoticias = Page & { tenant?: Tenant | null; hasNoticias: boolean; rssUrl?: string };
+/** Page com dados de notícias e tenant (Page já aceita tenant?: {...} | null). */
+type PageWithNoticias = Page & { hasNoticias: boolean; rssUrl?: string };
 
 export default function NoticiasPage() {
   const [pages, setPages] = useState<PageWithNoticias[]>([]);

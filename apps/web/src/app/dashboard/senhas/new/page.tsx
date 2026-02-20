@@ -17,7 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { authFetch } from "@/lib/authFetch";
 import { useAuth } from "@/context/AuthContext";
-import { VAULT_CATEGORIES } from "../categories";
+import { VAULT_CATEGORIES, type VaultCategory } from "../categories";
 
 type Tenant = { id: string; name: string; slug?: string };
 
@@ -28,10 +28,19 @@ export default function NovaSenhaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSecret, setShowSecret] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    category: VaultCategory;
+    tenantId: string | null;
+    username: string;
+    url: string;
+    secret: string;
+    notes: string;
+    status: string;
+  }>({
     title: "",
     category: VAULT_CATEGORIES[0],
-    tenantId: "" as string | null,
+    tenantId: "",
     username: "",
     url: "",
     secret: "",
@@ -165,7 +174,7 @@ export default function NovaSenhaPage() {
                 <Label htmlFor="category">Categoria</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(v) => setFormData((p) => ({ ...p, category: v }))}
+                  onValueChange={(v) => setFormData((p) => ({ ...p, category: v as VaultCategory }))}
                 >
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Selecione" />

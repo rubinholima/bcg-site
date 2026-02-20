@@ -29,6 +29,7 @@ import type {
   HeroCarouselIntervalSeconds,
   GlobalPresenceCounter,
 } from "@/types/home-content";
+import type { BlockConfigValue } from "@/types/block-config";
 import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
 import { copy } from "@/lib/home-copy";
 import {
@@ -173,11 +174,7 @@ export default function ConteudoPage() {
     });
   };
 
-  const updateBlockConfigValue = (
-    index: number,
-    key: string,
-    value: string | number | string[] | HeroSlide[] | { label: string; href: string }[] | GlobalPresenceCounter[] | undefined,
-  ) => {
+  const updateBlockConfigValue = (index: number, key: string, value: BlockConfigValue) => {
     setContent((prev) => {
       const list = getOrderedBlocks(prev);
       const block = list[index];

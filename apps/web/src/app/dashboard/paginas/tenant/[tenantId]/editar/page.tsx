@@ -52,6 +52,7 @@ import type {
   GlobalPresenceLocation,
   GlobalPresenceCounter,
 } from "@/types/home-content";
+import type { BlockConfigValue } from "@/types/block-config";
 import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
 import { getCtaPresetContent, CTA_PRESET_OPTIONS, type CtaPresetId } from "@/lib/cta-presets";
 import type { Page, PageTheme } from "@/types/page";
@@ -426,11 +427,7 @@ export default function EditarPaginaTenantPage() {
     setBlocks(list);
   };
 
-  const updateBlockConfigValue = (
-    index: number,
-    key: string,
-    value: string | number | boolean | string[] | Record<string, string>[] | HomeContentBlock[] | unknown,
-  ) => {
+  const updateBlockConfigValue = (index: number, key: string, value: BlockConfigValue) => {
     const list = [...blocks];
     const block = list[index];
     if (!block) return;
@@ -1647,7 +1644,7 @@ export default function EditarPaginaTenantPage() {
                               const tenantName = page?.tenant?.name ?? "";
 
                               const updateCategoryPlayers = (newPlayers: Array<unknown>) => {
-                                const prev = (block.config?.timesCategoriasCategories as Array<Record<string, unknown>>) ?? [];
+                                const prev = (block.config?.timesCategoriasCategories as unknown as Array<Record<string, unknown>>) ?? [];
                                 const idx = prev.findIndex((c) => c.id === cat.value);
                                 const nextCategories = prev.map((c, i) =>
                                   i === idx ? { ...c, players: newPlayers } : c
@@ -3723,7 +3720,7 @@ export default function EditarPaginaTenantPage() {
                                   <Input placeholder="Label (EN)" value={(block.config?.secondaryCTA as { labelEN?: string })?.labelEN ?? ""} onChange={(e) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), labelEN: e.target.value })} />
                                 </div>
                                 <Input placeholder="Link (href)" value={(block.config?.secondaryCTA as { href?: string })?.href ?? ""} onChange={(e) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), href: e.target.value })} />
-                                <Select value={(block.config?.secondaryCTA as { variant?: string })?.variant ?? "outline"} onValueChange={(v) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), variant: v })}>
+                                <Select value={(block.config?.secondaryCTA as { variant?: string })?.variant ?? "outline"} onValueChange={(v) => updateBlockConfigValue(index, "secondaryCTA", { ...(block.config?.secondaryCTA as object || {}), variant: v as "outline" | "ghost" })}>
                                   <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="outline">Outline</SelectItem>
@@ -5016,7 +5013,7 @@ export default function EditarPaginaTenantPage() {
                                   {(cfg.ctaBackgroundMode as string) === "solid" && (
                                     <div className="flex gap-2"><input type="color" className="h-10 w-12 rounded border" value={(cfg.backgroundColor as string) || "#18181b"} onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)} /><Input placeholder="Hex" value={(cfg.backgroundColor as string) ?? ""} onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)} /></div>
                                   )}
-                                  <div className="flex gap-2 items-center"><Label className="text-xs text-muted-foreground">Overlay (0-1)</Label><Input type="number" min={0} max={1} step={0.1} placeholder="0.75" value={(cfg.ctaOverlayOpacity as number) ?? ""} onChange={(e) => { const v = e.target.value; updateBlockConfig(index, "ctaOverlayOpacity", v === "" ? undefined : Number(v)); }} className="w-20" /></div>
+                                  <div className="flex gap-2 items-center"><Label className="text-xs text-muted-foreground">Overlay (0-1)</Label><Input type="number" min={0} max={1} step={0.1} placeholder="0.75" value={(cfg.ctaOverlayOpacity as number) ?? ""} onChange={(e) => { const v = e.target.value; updateBlockConfigValue(index, "ctaOverlayOpacity", v === "" ? undefined : Number(v)); }} className="w-20" /></div>
                                 </div>
                                 <div className="space-y-3">
                                   <Label>Botões (até 3 — links internos, âncoras ou externos; sem contato)</Label>

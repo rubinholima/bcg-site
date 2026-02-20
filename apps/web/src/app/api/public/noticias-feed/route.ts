@@ -97,34 +97,16 @@ function getUrlFromMedia(v: unknown): string | undefined {
 
 
 /**
-
- * Tipo mínimo para o item RSS com customFields (media/contentEncoded),
-
- * mantendo compatibilidade com rss-parser e evitando erro do TS no build.
-
+ * Tipo mínimo para o item RSS com customFields (media/contentEncoded).
+ * Usamos Record<string, unknown> para aceitar qualquer item retornado pelo parser
+ * e evitar incompatibilidade de tipos no build strict.
  */
-
-type RssItemWithMedia = Parser.Item & {
-
-  mediaContent?: unknown;
-
-  mediaThumbnail?: unknown;
-
-  contentEncoded?: unknown;
-
-  [key: string]: unknown;
-
-};
-
-
+type RssItemForImage = Record<string, unknown>;
 
 /** Extrai URL de imagem do item RSS */
-
-function extractImageUrl(item: RssItemWithMedia): string | undefined {
-
+function extractImageUrl(item: RssItemForImage): string | undefined {
   // 1. Enclosure
-
-  const enclosure = item.enclosure;
+  const enclosure = item.enclosure as { url?: string; type?: string } | undefined;
 
   if (enclosure?.url) {
 
@@ -260,7 +242,7 @@ export async function GET(request: NextRequest) {
 
   try {
 
-    const parser = new Parser<RssItemWithMedia>({
+    const parser = new Parser<RssItemForImage>({
 
       timeout: 10000,
 

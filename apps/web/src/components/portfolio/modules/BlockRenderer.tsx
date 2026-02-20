@@ -316,7 +316,7 @@ export function BlockRenderer({
   }
 
   if (block.type === "logo_carousel") {
-    return <LogoCarouselSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} />;
+    return <LogoCarouselSection key={block.id} block={block} lang={lang} />;
   }
 
   if (block.type === "noticias") {

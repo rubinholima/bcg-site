@@ -1,5 +1,5 @@
 import type { HomeContentDto, HomeContentBlock, HomeBlockType, GlobalPresenceCounter, GlobalPresenceLocation } from "@/types/home-content";
-import { copy } from "@/lib/home-copy";
+import { copy, type CopySchema } from "@/lib/home-copy";
 
 const DEFAULT_HERO =
   "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1920&q=80";
@@ -52,11 +52,11 @@ function deepMerge<T extends Record<string, unknown>>(
 }
 
 function mergeLang(
-  base: typeof copy.pt,
+  base: CopySchema,
   override: Record<string, unknown> | undefined
-): typeof copy.pt {
+): CopySchema {
   if (!override) return base;
-  return deepMerge(base as Record<string, unknown>, override) as typeof copy.pt;
+  return deepMerge(base as unknown as Record<string, unknown>, override) as unknown as CopySchema;
 }
 
 /** Ordem padrão dos módulos no meio da página (cabeçalho e rodapé são sempre fixos no topo/fim). */
@@ -415,14 +415,12 @@ export function getImagesFromBlocks(blocks: HomeContentBlock[]): {
   };
 }
 
-type CopyLang = typeof copy.pt;
-
 /** Constrói o objeto de textos (t) a partir dos blocos, com fallback no copy. */
 export function buildTFromBlocks(
   blocks: HomeContentBlock[],
-  copyLang: CopyLang,
+  copyLang: CopySchema,
   lang: "pt" | "en"
-): CopyLang {
+): CopySchema {
   const isPt = lang === "pt";
   const titleKey = isPt ? "titlePt" : "titleEn";
   const bodyKey = isPt ? "bodyPt" : "bodyEn";
@@ -452,7 +450,7 @@ export function buildTFromBlocks(
   const highlightsArr = (highlightsBlock?.config as Record<string, string[] | undefined>)?.[
     isPt ? "highlightsPt" : "highlightsEn"
   ];
-  const highlights: [string?, string?, string?] = Array.isArray(highlightsArr) && highlightsArr.length >= 3
+  const highlights: string[] = Array.isArray(highlightsArr) && highlightsArr.length >= 3
     ? [highlightsArr[0], highlightsArr[1], highlightsArr[2]]
     : copyLang.highlights ?? ["", "", ""];
 
@@ -474,7 +472,7 @@ export function buildTFromBlocks(
   const founderBody = (founderBlock?.config?.[bodyKey] as string)?.trim() || copyLang.founder?.body || "";
   const founderBulletsKey = isPt ? "bulletsPt" : "bulletsEn";
   const founderBulletsRaw = (founderBlock?.config as Record<string, string[] | undefined>)?.[founderBulletsKey];
-  const founderBullets: [string?, string?, string?] = Array.isArray(founderBulletsRaw) && founderBulletsRaw.length >= 3
+  const founderBullets: string[] = Array.isArray(founderBulletsRaw) && founderBulletsRaw.length >= 3
     ? [founderBulletsRaw[0], founderBulletsRaw[1], founderBulletsRaw[2]]
     : copyLang.founder?.bullets ?? ["", "", ""];
   const founderQuote =
@@ -486,7 +484,7 @@ export function buildTFromBlocks(
   const howBody = (howBlock?.config?.[bodyKey] as string)?.trim() || copyLang.how?.body || "";
   const howBulletsKey = isPt ? "bulletsPt" : "bulletsEn";
   const howBulletsRaw = (howBlock?.config as Record<string, string[] | undefined>)?.[howBulletsKey];
-  const howBullets: [string?, string?, string?, string?] = Array.isArray(howBulletsRaw) && howBulletsRaw.length >= 4
+  const howBullets: string[] = Array.isArray(howBulletsRaw) && howBulletsRaw.length >= 4
     ? [howBulletsRaw[0], howBulletsRaw[1], howBulletsRaw[2], howBulletsRaw[3]]
     : copyLang.how?.bullets ?? ["", "", "", ""];
 
@@ -525,5 +523,5 @@ export function buildTFromBlocks(
       dashboard: copyLang.cta?.dashboard ?? "",
     },
     errorBanner: copyLang.errorBanner ?? "",
-  };
+  } as CopySchema;
 }

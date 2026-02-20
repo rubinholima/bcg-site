@@ -514,8 +514,8 @@ export default function Home() {
         </AnimateInView>
             );
           }
-          if (block.type === "logo_carousel") {
-            return <LogoCarouselSection key={block.id} block={block} lang={lang} />;
+          if ((block as HomeContentBlock).type === "logo_carousel") {
+            return <LogoCarouselSection key={block.id} block={block as HomeContentBlock} lang={lang} />;
           }
           if (block.type === "what") {
             const imageOnLeft = (block.config?.whatImagePosition as string) === "left";
@@ -882,11 +882,6 @@ export default function Home() {
               <AnimateInView key={block.id}>
                 <GlobalPresenceSection block={block} lang={lang} />
               </AnimateInView>
-            );
-          }
-          if (block.type === "logo_carousel") {
-            return (
-              <LogoCarouselSection key={block.id} block={block} lang={lang} />
             );
           }
           if (block.type === "cta") {

@@ -1,6 +1,24 @@
 export type Lang = "pt" | "en";
 
-export const copy = {
+/** Shape comum do copy (pt/en) sem literais travados — evita conflito "Clubes" vs "Clubs" no build. */
+export interface CopySchema {
+  nav: { home: string; clubs: string; companies: string; about: string; contact: string; dashboard: string };
+  hero: { headline: string; subheadline: string; ctaClubs: string; ctaCompanies: string };
+  highlights: string[];
+  what: {
+    title: string;
+    body: string;
+    cards: Array<{ title: string; body: string }>;
+  };
+  clubs: { title: string; subtext: string; visitSite: string; openProfile: string };
+  companies: { title: string; subtext: string; visitWebsite: string; openProfile: string };
+  founder: { title: string; body: string; bullets: string[]; quote: string };
+  how: { title: string; body: string; bullets: string[] };
+  cta: { title: string; body: string; contact: string; dashboard: string };
+  errorBanner: string;
+}
+
+export const copy: { pt: CopySchema; en: CopySchema } = {
   pt: {
     nav: { home: "Home", clubs: "Clubes", companies: "Empresas", about: "Sobre", contact: "Contato", dashboard: "Dashboard" },
     hero: {
@@ -129,4 +147,4 @@ export const copy = {
     },
     errorBanner: "Could not load portfolio. Data will show when the connection is available.",
   },
-} as const;
+} as { pt: CopySchema; en: CopySchema };
