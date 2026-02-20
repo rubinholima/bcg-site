@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Obtém a URL base da API backend (NestJS).
- * 
- * Usa API_BASE_URL (server-side only) com fallback para localhost:3001 em dev.
- * 
- * - DEV: http://localhost:3001
- * - PROD: https://api.bostoncitygroup.biz
+ *
+ * - No browser: retorna "/api" para que fetches usem as rotas Next.js (Nginx proxy para o backend).
+ * - No server: retorna API_BASE_URL ou fallback para dev (127.0.0.1:3001).
+ * API_BASE_URL não está disponível no client (não é NEXT_PUBLIC_), por isso a detecção.
  */
 export function getApiBaseUrl(): string {
-  return process.env.API_BASE_URL ?? "http://localhost:3001";
+  const isBrowser = typeof window !== "undefined";
+
+  if (isBrowser) {
+    return "/api";
+  }
+
+  return process.env.API_BASE_URL || "http://127.0.0.1:3001";
 }
 
 /**
