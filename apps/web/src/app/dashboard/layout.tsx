@@ -6,6 +6,9 @@ import { DashboardGuard } from "@/components/auth/DashboardGuard";
 import { DashboardBodyLock } from "@/components/dashboard/DashboardBodyLock";
 import { buildBackendUrl } from "@/lib/apiProxy";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const res = await fetch(buildBackendUrl("/group"), { cache: "no-store" });
