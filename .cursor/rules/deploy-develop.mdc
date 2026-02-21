@@ -1,0 +1,20 @@
+---
+description: Ao usuário pedir "deploy", fazer commit e push para develop automaticamente
+alwaysApply: true
+---
+
+# Deploy = commit + push para develop
+
+Quando o usuário escrever **deploy** (ou "commit e sobe", "sobe pro git", "commit git develop", etc.):
+
+1. **Execute você mesmo** (não só sugira):
+   - `git status` para ver o que mudou
+   - `git add` dos arquivos alterados/criados
+   - `git commit` com mensagem clara e concisa
+   - `git push` para `origin/develop`
+
+2. **Branch:** usar sempre o branch **develop** salvo indicação em contrário.
+
+3. **Resposta:** confirme em uma linha (commit hash, arquivos, "Push enviado para origin/develop").
+
+Não peça confirmação extra — o pedido de "deploy" já é a instrução para subir.

@@ -6,6 +6,72 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 18 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Login, imagens S3, logo sistema, redirect /api/media/proxy)</span>
+
+## **LOGIN FORA DE /api, IMAGENS S3 DIRETAS, LOGO BCG ÚNICA, SMARTIMAGE, REDIRECT 302 HTTPS**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+#### 1. **Login sem depender de /api (Nginx)**
+
+- **Problema:** Com Nginx (`location /api/` → backend), rota Next em `/api/auth/login` nunca era atingida (404 do backend).
+- **Solução:** Rota **GET /auth/login** (fora de /api) no Next que lê `next` da query, monta URL do Cognito (oauth2/authorize) e responde **302** para o Hosted UI. Botão "Entrar" em `/login` passou a ser link para **`/auth/login?next=...`**.
+- **Arquivos:** `apps/web/src/app/auth/login/route.ts` (criado), `apps/web/src/app/login/page.tsx` (loginHref para `/auth/login`); removido `apps/web/src/app/api/auth/login/route.ts`.
+
+#### 2. **Imagens S3 diretas (sem proxy no fluxo principal)**
+
+- **getPublicImageUrl:** passou a retornar URL absoluta do S3 (ou path relativo prefixado com base S3); revertido uso de `/media/proxy` para imagens.
+- **Pipeline de imagens:** restaurado ao last-known-good (S3 direto); removida rota Next `/media/proxy`; `next.config` sem localPattern para `/media/proxy`; `/api/media/proxy` mantido apenas como **redirect** para quem ainda chamar essa URL.
+
+#### 3. **Logo do sistema sempre bcg-logo.png**
+
+- Em **todo o app** (header, layout, login, dashboard sidebar/header, favicon, home): uso exclusivo de **`/bcg-logo.png`**. Removido uso de `group.logoUrl` para a logo do sistema.
+- **Arquivos:** `LayoutWithNav.tsx`, `layout.tsx`, `dashboard/layout.tsx`, `DashboardHead.tsx`, `header.tsx`, `sidebar.tsx`, `page.tsx` (home).
+
+#### 4. **SmartImage — imagens S3 sem next/image (evitar 403)**
+
+- **Problema:** next/image retornava 403 para imagens do bucket S3.
+- **Solução:** Criados **`isBcgS3Asset(src)`** (`apps/web/src/lib/isBcgS3Asset.ts`) e **`SmartImage`** (`apps/web/src/components/common/SmartImage.tsx`). Para URLs do bucket BCG S3, renderiza **`<img>`** direto (loading lazy); caso contrário usa `next/image`. Substituído `<Image src={getPublicImageUrl(...)}>` por `<SmartImage ...>` nos componentes que exibem imagens S3 (page.tsx, HeroCarousel, ProximosJogosSection, PatrocinadoresSection, LogoCarouselSection, FixtureTeamLogo, BlockRenderer, SectionBlockRenderer, TimesCategoriasSection, NoticiasSection, GaleriaSection, portfolio [slug], GlobalPresenceSection).
+- **Resultado:** Request URL das imagens S3 no browser passa a ser `https://bcg-platform-assets...` com status 200; sem `/_next/image` para esses assets.
+
+#### 5. **isSvgUrl restaurado**
+
+- **Problema:** Build falhando com "Export isSvgUrl doesn't exist in target module" (vários componentes importavam de `media-url`).
+- **Solução:** Restaurada a função **`isSvgUrl(url)`** em `apps/web/src/lib/media-url.ts`: retorna true se a URL termina em `.svg` ou contém `.svg?`.
+
+#### 6. **Redirect /api/media/proxy — Location sempre HTTPS**
+
+- **Problema:** 302 com **Location: http://www.bostoncitygroup.biz/...** (ou localhost) porque `request.nextUrl`/origin vinha como http/localhost em produção.
+- **Solução (apenas em `route.ts`):**
+  - **Proto:** `x-forwarded-proto` ou `cloudfront-viewer-protocol` ou fallback `"https"`; primeiro valor (split por vírgula), trim, lowercase; se não for `"https"`, forçar **`proto = "https"`**.
+  - **Host:** `x-forwarded-host` ?? `host` ?? `request.nextUrl.host`.
+  - **URL absoluta:** `new URL("/media/proxy", \`${proto}://${host}\`)` e `dest.searchParams.set("url", url)`.
+  - **Resposta:** `NextResponse.redirect(dest.toString(), 302)` e **Cache-Control: no-store**.
+- **Resultado:** `curl -I https://www.bostoncitygroup.biz/api/media/proxy?url=...` retorna **302** com **Location: https://www.bostoncitygroup.biz/media/proxy?url=...**.
+
+---
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Criados:**  
+`apps/web/src/app/auth/login/route.ts`, `apps/web/src/lib/isBcgS3Asset.ts`, `apps/web/src/components/common/SmartImage.tsx`
+
+**Modificados:**  
+`apps/web/src/app/login/page.tsx`, `apps/web/src/lib/media-url.ts`, `apps/web/next.config.ts`, `apps/web/src/app/api/media/proxy/route.ts`, `apps/web/src/app/page.tsx`, `apps/web/src/components/layout/LayoutWithNav.tsx`, `apps/web/src/app/layout.tsx`, `apps/web/src/app/dashboard/layout.tsx`, `apps/web/src/components/dashboard/DashboardHead.tsx`, `apps/web/src/components/dashboard/header.tsx`, `apps/web/src/components/dashboard/sidebar.tsx`, `apps/web/src/components/home/HeroCarousel.tsx`, `apps/web/src/components/home/GlobalPresenceSection.tsx`, `apps/web/src/components/portfolio/FixtureTeamLogo.tsx`, `apps/web/src/components/portfolio/modules/BlockRenderer.tsx`, `apps/web/src/components/portfolio/modules/SectionBlockRenderer.tsx`, `apps/web/src/components/portfolio/modules/ProximosJogosSection.tsx`, `apps/web/src/components/portfolio/modules/PatrocinadoresSection.tsx`, `apps/web/src/components/portfolio/modules/LogoCarouselSection.tsx`, `apps/web/src/components/portfolio/modules/TimesCategoriasSection.tsx`, `apps/web/src/components/portfolio/modules/NoticiasSection.tsx`, `apps/web/src/components/portfolio/modules/GaleriaSection.tsx`, `apps/web/src/app/portfolio/[slug]/page.tsx`
+
+**Removidos (durante o dia):**  
+`apps/web/src/app/api/auth/login/route.ts`, `apps/web/src/app/media/proxy/route.ts` (rota Next de proxy de mídia)
+
+---
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Últimos commits do dia:** `dfdff85`, `cf65357`, `905856a`, `e26b83e`, `394bd15`, `0fbf804`, `51d72ce`, `e3bac20`, `0cf8d1f`, `40df9a3`, entre outros.
+- **Branch:** `develop`
+- **Push:** ✅ para repositório externo (origin) ao longo do dia.
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 2 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Últimos Resultados: nosso clube, card, marquee)</span>
 
 ## **MÓDULO ÚLTIMOS RESULTADOS: NOME/LOGO DO CLUBE PELO SLUG, CARD E MARQUEE CONDICIONAL**
