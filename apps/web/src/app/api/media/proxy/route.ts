@@ -1,58 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buildBackendUrl } from "@/lib/apiProxy";
 
-const ALLOWED_ORIGIN = "https://bcg-platform-assets.s3.";
-const ALLOWED_ORIGIN_ALT = "https://bcg-platform-assets.s3.amazonaws.com";
-
-/** Extrai a key S3 (ex: media/hero/xxx.jpg) da URL do bucket. */
-function s3UrlToKey(url: string): string | null {
-  try {
-    const u = new URL(url);
-    const path = u.pathname.replace(/^\/+/, "");
-    return path || null;
-  } catch {
-    return null;
+/**
+ * Origin do request (mesmo host que o cliente usou). Evita Location com localhost
+ * atrás de CloudFront/Nginx: usa x-forwarded-proto + host quando presentes.
+ */
+function getRequestOrigin(request: NextRequest): string {
+  const proto = request.headers.get("x-forwarded-proto");
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (proto && host) {
+    return `${proto.replace(/,.*$/, "").trim()}://${host.replace(/,.*$/, "").trim()}`;
   }
+  return request.nextUrl.origin;
 }
 
 /**
  * GET /api/media/proxy?url=...
- * Proxy para imagens do S3. Usa o backend (GET /public/media?key=...) para
- * buscar com credenciais AWS, assim funciona com bucket privado.
- * Em produção com Nginx, /api/* vai ao backend; imagens usam URL S3 direta (getPublicImageUrl).
+ * Redireciona (302) para /media/proxy?url=... no mesmo origin do request.
+ * Em produção com Nginx, /api/* vai ao backend; quando esta rota Next responde,
+ * o Location usa o host real (nunca localhost).
  */
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
-  if (!url || typeof url !== "string") {
-    return NextResponse.json({ error: "Missing url" }, { status: 400 });
-  }
-  const trimmed = url.trim();
-  const isS3 =
-    trimmed.startsWith(ALLOWED_ORIGIN) || trimmed.startsWith(ALLOWED_ORIGIN_ALT);
-  if (!isS3) {
-    return NextResponse.json({ error: "URL not allowed" }, { status: 403 });
-  }
-  const key = s3UrlToKey(trimmed);
-  if (!key) {
-    return NextResponse.json({ error: "Invalid S3 URL" }, { status: 400 });
-  }
-  try {
-    const res = await fetch(
-      buildBackendUrl(`/public/media?key=${encodeURIComponent(key)}`),
-      { cache: "force-cache" },
-    );
-    if (!res.ok) {
-      return new NextResponse(null, { status: res.status });
-    }
-    const contentType = res.headers.get("content-type") ?? "image/jpeg";
-    const body = await res.arrayBuffer();
-    return new NextResponse(body, {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=3600",
-      },
-    });
-  } catch {
-    return NextResponse.json({ error: "Proxy failed" }, { status: 502 });
-  }
+  const origin = getRequestOrigin(request).replace(/\/$/, "");
+  const target = url != null && url !== ""
+    ? `${origin}/media/proxy?url=${encodeURIComponent(url)}`
+    : `${origin}/media/proxy`;
+  const res = NextResponse.redirect(target, 302);
+  res.headers.set("Cache-Control", "no-store");
+  return res;
 }
