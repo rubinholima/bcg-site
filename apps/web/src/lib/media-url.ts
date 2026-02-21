@@ -26,3 +26,9 @@ export function getPublicImageUrl(url: string | undefined | null): string {
 export function isProxyImageUrl(url: string): boolean {
   return typeof url === "string" && url.startsWith("/api/media/proxy");
 }
+
+export function isSvgUrl(url?: string | null): boolean {
+  if (!url) return false;
+  const value = String(url).toLowerCase();
+  return value.endsWith(".svg") || value.includes(".svg?");
+}
