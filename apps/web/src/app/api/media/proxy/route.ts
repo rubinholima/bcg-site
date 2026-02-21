@@ -2,13 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/media/proxy?url=...
- * Redireciona (302) para /media/proxy?url=... com Location relativo (sem host/protocolo).
+ * Redireciona (302) para /media/proxy?url=... com URL absoluta a partir de headers
+ * (x-forwarded-proto, x-forwarded-host/host), nunca localhost em produção.
  */
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
-  const target =
-    url != null && url !== "" ? `/media/proxy?url=${encodeURIComponent(url)}` : "/media/proxy";
-  const res = NextResponse.redirect(target, 302);
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    request.nextUrl.host;
+  const dest = new URL("/media/proxy", `${proto}://${host}`);
+  if (url != null && url !== "") {
+    dest.searchParams.set("url", url);
+  }
+  const res = NextResponse.redirect(dest.toString(), 302);
   res.headers.set("Cache-Control", "no-store");
   return res;
 }
