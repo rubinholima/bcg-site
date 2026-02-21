@@ -7,7 +7,10 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url");
-  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  const xfProto = request.headers.get("x-forwarded-proto");
+  const cfProto = request.headers.get("cloudfront-viewer-protocol");
+  let proto = (xfProto || cfProto || "https").split(",")[0].trim().toLowerCase();
+  if (proto !== "https") proto = "https";
   const host =
     request.headers.get("x-forwarded-host") ??
     request.headers.get("host") ??
