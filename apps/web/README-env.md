@@ -17,14 +17,14 @@ Esta variável é usada apenas no servidor (API Routes do Next.js) para fazer pr
 
 ### Cognito (login Hosted UI)
 
-Para o botão "Entrar" redirecionar para o Cognito, configure no **servidor** (não é necessário expor ao client):
+**Produção — obrigatório no .env:** Para o login funcionar, o **CEO / responsável por deploy** deve configurar no ambiente de produção:
 
 - **`COGNITO_DOMAIN`** — domínio do User Pool (ex: `https://xxxx.auth.us-east-1.amazoncognito.com`, sem barra final)
 - **`COGNITO_CLIENT_ID`** — Client ID do App Client
 
-Alternativa (compatível com código legado): use `NEXT_PUBLIC_COGNITO_DOMAIN` e `NEXT_PUBLIC_COGNITO_CLIENT_ID` (o Route Handler `/api/auth/login` aceita ambos). Opcionais: `COGNITO_SCOPE` / `NEXT_PUBLIC_COGNITO_SCOPES` (default: `openid email phone`).
+Se essas variáveis estiverem ausentes, o build de assets **não quebra** (são lidas em runtime nas rotas de auth). Porém, ao acessar `/auth/login`, a API retorna 500 com a mensagem "Login not configured" e um log `[auth/login] missing Cognito config`. Configure-as no .env de produção para evitar esse erro.
 
-O redirect de login é feito pelo GET `/api/auth/login?next=/dashboard`, que responde 302 para o Cognito; assim não há dependência de env no browser em produção.
+Alternativa (compatível com código legado): use `NEXT_PUBLIC_COGNITO_DOMAIN` e `NEXT_PUBLIC_COGNITO_CLIENT_ID`. Opcionais: `COGNITO_SCOPE` / `NEXT_PUBLIC_COGNITO_SCOPES` (default: `openid email profile`).
 
 ### `NEXT_PUBLIC_APP_URL`
 
