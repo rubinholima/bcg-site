@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
   const responseType =
     process.env.COGNITO_RESPONSE_TYPE || "code";
 
+  // Lembrete: em produção, configurar COGNITO_DOMAIN e COGNITO_CLIENT_ID no .env para evitar 500 e logs "missing Cognito config".
   if (!cognitoDomain || !clientId) {
     console.error("[auth/login] missing Cognito config", {
       hasDomain: Boolean(cognitoDomain),

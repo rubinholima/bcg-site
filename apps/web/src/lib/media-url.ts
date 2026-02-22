@@ -1,4 +1,8 @@
-/** Domínio público de mídia: CloudFront serve S3 em www.bostoncitygroup.biz (paths media/ e logos/). */
+/**
+ * URLs de mídia: sempre https://www.bostoncitygroup.biz/${path}.
+ * Path deve incluir o prefixo da pasta (ex: media/foto.jpg, logos/clube.png).
+ * Nenhuma URL de saída deve conter api/media/proxy.
+ */
 const PUBLIC_MEDIA_ORIGIN =
   (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_MEDIA_ORIGIN) ||
   "https://www.bostoncitygroup.biz";
