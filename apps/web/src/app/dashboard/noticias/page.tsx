@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Newspaper, Pencil, Building2, Home, ExternalLink, Loader2, Rss } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPublicImageUrl } from "@/lib/media-url";
 import type { Page } from "@/types/page";
 import type { Tenant } from "@/types/tenant";
 
@@ -102,7 +103,7 @@ export default function NoticiasPage() {
               <div className="flex items-center gap-2">
                 {page.tenant?.logoUrl ? (
                   <img
-                    src={page.tenant.logoUrl}
+                    src={getPublicImageUrl(page.tenant.logoUrl)}
                     alt=""
                     className="h-8 w-8 rounded object-contain border"
                   />

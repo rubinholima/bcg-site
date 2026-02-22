@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { authFetch } from "@/lib/authFetch";
+import { getPublicImageUrl } from "@/lib/media-url";
 import type { Group } from "@/types/group";
 
 export default function GrupoPage() {
@@ -176,7 +177,7 @@ export default function GrupoPage() {
           {group?.logoUrl && !logoLoadError ? (
             <div className="flex items-center gap-4">
               <img
-                src={group.logoUrl}
+                src={getPublicImageUrl(group.logoUrl)}
                 alt="Logo do grupo"
                 className="h-24 w-auto object-contain rounded border"
                 onError={() => setLogoLoadError(true)}

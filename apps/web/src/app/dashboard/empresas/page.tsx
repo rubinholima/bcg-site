@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
 import { EmpresasFilters } from "@/components/dashboard/EmpresasFilters";
@@ -143,7 +144,7 @@ export default async function EmpresasPage({
                     <TableCell>
                       {t.logoUrl ? (
                         <img
-                          src={t.logoUrl}
+                          src={getPublicImageUrl(t.logoUrl)}
                           alt=""
                           className="h-8 w-8 object-contain rounded border"
                         />

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
@@ -215,7 +216,7 @@ export default function EditEmpresaPage() {
           {empresa?.logoUrl ? (
             <div className="flex items-center gap-4">
               <img
-                src={empresa.logoUrl}
+                src={getPublicImageUrl(empresa.logoUrl)}
                 alt={`Logo ${empresa.name}`}
                 className="h-20 w-auto object-contain rounded border"
               />

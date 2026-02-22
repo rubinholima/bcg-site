@@ -1,19 +1,12 @@
-const ORIGIN =
-  (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_MEDIA_ORIGIN) ||
-  "https://www.bostoncitygroup.biz";
+const BASE = "https://www.bostoncitygroup.biz";
 
-export function isS3Url(url: string | undefined | null): boolean {
-  if (!url || typeof url !== "string") return false;
-  return url.trim().includes("amazonaws.com");
-}
-
-function getPath(url: string): string {
+function pathFrom(url: string): string {
   const t = url.trim();
   if (!t) return "";
   if (t.includes("amazonaws.com")) {
     try {
-      const path = new URL(t).pathname;
-      return path.startsWith("/") ? path : `/${path}`;
+      const p = new URL(t).pathname;
+      return p.startsWith("/") ? p : `/${p}`;
     } catch {
       const m = t.match(/amazonaws\.com(\/[^?#]*)/);
       return m ? m[1] : "";
@@ -26,16 +19,16 @@ function getPath(url: string): string {
 
 export function getPublicImageUrl(url: string | undefined | null): string {
   if (!url || typeof url !== "string") return "";
-  const trimmed = url.trim();
-  if (!trimmed) return "";
-  const path = getPath(trimmed);
-  if (!path) {
-    if (trimmed.startsWith("http://") || trimmed.startsWith("https://"))
-      return trimmed;
-    return "";
-  }
-  const base = ORIGIN.replace(/\/$/, "");
-  return `${base}${path}`;
+  const path = pathFrom(url.trim());
+  if (path) return `${BASE}${path}`;
+  const u = url.trim();
+  if (u.startsWith("http://") || u.startsWith("https://")) return u;
+  return "";
+}
+
+export function isS3Url(url: string | undefined | null): boolean {
+  if (!url || typeof url !== "string") return false;
+  return url.trim().includes("amazonaws.com");
 }
 
 export function isSvgUrl(url?: string | null): boolean {

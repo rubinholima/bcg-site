@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/dashboard/tipos", destination: "/dashboard/cadastros/tipos", permanent: true },
       { source: "/dashboard/tipos/:path*", destination: "/dashboard/cadastros/tipos/:path*", permanent: true },
+      { source: "/favicon.ico", destination: "/bcg-logo.png", permanent: false },
     ];
   },
   images: {

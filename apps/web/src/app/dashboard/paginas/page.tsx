@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileText, Home, Building2, Plus, Pencil, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPublicImageUrl } from "@/lib/media-url";
 import type { Page } from "@/types/page";
 import type { Tenant } from "@/types/tenant";
 
@@ -121,7 +122,7 @@ export default function PaginasPage() {
                 <div className="flex items-center gap-2">
                   {tenant.logoUrl ? (
                     <img
-                      src={tenant.logoUrl}
+                      src={getPublicImageUrl(tenant.logoUrl)}
                       alt=""
                       className="h-8 w-8 rounded object-contain border"
                     />

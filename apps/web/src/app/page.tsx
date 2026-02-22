@@ -1177,7 +1177,7 @@ function PortfolioCard({
       <div className="flex flex-col items-center text-center">
         {item.logoUrl ? (
           <img
-            src={item.logoUrl}
+            src={getPublicImageUrl(item.logoUrl)}
             alt=""
             className="h-16 w-16 rounded-xl object-contain sm:h-20 sm:w-20"
           />

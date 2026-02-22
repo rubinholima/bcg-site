@@ -39,7 +39,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: siteName,
     description: `Portal ${siteName} — empresas, usuários, emails e configurações.`,
-    icons: { icon: "/bcg-logo.png" },
+    icons: {
+      icon: [{ url: "/bcg-logo.png", type: "image/png", sizes: "32x32" }, { url: "/bcg-logo.png", type: "image/png", sizes: "192x192" }],
+      shortcut: "/bcg-logo.png",
+      apple: "/bcg-logo.png",
+    },
   };
 }
 

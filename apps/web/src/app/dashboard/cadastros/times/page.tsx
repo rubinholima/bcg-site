@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 
 interface VisitingTeam {
   id: string;
@@ -95,7 +96,7 @@ export default async function TimesPage({
                       {t.logoUrl ? (
                         <div className="h-10 w-10 rounded overflow-hidden bg-muted flex items-center justify-center">
                           <img
-                            src={t.logoUrl}
+                            src={getPublicImageUrl(t.logoUrl)}
                             alt=""
                             className="h-full w-full object-contain"
                           />

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 
 export type SelectWithCreateType = "championship" | "stadium" | "visiting-team";
 
@@ -211,7 +212,7 @@ export function SelectWithCreate<T extends BaseItem>({
                 {logoUrlProp ? (
                   <span className="flex items-center gap-2">
                     <img
-                      src={logoUrlProp}
+                      src={getPublicImageUrl(logoUrlProp)}
                       alt=""
                       className="h-5 w-5 object-contain rounded shrink-0"
                     />
@@ -229,7 +230,7 @@ export function SelectWithCreate<T extends BaseItem>({
                   {vt.logoUrl ? (
                     <span className="flex items-center gap-2">
                       <img
-                        src={vt.logoUrl}
+                        src={getPublicImageUrl(vt.logoUrl)}
                         alt=""
                         className="h-5 w-5 object-contain rounded shrink-0"
                       />

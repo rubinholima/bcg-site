@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { buildBackendUrl } from "@/lib/apiProxy";
+import { getPublicImageUrl } from "@/lib/media-url";
 
 interface LastActivity {
   name: string;
@@ -272,7 +273,7 @@ export default async function DashboardPage() {
                     >
                       {t.logoUrl ? (
                         <img
-                          src={t.logoUrl}
+                          src={getPublicImageUrl(t.logoUrl)}
                           alt=""
                           className="h-9 w-9 rounded-md object-contain bg-muted"
                         />

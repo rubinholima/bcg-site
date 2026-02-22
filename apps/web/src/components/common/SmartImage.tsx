@@ -5,7 +5,6 @@ import { useState } from "react";
 
 type SmartImageProps = React.ComponentProps<typeof Image>;
 
-/** Imagens via getPublicImageUrl — domínio principal www.bostoncitygroup.biz apenas. */
 export function SmartImage({
   src,
   alt,
