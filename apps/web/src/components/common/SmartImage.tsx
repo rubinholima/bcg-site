@@ -6,8 +6,8 @@ type SmartImageProps = React.ComponentProps<typeof Image>;
 
 /**
  * Wrapper de next/image para URLs de mídia.
- * Com CloudFront OAC, todas as URLs são servidas pelo domínio oficial (www.bostoncitygroup.biz),
- * então next/image pode ser usado com otimização; não é mais necessário forçar <img> para S3.
+ * Assets vêm do domínio principal (www.bostoncitygroup.biz/media/* e /logos/* via CloudFront).
+ * Usa apenas o componente Image do Next.js; sem fallback para proxy.
  */
 export function SmartImage({
   src,

@@ -32,7 +32,7 @@ Use o componente `SectionTitle` para renderizar títulos com gradiente e linha a
 
 - **Imagem de fundo:** quando `backgroundImage` existir, renderizar `<Image>` em `absolute inset-0` com `object-cover`, e um overlay `<div className="absolute inset-0 bg-zinc-950" style={{ opacity: backgroundOverlayOpacity }} />`.
 - **Container:** use `relative` no container do conteúdo para que fique acima do fundo.
-- **Media URL:** use `getPublicImageUrl()` e `isProxyImageUrl()` para imagens.
+- **Media URL:** use `getPublicImageUrl()` para imagens (URLs servidas por www.bostoncitygroup.biz/media/* e /logos/*).
 
 ## 4. Módulos que já seguem o padrão
 

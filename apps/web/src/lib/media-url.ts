@@ -67,11 +67,6 @@ export function getPublicImageUrl(url: string | undefined | null): string {
   return trimmed;
 }
 
-/** Retorna true se a URL é do nosso proxy (evita otimização que quebra). */
-export function isProxyImageUrl(url: string): boolean {
-  return typeof url === "string" && url.startsWith("/api/media/proxy");
-}
-
 export function isSvgUrl(url?: string | null): boolean {
   if (!url) return false;
   const value = String(url).toLowerCase();
