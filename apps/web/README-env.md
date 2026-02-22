@@ -35,6 +35,13 @@ O redirect de login é feito pelo GET `/api/auth/login?next=/dashboard`, que res
 
 Usada para gerar URLs públicas, redirects e links absolutos quando necessário.
 
+### `NEXT_PUBLIC_MEDIA_ORIGIN`
+
+**Opcional** — Domínio pelo qual as imagens do S3 são servidas (CloudFront OAC).
+
+- **Padrão:** `https://www.bostoncitygroup.biz`
+- Usado por `getPublicImageUrl()` para converter URLs do bucket S3 em URLs do domínio oficial, permitindo uso de `next/image` com otimização.
+
 ## Arquivos de Configuração
 
 ### `.env.local` (desenvolvimento local)

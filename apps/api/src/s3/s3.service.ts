@@ -23,6 +23,9 @@ const EXT_BY_MIME: Record<string, string> = {
 const MEDIA_PREFIX = 'media/';
 const LOGOS_PREFIX = 'logos/';
 
+/** Quando definido, URLs públicas são retornadas via este domínio (CloudFront OAC) em vez de s3.amazonaws.com. */
+const PUBLIC_MEDIA_ORIGIN = (process.env.PUBLIC_MEDIA_ORIGIN ?? '').replace(/\/$/, '');
+
 @Injectable()
 export class S3Service {
   private readonly bucket: string;
@@ -38,6 +41,15 @@ export class S3Service {
     const config = getAwsClientConfig();
     this.region = config.region;
     this.client = new S3Client(config);
+  }
+
+  /** URL pública do objeto: domínio oficial se configurado, senão S3 direto. */
+  private publicUrl(key: string): string {
+    if (PUBLIC_MEDIA_ORIGIN) {
+      const path = key.startsWith('/') ? key : `/${key}`;
+      return `${PUBLIC_MEDIA_ORIGIN}${path}`;
+    }
+    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
   }
 
   /**
@@ -78,8 +90,7 @@ export class S3Service {
       );
     }
 
-    const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
-    return { key, url };
+    return { key, url: this.publicUrl(key) };
   }
 
   /**
@@ -117,8 +128,7 @@ export class S3Service {
       );
     }
 
-    const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
-    return { key, url };
+    return { key, url: this.publicUrl(key) };
   }
 
   /**
@@ -153,8 +163,7 @@ export class S3Service {
       );
     }
 
-    const url = `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
-    return { key, url };
+    return { key, url: this.publicUrl(key) };
   }
 
   /**
@@ -177,7 +186,7 @@ export class S3Service {
       const items = (response.Contents ?? []).filter((o) => o.Key && !o.Key.endsWith('/'));
       return items.map((o) => ({
         key: o.Key!,
-        url: `https://${this.bucket}.s3.${this.region}.amazonaws.com/${o.Key}`,
+        url: this.publicUrl(o.Key!),
         size: o.Size ?? 0,
         lastModified: o.LastModified?.toISOString() ?? '',
       }));
@@ -219,7 +228,7 @@ export class S3Service {
         folder: string,
       ) => ({
         key: o.Key!,
-        url: `https://${this.bucket}.s3.${this.region}.amazonaws.com/${o.Key}`,
+        url: this.publicUrl(o.Key!),
         size: o.Size ?? 0,
         lastModified: o.LastModified?.toISOString() ?? '',
         folder,
