@@ -1,50 +1,41 @@
-const BASE =
+const ORIGIN =
   (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_MEDIA_ORIGIN) ||
   "https://www.bostoncitygroup.biz";
-const ORIGIN = BASE.replace(/\/$/, "");
 
 export function isS3Url(url: string | undefined | null): boolean {
   if (!url || typeof url !== "string") return false;
   return url.trim().includes("amazonaws.com");
 }
 
-function toPath(s: string): string {
-  const t = s.trim();
+function getPath(url: string): string {
+  const t = url.trim();
   if (!t) return "";
+  if (t.includes("amazonaws.com")) {
+    try {
+      const path = new URL(t).pathname;
+      return path.startsWith("/") ? path : `/${path}`;
+    } catch {
+      const m = t.match(/amazonaws\.com(\/[^?#]*)/);
+      return m ? m[1] : "";
+    }
+  }
+  if (t.startsWith("http://") || t.startsWith("https://") || t.startsWith("//"))
+    return "";
   return t.startsWith("/") ? t : `/${t}`;
 }
 
-/**
- * Retorna https://www.bostoncitygroup.biz/${path}.
- * O path do banco já inclui as subpastas (ex: media/custom/arquivo.jpg, logos/tenants/logo.png).
- * Não adicionamos prefixos: se já começa com media ou logos, usamos como está.
- */
 export function getPublicImageUrl(url: string | undefined | null): string {
   if (!url || typeof url !== "string") return "";
   const trimmed = url.trim();
   if (!trimmed) return "";
-
-  if (trimmed.includes("amazonaws.com")) {
-    try {
-      const u = new URL(trimmed);
-      const path = toPath(u.pathname);
-      return path ? `${ORIGIN}${path}` : "";
-    } catch {
-      const m = trimmed.match(/amazonaws\.com(\/[^?#]*)/);
-      return m ? `${ORIGIN}${m[1]}` : "";
-    }
+  const path = getPath(trimmed);
+  if (!path) {
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://"))
+      return trimmed;
+    return "";
   }
-
-  if (
-    !trimmed.startsWith("http://") &&
-    !trimmed.startsWith("https://") &&
-    !trimmed.startsWith("//")
-  ) {
-    const path = toPath(trimmed);
-    if (path) return `${ORIGIN}${path}`;
-  }
-
-  return trimmed;
+  const base = ORIGIN.replace(/\/$/, "");
+  return `${base}${path}`;
 }
 
 export function isSvgUrl(url?: string | null): boolean {
