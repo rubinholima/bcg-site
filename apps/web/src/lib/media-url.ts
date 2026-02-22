@@ -1,7 +1,7 @@
 /**
- * URLs de mídia: sempre https://www.bostoncitygroup.biz/${path}.
- * Path deve incluir o prefixo da pasta (ex: media/foto.jpg, logos/clube.png).
- * Nenhuma URL de saída deve conter api/media/proxy.
+ * URLs de mídia: apenas https://www.bostoncitygroup.biz/${path}.
+ * Path deve incluir o prefixo da pasta no S3 (ex: media/foto.jpg, logos/clube.png).
+ * Todas as imagens são carregadas direto do CloudFront; sem proxy.
  */
 const PUBLIC_MEDIA_ORIGIN =
   (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_MEDIA_ORIGIN) ||

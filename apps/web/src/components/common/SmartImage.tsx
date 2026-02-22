@@ -5,8 +5,8 @@ import Image from "next/image";
 type SmartImageProps = React.ComponentProps<typeof Image>;
 
 /**
- * Image nativo do Next.js para mídia (www.bostoncitygroup.biz/media/* e /logos/*).
- * Sem fallback para proxy e sem lógica de redirecionamento.
+ * Image nativo do Next.js. src deve ser URL direta do domínio (getPublicImageUrl).
+ * Apenas www.bostoncitygroup.biz/media/* e /logos/* — sem proxy e sem redirecionamento.
  */
 export function SmartImage({
   src,
