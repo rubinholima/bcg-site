@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
+const cognitoDomainRaw = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
+const cognitoDomain = cognitoDomainRaw.startsWith("http")
+  ? cognitoDomainRaw.replace(/\/$/, "")
+  : cognitoDomainRaw
+    ? `https://${cognitoDomainRaw.replace(/\/$/, "")}`
+    : "";
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
 
 const MAX_STATE_LENGTH = 500;
@@ -10,6 +15,22 @@ function isValidInternalPath(value: string | null): value is string {
   if (!value.startsWith("/") || value.startsWith("//")) return false;
   if (value.includes("://") || value.includes("\\")) return false;
   return true;
+}
+
+/** Origem correta em produção (atrás de Nginx/CloudFront). */
+function getRequestOrigin(request: NextRequest): string {
+  const proto =
+    request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim()?.toLowerCase() ||
+    request.headers.get("cloudfront-viewer-protocol")?.split(",")[0]?.trim()?.toLowerCase() ||
+    "https";
+  const host =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host") ||
+    request.nextUrl.host;
+  if (host && (proto === "https" || proto === "http")) {
+    return `${proto}://${host}`;
+  }
+  return request.nextUrl.origin;
 }
 
 /**
@@ -23,7 +44,9 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get("error");
   const errorDesc = searchParams.get("error_description") ?? "";
 
-  const requestOrigin = request.nextUrl.origin;
+  const requestOrigin =
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+    getRequestOrigin(request).replace(/\/$/, "");
 
   if (error) {
     const errParam = errorDesc.includes("invalid_scope") ? "invalid_scope" : "auth";
@@ -35,8 +58,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=missing", requestOrigin));
   }
 
-  // Usa a origem real da requisição (onde o Cognito redirecionou) — evita mismatch com localhost vs 127.0.0.1
-  const redirectUri = `${requestOrigin.replace(/\/$/, "")}/api/auth/callback`;
+  const redirectUri = `${requestOrigin}/api/auth/callback`;
   const tokenUrl = `${cognitoDomain}/oauth2/token`;
 
   const body = new URLSearchParams({

@@ -43,10 +43,13 @@ export async function GET(request: NextRequest) {
     const nextParam = searchParams.get("next")?.trim();
     const state = isValidInternalPath(nextParam) ? nextParam : "/dashboard";
 
-    const cognitoDomain =
+    const cognitoDomainRaw =
       process.env.COGNITO_DOMAIN ||
       process.env.NEXT_PUBLIC_COGNITO_DOMAIN ||
       COGNITO_DOMAIN_FALLBACK;
+    const cognitoDomain = cognitoDomainRaw.startsWith("http")
+      ? cognitoDomainRaw.replace(/\/$/, "")
+      : `https://${cognitoDomainRaw.replace(/\/$/, "")}`;
     const clientId =
       process.env.COGNITO_CLIENT_ID ||
       process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ||
@@ -71,7 +74,7 @@ export async function GET(request: NextRequest) {
       state: state ?? "/dashboard",
     });
 
-    const authorizeUrl = `${cognitoDomain.replace(/\/$/, "")}/oauth2/authorize?${params.toString()}`;
+    const authorizeUrl = `${cognitoDomain}/oauth2/authorize?${params.toString()}`;
     const res = NextResponse.redirect(authorizeUrl, 302);
     res.headers.set("Cache-Control", "no-store");
     return res;
