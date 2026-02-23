@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 /**
@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
  * O code fica na URL no browser (não se perde com proxy/redirect).
  * Enviamos por POST para a API trocar por tokens e definir cookies.
  */
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "done" | "error">("loading");
 
@@ -60,5 +60,19 @@ export default function AuthCallbackPage() {
         {status === "error" && "Erro. Redirecionando…"}
       </p>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <p className="text-muted-foreground">Concluindo login…</p>
+        </div>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
