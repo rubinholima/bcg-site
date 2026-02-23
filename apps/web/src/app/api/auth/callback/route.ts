@@ -43,7 +43,10 @@ async function exchangeCodeForTokens(
   redirectUri: string,
   cognitoDomain: string,
   clientId: string
-): Promise<{ id_token?: string; access_token?: string; refresh_token?: string; expires_in?: number } | null> {
+): Promise<
+  | { ok: true; tokens: { id_token?: string; access_token?: string; refresh_token?: string; expires_in?: number } }
+  | { ok: false; cognitoError: string }
+> {
   const tokenUrl = `${cognitoDomain}/oauth2/token`;
   const body = new URLSearchParams({
     grant_type: "authorization_code",
@@ -56,12 +59,20 @@ async function exchangeCodeForTokens(
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
+  const text = await res.text();
   if (!res.ok) {
-    const text = await res.text();
+    let cognitoError = text;
+    try {
+      const j = JSON.parse(text) as { error?: string; error_description?: string };
+      cognitoError = j.error_description ?? j.error ?? text;
+    } catch {
+      // use raw text
+    }
     console.error("[auth/callback] token exchange failed", res.status, text, "redirect_uri:", redirectUri);
-    return null;
+    return { ok: false, cognitoError };
   }
-  return (await res.json()) as { id_token?: string; access_token?: string; refresh_token?: string; expires_in?: number };
+  const tokens = JSON.parse(text) as { id_token?: string; access_token?: string; refresh_token?: string; expires_in?: number };
+  return { ok: true, tokens };
 }
 
 function applyTokenCookies(
@@ -109,13 +120,15 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUri = `${requestOrigin}/auth/callback`;
-  const tokens = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
-  if (!tokens) return NextResponse.redirect(new URL("/login?error=auth", requestOrigin));
-
+  const result = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
+  if (!result.ok) {
+    const hint = encodeURIComponent(result.cognitoError.slice(0, 100));
+    return NextResponse.redirect(new URL(`/login?error=auth&hint=${hint}`, requestOrigin));
+  }
   const state = searchParams.get("state");
   const nextPath = isValidInternalPath(state) ? state : "/dashboard";
   const redirect = NextResponse.redirect(new URL(nextPath, requestOrigin));
-  applyTokenCookies(redirect, tokens, requestOrigin);
+  applyTokenCookies(redirect, result.tokens, requestOrigin);
   return redirect;
 }
 
@@ -143,13 +156,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "missing", redirect: "/login?error=missing" });
   }
 
-  const tokens = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
-  if (!tokens) {
-    return NextResponse.json({ error: "auth", redirect: "/login?error=auth" });
+  const result = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
+  if (!result.ok) {
+    return NextResponse.json({
+      error: "auth",
+      redirect: "/login?error=auth",
+      cognitoError: result.cognitoError,
+    });
   }
 
   const nextPath = isValidInternalPath(body.state ?? null) ? body.state! : "/dashboard";
   const res = NextResponse.json({ redirect: nextPath });
-  applyTokenCookies(res, tokens, requestOrigin);
+  applyTokenCookies(res, result.tokens, requestOrigin);
   return res;
 }

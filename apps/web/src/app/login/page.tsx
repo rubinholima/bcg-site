@@ -30,6 +30,7 @@ function LoginPageContent() {
   const [hasError, setHasError] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [invalidScope, setInvalidScope] = useState(false);
+  const [cognitoHint, setCognitoHint] = useState<string | null>(null);
 
   useEffect(() => {
     if (canonicalOrigin && typeof window !== "undefined" && !canonicalOrigin.includes("localhost")) {
@@ -46,6 +47,7 @@ function LoginPageContent() {
     setHasError(err === "auth" || err === "missing" || err === "invalid_scope");
     setInvalidScope(err === "invalid_scope");
     setSessionExpired(searchParams.get("reason") === "session_expired");
+    setCognitoHint(searchParams.get("hint") ?? null);
   }, [searchParams]);
 
   return (
@@ -86,14 +88,22 @@ function LoginPageContent() {
                     ? "A última tentativa falhou por scopes incompatíveis. O app usa agora openid, email, phone. Clique em Entrar novamente ou acesse /login para tentar de novo."
                     : "Não foi possível concluir o login. Verifique seus dados e tente novamente."}
                 </p>
+                {cognitoHint && (
+                  <p className="text-xs font-mono break-all opacity-90">
+                    Cognito: {cognitoHint}
+                  </p>
+                )}
                 <p className="text-xs opacity-90">
-                  Se persistir: Allowed callback URLs no Cognito deve incluir{" "}
+                  Allowed callback URLs no Cognito:{" "}
                   <code className="bg-black/20 px-1 rounded">
                     {typeof window !== "undefined"
                       ? `${window.location.origin}/auth/callback`
                       : "https://www.bostoncitygroup.biz/auth/callback"}
                   </code>
-                  . Ver <code className="bg-black/20 px-1 rounded">docs/TOKEN_STORAGE.md</code>.
+                  {typeof window !== "undefined" && window.location.origin.includes("www") === false && (
+                    <> e <code className="bg-black/20 px-1 rounded">https://www.bostoncitygroup.biz/auth/callback</code></>
+                  )}
+                  .
                 </p>
               </div>
             )}

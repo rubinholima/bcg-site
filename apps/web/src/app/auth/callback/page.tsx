@@ -37,13 +37,14 @@ function AuthCallbackContent() {
       credentials: "include",
     })
       .then((res) => res.json())
-      .then((data: { redirect?: string; error?: string }) => {
+      .then((data: { redirect?: string; error?: string; cognitoError?: string }) => {
         if (data.redirect) {
           setStatus("done");
           window.location.replace(data.redirect);
         } else {
           setStatus("error");
-          window.location.replace(`/login?error=${data.error ?? "auth"}`);
+          const hint = data.cognitoError ? `&hint=${encodeURIComponent(data.cognitoError.slice(0, 120))}` : "";
+          window.location.replace(`/login?error=${data.error ?? "auth"}${hint}`);
         }
       })
       .catch(() => {
