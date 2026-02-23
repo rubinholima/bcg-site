@@ -6,13 +6,18 @@
  * Para refresh_token, use NEXT_PUBLIC_COGNITO_SCOPES=openid offline_access (requer offline_access no Cognito).
  */
 
-const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
+const cognitoDomainRaw = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
+const cognitoDomain = cognitoDomainRaw.startsWith("http")
+  ? cognitoDomainRaw.replace(/\/$/, "")
+  : cognitoDomainRaw
+    ? `https://${cognitoDomainRaw.replace(/\/$/, "")}`
+    : "";
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const scopes = process.env.NEXT_PUBLIC_COGNITO_SCOPES ?? "openid email phone";
 
 export function getHostedUiLoginUrl(state?: string): string {
-  // No browser: usa appUrl. No cliente: usa window.origin para evitar mismatch localhost vs 127.0.0.1
+  // No browser: usa window.origin (evita proxy/Nginx). No servidor: usa appUrl.
   const base = typeof window !== "undefined" ? window.location.origin : appUrl;
   const redirectUri = `${base.replace(/\/$/, "")}/api/auth/callback`;
   const params = new URLSearchParams({

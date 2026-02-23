@@ -10,12 +10,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  getHostedUiLoginUrl,
+  isCognitoConfigured,
+} from "@/lib/cognito-hosted-ui";
 import { LogIn } from "lucide-react";
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next")?.trim() || "/dashboard";
-  const loginHref = `/auth/login?next=${encodeURIComponent(next)}`;
+  const loginHref = isCognitoConfigured()
+    ? getHostedUiLoginUrl(next)
+    : `/auth/login?next=${encodeURIComponent(next)}`;
 
   const [hasError, setHasError] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
