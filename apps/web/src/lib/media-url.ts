@@ -1,4 +1,36 @@
+/** CloudFront origin — S3 is only reachable via this domain (OAC). */
 const BASE = "https://www.bostoncitygroup.biz";
+
+/**
+ * Unwraps legacy /api/media/proxy?url=... so we resolve to a clean absolute URL (BASE + path).
+ * Returns the inner URL or the original string if not a proxy URL.
+ */
+function unwrapLegacyProxyUrl(input: string): string {
+  const t = input.trim();
+  if (!t.includes("/api/media/proxy") || !t.includes("url=")) return t;
+  try {
+    const queryStart = t.indexOf("?");
+    if (queryStart === -1) return t;
+    const query = t.slice(queryStart + 1);
+    const params = new URLSearchParams(query);
+    const inner = params.get("url");
+    if (inner) return decodeURIComponent(inner.trim());
+    const match = t.match(/[?&]url=([^&]+)/);
+    if (match) return decodeURIComponent(match[1].trim());
+  } catch {
+    // fallback: split on url= and decode
+    const idx = t.indexOf("url=");
+    if (idx !== -1) {
+      const rest = t.slice(idx + 4).replace(/^&.*$/, "").trim();
+      try {
+        return decodeURIComponent(rest);
+      } catch {
+        return rest;
+      }
+    }
+  }
+  return t;
+}
 
 function pathFrom(url: string): string {
   const t = url.trim();
@@ -19,10 +51,20 @@ function pathFrom(url: string): string {
 
 export function getPublicImageUrl(url: string | undefined | null): string {
   if (!url || typeof url !== "string") return "";
-  const path = pathFrom(url.trim());
+  const sanitized = unwrapLegacyProxyUrl(url.trim());
+  if (!sanitized) return "";
+
+  const path = pathFrom(sanitized);
   if (path) return `${BASE}${path}`;
-  const u = url.trim();
-  if (u.startsWith("http://") || u.startsWith("https://")) return u;
+
+  const u = sanitized.startsWith("http://") || sanitized.startsWith("https://")
+    ? sanitized
+    : "";
+  if (u && u.includes("amazonaws.com")) {
+    const p = pathFrom(u);
+    if (p) return `${BASE}${p}`;
+  }
+  if (u) return u;
   return "";
 }
 
