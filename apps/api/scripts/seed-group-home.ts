@@ -18,7 +18,7 @@ dotenv.config({ path: path.resolve(cwd, '.env') });
 if (!process.env.DATABASE_URL) {
   dotenv.config({ path: path.resolve(cwd, '../../.env') });
 }
-// Prisma 7: motor nativo — lê DATABASE_URL do env (já carregado pelo dotenv acima)
+// Prisma 6: lê DATABASE_URL do env (já carregado pelo dotenv acima)
 const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
 const prisma = new PrismaClient();
 

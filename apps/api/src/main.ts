@@ -8,6 +8,11 @@ config({ path: resolve(apiDir, '.env') });
 config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(rootDir, '.env') });
 
+// Em produção (ex.: AWS Lightsail), usar 127.0.0.1 evita problemas de resolução IPv6 do Node com "localhost"
+if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('localhost')) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/localhost/g, '127.0.0.1');
+}
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';

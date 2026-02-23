@@ -71,7 +71,7 @@ $ pnpm run test:cov
 ## Deploy AWS Lightsail (Ubuntu)
 
 - **Prisma:** A API usa o motor nativo do Prisma (sem `@prisma/adapter-pg`). O Prisma lê `DATABASE_URL` automaticamente.
-- **DATABASE_URL em produção:** Use `127.0.0.1` em vez de `localhost` (ex.: `postgresql://user:pass@127.0.0.1:5432/dbname`) para evitar problemas de resolução IPv6 no Node. Se usar `localhost`, o `prisma.config.ts` troca para `127.0.0.1` quando `NODE_ENV=production`.
+- **DATABASE_URL em produção:** Use `127.0.0.1` em vez de `localhost` (ex.: `postgresql://user:pass@127.0.0.1:5432/dbname`) para evitar problemas de resolução IPv6 no Node. Se usar `localhost`, o `main.ts` normaliza para `127.0.0.1` quando `NODE_ENV=production`.
 - **Line endings:** O projeto usa LF (`.editorconfig`). Evite commitar com CRLF para não quebrar scripts no Linux.
 - **Versões:** `@prisma/client` e `prisma` estão fixos em `7.3.0` para evitar incompatibilidade de binários.
 

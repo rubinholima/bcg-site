@@ -151,8 +151,8 @@ cd ~/bcg-site && ./deploy.sh
 
 ## 7. Erros comuns
 
-- **PrismaClientInitializationError / "non-empty, valid PrismaClientOptions"**  
-  O `PrismaService` precisa chamar `super({ log: [...] })` no construtor (Prisma 7). Não deixar `super()` vazio.
+- **PrismaClientInitializationError / "adapter or accelerateUrl"**  
+  O projeto usa **Prisma 6** (não 7). Prisma 7 exige adapter ou Accelerate; o adapter travava no Lightsail. Mantenha `@prisma/client` e `prisma` em 6.8.2.
 
 - **Conexão recusada com o banco**  
   Conferir `DATABASE_URL`, que o Postgres está rodando e que está usando **127.0.0.1** (não `localhost`).

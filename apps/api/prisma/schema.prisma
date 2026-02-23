@@ -1,11 +1,10 @@
-// Prisma 7: URL do banco fica em prisma.config.ts
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "binary"
+  provider = "prisma-client-js"
 }
 
 model User {
