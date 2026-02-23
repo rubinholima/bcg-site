@@ -65,9 +65,10 @@ Quando o login falha na tela de callback (erro vermelho "Não foi possível conc
 1. **Allowed callback URLs** — No App Client → Hosted UI → **Allowed callback URLs**, adicione **exatamente**:
    - `http://localhost:3000/api/auth/callback` (dev)
    - `http://127.0.0.1:3000/api/auth/callback` (se usar 127.0.0.1)
-   - Em produção: `https://seu-dominio.com/api/auth/callback`
+   - Em produção: a URL canônica definida em `NEXT_PUBLIC_APP_URL`, ex.: `https://www.bostoncitygroup.biz/api/auth/callback`
+   - Se o domínio tiver www e sem-www: adicione **ambas** (`https://www.dominio.com/api/auth/callback` e `https://dominio.com/api/auth/callback`) OU defina `NEXT_PUBLIC_APP_URL` com a URL canônica e use sempre essa
 2. **Scopes** — Em Hosted UI, habilite **OpenID** e **offline_access** (evita `invalid_scope`).
-3. **URL consistente** — Use sempre a mesma URL para acessar o app (só `localhost` ou só `127.0.0.1`). O `NEXT_PUBLIC_APP_URL` no `.env` deve bater com a URL que você usa no navegador.
+3. **URL consistente** — Em produção, defina `NEXT_PUBLIC_APP_URL` com a URL canônica (ex.: `https://www.bostoncitygroup.biz`). O login usará essa URL para o callback, evitando divergência entre www e sem-www.
 4. **Novo login** — Após alterar scopes ou callback URLs no Cognito, limpe os cookies do site e faça login de novo.
 5. **Log do servidor** — Se ainda falhar, veja o terminal do Next.js: `[auth/callback] token exchange failed` mostra a resposta exata do Cognito.
 
