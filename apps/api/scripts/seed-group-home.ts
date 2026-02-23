@@ -18,15 +18,9 @@ dotenv.config({ path: path.resolve(cwd, '.env') });
 if (!process.env.DATABASE_URL) {
   dotenv.config({ path: path.resolve(cwd, '../../.env') });
 }
-const defaultUrl =
-  'postgresql://bcg:bcg_password@localhost:5432/bcg_platform?schema=public';
-const connectionString = process.env.DATABASE_URL || defaultUrl;
-
-// Prisma 7: usar adapter-pg para instanciar o client
+// Prisma 7: motor nativo — lê DATABASE_URL do env (já carregado pelo dotenv acima)
 const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg') as typeof import('@prisma/adapter-pg');
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 const GROUP_SLUG = 'bcg';
 const GROUP_NAME = 'Boston City Group';

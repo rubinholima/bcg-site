@@ -68,6 +68,13 @@ $ pnpm run test:e2e
 $ pnpm run test:cov
 ```
 
+## Deploy AWS Lightsail (Ubuntu)
+
+- **Prisma:** A API usa o motor nativo do Prisma (sem `@prisma/adapter-pg`). O Prisma lê `DATABASE_URL` automaticamente.
+- **DATABASE_URL em produção:** Use `127.0.0.1` em vez de `localhost` (ex.: `postgresql://user:pass@127.0.0.1:5432/dbname`) para evitar problemas de resolução IPv6 no Node. Se usar `localhost`, o `prisma.config.ts` troca para `127.0.0.1` quando `NODE_ENV=production`.
+- **Line endings:** O projeto usa LF (`.editorconfig`). Evite commitar com CRLF para não quebrar scripts no Linux.
+- **Versões:** `@prisma/client` e `prisma` estão fixos em `7.3.0` para evitar incompatibilidade de binários.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
