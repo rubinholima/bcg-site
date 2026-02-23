@@ -13,14 +13,18 @@ export async function authFetch(
   let res = await fetch(input, opts);
 
   if (res.status === 401) {
+    const isProtectedRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/dashboard");
+    if (!isProtectedRoute) {
+      // Página pública (home etc.): 401 = não logado; não tenta refresh (evita 403 no console)
+      return res;
+    }
     const refreshRes = await fetch("/api/auth/refresh", {
       method: "POST",
       credentials: "include",
     });
     if (refreshRes.ok) {
       res = await fetch(input, opts);
-    } else if (typeof window !== "undefined" && window.location.pathname.startsWith("/dashboard")) {
-      // Só redireciona para login em rotas protegidas; páginas públicas (/, /portfolio, etc.) não exigem sessão
+    } else {
       const next = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.href = `/login?reason=session_expired&next=${next}`;
       return res;

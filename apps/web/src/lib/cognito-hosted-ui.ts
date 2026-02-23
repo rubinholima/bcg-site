@@ -26,7 +26,7 @@ export function getHostedUiLoginUrl(state?: string): string {
     typeof window !== "undefined"
       ? window.location.origin
       : (appUrl && !appUrl.includes("localhost") ? appUrl : "http://localhost:3000").replace(/\/$/, "");
-  const redirectUri = `${base.replace(/\/$/, "")}/api/auth/callback`;
+  const redirectUri = `${base.replace(/\/$/, "")}/auth/callback`;
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",

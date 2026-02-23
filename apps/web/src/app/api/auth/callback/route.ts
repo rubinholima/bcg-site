@@ -38,10 +38,55 @@ function getRequestOrigin(request: NextRequest): string {
   return request.nextUrl.origin;
 }
 
+async function exchangeCodeForTokens(
+  code: string,
+  redirectUri: string,
+  cognitoDomain: string,
+  clientId: string
+): Promise<{ id_token?: string; access_token?: string; refresh_token?: string; expires_in?: number } | null> {
+  const tokenUrl = `${cognitoDomain}/oauth2/token`;
+  const body = new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: clientId,
+    code,
+    redirect_uri: redirectUri,
+  });
+  const res = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("[auth/callback] token exchange failed", res.status, text, "redirect_uri:", redirectUri);
+    return null;
+  }
+  return (await res.json()) as { id_token?: string; access_token?: string; refresh_token?: string; expires_in?: number };
+}
+
+function applyTokenCookies(
+  response: NextResponse,
+  tokens: { id_token?: string; access_token?: string; refresh_token?: string },
+  origin: string
+) {
+  const isLocalhost = origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1");
+  const cookieOpts = {
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    maxAge: 60 * 60 * 24 * 7,
+    secure: !isLocalhost,
+  };
+  if (tokens.id_token) response.cookies.set("id_token", tokens.id_token, cookieOpts);
+  if (tokens.access_token) response.cookies.set("access_token", tokens.access_token, cookieOpts);
+  if (tokens.refresh_token) {
+    response.cookies.set("refresh_token", tokens.refresh_token, { ...cookieOpts, maxAge: 60 * 60 * 24 * 30 });
+  }
+}
+
 /**
- * Callback do Cognito Hosted UI.
- * Cognito redireciona aqui com ?code=xxx&state=yyy.
- * Troca o code por tokens no servidor (sem fetch no browser, sem CORS).
+ * GET: callback direto (Cognito -> /api/auth/callback). Mantido por compat.
+ * POST: página /auth/callback envia code no body; evita proxy/Nginx cortar ?code=...
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -59,61 +104,52 @@ export async function GET(request: NextRequest) {
   }
 
   if (!code || !cognitoDomain || !clientId) {
-    console.error("[auth/callback] missing code or config", { hasCode: !!code, hasDomain: !!cognitoDomain, hasClientId: !!clientId });
+    console.error("[auth/callback] GET missing code or config", { hasCode: !!code, hasDomain: !!cognitoDomain, hasClientId: !!clientId });
     return NextResponse.redirect(new URL("/login?error=missing", requestOrigin));
   }
 
-  const redirectUri = `${requestOrigin}/api/auth/callback`;
-  const tokenUrl = `${cognitoDomain}/oauth2/token`;
-
-  const body = new URLSearchParams({
-    grant_type: "authorization_code",
-    client_id: clientId,
-    code,
-    redirect_uri: redirectUri,
-  });
-
-  const tokenRes = await fetch(tokenUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString(),
-  });
-
-  if (!tokenRes.ok) {
-    const text = await tokenRes.text();
-    console.error("[auth/callback] token exchange failed", tokenRes.status, text);
-    console.error("[auth/callback] redirect_uri usado:", redirectUri, "| requestOrigin:", requestOrigin);
-    return NextResponse.redirect(new URL("/login?error=auth", requestOrigin));
-  }
-
-  const tokens = (await tokenRes.json()) as {
-    id_token?: string;
-    access_token?: string;
-    refresh_token?: string;
-    expires_in?: number;
-  };
+  const redirectUri = `${requestOrigin}/auth/callback`;
+  const tokens = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
+  if (!tokens) return NextResponse.redirect(new URL("/login?error=auth", requestOrigin));
 
   const state = searchParams.get("state");
   const nextPath = isValidInternalPath(state) ? state : "/dashboard";
   const redirect = NextResponse.redirect(new URL(nextPath, requestOrigin));
-  const isLocalhost = requestOrigin.startsWith("http://localhost") || requestOrigin.startsWith("http://127.0.0.1");
-  const cookieOpts = {
-    path: "/",
-    httpOnly: true,
-    sameSite: "lax" as const,
-    maxAge: 60 * 60 * 24 * 7,
-    secure: !isLocalhost,
-  };
-
-  if (tokens.id_token) {
-    redirect.cookies.set("id_token", tokens.id_token, cookieOpts);
-  }
-  if (tokens.access_token) {
-    redirect.cookies.set("access_token", tokens.access_token, cookieOpts);
-  }
-  if (tokens.refresh_token) {
-    redirect.cookies.set("refresh_token", tokens.refresh_token, { ...cookieOpts, maxAge: 60 * 60 * 24 * 30 });
-  }
-
+  applyTokenCookies(redirect, tokens, requestOrigin);
   return redirect;
+}
+
+/**
+ * POST: recebe { code, state?, redirect_uri } do cliente (página /auth/callback).
+ * O code vem da URL no browser; assim não se perde com redirect/proxy.
+ */
+export async function POST(request: NextRequest) {
+  const cognitoDomain = getCognitoDomain();
+  const clientId = getClientId();
+  const requestOrigin = getRequestOrigin(request).replace(/\/$/, "");
+
+  let body: { code?: string; state?: string; redirect_uri?: string };
+  try {
+    body = (await request.json()) as { code?: string; state?: string; redirect_uri?: string };
+  } catch {
+    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  }
+
+  const code = body.code?.trim();
+  const redirectUri = (body.redirect_uri ?? "").replace(/\/$/, "") || `${requestOrigin}/auth/callback`;
+
+  if (!code || !cognitoDomain || !clientId) {
+    console.error("[auth/callback] POST missing code or config", { hasCode: !!code });
+    return NextResponse.json({ error: "missing", redirect: "/login?error=missing" });
+  }
+
+  const tokens = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
+  if (!tokens) {
+    return NextResponse.json({ error: "auth", redirect: "/login?error=auth" });
+  }
+
+  const nextPath = isValidInternalPath(body.state ?? null) ? body.state! : "/dashboard";
+  const res = NextResponse.json({ redirect: nextPath });
+  applyTokenCookies(res, tokens, requestOrigin);
+  return res;
 }

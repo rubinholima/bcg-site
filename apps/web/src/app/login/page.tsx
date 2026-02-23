@@ -90,8 +90,8 @@ function LoginPageContent() {
                   Se persistir: Allowed callback URLs no Cognito deve incluir{" "}
                   <code className="bg-black/20 px-1 rounded">
                     {typeof window !== "undefined"
-                      ? `${window.location.origin}/api/auth/callback`
-                      : "https://www.bostoncitygroup.biz/api/auth/callback"}
+                      ? `${window.location.origin}/auth/callback`
+                      : "https://www.bostoncitygroup.biz/auth/callback"}
                   </code>
                   . Ver <code className="bg-black/20 px-1 rounded">docs/TOKEN_STORAGE.md</code>.
                 </p>
