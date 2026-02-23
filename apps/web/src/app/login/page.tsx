@@ -67,7 +67,13 @@ function LoginPageContent() {
                     : "Não foi possível concluir o login. Verifique seus dados e tente novamente."}
                 </p>
                 <p className="text-xs opacity-90">
-                  Se persistir: Allowed callback URLs deve ter <code className="bg-black/20 px-1 rounded">http://localhost:3000/api/auth/callback</code>. Ver <code className="bg-black/20 px-1 rounded">docs/TOKEN_STORAGE.md</code>.
+                  Se persistir: Allowed callback URLs no Cognito deve incluir{" "}
+                  <code className="bg-black/20 px-1 rounded">
+                    {typeof window !== "undefined"
+                      ? `${window.location.origin}/api/auth/callback`
+                      : "https://www.bostoncitygroup.biz/api/auth/callback"}
+                  </code>
+                  . Ver <code className="bg-black/20 px-1 rounded">docs/TOKEN_STORAGE.md</code>.
                 </p>
               </div>
             )}
