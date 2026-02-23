@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const COGNITO_DOMAIN_FALLBACK = "https://us-east-1etlo1rsa7.auth.us-east-1.amazoncognito.com";
-const cognitoDomainRaw = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
-const cognitoDomainResolved = cognitoDomainRaw.startsWith("http")
-  ? cognitoDomainRaw.replace(/\/$/, "")
-  : cognitoDomainRaw
-    ? `https://${cognitoDomainRaw.replace(/\/$/, "")}`
-    : COGNITO_DOMAIN_FALLBACK;
-const cognitoDomain = cognitoDomainResolved.includes("bostoncitygroup.auth.")
-  ? COGNITO_DOMAIN_FALLBACK
-  : cognitoDomainResolved;
-const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
+const CLIENT_ID_FALLBACK = "7j0lpgtmi1571iu007fscgkinp";
+
+function getCognitoDomain(): string {
+  const raw = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? process.env.COGNITO_DOMAIN ?? "";
+  const resolved = raw.startsWith("http") ? raw.replace(/\/$/, "") : raw ? `https://${raw.replace(/\/$/, "")}` : COGNITO_DOMAIN_FALLBACK;
+  return resolved.includes("bostoncitygroup.auth.") ? COGNITO_DOMAIN_FALLBACK : resolved;
+}
+
+function getClientId(): string {
+  return process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? process.env.COGNITO_CLIENT_ID ?? CLIENT_ID_FALLBACK;
+}
 
 const MAX_STATE_LENGTH = 500;
 
@@ -48,9 +49,9 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get("error");
   const errorDesc = searchParams.get("error_description") ?? "";
 
-  const requestOrigin =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    getRequestOrigin(request).replace(/\/$/, "");
+  const cognitoDomain = getCognitoDomain();
+  const clientId = getClientId();
+  const requestOrigin = getRequestOrigin(request).replace(/\/$/, "");
 
   if (error) {
     const errParam = errorDesc.includes("invalid_scope") ? "invalid_scope" : "auth";

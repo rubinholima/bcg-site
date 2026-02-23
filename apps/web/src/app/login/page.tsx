@@ -16,6 +16,10 @@ import {
 } from "@/lib/cognito-hosted-ui";
 import { LogIn } from "lucide-react";
 
+const canonicalOrigin = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_APP_URL)
+  ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
+  : "";
+
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next")?.trim() || "/dashboard";
@@ -26,6 +30,16 @@ function LoginPageContent() {
   const [hasError, setHasError] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [invalidScope, setInvalidScope] = useState(false);
+
+  useEffect(() => {
+    if (canonicalOrigin && typeof window !== "undefined" && !canonicalOrigin.includes("localhost")) {
+      if (window.location.origin !== canonicalOrigin) {
+        const to = `${canonicalOrigin}${window.location.pathname}${window.location.search}`;
+        window.location.replace(to);
+        return;
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const err = searchParams.get("error");
