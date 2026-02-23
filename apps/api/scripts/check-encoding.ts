@@ -34,7 +34,7 @@ async function main() {
   }
 
   console.log('=== 2. Via Prisma (Page content - primeira página) ===\n');
-  const page = await prisma.page.findFirst({ where: { content: { not: null } } });
+  const page = await prisma.page.findFirst();
   if (!page?.content) {
     console.log('Nenhuma Page com content');
   } else {
@@ -55,7 +55,7 @@ async function main() {
   );
   console.log('Encoding do banco:', enc[0]?.pg_encoding_to_char ?? '?');
 
-  const raw = await prisma.$queryRawUnsafe<[{ title_pt: string | null }][]>(
+  const raw = await prisma.$queryRawUnsafe<Array<{ title_pt: string | null }>>(
     `SELECT (b.elem->'config'->>'titlePt') as title_pt FROM "Group" g, jsonb_array_elements(g.home_content->'blocks') as b(elem) WHERE g.slug = 'bcg' AND b.elem->>'type' = 'what' LIMIT 1`
   );
   const titleFromDb = raw[0]?.title_pt ?? null;
