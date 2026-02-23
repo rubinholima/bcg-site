@@ -6,6 +6,35 @@
 
 ---
 
+# <span style="color: red; font-size: 28px;">📅 18 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Login Cognito: callback /auth/callback, getCallbackOrigin, hint, authFetch)</span>
+
+## **CALLBACK COMO PÁGINA, POST API, URL CANÔNICA, ERRO COGNITO NA TELA**
+
+### 🎯 **O QUE FOI FEITO HOJE (sessão login):**
+
+1. **Callback Cognito em página (/auth/callback)** — Cognito passou a redirecionar para **/auth/callback** (página) em vez de /api/auth/callback; o `code` fica na URL no browser e é enviado por **POST** para a API trocar por tokens. Evita proxy/Nginx cortar o query string.
+2. **API POST /api/auth/callback** — Aceita `{ code, state, redirect_uri }` no body; troca o code por tokens no Cognito, define cookies e devolve `{ redirect }`. GET mantido por compatibilidade.
+3. **getCallbackOrigin()** — Em produção usa sempre **NEXT_PUBLIC_APP_URL** para montar a redirect_uri no login e no callback, evitando mismatch www vs não-www com o Cognito.
+4. **Erro do Cognito na tela** — API devolve `cognitoError` quando a troca de tokens falha; a página de login exibe "Cognito: …" quando há hint (pendente: garantir que o hint apareça sempre).
+5. **authFetch** — Em páginas públicas (fora de /dashboard) não tenta mais /api/auth/refresh ao receber 401, evitando 403 no console.
+6. **Suspense em /auth/callback** — useSearchParams() envolvido em Suspense para atender exigência do Next.js no prerender.
+7. **Fallback env no callback** — COGNITO_DOMAIN, COGNITO_CLIENT_ID e valores de produção como fallback no servidor.
+
+**Pendente para próximo dia:** Login ainda retorna `error=auth` em produção; conferir Allowed callback URLs no Cognito (`https://www.bostoncitygroup.biz/auth/callback`) e que NEXT_PUBLIC_APP_URL está setado no build; validar exibição do hint do Cognito na tela.
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Modificados:**  
+`apps/web/src/app/api/auth/callback/route.ts`, `apps/web/src/app/auth/callback/page.tsx`, `apps/web/src/app/auth/login/route.ts`, `apps/web/src/app/login/page.tsx`, `apps/web/src/lib/authFetch.ts`, `apps/web/src/lib/cognito-hosted-ui.ts`, `docs/TOKEN_STORAGE.md`
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Últimos commits:** `c0704c3`, `016df50`, `2a1cb16`, `00ce4b4`, `967a1d1`, `d2e4cd1`, `3ebe1fd`, `d9cd461`, entre outros.
+- **Branch:** `develop`
+- **Push:** ✅ para origin/develop (working tree clean).
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 18 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Login, imagens S3, logo sistema, redirect /api/media/proxy)</span>
 
 ## **LOGIN FORA DE /api, IMAGENS S3 DIRETAS, LOGO BCG ÚNICA, SMARTIMAGE, REDIRECT 302 HTTPS**
