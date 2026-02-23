@@ -32,7 +32,7 @@ cd ../..
 # 6. Reiniciar Web
 echo "🌐 Reiniciando Web (bcg-web)..."
 pm2 delete bcg-web 2>/dev/null || true
-pm2 start "pnpm --filter web start -- --port 3000" --name bcg-web
+pm2 start "pnpm --filter web start" --name bcg-web --cwd "$(pwd)"
 # cwd do PM2 deve ser a raiz do monorepo (onde está pnpm-workspace.yaml)
 
 # 7. Salvar e status

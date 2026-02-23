@@ -49,7 +49,7 @@ function fixJson(obj: unknown): unknown {
 async function main() {
   console.log('Corrigindo encoding em Group.homeContent e Page.content...\n');
 
-  const groups = await prisma.group.findMany({ where: { homeContent: { not: null } } });
+  const groups = await prisma.group.findMany();
   for (const g of groups) {
     if (g.homeContent) {
       const fixed = fixJson(g.homeContent) as object;
@@ -61,7 +61,7 @@ async function main() {
     }
   }
 
-  const pages = await prisma.page.findMany({ where: { content: { not: null } } });
+  const pages = await prisma.page.findMany();
   for (const p of pages) {
     if (p.content) {
       const fixed = fixJson(p.content) as object;
