@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const COGNITO_DOMAIN_FALLBACK = "https://us-east-1etlo1rsa7.auth.us-east-1.amazoncognito.com";
 const cognitoDomainRaw = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
-const cognitoDomain = cognitoDomainRaw.startsWith("http")
+const cognitoDomainResolved = cognitoDomainRaw.startsWith("http")
   ? cognitoDomainRaw.replace(/\/$/, "")
   : cognitoDomainRaw
     ? `https://${cognitoDomainRaw.replace(/\/$/, "")}`
-    : "";
+    : COGNITO_DOMAIN_FALLBACK;
+const cognitoDomain = cognitoDomainResolved.includes("bostoncitygroup.auth.")
+  ? COGNITO_DOMAIN_FALLBACK
+  : cognitoDomainResolved;
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
 
 const MAX_STATE_LENGTH = 500;

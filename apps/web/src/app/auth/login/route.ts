@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 const MAX_STATE_LENGTH = 500;
 
 /** Fallbacks when process.env is not available (Cognito domain and Client ID are public). */
-const COGNITO_DOMAIN_FALLBACK = "https://bostoncitygroup.auth.us-east-1.amazoncognito.com";
+const COGNITO_DOMAIN_FALLBACK = "https://us-east-1etlo1rsa7.auth.us-east-1.amazoncognito.com";
 const COGNITO_CLIENT_ID_FALLBACK = "7j0lpgtmi1571iu007fscgkinp";
 
 function isValidInternalPath(value: string | null | undefined): boolean {
@@ -47,9 +47,12 @@ export async function GET(request: NextRequest) {
       process.env.COGNITO_DOMAIN ||
       process.env.NEXT_PUBLIC_COGNITO_DOMAIN ||
       COGNITO_DOMAIN_FALLBACK;
-    const cognitoDomain = cognitoDomainRaw.startsWith("http")
+    let cognitoDomain = cognitoDomainRaw.startsWith("http")
       ? cognitoDomainRaw.replace(/\/$/, "")
       : `https://${cognitoDomainRaw.replace(/\/$/, "")}`;
+    if (cognitoDomain.includes("bostoncitygroup.auth.")) {
+      cognitoDomain = COGNITO_DOMAIN_FALLBACK;
+    }
     const clientId =
       process.env.COGNITO_CLIENT_ID ||
       process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ||

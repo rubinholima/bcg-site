@@ -6,12 +6,16 @@
  * Para refresh_token, use NEXT_PUBLIC_COGNITO_SCOPES=openid offline_access (requer offline_access no Cognito).
  */
 
+const COGNITO_DOMAIN_FALLBACK = "https://us-east-1etlo1rsa7.auth.us-east-1.amazoncognito.com";
 const cognitoDomainRaw = process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "";
-const cognitoDomain = cognitoDomainRaw.startsWith("http")
+const cognitoDomainResolved = cognitoDomainRaw.startsWith("http")
   ? cognitoDomainRaw.replace(/\/$/, "")
   : cognitoDomainRaw
     ? `https://${cognitoDomainRaw.replace(/\/$/, "")}`
-    : "";
+    : COGNITO_DOMAIN_FALLBACK;
+const cognitoDomain = cognitoDomainResolved.includes("bostoncitygroup.auth.")
+  ? COGNITO_DOMAIN_FALLBACK
+  : cognitoDomainResolved;
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const scopes = process.env.NEXT_PUBLIC_COGNITO_SCOPES ?? "openid email phone";
