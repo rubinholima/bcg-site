@@ -8,6 +8,7 @@
   "scripts": {
     "seed:group-home": "ts-node -r tsconfig-paths/register scripts/seed-group-home.ts",
     "fix:encoding": "ts-node -r tsconfig-paths/register scripts/fix-encoding.ts",
+    "check:encoding": "ts-node -r tsconfig-paths/register scripts/check-encoding.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
