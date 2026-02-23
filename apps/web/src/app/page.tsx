@@ -540,7 +540,7 @@ export default function Home() {
             )}
             <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               <div className="grid items-stretch gap-12 lg:grid-cols-2 lg:gap-16">
-                <div className={`animate-on-scroll flex flex-col ${textOrder}`}>
+                <div className={`animate-on-scroll flex flex-col ${textOrder}`} style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>
                   <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                     {blockTitle(block, t.what.title)}
                   </h2>
