@@ -20,13 +20,17 @@ const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const scopes = process.env.NEXT_PUBLIC_COGNITO_SCOPES ?? "openid email phone";
 
+/** Base da URL de callback: em produção usa sempre NEXT_PUBLIC_APP_URL para bater com o Cognito. */
+export function getCallbackOrigin(): string {
+  const base = appUrl?.replace(/\/$/, "") ?? "";
+  if (base && !base.includes("localhost") && !base.includes("127.0.0.1")) return base;
+  if (typeof window !== "undefined") return window.location.origin;
+  return base || "http://localhost:3000";
+}
+
 export function getHostedUiLoginUrl(state?: string): string {
-  // Browser: origem atual (login já redireciona para canônico em /login). Servidor: appUrl.
-  const base =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : (appUrl && !appUrl.includes("localhost") ? appUrl : "http://localhost:3000").replace(/\/$/, "");
-  const redirectUri = `${base.replace(/\/$/, "")}/auth/callback`;
+  const base = getCallbackOrigin().replace(/\/$/, "");
+  const redirectUri = `${base}/auth/callback`;
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",

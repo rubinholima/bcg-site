@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { getCallbackOrigin } from "@/lib/cognito-hosted-ui";
 
 /**
  * Cognito redireciona para /auth/callback?code=xxx&state=yyy.
@@ -29,7 +30,8 @@ function AuthCallbackContent() {
       return;
     }
 
-    const redirectUri = `${window.location.origin}/auth/callback`;
+    const origin = getCallbackOrigin().replace(/\/$/, "");
+    const redirectUri = `${origin}/auth/callback`;
     fetch("/api/auth/callback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
