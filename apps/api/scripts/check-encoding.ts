@@ -21,12 +21,12 @@ async function main() {
     return;
   }
   const blocks = (group.homeContent as { blocks?: unknown[] })?.blocks ?? [];
-  const whatBlock = blocks.find((b: { type?: string }) => b.type === 'what');
+  const whatBlock = blocks.find((b: { type?: string }) => b.type === 'what') as { config?: Record<string, unknown> } | undefined;
   if (!whatBlock?.config) {
     console.log('Bloco what não encontrado');
     return;
   }
-  const cfg = whatBlock.config as Record<string, unknown>;
+  const cfg = whatBlock.config;
   console.log('--- titlePt (raw) ---');
   console.log(JSON.stringify(cfg.titlePt));
   console.log('--- titlePt (hex bytes) ---');
