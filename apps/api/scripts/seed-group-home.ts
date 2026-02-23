@@ -101,8 +101,8 @@ function buildBlocks(): Array<{
       type: 'what',
       sortOrder: 3,
       config: {
-        titlePt: 'Construímos ecossistemas que crescem com consistência.',
-        titleEn: 'We build ecosystems that scale with consistency.',
+        titlePt: 'Um grupo. Diversos negócios. Uma visão.',
+        titleEn: 'One group. Diverse businesses. One vision.',
         bodyPt:
           'Do campo ao escritório, o foco é simples: estruturar operações, fortalecer marcas e criar sistemas repetíveis que sustentam crescimento.',
         bodyEn:
@@ -110,38 +110,38 @@ function buildBlocks(): Array<{
         imageUrl: DEFAULT_WHAT,
         cardsPt: [
           {
-            title: 'Operação de Clubes',
-            body: 'Estratégia, identidade, calendário, elenco, conteúdo e matchday.',
+            title: 'Gestão Esportiva',
+            body: 'Administração profissional de clubes e ativos esportivos, integrando operação, marca, performance, calendário, conteúdo e mercado sob uma estratégia de longo prazo.',
           },
           {
-            title: 'Mídia & Comunicação',
-            body: 'Storytelling, produção e distribuição de conteúdo em escala.',
+            title: 'Hospitalidade',
+            body: 'Gestão e expansão de restaurantes e operações de hospitalidade, com foco em eficiência, padronização, experiência e escala sustentável.',
           },
           {
-            title: 'Portfólio de Negócios',
-            body: 'Unidades organizadas por segmento com padrão de grupo.',
+            title: 'Saúde',
+            body: 'Estruturação e gestão de hospitais e negócios da área da saúde, com processos, governança e crescimento orientados à qualidade e impacto.',
           },
           {
-            title: 'Plataforma de Tecnologia',
+            title: 'Gestão Corporativa',
             body: 'Um hub para páginas, módulos, temas e publicação.',
           },
         ],
         cardsEn: [
           {
-            title: 'Club Operations',
-            body: 'Strategy, identity, fixtures, squad, content, and matchday.',
+            title: 'Sports Management',
+            body: 'Professional management of clubs and sports assets, integrating operations, brand, performance, calendar, content and market under a long-term strategy.',
           },
           {
-            title: 'Media & Communication',
-            body: 'Storytelling, production, and distribution at scale.',
+            title: 'Hospitality',
+            body: 'Management and expansion of restaurants and hospitality operations, with focus on efficiency, standardization, experience and sustainable scale.',
           },
           {
-            title: 'Business Portfolio',
-            body: 'Segment-based units under a unified group standard.',
+            title: 'Healthcare',
+            body: 'Structuring and management of hospitals and healthcare businesses, with processes, governance and growth oriented to quality and impact.',
           },
           {
-            title: 'Technology Platform',
-            body: 'A hub for pages, modules, themes, and publishing.',
+            title: 'Corporate Management',
+            body: 'A hub for pages, modules, themes and publishing.',
           },
         ],
       },
