@@ -10,10 +10,11 @@ Crie/edite o `.env` na pasta do projeto (ex.: `~/bcg-site/apps/api/.env` para a 
 
 ```env
 NODE_ENV=production
-DATABASE_URL=postgresql://USUARIO:SENHA@127.0.0.1:5432/bcg_platform?schema=public
+DATABASE_URL=postgresql://USUARIO:SENHA@127.0.0.1:5432/bcg_platform?schema=public&options=-c%20client_encoding%3DUTF8
 ```
 
 - Use **127.0.0.1** em vez de `localhost` para evitar problema de IPv6 no Node.
+- Adicione `&options=-c%20client_encoding%3DUTF8` para garantir UTF-8 na conexão (evita acentuação corrompida).
 - Se o Postgres estiver em outro host, troque `127.0.0.1` pelo IP/host correto.
 
 O front (Next.js) pode ter seu próprio `.env` em `apps/web` se precisar (ex.: `NEXT_PUBLIC_*`, `API_BASE_URL`).
@@ -162,6 +163,11 @@ cd ~/bcg-site && ./deploy.sh
 
 - **API sobe mas não responde**  
   Ver porta no `main.ts` e no Nginx; ver se o PM2 está realmente rodando `api` e `web`.
+
+- **Acentuação corrompida (negócios → neg | cios, etc.)**  
+  Dados migrados com encoding errado. Rode o script de correção:  
+  `cd apps/api && pnpm run fix:encoding`  
+  Depois atualize o `.env` com `&options=-c%20client_encoding%3DUTF8` na DATABASE_URL para evitar novos problemas.
 
 ---
 

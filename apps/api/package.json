@@ -7,6 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "seed:group-home": "ts-node -r tsconfig-paths/register scripts/seed-group-home.ts",
+    "fix:encoding": "ts-node -r tsconfig-paths/register scripts/fix-encoding.ts",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
