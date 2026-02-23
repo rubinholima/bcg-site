@@ -1,5 +1,5 @@
-/** Direct S3 bucket; next.config.ts remotePatterns must include this hostname. */
-const BASE = "https://bcg-platform-assets.s3.us-east-1.amazonaws.com";
+/** CloudFront — origem das mídias em produção. */
+const BASE = "https://www.bostoncitygroup.biz";
 
 /**
  * Unwraps legacy /api/media/proxy?url=... so we resolve to a clean absolute URL (BASE + path).
@@ -18,7 +18,6 @@ function unwrapLegacyProxyUrl(input: string): string {
     const match = t.match(/[?&]url=([^&]+)/);
     if (match) return decodeURIComponent(match[1].trim());
   } catch {
-    // fallback: split on url= and decode
     const idx = t.indexOf("url=");
     if (idx !== -1) {
       const rest = t.slice(idx + 4).replace(/^&.*$/, "").trim();
