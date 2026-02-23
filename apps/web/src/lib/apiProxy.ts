@@ -173,6 +173,11 @@ export async function forwardRequest(
       }
     });
 
+    // Garante charset UTF-8 em respostas JSON
+    if (contentType?.includes("application/json") && !nextResponseHeaders["content-type"]?.includes("charset")) {
+      nextResponseHeaders["content-type"] = "application/json; charset=utf-8";
+    }
+
     // Retorna resposta com mesmo status
     if (typeof responseData === "string") {
       return new NextResponse(responseData, {

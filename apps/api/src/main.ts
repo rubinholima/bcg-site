@@ -25,6 +25,15 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({ origin: true }); // permite localhost:3000 (Next) e outros em dev
+  // Garante charset UTF-8 em respostas JSON
+  app.use((_req, res, next) => {
+    const origJson = res.json.bind(res);
+    res.json = (body: unknown) => {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return origJson(body);
+    };
+    next();
+  });
   await app.listen(Number(process.env.PORT ?? 3001), '0.0.0.0');
 }
 bootstrap();
