@@ -1,5 +1,5 @@
-/** CloudFront origin — S3 is only reachable via this domain (OAC). */
-const BASE = "https://www.bostoncitygroup.biz";
+/** Direct S3 bucket; next.config.ts remotePatterns must include this hostname. */
+const BASE = "https://bcg-platform-assets.s3.us-east-1.amazonaws.com";
 
 /**
  * Unwraps legacy /api/media/proxy?url=... so we resolve to a clean absolute URL (BASE + path).
