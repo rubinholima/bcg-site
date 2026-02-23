@@ -1,4 +1,6 @@
 import type { HomeContentDto, HomeContentBlock, HomeBlockType, GlobalPresenceCounter, GlobalPresenceLocation } from "@/types/home-content";
+import type { Page } from "@/types/page";
+import { buildBackendUrl } from "@/lib/apiProxy";
 import { copy, type CopySchema } from "@/lib/home-copy";
 
 const DEFAULT_HERO =
@@ -18,6 +20,24 @@ export async function fetchHomeContent(): Promise<HomeContentDto | null> {
     });
     if (!res.ok) return null;
     return (await res.json()) as HomeContentDto;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Busca group-home diretamente do backend (server-side).
+ * Evita passar pelo Nginx, que pode corromper UTF-8 em produção.
+ * Usar APENAS em Server Components.
+ */
+export async function fetchGroupHomeFromBackend(): Promise<Page | null> {
+  try {
+    const res = await fetch(buildBackendUrl("/public/group-home"), {
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as Page;
   } catch {
     return null;
   }

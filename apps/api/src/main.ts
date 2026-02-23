@@ -9,12 +9,19 @@ config({ path: resolve(process.cwd(), '.env') });
 config({ path: resolve(rootDir, '.env') });
 
 // Em produção (ex.: AWS Lightsail), usar 127.0.0.1 evita problemas de resolução IPv6 do Node com "localhost"
-if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('localhost')) {
-  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(/localhost/g, '127.0.0.1');
+if (
+  process.env.NODE_ENV === 'production' &&
+  process.env.DATABASE_URL?.includes('localhost')
+) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL.replace(
+    /localhost/g,
+    '127.0.0.1',
+  );
 }
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NextFunction, Response } from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 
@@ -26,8 +33,8 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({ origin: true }); // permite localhost:3000 (Next) e outros em dev
   // Garante charset UTF-8 em respostas JSON
-  app.use((_req, res, next) => {
-    const origJson = res.json.bind(res);
+  app.use((_req, res: Response, next: NextFunction) => {
+    const origJson = res.json.bind(res) as (body: unknown) => Response;
     res.json = (body: unknown) => {
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return origJson(body);
@@ -36,4 +43,4 @@ async function bootstrap() {
   });
   await app.listen(Number(process.env.PORT ?? 3001), '0.0.0.0');
 }
-bootstrap();
+void bootstrap();
