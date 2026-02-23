@@ -21,14 +21,9 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const scopes = process.env.NEXT_PUBLIC_COGNITO_SCOPES ?? "openid email phone";
 
 export function getHostedUiLoginUrl(state?: string): string {
-  // Usa appUrl canônico quando definido (evita www vs non-www). Senão, window.origin no browser.
-  const base =
-    appUrl && !appUrl.includes("localhost") && !appUrl.includes("127.0.0.1")
-      ? appUrl.replace(/\/$/, "")
-      : typeof window !== "undefined"
-        ? window.location.origin
-        : appUrl.replace(/\/$/, "");
-  const redirectUri = `${(base || "").replace(/\/$/, "")}/api/auth/callback`;
+  // No browser: sempre a origem atual (evita redirect www↔não-www que apaga ?code=...). No servidor: appUrl.
+  const base = typeof window !== "undefined" ? window.location.origin : appUrl.replace(/\/$/, "");
+  const redirectUri = `${base.replace(/\/$/, "")}/api/auth/callback`;
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",
