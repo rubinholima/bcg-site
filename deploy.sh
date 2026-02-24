@@ -29,11 +29,12 @@ cd apps/api
 pm2 start dist/src/main.js --name bcg-api --update-env
 cd ../..
 
-# 6. Reiniciar Web
+# 6. Reiniciar Web (cwd = apps/web para next start encontrar .next)
 echo "🌐 Reiniciando Web (bcg-web)..."
 pm2 delete bcg-web 2>/dev/null || true
-pm2 start "pnpm --filter web start" --name bcg-web --cwd "$(pwd)"
-# cwd do PM2 deve ser a raiz do monorepo (onde está pnpm-workspace.yaml)
+cd apps/web
+pm2 start "pnpm start" --name bcg-web --cwd "$(pwd)"
+cd ../..
 
 # 7. Salvar e status
 pm2 save
