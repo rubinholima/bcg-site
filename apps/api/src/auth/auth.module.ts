@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ModulesModule } from '../modules/modules.module';
@@ -14,7 +14,7 @@ const jwtSecret = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
 @Module({
   imports: [
     PrismaModule,
-    ModulesModule,
+    forwardRef(() => ModulesModule),
     JwtModule.register({
       secret: jwtSecret,
       signOptions: { issuer: JWT_ISSUER, algorithm: 'HS256' },
