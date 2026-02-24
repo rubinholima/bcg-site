@@ -59,10 +59,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const res = await fetch(`${API_BASE_URL}/internal/auth/login`, {
+    const base = process.env.API_BASE_URL?.trim() || "http://127.0.0.1:3001";
+    const url = `${base.replace(/\/$/, "")}/internal/auth/login`;
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
+      signal: AbortSignal.timeout(15000),
     });
     const data = (await res.json()) as {
       access_token?: string;
