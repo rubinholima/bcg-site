@@ -81,18 +81,12 @@ function applyTokenCookies(
   origin: string
 ) {
   const isLocalhost = origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1");
-  const host = origin.replace(/^https?:\/\//, "").split("/")[0] ?? "";
-  const cookieDomain =
-    !isLocalhost && (host === "bostoncitygroup.biz" || host.endsWith(".bostoncitygroup.biz"))
-      ? ".bostoncitygroup.biz"
-      : undefined;
   const cookieOpts = {
     path: "/",
     httpOnly: true,
     sameSite: "lax" as const,
     maxAge: 60 * 60 * 24 * 7,
     secure: !isLocalhost,
-    ...(cookieDomain && { domain: cookieDomain }),
   };
   if (tokens.id_token) response.cookies.set("id_token", tokens.id_token, cookieOpts);
   if (tokens.access_token) response.cookies.set("access_token", tokens.access_token, cookieOpts);
@@ -149,11 +143,21 @@ export async function POST(request: NextRequest) {
   const requestOrigin = getRequestOrigin(request).replace(/\/$/, "");
 
   let body: { code?: string; state?: string; redirect_uri?: string };
-  try {
-    body = (await request.json()) as { code?: string; state?: string; redirect_uri?: string };
-  } catch {
-    console.error("[auth/callback] POST invalid body");
-    return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const fd = await request.formData();
+    body = {
+      code: fd.get("code")?.toString()?.trim(),
+      state: fd.get("state")?.toString()?.trim() || undefined,
+      redirect_uri: fd.get("redirect_uri")?.toString()?.trim() || undefined,
+    };
+  } else {
+    try {
+      body = (await request.json()) as { code?: string; state?: string; redirect_uri?: string };
+    } catch {
+      console.error("[auth/callback] POST invalid body");
+      return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+    }
   }
 
   const code = body.code?.trim();
