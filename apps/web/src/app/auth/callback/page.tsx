@@ -45,8 +45,10 @@ function AuthCallbackContent() {
           window.location.replace(data.redirect);
         } else {
           setStatus("error");
-          const hint = data.cognitoError ? `&hint=${encodeURIComponent(data.cognitoError.slice(0, 120))}` : "";
-          window.location.replace(`/login?error=${data.error ?? "auth"}${hint}`);
+          if (data.cognitoError && typeof sessionStorage !== "undefined") {
+            sessionStorage.setItem("loginErrorReason", data.cognitoError);
+          }
+          window.location.replace(`/login?error=${data.error ?? "auth"}`);
         }
       })
       .catch(() => {

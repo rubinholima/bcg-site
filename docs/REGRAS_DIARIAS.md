@@ -153,7 +153,7 @@ Assim o módulo aparece em **Configurações → Módulos** e o super admin pode
 **Quando o usuário escrever "encerre o dia", executar nesta ordem:**
 
 1. **Comitar tudo** — `git add .` e `git commit -m "..."` com mensagem que descreva o que foi feito no dia.
-2. **Atualizar o resumo do dia** — Em `docs/DESENVOLVIMENTO_DIARIO.md`, adicionar no topo (após o título do arquivo) uma nova seção **📅 [DATA] — ENCERRAMENTO** com a **data real do dia** (ex.: 16 DE FEVEREIRO DE 2026). A seção deve conter:
+2. **Atualizar o resumo do dia** — Em `docs/DESENVOLVIMENTO_DIARIO.md`, adicionar no topo (após o título do arquivo) uma nova seção **📅 [DATA] — ENCERRAMENTO**. A **[DATA]** deve ser **sempre a data do sistema** (obter com `date` no terminal, ex.: 23 DE FEVEREIRO DE 2026). A seção deve conter:
    - O que foi feito hoje (lista objetiva).
    - Arquivos criados/modificados (resumo).
    - Commit e branch usados; confirmação de push.

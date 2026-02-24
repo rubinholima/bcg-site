@@ -33,6 +33,18 @@ function LoginPageContent() {
   const [cognitoHint, setCognitoHint] = useState<string | null>(null);
 
   useEffect(() => {
+    const hintFromUrl = searchParams.get("hint");
+    const hintFromStorage =
+      typeof sessionStorage !== "undefined" ? sessionStorage.getItem("loginErrorReason") : null;
+    if (hintFromStorage) {
+      setCognitoHint(hintFromStorage);
+      sessionStorage.removeItem("loginErrorReason");
+    } else if (hintFromUrl) {
+      setCognitoHint(hintFromUrl);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (canonicalOrigin && typeof window !== "undefined" && !canonicalOrigin.includes("localhost")) {
       if (window.location.origin !== canonicalOrigin) {
         const to = `${canonicalOrigin}${window.location.pathname}${window.location.search}`;
@@ -47,7 +59,6 @@ function LoginPageContent() {
     setHasError(err === "auth" || err === "missing" || err === "invalid_scope");
     setInvalidScope(err === "invalid_scope");
     setSessionExpired(searchParams.get("reason") === "session_expired");
-    setCognitoHint(searchParams.get("hint") ?? null);
   }, [searchParams]);
 
   return (
@@ -81,30 +92,27 @@ function LoginPageContent() {
             {hasError && (
               <div
                 role="alert"
-                className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive space-y-1"
+                className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive space-y-2"
               >
-                <p>
-                  {invalidScope
-                    ? "A última tentativa falhou por scopes incompatíveis. O app usa agora openid, email, phone. Clique em Entrar novamente ou acesse /login para tentar de novo."
-                    : "Não foi possível concluir o login. Verifique seus dados e tente novamente."}
-                </p>
-                {cognitoHint && (
-                  <p className="text-xs font-mono break-all opacity-90">
-                    Cognito: {cognitoHint}
+                <p className="font-semibold">Por que não entrou:</p>
+                {cognitoHint ? (
+                  <p className="font-mono text-xs break-words bg-black/10 px-2 py-1.5 rounded">
+                    {cognitoHint}
+                  </p>
+                ) : (
+                  <p>
+                    {invalidScope
+                      ? "Scopes incompatíveis no Cognito. Use openid, email, phone (e offline_access se quiser refresh)."
+                      : "O Cognito recusou a troca do código. Inclua no App Client (Allowed callback URLs) exatamente:"}
                   </p>
                 )}
-                <p className="text-xs opacity-90">
-                  Allowed callback URLs no Cognito:{" "}
-                  <code className="bg-black/20 px-1 rounded">
+                {!cognitoHint && !invalidScope && (
+                  <p className="font-mono text-xs bg-black/10 px-2 py-1 rounded">
                     {typeof window !== "undefined"
                       ? `${window.location.origin}/auth/callback`
                       : "https://www.bostoncitygroup.biz/auth/callback"}
-                  </code>
-                  {typeof window !== "undefined" && window.location.origin.includes("www") === false && (
-                    <> e <code className="bg-black/20 px-1 rounded">https://www.bostoncitygroup.biz/auth/callback</code></>
-                  )}
-                  .
-                </p>
+                  </p>
+                )}
               </div>
             )}
             <Button asChild className="w-full h-12 text-base font-medium">

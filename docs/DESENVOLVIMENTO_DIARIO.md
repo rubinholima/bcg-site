@@ -3,6 +3,7 @@
 > **Este arquivo concentra TODO o histórico diário do projeto.**
 > **NUNCA** criar outros arquivos de resumo.
 > Atualizar **somente no FIM DO DIA**.
+> **Sempre usar a data do sistema** ao criar seção de encerramento (rodar `date` no terminal para obter o dia atual).
 
 ---
 
