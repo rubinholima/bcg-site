@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { setPendingTokens } from "../pending-tokens";
+import { randomBytes } from "crypto";
 
 const COGNITO_DOMAIN_FALLBACK = "https://us-east-1etlo1rsa7.auth.us-east-1.amazoncognito.com";
 const CLIENT_ID_FALLBACK = "7j0lpgtmi1571iu007fscgkinp";
@@ -186,8 +188,12 @@ export async function POST(request: NextRequest) {
 
   const nextPath = isValidInternalPath(body.state ?? null) ? body.state! : "/dashboard";
   console.log("[auth/callback] POST success ->", nextPath);
-  const res = NextResponse.redirect(new URL(nextPath, requestOrigin), 302);
+  const key = randomBytes(24).toString("base64url");
+  setPendingTokens(key, result.tokens);
+  const setCookiesUrl = new URL("/api/auth/set-cookies", requestOrigin);
+  setCookiesUrl.searchParams.set("t", key);
+  setCookiesUrl.searchParams.set("next", nextPath);
+  const res = NextResponse.redirect(setCookiesUrl, 302);
   res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
-  applyTokenCookies(res, result.tokens, requestOrigin);
   return res;
 }
