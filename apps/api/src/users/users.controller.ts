@@ -19,10 +19,10 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 const AWS_CREDENTIALS_MESSAGE =
-  'AWS credentials not configured. For local dev: run `aws configure` or set AWS_PROFILE in .env, or set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. See docs/AWS_CREDENTIALS.md.';
+  'AWS credentials not configured. For local dev: run `aws configure` or set AWS_PROFILE in .env, or set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY. See docs/DESENVOLVIMENTO_DIARIO.md (seção AWS_CREDENTIALS).';
 
 const AWS_ACCESS_DENIED_MESSAGE =
-  'AWS Access Denied: o usuário IAM não tem permissão no User Pool. Verifique a política IAM (ListUsers, AdminListGroupsForUser, etc.) e o ARN do pool em docs/AWS_CREDENTIALS.md.';
+  'AWS Access Denied: o usuário IAM não tem permissão no User Pool. Verifique a política IAM (ListUsers, AdminListGroupsForUser, etc.) e o ARN do pool em docs/DESENVOLVIMENTO_DIARIO.md (seção AWS_CREDENTIALS).';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)

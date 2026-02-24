@@ -7,6 +7,27 @@
 
 ---
 
+# ⭐ REGRAS DIÁRIAS (LER PRIMEIRO)
+
+> **Leia esta seção todo dia antes de desenvolver.** O resto do documento é histórico por dia e docs consolidados.
+
+- **Nunca mudar o que já funciona** — Não modifique código/comportamento aprovado; não adicione scrollbars/overflow em áreas que funcionam; só altere o que foi pedido.
+- **Carrosséis** — Usar `el.scrollTo({ left: ... })` no container. **NUNCA** `scrollIntoView` (quebra o scroll vertical da página).
+- **Dashboard** — Não alterar estrutura base: Sidebar, Header, nome "BCG Platform". Layout em `apps/web/src/app/dashboard/layout.tsx`.
+- **Rotina do dia** — (1) Subir banco: `docker compose up -d db`. (2) Ler regras e desenvolvimento diário. (3) Confirmar objetivo antes de codar.
+- **Código** — TypeScript; tenant = empresa (conceito técnico vs UI); não quebrar monorepo.
+- **Módulos de página** — Padrão: cor de fundo, overlay, títulos PT/EN; Hero com carrossel; ver seção MODULOS_PAGINA em DOCS CONSOLIDADOS (final do arquivo).
+- **Módulos do dashboard** — Cadastrar em Module + ModuleRole no backend; sidebar com mesmo `moduleSlug`; proteger página com `canAccessModule("slug")`. Ver seção MODULOS_DASHBOARD em DOCS CONSOLIDADOS.
+- **Encerrar o dia** — Quando o usuário disser "encerre o dia": (1) Commit de tudo. (2) No **topo** da seção "POR DIA" abaixo, adicionar **📅 [DATA] — ENCERRAMENTO** (data do sistema via `date`), com o que foi feito, arquivos, commit e push. (3) `git push origin <branch>`.
+- **Git** — Trabalhar em branch; não commitar direto em main.
+- **Cursor OOM** — `NODE_OPTIONS=--max-old-space-size=8192`; abrir um projeto por vez; ao reabrir após OOM marcar "Don't restore editors". Ver seção CURSOR_EVITAR_OOM em DOCS CONSOLIDADOS.
+
+**Comandos principais:** `docker compose up -d db` | `pnpm install` (raiz) | `cd apps/web && pnpm dev` | `cd apps/api && pnpm start:dev`
+
+---
+
+# 📅 POR DIA — ENCERRAMENTOS
+
 # <span style="color: red; font-size: 28px;">📅 18 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Login Cognito: callback /auth/callback, getCallbackOrigin, hint, authFetch)</span>
 
 ## **CALLBACK COMO PÁGINA, POST API, URL CANÔNICA, ERRO COGNITO NA TELA**
@@ -26,7 +47,7 @@
 ### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
 
 **Modificados:**  
-`apps/web/src/app/api/auth/callback/route.ts`, `apps/web/src/app/auth/callback/page.tsx`, `apps/web/src/app/auth/login/route.ts`, `apps/web/src/app/login/page.tsx`, `apps/web/src/lib/authFetch.ts`, `apps/web/src/lib/cognito-hosted-ui.ts`, `docs/TOKEN_STORAGE.md`
+`apps/web/src/app/api/auth/callback/route.ts`, `apps/web/src/app/auth/callback/page.tsx`, `apps/web/src/app/auth/login/route.ts`, `apps/web/src/app/login/page.tsx`, `apps/web/src/lib/authFetch.ts`, `apps/web/src/lib/cognito-hosted-ui.ts`, `seção TOKEN_STORAGE neste arquivo`
 
 ### 🚀 **FECHAMENTO DO DIA (GIT):**
 
@@ -179,18 +200,18 @@
 
 #### 5. **Guia da planilha e regra "Encerre o dia"**
 
-- `docs/PLANILHA_TIMES_CATEGORIAS_GOOGLE_SHEETS.md`: como usar dropdowns (Validação de dados), congelar linha, listas para categoria/posição/pe_dominante.
-- `docs/REGRAS_DIARIAS.md`: nova seção **Encerrar o dia** — quando o usuário escrever "encerre o dia", commitar tudo, atualizar resumo em `DESENVOLVIMENTO_DIARIO.md` e dar push para o Git externo.
+- Seção PLANILHA_TIMES_CATEGORIAS_GOOGLE_SHEETS (neste arquivo): como usar dropdowns (Validação de dados), congelar linha, listas para categoria/posição/pe_dominante.
+- Seção REGRAS_DIARIAS (neste arquivo): **Encerrar o dia** — quando o usuário escrever "encerre o dia", commitar tudo, atualizar resumo em `DESENVOLVIMENTO_DIARIO.md` e dar push para o Git externo.
 
 ---
 
 ### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
 
 **Criados:**  
-`apps/web/src/app/api/google-sheets/times-categorias/route.ts`, `apps/web/public/templates/times-categorias-template.csv`, `docs/PLANILHA_TIMES_CATEGORIAS_GOOGLE_SHEETS.md`
+`apps/web/src/app/api/google-sheets/times-categorias/route.ts`, `apps/web/public/templates/times-categorias-template.csv`, seção DOCS CONSOLIDADOS (neste arquivo)
 
 **Modificados:**  
-`apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/components/portfolio/modules/TimesCategoriasSection.tsx`, `apps/web/src/lib/football-positions.ts`, `docs/REGRAS_DIARIAS.md`, `docs/DESENVOLVIMENTO_DIARIO.md`
+`apps/web/src/app/dashboard/paginas/tenant/[tenantId]/editar/page.tsx`, `apps/web/src/components/portfolio/modules/TimesCategoriasSection.tsx`, `apps/web/src/lib/football-positions.ts`, este arquivo
 
 ---
 
@@ -567,7 +588,7 @@ Deploy; testes E2E; ajustes de UX conforme uso.
 - **Problema:** Dúvida conceitual entre Tenant e Empresa.
 - **Causa:** Termo técnico exposto no UI.
 - **Solução:** Definição oficial: Tenant = Empresa do Grupo (apenas técnico).
-- **Arquivos:** `docs/REGRAS_DIARIAS.md`
+- **Arquivos:** este arquivo (seção REGRAS_DIARIAS)
 - **Status:** ✅ RESOLVIDO
 
 ---
@@ -587,7 +608,7 @@ Deploy; testes E2E; ajustes de UX conforme uso.
 
 #### **Criados:**
 
-1. `docs/REGRAS_DIARIAS.md` — Regras oficiais do projeto
+1. Seção REGRAS_DIARIAS (neste arquivo) — Regras oficiais do projeto
 2. `apps/api/prisma.config.ts` — Configuração Prisma 7
 3. `apps/api/prisma/schema.prisma` — Modelo Tenant
 4. Estrutura base do monorepo
@@ -739,14 +760,14 @@ Para o endpoint **GET /users** (e criar/alterar usuários) funcionar, a API prec
 - **Opção 1 (recomendada):** Instalar AWS CLI v2, rodar `aws configure --profile bcg-dev`, e no `apps/api/.env` setar `AWS_PROFILE=bcg-dev`. Não usar `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`.
 - **Opção 2:** Preencher `AWS_ACCESS_KEY_ID` e `AWS_SECRET_ACCESS_KEY` no `.env` (nunca commitar).
 
-Se não houver credenciais, a API retorna 500 com mensagem orientando. Ver **`docs/AWS_CREDENTIALS.md`** (IAM policy mínima e comando de teste: GET /users com Bearer token).
+Se não houver credenciais, a API retorna 500 com mensagem orientando. Ver seção **AWS_CREDENTIALS** (neste arquivo) (IAM policy mínima e comando de teste: GET /users com Bearer token).
 
 ---
 
 ### 📌 **Regra: Módulos do dashboard (resumo diário e regras)**
 
 **Todo novo módulo do dashboard deve vir para a tela Configurações → Módulos.**
-Regra registrada em **`docs/REGRAS_DIARIAS.md`** (seção Módulos do dashboard) e detalhada em **`docs/MODULOS_DASHBOARD.md`**. Ao criar um novo módulo: cadastrar em Module + ModuleRole no backend, adicionar no menu da sidebar com o mesmo `moduleSlug`, e proteger a página com `canAccessModule("slug")`.
+Regra registrada na seção **REGRAS_DIARIAS** e detalhada na seção **MODULOS_DASHBOARD** (neste arquivo). Ao criar um novo módulo: cadastrar em Module + ModuleRole no backend, adicionar no menu da sidebar com o mesmo `moduleSlug`, e proteger a página com `canAccessModule("slug")`.
 
 ---
 
@@ -761,7 +782,7 @@ Regra registrada em **`docs/REGRAS_DIARIAS.md`** (seção Módulos do dashboard)
 - **Backend:** `S3Module` + `S3Service`; endpoint `POST /upload/logo` (multipart, `scope`: `'group'` ou `tenantId`); bucket configurável via `AWS_S3_BUCKET`.
 - **Banco:** Campo `logoUrl` em `Tenant`; migration aplicada.
 - **Frontend:** Página editar empresa com upload de logo; lista de empresas com coluna Logo; Grupo Master com upload de logo do grupo.
-- **Doc:** `docs/S3_BUCKET_POLICY.md` (política S3 e Block Public Access).
+- **Doc:** seção S3_BUCKET_POLICY (neste arquivo) (política S3 e Block Public Access).
 
 #### 2. **Grupo Master (Group)**
 
@@ -772,13 +793,13 @@ Regra registrada em **`docs/REGRAS_DIARIAS.md`** (seção Módulos do dashboard)
 
 - **Backend:** Modelos `Module` e `ModuleRole`; seed de módulos (dashboard, grupo_master, usuarios, empresas, tipos, paginas, noticias, midia, configuracoes); `GET /me/modules` (módulos do usuário); `GET/PATCH /settings/modules` (super_admin).
 - **Frontend:** Sidebar filtra itens por `canAccessModule(moduleSlug)`; página Configurações → Módulos (super_admin) com checkboxes por role; páginas protegidas com redirect para `/403`.
-- **Doc:** `docs/MODULOS_DASHBOARD.md`.
+- **Doc:** seção MODULOS_DASHBOARD (neste arquivo).
 
 #### 4. **Logout e URL de saída**
 
 - **Frontend:** `getHostedUiLogoutUrl()` redireciona para `/login` após logout no Cognito.
 - **Cognito:** Para evitar tela "Invalid request", adicionar `http://localhost:3000/login` (e URL de produção) em **Sign out URL(s)** do App Client (Hosted UI).
-- **Doc:** `docs/TOKEN_STORAGE.md` atualizado com passos no AWS Console.
+- **Doc:** seção TOKEN_STORAGE (neste arquivo) atualizado com passos no AWS Console.
 
 #### 5. **Criação de usuário — confirmação de senha**
 
@@ -817,5 +838,120 @@ Deploy, páginas de conteúdo (Páginas, Notícias, Mídia) com dados reais.
 2. Grupo Master configurável (nome e logo) com acesso controlado.
 3. Controle de acesso por módulo (super_admin define quem vê o quê).
 4. Logout sem tela de erro da AWS quando Sign out URL está configurada.
+
+---
+
+# 📅 LOGIN E DEPLOY EM PRODUÇÃO — RESUMO E CHECKLIST (Fev 2026)
+
+> Tudo que foi tentado e o que conferir no servidor. Não criar outros .md de resumo.
+
+## O que foi pedido
+
+Resolver o login em produção: entrar e ir para o dashboard, sem voltar para a tela de login e sem 502.
+
+## O que foi tentado
+
+| Problema | O que fizemos |
+|----------|----------------|
+| **502 no callback** | Nginx: `proxy_buffer_size 16k` e `proxy_buffers 4 16k` em `location ^~ /api/auth/` (resposta com 3 cookies JWT é grande; sem isso: "upstream sent too big header"). |
+| **Volta para login** | Cookie `domain: ".bostoncitygroup.biz"` para www/new/apex; form POST em vez de fetch; por fim: **duas respostas** — POST só 302 para `/api/auth/set-cookies?t=KEY&next=/dashboard`, e GET set-cookies devolve 302 + Set-Cookie para /dashboard (evita 302+Set-Cookie na mesma resposta do POST, que alguns proxies tratam mal). |
+| **GET perdia o code** | Fluxo GET direto (Cognito → /api/auth/callback) foi revertido; proxy/CloudFront cortava a query string. Mantido fluxo POST (página /auth/callback + form). |
+| **Subdomínio new** | Inclusão de `https://new.bostoncitygroup.biz/auth/callback` no Cognito e cookies com domain para subdomínios. |
+
+## Fluxo atual (duas respostas)
+
+1. Cognito redireciona para `/auth/callback?code=xxx&state=/dashboard`.
+2. Página envia **form POST** para `/api/auth/callback` (code no body).
+3. Callback troca o code por tokens, guarda em memória com uma chave, e responde **só 302** para `/api/auth/set-cookies?t=KEY&next=/dashboard` (sem Set-Cookie).
+4. O browser segue para GET `/api/auth/set-cookies?t=...`. Essa rota devolve **302 + Set-Cookie** para `/dashboard`.
+5. O browser define os cookies e segue para `/dashboard`; o próximo request já vai com cookies.
+
+## Checklist no servidor
+
+**1. Nginx** — Em `location ^~ /api/auth/` (blocos 80 e 443): `proxy_buffer_size 16k;` e `proxy_buffers 4 16k;`. Testar: `sudo nginx -t`. Recarregar: `sudo systemctl reload nginx`. Ver `docs/nginx-bostoncitygroup.biz.example.conf`.
+
+**2. Cognito** — Allowed callback URLs: `https://www.bostoncitygroup.biz/auth/callback`, `https://bostoncitygroup.biz/auth/callback`, `https://new.bostoncitygroup.biz/auth/callback`.
+
+**3. Env Next (apps/web)** — `NEXT_PUBLIC_APP_URL` (URL canônica), `COGNITO_DOMAIN` ou `NEXT_PUBLIC_COGNITO_DOMAIN`, `COGNITO_CLIENT_ID` ou `NEXT_PUBLIC_COGNITO_CLIENT_ID`.
+
+**4. Deploy** — `cd ~/bcg-site && git pull origin develop && ./deploy.sh`. Depois limpar cookies ou aba anônima.
+
+**Se ainda falhar:** `pm2 logs bcg-web --lines 50`; conferir se POST retorna 302 para `/api/auth/set-cookies?t=...`; se houver CloudFront, desabilitar cache para `/api/auth/*` e invalidar.
+
+---
+
+# DOCS CONSOLIDADOS (conteúdo dos .md)
+
+> Todo o conteúdo que estava em arquivos .md separados em docs/ foi reunido aqui. Não criar novos .md de resumo.
+
+## DEPLOY-SERVER (Deploy no servidor — AWS Lightsail / Ubuntu)
+
+Passo a passo para rodar o projeto no servidor com **PM2**. Pressupõe: Node.js, pnpm, Git e PM2 instalados; PostgreSQL rodando (no mesmo servidor ou em 127.0.0.1).
+
+**1. Variáveis de ambiente** — Crie/edite `.env` em `apps/api` (e `apps/web` se precisar). Use `DATABASE_URL` com **127.0.0.1** (não localhost) e `&options=-c%20client_encoding%3DUTF8`. **2. Atualizar código:** `cd ~/bcg-site && git pull origin develop && pnpm install`. **3. API:** `cd apps/api && pnpm exec prisma generate && pnpm run build`; PM2: `pm2 start dist/main.js --name api` (ou `pm2 restart api`). **4. Web:** `cd apps/web && pnpm run build`; PM2: `pm2 start pnpm --name web -- start` (ou `pm2 restart web`). **5. Script único:** `./deploy.sh` na raiz (git pull, pnpm install, build API e Web, pm2 restart). **6. Nginx:** `location ^~ /api/auth/` deve ir para porta 3000 (Next) com `proxy_buffer_size 16k; proxy_buffers 4 16k;`. **7. Checklist:** NODE_ENV, DATABASE_URL 127.0.0.1, Prisma generate antes do build, PM2 api e web, portas e Nginx. **8. Erros comuns:** Prisma 6 (não 7), CRLF→LF, acentuação→fix:encoding e options na URL.
+
+## TOKEN_STORAGE (Token storage — Fase 2)
+
+Tokens em **HTTP-only cookies** (id_token, access_token, refresh_token). Definidos em `apps/web/src/app/api/auth/callback` (e set-cookies). Recuperar no servidor: `request.cookies.get('access_token')?.value`; no frontend usar `/api/me` com `credentials: 'include'`. Renovação: scope `offline_access`, rota `POST /api/auth/refresh`, usar `authFetch` em chamadas autenticadas. Logout: link para Cognito com `logout_uri` = nossa tela `/login`; cadastrar Sign out URL(s) no App Client. Allowed callback URLs: incluir exatamente as URLs de callback (localhost e produção). Scopes: OpenID e offline_access. NEXT_PUBLIC_APP_URL = URL canônica.
+
+## REGRAS_DIARIAS
+
+**Ver seção "⭐ REGRAS DIÁRIAS (LER PRIMEIRO)" no topo deste arquivo.**
+
+## ENCODING_UTF8_FIX
+
+Acentuação corrompida (Mojibake): buscar dados da Home no servidor (RSC) direto do backend (fetch 127.0.0.1:3001), sem fetch no cliente para carregamento inicial. Arquivos: home-content.ts (fetchGroupHomeFromBackend), page.tsx (Server Component), HomeClient (recebe props). Nginx alternativo: charset utf-8; proxy_set_header Accept-Charset "utf-8".
+
+## PARA-O-CHATGPT
+
+Prisma 6 (não 7), DATABASE_URL com 127.0.0.1 em produção, arquivos LF (não CRLF), prisma e @prisma/client mesma versão. Ao sugerir código para PrismaService/deploy: Prisma 6, url = env("DATABASE_URL"), super({ log: [...] }), 127.0.0.1.
+
+## BUILD_E_DEPLOY_WEB
+
+`pnpm install` (raiz); `pnpm --filter web build`; `pnpm --filter web start -- --port 3000`. PM2: working directory raiz do monorepo. Lockfile só na raiz. Erros de runtime em "Generating static pages" são esperados se APIs indisponíveis no build.
+
+## CURSOR_EVITAR_OOM
+
+Abrir um projeto por vez. NODE_OPTIONS=--max-old-space-size=8192 (ou 16384) em variáveis de ambiente do sistema. Ao reabrir após OOM: "Don't restore editors". Opção B: script cursor-launch-com-mais-memoria.bat.
+
+## S3_BUCKET_POLICY
+
+Bucket bcg-platform-assets: leitura pública em `logos/*` e `media/*` via bucket policy (GetObject, Principal *). Desbloquear "Block public access" se necessário. URLs: logos em logos/group e logos/tenants/{id}; mídia em media/{sizeKey}/.
+
+## PAGINAS_E_SUBDOMINIOS
+
+Criar página: Dashboard → Empresas → Páginas → Construtor com módulos. Ver em dev: /portfolio/[slug]. Subdomínio AWS: CNAME para o app; backend/front identificam tenant pelo hostname.
+
+## NPM_VS_PNPM
+
+Monorepo usa **pnpm**. Na raiz: `pnpm install`. Não rodar npm install em apps/api. Para adicionar pacote: `pnpm add <pkg> --filter api` (ou web).
+
+## PLANILHA_TIMES_CATEGORIAS_GOOGLE_SHEETS
+
+Congelar primeira linha. Validação de dados: dropdowns para categoria (principal, sub20, ...), posição (GK, CB, ...), pe_dominante (Esquerdo, Direito, Ambos). Aba Opções com listas. Formatação: cabeçalho negrito, colunas largas.
+
+## MODULOS_PAGINA (resumo)
+
+Imagens: Dashboard → Mídia, placeholders com tamanho, dropdown da mídia. Padrão: backgroundColor, backgroundOverlayOpacity, titlePt/titleEn. Hero: múltiplas fotos, carrossel (fade/slide/zoom), intervalo configurável, título por foto. Header/Footer: módulos dedicados. Ordem dos blocos definida pelo usuário.
+
+## MODULOS_DASHBOARD
+
+Configurações → Módulos: super admin define acesso por módulo (Company Admin, Editor). Novo módulo: INSERT em Module e ModuleRole; migration ou seed; item na sidebar com moduleSlug; página com canAccessModule("slug").
+
+## FOOTBALL_DATA_SETUP
+
+Cadastro em football-data.org; FOOTBALL_DATA_API_KEY no .env da API. Team ID na cobertura da API. Empresas → [clube] → Football-Data Team ID; Páginas → módulo Próximos jogos → Fonte AUTO. Limite: 10 req/min, cache 10 min.
+
+## CURSOR_CONFIG_ESTABILIDADE
+
+Abrir só o projeto do dia. files.exclude e search.exclude para node_modules, dist, .next. Reduz indexação e memória.
+
+## AWS_CREDENTIALS
+
+API usa AWS SDK (Cognito Admin). Credenciais: default chain ou AWS_ACCESS_KEY_ID/SECRET no .env. Dev: aws configure --profile bcg-dev e AWS_PROFILE no .env. IAM policy mínima para User Pool. Nunca commitar .env.
+
+## FASE2_ENTREGAVEIS / prd_site_bcg
+
+Ver arquivos no repo se necessário; conteúdo de produto e entregáveis mantido nos respectivos documentos originais quando existirem.
 
 ---

@@ -8,7 +8,7 @@
 - [x] Usuário role="user" NÃO acessa /dashboard (redireciona para "/").
 - [x] Portal público (/, /403) funciona sem login.
 - [x] Sem chamadas fetch/axios para cognito-idp no browser.
-- [x] Token storage documentado (HTTP-only cookies; ver `docs/TOKEN_STORAGE.md`).
+- [x] Token storage documentado (HTTP-only cookies; ver `docs/DESENVOLVIMENTO_DIARIO.md` (seção TOKEN_STORAGE)).
 
 ---
 
@@ -39,7 +39,7 @@
 
 | Arquivo | Descrição |
 |--------|-----------|
-| `docs/TOKEN_STORAGE.md` | Onde os tokens ficam (cookies) e como recuperar. |
+| `docs/DESENVOLVIMENTO_DIARIO.md` (seção TOKEN_STORAGE) | Onde os tokens ficam (cookies) e como recuperar. |
 | `docs/FASE2_ENTREGAVEIS.md` | Este arquivo (checklist + comandos). |
 
 ---
@@ -145,4 +145,4 @@ No User Pool do Cognito, use os grupos **super_admin**, **company_admin**, **edi
 Além das já listadas para JWT:
 
 - `AWS_REGION` — (opcional) Região do User Pool; padrão `us-east-1`. Usada no JWT (JWKS/issuer) e no CognitoService.
-- Credenciais AWS: **opcional** no .env. Se não setar `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`, o SDK usa a default chain (`AWS_PROFILE`, `aws configure`, IAM role em produção). Ver **`docs/AWS_CREDENTIALS.md`** (DEV local Windows, IAM policy mínima, teste GET /users).
+- Credenciais AWS: **opcional** no .env. Se não setar `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`, o SDK usa a default chain (`AWS_PROFILE`, `aws configure`, IAM role em produção). Ver **`docs/DESENVOLVIMENTO_DIARIO.md`** (seção AWS_CREDENTIALS) (DEV local Windows, IAM policy mínima, teste GET /users).

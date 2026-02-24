@@ -38,8 +38,16 @@ export async function GET(request: NextRequest) {
     ...(domain && { domain }),
   };
 
-  const res = NextResponse.redirect(new URL(nextPath, origin), 302);
-  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+  // 200 + Set-Cookie + HTML redirect: alguns proxies/browsers descartam Set-Cookie em 302
+  const redirectUrl = new URL(nextPath, origin).toString();
+  const html = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl}"/><script>window.location.replace(${JSON.stringify(redirectUrl)});</script></head><body>Redirecionando...</body></html>`;
+  const res = new NextResponse(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+    },
+  });
   if (tokens.id_token) res.cookies.set("id_token", tokens.id_token, cookieOpts);
   if (tokens.access_token) res.cookies.set("access_token", tokens.access_token, cookieOpts);
   if (tokens.refresh_token) {

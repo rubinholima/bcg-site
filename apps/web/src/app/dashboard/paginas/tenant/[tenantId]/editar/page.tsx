@@ -1633,7 +1633,7 @@ export default function EditarPaginaTenantPage() {
                                   <a href="/templates/times-categorias-template.csv" download="times-categorias-template.csv" className="text-primary underline hover:no-underline">
                                     Baixar template CSV
                                   </a>
-                                  {" "}Na planilha você pode usar <strong>Dados → Validação de dados → Lista de itens</strong> para criar dropdowns em categoria, posição e pé dominante (guia em <code className="rounded bg-muted px-1">docs/PLANILHA_TIMES_CATEGORIAS_GOOGLE_SHEETS.md</code>).
+                                  {" "}Na planilha você pode usar <strong>Dados → Validação de dados → Lista de itens</strong> para criar dropdowns em categoria, posição e pé dominante (guia em <code className="rounded bg-muted px-1">docs/DESENVOLVIMENTO_DIARIO.md (seção DOCS CONSOLIDADOS)</code>).
                                 </p>
                               </div>
                             </div>

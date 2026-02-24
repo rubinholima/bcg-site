@@ -230,7 +230,7 @@ export default function GrupoPage() {
           )}
           {logoLoadError && (
             <p className="text-sm text-amber-600 dark:text-amber-400">
-              Logo não carregou. Verifique no S3: bucket policy deve permitir leitura em logos/* (veja docs/S3_BUCKET_POLICY.md).
+              Logo não carregou. Verifique no S3: bucket policy deve permitir leitura em logos/* (veja docs/DESENVOLVIMENTO_DIARIO.md (seção S3_BUCKET_POLICY)).
             </p>
           )}
         </CardContent>
