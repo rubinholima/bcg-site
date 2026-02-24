@@ -1,18 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { useState, useEffect } from "react";
 import { LayoutDashboard, Home } from "lucide-react";
 import { fetchGroup } from "@/lib/home-data";
 
-/** Páginas públicas que usam a navbar do portal. "/" (home) tem navbar própria e não entra aqui. */
+/** Páginas públicas que usam a navbar do portal (login, 403). */
 const PORTAL_NAV_PATHS = ["/login", "/403"] as const;
 
 export function LayoutWithNav({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLogin = pathname === "/login";
   const showPortalNav =
     pathname != null &&
     (PORTAL_NAV_PATHS as readonly string[]).includes(pathname);
@@ -46,40 +44,18 @@ export function LayoutWithNav({ children }: { children: React.ReactNode }) {
                 <Home className="h-4 w-4" />
                 Início
               </Link>
-              <PortalDashboardLink />
-              <LoginLink isLogin={isLogin} />
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
+              >
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </Link>
             </nav>
           </div>
         </header>
       )}
       {children}
     </>
-  );
-}
-
-function PortalDashboardLink() {
-  const { canAccessDashboard, loading } = useAuth();
-  if (loading || !canAccessDashboard) return null;
-  return (
-    <Link
-      href="/dashboard"
-      className="text-sm font-medium text-muted-foreground hover:text-foreground flex items-center gap-1"
-    >
-      <LayoutDashboard className="h-4 w-4" />
-      Dashboard
-    </Link>
-  );
-}
-
-function LoginLink({ isLogin }: { isLogin: boolean }) {
-  const { user, loading } = useAuth();
-  if (loading || isLogin || user) return null;
-  return (
-    <Link
-      href="/login"
-      className="text-sm font-medium text-muted-foreground hover:text-foreground"
-    >
-      Entrar
-    </Link>
   );
 }
