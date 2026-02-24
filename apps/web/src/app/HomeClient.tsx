@@ -185,6 +185,17 @@ export default function HomeClient({
       .finally(() => setLoading(false));
   }, [hasServerData]);
 
+  // Quando o servidor veio com groupHome null (SSR falhou ou API inacessível no server), tenta no cliente
+  useEffect(() => {
+    if (!hasServerData || initialGroupHome != null) return;
+    fetch("/api/public/group-home?nocache=" + Date.now(), { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: Page | null) => {
+        if (data && data.content) setGroupHome(data);
+      })
+      .catch(() => {});
+  }, [hasServerData, initialGroupHome]);
+
   const setLangAndStore = (l: Lang) => {
     setLang(l);
     if (typeof window !== "undefined") localStorage.setItem(LANG_KEY, l);
@@ -241,13 +252,11 @@ export default function HomeClient({
     return "py-14 sm:py-20";
   };
 
-  if (!loading && !groupHome) {
+  if (!loading && apiUnavailable) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center px-4">
         <p className="text-zinc-400 text-center">
-          {apiUnavailable
-            ? "Serviço temporariamente indisponível. Inicie o backend (ex: pnpm --filter api dev na raiz do projeto)."
-            : "Group Home not configured."}
+          Serviço temporariamente indisponível. Inicie o backend (ex: pnpm --filter api dev na raiz do projeto).
         </p>
         <Link href="/dashboard" className="mt-4 text-amber-400 hover:text-amber-300 text-sm">
           Dashboard
@@ -256,6 +265,20 @@ export default function HomeClient({
     );
   }
 
+  if (!loading && !groupHome && error) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center px-4">
+        <p className="text-zinc-400 text-center">
+          Erro ao carregar a página. Tente novamente.
+        </p>
+        <Link href="/" className="mt-4 text-amber-400 hover:text-amber-300 text-sm">
+          Início
+        </Link>
+      </div>
+    );
+  }
+
+  // groupHome pode ser null (não configurado no banco): mostramos a home com blocos padrão
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       {/* 1. Cabeçalho fixo: cor de fundo e texto vêm do bloco header (se existir) */}
