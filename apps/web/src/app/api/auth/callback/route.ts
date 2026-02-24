@@ -171,6 +171,7 @@ export async function POST(request: NextRequest) {
   const nextPath = isValidInternalPath(body.state ?? null) ? body.state! : "/dashboard";
   console.log("[auth/callback] POST success ->", nextPath);
   const res = NextResponse.json({ redirect: nextPath });
+  res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
   applyTokenCookies(res, result.tokens, requestOrigin);
   return res;
 }
