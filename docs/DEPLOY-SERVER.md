@@ -138,7 +138,27 @@ cd ~/bcg-site && ./deploy.sh
 
 ---
 
-## 6. Checklist rápido
+## 6. Nginx: rota de login (callback)
+
+Se você usa **Nginx** na frente do Next e do backend, o login Cognito depende da rota **POST /api/auth/callback** ir para o **Next.js** (porta 3000), não para o backend Nest (3001). Caso contrário o usuário “não entra” e pode não ver erro.
+
+Exemplo de regra **antes** do proxy geral de `/api/`:
+
+```nginx
+location /api/auth/ {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Assim `/api/auth/callback` e outras rotas em `/api/auth/` são atendidas pelo Next; o restante de `/api/` pode continuar indo para o backend.
+
+---
+
+## 7. Checklist rápido
 
 | Item | Conferir |
 |------|----------|
@@ -147,10 +167,11 @@ cd ~/bcg-site && ./deploy.sh
 | Prisma | `prisma generate` depois do pull e antes do build da API |
 | PM2 | `api` e `web` no `pm2 list`; `pm2 logs` sem erro de Prisma |
 | Portas | API (ex.: 3001) e Web (ex.: 3000) abertas no firewall e no Nginx (se usar) |
+| Nginx + login | `/api/auth/` deve ir para o **Next** (3000); ver seção 6 |
 
 ---
 
-## 7. Erros comuns
+## 8. Erros comuns
 
 - **PrismaClientInitializationError / "adapter or accelerateUrl"**  
   O projeto usa **Prisma 6** (não 7). Prisma 7 exige adapter ou Accelerate; o adapter travava no Lightsail. Mantenha `@prisma/client` e `prisma` em 6.8.2.

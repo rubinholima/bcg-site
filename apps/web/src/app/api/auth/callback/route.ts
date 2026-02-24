@@ -137,6 +137,7 @@ export async function GET(request: NextRequest) {
  * O code vem da URL no browser; assim não se perde com redirect/proxy.
  */
 export async function POST(request: NextRequest) {
+  console.log("[auth/callback] POST received");
   const cognitoDomain = getCognitoDomain();
   const clientId = getClientId();
   const requestOrigin = getRequestOrigin(request).replace(/\/$/, "");
@@ -145,6 +146,7 @@ export async function POST(request: NextRequest) {
   try {
     body = (await request.json()) as { code?: string; state?: string; redirect_uri?: string };
   } catch {
+    console.error("[auth/callback] POST invalid body");
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }
 
@@ -158,6 +160,7 @@ export async function POST(request: NextRequest) {
 
   const result = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
   if (!result.ok) {
+    console.error("[auth/callback] POST token failed:", result.cognitoError);
     return NextResponse.json({
       error: "auth",
       redirect: "/login?error=auth",
@@ -166,6 +169,7 @@ export async function POST(request: NextRequest) {
   }
 
   const nextPath = isValidInternalPath(body.state ?? null) ? body.state! : "/dashboard";
+  console.log("[auth/callback] POST success ->", nextPath);
   const res = NextResponse.json({ redirect: nextPath });
   applyTokenCookies(res, result.tokens, requestOrigin);
   return res;

@@ -38,8 +38,18 @@ function AuthCallbackContent() {
       body: JSON.stringify({ code, state: state ?? undefined, redirect_uri: redirectUri }),
       credentials: "include",
     })
-      .then((res) => res.json())
-      .then((data: { redirect?: string; error?: string; cognitoError?: string }) => {
+      .then(async (res) => {
+        const text = await res.text();
+        let data: { redirect?: string; error?: string; cognitoError?: string };
+        try {
+          data = JSON.parse(text) as { redirect?: string; error?: string; cognitoError?: string };
+        } catch {
+          if (typeof sessionStorage !== "undefined") {
+            sessionStorage.setItem("loginErrorReason", `Resposta inválida (${res.status}): não é JSON. Verifique se /api/auth/callback vai para o Next e não para o backend.`);
+          }
+          window.location.replace("/login?error=auth");
+          return;
+        }
         if (data.redirect) {
           setStatus("done");
           window.location.replace(data.redirect);
@@ -53,6 +63,9 @@ function AuthCallbackContent() {
       })
       .catch(() => {
         setStatus("error");
+        if (typeof sessionStorage !== "undefined") {
+          sessionStorage.setItem("loginErrorReason", "Falha de rede ao chamar /api/auth/callback. Verifique Nginx: /api/auth/ deve ir para o Next (porta 3000).");
+        }
         window.location.replace("/login?error=auth");
       });
   }, [searchParams]);
