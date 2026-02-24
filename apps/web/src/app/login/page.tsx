@@ -1,8 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -10,144 +12,137 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  getHostedUiLoginUrl,
-  isCognitoConfigured,
-} from "@/lib/cognito-hosted-ui";
-import { LogIn } from "lucide-react";
+import { LogIn, Loader2 } from "lucide-react";
 
-const canonicalOrigin = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_APP_URL)
-  ? process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")
-  : "";
-
-function LoginPageContent() {
+function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next")?.trim() || "/dashboard";
-  const loginHref = isCognitoConfigured()
-    ? getHostedUiLoginUrl(next)
-    : `/auth/login?next=${encodeURIComponent(next)}`;
+  const errorParam = searchParams.get("error");
+  const hintParam = searchParams.get("hint");
 
-  const [hasError, setHasError] = useState(false);
-  const [sessionExpired, setSessionExpired] = useState(false);
-  const [invalidScope, setInvalidScope] = useState(false);
-  const [cognitoHint, setCognitoHint] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(
+    errorParam === "invalid"
+      ? hintParam || "Email ou senha incorretos."
+      : errorParam === "missing"
+        ? "Preencha email e senha."
+        : errorParam === "server"
+          ? "Erro ao conectar. Tente novamente."
+          : null
+  );
 
-  useEffect(() => {
-    const hintFromUrl = searchParams.get("hint");
-    const hintFromStorage =
-      typeof sessionStorage !== "undefined" ? sessionStorage.getItem("loginErrorReason") : null;
-    if (hintFromStorage) {
-      setCognitoHint(hintFromStorage);
-      sessionStorage.removeItem("loginErrorReason");
-    } else if (hintFromUrl) {
-      setCognitoHint(hintFromUrl);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email.trim() || !password) {
+      setError("Preencha email e senha.");
+      return;
     }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (canonicalOrigin && typeof window !== "undefined" && !canonicalOrigin.includes("localhost")) {
-      if (window.location.origin !== canonicalOrigin) {
-        const to = `${canonicalOrigin}${window.location.pathname}${window.location.search}`;
-        window.location.replace(to);
-        return;
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    const err = searchParams.get("error");
-    setHasError(err === "auth" || err === "missing" || err === "invalid_scope");
-    setInvalidScope(err === "invalid_scope");
-    setSessionExpired(searchParams.get("reason") === "session_expired");
-  }, [searchParams]);
+    setLoading(true);
+    (document.getElementById("login-form") as HTMLFormElement)?.submit();
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="w-full max-w-[400px]">
-        {/* Card central */}
-        <Card className="border-border/80 shadow-2xl shadow-black/10 bg-card/95 backdrop-blur-sm">
-          <CardHeader className="space-y-3 pb-2 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-              <LogIn className="h-8 w-8" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,80,40,0.15),transparent)]" />
+      <div className="w-full max-w-[420px] relative">
+        <Card className="border-zinc-800/80 shadow-2xl shadow-black/30 bg-zinc-900/95 backdrop-blur-sm">
+          <CardHeader className="space-y-4 pb-4 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
+              <LogIn className="h-7 w-7" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-semibold tracking-tight">
+              <CardTitle className="text-2xl font-semibold tracking-tight text-zinc-100">
                 Entrar
               </CardTitle>
-              <CardDescription className="mt-1.5 text-balance">
-                Use o botão abaixo. Você será redirecionado para fazer login de forma segura.
-                No primeiro acesso, use a senha temporária e defina uma nova.
+              <CardDescription className="mt-1.5 text-zinc-400">
+                Área restrita · Boston City Group
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4 pt-2">
-            {sessionExpired && (
-              <div
-                role="alert"
-                className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-400"
-              >
-                Sua sessão expirou. Faça login novamente para continuar.
+            <form
+              id="login-form"
+              method="POST"
+              action="/api/auth/login"
+              onSubmit={handleSubmit}
+              className="space-y-4"
+            >
+              <input type="hidden" name="next" value={next} />
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+                >
+                  {error}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-zinc-300">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/50"
+                  required
+                />
               </div>
-            )}
-            {hasError && (
-              <div
-                role="alert"
-                className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive space-y-2"
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-zinc-300">
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/50"
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-zinc-950 font-medium"
+                disabled={loading}
               >
-                <p className="font-semibold">Por que não entrou:</p>
-                {cognitoHint ? (
-                  <p className="font-mono text-xs break-words bg-black/10 px-2 py-1.5 rounded">
-                    {cognitoHint}
-                  </p>
+                {loading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <p>
-                    {invalidScope
-                      ? "Scopes incompatíveis no Cognito. Use openid, email, phone (e offline_access se quiser refresh)."
-                      : "O Cognito recusou a troca do código. Inclua no App Client (Allowed callback URLs) exatamente:"}
-                  </p>
+                  "Entrar"
                 )}
-                {!cognitoHint && !invalidScope && (
-                  <p className="font-mono text-xs bg-black/10 px-2 py-1 rounded">
-                    {typeof window !== "undefined"
-                      ? `${window.location.origin}/auth/callback`
-                      : "https://www.bostoncitygroup.biz/auth/callback"}
-                  </p>
-                )}
-              </div>
-            )}
-            <Button asChild className="w-full h-12 text-base font-medium">
-              <a href={loginHref}>Entrar</a>
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Login e senha são tratados de forma segura pelo provedor de identidade.
+              </Button>
+            </form>
+            <p className="text-center text-xs text-zinc-500">
+              Altere sua senha no dashboard em Usuários após o primeiro acesso.
             </p>
           </CardContent>
         </Card>
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Área restrita · Boston City Group
-        </p>
       </div>
     </div>
   );
 }
 
-/**
- * Login via Cognito Hosted UI.
- * O botão "Entrar" leva a GET /api/auth/login?next=... que responde 302 para o Cognito (server-side).
- * Assim não dependemos de env no browser e o redirect funciona atrás de CloudFront/Nginx.
- */
 export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-muted/20">
-          <div className="w-full max-w-[400px] text-center text-muted-foreground">
-            Carregando…
-          </div>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
+          <div className="text-zinc-500">Carregando…</div>
         </div>
       }
     >
-      <LoginPageContent />
+      <LoginForm />
     </Suspense>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getHostedUiLogoutUrl } from "@/lib/cognito-hosted-ui";
 import { Button } from "@/components/ui/button";
 import type { Group } from "@/types/group";
 
@@ -43,7 +42,7 @@ export function Header() {
           Dashboard · {name}
         </span>
         <Button variant="ghost" size="sm" asChild>
-          <a href={getHostedUiLogoutUrl()}>Sair</a>
+          <a href="/api/auth/logout">Sair</a>
         </Button>
         <Button variant="outline" size="sm" asChild>
           <Link href="/dashboard">Dashboard</Link>

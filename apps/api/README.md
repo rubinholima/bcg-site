@@ -30,9 +30,10 @@ API NestJS do monorepo BCG (empresas, tipos/tenant-kinds, auth).
 ### Rodar a API (necessário para /dashboard, /dashboard/empresas, /dashboard/tipos)
 
 1. Em um terminal: `cd apps/api && pnpm install`
-2. Crie um `.env` em `apps/api` com `DATABASE_URL` (PostgreSQL).
+2. Crie um `.env` em `apps/api` com `DATABASE_URL` (PostgreSQL) e `JWT_SECRET` (segredo para assinar o token de login; use um valor forte em produção).
 3. Rode as migrations: `npx prisma migrate deploy` (ou `npx prisma migrate dev` em desenvolvimento).
-4. Inicie a API: `pnpm run start:dev` — sobe em **http://localhost:3001**.
+4. (Opcional) Seed do usuário principal: `pnpm run seed:local-user` — cria `rl@bostoncitygroup.biz` com senha inicial `2504` (altere no dashboard).
+5. Inicie a API: `pnpm run start:dev` — sobe em **http://localhost:3001**.
 
 Com a API no ar, o dashboard passa a carregar empresas e tipos normalmente. Se aparecer "fetch failed" / ECONNREFUSED, é porque a API não está rodando.
 

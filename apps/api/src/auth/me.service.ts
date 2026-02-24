@@ -11,6 +11,12 @@ interface UpsertUserInput {
 export class MeService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findUserById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
   async upsertUser(input: UpsertUserInput) {
     const existing = await this.prisma.user.findUnique({
       where: { cognitoSub: input.cognitoSub },

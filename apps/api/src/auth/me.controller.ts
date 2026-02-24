@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from './jwt-auth.guard';
 import { DashboardRolesGuard } from './roles.guard';
@@ -25,17 +25,18 @@ export class MeController {
   async me(@Req() req: Request & { user: CognitoJwtPayload }): Promise<MeResponse> {
     const payload = req.user;
     const sub = payload.sub;
-    const email = payload.email ?? `${sub}@cognito.local`;
-    const name = payload.name ?? null;
     const groups: string[] = payload['cognito:groups'] ?? [];
+    let role: MeRole = (payload.role as MeRole) ?? 'user';
+    if (groups.length > 0 && !role) {
+      if (groups.includes('super_admin')) role = 'super_admin';
+      else if (groups.includes('company_admin')) role = 'company_admin';
+      else if (groups.includes('editor')) role = 'editor';
+    }
 
-    let role: MeRole = 'user';
-    if (groups.includes('super_admin')) role = 'super_admin';
-    else if (groups.includes('company_admin')) role = 'company_admin';
-    else if (groups.includes('editor')) role = 'editor';
-
-    const user = await this.meService.upsertUser({ cognitoSub: sub, email, name });
-
+    const user = await this.meService.findUserById(sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
     return {
       user: {
         id: user.id,
@@ -43,7 +44,7 @@ export class MeController {
         name: user.name,
         cognitoSub: user.cognitoSub ?? sub,
       },
-      groups,
+      groups: groups.length ? groups : [role],
       role,
     };
   }

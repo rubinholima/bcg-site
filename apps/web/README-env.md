@@ -17,14 +17,9 @@ Esta variável é usada apenas no servidor (API Routes do Next.js) para fazer pr
 
 ### Cognito (login Hosted UI)
 
-**Produção — obrigatório no .env:** Para o login funcionar, o **CEO / responsável por deploy** deve configurar no ambiente de produção:
+**Não utilizado.** O login é feito por **email e senha** no próprio sistema. Usuários são criados no dashboard (Usuários) e fazem login em `/login`. O backend (API) usa `JWT_SECRET` para assinar o token; configure em produção (ex.: `apps/api/.env`).
 
-- **`COGNITO_DOMAIN`** — domínio do User Pool (ex: `https://xxxx.auth.us-east-1.amazoncognito.com`, sem barra final)
-- **`COGNITO_CLIENT_ID`** — Client ID do App Client
-
-Se essas variáveis estiverem ausentes, o build de assets **não quebra** (são lidas em runtime nas rotas de auth). Porém, ao acessar `/auth/login`, a API retorna 500 com a mensagem "Login not configured" e um log `[auth/login] missing Cognito config`. Configure-as no .env de produção para evitar esse erro.
-
-Alternativa (compatível com código legado): use `NEXT_PUBLIC_COGNITO_DOMAIN` e `NEXT_PUBLIC_COGNITO_CLIENT_ID`. Opcionais: `COGNITO_SCOPE` / `NEXT_PUBLIC_COGNITO_SCOPES` (default: `openid email profile`).
+Variáveis antigas do Cognito (`COGNITO_DOMAIN`, `COGNITO_CLIENT_ID`) não são mais necessárias para o login.
 
 ### `NEXT_PUBLIC_APP_URL`
 
