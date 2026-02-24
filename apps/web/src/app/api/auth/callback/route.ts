@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=missing", requestOrigin));
   }
 
-  const redirectUri = `${requestOrigin}/auth/callback`;
+  const redirectUri = `${requestOrigin}/api/auth/callback`;
   const result = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
   if (!result.ok) {
     const hint = encodeURIComponent(result.cognitoError.slice(0, 100));

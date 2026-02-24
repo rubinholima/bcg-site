@@ -30,7 +30,7 @@ export function getCallbackOrigin(): string {
 
 export function getHostedUiLoginUrl(state?: string): string {
   const base = getCallbackOrigin().replace(/\/$/, "");
-  const redirectUri = `${base}/auth/callback`;
+  const redirectUri = `${base}/api/auth/callback`;
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: "code",

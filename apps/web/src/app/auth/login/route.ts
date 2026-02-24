@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     const origin =
       process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
       getRequestOrigin(request).replace(/\/$/, "");
-    const redirectUri = `${origin}/auth/callback`;
+    const redirectUri = `${origin}/api/auth/callback`;
 
     const params = new URLSearchParams({
       client_id: clientId,
