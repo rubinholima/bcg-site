@@ -81,12 +81,18 @@ function applyTokenCookies(
   origin: string
 ) {
   const isLocalhost = origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1");
+  const host = origin.replace(/^https?:\/\//, "").split("/")[0] ?? "";
+  const cookieDomain =
+    !isLocalhost && (host === "bostoncitygroup.biz" || host.endsWith(".bostoncitygroup.biz"))
+      ? ".bostoncitygroup.biz"
+      : undefined;
   const cookieOpts = {
     path: "/",
     httpOnly: true,
     sameSite: "lax" as const,
     maxAge: 60 * 60 * 24 * 7,
     secure: !isLocalhost,
+    ...(cookieDomain && { domain: cookieDomain }),
   };
   if (tokens.id_token) response.cookies.set("id_token", tokens.id_token, cookieOpts);
   if (tokens.access_token) response.cookies.set("access_token", tokens.access_token, cookieOpts);

@@ -145,14 +145,18 @@ Se você usa **Nginx** na frente do Next e do backend, o login Cognito depende d
 Exemplo de regra **antes** do proxy geral de `/api/`:
 
 ```nginx
-location /api/auth/ {
+location ^~ /api/auth/ {
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_buffer_size 16k;
+    proxy_buffers 4 16k;
 }
 ```
+
+(Veja `docs/FIX-502-LOGIN.md` — sem `proxy_buffer_size` a resposta com 3 cookies JWT causa 502.)
 
 Assim `/api/auth/callback` e outras rotas em `/api/auth/` são atendidas pelo Next; o restante de `/api/` pode continuar indo para o backend.
 
