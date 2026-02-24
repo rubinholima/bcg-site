@@ -49,8 +49,18 @@ export async function POST(request: NextRequest) {
     expires_in?: number;
   };
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const isLocalhost = appUrl.startsWith("http://localhost") || appUrl.startsWith("http://127.0.0.1");
+  const host =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host") ||
+    "";
+  const hostOnly = host ? host.split(":")[0] : "";
+  const isLocalhost =
+    hostOnly === "localhost" || hostOnly === "127.0.0.1";
+  const domain =
+    !isLocalhost &&
+    (hostOnly === "bostoncitygroup.biz" || hostOnly.endsWith(".bostoncitygroup.biz"))
+      ? ".bostoncitygroup.biz"
+      : undefined;
   const res = NextResponse.json({ ok: true });
   const cookieOpts = {
     path: "/",
@@ -58,6 +68,7 @@ export async function POST(request: NextRequest) {
     sameSite: "lax" as const,
     maxAge: 60 * 60 * 24 * 7,
     secure: !isLocalhost,
+    ...(domain && { domain }),
   };
 
   if (tokens.id_token) {
