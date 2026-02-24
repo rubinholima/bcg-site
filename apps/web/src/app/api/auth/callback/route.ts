@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?error=missing", requestOrigin));
   }
 
-  const redirectUri = `${requestOrigin}/api/auth/callback`;
+  const redirectUri = `${requestOrigin}/auth/callback`;
   const result = await exchangeCodeForTokens(code, redirectUri, cognitoDomain, clientId);
   if (!result.ok) {
     const hint = encodeURIComponent(result.cognitoError.slice(0, 100));
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
 
   const nextPath = isValidInternalPath(body.state ?? null) ? body.state! : "/dashboard";
   console.log("[auth/callback] POST success ->", nextPath);
-  const res = NextResponse.json({ redirect: nextPath });
+  const res = NextResponse.redirect(new URL(nextPath, requestOrigin), 302);
   res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
   applyTokenCookies(res, result.tokens, requestOrigin);
   return res;

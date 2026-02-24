@@ -109,8 +109,8 @@ function LoginPageContent() {
                 {!cognitoHint && !invalidScope && (
                   <p className="font-mono text-xs bg-black/10 px-2 py-1 rounded">
                     {typeof window !== "undefined"
-                      ? `${window.location.origin}/api/auth/callback`
-                      : "https://www.bostoncitygroup.biz/api/auth/callback"}
+                      ? `${window.location.origin}/auth/callback`
+                      : "https://www.bostoncitygroup.biz/auth/callback"}
                   </p>
                 )}
               </div>

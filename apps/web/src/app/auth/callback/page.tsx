@@ -37,8 +37,15 @@ function AuthCallbackContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, state: state ?? undefined, redirect_uri: redirectUri }),
       credentials: "include",
+      redirect: "manual",
     })
       .then(async (res) => {
+        if (res.type === "opaqueredirect" || res.status === 302) {
+          const nextPath = state && state.startsWith("/") ? state : "/dashboard";
+          setStatus("done");
+          window.location.replace(nextPath);
+          return;
+        }
         const text = await res.text();
         let data: { redirect?: string; error?: string; cognitoError?: string };
         try {
