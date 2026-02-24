@@ -29,7 +29,7 @@ function LoginForm() {
       : errorParam === "missing"
         ? "Preencha email e senha."
         : errorParam === "server"
-          ? "Erro ao conectar. Tente novamente."
+          ? hintParam || "Erro ao conectar. Tente novamente."
           : null
   );
 

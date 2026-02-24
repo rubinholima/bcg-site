@@ -85,9 +85,14 @@ export async function POST(request: NextRequest) {
     redirect.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
     return redirect;
   } catch (err) {
-    console.error("[auth/login] backend error:", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[auth/login] backend error:", message);
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("error", "server");
+    // Hint para o usuário: API inacessível (servidor pode estar fora do ar)
+    if (/ECONNREFUSED|ETIMEDOUT|fetch failed|Failed to fetch/i.test(message)) {
+      loginUrl.searchParams.set("hint", "API indisponível. No servidor rode: pm2 status e ./deploy.sh");
+    }
     return NextResponse.redirect(loginUrl);
   }
 }

@@ -890,6 +890,18 @@ Passo a passo para rodar o projeto no servidor com **PM2**. Pressupõe: Node.js,
 
 **1. Variáveis de ambiente** — Crie/edite `.env` em `apps/api` (e `apps/web` se precisar). Use `DATABASE_URL` com **127.0.0.1** (não localhost) e `&options=-c%20client_encoding%3DUTF8`. **2. Atualizar código:** `cd ~/bcg-site && git pull origin develop && pnpm install`. **3. API:** `cd apps/api && pnpm exec prisma generate && pnpm run build`; PM2: `pm2 start dist/main.js --name api` (ou `pm2 restart api`). **4. Web:** `cd apps/web && pnpm run build`; PM2: `pm2 start pnpm --name web -- start` (ou `pm2 restart web`). **5. Script único:** `./deploy.sh` na raiz (git pull, pnpm install, build API e Web, pm2 restart). **6. Nginx:** `location ^~ /api/auth/` deve ir para porta 3000 (Next) com `proxy_buffer_size 16k; proxy_buffers 4 16k;`. **7. Checklist:** NODE_ENV, DATABASE_URL 127.0.0.1, Prisma generate antes do build, PM2 api e web, portas e Nginx. **8. Erros comuns:** Prisma 6 (não 7), CRLF→LF, acentuação→fix:encoding e options na URL.
 
+## SERVER_500_ERRO_AO_CONECTAR (Login 500 / "Erro ao conectar" no servidor)
+
+Quando o dashboard ou o login retornam **500** ou **"Erro ao conectar. Tente novamente."**, a causa é quase sempre: **API Nest (bcg-api) não está respondendo** (crashed no bootstrap ou não subiu). No servidor Ubuntu, rode na ordem:
+
+1. **Diagnóstico:** `cd ~/bcg-site && bash scripts/check-env-server.sh` — confere .env (DATABASE_URL, JWT_SECRET), se GET /group responde 200 e se PM2 está com bcg-api/bcg-web online.
+2. **Atualizar e subir:** `git pull origin develop && ./deploy.sh` — puxa o código (incl. fix de dependência circular Auth/Modules), instala deps, build API e Web, reinicia PM2.
+3. **Se bcg-api continuar em erro:** `pm2 logs bcg-api --lines 80 --nostream` — se aparecer `UndefinedModuleException` ou "ModulesModule imports undefined", o deploy não pegou (rode de novo o passo 2). Se aparecer erro de **banco** (connection refused, P1001): PostgreSQL deve estar rodando; confira `DATABASE_URL` em `apps/api/.env` (127.0.0.1).
+4. **Testar API direto:** `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3001/group` — deve retornar **200**. Se retornar 000, a API não está escutando.
+5. **Primeira vez no servidor:** Se nunca rodou migrations: `cd apps/api && pnpm exec prisma migrate deploy`. Opcional: `pnpm run seed:local-user` para usuário rl@bostoncitygroup.biz.
+
+Depois disso, acesse de novo o site e tente o login. O cookie `access_token` (JWT nosso) é definido pelo Next após POST no Nest `/internal/auth/login`.
+
 ## TOKEN_STORAGE (Token storage — Fase 2)
 
 Tokens em **HTTP-only cookies** (id_token, access_token, refresh_token). Definidos em `apps/web/src/app/api/auth/callback` (e set-cookies). Recuperar no servidor: `request.cookies.get('access_token')?.value`; no frontend usar `/api/me` com `credentials: 'include'`. Renovação: scope `offline_access`, rota `POST /api/auth/refresh`, usar `authFetch` em chamadas autenticadas. Logout: link para Cognito com `logout_uri` = nossa tela `/login`; cadastrar Sign out URL(s) no App Client. Allowed callback URLs: incluir exatamente as URLs de callback (localhost e produção). Scopes: OpenID e offline_access. NEXT_PUBLIC_APP_URL = URL canônica.
