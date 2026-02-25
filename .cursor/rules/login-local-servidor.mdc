@@ -1,0 +1,21 @@
+---
+description: Login deve funcionar tanto local quanto em produção
+alwaysApply: true
+---
+
+# Login — local e servidor
+
+O login em `/login` **deve funcionar nos dois ambientes**:
+
+- **Local** (localhost, dev): form submit nativo ou fetch
+- **Servidor** (produção, Nginx, CloudFront): fetch JSON (evita body vazio no proxy)
+
+## Implementação obrigatória
+
+1. **Duas opções no app:** fetch como primário; form submit como fallback quando fetch falha (ex.: rede, CORS).
+2. **API `/api/auth/login`:** aceitar tanto `application/json` quanto `application/x-www-form-urlencoded`.
+3. **Não remover** o fallback de form submit — garante funcionamento local quando fetch falha.
+
+## Regra
+
+Ao alterar o fluxo de login, **validar em ambos os ambientes** antes de commitar.

@@ -53,8 +53,8 @@ function LoginForm() {
       });
       window.location.href = res.url;
     } catch {
-      setError("Erro ao conectar. Tente novamente.");
       setLoading(false);
+      form.submit();
     }
   };
 
