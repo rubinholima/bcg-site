@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 const CANONICAL_HOST = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "").split("/")[0] ?? "www.bostoncitygroup.biz";
 
+function getOrigin(request: NextRequest): string {
+  const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || "";
+  const hostOnly = host.replace(/^https?:\/\//, "").split("/")[0] ?? "";
+  const proto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim()?.toLowerCase() === "https" ? "https" : "http";
+  if (hostOnly && hostOnly !== "127.0.0.1" && !hostOnly.startsWith("localhost")) {
+    return `${proto}://${hostOnly}`;
+  }
+  return `https://${CANONICAL_HOST}`;
+}
+
 export function middleware(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() || request.headers.get("host") || "";
   const hostOnly = host.replace(/^https?:\/\//, "").split("/")[0] ?? "";
@@ -25,9 +35,10 @@ export function middleware(request: NextRequest) {
   }
 
   const next = `${pathname}${request.nextUrl.search}`;
-  const loginUrl = new URL("/login", request.url);
+  const origin = getOrigin(request);
+  const loginUrl = new URL("/login", origin);
   loginUrl.searchParams.set("next", next);
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.redirect(loginUrl, 302);
 }
 
 export const config = {
