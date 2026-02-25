@@ -108,8 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Na página de login não chama /api/me (evita 401 no console)
-    if (pathname === "/login") {
+    // Na página de login e home pública não chama /api/me (evita 401 no console)
+    if (pathname === "/login" || pathname === "/") {
       setState({ user: null, groups: [], role: null, modules: [], loading: false });
       return;
     }
