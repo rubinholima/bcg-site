@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Login — local e servidor
 
-O login em `/login` **deve funcionar nos dois ambientes**:
+**Obrigatório:** o login em `/login` **deve funcionar nos dois ambientes** (local e servidor). Se der erro em um deles, o código está incorreto.
 
 - **Local** (localhost, dev): form submit nativo ou fetch
 - **Servidor** (produção, Nginx, CloudFront): fetch JSON (evita body vazio no proxy)
@@ -19,6 +19,11 @@ O login em `/login` **deve funcionar nos dois ambientes**:
 ## Regra
 
 Ao alterar o fluxo de login, **validar em ambos os ambientes** antes de commitar.
+
+## Cuidados técnicos
+
+- **JWT:** não colocar `iss` no payload manualmente se `signOptions.issuer` já estiver definido — causa erro "Bad options.issuer option. The payload already has an iss property".
+- **API auth:** aceitar JSON e form-urlencoded; fallback de form submit para quando fetch falha.
 
 ## Dev local — API obrigatória
 

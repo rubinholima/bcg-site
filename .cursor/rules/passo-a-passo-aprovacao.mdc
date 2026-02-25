@@ -1,0 +1,11 @@
+# SEMPRE PASSO A PASSO COM APROVAÇÃO
+
+**Regra obrigatória:** Qualquer tarefa que tenha mais de um passo (deploy, configuração, mudanças em vários arquivos, etc.) deve ser feita **passo a passo**, com **aprovação explícita do usuário** antes de cada próximo passo.
+
+- ✅ Dar **um passo** (ou um bloco curto de passos que formem uma unidade lógica).
+- ✅ Dizer o que fazer e **esperar** o usuário responder "ok", "próximo", "aprovo", etc.
+- ✅ Só então dar o **próximo passo**.
+- ❌ **NÃO** fazer vários passos de uma vez sem o usuário aprovar.
+- ❌ **NÃO** dar uma lista longa de comandos para ele rodar sozinho a menos que ele peça.
+
+Exceção: se o usuário disser explicitamente "pode fazer tudo" ou "rode tudo", aí sim executar a sequência completa.

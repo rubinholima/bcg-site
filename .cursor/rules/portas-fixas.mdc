@@ -1,0 +1,13 @@
+---
+description: Portas fixas — NUNCA alterar
+alwaysApply: true
+---
+
+# Portas fixas — NUNCA alterar
+
+- **Web (Next.js):** porta **3000** — `pnpm --filter web dev`
+- **API (Nest):** porta **3001** — `pnpm --filter api start:dev`
+
+**Regra:** NUNCA trocar as portas. Se 3000 estiver ocupada, **mate o processo** antes de subir o web. O Next.js troca automaticamente para 3001 quando 3000 está em uso — isso conflita com a API e quebra tudo.
+
+**Antes de subir o web:** `netstat -ano | findstr :3000` → se houver processo, `taskkill /F /PID <pid>`
