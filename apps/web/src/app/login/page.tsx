@@ -19,6 +19,8 @@ function LoginForm() {
   const next = searchParams.get("next")?.trim() || "/dashboard";
   const errorParam = searchParams.get("error");
   const hintParam = searchParams.get("hint");
+  const authApiUrl = (typeof process.env.NEXT_PUBLIC_AUTH_API_URL === "string" && process.env.NEXT_PUBLIC_AUTH_API_URL.trim()) || "";
+  const loginAction = authApiUrl ? authApiUrl.replace(/\/$/, "") + "/api/auth/login" : "/api/auth/login";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
@@ -41,6 +43,11 @@ function LoginForm() {
     const password = passwordEl?.value ?? "";
     if (!email || !password) {
       setError("Preencha email e senha.");
+      return;
+    }
+    if (authApiUrl) {
+      form.action = loginAction;
+      form.submit();
       return;
     }
     setLoading(true);
@@ -80,7 +87,7 @@ function LoginForm() {
             <form
               id="login-form"
               method="POST"
-              action="/api/auth/login"
+              action={loginAction}
               onSubmit={handleSubmit}
               className="space-y-4"
             >
