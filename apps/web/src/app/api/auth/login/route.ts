@@ -51,11 +51,13 @@ export async function POST(request: NextRequest) {
   let body: { email?: string; password?: string; next?: string };
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("application/x-www-form-urlencoded")) {
-    const fd = await request.formData();
+    // Ler body como texto e parsear manualmente — evita body vazio quando Nginx/proxy altera o request
+    const raw = await request.text();
+    const params = new URLSearchParams(raw);
     body = {
-      email: fd.get("email")?.toString()?.trim(),
-      password: fd.get("password")?.toString() ?? "",
-      next: fd.get("next")?.toString()?.trim() || undefined,
+      email: params.get("email")?.trim() ?? undefined,
+      password: params.get("password") ?? "",
+      next: params.get("next")?.trim() || undefined,
     };
   } else {
     try {
