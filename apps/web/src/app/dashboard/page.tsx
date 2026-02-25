@@ -24,7 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { buildBackendUrl } from "@/lib/apiProxy";
+import { buildBackendUrl, getAppBaseUrl } from "@/lib/apiProxy";
 import { getPublicImageUrl } from "@/lib/media-url";
 
 interface LastActivity {
@@ -45,10 +45,8 @@ interface DashboardStats {
 
 async function getGroup(): Promise<Group | null> {
   try {
-    const res = await fetch(buildBackendUrl("/group"), {
-      cache: "no-store",
-      headers: { "Content-Type": "application/json" },
-    });
+    const base = getAppBaseUrl();
+    const res = await fetch(`${base}/api/public/group`, { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as Group;
   } catch {

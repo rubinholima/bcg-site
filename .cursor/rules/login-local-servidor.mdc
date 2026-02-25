@@ -19,3 +19,12 @@ O login em `/login` **deve funcionar nos dois ambientes**:
 ## Regra
 
 Ao alterar o fluxo de login, **validar em ambos os ambientes** antes de commitar.
+
+## Dev local — API obrigatória
+
+Para o dashboard e login funcionarem localmente, **subir os dois**:
+1. `docker compose up -d db` (banco)
+2. `pnpm --filter api start:dev` (API Nest na 3001)
+3. `pnpm --filter web dev` (Next na 3000)
+
+Sem a API rodando: layouts usam fallback "Boston City Group"; /api/group e /api/me retornam 401/500.

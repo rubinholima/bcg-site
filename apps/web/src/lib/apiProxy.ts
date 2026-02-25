@@ -17,6 +17,13 @@ export function getApiBaseUrl(): string {
   return process.env.API_BASE_URL || "http://127.0.0.1:3001";
 }
 
+/** URL base do app (Next.js) para fetches server-side às rotas /api. */
+export function getAppBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (url && !url.includes("localhost") && !url.includes("127.0.0.1")) return url;
+  return "http://localhost:3000";
+}
+
 /**
  * Constrói a URL completa do backend a partir de um path.
  * 

@@ -16,12 +16,13 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-import { buildBackendUrl } from "@/lib/apiProxy";
+import { getAppBaseUrl } from "@/lib/apiProxy";
 
-/** Nome e logo vêm da API do Grupo Master (dashboard). */
+/** Nome e logo vêm da API do Grupo Master. Usa /api/public/group (fallback quando backend indisponível). */
 async function getGroupMetadata(): Promise<{ name?: string; logoUrl?: string }> {
   try {
-    const res = await fetch(buildBackendUrl("/group"), { cache: "no-store" });
+    const base = getAppBaseUrl();
+    const res = await fetch(`${base}/api/public/group`, { cache: "no-store" });
     if (!res.ok) return {};
     const group = (await res.json()) as { name?: string | null; logoUrl?: string | null };
     return {
