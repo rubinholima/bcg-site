@@ -75,6 +75,7 @@
     width: 100%;
     max-width: 100%;
     margin: 0;
+    user-select: text; /* permite copiar texto no site */
   }
 }
 

@@ -2,20 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:3001";
 
-/** Origem pública para redirects. Em produção (Nginx) request.url pode ser 127.0.0.1 — usar headers ou NEXT_PUBLIC_APP_URL. */
+/** Origem pública para redirects. Em produção (Nginx) request.url pode ser 127.0.0.1. Nunca redireciona para origin — usa www (canônico). */
 function getRedirectOrigin(request: NextRequest): string {
+  const canonical = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (canonical && !canonical.includes("localhost") && !canonical.includes("127.0.0.1")) {
+    const fwdHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+    const host = (fwdHost || request.headers.get("host") || "").replace(/^https?:\/\//, "").split("/")[0]?.trim() ?? "";
+    if (host === "origin.bostoncitygroup.biz") return canonical;
+  }
   const fwdHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
   const host = fwdHost || request.headers.get("host") || "";
   const fwdProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim()?.toLowerCase();
   const cleanHost = host.replace(/^https?:\/\//, "").split("/")[0]?.trim() ?? "";
+  if (cleanHost === "origin.bostoncitygroup.biz") {
+    return canonical && !canonical.includes("localhost") ? canonical : "https://www.bostoncitygroup.biz";
+  }
   if (cleanHost && !cleanHost.includes("127.0.0.1") && !cleanHost.startsWith("localhost")) {
     const proto = fwdProto === "https" ? "https" : "http";
     return `${proto}://${cleanHost}`;
   }
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (appUrl && !appUrl.includes("localhost") && !appUrl.includes("127.0.0.1")) {
-    return appUrl;
-  }
+  if (canonical && !canonical.includes("localhost")) return canonical;
   return new URL(request.url).origin;
 }
 
