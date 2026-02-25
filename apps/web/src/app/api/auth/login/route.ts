@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:3001";
 
+/** Origem pública para redirects. Em produção (Nginx) request.url pode ser 127.0.0.1 — usar headers ou NEXT_PUBLIC_APP_URL. */
+function getRedirectOrigin(request: NextRequest): string {
+  const fwdHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = fwdHost || request.headers.get("host") || "";
+  const fwdProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim()?.toLowerCase();
+  const cleanHost = host.replace(/^https?:\/\//, "").split("/")[0]?.trim() ?? "";
+  if (cleanHost && !cleanHost.includes("127.0.0.1") && !cleanHost.startsWith("localhost")) {
+    const proto = fwdProto === "https" ? "https" : "http";
+    return `${proto}://${cleanHost}`;
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (appUrl && !appUrl.includes("localhost") && !appUrl.includes("127.0.0.1")) {
+    return appUrl;
+  }
+  return new URL(request.url).origin;
+}
+
 function getCookieOptions(request: NextRequest) {
   const host =
     request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
@@ -53,7 +70,8 @@ export async function POST(request: NextRequest) {
   const nextPath = body.next?.startsWith("/") ? body.next : "/dashboard";
 
   if (!email || !password) {
-    const loginUrl = new URL("/login", request.url);
+    const origin = getRedirectOrigin(request);
+    const loginUrl = new URL("/login", origin);
     loginUrl.searchParams.set("error", "missing");
     return NextResponse.redirect(loginUrl);
   }
@@ -74,20 +92,23 @@ export async function POST(request: NextRequest) {
     };
 
     if (!res.ok || !data.access_token) {
-      const loginUrl = new URL("/login", request.url);
+      const origin = getRedirectOrigin(request);
+      const loginUrl = new URL("/login", origin);
       loginUrl.searchParams.set("error", "invalid");
       if (data.message) loginUrl.searchParams.set("hint", data.message.slice(0, 80));
       return NextResponse.redirect(loginUrl);
     }
 
-    const redirect = NextResponse.redirect(new URL(nextPath, request.url));
+    const origin = getRedirectOrigin(request);
+    const redirect = NextResponse.redirect(new URL(nextPath, origin));
     redirect.cookies.set("access_token", data.access_token, getCookieOptions(request));
     redirect.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
     return redirect;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[auth/login] backend error:", message);
-    const loginUrl = new URL("/login", request.url);
+    const origin = getRedirectOrigin(request);
+    const loginUrl = new URL("/login", origin);
     loginUrl.searchParams.set("error", "server");
     // Hint para o usuário: API inacessível (servidor pode estar fora do ar)
     if (/ECONNREFUSED|ETIMEDOUT|fetch failed|Failed to fetch/i.test(message)) {
