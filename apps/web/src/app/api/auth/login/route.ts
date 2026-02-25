@@ -2,23 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://127.0.0.1:3001";
 
-/** Origem pública para redirects. Em produção (Nginx) request.url pode ser 127.0.0.1. Nunca redireciona para origin — usa www (canônico). */
+/** Origem pública para redirects. Em produção (Nginx/CloudFront) X-Forwarded-Proto pode vir como http; usar NEXT_PUBLIC_APP_URL para garantir https. */
 function getRedirectOrigin(request: NextRequest): string {
   const canonical = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (canonical && !canonical.includes("localhost") && !canonical.includes("127.0.0.1")) {
-    const fwdHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-    const host = (fwdHost || request.headers.get("host") || "").replace(/^https?:\/\//, "").split("/")[0]?.trim() ?? "";
-    if (host === "origin.bostoncitygroup.biz") return canonical;
-  }
   const fwdHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const host = fwdHost || request.headers.get("host") || "";
+  const host = (fwdHost || request.headers.get("host") || "").replace(/^https?:\/\//, "").split("/")[0]?.trim() ?? "";
+  const isProduction = host === "bostoncitygroup.biz" || host.endsWith(".bostoncitygroup.biz");
+  if (canonical && !canonical.includes("localhost") && !canonical.includes("127.0.0.1") && isProduction) {
+    return canonical.startsWith("https") ? canonical : `https://${canonical.replace(/^https?:\/\//, "")}`;
+  }
+  if (host === "origin.bostoncitygroup.biz") {
+    return canonical && !canonical.includes("localhost") ? canonical : "https://www.bostoncitygroup.biz";
+  }
   const fwdProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim()?.toLowerCase();
   const cleanHost = host.replace(/^https?:\/\//, "").split("/")[0]?.trim() ?? "";
   if (cleanHost === "origin.bostoncitygroup.biz") {
     return canonical && !canonical.includes("localhost") ? canonical : "https://www.bostoncitygroup.biz";
   }
   if (cleanHost && !cleanHost.includes("127.0.0.1") && !cleanHost.startsWith("localhost")) {
-    const proto = fwdProto === "https" ? "https" : "http";
+    const proto = fwdProto === "https" ? "https" : "https";
     return `${proto}://${cleanHost}`;
   }
   if (canonical && !canonical.includes("localhost")) return canonical;
