@@ -911,6 +911,7 @@ Se o site passa por **CloudFront** e você vê **403** ("This distribution is no
 3. **Não cachear /dashboard** — Crie um behavior com path pattern **`/dashboard`** (ou **`/dashboard/*`**), origin = mesmo do site (ec2-bcg-web), **Cache policy = CachingDisabled**. Coloque **antes** do Default. Assim o 302 de /dashboard → /login nunca é cacheado e o loop para.
 4. **Invalidar cache** — Depois de alterar: Create invalidation com `/*` para limpar cache antigo.
 5. **Cookies** — Garanta que a policy de cache (ou "Forward cookies") encaminha os cookies ao origin quando necessário (para /api/* e /login), para o redirect pós-login funcionar.
+6. **302 com Location igual à URL (redirect para si mesmo)** — Se `curl -I https://www.bostoncitygroup.biz/dashboard` retorna **302** com **Location: https://www.bostoncitygroup.biz/dashboard** (mesma URL), é conflito de trailing slash (Next.js ↔ Nginx/CloudFront). **Solução:** `skipTrailingSlashRedirect: true` em `next.config.ts` desativa o redirect automático `/dashboard` ↔ `/dashboard/`. Deploy e invalidar cache CloudFront.
 
 Se não usar CloudFront (acesso direto ao Lightsail/Nginx), o 403 e o redirect loop não vêm do CloudFront; confira Nginx e o deploy (middleware usando origem pública).
 

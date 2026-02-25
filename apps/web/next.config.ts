@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: monorepoRoot,
   },
+  /** Evita redirect /dashboard ↔ /dashboard/ que causa ERR_TOO_MANY_REDIRECTS com Nginx/CloudFront */
+  skipTrailingSlashRedirect: true,
   async redirects() {
     return [
       { source: "/dashboard/tipos", destination: "/dashboard/cadastros/tipos", permanent: true },
