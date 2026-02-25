@@ -6,19 +6,17 @@ const CANONICAL_HOST = process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, 
  * Middleware só redireciona origin → www.
  * NÃO redireciona /dashboard → /login aqui: o DashboardGuard (cliente) faz isso após /api/me.
  * Assim evitamos 302 no servidor que CloudFront/Nginx podem cachear e causar ERR_TOO_MANY_REDIRECTS.
- * Header X-Middleware-Auth: no-redirect confirma que esta versão está em produção (para diagnóstico).
  *
- * Rewrite /dashboard/ → /dashboard (sem redirect) para evitar loop 302 quando Nginx/CloudFront
- * enviam trailing slash e Next.js responde redirect para a mesma URL.
+ * /dashboard (sem slash) → rewrite para /dashboard/ (evita 302; /dashboard/ retorna 200).
  */
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  // Rewrite /path/ → /path (evita 302 do Next.js para mesma URL)
-  if (pathname !== "/" && pathname.endsWith("/")) {
+  // /dashboard exato sem trailing slash → rewrite para /dashboard/
+  if (pathname === "/dashboard") {
     const url = request.nextUrl.clone();
-    url.pathname = pathname.slice(0, -1);
+    url.pathname = "/dashboard/";
     const res = NextResponse.rewrite(url);
-    res.headers.set("X-Middleware-Auth", "rewrite-no-slash");
+    res.headers.set("X-Middleware-Auth", "rewrite-add-slash");
     return res;
   }
 
