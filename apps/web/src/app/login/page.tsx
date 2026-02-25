@@ -20,8 +20,6 @@ function LoginForm() {
   const errorParam = searchParams.get("error");
   const hintParam = searchParams.get("hint");
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam === "invalid"
@@ -33,15 +31,20 @@ function LoginForm() {
           : null
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
-    if (!email.trim() || !password) {
+    const form = e.currentTarget;
+    const emailEl = form.elements.namedItem("email") as HTMLInputElement | null;
+    const passwordEl = form.elements.namedItem("password") as HTMLInputElement | null;
+    const email = emailEl?.value?.trim() ?? "";
+    const password = passwordEl?.value ?? "";
+    if (!email || !password) {
       setError("Preencha email e senha.");
       return;
     }
     setLoading(true);
-    (document.getElementById("login-form") as HTMLFormElement)?.submit();
+    form.submit();
   };
 
   return (
@@ -89,8 +92,7 @@ function LoginForm() {
                   type="email"
                   autoComplete="email"
                   placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  defaultValue=""
                   className="bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/50"
                   required
                 />
@@ -105,8 +107,7 @@ function LoginForm() {
                   type="password"
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  defaultValue=""
                   className="bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/50"
                   required
                 />
