@@ -31,7 +31,7 @@ function LoginForm() {
           : null
   );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     const form = e.currentTarget;
@@ -44,7 +44,18 @@ function LoginForm() {
       return;
     }
     setLoading(true);
-    form.submit();
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, next }),
+        credentials: "include",
+      });
+      window.location.href = res.url;
+    } catch {
+      setError("Erro ao conectar. Tente novamente.");
+      setLoading(false);
+    }
   };
 
   return (
