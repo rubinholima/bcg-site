@@ -902,6 +902,18 @@ Quando o dashboard ou o login retornam **500** ou **"Erro ao conectar. Tente nov
 
 Depois disso, acesse de novo o site e tente o login. O cookie `access_token` (JWT nosso) é definido pelo Next após POST no Nest `/internal/auth/login`.
 
+## CLOUDFRONT_403_REDIRECT_LOOP (403 "request method" / "only cachable" / ERR_TOO_MANY_REDIRECTS)
+
+Se o site passa por **CloudFront** e você vê **403** ("This distribution is not configured to allow the HTTP request method" / "supports only cachable requests") ou **ERR_TOO_MANY_REDIRECTS** no /dashboard ou /login:
+
+1. **Permitir POST (e outros métodos)** — No CloudFront, edite o **Cache behavior** que atende o site (ex.: Default ou o que usa o origin Lightsail). Em **Allowed HTTP Methods** escolha **GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE** (não use só "GET, HEAD, OPTIONS").
+2. **Não cachear login e API auth** — Crie um **Cache behavior** com path pattern `/api/auth/*` e `/login` (ou dois behaviors), com **Cache policy** = CachingDisabled (ou "No cache"). Ordem: esses behaviors **antes** do Default, para ter prioridade. Assim POST /api/auth/login e GET /login não são cacheados e o método POST é repassado ao origin.
+3. **Não cachear /dashboard** — Crie um behavior com path pattern **`/dashboard`** (ou **`/dashboard/*`**), origin = mesmo do site (ec2-bcg-web), **Cache policy = CachingDisabled**. Coloque **antes** do Default. Assim o 302 de /dashboard → /login nunca é cacheado e o loop para.
+4. **Invalidar cache** — Depois de alterar: Create invalidation com `/*` para limpar cache antigo.
+5. **Cookies** — Garanta que a policy de cache (ou "Forward cookies") encaminha os cookies ao origin quando necessário (para /api/* e /login), para o redirect pós-login funcionar.
+
+Se não usar CloudFront (acesso direto ao Lightsail/Nginx), o 403 e o redirect loop não vêm do CloudFront; confira Nginx e o deploy (middleware usando origem pública).
+
 ## TOKEN_STORAGE (Token storage — Fase 2)
 
 Tokens em **HTTP-only cookies** (id_token, access_token, refresh_token). Definidos em `apps/web/src/app/api/auth/callback` (e set-cookies). Recuperar no servidor: `request.cookies.get('access_token')?.value`; no frontend usar `/api/me` com `credentials: 'include'`. Renovação: scope `offline_access`, rota `POST /api/auth/refresh`, usar `authFetch` em chamadas autenticadas. Logout: link para Cognito com `logout_uri` = nossa tela `/login`; cadastrar Sign out URL(s) no App Client. Allowed callback URLs: incluir exatamente as URLs de callback (localhost e produção). Scopes: OpenID e offline_access. NEXT_PUBLIC_APP_URL = URL canônica.
