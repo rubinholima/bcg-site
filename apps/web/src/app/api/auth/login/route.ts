@@ -77,6 +77,10 @@ export async function POST(request: NextRequest) {
   const password = body.password ?? "";
   const nextPath = body.next?.startsWith("/") ? body.next : "/dashboard";
 
+  if (process.env.NODE_ENV === "development") {
+    console.log("[auth/login] body keys:", Object.keys(body), "email:", !!email, "password:", !!password);
+  }
+
   if (!email || !password) {
     const origin = getRedirectOrigin(request);
     const loginUrl = new URL("/login", origin);
@@ -87,6 +91,9 @@ export async function POST(request: NextRequest) {
   try {
     const base = process.env.API_BASE_URL?.trim() || "http://127.0.0.1:3001";
     const url = `${base.replace(/\/$/, "")}/internal/auth/login`;
+    if (process.env.NODE_ENV === "development") {
+      console.log("[auth/login] sending to backend:", url, "email:", email?.slice(0, 5) + "...", "passwordLen:", password?.length);
+    }
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

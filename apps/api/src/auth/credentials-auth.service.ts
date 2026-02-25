@@ -9,7 +9,6 @@ export interface LocalJwtPayload {
   sub: string;
   email: string;
   role: string;
-  iss: string;
   exp?: number;
   iat?: number;
 }
@@ -45,7 +44,6 @@ export class CredentialsAuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
-      iss: JWT_ISSUER,
     };
     const access_token = this.jwtService.sign(payload, {
       expiresIn: '7d',
