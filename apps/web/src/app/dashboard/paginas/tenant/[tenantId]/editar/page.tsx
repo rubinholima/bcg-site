@@ -503,18 +503,34 @@ export default function EditarPaginaTenantPage() {
     setBlocks(list);
   };
 
-  /** Normaliza blocos para o payload: heroSlides com url/titlePt/titleEn sempre strings (evita 403/413 por payload grande ou inconsistente). */
-  const normalizeBlocksForSave = (list: HomeContentBlock[]): HomeContentBlock[] =>
-    list.map((block) => {
-      if (block.type !== "hero") return block;
-      const slides = Array.isArray(block.config?.heroSlides) ? block.config.heroSlides : [];
-      const normalizedSlides = slides.map((s: { url?: string; titlePt?: string; titleEn?: string }) => ({
-        url: typeof s?.url === "string" ? s.url : "",
-        titlePt: typeof s?.titlePt === "string" ? s.titlePt : "",
-        titleEn: typeof s?.titleEn === "string" ? s.titleEn : "",
-      }));
-      return { ...block, config: { ...block.config, heroSlides: normalizedSlides } };
-    });
+  /** Normaliza blocos para o payload: heroSlides com url/titlePt/titleEn sempre strings. Em seções, normaliza também os módulos internos. */
+  const normalizeBlocksForSave = (list: HomeContentBlock[]): HomeContentBlock[] => {
+    const normalizeHeroInBlock = (block: HomeContentBlock): HomeContentBlock => {
+      if (block.type === "hero") {
+        const slides = Array.isArray(block.config?.heroSlides) ? block.config.heroSlides : [];
+        const normalizedSlides = slides.map((s: { url?: unknown; titlePt?: unknown; titleEn?: unknown }) => ({
+          url: String(s?.url ?? "").trim(),
+          titlePt: String(s?.titlePt ?? ""),
+          titleEn: String(s?.titleEn ?? ""),
+        }));
+        return { ...block, config: { ...block.config, heroSlides: normalizedSlides } };
+      }
+      if (block.type === "section") {
+        const left = Array.isArray(block.config?.sectionLeftModules) ? block.config.sectionLeftModules : [];
+        const right = Array.isArray(block.config?.sectionRightModules) ? block.config.sectionRightModules : [];
+        return {
+          ...block,
+          config: {
+            ...block.config,
+            sectionLeftModules: left.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
+            sectionRightModules: right.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
+          },
+        };
+      }
+      return block;
+    };
+    return list.map(normalizeHeroInBlock);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -534,7 +550,13 @@ export default function EditarPaginaTenantPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        const msg = (data as { error?: string; message?: string })?.error ?? (data as { message?: string })?.message ?? "Erro ao salvar";
+        const msg =
+          (data as { error?: string; message?: string })?.error ??
+          (data as { message?: string })?.message ??
+          "Erro ao salvar";
+        if (process.env.NODE_ENV === "development") {
+          console.error("[tenant page save]", res.status, data);
+        }
         throw new Error(msg);
       }
       setSuccess(true);
