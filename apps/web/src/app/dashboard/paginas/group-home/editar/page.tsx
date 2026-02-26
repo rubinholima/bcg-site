@@ -1071,8 +1071,16 @@ export default function EditarGroupHomePage() {
                             </div>
                           </details>
                           <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
-                            <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título já acima)</summary>
+                            <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título, subtítulo, descrição)</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
+                              <div className="space-y-2">
+                                <Label>Título / Headline (PT)</Label>
+                                <Input placeholder="O hub que conecta clubes e empresas em uma única operação." value={(block.config?.titlePt as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titlePt", e.target.value)} />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Título / Headline (EN)</Label>
+                                <Input placeholder="The hub connecting clubs and companies under one operating standard." value={(block.config?.titleEn as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleEn", e.target.value)} />
+                              </div>
                               <div className="space-y-2">
                                 <Label>Subtítulo (PT)</Label>
                                 <Input placeholder="Frase de posicionamento" value={(block.config?.subtitlePT as string) ?? ""} onChange={(e) => updateBlockConfig(index, "subtitlePT", e.target.value)} />
