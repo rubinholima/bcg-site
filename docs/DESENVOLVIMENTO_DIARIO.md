@@ -28,6 +28,30 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# <span style="color: red; font-size: 28px;">📅 25 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Nginx WorkMail/Vault, regra encerrar o dia)</span>
+
+## **EXCEÇÕES NGINX /api/workmail e /api/vault, REGRA ENCERRAR O DIA**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+1. **Nginx — WorkMail e Vault em produção (404)** — O backend Nest usa `@Controller('api/workmail')` e `@Controller('api/vault')`; com `location /api/` → 3001 e `proxy_pass .../`, o path chegava sem `/api/` e dava 404. Adicionadas exceções no exemplo: `location ^~ /api/workmail/` e `location ^~ /api/vault/` para Next (3000); o Next faz proxy com path completo para o backend.
+2. **Regra encerrar o dia** — Criada/atualizada `.cursor/rules/encerrar-o-dia.mdc`: ao dizer "encerre o dia", executar commit de tudo, adicionar bloco 📅 [DATA] — ENCERRAMENTO no topo de POR DIA em `docs/DESENVOLVIMENTO_DIARIO.md`, e push para origin (develop). Alinhada à seção REGRAS DIÁRIAS do desenvolvimento diário.
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Modificados:**  
+`docs/nginx-bostoncitygroup.biz.example.conf`, `.cursor/rules/encerrar-o-dia.mdc`, `docs/DESENVOLVIMENTO_DIARIO.md`
+
+*Outros arquivos no commit (de sessões anteriores):* `apps/api/prisma/migrations/...`, `apps/api/scripts/seed-local-user.ts`, `apps/web/src/app/api/public/group/route.ts`, `scripts/check-env-server.sh`
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commit:** `b6fd550`
+- **Branch:** `develop`
+- **Push:** para origin/develop após o commit.
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 18 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Login Cognito: callback /auth/callback, getCallbackOrigin, hint, authFetch)</span>
 
 ## **CALLBACK COMO PÁGINA, POST API, URL CANÔNICA, ERRO COGNITO NA TELA**
@@ -868,7 +892,7 @@ Resolver o login em produção: entrar e ir para o dashboard, sem voltar para a 
 
 ## Checklist no servidor
 
-**1. Nginx** — Em `location ^~ /api/auth/` (blocos 80 e 443): `proxy_buffer_size 16k;` e `proxy_buffers 4 16k;`. Testar: `sudo nginx -t`. Recarregar: `sudo systemctl reload nginx`. Ver `docs/nginx-bostoncitygroup.biz.example.conf`.
+**1. Nginx** — Em `location ^~ /api/auth/` (blocos 80 e 443): `proxy_buffer_size 16k;` e `proxy_buffers 4 16k;`. **Obrigatório:** `location ^~ /api/public/` deve ir para 3000 (Next), senão `/api/public/group` retorna 404 e a página de login quebra (session_expired). Testar: `sudo nginx -t`. Recarregar: `sudo systemctl reload nginx`. Ver `docs/nginx-bostoncitygroup.biz.example.conf`.
 
 **2. Cognito** — Allowed callback URLs: `https://www.bostoncitygroup.biz/auth/callback`, `https://bostoncitygroup.biz/auth/callback`, `https://new.bostoncitygroup.biz/auth/callback`.
 
