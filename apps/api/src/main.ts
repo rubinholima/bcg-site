@@ -22,18 +22,13 @@ if (
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NextFunction, Response } from 'express';
-import * as express from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn'],
-    bodyParser: false, // vamos aplicar com limit maior abaixo
+    logger: ['error', 'warn'], // sem banner/log de startup no console
   });
-  // Limite 2mb para JSON (página com Hero + dois títulos longos pode passar de 100kb)
-  app.use(express.json({ limit: '2mb' }));
-  app.use(express.urlencoded({ limit: '2mb', extended: true }));
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({ origin: true }); // permite localhost:3000 (Next) e outros em dev
