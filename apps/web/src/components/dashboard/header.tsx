@@ -10,7 +10,7 @@ export function Header() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/group")
+    fetch("/api/group", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Group | null) => {
         if (!cancelled && data) setGroup(data);

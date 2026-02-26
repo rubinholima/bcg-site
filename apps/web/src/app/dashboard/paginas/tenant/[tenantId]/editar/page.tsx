@@ -520,7 +520,8 @@ export default function EditarPaginaTenantPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string })?.error ?? "Erro ao salvar");
+        const msg = (data as { error?: string; message?: string })?.error ?? (data as { message?: string })?.message ?? "Erro ao salvar";
+        throw new Error(msg);
       }
       setSuccess(true);
     } catch (err) {

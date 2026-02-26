@@ -23,6 +23,9 @@ export class SuperAdminGuard implements CanActivate {
     if (groups.includes('super_admin')) {
       return true;
     }
-    throw new ForbiddenException('Acesso restrito a super admin');
+    const received = groups.length ? groups.join(', ') : '(nenhum role)';
+    throw new ForbiddenException(
+      `Acesso restrito a super admin. Seu usuário tem role: ${received}. Altere no banco (User.role) ou em Configurações → Usuários.`,
+    );
   }
 }

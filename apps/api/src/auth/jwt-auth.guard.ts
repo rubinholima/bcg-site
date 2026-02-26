@@ -9,8 +9,8 @@ import { JwtService } from '@nestjs/jwt';
 import { LocalJwtPayload, JWT_ISSUER } from './credentials-auth.service';
 
 /**
- * Payload que pode vir do nosso JWT (login próprio) ou do Cognito (legado).
- * Guards e controllers usam: sub, email, name, role ou cognito:groups.
+ * Payload do nosso JWT (login direto email/senha). role vem do User no banco.
+ * Guards usam: sub, email, role; cognito:groups = [role] por compatibilidade.
  */
 export interface CognitoJwtPayload {
   sub: string;
