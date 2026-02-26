@@ -199,6 +199,11 @@ export default function EditarGroupHomePage() {
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
   const theme = (page?.content?.theme ?? {}) as PageTheme;
+  /** Servidor pode devolver visible como boolean ou string "true"/"false"; tratar os dois. */
+  const isBlockHidden = (b: HomeContentBlock) => {
+    const v = b.config?.visible;
+    return v === false || v === "false";
+  };
   const updateTheme = (key: keyof PageTheme, value: string | number | undefined) => {
     const normalized = value === undefined || value === null || value === "" ? undefined : value;
     setPage((prev) =>
@@ -616,8 +621,8 @@ export default function EditarGroupHomePage() {
                 const header = blocks[0];
                 const footer = blocks[blocks.length - 1];
                 const middleBlocks = blocks.slice(1, -1).map((block, i) => ({ block, index: i + 1 }));
-                const visibleMiddle = middleBlocks.filter(({ block }) => block.config?.visible !== false);
-                const hiddenMiddle = middleBlocks.filter(({ block }) => block.config?.visible === false);
+                const visibleMiddle = middleBlocks.filter(({ block }) => !isBlockHidden(block));
+                const hiddenMiddle = middleBlocks.filter(({ block }) => isBlockHidden(block));
                 const rows: Array<
                   | { type: "block"; block: HomeContentBlock; index: number; hidden: boolean }
                   | { type: "add" }
@@ -728,12 +733,12 @@ export default function EditarGroupHomePage() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className={`h-8 w-8 ${block.config?.visible === false ? "text-muted-foreground" : "text-amber-500"}`}
-                          onClick={() => updateBlockConfigValue(index, "visible", block.config?.visible === false ? true : false)}
-                          title={block.config?.visible === false ? "Exibir na página pública" : "Ocultar da página pública"}
-                          aria-label={block.config?.visible === false ? "Exibir" : "Ocultar"}
+                          className={`h-8 w-8 ${isBlockHidden(block) ? "text-muted-foreground" : "text-amber-500"}`}
+                          onClick={() => updateBlockConfigValue(index, "visible", isBlockHidden(block) ? true : false)}
+                          title={isBlockHidden(block) ? "Exibir na página pública" : "Ocultar da página pública"}
+                          aria-label={isBlockHidden(block) ? "Exibir" : "Ocultar"}
                         >
-                          {block.config?.visible === false ? (
+                          {isBlockHidden(block) ? (
                             <EyeOff className="h-4 w-4" />
                           ) : (
                             <Eye className="h-4 w-4" />
