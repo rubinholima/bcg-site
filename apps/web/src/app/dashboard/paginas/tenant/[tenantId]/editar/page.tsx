@@ -503,6 +503,19 @@ export default function EditarPaginaTenantPage() {
     setBlocks(list);
   };
 
+  /** Normaliza blocos para o payload: heroSlides com url/titlePt/titleEn sempre strings (evita 403/413 por payload grande ou inconsistente). */
+  const normalizeBlocksForSave = (list: HomeContentBlock[]): HomeContentBlock[] =>
+    list.map((block) => {
+      if (block.type !== "hero") return block;
+      const slides = Array.isArray(block.config?.heroSlides) ? block.config.heroSlides : [];
+      const normalizedSlides = slides.map((s: { url?: string; titlePt?: string; titleEn?: string }) => ({
+        url: typeof s?.url === "string" ? s.url : "",
+        titlePt: typeof s?.titlePt === "string" ? s.titlePt : "",
+        titleEn: typeof s?.titleEn === "string" ? s.titleEn : "",
+      }));
+      return { ...block, config: { ...block.config, heroSlides: normalizedSlides } };
+    });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!page) return;
@@ -510,12 +523,13 @@ export default function EditarPaginaTenantPage() {
     setError(null);
     setSuccess(false);
     try {
+      const payloadBlocks = normalizeBlocksForSave(blocks);
       const res = await authFetch(`/api/pages/${page.id}`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          content: { theme: page.content.theme, blocks },
+          content: { theme: page.content.theme, blocks: payloadBlocks },
         }),
       });
       if (!res.ok) {
