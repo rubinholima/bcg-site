@@ -47,7 +47,7 @@ import type {
 import type { BlockConfigValue } from "@/types/block-config";
 import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
 import { getCtaPresetContent, CTA_PRESET_OPTIONS, type CtaPresetId } from "@/lib/cta-presets";
-import type { Page } from "@/types/page";
+import type { Page, PageTheme } from "@/types/page";
 import {
   getBlockLabel,
   MODULE_OPTIONS,
@@ -192,8 +192,25 @@ export default function EditarGroupHomePage() {
   const [headerAdvanced, setHeaderAdvanced] = useState(false);
   const [headerDebug, setHeaderDebug] = useState(false);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
+  const [globalAppearanceOpen, setGlobalAppearanceOpen] = useState(false);
+  const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
+  const theme = (page?.content?.theme ?? {}) as PageTheme;
+  const updateTheme = (key: keyof PageTheme, value: string | number | undefined) => {
+    const normalized = value === undefined || value === null || value === "" ? undefined : value;
+    setPage((prev) =>
+      prev
+        ? {
+            ...prev,
+            content: {
+              ...prev.content,
+              theme: { ...(prev.content.theme ?? {}), [key]: normalized },
+            },
+          }
+        : null,
+    );
+  };
 
   const toggleBlockCollapsed = (blockId: string) => {
     setCollapsedBlockIds((prev) => {
@@ -308,7 +325,7 @@ export default function EditarGroupHomePage() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          homeContent: { blocks },
+          homeContent: { theme: page.content.theme, blocks },
         }),
       });
       if (!res.ok) {
@@ -402,6 +419,188 @@ export default function EditarGroupHomePage() {
       )}
 
       <form id="editor-group-home-form" onSubmit={handleSubmit} className="space-y-6">
+        {/* Aparência geral da página — fundo, cores, fontes. Módulos podem sobrescrever. */}
+        <Card className="border-violet-500/30 bg-violet-950/20">
+          <CardHeader
+            className="cursor-pointer select-none border-b border-transparent hover:border-violet-500/30 transition-colors"
+            onClick={() => setGlobalAppearanceOpen((o) => !o)}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <CardTitle className="flex items-center gap-2">
+                  <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-sm">Global</span>
+                  Aparência geral da página
+                </CardTitle>
+                <CardDescription>
+                  Fundo, cores, largura (box/full) e fontes aplicados a toda a página. Cada módulo pode sobrescrever em Aparência.
+                </CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 border-violet-500/40"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setGlobalAppearanceOpen((o) => !o);
+                }}
+                aria-expanded={globalAppearanceOpen}
+                aria-label={globalAppearanceOpen ? "Recolher" : "Expandir"}
+              >
+                {globalAppearanceOpen ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Recolher
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    Expandir
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          {globalAppearanceOpen && (
+          <CardContent className="space-y-4">
+            <div className="space-y-3 rounded-lg border border-violet-500/30 bg-violet-500/10 p-3">
+              <Label className="text-sm font-medium">Padrões (todos os módulos)</Label>
+              <p className="text-xs text-muted-foreground">
+                Defina aqui para não precisar configurar em cada módulo. Cada módulo pode sobrescrever em Aparência.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Largura do conteúdo</Label>
+                  <Select
+                    value={(theme.contentWidth as string) ?? "box"}
+                    onValueChange={(v) => updateTheme("contentWidth", v as "box" | "full")}
+                  >
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="box">Box (centralizado)</SelectItem>
+                      <SelectItem value="full">Full width</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Alinhamento dos títulos</Label>
+                  <Select
+                    value={(theme.titleAlign as string) ?? "left"}
+                    onValueChange={(v) => updateTheme("titleAlign", v as "left" | "center" | "right")}
+                  >
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="left">Esquerda</SelectItem>
+                      <SelectItem value="center">Centro</SelectItem>
+                      <SelectItem value="right">Direita</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Cor de fundo do corpo (hex)</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                    value={(theme.backgroundColor as string)?.trim() || "#0f0f12"}
+                    onChange={(e) => updateTheme("backgroundColor", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="#0f0f12"
+                    className="flex-1 min-w-[120px]"
+                    value={(theme.backgroundColor as string) ?? ""}
+                    onChange={(e) => updateTheme("backgroundColor", e.target.value.trim() || undefined)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Imagem de fundo do corpo</Label>
+                <MediaPicker
+                  value={(theme.backgroundImage as string) ?? ""}
+                  onChange={(url) => updateTheme("backgroundImage", url || undefined)}
+                  sizeKey="backgrounds"
+                  uploadFolderHint="backgrounds"
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Opacidade do overlay sobre a imagem (0–1)</Label>
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0.75"
+                  value={overlayOpacityDraft ?? String(theme.backgroundOverlayOpacity ?? "")}
+                  onChange={(e) => setOverlayOpacityDraft(e.target.value)}
+                  onBlur={() => {
+                    const v = (overlayOpacityDraft ?? "").trim();
+                    const n = v === "" ? undefined : parseFloat(v);
+                    const valid = typeof n === "number" && !Number.isNaN(n) && n >= 0 && n <= 1;
+                    updateTheme("backgroundOverlayOpacity", valid ? n : undefined);
+                    setOverlayOpacityDraft(null);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Cor do texto principal (hex)</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                    value={(theme.textColor as string)?.trim() || "#fafafa"}
+                    onChange={(e) => updateTheme("textColor", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="#fafafa"
+                    className="flex-1 min-w-[120px]"
+                    value={(theme.textColor as string) ?? ""}
+                    onChange={(e) => updateTheme("textColor", e.target.value.trim() || undefined)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Cor de destaque / links (hex)</Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="color"
+                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                    value={(theme.accentColor as string)?.trim() || "#fbbf24"}
+                    onChange={(e) => updateTheme("accentColor", e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="#fbbf24"
+                    className="flex-1 min-w-[120px]"
+                    value={(theme.accentColor as string) ?? ""}
+                    onChange={(e) => updateTheme("accentColor", e.target.value.trim() || undefined)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Família de fontes</Label>
+                <Input
+                  type="text"
+                  placeholder="Inter, system-ui"
+                  value={(theme.fontFamily as string) ?? ""}
+                  onChange={(e) => updateTheme("fontFamily", e.target.value.trim() || undefined)}
+                />
+              </div>
+            </div>
+          </CardContent>
+          )}
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Módulos da página</CardTitle>
@@ -530,6 +729,43 @@ export default function EditarGroupHomePage() {
                         Aparência (todos os módulos)
                       </Label>
                     </div>
+                    {(block.type !== "header" && block.type !== "footer") && (
+                      <>
+                        <div className="space-y-2">
+                          <Label>Largura do conteúdo (box ou full width)</Label>
+                          <Select
+                            value={(block.config?.contentWidth as string) ?? "inherit"}
+                            onValueChange={(v) => updateBlockConfig(index, "contentWidth", v === "inherit" ? undefined : v)}
+                          >
+                            <SelectTrigger className="max-w-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="inherit">Padrão da página ({theme.contentWidth === "full" ? "full width" : "box"})</SelectItem>
+                              <SelectItem value="box">Box (centralizado)</SelectItem>
+                              <SelectItem value="full">Full width</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Alinhamento do título</Label>
+                          <Select
+                            value={(block.config?.titleAlign as string) ?? "inherit"}
+                            onValueChange={(v) => updateBlockConfig(index, "titleAlign", v === "inherit" ? undefined : v)}
+                          >
+                            <SelectTrigger className="max-w-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="inherit">Padrão da página ({((theme.titleAlign as string) === "center" ? "centro" : (theme.titleAlign as string) === "right" ? "direita" : "esquerda")})</SelectItem>
+                              <SelectItem value="left">Esquerda</SelectItem>
+                              <SelectItem value="center">Centro</SelectItem>
+                              <SelectItem value="right">Direita</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    )}
                     {block.type !== "hero" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <div className="space-y-2">
                         <Label>Cor de fundo (hex)</Label>

@@ -2,10 +2,12 @@
 
 **Regra obrigatória:** Qualquer tarefa que tenha mais de um passo (deploy, configuração, mudanças em vários arquivos, etc.) deve ser feita **passo a passo**, com **aprovação explícita do usuário** antes de cada próximo passo.
 
+- ✅ **O passo a passo é AQUI NO CHAT.** Dar cada passo na conversa; não substituir por "está no arquivo X" ou por checklists em .md/.conf.
 - ✅ Dar **um passo** (ou um bloco curto de passos que formem uma unidade lógica).
 - ✅ Dizer o que fazer e **esperar** o usuário responder "ok", "próximo", "aprovo", etc.
 - ✅ Só então dar o **próximo passo**.
 - ❌ **NÃO** fazer vários passos de uma vez sem o usuário aprovar.
 - ❌ **NÃO** dar uma lista longa de comandos para ele rodar sozinho a menos que ele peça.
+- ❌ **NÃO** responder ao pedido de passo a passo mandando ler um arquivo; os passos vão na conversa.
 
 Exceção: se o usuário disser explicitamente "pode fazer tudo" ou "rode tudo", aí sim executar a sequência completa.

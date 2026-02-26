@@ -22,13 +22,13 @@ export interface GroupDto {
   updatedAt: string;
 }
 
-/** Formato "página" para a home do grupo (frontend espera content.blocks e tenant). */
+/** Formato "página" para a home do grupo (frontend espera content.blocks, content.theme e tenant). */
 export interface GroupHomePageShape {
   id: string;
   tenantId: string;
   slug: string;
   title: string | null;
-  content: { blocks?: unknown[] };
+  content: { theme?: Record<string, unknown>; blocks?: unknown[] };
   tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
 }
 
@@ -69,9 +69,8 @@ export class GroupService {
   async getGroupHomePageShape(slug: string = DEFAULT_SLUG): Promise<GroupHomePageShape | null> {
     const group = await this.findOne(slug);
     const content = group.homeContent ?? { blocks: [] };
-    const rawBlocks = Array.isArray((content as { blocks?: unknown[] }).blocks)
-      ? (content as { blocks: unknown[] }).blocks
-      : [];
+    const raw = content as { theme?: Record<string, unknown>; blocks?: unknown[] };
+    const rawBlocks = Array.isArray(raw.blocks) ? raw.blocks : [];
     const blocks = await this.homeContentService.enrichBlocksWithGlobalPresence(
       rawBlocks as { id: string; type: string; sortOrder: number; config?: Record<string, unknown> }[],
     );
@@ -80,7 +79,7 @@ export class GroupService {
       tenantId: group.id,
       slug: 'group-home',
       title: group.name,
-      content: { blocks },
+      content: { theme: raw.theme, blocks },
       tenant: {
         id: group.id,
         name: group.name,
