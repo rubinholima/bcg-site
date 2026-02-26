@@ -44,8 +44,14 @@ export function SectionBlockRenderer({
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
 
-  const visibleLeft = leftModules.filter((m) => m.config?.visible !== false && m.config?.visible !== "false");
-  const visibleRight = rightModules.filter((m) => m.config?.visible !== false && m.config?.visible !== "false");
+  const visibleLeft = leftModules.filter((m) => {
+    const v = m.config?.visible as boolean | string | undefined;
+    return v !== false && v !== "false";
+  });
+  const visibleRight = rightModules.filter((m) => {
+    const v = m.config?.visible as boolean | string | undefined;
+    return v !== false && v !== "false";
+  });
   const allModules = columns === 1 ? visibleLeft : [...visibleLeft, ...visibleRight];
 
   const leftColumnTitle = (lang === "pt" ? block.config?.sectionLeftColumnTitlePt : block.config?.sectionLeftColumnTitleEn) as string;

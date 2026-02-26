@@ -123,7 +123,8 @@ export function BlockRenderer({
   inSection?: boolean;
 }) {
   /** Servidor pode devolver visible como boolean ou string; ocultar só quando false ou "false". */
-  const visible = block.config?.visible !== false && block.config?.visible !== "false";
+  const v = block.config?.visible as boolean | string | undefined;
+  const visible = v !== false && v !== "false";
   if (!visible) return null;
 
   const fullWidth = getEffectiveFullWidth(block, page, inSection);

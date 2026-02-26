@@ -201,7 +201,7 @@ export default function EditarGroupHomePage() {
   const theme = (page?.content?.theme ?? {}) as PageTheme;
   /** Servidor pode devolver visible como boolean ou string "true"/"false"; tratar os dois. */
   const isBlockHidden = (b: HomeContentBlock) => {
-    const v = b.config?.visible;
+    const v = b.config?.visible as boolean | string | undefined;
     return v === false || v === "false";
   };
   const updateTheme = (key: keyof PageTheme, value: string | number | undefined) => {
@@ -2490,8 +2490,7 @@ export default function EditarGroupHomePage() {
                 </Fragment>
                   );
                 });
-              });
-            }}
+              })())}
             </div>
           </CardContent>
         </Card>
