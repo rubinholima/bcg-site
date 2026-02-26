@@ -41,3 +41,9 @@ Use o componente `SectionTitle` para renderizar títulos com gradiente e linha a
 - `logo_carousel`, `global_presence`
 
 Ao criar novos módulos, inclua sempre: cor de fundo, opacidade overlay, imagem de fundo e (se tiver título) cores do gradiente do título.
+
+---
+
+## 5. Regra: tudo vale para todas as páginas
+
+**Tudo que for implementado no código de edição de páginas tem que valer para todas as páginas.** Isso inclui: Home (group-home) e todas as páginas de tenant (empresas/clubes). Tipos de módulo, botão olho (ocultar/exibir), aparência geral, opções por módulo, drag-and-drop, etc. — devem existir e funcionar igual em todos os editores. Não implementar uma feature só em um editor (ex.: só no tenant); replicar no group-home e em qualquer outro editor de página.

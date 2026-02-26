@@ -16,6 +16,8 @@ import {
   Twitter,
   Globe,
   User,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -609,49 +611,75 @@ export default function EditarGroupHomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              {blocks.map((block, index) => {
-                const isHeader = index === 0;
-                const isFooter = index === blocks.length - 1;
-                const isLastBlock = index === blocks.length - 1;
-                const isFixed = isHeader || isFooter;
-                const sectionLabel = isHeader
-                  ? "Cabeçalho"
-                  : isFooter
-                    ? "Rodapé"
-                    : `Módulo — ${getBlockLabel(block.id, block.type as HomeBlockType, "pt")}`;
-                const isExpanded = !collapsedBlockIds.has(block.id);
-                const cardClassName = isHeader || isFooter
-                  ? `module-card flex flex-col gap-3 rounded-lg border-2 border-emerald-500/50 bg-emerald-950/30 p-3 ${isExpanded ? "ring-2 ring-white/90" : ""}`
-                  : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
-                return (
-                <Fragment key={block.id}>
-                  {isLastBlock && (
-                    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-3">
-                      <span className="text-sm font-semibold text-muted-foreground">
-                        Adicionar módulo:
-                      </span>
-                      <Select
-                        value=""
-                        onValueChange={(value) => {
-                          if (value) addModule(value as HomeBlockType);
-                        }}
+            <div className="space-y-4">
+              {((() => {
+                const header = blocks[0];
+                const footer = blocks[blocks.length - 1];
+                const middleBlocks = blocks.slice(1, -1).map((block, i) => ({ block, index: i + 1 }));
+                const visibleMiddle = middleBlocks.filter(({ block }) => block.config?.visible !== false);
+                const hiddenMiddle = middleBlocks.filter(({ block }) => block.config?.visible === false);
+                const rows: Array<
+                  | { type: "block"; block: HomeContentBlock; index: number; hidden: boolean }
+                  | { type: "add" }
+                > = [
+                  ...(header ? [{ type: "block" as const, block: header, index: 0, hidden: false }] : []),
+                  ...visibleMiddle.map(({ block, index }) => ({ type: "block" as const, block, index, hidden: false })),
+                  { type: "add" },
+                  ...hiddenMiddle.map(({ block, index }) => ({ type: "block" as const, block, index, hidden: true })),
+                  ...(footer ? [{ type: "block" as const, block: footer, index: blocks.length - 1, hidden: false }] : []),
+                ];
+                return rows.map((row) => {
+                  if (row.type === "add") {
+                    return (
+                      <div key="add-module" className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-4">
+                        <span className="text-sm font-semibold text-muted-foreground">
+                          Adicionar módulo:
+                        </span>
+                        <Select
+                          value=""
+                          onValueChange={(value) => {
+                            if (value) addModule(value as HomeBlockType);
+                          }}
+                        >
+                          <SelectTrigger className="w-[280px]">
+                            <SelectValue placeholder="Hero, Destaques, Texto…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {MIDDLE_MODULE_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.type} value={opt.type}>
+                                {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  }
+                  const { block, index, hidden } = row;
+                  const isHeader = index === 0;
+                  const isFooter = index === blocks.length - 1;
+                  const isFixed = isHeader || isFooter;
+                  const sectionLabel = isHeader
+                    ? "Cabeçalho"
+                    : isFooter
+                      ? "Rodapé"
+                      : `Módulo — ${getBlockLabel(block.id, block.type as HomeBlockType, "pt")}`;
+                  const isExpanded = !collapsedBlockIds.has(block.id);
+                  const cardClassName = isHeader || isFooter
+                    ? `module-card flex flex-col gap-3 rounded-lg border-2 border-emerald-500/50 bg-emerald-950/30 p-3 ${isExpanded ? "ring-2 ring-white/90" : ""}`
+                    : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
+                  return (
+                    <Fragment key={block.id}>
+                      <div
+                        className={hidden ? "rounded-lg border-2 border-dashed border-amber-500/40 bg-amber-950/20 p-2 opacity-60" : ""}
                       >
-                        <SelectTrigger className="w-[280px]">
-                          <SelectValue placeholder="Hero, Destaques, Texto…" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {MIDDLE_MODULE_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.type} value={opt.type}>
-                              {opt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                <div
-                  className={cardClassName}
+                        {hidden && (
+                          <p className="mb-2 text-center text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                            Fora da página (oculto) — clique no olho para exibir de novo
+                          </p>
+                        )}
+                        <div
+                          className={cardClassName}
                   onDragEnter={!isFixed ? (e) => e.preventDefault() : undefined}
                   onDragOver={!isFixed ? (e) => {
                     e.preventDefault();
@@ -695,6 +723,23 @@ export default function EditarGroupHomePage() {
                       </span>
                     ) : null}
                     <div className="ml-auto flex items-center gap-1">
+                      {!isFixed && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className={`h-8 w-8 ${block.config?.visible === false ? "text-muted-foreground" : "text-amber-500"}`}
+                          onClick={() => updateBlockConfigValue(index, "visible", block.config?.visible === false ? true : false)}
+                          title={block.config?.visible === false ? "Exibir na página pública" : "Ocultar da página pública"}
+                          aria-label={block.config?.visible === false ? "Exibir" : "Ocultar"}
+                        >
+                          {block.config?.visible === false ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
@@ -2436,9 +2481,12 @@ export default function EditarGroupHomePage() {
                   </div>
                   )}
                 </div>
+                      </div>
                 </Fragment>
-                );
-              })}
+                  );
+                });
+              });
+            }}
             </div>
           </CardContent>
         </Card>
