@@ -1,43 +1,37 @@
 #!/bin/bash
-set -e
+# Deploy no servidor: pull, install, build API + Web, restart PM2.
+# Rode na raiz do projeto: ./deploy.sh
+# Requer: pnpm, PM2; apps/api/.env e apps/web com envs corretos.
 
-# 1. Navegar para a raiz e atualizar o código
-echo "🚀 Puxando atualizações do Git..."
-cd ~/bcg-site
+set -e
+cd "$(dirname "$0")"
+
+echo "[deploy] git pull..."
 git pull origin develop
 
-# 2. Instalar dependências
-echo "📦 Instalando dependências..."
+echo "[deploy] pnpm install..."
 pnpm install
 
-# 3. API: Prisma generate + build
-echo "💎 Gerando Prisma Client..."
+echo "[deploy] API: prisma generate + build..."
 cd apps/api
 pnpm exec prisma generate
-echo "🔨 Build da API..."
 pnpm run build
 cd ../..
 
-# 4. Web: build
-echo "🔨 Build do Web..."
-pnpm --filter web build
-
-# 5. Reiniciar API (cwd = apps/api, dist/main.js)
-echo "⚡ Reiniciando API (bcg-api)..."
-pm2 delete bcg-api 2>/dev/null || true
-cd apps/api
-pm2 start dist/src/main.js --name bcg-api --update-env
-cd ../..
-
-# 6. Reiniciar Web (cwd = apps/web para next start encontrar .next)
-echo "🌐 Reiniciando Web (bcg-web)..."
-pm2 delete bcg-web 2>/dev/null || true
+echo "[deploy] Web: build..."
 cd apps/web
-pm2 start "pnpm start" --name bcg-web --cwd "$(pwd)"
+pnpm run build
 cd ../..
 
-# 7. Salvar e status
-pm2 save
-pm2 status
+echo "[deploy] PM2 restart bcg-api, bcg-web..."
+if command -v pm2 >/dev/null 2>&1; then
+  pm2 restart bcg-api 2>/dev/null || (cd apps/api && pm2 start dist/main.js --name bcg-api)
+  pm2 restart bcg-web 2>/dev/null || (cd apps/web && pm2 start pnpm --name bcg-web -- start)
+  pm2 save 2>/dev/null || true
+  echo "[deploy] PM2 status:"
+  pm2 list | grep -E "bcg-api|bcg-web|Name" || true
+else
+  echo "[deploy] pm2 nao encontrado; suba manualmente a API (apps/api) e o Web (apps/web)."
+fi
 
-echo "✅ Deploy finalizado com sucesso!"
+echo "[deploy] Concluido."

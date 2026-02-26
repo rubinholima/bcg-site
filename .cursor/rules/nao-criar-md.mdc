@@ -1,0 +1,15 @@
+---
+description: Nunca criar arquivos .md; manter contexto nas regras e no DESENVOLVIMENTO_DIARIO
+alwaysApply: true
+---
+
+# NÃO CRIAR .MD
+
+**Regra obrigatória:** Não crie arquivos .md (documentação, checklist, README, deploy, resumos, etc.) a menos que o usuário peça **explicitamente** por um arquivo com esse nome ou tipo.
+
+- ❌ NÃO crie DEPLOY_SERVIDOR.md, LOGIN_CHECKLIST.md, RESUMO.md ou qualquer outro .md
+- ❌ NÃO crie documentação "para ficar fácil de achar" — o que já existe está em docs/ e no DESENVOLVIMENTO_DIARIO
+- ✅ Documentação e passos consolidados ficam em **docs/DESENVOLVIMENTO_DIARIO.md** (seção DOCS CONSOLIDADOS) ou em arquivos que **já existem** no repo
+- ✅ Só crie .md se o usuário disser claramente "crie um arquivo X.md" ou equivalente
+
+**Leia e siga as regras do projeto** (.cursor/rules e o topo do DESENVOLVIMENTO_DIARIO). Mantenha-se no contexto do que o usuário pediu.
