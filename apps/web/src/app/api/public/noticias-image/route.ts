@@ -33,11 +33,15 @@ export async function GET(request: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
     const parsed = new URL(decoded);
     const origin = `${parsed.protocol}//${parsed.host}`;
+    // Sem Referer: muitos CDNs bloqueiam quando veem Referer de outro domínio.
+    // User-Agent browser-like + Accept para parecer requisição de imagem legítima.
     const res = await fetch(decoded, {
       signal: controller.signal,
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Referer: origin,
+        Accept: "image/webp,image/apng,image/*,*/*;q=0.8",
+        // Referer da origem da imagem — alguns CDNs exigem; outros bloqueiam. Testar sem se 403 persistir.
+        ...(process.env.NOTICIAS_IMAGE_USE_REFERER === "1" ? { Referer: origin } : {}),
       },
       redirect: "follow",
     });

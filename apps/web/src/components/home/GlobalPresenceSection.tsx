@@ -106,6 +106,7 @@ export function GlobalPresenceSection({
   const title = (lang === "pt" ? (config.titlePt as string) : (config.titleEn as string))?.trim() ?? "";
   const gradientStart = (config.titleGradientStart as string)?.trim() || "#fcd34d";
   const gradientEnd = (config.titleGradientEnd as string)?.trim() || "#ffffff";
+  const titleAlign = ((config.titleAlign as "left" | "center" | "right") || "left") as "left" | "center" | "right";
   const subtitle =
     (lang === "pt" ? (config.subtitlePT as string) : (config.subtitleEN as string))?.trim() ||
     (lang === "pt" ? "Não somos locais. Somos plataforma." : "We are not local. We are a platform.");
@@ -176,23 +177,27 @@ export function GlobalPresenceSection({
         </div>
       )}
       <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-10 sm:mb-14">
+        {/* Header — alinhamento do título via config (titleAlign) */}
+        <div
+          className={`mb-10 sm:mb-14 flex flex-col ${
+            titleAlign === "center" ? "items-center text-center" : titleAlign === "right" ? "items-end text-right" : "items-start text-left"
+          }`}
+        >
           {title && (
             <SectionTitle
               title={title}
               gradientStart={gradientStart}
               gradientEnd={gradientEnd}
-              align="center"
+              align={titleAlign}
             />
           )}
           {subtitle && (
-            <p className="mt-3 text-base sm:text-lg text-zinc-300 font-medium max-w-2xl mx-auto">
+            <p className={`mt-3 text-base sm:text-lg text-zinc-300 font-medium ${titleAlign === "center" ? "max-w-2xl mx-auto" : titleAlign === "right" ? "ml-auto max-w-2xl" : "max-w-2xl"}`}>
               {subtitle}
             </p>
           )}
           {description && (
-            <p className="mt-2 text-sm text-zinc-400 max-w-xl mx-auto">{description}</p>
+            <p className={`mt-2 text-sm text-zinc-400 ${titleAlign === "center" ? "max-w-xl mx-auto" : titleAlign === "right" ? "ml-auto max-w-xl" : "max-w-xl"}`}>{description}</p>
           )}
         </div>
 

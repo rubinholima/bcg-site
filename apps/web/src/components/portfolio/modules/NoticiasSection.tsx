@@ -11,9 +11,22 @@ import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 
 function NewsCardImage({ src }: { src: string }) {
   const [failed, setFailed] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
   // Em produção, usar URL absoluta do proxy para evitar falha de resolução (ex.: base errada)
-  const imgSrc =
+  const baseSrc =
     typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
+  // Fallback: quando proxy retorna 403, tentar URL original direto (request do browser pode passar onde o servidor falha)
+  const fallbackUrl = (() => {
+    if (!baseSrc.includes("/api/public/noticias-image?")) return null;
+    try {
+      const u = new URL(baseSrc);
+      const encoded = u.searchParams.get("url");
+      return encoded ? decodeURIComponent(encoded) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const imgSrc = useFallback && fallbackUrl ? fallbackUrl : baseSrc;
   if (failed) {
     return (
       <div className="flex aspect-video w-full shrink-0 items-center justify-center bg-zinc-800/80">
@@ -30,7 +43,13 @@ function NewsCardImage({ src }: { src: string }) {
         className="h-full w-full object-cover transition-transform group-hover:scale-105"
         loading="lazy"
         referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
+        onError={() => {
+          if (!useFallback && fallbackUrl) {
+            setUseFallback(true);
+          } else {
+            setFailed(true);
+          }
+        }}
       />
     </div>
   );
