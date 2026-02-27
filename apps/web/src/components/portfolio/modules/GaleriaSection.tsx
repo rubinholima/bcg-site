@@ -9,9 +9,20 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { ImageIcon, Loader2, X } from "lucide-react";
 
-function GalleryPhoto({ src, srcOriginal, alt }: { src: string; srcOriginal?: string; alt?: string }) {
+function GalleryPhoto({
+  src,
+  srcOriginal,
+  alt,
+  loadEager,
+}: {
+  src: string;
+  srcOriginal?: string;
+  alt?: string;
+  loadEager?: boolean;
+}) {
   const [failed, setFailed] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   // Priorizar PROXY: Instagram/CDN enviam CORP same-origin → browser bloqueia URL direta.
   const baseSrc =
     typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
@@ -38,14 +49,19 @@ function GalleryPhoto({ src, srcOriginal, alt }: { src: string; srcOriginal?: st
     <div className="relative aspect-square w-full overflow-hidden bg-zinc-900">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        key={retryCount}
         src={imgSrc}
         alt={alt ?? ""}
         className="h-full w-full object-cover grayscale transition-all duration-300 group-hover:scale-105 group-hover:grayscale-0"
-        loading="lazy"
+        loading={loadEager ? "eager" : "lazy"}
         referrerPolicy="no-referrer"
         onError={() => {
-          if (!useFallback && proxyFallbackUrl && srcOriginal) {
+          if (retryCount < 2) {
+            // Retry proxy (transient failures, rate limit)
+            setTimeout(() => setRetryCount((c) => c + 1), 1500);
+          } else if (!useFallback && proxyFallbackUrl && srcOriginal) {
             setUseFallback(true);
+            setRetryCount(0);
           } else {
             setFailed(true);
           }
@@ -196,10 +212,10 @@ export function GaleriaSection({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchRssFeed(rssUrl, maxItems)
+    fetchRssFeed(rssUrl, Math.min(50, maxItems * 3))
       .then((data) => {
         if (!cancelled) {
-          const gallery = rssToGaleriaItems(data);
+          const gallery = rssToGaleriaItems(data).slice(0, maxItems);
           setItems(gallery);
           setError(
             gallery.length === 0
@@ -291,6 +307,7 @@ export function GaleriaSection({
                   src={getPublicImageUrl(item.imageUrl) || item.imageUrl}
                   srcOriginal={item.imageUrlOriginal}
                   alt=""
+                  loadEager={idx < 6}
                 />
               </button>
             ))}

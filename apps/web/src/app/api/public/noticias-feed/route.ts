@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
 
   const rssUrl = searchParams.get("rssUrl")?.trim();
 
-  const max = Math.min(20, Math.max(1, parseInt(searchParams.get("max") ?? "10", 10) || 10));
+  const max = Math.min(50, Math.max(1, parseInt(searchParams.get("max") ?? "10", 10) || 10));
 
 
 
