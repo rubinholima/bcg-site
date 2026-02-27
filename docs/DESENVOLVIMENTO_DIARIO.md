@@ -28,6 +28,30 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# <span style="color: red; font-size: 28px;">📅 27 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Imagens 403/CORP, galeria 2ª linha)</span>
+
+## **IMAGENS NOTÍCIAS/GALERIA — CORP, PROXY, GALERIA SEGUNDA LINHA**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+1. **Erro 403/CORP nas fotos** — O problema era CORP (Cross-Origin-Resource-Policy): Instagram/CDN enviam `same-origin`, bloqueando URL direta no browser (ERR_BLOCKED_BY_RESPONSE.NotSameOrigin). Solução: priorizar proxy (`/api/public/noticias-image`) — servidor busca a imagem e serve do nosso domínio.
+2. **NoticiasSection e GaleriaSection** — Voltaram a usar proxy como fonte primária; fallback para URL original quando proxy falha.
+3. **Galeria 2ª linha não aparecia** — Tentativas: mais itens no feed (até 50), retry automático, loading eager em todas as imagens. **Pendente para amanhã:** ajustar segunda linha (ainda com placeholders em alguns casos).
+4. **noticias-feed** — Retorna `imageUrlOriginal` além de `imageUrl`; limite máximo aumentado de 20 para 50 itens.
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Modificados:**  
+`apps/web/src/app/api/public/noticias-feed/route.ts`, `apps/web/src/components/portfolio/modules/NoticiasSection.tsx`, `apps/web/src/components/portfolio/modules/GaleriaSection.tsx`, `apps/web/src/types/home-content.ts`, `docs/DESENVOLVIMENTO_DIARIO.md`
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Últimos commits:** `f2160c4`, `8bda838`, `4ffe1f2`, `b2438b9`
+- **Branch:** `develop`
+- **Push:** ✅ para origin/develop (working tree clean)
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 25 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Nginx WorkMail/Vault, regra encerrar o dia)</span>
 
 ## **EXCEÇÕES NGINX /api/workmail e /api/vault, REGRA ENCERRAR O DIA**
