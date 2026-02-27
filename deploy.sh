@@ -12,8 +12,9 @@ git pull origin develop
 echo "[deploy] pnpm install..."
 pnpm install
 
-echo "[deploy] API: prisma generate + build..."
+echo "[deploy] API: prisma migrate + generate + build..."
 cd apps/api
+pnpm exec prisma migrate deploy
 pnpm exec prisma generate
 pnpm run build
 cd ../..

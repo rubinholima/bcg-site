@@ -29,6 +29,32 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# <span style="color: red; font-size: 28px;">📅 27 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Tabela classificação, sectionSize, CSV BOM, deploy migrate)</span>
+
+## **TABELA CLASSIFICAÇÃO, DENSIDADE, CSV UTF-8, PRISMA MIGRATE NO DEPLOY**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+1. **Tabela de classificação** — Módulo completo: filtros (Competições, Categoria, Temporada), colunas Pos/Time/P/J/V/E/D/GP/GC/SG/Últ. Resultados/Próximo, barra compacta centralizada, max 4 linhas visíveis em section com scroll.
+2. **sectionSize (Tabela)** — Mínimo, Compacto, Normal, Grande: controla densidade (padding, fonte, logos) quando o módulo está em section. TabelaRow recebe `density`.
+3. **Section module spacing** — `sectionPaddingTop` (Mínimo/Compacto/Normal/Grande) também controla `space-y` entre módulos na coluna (minimal=space-y-4, compact=space-y-6, etc.).
+4. **CSV UTF-8 BOM** — Acentuação correta nos downloads: tabela-listas, all, visiting-teams, championships, stadiums, proximos-jogos. BOM `\uFEFF` no início.
+5. **Upload logo** — apiProxy: preservar Content-Type original (multipart boundary) ao repassar request. Fix "Envie um arquivo (campo file)".
+6. **Deploy servidor** — Erro `Championship.logoUrl does not exist`: migrations não eram aplicadas. Adicionado `prisma migrate deploy` ao `deploy.sh` antes de `prisma generate`.
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Modificados:** `deploy.sh`, `docs/DESENVOLVIMENTO_DIARIO.md`  
+**Commit principal do dia:** `285c243` (37 arquivos: TabelaClassificacaoSection, SectionBlockRenderer, apiProxy, CSV routes, campeonatos logo/standingsFormula, etc.)
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Último commit:** (deploy.sh + DESENVOLVIMENTO_DIARIO)
+- **Branch:** `develop`
+- **Push:** ✅ para origin/develop
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 27 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Imagens 403/CORP, galeria 2ª linha)</span>
 
 ## **IMAGENS NOTÍCIAS/GALERIA — CORP, PROXY, GALERIA SEGUNDA LINHA**
