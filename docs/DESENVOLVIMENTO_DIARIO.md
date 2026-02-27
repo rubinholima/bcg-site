@@ -34,10 +34,12 @@
 
 ### 🎯 **O QUE FOI FEITO HOJE:**
 
-1. **Erro 403/CORP nas fotos** — O problema era CORP (Cross-Origin-Resource-Policy): Instagram/CDN enviam `same-origin`, bloqueando URL direta no browser (ERR_BLOCKED_BY_RESPONSE.NotSameOrigin). Solução: priorizar proxy (`/api/public/noticias-image`) — servidor busca a imagem e serve do nosso domínio.
-2. **NoticiasSection e GaleriaSection** — Voltaram a usar proxy como fonte primária; fallback para URL original quando proxy falha.
-3. **Galeria 2ª linha não aparecia** — Tentativas: mais itens no feed (até 50), retry automático, loading eager em todas as imagens. **Pendente para amanhã:** ajustar segunda linha (ainda com placeholders em alguns casos).
-4. **noticias-feed** — Retorna `imageUrlOriginal` além de `imageUrl`; limite máximo aumentado de 20 para 50 itens.
+1. **Erro 403 nas fotos** — Inicialmente tentamos priorizar `imageUrlOriginal` (URL direta) para evitar 403 do proxy; deploy b2438b9.
+2. **Descoberta: era CORP, não 403** — Screenshots mostraram `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin 200 (OK)`: Instagram/CDN enviam `Cross-Origin-Resource-Policy: same-origin`, bloqueando URL direta no browser. Revertemos para priorizar proxy — servidor busca a imagem e serve do nosso domínio (commit 4ffe1f2).
+3. **NoticiasSection e GaleriaSection** — Proxy como fonte primária; fallback para URL original quando proxy falha.
+4. **noticias-feed** — Retorna `imageUrlOriginal` além de `imageUrl`; limite máximo de 20 → 50 itens.
+5. **GaleriaItem (home-content.ts)** — Campo opcional `imageUrlOriginal` para fallback.
+6. **Galeria 2ª linha não aparecia** — Tentativas: galeria pede 3× maxItems ao feed (pool maior); retry automático (até 2x) em falha; `loading="eager"` em todas as imagens (evitar lazy na 2ª linha). **Pendente para amanhã:** ajustar segunda linha (ainda placeholders em alguns casos).
 
 ### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
 
@@ -46,9 +48,9 @@
 
 ### 🚀 **FECHAMENTO DO DIA (GIT):**
 
-- **Últimos commits:** `f2160c4`, `8bda838`, `4ffe1f2`, `b2438b9`
+- **Commits do dia (ordem):** `b2438b9` (imageUrlOriginal), `4ffe1f2` (proxy/CORP), `8bda838` (galeria retry/3x feed), `f2160c4` (loading eager), `c95ac64` (encerramento)
 - **Branch:** `develop`
-- **Push:** ✅ para origin/develop (working tree clean)
+- **Push:** ✅ para origin/develop
 
 ---
 
