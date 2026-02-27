@@ -12,11 +12,10 @@ import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string }) {
   const [failed, setFailed] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
-  // Priorizar URL original direto (evita 403 — Instagram/CDNs bloqueiam proxy no servidor)
-  const useDirectFirst = !!srcOriginal;
+  // Priorizar PROXY: Instagram/CDN enviam CORP same-origin → browser bloqueia URL direta (ERR_BLOCKED_BY_RESPONSE.NotSameOrigin).
+  // O proxy busca no servidor e serve do nosso domínio → mesmo origin → funciona.
   const baseSrc =
     typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
-  // Fallback: quando proxy retorna 403, tentar URL original extraída do param
   const proxyFallbackUrl = (() => {
     if (!baseSrc.includes("/api/public/noticias-image?")) return null;
     try {
@@ -27,10 +26,10 @@ function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string
       return null;
     }
   })();
-  const imgSrc = useDirectFirst
-    ? srcOriginal!
-    : useFallback && proxyFallbackUrl
-      ? proxyFallbackUrl
+  // Proxy primeiro; fallback para URL direta só se proxy falhar (pode ajudar em alguns CDNs sem CORP)
+  const imgSrc =
+    useFallback && proxyFallbackUrl && srcOriginal
+      ? srcOriginal
       : baseSrc;
   if (failed) {
     return (
@@ -49,7 +48,7 @@ function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => {
-          if (!useFallback && !useDirectFirst && proxyFallbackUrl) {
+          if (!useFallback && proxyFallbackUrl && srcOriginal) {
             setUseFallback(true);
           } else {
             setFailed(true);
