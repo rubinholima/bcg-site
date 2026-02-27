@@ -1100,6 +1100,27 @@ export default function EditarGroupHomePage() {
                             </div>
                           </details>
                           <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                            <summary className="cursor-pointer px-3 py-2 font-medium">Cores do título (gradiente + linha)</summary>
+                            <div className="border-t border-border px-3 py-3 space-y-3">
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                  <Label>Cor inicial</Label>
+                                  <div className="flex gap-2">
+                                    <input type="color" className="h-10 w-12 cursor-pointer rounded border border-input bg-background" value={(block.config?.titleGradientStart as string) || "#fcd34d"} onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)} />
+                                    <Input placeholder="#fcd34d" value={(block.config?.titleGradientStart as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)} />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Cor final</Label>
+                                  <div className="flex gap-2">
+                                    <input type="color" className="h-10 w-12 cursor-pointer rounded border border-input bg-background" value={(block.config?.titleGradientEnd as string) || "#ffffff"} onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)} />
+                                    <Input placeholder="#ffffff" value={(block.config?.titleGradientEnd as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)} />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </details>
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                             <summary className="cursor-pointer px-3 py-2 font-medium">Ações (CTA)</summary>
                             <div className="border-t border-border px-3 py-3 space-y-4">
                               <div className="space-y-2">
@@ -1824,6 +1845,15 @@ export default function EditarGroupHomePage() {
                             </div>
                           </details>
                           <details className="rounded-lg border border-border bg-muted/20">
+                            <summary className="cursor-pointer px-3 py-2 font-medium">Cores do título (gradiente + linha)</summary>
+                            <div className="border-t border-border px-3 py-3 space-y-3">
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-1"><Label>Cor inicial</Label><div className="flex gap-2"><input type="color" className="h-10 w-12 cursor-pointer rounded border" value={(block.config?.titleGradientStart as string) || "#fcd34d"} onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)} /><Input placeholder="#fcd34d" value={(block.config?.titleGradientStart as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)} /></div></div>
+                                <div className="space-y-1"><Label>Cor final</Label><div className="flex gap-2"><input type="color" className="h-10 w-12 cursor-pointer rounded border" value={(block.config?.titleGradientEnd as string) || "#ffffff"} onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)} /><Input placeholder="#ffffff" value={(block.config?.titleGradientEnd as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)} /></div></div>
+                              </div>
+                            </div>
+                          </details>
+                          <details className="rounded-lg border border-border bg-muted/20">
                             <summary className="cursor-pointer px-3 py-2 font-medium">Aparência (FIFA)</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
                               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -2455,6 +2485,40 @@ export default function EditarGroupHomePage() {
                               }
                             />
                           </div>
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                            <summary className="cursor-pointer px-3 py-2 font-medium">Cores do título (gradiente + linha)</summary>
+                            <div className="border-t border-border px-3 py-3 space-y-3">
+                              <p className="text-xs text-muted-foreground">
+                                Cor do título e da linha abaixo. Vazio = âmbar/branco.
+                              </p>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                  <Label>Cor inicial (gradiente)</Label>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="color"
+                                      className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                                      value={(block.config?.titleGradientStart as string) || "#fcd34d"}
+                                      onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)}
+                                    />
+                                    <Input placeholder="#fcd34d" value={(block.config?.titleGradientStart as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)} />
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Cor final (gradiente)</Label>
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="color"
+                                      className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                                      value={(block.config?.titleGradientEnd as string) || "#ffffff"}
+                                      onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)}
+                                    />
+                                    <Input placeholder="#ffffff" value={(block.config?.titleGradientEnd as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)} />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </details>
                           </>
                           )}
                           {block.type !== "global_presence" && BLOCK_TYPES_WITH_BODY.includes(block.type as HomeBlockType) && (

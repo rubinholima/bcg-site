@@ -27,6 +27,7 @@ import { AnimateInView } from "@/components/home/AnimateInView";
 import { FounderBioExpandable } from "@/components/founder/FounderBioExpandable";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { GlobalPresenceSection } from "@/components/home/GlobalPresenceSection";
+import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { LogoCarouselSection } from "@/components/portfolio/modules/LogoCarouselSection";
 import { LanguageSelector } from "@/components/home/LanguageSelector";
 import type { LucideIcon } from "lucide-react";
@@ -218,6 +219,11 @@ export default function HomeClient({
     }
     return 0.75;
   };
+
+  const titleGradientStart = (block: HomeContentBlock) =>
+    (block.config?.titleGradientStart as string)?.trim() || "#fcd34d";
+  const titleGradientEnd = (block: HomeContentBlock) =>
+    (block.config?.titleGradientEnd as string)?.trim() || "#ffffff";
 
   const getHeroOverlayStyle = (block: HomeContentBlock): React.CSSProperties => {
     const op = blockOverlayOpacity(block);
@@ -586,10 +592,12 @@ export default function HomeClient({
             <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
               <div className="grid items-stretch gap-12 lg:grid-cols-2 lg:gap-16">
                 <div className={`animate-on-scroll flex flex-col ${textOrder}`} style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif' }}>
-                  <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                    {blockTitle(block, t.what.title)}
-                  </h2>
-                  <p className="mt-4 max-w-xl text-zinc-400">{t.what.body}</p>
+                  <SectionTitle
+                    title={blockTitle(block, t.what.title)}
+                    gradientStart={titleGradientStart(block)}
+                    gradientEnd={titleGradientEnd(block)}
+                  />
+                  <p className="mt-4 max-w-xl text-zinc-400">{(lang === "pt" ? (block.config?.bodyPt as string) : (block.config?.bodyEn as string))?.trim() || t.what.body}</p>
                   <div className="mt-8 grid flex-1 gap-4 sm:grid-cols-2 content-start">
                     {t.what.cards.map((card, i) => (
                       <div
@@ -640,11 +648,14 @@ export default function HomeClient({
               </div>
             )}
             <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-              <h2 className="animate-on-scroll text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                {blockTitle(block, t.clubs.title)}
-              </h2>
+              <SectionTitle
+                title={blockTitle(block, t.clubs.title)}
+                gradientStart={titleGradientStart(block)}
+                gradientEnd={titleGradientEnd(block)}
+                className="animate-on-scroll"
+              />
               <p className="animate-on-scroll mt-3 text-zinc-400 animate-delay-100">
-                {t.clubs.subtext}
+                {(lang === "pt" ? (block.config?.bodyPt as string) : (block.config?.bodyEn as string))?.trim() || t.clubs.subtext}
               </p>
               {loading ? (
                 <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -698,11 +709,14 @@ export default function HomeClient({
               </div>
             )}
             <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-              <h2 className="animate-on-scroll text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                {blockTitle(block, t.companies.title)}
-              </h2>
+              <SectionTitle
+                title={blockTitle(block, t.companies.title)}
+                gradientStart={titleGradientStart(block)}
+                gradientEnd={titleGradientEnd(block)}
+                className="animate-on-scroll"
+              />
               <p className="animate-on-scroll mt-3 text-zinc-400 animate-delay-100">
-                {t.companies.subtext}
+                {(lang === "pt" ? (block.config?.bodyPt as string) : (block.config?.bodyEn as string))?.trim() || t.companies.subtext}
               </p>
               {loading ? (
                 <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -778,9 +792,12 @@ export default function HomeClient({
                       {lang === "pt" ? "Fundador" : "Founder"}
                     </p>
                     {founderName && (
-                      <h2 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
-                        {founderName}
-                      </h2>
+                      <SectionTitle
+                        title={founderName}
+                        gradientStart={titleGradientStart(block)}
+                        gradientEnd={titleGradientEnd(block)}
+                        className="mt-1"
+                      />
                     )}
                     {(role || foundedYear) && (
                       <>
@@ -879,11 +896,14 @@ export default function HomeClient({
               </div>
             )}
             <div className="container relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-              <h2 className="animate-on-scroll text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                {blockTitle(block, t.how.title)}
-              </h2>
+              <SectionTitle
+                title={blockTitle(block, t.how.title)}
+                gradientStart={titleGradientStart(block)}
+                gradientEnd={titleGradientEnd(block)}
+                className="animate-on-scroll"
+              />
               <p className="animate-on-scroll mt-4 text-zinc-400 animate-delay-100">
-                {t.how.body}
+                {(lang === "pt" ? (block.config?.bodyPt as string) : (block.config?.bodyEn as string))?.trim() || t.how.body}
               </p>
               <ul className="mt-8 grid gap-4 sm:grid-cols-2">
                 {t.how.bullets.map((b, i) => {

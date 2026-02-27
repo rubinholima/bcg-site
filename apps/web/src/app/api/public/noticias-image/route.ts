@@ -31,9 +31,14 @@ export async function GET(request: NextRequest) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const parsed = new URL(decoded);
+    const origin = `${parsed.protocol}//${parsed.host}`;
     const res = await fetch(decoded, {
       signal: controller.signal,
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; BCG-News/1.0)" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Referer: origin,
+      },
       redirect: "follow",
     });
     clearTimeout(timeoutId);

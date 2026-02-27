@@ -5,6 +5,7 @@ import { useRef, useEffect, useState } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
+import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import type { GlobalPresenceLocation, GlobalPresenceCounter } from "@/types/home-content";
 import { MapPin } from "lucide-react";
 
@@ -103,6 +104,8 @@ export function GlobalPresenceSection({
   const [countersInView, setCountersInView] = useState(false);
 
   const title = (lang === "pt" ? (config.titlePt as string) : (config.titleEn as string))?.trim() ?? "";
+  const gradientStart = (config.titleGradientStart as string)?.trim() || "#fcd34d";
+  const gradientEnd = (config.titleGradientEnd as string)?.trim() || "#ffffff";
   const subtitle =
     (lang === "pt" ? (config.subtitlePT as string) : (config.subtitleEN as string))?.trim() ||
     (lang === "pt" ? "Não somos locais. Somos plataforma." : "We are not local. We are a platform.");
@@ -176,9 +179,12 @@ export function GlobalPresenceSection({
         {/* Header */}
         <div className="text-center mb-10 sm:mb-14">
           {title && (
-            <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
-              {title}
-            </h2>
+            <SectionTitle
+              title={title}
+              gradientStart={gradientStart}
+              gradientEnd={gradientEnd}
+              align="center"
+            />
           )}
           {subtitle && (
             <p className="mt-3 text-base sm:text-lg text-zinc-300 font-medium max-w-2xl mx-auto">
