@@ -9,17 +9,7 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { ImageIcon, Loader2, X } from "lucide-react";
 
-function GalleryPhoto({
-  src,
-  srcOriginal,
-  alt,
-  loadEager,
-}: {
-  src: string;
-  srcOriginal?: string;
-  alt?: string;
-  loadEager?: boolean;
-}) {
+function GalleryPhoto({ src, srcOriginal, alt }: { src: string; srcOriginal?: string; alt?: string }) {
   const [failed, setFailed] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -53,7 +43,7 @@ function GalleryPhoto({
         src={imgSrc}
         alt={alt ?? ""}
         className="h-full w-full object-cover grayscale transition-all duration-300 group-hover:scale-105 group-hover:grayscale-0"
-        loading={loadEager ? "eager" : "lazy"}
+        loading="eager"
         referrerPolicy="no-referrer"
         onError={() => {
           if (retryCount < 2) {
@@ -307,7 +297,6 @@ export function GaleriaSection({
                   src={getPublicImageUrl(item.imageUrl) || item.imageUrl}
                   srcOriginal={item.imageUrlOriginal}
                   alt=""
-                  loadEager={idx < 6}
                 />
               </button>
             ))}
