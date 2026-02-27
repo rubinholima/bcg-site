@@ -103,87 +103,62 @@ function getUrlFromMedia(v: unknown): string | undefined {
  */
 type RssItemForImage = Record<string, unknown>;
 
-/** Extrai URL de imagem do item RSS */
-function extractImageUrl(item: RssItemForImage): string | undefined {
-  // 1. Enclosure
+/** Coleta todas as URLs de imagem do item (para preferir fbcdn sobre scontent) */
+function collectImageUrls(item: RssItemForImage): string[] {
+  const urls: string[] = [];
+  const add = (u: string | undefined) => {
+    if (u && u.startsWith("http") && !urls.includes(u)) urls.push(u);
+  };
   const enclosure = item.enclosure as { url?: string; type?: string } | undefined;
-
   if (enclosure?.url) {
-
     const type = (enclosure as { type?: string }).type;
-
     const isImage = !type || type.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(enclosure.url);
-
-    if (isImage) return enclosure.url;
-
+    if (isImage) add(enclosure.url);
   }
-
-
-
-  // 2. media:content, media:thumbnail (Media RSS, RSS.app)
-
-  const m1 = getUrlFromMedia(item.mediaContent ?? item["media:content"]);
-
-  if (m1) return m1;
-
-  const m2 = getUrlFromMedia(item.mediaThumbnail ?? item["media:thumbnail"]);
-
-  if (m2) return m2;
-
-
-
-  // 3. content:encoded, content, description, summary — qualquer HTML com img
-
+  add(getUrlFromMedia(item.mediaContent ?? item["media:content"]));
+  add(getUrlFromMedia(item.mediaThumbnail ?? item["media:thumbnail"]));
   const htmlFields = [
-
     item.contentEncoded ?? item["content:encoded"],
-
     item.content,
-
     item.description,
-
     item.summary,
-
   ];
-
   for (const h of htmlFields) {
-
     let html: string | undefined;
-
     if (typeof h === "string") html = h;
-
     else if (Array.isArray(h) && h[0]) html = typeof h[0] === "string" ? h[0] : (h[0] as Record<string, unknown>)?._ as string;
-
     else if (h && typeof h === "object") html = (h as Record<string, unknown>)._ as string;
-
-    const url = extractImgFromHtml(html ?? "");
-
-    if (url) return url;
-
+    add(extractImgFromHtml(html ?? ""));
   }
-
-
-
-  // 4. itunes:image
-
   const itunes = item.itunes as { image?: string } | undefined;
+  if (itunes?.image) add(itunes.image);
+  return urls;
+}
 
-  if (itunes?.image) return itunes.image;
+/** scontent.cdninstagram.com bloqueia tudo (servidor, Lambda). fbcdn.net funciona. Preferir fbcdn. */
+function pickBestImageUrl(urls: string[]): string | undefined {
+  const fbcdn = urls.find((u) => /fbcdn\.net/i.test(u));
+  if (fbcdn) return fbcdn;
+  return urls[0];
+}
 
-
-
-  return undefined;
-
+function extractImageUrl(item: RssItemForImage): string | undefined {
+  return pickBestImageUrl(collectImageUrls(item));
 }
 
 
 
-/** Usa proxy para imagens externas (evita CORS/referrer block) */
+const isInstagramCdn = (u: string) => /cdninstagram|fbcdn\.net/i.test(u);
+const isScontentBlocked = (u: string) => /scontent\.cdninstagram\.com/i.test(u);
 
+/** Proxy para imagens. scontent bloqueia Lambda também — usar sempre proxy interno. fbcdn pode usar Lambda. */
 function toProxyImageUrl(url: string): string {
-
+  const proxyUrl = process.env.NOTICIAS_IMAGE_PROXY_URL?.trim();
+  if (proxyUrl && isInstagramCdn(url) && !isScontentBlocked(url)) {
+    const base = proxyUrl.replace(/\/$/, "");
+    return `${base}?url=${encodeURIComponent(url)}`;
+  }
   return `/api/public/noticias-image?url=${encodeURIComponent(url)}`;
-
 }
 
 
@@ -223,8 +198,7 @@ export async function GET(request: NextRequest) {
 
 
   const nocache = searchParams.get("nocache") === "1";
-
-  const cacheKey = `${rssUrl}:${max}:v2`; // v2 = imagens via proxy
+  const cacheKey = `${rssUrl}:${max}:v2`;
 
   const cached = !nocache && cache.get(cacheKey);
 

@@ -164,10 +164,13 @@ model VaultItem {
 
 // Cadastros: campeonatos, estádios, times visitantes
 model Championship {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  name                  String   @unique
+  logoUrl               String?  // logo da competição (para tabela de classificação)
+  standingsFormula      String?  // forma de cálculo: "pontos:desc,saldo_gols:desc,gols_marcados:desc"
+  standingsFormulaName  String?  // nome da fórmula (só quando personalizado e não é preset)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Stadium {

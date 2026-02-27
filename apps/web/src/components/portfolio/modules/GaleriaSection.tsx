@@ -9,10 +9,29 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { ImageIcon, Loader2, X } from "lucide-react";
 
-function GalleryPhoto({ src, srcOriginal, alt }: { src: string; srcOriginal?: string; alt?: string }) {
+function GalleryPhoto({
+  src,
+  srcOriginal,
+  alt,
+  delayMs = 0,
+}: {
+  src: string;
+  srcOriginal?: string;
+  alt?: string;
+  /** Atraso antes de carregar (evita rate limit no proxy quando muitas imagens) */
+  delayMs?: number;
+}) {
+  const [ready, setReady] = useState(delayMs <= 0);
   const [failed, setFailed] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    if (delayMs <= 0) return;
+    const t = setTimeout(() => setReady(true), delayMs);
+    return () => clearTimeout(t);
+  }, [delayMs]);
+
   // Priorizar PROXY: Instagram/CDN enviam CORP same-origin → browser bloqueia URL direta.
   const baseSrc =
     typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
@@ -26,8 +45,19 @@ function GalleryPhoto({ src, srcOriginal, alt }: { src: string; srcOriginal?: st
       return null;
     }
   })();
+  // Instagram/CDN: URL direta nunca funciona (CORP). Só usar proxy; fallback causaria 403.
+  const isBlockedCdn = (url?: string) =>
+    url && /cdninstagram|fbcdn\.net|instagram\.com/i.test(url);
   const imgSrc =
-    useFallback && proxyFallbackUrl && srcOriginal ? srcOriginal : baseSrc;
+    useFallback && proxyFallbackUrl && srcOriginal && !isBlockedCdn(srcOriginal)
+      ? srcOriginal
+      : baseSrc;
+
+  if (!ready) {
+    return (
+      <div className="aspect-square w-full animate-pulse bg-zinc-800/80" aria-hidden />
+    );
+  }
   if (failed) {
     return (
       <div className="flex aspect-square w-full items-center justify-center bg-zinc-800/80">
@@ -46,10 +76,14 @@ function GalleryPhoto({ src, srcOriginal, alt }: { src: string; srcOriginal?: st
         loading="eager"
         referrerPolicy="no-referrer"
         onError={() => {
-          if (retryCount < 2) {
-            // Retry proxy (transient failures, rate limit)
-            setTimeout(() => setRetryCount((c) => c + 1), 1500);
-          } else if (!useFallback && proxyFallbackUrl && srcOriginal) {
+          if (retryCount < 5) {
+            setTimeout(() => setRetryCount((c) => c + 1), 2500);
+          } else if (
+            !useFallback &&
+            proxyFallbackUrl &&
+            srcOriginal &&
+            !isBlockedCdn(srcOriginal)
+          ) {
             setUseFallback(true);
             setRetryCount(0);
           } else {
@@ -145,16 +179,32 @@ function rssToGaleriaItems(items: NoticiasItem[]): GaleriaItem[] {
     }));
 }
 
+/** Embaralha de forma determinística (mesmo feed = mesma ordem) — galeria diferente do bloco notícias */
+function shuffleForGallery<T>(arr: T[], seed: string): T[] {
+  const out = [...arr];
+  let s = seed.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export function GaleriaSection({
   block,
   lang,
   fullWidth,
   titleAlign = "left",
+  inSection,
+  showTitle = true,
 }: {
   block: HomeContentBlock;
   lang: "pt" | "en";
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
+  inSection?: boolean;
+  showTitle?: boolean;
 }) {
   const [items, setItems] = useState<GaleriaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,7 +215,7 @@ export function GaleriaSection({
   const dataSource = (block.config?.galeriaDataSource as "rss" | "manual") ?? "rss";
   const rssUrl = (block.config?.galeriaRssUrl as string)?.trim() ?? "";
   const manualItems = (block.config?.galeriaManualItems as GaleriaItem[] | undefined) ?? [];
-  const maxItems = Math.min(24, Math.max(1, (block.config?.galeriaMaxItems as number) ?? 12));
+  const maxItems = Math.min(24, Math.max(1, (block.config?.galeriaMaxItems as number) ?? 10));
   const padTop = (block.config?.galeriaPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.galeriaPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
   const blockBg = (block.config?.backgroundColor as string)?.trim();
@@ -205,7 +255,10 @@ export function GaleriaSection({
     fetchRssFeed(rssUrl, Math.min(50, maxItems * 3))
       .then((data) => {
         if (!cancelled) {
-          const gallery = rssToGaleriaItems(data).slice(0, maxItems);
+          const gallery = shuffleForGallery(
+            rssToGaleriaItems(data).slice(0, maxItems),
+            rssUrl
+          );
           setItems(gallery);
           setError(
             gallery.length === 0
@@ -261,7 +314,7 @@ export function GaleriaSection({
           </div>
         )}
         <div className={`relative ${containerClass}`}>
-          {title && (
+          {showTitle && title && (
             <SectionTitle
               title={title}
               align={titleAlign}
@@ -283,18 +336,26 @@ export function GaleriaSection({
             </div>
           )}
           {hasContent && !loading && (
-            <div className="mt-8 grid grid-cols-3 gap-0 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+            <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
             {displayItems.map((item, idx) => (
               <button
                 key={item.id ?? idx}
                 type="button"
                 className="group relative block cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950"
                 onClick={() =>
-                  setLightboxSrc(getPublicImageUrl(item.imageUrl) || item.imageUrl)
+                  setLightboxSrc(
+                    item.imageUrl?.startsWith("/api/") || item.imageUrl?.startsWith("https://")
+                      ? item.imageUrl
+                      : getPublicImageUrl(item.imageUrl) || item.imageUrl
+                  )
                 }
               >
                 <GalleryPhoto
-                  src={getPublicImageUrl(item.imageUrl) || item.imageUrl}
+                  src={
+                    item.imageUrl?.startsWith("/api/") || item.imageUrl?.startsWith("https://")
+                      ? item.imageUrl
+                      : getPublicImageUrl(item.imageUrl) || item.imageUrl
+                  }
                   srcOriginal={item.imageUrlOriginal}
                   alt=""
                 />

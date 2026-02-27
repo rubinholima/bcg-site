@@ -24,10 +24,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Erro ao buscar campeonatos" }, { status: 502 });
     }
     const data = await res.json();
-    const names = Array.isArray(data) ? data.map((c: { name: string }) => c.name).sort() : [];
+    const items = Array.isArray(data)
+      ? data.map((c: { id: string; name: string; logoUrl?: string; standingsFormula?: string }) => ({
+          id: c.id,
+          name: c.name,
+          logoUrl: c.logoUrl ?? null,
+          standingsFormula: c.standingsFormula ?? null,
+        }))
+      : [];
 
     if (wantCsv) {
-      const csv = "name\n" + names.map((n) => csvEscape(n)).join("\n");
+      const names = items.map((c: { name: string }) => c.name).sort();
+      const csv = "\uFEFFname\n" + names.map((n) => csvEscape(n)).join("\n");
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
@@ -35,7 +43,7 @@ export async function GET(request: NextRequest) {
         },
       });
     }
-    return NextResponse.json({ items: names });
+    return NextResponse.json({ items });
   } catch {
     return NextResponse.json({ error: "Erro ao buscar campeonatos" }, { status: 502 });
   }

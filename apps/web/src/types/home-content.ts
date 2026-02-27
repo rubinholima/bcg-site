@@ -111,7 +111,7 @@ export interface HomeBlockConfig {
   /** Alinhamento do título. Se não definido, usa o padrão do tema da página. */
   titleAlign?: TitleAlignMode;
   /** Tamanho/altura da seção (compact = menos padding, normal, large = mais padding). Aplica a todos os módulos. */
-  sectionSize?: "compact" | "normal" | "large";
+  sectionSize?: "minimal" | "compact" | "normal" | "large";
   /** Cor de fundo (hex, ex: #18181b). Vazio = transparente (herda do tema). */
   backgroundColor?: string;
   /** Se false, o bloco não aparece na página pública (mas continua editável). */
@@ -338,7 +338,7 @@ export interface HomeBlockConfig {
   galeriaRssUrl?: string;
   /** Galeria: itens manuais (imagem + link + legenda) */
   galeriaManualItems?: GaleriaItem[];
-  /** Galeria: máx. fotos a exibir (default 12) */
+  /** Galeria: máx. fotos a exibir (default 10) */
   galeriaMaxItems?: number;
   /** Galeria: padding topo da seção */
   galeriaPaddingTop?: "minimal" | "compact" | "normal" | "large";
@@ -373,7 +373,46 @@ export interface HomeBlockConfig {
   proximosJogosManualFixtures?: ProximosJogosFixtureItem[];
   /** Próximos Jogos: overrides por externalId (quando dataSource=sofascore) */
   proximosJogosOverrides?: Record<string, ProximosJogosFixtureOverride>;
+  /** Tabela Classificação: fonte (manual = lista editada; google_sheets = planilha) */
+  tabelaDataSource?: "manual" | "google_sheets";
+  /** Tabela: URL ou ID da planilha Google Sheets */
+  tabelaSpreadsheetUrl?: string;
+  /** Tabela: gid da aba */
+  tabelaSheetGid?: string;
+  /** Tabela: linhas manuais (quando dataSource=manual) */
+  tabelaManualRows?: TabelaStandingsRow[];
+  /** Tabela: padding topo */
+  tabelaPaddingTop?: "minimal" | "compact" | "normal" | "large";
+  /** Tabela: padding base */
+  tabelaPaddingBottom?: "minimal" | "compact" | "normal" | "large";
   [key: string]: unknown;
+}
+
+/** Linha da tabela de classificação (posição calculada pelo app conforme fórmula da competição) */
+export interface TabelaStandingsRow {
+  /** Nome da competição (ex.: Mineirão, La Liga) — filtro Competições */
+  competicao?: string;
+  /** Categoria/faixa etária (principal, sub20, sub17, etc.) — filtro Categoria */
+  categoria?: string;
+  temporada?: string;
+  /** Calculado pelo app; não vem do template */
+  posicao?: number;
+  /** Calculado pelo app (opcional; requer histórico); não vem do template */
+  variacao?: "up" | "down" | "same";
+  time: string;
+  logoTime?: string;
+  pontos: number;
+  jogos: number;
+  vitorias: number;
+  empates: number;
+  derrotas: number;
+  golsMarcados: number;
+  golsSofridos: number;
+  /** Calculado se não informado: golsMarcados - golsSofridos */
+  saldoGols?: number;
+  ultimosJogos?: string;
+  proximoJogo?: string;
+  logoProximo?: string;
 }
 
 /** Item de notícia (manual ou retorno do RSS) */

@@ -582,11 +582,15 @@ export function TimesCategoriasSection({
   lang,
   fullWidth,
   titleAlign = "left",
+  inSection,
+  showTitle = true,
 }: {
   block: HomeContentBlock;
   lang: "pt" | "en";
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
+  inSection?: boolean;
+  showTitle?: boolean;
 }) {
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const categories = (block.config?.timesCategoriasCategories as TeamCategory[] | undefined) ?? [];
@@ -663,12 +667,12 @@ export function TimesCategoriasSection({
           </div>
         )}
         <div className={`relative ${containerClass}`}>
-          {title && (
+          {showTitle && title && (
             <SectionTitle
               title={title}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
-              align="left"
+              align={titleAlign ?? "left"}
             />
           )}
           

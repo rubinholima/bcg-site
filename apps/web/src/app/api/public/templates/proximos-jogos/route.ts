@@ -125,7 +125,7 @@ export async function GET() {
     );
   }
 
-  const csv = rows.join("\n");
+  const csv = "\uFEFF" + rows.join("\n");
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",

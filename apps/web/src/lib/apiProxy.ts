@@ -109,12 +109,12 @@ export async function forwardRequest(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  // Adiciona Content-Type se não for pulado e se não estiver definido
-  if (!skipContentType && !headers["Content-Type"]) {
-    const contentType = request.headers.get("content-type");
+  // Content-Type: preserva o original (multipart/form-data com boundary) ou usa JSON
+  const contentType = request.headers.get("content-type");
+  if (!headers["Content-Type"]) {
     if (contentType) {
       headers["Content-Type"] = contentType;
-    } else {
+    } else if (!skipContentType) {
       headers["Content-Type"] = "application/json";
     }
   }

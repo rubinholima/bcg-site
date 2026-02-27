@@ -31,6 +31,7 @@ import { NoticiasSection } from "@/components/portfolio/modules/NoticiasSection"
 import { GaleriaSection } from "@/components/portfolio/modules/GaleriaSection";
 import { PatrocinadoresSection } from "@/components/portfolio/modules/PatrocinadoresSection";
 import { TimesCategoriasSection } from "@/components/portfolio/modules/TimesCategoriasSection";
+import { TabelaClassificacaoSection } from "@/components/portfolio/modules/TabelaClassificacaoSection";
 import { SectionBlockRenderer } from "@/components/portfolio/modules/SectionBlockRenderer";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Button } from "@/components/ui/button";
@@ -115,12 +116,14 @@ export function BlockRenderer({
   lang,
   page,
   inSection,
+  showModuleTitle,
 }: {
   block: HomeContentBlock;
   slug: string;
   lang: "pt" | "en";
   page: Page;
   inSection?: boolean;
+  showModuleTitle?: boolean;
 }) {
   /** Servidor pode devolver visible como boolean ou string; ocultar só quando false ou "false". */
   const v = block.config?.visible as boolean | string | undefined;
@@ -320,20 +323,39 @@ export function BlockRenderer({
     return <LogoCarouselSection key={block.id} block={block} lang={lang} />;
   }
 
+  const shouldShowTitle = showModuleTitle || !inSection;
+
   if (block.type === "noticias") {
-    return <NoticiasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
+    return <NoticiasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
   }
 
   if (block.type === "galeria") {
-    return <GaleriaSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
+    return <GaleriaSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
   }
 
   if (block.type === "patrocinadores") {
-    return <PatrocinadoresSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
+    return <PatrocinadoresSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
   }
 
   if (block.type === "times_categorias") {
-    return <TimesCategoriasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} />;
+    return <TimesCategoriasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
+  }
+
+  if (block.type === "tabela") {
+    return (
+      <TabelaClassificacaoSection
+        key={block.id}
+        block={block}
+        page={page}
+        lang={lang}
+        ourTeamName={tenant?.name}
+        ourTeamLogoUrl={tenant?.logoUrl}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
   }
 
   if (block.type === "proximos_jogos") {
@@ -347,6 +369,8 @@ export function BlockRenderer({
         ourTeamLogoUrl={tenant?.logoUrl}
         fullWidth={fullWidth}
         titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
       />
     );
   }
@@ -362,6 +386,8 @@ export function BlockRenderer({
         ourTeamLogoUrl={tenant?.logoUrl}
         fullWidth={fullWidth}
         titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
       />
     );
   }

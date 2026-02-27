@@ -22,7 +22,14 @@ export class ChampionshipsService {
       where: { name: dto.name.trim() },
     });
     if (existing) throw new ConflictException(`Campeonato "${dto.name}" já existe`);
-    return this.prisma.championship.create({ data: { name: dto.name.trim() } });
+    return this.prisma.championship.create({
+      data: {
+        name: dto.name.trim(),
+        logoUrl: dto.logoUrl?.trim() || null,
+        standingsFormula: dto.standingsFormula?.trim() || null,
+        standingsFormulaName: dto.standingsFormulaName?.trim() || null,
+      },
+    });
   }
 
   async update(id: string, dto: UpdateChampionshipDto) {
@@ -33,9 +40,14 @@ export class ChampionshipsService {
       });
       if (existing) throw new ConflictException(`Campeonato "${dto.name}" já existe`);
     }
+    const data: { name?: string; logoUrl?: string | null; standingsFormula?: string | null; standingsFormulaName?: string | null } = {};
+    if (dto.name !== undefined) data.name = dto.name.trim();
+    if (dto.logoUrl !== undefined) data.logoUrl = dto.logoUrl?.trim() || null;
+    if (dto.standingsFormula !== undefined) data.standingsFormula = dto.standingsFormula?.trim() || null;
+    if (dto.standingsFormulaName !== undefined) data.standingsFormulaName = dto.standingsFormulaName?.trim() || null;
     return this.prisma.championship.update({
       where: { id },
-      data: dto.name ? { name: dto.name.trim() } : {},
+      data,
     });
   }
 

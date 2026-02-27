@@ -257,6 +257,8 @@ export function ProximosJogosSection({
   ourTeamLogoUrl,
   fullWidth,
   titleAlign = "left",
+  inSection,
+  showTitle = true,
 }: {
   block: HomeContentBlock;
   slug: string;
@@ -265,6 +267,8 @@ export function ProximosJogosSection({
   ourTeamLogoUrl?: string | null;
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
+  inSection?: boolean;
+  showTitle?: boolean;
 }) {
   const [fixtures, setFixtures] = useState<FixtureItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -395,7 +399,7 @@ export function ProximosJogosSection({
         </div>
       )}
       <div className={`relative w-full ${fullWidth ? "" : "container mx-auto max-w-5xl px-0 sm:px-6 lg:px-8"}`}>
-        {title && (
+        {showTitle && title && (
           <SectionTitle
             title={title}
             gradientStart={(block.config?.titleGradientStart as string)?.trim()}

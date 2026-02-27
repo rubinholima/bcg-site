@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const names = Array.isArray(data) ? data.map((s: { name: string }) => s.name).sort() : [];
 
     if (wantCsv) {
-      const csv = "name\n" + names.map((n) => csvEscape(n)).join("\n");
+      const csv = "\uFEFFname\n" + names.map((n) => csvEscape(n)).join("\n");
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",

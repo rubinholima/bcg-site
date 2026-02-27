@@ -12,6 +12,14 @@ const PADDING_CLASSES = {
   large: { top: "pt-20 sm:pt-24", bottom: "pb-20 sm:pb-24" },
 } as const;
 
+/** Espaço entre módulos na coluna — minimal/compact = menos espaço. */
+const MODULE_SPACING = {
+  minimal: "space-y-4",
+  compact: "space-y-6",
+  normal: "space-y-10",
+  large: "space-y-12",
+} as const;
+
 export function SectionBlockRenderer({
   block,
   slug,
@@ -43,6 +51,7 @@ export function SectionBlockRenderer({
 
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
+  const moduleSpacing = MODULE_SPACING[padTop] ?? MODULE_SPACING.compact;
 
   const visibleLeft = leftModules.filter((m) => {
     const v = m.config?.visible as boolean | string | undefined;
@@ -136,8 +145,8 @@ export function SectionBlockRenderer({
             {(leftColBgColor || leftColBgImage) && (
               <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
             )}
-            <div className="relative space-y-12">
-              {leftColumnTitle?.trim() && (
+            <div className={`relative ${moduleSpacing}`}>
+              {leftColumnTitle?.trim() && visibleLeft.length <= 1 && (
                 <SectionTitle
                   title={leftColumnTitle}
                   gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
@@ -147,9 +156,10 @@ export function SectionBlockRenderer({
               )}
               {allModules.map((m) => {
                 const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                const showModuleTitle = visibleLeft.length > 1;
                 return (
                   <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                    <BlockRenderer block={m} slug={slug} lang={lang} page={page} />
+                    <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection showModuleTitle={showModuleTitle} />
                   </div>
                 );
               })}
@@ -165,8 +175,8 @@ export function SectionBlockRenderer({
               {(leftColBgColor || leftColBgImage) && (
                 <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
               )}
-              <div className="relative space-y-12">
-                {leftColumnTitle?.trim() && (
+              <div className={`relative ${moduleSpacing}`}>
+                {leftColumnTitle?.trim() && visibleLeft.length <= 1 && (
                   <SectionTitle
                     title={leftColumnTitle}
                     gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
@@ -176,9 +186,10 @@ export function SectionBlockRenderer({
                 )}
                 {visibleLeft.map((m) => {
                   const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                  const showModuleTitle = visibleLeft.length > 1;
                   return (
                     <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection />
+                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection showModuleTitle={showModuleTitle} />
                     </div>
                   );
                 })}
@@ -188,8 +199,8 @@ export function SectionBlockRenderer({
               {(rightColBgColor || rightColBgImage) && (
                 <ColumnBg bgColor={rightColBgColor} bgImage={rightColBgImage} overlayOp={rightColOverlay} />
               )}
-              <div className="relative space-y-12">
-                {rightColumnTitle?.trim() && (
+              <div className={`relative ${moduleSpacing}`}>
+                {rightColumnTitle?.trim() && visibleRight.length <= 1 && (
                   <SectionTitle
                     title={rightColumnTitle}
                     gradientStart={(block.config?.sectionRightColumnTitleGradientStart as string)?.trim()}
@@ -199,9 +210,10 @@ export function SectionBlockRenderer({
                 )}
                 {visibleRight.map((m) => {
                   const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                  const showModuleTitle = visibleRight.length > 1;
                   return (
                     <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection />
+                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection showModuleTitle={showModuleTitle} />
                     </div>
                   );
                 })}

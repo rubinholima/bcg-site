@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     if (wantCsv) {
       const names = teams.map((t) => t.name).sort();
-      const csv = "name\n" + names.map((n) => csvEscape(n)).join("\n");
+      const csv = "\uFEFFname\n" + names.map((n) => csvEscape(n)).join("\n");
       return new NextResponse(csv, {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",

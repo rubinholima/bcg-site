@@ -15,6 +15,7 @@
 - **Carrosséis** — Usar `el.scrollTo({ left: ... })` no container. **NUNCA** `scrollIntoView` (quebra o scroll vertical da página).
 - **Dashboard** — Não alterar estrutura base: Sidebar, Header, nome "BCG Platform". Layout em `apps/web/src/app/dashboard/layout.tsx`.
 - **Rotina do dia** — (1) Subir banco: `docker compose up -d db`. (2) Ler regras e desenvolvimento diário. (3) Confirmar objetivo antes de codar.
+- **Passo a passo com aprovação** — Tarefas com mais de um passo (deploy, config, etc.): dar **um passo** no chat, **esperar** o usuário aprovar ("ok", "próximo", "aprovo") e **só então** dar o próximo. Não mandar lista longa de uma vez; não mandar ler arquivo em vez dos passos. Exceção: se o usuário disser "pode fazer tudo" ou "rode tudo".
 - **Código** — TypeScript; tenant = empresa (conceito técnico vs UI); não quebrar monorepo.
 - **Módulos de página** — Padrão: cor de fundo, overlay, títulos PT/EN; Hero com carrossel; ver seção MODULOS_PAGINA em DOCS CONSOLIDADOS (final do arquivo).
 - **Módulos do dashboard** — Cadastrar em Module + ModuleRole no backend; sidebar com mesmo `moduleSlug`; proteger página com `canAccessModule("slug")`. Ver seção MODULOS_DASHBOARD em DOCS CONSOLIDADOS.
@@ -1029,5 +1030,9 @@ API usa AWS SDK (Cognito Admin). Credenciais: default chain ou AWS_ACCESS_KEY_ID
 ## FASE2_ENTREGAVEIS / prd_site_bcg
 
 Ver arquivos no repo se necessário; conteúdo de produto e entregáveis mantido nos respectivos documentos originais quando existirem.
+
+## NOTICIAS_IMAGE_PROXY_LAMBDA (Proxy de imagens Instagram via AWS Lambda)
+
+Imagens do feed (Instagram) podem dar 403 no proxy interno. **NOTICIAS_IMAGE_PROXY_URL** (server-side): quando definido, URLs do Instagram passam por esse proxy. Formato: `https://xxx.lambda-url.region.on.aws` (sem barra final). **Importante:** URLs relativas (/api/public/noticias-image) e Lambda (https://) NÃO devem passar por getPublicImageUrl — senão em local as imagens vão para bostoncitygroup.biz em vez de localhost. GaleriaSection e NoticiasSection usam a URL direta para proxy/Lambda. **Deploy Lambda:** (1) Console AWS Lambda → Node.js 20.x, sem VPC. (2) Upload `scripts/aws-lambda-image-proxy/index.mjs`; handler `index.handler`. (3) Function URL, Auth NONE. (4) Copiar URL.
 
 ---

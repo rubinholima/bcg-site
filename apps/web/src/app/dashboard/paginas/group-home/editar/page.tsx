@@ -194,6 +194,7 @@ export default function EditarGroupHomePage() {
   const [headerAdvanced, setHeaderAdvanced] = useState(false);
   const [headerDebug, setHeaderDebug] = useState(false);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
+  const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
   const [globalAppearanceOpen, setGlobalAppearanceOpen] = useState(false);
   const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
 
@@ -928,13 +929,14 @@ export default function EditarGroupHomePage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="minimal">Mínimo (máximo compacto)</SelectItem>
                               <SelectItem value="compact">Compacto (menor)</SelectItem>
                               <SelectItem value="normal">Normal</SelectItem>
                               <SelectItem value="large">Grande (mais espaço)</SelectItem>
                             </SelectContent>
                           </Select>
                           <p className="text-xs text-muted-foreground">
-                            Compacto reduz o padding vertical; use para deixar o módulo menor e ganhar espaço na página.
+                            Mínimo e Compacto reduzem o espaço; use para deixar o módulo menor e ganhar espaço na página.
                           </p>
                         </div>
                       </details>
@@ -2474,6 +2476,85 @@ export default function EditarGroupHomePage() {
                               </div>
                             );
                           })()}
+                          {block.type === "tabela" && (
+                            <div className="space-y-4 rounded-lg border border-border p-3 bg-muted/10">
+                              <p className="text-sm font-medium text-muted-foreground">Tabela Classificação — importe de Google Sheets</p>
+                              <p className="text-xs text-muted-foreground">
+                                Use o template{" "}
+                                <a href="/templates/tabela-classificacao-template.csv" download className="underline text-amber-600 dark:text-amber-400">
+                                  tabela-classificacao-template.csv
+                                </a>
+                                {" | "}
+                                <a href="/api/public/cadastros/tabela-listas?format=csv" download="listas-tabela-dropdowns.csv" className="underline text-amber-600 dark:text-amber-400">
+                                  Baixar listas para dropdowns
+                                </a>
+                                . Colunas: competicao (ou categoria), temporada, time, logo_time, pontos, jogos, vitorias, empates, derrotas, gols_marcados, gols_sofridos, ultimos_jogos (W D L), proximo_jogo, logo_proximo. A posição é calculada pelo app conforme a fórmula cadastrada na competição.
+                              </p>
+                              <div className="space-y-2">
+                                <Label>URL da planilha ou ID</Label>
+                                <Input
+                                  placeholder="https://docs.google.com/spreadsheets/d/... ou ID"
+                                  value={((block.config?.tabelaSpreadsheetUrl as string) ?? "").toString()}
+                                  onChange={(e) => updateBlockConfigValue(index, "tabelaSpreadsheetUrl", e.target.value)}
+                                />
+                                <div className="flex gap-2">
+                                  <div className="flex-1 space-y-1">
+                                    <Label>GID da aba</Label>
+                                    <Input
+                                      placeholder="0"
+                                      value={((block.config?.tabelaSheetGid as string) ?? "0").toString()}
+                                      onChange={(e) => updateBlockConfigValue(index, "tabelaSheetGid", e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="flex items-end pb-2">
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      disabled={syncingTabelaBlockIndex === index}
+                                      onClick={async () => {
+                                        const urlOrId = (block.config?.tabelaSpreadsheetUrl as string)?.trim();
+                                        const gid = ((block.config?.tabelaSheetGid as string)?.trim() || "0").toString();
+                                        if (!urlOrId) {
+                                          alert("Informe a URL ou ID da planilha.");
+                                          return;
+                                        }
+                                        setSyncingTabelaBlockIndex(index);
+                                        try {
+                                          const params = new URLSearchParams();
+                                          params.set("spreadsheetId", urlOrId);
+                                          params.set("gid", gid);
+                                          params.set("_t", Date.now().toString());
+                                          const res = await authFetch(`/api/google-sheets/tabela-classificacao?${params}`, { credentials: "include" });
+                                          const data = await res.json();
+                                          if (res.ok && Array.isArray(data.rows)) {
+                                            updateBlockConfigValue(index, "tabelaManualRows", data.rows);
+                                            updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
+                                          } else if (data.error) {
+                                            alert(data.error);
+                                          }
+                                        } catch {
+                                          alert("Erro ao importar. Verifique a URL e se a planilha está compartilhada.");
+                                        } finally {
+                                          setSyncingTabelaBlockIndex(null);
+                                        }
+                                      }}
+                                    >
+                                      {syncingTabelaBlockIndex === index ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                      ) : null}
+                                      Atualizar com Google Sheets
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                              {((block.config?.tabelaManualRows as object[]) ?? []).length > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  {((block.config?.tabelaManualRows as object[]) ?? []).length} linhas importadas.
+                                </p>
+                              )}
+                            </div>
+                          )}
                           {block.type !== "global_presence" && (
                           <>
                           <div className="space-y-2">

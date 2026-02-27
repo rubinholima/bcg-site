@@ -324,6 +324,7 @@ export default function EditarPaginaTenantPage() {
   const [openFixtureByBlockId, setOpenFixtureByBlockId] = useState<Record<string, number>>({});
   const [syncingTimesCategoriasBlockIndex, setSyncingTimesCategoriasBlockIndex] = useState<number | null>(null);
   const [syncingProximosJogosBlockIndex, setSyncingProximosJogosBlockIndex] = useState<number | null>(null);
+  const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const proximosJogosUrlRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const proximosJogosGidRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -996,7 +997,7 @@ export default function EditarPaginaTenantPage() {
                       <Label className="text-muted-foreground">
                         Aparência (todos os módulos)
                       </Label>
-                      {(block.type === "proximos_jogos" || block.type === "noticias" || block.type === "ultimos_resultados") && (
+                      {(block.type === "proximos_jogos" || block.type === "noticias" || block.type === "ultimos_resultados" || block.type === "tabela") && (
                         <p className="text-xs text-muted-foreground">
                           Deixe cor e imagem de fundo vazios para o fundo da página aparecer continuado (sem bloco separado).
                         </p>
@@ -1140,13 +1141,14 @@ export default function EditarPaginaTenantPage() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="minimal">Mínimo (máximo compacto)</SelectItem>
                               <SelectItem value="compact">Compacto (menor)</SelectItem>
                               <SelectItem value="normal">Normal</SelectItem>
                               <SelectItem value="large">Grande (mais espaço)</SelectItem>
                             </SelectContent>
                           </Select>
                           <p className="text-xs text-muted-foreground">
-                            Compacto reduz o padding vertical; use para deixar o módulo menor e ganhar espaço na página.
+                            Mínimo e Compacto reduzem o espaço; use para deixar o módulo menor e ganhar espaço na página.
                           </p>
                         </div>
                       </details>
@@ -2555,10 +2557,10 @@ export default function EditarPaginaTenantPage() {
                                     type="number"
                                     min={1}
                                     max={24}
-                                    value={(block.config?.galeriaMaxItems as number) ?? 12}
+                                    value={(block.config?.galeriaMaxItems as number) ?? 10}
                                     onChange={(e) => {
                                       const v = parseInt(e.target.value, 10);
-                                      updateBlockConfigValue(index, "galeriaMaxItems", Number.isNaN(v) ? 12 : Math.min(24, Math.max(1, v)));
+                                      updateBlockConfigValue(index, "galeriaMaxItems", Number.isNaN(v) ? 10 : Math.min(24, Math.max(1, v)));
                                     }}
                                   />
                                 </div>
@@ -3001,7 +3003,7 @@ export default function EditarPaginaTenantPage() {
                                           ].join(",")
                                         );
                                       });
-                                      const csv = csvRows.join("\n");
+                                      const csv = "\uFEFF" + csvRows.join("\n");
                                       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
                                       const link = document.createElement("a");
                                       const url = URL.createObjectURL(blob);
@@ -3563,6 +3565,94 @@ export default function EditarPaginaTenantPage() {
                                 )}
                               </div>
                             </details>
+                          </div>
+                        </details>
+                      </div>
+                    )}
+                    {block.type === "tabela" && (
+                      <div className="space-y-3 sm:col-span-2">
+                        <details open className="rounded-lg border border-border bg-muted/20">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Tabela Classificação</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <p className="text-xs text-muted-foreground">
+                              Importe dados de uma planilha Google Sheets. Use o template{" "}
+                              <a href="/templates/tabela-classificacao-template.csv" download className="underline text-amber-600 dark:text-amber-400">
+                                tabela-classificacao-template.csv
+                              </a>
+                              {" | "}
+                              <a href="/api/public/cadastros/tabela-listas?format=csv" download="listas-tabela-dropdowns.csv" className="underline text-amber-600 dark:text-amber-400">
+                                Baixar listas para dropdowns
+                              </a>
+                              . Colunas: competicao (ou categoria), temporada, time, logo_time, pontos, jogos, vitorias, empates, derrotas, gols_marcados, gols_sofridos, ultimos_jogos (W D L), proximo_jogo, logo_proximo. A posição é calculada pelo app conforme a fórmula cadastrada na competição.
+                            </p>
+                            <div className="space-y-2">
+                              <Label>URL da planilha ou ID</Label>
+                              <Input
+                                placeholder="https://docs.google.com/spreadsheets/d/... ou ID"
+                                value={((block.config?.tabelaSpreadsheetUrl as string) ?? "").toString()}
+                                onChange={(e) => updateBlockConfigValue(index, "tabelaSpreadsheetUrl", e.target.value)}
+                                onPaste={(e) => {
+                                  const t = e.clipboardData.getData("text");
+                                  const gidMatch = t.match(/[?&]gid=(\d+)/i) || t.match(/#gid=(\d+)/i);
+                                  if (gidMatch) updateBlockConfigValue(index, "tabelaSheetGid", gidMatch[1]);
+                                }}
+                              />
+                              <div className="flex gap-2">
+                                <div className="flex-1 space-y-1">
+                                  <Label>GID da aba</Label>
+                                  <Input
+                                    placeholder="0"
+                                    value={((block.config?.tabelaSheetGid as string) ?? "0").toString()}
+                                    onChange={(e) => updateBlockConfigValue(index, "tabelaSheetGid", e.target.value)}
+                                  />
+                                </div>
+                                <div className="flex items-end pb-2">
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    disabled={syncingTabelaBlockIndex === index}
+                                    onClick={async () => {
+                                      const urlOrId = (block.config?.tabelaSpreadsheetUrl as string)?.trim();
+                                      const gid = ((block.config?.tabelaSheetGid as string)?.trim() || "0").toString();
+                                      if (!urlOrId) {
+                                        alert("Informe a URL ou ID da planilha.");
+                                        return;
+                                      }
+                                      updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
+                                      setSyncingTabelaBlockIndex(index);
+                                      try {
+                                        const params = new URLSearchParams();
+                                        params.set("spreadsheetId", urlOrId);
+                                        params.set("gid", gid);
+                                        params.set("_t", Date.now().toString());
+                                        const res = await authFetch(`/api/google-sheets/tabela-classificacao?${params}`, { credentials: "include" });
+                                        const data = await res.json();
+                                        if (res.ok && Array.isArray(data.rows)) {
+                                          updateBlockConfigValue(index, "tabelaManualRows", data.rows);
+                                        } else if (data.error) {
+                                          alert(data.error);
+                                        }
+                                      } catch (err) {
+                                        alert("Erro ao importar. Verifique a URL e se a planilha está compartilhada.");
+                                      } finally {
+                                        setSyncingTabelaBlockIndex(null);
+                                      }
+                                    }}
+                                  >
+                                    {syncingTabelaBlockIndex === index ? (
+                                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                    ) : null}
+                                    Atualizar com Google Sheets
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                            {((block.config?.tabelaManualRows as object[]) ?? []).length > 0 && (
+                              <p className="text-xs text-muted-foreground">
+                                {((block.config?.tabelaManualRows as object[]) ?? []).length} linhas importadas. Filtros por categoria e temporada aparecem na barra abaixo da tabela.
+                              </p>
+                            )}
                           </div>
                         </details>
                       </div>

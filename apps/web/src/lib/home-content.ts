@@ -325,7 +325,7 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.galeriaDataSource = "rss";
     config.galeriaRssUrl = "";
     config.galeriaManualItems = [];
-    config.galeriaMaxItems = 12;
+    config.galeriaMaxItems = 10;
     config.galeriaPaddingTop = "compact";
     config.galeriaPaddingBottom = "compact";
   }
@@ -338,6 +338,12 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.timesCategoriasCategories = [];
     config.timesCategoriasPaddingTop = "compact";
     config.timesCategoriasPaddingBottom = "compact";
+  }
+  if (type === "tabela") {
+    config.tabelaDataSource = "manual";
+    config.tabelaManualRows = [];
+    config.tabelaPaddingTop = "compact";
+    config.tabelaPaddingBottom = "compact";
   }
   if (type === "logo_carousel") {
     config.backgroundColor = "#0f0f12";

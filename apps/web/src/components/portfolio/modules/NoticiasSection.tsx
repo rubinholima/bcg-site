@@ -26,9 +26,11 @@ function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string
       return null;
     }
   })();
-  // Proxy primeiro; fallback para URL direta só se proxy falhar (pode ajudar em alguns CDNs sem CORP)
+  // Instagram/CDN: URL direta nunca funciona (CORP). Só proxy; fallback causaria 403.
+  const isBlockedCdn = (url?: string) =>
+    url && /cdninstagram|fbcdn\.net|instagram\.com/i.test(url);
   const imgSrc =
-    useFallback && proxyFallbackUrl && srcOriginal
+    useFallback && proxyFallbackUrl && srcOriginal && !isBlockedCdn(srcOriginal)
       ? srcOriginal
       : baseSrc;
   if (failed) {
@@ -48,7 +50,7 @@ function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => {
-          if (!useFallback && proxyFallbackUrl && srcOriginal) {
+          if (!useFallback && proxyFallbackUrl && srcOriginal && !isBlockedCdn(srcOriginal)) {
             setUseFallback(true);
           } else {
             setFailed(true);
@@ -92,11 +94,15 @@ export function NoticiasSection({
   lang,
   fullWidth,
   titleAlign = "left",
+  inSection,
+  showTitle = true,
 }: {
   block: HomeContentBlock;
   lang: "pt" | "en";
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
+  inSection?: boolean;
+  showTitle?: boolean;
 }) {
   const [items, setItems] = useState<NoticiasItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,7 +192,7 @@ export function NoticiasSection({
           </div>
         )}
         <div className={`relative ${containerClass}`}>
-          {title && (
+          {showTitle && title && (
             <SectionTitle
               title={title}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}

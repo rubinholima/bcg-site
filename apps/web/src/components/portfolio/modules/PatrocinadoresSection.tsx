@@ -74,11 +74,15 @@ export function PatrocinadoresSection({
   lang,
   fullWidth,
   titleAlign = "left",
+  inSection,
+  showTitle = true,
 }: {
   block: HomeContentBlock;
   lang: "pt" | "en";
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
+  inSection?: boolean;
+  showTitle?: boolean;
 }) {
   const title = ((lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string)?.trim();
   const titleLogo = (block.config?.patrocinadoresTitleLogo as string)?.trim();
@@ -126,7 +130,7 @@ export function PatrocinadoresSection({
           </div>
         )}
         <div className={`relative ${containerClass}`}>
-          {titleLogo ? (
+          {showTitle && titleLogo ? (
             <div className="mb-6 flex items-center justify-start">
               <div className="relative h-16 w-auto max-w-xs sm:h-20">
                 <SmartImage
@@ -138,12 +142,12 @@ export function PatrocinadoresSection({
                 />
               </div>
             </div>
-          ) : hasTitle ? (
+          ) : showTitle && hasTitle ? (
             <SectionTitle
               title={title}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
-              align="left"
+              align={titleAlign ?? "left"}
             />
           ) : null}
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
