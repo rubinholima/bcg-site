@@ -1851,6 +1851,17 @@ export default function EditarGroupHomePage() {
                                 <div className="space-y-1"><Label>Cor inicial</Label><div className="flex gap-2"><input type="color" className="h-10 w-12 cursor-pointer rounded border" value={(block.config?.titleGradientStart as string) || "#fcd34d"} onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)} /><Input placeholder="#fcd34d" value={(block.config?.titleGradientStart as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientStart", e.target.value)} /></div></div>
                                 <div className="space-y-1"><Label>Cor final</Label><div className="flex gap-2"><input type="color" className="h-10 w-12 cursor-pointer rounded border" value={(block.config?.titleGradientEnd as string) || "#ffffff"} onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)} /><Input placeholder="#ffffff" value={(block.config?.titleGradientEnd as string) ?? ""} onChange={(e) => updateBlockConfig(index, "titleGradientEnd", e.target.value)} /></div></div>
                               </div>
+                              <div className="space-y-1">
+                                <Label>Alinhamento do título</Label>
+                                <Select value={(block.config?.titleAlign as string) ?? "left"} onValueChange={(v) => updateBlockConfig(index, "titleAlign", v as "left" | "center" | "right")}>
+                                  <SelectTrigger className="w-full max-w-[200px]"><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="left">Esquerda</SelectItem>
+                                    <SelectItem value="center">Centro</SelectItem>
+                                    <SelectItem value="right">Direita</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           </details>
                           <details className="rounded-lg border border-border bg-muted/20">

@@ -384,6 +384,8 @@ export interface NoticiasItem {
   excerpt?: string;
   dateISO?: string;
   imageUrl?: string;
+  /** URL original da imagem (para carregar no cliente com no-referrer e evitar 403 do proxy). */
+  imageUrlOriginal?: string;
   source?: string;
 }
 
@@ -391,6 +393,8 @@ export interface NoticiasItem {
 export interface GaleriaItem {
   id?: string;
   imageUrl: string;
+  /** URL original (para carregar direto e evitar 403 do proxy) */
+  imageUrlOriginal?: string;
   link?: string;
   title?: string;
   caption?: string;

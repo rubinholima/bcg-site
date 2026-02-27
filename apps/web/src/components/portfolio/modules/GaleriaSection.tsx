@@ -9,10 +9,27 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { ImageIcon, Loader2, X } from "lucide-react";
 
-function GalleryPhoto({ src, alt }: { src: string; alt?: string }) {
+function GalleryPhoto({ src, srcOriginal, alt }: { src: string; srcOriginal?: string; alt?: string }) {
   const [failed, setFailed] = useState(false);
-  const imgSrc =
+  const [useFallback, setUseFallback] = useState(false);
+  const baseSrc =
     typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
+  const proxyFallbackUrl = (() => {
+    if (!baseSrc.includes("/api/public/noticias-image?")) return null;
+    try {
+      const u = new URL(baseSrc);
+      const encoded = u.searchParams.get("url");
+      return encoded ? decodeURIComponent(encoded) : null;
+    } catch {
+      return null;
+    }
+  })();
+  const useDirectFirst = !!srcOriginal;
+  const imgSrc = useDirectFirst
+    ? srcOriginal!
+    : useFallback && proxyFallbackUrl
+      ? proxyFallbackUrl
+      : baseSrc;
   if (failed) {
     return (
       <div className="flex aspect-square w-full items-center justify-center bg-zinc-800/80">
@@ -29,7 +46,13 @@ function GalleryPhoto({ src, alt }: { src: string; alt?: string }) {
         className="h-full w-full object-cover grayscale transition-all duration-300 group-hover:scale-105 group-hover:grayscale-0"
         loading="lazy"
         referrerPolicy="no-referrer"
-        onError={() => setFailed(true)}
+        onError={() => {
+          if (!useFallback && !useDirectFirst && proxyFallbackUrl) {
+            setUseFallback(true);
+          } else {
+            setFailed(true);
+          }
+        }}
       />
     </div>
   );
@@ -82,6 +105,7 @@ function Lightbox({
         className="max-h-[90vh] max-w-full object-contain"
         onClick={(e) => e.stopPropagation()}
         draggable={false}
+        referrerPolicy="no-referrer"
       />
     </div>
   );
@@ -107,10 +131,11 @@ async function fetchRssFeed(rssUrl: string, max: number): Promise<NoticiasItem[]
 /** Converte itens RSS (NoticiasItem) em GaleriaItem — só os que têm imagem */
 function rssToGaleriaItems(items: NoticiasItem[]): GaleriaItem[] {
   return items
-    .filter((i) => i.imageUrl?.trim())
+    .filter((i) => i.imageUrl?.trim() || i.imageUrlOriginal?.trim())
     .map((i) => ({
       id: i.id,
-      imageUrl: i.imageUrl!,
+      imageUrl: i.imageUrl ?? i.imageUrlOriginal ?? "",
+      imageUrlOriginal: i.imageUrlOriginal,
       link: i.link?.trim() || undefined,
       title: i.title?.trim() || undefined,
       caption: i.excerpt?.trim() || undefined,
@@ -262,10 +287,16 @@ export function GaleriaSection({
                 type="button"
                 className="group relative block cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950"
                 onClick={() =>
-                  setLightboxSrc(getPublicImageUrl(item.imageUrl))
+                  setLightboxSrc(
+                    item.imageUrlOriginal ?? getPublicImageUrl(item.imageUrl)
+                  )
                 }
               >
-                <GalleryPhoto src={getPublicImageUrl(item.imageUrl)} alt="" />
+                <GalleryPhoto
+                  src={getPublicImageUrl(item.imageUrl) || item.imageUrl}
+                  srcOriginal={item.imageUrlOriginal}
+                  alt=""
+                />
               </button>
             ))}
             </div>

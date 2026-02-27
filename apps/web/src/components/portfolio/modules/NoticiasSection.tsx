@@ -9,14 +9,15 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 
-function NewsCardImage({ src }: { src: string }) {
+function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string }) {
   const [failed, setFailed] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
-  // Em produção, usar URL absoluta do proxy para evitar falha de resolução (ex.: base errada)
+  // Priorizar URL original direto (evita 403 — Instagram/CDNs bloqueiam proxy no servidor)
+  const useDirectFirst = !!srcOriginal;
   const baseSrc =
     typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
-  // Fallback: quando proxy retorna 403, tentar URL original direto (request do browser pode passar onde o servidor falha)
-  const fallbackUrl = (() => {
+  // Fallback: quando proxy retorna 403, tentar URL original extraída do param
+  const proxyFallbackUrl = (() => {
     if (!baseSrc.includes("/api/public/noticias-image?")) return null;
     try {
       const u = new URL(baseSrc);
@@ -26,7 +27,11 @@ function NewsCardImage({ src }: { src: string }) {
       return null;
     }
   })();
-  const imgSrc = useFallback && fallbackUrl ? fallbackUrl : baseSrc;
+  const imgSrc = useDirectFirst
+    ? srcOriginal!
+    : useFallback && proxyFallbackUrl
+      ? proxyFallbackUrl
+      : baseSrc;
   if (failed) {
     return (
       <div className="flex aspect-video w-full shrink-0 items-center justify-center bg-zinc-800/80">
@@ -44,7 +49,7 @@ function NewsCardImage({ src }: { src: string }) {
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => {
-          if (!useFallback && fallbackUrl) {
+          if (!useFallback && !useDirectFirst && proxyFallbackUrl) {
             setUseFallback(true);
           } else {
             setFailed(true);
@@ -211,8 +216,11 @@ export function NoticiasSection({
                   rel="noopener noreferrer"
                   className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 transition-all hover:border-amber-500/20 hover:shadow-lg hover:shadow-amber-500/5 h-full"
                 >
-                  {item.imageUrl ? (
-                    <NewsCardImage src={item.imageUrl} />
+                  {item.imageUrl || item.imageUrlOriginal ? (
+                    <NewsCardImage
+                      src={item.imageUrl ?? item.imageUrlOriginal ?? ""}
+                      srcOriginal={item.imageUrlOriginal}
+                    />
                   ) : (
                     <div className="flex aspect-video w-full shrink-0 items-center justify-center bg-zinc-800/80">
                       <Newspaper className="h-12 w-12 text-zinc-500" />

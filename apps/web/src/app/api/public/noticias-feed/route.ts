@@ -296,6 +296,14 @@ export async function GET(request: NextRequest) {
 
         })(),
 
+        imageUrlOriginal: (() => {
+
+          const u = extractImageUrl(item);
+
+          return u ?? undefined;
+
+        })(),
+
         source: feed.title?.trim(),
 
       }));
