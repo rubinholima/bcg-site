@@ -6,6 +6,7 @@ export type SectionTitleAlign = "left" | "center" | "right";
 /**
  * Título de seção com gradiente e linha animada.
  * Cores e alinhamento configuráveis no editor.
+ * A linha usa as mesmas cores do gradiente do título (âmbar→branco ou personalizado).
  */
 export function SectionTitle({
   title,
@@ -26,6 +27,9 @@ export function SectionTitle({
     background: `linear-gradient(90deg, ${start}, ${end})`,
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
+    // linha usa o mesmo gradiente
+    ["--title-line-start" as string]: start,
+    ["--title-line-end" as string]: end,
   } as React.CSSProperties;
   const alignClass = align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left";
   const widthClass = align === "left" || align === "right" ? "w-full" : "";

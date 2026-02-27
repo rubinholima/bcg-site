@@ -11,6 +11,8 @@ import { ImageIcon, Loader2, X } from "lucide-react";
 
 function GalleryPhoto({ src, alt }: { src: string; alt?: string }) {
   const [failed, setFailed] = useState(false);
+  const imgSrc =
+    typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
   if (failed) {
     return (
       <div className="flex aspect-square w-full items-center justify-center bg-zinc-800/80">
@@ -22,7 +24,7 @@ function GalleryPhoto({ src, alt }: { src: string; alt?: string }) {
     <div className="relative aspect-square w-full overflow-hidden bg-zinc-900">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
+        src={imgSrc}
         alt={alt ?? ""}
         className="h-full w-full object-cover grayscale transition-all duration-300 group-hover:scale-105 group-hover:grayscale-0"
         loading="lazy"

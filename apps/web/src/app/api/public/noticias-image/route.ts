@@ -29,10 +29,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "URL não permitida" }, { status: 403 });
   }
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(decoded, {
+      signal: controller.signal,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; BCG-News/1.0)" },
       redirect: "follow",
     });
+    clearTimeout(timeoutId);
     if (!res.ok) return new NextResponse(null, { status: res.status });
     const contentType = res.headers.get("content-type") ?? "image/jpeg";
     const body = await res.arrayBuffer();

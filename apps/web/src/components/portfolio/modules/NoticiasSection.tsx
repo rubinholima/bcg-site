@@ -11,6 +11,9 @@ import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 
 function NewsCardImage({ src }: { src: string }) {
   const [failed, setFailed] = useState(false);
+  // Em produção, usar URL absoluta do proxy para evitar falha de resolução (ex.: base errada)
+  const imgSrc =
+    typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
   if (failed) {
     return (
       <div className="flex aspect-video w-full shrink-0 items-center justify-center bg-zinc-800/80">
@@ -22,7 +25,7 @@ function NewsCardImage({ src }: { src: string }) {
     <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-zinc-800">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
+        src={imgSrc}
         alt=""
         className="h-full w-full object-cover transition-transform group-hover:scale-105"
         loading="lazy"
