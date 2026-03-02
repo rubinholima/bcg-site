@@ -100,6 +100,46 @@ function normalizePreferredFoot(value: string): "left" | "right" | "both" | unde
   return undefined;
 }
 
+/** Mapeia labels de posição (planilha) para códigos (GK, CB, etc.). Aceita nomes completos em PT. */
+const POSITION_LABEL_TO_VALUE: Record<string, string> = {
+  goleiro: "GK",
+  "zagueiro central": "CB",
+  "lateral esquerdo": "LB",
+  "lateral direito": "RB",
+  "ala esquerdo": "LWB",
+  "ala direito": "RWB",
+  volante: "CDM",
+  "meio-campista": "CM",
+  "meia-atacante": "CAM",
+  "meia esquerda": "LM",
+  "meia direita": "RM",
+  "ponta esquerda": "LW",
+  "ponta direita": "RW",
+  atacante: "CF",
+  centroavante: "ST",
+};
+function normalizePosition(value: string): string {
+  const v = value?.trim();
+  if (!v) return "";
+  const lower = v.toLowerCase();
+  return POSITION_LABEL_TO_VALUE[lower] ?? v;
+}
+
+/** Índice da coluna clube/slug. -1 se não existir. */
+function getSlugColumnIndex(headers: string[]): number {
+  const targets = ["clube_slug", "clube/slug", "club_slug", "club/slug"];
+  for (let i = 0; i < headers.length; i++) {
+    if (targets.includes(normCol(headers[i]))) return i;
+  }
+  return -1;
+}
+
+/** Valor da coluna slug na linha (lowercase). */
+function getRowSlug(headers: string[], row: string[], slugColIndex: number): string {
+  if (slugColIndex < 0) return "";
+  return (row[slugColIndex]?.trim() ?? "").toLowerCase();
+}
+
 /** Mapeamento: nome da coluna (normalizado) -> setter no objeto jogador. */
 const COLUMN_MAP: Record<
   string,
@@ -107,6 +147,11 @@ const COLUMN_MAP: Record<
 > = {
   categoria: () => {}, // usado para agrupar, não no jogador
   category: () => {},
+  "clube/slug": () => {},
+  clube_slug: () => {},
+  "club/slug": () => {},
+  club_slug: () => {},
+  nosso_time: () => {},
   nome: (p, v) => { p.name = v || p.name; },
   name: (p, v) => { p.name = v || p.name; },
   foto_url: (p, v) => { p.photoUrl = v || undefined; },
@@ -123,8 +168,9 @@ const COLUMN_MAP: Record<
   numero_camisa: (p, v) => { p.jerseyNumber = v ? parseInt(v, 10) : undefined; },
   numero: (p, v) => { p.jerseyNumber = v ? parseInt(v, 10) : undefined; },
   jersey_number: (p, v) => { p.jerseyNumber = v ? parseInt(v, 10) : undefined; },
-  posicao: (p, v) => { p.position = v || undefined; },
-  position: (p, v) => { p.position = v || undefined; },
+  posicao: (p, v) => { p.position = v ? normalizePosition(v) || v : undefined; },
+  position: (p, v) => { p.position = v ? normalizePosition(v) || v : undefined; },
+  pos: (p, v) => { p.position = v ? normalizePosition(v) || v : undefined; },
   pe_dominante: (p, v) => { p.preferredFoot = normalizePreferredFoot(v); },
   preferred_foot: (p, v) => { p.preferredFoot = normalizePreferredFoot(v); },
   pe: (p, v) => { p.preferredFoot = normalizePreferredFoot(v); },
@@ -182,6 +228,7 @@ export async function GET(request: NextRequest) {
   const spreadsheetInput = (searchParams.get("spreadsheetId") ?? searchParams.get("url") ?? "").trim();
   const gid = searchParams.get("gid") ?? "0";
   const tenantName = searchParams.get("tenantName") ?? "";
+  const slug = (searchParams.get("slug") ?? "").trim().toLowerCase();
 
   const decodedInput = spreadsheetInput
     ? (() => {
@@ -218,9 +265,15 @@ export async function GET(request: NextRequest) {
     }
     const rows = parseCSV(text);
     const headers = rows[0] ?? [];
+    const slugColIndex = getSlugColumnIndex(headers);
     const categoryMap = new Map<string, PlayerItem[]>();
     for (let r = 1; r < rows.length; r++) {
-      const { categoryId, player } = rowToPlayer(headers, rows[r], tenantName);
+      const row = rows[r];
+      if (slug && slugColIndex >= 0) {
+        const rowSlug = getRowSlug(headers, row, slugColIndex);
+        if (!rowSlug || rowSlug !== slug) continue;
+      }
+      const { categoryId, player } = rowToPlayer(headers, row, tenantName);
       if (!categoryId || !player.name?.trim()) continue;
       const list = categoryMap.get(categoryId) ?? [];
       list.push(player);
@@ -293,10 +346,15 @@ export async function GET(request: NextRequest) {
 
   const rows = parseCSV(text);
   const headers = rows[0] ?? [];
+  const slugColIndex = getSlugColumnIndex(headers);
   const categoryMap = new Map<string, PlayerItem[]>();
 
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];
+    if (slug && slugColIndex >= 0) {
+      const rowSlug = getRowSlug(headers, row, slugColIndex);
+      if (!rowSlug || rowSlug !== slug) continue;
+    }
     const { categoryId, player } = rowToPlayer(headers, row, tenantName);
     if (!categoryId) continue;
     if (!player.name?.trim()) continue;

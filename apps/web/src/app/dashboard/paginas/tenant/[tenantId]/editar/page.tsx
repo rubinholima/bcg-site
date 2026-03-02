@@ -437,6 +437,16 @@ export default function EditarPaginaTenantPage() {
     setBlocks(list);
   };
 
+  /** Atualiza vários config de uma vez (evita que a segunda chamada sobrescreva a primeira). */
+  const updateBlockConfigValues = (index: number, updates: Record<string, BlockConfigValue>) => {
+    const list = [...blocks];
+    const block = list[index];
+    if (!block) return;
+    const config = { ...(block.config ?? {}), ...updates };
+    list[index] = { ...block, config };
+    setBlocks(list);
+  };
+
   const addModule = (type: HomeBlockType) => {
     if (type === "header" || type === "footer") return;
     const newBlock = createBlock(type, blocks.length - 1);
@@ -610,7 +620,7 @@ export default function EditarPaginaTenantPage() {
         </div>
         <div className="flex items-center gap-2">
           {error && (
-            <span className="max-w-[200px] truncate text-sm text-destructive" title={error}>
+            <span className="max-w-[320px] truncate text-sm text-destructive" title={error}>
               {error}
             </span>
           )}
@@ -1614,18 +1624,27 @@ export default function EditarPaginaTenantPage() {
                               <div className="grid gap-2 sm:grid-cols-[1fr,auto]">
                                 <div className="space-y-1">
                                   <label className="text-xs text-muted-foreground">URL ou ID da planilha</label>
-                                  <input
+                                  <Input
                                     type="text"
-                                    className="h-9 w-full rounded border border-input bg-background px-2 text-sm"
+                                    className="h-9"
                                     placeholder="https://docs.google.com/spreadsheets/d/... ou ID da planilha"
                                     value={((block.config?.timesCategoriasSpreadsheetUrl as string) ?? "").toString()}
                                     onChange={(e) => {
-                                      const v = e.target.value || undefined;
-                                      updateBlockConfigValue(index, "timesCategoriasSpreadsheetUrl", v);
-                                      const gidMatch = typeof v === "string" && (v.match(/[?&]gid=(\d+)/i) || v.match(/#gid=(\d+)/i));
-                                      if (gidMatch) {
-                                        updateBlockConfigValue(index, "timesCategoriasSheetGid", gidMatch[1]);
-                                      }
+                                      const v = e.target.value ?? "";
+                                      updateBlockConfigValue(index, "timesCategoriasSpreadsheetUrl", v || undefined);
+                                      const gidMatch = v && (v.match(/[?&]gid=(\d+)/i) || v.match(/#gid=(\d+)/i));
+                                      if (gidMatch) updateBlockConfigValue(index, "timesCategoriasSheetGid", gidMatch[1]);
+                                    }}
+                                    onPaste={(e) => {
+                                      const pasted = (e.clipboardData?.getData?.("text/plain") ?? "").trim();
+                                      if (!pasted) return;
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const gidMatch = pasted.match(/[?&]gid=(\d+)/i) || pasted.match(/#gid=(\d+)/i);
+                                      updateBlockConfigValues(index, {
+                                        timesCategoriasSpreadsheetUrl: pasted,
+                                        ...(gidMatch ? { timesCategoriasSheetGid: gidMatch[1] } : {}),
+                                      });
                                     }}
                                   />
                                 </div>
@@ -1655,6 +1674,7 @@ export default function EditarPaginaTenantPage() {
                                         spreadsheetId: urlOrId,
                                         gid,
                                         ...(tenantName ? { tenantName } : {}),
+                                        ...(page?.tenant?.slug ? { slug: page.tenant.slug } : {}),
                                       });
                                       authFetch(`/api/google-sheets/times-categorias?${params}`, { credentials: "include" })
                                         .then((r) => {
@@ -1686,7 +1706,7 @@ export default function EditarPaginaTenantPage() {
                                   <li><strong>URL normal da planilha</strong> — Link de edição (docs.google.com/spreadsheets/d/.../edit). Compartilhar &gt; Qualquer pessoa com o link pode ver. Se der erro, use a opção &quot;Publicar na Web&quot; acima.</li>
                                   <li><strong>ID da planilha</strong> — Só o ID (~44 caracteres) e o gid da aba desejada.</li>
                                 </ul>
-                                <p>Primeira linha = cabeçalho com coluna <code className="rounded bg-muted px-1">categoria</code> (ou <code className="rounded bg-muted px-1">category</code>). Use <code className="rounded bg-muted px-1">pe_dominante</code> com: Esquerdo, Direito ou Ambos.{" "}
+                                <p>Primeira linha = cabeçalho com coluna <code className="rounded bg-muted px-1">categoria</code> (ou <code className="rounded bg-muted px-1">category</code>) e <code className="rounded bg-muted px-1">clube/slug</code> (ex.: americano-fc, boston-city-fc-brasil) para separar jogadores por clube. Use <code className="rounded bg-muted px-1">pe_dominante</code> com: Esquerdo, Direito ou Ambos.{" "}
                                   <a href="/templates/times-categorias-template.csv" download="times-categorias-template.csv" className="text-primary underline hover:no-underline">
                                     Baixar template CSV
                                   </a>
@@ -2917,9 +2937,7 @@ export default function EditarPaginaTenantPage() {
                                       const pasted = (e.clipboardData?.getData?.("text/plain") ?? "").trim();
                                       if (!pasted) return;
                                       const gidMatch = pasted.match(/[?&]gid=(\d+)/i) || pasted.match(/#gid=(\d+)/i);
-                                      if (gidMatch) {
-                                        updateBlockConfigValue(index, "proximosJogosSheetGid", gidMatch[1]);
-                                      }
+                                      if (gidMatch) updateBlockConfigValue(index, "proximosJogosSheetGid", gidMatch[1]);
                                     }}
                                   />
                                 </div>
