@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, ImageIcon } from "lucide-react";
+import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,8 @@ export default function GrupoPage() {
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [logoLoadError, setLogoLoadError] = useState(false);
+  const [logoRefreshKey, setLogoRefreshKey] = useState(0);
+  const [updatingLogo, setUpdatingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -100,11 +103,38 @@ export default function GrupoPage() {
       const { url } = (await res.json()) as { url: string };
       setLogoLoadError(false);
       setGroup((prev) => (prev ? { ...prev, logoUrl: url } : null));
+      setLogoLoadError(false);
+      setLogoRefreshKey((k) => k + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao subir logo");
     } finally {
       setUploadingLogo(false);
       e.target.value = "";
+    }
+  };
+
+  const handleSelectLogoFromMedia = async (url: string) => {
+    const trimmed = url?.trim() ?? "";
+    if (trimmed === (group?.logoUrl?.trim() ?? "")) return;
+    setUpdatingLogo(true);
+    setError(null);
+    try {
+      const res = await authFetch("/api/group", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl: trimmed || null }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error ?? "Erro ao atualizar logo");
+      }
+      const data: Group = await res.json();
+      setGroup(data);
+      setLogoLoadError(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao atualizar logo");
+    } finally {
+      setUpdatingLogo(false);
     }
   };
 
@@ -170,64 +200,65 @@ export default function GrupoPage() {
         <CardHeader>
           <CardTitle>Logo do grupo</CardTitle>
           <CardDescription>
-            Logo exibido no portal do grupo. Formatos: PNG, JPG, WebP ou SVG (máx. 2 MB). Se aparecer quebrado, confira no S3 a bucket policy (leitura pública em logos/*).
+            Logo exibido no portal do grupo. Escolha da pasta de logos (S3) ou envie um novo arquivo. Formatos: PNG, JPG, WebP ou SVG (máx. 2 MB). Se aparecer quebrado, confira no S3 a bucket policy (leitura pública em logos/*).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {group?.logoUrl && !logoLoadError ? (
-            <div className="flex items-center gap-4">
-              <img
-                src={getPublicImageUrl(group.logoUrl)}
-                alt="Logo do grupo"
-                className="h-24 w-auto object-contain rounded border"
-                onError={() => setLogoLoadError(true)}
-                referrerPolicy="no-referrer"
-              />
-              <div className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                >
-                  {uploadingLogo ? "Enviando..." : "Alterar logo"}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  className="hidden"
-                  onChange={handleUploadLogo}
+          <div className="flex flex-col gap-4">
+            {group?.logoUrl && !logoLoadError ? (
+              <div className="flex items-center gap-4">
+                <img
+                  src={
+                    (() => {
+                      const base = getPublicImageUrl(group.logoUrl);
+                      if (!base) return "";
+                      const sep = base.includes("?") ? "&" : "?";
+                      const version = `${logoRefreshKey}-${group.updatedAt ? new Date(group.updatedAt).getTime() : ""}`;
+                      return `${base}${sep}v=${version}`;
+                    })()
+                  }
+                  alt="Logo do grupo"
+                  className="h-24 w-auto object-contain rounded border"
+                  onError={() => setLogoLoadError(true)}
+                  referrerPolicy="no-referrer"
                 />
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-4">
+            ) : (
               <div className="flex h-24 w-24 items-center justify-center rounded border bg-muted">
                 <ImageIcon className="h-10 w-10 text-muted-foreground" />
               </div>
-              <div className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {uploadingLogo ? "Enviando..." : "Subir logo"}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  className="hidden"
-                  onChange={handleUploadLogo}
-                />
-              </div>
+            )}
+            <div className="flex flex-wrap items-end gap-3">
+              <MediaPicker
+                sizeKey="card"
+                folder="logos"
+                value={group?.logoUrl ?? ""}
+                onChange={handleSelectLogoFromMedia}
+                placeholder="Escolher da pasta de logos"
+                refreshTrigger={logoRefreshKey}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="hidden"
+                onChange={handleUploadLogo}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingLogo || updatingLogo}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {uploadingLogo ? "Enviando..." : "Enviar novo do computador"}
+              </Button>
             </div>
-          )}
+            <p className="text-xs text-muted-foreground">
+              Use o seletor para buscar um logo já salvo na pasta logos/ do S3, ou envie um novo arquivo. Formatos: PNG, JPG, WebP ou SVG (máx. 2 MB). Logos do grupo ficam em logos/group/.
+            </p>
+          </div>
           {logoLoadError && (
             <p className="text-sm text-amber-600 dark:text-amber-400">
               Logo não carregou. Verifique no S3: bucket policy deve permitir leitura em logos/* (veja docs/DESENVOLVIMENTO_DIARIO.md (seção S3_BUCKET_POLICY)).
