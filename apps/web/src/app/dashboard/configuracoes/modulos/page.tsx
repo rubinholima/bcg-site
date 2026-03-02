@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
+import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
 
 interface ModulePermission {
   slug: string;
@@ -150,7 +151,9 @@ export default function ModulosPage() {
                   <tbody>
                     {modules.map((m) => (
                       <tr key={m.slug} className="border-b last:border-0">
-                        <td className="px-4 py-3 font-medium">{m.name}</td>
+                        <td className="px-4 py-3 font-medium">
+                          {MODULE_DISPLAY_NAMES[m.slug] ?? m.name}
+                        </td>
                         <td className="px-4 py-3 align-middle">
                           <label className="inline-flex cursor-pointer items-center gap-2">
                             <input

@@ -25,15 +25,16 @@ import {
   Layers,
 } from "lucide-react";
 import type { Group } from "@/types/group";
+import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 
 const cadastrosItems = [
-  { title: "Usuários", href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
+  { title: DASHBOARD_LABELS.usuarios, href: "/dashboard/usuarios", icon: Users, moduleSlug: "usuarios" },
   { title: "Empresas / Clubes", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
   { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers, moduleSlug: "tipos" },
   { title: "Tipos Emp/Clubes", href: "/dashboard/cadastros/tipos", icon: Tag, moduleSlug: "tipos" },
   { title: "Campeonatos", href: "/dashboard/cadastros/campeonatos", icon: Trophy, moduleSlug: "tipos" },
-  { title: "Estádios", href: "/dashboard/cadastros/estadios", icon: MapPin, moduleSlug: "tipos" },
-  { title: "Times adversários", href: "/dashboard/cadastros/times", icon: Shirt, moduleSlug: "tipos" },
+  { title: DASHBOARD_LABELS.estadios, href: "/dashboard/cadastros/estadios", icon: MapPin, moduleSlug: "tipos" },
+  { title: DASHBOARD_LABELS.timesAdversarios, href: "/dashboard/cadastros/times", icon: Shirt, moduleSlug: "tipos" },
 ];
 
 const menuItems = [
@@ -41,10 +42,10 @@ const menuItems = [
   { title: "Grupo Master", href: "/dashboard/grupo", icon: Globe, moduleSlug: "grupo_master" },
   { title: "Emails", href: "/dashboard/emails", icon: Mail, moduleSlug: "emails" },
   { title: "Senhas", href: "/dashboard/senhas", icon: KeyRound, moduleSlug: "vault" },
-  { title: "Páginas", href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
-  { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
-  { title: "Mídia", href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
-  { title: "Configurações", href: "/dashboard/configuracoes", icon: Settings, moduleSlug: "configuracoes" },
+  { title: DASHBOARD_LABELS.paginas, href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
+  { title: DASHBOARD_LABELS.noticias, href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
+  { title: DASHBOARD_LABELS.midia, href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
+  { title: DASHBOARD_LABELS.configuracoes, href: "/dashboard/configuracoes", icon: Settings, moduleSlug: "configuracoes" },
 ];
 
 export function Sidebar() {
