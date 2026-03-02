@@ -96,9 +96,9 @@ export default async function PortfolioSlugPage({
 }) {
   const { slug } = await params;
   const { lang: langParam } = await searchParams;
-  const lang = langParam === "en" ? "en" : "pt";
-
   const page = await getPageBySlug(slug);
+  const defaultLang = (page?.content?.theme as { defaultLang?: "pt" | "en" } | undefined)?.defaultLang ?? "pt";
+  const lang = langParam === "en" ? "en" : langParam === "pt" ? "pt" : defaultLang;
 
   if (!page?.content?.blocks?.length) {
     const emptyTheme = page?.content?.theme ?? {};

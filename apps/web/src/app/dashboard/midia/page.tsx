@@ -54,6 +54,7 @@ export default function MidiaPage() {
   const { canAccessModule } = useAuth();
   const searchParams = useSearchParams();
   const folderParam = searchParams.get("folder");
+  const slugParam = searchParams.get("slug");
   const initialFolder = (folderParam && MEDIA_PLACEHOLDER_KEYS.includes(folderParam as MediaPlaceholderSizeKey))
     ? (folderParam as MediaPlaceholderSizeKey)
     : null;
@@ -61,6 +62,7 @@ export default function MidiaPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterSizeKey, setFilterSizeKey] = useState<string>(initialFolder ?? "media_all");
+  const [galeriaSlug, setGaleriaSlug] = useState<string>(slugParam ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadSizeKey, setUploadSizeKey] = useState<MediaPlaceholderSizeKey>(initialFolder ?? "hero");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -83,15 +85,26 @@ export default function MidiaPage() {
     if (!canAccessModule("midia")) return;
     fetch("/api/tenants", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : []))
-      .then((list: Array<{ id: string; name?: string }>) => setTenants(Array.isArray(list) ? list : []))
+      .then((list: Array<{ id: string; name?: string; slug?: string }>) => setTenants(Array.isArray(list) ? list : []))
       .catch(() => setTenants([]));
   }, [canAccessModule]);
 
-  const fetchList = (filter: string) => {
+  useEffect(() => {
+    if (slugParam?.trim()) setGaleriaSlug(slugParam.trim());
+  }, [slugParam]);
+
+  const fetchList = (filter: string, slug?: string) => {
     setLoading(true);
     setError(null);
     const useAll = filter === "logos" || filter === "media_all" || filter === "all_with_logos";
-    const qs = useAll ? "?all=1" : `?sizeKey=${encodeURIComponent(filter)}`;
+    let qs: string;
+    if (filter === "galeria_clubes" && slug?.trim()) {
+      qs = `?sizeKey=galeria_clubes&slug=${encodeURIComponent(slug.trim())}`;
+    } else if (useAll) {
+      qs = "?all=1";
+    } else {
+      qs = `?sizeKey=${encodeURIComponent(filter)}`;
+    }
     fetch(`/api/media${qs}`, { credentials: "include" })
       .then((res) => {
         if (!res.ok) throw new Error("Falha ao carregar mídia");
@@ -112,8 +125,8 @@ export default function MidiaPage() {
 
   useEffect(() => {
     if (!canAccessModule("midia")) return;
-    fetchList(filterSizeKey);
-  }, [filterSizeKey, canAccessModule]);
+    fetchList(filterSizeKey, filterSizeKey === "galeria_clubes" ? galeriaSlug : undefined);
+  }, [filterSizeKey, galeriaSlug, canAccessModule]);
 
   const handleCopyUrl = (url: string) => {
     navigator.clipboard.writeText(url).then(() => {
@@ -200,11 +213,16 @@ export default function MidiaPage() {
   const handleUpload = (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) return;
+    if (uploadSizeKey === "galeria_clubes" && !galeriaSlug.trim()) {
+      setError("Para Galeria fotos clubes, informe o slug do clube (ex: americano-fc).");
+      return;
+    }
     setUploading(true);
     setError(null);
     const formData = new FormData();
     formData.append("file", uploadFile);
     formData.append("sizeKey", uploadSizeKey);
+    if (uploadSizeKey === "galeria_clubes" && galeriaSlug.trim()) formData.append("slug", galeriaSlug.trim());
     if (uploadDisplayName.trim()) formData.append("displayName", uploadDisplayName.trim());
     fetch("/api/media", {
       method: "POST",
@@ -218,7 +236,7 @@ export default function MidiaPage() {
       .then(() => {
         setUploadFile(null);
         setUploadDisplayName("");
-        fetchList(filterSizeKey);
+        fetchList(filterSizeKey, filterSizeKey === "galeria_clubes" ? galeriaSlug : undefined);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro no upload"))
       .finally(() => setUploading(false));
@@ -325,6 +343,27 @@ export default function MidiaPage() {
                 </SelectContent>
               </Select>
             </div>
+            {uploadSizeKey === "galeria_clubes" && (
+              <div className="space-y-2">
+                <Label>Clube (slug)</Label>
+                <Select
+                  value={galeriaSlug || "__none__"}
+                  onValueChange={(v) => setGaleriaSlug(v === "__none__" ? "" : v)}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Selecione o clube" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Selecione o clube</SelectItem>
+                    {tenants.map((t) => (
+                      <SelectItem key={t.id} value={(t as { slug?: string }).slug ?? t.id}>
+                        {t.name?.trim() || (t as { slug?: string }).slug || t.id}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Nome da imagem (opcional)</Label>
               <Input
@@ -409,33 +448,62 @@ export default function MidiaPage() {
           <CardDescription>
             Bucket bcg-platform-assets: pasta <strong>media/</strong> (hero, cards, etc.) e pasta <strong>logos/</strong> (empresas/clubes). Clique no nome para editar e identificar nos seletores.
           </CardDescription>
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
             <Label className="text-muted-foreground">Filtrar por tamanho</Label>
-            <Select value={filterSizeKey} onValueChange={setFilterSizeKey}>
-              <SelectTrigger className="w-[280px] mt-1">
-                <SelectValue placeholder="Escolha" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="media_all">Todas as pastas (mídia + logos)</SelectItem>
-                <SelectItem value="logos">Logos (empresas/clubes)</SelectItem>
-                <SelectItem value="all_with_logos">Tudo (mídia + logos)</SelectItem>
-                {MEDIA_PLACEHOLDER_KEYS.map((key) => (
-                  <SelectItem key={key} value={key}>
-                    {MEDIA_PLACEHOLDER_SIZES[key].label} — {MEDIA_PLACEHOLDER_SIZES[key].dimensions}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-end gap-2">
+              <Select value={filterSizeKey} onValueChange={setFilterSizeKey}>
+                <SelectTrigger className="w-[280px] mt-1">
+                  <SelectValue placeholder="Escolha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="media_all">Todas as pastas (mídia + logos)</SelectItem>
+                  <SelectItem value="logos">Logos (empresas/clubes)</SelectItem>
+                  <SelectItem value="all_with_logos">Tudo (mídia + logos)</SelectItem>
+                  {MEDIA_PLACEHOLDER_KEYS.map((key) => (
+                    <SelectItem key={key} value={key}>
+                      {MEDIA_PLACEHOLDER_SIZES[key].label} — {MEDIA_PLACEHOLDER_SIZES[key].dimensions}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {filterSizeKey === "galeria_clubes" && (
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-xs">Clube (slug)</Label>
+                  <Select
+                    value={galeriaSlug || "__none__"}
+                    onValueChange={(v) => setGaleriaSlug(v === "__none__" ? "" : v)}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Selecione o clube" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Selecione o clube</SelectItem>
+                      {tenants.map((t) => (
+                        <SelectItem key={t.id} value={(t as { slug?: string }).slug ?? t.id}>
+                          {t.name?.trim() || (t as { slug?: string }).slug || t.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-muted-foreground">Carregando…</p>
+          ) : filterSizeKey === "galeria_clubes" && !galeriaSlug.trim() ? (
+            <p className="text-muted-foreground">
+              Selecione o clube (slug) acima para listar as fotos da galeria.
+            </p>
           ) : items.length === 0 ? (
             <p className="text-muted-foreground">
               {filterSizeKey === "logos"
                 ? "Nenhum logo. Use o formulário “Enviar logo (empresa/clube)” acima."
-                : "Nenhuma imagem nesta pasta. Envie uma acima."}
+                : filterSizeKey === "galeria_clubes"
+                  ? "Nenhuma foto deste clube. Use o formulário acima e selecione o clube para enviar."
+                  : "Nenhuma imagem nesta pasta. Envie uma acima."}
             </p>
           ) : (
             <div className="rounded-md border border-border">

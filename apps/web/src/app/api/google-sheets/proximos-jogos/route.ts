@@ -11,12 +11,13 @@ function extractSpreadsheetId(input: string): string | null {
   return null;
 }
 
-/** Detecta URL "Publicar na Web" e retorna a URL de export CSV. */
-function getPublishedExportUrl(input: string): string | null {
+/** Detecta URL "Publicar na Web" e retorna a URL de export CSV. Inclui gid da aba quando informado. */
+function getPublishedExportUrl(input: string, gid?: string): string | null {
   const trimmed = input.trim();
   const match = trimmed.match(/\/spreadsheets\/d\/e\/(2PACX-[a-zA-Z0-9_-]+)/i);
   if (!match) return null;
-  return `https://docs.google.com/spreadsheets/d/e/${match[1]}/pub?output=csv`;
+  const effectiveGid = gid?.trim() || extractGidFromUrl(trimmed) || "0";
+  return `https://docs.google.com/spreadsheets/d/e/${match[1]}/pub?output=csv&gid=${effectiveGid}`;
 }
 
 /** Extrai gid da aba a partir da URL. */
@@ -126,6 +127,24 @@ function normalizeIsOurTeamHome(value: string): boolean | undefined {
   return undefined;
 }
 
+/** Extrai valor da coluna clube/slug da linha. Colunas: clube/slug, clube_slug, clube, slug. */
+function getRowSlug(record: Record<string, string>): string {
+  const keys = ["clube_slug", "clube/slug", "clube", "slug"];
+  for (const k of keys) {
+    const v = record[k]?.trim();
+    if (v) return v.toLowerCase();
+  }
+  return "";
+}
+
+/** Verifica se a linha pertence ao slug. Se a planilha não tem coluna clube/slug, inclui a linha. */
+function rowMatchesSlug(record: Record<string, string>, slug: string | null): boolean {
+  if (!slug?.trim()) return true;
+  const rowSlug = getRowSlug(record);
+  if (!rowSlug) return true; // planilha antiga sem coluna: incluir
+  return rowSlug === slug.trim().toLowerCase();
+}
+
 /** Converte uma linha CSV em ProximosJogosFixtureItem (com campos usados no editor manual). */
 function rowToFixture(headers: string[], row: string[]): ProximosJogosFixtureItem & { id?: string; isOurTeamHome?: boolean; homeTeamLogoUrl?: string; awayTeamLogoUrl?: string } {
   const record: Record<string, string> = {};
@@ -174,6 +193,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const spreadsheetInput = (searchParams.get("spreadsheetId") ?? searchParams.get("url") ?? "").trim();
   const gid = searchParams.get("gid") ?? "0";
+  const slug = searchParams.get("slug")?.trim() || null;
 
   const decodedInput = spreadsheetInput
     ? (() => {
@@ -185,7 +205,7 @@ export async function GET(request: NextRequest) {
       })()
     : "";
 
-  const publishedExportUrl = getPublishedExportUrl(decodedInput);
+  const publishedExportUrl = getPublishedExportUrl(decodedInput, gid);
 
   if (publishedExportUrl) {
     const res = await fetch(publishedExportUrl, {
@@ -212,6 +232,11 @@ export async function GET(request: NextRequest) {
     const headers = rows[0] ?? [];
     const fixtures: (ProximosJogosFixtureItem & { isOurTeamHome?: boolean; homeTeamLogoUrl?: string; awayTeamLogoUrl?: string })[] = [];
     for (let r = 1; r < rows.length; r++) {
+      const record: Record<string, string> = {};
+      for (let i = 0; i < headers.length; i++) {
+        record[normCol(headers[i])] = rows[r][i]?.trim() ?? "";
+      }
+      if (!rowMatchesSlug(record, slug)) continue;
       const fixture = rowToFixture(headers, rows[r]);
       if (!fixture.startISO && !fixture.homeTeamName && !fixture.awayTeamName) continue;
       if (!fixture.startISO) fixture.startISO = new Date().toISOString();
@@ -278,6 +303,11 @@ export async function GET(request: NextRequest) {
   const headers = rows[0] ?? [];
   const fixtures: (ProximosJogosFixtureItem & { isOurTeamHome?: boolean; homeTeamLogoUrl?: string; awayTeamLogoUrl?: string })[] = [];
   for (let r = 1; r < rows.length; r++) {
+    const record: Record<string, string> = {};
+    for (let i = 0; i < headers.length; i++) {
+      record[normCol(headers[i])] = rows[r][i]?.trim() ?? "";
+    }
+    if (!rowMatchesSlug(record, slug)) continue;
     const fixture = rowToFixture(headers, rows[r]);
     if (!fixture.startISO && !fixture.homeTeamName && !fixture.awayTeamName) continue;
     if (!fixture.startISO) fixture.startISO = new Date().toISOString();

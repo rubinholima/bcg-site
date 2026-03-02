@@ -96,12 +96,14 @@ export class S3Service {
   /**
    * Upload de imagem para a pasta de mídia do site (placeholders, fundos).
    * Salva em media/{sizeKey}/{uuid}.{ext}. sizeKey padrão: "custom".
+   * Quando sizeKey é "galeria_clubes" e subfolder (slug) é informado: media/galeria_clubes/{slug}/{uuid}.{ext}.
    * Retorna key e URL pública (requer bucket policy de leitura em media/*).
    */
   async uploadMedia(
     buffer: Buffer,
     contentType: string,
     sizeKey: string = 'custom',
+    subfolder?: string,
   ): Promise<{ key: string; url: string }> {
     if (!ALLOWED_TYPES.includes(contentType as (typeof ALLOWED_TYPES)[number])) {
       throw new InternalServerErrorException(
@@ -110,7 +112,14 @@ export class S3Service {
     }
     const ext = EXT_BY_MIME[contentType] ?? 'png';
     const safeKey = sizeKey.replace(/[^a-z0-9_-]/gi, '_').toLowerCase() || 'custom';
-    const key = `${MEDIA_PREFIX}${safeKey}/${randomUUID()}.${ext}`;
+    const safeSub = subfolder?.trim()
+      ? subfolder.replace(/[^a-z0-9_-]/gi, '_').toLowerCase()
+      : '';
+    const pathSuffix =
+      safeKey === 'galeria_clubes' && safeSub
+        ? `${safeKey}/${safeSub}/${randomUUID()}.${ext}`
+        : `${safeKey}/${randomUUID()}.${ext}`;
+    const key = `${MEDIA_PREFIX}${pathSuffix}`;
 
     try {
       await this.client.send(
@@ -203,12 +212,21 @@ export class S3Service {
 
   /**
    * Lista objetos na pasta media/ (ou media/{sizeKey}/).
+   * Quando sizeKey é "galeria_clubes" e subfolder (slug) é informado: media/galeria_clubes/{slug}/.
    * Retorna key, url, size (bytes), lastModified.
    */
-  async listMedia(sizeKey?: string): Promise<Array<{ key: string; url: string; size: number; lastModified: string }>> {
-    const prefix = sizeKey
-      ? `${MEDIA_PREFIX}${sizeKey.replace(/[^a-z0-9_-]/gi, '_').toLowerCase()}/`
-      : MEDIA_PREFIX;
+  async listMedia(sizeKey?: string, subfolder?: string): Promise<Array<{ key: string; url: string; size: number; lastModified: string }>> {
+    let prefix = MEDIA_PREFIX;
+    if (sizeKey) {
+      const safeKey = sizeKey.replace(/[^a-z0-9_-]/gi, '_').toLowerCase();
+      const safeSub = subfolder?.trim()
+        ? subfolder.replace(/[^a-z0-9_-]/gi, '_').toLowerCase()
+        : '';
+      prefix =
+        safeKey === 'galeria_clubes' && safeSub
+          ? `${MEDIA_PREFIX}${safeKey}/${safeSub}/`
+          : `${MEDIA_PREFIX}${safeKey}/`;
+    }
 
     try {
       const response = await this.client.send(

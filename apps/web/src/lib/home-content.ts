@@ -322,7 +322,7 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.noticiasPaddingBottom = "compact";
   }
   if (type === "galeria") {
-    config.galeriaDataSource = "rss";
+    config.galeriaDataSource = "rss_com_manual";
     config.galeriaRssUrl = "";
     config.galeriaManualItems = [];
     config.galeriaMaxItems = 10;

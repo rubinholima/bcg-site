@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   fetchPublicPortfolio,
-  getClubSiteUrl,
-  getCompanyWebsiteUrl,
   formatLocation,
   formatPhone,
   type PortfolioItem,
@@ -39,7 +37,6 @@ import {
   Check,
   CheckCircle,
   ChevronDown,
-  ExternalLink,
   Globe,
   LayoutDashboard,
   Layers,
@@ -98,7 +95,9 @@ export default function HomeClient({
     initialPortfolio !== undefined &&
     initialGroup !== undefined;
 
-  const [lang, setLang] = useState<Lang>("pt");
+  const theme = initialGroupHome?.content?.theme as { defaultLang?: "pt" | "en" } | undefined;
+  const defaultLang: Lang = theme?.defaultLang === "en" || theme?.defaultLang === "pt" ? theme.defaultLang : "pt";
+  const [lang, setLang] = useState<Lang>(defaultLang);
   const [portfolio, setPortfolio] = useState<PortfolioItem[] | null>(
     initialPortfolio ?? null
   );
@@ -675,7 +674,6 @@ export default function HomeClient({
                     >
                       <PortfolioCard
                         item={item}
-                        visitLabel={t.clubs.visitSite}
                         profileLabel={t.clubs.openProfile}
                         isClub
                       />
@@ -736,7 +734,6 @@ export default function HomeClient({
                     >
                       <PortfolioCard
                         item={item}
-                        visitLabel={t.companies.visitWebsite}
                         profileLabel={t.companies.openProfile}
                         isClub={false}
                       />
@@ -1220,18 +1217,13 @@ export default function HomeClient({
 
 function PortfolioCard({
   item,
-  visitLabel,
   profileLabel,
   isClub,
 }: {
   item: PortfolioItem;
-  visitLabel: string;
   profileLabel: string;
   isClub: boolean;
 }) {
-  const siteUrl = isClub
-    ? getClubSiteUrl(item)
-    : getCompanyWebsiteUrl(item);
   const locationStr = formatLocation(item.location);
   const phoneStr = formatPhone(item);
 
@@ -1265,17 +1257,6 @@ function PortfolioCard({
           </p>
         )}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          {siteUrl && (
-            <a
-              href={siteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/20 hover:text-amber-300"
-            >
-              {visitLabel}
-              <ExternalLink className="h-3.5 w-3.5" />
-            </a>
-          )}
           <Link
             href={`/portfolio/${item.slug}`}
             className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"

@@ -8,6 +8,8 @@ export type TitleAlignMode = "left" | "center" | "right";
 
 /** Aparência geral da página: fundo, cores, fontes. Módulos individuais podem sobrescrever. */
 export interface PageTheme {
+  /** Língua principal ao carregar o site (sem ?lang= nem preferência salva). */
+  defaultLang?: "pt" | "en";
   /** Largura padrão dos módulos: box (centralizado) ou full (largura total). Cada módulo pode sobrescrever. */
   contentWidth?: ContentWidthMode;
   /** Alinhamento padrão dos títulos dos módulos. Cada módulo pode sobrescrever. */

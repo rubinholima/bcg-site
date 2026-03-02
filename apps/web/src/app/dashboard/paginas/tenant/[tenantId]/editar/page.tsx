@@ -726,6 +726,24 @@ export default function EditarPaginaTenantPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Língua principal</Label>
+                  <Select
+                    value={(theme.defaultLang as string) ?? "pt"}
+                    onValueChange={(v) => updateTheme("defaultLang", v as "pt" | "en")}
+                  >
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pt">Português</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    Idioma ao carregar o site (sem ?lang= nem preferência salva)
+                  </p>
+                </div>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -2523,54 +2541,27 @@ export default function EditarPaginaTenantPage() {
                           <summary className="cursor-pointer px-3 py-2 font-medium">Galeria de fotos</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
-                              Use RSS para Instagram (via rss.app) ou outro feed com fotos. Cole a URL do feed em RSS.
+                              Fotos manuais (enviadas na pasta Galeria fotos clubes) entram primeiro. O restante pode vir do RSS (Instagram via rss.app).
                             </p>
                             <div className="space-y-2">
                               <Label>Fonte</Label>
                               <Select
-                                value={(block.config?.galeriaDataSource as string) ?? "rss"}
+                                value={(block.config?.galeriaDataSource as string) ?? "rss_com_manual"}
                                 onValueChange={(v) => updateBlockConfigValue(index, "galeriaDataSource", v)}
                               >
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="rss">RSS (Instagram via rss.app, etc.)</SelectItem>
-                                  <SelectItem value="manual">Manual (lista editada)</SelectItem>
+                                  <SelectItem value="rss_com_manual">RSS + manual (manuais primeiro)</SelectItem>
+                                  <SelectItem value="rss">Só RSS (Instagram)</SelectItem>
+                                  <SelectItem value="manual">Só manual</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
-                            {(block.config?.galeriaDataSource as string) !== "manual" && (
-                              <>
-                                <div className="space-y-2">
-                                  <Label>URL do feed RSS (Instagram)</Label>
-                                  <Input
-                                    placeholder="https://rss.app/feed/... (Instagram)"
-                                    value={(block.config?.galeriaRssUrl as string) ?? ""}
-                                    onChange={(e) => updateBlockConfig(index, "galeriaRssUrl", e.target.value)}
-                                  />
-                                  <p className="text-xs text-muted-foreground">
-                                    Crie em <a href="https://rss.app/rss-feed/create-instagram-rss-feed" target="_blank" rel="noopener noreferrer" className="underline text-primary">rss.app</a> — cole a URL do perfil do Instagram.
-                                  </p>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Máx. fotos</Label>
-                                  <Input
-                                    type="number"
-                                    min={1}
-                                    max={24}
-                                    value={(block.config?.galeriaMaxItems as number) ?? 10}
-                                    onChange={(e) => {
-                                      const v = parseInt(e.target.value, 10);
-                                      updateBlockConfigValue(index, "galeriaMaxItems", Number.isNaN(v) ? 10 : Math.min(24, Math.max(1, v)));
-                                    }}
-                                  />
-                                </div>
-                              </>
-                            )}
-                            {(block.config?.galeriaDataSource as string) === "manual" && (
+                            {((block.config?.galeriaDataSource as string) === "rss_com_manual" || (block.config?.galeriaDataSource as string) === "manual" || (block.config?.galeriaDataSource as string) === "rss") && (
                               <div className="space-y-2">
-                                <Label>Fotos manuais</Label>
+                                <Label>Fotos manuais (primeiras na galeria)</Label>
                                 <p className="text-xs text-muted-foreground">
-                                  Adicione fotos manualmente. Use o MediaPicker para cada item.
+                                  Envie na Mídia → Galeria fotos clubes (clube atual). Depois selecione abaixo.
                                 </p>
                                 {((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? []).map((item, gi) => (
                                   <div key={gi} className="rounded-lg border border-border p-3 space-y-2">
@@ -2587,8 +2578,9 @@ export default function EditarPaginaTenantPage() {
                                       <div className="flex-1 min-w-0 space-y-2">
                                         <MediaPicker
                                           label=""
-                                          sizeKey="card"
-                                          allowAllFolders
+                                          sizeKey="galeria_clubes"
+                                          galeriaSlug={page?.tenant?.slug}
+                                          uploadFolderHint="galeria_clubes"
                                           value={item.imageUrl ?? ""}
                                           onChange={(url) => {
                                             const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? [])];
@@ -2596,7 +2588,7 @@ export default function EditarPaginaTenantPage() {
                                             arr[gi] = { ...arr[gi], imageUrl: url };
                                             updateBlockConfigValue(index, "galeriaManualItems", arr);
                                           }}
-                                          placeholder="Escolher foto"
+                                          placeholder="Escolher foto (pasta do clube)"
                                         />
                                         <Input
                                           placeholder="Link (opcional — ex: Instagram)"
@@ -2646,6 +2638,34 @@ export default function EditarPaginaTenantPage() {
                                   <Plus className="h-4 w-4 mr-1" /> Adicionar foto
                                 </Button>
                               </div>
+                            )}
+                            {((block.config?.galeriaDataSource as string) === "rss_com_manual" || (block.config?.galeriaDataSource as string) === "rss") && (
+                              <>
+                                <div className="space-y-2">
+                                  <Label>URL do feed RSS (Instagram)</Label>
+                                  <Input
+                                    placeholder="https://rss.app/feed/... (Instagram)"
+                                    value={(block.config?.galeriaRssUrl as string) ?? ""}
+                                    onChange={(e) => updateBlockConfig(index, "galeriaRssUrl", e.target.value)}
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Crie em <a href="https://rss.app/rss-feed/create-instagram-rss-feed" target="_blank" rel="noopener noreferrer" className="underline text-primary">rss.app</a> — cole a URL do perfil do Instagram.
+                                  </p>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Máx. fotos</Label>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={24}
+                                    value={(block.config?.galeriaMaxItems as number) ?? 10}
+                                    onChange={(e) => {
+                                      const v = parseInt(e.target.value, 10);
+                                      updateBlockConfigValue(index, "galeriaMaxItems", Number.isNaN(v) ? 10 : Math.min(24, Math.max(1, v)));
+                                    }}
+                                  />
+                                </div>
+                              </>
                             )}
                             <div className="grid gap-2 sm:grid-cols-2">
                               <div className="space-y-2">
@@ -2931,6 +2951,7 @@ export default function EditarPaginaTenantPage() {
                                       updateBlockConfigValue(index, "proximosJogosSheetGid", gid);
                                       setSyncingProximosJogosBlockIndex(index);
                                       const params = new URLSearchParams({ spreadsheetId: urlOrId, gid });
+                                      if (page?.tenant?.slug) params.set("slug", page.tenant.slug);
                                       authFetch(`/api/google-sheets/proximos-jogos?${params}`, { credentials: "include" })
                                         .then((r) => {
                                           if (!r.ok) return r.json().then((d) => Promise.reject(new Error((d as { error?: string })?.error ?? "Erro ao importar")));
@@ -2974,8 +2995,9 @@ export default function EditarPaginaTenantPage() {
                                         category?: string;
                                         featured?: boolean;
                                       }>) ?? [];
+                                      const currentSlug = page?.tenant?.slug ?? "";
                                       const csvRows: string[] = [
-                                        "data,hora,time_casa,time_visitante,competicao,local,url_assistir,url_ingresso,categoria,destaque,logo_casa,logo_visitante,nosso_time",
+                                        "data,hora,clube/slug,time_casa,time_visitante,competicao,local,url_assistir,url_ingresso,categoria,destaque,logo_casa,logo_visitante,nosso_time",
                                       ];
                                       fixtures.forEach((f) => {
                                         const d = f.startISO ? new Date(f.startISO) : null;
@@ -2989,6 +3011,7 @@ export default function EditarPaginaTenantPage() {
                                           [
                                             date,
                                             time,
+                                            currentSlug,
                                             f.homeTeamName || "",
                                             f.awayTeamName || "",
                                             f.competitionName || "",
@@ -2997,9 +3020,9 @@ export default function EditarPaginaTenantPage() {
                                             f.ticketUrl || "",
                                             f.category || "principal",
                                             f.featured ? "sim" : "não",
-                                            "",
-                                            "",
-                                            "",
+                                            (f as { homeTeamLogoUrl?: string }).homeTeamLogoUrl || "",
+                                            (f as { awayTeamLogoUrl?: string }).awayTeamLogoUrl || "",
+                                            (f as { isOurTeamHome?: boolean }).isOurTeamHome === true ? "casa" : (f as { isOurTeamHome?: boolean }).isOurTeamHome === false ? "visitante" : "",
                                           ].join(",")
                                         );
                                       });
@@ -3626,6 +3649,7 @@ export default function EditarPaginaTenantPage() {
                                         params.set("spreadsheetId", urlOrId);
                                         params.set("gid", gid);
                                         params.set("_t", Date.now().toString());
+                                        if (page?.tenant?.slug) params.set("slug", page.tenant.slug);
                                         const res = await authFetch(`/api/google-sheets/tabela-classificacao?${params}`, { credentials: "include" });
                                         const data = await res.json();
                                         if (res.ok && Array.isArray(data.rows)) {

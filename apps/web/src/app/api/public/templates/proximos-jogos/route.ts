@@ -41,7 +41,7 @@ export async function GET() {
   }
 
   const header =
-    "data,hora,time_casa,time_visitante,competicao,local,url_assistir,url_ingresso,categoria,destaque,logo_casa,logo_visitante,nosso_time";
+    "data,hora,clube/slug,time_casa,time_visitante,competicao,local,url_assistir,url_ingresso,categoria,destaque,logo_casa,logo_visitante,nosso_time";
   const rows: string[] = [header];
 
   const catValues = FIXTURE_CATEGORIES.map((c) => c.value);
@@ -50,8 +50,8 @@ export async function GET() {
 
   const maxFixtureRows = 5;
   if (teams.length === 0 && championships.length === 0 && stadiums.length === 0) {
-    rows.push("2025-03-15,20:00,Nosso Clube,Adversário A,Campeonato Estadual,Estádio Municipal,,,principal,não,,,casa");
-    rows.push("2025-03-22,16:00,Adversário B,Nosso Clube,Copa Regional,,https://tv.exemplo.com,,principal,sim,,,visitante");
+    rows.push("2025-03-15,20:00,,Nosso Clube,Adversário A,Campeonato Estadual,Estádio Municipal,,,principal,não,,,casa");
+    rows.push("2025-03-22,16:00,,Adversário B,Nosso Clube,Copa Regional,,https://tv.exemplo.com,,principal,sim,,,visitante");
   } else {
     const n = Math.min(Math.max(teams.length, 1), maxFixtureRows);
     for (let i = 0; i < n; i++) {
@@ -74,6 +74,7 @@ export async function GET() {
         [
           dataStr,
           horaStr,
+          "", // clube/slug — preencha com o slug do clube (ex: americano-fc) para filtrar ao importar
           csvEscape(timeCasa),
           csvEscape(timeVisitante),
           csvEscape(comp),

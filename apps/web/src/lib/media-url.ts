@@ -1,4 +1,4 @@
-/** CloudFront — origem das mídias em produção. */
+/** CloudFront — origem das mídias em produção. Funciona em local e servidor. */
 const BASE = "https://www.bostoncitygroup.biz";
 
 /**

@@ -529,6 +529,24 @@ export default function EditarGroupHomePage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Língua principal</Label>
+                  <Select
+                    value={(theme.defaultLang as string) ?? "pt"}
+                    onValueChange={(v) => updateTheme("defaultLang", v as "pt" | "en")}
+                  >
+                    <SelectTrigger className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pt">Português</SelectItem>
+                      <SelectItem value="en">English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    Idioma ao carregar o site (sem ?lang= nem preferência salva)
+                  </p>
+                </div>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -2645,7 +2663,7 @@ export default function EditarGroupHomePage() {
                               </div>
                             </>
                           )}
-                          {(block.type === "custom" || block.type === "galeria") && (
+                          {block.type === "custom" && (
                             <div className="space-y-2">
                               <MediaPicker
                                 label="Imagem da seção"
@@ -2663,6 +2681,125 @@ export default function EditarGroupHomePage() {
                                   updateBlockConfig(index, "imageUrl", e.target.value)
                                 }
                               />
+                            </div>
+                          )}
+                          {block.type === "galeria" && (
+                            <div className="space-y-3 sm:col-span-2">
+                              <details open className="rounded-lg border border-border bg-muted/20">
+                                <summary className="cursor-pointer px-3 py-2 font-medium">Galeria de fotos</summary>
+                                <div className="border-t border-border px-3 py-3 space-y-3">
+                                  <p className="text-xs text-muted-foreground">
+                                    Fotos manuais (pasta Galeria) entram primeiro. O restante pode vir do RSS (Instagram).
+                                  </p>
+                                  <div className="space-y-2">
+                                    <Label>Fonte</Label>
+                                    <Select
+                                      value={(block.config?.galeriaDataSource as string) ?? "rss_com_manual"}
+                                      onValueChange={(v) => updateBlockConfigValue(index, "galeriaDataSource", v)}
+                                    >
+                                      <SelectTrigger><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="rss_com_manual">RSS + manual (manuais primeiro)</SelectItem>
+                                        <SelectItem value="rss">Só RSS (Instagram)</SelectItem>
+                                        <SelectItem value="manual">Só manual</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {((block.config?.galeriaDataSource as string) === "rss_com_manual" || (block.config?.galeriaDataSource as string) === "manual" || (block.config?.galeriaDataSource as string) === "rss") && (
+                                    <div className="space-y-2">
+                                      <Label>Fotos manuais (primeiras na galeria)</Label>
+                                      {((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? []).map((item, gi) => (
+                                        <div key={gi} className="rounded-lg border border-border p-3 space-y-2">
+                                          <div className="flex items-start gap-2">
+                                            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                                              {item.imageUrl ? (
+                                                <img src={getPublicImageUrl(item.imageUrl)} alt="" className="h-full w-full object-cover" />
+                                              ) : (
+                                                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                                  <Plus className="h-6 w-6" />
+                                                </div>
+                                              )}
+                                            </div>
+                                            <div className="flex-1 min-w-0 space-y-2">
+                                              <MediaPicker
+                                                label=""
+                                                sizeKey="gallery"
+                                                allowAllFolders
+                                                value={item.imageUrl ?? ""}
+                                                onChange={(url) => {
+                                                  const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? [])];
+                                                  if (!arr[gi]) arr[gi] = {};
+                                                  arr[gi] = { ...arr[gi], imageUrl: url };
+                                                  updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                                }}
+                                                placeholder="Escolher foto"
+                                              />
+                                              <Input
+                                                placeholder="Legenda (opcional)"
+                                                value={item.title ?? ""}
+                                                onChange={(e) => {
+                                                  const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? [])];
+                                                  if (!arr[gi]) arr[gi] = {};
+                                                  arr[gi] = { ...arr[gi], title: e.target.value };
+                                                  updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                                }}
+                                              />
+                                            </div>
+                                            <Button
+                                              type="button"
+                                              variant="ghost"
+                                              size="icon"
+                                              className="shrink-0 text-destructive"
+                                              onClick={() => {
+                                                const arr = ((block.config?.galeriaManualItems as Array<unknown>) ?? []).filter((_, j) => j !== gi);
+                                                updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                              }}
+                                            >
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          const arr = [...((block.config?.galeriaManualItems as Array<{ imageUrl?: string; link?: string; title?: string }>) ?? []), { imageUrl: "", link: "", title: "" }];
+                                          updateBlockConfigValue(index, "galeriaManualItems", arr);
+                                        }}
+                                      >
+                                        <Plus className="h-4 w-4 mr-1" /> Adicionar foto
+                                      </Button>
+                                    </div>
+                                  )}
+                                  {((block.config?.galeriaDataSource as string) === "rss_com_manual" || (block.config?.galeriaDataSource as string) === "rss") && (
+                                    <>
+                                      <div className="space-y-2">
+                                        <Label>URL do feed RSS (Instagram)</Label>
+                                        <Input
+                                          placeholder="https://rss.app/feed/... (Instagram)"
+                                          value={(block.config?.galeriaRssUrl as string) ?? ""}
+                                          onChange={(e) => updateBlockConfig(index, "galeriaRssUrl", e.target.value)}
+                                        />
+                                      </div>
+                                      <div className="space-y-2">
+                                        <Label>Máx. fotos</Label>
+                                        <Input
+                                          type="number"
+                                          min={1}
+                                          max={24}
+                                          value={(block.config?.galeriaMaxItems as number) ?? 10}
+                                          onChange={(e) => {
+                                            const v = parseInt(e.target.value, 10);
+                                            updateBlockConfigValue(index, "galeriaMaxItems", Number.isNaN(v) ? 10 : Math.min(24, Math.max(1, v)));
+                                          }}
+                                        />
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </details>
                             </div>
                           )}
                         </div>

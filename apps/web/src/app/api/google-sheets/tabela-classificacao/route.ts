@@ -12,12 +12,13 @@ function extractSpreadsheetId(input: string): string | null {
   return null;
 }
 
-/** Detecta URL "Publicar na Web" e retorna a URL de export CSV. */
-function getPublishedExportUrl(input: string): string | null {
+/** Detecta URL "Publicar na Web" e retorna a URL de export CSV. Inclui gid da aba quando informado. */
+function getPublishedExportUrl(input: string, gid?: string): string | null {
   const trimmed = input.trim();
   const match = trimmed.match(/\/spreadsheets\/d\/e\/(2PACX-[a-zA-Z0-9_-]+)/i);
   if (!match) return null;
-  return `https://docs.google.com/spreadsheets/d/e/${match[1]}/pub?output=csv`;
+  const effectiveGid = gid?.trim() || extractGidFromUrl(trimmed) || "0";
+  return `https://docs.google.com/spreadsheets/d/e/${match[1]}/pub?output=csv&gid=${effectiveGid}`;
 }
 
 /** Extrai gid da aba a partir da URL. */
@@ -95,6 +96,24 @@ function getVal(record: Record<string, string>, ...keys: string[]): string {
   return "";
 }
 
+/** Extrai valor da coluna clube/slug da linha. Colunas: clube/slug, clube_slug, clube, slug. */
+function getRowSlug(record: Record<string, string>): string {
+  const keys = ["clube_slug", "clube/slug", "clube", "slug"];
+  for (const k of keys) {
+    const v = record[k]?.trim();
+    if (v) return v.toLowerCase();
+  }
+  return "";
+}
+
+/** Verifica se a linha pertence ao slug. Se a planilha não tem coluna clube/slug, inclui a linha. */
+function rowMatchesSlug(record: Record<string, string>, slug: string | null): boolean {
+  if (!slug?.trim()) return true;
+  const rowSlug = getRowSlug(record);
+  if (!rowSlug) return true;
+  return rowSlug === slug.trim().toLowerCase();
+}
+
 function toNum(v: string): number {
   const n = parseInt(v, 10);
   return Number.isNaN(n) ? 0 : n;
@@ -152,6 +171,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const spreadsheetInput = (searchParams.get("spreadsheetId") ?? searchParams.get("url") ?? "").trim();
   const gid = searchParams.get("gid") ?? "0";
+  const slug = searchParams.get("slug")?.trim() || null;
 
   const decodedInput = spreadsheetInput
     ? (() => {
@@ -163,7 +183,7 @@ export async function GET(request: NextRequest) {
       })()
     : "";
 
-  const publishedExportUrl = getPublishedExportUrl(decodedInput);
+  const publishedExportUrl = getPublishedExportUrl(decodedInput, gid);
 
   if (publishedExportUrl) {
     const res = await fetch(publishedExportUrl, {
@@ -194,6 +214,7 @@ export async function GET(request: NextRequest) {
       for (let i = 0; i < headers.length; i++) {
         record[normCol(headers[i])] = rows[r][i]?.trim() ?? "";
       }
+      if (!rowMatchesSlug(record, slug)) continue;
       const row = rowToStandings(record);
       if (row) standings.push(row);
     }
@@ -262,6 +283,7 @@ export async function GET(request: NextRequest) {
     for (let i = 0; i < headers.length; i++) {
       record[normCol(headers[i])] = rows[r][i]?.trim() ?? "";
     }
+    if (!rowMatchesSlug(record, slug)) continue;
     const row = rowToStandings(record);
     if (row) standings.push(row);
   }

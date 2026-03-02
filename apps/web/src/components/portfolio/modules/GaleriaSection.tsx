@@ -6,6 +6,7 @@ import type { NoticiasItem, GaleriaItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { isBcgS3Asset } from "@/lib/isBcgS3Asset";
 import { SmartImage } from "@/components/common/SmartImage";
 import { ImageIcon, Loader2, X } from "lucide-react";
 
@@ -212,10 +213,12 @@ export function GaleriaSection({
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
-  const dataSource = (block.config?.galeriaDataSource as "rss" | "manual") ?? "rss";
+  const dataSource = (block.config?.galeriaDataSource as "rss" | "manual" | "rss_com_manual") ?? "rss_com_manual";
   const rssUrl = (block.config?.galeriaRssUrl as string)?.trim() ?? "";
   const manualItems = (block.config?.galeriaManualItems as GaleriaItem[] | undefined) ?? [];
   const maxItems = Math.min(24, Math.max(1, (block.config?.galeriaMaxItems as number) ?? 10));
+  const useManualFirst = dataSource === "rss_com_manual" || dataSource === "manual" || dataSource === "rss";
+  const useRss = dataSource === "rss" || dataSource === "rss_com_manual";
   const padTop = (block.config?.galeriaPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.galeriaPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
   const blockBg = (block.config?.backgroundColor as string)?.trim();
@@ -237,13 +240,7 @@ export function GaleriaSection({
   const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
   useEffect(() => {
-    if (dataSource === "manual") {
-      setItems([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-    if (!rssUrl) {
+    if (!useRss || !rssUrl) {
       setItems([]);
       setLoading(false);
       setError(null);
@@ -261,7 +258,7 @@ export function GaleriaSection({
           );
           setItems(gallery);
           setError(
-            gallery.length === 0
+            gallery.length === 0 && !useManualFirst
               ? lang === "pt"
                 ? "Nenhuma foto encontrada no feed."
                 : "No photos found in feed."
@@ -273,7 +270,7 @@ export function GaleriaSection({
         if (!cancelled) {
           setItems([]);
           setError(
-            lang === "pt" ? "Erro ao carregar galeria." : "Error loading gallery."
+            !useManualFirst && lang === "pt" ? "Erro ao carregar galeria." : !useManualFirst ? "Error loading gallery." : null
           );
         }
       })
@@ -283,12 +280,18 @@ export function GaleriaSection({
     return () => {
       cancelled = true;
     };
-  }, [dataSource, rssUrl, maxItems, lang]);
+  }, [useRss, rssUrl, maxItems, lang, useManualFirst]);
 
-  const displayItems =
-    dataSource === "manual"
-      ? manualItems.filter((i) => i.imageUrl?.trim()).slice(0, maxItems)
-      : items;
+  const manualFiltered = manualItems.filter((i) => i.imageUrl?.trim());
+  const rssFiltered = items;
+  const displayItems = useManualFirst
+    ? [
+        ...manualFiltered,
+        ...rssFiltered.filter(
+          (r) => !manualFiltered.some((m) => m.imageUrl?.trim() === r.imageUrl?.trim())
+        ),
+      ].slice(0, maxItems)
+    : rssFiltered;
   const hasContent = displayItems.length > 0;
 
   return (
@@ -344,17 +347,21 @@ export function GaleriaSection({
                 className="group relative block cursor-pointer overflow-hidden focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950"
                 onClick={() =>
                   setLightboxSrc(
-                    item.imageUrl?.startsWith("/api/") || item.imageUrl?.startsWith("https://")
-                      ? item.imageUrl
-                      : getPublicImageUrl(item.imageUrl) || item.imageUrl
+                    isBcgS3Asset(item.imageUrl)
+                      ? getPublicImageUrl(item.imageUrl)
+                      : (item.imageUrl?.startsWith("/api/") || item.imageUrl?.startsWith("https://")
+                        ? item.imageUrl
+                        : getPublicImageUrl(item.imageUrl) || item.imageUrl)
                   )
                 }
               >
                 <GalleryPhoto
                   src={
-                    item.imageUrl?.startsWith("/api/") || item.imageUrl?.startsWith("https://")
-                      ? item.imageUrl
-                      : getPublicImageUrl(item.imageUrl) || item.imageUrl
+                    isBcgS3Asset(item.imageUrl)
+                      ? getPublicImageUrl(item.imageUrl)
+                      : (item.imageUrl?.startsWith("/api/") || item.imageUrl?.startsWith("https://")
+                        ? item.imageUrl
+                        : getPublicImageUrl(item.imageUrl) || item.imageUrl)
                   }
                   srcOriginal={item.imageUrlOriginal}
                   alt=""

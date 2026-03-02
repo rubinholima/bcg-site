@@ -25,6 +25,8 @@ interface MediaPickerProps {
   allowAllFolders?: boolean;
   /** Quando o link "Subir para mídia" é exibido, redireciona para esta pasta (ex: backgrounds). */
   uploadFolderHint?: MediaPlaceholderSizeKey;
+  /** Quando sizeKey é galeria_clubes, slug do clube para subpasta (media/galeria_clubes/{slug}/). */
+  galeriaSlug?: string | null;
   /** Se "logos", lista apenas a pasta de logos (empresas/clubes). Ignora sizeKey. */
   folder?: "logos" | "all";
   placeholder?: string;
@@ -53,6 +55,7 @@ export function MediaPicker({
   label,
   className,
   uploadFolderHint,
+  galeriaSlug,
   refreshTrigger,
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
@@ -60,7 +63,16 @@ export function MediaPicker({
 
   useEffect(() => {
     const useLogosOnly = folder === "logos";
-    const qs = useLogosOnly ? "?all=1" : allowAllFolders ? "" : `?sizeKey=${encodeURIComponent(sizeKey)}`;
+    let qs: string;
+    if (sizeKey === "galeria_clubes" && galeriaSlug?.trim()) {
+      qs = `?sizeKey=galeria_clubes&slug=${encodeURIComponent(galeriaSlug.trim())}`;
+    } else if (useLogosOnly) {
+      qs = "?all=1";
+    } else if (allowAllFolders) {
+      qs = "";
+    } else {
+      qs = `?sizeKey=${encodeURIComponent(sizeKey)}`;
+    }
     let cancelled = false;
     queueMicrotask(() => setLoading(true));
     fetch(`/api/media${qs}`, { credentials: "include" })
@@ -82,7 +94,7 @@ export function MediaPicker({
     return () => {
       cancelled = true;
     };
-  }, [sizeKey, allowAllFolders, folder, refreshTrigger]);
+  }, [sizeKey, allowAllFolders, folder, galeriaSlug, refreshTrigger]);
 
   const dimensions = folder === "logos" ? "Logo" : MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";
   const validItems = items.filter((item) => item.url?.trim());
@@ -130,7 +142,11 @@ export function MediaPicker({
         </div>
         {!loading && validItems.length === 0 && folder !== "logos" && (
           <Link
-            href={uploadFolderHint ? `/dashboard/midia?folder=${encodeURIComponent(uploadFolderHint)}` : "/dashboard/midia"}
+            href={
+              uploadFolderHint
+                ? `/dashboard/midia?folder=${encodeURIComponent(uploadFolderHint)}${galeriaSlug?.trim() ? `&slug=${encodeURIComponent(galeriaSlug.trim())}` : ""}`
+                : "/dashboard/midia"
+            }
             className="text-sm text-muted-foreground hover:text-foreground underline"
           >
             Nenhuma imagem nesta pasta. Subir para mídia →

@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 
 export type PageContentDto = {
+  theme?: Record<string, unknown>;
   blocks?: Array<{
     id: string;
     type: string;
@@ -29,7 +30,16 @@ export type CreatePageDto = {
   tenantId: string;
   slug?: string;
   title?: string;
+  /** Se informado, copia blocos desta página (filtrando por mesmo tipo: clube↔clube, empresa↔empresa). */
+  sourcePageId?: string;
 };
+
+/** Considera "clube" se o tipo contiver futebol/clube/football. */
+function isClubKind(kindName: string | null): boolean {
+  if (!kindName) return false;
+  const k = kindName.toLowerCase();
+  return k.includes('futebol') || k.includes('clube') || k.includes('football');
+}
 
 export type UpdatePageDto = {
   title?: string;
@@ -109,6 +119,7 @@ export class PagesService {
     const slug = (dto.slug ?? 'main').trim() || 'main';
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: dto.tenantId },
+      include: { kind: true },
     });
     if (!tenant) {
       throw new NotFoundException(
@@ -123,12 +134,42 @@ export class PagesService {
         `Já existe uma página com slug "${slug}" para esta empresa`,
       );
     }
+
+    let content: PageContentDto = { blocks: [] };
+    if (dto.sourcePageId) {
+      const source = await this.prisma.page.findUnique({
+        where: { id: dto.sourcePageId },
+        include: { tenant: { include: { kind: true } } },
+      });
+      if (!source) {
+        throw new NotFoundException(
+          `Página de origem com ID "${dto.sourcePageId}" não encontrada`,
+        );
+      }
+      const targetIsClub = isClubKind(tenant.kind?.name ?? null);
+      const sourceIsClub = isClubKind(source.tenant?.kind?.name ?? null);
+      if (targetIsClub !== sourceIsClub) {
+        throw new ConflictException(
+          'Só é possível copiar de páginas do mesmo tipo (clube para clube, empresa para empresa).',
+        );
+      }
+      const srcContent = (source.content as PageContentDto) ?? { blocks: [] };
+      const blocks = (srcContent.blocks ?? []).map((b) => ({
+        ...b,
+        id: crypto.randomUUID(),
+      }));
+      content = {
+        theme: srcContent.theme,
+        blocks,
+      };
+    }
+
     const row = await this.prisma.page.create({
       data: {
         tenantId: dto.tenantId,
         slug,
         title: dto.title?.trim() || null,
-        content: { blocks: [] } as object,
+        content: content as object,
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });

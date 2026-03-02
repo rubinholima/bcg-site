@@ -35,15 +35,16 @@ export class MediaController {
   @Get()
   async list(
     @Query('sizeKey') sizeKey?: string,
+    @Query('slug') slug?: string,
     @Query('all') all?: string,
   ) {
     let items: Array<{ key: string; url: string; size: number; lastModified: string; folder?: string }>;
     if (all === '1' || all === 'true') {
       items = await this.s3.listAllAssets();
     } else {
-      items = await this.s3.listMedia(
-        typeof sizeKey === 'string' && sizeKey.trim() ? sizeKey.trim() : undefined,
-      );
+      const key = typeof sizeKey === 'string' && sizeKey.trim() ? sizeKey.trim() : undefined;
+      const subfolder = typeof slug === 'string' && slug.trim() ? slug.trim() : undefined;
+      items = await this.s3.listMedia(key, subfolder);
     }
     const keys = items.map((i) => i.key);
     const displayNames = await this.mediaMeta.getDisplayNames(keys);
@@ -81,6 +82,7 @@ export class MediaController {
   async upload(
     @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
     @Body('sizeKey') sizeKey?: string,
+    @Body('slug') slug?: string,
     @Body('displayName') displayName?: string,
   ) {
     if (!file?.buffer) {
@@ -90,6 +92,7 @@ export class MediaController {
     const sizeLower = size.toLowerCase();
     const isExternalLogos = sizeLower === 'external_logos';
     const isCompetitions = sizeLower === 'competitions' || sizeLower === 'competitions_logos';
+    const subfolder = typeof slug === 'string' && slug.trim() ? slug.trim() : undefined;
     let key: string;
     let url: string;
     if (isExternalLogos) {
@@ -101,7 +104,7 @@ export class MediaController {
       key = result.key;
       url = result.url;
     } else {
-      const result = await this.s3.uploadMedia(file.buffer, file.mimetype, size);
+      const result = await this.s3.uploadMedia(file.buffer, file.mimetype, size, subfolder);
       key = result.key;
       url = result.url;
     }

@@ -2,18 +2,60 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { FileText, Home, Building2, Plus, Pencil, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Building2, Copy, Home, Loader2, Pencil, Plus, Trophy, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getPublicImageUrl } from "@/lib/media-url";
 import type { Page } from "@/types/page";
 import type { Tenant } from "@/types/tenant";
 
+/** Clube se o tipo contiver futebol/clube/football. */
+function isClubKind(kindName: string | null | undefined): boolean {
+  if (!kindName) return false;
+  const k = kindName.toLowerCase();
+  return k.includes("futebol") || k.includes("clube") || k.includes("football");
+}
+
+function sortTenantsByKind(tenants: Tenant[]): { clubs: Tenant[]; companies: Tenant[] } {
+  const clubs: Tenant[] = [];
+  const companies: Tenant[] = [];
+  for (const t of tenants) {
+    if (isClubKind(t.kind?.name)) clubs.push(t);
+    else companies.push(t);
+  }
+  clubs.sort((a, b) => a.name.localeCompare(b.name));
+  companies.sort((a, b) => a.name.localeCompare(b.name));
+  return { clubs, companies };
+}
+
 export default function PaginasPage() {
+  const router = useRouter();
   const [pages, setPages] = useState<Page[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState<string | null>(null);
+  const [creatingFromCopy, setCreatingFromCopy] = useState<string | null>(null);
+  const [replaceFromCopy, setReplaceFromCopy] = useState<string | null>(null);
+  const [copySourceByTenant, setCopySourceByTenant] = useState<Record<string, string>>({});
+  const [replaceSourceByTenant, setReplaceSourceByTenant] = useState<Record<string, string>>({});
+  const [replaceModal, setReplaceModal] = useState<{ tenantId: string; sourcePageId: string; tenantName: string; sourceName: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +87,18 @@ export default function PaginasPage() {
 
   const pageByTenantId = new Map(pages.map((p) => [p.tenantId, p]));
 
+  /** Páginas que podem ser usadas como origem para copiar (mesmo tipo: clube↔clube, empresa↔empresa). */
+  const getSourcePagesForTenant = (tenant: Tenant): Page[] => {
+    const tenantIsClub = isClubKind(tenant.kind?.name);
+    return pages.filter((p) => {
+      if (p.tenantId === tenant.id) return false;
+      const srcTenant = tenants.find((t) => t.id === p.tenantId);
+      if (!srcTenant) return false;
+      const srcIsClub = isClubKind(srcTenant.kind?.name);
+      return tenantIsClub === srcIsClub;
+    });
+  };
+
   const handleCreatePage = async (tenantId: string) => {
     setCreating(tenantId);
     setError(null);
@@ -68,6 +122,85 @@ export default function PaginasPage() {
     }
   };
 
+  const handleCreateFromCopy = async (tenantId: string, sourcePageId: string) => {
+    setCreatingFromCopy(tenantId);
+    setError(null);
+    try {
+      const res = await fetch("/api/pages", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId, sourcePageId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error ?? "Erro ao criar página");
+      }
+      const page = (await res.json()) as Page;
+      setPages((prev) => [...prev, page]);
+      setCopySourceByTenant((prev) => ({ ...prev, [tenantId]: "" }));
+      router.push(`/dashboard/paginas/tenant/${tenantId}/editar`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao criar página");
+    } finally {
+      setCreatingFromCopy(null);
+    }
+  };
+
+  const handleReplaceFromCopy = async (tenantId: string, sourcePageId: string) => {
+    const targetPage = pageByTenantId.get(tenantId);
+    if (!targetPage) return;
+    setReplaceFromCopy(tenantId);
+    setError(null);
+    try {
+      const sourcePage = pages.find((p) => p.id === sourcePageId);
+      if (!sourcePage?.content?.blocks) throw new Error("Página de origem sem conteúdo");
+      const copiedBlocks = sourcePage.content.blocks.map((b) => ({
+        ...b,
+        id: crypto.randomUUID(),
+      }));
+      const res = await fetch(`/api/pages/${targetPage.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: {
+            theme: sourcePage.content.theme,
+            blocks: copiedBlocks,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error ?? "Erro ao substituir módulos");
+      }
+      const updated = (await res.json()) as Page;
+      setPages((prev) => prev.map((p) => (p.id === targetPage.id ? updated : p)));
+      setReplaceSourceByTenant((prev) => ({ ...prev, [tenantId]: "" }));
+      setReplaceModal(null);
+      router.push(`/dashboard/paginas/tenant/${tenantId}/editar`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao substituir módulos");
+      setReplaceModal(null);
+    } finally {
+      setReplaceFromCopy(null);
+    }
+  };
+
+  const openReplaceModal = (tenantId: string) => {
+    const src = replaceSourceByTenant[tenantId];
+    if (!src) return;
+    const tenant = tenants.find((t) => t.id === tenantId);
+    const sourcePage = pages.find((p) => p.id === src);
+    const sourceTenant = tenants.find((t) => t.id === sourcePage?.tenantId);
+    setReplaceModal({
+      tenantId,
+      sourcePageId: src,
+      tenantName: tenant?.name ?? "Página",
+      sourceName: sourceTenant?.name ?? sourcePage?.tenant?.name ?? "Página",
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -76,48 +209,12 @@ export default function PaginasPage() {
     );
   }
 
-  return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Páginas</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Edite a Home (grupo) ou a página de cada empresa. Monte com módulos: Hero, Destaques, Texto, etc.
-        </p>
-      </div>
+  const { clubs, companies } = sortTenantsByKind(tenants);
 
-      {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Home (grupo master) */}
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-2">
-              <Home className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-lg">Home</CardTitle>
-            </div>
-            <CardDescription>
-              Página inicial do site (grupo master). Conteúdo modular com os mesmos tipos de módulo.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/dashboard/paginas/group-home/editar">
-              <Button variant="outline" className="w-full">
-                <Pencil className="mr-2 h-4 w-4" />
-                Editar página
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* Página por empresa */}
-        {tenants.map((tenant) => {
-          const page = pageByTenantId.get(tenant.id);
-          return (
-            <Card key={tenant.id}>
+  const renderTenantCard = (tenant: Tenant) => {
+    const page = pageByTenantId.get(tenant.id);
+    return (
+      <Card key={tenant.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
                   {tenant.logoUrl ? (
@@ -133,44 +230,214 @@ export default function PaginasPage() {
                 </div>
                 <CardDescription>
                   {page
-                    ? "Página específica desta empresa. Edite módulos, aparência e textos."
-                    : "Crie a página específica desta empresa e monte com módulos."}
+                    ? "Página específica. Edite módulos, aparência e textos."
+                    : "Crie a página e monte com módulos."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {page ? (
-                  <Link href={`/dashboard/paginas/tenant/${tenant.id}/editar`}>
-                    <Button variant="outline" className="w-full">
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Editar página
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    disabled={creating === tenant.id}
-                    onClick={() => handleCreatePage(tenant.id)}
-                  >
-                    {creating === tenant.id ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plus className="mr-2 h-4 w-4" />
+                  <div className="space-y-3">
+                    <Link href={`/dashboard/paginas/tenant/${tenant.id}/editar`} className="block">
+                      <Button variant="outline" className="w-full">
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar página
+                      </Button>
+                    </Link>
+                    {getSourcePagesForTenant(tenant).length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          Copiar módulos de outra página:
+                        </span>
+                        <div className="flex gap-2">
+                          <Select
+                            value={replaceSourceByTenant[tenant.id] ?? ""}
+                            onValueChange={(v) =>
+                              setReplaceSourceByTenant((prev) => ({
+                                ...prev,
+                                [tenant.id]: v,
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Selecione uma página" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getSourcePagesForTenant(tenant).map((p) => {
+                                const t = tenants.find((x) => x.id === p.tenantId);
+                                return (
+                                  <SelectItem key={p.id} value={p.id}>
+                                    {t?.name ?? p.tenant?.name ?? "Página"}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={
+                              !replaceSourceByTenant[tenant.id] ||
+                              replaceFromCopy === tenant.id
+                            }
+                            onClick={() => openReplaceModal(tenant.id)}
+                          >
+                            {replaceFromCopy === tenant.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                            Copiar
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                    Criar página
-                  </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      disabled={creating === tenant.id}
+                      onClick={() => handleCreatePage(tenant.id)}
+                    >
+                      {creating === tenant.id ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Plus className="mr-2 h-4 w-4" />
+                      )}
+                      Criar página
+                    </Button>
+                    {getSourcePagesForTenant(tenant).length > 0 && (
+                      <div className="flex flex-col gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          ou copiar módulos de:
+                        </span>
+                        <div className="flex gap-2">
+                          <Select
+                            value={copySourceByTenant[tenant.id] ?? ""}
+                            onValueChange={(v) =>
+                              setCopySourceByTenant((prev) => ({
+                                ...prev,
+                                [tenant.id]: v,
+                              }))
+                            }
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Selecione uma página" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getSourcePagesForTenant(tenant).map((p) => {
+                                const t = tenants.find((x) => x.id === p.tenantId);
+                                return (
+                                  <SelectItem key={p.id} value={p.id}>
+                                    {t?.name ?? p.tenant?.name ?? "Página"}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled={
+                              !copySourceByTenant[tenant.id] ||
+                              creatingFromCopy === tenant.id
+                            }
+                            onClick={() => {
+                              const src = copySourceByTenant[tenant.id];
+                              if (src) handleCreateFromCopy(tenant.id, src);
+                            }}
+                          >
+                            {creatingFromCopy === tenant.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                            Copiar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
-          );
-        })}
+    );
+  };
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Páginas</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Edite a Home (grupo) ou a página de cada empresa/clube. Monte com módulos: Hero, Destaques, Texto, etc.
+        </p>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {/* Home em destaque */}
+      <div>
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <Home className="h-5 w-5 text-primary" />
+              <CardTitle className="text-lg">Home</CardTitle>
+            </div>
+            <CardDescription>
+              Página inicial do site (grupo master). Conteúdo modular com os mesmos tipos de módulo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/paginas/group-home/editar">
+              <Button variant="outline" className="w-full">
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar página
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Clubes */}
+      {clubs.length > 0 && (
+        <div className="space-y-4 pt-6 border-t border-border">
+          <h2 className="flex items-center gap-2.5 text-xl font-bold uppercase tracking-wider">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
+              <Trophy className="h-4 w-4 text-amber-500" />
+            </span>
+            Clubes
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {clubs.map(renderTenantCard)}
+          </div>
+        </div>
+      )}
+
+      {/* Empresas */}
+      {companies.length > 0 && (
+        <div className="space-y-4 pt-6 border-t border-border">
+          <h2 className="flex items-center gap-2.5 text-xl font-bold uppercase tracking-wider">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20">
+              <Briefcase className="h-4 w-4 text-emerald-500" />
+            </span>
+            Empresas
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {companies.map(renderTenantCard)}
+          </div>
+        </div>
+      )}
 
       {tenants.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             <Building2 className="mx-auto h-12 w-12 opacity-50 mb-4" />
-            <p>Nenhuma empresa cadastrada. Cadastre empresas para criar páginas específicas.</p>
+            <p>Nenhuma empresa ou clube cadastrado. Cadastre em Empresas para criar páginas.</p>
             <Link href="/dashboard/empresas/new">
               <Button variant="outline" className="mt-4">
                 Nova empresa
@@ -179,6 +446,39 @@ export default function PaginasPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de confirmação: substituir módulos */}
+      <AlertDialog open={!!replaceModal} onOpenChange={(open) => !open && setReplaceModal(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Substituir todos os módulos?</AlertDialogTitle>
+            <AlertDialogDescription className="text-amber-600 dark:text-amber-400">
+              Atenção: isso substituirá todos os módulos atuais da página de{" "}
+              <strong>{replaceModal?.tenantName}</strong> pelos módulos de{" "}
+              <strong>{replaceModal?.sourceName}</strong>. A ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!replaceFromCopy}>Cancelar</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              className="bg-amber-600 hover:bg-amber-700"
+              disabled={!!replaceFromCopy}
+              onClick={(e) => {
+                e.preventDefault();
+                if (replaceModal)
+                  handleReplaceFromCopy(replaceModal.tenantId, replaceModal.sourcePageId);
+              }}
+            >
+              {replaceFromCopy === replaceModal?.tenantId ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Substituir"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
