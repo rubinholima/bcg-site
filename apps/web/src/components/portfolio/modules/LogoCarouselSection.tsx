@@ -71,8 +71,8 @@ function LogoStrip({
 
   if (items.length === 0) return null;
 
-  const copies = 6;
-  const duplicated = Array.from({ length: copies }, () => items).flat();
+  /* 2 cópias para loop infinito perfeito: animação -50% = próximo bloco idêntico */
+  const duplicated = [...items, ...items];
 
   return (
     <div
@@ -81,12 +81,13 @@ function LogoStrip({
       onMouseLeave={() => setPaused(false)}
     >
       <div
-        className="flex py-2"
+        className="flex py-2 w-max min-w-full"
         style={{
           gap: `${gap}px`,
           animation: `${animationName} ${duration}s linear infinite`,
           animationDirection: direction === "right-to-left" ? "reverse" : "normal",
           animationPlayState: paused ? "paused" : "running",
+          willChange: "transform",
         }}
       >
         {duplicated.map((item, i) => (
@@ -201,10 +202,10 @@ export function LogoCarouselSection({
   const openInNewTab = config.logoCarouselOpenInNewTab !== false;
 
   const clubsEnabled = config.logoCarouselClubsEnabled !== false;
-  const clubsLimit = Number(config.logoCarouselClubsLimit) || 50;
+  const clubsLimit = Number(config.logoCarouselClubsLimit) || 100;
   const clubsFallback = (config.logoCarouselClubsFallbackLogo as string)?.trim();
   const companiesEnabled = config.logoCarouselCompaniesEnabled !== false;
-  const companiesLimit = Number(config.logoCarouselCompaniesLimit) || 50;
+  const companiesLimit = Number(config.logoCarouselCompaniesLimit) || 100;
   const companiesFallback = (config.logoCarouselCompaniesFallbackLogo as string)?.trim();
   const fallbackLogo = clubsFallback || companiesFallback;
 
@@ -212,8 +213,8 @@ export function LogoCarouselSection({
     let cancelled = false;
     const load = async () => {
       const [clubList, companyList] = await Promise.all([
-        clubsEnabled ? fetchPublicTenants("club", clubsLimit) : [],
-        companiesEnabled ? fetchPublicTenants("company", companiesLimit) : [],
+        clubsEnabled ? fetchPublicTenants("club", clubsLimit) : Promise.resolve([]),
+        companiesEnabled ? fetchPublicTenants("company", companiesLimit) : Promise.resolve([]),
       ]);
       if (!cancelled) {
         setAllItems([...clubList, ...companyList]);

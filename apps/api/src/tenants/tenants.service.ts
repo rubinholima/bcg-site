@@ -124,9 +124,13 @@ export class TenantsService {
     try {
       const id = crypto.randomUUID();
       const now = new Date();
+      const categoriesJson =
+        dto.categories && Array.isArray(dto.categories) && dto.categories.length > 0
+          ? JSON.stringify(dto.categories)
+          : null;
       await this.prisma.$executeRaw`
-        INSERT INTO "Tenant" (id, name, slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "createdAt", "updatedAt")
-        VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${dto.address ?? null}, ${dto.contactName ?? null}, ${dto.contactPhone ?? null}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${dto.city ?? null}, ${dto.country ?? null}, ${dto.websiteUrl ?? null}, ${now}, ${now})
+        INSERT INTO "Tenant" (id, name, slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "sofascoreTeamId", categories, "createdAt", "updatedAt")
+        VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${dto.address ?? null}, ${dto.contactName ?? null}, ${dto.contactPhone ?? null}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${dto.city ?? null}, ${dto.country ?? null}, ${dto.websiteUrl ?? null}, ${(dto.sofascoreTeamId ?? "").trim() || null}, ${categoriesJson}::jsonb, ${now}, ${now})
       `;
       return this.findOne(id);
     } catch (err) {

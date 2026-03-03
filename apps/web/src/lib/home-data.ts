@@ -31,7 +31,8 @@ export function getTenantSiteUrl(slug: string): string {
   return `https://${slug}.bostoncitygroup.biz`;
 }
 
-function isFootballKind(kindName: string): boolean {
+/** Verifica se o tipo de empresa é futebol/clube (exibe campos exclusivos: categorias, SofaScore). */
+export function isFootballKind(kindName: string): boolean {
   const k = kindName.toLowerCase();
   return k.includes("futebol") || k.includes("clube") || k.includes("football");
 }

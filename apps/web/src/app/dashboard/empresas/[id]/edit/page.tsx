@@ -20,6 +20,7 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { isFootballKind } from "@/lib/home-data";
 
 interface FormData {
   name: string;
@@ -103,13 +104,14 @@ export default function EditEmpresaPage() {
       if (websiteUrl && !/^https?:\/\//i.test(websiteUrl)) {
         websiteUrl = "https://" + websiteUrl;
       }
+      const isClub = isFootballKind(tipos.find((t) => t.id === formData.kindId)?.name ?? "");
       const payload = {
         ...formData,
         websiteUrl: websiteUrl || undefined,
         lat: formData.lat === "" || formData.lat === undefined ? undefined : Number(formData.lat),
         lng: formData.lng === "" || formData.lng === undefined ? undefined : Number(formData.lng),
-        sofascoreTeamId: (formData.sofascoreTeamId ?? "").trim() || null,
-        categories: Array.isArray(formData.categories) && formData.categories.length > 0 ? formData.categories : null,
+        sofascoreTeamId: isClub ? ((formData.sofascoreTeamId ?? "").trim() || null) : null,
+        categories: isClub && Array.isArray(formData.categories) && formData.categories.length > 0 ? formData.categories : null,
       };
       await api.patch(`/tenants/${id}`, payload);
       router.push("/dashboard/empresas?success=true");
@@ -451,50 +453,52 @@ export default function EditEmpresaPage() {
               </div>
             </div>
 
-            <div className="space-y-4 pt-2 border-t">
-              <div className="space-y-2">
-                <Label>Categorias que o clube joga</Label>
-                <p className="text-xs text-muted-foreground">
-                  Marque as categorias em que o clube participa (ex.: Sub-15, Sub-17, Principal).
-                </p>
-                <div className="flex flex-wrap gap-3 pt-1">
-                  {FIXTURE_CATEGORIES.map((cat) => (
-                    <label
-                      key={cat.value}
-                      className="flex items-center gap-2 cursor-pointer text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={(formData.categories ?? []).includes(cat.value)}
-                        onChange={(e) => {
-                          const current = formData.categories ?? [];
-                          const next = e.target.checked
-                            ? [...current, cat.value]
-                            : current.filter((c) => c !== cat.value);
-                          setFormData((prev) => ({ ...prev, categories: next }));
-                        }}
-                      />
-                      {cat.labelPT}
-                    </label>
-                  ))}
+            {isFootballKind(tipos.find((t) => t.id === formData.kindId)?.name ?? "") && (
+              <div className="space-y-4 pt-2 border-t">
+                <div className="space-y-2">
+                  <Label>Categorias que o clube joga</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Marque as categorias em que o clube participa (ex.: Sub-15, Sub-17, Principal).
+                  </p>
+                  <div className="flex flex-wrap gap-3 pt-1">
+                    {FIXTURE_CATEGORIES.map((cat) => (
+                      <label
+                        key={cat.value}
+                        className="flex items-center gap-2 cursor-pointer text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(formData.categories ?? []).includes(cat.value)}
+                          onChange={(e) => {
+                            const current = formData.categories ?? [];
+                            const next = e.target.checked
+                              ? [...current, cat.value]
+                              : current.filter((c) => c !== cat.value);
+                            setFormData((prev) => ({ ...prev, categories: next }));
+                          }}
+                        />
+                        {cat.labelPT}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sofascoreTeamId">SofaScore Team ID (para módulo Próximos Jogos AUTO)</Label>
+                  <Input
+                    id="sofascoreTeamId"
+                    name="sofascoreTeamId"
+                    type="text"
+                    value={formData.sofascoreTeamId ?? ""}
+                    onChange={handleChange}
+                    placeholder="Ex: 1955 (Bahia — URL: sofascore.com/team/football/bahia/1955)"
+                    disabled={loading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Obrigatório para &quot;Próximos Jogos&quot; com fonte AUTO. O ID do time está na URL do SofaScore.
+                  </p>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="sofascoreTeamId">SofaScore Team ID (para módulo Próximos Jogos AUTO)</Label>
-                <Input
-                  id="sofascoreTeamId"
-                  name="sofascoreTeamId"
-                  type="text"
-                  value={formData.sofascoreTeamId ?? ""}
-                  onChange={handleChange}
-                  placeholder="Ex: 1955 (Bahia — URL: sofascore.com/team/football/bahia/1955)"
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Obrigatório para &quot;Próximos Jogos&quot; com fonte AUTO. O ID do time está na URL do SofaScore.
-                </p>
-              </div>
-            </div>
+            )}
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading || !formData.kindId}>
