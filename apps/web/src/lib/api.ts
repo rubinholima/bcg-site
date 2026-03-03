@@ -5,7 +5,7 @@ async function getErrorMessage(res: Response): Promise<string> {
   const text = await res.text().catch(() => res.statusText);
   try {
     const json = JSON.parse(text) as { error?: string; message?: string };
-    return json?.error ?? json?.message ?? text || res.statusText;
+    return json?.error ?? json?.message ?? (text || res.statusText);
   } catch {
     if (text && text.length < 200 && !text.startsWith("<")) return text;
     const code = res.status;
