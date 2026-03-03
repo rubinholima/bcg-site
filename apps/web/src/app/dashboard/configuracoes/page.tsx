@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Settings, Sliders } from "lucide-react";
+import { ArrowLeft, Link2, Settings, Sliders } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -42,21 +42,38 @@ export default function ConfiguracoesPage() {
 
       <div className="grid gap-4">
         {isSuperAdmin && (
-          <Link href="/dashboard/configuracoes/modulos">
-            <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <Sliders className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <CardTitle>Módulos</CardTitle>
-                  <CardDescription>
-                    Definir quais perfis (Company Admin, Editor) podem acessar cada módulo do menu. Apenas super admin.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-            </Card>
-          </Link>
+          <>
+            <Link href="/dashboard/configuracoes/modulos">
+              <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+                <CardHeader className="flex flex-row items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <Sliders className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>Módulos</CardTitle>
+                    <CardDescription>
+                      Definir quais perfis (Company Admin, Editor) podem acessar cada módulo do menu. Apenas super admin.
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
+            <Link href="/dashboard/configuracoes/integracoes">
+              <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+                <CardHeader className="flex flex-row items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <Link2 className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>Integrações</CardTitle>
+                    <CardDescription>
+                      Planilhas Google Sheets (Times por Categorias, Próximos Jogos, Tabela Classificação) e templates.
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+              </Card>
+            </Link>
+          </>
         )}
 
         {!isSuperAdmin && (

@@ -87,7 +87,11 @@ export function PatrocinadoresSection({
   const title = ((lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string)?.trim();
   const titleLogo = (block.config?.patrocinadoresTitleLogo as string)?.trim();
   const hasTitle = title && title.length > 0;
-  const items = (block.config?.patrocinadoresManualItems as PatrocinadorItem[] | undefined) ?? [];
+  const rawItems = (block.config?.patrocinadoresManualItems as PatrocinadorItem[] | undefined) ?? [];
+  const items = rawItems.map((i) => ({
+    ...i,
+    logoUrl: String(i.logoUrl ?? (i as Record<string, unknown>).logo_url ?? "").trim(),
+  }));
   const padTop = (block.config?.patrocinadoresPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.patrocinadoresPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
   const bgColor = (block.config?.backgroundColor as string)?.trim();

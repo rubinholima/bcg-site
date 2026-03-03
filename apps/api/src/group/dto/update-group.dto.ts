@@ -33,4 +33,9 @@ export class UpdateGroupDto {
   @IsObject()
   @IsOptional()
   homeContent?: { blocks?: unknown[] };
+
+  /** Configurações padrão por tipo de módulo (Record<type, config>). Usadas ao adicionar módulo em páginas. */
+  @IsObject()
+  @IsOptional()
+  moduleDefaults?: Record<string, Record<string, unknown>>;
 }

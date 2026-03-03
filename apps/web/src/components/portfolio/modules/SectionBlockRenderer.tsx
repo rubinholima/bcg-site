@@ -31,9 +31,10 @@ export function SectionBlockRenderer({
   lang: "pt" | "en";
   page: Page;
 }) {
-  const columns = (block.config?.sectionColumns as 1 | 2) ?? 1;
-  const layout = (block.config?.sectionLayout as "50-50" | "33-66" | "66-33") ?? "50-50";
+  const columns = (block.config?.sectionColumns as 1 | 2 | 3) ?? 1;
+  const layout = (block.config?.sectionLayout as string) ?? "50-50";
   const leftModules = (block.config?.sectionLeftModules as HomeContentBlock[] | undefined) ?? [];
+  const middleModules = (block.config?.sectionMiddleModules as HomeContentBlock[] | undefined) ?? [];
   const rightModules = (block.config?.sectionRightModules as HomeContentBlock[] | undefined) ?? [];
   const padTop = (block.config?.sectionPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.sectionPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
@@ -57,13 +58,18 @@ export function SectionBlockRenderer({
     const v = m.config?.visible as boolean | string | undefined;
     return v !== false && v !== "false";
   });
+  const visibleMiddle = middleModules.filter((m) => {
+    const v = m.config?.visible as boolean | string | undefined;
+    return v !== false && v !== "false";
+  });
   const visibleRight = rightModules.filter((m) => {
     const v = m.config?.visible as boolean | string | undefined;
     return v !== false && v !== "false";
   });
-  const allModules = columns === 1 ? visibleLeft : [...visibleLeft, ...visibleRight];
+  const allModules = columns === 1 ? visibleLeft : columns === 2 ? [...visibleLeft, ...visibleRight] : [...visibleLeft, ...visibleMiddle, ...visibleRight];
 
   const leftColumnTitle = (lang === "pt" ? block.config?.sectionLeftColumnTitlePt : block.config?.sectionLeftColumnTitleEn) as string;
+  const middleColumnTitle = (lang === "pt" ? block.config?.sectionMiddleColumnTitlePt : block.config?.sectionMiddleColumnTitleEn) as string;
   const rightColumnTitle = (lang === "pt" ? block.config?.sectionRightColumnTitlePt : block.config?.sectionRightColumnTitleEn) as string;
   const titleAlign = (block.config?.titleAlign as "left" | "center" | "right") ?? (page.content?.theme?.titleAlign as "left" | "center" | "right") ?? "left";
 
@@ -80,6 +86,17 @@ export function SectionBlockRenderer({
   })();
   const rightColBgColor = (block.config?.sectionRightColumnBackgroundColor as string)?.trim();
   const rightColBgImage = (block.config?.sectionRightColumnBackgroundImage as string)?.trim();
+  const middleColBgColor = (block.config?.sectionMiddleColumnBackgroundColor as string)?.trim();
+  const middleColBgImage = (block.config?.sectionMiddleColumnBackgroundImage as string)?.trim();
+  const middleColOverlay = (() => {
+    const v = block.config?.sectionMiddleColumnBackgroundOverlayOpacity;
+    if (typeof v === "number" && v >= 0 && v <= 1) return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (!Number.isNaN(n) && n >= 0 && n <= 1) return n;
+    }
+    return 0.75;
+  })();
   const rightColOverlay = (() => {
     const v = block.config?.sectionRightColumnBackgroundOverlayOpacity;
     if (typeof v === "number" && v >= 0 && v <= 1) return v;
@@ -99,6 +116,27 @@ export function SectionBlockRenderer({
   const sectionWrapperClass = sectionFullWidth
     ? "relative w-full px-4 sm:px-6 lg:px-8"
     : `relative w-full px-4 sm:px-6 lg:px-8 mx-auto ${columns === 1 ? "max-w-6xl" : "max-w-7xl"}`;
+
+  const gridColsClass =
+    columns === 2
+      ? layout === "50-50"
+        ? "lg:grid-cols-2"
+        : layout === "33-66"
+          ? "lg:grid-cols-[1fr_2fr]"
+          : layout === "66-33"
+            ? "lg:grid-cols-[2fr_1fr]"
+            : "lg:grid-cols-2"
+      : columns === 3
+        ? layout === "33-33-33"
+          ? "lg:grid-cols-3"
+          : layout === "25-50-25"
+            ? "lg:grid-cols-[1fr_2fr_1fr]"
+            : layout === "50-25-25"
+              ? "lg:grid-cols-[2fr_1fr_1fr]"
+              : layout === "25-25-50"
+                ? "lg:grid-cols-[1fr_1fr_2fr]"
+                : "lg:grid-cols-3"
+        : "lg:grid-cols-2";
 
   function ColumnBg({ bgColor: colBg, bgImage: colImg, overlayOp }: { bgColor?: string; bgImage?: string; overlayOp: number }) {
     if (!colBg && !colImg) return null;
@@ -159,18 +197,14 @@ export function SectionBlockRenderer({
                 const showModuleTitle = visibleLeft.length > 1;
                 return (
                   <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                    <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection showModuleTitle={showModuleTitle} />
+                    <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
                   </div>
                 );
               })}
             </div>
           </div>
         ) : (
-          <div
-            className={`grid w-full grid-cols-1 gap-8 lg:gap-12 ${
-              layout === "50-50" ? "lg:grid-cols-2" : layout === "33-66" ? "lg:grid-cols-[1fr_2fr]" : "lg:grid-cols-[2fr_1fr]"
-            }`}
-          >
+          <div className={`grid w-full grid-cols-1 gap-8 lg:gap-12 ${gridColsClass}`}>
             <div className={`relative min-w-0 rounded-lg ${(leftColBgColor || leftColBgImage) ? "p-4 sm:p-6" : ""}`}>
               {(leftColBgColor || leftColBgImage) && (
                 <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
@@ -189,12 +223,38 @@ export function SectionBlockRenderer({
                   const showModuleTitle = visibleLeft.length > 1;
                   return (
                     <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection showModuleTitle={showModuleTitle} />
+                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
                     </div>
                   );
                 })}
               </div>
             </div>
+            {columns === 3 && (
+              <div className={`relative min-w-0 rounded-lg ${(middleColBgColor || middleColBgImage) ? "p-4 sm:p-6" : ""}`}>
+                {(middleColBgColor || middleColBgImage) && (
+                  <ColumnBg bgColor={middleColBgColor} bgImage={middleColBgImage} overlayOp={middleColOverlay} />
+                )}
+                <div className={`relative ${moduleSpacing}`}>
+                  {middleColumnTitle?.trim() && visibleMiddle.length <= 1 && (
+                    <SectionTitle
+                      title={middleColumnTitle}
+                      gradientStart={(block.config?.sectionMiddleColumnTitleGradientStart as string)?.trim()}
+                      gradientEnd={(block.config?.sectionMiddleColumnTitleGradientEnd as string)?.trim()}
+                      align={titleAlign}
+                    />
+                  )}
+                  {visibleMiddle.map((m) => {
+                    const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                    const showModuleTitle = visibleMiddle.length > 1;
+                    return (
+                      <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
+                        <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className={`relative min-w-0 rounded-lg ${(rightColBgColor || rightColBgImage) ? "p-4 sm:p-6" : ""}`}>
               {(rightColBgColor || rightColBgImage) && (
                 <ColumnBg bgColor={rightColBgColor} bgImage={rightColBgImage} overlayOp={rightColOverlay} />
@@ -213,7 +273,7 @@ export function SectionBlockRenderer({
                   const showModuleTitle = visibleRight.length > 1;
                   return (
                     <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection showModuleTitle={showModuleTitle} />
+                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
                     </div>
                   );
                 })}

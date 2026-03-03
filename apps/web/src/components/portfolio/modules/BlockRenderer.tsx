@@ -116,6 +116,7 @@ export function BlockRenderer({
   lang,
   page,
   inSection,
+  sectionColumns,
   showModuleTitle,
 }: {
   block: HomeContentBlock;
@@ -123,6 +124,7 @@ export function BlockRenderer({
   lang: "pt" | "en";
   page: Page;
   inSection?: boolean;
+  sectionColumns?: 1 | 2 | 3;
   showModuleTitle?: boolean;
 }) {
   /** Servidor pode devolver visible como boolean ou string; ocultar só quando false ou "false". */
@@ -333,12 +335,24 @@ export function BlockRenderer({
     return <GaleriaSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
   }
 
-  if (block.type === "patrocinadores") {
+  if (String(block.type).toLowerCase() === "patrocinadores") {
     return <PatrocinadoresSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
   }
 
   if (block.type === "times_categorias") {
-    return <TimesCategoriasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
+    return (
+      <TimesCategoriasSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        tenantId={tenant?.id}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
   }
 
   if (block.type === "tabela") {
@@ -353,6 +367,7 @@ export function BlockRenderer({
         fullWidth={fullWidth}
         titleAlign={titleAlign}
         inSection={inSection}
+        sectionColumns={sectionColumns}
         showTitle={shouldShowTitle}
       />
     );
@@ -370,6 +385,7 @@ export function BlockRenderer({
         fullWidth={fullWidth}
         titleAlign={titleAlign}
         inSection={inSection}
+        sectionColumns={sectionColumns}
         showTitle={shouldShowTitle}
       />
     );

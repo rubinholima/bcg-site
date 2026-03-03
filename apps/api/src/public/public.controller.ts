@@ -71,12 +71,31 @@ export class PublicController {
   }
 
   /**
+   * GET /public/tenants/by-id/:tenantId/players
+   * Jogadores pelo ID do tenant — garante o tenant correto da página carregada.
+   */
+  @Get('tenants/by-id/:tenantId/players')
+  async getTenantPlayersById(@Param('tenantId') tenantId: string) {
+    return this.publicService.getPlayersForTenantId(tenantId);
+  }
+
+  /**
    * GET /public/tenants/:slug/fixtures
    * Próximos jogos do tenant (clube). Usado pelo módulo "Próximos Jogos" na página pública.
    */
   @Get('tenants/:slug/fixtures')
   async getTenantFixtures(@Param('slug') slug: string) {
     return this.publicService.getFixturesForTenantSlug(slug);
+  }
+
+  /**
+   * GET /public/tenants/:slug/players
+   * Jogadores do clube agrupados por categoria, só os com teamPage visível (publicFields.teamPage !== false).
+   * Usado pelo módulo Times por Categorias na página pública.
+   */
+  @Get('tenants/:slug/players')
+  async getTenantPlayers(@Param('slug') slug: string) {
+    return this.publicService.getPlayersForTenantSlug(slug);
   }
 
   /**

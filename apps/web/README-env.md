@@ -30,6 +30,24 @@ Variáveis antigas do Cognito (`COGNITO_DOMAIN`, `COGNITO_CLIENT_ID`) não são 
 
 Usada para gerar URLs públicas, redirects e links absolutos quando necessário.
 
+### `YOUTUBE_API_KEY` (server-side only)
+
+**Opcional** — Chave da API do YouTube Data API v3, usada para buscar vídeos de playlists.
+
+- Necessária para importar playlists do YouTube (ex.: no editor de páginas, módulo Galeria/Vídeos).
+- Sem ela, a API retorna 503 com mensagem "YOUTUBE_API_KEY não configurada".
+
+**Como obter:**
+1. Acesse [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie um projeto ou selecione um existente
+3. Ative a **YouTube Data API v3** (APIs & Services → Library → buscar "YouTube Data API v3")
+4. Credenciais → Criar credenciais → Chave de API
+5. Copie a chave e defina em `.env.local` ou nas variáveis de ambiente de produção:
+
+```env
+YOUTUBE_API_KEY=AIza...
+```
+
 ### `NEXT_PUBLIC_MEDIA_ORIGIN`
 
 **Opcional** — Domínio pelo qual as imagens do S3 são servidas (CloudFront OAC).

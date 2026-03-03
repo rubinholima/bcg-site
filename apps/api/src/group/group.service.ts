@@ -18,6 +18,7 @@ export interface GroupDto {
   contactName: string | null;
   contactPhone: string | null;
   homeContent: { blocks?: unknown[] } | null;
+  moduleDefaults?: Record<string, Record<string, unknown>> | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,6 +51,7 @@ export class GroupService {
       });
     }
     const content = row.homeContent as { blocks?: unknown[] } | null;
+    const defaults = row.moduleDefaults as Record<string, Record<string, unknown>> | null;
     return {
       id: row.id,
       name: row.name,
@@ -60,6 +62,7 @@ export class GroupService {
       contactName: row.contactName ?? null,
       contactPhone: row.contactPhone ?? null,
       homeContent: content ?? null,
+      moduleDefaults: defaults ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -99,6 +102,7 @@ export class GroupService {
       contactName?: string;
       contactPhone?: string;
       homeContent?: { blocks?: unknown[] } | null;
+      moduleDefaults?: Record<string, Record<string, unknown>> | null;
     },
   ): Promise<GroupDto> {
     const existing = await this.prisma.group.findUnique({ where: { slug } });
@@ -116,9 +120,11 @@ export class GroupService {
           ...(dto.contactName !== undefined && { contactName: dto.contactName }),
           ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
           ...(dto.homeContent !== undefined && { homeContent: dto.homeContent as object }),
+          ...(dto.moduleDefaults !== undefined && { moduleDefaults: dto.moduleDefaults as object }),
         },
       });
       const content = updated.homeContent as { blocks?: unknown[] } | null;
+      const defaults = updated.moduleDefaults as Record<string, Record<string, unknown>> | null;
       return {
         id: updated.id,
         name: updated.name,
@@ -129,6 +135,7 @@ export class GroupService {
         contactName: updated.contactName ?? null,
         contactPhone: updated.contactPhone ?? null,
         homeContent: content ?? null,
+        moduleDefaults: defaults ?? null,
         createdAt: updated.createdAt.toISOString(),
         updatedAt: updated.updatedAt.toISOString(),
       };

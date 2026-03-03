@@ -23,6 +23,7 @@ import {
   MapPin,
   Shirt,
   Layers,
+  UserCircle,
 } from "lucide-react";
 import type { Group } from "@/types/group";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
@@ -32,11 +33,12 @@ const cadastrosClubesItems = [
   { title: "Campeonatos", href: "/dashboard/cadastros/campeonatos", icon: Trophy, moduleSlug: "tipos" },
   { title: DASHBOARD_LABELS.estadios, href: "/dashboard/cadastros/estadios", icon: MapPin, moduleSlug: "tipos" },
   { title: DASHBOARD_LABELS.timesAdversarios, href: "/dashboard/cadastros/times", icon: Shirt, moduleSlug: "tipos" },
+  { title: "Jogadores", href: "/dashboard/cadastros/jogadores", icon: UserCircle, moduleSlug: "tipos" },
 ];
 
-const cadastrosEmpresasItems: { title: string; href: string; icon: typeof Building2; moduleSlug: string }[] = [
+const cadastrosEmpresasItems: { title: string; href: string; icon: typeof Building2 | typeof Tag; moduleSlug: string }[] = [
   { title: "Listagem", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
-  // Mais itens serão adicionados depois
+  { title: "Tipos de Negócios", href: "/dashboard/cadastros/tipos", icon: Tag, moduleSlug: "tipos" },
 ];
 
 const menuItems = [
@@ -68,10 +70,10 @@ export function Sidebar() {
   const [empresasOpen, setEmpresasOpen] = useState(
     () =>
       (pathname?.startsWith("/dashboard/empresas") ||
-        pathname?.startsWith("/dashboard/tenants")) ??
+        pathname?.startsWith("/dashboard/tenants") ||
+        pathname?.startsWith("/dashboard/cadastros/tipos")) ??
       false
   );
-
   useEffect(() => {
     let cancelled = false;
     fetch("/api/group", { credentials: "include" })
@@ -121,7 +123,8 @@ export function Sidebar() {
             (item.href === "/dashboard/emails" && pathname?.startsWith("/dashboard/emails")) ||
             (item.href === "/dashboard/senhas" && pathname?.startsWith("/dashboard/senhas")) ||
             (item.href === "/dashboard/noticias" && pathname?.startsWith("/dashboard/noticias")) ||
-            (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia"));
+            (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia")) ||
+            (item.href === "/dashboard/paginas" && (pathname === "/dashboard/paginas" || pathname?.startsWith("/dashboard/paginas/")));
 
           const linkEl = (
             <Link
@@ -187,52 +190,6 @@ export function Sidebar() {
                         {DASHBOARD_LABELS.usuarios}
                       </Link>
                     )}
-                    {hasClubes && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setClubesOpen((o) => !o)}
-                          className={cn(
-                            "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
-                            clubesOpen
-                              ? "bg-accent/50 text-accent-foreground"
-                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                          )}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Shirt className="h-4 w-4" />
-                            Clubes
-                          </span>
-                          {clubesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        </button>
-                        {clubesOpen && (
-                          <div className="ml-4 space-y-0.5 border-l border-border pl-2">
-                            {cadastrosClubesItems
-                              .filter((s) => canAccessModule(s.moduleSlug))
-                              .map((sub) => {
-                                const SubIcon = sub.icon;
-                                const isSubActive =
-                                  pathname === sub.href || pathname?.startsWith(sub.href + "/");
-                                return (
-                                  <Link
-                                    key={sub.href}
-                                    href={sub.href}
-                                    className={cn(
-                                      "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
-                                      isSubActive
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                    )}
-                                  >
-                                    <SubIcon className="h-4 w-4" />
-                                    {sub.title}
-                                  </Link>
-                                );
-                              })}
-                          </div>
-                        )}
-                      </>
-                    )}
                     {(hasEmpresas || cadastrosEmpresasItems.length > 0) && (
                       <>
                         <button
@@ -281,6 +238,52 @@ export function Sidebar() {
                                   );
                                 })
                             )}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {hasClubes && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setClubesOpen((o) => !o)}
+                          className={cn(
+                            "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
+                            clubesOpen
+                              ? "bg-accent/50 text-accent-foreground"
+                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Shirt className="h-4 w-4" />
+                            Clubes Assets
+                          </span>
+                          {clubesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        </button>
+                        {clubesOpen && (
+                          <div className="ml-4 space-y-0.5 border-l border-border pl-2">
+                            {cadastrosClubesItems
+                              .filter((s) => canAccessModule(s.moduleSlug))
+                              .map((sub) => {
+                                const SubIcon = sub.icon;
+                                const isSubActive =
+                                  pathname === sub.href || pathname?.startsWith(sub.href + "/");
+                                return (
+                                  <Link
+                                    key={sub.href}
+                                    href={sub.href}
+                                    className={cn(
+                                      "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
+                                      isSubActive
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                    )}
+                                  >
+                                    <SubIcon className="h-4 w-4" />
+                                    {sub.title}
+                                  </Link>
+                                );
+                              })}
                           </div>
                         )}
                       </>

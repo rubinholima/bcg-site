@@ -87,8 +87,9 @@ export class PagesService {
 
   /** Público: retorna a página do tenant pelo slug (para exibir em /portfolio/[slug]) */
   async findByTenantSlug(tenantSlug: string): Promise<PageResponseDto | null> {
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { slug: tenantSlug },
+    const slugNorm = tenantSlug.trim();
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { slug: { equals: slugNorm, mode: 'insensitive' } },
       select: { id: true },
     });
     if (!tenant) return null;

@@ -322,7 +322,6 @@ export default function EditarPaginaTenantPage() {
   const [pastFixturesByBlock, setPastFixturesByBlock] = useState<Record<string, FixtureItem[]>>({});
   const [loadingPastFixtures, setLoadingPastFixtures] = useState<string | null>(null);
   const [openFixtureByBlockId, setOpenFixtureByBlockId] = useState<Record<string, number>>({});
-  const [syncingTimesCategoriasBlockIndex, setSyncingTimesCategoriasBlockIndex] = useState<number | null>(null);
   const [syncingProximosJogosBlockIndex, setSyncingProximosJogosBlockIndex] = useState<number | null>(null);
   const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
@@ -460,16 +459,18 @@ export default function EditarPaginaTenantPage() {
     setBlocks(blocks.filter((_, i) => i !== index));
   };
 
+  type SectionColumn = "left" | "middle" | "right";
+  const sectionColumnKey = (col: SectionColumn) => col === "left" ? "sectionLeftModules" : col === "middle" ? "sectionMiddleModules" : "sectionRightModules";
   const addModuleToSection = (
     sectionIndex: number,
-    column: "left" | "right",
+    column: SectionColumn,
     type: HomeBlockType,
   ) => {
     if (type === "header" || type === "footer" || type === "section") return;
     const list = [...blocks];
     const block = list[sectionIndex];
     if (!block || block.type !== "section") return;
-    const key = column === "left" ? "sectionLeftModules" : "sectionRightModules";
+    const key = sectionColumnKey(column);
     const modules = ((block.config?.[key] as HomeContentBlock[]) ?? []) as HomeContentBlock[];
     const newBlock = createBlock(type, modules.length);
     const updated = [...modules, newBlock];
@@ -480,13 +481,13 @@ export default function EditarPaginaTenantPage() {
 
   const removeModuleFromSection = (
     sectionIndex: number,
-    column: "left" | "right",
+    column: SectionColumn,
     moduleIndex: number,
   ) => {
     const list = [...blocks];
     const block = list[sectionIndex];
     if (!block || block.type !== "section") return;
-    const key = column === "left" ? "sectionLeftModules" : "sectionRightModules";
+    const key = sectionColumnKey(column);
     const modules = ((block.config?.[key] as HomeContentBlock[]) ?? []) as HomeContentBlock[];
     const updated = modules.filter((_, i) => i !== moduleIndex);
     const config = { ...(block.config ?? {}), [key]: updated };
@@ -496,7 +497,7 @@ export default function EditarPaginaTenantPage() {
 
   const updateSectionModuleConfig = (
     sectionIndex: number,
-    column: "left" | "right",
+    column: SectionColumn,
     moduleIndex: number,
     key: string,
     value: unknown,
@@ -504,7 +505,7 @@ export default function EditarPaginaTenantPage() {
     const list = [...blocks];
     const block = list[sectionIndex];
     if (!block || block.type !== "section") return;
-    const configKey = column === "left" ? "sectionLeftModules" : "sectionRightModules";
+    const configKey = sectionColumnKey(column);
     const modules = [...((block.config?.[configKey] as HomeContentBlock[]) ?? [])];
     const mod = modules[moduleIndex];
     if (!mod) return;
@@ -529,12 +530,14 @@ export default function EditarPaginaTenantPage() {
       if (block.type === "section") {
         const left = Array.isArray(block.config?.sectionLeftModules) ? block.config.sectionLeftModules : [];
         const right = Array.isArray(block.config?.sectionRightModules) ? block.config.sectionRightModules : [];
+        const middle = Array.isArray(block.config?.sectionMiddleModules) ? block.config.sectionMiddleModules : [];
         return {
           ...block,
           config: {
             ...block.config,
             sectionLeftModules: left.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
             sectionRightModules: right.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
+            sectionMiddleModules: middle.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
           },
         };
       }
@@ -1188,16 +1191,29 @@ export default function EditarPaginaTenantPage() {
                             <Label>Colunas</Label>
                             <Select
                               value={String((block.config?.sectionColumns as number) ?? 2)}
-                              onValueChange={(v) => updateBlockConfigValue(index, "sectionColumns", v === "1" ? 1 : 2)}
+                              onValueChange={(v) => {
+                                const cols = v === "1" ? 1 : v === "3" ? 3 : 2;
+                                const layout = (block.config?.sectionLayout as string) ?? "50-50";
+                                const twoCol = ["50-50", "33-66", "66-33"];
+                                const threeCol = ["33-33-33", "25-50-25", "50-25-25", "25-25-50"];
+                                const newLayout = cols === 3 ? (threeCol.includes(layout) ? layout : "33-33-33") : (twoCol.includes(layout) ? layout : "50-50");
+                                const updates: Record<string, BlockConfigValue> = {
+                                  sectionColumns: cols,
+                                  sectionLayout: newLayout,
+                                };
+                                if (cols === 3 && !Array.isArray(block.config?.sectionMiddleModules)) updates.sectionMiddleModules = [];
+                                updateBlockConfigValues(index, updates);
+                              }}
                             >
                               <SelectTrigger><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="1">1 coluna (empilhado)</SelectItem>
-                                <SelectItem value="2">2 colunas</SelectItem>
+                                <SelectItem value="2">2 colunas (esquerda / direita)</SelectItem>
+                                <SelectItem value="3">3 colunas (esquerda / meio / direita)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
-                          {(block.config?.sectionColumns as number) === 2 && (
+                          {((block.config?.sectionColumns as number) ?? 2) >= 2 && (
                             <div className="space-y-2">
                               <Label>Proporção das colunas</Label>
                               <Select
@@ -1206,9 +1222,20 @@ export default function EditarPaginaTenantPage() {
                               >
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="50-50">50% / 50%</SelectItem>
-                                  <SelectItem value="33-66">33% / 66%</SelectItem>
-                                  <SelectItem value="66-33">66% / 33%</SelectItem>
+                                  {(block.config?.sectionColumns as number) === 2 ? (
+                                    <>
+                                      <SelectItem value="50-50">50% / 50%</SelectItem>
+                                      <SelectItem value="33-66">33% / 66%</SelectItem>
+                                      <SelectItem value="66-33">66% / 33%</SelectItem>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <SelectItem value="33-33-33">33% / 33% / 33%</SelectItem>
+                                      <SelectItem value="25-50-25">25% / 50% / 25%</SelectItem>
+                                      <SelectItem value="50-25-25">50% / 25% / 25%</SelectItem>
+                                      <SelectItem value="25-25-50">25% / 25% / 50%</SelectItem>
+                                    </>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1244,7 +1271,7 @@ export default function EditarPaginaTenantPage() {
                             </Select>
                           </div>
                         </div>
-                        <div className={`grid gap-4 ${(block.config?.sectionColumns as number) === 2 ? "sm:grid-cols-2" : ""}`}>
+                        <div className={`grid gap-4 ${(block.config?.sectionColumns as number) === 3 ? "sm:grid-cols-3" : (block.config?.sectionColumns as number) === 2 ? "sm:grid-cols-2" : ""}`}>
                           <details className="rounded-lg border border-amber-500/40 bg-amber-500/10">
                             <summary className="cursor-pointer px-3 py-2 font-medium">
                               {(block.config?.sectionColumns as number) === 1 ? "Conteúdo" : "Coluna esquerda"} — {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length} módulo(s)
@@ -1362,7 +1389,74 @@ export default function EditarPaginaTenantPage() {
                               </Select>
                             </div>
                           </details>
-                          {(block.config?.sectionColumns as number) === 2 && (
+                          {((block.config?.sectionColumns as number) ?? 2) === 3 && (
+                            <details className="rounded-lg border border-amber-500/40 bg-amber-500/10">
+                              <summary className="cursor-pointer px-3 py-2 font-medium">
+                                Coluna meio — {((block.config?.sectionMiddleModules as HomeContentBlock[]) ?? []).length} módulo(s)
+                              </summary>
+                              <div className="border-t border-border px-3 py-3 space-y-2">
+                                <div className="grid gap-2 sm:grid-cols-2 pb-2 border-b border-border/50">
+                                  <div className="space-y-1"><Label className="text-xs">Título da coluna (PT)</Label><Input placeholder="Ex: Destaques" value={(block.config?.sectionMiddleColumnTitlePt as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionMiddleColumnTitlePt", e.target.value)} className="h-8" /></div>
+                                  <div className="space-y-1"><Label className="text-xs">Título da coluna (EN)</Label><Input placeholder="Ex: Highlights" value={(block.config?.sectionMiddleColumnTitleEn as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionMiddleColumnTitleEn", e.target.value)} className="h-8" /></div>
+                                </div>
+                                <div className="pb-2 border-b border-border/50 space-y-2">
+                                  <Label className="text-xs">Fundo da coluna (cor ou imagem)</Label>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <input type="color" className="h-8 w-10 cursor-pointer rounded border" value={((block.config?.sectionMiddleColumnBackgroundColor as string)?.trim()) || "#18181b"} onChange={(e) => updateBlockConfig(index, "sectionMiddleColumnBackgroundColor", e.target.value)} />
+                                    <Input placeholder="Cor (hex) — vazio = transparente" className="h-8 flex-1 min-w-[140px]" value={(block.config?.sectionMiddleColumnBackgroundColor as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionMiddleColumnBackgroundColor", e.target.value)} />
+                                    <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateBlockConfig(index, "sectionMiddleColumnBackgroundColor", "")}>Limpar cor</Button>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <MediaPicker sizeKey="section_bg" allowAllFolders value={(block.config?.sectionMiddleColumnBackgroundImage as string) ?? ""} onChange={(url) => updateBlockConfig(index, "sectionMiddleColumnBackgroundImage", url)} placeholder="Imagem de fundo" />
+                                    <Input placeholder="Ou URL da imagem" className="h-8 flex-1 min-w-0" value={(block.config?.sectionMiddleColumnBackgroundImage as string) ?? ""} onChange={(e) => updateBlockConfig(index, "sectionMiddleColumnBackgroundImage", e.target.value)} />
+                                    <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateBlockConfig(index, "sectionMiddleColumnBackgroundImage", "")}>Limpar img</Button>
+                                  </div>
+                                  {(block.config?.sectionMiddleColumnBackgroundImage as string)?.trim() && (
+                                    <div className="flex items-center gap-2">
+                                      <Label className="text-xs shrink-0">Overlay (0–1):</Label>
+                                      <Input type="number" min={0} max={1} step={0.1} className="h-8 w-20" placeholder="0.75" value={(block.config?.sectionMiddleColumnBackgroundOverlayOpacity as number) ?? ""} onChange={(e) => { const v = e.target.value; updateBlockConfigValue(index, "sectionMiddleColumnBackgroundOverlayOpacity", v === "" ? undefined : Number(v)); }} />
+                                    </div>
+                                  )}
+                                </div>
+                                {((block.config?.sectionMiddleModules as HomeContentBlock[]) ?? []).map((m, mi) => (
+                                  <details key={m.id} className="rounded border border-border bg-muted/30 group/mod">
+                                    <summary className="flex cursor-pointer items-center justify-between px-2 py-2 list-none [&::-webkit-details-marker]:hidden">
+                                      <span className="text-sm font-medium">{getBlockLabel(m.id, m.type as HomeBlockType, "pt")}</span>
+                                      <div className="flex items-center gap-1">
+                                        <Button type="button" variant="ghost" size="icon" className={`h-7 w-7 ${m.config?.visible === false ? "text-muted-foreground" : "text-amber-500"}`} onClick={(e) => { e.preventDefault(); updateSectionModuleConfig(index, "middle", mi, "visible", m.config?.visible === false); }} title={m.config?.visible === false ? "Exibir" : "Ocultar"}>
+                                          {m.config?.visible === false ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                        </Button>
+                                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={(e) => { e.preventDefault(); removeModuleFromSection(index, "middle", mi); }}>
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </summary>
+                                    <div className="border-t border-border px-2 py-3 space-y-2">
+                                      <div className="grid gap-2 sm:grid-cols-2">
+                                        <div className="space-y-1"><Label className="text-xs">Título (PT)</Label><Input placeholder="Título da seção" value={(m.config?.titlePt as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "middle", mi, "titlePt", e.target.value)} className="h-8" /></div>
+                                        <div className="space-y-1"><Label className="text-xs">Título (EN)</Label><Input placeholder="Section title" value={(m.config?.titleEn as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "middle", mi, "titleEn", e.target.value)} className="h-8" /></div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Label className="text-xs shrink-0">Cor de fundo:</Label>
+                                        <input type="color" className="h-8 w-10 cursor-pointer rounded border" value={(m.config?.backgroundColor as string)?.trim() || "#18181b"} onChange={(e) => updateSectionModuleConfig(index, "middle", mi, "backgroundColor", e.target.value)} />
+                                        <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "middle", mi, "backgroundColor", e.target.value)} />
+                                        <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "middle", mi, "backgroundColor", "")}>Limpar</Button>
+                                      </div>
+                                    </div>
+                                  </details>
+                                ))}
+                                <Select key={`section-${index}-middle-${((block.config?.sectionMiddleModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "middle", v as HomeBlockType); }}>
+                                  <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
+                                  <SelectContent>
+                                    {MIDDLE_MODULE_OPTIONS.filter((o) => o.type !== "section").map((opt) => (
+                                      <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </details>
+                          )}
+                          {((block.config?.sectionColumns as number) ?? 2) >= 2 && (
                             <details className="rounded-lg border border-amber-500/40 bg-amber-500/10">
                               <summary className="cursor-pointer px-3 py-2 font-medium">
                                 Coluna direita — {((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).length} módulo(s)
@@ -1616,909 +1710,30 @@ export default function EditarPaginaTenantPage() {
                         <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Times por Categorias</summary>
                           <div className="border-t border-border px-3 py-3 space-y-4">
-                            <p className="text-xs text-muted-foreground">
-                              Adicione jogadores para cada categoria. O time atual será preenchido automaticamente com o nome do clube/empresa desta página.
+                            <p className="text-sm text-muted-foreground">
+                              Os jogadores vêm do cadastro (<strong>Cadastros → Jogadores</strong>), agrupados por clube/slug. Na página pública só aparecem os marcados como visíveis (olho).
                             </p>
-                            <div className="space-y-2 rounded-md border border-border bg-muted/10 p-3">
-                              <p className="text-xs font-medium text-muted-foreground">Dados dinâmicos (Google Sheets)</p>
-                              <div className="grid gap-2 sm:grid-cols-[1fr,auto]">
-                                <div className="space-y-1">
-                                  <label className="text-xs text-muted-foreground">URL ou ID da planilha</label>
-                                  <Input
-                                    type="text"
-                                    className="h-9"
-                                    placeholder="https://docs.google.com/spreadsheets/d/... ou ID da planilha"
-                                    value={((block.config?.timesCategoriasSpreadsheetUrl as string) ?? "").toString()}
-                                    onChange={(e) => {
-                                      const v = e.target.value ?? "";
-                                      updateBlockConfigValue(index, "timesCategoriasSpreadsheetUrl", v || undefined);
-                                      const gidMatch = v && (v.match(/[?&]gid=(\d+)/i) || v.match(/#gid=(\d+)/i));
-                                      if (gidMatch) updateBlockConfigValue(index, "timesCategoriasSheetGid", gidMatch[1]);
-                                    }}
-                                    onPaste={(e) => {
-                                      const pasted = (e.clipboardData?.getData?.("text/plain") ?? "").trim();
-                                      if (!pasted) return;
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      const gidMatch = pasted.match(/[?&]gid=(\d+)/i) || pasted.match(/#gid=(\d+)/i);
-                                      updateBlockConfigValues(index, {
-                                        timesCategoriasSpreadsheetUrl: pasted,
-                                        ...(gidMatch ? { timesCategoriasSheetGid: gidMatch[1] } : {}),
-                                      });
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex items-end gap-2">
-                                  <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">Aba (gid)</label>
-                                    <input
-                                      type="text"
-                                      className="h-9 w-20 rounded border border-input bg-background px-2 text-sm"
-                                      placeholder="0"
-                                      value={((block.config?.timesCategoriasSheetGid as string) ?? "0").toString()}
-                                      onChange={(e) => updateBlockConfigValue(index, "timesCategoriasSheetGid", e.target.value || "0")}
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    disabled={syncingTimesCategoriasBlockIndex === index || !(block.config?.timesCategoriasSpreadsheetUrl as string)?.trim()}
-                                    onClick={() => {
-                                      const urlOrId = (block.config?.timesCategoriasSpreadsheetUrl as string)?.trim();
-                                      const gid = ((block.config?.timesCategoriasSheetGid as string) ?? "0").toString().trim() || "0";
-                                      const tenantName = page?.tenant?.name ?? "";
-                                      if (!urlOrId) return;
-                                      setSyncingTimesCategoriasBlockIndex(index);
-                                      const params = new URLSearchParams({
-                                        spreadsheetId: urlOrId,
-                                        gid,
-                                        ...(tenantName ? { tenantName } : {}),
-                                        ...(page?.tenant?.slug ? { slug: page.tenant.slug } : {}),
-                                      });
-                                      authFetch(`/api/google-sheets/times-categorias?${params}`, { credentials: "include" })
-                                        .then((r) => {
-                                          if (!r.ok) return r.json().then((d) => Promise.reject(new Error((d as { error?: string })?.error ?? "Erro ao importar")));
-                                          return r.json();
-                                        })
-                                        .then((data: { categories?: Array<{ id: string; namePT?: string; nameEN?: string; players?: unknown[] }> }) => {
-                                          setError(null);
-                                          if (data.categories?.length) {
-                                            updateBlockConfigValue(index, "timesCategoriasCategories", data.categories);
-                                          }
-                                        })
-                                        .catch((err) => setError(err instanceof Error ? err.message : "Erro ao importar da planilha"))
-                                        .finally(() => setSyncingTimesCategoriasBlockIndex(null));
-                                    }}
-                                  >
-                                    {syncingTimesCategoriasBlockIndex === index ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      "Atualizar com Google Sheets"
-                                    )}
-                                  </Button>
-                                </div>
+                            <p className="text-xs text-muted-foreground">
+                              Use <strong>Sync da planilha</strong> em Cadastros → Jogadores para importar. Use o ícone de visibilidade em cada jogador para exibir ou ocultar na página do time.
+                            </p>
+                            {page?.tenant?.slug && (
+                              <div className="flex flex-wrap gap-2">
+                                <Link
+                                  href="/dashboard/cadastros/jogadores"
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  Cadastros → Jogadores →
+                                </Link>
+                                <Link
+                                  href={`/portfolio/${page.tenant.slug}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-primary hover:underline"
+                                >
+                                  Ver página pública →
+                                </Link>
                               </div>
-                              <div className="text-xs text-muted-foreground space-y-1">
-                                <p className="font-medium">Opções (cole no campo acima):</p>
-                                <ul className="list-disc pl-4 space-y-0.5">
-                                  <li><strong>Link &quot;Publicado na Web&quot;</strong> — Arquivo &gt; Compartilhar &gt; Publicar na Web &gt; escolha a aba (ex. times-categorias-template) &gt; Formato: CSV &gt; copie o link gerado e cole aqui (o campo Aba pode ficar 0).</li>
-                                  <li><strong>URL normal da planilha</strong> — Link de edição (docs.google.com/spreadsheets/d/.../edit). Compartilhar &gt; Qualquer pessoa com o link pode ver. Se der erro, use a opção &quot;Publicar na Web&quot; acima.</li>
-                                  <li><strong>ID da planilha</strong> — Só o ID (~44 caracteres) e o gid da aba desejada.</li>
-                                </ul>
-                                <p>Primeira linha = cabeçalho com coluna <code className="rounded bg-muted px-1">categoria</code> (ou <code className="rounded bg-muted px-1">category</code>) e <code className="rounded bg-muted px-1">clube/slug</code> (ex.: americano-fc, boston-city-fc-brasil) para separar jogadores por clube. Use <code className="rounded bg-muted px-1">pe_dominante</code> com: Esquerdo, Direito ou Ambos.{" "}
-                                  <a href="/templates/times-categorias-template.csv" download="times-categorias-template.csv" className="text-primary underline hover:no-underline">
-                                    Baixar template CSV
-                                  </a>
-                                  {" "}Na planilha você pode usar <strong>Dados → Validação de dados → Lista de itens</strong> para criar dropdowns em categoria, posição e pé dominante (guia em <code className="rounded bg-muted px-1">docs/DESENVOLVIMENTO_DIARIO.md (seção DOCS CONSOLIDADOS)</code>).
-                                </p>
-                              </div>
-                            </div>
-                            {FIXTURE_CATEGORIES.map((cat) => {
-                              const categories = ((block.config?.timesCategoriasCategories as Array<{ id: string; namePT?: string; nameEN?: string; players?: Array<unknown> }>) ?? []);
-                              let existingCategory = categories.find((c) => c.id === cat.value);
-                              const players = existingCategory?.players ?? [];
-                              const tenantName = page?.tenant?.name ?? "";
-
-                              const updateCategoryPlayers = (newPlayers: Array<unknown>) => {
-                                const prev = (block.config?.timesCategoriasCategories as unknown as Array<Record<string, unknown>>) ?? [];
-                                const idx = prev.findIndex((c) => c.id === cat.value);
-                                const nextCategories = prev.map((c, i) =>
-                                  i === idx ? { ...c, players: newPlayers } : c
-                                );
-                                if (idx < 0) {
-                                  nextCategories.push({
-                                    id: cat.value,
-                                    namePT: cat.labelPT,
-                                    nameEN: cat.labelEN,
-                                    players: newPlayers,
-                                  });
-                                }
-                                updateBlockConfigValue(index, "timesCategoriasCategories", nextCategories);
-                              };
-
-                              const updatePlayerField = (pIdx: number, field: string, value: unknown) => {
-                                const newPlayers = players.map((pl, i) => {
-                                  if (i !== pIdx) return pl;
-                                  const current = (pl as Record<string, unknown>) ?? {};
-                                  return { ...current, [field]: value };
-                                });
-                                if (pIdx >= newPlayers.length) {
-                                  newPlayers.push({
-                                    id: `player-${Date.now()}`,
-                                    name: "",
-                                    currentTeam: tenantName,
-                                    [field]: value,
-                                  });
-                                }
-                                updateCategoryPlayers(newPlayers);
-                              };
-
-                              return (
-                                <details key={cat.value} className="rounded-lg border border-border bg-card">
-                                  <summary className="cursor-pointer px-3 py-2 font-medium text-sm">
-                                    {cat.labelPT} ({players.length} {players.length === 1 ? "jogador" : "jogadores"})
-                                  </summary>
-                                  <div className="border-t border-border px-3 py-3 space-y-3">
-                                    <div className="space-y-3">
-                                      <Label className="text-sm font-medium">Jogadores</Label>
-                                      {players.map((player: unknown, pIdx: number) => {
-                                      const p = player as {
-                                        id?: string;
-                                        name?: string;
-                                        photoUrl?: string;
-                                        birthDate?: string;
-                                        nationality?: string;
-                                        height?: number;
-                                        weight?: number;
-                                        preferredFoot?: string;
-                                        jerseyNumber?: number;
-                                        position?: string;
-                                        fieldPosition?: { x?: number; y?: number };
-                                        currentTeam?: string;
-                                        previousTeams?: string[];
-                                        seasonHistory?: Array<{
-                                          id?: string;
-                                          year?: number;
-                                          team?: string;
-                                          competition?: string;
-                                          matches?: number;
-                                          starts?: number;
-                                          substitutions?: number;
-                                          goals?: number;
-                                          assists?: number;
-                                          minutesPlayed?: number;
-                                          yellowCards?: number;
-                                          redCards?: number;
-                                        }>;
-                                        socialMedia?: {
-                                          instagram?: string;
-                                          twitter?: string;
-                                          facebook?: string;
-                                          tiktok?: string;
-                                          youtube?: string;
-                                          website?: string;
-                                        };
-                                        matchesPlayed?: number;
-                                        goals?: number;
-                                        assists?: number;
-                                        yellowCards?: number;
-                                        redCards?: number;
-                                        marketValue?: number;
-                                        highlights?: string[];
-                                        bioPT?: string;
-                                        bioEN?: string;
-                                      };
-                                      const playerTitle = p.jerseyNumber && p.name 
-                                        ? `${p.jerseyNumber} - ${p.name}`
-                                        : p.name || `Jogador ${pIdx + 1}`;
-                                      return (
-                                        <details key={p.id ?? pIdx} className="rounded-lg border border-border bg-muted/30 p-3">
-                                          <summary className="cursor-pointer text-sm font-medium">
-                                            {playerTitle}
-                                          </summary>
-                                          <div className="mt-3 space-y-3">
-                                            <div className="grid gap-2 sm:grid-cols-2">
-                                              <Input
-                                                placeholder="Nome completo *"
-                                                value={p.name ?? ""}
-                                                onChange={(e) => {
-                                                  const newPlayers = [...players];
-                                                  if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName };
-                                                  (newPlayers[pIdx] as { name?: string }).name = e.target.value;
-                                                  updateCategoryPlayers(newPlayers);
-                                                }}
-                                              />
-                                              <div className="flex items-start gap-2">
-                                                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted border border-border">
-                                                  {p.photoUrl ? (
-                                                    <img
-                                                      src={getPublicImageUrl(p.photoUrl)}
-                                                      alt={p.name || "Foto do jogador"}
-                                                      className="h-full w-full object-cover"
-                                                    />
-                                                  ) : (
-                                                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                                                      <Plus className="h-6 w-6" />
-                                                    </div>
-                                                  )}
-                                                </div>
-                                                <div className="flex-1 min-w-0 space-y-2">
-                                                  <MediaPicker
-                                                    label="Foto do jogador"
-                                                    sizeKey="jogadores"
-                                                    value={p.photoUrl ?? ""}
-                                                    onChange={(url) => updatePlayerField(pIdx, "photoUrl", url)}
-                                                    placeholder="Escolher foto"
-                                                  />
-                                                </div>
-                                              </div>
-                                            </div>
-                                            <div className="grid gap-2 sm:grid-cols-3">
-                                              <div className="flex gap-1">
-                                                <Input
-                                                  placeholder="Data de Nascimento - DD/MMM/YYYY"
-                                                  value={p.birthDate ? formatDateToDDMMMYYYY(p.birthDate) : ""}
-                                                  onChange={(e) => {
-                                                    let value = e.target.value.toLowerCase();
-                                                    // Remove tudo exceto números, barras e letras
-                                                    value = value.replace(/[^0-9\/a-z]/g, "");
-                                                    
-                                                    // Formatação automática durante digitação
-                                                    let formatted = "";
-                                                    const parts = value.split("/");
-                                                    
-                                                    if (parts[0]) {
-                                                      // Dia (máximo 2 dígitos)
-                                                      formatted = parts[0].slice(0, 2);
-                                                      if (parts[1]) {
-                                                        // Mês (máximo 3 letras)
-                                                        const monthPart = parts[1].slice(0, 3);
-                                                        // Verifica se é um mês válido
-                                                        const validMonth = MONTHS_ABBR.find(m => m.startsWith(monthPart));
-                                                        if (validMonth) {
-                                                          formatted += "/" + validMonth;
-                                                        } else if (monthPart.length > 0) {
-                                                          formatted += "/" + monthPart;
-                                                        }
-                                                        if (parts[2]) {
-                                                          // Ano (máximo 4 dígitos)
-                                                          formatted += "/" + parts[2].slice(0, 4);
-                                                        }
-                                                      }
-                                                    }
-                                                    
-                                                    // Se está completo (dd/mmm/yyyy), converte e salva
-                                                    if (formatted.match(/^\d{1,2}\/[a-z]{3}\/\d{4}$/)) {
-                                                      const dateValue = parseDDMMMYYYYToDate(formatted);
-                                                      if (dateValue && dateValue.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                                                        updatePlayerField(pIdx, "birthDate", dateValue);
-                                                      } else {
-                                                        updatePlayerField(pIdx, "birthDate", formatted);
-                                                      }
-                                                    } else {
-                                                      // Salva formato parcial durante digitação
-                                                      updatePlayerField(pIdx, "birthDate", formatted);
-                                                    }
-                                                  }}
-                                                  maxLength={12}
-                                                />
-                                                <input
-                                                  type="date"
-                                                  data-player-idx={pIdx}
-                                                  ref={(el) => {
-                                                    if (el) {
-                                                      (dateInputRefs.current as Record<number, HTMLInputElement | null>)[pIdx] = el;
-                                                    }
-                                                  }}
-                                                  className="hidden"
-                                                  max={new Date().toISOString().split('T')[0]}
-                                                  value={p.birthDate && /^\d{4}-\d{2}-\d{2}$/.test(p.birthDate) ? p.birthDate : ""}
-                                                  onChange={(e) => {
-                                                    const dateValue = e.target.value || undefined;
-                                                    updatePlayerField(pIdx, "birthDate", dateValue);
-                                                  }}
-                                                />
-                                                <Button
-                                                  type="button"
-                                                  variant="outline"
-                                                  size="icon"
-                                                  className="h-10 w-10 shrink-0"
-                                                  title="Abrir calendário"
-                                                  onClick={() => {
-                                                    const input = (dateInputRefs.current as Record<number, HTMLInputElement | null>)[pIdx];
-                                                    input?.showPicker?.();
-                                                  }}
-                                                >
-                                                  <CalendarIcon className="h-4 w-4" />
-                                                </Button>
-                                              </div>
-                                              <Input
-                                                placeholder="Nacionalidade"
-                                                value={p.nationality ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "nationality", e.target.value)}
-                                              />
-                                              <Input
-                                                type="number"
-                                                placeholder="Número da camisa"
-                                                value={p.jerseyNumber ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "jerseyNumber", e.target.value ? Number(e.target.value) : undefined)}
-                                              />
-                                            </div>
-                                            <div className="grid gap-2 sm:grid-cols-3">
-                                              <Input
-                                                type="number"
-                                                placeholder="Altura (cm)"
-                                                value={p.height ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "height", e.target.value ? Number(e.target.value) : undefined)}
-                                              />
-                                              <Input
-                                                type="number"
-                                                placeholder="Peso (kg)"
-                                                value={p.weight ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "weight", e.target.value ? Number(e.target.value) : undefined)}
-                                              />
-                                              <Select
-                                                value={p.preferredFoot ?? ""}
-                                                onValueChange={(v) => updatePlayerField(pIdx, "preferredFoot", v || undefined)}
-                                              >
-                                                <SelectTrigger><SelectValue placeholder="Pé predominante" /></SelectTrigger>
-                                                <SelectContent>
-                                                  <SelectItem value="left">Esquerdo</SelectItem>
-                                                  <SelectItem value="right">Direito</SelectItem>
-                                                  <SelectItem value="both">Ambos</SelectItem>
-                                                </SelectContent>
-                                              </Select>
-                                            </div>
-                                            <div className="grid gap-2 sm:grid-cols-2">
-                                              <Select
-                                                value={p.position ?? ""}
-                                                onValueChange={(v) => updatePlayerField(pIdx, "position", v || undefined)}
-                                              >
-                                                <SelectTrigger><SelectValue placeholder="Posição" /></SelectTrigger>
-                                                <SelectContent>
-                                                  {FOOTBALL_POSITIONS.map((pos) => (
-                                                    <SelectItem key={pos.value} value={pos.value}>
-                                                      {pos.label}
-                                                    </SelectItem>
-                                                  ))}
-                                                </SelectContent>
-                                              </Select>
-                                              <Input
-                                                placeholder="Time atual"
-                                                value={p.currentTeam ?? tenantName}
-                                                onChange={(e) => {
-                                                  const newPlayers = [...players];
-                                                  if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName };
-                                                  (newPlayers[pIdx] as { currentTeam?: string }).currentTeam = e.target.value || tenantName;
-                                                  updateCategoryPlayers(newPlayers);
-                                                }}
-                                              />
-                                            </div>
-                                            <div className="grid gap-2 sm:grid-cols-4">
-                                              <Input
-                                                type="number"
-                                                placeholder="Jogos"
-                                                value={p.matchesPlayed ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "matchesPlayed", e.target.value ? Number(e.target.value) : undefined)}
-                                              />
-                                              <Input
-                                                type="number"
-                                                placeholder="Gols"
-                                                value={p.goals ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "goals", e.target.value ? Number(e.target.value) : undefined)}
-                                              />
-                                              <Input
-                                                type="number"
-                                                placeholder="Assistências"
-                                                value={p.assists ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "assists", e.target.value ? Number(e.target.value) : undefined)}
-                                              />
-                                              <Input
-                                                type="number"
-                                                placeholder="Valor mercado (€)"
-                                                value={p.marketValue ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "marketValue", e.target.value ? Number(e.target.value) : undefined)}
-                                              />
-                                            </div>
-                                            <div className="space-y-2">
-                                              <Label className="text-xs">Biografia (PT)</Label>
-                                              <textarea
-                                                className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                placeholder="Biografia do jogador em português"
-                                                value={p.bioPT ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "bioPT", e.target.value)}
-                                              />
-                                            </div>
-                                            <div className="space-y-2">
-                                              <Label className="text-xs">Biografia (EN)</Label>
-                                              <textarea
-                                                className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                                placeholder="Biografia do jogador em inglês"
-                                                value={p.bioEN ?? ""}
-                                                onChange={(e) => updatePlayerField(pIdx, "bioEN", e.target.value)}
-                                              />
-                                            </div>
-                                            
-                                            {/* Redes Sociais */}
-                                            <div className="space-y-2">
-                                              <Label className="text-xs font-medium">Redes Sociais</Label>
-                                              <div className="grid gap-2 sm:grid-cols-2">
-                                                <div className="flex items-center gap-2">
-                                                  <Instagram className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                  <Input
-                                                    placeholder="Instagram (@usuario ou URL)"
-                                                    value={p.socialMedia?.instagram ?? ""}
-                                                    onChange={(e) => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, socialMedia: {} };
-                                                      const socialMedia = ((newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia ?? {});
-                                                      socialMedia.instagram = e.target.value;
-                                                      (newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia = socialMedia;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  />
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <Twitter className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                  <Input
-                                                    placeholder="Twitter/X (@usuario ou URL)"
-                                                    value={p.socialMedia?.twitter ?? ""}
-                                                    onChange={(e) => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, socialMedia: {} };
-                                                      const socialMedia = ((newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia ?? {});
-                                                      socialMedia.twitter = e.target.value;
-                                                      (newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia = socialMedia;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  />
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <Facebook className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                  <Input
-                                                    placeholder="Facebook (URL)"
-                                                    value={p.socialMedia?.facebook ?? ""}
-                                                    onChange={(e) => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, socialMedia: {} };
-                                                      const socialMedia = ((newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia ?? {});
-                                                      socialMedia.facebook = e.target.value;
-                                                      (newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia = socialMedia;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  />
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <Music className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                  <Input
-                                                    placeholder="TikTok (@usuario ou URL)"
-                                                    value={p.socialMedia?.tiktok ?? ""}
-                                                    onChange={(e) => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, socialMedia: {} };
-                                                      const socialMedia = ((newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia ?? {});
-                                                      socialMedia.tiktok = e.target.value;
-                                                      (newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia = socialMedia;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  />
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <Youtube className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                  <Input
-                                                    placeholder="YouTube (URL do canal)"
-                                                    value={p.socialMedia?.youtube ?? ""}
-                                                    onChange={(e) => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, socialMedia: {} };
-                                                      const socialMedia = ((newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia ?? {});
-                                                      socialMedia.youtube = e.target.value;
-                                                      (newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia = socialMedia;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  />
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                  <Input
-                                                    placeholder="Site pessoal (URL)"
-                                                    value={p.socialMedia?.website ?? ""}
-                                                    onChange={(e) => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, socialMedia: {} };
-                                                      const socialMedia = ((newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia ?? {});
-                                                      socialMedia.website = e.target.value;
-                                                      (newPlayers[pIdx] as { socialMedia?: Record<string, string> }).socialMedia = socialMedia;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  />
-                                                </div>
-                                              </div>
-                                            </div>
-
-                                            {/* Histórico de Temporadas */}
-                                            <div className="space-y-2">
-                                              <div className="flex items-center justify-between">
-                                                <Label className="text-xs font-medium">Histórico de Temporadas</Label>
-                                                <Button
-                                                  type="button"
-                                                  variant="outline"
-                                                  size="sm"
-                                                  className="h-7 text-xs"
-                                                  onClick={() => {
-                                                    const newPlayers = [...players];
-                                                    if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                    const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                    history.push({
-                                                      id: `season-${Date.now()}`,
-                                                      year: new Date().getFullYear(),
-                                                      team: "",
-                                                      competition: "",
-                                                    });
-                                                    (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                    updateCategoryPlayers(newPlayers);
-                                                  }}
-                                                >
-                                                  <Plus className="h-3 w-3 mr-1" /> Adicionar temporada
-                                                </Button>
-                                              </div>
-                                              {((p.seasonHistory as Array<unknown>) ?? []).map((season: unknown, sIdx: number) => {
-                                                const s = season as {
-                                                  id?: string;
-                                                  year?: number;
-                                                  team?: string;
-                                                  competition?: string;
-                                                  matches?: number;
-                                                  starts?: number;
-                                                  substitutions?: number;
-                                                  goals?: number;
-                                                  assists?: number;
-                                                  minutesPlayed?: number;
-                                                  yellowCards?: number;
-                                                  redCards?: number;
-                                                };
-                                                return (
-                                                  <details key={s.id ?? sIdx} className="rounded-lg border border-border bg-muted/20 p-3">
-                                                    <summary className="cursor-pointer text-xs font-medium">
-                                                      {s.year && s.team && s.competition 
-                                                        ? `${s.year} - ${s.team} - ${s.competition}`
-                                                        : `Temporada ${sIdx + 1}`}
-                                                    </summary>
-                                                    <div className="mt-3 space-y-3 grid gap-2 sm:grid-cols-2">
-                                                      <Input
-                                                        type="number"
-                                                        placeholder="Ano"
-                                                        value={s.year ?? ""}
-                                                        onChange={(e) => {
-                                                          const newPlayers = [...players];
-                                                          if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                          const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                          if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                          (history[sIdx] as { year?: number }).year = e.target.value ? Number(e.target.value) : undefined;
-                                                          (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                          updateCategoryPlayers(newPlayers);
-                                                        }}
-                                                      />
-                                                      <Input
-                                                        placeholder="Time"
-                                                        value={s.team ?? ""}
-                                                        onChange={(e) => {
-                                                          const newPlayers = [...players];
-                                                          if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                          const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                          if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                          (history[sIdx] as { team?: string }).team = e.target.value;
-                                                          (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                          updateCategoryPlayers(newPlayers);
-                                                        }}
-                                                      />
-                                                      <Input
-                                                        placeholder="Competição"
-                                                        value={s.competition ?? ""}
-                                                        onChange={(e) => {
-                                                          const newPlayers = [...players];
-                                                          if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                          const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                          if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                          (history[sIdx] as { competition?: string }).competition = e.target.value;
-                                                          (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                          updateCategoryPlayers(newPlayers);
-                                                        }}
-                                                      />
-                                                      <div className="grid gap-2 sm:grid-cols-3">
-                                                        <Input
-                                                          type="number"
-                                                          placeholder="Partidas"
-                                                          value={s.matches ?? ""}
-                                                          onChange={(e) => {
-                                                            const newPlayers = [...players];
-                                                            if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                            const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                            if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                            (history[sIdx] as { matches?: number }).matches = e.target.value ? Number(e.target.value) : undefined;
-                                                            (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                            updateCategoryPlayers(newPlayers);
-                                                          }}
-                                                        />
-                                                        <Input
-                                                          type="number"
-                                                          placeholder="Início (titular)"
-                                                          value={s.starts ?? ""}
-                                                          onChange={(e) => {
-                                                            const newPlayers = [...players];
-                                                            if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                            const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                            if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                            (history[sIdx] as { starts?: number }).starts = e.target.value ? Number(e.target.value) : undefined;
-                                                            (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                            updateCategoryPlayers(newPlayers);
-                                                          }}
-                                                        />
-                                                        <Input
-                                                          type="number"
-                                                          placeholder="Substituições"
-                                                          value={s.substitutions ?? ""}
-                                                          onChange={(e) => {
-                                                            const newPlayers = [...players];
-                                                            if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                            const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                            if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                            (history[sIdx] as { substitutions?: number }).substitutions = e.target.value ? Number(e.target.value) : undefined;
-                                                            (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                            updateCategoryPlayers(newPlayers);
-                                                          }}
-                                                        />
-                                                      </div>
-                                                      <div className="grid gap-2 sm:grid-cols-4">
-                                                        <Input
-                                                          type="number"
-                                                          placeholder="Gols"
-                                                          value={s.goals ?? ""}
-                                                          onChange={(e) => {
-                                                            const newPlayers = [...players];
-                                                            if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                            const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                            if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                            (history[sIdx] as { goals?: number }).goals = e.target.value ? Number(e.target.value) : undefined;
-                                                            (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                            updateCategoryPlayers(newPlayers);
-                                                          }}
-                                                        />
-                                                        <Input
-                                                          type="number"
-                                                          placeholder="Assistências"
-                                                          value={s.assists ?? ""}
-                                                          onChange={(e) => {
-                                                            const newPlayers = [...players];
-                                                            if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                            const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                            if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                            (history[sIdx] as { assists?: number }).assists = e.target.value ? Number(e.target.value) : undefined;
-                                                            (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                            updateCategoryPlayers(newPlayers);
-                                                          }}
-                                                        />
-                                                        <Input
-                                                          type="number"
-                                                          placeholder="Tempo (minutos)"
-                                                          value={s.minutesPlayed ?? ""}
-                                                          onChange={(e) => {
-                                                            const newPlayers = [...players];
-                                                            if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                            const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                            if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                            (history[sIdx] as { minutesPlayed?: number }).minutesPlayed = e.target.value ? Number(e.target.value) : undefined;
-                                                            (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                            updateCategoryPlayers(newPlayers);
-                                                          }}
-                                                        />
-                                                        <div className="grid gap-2 sm:grid-cols-2">
-                                                          <Input
-                                                            type="number"
-                                                            placeholder="Amarelo"
-                                                            value={s.yellowCards ?? ""}
-                                                            onChange={(e) => {
-                                                              const newPlayers = [...players];
-                                                              if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                              const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                              if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                              (history[sIdx] as { yellowCards?: number }).yellowCards = e.target.value ? Number(e.target.value) : undefined;
-                                                              (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                              updateCategoryPlayers(newPlayers);
-                                                            }}
-                                                          />
-                                                          <Input
-                                                            type="number"
-                                                            placeholder="Vermelho"
-                                                            value={s.redCards ?? ""}
-                                                            onChange={(e) => {
-                                                              const newPlayers = [...players];
-                                                              if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, seasonHistory: [] };
-                                                              const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []);
-                                                              if (!history[sIdx]) history[sIdx] = { id: `season-${Date.now()}` };
-                                                              (history[sIdx] as { redCards?: number }).redCards = e.target.value ? Number(e.target.value) : undefined;
-                                                              (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                              updateCategoryPlayers(newPlayers);
-                                                            }}
-                                                          />
-                                                        </div>
-                                                      </div>
-                                                      <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="w-full text-destructive"
-                                                        onClick={() => {
-                                                          const newPlayers = [...players];
-                                                          if (!newPlayers[pIdx]) return;
-                                                          const history = ((newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory ?? []).filter((_, i) => i !== sIdx);
-                                                          (newPlayers[pIdx] as { seasonHistory?: Array<unknown> }).seasonHistory = history;
-                                                          updateCategoryPlayers(newPlayers);
-                                                        }}
-                                                      >
-                                                        <Trash2 className="h-4 w-4 mr-1" /> Remover temporada
-                                                      </Button>
-                                                    </div>
-                                                  </details>
-                                                );
-                                              })}
-                                            </div>
-
-                                            {/* Posição no Campo */}
-                                            <div className="space-y-2">
-                                              <Label className="text-xs font-medium">Posição no Campo</Label>
-                                              <div className="relative w-full max-w-md mx-auto aspect-[3/2] border-2 border-white/20 rounded-lg overflow-hidden bg-zinc-900">
-                                                {/* Imagem real do campo de futebol */}
-                                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                <img
-                                                  src="/campo-futebol.png"
-                                                  alt="Campo de futebol"
-                                                  className="absolute inset-0 w-full h-full object-cover"
-                                                />
-                                                
-                                                {/* Marcador de posição - laranja com borda branca */}
-                                                {p.fieldPosition && (
-                                                  <div
-                                                    className="absolute w-6 h-6 bg-orange-500 rounded-full border-2 border-white shadow-lg z-10"
-                                                    style={{
-                                                      left: `${p.fieldPosition.x ?? 50}%`,
-                                                      top: `${p.fieldPosition.y ?? 50}%`,
-                                                      transform: 'translate(-50%, -50%)',
-                                                    }}
-                                                  />
-                                                )}
-                                                
-                                                {/* Área clicável */}
-                                                <button
-                                                  type="button"
-                                                  className="absolute inset-0 cursor-crosshair w-full h-full z-20"
-                                                  onClick={(e) => {
-                                                    const rect = e.currentTarget.getBoundingClientRect();
-                                                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                                                    const y = ((e.clientY - rect.top) / rect.height) * 100;
-                                                    const newPlayers = [...players];
-                                                    if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName };
-                                                    (newPlayers[pIdx] as { fieldPosition?: { x: number; y: number } }).fieldPosition = { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
-                                                    updateCategoryPlayers(newPlayers);
-                                                  }}
-                                                />
-                                              </div>
-                                              {p.fieldPosition && (
-                                                <p className="text-xs text-muted-foreground text-center">
-                                                  Posição: X: {Math.round(p.fieldPosition.x ?? 50)}%, Y: {Math.round(p.fieldPosition.y ?? 50)}%
-                                                </p>
-                                              )}
-                                            </div>
-
-                                            {/* Melhores momentos */}
-                                            <div className="space-y-2">
-                                              <div className="flex items-center justify-between">
-                                                <Label className="text-xs">Melhores momentos</Label>
-                                                <Button
-                                                  type="button"
-                                                  variant="outline"
-                                                  size="sm"
-                                                  className="h-7 text-xs"
-                                                  onClick={() => {
-                                                    const newPlayers = [...players];
-                                                    if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, highlights: [] };
-                                                    const highlights = ((newPlayers[pIdx] as { highlights?: string[] }).highlights ?? []);
-                                                    highlights.push("");
-                                                    (newPlayers[pIdx] as { highlights?: string[] }).highlights = highlights;
-                                                    updateCategoryPlayers(newPlayers);
-                                                  }}
-                                                >
-                                                  <Plus className="h-3 w-3 mr-1" /> Adicionar
-                                                </Button>
-                                              </div>
-                                              {/* Buscar playlist do YouTube */}
-                                              <PlaylistImporter
-                                                onImport={(urls) => {
-                                                  const newPlayers = [...players];
-                                                  if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, highlights: [] };
-                                                  const current = ((newPlayers[pIdx] as { highlights?: string[] }).highlights ?? []);
-                                                  const existing = new Set(current);
-                                                  const toAdd = urls.filter((u) => !existing.has(u));
-                                                  toAdd.forEach((u) => existing.add(u));
-                                                  (newPlayers[pIdx] as { highlights?: string[] }).highlights = [...existing];
-                                                  updateCategoryPlayers(newPlayers);
-                                                }}
-                                              />
-                                              {((p.highlights as string[]) ?? []).map((url, hIdx) => (
-                                                <div key={hIdx} className="flex gap-1">
-                                                  <Input
-                                                    className="h-8 text-xs"
-                                                    placeholder="URL"
-                                                    value={url}
-                                                    onChange={(e) => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) newPlayers[pIdx] = { id: `player-${Date.now()}`, name: "", currentTeam: tenantName, highlights: [] };
-                                                      const highlights = ((newPlayers[pIdx] as { highlights?: string[] }).highlights ?? []);
-                                                      highlights[hIdx] = e.target.value;
-                                                      (newPlayers[pIdx] as { highlights?: string[] }).highlights = highlights;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  />
-                                                  <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-8 w-8 shrink-0 text-destructive"
-                                                    onClick={() => {
-                                                      const newPlayers = [...players];
-                                                      if (!newPlayers[pIdx]) return;
-                                                      const highlights = ((newPlayers[pIdx] as { highlights?: string[] }).highlights ?? []).filter((_, i) => i !== hIdx);
-                                                      (newPlayers[pIdx] as { highlights?: string[] }).highlights = highlights;
-                                                      updateCategoryPlayers(newPlayers);
-                                                    }}
-                                                  >
-                                                    <Trash2 className="h-3 w-3" />
-                                                  </Button>
-                                                </div>
-                                              ))}
-                                            </div>
-
-                                            <Button
-                                              type="button"
-                                              variant="ghost"
-                                              size="sm"
-                                              className="w-full text-destructive"
-                                              onClick={() => {
-                                                const newPlayers = players.filter((_, i) => i !== pIdx);
-                                                updateCategoryPlayers(newPlayers);
-                                              }}
-                                            >
-                                              <Trash2 className="h-4 w-4 mr-1" /> Remover jogador
-                                            </Button>
-                                          </div>
-                                        </details>
-                                      );
-                                      })}
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        const newPlayers = [...players, { id: `player-${Date.now()}`, name: "", currentTeam: tenantName }];
-                                        // Garantir que a categoria existe
-                                        const arr = [...((block.config?.timesCategoriasCategories as Array<unknown>) ?? [])];
-                                        const idx = arr.findIndex((c: unknown) => (c as { id?: string }).id === cat.value);
-                                        if (idx >= 0) {
-                                          (arr[idx] as { players?: Array<unknown> }).players = newPlayers;
-                                        } else {
-                                          arr.push({ id: cat.value, namePT: cat.labelPT, nameEN: cat.labelEN, players: newPlayers });
-                                        }
-                                        updateBlockConfigValue(index, "timesCategoriasCategories", arr);
-                                      }}
-                                    >
-                                      <Plus className="h-4 w-4 mr-1" /> Adicionar jogador
-                                    </Button>
-                                  </div>
-                              </details>
-                              );
-                            })}
+                            )}
                             <div className="grid gap-2 sm:grid-cols-2 pt-2 border-t border-border">
                               <div className="space-y-2">
                                 <Label>Espaço no topo</Label>
@@ -2924,77 +2139,47 @@ export default function EditarPaginaTenantPage() {
                         )}
                         <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
                           <p className="text-xs font-medium text-muted-foreground">Dados dinâmicos (Google Sheets)</p>
-                              <div className="grid gap-2 sm:grid-cols-[1fr,auto]">
-                                <div className="space-y-1">
-                                  <label className="text-xs text-muted-foreground">URL ou ID da planilha</label>
-                                  <Input
-                                    type="text"
-                                    className="h-9"
-                                    placeholder="https://docs.google.com/spreadsheets/d/... ou ID da planilha"
-                                    value={((block.config?.proximosJogosSpreadsheetUrl as string) ?? "").toString()}
-                                    onChange={(e) => updateBlockConfigValue(index, "proximosJogosSpreadsheetUrl", e.target.value)}
-                                    onPaste={(e) => {
-                                      const pasted = (e.clipboardData?.getData?.("text/plain") ?? "").trim();
-                                      if (!pasted) return;
-                                      const gidMatch = pasted.match(/[?&]gid=(\d+)/i) || pasted.match(/#gid=(\d+)/i);
-                                      if (gidMatch) updateBlockConfigValue(index, "proximosJogosSheetGid", gidMatch[1]);
-                                    }}
-                                  />
-                                </div>
-                                <div className="flex items-end gap-2">
-                                  <div className="space-y-1">
-                                    <label className="text-xs text-muted-foreground">Aba (gid)</label>
-                                    <Input
-                                      type="text"
-                                      className="h-9 w-20"
-                                      placeholder="0"
-                                      value={((block.config?.proximosJogosSheetGid as string) ?? "0").toString()}
-                                      onChange={(e) => updateBlockConfigValue(index, "proximosJogosSheetGid", e.target.value)}
-                                    />
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    disabled={syncingProximosJogosBlockIndex === index}
-                                    onClick={() => {
-                                      const urlOrId = (block.config?.proximosJogosSpreadsheetUrl as string)?.trim();
-                                      const gid = ((block.config?.proximosJogosSheetGid as string)?.trim() || "0").toString();
-                                      if (!urlOrId) {
-                                        setError("Cole ou digite a URL (ou ID) da planilha no campo acima e clique em Atualizar.");
-                                        return;
-                                      }
-                                      setError(null);
-                                      updateBlockConfigValue(index, "proximosJogosSpreadsheetUrl", urlOrId);
-                                      updateBlockConfigValue(index, "proximosJogosSheetGid", gid);
-                                      setSyncingProximosJogosBlockIndex(index);
-                                      const params = new URLSearchParams({ spreadsheetId: urlOrId, gid });
-                                      if (page?.tenant?.slug) params.set("slug", page.tenant.slug);
-                                      authFetch(`/api/google-sheets/proximos-jogos?${params}`, { credentials: "include" })
-                                        .then((r) => {
-                                          if (!r.ok) return r.json().then((d) => Promise.reject(new Error((d as { error?: string })?.error ?? "Erro ao importar")));
-                                          return r.json();
-                                        })
-                                        .then((data: { fixtures?: object[] }) => {
-                                          setError(null);
-                                          if (data.fixtures?.length) {
-                                            updateBlockConfigValue(index, "proximosJogosManualFixtures", data.fixtures);
-                                          } else if (Array.isArray(data.fixtures)) {
-                                            updateBlockConfigValue(index, "proximosJogosManualFixtures", []);
-                                          }
-                                        })
-                                        .catch((err) => setError(err instanceof Error ? err.message : "Erro ao importar da planilha"))
-                                        .finally(() => setSyncingProximosJogosBlockIndex(null));
-                                    }}
-                                  >
-                                    {syncingProximosJogosBlockIndex === index ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      "Atualizar com Google Sheets"
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
+                          <p className="text-xs text-muted-foreground">
+                            Planilha configurada em <strong>Configurações → Integrações</strong>. Use o botão abaixo para importar.
+                          </p>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={syncingProximosJogosBlockIndex === index}
+                            onClick={() => {
+                              if (!page?.tenant?.id) return;
+                              setSyncingProximosJogosBlockIndex(index);
+                              authFetch("/api/integrations/sync", {
+                                method: "POST",
+                                credentials: "include",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  type: "proximos_jogos",
+                                  slug: page.tenant.slug ?? undefined,
+                                }),
+                              })
+                                .then((r) => {
+                                  if (!r.ok) return r.json().then((d) => Promise.reject(new Error((d as { error?: string })?.error ?? "Erro ao importar")));
+                                  return r.json();
+                                })
+                                .then((data: { fixtures?: object[] }) => {
+                                  setError(null);
+                                  if (data.fixtures?.length) {
+                                    updateBlockConfigValue(index, "proximosJogosManualFixtures", data.fixtures);
+                                  } else if (Array.isArray(data.fixtures)) {
+                                    updateBlockConfigValue(index, "proximosJogosManualFixtures", []);
+                                  }
+                                })
+                                .catch((err) => setError(err instanceof Error ? err.message : "Erro ao importar da planilha"))
+                                .finally(() => setSyncingProximosJogosBlockIndex(null));
+                            }}
+                          >
+                            {syncingProximosJogosBlockIndex === index ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                            ) : null}
+                            Atualizar com Google Sheets
+                          </Button>
                               {((block.config?.proximosJogosManualFixtures as object[]) ?? []).length > 0 && (
                                 <div className="mt-2">
                                   <Button
@@ -3060,30 +2245,6 @@ export default function EditarPaginaTenantPage() {
                                   </Button>
                                 </div>
                               )}
-                              <div className="text-xs text-muted-foreground space-y-1 mt-2">
-                                <p className="font-medium">Opções (cole no campo acima):</p>
-                                <ul className="list-disc pl-4 space-y-0.5">
-                                  <li>
-                                    <strong>Link &quot;Publicado na Web&quot;</strong> — Arquivo &gt; Compartilhar &gt; Publicar na Web &gt; escolha a aba &gt; Formato: CSV &gt; copie o link e cole no campo abaixo (Aba pode ficar 0).
-                                  </li>
-                                  <li>
-                                    <strong>URL normal da planilha</strong> — Link de edição (docs.google.com/spreadsheets/d/.../edit). Compartilhar &gt; Qualquer pessoa com o link pode ver. Se der erro, use a opção &quot;Publicar na Web&quot; acima.
-                                  </li>
-                                  <li>
-                                    <strong>ID da planilha</strong> — Só o ID (~44 caracteres) e o gid da aba desejada.
-                                  </li>
-                                </ul>
-                                <p>
-                                  Primeira linha = cabeçalho. Use <code className="rounded bg-muted px-1">categoria</code> com: principal, sub20, sub17, sub15, sub13, sub11, sub9, feminino.{" "}
-                                  <a href="/api/public/templates/proximos-jogos" download="proximos-jogos-template.csv" className="text-primary underline hover:no-underline">
-                                    Baixar template CSV
-                                  </a>
-                                  {" | "}
-                                  <a href="/api/public/cadastros/all?format=csv" download="listas-dropdowns.csv" className="text-primary underline hover:no-underline">
-                                    Baixar listas para dropdowns
-                                  </a>
-                                </p>
-                              </div>
                         </div>
                         {(block.config?.proximosJogosDataSource as string) === "manual" && (
                             <details className="rounded-lg border border-border bg-muted/20 mt-2">
@@ -3616,80 +2777,45 @@ export default function EditarPaginaTenantPage() {
                           <summary className="cursor-pointer px-3 py-2 font-medium">Tabela Classificação</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
-                              Importe dados de uma planilha Google Sheets. Use o template{" "}
-                              <a href="/templates/tabela-classificacao-template.csv" download className="underline text-amber-600 dark:text-amber-400">
-                                tabela-classificacao-template.csv
-                              </a>
-                              {" | "}
-                              <a href="/api/public/cadastros/tabela-listas?format=csv" download="listas-tabela-dropdowns.csv" className="underline text-amber-600 dark:text-amber-400">
-                                Baixar listas para dropdowns
-                              </a>
-                              . Colunas: competicao (ou categoria), temporada, time, logo_time, pontos, jogos, vitorias, empates, derrotas, gols_marcados, gols_sofridos, ultimos_jogos (W D L), proximo_jogo, logo_proximo. A posição é calculada pelo app conforme a fórmula cadastrada na competição.
+                              Planilha configurada em <strong>Configurações → Integrações</strong>. Use o botão abaixo para importar.
                             </p>
-                            <div className="space-y-2">
-                              <Label>URL da planilha ou ID</Label>
-                              <Input
-                                placeholder="https://docs.google.com/spreadsheets/d/... ou ID"
-                                value={((block.config?.tabelaSpreadsheetUrl as string) ?? "").toString()}
-                                onChange={(e) => updateBlockConfigValue(index, "tabelaSpreadsheetUrl", e.target.value)}
-                                onPaste={(e) => {
-                                  const t = e.clipboardData.getData("text");
-                                  const gidMatch = t.match(/[?&]gid=(\d+)/i) || t.match(/#gid=(\d+)/i);
-                                  if (gidMatch) updateBlockConfigValue(index, "tabelaSheetGid", gidMatch[1]);
-                                }}
-                              />
-                              <div className="flex gap-2">
-                                <div className="flex-1 space-y-1">
-                                  <Label>GID da aba</Label>
-                                  <Input
-                                    placeholder="0"
-                                    value={((block.config?.tabelaSheetGid as string) ?? "0").toString()}
-                                    onChange={(e) => updateBlockConfigValue(index, "tabelaSheetGid", e.target.value)}
-                                  />
-                                </div>
-                                <div className="flex items-end pb-2">
-                                  <Button
-                                    type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    disabled={syncingTabelaBlockIndex === index}
-                                    onClick={async () => {
-                                      const urlOrId = (block.config?.tabelaSpreadsheetUrl as string)?.trim();
-                                      const gid = ((block.config?.tabelaSheetGid as string)?.trim() || "0").toString();
-                                      if (!urlOrId) {
-                                        alert("Informe a URL ou ID da planilha.");
-                                        return;
-                                      }
-                                      updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
-                                      setSyncingTabelaBlockIndex(index);
-                                      try {
-                                        const params = new URLSearchParams();
-                                        params.set("spreadsheetId", urlOrId);
-                                        params.set("gid", gid);
-                                        params.set("_t", Date.now().toString());
-                                        if (page?.tenant?.slug) params.set("slug", page.tenant.slug);
-                                        const res = await authFetch(`/api/google-sheets/tabela-classificacao?${params}`, { credentials: "include" });
-                                        const data = await res.json();
-                                        if (res.ok && Array.isArray(data.rows)) {
-                                          updateBlockConfigValue(index, "tabelaManualRows", data.rows);
-                                        } else if (data.error) {
-                                          alert(data.error);
-                                        }
-                                      } catch (err) {
-                                        alert("Erro ao importar. Verifique a URL e se a planilha está compartilhada.");
-                                      } finally {
-                                        setSyncingTabelaBlockIndex(null);
-                                      }
-                                    }}
-                                  >
-                                    {syncingTabelaBlockIndex === index ? (
-                                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                                    ) : null}
-                                    Atualizar com Google Sheets
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              disabled={syncingTabelaBlockIndex === index}
+                              onClick={async () => {
+                                if (!page?.tenant?.id) return;
+                                updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
+                                setSyncingTabelaBlockIndex(index);
+                                try {
+                                  const res = await authFetch("/api/integrations/sync", {
+                                    method: "POST",
+                                    credentials: "include",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({
+                                      type: "tabela_classificacao",
+                                      slug: page.tenant.slug ?? undefined,
+                                    }),
+                                  });
+                                  const data = await res.json();
+                                  if (res.ok && Array.isArray(data.rows)) {
+                                    updateBlockConfigValue(index, "tabelaManualRows", data.rows);
+                                  } else if (data.error) {
+                                    alert(data.error);
+                                  }
+                                } catch (err) {
+                                  alert("Erro ao importar. Verifique Configurações → Integrações.");
+                                } finally {
+                                  setSyncingTabelaBlockIndex(null);
+                                }
+                              }}
+                            >
+                              {syncingTabelaBlockIndex === index ? (
+                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                              ) : null}
+                              Atualizar com Google Sheets
+                            </Button>
                             {((block.config?.tabelaManualRows as object[]) ?? []).length > 0 && (
                               <p className="text-xs text-muted-foreground">
                                 {((block.config?.tabelaManualRows as object[]) ?? []).length} linhas importadas. Filtros por categoria e temporada aparecem na barra abaixo da tabela.
@@ -5194,7 +4320,7 @@ export default function EditarPaginaTenantPage() {
                                         <div className="flex flex-wrap gap-2">
                                           <Select value={(btn.type as string) ?? "primary"} onValueChange={(v) => { const arr = [...buttons]; arr[i] = { ...arr[i], type: v as "primary" | "secondary" | "ghost" }; updateBlockConfigValue(index, "ctaButtons", arr); }}><SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Primary</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem></SelectContent></Select>
                                           <Input placeholder="URL ou #âncora" className="flex-1 min-w-[120px]" value={btn.href ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], href: e.target.value }; updateBlockConfigValue(index, "ctaButtons", arr); }} />
-                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i],InNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
+                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], openInNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
                                           <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.highlighted} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], highlighted: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Destaque</label>
                                         </div>
                                       </div>

@@ -59,10 +59,180 @@ export class PublicService {
     private readonly sofaScore: SofaScoreService,
   ) {}
 
+  /**
+   * Jogadores do tenant pelo slug, agrupados por categoria. Só inclui jogadores com teamPage visível
+   * (publicFields.teamPage !== false). Usado pelo módulo Times por Categorias na página pública.
+   */
+  async getPlayersForTenantSlug(slug: string): Promise<{
+    categories: Array<{
+      id: string;
+      namePT: string;
+      nameEN: string;
+      players: Array<{
+        id: string;
+        name: string;
+        photoUrl?: string | null;
+        birthDate?: string | null;
+        nationality?: string | null;
+        height?: number | null;
+        weight?: number | null;
+        preferredFoot?: string | null;
+        jerseyNumber?: number | null;
+        position?: string | null;
+        currentTeam?: string | null;
+        socialMedia?: unknown;
+        matchesPlayed?: number | null;
+        goals?: number | null;
+        assists?: number | null;
+        yellowCards?: number | null;
+        redCards?: number | null;
+        highlights?: string[] | null;
+        bioPT?: string | null;
+        bioEN?: string | null;
+      }>;
+    }>;
+  }> {
+    // Busca case-insensitive para aceitar americano-fc, Americano-FC, etc.
+    const slugNorm = slug.trim();
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { slug: { equals: slugNorm, mode: 'insensitive' } },
+      select: { id: true },
+    });
+    if (!tenant) return { categories: [] };
+    return this.getPlayersForTenantId(tenant.id);
+  }
+
+  /** Jogadores do tenant pelo ID — usado quando já temos o tenant da página. */
+  async getPlayersForTenantId(tenantId: string): Promise<{
+    categories: Array<{
+      id: string;
+      namePT: string;
+      nameEN: string;
+      players: Array<{
+        id: string;
+        name: string;
+        photoUrl?: string | null;
+        birthDate?: string | null;
+        nationality?: string | null;
+        height?: number | null;
+        weight?: number | null;
+        preferredFoot?: string | null;
+        jerseyNumber?: number | null;
+        position?: string | null;
+        currentTeam?: string | null;
+        socialMedia?: unknown;
+        matchesPlayed?: number | null;
+        goals?: number | null;
+        assists?: number | null;
+        yellowCards?: number | null;
+        redCards?: number | null;
+        highlights?: string[] | null;
+        bioPT?: string | null;
+        bioEN?: string | null;
+      }>;
+    }>;
+  }> {
+    const players = await this.prisma.player.findMany({
+      where: { tenantId },
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        photoUrl: true,
+        birthDate: true,
+        nationality: true,
+        height: true,
+        weight: true,
+        preferredFoot: true,
+        jerseyNumber: true,
+        position: true,
+        fieldPositionX: true,
+        fieldPositionY: true,
+        currentTeam: true,
+        previousTeams: true,
+        seasonHistory: true,
+        socialMedia: true,
+        matchesPlayed: true,
+        goals: true,
+        assists: true,
+        yellowCards: true,
+        redCards: true,
+        highlights: true,
+        bioPT: true,
+        bioEN: true,
+        category: true,
+        publicFields: true,
+      },
+    });
+
+    // Só jogadores visíveis na página do time (publicFields.teamPage !== false)
+    const visible = players.filter((p) => {
+      const pf = p.publicFields as Record<string, unknown> | null;
+      if (!pf || typeof pf !== 'object') return true;
+      const teamPage = pf.teamPage;
+      return teamPage !== false;
+    });
+
+    const FIXTURE_CATEGORIES = [
+      { value: 'principal', labelPT: 'Principal', labelEN: 'First Team' },
+      { value: 'sub20', labelPT: 'Sub-20', labelEN: 'U-20' },
+      { value: 'sub17', labelPT: 'Sub-17', labelEN: 'U-17' },
+      { value: 'sub15', labelPT: 'Sub-15', labelEN: 'U-15' },
+      { value: 'sub13', labelPT: 'Sub-13', labelEN: 'U-13' },
+      { value: 'sub11', labelPT: 'Sub-11', labelEN: 'U-11' },
+      { value: 'sub9', labelPT: 'Sub-9', labelEN: 'U-9' },
+      { value: 'feminino', labelPT: 'Feminino', labelEN: "Women's" },
+    ] as const;
+
+    const byCategory = new Map<string, typeof visible>();
+    for (const p of visible) {
+      const cat = (p.category?.trim() || 'principal').toLowerCase();
+      const list = byCategory.get(cat) ?? [];
+      list.push(p);
+      byCategory.set(cat, list);
+    }
+
+    const categories = FIXTURE_CATEGORIES.map((c) => ({
+      id: c.value,
+      namePT: c.labelPT,
+      nameEN: c.labelEN,
+      players: (byCategory.get(c.value) ?? []).map((pl) => ({
+        id: pl.id,
+        name: pl.name,
+        photoUrl: pl.photoUrl,
+        birthDate: pl.birthDate,
+        nationality: pl.nationality,
+        height: pl.height,
+        weight: pl.weight,
+        preferredFoot: pl.preferredFoot,
+        jerseyNumber: pl.jerseyNumber,
+        position: pl.position,
+        fieldPosition: (pl.fieldPositionX != null || pl.fieldPositionY != null)
+          ? { x: pl.fieldPositionX ?? 50, y: pl.fieldPositionY ?? 50 }
+          : undefined,
+        currentTeam: pl.currentTeam,
+        previousTeams: pl.previousTeams,
+        seasonHistory: pl.seasonHistory,
+        socialMedia: pl.socialMedia,
+        matchesPlayed: pl.matchesPlayed,
+        goals: pl.goals,
+        assists: pl.assists,
+        yellowCards: pl.yellowCards,
+        redCards: pl.redCards,
+        highlights: Array.isArray(pl.highlights) ? (pl.highlights as string[]) : null,
+        bioPT: pl.bioPT,
+        bioEN: pl.bioEN,
+      })),
+    }));
+
+    return { categories };
+  }
+
   /** Dados públicos do tenant pelo slug (nome e logo para "nosso clube" nos módulos). */
   async getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
-    const t = await this.prisma.tenant.findUnique({
-      where: { slug },
+    const slugNorm = slug.trim();
+    const t = await this.prisma.tenant.findFirst({
+      where: { slug: { equals: slugNorm, mode: 'insensitive' } },
       select: { id: true, name: true, slug: true, logoUrl: true },
     });
     if (!t) return null;
@@ -183,8 +353,9 @@ export class PublicService {
     }
 
     // effectiveSource === 'sofascore'
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { slug },
+    const slugNorm = slug.trim();
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { slug: { equals: slugNorm, mode: 'insensitive' } },
       select: { sofascoreTeamId: true },
     });
     const teamId = tenant?.sofascoreTeamId?.trim();

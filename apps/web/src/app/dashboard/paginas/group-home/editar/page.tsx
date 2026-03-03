@@ -957,6 +957,128 @@ export default function EditarGroupHomePage() {
                         </div>
                       </details>
                     )}
+                    {block.type === "hero" && (
+                      <>
+                        <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Cor de fundo (hex)</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <div className="space-y-2">
+                              <Label>Cor de fundo da seção (hex)</Label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="color"
+                                  className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
+                                  value={(block.config?.backgroundColor as string) || "#18181b"}
+                                  onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)}
+                                />
+                                <Input
+                                  placeholder="#18181b ou vazio"
+                                  value={(block.config?.backgroundColor as string) ?? ""}
+                                  onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                        <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Fundo & Overlay</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <div className="space-y-2">
+                              <Label>Modo do overlay</Label>
+                              <Select value={(block.config?.overlayMode as string) ?? "solid"} onValueChange={(v) => updateBlockConfig(index, "overlayMode", v)}>
+                                <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="solid">Sólido</SelectItem>
+                                  <SelectItem value="gradient-bottom">Gradiente (cima→baixo)</SelectItem>
+                                  <SelectItem value="gradient-right">Gradiente (esq→dir)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Cor do overlay (hex)</Label>
+                              <div className="flex gap-2">
+                                <input type="color" className="h-10 w-12 cursor-pointer rounded border" value={(block.config?.overlayColor as string) || "#000000"} onChange={(e) => updateBlockConfig(index, "overlayColor", e.target.value)} />
+                                <Input placeholder="#000000" value={(block.config?.overlayColor as string) ?? ""} onChange={(e) => updateBlockConfig(index, "overlayColor", e.target.value)} />
+                              </div>
+                            </div>
+                          </div>
+                        </details>
+                        <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                          <summary className="cursor-pointer px-3 py-2 font-medium">Layout & Estilo</summary>
+                          <div className="border-t border-border px-3 py-3 space-y-3">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label>Alinhamento horizontal</Label>
+                                <Select value={(block.config?.contentAlign as string) ?? "center"} onValueChange={(v) => updateBlockConfig(index, "contentAlign", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="left">Esquerda</SelectItem>
+                                    <SelectItem value="center">Centro</SelectItem>
+                                    <SelectItem value="right">Direita</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Alinhamento vertical</Label>
+                                <Select value={(block.config?.verticalAlign as string) ?? "center"} onValueChange={(v) => updateBlockConfig(index, "verticalAlign", v)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="top">Topo</SelectItem>
+                                    <SelectItem value="center">Centro</SelectItem>
+                                    <SelectItem value="bottom">Base</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Largura máxima do conteúdo</Label>
+                              <Select value={(block.config?.maxContentWidth as string) ?? "normal"} onValueChange={(v) => updateBlockConfig(index, "maxContentWidth", v)}>
+                                <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="narrow">Estreita</SelectItem>
+                                  <SelectItem value="normal">Normal</SelectItem>
+                                  <SelectItem value="wide">Larga</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Tamanho do título</Label>
+                              <Select value={(block.config?.titleSize as string) ?? "2xl"} onValueChange={(v) => updateBlockConfig(index, "titleSize", v)}>
+                                <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="xl">XL</SelectItem>
+                                  <SelectItem value="2xl">2XL</SelectItem>
+                                  <SelectItem value="3xl">3XL</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Estilo do subtítulo</Label>
+                              <Select value={(block.config?.subtitleStyle as string) ?? "normal"} onValueChange={(v) => updateBlockConfig(index, "subtitleStyle", v)}>
+                                <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="normal">Normal</SelectItem>
+                                  <SelectItem value="uppercase">Uppercase</SelectItem>
+                                  <SelectItem value="highlighted">Destaque (linha/cor)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Altura do Hero</Label>
+                              <Select value={(block.config?.heroHeight as string) ?? "medium"} onValueChange={(v) => updateBlockConfig(index, "heroHeight", v)}>
+                                <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="screen">Tela inteira (100vh)</SelectItem>
+                                  <SelectItem value="large">Grande (80vh)</SelectItem>
+                                  <SelectItem value="medium">Médio (60vh)</SelectItem>
+                                  <SelectItem value="compact">Compacto (50vh)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        </details>
+                      </>
+                    )}
                       </div>
                     </details>
                     {block.type === "hero" && (() => {
@@ -1088,10 +1210,8 @@ export default function EditarGroupHomePage() {
                                   </div>
                                 ))}
                               </div>
-                            </div>
-                          </details>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
-                            <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título, subtítulo, descrição)</summary>
+                              <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2 mt-3">
+                                <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
                               <div className="space-y-2">
                                 <Label>Título / Headline (PT)</Label>
@@ -1117,6 +1237,8 @@ export default function EditarGroupHomePage() {
                                 <Label>Description (EN) — optional</Label>
                                 <textarea placeholder="Up to 3 lines" value={(block.config?.descriptionEN as string) ?? ""} onChange={(e) => updateBlockConfig(index, "descriptionEN", e.target.value)} rows={3} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
                               </div>
+                            </div>
+                          </details>
                             </div>
                           </details>
                           <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
@@ -1163,124 +1285,6 @@ export default function EditarGroupHomePage() {
                                   <SelectContent>
                                     <SelectItem value="outline">Outline</SelectItem>
                                     <SelectItem value="ghost">Ghost</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          </details>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
-                            <summary className="cursor-pointer px-3 py-2 font-medium">Cor de fundo (hex)</summary>
-                            <div className="border-t border-border px-3 py-3 space-y-3">
-                              <div className="space-y-2">
-                                <Label>Cor de fundo da seção (hex)</Label>
-                                <div className="flex gap-2">
-                                  <input
-                                    type="color"
-                                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
-                                    value={(block.config?.backgroundColor as string) || "#18181b"}
-                                    onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)}
-                                  />
-                                  <Input
-                                    placeholder="#18181b ou vazio"
-                                    value={(block.config?.backgroundColor as string) ?? ""}
-                                    onChange={(e) => updateBlockConfig(index, "backgroundColor", e.target.value)}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </details>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
-                            <summary className="cursor-pointer px-3 py-2 font-medium">Fundo & Overlay</summary>
-                            <div className="border-t border-border px-3 py-3 space-y-3">
-                              <div className="space-y-2">
-                                <Label>Modo do overlay</Label>
-                                <Select value={(block.config?.overlayMode as string) ?? "solid"} onValueChange={(v) => updateBlockConfig(index, "overlayMode", v)}>
-                                  <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="solid">Sólido</SelectItem>
-                                    <SelectItem value="gradient-bottom">Gradiente (cima→baixo)</SelectItem>
-                                    <SelectItem value="gradient-right">Gradiente (esq→dir)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Cor do overlay (hex)</Label>
-                                <div className="flex gap-2">
-                                  <input type="color" className="h-10 w-12 cursor-pointer rounded border" value={(block.config?.overlayColor as string) || "#000000"} onChange={(e) => updateBlockConfig(index, "overlayColor", e.target.value)} />
-                                  <Input placeholder="#000000" value={(block.config?.overlayColor as string) ?? ""} onChange={(e) => updateBlockConfig(index, "overlayColor", e.target.value)} />
-                                </div>
-                              </div>
-                            </div>
-                          </details>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
-                            <summary className="cursor-pointer px-3 py-2 font-medium">Layout & Estilo</summary>
-                            <div className="border-t border-border px-3 py-3 space-y-3">
-                              <div className="grid gap-2 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                  <Label>Alinhamento horizontal</Label>
-                                  <Select value={(block.config?.contentAlign as string) ?? "center"} onValueChange={(v) => updateBlockConfig(index, "contentAlign", v)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="left">Esquerda</SelectItem>
-                                      <SelectItem value="center">Centro</SelectItem>
-                                      <SelectItem value="right">Direita</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Alinhamento vertical</Label>
-                                  <Select value={(block.config?.verticalAlign as string) ?? "center"} onValueChange={(v) => updateBlockConfig(index, "verticalAlign", v)}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="top">Topo</SelectItem>
-                                      <SelectItem value="center">Centro</SelectItem>
-                                      <SelectItem value="bottom">Base</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Largura máxima do conteúdo</Label>
-                                <Select value={(block.config?.maxContentWidth as string) ?? "normal"} onValueChange={(v) => updateBlockConfig(index, "maxContentWidth", v)}>
-                                  <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="narrow">Estreita</SelectItem>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="wide">Larga</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Tamanho do título</Label>
-                                <Select value={(block.config?.titleSize as string) ?? "2xl"} onValueChange={(v) => updateBlockConfig(index, "titleSize", v)}>
-                                  <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="xl">XL</SelectItem>
-                                    <SelectItem value="2xl">2XL</SelectItem>
-                                    <SelectItem value="3xl">3XL</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Estilo do subtítulo</Label>
-                                <Select value={(block.config?.subtitleStyle as string) ?? "normal"} onValueChange={(v) => updateBlockConfig(index, "subtitleStyle", v)}>
-                                  <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="uppercase">Uppercase</SelectItem>
-                                    <SelectItem value="highlighted">Destaque (linha/cor)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Altura do Hero</Label>
-                                <Select value={(block.config?.heroHeight as string) ?? "medium"} onValueChange={(v) => updateBlockConfig(index, "heroHeight", v)}>
-                                  <SelectTrigger className="w-full max-w-xs"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="screen">Tela inteira (100vh)</SelectItem>
-                                    <SelectItem value="large">Grande (80vh)</SelectItem>
-                                    <SelectItem value="medium">Médio (60vh)</SelectItem>
-                                    <SelectItem value="compact">Compacto (50vh)</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -2483,7 +2487,7 @@ export default function EditarGroupHomePage() {
                                         <div className="flex flex-wrap gap-2">
                                           <Select value={(btn.type as string) ?? "primary"} onValueChange={(v) => { const arr = [...buttons]; arr[i] = { ...arr[i], type: v as "primary" | "secondary" | "ghost" }; updateBlockConfigValue(index, "ctaButtons", arr); }}><SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Primary</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem></SelectContent></Select>
                                           <Input placeholder="URL ou #âncora" className="flex-1 min-w-[120px]" value={btn.href ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], href: e.target.value }; updateBlockConfigValue(index, "ctaButtons", arr); }} />
-                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i],InNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
+                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], openInNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
                                           <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.highlighted} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], highlighted: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Destaque</label>
                                         </div>
                                       </div>
@@ -2498,74 +2502,43 @@ export default function EditarGroupHomePage() {
                             <div className="space-y-4 rounded-lg border border-border p-3 bg-muted/10">
                               <p className="text-sm font-medium text-muted-foreground">Tabela Classificação — importe de Google Sheets</p>
                               <p className="text-xs text-muted-foreground">
-                                Use o template{" "}
-                                <a href="/templates/tabela-classificacao-template.csv" download className="underline text-amber-600 dark:text-amber-400">
-                                  tabela-classificacao-template.csv
-                                </a>
-                                {" | "}
-                                <a href="/api/public/cadastros/tabela-listas?format=csv" download="listas-tabela-dropdowns.csv" className="underline text-amber-600 dark:text-amber-400">
-                                  Baixar listas para dropdowns
-                                </a>
-                                . Colunas: competicao (ou categoria), temporada, time, logo_time, pontos, jogos, vitorias, empates, derrotas, gols_marcados, gols_sofridos, ultimos_jogos (W D L), proximo_jogo, logo_proximo. A posição é calculada pelo app conforme a fórmula cadastrada na competição.
+                                Planilha configurada em <strong>Configurações → Integrações</strong>. Use o botão abaixo para importar.
                               </p>
-                              <div className="space-y-2">
-                                <Label>URL da planilha ou ID</Label>
-                                <Input
-                                  placeholder="https://docs.google.com/spreadsheets/d/... ou ID"
-                                  value={((block.config?.tabelaSpreadsheetUrl as string) ?? "").toString()}
-                                  onChange={(e) => updateBlockConfigValue(index, "tabelaSpreadsheetUrl", e.target.value)}
-                                />
-                                <div className="flex gap-2">
-                                  <div className="flex-1 space-y-1">
-                                    <Label>GID da aba</Label>
-                                    <Input
-                                      placeholder="0"
-                                      value={((block.config?.tabelaSheetGid as string) ?? "0").toString()}
-                                      onChange={(e) => updateBlockConfigValue(index, "tabelaSheetGid", e.target.value)}
-                                    />
-                                  </div>
-                                  <div className="flex items-end pb-2">
-                                    <Button
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      disabled={syncingTabelaBlockIndex === index}
-                                      onClick={async () => {
-                                        const urlOrId = (block.config?.tabelaSpreadsheetUrl as string)?.trim();
-                                        const gid = ((block.config?.tabelaSheetGid as string)?.trim() || "0").toString();
-                                        if (!urlOrId) {
-                                          alert("Informe a URL ou ID da planilha.");
-                                          return;
-                                        }
-                                        setSyncingTabelaBlockIndex(index);
-                                        try {
-                                          const params = new URLSearchParams();
-                                          params.set("spreadsheetId", urlOrId);
-                                          params.set("gid", gid);
-                                          params.set("_t", Date.now().toString());
-                                          const res = await authFetch(`/api/google-sheets/tabela-classificacao?${params}`, { credentials: "include" });
-                                          const data = await res.json();
-                                          if (res.ok && Array.isArray(data.rows)) {
-                                            updateBlockConfigValue(index, "tabelaManualRows", data.rows);
-                                            updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
-                                          } else if (data.error) {
-                                            alert(data.error);
-                                          }
-                                        } catch {
-                                          alert("Erro ao importar. Verifique a URL e se a planilha está compartilhada.");
-                                        } finally {
-                                          setSyncingTabelaBlockIndex(null);
-                                        }
-                                      }}
-                                    >
-                                      {syncingTabelaBlockIndex === index ? (
-                                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                                      ) : null}
-                                      Atualizar com Google Sheets
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                disabled={syncingTabelaBlockIndex === index}
+                                onClick={async () => {
+                                  setSyncingTabelaBlockIndex(index);
+                                  try {
+                                    const res = await authFetch("/api/integrations/sync", {
+                                      method: "POST",
+                                      credentials: "include",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify({
+                                        type: "tabela_classificacao",
+                                      }),
+                                    });
+                                    const data = await res.json();
+                                    if (res.ok && Array.isArray(data.rows)) {
+                                      updateBlockConfigValue(index, "tabelaManualRows", data.rows);
+                                      updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
+                                    } else if (data.error) {
+                                      alert(data.error);
+                                    }
+                                  } catch {
+                                    alert("Erro ao importar. Verifique Configurações → Integrações.");
+                                  } finally {
+                                    setSyncingTabelaBlockIndex(null);
+                                  }
+                                }}
+                              >
+                                {syncingTabelaBlockIndex === index ? (
+                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                ) : null}
+                                Atualizar com Google Sheets
+                              </Button>
                               {((block.config?.tabelaManualRows as object[]) ?? []).length > 0 && (
                                 <p className="text-xs text-muted-foreground">
                                   {((block.config?.tabelaManualRows as object[]) ?? []).length} linhas importadas.

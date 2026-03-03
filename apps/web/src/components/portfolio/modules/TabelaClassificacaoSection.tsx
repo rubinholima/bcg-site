@@ -91,6 +91,7 @@ export function TabelaClassificacaoSection({
   fullWidth,
   titleAlign,
   inSection,
+  sectionColumns,
   showTitle = true,
 }: {
   block: HomeContentBlock;
@@ -101,6 +102,7 @@ export function TabelaClassificacaoSection({
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
   inSection?: boolean;
+  sectionColumns?: 1 | 2 | 3;
   showTitle?: boolean;
 }) {
   const ownRows = (block.config?.tabelaManualRows as TabelaStandingsRow[] | undefined) ?? [];
@@ -183,6 +185,9 @@ export function TabelaClassificacaoSection({
   const sectionSize = (block.config?.sectionSize as "minimal" | "compact" | "normal" | "large") || "normal";
   const density: "minimal" | "compact" | "normal" | "large" = inSection ? sectionSize : "normal";
 
+  /** Seção em 3 colunas: tabela compacta, fontes menores, barra sem overflow. */
+  const is3Col = Boolean(inSection && sectionColumns === 3);
+
   return (
     <section
       className={`relative overflow-hidden ${inSection ? "" : "border-b border-white/5"}`}
@@ -233,13 +238,15 @@ export function TabelaClassificacaoSection({
             </div>
           ) : (
             <>
-              {/* Barra de filtros — densidade conforme sectionSize */}
+              {/* Barra de filtros — em 3 col: fontes menores, min-w-0 para evitar overflow */}
               <div
-                className={`flex flex-nowrap items-center justify-evenly rounded-xl border border-white/10 bg-zinc-900/80 ${
-                  inSection && (density === "minimal" || density === "compact")
-                    ? density === "minimal"
-                      ? "mt-1 gap-1 px-1.5 py-1 sm:rounded-md sm:px-2"
-                      : "mt-2 gap-2 px-2 py-1.5 sm:rounded-lg sm:px-3"
+                className={`flex min-w-0 flex-nowrap items-center justify-between gap-1 overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 ${
+                  is3Col
+                    ? "mt-2 gap-0.5 px-1.5 py-1 sm:px-2"
+                    : inSection && (density === "minimal" || density === "compact")
+                      ? density === "minimal"
+                        ? "mt-1 gap-1 px-1.5 py-1 sm:rounded-md sm:px-2"
+                        : "mt-2 gap-2 px-2 py-1.5 sm:rounded-lg sm:px-3"
                     : inSection && density === "large"
                       ? "mt-8 gap-6 px-5 py-3.5 sm:rounded-2xl sm:px-6"
                       : "mt-6 gap-4 px-4 py-2.5 sm:rounded-2xl sm:px-6"
@@ -247,25 +254,29 @@ export function TabelaClassificacaoSection({
               >
                 <div
                   className={`flex shrink-0 items-center rounded-l-lg bg-zinc-800/80 ${
-                    inSection && (density === "minimal" || density === "compact")
-                      ? density === "minimal"
-                        ? "gap-0.5 px-1 py-0.5 sm:rounded-l-sm"
-                        : "gap-1 px-1.5 py-1 sm:rounded-l-md"
-                      : "gap-1.5 px-2 py-1.5 sm:rounded-l-xl"
+                    is3Col
+                      ? "gap-0.5 px-1 py-0.5"
+                      : inSection && (density === "minimal" || density === "compact")
+                        ? density === "minimal"
+                          ? "gap-0.5 px-1 py-0.5 sm:rounded-l-sm"
+                          : "gap-1 px-1.5 py-1 sm:rounded-l-md"
+                        : "gap-1.5 px-2 py-1.5 sm:rounded-l-xl"
                   }`}
                 >
-                  <Filter className="h-3.5 w-3.5 text-white" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-white sm:text-xs">
+                  <Filter className={is3Col ? "h-3 w-3 text-white" : "h-3.5 w-3.5 text-white"} />
+                  <span className={is3Col ? "text-[8px] font-semibold uppercase tracking-wider text-white" : "text-[10px] font-semibold uppercase tracking-wider text-white sm:text-xs"}>
                     {lang === "pt" ? "Filtro" : "Filter"}
                   </span>
                 </div>
                 {competicoes.length > 0 && (
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
-                      {lang === "pt" ? "Competições" : "Competitions"}
-                    </label>
+                  <div className="flex min-w-0 shrink items-center gap-0.5">
+                    {!is3Col && (
+                      <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
+                        {lang === "pt" ? "Competições" : "Competitions"}
+                      </label>
+                    )}
                     <Select value={competicaoSel} onValueChange={setCompeticaoSel}>
-                      <SelectTrigger className="h-7 w-[100px] border-white/10 bg-zinc-800/60 px-2 text-xs text-white focus:ring-amber-500/30 sm:w-[110px]">
+                      <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[72px] min-w-0 text-[9px]" : "h-7 w-[100px] px-2 text-xs sm:w-[110px]"}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -279,12 +290,14 @@ export function TabelaClassificacaoSection({
                   </div>
                 )}
                 {categorias.length > 0 && (
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
-                      {lang === "pt" ? "Categoria" : "Category"}
-                    </label>
+                  <div className="flex min-w-0 shrink items-center gap-0.5">
+                    {!is3Col && (
+                      <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
+                        {lang === "pt" ? "Categoria" : "Category"}
+                      </label>
+                    )}
                     <Select value={categoriaSel} onValueChange={setCategoriaSel}>
-                      <SelectTrigger className="h-7 w-[90px] border-white/10 bg-zinc-800/60 px-2 text-xs text-white focus:ring-amber-500/30 sm:w-[100px]">
+                      <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[64px] min-w-0 text-[9px]" : "h-7 w-[90px] px-2 text-xs sm:w-[100px]"}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -298,12 +311,14 @@ export function TabelaClassificacaoSection({
                   </div>
                 )}
                 {temporadas.length > 0 && (
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
-                      {lang === "pt" ? "Temporada" : "Season"}
-                    </label>
+                  <div className="flex min-w-0 shrink items-center gap-0.5">
+                    {!is3Col && (
+                      <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
+                        {lang === "pt" ? "Temporada" : "Season"}
+                      </label>
+                    )}
                     <Select value={temporadaSel} onValueChange={setTemporadaSel}>
-                      <SelectTrigger className="h-7 w-[70px] border-white/10 bg-zinc-800/60 px-2 text-xs text-white focus:ring-amber-500/30 sm:w-[80px]">
+                      <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[52px] min-w-0 text-[9px]" : "h-7 w-[70px] px-2 text-xs sm:w-[80px]"}`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -320,50 +335,54 @@ export function TabelaClassificacaoSection({
                   type="button"
                   onClick={handleReset}
                   className={`flex shrink-0 items-center rounded-r-lg bg-zinc-800/80 text-amber-400 transition-colors hover:bg-zinc-700/80 hover:text-amber-300 ${
-                    inSection && (density === "minimal" || density === "compact")
-                      ? density === "minimal"
-                        ? "gap-0.5 px-1 py-0.5 sm:rounded-r-sm"
-                        : "gap-1 px-1.5 py-1 sm:rounded-r-md"
-                      : "gap-1.5 px-2 py-1.5 sm:rounded-r-xl"
+                    is3Col
+                      ? "gap-0.5 px-1 py-0.5"
+                      : inSection && (density === "minimal" || density === "compact")
+                        ? density === "minimal"
+                          ? "gap-0.5 px-1 py-0.5 sm:rounded-r-sm"
+                          : "gap-1 px-1.5 py-1 sm:rounded-r-md"
+                        : "gap-1.5 px-2 py-1.5 sm:rounded-r-xl"
                   }`}
                   aria-label={lang === "pt" ? "Resetar filtros" : "Reset filters"}
                 >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider sm:text-xs">
+                  <RotateCcw className={is3Col ? "h-3 w-3" : "h-3.5 w-3.5"} />
+                  <span className={is3Col ? "text-[8px] font-semibold uppercase tracking-wider" : "text-[10px] font-semibold uppercase tracking-wider sm:text-xs"}>
                     {lang === "pt" ? "Reset" : "Reset"}
                   </span>
                 </button>
               </div>
 
-              {/* Tabela — densidade conforme sectionSize quando inSection */}
+              {/* Tabela — em 3 col: max 4 clubes visíveis, restante na rolagem; fonte legível; 2 col inalterado */}
               <div
                 className={`w-full rounded-xl border border-white/10 bg-zinc-900/60 ${
-                  inSection
-                    ? density === "minimal"
-                      ? "mt-1 max-h-[180px] overflow-auto rounded-lg"
-                      : density === "compact"
-                        ? "mt-2 max-h-[200px] overflow-auto rounded-lg"
-                        : density === "large"
-                          ? "mt-8 max-h-[260px] overflow-auto"
-                          : "mt-6 max-h-[220px] overflow-auto"
-                    : "mt-6 overflow-x-auto"
+                  is3Col
+                    ? "mt-2 max-h-[260px] overflow-y-auto overflow-x-hidden rounded-lg"
+                    : inSection
+                      ? density === "minimal"
+                        ? "mt-1 max-h-[180px] overflow-auto rounded-lg"
+                        : density === "compact"
+                          ? "mt-2 max-h-[200px] overflow-auto rounded-lg"
+                          : density === "large"
+                            ? "mt-8 max-h-[260px] overflow-auto"
+                            : "mt-6 max-h-[220px] overflow-auto"
+                      : "mt-6 overflow-x-auto"
                 }`}
               >
-                <table className={`w-full text-left ${inSection ? "min-w-0 table-fixed" : "min-w-[800px]"} ${inSection && (density === "minimal" || density === "compact") ? "text-xs" : "text-sm"}`}>
+                <table className={`w-full text-left ${is3Col ? "min-w-0 table-fixed text-xs" : inSection ? "min-w-0 table-fixed" : "min-w-[800px]"} ${!is3Col && (inSection && (density === "minimal" || density === "compact") ? "text-xs" : "text-sm")}`}>
                   <thead>
-                    <tr className="border-b border-white/10 text-zinc-400">
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Pos" : "Pos"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[22%] min-w-0 px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[22%] min-w-0 px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[22%] min-w-0 px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Time" : "Team"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "P" : "P"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "J" : "MP"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "V" : "W"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "E" : "D"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "D" : "L"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "GP" : "GF"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "GC" : "GA"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[5%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[5%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[5%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "SG" : "GD"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[12%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[12%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[12%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Últ. Resultados" : "Last Results"}</th>
-                      <th className={inSection ? (density === "minimal" || density === "compact" ? "w-[14%] min-w-0 px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[14%] min-w-0 px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[14%] min-w-0 px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Próximo" : "Next"}</th>
+                    <tr className={`border-b border-white/10 text-zinc-400 ${is3Col ? "text-xs" : ""}`}>
+                      <th className={is3Col ? "w-[4%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Pos" : "Pos"}</th>
+                      <th className={is3Col ? "w-[22%] min-w-0 px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[22%] min-w-0 px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[22%] min-w-0 px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[22%] min-w-0 px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Time" : "Team"}</th>
+                      <th className={is3Col ? "w-[4%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "P" : "P"}</th>
+                      <th className={is3Col ? "w-[3%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "J" : "MP"}</th>
+                      <th className={is3Col ? "w-[3%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "V" : "W"}</th>
+                      <th className={is3Col ? "w-[3%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "E" : "D"}</th>
+                      <th className={is3Col ? "w-[3%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[3%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[3%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[3%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "D" : "L"}</th>
+                      <th className={is3Col ? "w-[4%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "GP" : "GF"}</th>
+                      <th className={is3Col ? "w-[4%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "GC" : "GA"}</th>
+                      <th className={is3Col ? "w-[5%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[5%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[5%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[5%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "SG" : "GD"}</th>
+                      <th className={is3Col ? "w-[12%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[12%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[12%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[12%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Últ." : "Last"}</th>
+                      <th className={is3Col ? "w-[14%] min-w-0 px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[14%] min-w-0 px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[14%] min-w-0 px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[14%] min-w-0 px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Próx." : "Next"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -377,6 +396,7 @@ export function TabelaClassificacaoSection({
                         ourTeamLogoUrl={ourTeamLogoUrl}
                         inSection={inSection}
                         density={inSection ? density : "normal"}
+                        is3Col={is3Col}
                       />
                     ))}
                   </tbody>
@@ -398,6 +418,7 @@ function TabelaRow({
   ourTeamLogoUrl,
   inSection,
   density = "normal",
+  is3Col = false,
 }: {
   row: TabelaStandingsRow;
   isFirst: boolean;
@@ -406,6 +427,7 @@ function TabelaRow({
   ourTeamLogoUrl?: string | null;
   inSection?: boolean;
   density?: "minimal" | "compact" | "normal" | "large";
+  is3Col?: boolean;
 }) {
   const variacao = row.variacao ?? "same";
   const VariacaoIcon = () => {
@@ -440,15 +462,17 @@ function TabelaRow({
   };
 
   const cellClass =
-    inSection && (density === "minimal" || density === "compact")
-      ? density === "minimal"
-        ? "px-0.5 py-0.5 sm:py-1"
-        : "px-0.5 py-1 sm:py-1.5"
-      : inSection && density === "large"
-        ? "px-2 py-2.5 sm:px-3 sm:py-3"
-        : inSection
-          ? "px-1 py-2 sm:px-2 sm:py-3"
-          : "px-4 py-3";
+    is3Col
+      ? "px-1 py-1.5 sm:px-1.5 sm:py-2"
+      : inSection && (density === "minimal" || density === "compact")
+        ? density === "minimal"
+          ? "px-0.5 py-0.5 sm:py-1"
+          : "px-0.5 py-1 sm:py-1.5"
+        : inSection && density === "large"
+          ? "px-2 py-2.5 sm:px-3 sm:py-3"
+          : inSection
+            ? "px-1 py-2 sm:px-2 sm:py-3"
+            : "px-4 py-3";
   return (
     <tr
       className={`border-b border-white/5 transition-colors hover:bg-white/5 ${
@@ -462,17 +486,19 @@ function TabelaRow({
         </span>
       </td>
       <td className={cellClass}>
-        <div className={`flex items-center ${inSection ? "min-w-0 gap-1.5 sm:gap-2" : "gap-2"} ${inSection && (density === "minimal" || density === "compact") ? "gap-1" : ""}`}>
+        <div className={`flex items-center ${is3Col ? "min-w-0 gap-1 sm:gap-1.5" : inSection ? "min-w-0 gap-1.5 sm:gap-2" : "gap-2"} ${!is3Col && inSection && (density === "minimal" || density === "compact") ? "gap-1" : ""}`}>
           {logoUrl ? (
             <div
               className={`relative shrink-0 overflow-hidden rounded-full bg-white/10 ${
-                inSection && (density === "minimal" || density === "compact")
-                  ? density === "minimal"
-                    ? "h-4 w-4 sm:h-5 sm:w-5"
-                    : "h-5 w-5 sm:h-6 sm:w-6"
-                  : inSection
-                    ? "h-6 w-6 sm:h-8 sm:w-8"
-                    : "h-8 w-8"
+                is3Col
+                  ? "h-5 w-5 sm:h-6 sm:w-6"
+                  : inSection && (density === "minimal" || density === "compact")
+                    ? density === "minimal"
+                      ? "h-4 w-4 sm:h-5 sm:w-5"
+                      : "h-5 w-5 sm:h-6 sm:w-6"
+                    : inSection
+                      ? "h-6 w-6 sm:h-8 sm:w-8"
+                      : "h-8 w-8"
               }`}
             >
               <SmartImage src={logoUrl} alt="" fill className={`object-contain ${inSection ? "p-0.5 sm:p-1" : "p-1"}`} sizes="32px" />
@@ -480,13 +506,15 @@ function TabelaRow({
           ) : (
             <div
               className={`flex shrink-0 items-center justify-center rounded-full bg-zinc-700/50 font-bold text-zinc-400 ${
-                inSection && (density === "minimal" || density === "compact")
-                  ? density === "minimal"
-                    ? "h-4 w-4 text-[8px] sm:h-5 sm:w-5"
-                    : "h-5 w-5 text-[9px] sm:h-6 sm:w-6"
-                  : inSection
-                    ? "h-6 w-6 text-[10px] sm:h-8 sm:w-8 sm:text-xs"
-                    : "h-8 w-8 text-xs"
+                is3Col
+                  ? "h-4 w-4 text-[7px] sm:h-5 sm:w-5"
+                  : inSection && (density === "minimal" || density === "compact")
+                    ? density === "minimal"
+                      ? "h-4 w-4 text-[8px] sm:h-5 sm:w-5"
+                      : "h-5 w-5 text-[9px] sm:h-6 sm:w-6"
+                    : inSection
+                      ? "h-6 w-6 text-[10px] sm:h-8 sm:w-8 sm:text-xs"
+                      : "h-8 w-8 text-xs"
               }`}
             >
               {displayName?.charAt(0) ?? "?"}
@@ -516,13 +544,15 @@ function TabelaRow({
               <span
                 key={i}
                 className={`flex items-center justify-center rounded font-bold text-white ${bg} ${
-                  inSection && (density === "minimal" || density === "compact")
-                    ? density === "minimal"
-                      ? "h-3.5 w-3.5 text-[7px] sm:h-4 sm:w-4 sm:text-[8px]"
-                      : "h-4 w-4 text-[8px] sm:h-5 sm:w-5 sm:text-[9px]"
-                    : inSection
-                      ? "h-5 w-5 text-[9px] sm:h-6 sm:w-6 sm:text-[10px]"
-                      : "h-6 w-6 text-[10px]"
+                  is3Col
+                    ? "h-3.5 w-3.5 text-[7px] sm:h-4 sm:w-4 sm:text-[8px]"
+                    : inSection && (density === "minimal" || density === "compact")
+                      ? density === "minimal"
+                        ? "h-3.5 w-3.5 text-[7px] sm:h-4 sm:w-4 sm:text-[8px]"
+                        : "h-4 w-4 text-[8px] sm:h-5 sm:w-5 sm:text-[9px]"
+                      : inSection
+                        ? "h-5 w-5 text-[9px] sm:h-6 sm:w-6 sm:text-[10px]"
+                        : "h-6 w-6 text-[10px]"
                 }`}
                 title={letter}
               >
@@ -534,23 +564,25 @@ function TabelaRow({
       </td>
       <td className={cellClass}>
         {row.proximoJogo || logoProximo ? (
-          <div className={`flex items-center ${inSection ? "min-w-0 gap-1.5 sm:gap-2" : "gap-2"}`}>
+          <div className={`flex items-center ${is3Col ? "min-w-0 gap-0.5" : inSection ? "min-w-0 gap-1 sm:gap-1.5" : "gap-2"}`} title={is3Col && row.proximoJogo ? row.proximoJogo : undefined}>
             {logoProximo && (
               <div
                 className={`relative shrink-0 overflow-hidden rounded-full bg-white/10 ${
-                  inSection && (density === "minimal" || density === "compact")
-                    ? density === "minimal"
-                      ? "h-3.5 w-3.5 sm:h-4 sm:w-4"
-                      : "h-4 w-4 sm:h-5 sm:w-5"
-                    : inSection
-                      ? "h-5 w-5 sm:h-6 sm:w-6"
-                      : "h-6 w-6"
+                  is3Col
+                    ? "h-5 w-5 sm:h-6 sm:w-6"
+                    : inSection && (density === "minimal" || density === "compact")
+                      ? density === "minimal"
+                        ? "h-3.5 w-3.5 sm:h-4 sm:w-4"
+                        : "h-4 w-4 sm:h-5 sm:w-5"
+                      : inSection
+                        ? "h-5 w-5 sm:h-6 sm:w-6"
+                        : "h-6 w-6"
                 }`}
               >
                 <SmartImage src={logoProximo} alt="" fill className="object-contain p-0.5" sizes="24px" />
               </div>
             )}
-            {row.proximoJogo && (
+            {!is3Col && row.proximoJogo && (
               <span
                 className={`text-zinc-300 ${
                   inSection && (density === "minimal" || density === "compact")

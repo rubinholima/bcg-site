@@ -157,7 +157,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string }[] = [
   { type: "contato", label: "Contato" },
   { type: "global_presence", label: "Presença Global / Expansão" },
   { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)" },
-  { type: "section", label: "Seção em 2 colunas" },
+  { type: "section", label: "Seção (1, 2 ou 3 colunas)" },
 ];
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
@@ -165,6 +165,36 @@ export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"
   if (type === "text" && id.startsWith("text-")) return BLOCK_LABELS.text[lang] + ` (${id})`;
   return BLOCK_LABELS[id]?.[lang] ?? BLOCK_LABELS[type]?.[lang] ?? id;
 }
+
+/** Chaves de config que têm UI dedicada no editor. Usado em Campos adicionais para não duplicar. */
+export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
+  "titlePt", "titleEn", "bodyPt", "bodyEn", "visible",
+  "backgroundColor", "backgroundOverlayOpacity", "backgroundImage",
+  "titleGradientStart", "titleGradientEnd",
+  "imageUrl", "heroSlides", "heroCarouselEffect", "heroCarouselIntervalSeconds",
+  "headerLogoUrl", "headerLinks", "headerTextColor", "headerPreset", "backgroundMode", "linkStyle", "logoSize", "sticky", "borderBottom", "borderColor", "showLanguage", "showHomeLink",
+  "footerText", "footerLinks", "footerTextColor",
+  "highlightsPt", "highlightsEn", "highlightsIcons",
+  "whatImagePosition", "cardsPt", "cardsEn",
+  "bulletsPt", "bulletsEn", "howBulletsIcons",
+  "ctaLayout", "ctaTextAlign", "ctaContentWidth", "ctaBackgroundMode", "ctaOverlayOpacity", "ctaBlur", "ctaPreset", "ctaButtons", "primaryCTA", "secondaryCTA",
+  "themePreset", "accentColor", "mapTint", "overlayOpacity", "showGridLines", "sectionHeight", "subtitlePT", "subtitleEN", "counters", "locations",
+  "sectionColumns", "sectionLayout", "sectionLeftColumnTitlePt", "sectionLeftColumnTitleEn", "sectionRightColumnTitlePt", "sectionRightColumnTitleEn", "sectionMiddleColumnTitlePt", "sectionMiddleColumnTitleEn", "sectionLeftModules", "sectionRightModules", "sectionMiddleModules", "sectionPaddingTop", "sectionPaddingBottom",
+  "sectionLeftColumnBackgroundColor", "sectionLeftColumnBackgroundImage", "sectionLeftColumnBackgroundOverlayOpacity",
+  "sectionRightColumnBackgroundColor", "sectionRightColumnBackgroundImage", "sectionRightColumnBackgroundOverlayOpacity",
+  "sectionMiddleColumnBackgroundColor", "sectionMiddleColumnBackgroundImage", "sectionMiddleColumnBackgroundOverlayOpacity",
+  "proximosJogosDataSource", "proximosJogosManualFixtures", "proximosJogosOverrides", "proximosJogosPaddingTop", "proximosJogosPaddingBottom", "proximosJogosSpreadsheetUrl", "proximosJogosSheetGid", "fullBleedCarousel",
+  "ultimosResultadosPaddingTop", "ultimosResultadosPaddingBottom", "ultimosResultadosMaxItems", "resultadosManuais", "resultadosDetalhes",
+  "noticiasDataSource", "noticiasRssUrl", "noticiasManualItems", "noticiasMaxItems", "noticiasPaddingTop", "noticiasPaddingBottom",
+  "galeriaDataSource", "galeriaRssUrl", "galeriaManualItems", "galeriaMaxItems", "galeriaPaddingTop", "galeriaPaddingBottom",
+  "patrocinadoresTitleLogo", "patrocinadoresManualItems", "patrocinadoresPaddingTop", "patrocinadoresPaddingBottom",
+  "timesCategoriasCategories", "timesCategoriasSpreadsheetUrl", "timesCategoriasSheetGid", "timesCategoriasPaddingTop", "timesCategoriasPaddingBottom",
+  "tabelaDataSource", "tabelaManualRows", "tabelaSpreadsheetUrl", "tabelaSheetGid", "tabelaPaddingTop", "tabelaPaddingBottom",
+  "logoCarouselSectionPadding", "logoCarouselCardStyle", "logoCarouselCardHeight", "logoCarouselCardRadius", "logoCarouselCardBackground", "logoCarouselShowShadow", "logoCarouselGapBetweenCards", "logoCarouselAnimationSpeed", "logoCarouselPauseOnHover", "logoCarouselDirection", "logoCarouselOpenInNewTab",
+  "logoCarouselClubsEnabled", "logoCarouselClubsTitlePT", "logoCarouselClubsTitleEN", "logoCarouselClubsLimit", "logoCarouselClubsSorting",
+  "logoCarouselCompaniesEnabled", "logoCarouselCompaniesTitlePT", "logoCarouselCompaniesTitleEN", "logoCarouselCompaniesLimit", "logoCarouselCompaniesSorting",
+  "logoCarouselCardWidthRatio", "logoCarouselPaddingTop", "logoCarouselPaddingBottom",
+]);
 
 /** Tipos que usam config título + corpo (e opcionalmente imagem) no editor */
 export const BLOCK_TYPES_WITH_BODY: HomeBlockType[] = [
@@ -295,8 +325,11 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.sectionLeftColumnTitleEn = "";
     config.sectionRightColumnTitlePt = "";
     config.sectionRightColumnTitleEn = "";
+    config.sectionMiddleColumnTitlePt = "";
+    config.sectionMiddleColumnTitleEn = "";
     config.sectionLeftModules = [];
     config.sectionRightModules = [];
+    config.sectionMiddleModules = [];
     config.sectionPaddingTop = "compact";
     config.sectionPaddingBottom = "compact";
   }
@@ -369,6 +402,7 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.logoCarouselCompaniesLimit = 50;
     config.logoCarouselCompaniesSorting = "alphabetical";
   }
+
   return { id, type, sortOrder, config };
 }
 

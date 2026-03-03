@@ -113,13 +113,15 @@ function TeamLogo({
   ourTeamName,
   ourTeamLogoUrl,
   logoUrlOverride,
+  size: sizeProp,
 }: {
   teamName: string;
   ourTeamName: string | null | undefined;
   ourTeamLogoUrl: string | null | undefined;
   logoUrlOverride?: string | null;
+  size?: number;
 }) {
-  const size = FIXTURE_LOGO_SIZE;
+  const size = sizeProp ?? FIXTURE_LOGO_SIZE;
   const [externalExtIndex, setExternalExtIndex] = useState(0);
   const [showPlaceholder, setShowPlaceholder] = useState(false);
 
@@ -258,6 +260,7 @@ export function ProximosJogosSection({
   fullWidth,
   titleAlign = "left",
   inSection,
+  sectionColumns,
   showTitle = true,
 }: {
   block: HomeContentBlock;
@@ -268,6 +271,7 @@ export function ProximosJogosSection({
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
   inSection?: boolean;
+  sectionColumns?: 1 | 2 | 3;
   showTitle?: boolean;
 }) {
   const [fixtures, setFixtures] = useState<FixtureItem[]>([]);
@@ -279,6 +283,9 @@ export function ProximosJogosSection({
 
   const displayOurTeamName = tenantBySlug?.name ?? ourTeamName ?? undefined;
   const displayOurTeamLogoUrl = tenantBySlug?.logoUrl ?? ourTeamLogoUrl ?? undefined;
+
+  /** Em seção de 3 colunas: só logos, sem nome do time. */
+  const logosOnly = Boolean(inSection && sectionColumns === 3);
 
   const title =
     (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
@@ -519,30 +526,34 @@ export function ProximosJogosSection({
                     <div className="mb-3 text-2xl font-bold text-white">
                       {formatBigDate(f.startISO, lang)}
                     </div>
-                    {/* Times — uma linha só; nomes em text-xs e truncados para não quebrar */}
+                    {/* Times — logosOnly em 3 col: só logo (40px); 2 col: logo + nome */}
                     <div className="mb-4 flex flex-nowrap items-center gap-1.5 min-w-0">
-                      <div className="flex items-center gap-1.5 min-w-0 shrink">
+                      <div className={`flex items-center min-w-0 shrink ${logosOnly ? "justify-center" : "gap-1.5"}`} title={logosOnly ? (isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName) : undefined}>
                         <TeamLogo
                           teamName={f.homeTeamName}
                           ourTeamName={displayOurTeamName}
                           ourTeamLogoUrl={displayOurTeamLogoUrl}
                           logoUrlOverride={f.homeTeamLogoUrl}
                         />
-                        <span className="font-semibold text-white text-xs truncate">
-                          {isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}
-                        </span>
+                        {!logosOnly && (
+                          <span className="font-semibold text-white text-xs truncate" title={isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}>
+                            {isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}
+                          </span>
+                        )}
                       </div>
                       <span className="text-zinc-500 shrink-0 text-xs">×</span>
-                      <div className="flex items-center gap-1.5 min-w-0 shrink">
+                      <div className={`flex items-center min-w-0 shrink ${logosOnly ? "justify-center" : "gap-1.5"}`} title={logosOnly ? (isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName) : undefined}>
                         <TeamLogo
                           teamName={f.awayTeamName}
                           ourTeamName={displayOurTeamName}
                           ourTeamLogoUrl={displayOurTeamLogoUrl}
                           logoUrlOverride={f.awayTeamLogoUrl}
                         />
-                        <span className="font-semibold text-white text-xs truncate">
-                          {isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}
-                        </span>
+                        {!logosOnly && (
+                          <span className="font-semibold text-white text-xs truncate" title={isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}>
+                            {isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {/* CTA + local: ambos botões quando ambas URLs existirem */}

@@ -27,9 +27,10 @@ model Group {
   address      String?  @db.Text // Endereço da empresa
   contactName  String?  // Nome do contato
   contactPhone String?  // Telefone do contato
-  homeContent  Json?    // Conteúdo modular da página inicial (blocos) — NÃO é empresa
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  homeContent    Json?    // Conteúdo modular da página inicial (blocos) — NÃO é empresa
+  moduleDefaults Json?    // Configurações padrão por tipo de módulo (usadas ao adicionar em páginas)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model TenantKind {
@@ -67,6 +68,7 @@ model Tenant {
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]
   pages                   Page[]
+  players                 Player[]
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)
@@ -186,6 +188,63 @@ model VisitingTeam {
   id       String   @id @default(cuid())
   name     String   @unique
   logoUrl  String?  // pasta logos
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Jogadores (CRUD completo — dados base + médico, avaliações, status, desempenho)
+model Player {
+  id              String   @id @default(cuid())
+  tenantId        String   // clube/empresa
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category        String?  // principal, sub20, sub17, sub15, feminino
+  // Dados base (mesmos do Times por Categorias / Google Sheets)
+  name            String
+  photoUrl        String?
+  birthDate       String?  // YYYY-MM-DD
+  nationality     String?
+  height          Int?     // cm
+  weight          Int?     // kg
+  preferredFoot   String?  // left, right, both
+  jerseyNumber    Int?
+  position        String?  // GK, CB, etc.
+  fieldPositionX  Float?   // 0–100 posição no campo
+  fieldPositionY  Float?
+  currentTeam     String?
+  previousTeams   Json?    // string[]
+  seasonHistory   Json?    // PlayerSeasonHistory[]
+  socialMedia     Json?    // PlayerSocialMedia
+  matchesPlayed   Int?
+  goals           Int?
+  assists         Int?
+  yellowCards     Int?
+  redCards        Int?
+  marketValue     Float?   // euros
+  highlights      Json?    // string[] URLs
+  bioPT           String?  @db.Text
+  bioEN           String?  @db.Text
+  externalId      String?  // ID da linha no Google Sheets (para sync)
+  // Extensões (histórico médico, avaliações, status, etc.)
+  medicalHistory  Json?    // Array<{ date, type, description, daysOut, gamesMissed }>
+  evaluations     Json?    // Array<{ date, evaluator, rating, notes }>
+  status          String?  @default("available") // available, injured, suspended, absent, on_bench, not_in_squad
+  statusDetails   String?  @db.Text // detalhes lesão/suspensão
+  statusUntil     DateTime? // até quando (lesão/suspensão)
+  heatMapData     Json?    // dados do mapa de calor
+  performanceAnalysis String? @db.Text // análise de desempenho (texto livre ou JSON string)
+  images          Json?    // Array<{ type, url }> fotos de apoio
+  publicFields    Json?    // quais campos exibir na página pública: { medicalHistory, evaluations, status, marketValue, performanceAnalysis, images, highlights }
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([tenantId])
+  @@index([tenantId, category])
+}
+
+// Integrações centralizadas (planilhas Google únicas) — uma planilha por tipo, sistema filtra por slug
+model IntegrationConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique // times_categorias | proximos_jogos | tabela_classificacao
+  config    Json     // { spreadsheetUrl, gid }
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

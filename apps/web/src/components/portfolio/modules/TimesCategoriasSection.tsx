@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { PlayerItem, TeamCategory, PlayerSeasonHistory, PlayerSocialMedia } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
@@ -579,6 +579,8 @@ function PlayerModal({
 
 export function TimesCategoriasSection({
   block,
+  slug,
+  tenantId,
   lang,
   fullWidth,
   titleAlign = "left",
@@ -586,6 +588,8 @@ export function TimesCategoriasSection({
   showTitle = true,
 }: {
   block: HomeContentBlock;
+  slug?: string;
+  tenantId?: string;
   lang: "pt" | "en";
   fullWidth?: boolean;
   titleAlign?: "left" | "center" | "right";
@@ -593,7 +597,6 @@ export function TimesCategoriasSection({
   showTitle?: boolean;
 }) {
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
-  const categories = (block.config?.timesCategoriasCategories as TeamCategory[] | undefined) ?? [];
   const padTop = (block.config?.timesCategoriasPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.timesCategoriasPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
   const bgColor = (block.config?.backgroundColor as string)?.trim();
@@ -612,20 +615,49 @@ export function TimesCategoriasSection({
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
   const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
 
+  const [categories, setCategories] = useState<TeamCategory[]>([]);
+  const hasTenant = !!(tenantId?.trim() || slug?.trim());
+  const [loading, setLoading] = useState(hasTenant);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | "all">(() => {
-    const cats = (block.config?.timesCategoriasCategories as TeamCategory[] | undefined) ?? [];
-    const hasPrincipal = cats.some((c) => (c as { id?: string }).id === "principal");
-    return hasPrincipal ? "principal" : ((cats[0] as { id?: string } | undefined)?.id ?? "all");
-  });
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | "all">("principal");
+
+  // Dados do cadastro — usa tenantId (tenant da página) quando disponível; senão slug
+  useEffect(() => {
+    if (tenantId?.trim()) {
+      setLoading(true);
+      fetch(`/api/public/tenants/by-id/${encodeURIComponent(tenantId)}/players`, { cache: "no-store" })
+        .then((res) => (res.ok ? res.json() : { categories: [] }))
+        .then((data: { categories?: TeamCategory[] }) => {
+          const cats = Array.isArray(data?.categories) ? data.categories : [];
+          setCategories(cats);
+          const hasPrincipal = cats.some((c) => (c as { id?: string }).id === "principal");
+          setSelectedCategoryId(hasPrincipal ? "principal" : (cats[0]?.id ?? "all"));
+        })
+        .catch(() => setCategories([]))
+        .finally(() => setLoading(false));
+    } else if (slug?.trim()) {
+      setLoading(true);
+      fetch(`/api/public/tenants/${encodeURIComponent(slug)}/players`, { cache: "no-store" })
+        .then((res) => (res.ok ? res.json() : { categories: [] }))
+        .then((data: { categories?: TeamCategory[] }) => {
+          const cats = Array.isArray(data?.categories) ? data.categories : [];
+          setCategories(cats);
+          const hasPrincipal = cats.some((c) => (c as { id?: string }).id === "principal");
+          setSelectedCategoryId(hasPrincipal ? "principal" : (cats[0]?.id ?? "all"));
+        })
+        .catch(() => setCategories([]))
+        .finally(() => setLoading(false));
+    } else {
+      setCategories([]);
+      setLoading(false);
+    }
+  }, [tenantId, slug]);
 
   const handlePlayerClick = (player: PlayerItem) => {
     setSelectedPlayer(player);
     setModalOpen(true);
   };
-
-  if (categories.length === 0) return null;
 
   // Preparar categorias com nomes
   const categoriesWithNames = categories.map((category) => {
@@ -647,6 +679,8 @@ export function TimesCategoriasSection({
       ? categoriesWithNames
       : categoriesWithNames.filter((cat) => cat.id === selectedCategoryId);
 
+  const hasPlayers = categoriesWithNames.some((c) => (c.players?.length ?? 0) > 0);
+
   return (
     <AnimateInView>
       <section
@@ -667,17 +701,31 @@ export function TimesCategoriasSection({
           </div>
         )}
         <div className={`relative ${containerClass}`}>
-          {showTitle && title && (
+          {showTitle && (title || !hasPlayers) && (
             <SectionTitle
-              title={title}
+              title={title || (lang === "pt" ? "Times por Categorias" : "Teams by Category")}
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
               align={titleAlign ?? "left"}
             />
           )}
+
+          {loading && (
+            <p className="text-sm text-zinc-400 py-8">
+              {lang === "pt" ? "Carregando jogadores..." : "Loading players..."}
+            </p>
+          )}
+
+          {!loading && !hasPlayers && (
+            <p className="text-sm text-zinc-400 py-8">
+              {lang === "pt"
+                ? "Nenhum jogador visível. Cadastre em Cadastros → Jogadores (filtrando por este clube), use Sync da planilha para importar, e marque cada jogador como visível (ícone do olho)."
+                : "No visible players. Add them in Players (filter by this club), use Sync to import from sheet, and mark each as visible (eye icon)."}
+            </p>
+          )}
           
           {/* Seletor de categoria - sempre visível */}
-          {categoriesWithNames.length >= 1 && (
+          {!loading && categoriesWithNames.length >= 1 && (
             <div className="mb-8 flex justify-start">
               <Select value={selectedCategoryId} onValueChange={(v) => setSelectedCategoryId(v)}>
                 <SelectTrigger className="w-full max-w-xs bg-zinc-900/80 border-white/10 text-white">
@@ -697,6 +745,7 @@ export function TimesCategoriasSection({
             </div>
           )}
 
+          {!loading && hasPlayers && (
           <div className="space-y-12">
             {filteredCategories.map((category) => {
               const players = category.players?.filter((p) => p.name?.trim()) ?? [];
@@ -714,6 +763,7 @@ export function TimesCategoriasSection({
               );
             })}
           </div>
+          )}
         </div>
         <PlayerModal player={selectedPlayer} lang={lang} open={modalOpen} onClose={() => setModalOpen(false)} />
       </section>

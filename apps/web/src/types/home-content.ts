@@ -515,6 +515,8 @@ export interface PlayerItem {
   fieldPosition?: { x: number; y: number };
   /** Time atual */
   currentTeam?: string;
+  /** Slug do clube (ex.: boston-city-u20) — usado na sync da planilha */
+  clubSlug?: string;
   /** Histórico de equipes (array de strings) */
   previousTeams?: string[];
   /** Histórico detalhado por temporada */
