@@ -88,10 +88,10 @@ export function PatrocinadoresSection({
   const titleLogo = (block.config?.patrocinadoresTitleLogo as string)?.trim();
   const hasTitle = title && title.length > 0;
   const rawItems = (block.config?.patrocinadoresManualItems as PatrocinadorItem[] | undefined) ?? [];
-  const items = rawItems.map((i) => ({
-    ...i,
-    logoUrl: String(i.logoUrl ?? (i as Record<string, unknown>).logo_url ?? "").trim(),
-  }));
+  const items = rawItems.map((i) => {
+    const logo = i.logoUrl ?? (i as unknown as Record<string, unknown>).logo_url;
+    return { ...i, logoUrl: String(logo ?? "").trim() };
+  });
   const padTop = (block.config?.patrocinadoresPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.patrocinadoresPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
   const bgColor = (block.config?.backgroundColor as string)?.trim();

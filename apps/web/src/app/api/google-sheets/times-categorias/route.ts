@@ -147,10 +147,10 @@ const COLUMN_MAP: Record<
 > = {
   categoria: () => {}, // usado para agrupar, não no jogador
   category: () => {},
-  "clube/slug": (p, v) => { (p as Record<string, unknown>).clubSlug = v?.trim() || undefined; },
-  clube_slug: (p, v) => { (p as Record<string, unknown>).clubSlug = v?.trim() || undefined; },
-  "club/slug": (p, v) => { (p as Record<string, unknown>).clubSlug = v?.trim() || undefined; },
-  club_slug: (p, v) => { (p as Record<string, unknown>).clubSlug = v?.trim() || undefined; },
+  "clube/slug": (p, v) => { p.clubSlug = v?.trim() || undefined; },
+  clube_slug: (p, v) => { p.clubSlug = v?.trim() || undefined; },
+  "club/slug": (p, v) => { p.clubSlug = v?.trim() || undefined; },
+  club_slug: (p, v) => { p.clubSlug = v?.trim() || undefined; },
   nosso_time: () => {},
   nome: (p, v) => { p.name = v || p.name; },
   name: (p, v) => { p.name = v || p.name; },
