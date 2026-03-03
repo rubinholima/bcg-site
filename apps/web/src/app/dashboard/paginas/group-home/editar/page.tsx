@@ -814,11 +814,9 @@ export default function EditarGroupHomePage() {
                   </div>
                   {!collapsedBlockIds.has(block.id) && (
                   <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label className="text-muted-foreground">
-                        Aparência (todos os módulos)
-                      </Label>
-                    </div>
+                    <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                      <summary className="cursor-pointer px-3 py-2 font-medium">Aparência do Módulo</summary>
+                      <div className="border-t border-border px-3 py-3 grid gap-3 sm:grid-cols-2">
                     {(block.type !== "header" && block.type !== "footer") && (
                       <>
                         <div className="space-y-2">
@@ -959,6 +957,8 @@ export default function EditarGroupHomePage() {
                         </div>
                       </details>
                     )}
+                      </div>
+                    </details>
                     {block.type === "hero" && (() => {
                       const heroSlides: HeroSlide[] = Array.isArray(block.config?.heroSlides)
                         ? block.config.heroSlides
@@ -968,7 +968,7 @@ export default function EditarGroupHomePage() {
                       const interval = (block.config?.heroCarouselIntervalSeconds as HeroCarouselIntervalSeconds) ?? 10;
                       return (
                         <>
-                          <details open className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                             <summary className="cursor-pointer px-3 py-2.5 font-medium">
                               Slides do carrossel (URL + título por foto)
                             </summary>
@@ -1090,7 +1090,7 @@ export default function EditarGroupHomePage() {
                               </div>
                             </div>
                           </details>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                             <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título, subtítulo, descrição)</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
                               <div className="space-y-2">
@@ -1636,7 +1636,7 @@ export default function EditarGroupHomePage() {
                                   )}
                                 </div>
                               </details>
-                              <details className="rounded-lg border border-border bg-muted/20" open>
+                              <details className="rounded-lg border border-border bg-muted/20">
                                 <summary className="cursor-pointer px-3 py-2 font-medium">Links</summary>
                                 <div className="border-t border-border px-3 py-3 space-y-2">
                                   <Label>Links do cabeçalho (label, href)</Label>
@@ -1847,7 +1847,7 @@ export default function EditarGroupHomePage() {
                       };
                       return (
                         <div className="space-y-3 sm:col-span-2">
-                          <details open className="rounded-lg border border-border bg-muted/20">
+                          <details className="rounded-lg border border-border bg-muted/20">
                             <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título, subtítulo, descrição)</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
                               <div className="grid gap-2 sm:grid-cols-2">
@@ -1960,7 +1960,7 @@ export default function EditarGroupHomePage() {
                         <p className="text-xs text-muted-foreground">
                           Dados puxados automaticamente: clubes e empresas com logo em uma única faixa contínua.
                         </p>
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Geral (faixa e cards)</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <div className="space-y-1">
@@ -2068,7 +2068,7 @@ export default function EditarGroupHomePage() {
                     )}
                     {block.type === "founder" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details className="rounded-lg border border-border bg-muted/20" open>
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium flex items-center gap-2">
                             <User className="h-4 w-4" /> Perfil do Fundador
                           </summary>
@@ -2210,7 +2210,7 @@ export default function EditarGroupHomePage() {
                       </div>
                     )}
                     {block.type !== "header" && block.type !== "footer" && block.type !== "hero" && (
-                      <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
+                      <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (textos e ícones)</summary>
                         <div className="border-t border-border px-3 py-3 space-y-4">
                           {block.type === "highlights" && (() => {
@@ -2483,7 +2483,7 @@ export default function EditarGroupHomePage() {
                                         <div className="flex flex-wrap gap-2">
                                           <Select value={(btn.type as string) ?? "primary"} onValueChange={(v) => { const arr = [...buttons]; arr[i] = { ...arr[i], type: v as "primary" | "secondary" | "ghost" }; updateBlockConfigValue(index, "ctaButtons", arr); }}><SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Primary</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem></SelectContent></Select>
                                           <Input placeholder="URL ou #âncora" className="flex-1 min-w-[120px]" value={btn.href ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], href: e.target.value }; updateBlockConfigValue(index, "ctaButtons", arr); }} />
-                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], openInNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
+                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i],InNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
                                           <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.highlighted} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], highlighted: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Destaque</label>
                                         </div>
                                       </div>
@@ -2685,7 +2685,7 @@ export default function EditarGroupHomePage() {
                           )}
                           {block.type === "galeria" && (
                             <div className="space-y-3 sm:col-span-2">
-                              <details open className="rounded-lg border border-border bg-muted/20">
+                              <details className="rounded-lg border border-border bg-muted/20">
                                 <summary className="cursor-pointer px-3 py-2 font-medium">Galeria de fotos</summary>
                                 <div className="border-t border-border px-3 py-3 space-y-3">
                                   <p className="text-xs text-muted-foreground">

@@ -1021,16 +1021,14 @@ export default function EditarPaginaTenantPage() {
                   </div>
                   {!collapsedBlockIds.has(block.id) && (
                   <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label className="text-muted-foreground">
-                        Aparência (todos os módulos)
-                      </Label>
+                    <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                      <summary className="cursor-pointer px-3 py-2 font-medium">Aparência do Módulo</summary>
+                      <div className="border-t border-border px-3 py-3 grid gap-3 sm:grid-cols-2">
                       {(block.type === "proximos_jogos" || block.type === "noticias" || block.type === "ultimos_resultados" || block.type === "tabela") && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground sm:col-span-2">
                           Deixe cor e imagem de fundo vazios para o fundo da página aparecer continuado (sem bloco separado).
                         </p>
                       )}
-                    </div>
                     {(block.type !== "header" && block.type !== "footer") && (
                       <>
                       <div className="space-y-2">
@@ -1181,6 +1179,8 @@ export default function EditarPaginaTenantPage() {
                         </div>
                       </details>
                     )}
+                      </div>
+                    </details>
                     {block.type === "section" && (
                       <div className="space-y-4 sm:col-span-2">
                         <div className="grid gap-3 sm:grid-cols-2">
@@ -1245,7 +1245,7 @@ export default function EditarPaginaTenantPage() {
                           </div>
                         </div>
                         <div className={`grid gap-4 ${(block.config?.sectionColumns as number) === 2 ? "sm:grid-cols-2" : ""}`}>
-                          <details open className="rounded-lg border border-amber-500/40 bg-amber-500/10">
+                          <details className="rounded-lg border border-amber-500/40 bg-amber-500/10">
                             <summary className="cursor-pointer px-3 py-2 font-medium">
                               {(block.config?.sectionColumns as number) === 1 ? "Conteúdo" : "Coluna esquerda"} — {((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length} módulo(s)
                             </summary>
@@ -1363,7 +1363,7 @@ export default function EditarPaginaTenantPage() {
                             </div>
                           </details>
                           {(block.config?.sectionColumns as number) === 2 && (
-                            <details open className="rounded-lg border border-amber-500/40 bg-amber-500/10">
+                            <details className="rounded-lg border border-amber-500/40 bg-amber-500/10">
                               <summary className="cursor-pointer px-3 py-2 font-medium">
                                 Coluna direita — {((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).length} módulo(s)
                               </summary>
@@ -1486,7 +1486,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "patrocinadores" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Patrocinadores</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
@@ -1613,7 +1613,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "times_categorias" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Times por Categorias</summary>
                           <div className="border-t border-border px-3 py-3 space-y-4">
                             <p className="text-xs text-muted-foreground">
@@ -1755,7 +1755,7 @@ export default function EditarPaginaTenantPage() {
                               };
 
                               return (
-                                <details key={cat.value} open={players.length > 0} className="rounded-lg border border-border bg-card">
+                                <details key={cat.value} className="rounded-lg border border-border bg-card">
                                   <summary className="cursor-pointer px-3 py-2 font-medium text-sm">
                                     {cat.labelPT} ({players.length} {players.length === 1 ? "jogador" : "jogadores"})
                                   </summary>
@@ -2557,7 +2557,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "galeria" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Galeria de fotos</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
@@ -2725,7 +2725,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "noticias" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Feed de notícias</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
@@ -2818,7 +2818,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "proximos_jogos" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Espaço no topo e embaixo</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
@@ -3086,7 +3086,7 @@ export default function EditarPaginaTenantPage() {
                               </div>
                         </div>
                         {(block.config?.proximosJogosDataSource as string) === "manual" && (
-                            <details open className="rounded-lg border border-border bg-muted/20 mt-2">
+                            <details className="rounded-lg border border-border bg-muted/20 mt-2">
                               <summary className="cursor-pointer px-3 py-2 font-medium">Lista manual de jogos</summary>
                               <div className="border-t border-border px-3 py-3 space-y-3">
                                 {page?.tenant?.slug && (
@@ -3326,7 +3326,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "ultimos_resultados" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Últimos resultados</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
@@ -3612,7 +3612,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "tabela" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Tabela Classificação</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <p className="text-xs text-muted-foreground">
@@ -3708,7 +3708,7 @@ export default function EditarPaginaTenantPage() {
                       const interval = (block.config?.heroCarouselIntervalSeconds as HeroCarouselIntervalSeconds) ?? 10;
                       return (
                         <>
-                          <details open className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                             <summary className="cursor-pointer px-3 py-2.5 font-medium">
                               Slides do carrossel (URL + título por foto)
                             </summary>
@@ -3830,7 +3830,7 @@ export default function EditarPaginaTenantPage() {
                               </div>
                             </div>
                           </details>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                             <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título já acima)</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
                               <div className="space-y-2">
@@ -4367,7 +4367,7 @@ export default function EditarPaginaTenantPage() {
                                   )}
                                 </div>
                               </details>
-                              <details className="rounded-lg border border-border bg-muted/20" open>
+                              <details className="rounded-lg border border-border bg-muted/20">
                                 <summary className="cursor-pointer px-3 py-2 font-medium">Links</summary>
                                 <div className="border-t border-border px-3 py-3 space-y-2">
                                   <Label>Links do cabeçalho (label, href)</Label>
@@ -4578,7 +4578,7 @@ export default function EditarPaginaTenantPage() {
                       };
                       return (
                         <div className="space-y-3 sm:col-span-2">
-                          <details open className="rounded-lg border border-border bg-muted/20">
+                          <details className="rounded-lg border border-border bg-muted/20">
                             <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título, subtítulo, descrição)</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
                               <div className="grid gap-2 sm:grid-cols-2">
@@ -4671,7 +4671,7 @@ export default function EditarPaginaTenantPage() {
                         <p className="text-xs text-muted-foreground">
                           Dados puxados automaticamente: clubes e empresas com logo em uma única faixa contínua.
                         </p>
-                        <details open className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Geral (faixa e cards)</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <div className="space-y-1">
@@ -4779,7 +4779,7 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "founder" && (
                       <div className="space-y-3 sm:col-span-2">
-                        <details className="rounded-lg border border-border bg-muted/20" open>
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium flex items-center gap-2">
                             <User className="h-4 w-4" /> Perfil do Fundador
                           </summary>
@@ -5194,7 +5194,7 @@ export default function EditarPaginaTenantPage() {
                                         <div className="flex flex-wrap gap-2">
                                           <Select value={(btn.type as string) ?? "primary"} onValueChange={(v) => { const arr = [...buttons]; arr[i] = { ...arr[i], type: v as "primary" | "secondary" | "ghost" }; updateBlockConfigValue(index, "ctaButtons", arr); }}><SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="primary">Primary</SelectItem><SelectItem value="secondary">Secondary</SelectItem><SelectItem value="ghost">Ghost</SelectItem></SelectContent></Select>
                                           <Input placeholder="URL ou #âncora" className="flex-1 min-w-[120px]" value={btn.href ?? ""} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], href: e.target.value }; updateBlockConfigValue(index, "ctaButtons", arr); }} />
-                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], openInNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
+                                          <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.openInNewTab} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i],InNewTab: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Nova aba</label>
                                           <label className="flex items-center gap-1"><input type="checkbox" checked={!!btn.highlighted} onChange={(e) => { const arr = [...buttons]; arr[i] = { ...arr[i], highlighted: e.target.checked }; updateBlockConfigValue(index, "ctaButtons", arr); }} /> Destaque</label>
                                         </div>
                                       </div>
