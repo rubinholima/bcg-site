@@ -46,7 +46,7 @@
 
 ### 🚀 **FECHAMENTO DO DIA (GIT):**
 
-- **Último commit:** `c3398e2` (sync jogadores erro + encerramento). Antecedentes: `505481f` (migration Player), `e1ab2d4` (migrate:player-fix)
+- **Último commit:** `27aaf6c` (encerramento 3 mar)
 - **Branch:** `develop`
 - **Push:** ✅ para origin/develop
 
