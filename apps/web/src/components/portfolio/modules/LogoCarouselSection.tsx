@@ -6,11 +6,9 @@ import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { fetchPublicTenants, type PublicTenantCarouselItem } from "@/lib/public-tenants";
 
+/** Sempre /portfolio/[slug] no site principal (nunca subdomínio americanofc.bostoncitygroup.biz). */
 function buildTenantUrl(item: PublicTenantCarouselItem): string {
-  if (item.websiteUrl?.trim()) return item.websiteUrl.trim();
-  if (typeof window !== "undefined") return `/portfolio/${item.slug}`;
-  const base = process.env.NEXT_PUBLIC_PORTFOLIO_BASE_URL ?? "";
-  return base ? `${base.replace(/\/$/, "")}/portfolio/${item.slug}` : `/portfolio/${item.slug}`;
+  return `/portfolio/${item.slug}`;
 }
 
 function LogoStrip({
@@ -49,10 +47,11 @@ function LogoStrip({
     : (speedKey === "slow" ? 60 : speedKey === "fast" ? 25 : 40);
   const animationName = isStrobe ? `logo-marquee-${speedKey}` : "logo-marquee-6x";
   const minCardWidth = cardHeight * cardWidthRatio;
-  const logoSize = Math.round(cardHeight * 0.8);
+  const logoSize = Math.round(cardHeight * 0.65); /* tamanho fixo igual para todos */
 
   const cardStyleObj: React.CSSProperties = {
     height: `${cardHeight}px`,
+    width: `${minCardWidth}px`,
     minWidth: `${minCardWidth}px`,
     borderRadius: `${cardRadius}px`,
     boxShadow: showShadow ? "0 4px 14px rgba(0,0,0,0.12)" : undefined,
@@ -71,7 +70,7 @@ function LogoStrip({
 
   if (items.length === 0) return null;
 
-  /* 2 cópias para loop infinito perfeito: animação -50% = próximo bloco idêntico */
+  /* 2 cópias para loop infinito; ordem embaralhada evita logos iguais em sequência */
   const duplicated = [...items, ...items];
 
   return (
@@ -101,57 +100,47 @@ function LogoStrip({
           >
             {item.logoUrl ? (
               <span
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: logoSize,
-                  height: logoSize,
-                }}
+                className="flex shrink-0 items-center justify-center"
+                style={{ width: logoSize, height: logoSize, maxWidth: logoSize, maxHeight: logoSize }}
               >
                 {isSvgUrl(item.logoUrl) ? (
                   <img
                     src={getPublicImageUrl(item.logoUrl)}
                     alt={item.name}
-                    width={Math.round(logoSize)}
-                    height={Math.round(logoSize)}
-                    className="object-contain"
-                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    width={logoSize}
+                    height={logoSize}
+                    className="max-h-full max-w-full object-contain"
                   />
                 ) : (
                   <SmartImage
                     src={getPublicImageUrl(item.logoUrl)}
                     alt={item.name}
-                    width={Math.round(logoSize)}
-                    height={Math.round(logoSize)}
-                    className="object-contain"
-                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    width={logoSize}
+                    height={logoSize}
+                    className="max-h-full max-w-full object-contain"
                   />
                 )}
               </span>
             ) : fallbackLogo ? (
               <span
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: logoSize,
-                  height: logoSize,
-                }}
+                className="flex shrink-0 items-center justify-center"
+                style={{ width: logoSize, height: logoSize, maxWidth: logoSize, maxHeight: logoSize }}
               >
                 {isSvgUrl(fallbackLogo) ? (
                   <img
                     src={getPublicImageUrl(fallbackLogo)}
                     alt={item.name}
-                    width={Math.round(logoSize)}
-                    height={Math.round(logoSize)}
-                    className="object-contain"
-                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    width={logoSize}
+                    height={logoSize}
+                    className="max-h-full max-w-full object-contain"
                   />
                 ) : (
                   <SmartImage
                     src={getPublicImageUrl(fallbackLogo)}
                     alt={item.name}
-                    width={Math.round(logoSize)}
-                    height={Math.round(logoSize)}
-                    className="object-contain"
-                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    width={logoSize}
+                    height={logoSize}
+                    className="max-h-full max-w-full object-contain"
                   />
                 )}
               </span>
@@ -209,6 +198,16 @@ export function LogoCarouselSection({
   const companiesFallback = (config.logoCarouselCompaniesFallbackLogo as string)?.trim();
   const fallbackLogo = clubsFallback || companiesFallback;
 
+  /** Fisher-Yates shuffle — mistura clubes e empresas para não ficar logos iguais perto. */
+  function shuffle<T>(arr: T[]): T[] {
+    const out = [...arr];
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
+  }
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -217,7 +216,7 @@ export function LogoCarouselSection({
         companiesEnabled ? fetchPublicTenants("company", companiesLimit) : Promise.resolve([]),
       ]);
       if (!cancelled) {
-        setAllItems([...clubList, ...companyList]);
+        setAllItems(shuffle([...clubList, ...companyList]));
       }
       setLoading(false);
     };
