@@ -29,6 +29,30 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# <span style="color: red; font-size: 28px;">📅 2 DE MARÇO DE 2026 — ENCERRAMENTO (Acentuação módulos, sidebar Clubes/Empresas, logo grupo MediaPicker)</span>
+
+## **ACENTUAÇÃO, SIDEBAR, LOGO DO GRUPO**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+1. **Permissões dos Módulos** — Acentuação correta na tabela: `MODULE_DISPLAY_NAMES` em `dashboard-labels.ts` mapeia slug → nome exibido (evita mojibake no servidor).
+2. **Sidebar Cadastros** — Reorganizado: submenu **Clubes** (Categorias, Campeonatos, Estádios, Times adversários) e submenu **Empresas** (Listagem). Usuários permanece direto.
+3. **Logo do grupo** — MediaPicker para escolher da pasta logos/ do S3 em vez de só abrir explorador local; opção "Enviar novo do computador" mantida. Cache busting na img para evitar exibição de logo antiga (Atlético).
+4. **Fix** — Parênteses no `useState` (?? com ||) no sidebar.
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Criado:** `apps/web/src/lib/dashboard-labels.ts`  
+**Modificados:** `apps/web/src/app/dashboard/configuracoes/modulos/page.tsx`, `apps/web/src/components/dashboard/sidebar.tsx`, `apps/web/src/app/dashboard/grupo/page.tsx`
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Último commit:** `831423b` (MediaPicker logo grupo + cache busting; sidebar Clubes/Empresas)
+- **Branch:** `develop`
+- **Push:** ✅ para origin/develop
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 27 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Tabela classificação, sectionSize, CSV BOM, deploy migrate)</span>
 
 ## **TABELA CLASSIFICAÇÃO, DENSIDADE, CSV UTF-8, PRISMA MIGRATE NO DEPLOY**
