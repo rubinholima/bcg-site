@@ -25,10 +25,9 @@ export async function POST(request: NextRequest) {
     }
   );
   if (!configRes.ok) {
-    return NextResponse.json(
-      { error: "Não foi possível obter a configuração de integração" },
-      { status: configRes.status }
-    );
+    const errBody = await configRes.json().catch(() => ({}));
+    const msg = errBody?.message ?? errBody?.error ?? "Não foi possível obter a configuração de integração";
+    return NextResponse.json({ error: msg }, { status: configRes.status });
   }
   const item = (await configRes.json()) as { spreadsheetUrl?: string; gid?: string } | null;
   const spreadsheetUrl = item?.spreadsheetUrl?.trim();
@@ -78,12 +77,10 @@ export async function POST(request: NextRequest) {
     }),
   });
 
-  const syncResult = await syncRes.json();
+  const syncResult = await syncRes.json().catch(() => ({}));
   if (!syncRes.ok) {
-    return NextResponse.json(
-      syncResult?.message ?? syncResult ?? { error: "Erro ao sincronizar jogadores" },
-      { status: syncRes.status }
-    );
+    const msg = syncResult?.message ?? syncResult?.error ?? "Erro ao sincronizar jogadores";
+    return NextResponse.json({ error: msg }, { status: syncRes.status });
   }
   return NextResponse.json(syncResult);
 }

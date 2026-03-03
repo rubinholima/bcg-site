@@ -23,9 +23,10 @@ export function SyncPlayersButton() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error ?? "Erro ao sincronizar");
+        const msg = data?.error ?? data?.message ?? (typeof data === "string" ? data : "Erro ao sincronizar");
+        setError(msg);
         return;
       }
       const { created = 0, updated = 0, skipped = 0 } = data;

@@ -29,6 +29,29 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# <span style="color: red; font-size: 28px;">📅 3 DE MARÇO DE 2026 — ENCERRAMENTO (Tabela Player, migrate:player-fix, sync jogadores)</span>
+
+## **MIGRATION PLAYER, SCRIPT MANUAL, TRATAMENTO DE ERRO SYNC**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+1. **Tabela Player ausente no servidor** — Erro `The table public.Player does not exist`. O modelo estava no schema mas não havia migration. Criada `20260304000000_add_player_table`.
+2. **Script migrate:player-fix** — `pnpm run migrate:player-fix` aplica o SQL da migration diretamente, útil quando `prisma migrate deploy` diz "No pending migrations" mas a tabela não existe.
+3. **Sync jogadores — tratamento de erro** — route e SyncPlayersButton exibem a mensagem real do backend (message/error) em vez de genérica.
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Criados:** `apps/api/prisma/migrations/20260304000000_add_player_table/migration.sql`  
+**Modificados:** `apps/api/package.json`, `apps/web/src/app/api/integrations/sync-players/route.ts`, `apps/web/src/app/dashboard/cadastros/jogadores/SyncPlayersButton.tsx`, `docs/DESENVOLVIMENTO_DIARIO.md`
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Último commit:** `58e5ea1` (sync jogadores erro + encerramento). Antecedentes: `505481f` (migration Player), `e1ab2d4` (migrate:player-fix)
+- **Branch:** `develop`
+- **Push:** ✅ para origin/develop
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 2 DE MARÇO DE 2026 — ENCERRAMENTO (Acentuação módulos, sidebar Clubes/Empresas, logo grupo MediaPicker)</span>
 
 ## **ACENTUAÇÃO, SIDEBAR, LOGO DO GRUPO**
