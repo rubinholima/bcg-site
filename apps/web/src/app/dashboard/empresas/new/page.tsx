@@ -39,6 +39,7 @@ export default function NovaEmpresaPage() {
   const [loading, setLoading] = useState(false);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [tipos, setTipos] = useState<TenantKind[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -104,6 +105,8 @@ export default function NovaEmpresaPage() {
           throw new Error(err?.error ?? "Empresa criada, mas falha ao enviar logo.");
         }
       }
+      setSuccess(true);
+      await new Promise((r) => setTimeout(r, 800));
       router.push("/dashboard/empresas?success=true");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar empresa");
@@ -242,6 +245,11 @@ export default function NovaEmpresaPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {success && (
+              <div className="rounded-md bg-green-500/15 p-3 text-sm text-green-600 dark:text-green-500">
+                Empresa cadastrada com sucesso! Redirecionando...
+              </div>
+            )}
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                 {error}

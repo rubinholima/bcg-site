@@ -1,5 +1,21 @@
 import { buildBackendUrl } from "@/lib/apiProxy";
 
+/** Extrai mensagem legível da resposta de erro (JSON { error, message } ou texto) */
+async function getErrorMessage(res: Response): Promise<string> {
+  const text = await res.text().catch(() => res.statusText);
+  try {
+    const json = JSON.parse(text) as { error?: string; message?: string };
+    return json?.error ?? json?.message ?? text || res.statusText;
+  } catch {
+    if (text && text.length < 200 && !text.startsWith("<")) return text;
+    const code = res.status;
+    if (code === 405) return "Método não permitido (405). Faça o deploy no servidor e verifique CloudFront.";
+    if (code === 403) return "Acesso negado (403). Verifique CloudFront: Allowed HTTP Methods deve incluir POST.";
+    if (code === 401) return "Não autenticado. Faça login novamente.";
+    return res.statusText || `Erro ${code}`;
+  }
+}
+
 function getFetchUrl(path: string): string {
   const fullPath = path.startsWith("/") ? path : `/${path}`;
   if (typeof window !== "undefined") {
@@ -25,8 +41,8 @@ export const api = {
   async get<T>(path: string, init?: RequestInit): Promise<{ data: T }> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? { "Content-Type": "application/json", ...init?.headers } : await getServerHeaders(init);
-    const res = await fetch(url, { ...init, headers });
-    if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+    const res = await fetch(url, { ...init, headers, credentials: "include" });
+    if (!res.ok) throw new Error(await getErrorMessage(res));
     const data = (await res.json().catch(() => ({}))) as T;
     return { data };
   },
@@ -38,8 +54,9 @@ export const api = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
       ...init,
       headers,
+      credentials: "include",
     });
-    if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+    if (!res.ok) throw new Error(await getErrorMessage(res));
     const data = (await res.json().catch(() => ({}))) as T;
     return { data };
   },
@@ -51,15 +68,16 @@ export const api = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
       ...init,
       headers,
+      credentials: "include",
     });
-    if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+    if (!res.ok) throw new Error(await getErrorMessage(res));
     const data = (await res.json().catch(() => ({}))) as T;
     return { data };
   },
   async delete(path: string, init?: RequestInit): Promise<void> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? {} : await getServerHeaders(init);
-    const res = await fetch(url, { method: "DELETE", ...init, headers });
-    if (!res.ok) throw new Error(await res.text().catch(() => res.statusText));
+    const res = await fetch(url, { method: "DELETE", ...init, headers, credentials: "include" });
+    if (!res.ok) throw new Error(await getErrorMessage(res));
   },
 };
