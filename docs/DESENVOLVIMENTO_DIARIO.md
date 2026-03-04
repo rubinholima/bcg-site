@@ -29,6 +29,28 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# <span style="color: red; font-size: 28px;">📅 3 DE MARÇO DE 2026 — ENCERRAMENTO (Carrossel logos, Buildertrend sidebar)</span>
+
+## **CARROSSEL, BUILDERTREND, DEPLOY**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+1. **Carrossel de logos** — Tamanho padronizado para todos; link para `/portfolio/{slug}` (ex.: americanofc); shuffle para evitar logos repetidos em sequência.
+2. **Buildertrend no sidebar** — Tentativa de iframe bloqueada (X-Frame-Options); implementado link externo em nova aba (`target="_blank"`).
+3. **Fix** — Erro de sintaxe no sidebar (operador `||` órfão na expressão `isActive`).
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Modificados:** `apps/web/src/components/portfolio/modules/LogoCarouselSection.tsx`, `apps/web/src/components/dashboard/sidebar.tsx`
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commits do dia:** `2546b7d` (carrossel logos), `9439247` (Buildertrend link externo)
+- **Branch:** `develop`
+- **Push:** ✅ para origin/develop
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 3 DE MARÇO DE 2026 — ENCERRAMENTO (Tabela Player, migrate:player-fix, sync jogadores)</span>
 
 ## **MIGRATION PLAYER, SCRIPT MANUAL, TRATAMENTO DE ERRO SYNC**
