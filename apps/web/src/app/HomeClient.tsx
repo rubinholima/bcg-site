@@ -322,24 +322,45 @@ export default function HomeClient({
               selectedBg={headerLanguageSelectedBg}
               selectedTextColor={headerLanguageSelectedText}
             />
-            <a
-              href={`#${CLUBS_ID}`}
-              className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"
-            >
-              {t.nav.clubs}
-            </a>
-            <a
-              href={`#${COMPANIES_ID}`}
-              className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"
-            >
-              {t.nav.companies}
-            </a>
-            <a
-              href={`#${CONTACT_ID}`}
-              className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"
-            >
-              {t.nav.contact}
-            </a>
+            {(
+              (Array.isArray(headerBlock?.config?.headerLinks) && headerBlock.config.headerLinks.length > 0
+                ? headerBlock.config.headerLinks
+                : [
+                    { label: t.nav.clubs, href: `#${CLUBS_ID}` },
+                    { label: t.nav.companies, href: `#${COMPANIES_ID}` },
+                    { label: t.nav.contact, href: `#${CONTACT_ID}` },
+                  ]) as Array<{ label?: string; href?: string }>
+            )
+              .filter((l) => (l?.label ?? "").trim() && (l?.href ?? "").trim())
+              .map((link, i) => {
+                const href = (link.href ?? "").trim();
+                const label = (link.label ?? "").trim();
+                const isExternal = /^https?:\/\//i.test(href);
+                if (isExternal) {
+                  return (
+                    <a
+                      key={i}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"
+                      style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}
+                    >
+                      {label}
+                    </a>
+                  );
+                }
+                return (
+                  <Link
+                    key={i}
+                    href={href}
+                    className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"
+                    style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
             <Button
               asChild
               variant="outline"
