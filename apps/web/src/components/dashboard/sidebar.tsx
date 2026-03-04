@@ -24,6 +24,7 @@ import {
   Shirt,
   Layers,
   UserCircle,
+  HardHat,
 } from "lucide-react";
 import type { Group } from "@/types/group";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
@@ -50,6 +51,7 @@ const menuItems = [
   { title: DASHBOARD_LABELS.noticias, href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
   { title: DASHBOARD_LABELS.midia, href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
   { title: DASHBOARD_LABELS.configuracoes, href: "/dashboard/configuracoes", icon: Settings, moduleSlug: "configuracoes" },
+  { title: "Buildertrend", href: "https://buildertrend.net/", icon: HardHat, moduleSlug: "dashboard", external: true },
 ];
 
 export function Sidebar() {
@@ -126,7 +128,21 @@ export function Sidebar() {
             (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia")) ||
             (item.href === "/dashboard/paginas" && (pathname === "/dashboard/paginas" || pathname?.startsWith("/dashboard/paginas/")));
 
-          const linkEl = (
+          const linkEl = "external" in item && item.external ? (
+            <a
+              key={item.href}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span>{item.title}</span>
+            </a>
+          ) : (
             <Link
               key={item.href}
               href={item.href}
