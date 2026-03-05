@@ -32,7 +32,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -53,10 +55,13 @@ import type { Page, PageTheme } from "@/types/page";
 import {
   getBlockLabel,
   MODULE_OPTIONS,
+  tenantKindNameToModuleCategory,
   createBlock,
   BLOCK_TYPES_WITH_BODY,
   mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
+import { api } from "@/lib/api";
+import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -197,8 +202,12 @@ export default function EditarGroupHomePage() {
   const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
   const [globalAppearanceOpen, setGlobalAppearanceOpen] = useState(false);
   const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
+  const [tenantKinds, setTenantKinds] = useState<TenantKind[]>([]);
+  const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
+  const resolvedModuleCategory = moduleTypeFilter === "geral" ? "geral" : tenantKindNameToModuleCategory(tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? "");
+  const resolvedModuleLabel = moduleTypeFilter === "geral" ? "Geral" : (tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? moduleTypeFilter);
   const theme = (page?.content?.theme ?? {}) as PageTheme;
   /** Servidor pode devolver visible como boolean ou string "true"/"false"; tratar os dois. */
   const isBlockHidden = (b: HomeContentBlock) => {
@@ -257,6 +266,21 @@ export default function EditarGroupHomePage() {
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<TenantKind[]>("/tenant-kinds")
+      .then(({ data }) => {
+        if (!cancelled && Array.isArray(data)) setTenantKinds(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTenantKinds([]);
       });
     return () => {
       cancelled = true;
@@ -677,24 +701,43 @@ export default function EditarGroupHomePage() {
                   if (row.type === "add") {
                     return (
                       <div key="add-module" className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-4">
-                        <span className="text-sm font-semibold text-muted-foreground">
-                          Adicionar módulo:
-                        </span>
-                        <Select
-                          value=""
-                          onValueChange={(value) => {
-                            if (value) addModule(value as HomeBlockType);
-                          }}
-                        >
-                          <SelectTrigger className="w-[280px]">
+                        {tenantKinds.length > 0 && (
+                          <>
+                            <span className="text-sm font-semibold text-muted-foreground">Tipo de negócio:</span>
+                            <Select value={moduleTypeFilter} onValueChange={(v) => setModuleTypeFilter(v)}>
+                              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="geral">Geral</SelectItem>
+                                {tenantKinds.map((k) => (
+                                  <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-sm font-semibold text-muted-foreground ml-2">Adicionar módulo:</span>
+                          </>
+                        )}
+                        {tenantKinds.length === 0 && <span className="text-sm font-semibold text-muted-foreground">Adicionar módulo:</span>}
+                        <Select value="" onValueChange={(value) => { if (value) addModule(value as HomeBlockType); }}>
+                          <SelectTrigger className="w-[240px]">
                             <SelectValue placeholder="Hero, Destaques, Texto…" />
                           </SelectTrigger>
                           <SelectContent>
-                            {MIDDLE_MODULE_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.type} value={opt.type}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
+                            {[
+                              ...(resolvedModuleCategory !== "geral" ? [
+                                <SelectGroup key="geral">
+                                  <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
+                                  {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral").map((opt) => (
+                                    <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                  ))}
+                                </SelectGroup>,
+                              ] : []),
+                              <SelectGroup key={moduleTypeFilter}>
+                                <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
+                                {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory).map((opt) => (
+                                  <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectGroup>,
+                            ]}
                           </SelectContent>
                         </Select>
                       </div>

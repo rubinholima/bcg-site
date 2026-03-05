@@ -11,8 +11,8 @@ import HomeClient from "./HomeClient";
 export default async function Page() {
   const [groupHomeRes, portfolioRes, groupRes] = await Promise.allSettled([
     fetchGroupHomeFromBackend(),
-    fetchPublicPortfolio(),
-    fetchGroup(),
+      fetchPublicPortfolio(),
+      fetchGroup(),
   ]);
 
   const groupHome = groupHomeRes.status === "fulfilled" ? groupHomeRes.value : null;

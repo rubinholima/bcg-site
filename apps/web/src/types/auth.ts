@@ -5,7 +5,15 @@ export interface MeUser {
   cognitoSub: string;
 }
 
-export type MeRole = "super_admin" | "company_admin" | "editor" | "user";
+export type MeRole =
+  | "super_admin"
+  | "company_admin"
+  | "editor"
+  | "analista"
+  | "diretoria"
+  | "medico"
+  | "psicologo"
+  | "user";
 
 export interface MeResponse {
   user: MeUser;

@@ -1,0 +1,36 @@
+---
+description: Campos de data — usar date picker e garantir texto legível (claro em fundo escuro)
+alwaysApply: true
+---
+
+# Campos de data — Date Picker legível
+
+## Regra obrigatória
+
+**Sempre que houver um campo de data:**
+1. Use um date picker para escolher a data (input `type="date"` ou componente com calendário).
+2. O texto dentro do campo e do layer/popover deve ser **claro/legível** — nunca preto em fundo escuro.
+
+## Implementação
+
+- Use `input type="date"` (picker nativo) ou componente de calendário.
+- **Contraste:** texto sempre legível. Em tema escuro: `text-foreground` ou `text-white`; nunca deixar texto preto sobre fundo escuro.
+- Os inputs de data devem ter classe para garantir legibilidade: `text-foreground` (ou estilos específicos para date/time).
+- Coloque o date picker em posição visível (lado, linha própria, etc.), nunca "escondido" ou com contraste insuficiente.
+
+## Estilos globais
+
+O projeto já tem em `globals.css` estilos para `input[type="date"]`, `input[type="time"]` e `input[type="datetime-local"]` garantindo `color: hsl(var(--foreground))` e `color-scheme: dark` em tema escuro. Não remova nem sobrescreva sem garantir legibilidade.
+
+## Exemplo
+
+```tsx
+<Input
+  type="date"
+  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+  value={date}
+  onChange={(e) => setDate(e.target.value)}
+/>
+```
+
+Se o picker nativo tiver texto escuro no popover (controle do browser), considere componente customizado (ex: Radix Calendar) com estilos explícitos para tema escuro.

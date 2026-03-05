@@ -15,7 +15,20 @@ export class ModulesController {
 
   @Patch()
   async updatePermissions(
-    @Body() body: { permissions: Record<string, { company_admin?: boolean; editor?: boolean }> },
+    @Body()
+    body: {
+      permissions: Record<
+        string,
+        {
+          company_admin?: boolean;
+          editor?: boolean;
+          analista?: boolean;
+          diretoria?: boolean;
+          medico?: boolean;
+          psicologo?: boolean;
+        }
+      >;
+    },
   ): Promise<{ ok: boolean }> {
     await this.modulesService.updatePermissions(body.permissions ?? {});
     return { ok: true };

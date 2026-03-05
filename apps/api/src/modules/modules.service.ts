@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-const ROLES = ['super_admin', 'company_admin', 'editor'] as const;
+const MANAGED_ROLES = [
+  'company_admin',
+  'editor',
+  'analista',
+  'diretoria',
+  'medico',
+  'psicologo',
+] as const;
 
 export interface ModuleWithPermissions {
   slug: string;
@@ -9,6 +16,14 @@ export interface ModuleWithPermissions {
   sortOrder: number;
   company_admin: boolean;
   editor: boolean;
+  analista: boolean;
+  diretoria: boolean;
+  medico: boolean;
+  psicologo: boolean;
+}
+
+function getRoleAccess(roles: { role: string; canAccess: boolean }[], role: string): boolean {
+  return roles.find((r) => r.role === role)?.canAccess ?? false;
 }
 
 @Injectable()
@@ -34,28 +49,38 @@ export class ModulesService {
       orderBy: { sortOrder: 'asc' },
       include: { roles: true },
     });
-    return modules.map((m) => {
-      const company_admin = m.roles.find((r) => r.role === 'company_admin')?.canAccess ?? false;
-      const editor = m.roles.find((r) => r.role === 'editor')?.canAccess ?? false;
-      return {
-        slug: m.slug,
-        name: m.name,
-        sortOrder: m.sortOrder,
-        company_admin,
-        editor,
-      };
-    });
+    return modules.map((m) => ({
+      slug: m.slug,
+      name: m.name,
+      sortOrder: m.sortOrder,
+      company_admin: getRoleAccess(m.roles, 'company_admin'),
+      editor: getRoleAccess(m.roles, 'editor'),
+      analista: getRoleAccess(m.roles, 'analista'),
+      diretoria: getRoleAccess(m.roles, 'diretoria'),
+      medico: getRoleAccess(m.roles, 'medico'),
+      psicologo: getRoleAccess(m.roles, 'psicologo'),
+    }));
   }
 
   /** Atualiza permissões por slug. Apenas super_admin. */
   async updatePermissions(
-    permissions: Record<string, { company_admin?: boolean; editor?: boolean }>,
+    permissions: Record<
+      string,
+      {
+        company_admin?: boolean;
+        editor?: boolean;
+        analista?: boolean;
+        diretoria?: boolean;
+        medico?: boolean;
+        psicologo?: boolean;
+      }
+    >,
   ): Promise<void> {
     for (const [slug, perms] of Object.entries(permissions)) {
       const module = await this.prisma.module.findUnique({ where: { slug } });
       if (!module) continue;
 
-      for (const role of ['company_admin', 'editor'] as const) {
+      for (const role of MANAGED_ROLES) {
         const canAccess = perms[role];
         if (canAccess === undefined) continue;
         await this.prisma.moduleRole.upsert({

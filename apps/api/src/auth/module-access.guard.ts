@@ -30,12 +30,8 @@ export class ModuleAccessGuard implements CanActivate {
       throw new ForbiddenException('Not authenticated');
     }
 
-    const groups: string[] = user['cognito:groups'] ?? [];
-    let role = 'user';
-    if (groups.includes('super_admin')) role = 'super_admin';
-    else if (groups.includes('company_admin')) role = 'company_admin';
-    else if (groups.includes('editor')) role = 'editor';
-
+    const role = user.role ?? user['cognito:groups']?.[0] ?? 'user';
+    if (role === 'super_admin') return true;
     const slugs = await this.modulesService.getSlugsForRole(role);
     if (slugs.includes(requiredSlug)) return true;
 

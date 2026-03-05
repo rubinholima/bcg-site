@@ -16,7 +16,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -37,10 +39,13 @@ import {
   getOrderedBlocks,
   getBlockLabel,
   MODULE_OPTIONS,
+  tenantKindNameToModuleCategory,
   createBlock,
   BLOCK_TYPES_WITH_BODY,
   mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
+import { api } from "@/lib/api";
+import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 
 const emptyContent = (): HomeContentDto => ({
@@ -99,6 +104,11 @@ export default function ConteudoPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [tenantKinds, setTenantKinds] = useState<TenantKind[]>([]);
+  const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
+
+  const resolvedModuleCategory = moduleTypeFilter === "geral" ? "geral" : tenantKindNameToModuleCategory(tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? "");
+  const resolvedModuleLabel = moduleTypeFilter === "geral" ? "Geral" : (tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? moduleTypeFilter);
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +127,21 @@ export default function ConteudoPage() {
       .catch(() => setError("Erro ao carregar conteúdo."))
       .finally(() => {
         if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<TenantKind[]>("/tenant-kinds")
+      .then(({ data }) => {
+        if (!cancelled && Array.isArray(data)) setTenantKinds(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTenantKinds([]);
       });
     return () => {
       cancelled = true;
@@ -783,22 +808,48 @@ export default function ConteudoPage() {
               ))}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Adicionar módulo:</span>
+              {tenantKinds.length > 0 && (
+                <>
+                  <span className="text-sm font-semibold text-muted-foreground">Tipo de negócio:</span>
+                  <Select value={moduleTypeFilter} onValueChange={(v) => setModuleTypeFilter(v)}>
+                    <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="geral">Geral</SelectItem>
+                      {tenantKinds.map((k) => (
+                        <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm font-semibold text-muted-foreground ml-2">Adicionar módulo:</span>
+                </>
+              )}
+              {tenantKinds.length === 0 && <span className="text-sm font-semibold text-muted-foreground">Adicionar módulo:</span>}
               <Select
                 value=""
                 onValueChange={(value) => {
                   if (value) addModule(value as HomeBlockType);
                 }}
               >
-                <SelectTrigger className="w-[280px]">
+                <SelectTrigger className="w-[240px]">
                   <SelectValue placeholder="Escolha o módulo (Hero, Destaque, Texto…)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MODULE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.type} value={opt.type}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
+                  {[
+                    ...(resolvedModuleCategory !== "geral" ? [
+                      <SelectGroup key="geral">
+                        <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
+                        {MODULE_OPTIONS.filter((o) => o.category === "geral").map((opt) => (
+                          <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectGroup>,
+                    ] : []),
+                    <SelectGroup key={moduleTypeFilter}>
+                      <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
+                      {MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory).map((opt) => (
+                        <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectGroup>,
+                  ]}
                 </SelectContent>
               </Select>
             </div>

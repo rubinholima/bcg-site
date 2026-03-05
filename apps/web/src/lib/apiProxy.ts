@@ -155,10 +155,33 @@ export async function forwardRequest(
     });
 
     // Lê a resposta
-    const contentType = res.headers.get("content-type");
-    let responseData: any;
-    
-    if (contentType?.includes("application/json")) {
+    const contentType = res.headers.get("content-type") ?? "";
+    const isBinary =
+      contentType.includes("application/pdf") ||
+      contentType.includes("application/octet-stream");
+
+    // Prepara headers da resposta
+    const nextResponseHeaders: Record<string, string> = { ...responseHeaders };
+    const headersToCopy = ["content-type", "cache-control", "content-disposition"];
+    headersToCopy.forEach((headerName) => {
+      const value = res.headers.get(headerName);
+      if (value) {
+        nextResponseHeaders[headerName] = value;
+      }
+    });
+
+    // Respostas binárias (PDF, etc): repassa o buffer
+    if (isBinary) {
+      const buffer = await res.arrayBuffer();
+      return new NextResponse(buffer, {
+        status: res.status,
+        headers: nextResponseHeaders,
+      });
+    }
+
+    // JSON ou texto
+    let responseData: unknown;
+    if (contentType.includes("application/json")) {
       try {
         responseData = await res.json();
       } catch {
@@ -168,24 +191,10 @@ export async function forwardRequest(
       responseData = await res.text();
     }
 
-    // Prepara headers da resposta
-    const nextResponseHeaders: Record<string, string> = { ...responseHeaders };
-    
-    // Copia headers relevantes do backend (exceto alguns que o Next.js gerencia)
-    const headersToCopy = ["content-type", "cache-control", "content-disposition"];
-    headersToCopy.forEach((headerName) => {
-      const value = res.headers.get(headerName);
-      if (value) {
-        nextResponseHeaders[headerName] = value;
-      }
-    });
-
-    // Garante charset UTF-8 em respostas JSON
-    if (contentType?.includes("application/json") && !nextResponseHeaders["content-type"]?.includes("charset")) {
+    if (contentType.includes("application/json") && !nextResponseHeaders["content-type"]?.includes("charset")) {
       nextResponseHeaders["content-type"] = "application/json; charset=utf-8";
     }
 
-    // Retorna resposta com mesmo status
     if (typeof responseData === "string") {
       return new NextResponse(responseData, {
         status: res.status,

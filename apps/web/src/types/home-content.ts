@@ -79,6 +79,13 @@ export type HomeBlockType =
   | "contato"
   | "global_presence"
   | "logo_carousel"
+  // Imobiliária
+  | "imoveis_destaque"
+  | "formulario_captura"
+  | "diferenciais"
+  | "numeros"
+  | "como_funciona"
+  | "faq"
   // Container: seção com colunas
   | "section";
 

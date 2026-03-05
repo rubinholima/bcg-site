@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import {
   LayoutDashboard,
-  Building2,
   Globe,
   FileText,
   Image,
@@ -19,61 +18,50 @@ import {
   KeyRound,
   ChevronDown,
   ChevronRight,
-  Trophy,
-  MapPin,
+  Building2,
   Shirt,
-  Layers,
-  UserCircle,
   HardHat,
 } from "lucide-react";
 import type { Group } from "@/types/group";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
+import { DASHBOARD_MENU } from "@/lib/dashboard-menu.config";
 
-const cadastrosClubesItems = [
-  { title: "Categorias", href: "/dashboard/cadastros/categorias", icon: Layers, moduleSlug: "tipos" },
-  { title: "Campeonatos", href: "/dashboard/cadastros/campeonatos", icon: Trophy, moduleSlug: "tipos" },
-  { title: DASHBOARD_LABELS.estadios, href: "/dashboard/cadastros/estadios", icon: MapPin, moduleSlug: "tipos" },
-  { title: DASHBOARD_LABELS.timesAdversarios, href: "/dashboard/cadastros/times", icon: Shirt, moduleSlug: "tipos" },
-  { title: "Jogadores", href: "/dashboard/cadastros/jogadores", icon: UserCircle, moduleSlug: "tipos" },
-];
+const cadastrosConfig = DASHBOARD_MENU.find((m) => m.slug === "cadastros");
+const cadastrosEmpresas = cadastrosConfig?.children?.find((c) => c.slug === "empresas");
+const cadastrosClubes = cadastrosConfig?.children?.find((c) => c.slug === "clubes");
 
-const cadastrosEmpresasItems: { title: string; href: string; icon: typeof Building2 | typeof Tag; moduleSlug: string }[] = [
-  { title: "Listagem", href: "/dashboard/empresas", icon: Building2, moduleSlug: "empresas" },
-  { title: "Tipos de Negócios", href: "/dashboard/cadastros/tipos", icon: Tag, moduleSlug: "tipos" },
-];
+const cadastrosClubesItems = (cadastrosClubes?.children ?? []).map((c) => ({
+  title: c.label,
+  href: c.href!,
+  icon: c.icon!,
+  moduleSlug: c.moduleSlug,
+}));
 
-const menuItems = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, moduleSlug: "dashboard" },
-  { title: "Grupo Master", href: "/dashboard/grupo", icon: Globe, moduleSlug: "grupo_master" },
-  { title: "Emails", href: "/dashboard/emails", icon: Mail, moduleSlug: "emails" },
-  { title: "Senhas", href: "/dashboard/senhas", icon: KeyRound, moduleSlug: "vault" },
-  { title: DASHBOARD_LABELS.paginas, href: "/dashboard/paginas", icon: FileText, moduleSlug: "paginas" },
-  { title: DASHBOARD_LABELS.noticias, href: "/dashboard/noticias", icon: Newspaper, moduleSlug: "noticias" },
-  { title: DASHBOARD_LABELS.midia, href: "/dashboard/midia", icon: Image, moduleSlug: "midia" },
-  { title: DASHBOARD_LABELS.configuracoes, href: "/dashboard/configuracoes", icon: Settings, moduleSlug: "configuracoes" },
-  { title: "Buildertrend", href: "https://buildertrend.net/", icon: HardHat, moduleSlug: "dashboard", external: true },
-];
+const cadastrosEmpresasItems = (cadastrosEmpresas?.children ?? []).map((c) => ({
+  title: c.label,
+  href: c.href!,
+  icon: c.icon!,
+  moduleSlug: c.moduleSlug,
+}));
+
+/** Itens do menu na ordem: até Grupo Master, depois Cadastros (injetado), resto. */
+const menuSections = DASHBOARD_MENU.filter((m) => m.href || m.external);
 
 export function Sidebar() {
   const pathname = usePathname();
   const { canAccessModule, canAccessDashboard } = useAuth();
   const [group, setGroup] = useState<Group | null>(null);
-  const [cadastrosOpen, setCadastrosOpen] = useState(
-    () =>
-      (pathname?.startsWith("/dashboard/cadastros") ||
-        pathname?.startsWith("/dashboard/usuarios") ||
-        pathname?.startsWith("/dashboard/empresas") ||
-        pathname?.startsWith("/dashboard/tenants")) ??
-      false
-  );
-  const [clubesOpen, setClubesOpen] = useState(
-    () => pathname?.startsWith("/dashboard/cadastros") ?? false
-  );
+  const inCadastros =
+    pathname?.startsWith("/dashboard/cadastros") ||
+    pathname?.startsWith("/dashboard/usuarios") ||
+    pathname?.startsWith("/dashboard/empresas") ||
+    pathname?.startsWith("/dashboard/tenants");
+  const [cadastrosOpen, setCadastrosOpen] = useState(inCadastros);
+  const [clubesOpen, setClubesOpen] = useState(pathname?.startsWith("/dashboard/cadastros") ?? false);
   const [empresasOpen, setEmpresasOpen] = useState(
-    () =>
-      (pathname?.startsWith("/dashboard/empresas") ||
-        pathname?.startsWith("/dashboard/tenants") ||
-        pathname?.startsWith("/dashboard/cadastros/tipos")) ??
+    (pathname?.startsWith("/dashboard/empresas") ||
+      pathname?.startsWith("/dashboard/tenants") ||
+      pathname?.startsWith("/dashboard/cadastros/tipos")) ??
       false
   );
   useEffect(() => {
@@ -111,14 +99,14 @@ export function Sidebar() {
 
       {/* Menu */}
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-        {menuItems
+        {menuSections
           .filter(
             (item) =>
               canAccessModule(item.moduleSlug) ||
               (item.moduleSlug === "emails" && canAccessDashboard),
           )
           .flatMap((item) => {
-          const Icon = item.icon;
+          const Icon = item.icon!;
           const isActive =
             pathname === item.href ||
             (item.href === "/dashboard/grupo" && pathname?.startsWith("/dashboard/grupo")) ||
@@ -128,7 +116,7 @@ export function Sidebar() {
             (item.href === "/dashboard/midia" && pathname?.startsWith("/dashboard/midia")) ||
             (item.href === "/dashboard/paginas" && (pathname === "/dashboard/paginas" || pathname?.startsWith("/dashboard/paginas/")));
 
-          const linkEl = "external" in item && item.external ? (
+          const linkEl = item.external ? (
             <a
               key={item.href}
               href={item.href}
@@ -140,12 +128,12 @@ export function Sidebar() {
               )}
             >
               <Icon className="h-5 w-5" />
-              <span>{item.title}</span>
+              <span>{item.label}</span>
             </a>
           ) : (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href!}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
@@ -154,7 +142,7 @@ export function Sidebar() {
               )}
             >
               <Icon className="h-5 w-5" />
-              <span>{item.title}</span>
+              <span>{item.label}</span>
             </Link>
           );
 
@@ -170,25 +158,19 @@ export function Sidebar() {
                   type="button"
                   onClick={() => setCadastrosOpen((o) => !o)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    cadastrosOpen ||
-                      pathname?.startsWith("/dashboard/cadastros") ||
-                      pathname?.startsWith("/dashboard/usuarios") ||
-                      pathname?.startsWith("/dashboard/empresas") ||
-                      pathname?.startsWith("/dashboard/tenants")
+                    "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    cadastrosOpen || inCadastros
                       ? "bg-accent/50 text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
                 >
-                  <span className="flex items-center gap-3">
-                    <Tag className="h-5 w-5" />
-                    Cadastros
-                  </span>
                   {cadastrosOpen ? (
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4 shrink-0" aria-label="Recolher" />
                   ) : (
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                   )}
+                  <Tag className="h-5 w-5 shrink-0" />
+                  <span>Cadastros</span>
                 </button>
                 {cadastrosOpen && (
                   <div className="mt-1 ml-4 space-y-1 border-l border-border pl-3">
@@ -212,17 +194,15 @@ export function Sidebar() {
                           type="button"
                           onClick={() => setEmpresasOpen((o) => !o)}
                           className={cn(
-                            "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
+                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
                             empresasOpen
                               ? "bg-accent/50 text-accent-foreground"
                               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                           )}
                         >
-                          <span className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4" />
-                            Empresas
-                          </span>
-                          {empresasOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          {empresasOpen ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+                          <Building2 className="h-4 w-4 shrink-0" />
+                          Empresas
                         </button>
                         {empresasOpen && (
                           <div className="ml-4 space-y-0.5 border-l border-border pl-2">
@@ -264,17 +244,15 @@ export function Sidebar() {
                           type="button"
                           onClick={() => setClubesOpen((o) => !o)}
                           className={cn(
-                            "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
+                            "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors",
                             clubesOpen
                               ? "bg-accent/50 text-accent-foreground"
                               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                           )}
                         >
-                          <span className="flex items-center gap-2">
-                            <Shirt className="h-4 w-4" />
-                            Clubes Assets
-                          </span>
-                          {clubesOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          {clubesOpen ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+                          <Shirt className="h-4 w-4 shrink-0" />
+                          Clubes Assets
                         </button>
                         {clubesOpen && (
                           <div className="ml-4 space-y-0.5 border-l border-border pl-2">

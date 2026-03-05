@@ -123,41 +123,75 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   contato: { pt: "Contato", en: "Contact" },
   global_presence: { pt: "Presença Global / Expansão", en: "Global Presence" },
   logo_carousel: { pt: "Carrossel — Logos (Clubes & Empresas)", en: "Logo Carousel (Clubs & Companies)" },
+  // Imobiliária
+  imoveis_destaque: { pt: "Imóveis em destaque", en: "Featured properties" },
+  formulario_captura: { pt: "Formulário de captura (leads)", en: "Lead capture form" },
+  diferenciais: { pt: "Diferenciais", en: "Differentiators" },
+  numeros: { pt: "Números / Estatísticas", en: "Stats & numbers" },
+  como_funciona: { pt: "Como funciona (processo)", en: "How it works (process)" },
+  faq: { pt: "Perguntas frequentes", en: "FAQ" },
 };
 
-/** Opções para o dropdown "Adicionar módulo" — clubes de futebol e empresas */
-export const MODULE_OPTIONS: { type: HomeBlockType; label: string }[] = [
-  { type: "header", label: "Cabeçalho" },
-  { type: "footer", label: "Rodapé" },
-  { type: "hero", label: "Hero" },
-  { type: "highlights", label: "Destaques" },
-  { type: "text", label: "Bloco de texto" },
-  { type: "custom", label: "Customizado (título + texto + imagem)" },
-  { type: "what", label: "O que fazemos" },
-  { type: "clubs", label: "Clubes" },
-  { type: "companies", label: "Empresas" },
-  { type: "founder", label: "Fundador" },
-  { type: "how", label: "Como funciona" },
-  { type: "cta", label: "CTA final" },
-  // Clubes (futebol)
-  { type: "proximos_jogos", label: "Próximos jogos" },
-  { type: "ultimos_resultados", label: "Últimos resultados" },
-  { type: "times_categorias", label: "Times por categorias" },
-  { type: "noticias", label: "Notícias" },
-  { type: "calendario", label: "Calendário / Agenda" },
-  { type: "tabela", label: "Tabela / Classificação" },
-  { type: "patrocinadores", label: "Patrocinadores" },
-  { type: "galeria", label: "Galeria de fotos" },
+/** Categorias por tipo de negócio — agrupam módulos no dropdown */
+export const MODULE_CATEGORIES = [
+  { id: "geral", label: "Geral (todos)" },
+  { id: "futebol", label: "Futebol (clubes)" },
+  { id: "empresas", label: "Empresas (geral)" },
+  { id: "imobiliaria", label: "Imobiliária" },
+] as const;
+
+export type ModuleCategory = (typeof MODULE_CATEGORIES)[number]["id"];
+
+/** Mapeia o nome de um TenantKind (cadastro) para ModuleCategory (filtro de módulos). */
+export function tenantKindNameToModuleCategory(kindName: string): ModuleCategory {
+  const k = kindName.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  if (k.includes("futebol") || k.includes("clube") || k.includes("football")) return "futebol";
+  if (k.includes("imobiliar") || k.includes("imoveis") || k.includes("imóveis")) return "imobiliaria";
+  if (k.includes("empresa")) return "empresas";
+  return "geral";
+}
+
+/** Opções para o dropdown "Adicionar módulo" — agrupadas por categoria */
+export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: ModuleCategory }[] = [
+  // Geral
+  { type: "header", label: "Cabeçalho", category: "geral" },
+  { type: "footer", label: "Rodapé", category: "geral" },
+  { type: "hero", label: "Hero", category: "geral" },
+  { type: "highlights", label: "Destaques", category: "geral" },
+  { type: "text", label: "Bloco de texto", category: "geral" },
+  { type: "custom", label: "Customizado (título + texto + imagem)", category: "geral" },
+  { type: "what", label: "O que fazemos", category: "geral" },
+  { type: "clubs", label: "Clubes", category: "geral" },
+  { type: "companies", label: "Empresas", category: "geral" },
+  { type: "founder", label: "Fundador", category: "geral" },
+  { type: "how", label: "Como funciona", category: "geral" },
+  { type: "cta", label: "CTA final", category: "geral" },
+  { type: "section", label: "Seção (1, 2 ou 3 colunas)", category: "geral" },
+  // Futebol
+  { type: "proximos_jogos", label: "Próximos jogos", category: "futebol" },
+  { type: "ultimos_resultados", label: "Últimos resultados", category: "futebol" },
+  { type: "times_categorias", label: "Times por categorias", category: "futebol" },
+  { type: "noticias", label: "Notícias", category: "futebol" },
+  { type: "calendario", label: "Calendário / Agenda", category: "futebol" },
+  { type: "tabela", label: "Tabela / Classificação", category: "futebol" },
+  { type: "patrocinadores", label: "Patrocinadores", category: "futebol" },
+  { type: "galeria", label: "Galeria de fotos", category: "futebol" },
   // Empresas
-  { type: "sobre", label: "Sobre nós" },
-  { type: "servicos", label: "Serviços" },
-  { type: "produtos", label: "Produtos" },
-  { type: "equipe", label: "Nossa equipe" },
-  { type: "clientes", label: "Clientes / Cases" },
-  { type: "contato", label: "Contato" },
-  { type: "global_presence", label: "Presença Global / Expansão" },
-  { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)" },
-  { type: "section", label: "Seção (1, 2 ou 3 colunas)" },
+  { type: "sobre", label: "Sobre nós", category: "empresas" },
+  { type: "servicos", label: "Serviços", category: "empresas" },
+  { type: "produtos", label: "Produtos", category: "empresas" },
+  { type: "equipe", label: "Nossa equipe", category: "empresas" },
+  { type: "clientes", label: "Clientes / Cases", category: "empresas" },
+  { type: "contato", label: "Contato", category: "empresas" },
+  { type: "global_presence", label: "Presença Global / Expansão", category: "empresas" },
+  { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)", category: "empresas" },
+  // Imobiliária
+  { type: "imoveis_destaque", label: "Imóveis em destaque", category: "imobiliaria" },
+  { type: "formulario_captura", label: "Formulário de captura (leads)", category: "imobiliaria" },
+  { type: "diferenciais", label: "Diferenciais", category: "imobiliaria" },
+  { type: "numeros", label: "Números / Estatísticas", category: "imobiliaria" },
+  { type: "como_funciona", label: "Como funciona (processo)", category: "imobiliaria" },
+  { type: "faq", label: "Perguntas frequentes", category: "imobiliaria" },
 ];
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
@@ -194,6 +228,9 @@ export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
   "logoCarouselClubsEnabled", "logoCarouselClubsTitlePT", "logoCarouselClubsTitleEN", "logoCarouselClubsLimit", "logoCarouselClubsSorting",
   "logoCarouselCompaniesEnabled", "logoCarouselCompaniesTitlePT", "logoCarouselCompaniesTitleEN", "logoCarouselCompaniesLimit", "logoCarouselCompaniesSorting",
   "logoCarouselCardWidthRatio", "logoCarouselPaddingTop", "logoCarouselPaddingBottom",
+  "imoveisDestaqueItems", "formularioCapturaEndpoint", "formularioCapturaTitlePt", "formularioCapturaTitleEn",
+  "diferenciaisItems", "numerosItems", "comoFuncionaBulletsPt", "comoFuncionaBulletsEn", "comoFuncionaIcons",
+  "faqItems",
 ]);
 
 /** Tipos que usam config título + corpo (e opcionalmente imagem) no editor */
@@ -214,6 +251,12 @@ export const BLOCK_TYPES_WITH_BODY: HomeBlockType[] = [
   "equipe",
   "clientes",
   "contato",
+  "imoveis_destaque",
+  "formulario_captura",
+  "diferenciais",
+  "numeros",
+  "como_funciona",
+  "faq",
 ];
 
 /** Contadores padrão do Presença Global (para merge no dashboard quando faltar algum). */
@@ -401,6 +444,37 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.logoCarouselCompaniesTitleEN = "Companies";
     config.logoCarouselCompaniesLimit = 50;
     config.logoCarouselCompaniesSorting = "alphabetical";
+  }
+  if (type === "imoveis_destaque") {
+    config.imoveisDestaqueItems = [];
+  }
+  if (type === "formulario_captura") {
+    config.formularioCapturaTitlePt = "Entre em contato";
+    config.formularioCapturaTitleEn = "Get in touch";
+    config.formularioCapturaEndpoint = "";
+  }
+  if (type === "diferenciais") {
+    config.diferenciaisItems = [
+      { icon: "Award", titlePt: "", titleEn: "", bodyPt: "", bodyEn: "" },
+      { icon: "Target", titlePt: "", titleEn: "", bodyPt: "", bodyEn: "" },
+      { icon: "CheckCircle", titlePt: "", titleEn: "", bodyPt: "", bodyEn: "" },
+      { icon: "Building2", titlePt: "", titleEn: "", bodyPt: "", bodyEn: "" },
+    ];
+  }
+  if (type === "numeros") {
+    config.numerosItems = [
+      { value: 0, labelPt: "Imóveis vendidos", labelEn: "Properties sold" },
+      { value: 0, labelPt: "Anos de experiência", labelEn: "Years of experience" },
+      { value: 0, labelPt: "Clientes satisfeitos", labelEn: "Happy clients" },
+    ];
+  }
+  if (type === "como_funciona") {
+    config.comoFuncionaBulletsPt = ["", "", "", ""];
+    config.comoFuncionaBulletsEn = ["", "", "", ""];
+    config.comoFuncionaIcons = ["CheckCircle", "CheckCircle", "CheckCircle", "CheckCircle"];
+  }
+  if (type === "faq") {
+    config.faqItems = [];
   }
 
   return { id, type, sortOrder, config };

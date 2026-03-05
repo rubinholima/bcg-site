@@ -6,18 +6,16 @@ import Link from "next/link";
 import {
   ArrowLeft,
   User,
-  Stethoscope,
-  Star,
-  Activity,
-  Map,
-  Image as ImageIcon,
-  BarChart3,
   Plus,
   Trash2,
   Loader2,
   Youtube,
   Eye,
   EyeOff,
+  Video,
+  ExternalLink,
+  Calendar,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,21 +29,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { ConsultasCalendar } from "@/components/dashboard/ConsultasCalendar";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
-
-const TABS = [
-  { id: "dados", label: "Dados base", icon: User },
-  { id: "medico", label: "Histórico médico", icon: Stethoscope },
-  { id: "avaliacoes", label: "Avaliações", icon: Star },
-  { id: "status", label: "Status", icon: Activity },
-  { id: "mapa", label: "Mapa / Posição", icon: Map },
-  { id: "momentos", label: "Melhores momentos", icon: Youtube },
-  { id: "imagens", label: "Imagens", icon: ImageIcon },
-  { id: "desempenho", label: "Análise de desempenho", icon: BarChart3 },
-] as const;
+import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
+import { LegalDocumentsTab } from "@/components/dashboard/LegalDocumentsTab";
 
 const STATUS_OPTIONS = [
   { value: "available", label: "Apto" },
@@ -86,7 +77,9 @@ interface PlayerData {
   bioPT?: string | null;
   bioEN?: string | null;
   externalId?: string | null;
-  medicalHistory?: unknown[] | null;
+  medicalHistory?: unknown;
+  psychologicalAssessment?: unknown[] | null;
+  onlineConsultations?: unknown[] | null;
   evaluations?: unknown[] | null;
   status?: string | null;
   statusDetails?: string | null;
@@ -97,12 +90,64 @@ interface PlayerData {
   publicFields?: Record<string, boolean> | null;
 }
 
+interface MedicalProfile {
+  bloodType?: string;
+  allergies?: string;
+  chronicDiseases?: string;
+  medications?: string;
+  otherConditions?: string;
+}
+
 interface MedicalEntry {
   date?: string;
   type?: string;
   description?: string;
   daysOut?: number;
   gamesMissed?: number;
+}
+
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
+
+/** Normaliza medicalHistory: array (legado) ou objeto { profile, records } */
+function normalizeMedicalHistory(
+  mh: unknown
+): { profile: MedicalProfile; records: MedicalEntry[] } {
+  if (Array.isArray(mh)) {
+    return { profile: {}, records: mh as MedicalEntry[] };
+  }
+  if (mh && typeof mh === "object" && "records" in mh) {
+    const obj = mh as { profile?: MedicalProfile; records?: MedicalEntry[] };
+    return {
+      profile: obj.profile ?? {},
+      records: Array.isArray(obj.records) ? obj.records : [],
+    };
+  }
+  return { profile: {}, records: [] };
+}
+
+interface PsychologicalAssessmentEntry {
+  date?: string;
+  evaluator?: string;
+  dadosPessoais?: string;
+  historicoEsportivo?: string;
+  motivacaoObjetivos?: string;
+  ansiedadeEstresse?: string;
+  concentracaoFoco?: string;
+  autoconfianca?: string;
+  coping?: string;
+  relacoesInterpessoais?: string;
+  vidaForaEsporte?: string;
+  qualidadeVida?: string;
+  observacoes?: string;
+}
+
+interface OnlineConsultation {
+  date?: string;
+  time?: string;
+  type?: "meet";
+  link?: string;
+  notes?: string;
+  status?: "scheduled" | "completed" | "cancelled";
 }
 
 interface EvaluationEntry {
@@ -203,6 +248,7 @@ function PlaylistImporter({ onImport }: { onImport: (urls: string[]) => void }) 
 export default function EditJogadorPage() {
   const router = useRouter();
   const params = useParams();
+  const { canAccessModule } = useAuth();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -210,7 +256,9 @@ export default function EditJogadorPage() {
   const [activeTab, setActiveTab] = useState<string>("dados");
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [tenantCategories, setTenantCategories] = useState<string[]>([]);
-
+  const [meetCreatingIdx, setMeetCreatingIdx] = useState<number | null>(null);
+  const [meetAvailable, setMeetAvailable] = useState<boolean | null>(null);
+  const [calendarRefreshTrigger, setCalendarRefreshTrigger] = useState(0);
 
   useEffect(() => {
     async function load() {
@@ -231,6 +279,21 @@ export default function EditJogadorPage() {
     }
     load();
   }, [id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ available: boolean }>("/consultations/meet-available")
+      .then(({ data }) => {
+        if (!cancelled) setMeetAvailable(data?.available ?? false);
+      })
+      .catch(() => {
+        if (!cancelled) setMeetAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const categoriesForDropdown = (() => {
     const fromTenant = tenantCategories.length
@@ -280,6 +343,8 @@ export default function EditJogadorPage() {
         bioEN: player.bioEN || undefined,
         externalId: player.externalId || undefined,
         medicalHistory: player.medicalHistory ?? undefined,
+        psychologicalAssessment: player.psychologicalAssessment ?? undefined,
+        onlineConsultations: player.onlineConsultations ?? undefined,
         evaluations: player.evaluations ?? undefined,
         status: player.status || undefined,
         statusDetails: player.statusDetails || undefined,
@@ -306,7 +371,11 @@ export default function EditJogadorPage() {
     );
   }
 
-  const medicalList = (player.medicalHistory ?? []) as MedicalEntry[];
+  const { profile: medicalProfile, records: medicalList } = normalizeMedicalHistory(
+    player.medicalHistory
+  );
+  const psychList = (player.psychologicalAssessment ?? []) as PsychologicalAssessmentEntry[];
+  const consultationList = (player.onlineConsultations ?? []) as OnlineConsultation[];
   const evalList = (player.evaluations ?? []) as EvaluationEntry[];
   const imagesList = (player.images ?? []) as ImageEntry[];
 
@@ -353,22 +422,23 @@ export default function EditJogadorPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-1 border-b">
-        {TABS.map((tab) => {
+      <div className="flex flex-wrap gap-2 p-2 rounded-xl bg-muted/40 border border-border">
+        {PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug)).map((tab) => {
           const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors",
-                activeTab === tab.id
-                  ? "bg-muted text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all shadow-sm",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-md border border-primary"
+                  : "bg-background/80 text-muted-foreground border border-transparent hover:border-border hover:bg-background hover:text-foreground"
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 shrink-0" />
               {tab.label}
             </button>
           );
@@ -689,7 +759,107 @@ export default function EditJogadorPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Dados de saúde do atleta (perfil) */}
+            <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground">Dados de saúde do atleta</h3>
+              <p className="text-xs text-muted-foreground">
+                Informações gerais para registro e acompanhamento médico
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Tipo de sangue</Label>
+                  <Select
+                    value={medicalProfile.bloodType || "__none__"}
+                    onValueChange={(v) =>
+                      update({
+                        medicalHistory: {
+                          profile: { ...medicalProfile, bloodType: v === "__none__" ? undefined : v },
+                          records: medicalList,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">—</SelectItem>
+                      {BLOOD_TYPES.map((bt) => (
+                        <SelectItem key={bt} value={bt}>
+                          {bt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Alergias</Label>
+                  <Input
+                    placeholder="Ex: penicilina, dipirona, lactose..."
+                    value={medicalProfile.allergies ?? ""}
+                    onChange={(e) =>
+                      update({
+                        medicalHistory: {
+                          profile: { ...medicalProfile, allergies: e.target.value || undefined },
+                          records: medicalList,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+                  <Label>Doenças crônicas</Label>
+                  <Input
+                    placeholder="Ex: asma, diabetes, hipertensão..."
+                    value={medicalProfile.chronicDiseases ?? ""}
+                    onChange={(e) =>
+                      update({
+                        medicalHistory: {
+                          profile: { ...medicalProfile, chronicDiseases: e.target.value || undefined },
+                          records: medicalList,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+                  <Label>Medicamentos em uso</Label>
+                  <Input
+                    placeholder="Medicamentos que o atleta toma regularmente"
+                    value={medicalProfile.medications ?? ""}
+                    onChange={(e) =>
+                      update({
+                        medicalHistory: {
+                          profile: { ...medicalProfile, medications: e.target.value || undefined },
+                          records: medicalList,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+                  <Label>Outras condições / observações</Label>
+                  <textarea
+                    className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="Outras informações de saúde relevantes"
+                    value={medicalProfile.otherConditions ?? ""}
+                    onChange={(e) =>
+                      update({
+                        medicalHistory: {
+                          profile: { ...medicalProfile, otherConditions: e.target.value || undefined },
+                          records: medicalList,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Registros de lesões/afastamentos */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3">Registros (lesões, afastamentos)</h3>
             {medicalList.map((entry, idx) => (
               <div key={idx} className="rounded-lg border p-4 space-y-2">
                 <div className="flex justify-between">
@@ -699,7 +869,7 @@ export default function EditJogadorPage() {
                     size="icon"
                     onClick={() => {
                       const next = medicalList.filter((_, i) => i !== idx);
-                      update({ medicalHistory: next });
+                      update({ medicalHistory: { profile: medicalProfile, records: next } });
                     }}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -713,7 +883,7 @@ export default function EditJogadorPage() {
                     onChange={(e) => {
                       const next = [...medicalList];
                       (next[idx] as MedicalEntry).date = e.target.value || undefined;
-                      update({ medicalHistory: next });
+                      update({ medicalHistory: { profile: medicalProfile, records: next } });
                     }}
                   />
                   <Input
@@ -722,7 +892,7 @@ export default function EditJogadorPage() {
                     onChange={(e) => {
                       const next = [...medicalList];
                       (next[idx] as MedicalEntry).type = e.target.value || undefined;
-                      update({ medicalHistory: next });
+                      update({ medicalHistory: { profile: medicalProfile, records: next } });
                     }}
                   />
                   <Input
@@ -732,7 +902,7 @@ export default function EditJogadorPage() {
                     onChange={(e) => {
                       const next = [...medicalList];
                       (next[idx] as MedicalEntry).daysOut = e.target.value ? Number(e.target.value) : undefined;
-                      update({ medicalHistory: next });
+                      update({ medicalHistory: { profile: medicalProfile, records: next } });
                     }}
                   />
                   <Input
@@ -742,7 +912,7 @@ export default function EditJogadorPage() {
                     onChange={(e) => {
                       const next = [...medicalList];
                       (next[idx] as MedicalEntry).gamesMissed = e.target.value ? Number(e.target.value) : undefined;
-                      update({ medicalHistory: next });
+                      update({ medicalHistory: { profile: medicalProfile, records: next } });
                     }}
                   />
                 </div>
@@ -753,18 +923,286 @@ export default function EditJogadorPage() {
                   onChange={(e) => {
                     const next = [...medicalList];
                     (next[idx] as MedicalEntry).description = e.target.value || undefined;
-                    update({ medicalHistory: next });
+                    update({ medicalHistory: { profile: medicalProfile, records: next } });
                   }}
                 />
               </div>
             ))}
             <Button
               variant="outline"
-              onClick={() => update({ medicalHistory: [...medicalList, {}] })}
+              onClick={() =>
+                update({
+                  medicalHistory: { profile: medicalProfile, records: [...medicalList, {}] },
+                })
+              }
             >
               <Plus className="mr-2 h-4 w-4" />
               Adicionar registro
             </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tab: Avaliação psicológica */}
+      {activeTab === "psicologica" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Avaliação psicológica</CardTitle>
+            <CardDescription>
+              Anamnese específica para atletas de futebol — dados pessoais, histórico esportivo, motivação, ansiedade, concentração, autoconfiança, coping, relações e vida fora do esporte
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {psychList.map((entry, idx) => (
+              <div key={idx} className="rounded-lg border p-4 space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      className="w-[165px] min-w-[165px]"
+                      placeholder="Data"
+                      value={entry.date ?? ""}
+                      onChange={(e) => {
+                        const next = [...psychList];
+                        (next[idx] as PsychologicalAssessmentEntry).date = e.target.value || undefined;
+                        update({ psychologicalAssessment: next });
+                      }}
+                    />
+                    <Input
+                      className="w-[180px]"
+                      placeholder="Avaliador/Psicólogo"
+                      value={entry.evaluator ?? ""}
+                      onChange={(e) => {
+                        const next = [...psychList];
+                        (next[idx] as PsychologicalAssessmentEntry).evaluator = e.target.value || undefined;
+                        update({ psychologicalAssessment: next });
+                      }}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const next = psychList.filter((_, i) => i !== idx);
+                      update({ psychologicalAssessment: next });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+
+                {[
+                  { key: "dadosPessoais", label: "Dados pessoais e contexto", placeholder: "Com quem mora, estado civil, filhos, escolaridade, profissão fora do esporte, rede de apoio familiar..." },
+                  { key: "historicoEsportivo", label: "Histórico esportivo", placeholder: "Anos praticando futebol, nível competitivo, lesões passadas, pausas na carreira, transições de clube..." },
+                  { key: "motivacaoObjetivos", label: "Motivação e objetivos", placeholder: "O que o leva a continuar, objetivos de curto e longo prazo, metas para a temporada..." },
+                  { key: "ansiedadeEstresse", label: "Ansiedade e estresse", placeholder: "Nível de ansiedade pré-jogo, situações estressantes, sintomas físicos/cognitivos, avaliação cognitiva da competição..." },
+                  { key: "concentracaoFoco", label: "Concentração e foco", placeholder: "Facilidade para manter o foco, situações de distração, rotinas pré-jogo..." },
+                  { key: "autoconfianca", label: "Autoconfiança", placeholder: "Nível geral de autoconfiança, variações em diferentes contextos (treino x jogo)..." },
+                  { key: "coping", label: "Estratégias de coping", placeholder: "Como lida com adversidades, pressão, derrotas; uso de coping ativo, evitativo..." },
+                  { key: "relacoesInterpessoais", label: "Relações interpessoais", placeholder: "Relação com comissão técnica, colegas de time, família em relação ao futebol..." },
+                  { key: "vidaForaEsporte", label: "Vida fora do esporte", placeholder: "Tempo livre, estudos, atividades, equilíbrio vida-treino..." },
+                  { key: "qualidadeVida", label: "Qualidade de vida e bem-estar", placeholder: "Percepção geral de bem-estar, sono, alimentação, descanso..." },
+                  { key: "observacoes", label: "Observações gerais", placeholder: "Outras informações relevantes da anamnese..." },
+                ].map(({ key, label, placeholder }) => (
+                  <div key={key} className="space-y-1">
+                    <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
+                    <textarea
+                      className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder={placeholder}
+                      value={(entry as Record<string, string>)[key] ?? ""}
+                      onChange={(e) => {
+                        const next = [...psychList];
+                        const entry = next[idx] as Record<string, string | undefined>;
+                        entry[key] = e.target.value || undefined;
+                        update({ psychologicalAssessment: next });
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              onClick={() => update({ psychologicalAssessment: [...psychList, {}] })}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar avaliação psicológica
+            </Button>
+
+            {/* Grupo Consultas: Consultas online | Calendário (50% | 50%) */}
+            <div className="space-y-4 rounded-lg border p-4 pt-6">
+              <h3 className="text-lg font-semibold">Consultas</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:divide-x lg:divide-border">
+                {/* Consultas online (Meet) — 50% */}
+                <div className="min-w-0 lg:pr-6">
+                  <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
+                    <Video className="h-4 w-4" />
+                    Consultas online
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Marque consultas para atendimento via Google Meet. Use o seletor de data e horário e o botão para criar o link no Meet.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <div className="overflow-y-auto max-h-[360px] space-y-3 pr-2 -mr-2">
+                  {consultationList.map((c, idx) => (
+                    <div key={idx} className="rounded-lg border p-4 space-y-2 flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-2">
+                      <div className="flex gap-2 flex-wrap flex-1">
+                        <Input
+                          type="date"
+                          className="w-[165px] min-w-[165px]"
+                          placeholder="Data"
+                          value={c.date ?? ""}
+                          onChange={(e) => {
+                            const next = [...consultationList];
+                            (next[idx] as OnlineConsultation).date = e.target.value || undefined;
+                            update({ onlineConsultations: next });
+                          }}
+                        />
+                        <Input
+                          type="time"
+                          className="w-[130px] min-w-[130px]"
+                          placeholder="Horário"
+                          value={c.time ?? ""}
+                          onChange={(e) => {
+                            const next = [...consultationList];
+                            (next[idx] as OnlineConsultation).time = e.target.value || undefined;
+                            update({ onlineConsultations: next });
+                          }}
+                        />
+                        <Select
+                        value={c.status ?? "scheduled"}
+                        onValueChange={(v: "scheduled" | "completed" | "cancelled") => {
+                          const next = [...consultationList];
+                          (next[idx] as OnlineConsultation).status = v;
+                          update({ onlineConsultations: next });
+                        }}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="scheduled">Agendada</SelectItem>
+                          <SelectItem value="completed">Realizada</SelectItem>
+                          <SelectItem value="cancelled">Cancelada</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 flex-1 min-w-0 flex-wrap">
+                      <Input
+                        className="flex-1 min-w-[200px]"
+                        placeholder="Link da reunião (Meet)"
+                        value={c.link ?? ""}
+                        onChange={(e) => {
+                          const next = [...consultationList];
+                          (next[idx] as OnlineConsultation).link = e.target.value || undefined;
+                          update({ onlineConsultations: next });
+                        }}
+                      />
+                      {meetAvailable && c.date && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={meetCreatingIdx === idx}
+                          onClick={async () => {
+                            setMeetCreatingIdx(idx);
+                            try {
+                              const { data } = await api.post<{ meetLink: string; createdWithMeet?: boolean }>(
+                                "/consultations/create-meet",
+                                {
+                                  summary: `Consulta: ${player.name}`,
+                                  description: c.notes || undefined,
+                                  startDate: c.date,
+                                  startTime: c.time || "09:00",
+                                  endTime: c.time ? undefined : "10:00",
+                                }
+                              );
+                              if (data?.meetLink) {
+                                const next = [...consultationList];
+                                (next[idx] as OnlineConsultation).link = data.meetLink;
+                                const toSave = next;
+                                const withNewRow = [...next, { type: "meet", status: "scheduled" } as OnlineConsultation];
+                                update({ onlineConsultations: withNewRow });
+                                await api.patch(`/players/${id}`, { onlineConsultations: toSave });
+                                setCalendarRefreshTrigger((t) => t + 1);
+                                if (!data.createdWithMeet) {
+                                  alert("Evento criado. Abra o link e clique em \"Adicionar videoconferência do Google Meet\" no Calendar.");
+                                }
+                              }
+                            } catch (e: unknown) {
+                              const msg = e instanceof Error ? e.message : 'Erro ao criar evento no Meet';
+                              alert(msg);
+                            } finally {
+                              setMeetCreatingIdx(null);
+                            }
+                          }}
+                        >
+                          {meetCreatingIdx === idx ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <Video className="h-4 w-4 mr-1" />
+                          )}
+                          Criar no Meet
+                        </Button>
+                      )}
+                      {c.link && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          title="Abrir em nova aba"
+                          onClick={() => window.open(c.link, "_blank")}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <textarea
+                      className="w-full min-h-[72px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
+                      placeholder="Anotações da sessão: gravações, observações, notas..."
+                      value={c.notes ?? ""}
+                      onChange={(e) => {
+                        const next = [...consultationList];
+                        (next[idx] as OnlineConsultation).notes = e.target.value || undefined;
+                        update({ onlineConsultations: next });
+                      }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0"
+                      onClick={() => {
+                        const next = consultationList.filter((_, i) => i !== idx);
+                        update({ onlineConsultations: next });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => update({ onlineConsultations: [...consultationList, { type: "meet", status: "scheduled" }] })}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Nova consulta online
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Calendário de consultas — 50% */}
+                <div className="min-w-0 lg:pl-6">
+                  <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
+                    <Calendar className="h-4 w-4" />
+                    Calendário de consultas
+                  </h4>
+                  <ConsultasCalendar refreshTrigger={calendarRefreshTrigger} />
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -1253,6 +1691,11 @@ export default function EditJogadorPage() {
             />
           </CardContent>
         </Card>
+      )}
+
+      {/* Tab: Controle Jurídico (Adobe Sign) */}
+      {activeTab === "juridico" && (
+        <LegalDocumentsTab playerId={id} playerName={player.name} />
       )}
 
       <div className="flex justify-end">

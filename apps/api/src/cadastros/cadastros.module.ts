@@ -7,6 +7,13 @@ import { VisitingTeamsController } from './visiting-teams.controller';
 import { VisitingTeamsService } from './visiting-teams.service';
 import { PlayersController } from './players.controller';
 import { PlayersService } from './players.service';
+import { LegalDocumentsController } from './legal-documents.controller';
+import { LegalDocumentsService } from './legal-documents.service';
+import { S3Module } from '../s3/s3.module';
+import { HelloSignModule } from '../hello-sign/hello-sign.module';
+import { AuthModule } from '../auth/auth.module';
+import { ModulesModule } from '../modules/modules.module';
+import { ModuleAccessGuard } from '../auth/module-access.guard';
 
 @Module({
   controllers: [
@@ -14,13 +21,17 @@ import { PlayersService } from './players.service';
     StadiumsController,
     VisitingTeamsController,
     PlayersController,
+    LegalDocumentsController,
   ],
   providers: [
     ChampionshipsService,
     StadiumsService,
     VisitingTeamsService,
     PlayersService,
+    LegalDocumentsService,
+    ModuleAccessGuard,
   ],
+  imports: [AuthModule, ModulesModule, S3Module, HelloSignModule],
   exports: [ChampionshipsService, StadiumsService, VisitingTeamsService, PlayersService],
 })
 export class CadastrosModule {}

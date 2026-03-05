@@ -31,4 +31,9 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   vault_manage: "Senhas / Vault (gerenciar)",
   vault_reveal: "Senhas / Vault (revelar/copiar)",
   vault_export: "Senhas / Vault (exportar)",
+  psicologia: "Psicologia (avalia\u00E7\u00E3o + consultas)",
+  medico: "M\u00E9dico (hist\u00F3rico m\u00E9dico)",
+  diretoria: "Diretoria (avalia\u00E7\u00F5es e status)",
+  analista: "Analista",
+  juridico: "Controle Jurídico",
 };

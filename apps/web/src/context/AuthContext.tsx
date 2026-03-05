@@ -52,7 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const canAccessDashboard =
         data.role === "super_admin" ||
         data.role === "company_admin" ||
-        data.role === "editor";
+        data.role === "editor" ||
+        data.role === "analista" ||
+        data.role === "diretoria" ||
+        data.role === "medico" ||
+        data.role === "psicologo";
       let modules: string[] = [];
       if (canAccessDashboard) {
         try {
@@ -71,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               "empresas",
               "emails",
               "tipos",
+              "psicologia",
               "paginas",
               "noticias",
               "midia",
@@ -119,8 +124,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSuperAdmin = state.role === "super_admin";
   const isCompanyAdmin = state.role === "company_admin";
   const isEditor = state.role === "editor";
-  const canAccessDashboard = isSuperAdmin || isCompanyAdmin || isEditor;
-  const canAccessModule = (slug: string) => state.modules.includes(slug);
+  const canAccessDashboard =
+    isSuperAdmin ||
+    isCompanyAdmin ||
+    isEditor ||
+    state.role === "analista" ||
+    state.role === "diretoria" ||
+    state.role === "medico" ||
+    state.role === "psicologo";
+  const canAccessModule = (slug: string) =>
+    isSuperAdmin || state.modules.includes(slug);
 
   const value: AuthContextValue = {
     ...state,

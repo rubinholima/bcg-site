@@ -79,6 +79,36 @@
   }
 }
 
+/* Date/Time pickers: texto legível e espaço para ícones (evitar corte) */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color: hsl(var(--foreground));
+  min-width: 10rem;
+  padding-inline-end: 2.5rem;
+}
+input[type="time"] {
+  min-width: 8.5rem;
+}
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field,
+input[type="time"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+input[type="time"]::-webkit-datetime-edit-text,
+input[type="time"]::-webkit-datetime-edit-ampm-field,
+input[type="datetime-local"]::-webkit-datetime-edit {
+  color: hsl(var(--foreground));
+}
+
 /* Section: full-bleed do carrossel Próximos Jogos (encosta nas bordas do box azul) */
 .fullbleed-carousel-module section > div.mt-6.w-full.overflow-hidden {
   margin-left: -1rem;

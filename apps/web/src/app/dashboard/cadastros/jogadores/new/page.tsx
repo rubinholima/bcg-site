@@ -33,6 +33,7 @@ export default function NewJogadorPage() {
   const [tenantId, setTenantId] = useState("");
   const [category, setCategory] = useState("");
   const [name, setName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function NewJogadorPage() {
         tenantId,
         name: name.trim(),
         category: category.trim() || undefined,
+        birthDate: birthDate.trim() || undefined,
         photoUrl: photoUrl.trim() || undefined,
       });
       router.push(`/dashboard/cadastros/jogadores/${data?.id ?? ""}/edit?success=new`);
@@ -153,6 +155,17 @@ export default function NewJogadorPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: João da Silva"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="birthDate">Data de nascimento</Label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
                 disabled={loading}
               />
             </div>

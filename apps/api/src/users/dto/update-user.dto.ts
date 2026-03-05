@@ -1,6 +1,14 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 
-export type UserRole = 'super_admin' | 'company_admin' | 'editor' | 'user';
+export type UserRole =
+  | 'super_admin'
+  | 'company_admin'
+  | 'editor'
+  | 'analista'
+  | 'diretoria'
+  | 'medico'
+  | 'psicologo'
+  | 'user';
 
 export class UpdateUserDto {
   @IsString()
@@ -11,7 +19,7 @@ export class UpdateUserDto {
   @IsOptional()
   email?: string;
 
-  @IsEnum(['super_admin', 'company_admin', 'editor', 'user'])
+  @IsEnum(['super_admin', 'company_admin', 'editor', 'analista', 'diretoria', 'medico', 'psicologo', 'user'])
   @IsOptional()
   role?: UserRole;
 

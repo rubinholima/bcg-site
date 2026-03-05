@@ -5,7 +5,15 @@ import { DashboardRolesGuard } from './roles.guard';
 import { MeService } from './me.service';
 import { ModulesService } from '../modules/modules.service';
 
-export type MeRole = 'super_admin' | 'company_admin' | 'editor' | 'user';
+export type MeRole =
+  | 'super_admin'
+  | 'company_admin'
+  | 'editor'
+  | 'analista'
+  | 'diretoria'
+  | 'medico'
+  | 'psicologo'
+  | 'user';
 
 export interface MeResponse {
   user: { id: string; email: string; name: string | null; cognitoSub: string };
@@ -27,10 +35,18 @@ export class MeController {
     const sub = payload.sub;
     const groups: string[] = payload['cognito:groups'] ?? [];
     let role: MeRole = (payload.role as MeRole) ?? 'user';
-    if (groups.length > 0 && !role) {
-      if (groups.includes('super_admin')) role = 'super_admin';
-      else if (groups.includes('company_admin')) role = 'company_admin';
-      else if (groups.includes('editor')) role = 'editor';
+    if (groups.length > 0 && (!role || role === 'user')) {
+      const r = groups.find(
+        (g) =>
+          g === 'super_admin' ||
+          g === 'company_admin' ||
+          g === 'editor' ||
+          g === 'analista' ||
+          g === 'diretoria' ||
+          g === 'medico' ||
+          g === 'psicologo',
+      );
+      if (r) role = r as MeRole;
     }
 
     const user = await this.meService.findUserById(sub);
@@ -53,11 +69,8 @@ export class MeController {
   @Get('modules')
   @UseGuards(DashboardRolesGuard)
   async modules(@Req() req: Request & { user: CognitoJwtPayload }): Promise<{ modules: string[] }> {
-    const groups: string[] = req.user['cognito:groups'] ?? [];
-    let role = 'user';
-    if (groups.includes('super_admin')) role = 'super_admin';
-    else if (groups.includes('company_admin')) role = 'company_admin';
-    else if (groups.includes('editor')) role = 'editor';
+    const role =
+      req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
     const modules = await this.modulesService.getSlugsForRole(role);
     return { modules };
   }

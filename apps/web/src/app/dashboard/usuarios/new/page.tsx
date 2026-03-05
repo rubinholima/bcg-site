@@ -21,6 +21,10 @@ const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Admin",
   company_admin: "Company Admin",
   editor: "Editor",
+  analista: "Analista",
+  diretoria: "Diretoria",
+  medico: "Médico",
+  psicologo: "Psicólogo",
   user: "Usuário",
 };
 
@@ -187,14 +191,13 @@ export default function NovoUsuarioPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="super_admin">
-                    {ROLE_LABELS.super_admin}
-                  </SelectItem>
-                  <SelectItem value="company_admin">
-                    {ROLE_LABELS.company_admin}
-                  </SelectItem>
-                  <SelectItem value="editor">{ROLE_LABELS.editor}</SelectItem>
-                  <SelectItem value="user">{ROLE_LABELS.user}</SelectItem>
+                  {(["super_admin", "company_admin", "editor", "analista", "diretoria", "medico", "psicologo", "user"] as UserRole[]).map(
+                    (r) => (
+                      <SelectItem key={r} value={r}>
+                        {ROLE_LABELS[r]}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
             </div>

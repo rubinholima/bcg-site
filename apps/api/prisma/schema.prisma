@@ -226,6 +226,8 @@ model Player {
   externalId      String?  // ID da linha no Google Sheets (para sync)
   // Extensões (histórico médico, avaliações, status, etc.)
   medicalHistory  Json?    // Array<{ date, type, description, daysOut, gamesMissed }>
+  psychologicalAssessment Json?    // Array<{ date, evaluator, sections: anamnese psicológica esportiva }>
+  onlineConsultations Json?    // Array<{ date, time?, type: meet, link?, notes?, status }>
   evaluations     Json?    // Array<{ date, evaluator, rating, notes }>
   status          String?  @default("available") // available, injured, suspended, absent, on_bench, not_in_squad
   statusDetails   String?  @db.Text // detalhes lesão/suspensão
@@ -236,8 +238,34 @@ model Player {
   publicFields    Json?    // quais campos exibir na página pública: { medicalHistory, evaluations, status, marketValue, performanceAnalysis, images, highlights }
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  legalDocuments  LegalDocument[]
   @@index([tenantId])
   @@index([tenantId, category])
+}
+
+model LegalDocument {
+  id               String    @id @default(cuid())
+  playerId         String
+  player           Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  type             String    // contrato_trabalho, contrato_imagem, formacao, rescisao, transferencia, aditivo, procuração, nda, outro
+  name             String    // nome exibido do documento
+  fileKey          String    // key no S3 do PDF original
+  fileUrl          String?   // URL pública (ou via proxy)
+  signedFileKey    String?   // key no S3 do PDF assinado (após Adobe Sign)
+  signedFileUrl    String?
+  status           String    @default("draft") // draft, pending_signature, signed, expired, cancelled
+  adobeAgreementId String?   // ID do agreement no Adobe Sign
+  signerEmail      String?   // email de quem assina
+  signerName       String?
+  validFrom        DateTime? // vigência inicial
+  validUntil       DateTime? // vigência até
+  notes            String?   @db.Text
+  metadata         Json?     // dados extras
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  @@index([playerId])
+  @@index([status])
+  @@index([adobeAgreementId])
 }
 
 // Integrações centralizadas (planilhas Google únicas) — uma planilha por tipo, sistema filtra por slug

@@ -1,4 +1,12 @@
-export type UserRole = "super_admin" | "company_admin" | "editor" | "user";
+export type UserRole =
+  | "super_admin"
+  | "company_admin"
+  | "editor"
+  | "analista"
+  | "diretoria"
+  | "medico"
+  | "psicologo"
+  | "user";
 
 export interface UserListItem {
   id: string | null;

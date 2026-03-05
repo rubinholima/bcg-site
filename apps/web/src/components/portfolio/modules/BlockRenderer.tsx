@@ -33,6 +33,12 @@ import { PatrocinadoresSection } from "@/components/portfolio/modules/Patrocinad
 import { TimesCategoriasSection } from "@/components/portfolio/modules/TimesCategoriasSection";
 import { TabelaClassificacaoSection } from "@/components/portfolio/modules/TabelaClassificacaoSection";
 import { SectionBlockRenderer } from "@/components/portfolio/modules/SectionBlockRenderer";
+import { ImoveisDestaqueSection } from "@/components/portfolio/modules/ImoveisDestaqueSection";
+import { DiferenciaisSection } from "@/components/portfolio/modules/DiferenciaisSection";
+import { NumerosSection } from "@/components/portfolio/modules/NumerosSection";
+import { ComoFuncionaSection } from "@/components/portfolio/modules/ComoFuncionaSection";
+import { FaqSection } from "@/components/portfolio/modules/FaqSection";
+import { FormularioCapturaSection } from "@/components/portfolio/modules/FormularioCapturaSection";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Button } from "@/components/ui/button";
 
@@ -391,6 +397,84 @@ export function BlockRenderer({
     );
   }
 
+  if (block.type === "imoveis_destaque") {
+    return (
+      <ImoveisDestaqueSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "formulario_captura") {
+    return (
+      <FormularioCapturaSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "diferenciais") {
+    return (
+      <DiferenciaisSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "numeros") {
+    return (
+      <NumerosSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "como_funciona") {
+    return (
+      <ComoFuncionaSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+  if (block.type === "faq") {
+    return (
+      <FaqSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
   if (block.type === "ultimos_resultados") {
     return (
       <UltimosResultadosSection

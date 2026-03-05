@@ -80,4 +80,21 @@ export const api = {
     const res = await fetch(url, { method: "DELETE", ...init, headers, credentials: "include" });
     if (!res.ok) throw new Error(await getErrorMessage(res));
   },
+  /** POST com FormData (para upload de arquivos). Não define Content-Type para o browser definir o boundary. */
+  async postForm<T>(path: string, formData: FormData, init?: RequestInit): Promise<{ data: T }> {
+    const url = getFetchUrl(path);
+    const headers: Record<string, string> =
+      typeof window !== "undefined" ? {} : await getServerHeaders(init);
+    delete headers["Content-Type"]; // FormData precisa que o browser defina multipart boundary
+    const res = await fetch(url, {
+      method: "POST",
+      body: formData,
+      ...init,
+      headers: { ...headers, ...(init?.headers as Record<string, string>) },
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error(await getErrorMessage(res));
+    const data = (await res.json().catch(() => ({}))) as T;
+    return { data };
+  },
 };

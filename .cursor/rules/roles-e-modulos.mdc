@@ -1,0 +1,87 @@
+---
+description: Roles, módulos e controle de acesso — diretoria, médico, psicólogo, abas por perfil
+alwaysApply: true
+---
+
+# ROLES E MÓDULOS — CONTROLE DE ACESSO
+
+## Princípio
+
+**Se o usuário não tem acesso a uma parte do site, essa parte nem aparece** (aba oculta, menu sem item, etc.).
+
+---
+
+## Roles atuais e novas
+
+| Role | Descrição | Acesso ao dashboard |
+|------|-----------|---------------------|
+| `super_admin` | Grupo/BCG — acesso total | Sim |
+| `company_admin` | Empresa/clube — administrador | Sim |
+| `editor` | Editor geral | Sim |
+| `analista` | Analista — visualização/config de módulos | Sim |
+| `diretoria` | Diretoria (avaliações, status, dados sensíveis) | Sim |
+| `medico` | Médico (histórico médico) | Sim |
+| `psicologo` | Psicólogo (avaliação psicológica + consultas) | Sim |
+| `user` | Usuário básico (sem dashboard?) | Definir |
+
+---
+
+## Módulos por seção (jogadores e site)
+
+### Módulos existentes
+- `psicologia` → aba Avaliação psicológica + Consultas
+- `vault`, `midia`, `empresas`, `paginas`, etc.
+
+### Módulos a criar
+- `medico` → aba Histórico médico
+- `diretoria` → aba Avaliações + aba Status (dados sensíveis da diretoria)
+
+### Abas do jogador e módulo necessário
+
+| Aba | Módulo / condição | Quem vê |
+|-----|-------------------|---------|
+| Dados base | — | Todos com acesso a jogadores |
+| Histórico médico | `medico` | médico, super_admin, company_admin (+ editor se configurado) |
+| Avaliação psicológica | `psicologia` | psicologo, super_admin, company_admin, editor |
+| Avaliações | `diretoria` | diretoria, super_admin, company_admin |
+| Status | `diretoria` | diretoria, super_admin, company_admin |
+| Mapa / Posição | — | Todos |
+| Melhores momentos | — | Todos |
+| Imagens | — | Todos |
+| Análise de desempenho | — | Todos |
+
+---
+
+## Implementação (checklist)
+
+1. **Banco/schema**
+   - Migration: `User.role` aceita novos valores (já é String)
+   - `ModuleRole.role` aceita diretoria, medico, psicologo
+   - Inserir módulos `medico` e `diretoria` + ModuleRole para cada role
+
+2. **Backend**
+   - `ModuleAccessGuard` / `RequireModule`: já suporta qualquer slug
+   - `getSlugsForRole(role)`: já retorna slugs por role
+   - `MeService` / `/api/me`: retornar role e incluir novos roles em `canAccessDashboard`
+   - Endpoints de jogadores: proteger por módulo quando necessário (medico, diretoria)
+
+3. **Frontend**
+   - `AuthContext.canAccessDashboard`: incluir `diretoria`, `medico`, `psicologo`
+   - `AuthContext`: expor `canAccessModule(slug)` (já existe)
+   - Página do jogador: filtrar TABS por `canAccessModule("medico")`, `canAccessModule("diretoria")`, etc.
+   - Configurações → Módulos: expandir UI para novos roles (diretoria, medico, psicologo)
+   - `ModulesService.getAllWithPermissions` e `updatePermissions`: suportar os novos roles
+
+4. **Sidebar**
+   - Itens já filtrados por `canAccessModule(moduleSlug)`
+   - Novos módulos entram no menu se tiverem item correspondente
+
+---
+
+## Regra de ouro
+
+Ao criar uma nova aba ou seção sensível:
+1. Criar o módulo no banco (migration ou seed)
+2. Associar ModuleRole aos roles que podem acessar
+3. Proteger a aba com `canAccessModule("slug")` — **se não tem acesso, a aba não aparece**
+4. No backend, usar `@RequireModule("slug")` nos endpoints que retornam dados sensíveis

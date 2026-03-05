@@ -1130,4 +1130,12 @@ Ver arquivos no repo se necessário; conteúdo de produto e entregáveis mantido
 
 Imagens do feed (Instagram) podem dar 403 no proxy interno. **NOTICIAS_IMAGE_PROXY_URL** (server-side): quando definido, URLs do Instagram passam por esse proxy. Formato: `https://xxx.lambda-url.region.on.aws` (sem barra final). **Importante:** URLs relativas (/api/public/noticias-image) e Lambda (https://) NÃO devem passar por getPublicImageUrl — senão em local as imagens vão para bostoncitygroup.biz em vez de localhost. GaleriaSection e NoticiasSection usam a URL direta para proxy/Lambda. **Deploy Lambda:** (1) Console AWS Lambda → Node.js 20.x, sem VPC. (2) Upload `scripts/aws-lambda-image-proxy/index.mjs`; handler `index.handler`. (3) Function URL, Auth NONE. (4) Copiar URL.
 
+## GOOGLE_MEET_CALENDAR (Criar eventos com link Meet)
+
+Usar o **mesmo projeto** do YouTube no Google Cloud. **1. Ativar API:** APIs e serviços → Biblioteca → "Google Calendar API" → Ativar. **2. Service Account:** Credenciais → Criar credenciais → Conta de serviço (nome ex.: bcg-calendar-meet). **3. Chave JSON:** Na conta de serviço, aba Chaves → Adicionar chave → JSON. **4. Calendário:** calendar.google.com → compartilhar calendário com o email da Service Account, permissão "Faça alterações nos eventos". **5. .env API:** GOOGLE_CALENDAR_CLIENT_EMAIL, GOOGLE_CALENDAR_PRIVATE_KEY, GOOGLE_CALENDAR_ID. **6. Impersonation (OBRIGATÓRIO para Meet):** Service Account sozinha não consegue criar links Meet. Adicione GOOGLE_CALENDAR_IMPERSONATE_EMAIL com o email do dono do calendário (ex.: user@empresa.com). Requer **domain-wide delegation** no Admin do Workspace: Security → API Controls → Domain-wide delegation → adicionar Client ID da Service Account com scope https://www.googleapis.com/auth/calendar.
+
+## CONTROLE_JURIDICO_HELLOSIGN (Assinatura eletrônica — Jogadores)
+
+Aba "Controle Jurídico" no cadastro do jogador. Upload PDF → envio para assinatura via **HelloSign** (Dropbox Sign). **1. Conta:** hellosign.com, plano free (3 docs/mês). **2. API Key:** Settings → API → copiar API Key. **3. .env API:** HELLOSIGN_API_KEY=sua_chave. Opcional: HELLOSIGN_TEST_MODE=true (testes sem consumir cota). **4. Deploy:** git pull, pnpm install, pnpm build, reiniciar API. S3: PDFs em legal/{playerId}/ (mesmo bucket de mídia). **5. Módulo:** Configurações → Módulos → habilitar "juridico" para company_admin, diretoria. super_admin vê tudo sem habilitar. **6. Assinatura:** campo posicionado no rodapé da página 1; ao enviar, prompt permite escolher página (1, 2, etc.).
+
 ---

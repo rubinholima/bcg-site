@@ -22,6 +22,7 @@ const EXT_BY_MIME: Record<string, string> = {
 
 const MEDIA_PREFIX = 'media/';
 const LOGOS_PREFIX = 'logos/';
+const LEGAL_PREFIX = 'legal/';
 
 /** Quando definido, URLs públicas são retornadas via este domínio (CloudFront OAC) em vez de s3.amazonaws.com. */
 const PUBLIC_MEDIA_ORIGIN = (process.env.PUBLIC_MEDIA_ORIGIN ?? '').replace(/\/$/, '');
@@ -311,7 +312,11 @@ export class S3Service {
    */
   async deleteObject(key: string): Promise<void> {
     const safeKey = key.replace(/^\/+/, '').replace(/\.\./g, '');
-    if (!safeKey.startsWith(MEDIA_PREFIX) && !safeKey.startsWith(LOGOS_PREFIX)) {
+    if (
+      !safeKey.startsWith(MEDIA_PREFIX) &&
+      !safeKey.startsWith(LOGOS_PREFIX) &&
+      !safeKey.startsWith(LEGAL_PREFIX)
+    ) {
       throw new InternalServerErrorException('Key inválida');
     }
     try {
@@ -330,12 +335,59 @@ export class S3Service {
   }
 
   /**
+   * Upload de documento jurídico (PDF) para S3.
+   * Salva em legal/{playerId}/{uuid}.pdf
+   */
+  async uploadLegalDocument(
+    buffer: Buffer,
+    playerId: string,
+    filename: string,
+  ): Promise<{ key: string; url: string }> {
+    const ext = filename.toLowerCase().endsWith('.pdf') ? 'pdf' : 'pdf';
+    const key = `${LEGAL_PREFIX}${playerId}/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: 'application/pdf',
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar documento para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.publicUrl(key) };
+  }
+
+  /**
+   * Retorna o buffer de um objeto (para envio ao Adobe Sign).
+   */
+  async getObjectBuffer(key: string): Promise<Buffer> {
+    const { body } = await this.getObject(key);
+    const chunks: Buffer[] = [];
+    for await (const chunk of body as AsyncIterable<Uint8Array>) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
+
+  /**
    * Retorna o stream de um objeto do S3 (para miniatura na página Mídia).
    * Usa credenciais AWS, então funciona mesmo com bucket privado.
    */
   async getObject(key: string): Promise<{ body: Readable; contentType: string }> {
     const safeKey = key.replace(/^\/+/, '').replace(/\.\./g, '');
-    if (!safeKey.startsWith(MEDIA_PREFIX) && !safeKey.startsWith(LOGOS_PREFIX)) {
+    if (
+      !safeKey.startsWith(MEDIA_PREFIX) &&
+      !safeKey.startsWith(LOGOS_PREFIX) &&
+      !safeKey.startsWith(LEGAL_PREFIX)
+    ) {
       throw new InternalServerErrorException('Key inválida');
     }
     try {

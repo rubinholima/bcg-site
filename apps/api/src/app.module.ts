@@ -19,6 +19,7 @@ import { MediaModule } from './media/media.module';
 import { VaultModule } from './vault/vault.module';
 import { CadastrosModule } from './cadastros/cadastros.module';
 import { IntegrationsModule } from './integrations/integrations.module';
+import { ConsultationsModule } from './consultations/consultations.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
     VaultModule,
     CadastrosModule,
     IntegrationsModule,
+    ConsultationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

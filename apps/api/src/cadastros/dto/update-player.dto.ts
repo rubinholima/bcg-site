@@ -148,6 +148,14 @@ export class UpdatePlayerDto {
 
   @IsOptional()
   @IsArray()
+  psychologicalAssessment?: unknown[];
+
+  @IsOptional()
+  @IsArray()
+  onlineConsultations?: unknown[];
+
+  @IsOptional()
+  @IsArray()
   evaluations?: unknown[];
 
   @IsString()

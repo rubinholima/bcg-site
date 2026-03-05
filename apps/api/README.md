@@ -31,6 +31,7 @@ API NestJS do monorepo BCG (empresas, tipos/tenant-kinds, auth).
 
 1. Em um terminal: `cd apps/api && pnpm install`
 2. Crie um `.env` em `apps/api` com `DATABASE_URL` (PostgreSQL) e `JWT_SECRET` (segredo para assinar o token de login; use um valor forte em produção).
+   - **Google Calendar + Meet (opcional):** para o botão "Criar no Meet" nas consultas de jogadores, adicione `GOOGLE_CALENDAR_CLIENT_EMAIL`, `GOOGLE_CALENDAR_PRIVATE_KEY` (chave do service account, com `\n` para quebras de linha) e `GOOGLE_CALENDAR_ID` (ID do calendário ou `primary`). O calendário precisa ser compartilhado com o service account.
 3. Rode as migrations: `npx prisma migrate deploy` (ou `npx prisma migrate dev` em desenvolvimento).
 4. (Opcional) Seed do usuário principal: `pnpm run seed:local-user` — cria `rl@bostoncitygroup.biz` com senha inicial `2504` (altere no dashboard).
 5. Inicie a API: `pnpm run start:dev` — sobe em **http://localhost:3001**.

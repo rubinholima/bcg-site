@@ -1,0 +1,18 @@
+---
+description: Layout mobile e responsivo — visual impecável no iPhone e dispositivos móveis
+alwaysApply: true
+---
+
+# MOBILE E RESPONSIVO
+
+**Regra obrigatória:** Todo layout e UI deve funcionar e ficar impecável no mobile (iPhone, Android).
+
+- ✅ Testar visual e funcionalidade em viewport pequeno (375px, 390px, 414px)
+- ✅ Usar Tailwind responsivo: `sm:`, `md:`, `lg:` onde fizer sentido
+- ✅ Formulários (consultas online, etc.): campos empilhados no mobile, lado a lado no desktop
+- ✅ Botões, inputs e áreas clicáveis: tamanho mínimo para touch (44px recomendado)
+- ✅ Scroll containers: garantir que não quebrem em telas pequenas
+- ✅ Consultas online: cards legíveis, campos acessíveis, sem cortes ou overflow ruim
+- ❌ NUNCA assumir só desktop — sempre validar no mobile
+
+**iPhone e mobile first.** O visual no celular deve ser impecável tanto quanto no desktop.

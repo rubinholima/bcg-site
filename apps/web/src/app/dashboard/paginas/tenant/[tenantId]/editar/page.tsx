@@ -38,7 +38,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -59,10 +61,14 @@ import type { Page, PageTheme } from "@/types/page";
 import {
   getBlockLabel,
   MODULE_OPTIONS,
+  type ModuleCategory,
+  tenantKindNameToModuleCategory,
   createBlock,
   BLOCK_TYPES_WITH_BODY,
   mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
+import { api } from "@/lib/api";
+import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
 import { authFetch } from "@/lib/authFetch";
@@ -324,11 +330,20 @@ export default function EditarPaginaTenantPage() {
   const [openFixtureByBlockId, setOpenFixtureByBlockId] = useState<Record<string, number>>({});
   const [syncingProximosJogosBlockIndex, setSyncingProximosJogosBlockIndex] = useState<number | null>(null);
   const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
+  const [tenantKinds, setTenantKinds] = useState<TenantKind[]>([]);
+  const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const proximosJogosUrlRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const proximosJogosGidRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
+
+  const resolvedModuleCategory: ModuleCategory =
+    moduleTypeFilter === "geral"
+      ? "geral"
+      : tenantKindNameToModuleCategory(tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? "");
+  const resolvedModuleLabel =
+    moduleTypeFilter === "geral" ? "Geral" : (tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? moduleTypeFilter);
 
   const toggleBlockCollapsed = (blockId: string) => {
     setCollapsedBlockIds((prev) => {
@@ -374,6 +389,21 @@ export default function EditarPaginaTenantPage() {
       cancelled = true;
     };
   }, [tenantId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<TenantKind[]>("/tenant-kinds")
+      .then(({ data }) => {
+        if (!cancelled && Array.isArray(data)) setTenantKinds(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTenantKinds([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const setBlocks = (newBlocks: HomeContentBlock[]) => {
     const normalized = normalizeBlocks(newBlocks);
@@ -887,24 +917,52 @@ export default function EditarPaginaTenantPage() {
                   if (row.type === "add") {
                     return (
                       <div key="add-module" className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-4">
-                        <span className="text-sm font-semibold text-muted-foreground">
-                          Adicionar módulo:
-                        </span>
+                        {tenantKinds.length > 0 && (
+                          <>
+                            <span className="text-sm font-semibold text-muted-foreground">Tipo de negócio:</span>
+                            <Select value={moduleTypeFilter} onValueChange={(v) => setModuleTypeFilter(v)}>
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="geral">Geral</SelectItem>
+                                {tenantKinds.map((k) => (
+                                  <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <span className="text-sm font-semibold text-muted-foreground ml-2">Adicionar módulo:</span>
+                          </>
+                        )}
+                        {tenantKinds.length === 0 && <span className="text-sm font-semibold text-muted-foreground">Adicionar módulo:</span>}
                         <Select
                           value=""
                           onValueChange={(value) => {
                             if (value) addModule(value as HomeBlockType);
                           }}
                         >
-                          <SelectTrigger className="w-[280px]">
+                          <SelectTrigger className="w-[240px]">
                             <SelectValue placeholder="Hero, Destaques, Texto…" />
                           </SelectTrigger>
                           <SelectContent>
-                            {MIDDLE_MODULE_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.type} value={opt.type}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
+                            {[
+                              ...(resolvedModuleCategory !== "geral"
+                                ? [
+                                    <SelectGroup key="geral">
+                                      <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
+                                      {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral").map((opt) => (
+                                        <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                      ))}
+                                    </SelectGroup>,
+                                  ]
+                                : []),
+                              <SelectGroup key={moduleTypeFilter}>
+                                <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
+                                {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory).map((opt) => (
+                                  <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectGroup>,
+                            ]}
                           </SelectContent>
                         </Select>
                       </div>
@@ -1382,9 +1440,24 @@ export default function EditarPaginaTenantPage() {
                               <Select key={`section-${index}-left-${((block.config?.sectionLeftModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "left", v as HomeBlockType); }}>
                                 <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
                                 <SelectContent>
-                                  {MIDDLE_MODULE_OPTIONS.filter((o) => o.type !== "section").map((opt) => (
-                                    <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
-                                  ))}
+                                  {[
+                                    ...(resolvedModuleCategory !== "geral"
+                                      ? [
+                                          <SelectGroup key="geral">
+                                            <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
+                                            {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral" && o.type !== "section").map((opt) => (
+                                              <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                            ))}
+                                          </SelectGroup>,
+                                        ]
+                                      : []),
+                                    <SelectGroup key={moduleTypeFilter}>
+                                      <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
+                                      {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory && o.type !== "section").map((opt) => (
+                                        <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                      ))}
+                                    </SelectGroup>,
+                                  ]}
                                 </SelectContent>
                               </Select>
                             </div>
@@ -1448,9 +1521,22 @@ export default function EditarPaginaTenantPage() {
                                 <Select key={`section-${index}-middle-${((block.config?.sectionMiddleModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "middle", v as HomeBlockType); }}>
                                   <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
                                   <SelectContent>
-                                    {MIDDLE_MODULE_OPTIONS.filter((o) => o.type !== "section").map((opt) => (
-                                      <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
-                                    ))}
+                                    {[
+                                      ...(resolvedModuleCategory !== "geral" ? [
+                                        <SelectGroup key="geral">
+                                          <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
+                                          {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral" && o.type !== "section").map((opt) => (
+                                            <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                          ))}
+                                        </SelectGroup>,
+                                      ] : []),
+                                      <SelectGroup key={moduleTypeFilter}>
+                                        <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
+                                        {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory && o.type !== "section").map((opt) => (
+                                          <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                        ))}
+                                      </SelectGroup>,
+                                    ]}
                                   </SelectContent>
                                 </Select>
                               </div>
@@ -1567,9 +1653,22 @@ export default function EditarPaginaTenantPage() {
                                 <Select key={`section-${index}-right-${((block.config?.sectionRightModules as HomeContentBlock[]) ?? []).length}`} value="" onValueChange={(v) => { if (v) addModuleToSection(index, "right", v as HomeBlockType); }}>
                                   <SelectTrigger className="w-full mt-2"><SelectValue placeholder="+ Adicionar módulo" /></SelectTrigger>
                                   <SelectContent>
-                                    {MIDDLE_MODULE_OPTIONS.filter((o) => o.type !== "section").map((opt) => (
-                                      <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
-                                    ))}
+                                    {[
+                                      ...(resolvedModuleCategory !== "geral" ? [
+                                        <SelectGroup key="geral">
+                                          <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
+                                          {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral" && o.type !== "section").map((opt) => (
+                                            <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                          ))}
+                                        </SelectGroup>,
+                                      ] : []),
+                                      <SelectGroup key={moduleTypeFilter}>
+                                        <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
+                                        {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory && o.type !== "section").map((opt) => (
+                                          <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                                        ))}
+                                      </SelectGroup>,
+                                    ]}
                                   </SelectContent>
                                 </Select>
                               </div>
