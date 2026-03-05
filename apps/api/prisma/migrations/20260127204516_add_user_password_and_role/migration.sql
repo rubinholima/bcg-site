@@ -1,3 +1,3 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN "passwordHash" TEXT;
-ALTER TABLE "User" ADD COLUMN "role" TEXT DEFAULT 'editor';
+-- AlterTable (IF NOT EXISTS para não falhar se colunas já existem)
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "passwordHash" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "role" TEXT DEFAULT 'editor';
