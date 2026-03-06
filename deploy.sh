@@ -29,7 +29,8 @@ cd ../..
 
 echo "[deploy] PM2 restart bcg-api, bcg-web..."
 if command -v pm2 >/dev/null 2>&1; then
-  pm2 restart bcg-api 2>/dev/null || (cd apps/api && pm2 start dist/main.js --name bcg-api)
+  pm2 delete bcg-api 2>/dev/null || true
+  (cd apps/api && pm2 start dist/src/main.js --name bcg-api)
   pm2 restart bcg-web 2>/dev/null || (cd apps/web && pm2 start pnpm --name bcg-web -- start)
   pm2 save 2>/dev/null || true
   echo "[deploy] PM2 status:"
