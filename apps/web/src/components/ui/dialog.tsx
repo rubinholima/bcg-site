@@ -102,7 +102,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           onCancel={handleCancel}
           className="fixed left-[50%] top-[50%] z-50 w-[min(32rem,calc(100vw-2rem))] translate-x-[-50%] translate-y-[-50%] rounded-xl border border-border bg-card p-0 shadow-2xl outline-none backdrop:bg-black/60"
         >
-          <div ref={ref} className={cn("grid w-full gap-4 p-6", className)} {...props}>
+          <div ref={ref} className={cn("grid w-full gap-4 p-6 text-foreground", className)} {...props}>
             {children}
             {showCloseButton && (
               <button
