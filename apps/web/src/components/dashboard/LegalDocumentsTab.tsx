@@ -299,16 +299,17 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
         )}
 
         <Dialog open={modalNovo} onOpenChange={(o) => !o && resetForm()}>
-          <DialogContent showCloseButton={!uploading}>
-            <DialogHeader className="space-y-1">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Upload className="h-5 w-5 text-primary" />
+          <DialogContent className="overflow-hidden" showCloseButton={!uploading}>
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400" />
+            <DialogHeader className="space-y-3 pt-1">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-600/10 ring-1 ring-emerald-500/30">
+                  <Upload className="h-6 w-6 text-emerald-500" />
                 </div>
-                <div>
-                  <DialogTitle>Novo documento</DialogTitle>
-                  <DialogDescription className="mt-0.5">
-                    Upload de PDF. Fica como rascunho até enviar para assinatura.
+                <div className="min-w-0 flex-1">
+                  <DialogTitle className="text-xl">Novo documento</DialogTitle>
+                  <DialogDescription className="mt-2">
+                    Upload de PDF. O documento ficará como rascunho até enviar para assinatura.
                   </DialogDescription>
                 </div>
               </div>
@@ -544,23 +545,27 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
         </div>
 
         <Dialog open={!!sendModalDoc} onOpenChange={(o) => !o && setSendModalDoc(null)}>
-          <DialogContent>
-            <DialogHeader className="space-y-1">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Send className="h-5 w-5 text-primary" />
+          <DialogContent className="overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300" />
+            <DialogHeader className="space-y-3 pt-1">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-600/10 ring-1 ring-amber-500/30">
+                  <Send className="h-6 w-6 text-amber-500" />
                 </div>
-                <div>
-                  <DialogTitle>Enviar para assinatura</DialogTitle>
-                  <DialogDescription className="mt-0.5">
-                    {sendModalDoc && (
-                      <>Enviar &quot;{sendModalDoc.name}&quot; via HelloSign</>
-                    )}
+                <div className="min-w-0 flex-1">
+                  <DialogTitle className="text-xl">Enviar para assinatura</DialogTitle>
+                  {sendModalDoc && (
+                    <p className="mt-1.5 rounded-md bg-muted/50 px-2.5 py-1.5 text-sm font-medium text-foreground">
+                      {sendModalDoc.name}
+                    </p>
+                  )}
+                  <DialogDescription className="mt-2">
+                    O signatário receberá um e-mail para assinar eletronicamente.
                   </DialogDescription>
                 </div>
               </div>
             </DialogHeader>
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="send-email">E-mail do signatário *</Label>
