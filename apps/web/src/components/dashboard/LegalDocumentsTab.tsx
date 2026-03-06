@@ -545,7 +545,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
         </div>
 
         <Dialog open={!!sendModalDoc} onOpenChange={(o) => !o && setSendModalDoc(null)}>
-          <DialogContent className="overflow-hidden">
+          <DialogContent>
             <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300" />
             <DialogHeader className="space-y-3 pt-1">
               <div className="flex items-start gap-4">
@@ -592,7 +592,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                     <SelectTrigger id="send-page">
                       <SelectValue placeholder="Página 1" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent side="top" sideOffset={4} className="max-h-48">
                       {[1, 2, 3, 4, 5].map((p) => (
                         <SelectItem key={p} value={String(p)}>
                           Página {p}
