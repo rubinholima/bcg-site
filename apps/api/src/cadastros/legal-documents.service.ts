@@ -7,9 +7,6 @@ import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { HelloSignService } from '../hello-sign/hello-sign.service';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ numpages: number }>;
-
 export const LEGAL_DOC_TYPES = [
   { value: 'contrato_trabalho', label: 'Contrato de trabalho' },
   { value: 'contrato_imagem', label: 'Contrato de imagem' },
@@ -104,18 +101,11 @@ export class LegalDocumentsService {
     const fileBuffer = await this.s3.getObjectBuffer(doc.fileKey);
     const fileName = doc.name.endsWith('.pdf') ? doc.name : `${doc.name}.pdf`;
 
-    // Valida página do campo de assinatura: não pode exceder o número de páginas do PDF
-    let validatedSignatureField = signatureField;
-    try {
-      const pdfData = await pdfParse(fileBuffer);
-      const numPages = Math.max(1, Number(pdfData?.numpages) || 1);
-      const requestedPage = signatureField?.page != null ? Math.max(1, Number(signatureField.page)) : 1;
-      const page = Math.min(requestedPage, numPages);
-      validatedSignatureField = { ...(signatureField ?? {}), page };
-    } catch {
-      // PDF inválido ou não legível (ex.: protegido, corrompido) — força página 1
-      validatedSignatureField = { ...(signatureField ?? {}), page: 1 };
-    }
+    // Página do campo de assinatura (padrão 1; HelloSign rejeita se exceder o PDF)
+    const page = signatureField?.page != null
+      ? Math.max(1, Math.min(999, Number(signatureField.page) || 1))
+      : 1;
+    const validatedSignatureField = { ...(signatureField ?? {}), page };
 
     let result;
     try {
