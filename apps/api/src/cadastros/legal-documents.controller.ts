@@ -15,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
+import { PDFDocument } from 'pdf-lib';
 import { LegalDocumentsService } from './legal-documents.service';
 import { S3Service } from '../s3/s3.service';
 
@@ -58,6 +59,14 @@ export class LegalDocumentsController {
       throw new BadRequestException('Campo "type" e "name" são obrigatórios.');
     }
 
+    let pageCount: number | undefined;
+    try {
+      const pdfDoc = await PDFDocument.load(file.buffer, { ignoreEncryption: true });
+      pageCount = pdfDoc.getPageCount();
+    } catch {
+      // fallback: unable to parse PDF pages
+    }
+
     const result = await this.s3.uploadLegalDocument(
       file.buffer,
       playerId,
@@ -74,6 +83,7 @@ export class LegalDocumentsController {
       validFrom,
       validUntil,
       notes: notes?.trim(),
+      pageCount,
     });
   }
 

@@ -70,6 +70,7 @@ interface LegalDocumentEntry {
   status: string;
   signerEmail?: string | null;
   signerName?: string | null;
+  pageCount?: number | null;
   validFrom?: string | null;
   validUntil?: string | null;
   adobeAgreementId?: string | null;
@@ -141,7 +142,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
   const openSendModal = (doc: LegalDocumentEntry) => {
     setSendEmail(doc.signerEmail ?? "");
     setSendName(doc.signerName ?? "");
-    setSendPage("1");
+    setSendPage(String(doc.pageCount || 1));
     setSendModalDoc(doc);
     setError(null);
   };
@@ -560,7 +561,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                     onChange={(e) => setSendPage(e.target.value)}
                     className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
-                    {[1, 2, 3, 4, 5].map((p) => (
+                    {Array.from({ length: sendModalDoc?.pageCount || 1 }, (_, i) => i + 1).map((p) => (
                       <option key={p} value={String(p)}>
                         Página {p}
                       </option>

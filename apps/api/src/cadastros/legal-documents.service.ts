@@ -55,6 +55,7 @@ export class LegalDocumentsService {
       validFrom?: string;
       validUntil?: string;
       notes?: string;
+      pageCount?: number;
     },
   ) {
     await this.ensurePlayerExists(playerId);
@@ -69,6 +70,7 @@ export class LegalDocumentsService {
         status: 'draft',
         signerEmail: data.signerEmail ?? null,
         signerName: data.signerName ?? null,
+        pageCount: data.pageCount ?? null,
         validFrom: data.validFrom ? new Date(data.validFrom) : null,
         validUntil: data.validUntil ? new Date(data.validUntil) : null,
         notes: data.notes ?? null,
