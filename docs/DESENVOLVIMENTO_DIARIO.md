@@ -29,6 +29,35 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# <span style="color: red; font-size: 28px;">📅 18 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Controle Jurídico: modal Enviar, dropdown, pageCount PDF)</span>
+
+## **MODAL ENVIAR PARA ASSINATURA, DROPDOWN E PÁGINAS REAIS DO PDF**
+
+### 🎯 **O QUE FOI FEITO HOJE:**
+
+1. **Modal "Enviar para assinatura"** — Dropdown "Página da assinatura" quebrava: o conteúdo do Radix Select (Portal em `document.body`) ficava **atrás** do `<dialog>` nativo (top layer). Solução: **select HTML nativo** no modal, sem Portal — funciona dentro do dialog.
+2. **Dialog** — Removido drag handle e lógica de arrastar; evita interceptar cliques e simplifica o componente.
+3. **Número de páginas do PDF** — No upload do documento jurídico: extração do **pageCount** com `pdf-lib` no controller; campo **pageCount** em `LegalDocument` (Prisma + migration); dropdown do modal passa a listar só **Página 1 … Página N** conforme o total de páginas do PDF (evita erro "página selecionada é maior que o número de páginas do PDF").
+
+### 📁 **ARQUIVOS ENVOLVIDOS NESTE ENCERRAMENTO:**
+
+**Modificados:**  
+`apps/web/src/components/dashboard/LegalDocumentsTab.tsx` (select nativo, uso de `pageCount` no dropdown), `apps/web/src/components/ui/dialog.tsx` (sem drag), `apps/api/src/cadastros/legal-documents.controller.ts` (pdf-lib, pageCount no create), `apps/api/src/cadastros/legal-documents.service.ts` (pageCount em create), `apps/api/prisma/schema.prisma` (pageCount Int?)
+
+**Criados:**  
+`apps/api/prisma/migrations/20250218_add_pagecount_legal_document/migration.sql`
+
+**Dependência:**  
+`pdf-lib` adicionada em `apps/api/package.json`
+
+### 🚀 **FECHAMENTO DO DIA (GIT):**
+
+- **Commits do dia:** `c7984bb` (simplifica modal Enviar, remove drag do dialog), `7ac7089` (select nativo no modal), `e18b4dc` (pageCount do PDF no upload e dropdown com páginas reais)
+- **Branch:** `develop`
+- **Push:** ✅ para origin/develop
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 3 DE MARÇO DE 2026 — ENCERRAMENTO (Carrossel logos, Buildertrend sidebar)</span>
 
 ## **CARROSSEL, BUILDERTREND, DEPLOY**
