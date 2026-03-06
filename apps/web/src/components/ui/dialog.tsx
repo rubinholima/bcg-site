@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { GripVertical, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -67,8 +67,6 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
     const { open: controlledOpen, onOpenChange } = React.useContext(DialogContext);
     const dialogRef = React.useRef<HTMLDialogElement>(null);
     const [mounted, setMounted] = React.useState(false);
-    const [drag, setDrag] = React.useState({ x: 0, y: 0 });
-    const dragStart = React.useRef({ x: 0, y: 0, left: 0, top: 0 });
 
     React.useEffect(() => {
       setMounted(true);
@@ -79,7 +77,6 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
       if (!dialog || !mounted) return;
       if (controlledOpen) {
         dialog.showModal();
-        setDrag({ x: 0, y: 0 });
       } else {
         dialog.close();
       }
@@ -98,44 +95,14 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
       [handleClose]
     );
 
-    const handleDragStart = React.useCallback((e: React.MouseEvent) => {
-      e.preventDefault();
-      dragStart.current = { x: e.clientX, y: e.clientY, left: drag.x, top: drag.y };
-      const onMove = (ev: MouseEvent) => {
-        setDrag({
-          x: dragStart.current.left + ev.clientX - dragStart.current.x,
-          y: dragStart.current.top + ev.clientY - dragStart.current.y,
-        });
-      };
-      const onUp = () => {
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
-    }, [drag.x, drag.y]);
-
     return (
       <DialogPortal>
         <dialog
           ref={dialogRef}
           onCancel={handleCancel}
-          className="fixed left-[50%] top-[50%] z-50 w-[min(32rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-0 shadow-2xl outline-none backdrop:bg-black/60 transition-none"
-          style={{
-            transform: `translate(calc(-50% + ${drag.x}px), calc(-50% + ${drag.y}px))`,
-          }}
+          className="fixed left-[50%] top-[50%] z-50 w-[min(32rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-0 shadow-2xl outline-none backdrop:bg-black/60 transition-none -translate-x-1/2 -translate-y-1/2"
         >
-          <div
-            role="button"
-            tabIndex={0}
-            onMouseDown={handleDragStart}
-            className="absolute left-0 right-12 top-0 z-10 flex cursor-grab items-center justify-center py-2 pr-4 active:cursor-grabbing"
-            data-drag-handle
-            aria-label="Arrastar para mover o modal"
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground/50" />
-          </div>
-          <div ref={ref} className={cn("grid w-full gap-4 p-6 pt-12 text-foreground", className)} {...props}>
+          <div ref={ref} className={cn("grid w-full gap-4 p-6 text-foreground", className)} {...props}>
             {children}
             {showCloseButton && (
               <button

@@ -88,7 +88,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
-  const [modalNovo, setModalNovo] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [sendModalDoc, setSendModalDoc] = useState<LegalDocumentEntry | null>(null);
   const [deleteModalDoc, setDeleteModalDoc] = useState<LegalDocumentEntry | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -134,7 +134,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
     setFormValidFrom("");
     setFormValidUntil("");
     setFormNotes("");
-    setModalNovo(false);
+    setShowForm(false);
     fileInputRef.current?.value && (fileInputRef.current.value = "");
   };
 
@@ -282,11 +282,11 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
           </div>
           <Button
             type="button"
-            variant="default"
-            onClick={() => setModalNovo(true)}
+            variant={showForm ? "outline" : "default"}
+            onClick={() => setShowForm(!showForm)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Novo documento
+            {showForm ? "Cancelar" : "Novo documento"}
           </Button>
         </div>
       </CardHeader>
@@ -298,93 +298,80 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
           </div>
         )}
 
-        <Dialog open={modalNovo} onOpenChange={(o) => !o && resetForm()}>
-          <DialogContent className="overflow-hidden" showCloseButton={!uploading}>
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400" />
-            <DialogHeader className="space-y-3 pt-1">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-600/10 ring-1 ring-emerald-500/30">
-                  <Upload className="h-6 w-6 text-emerald-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-xl">Novo documento</DialogTitle>
-                  <DialogDescription className="mt-2">
-                    Upload de PDF. O documento ficará como rascunho até enviar para assinatura.
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Tipo do documento *</Label>
-                  <Select value={formType} onValueChange={setFormType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LEGAL_DOC_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Nome do documento *</Label>
-                  <Input
-                    placeholder="Ex: Contrato 2025"
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>E-mail do signatário</Label>
-                  <Input
-                    type="email"
-                    placeholder="email@exemplo.com"
-                    value={formSignerEmail}
-                    onChange={(e) => setFormSignerEmail(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Nome do signatário</Label>
-                  <Input
-                    placeholder="Nome completo"
-                    value={formSignerName}
-                    onChange={(e) => setFormSignerName(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Válido de</Label>
-                  <Input
-                    type="date"
-                    value={formValidFrom}
-                    onChange={(e) => setFormValidFrom(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Válido até</Label>
-                  <Input
-                    type="date"
-                    value={formValidUntil}
-                    onChange={(e) => setFormValidUntil(e.target.value)}
-                  />
-                </div>
+        {showForm && (
+          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
+            <h3 className="text-sm font-semibold">Upload de PDF</h3>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Tipo do documento *</Label>
+                <Select value={formType} onValueChange={setFormType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LEGAL_DOC_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label>Observações</Label>
+                <Label>Nome do documento *</Label>
                 <Input
-                  placeholder="Observações opcionais"
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
+                  placeholder="Ex: Contrato 2025"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
                 />
               </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>E-mail do signatário</Label>
+                <Input
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={formSignerEmail}
+                  onChange={(e) => setFormSignerEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nome do signatário</Label>
+                <Input
+                  placeholder="Nome completo"
+                  value={formSignerName}
+                  onChange={(e) => setFormSignerName(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Válido de</Label>
+                <Input
+                  type="date"
+                  value={formValidFrom}
+                  onChange={(e) => setFormValidFrom(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Válido até</Label>
+                <Input
+                  type="date"
+                  value={formValidUntil}
+                  onChange={(e) => setFormValidUntil(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Input
+                placeholder="Observações opcionais"
+                value={formNotes}
+                onChange={(e) => setFormNotes(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -392,16 +379,6 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                 className="hidden"
                 onChange={handleUpload}
               />
-            </div>
-            <DialogFooter className="border-t border-border pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => resetForm()}
-                disabled={uploading}
-              >
-                Cancelar
-              </Button>
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -414,9 +391,9 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                 )}
                 {uploading ? "Enviando..." : "Selecionar PDF e enviar"}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+        )}
 
         <div>
           <h3 className="text-sm font-semibold mb-2">Documentos</h3>
@@ -546,26 +523,15 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
 
         <Dialog open={!!sendModalDoc} onOpenChange={(o) => !o && setSendModalDoc(null)}>
           <DialogContent>
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300" />
-            <DialogHeader className="space-y-3 pt-1">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-yellow-600/10 ring-1 ring-amber-500/30">
-                  <Send className="h-6 w-6 text-amber-500" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-xl">Enviar para assinatura</DialogTitle>
-                  {sendModalDoc && (
-                    <p className="mt-1.5 rounded-md bg-muted/50 px-2.5 py-1.5 text-sm font-medium text-foreground">
-                      {sendModalDoc.name}
-                    </p>
-                  )}
-                  <DialogDescription className="mt-2">
-                    O signatário receberá um e-mail para assinar eletronicamente.
-                  </DialogDescription>
-                </div>
-              </div>
+            <DialogHeader>
+              <DialogTitle>Enviar para assinatura</DialogTitle>
+              <DialogDescription>
+                {sendModalDoc && (
+                  <>Enviar &quot;{sendModalDoc.name}&quot;. O signatário receberá um e-mail para assinar.</>
+                )}
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-2">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="send-email">E-mail do signatário *</Label>
@@ -592,7 +558,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                     <SelectTrigger id="send-page">
                       <SelectValue placeholder="Página 1" />
                     </SelectTrigger>
-                    <SelectContent side="top" sideOffset={4} className="max-h-48">
+                    <SelectContent>
                       {[1, 2, 3, 4, 5].map((p) => (
                         <SelectItem key={p} value={String(p)}>
                           Página {p}
@@ -603,7 +569,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                 </div>
               </div>
             </div>
-            <DialogFooter className="border-t border-border pt-4">
+            <DialogFooter>
               <Button variant="outline" onClick={() => setSendModalDoc(null)}>
                 Cancelar
               </Button>
