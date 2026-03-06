@@ -299,12 +299,19 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
         )}
 
         <Dialog open={modalNovo} onOpenChange={(o) => !o && resetForm()}>
-          <DialogContent className="sm:max-w-lg" showCloseButton={!uploading}>
-            <DialogHeader>
-              <DialogTitle>Novo documento</DialogTitle>
-              <DialogDescription>
-                Preencha os dados e selecione um PDF. O documento ficará como rascunho até o envio para assinatura.
-              </DialogDescription>
+          <DialogContent showCloseButton={!uploading}>
+            <DialogHeader className="space-y-1">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Upload className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle>Novo documento</DialogTitle>
+                  <DialogDescription className="mt-0.5">
+                    Upload de PDF. Fica como rascunho até enviar para assinatura.
+                  </DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -385,7 +392,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                 onChange={handleUpload}
               />
             </div>
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="border-t border-border pt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -537,55 +544,61 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
         </div>
 
         <Dialog open={!!sendModalDoc} onOpenChange={(o) => !o && setSendModalDoc(null)}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Enviar para assinatura</DialogTitle>
-              <DialogDescription>
-                {sendModalDoc && (
-                  <>O signatário receberá um e-mail do HelloSign para assinar &quot;{sendModalDoc.name}&quot;.</>
-                )}
-              </DialogDescription>
+          <DialogContent>
+            <DialogHeader className="space-y-1">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Send className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <DialogTitle>Enviar para assinatura</DialogTitle>
+                  <DialogDescription className="mt-0.5">
+                    {sendModalDoc && (
+                      <>Enviar &quot;{sendModalDoc.name}&quot; via HelloSign</>
+                    )}
+                  </DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
             <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="send-email">E-mail do signatário *</Label>
-                <Input
-                  id="send-email"
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={sendEmail}
-                  onChange={(e) => setSendEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="send-name">Nome do signatário</Label>
-                <Input
-                  id="send-name"
-                  placeholder="Nome completo"
-                  value={sendName}
-                  onChange={(e) => setSendName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="send-page">Página do campo de assinatura</Label>
-                <Select value={sendPage} onValueChange={setSendPage}>
-                  <SelectTrigger id="send-page">
-                    <SelectValue placeholder="Página 1" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map((p) => (
-                      <SelectItem key={p} value={String(p)}>
-                        Página {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  O campo será posicionado no rodapé. PDFs com menos páginas são ajustados automaticamente.
-                </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="send-email">E-mail do signatário *</Label>
+                  <Input
+                    id="send-email"
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    value={sendEmail}
+                    onChange={(e) => setSendEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="send-name">Nome</Label>
+                  <Input
+                    id="send-name"
+                    placeholder="Nome completo"
+                    value={sendName}
+                    onChange={(e) => setSendName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="send-page">Página da assinatura</Label>
+                  <Select value={sendPage} onValueChange={setSendPage}>
+                    <SelectTrigger id="send-page">
+                      <SelectValue placeholder="Página 1" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5].map((p) => (
+                        <SelectItem key={p} value={String(p)}>
+                          Página {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="border-t border-border pt-4">
               <Button variant="outline" onClick={() => setSendModalDoc(null)}>
                 Cancelar
               </Button>
