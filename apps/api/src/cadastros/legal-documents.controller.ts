@@ -84,12 +84,16 @@ export class LegalDocumentsController {
     @Body('signerEmail') signerEmail?: string,
     @Body('signerName') signerName?: string,
     @Body('message') message?: string,
-    @Body('signaturePage') signaturePage?: number,
+    @Body('signaturePage') signaturePage?: number | string,
   ) {
     if (!signerEmail?.trim()) {
       throw new BadRequestException('Campo "signerEmail" é obrigatório.');
     }
-    const signatureField = signaturePage != null ? { page: signaturePage } : undefined;
+    const pageNum =
+      signaturePage != null
+        ? Math.max(1, Math.min(999, parseInt(String(signaturePage), 10) || 1))
+        : undefined;
+    const signatureField = pageNum != null ? { page: pageNum } : undefined;
     return this.service.sendForSignature(id, playerId, signerEmail.trim(), signerName?.trim(), message?.trim(), signatureField);
   }
 

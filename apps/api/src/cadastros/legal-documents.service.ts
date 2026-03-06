@@ -7,6 +7,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { HelloSignService } from '../hello-sign/hello-sign.service';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse') as (buffer: Buffer) => Promise<{ numpages: number }>;
+
 export const LEGAL_DOC_TYPES = [
   { value: 'contrato_trabalho', label: 'Contrato de trabalho' },
   { value: 'contrato_imagem', label: 'Contrato de imagem' },
@@ -101,15 +104,44 @@ export class LegalDocumentsService {
     const fileBuffer = await this.s3.getObjectBuffer(doc.fileKey);
     const fileName = doc.name.endsWith('.pdf') ? doc.name : `${doc.name}.pdf`;
 
-    const result = await this.helloSign.sendForSignature({
-      fileBuffer,
-      fileName,
-      agreementName: doc.name,
-      signerEmail: signerEmail.trim(),
-      signerName: signerName?.trim(),
-      message,
-      signatureField,
-    });
+    // Valida página do campo de assinatura: não pode exceder o número de páginas do PDF
+    let validatedSignatureField = signatureField;
+    try {
+      const pdfData = await pdfParse(fileBuffer);
+      const numPages = Math.max(1, Number(pdfData?.numpages) || 1);
+      const requestedPage = signatureField?.page != null ? Math.max(1, Number(signatureField.page)) : 1;
+      const page = Math.min(requestedPage, numPages);
+      validatedSignatureField = { ...(signatureField ?? {}), page };
+    } catch {
+      // PDF inválido ou não legível (ex.: protegido, corrompido) — força página 1
+      validatedSignatureField = { ...(signatureField ?? {}), page: 1 };
+    }
+
+    let result;
+    try {
+      result = await this.helloSign.sendForSignature({
+        fileBuffer,
+        fileName,
+        agreementName: doc.name,
+        signerEmail: signerEmail.trim(),
+        signerName: signerName?.trim(),
+        message,
+        signatureField: validatedSignatureField,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Page') && msg.includes('exceeds document length')) {
+        throw new BadRequestException(
+          'A página selecionada é maior que o número de páginas do PDF. Use a página 1 para documentos de uma única página.',
+        );
+      }
+      if (msg.includes('not decipherable')) {
+        throw new BadRequestException(
+          'O PDF não pôde ser lido. Verifique se o arquivo não está protegido, corrompido ou em formato incompatível.',
+        );
+      }
+      throw err;
+    }
 
     await this.prisma.legalDocument.update({
       where: { id },

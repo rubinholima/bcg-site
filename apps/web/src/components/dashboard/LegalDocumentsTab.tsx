@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Download,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { api } from "@/lib/api";
 
 const LEGAL_DOC_TYPES = [
@@ -69,10 +88,12 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [modalNovo, setModalNovo] = useState(false);
+  const [sendModalDoc, setSendModalDoc] = useState<LegalDocumentEntry | null>(null);
+  const [deleteModalDoc, setDeleteModalDoc] = useState<LegalDocumentEntry | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state
+  // Form state (novo documento)
   const [formType, setFormType] = useState<string>("contrato_trabalho");
   const [formName, setFormName] = useState("");
   const [formSignerEmail, setFormSignerEmail] = useState("");
@@ -80,6 +101,11 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
   const [formValidFrom, setFormValidFrom] = useState("");
   const [formValidUntil, setFormValidUntil] = useState("");
   const [formNotes, setFormNotes] = useState("");
+
+  // Form state (enviar para assinatura)
+  const [sendEmail, setSendEmail] = useState("");
+  const [sendName, setSendName] = useState("");
+  const [sendPage, setSendPage] = useState("1");
 
   const loadDocs = async () => {
     try {
@@ -108,8 +134,16 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
     setFormValidFrom("");
     setFormValidUntil("");
     setFormNotes("");
-    setShowForm(false);
+    setModalNovo(false);
     fileInputRef.current?.value && (fileInputRef.current.value = "");
+  };
+
+  const openSendModal = (doc: LegalDocumentEntry) => {
+    setSendEmail(doc.signerEmail ?? "");
+    setSendName(doc.signerName ?? "");
+    setSendPage("1");
+    setSendModalDoc(doc);
+    setError(null);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,32 +183,28 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
     }
   };
 
-  const handleSendForSignature = async (doc: LegalDocumentEntry) => {
-    let email = doc.signerEmail?.trim() || formSignerEmail?.trim();
-    let name = doc.signerName?.trim() || formSignerName?.trim();
+  const handleSendForSignature = async () => {
+    const doc = sendModalDoc;
+    if (!doc) return;
+    const email = sendEmail.trim();
     if (!email) {
-      const input = window.prompt("E-mail do signatário (obrigatório):");
-      if (!input?.trim()) {
-        setError("E-mail do signatário é obrigatório.");
-        return;
-      }
-      email = input.trim();
-      const nameInput = window.prompt("Nome do signatário (opcional):");
-      if (nameInput?.trim()) name = nameInput.trim();
+      setError("E-mail do signatário é obrigatório.");
+      return;
     }
-    const pageInput = window.prompt("Página do campo de assinatura no PDF (1 = primeira, 2 = segunda... Deixe vazio para 1):", "1");
-    const signaturePage = pageInput ? parseInt(pageInput, 10) : 1;
+    const signaturePage = sendPage ? parseInt(sendPage, 10) : 1;
     setActionId(doc.id);
     setError(null);
     try {
       await api.post(`/players/${playerId}/legal-documents/${doc.id}/send-for-signature`, {
         signerEmail: email,
-        signerName: name || undefined,
+        signerName: sendName.trim() || undefined,
         signaturePage: Number.isNaN(signaturePage) || signaturePage < 1 ? 1 : signaturePage,
       });
       await loadDocs();
+      setSendModalDoc(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao enviar para assinatura");
+      const msg = err instanceof Error ? err.message : "Erro ao enviar para assinatura";
+      setError(typeof msg === "string" ? msg : String(msg));
     } finally {
       setActionId(null);
     }
@@ -213,13 +243,15 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
     }
   };
 
-  const handleDelete = async (doc: LegalDocumentEntry) => {
-    if (!confirm(`Excluir o documento "${doc.name}"?`)) return;
+  const executeDelete = async () => {
+    const doc = deleteModalDoc;
+    if (!doc) return;
     setActionId(doc.id);
     setError(null);
     try {
       await api.delete(`/players/${playerId}/legal-documents/${doc.id}`);
       await loadDocs();
+      setDeleteModalDoc(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir");
     } finally {
@@ -250,95 +282,101 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
           </div>
           <Button
             type="button"
-            variant={showForm ? "outline" : "default"}
-            onClick={() => setShowForm(!showForm)}
+            variant="default"
+            onClick={() => setModalNovo(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            {showForm ? "Cancelar" : "Novo documento"}
+            Novo documento
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-            {error}
+          <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
         )}
 
-        {showForm && (
-          <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
-            <h3 className="text-sm font-semibold">Upload de PDF</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Tipo do documento *</Label>
-                <Select value={formType} onValueChange={setFormType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LEGAL_DOC_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <Dialog open={modalNovo} onOpenChange={(o) => !o && resetForm()}>
+          <DialogContent className="sm:max-w-lg" showCloseButton={!uploading}>
+            <DialogHeader>
+              <DialogTitle>Novo documento</DialogTitle>
+              <DialogDescription>
+                Preencha os dados e selecione um PDF. O documento ficará como rascunho até o envio para assinatura.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Tipo do documento *</Label>
+                  <Select value={formType} onValueChange={setFormType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LEGAL_DOC_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome do documento *</Label>
+                  <Input
+                    placeholder="Ex: Contrato 2025"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>E-mail do signatário</Label>
+                  <Input
+                    type="email"
+                    placeholder="email@exemplo.com"
+                    value={formSignerEmail}
+                    onChange={(e) => setFormSignerEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nome do signatário</Label>
+                  <Input
+                    placeholder="Nome completo"
+                    value={formSignerName}
+                    onChange={(e) => setFormSignerName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Válido de</Label>
+                  <Input
+                    type="date"
+                    value={formValidFrom}
+                    onChange={(e) => setFormValidFrom(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Válido até</Label>
+                  <Input
+                    type="date"
+                    value={formValidUntil}
+                    onChange={(e) => setFormValidUntil(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Nome do documento *</Label>
+                <Label>Observações</Label>
                 <Input
-                  placeholder="Ex: Contrato 2025"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="Observações opcionais"
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
                 />
               </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>E-mail do signatário</Label>
-                <Input
-                  type="email"
-                  placeholder="email@exemplo.com"
-                  value={formSignerEmail}
-                  onChange={(e) => setFormSignerEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Nome do signatário</Label>
-                <Input
-                  placeholder="Nome completo"
-                  value={formSignerName}
-                  onChange={(e) => setFormSignerName(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Válido de</Label>
-                <Input
-                  type="date"
-                  value={formValidFrom}
-                  onChange={(e) => setFormValidFrom(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Válido até</Label>
-                <Input
-                  type="date"
-                  value={formValidUntil}
-                  onChange={(e) => setFormValidUntil(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Observações</Label>
-              <Input
-                placeholder="Observações opcionais"
-                value={formNotes}
-                onChange={(e) => setFormNotes(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -346,6 +384,16 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                 className="hidden"
                 onChange={handleUpload}
               />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => resetForm()}
+                disabled={uploading}
+              >
+                Cancelar
+              </Button>
               <Button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -358,9 +406,9 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                 )}
                 {uploading ? "Enviando..." : "Selecionar PDF e enviar"}
               </Button>
-            </div>
-          </div>
-        )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div>
           <h3 className="text-sm font-semibold mb-2">Documentos</h3>
@@ -442,7 +490,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                                 size="icon"
                                 title="Enviar para assinatura (HelloSign)"
                                 disabled={isLoading}
-                                onClick={() => handleSendForSignature(doc)}
+                                onClick={() => openSendModal(doc)}
                               >
                                 {isLoading ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -473,7 +521,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                               title="Excluir"
                               className="text-destructive hover:text-destructive"
                               disabled={isLoading}
-                              onClick={() => handleDelete(doc)}
+                              onClick={() => setDeleteModalDoc(doc)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -487,6 +535,100 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
             </div>
           )}
         </div>
+
+        <Dialog open={!!sendModalDoc} onOpenChange={(o) => !o && setSendModalDoc(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Enviar para assinatura</DialogTitle>
+              <DialogDescription>
+                {sendModalDoc && (
+                  <>O signatário receberá um e-mail do HelloSign para assinar &quot;{sendModalDoc.name}&quot;.</>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="send-email">E-mail do signatário *</Label>
+                <Input
+                  id="send-email"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="send-name">Nome do signatário</Label>
+                <Input
+                  id="send-name"
+                  placeholder="Nome completo"
+                  value={sendName}
+                  onChange={(e) => setSendName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="send-page">Página do campo de assinatura</Label>
+                <Select value={sendPage} onValueChange={setSendPage}>
+                  <SelectTrigger id="send-page">
+                    <SelectValue placeholder="Página 1" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5].map((p) => (
+                      <SelectItem key={p} value={String(p)}>
+                        Página {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  O campo será posicionado no rodapé. PDFs com menos páginas são ajustados automaticamente.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSendModalDoc(null)}>
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => void handleSendForSignature()}
+                disabled={!sendEmail.trim() || actionId === sendModalDoc?.id}
+              >
+                {actionId === sendModalDoc?.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                Enviar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AlertDialog open={!!deleteModalDoc} onOpenChange={(o) => !o && setDeleteModalDoc(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir documento?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteModalDoc && (
+                  <>
+                    Excluir &quot;{deleteModalDoc.name}&quot;?
+                    <br />
+                    Esta ação não pode ser desfeita.
+                  </>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => void executeDelete()}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
