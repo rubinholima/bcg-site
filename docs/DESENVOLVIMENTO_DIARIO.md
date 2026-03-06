@@ -29,7 +29,7 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
-# <span style="color: red; font-size: 28px;">📅 18 DE FEVEREIRO DE 2026 — ENCERRAMENTO (Controle Jurídico: modal Enviar, dropdown, pageCount PDF)</span>
+# <span style="color: red; font-size: 28px;">📅 6 DE MARÇO DE 2026 — ENCERRAMENTO (Controle Jurídico: modal Enviar, dropdown, pageCount PDF)</span>
 
 ## **MODAL ENVIAR PARA ASSINATURA, DROPDOWN E PÁGINAS REAIS DO PDF**
 
