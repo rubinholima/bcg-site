@@ -554,18 +554,18 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="send-page">Página da assinatura</Label>
-                  <Select value={sendPage} onValueChange={setSendPage}>
-                    <SelectTrigger id="send-page">
-                      <SelectValue placeholder="Página 1" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5].map((p) => (
-                        <SelectItem key={p} value={String(p)}>
-                          Página {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    id="send-page"
+                    value={sendPage}
+                    onChange={(e) => setSendPage(e.target.value)}
+                    className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  >
+                    {[1, 2, 3, 4, 5].map((p) => (
+                      <option key={p} value={String(p)}>
+                        Página {p}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
