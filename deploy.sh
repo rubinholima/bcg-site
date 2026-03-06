@@ -6,6 +6,9 @@
 set -e
 cd "$(dirname "$0")"
 
+# Evita OOM no build (2GB RAM: heap 1536MB, resto para OS/PM2)
+export NODE_OPTIONS="--max-old-space-size=1536"
+
 echo "[deploy] git pull..."
 git pull origin develop
 
