@@ -277,7 +277,7 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
           <div>
             <CardTitle>Controle Jurídico</CardTitle>
             <CardDescription>
-              Contratos e documentos legais. Upload de PDF e envio para assinatura via HelloSign.
+              Contratos e documentos legais. Upload de PDF e envio para assinatura eletrônica.
             </CardDescription>
           </div>
           <Button

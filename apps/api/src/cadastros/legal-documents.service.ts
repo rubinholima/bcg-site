@@ -130,6 +130,11 @@ export class LegalDocumentsService {
           'O PDF não pôde ser lido. Verifique se o arquivo não está protegido, corrompido ou em formato incompatível.',
         );
       }
+      if (msg.includes('outside the vertical bounds') || msg.includes('outside the document')) {
+        throw new BadRequestException(
+          'Erro de posicionamento do campo de assinatura. Tente novamente — o sistema ajustou a posição.',
+        );
+      }
       throw err;
     }
 

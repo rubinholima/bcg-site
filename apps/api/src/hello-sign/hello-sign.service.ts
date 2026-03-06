@@ -54,10 +54,10 @@ export class HelloSignService {
 
     const sig = params.signatureField ?? {};
     const page = sig.page ?? 1;
-    const x = sig.x ?? 50;
-    const y = sig.y ?? 720;
-    const width = sig.width ?? 250;
-    const height = sig.height ?? 40;
+    const x = Math.max(0, Math.min(612, sig.x ?? 50));
+    const y = Math.max(0, Math.min(600, sig.y ?? 600)); // HelloSign: y deve ser < 682
+    const width = Math.max(100, Math.min(400, sig.width ?? 250));
+    const height = Math.max(30, Math.min(80, sig.height ?? 40));
 
     const formFields = [
       [
