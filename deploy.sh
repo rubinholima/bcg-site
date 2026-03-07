@@ -10,6 +10,10 @@ cd "$(dirname "$0")"
 export NODE_OPTIONS="--max-old-space-size=2560"
 
 echo "[deploy] git pull..."
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "[deploy] alterações locais no servidor detectadas; fazendo stash para permitir pull..."
+  git stash push -m "deploy $(date +%Y%m%d-%H%M%S)"
+fi
 git pull origin develop
 
 echo "[deploy] pnpm install..."
