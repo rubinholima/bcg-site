@@ -48,7 +48,7 @@
 
 ### 🚀 FECHAMENTO (GIT)
 
-- **Commit:** `59e6587` — Contato/emergência jogador, Depto Médico (feedback salvar), Fase 3 módulos, Jurídico no Futebol, Relatórios após Marketing + encerramento 7 mar 2026
+- **Commit:** `bbf0110` — Contato/emergência jogador, Depto Médico (feedback salvar), Fase 3 módulos, Jurídico no Futebol, Relatórios após Marketing + encerramento 7 mar 2026
 - **Branch:** develop
 - **Push:** ✅ para origin/develop  
 
