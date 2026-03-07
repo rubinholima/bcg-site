@@ -23,11 +23,13 @@ export interface PortfolioItem {
   isActive: boolean;
 }
 
-import { buildBackendUrl } from "@/lib/apiProxy";
+import { getServerBackendBaseUrl } from "@/lib/apiProxy";
 
 export async function fetchPublicPortfolio(): Promise<PortfolioItem[]> {
   const isClient = typeof window !== "undefined";
-  const url = isClient ? "/api/public/portfolio" : buildBackendUrl("/public/portfolio");
+  const url = isClient
+    ? "/api/public/portfolio"
+    : `${getServerBackendBaseUrl().replace(/\/$/, "")}/public/portfolio`;
   const res = await fetch(url, {
     cache: "no-store",
     headers: { "Content-Type": "application/json" },

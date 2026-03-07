@@ -1,11 +1,14 @@
 import type { Group } from "@/types/group";
 import type { Tenant } from "@/types/tenant";
-import { buildBackendUrl } from "@/lib/apiProxy";
+import { buildBackendUrl, getServerBackendBaseUrl } from "@/lib/apiProxy";
 
-/** Dados do grupo — usa /api/public/group (sem auth) para páginas públicas como login. */
+/** Dados do grupo. No servidor: direto no backend (nunca Nginx). No cliente: /api/public/group. */
 export async function fetchGroup(): Promise<Group | null> {
   try {
-    const url = typeof window !== "undefined" ? "/api/public/group" : buildBackendUrl("/group");
+    const url =
+      typeof window !== "undefined"
+        ? "/api/public/group"
+        : `${getServerBackendBaseUrl().replace(/\/$/, "")}/group`;
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
     return (await res.json()) as Group;

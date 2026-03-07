@@ -104,6 +104,7 @@ export default function HomeClient({
   const [groupHome, setGroupHome] = useState<Page | null>(
     initialGroupHome ?? null
   );
+  // Dados do servidor (SSR) têm prioridade absoluta — nunca sobrescrever com fetch do cliente.
   const [groupMaster, setGroupMaster] = useState<Awaited<
     ReturnType<typeof fetchGroup>
   > | null>(initialGroup ?? null);

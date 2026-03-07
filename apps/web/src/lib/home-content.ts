@@ -1,6 +1,6 @@
 import type { HomeContentDto, HomeContentBlock, HomeBlockType, GlobalPresenceCounter, GlobalPresenceLocation } from "@/types/home-content";
 import type { Page } from "@/types/page";
-import { buildBackendUrl } from "@/lib/apiProxy";
+import { getServerBackendBaseUrl } from "@/lib/apiProxy";
 import { copy, type CopySchema } from "@/lib/home-copy";
 
 const DEFAULT_HERO =
@@ -27,12 +27,13 @@ export async function fetchHomeContent(): Promise<HomeContentDto | null> {
 
 /**
  * Busca group-home diretamente do backend (server-side).
- * Evita passar pelo Nginx, que pode corromper UTF-8 em produção.
- * Usar APENAS em Server Components.
+ * Usa getServerBackendBaseUrl() para NUNCA passar por Nginx — evita dados errados e UTF-8 corrompido.
+ * Usar APENAS em Server Components (ex: page.tsx da home).
  */
 export async function fetchGroupHomeFromBackend(): Promise<Page | null> {
   try {
-    const res = await fetch(buildBackendUrl("/public/group-home"), {
+    const base = getServerBackendBaseUrl().replace(/\/$/, "");
+    const res = await fetch(`${base}/public/group-home`, {
       cache: "no-store",
       headers: { "Content-Type": "application/json" },
     });

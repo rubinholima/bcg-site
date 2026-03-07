@@ -3,6 +3,10 @@ import { fetchPublicPortfolio } from "@/lib/public-portfolio";
 import { fetchGroup } from "@/lib/home-data";
 import HomeClient from "./HomeClient";
 
+/** Sempre buscar dados no servidor por request — nunca cache/static. Dados vêm do Group (bcg), não da tabela Page. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 /**
  * Página principal (Home) do BCG.
  * Busca dados no servidor diretamente do backend (127.0.0.1:3001),

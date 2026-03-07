@@ -17,6 +17,19 @@ export function getApiBaseUrl(): string {
   return process.env.API_BASE_URL || "http://127.0.0.1:3001";
 }
 
+/**
+ * URL do backend para fetches no SERVIDOR que devem ir direto ao Nest (ex: home page).
+ * NUNCA passa por Nginx/proxy — evita dados errados e corrupção de UTF-8.
+ * Use em fetchGroupHomeFromBackend, fetchGroup (server), fetchPublicPortfolio (server).
+ *
+ * Local e produção (mesmo host): não definir API_INTERNAL_URL → usa http://127.0.0.1:3001.
+ * Produção (API em outro host/rede): definir API_INTERNAL_URL com a URL interna do Nest (ex: http://bcg-api:3001).
+ */
+export function getServerBackendBaseUrl(): string {
+  if (typeof window !== "undefined") return "/api";
+  return process.env.API_INTERNAL_URL || "http://127.0.0.1:3001";
+}
+
 /** URL base do app (Next.js) para fetches server-side às rotas /api. */
 export function getAppBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
