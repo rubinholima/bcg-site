@@ -46,7 +46,7 @@
 
 ### 🚀 FECHAMENTO (GIT)
 
-- **Commit:** (a ser preenchido após o commit)
+- **Commit:** `68d9802` — Fundador/Hero: dados no banco, fallbacks no editor, script check-group-home-blocks, fix parsing; encerramento 7 mar 2026
 - **Branch:** develop
 - **Push:** ✅ para origin/develop
 
