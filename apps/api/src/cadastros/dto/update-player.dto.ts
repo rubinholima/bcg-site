@@ -142,9 +142,33 @@ export class UpdatePlayerDto {
   @MaxLength(128)
   externalId?: string;
 
+  @IsString()
   @IsOptional()
-  @IsArray()
-  medicalHistory?: unknown[];
+  @MaxLength(255)
+  contactEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  contactPhone?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  emergencyContactName?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  emergencyContactEmail?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  emergencyContactPhone?: string;
+
+  @IsOptional()
+  medicalHistory?: unknown; // array de registros ou { profile, records }
 
   @IsOptional()
   @IsArray()

@@ -1810,10 +1810,10 @@ export default function EditarPaginaTenantPage() {
                           <summary className="cursor-pointer px-3 py-2 font-medium">Times por Categorias</summary>
                           <div className="border-t border-border px-3 py-3 space-y-4">
                             <p className="text-sm text-muted-foreground">
-                              Os jogadores vêm do cadastro (<strong>Cadastros → Jogadores</strong>), agrupados por clube/slug. Na página pública só aparecem os marcados como visíveis (olho).
+                              Os atletas vêm do cadastro (<strong>Futebol → Atletas</strong>), agrupados por clube/slug. Na página pública só aparecem os marcados como visíveis (olho).
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Use <strong>Sync da planilha</strong> em Cadastros → Jogadores para importar. Use o ícone de visibilidade em cada jogador para exibir ou ocultar na página do time.
+                              Use <strong>Sync da planilha</strong> em Futebol → Atletas para importar. Use o ícone de visibilidade em cada atleta para exibir ou ocultar na página do time.
                             </p>
                             {page?.tenant?.slug && (
                               <div className="flex flex-wrap gap-2">
@@ -1821,7 +1821,7 @@ export default function EditarPaginaTenantPage() {
                                   href="/dashboard/cadastros/jogadores"
                                   className="text-sm text-primary hover:underline"
                                 >
-                                  Cadastros → Jogadores →
+                                  Futebol → Atletas →
                                 </Link>
                                 <Link
                                   href={`/portfolio/${page.tenant.slug}`}

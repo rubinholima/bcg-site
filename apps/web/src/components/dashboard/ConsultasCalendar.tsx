@@ -3,13 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  Video,
-  ExternalLink,
   User,
   Building2,
   Loader2,
   Trash2,
   StickyNote,
+  History,
 } from "lucide-react";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { Button } from "@/components/ui/button";
@@ -23,12 +22,14 @@ interface Consultation {
   playerName: string;
   tenantName?: string;
   tenantLogoUrl?: string;
+  category?: string;
   date?: string;
   time?: string;
   type?: string;
   link?: string;
   notes?: string;
   status?: string;
+  psychologist?: string;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -63,11 +64,37 @@ function getDaysInMonth(year: number, month: number) {
 
 interface ConsultasCalendarProps {
   refreshTrigger?: number;
+  /** Filtro por nome do atleta (busca) */
+  nameFilter?: string;
+  onNameFilterChange?: (value: string) => void;
+  /** Filtros adicionais: clube (tenantId), atleta (playerId), categoria */
+  tenantIdFilter?: string;
+  playerIdFilter?: string;
+  categoryFilter?: string;
+  /** Quando passado, usa esta lista em vez de buscar (para uso na página Consultas com histórico) */
+  consultationsProp?: Consultation[];
+  /** Chamado quando o usuário clica em Atualizar e a lista é controlada pelo parent */
+  onRefreshRequested?: () => void;
+  /** Chamado ao clicar em Histórico para exibir o histórico do atleta embaixo do calendário */
+  onShowHistory?: (playerId: string, playerName: string) => void;
+  /** Nome do atleta selecionado no filtro (para o botão Histórico quando não há consultas na lista) */
+  selectedPlayerName?: string;
 }
 
-export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps) {
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ConsultasCalendar({
+  refreshTrigger = 0,
+  nameFilter,
+  onNameFilterChange,
+  tenantIdFilter,
+  playerIdFilter,
+  categoryFilter,
+  consultationsProp,
+  onRefreshRequested,
+  onShowHistory,
+  selectedPlayerName,
+}: ConsultasCalendarProps) {
+  const [consultations, setConsultations] = useState<Consultation[]>(consultationsProp ?? []);
+  const [loading, setLoading] = useState(!consultationsProp);
   const [dateFilter, setDateFilter] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(() => {
@@ -76,22 +103,39 @@ export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps
   });
 
   const fetchConsultations = useCallback(() => {
+    if (consultationsProp !== undefined) return; // controlado pelo parent
     setLoading(true);
     api
       .get<Consultation[]>("/consultations")
       .then(({ data }) => setConsultations(Array.isArray(data) ? data : []))
       .catch(() => setConsultations([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [consultationsProp]);
 
   useEffect(() => {
+    if (consultationsProp !== undefined) {
+      setConsultations(consultationsProp);
+      setLoading(false);
+      return;
+    }
     fetchConsultations();
-  }, [refreshTrigger, fetchConsultations]);
+  }, [refreshTrigger, consultationsProp, fetchConsultations]);
 
-  const filtered = dateFilter
+  const filtered = (dateFilter
     ? consultations.filter((c) => c.date === dateFilter)
-    : consultations;
+    : consultations
+  )
+    .filter((c) => c.status !== "completed")
+    .filter(
+      (c) =>
+        !nameFilter?.trim() ||
+        (c.playerName?.toLowerCase().includes(nameFilter.trim().toLowerCase()) ?? false)
+    )
+    .filter((c) => !tenantIdFilter || c.tenantId === tenantIdFilter)
+    .filter((c) => !playerIdFilter || c.playerId === playerIdFilter)
+    .filter((c) => !categoryFilter || (c.category ?? "") === categoryFilter);
 
+  const activeConsultations = consultations.filter((c) => c.status !== "completed");
   const byDate = filtered.reduce<Record<string, Consultation[]>>((acc, c) => {
     const key = c.date ?? "sem-data";
     if (!acc[key]) acc[key] = [];
@@ -103,7 +147,7 @@ export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps
 
   // Horários ocupados no dia selecionado
   const dayConsultations = dateFilter
-    ? consultations.filter((c) => c.date === dateFilter && c.time)
+    ? activeConsultations.filter((c) => c.date === dateFilter && c.time)
     : [];
   const occupiedSlots = new Set(
     dayConsultations.map((c) => {
@@ -132,16 +176,30 @@ export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-4 flex flex-col min-h-0 flex-1">
+      <div className="flex flex-wrap items-center justify-between gap-4 shrink-0">
         <div>
           <CardTitle className="text-base">Calendário de consultas</CardTitle>
           <CardDescription>
-            Todas as consultas cadastradas na ficha dos jogadores.
+            Todas as consultas cadastradas na ficha dos atletas.
           </CardDescription>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => fetchConsultations()} disabled={loading}>
+        <div className="flex flex-wrap items-center gap-2">
+          {onNameFilterChange != null && (
+            <input
+              type="text"
+              placeholder="Buscar por nome do atleta"
+              className="flex h-10 min-w-[12rem] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+              value={nameFilter ?? ""}
+              onChange={(e) => onNameFilterChange(e.target.value)}
+            />
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => (consultationsProp !== undefined ? onRefreshRequested?.() : fetchConsultations())}
+            disabled={loading}
+          >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
           </Button>
           <input
@@ -159,9 +217,9 @@ export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Mini calendário + horários do dia */}
-        <div className="space-y-3 rounded-lg border p-3 bg-muted/30">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+        {/* Mini calendário + horários do dia — fica parado */}
+        <div className="space-y-3 rounded-lg border p-3 bg-muted/30 shrink-0 lg:shrink-0">
           <h4 className="text-sm font-medium">Horários do dia</h4>
           <div className="flex gap-2">
             <Button
@@ -201,7 +259,7 @@ export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps
                 )
               )}
             {days.map(({ date, day }) => {
-              const hasConsultation = consultations.some((c) => c.date === date);
+              const hasConsultation = activeConsultations.some((c) => c.date === date);
               const isSelected = dateFilter === date;
               return (
                 <button
@@ -244,18 +302,33 @@ export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps
           )}
         </div>
 
-        {/* Lista de consultas */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Lista de consultas — só esta área rola; calendário fica parado */}
+        <div className="lg:col-span-2 space-y-4 overflow-y-auto min-h-0 max-h-[36vh] pr-1">
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : filtered.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              {consultations.length === 0
-                ? "Nenhuma consulta cadastrada."
-                : "Nenhuma consulta na data selecionada."}
-            </p>
+            <div className="py-4 flex flex-col items-center gap-3 text-center">
+              <p className="text-sm text-muted-foreground">
+                {consultations.length === 0
+                  ? "Nenhuma consulta cadastrada."
+                  : nameFilter?.trim()
+                    ? "Nenhuma consulta encontrada para esse nome."
+                    : "Nenhuma consulta na data selecionada."}
+              </p>
+              {playerIdFilter && onShowHistory && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onShowHistory(playerIdFilter, selectedPlayerName ?? "Atleta")}
+                  className="shrink-0"
+                >
+                  <History className="mr-1 h-4 w-4" />
+                  Veja aqui o histórico
+                </Button>
+              )}
+            </div>
           ) : (
             <div className="space-y-4">
               {sortedDates.map((dateKey) => (
@@ -310,21 +383,14 @@ export function ConsultasCalendar({ refreshTrigger = 0 }: ConsultasCalendarProps
                             {STATUS_LABEL[c.status ?? "scheduled"] ?? c.status}
                           </span>
                           {c.link && (
-                            <Button variant="outline" size="sm" asChild>
-                              <a
-                                href={c.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                title={
-                                  c.link.includes("meet.google.com")
-                                    ? "Entrar na videoconferência"
-                                    : "Abre o evento no Google Calendar."
-                                }
-                              >
-                                <Video className="mr-1 h-4 w-4" />
-                                {c.link.includes("meet.google.com") ? "Entrar" : "Abrir evento"}
-                                <ExternalLink className="ml-1 h-3 w-3" />
-                              </a>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onShowHistory?.(c.playerId, c.playerName)}
+                              title="Ver histórico do atleta"
+                            >
+                              <History className="mr-1 h-4 w-4" />
+                              Histórico
                             </Button>
                           )}
                           <Button

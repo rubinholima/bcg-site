@@ -1,5 +1,6 @@
 import { BadRequestException, Body, Delete, Get, Param, Post, Controller, UseGuards } from '@nestjs/common';
 import { ConsultationsService } from './consultations.service';
+import { ConsultationNotifyService, NotifyConsultationPayload } from './consultation-notify.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
@@ -8,7 +9,10 @@ import { RequireModule } from '../auth/require-module.decorator';
 @Controller('consultations')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class ConsultationsController {
-  constructor(private readonly service: ConsultationsService) {}
+  constructor(
+    private readonly service: ConsultationsService,
+    private readonly notifyService: ConsultationNotifyService,
+  ) {}
 
   @Get()
   @UseGuards(ModuleAccessGuard)
@@ -71,5 +75,26 @@ export class ConsultationsController {
       throw new BadRequestException('Consulta não encontrada');
     }
     return { success: true };
+  }
+
+  /** Envia o link da consulta por e-mail para o atleta (usa contactEmail do cadastro). */
+  @Post('notify-player')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('psicologia')
+  async notifyPlayer(
+    @Body()
+    body: { playerId: string; link: string; date: string; time?: string; psychologist?: string },
+  ) {
+    const { playerId, link, date } = body;
+    if (!playerId?.trim() || !link?.trim() || !date?.trim()) {
+      throw new BadRequestException('playerId, link e date são obrigatórios');
+    }
+    const payload: NotifyConsultationPayload = {
+      link: body.link.trim(),
+      date: body.date.trim(),
+      time: body.time?.trim(),
+      psychologist: body.psychologist?.trim(),
+    };
+    return this.notifyService.notifyPlayer(playerId.trim(), payload);
   }
 }

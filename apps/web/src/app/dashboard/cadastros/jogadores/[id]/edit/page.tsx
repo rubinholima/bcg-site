@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -16,6 +16,11 @@ import {
   ExternalLink,
   Calendar,
   Image as ImageIcon,
+  Mail,
+  Ruler,
+  Trophy,
+  BarChart3,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,10 +38,10 @@ import { useAuth } from "@/context/AuthContext";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { ConsultasCalendar } from "@/components/dashboard/ConsultasCalendar";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
-import { LegalDocumentsTab } from "@/components/dashboard/LegalDocumentsTab";
 
 const STATUS_OPTIONS = [
   { value: "available", label: "Apto" },
@@ -77,6 +82,11 @@ interface PlayerData {
   bioPT?: string | null;
   bioEN?: string | null;
   externalId?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactEmail?: string | null;
+  emergencyContactPhone?: string | null;
   medicalHistory?: unknown;
   psychologicalAssessment?: unknown[] | null;
   onlineConsultations?: unknown[] | null;
@@ -88,41 +98,6 @@ interface PlayerData {
   performanceAnalysis?: string | null;
   images?: unknown[] | null;
   publicFields?: Record<string, boolean> | null;
-}
-
-interface MedicalProfile {
-  bloodType?: string;
-  allergies?: string;
-  chronicDiseases?: string;
-  medications?: string;
-  otherConditions?: string;
-}
-
-interface MedicalEntry {
-  date?: string;
-  type?: string;
-  description?: string;
-  daysOut?: number;
-  gamesMissed?: number;
-}
-
-const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;
-
-/** Normaliza medicalHistory: array (legado) ou objeto { profile, records } */
-function normalizeMedicalHistory(
-  mh: unknown
-): { profile: MedicalProfile; records: MedicalEntry[] } {
-  if (Array.isArray(mh)) {
-    return { profile: {}, records: mh as MedicalEntry[] };
-  }
-  if (mh && typeof mh === "object" && "records" in mh) {
-    const obj = mh as { profile?: MedicalProfile; records?: MedicalEntry[] };
-    return {
-      profile: obj.profile ?? {},
-      records: Array.isArray(obj.records) ? obj.records : [],
-    };
-  }
-  return { profile: {}, records: [] };
 }
 
 interface PsychologicalAssessmentEntry {
@@ -248,12 +223,18 @@ function PlaylistImporter({ onImport }: { onImport: (urls: string[]) => void }) 
 export default function EditJogadorPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { canAccessModule } = useAuth();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("dados");
+  const [activeTab, setActiveTab] = useState<string>(() => searchParams.get("tab") || "dados");
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && PLAYER_TABS.some((t) => t.id === tab)) setActiveTab(tab);
+  }, [searchParams]);
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [tenantCategories, setTenantCategories] = useState<string[]>([]);
   const [meetCreatingIdx, setMeetCreatingIdx] = useState<number | null>(null);
@@ -272,7 +253,7 @@ export default function EditJogadorPage() {
           setTenantCategories([]);
         }
       } catch {
-        setError("Erro ao carregar jogador");
+        setError("Erro ao carregar atleta");
       } finally {
         setLoadingData(false);
       }
@@ -321,6 +302,11 @@ export default function EditJogadorPage() {
         photoUrl: player.photoUrl || undefined,
         birthDate: player.birthDate || undefined,
         nationality: player.nationality || undefined,
+        contactEmail: player.contactEmail || undefined,
+        contactPhone: player.contactPhone || undefined,
+        emergencyContactName: (player.emergencyContactName ?? "").trim() || null,
+        emergencyContactEmail: (player.emergencyContactEmail ?? "").trim() || null,
+        emergencyContactPhone: (player.emergencyContactPhone ?? "").trim() || null,
         height: player.height ?? undefined,
         weight: player.weight ?? undefined,
         preferredFoot: player.preferredFoot || undefined,
@@ -371,9 +357,6 @@ export default function EditJogadorPage() {
     );
   }
 
-  const { profile: medicalProfile, records: medicalList } = normalizeMedicalHistory(
-    player.medicalHistory
-  );
   const psychList = (player.psychologicalAssessment ?? []) as PsychologicalAssessmentEntry[];
   const consultationList = (player.onlineConsultations ?? []) as OnlineConsultation[];
   const evalList = (player.evaluations ?? []) as EvaluationEntry[];
@@ -453,7 +436,7 @@ export default function EditJogadorPage() {
               <div>
                 <CardTitle>Dados base</CardTitle>
                 <CardDescription>
-                  Informações do jogador (mesmas do Times por Categorias e Google Sheets)
+                  Informações do atleta (mesmas do Times por Categorias e Google Sheets)
                 </CardDescription>
               </div>
               <Button
@@ -475,7 +458,13 @@ export default function EditJogadorPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Seção: Foto e identificação */}
+            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
+                <User className="h-4 w-4 text-primary" />
+                Foto e identificação
+              </h3>
             <div className="flex gap-4">
               <div className="h-24 w-24 rounded overflow-hidden bg-muted shrink-0">
                 {player.photoUrl ? (
@@ -505,14 +494,13 @@ export default function EditJogadorPage() {
                 />
               </div>
             </div>
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Nome completo *</Label>
                 <Input
                   value={player.name}
                   onChange={(e) => update({ name: e.target.value })}
-                  placeholder="Nome do jogador"
+                  placeholder="Nome do atleta"
                 />
               </div>
               <div className="space-y-2">
@@ -535,12 +523,20 @@ export default function EditJogadorPage() {
                 </Select>
               </div>
             </div>
+            </div>
 
+            {/* Seção: Dados pessoais */}
+            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
+                <Mail className="h-4 w-4 text-primary" />
+                Dados pessoais
+              </h3>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
                 <Label>Data nascimento</Label>
                 <Input
                   type="date"
+                  className="text-foreground"
                   value={player.birthDate ?? ""}
                   onChange={(e) => update({ birthDate: e.target.value || null })}
                 />
@@ -554,36 +550,64 @@ export default function EditJogadorPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Nº camisa</Label>
+                <Label>E-mail de contato</Label>
                 <Input
-                  type="number"
-                  min={0}
-                  max={99}
-                  value={player.jerseyNumber ?? ""}
-                  onChange={(e) => update({ jerseyNumber: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="10"
+                  type="email"
+                  value={player.contactEmail ?? ""}
+                  onChange={(e) => update({ contactEmail: e.target.value || null })}
+                  placeholder="Para envio do link da consulta"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Posição</Label>
-                <Select
-                  value={player.position ?? ""}
-                  onValueChange={(v) => update({ position: v || null })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FOOTBALL_POSITIONS.map((pos) => (
-                      <SelectItem key={pos.value} value={pos.value}>
-                        {pos.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Telefone / WhatsApp</Label>
+                <Input
+                  value={player.contactPhone ?? ""}
+                  onChange={(e) => update({ contactPhone: e.target.value || null })}
+                  onBlur={(e) => {
+                    const formatted = formatPhoneForDisplay(e.target.value);
+                    if (formatted !== (player.contactPhone ?? "")) update({ contactPhone: formatted || null });
+                  }}
+                  placeholder="Ex: 5511999999999 ou 6178036866"
+                />
+              </div>
+              <div className="space-y-2 lg:col-span-2">
+                <Label>Contato/responsável (emergência)</Label>
+                <Input
+                  value={player.emergencyContactName ?? ""}
+                  onChange={(e) => update({ emergencyContactName: e.target.value || null })}
+                  placeholder="Nome do contato ou responsável"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>E-mail do responsável (emergência)</Label>
+                <Input
+                  type="email"
+                  value={player.emergencyContactEmail ?? ""}
+                  onChange={(e) => update({ emergencyContactEmail: e.target.value || null })}
+                  placeholder="E-mail do responsável"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Telefone do responsável (emergência)</Label>
+                <Input
+                  value={player.emergencyContactPhone ?? ""}
+                  onChange={(e) => update({ emergencyContactPhone: e.target.value || null })}
+                  onBlur={(e) => {
+                    const formatted = formatPhoneForDisplay(e.target.value);
+                    if (formatted !== (player.emergencyContactPhone ?? "")) update({ emergencyContactPhone: formatted || null });
+                  }}
+                  placeholder="Ex: 5511999999999 ou 6178036866"
+                />
               </div>
             </div>
+            </div>
 
+            {/* Seção: Características físicas */}
+            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
+                <Ruler className="h-4 w-4 text-primary" />
+                Características físicas
+              </h3>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label>Altura (cm)</Label>
@@ -624,17 +648,62 @@ export default function EditJogadorPage() {
                 </Select>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Time atual</Label>
-              <Input
-                value={player.currentTeam ?? ""}
-                onChange={(e) => update({ currentTeam: e.target.value || null })}
-                placeholder="Ex: Americano FC"
-              />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-4">
+            {/* Seção: Informações de futebol */}
+            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
+                <Trophy className="h-4 w-4 text-primary" />
+                Informações de futebol
+              </h3>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Posição</Label>
+                <Select
+                  value={player.position ?? ""}
+                  onValueChange={(v) => update({ position: v || null })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FOOTBALL_POSITIONS.map((pos) => (
+                      <SelectItem key={pos.value} value={pos.value}>
+                        {pos.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Nº camisa</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={player.jerseyNumber ?? ""}
+                  onChange={(e) => update({ jerseyNumber: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="10"
+                />
+              </div>
+              <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+                <Label>Time atual</Label>
+                <Input
+                  value={player.currentTeam ?? ""}
+                  onChange={(e) => update({ currentTeam: e.target.value || null })}
+                  placeholder="Ex: Americano FC"
+                />
+              </div>
+            </div>
+            </div>
+
+            {/* Seção: Estatísticas */}
+            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
+                <BarChart3 className="h-4 w-4 text-primary" />
+                Estatísticas
+              </h3>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
                 <Label>Jogos</Label>
                 <Input
@@ -689,7 +758,6 @@ export default function EditJogadorPage() {
                 />
               </div>
             </div>
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Cartões amarelos</Label>
@@ -710,235 +778,34 @@ export default function EditJogadorPage() {
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Biografia (PT)</Label>
-              <textarea
-                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={player.bioPT ?? ""}
-                onChange={(e) => update({ bioPT: e.target.value || null })}
-                placeholder="Biografia em português"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Biografia (EN)</Label>
-              <textarea
-                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={player.bioEN ?? ""}
-                onChange={(e) => update({ bioEN: e.target.value || null })}
-                placeholder="Biography in English"
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tab: Histórico médico */}
-      {activeTab === "medico" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Histórico médico</CardTitle>
-                <CardDescription>
-                  Lesões, afastamentos e períodos de recuperação
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                title={isFieldPublic(player.publicFields, "medicalHistory") ? "Visível na página pública" : "Oculto na página pública"}
-                onClick={() => {
-                  const pf = { ...(player.publicFields ?? {}) };
-                  pf.medicalHistory = !isFieldPublic(player.publicFields, "medicalHistory");
-                  update({ publicFields: pf });
-                }}
-              >
-                {isFieldPublic(player.publicFields, "medicalHistory") ? <Eye className="h-4 w-4 text-amber-500" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Dados de saúde do atleta (perfil) */}
-            <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground">Dados de saúde do atleta</h3>
-              <p className="text-xs text-muted-foreground">
-                Informações gerais para registro e acompanhamento médico
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="space-y-2">
-                  <Label>Tipo de sangue</Label>
-                  <Select
-                    value={medicalProfile.bloodType || "__none__"}
-                    onValueChange={(v) =>
-                      update({
-                        medicalHistory: {
-                          profile: { ...medicalProfile, bloodType: v === "__none__" ? undefined : v },
-                          records: medicalList,
-                        },
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">—</SelectItem>
-                      {BLOOD_TYPES.map((bt) => (
-                        <SelectItem key={bt} value={bt}>
-                          {bt}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Alergias</Label>
-                  <Input
-                    placeholder="Ex: penicilina, dipirona, lactose..."
-                    value={medicalProfile.allergies ?? ""}
-                    onChange={(e) =>
-                      update({
-                        medicalHistory: {
-                          profile: { ...medicalProfile, allergies: e.target.value || undefined },
-                          records: medicalList,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-                  <Label>Doenças crônicas</Label>
-                  <Input
-                    placeholder="Ex: asma, diabetes, hipertensão..."
-                    value={medicalProfile.chronicDiseases ?? ""}
-                    onChange={(e) =>
-                      update({
-                        medicalHistory: {
-                          profile: { ...medicalProfile, chronicDiseases: e.target.value || undefined },
-                          records: medicalList,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-                  <Label>Medicamentos em uso</Label>
-                  <Input
-                    placeholder="Medicamentos que o atleta toma regularmente"
-                    value={medicalProfile.medications ?? ""}
-                    onChange={(e) =>
-                      update({
-                        medicalHistory: {
-                          profile: { ...medicalProfile, medications: e.target.value || undefined },
-                          records: medicalList,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2 lg:col-span-3">
-                  <Label>Outras condições / observações</Label>
-                  <textarea
-                    className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    placeholder="Outras informações de saúde relevantes"
-                    value={medicalProfile.otherConditions ?? ""}
-                    onChange={(e) =>
-                      update({
-                        medicalHistory: {
-                          profile: { ...medicalProfile, otherConditions: e.target.value || undefined },
-                          records: medicalList,
-                        },
-                      })
-                    }
-                  />
-                </div>
-              </div>
             </div>
 
-            {/* Registros de lesões/afastamentos */}
-            <div>
-              <h3 className="text-sm font-semibold text-foreground mb-3">Registros (lesões, afastamentos)</h3>
-            {medicalList.map((entry, idx) => (
-              <div key={idx} className="rounded-lg border p-4 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Registro {idx + 1}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const next = medicalList.filter((_, i) => i !== idx);
-                      update({ medicalHistory: { profile: medicalProfile, records: next } });
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <Input
-                    type="date"
-                    placeholder="Data"
-                    value={entry.date ?? ""}
-                    onChange={(e) => {
-                      const next = [...medicalList];
-                      (next[idx] as MedicalEntry).date = e.target.value || undefined;
-                      update({ medicalHistory: { profile: medicalProfile, records: next } });
-                    }}
-                  />
-                  <Input
-                    placeholder="Tipo (ex: lesão muscular)"
-                    value={entry.type ?? ""}
-                    onChange={(e) => {
-                      const next = [...medicalList];
-                      (next[idx] as MedicalEntry).type = e.target.value || undefined;
-                      update({ medicalHistory: { profile: medicalProfile, records: next } });
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Dias afastado"
-                    value={entry.daysOut ?? ""}
-                    onChange={(e) => {
-                      const next = [...medicalList];
-                      (next[idx] as MedicalEntry).daysOut = e.target.value ? Number(e.target.value) : undefined;
-                      update({ medicalHistory: { profile: medicalProfile, records: next } });
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Jogos perdidos"
-                    value={entry.gamesMissed ?? ""}
-                    onChange={(e) => {
-                      const next = [...medicalList];
-                      (next[idx] as MedicalEntry).gamesMissed = e.target.value ? Number(e.target.value) : undefined;
-                      update({ medicalHistory: { profile: medicalProfile, records: next } });
-                    }}
-                  />
-                </div>
+            {/* Seção: Biografia */}
+            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
+                <FileText className="h-4 w-4 text-primary" />
+                Biografia
+              </h3>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Biografia (PT)</Label>
                 <textarea
-                  className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Descrição"
-                  value={entry.description ?? ""}
-                  onChange={(e) => {
-                    const next = [...medicalList];
-                    (next[idx] as MedicalEntry).description = e.target.value || undefined;
-                    update({ medicalHistory: { profile: medicalProfile, records: next } });
-                  }}
+                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={player.bioPT ?? ""}
+                  onChange={(e) => update({ bioPT: e.target.value || null })}
+                  placeholder="Biografia em português"
                 />
               </div>
-            ))}
-            <Button
-              variant="outline"
-              onClick={() =>
-                update({
-                  medicalHistory: { profile: medicalProfile, records: [...medicalList, {}] },
-                })
-              }
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar registro
-            </Button>
+              <div className="space-y-2">
+                <Label>Biografia (EN)</Label>
+                <textarea
+                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={player.bioEN ?? ""}
+                  onChange={(e) => update({ bioEN: e.target.value || null })}
+                  placeholder="Biography in English"
+                />
+              </div>
+            </div>
             </div>
           </CardContent>
         </Card>
@@ -1377,7 +1244,7 @@ export default function EditJogadorPage() {
           <CardHeader>
             <CardTitle>Posição no campo e mapa de calor</CardTitle>
             <CardDescription>
-              Clique no campo para definir a posição típica do jogador. Use X/Y para ajuste fino.
+              Clique no campo para definir a posição típica do atleta. Use X/Y para ajuste fino.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1481,7 +1348,7 @@ export default function EditJogadorPage() {
               <div>
                 <CardTitle>Melhores momentos</CardTitle>
                 <CardDescription>
-                  URLs de vídeos (YouTube, etc.) ou imagens dos melhores lances do jogador
+                  URLs de vídeos (YouTube, etc.) ou imagens dos melhores lances do atleta
                 </CardDescription>
               </div>
               <Button
@@ -1560,7 +1427,7 @@ export default function EditJogadorPage() {
               <div>
                 <CardTitle>Imagens de apoio</CardTitle>
                 <CardDescription>
-                  Fotos adicionais e imagens de referência. Use o picker ou suba em Mídia → Imagens de apoio (jogadores).
+                  Fotos adicionais e imagens de referência. Use o picker ou suba em Mídia → Imagens de apoio (atletas).
                 </CardDescription>
               </div>
               <Button
@@ -1687,15 +1554,10 @@ export default function EditJogadorPage() {
               className="w-full min-h-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={player.performanceAnalysis ?? ""}
               onChange={(e) => update({ performanceAnalysis: e.target.value || null })}
-              placeholder="Analise o desempenho do jogador, pontos fortes, áreas de melhoria, projeção de carreira..."
+              placeholder="Analise o desempenho do atleta, pontos fortes, áreas de melhoria, projeção de carreira..."
             />
           </CardContent>
         </Card>
-      )}
-
-      {/* Tab: Controle Jurídico (Adobe Sign) */}
-      {activeTab === "juridico" && (
-        <LegalDocumentsTab playerId={id} playerName={player.name} />
       )}
 
       <div className="flex justify-end">

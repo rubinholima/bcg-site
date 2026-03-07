@@ -68,7 +68,7 @@ export default function NewJogadorPage() {
       });
       router.push(`/dashboard/cadastros/jogadores/${data?.id ?? ""}/edit?success=new`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar jogador");
+      setError(err instanceof Error ? err.message : "Erro ao criar atleta");
       setLoading(false);
     }
   };
@@ -82,9 +82,9 @@ export default function NewJogadorPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Jogador</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Novo Atleta</h1>
           <p className="text-muted-foreground">
-            Cadastre um jogador. Após criar, edite para preencher histórico médico, avaliações e desempenho.
+            Cadastre um atleta. Após criar, edite para preencher histórico médico, avaliações e desempenho.
           </p>
         </div>
       </div>

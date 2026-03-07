@@ -10,6 +10,7 @@ export const DASHBOARD_LABELS = {
   configuracoes: "Configura\u00E7\u00F5es", // ç + õ
   estadios: "Est\u00E1dios",     // á
   timesAdversarios: "Times advers\u00E1rios", // á
+  atletas: "Atletas",            // termo profissional (antes "Jogadores")
 } as const;
 
 /**

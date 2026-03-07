@@ -47,7 +47,7 @@ export function SyncPlayersButton() {
         size="sm"
         onClick={handleSync}
         disabled={loading}
-        title="Importa todos os jogadores da planilha Times por Categorias (usa coluna clube/slug para o clube)"
+        title="Importa todos os atletas da planilha Times por Categorias (usa coluna clube/slug para o clube)"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin mr-2" />

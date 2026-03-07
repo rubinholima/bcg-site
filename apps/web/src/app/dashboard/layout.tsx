@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Sidebar } from "@/components/dashboard/sidebar";
-import { Header } from "@/components/dashboard/header";
+import { DashboardLayoutShell } from "@/components/dashboard/DashboardLayoutShell";
 import { DashboardHead } from "@/components/dashboard/DashboardHead";
 import { DashboardGuard } from "@/components/auth/DashboardGuard";
 import { DashboardBodyLock } from "@/components/dashboard/DashboardBodyLock";
@@ -38,27 +37,7 @@ export default function DashboardLayout({
     <DashboardGuard>
       <DashboardBodyLock />
       <DashboardHead />
-      <div className="flex h-screen w-full min-w-0 overflow-clip">
-        {/* Sidebar */}
-        <aside className="w-64 shrink-0">
-          <Sidebar />
-        </aside>
-
-        {/* Main Content - flex-basis:0 força o item a não ultrapassar o espaço disponível */}
-        <div className="flex min-h-0 min-w-0 flex-[1_1_0%] flex-col overflow-clip">
-          {/* Header */}
-          <Header />
-
-          {/* Page Content - scroll contido para não passar do rodapé */}
-          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-clip bg-background px-4 pb-6 pt-0 sm:px-6">
-            <div className="dashboard-scroll min-h-0 min-w-0 flex-1 overflow-x-hidden overscroll-none bg-background">
-              <div className="min-w-0 max-w-full pr-6">
-                {children}
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
+      <DashboardLayoutShell>{children}</DashboardLayoutShell>
     </DashboardGuard>
   );
 }

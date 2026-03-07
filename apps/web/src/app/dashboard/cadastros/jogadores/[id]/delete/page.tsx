@@ -23,7 +23,7 @@ export default function DeleteJogadorPage() {
         const { data } = await api.get<{ name: string }>(`/players/${id}`);
         setName(data?.name ?? "");
       } catch {
-        setError("Erro ao carregar jogador");
+        setError("Erro ao carregar atleta");
       } finally {
         setLoadingData(false);
       }
@@ -63,9 +63,9 @@ export default function DeleteJogadorPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Excluir Jogador</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Excluir Atleta</h1>
           <p className="text-muted-foreground">
-            Confirme a exclusão do jogador
+            Confirme a exclusão do atleta
           </p>
         </div>
       </div>
@@ -74,7 +74,7 @@ export default function DeleteJogadorPage() {
         <CardHeader>
           <CardTitle>Confirmar exclusão</CardTitle>
           <CardDescription>
-            Tem certeza que deseja excluir o jogador &quot;{name}&quot;? Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir o atleta &quot;{name}&quot;? Esta ação não pode ser desfeita.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

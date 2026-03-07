@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 import { JogadoresFilters } from "./JogadoresFilters";
 
 interface Player {
@@ -63,9 +64,9 @@ export default async function JogadoresPage({
       )}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Jogadores</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{DASHBOARD_LABELS.atletas}</h1>
           <p className="text-muted-foreground">
-            Gerencie os jogadores por clube e categoria (dados base, médico, avaliações, desempenho)
+            Gerencie os atletas por clube e categoria (dados base, médico, avaliações, desempenho)
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -73,7 +74,7 @@ export default async function JogadoresPage({
           <Link href="/dashboard/cadastros/jogadores/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Novo Jogador
+              Novo Atleta
             </Button>
           </Link>
         </div>
@@ -83,20 +84,20 @@ export default async function JogadoresPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Jogadores</CardTitle>
+          <CardTitle>Lista de {DASHBOARD_LABELS.atletas}</CardTitle>
           <CardDescription>
             {players.length === 0
-              ? "Nenhum jogador cadastrado"
-              : `${players.length} jogador${players.length > 1 ? "es" : ""} cadastrado${players.length > 1 ? "s" : ""}`}
+              ? "Nenhum atleta cadastrado"
+              : `${players.length} atleta${players.length > 1 ? "s" : ""} cadastrado${players.length > 1 ? "s" : ""}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {players.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>Nenhum jogador encontrado.</p>
+              <p>Nenhum atleta encontrado.</p>
               <Link href="/dashboard/cadastros/jogadores/new">
                 <Button variant="outline" className="mt-4">
-                  Cadastrar primeiro jogador
+                  Cadastrar primeiro atleta
                 </Button>
               </Link>
             </div>

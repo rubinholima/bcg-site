@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
@@ -6,6 +6,8 @@ import { UpdatePlayerDto } from './dto/update-player.dto';
 
 @Injectable()
 export class PlayersService {
+  private readonly logger = new Logger(PlayersService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(filters?: { tenantId?: string; category?: string; search?: string }) {
@@ -50,6 +52,9 @@ export class PlayersService {
   async update(id: string, dto: UpdatePlayerDto) {
     await this.findOne(id);
     const data = this.toUpdateData(dto);
+    this.logger.log(
+      `Player update ${id} contact/emergency: contactEmail=${(dto as { contactEmail?: string }).contactEmail ?? 'n/a'} contactPhone=${(dto as { contactPhone?: string }).contactPhone ?? 'n/a'} emergencyName=${(dto as { emergencyContactName?: string }).emergencyContactName ?? 'n/a'} emergencyEmail=${(dto as { emergencyContactEmail?: string }).emergencyContactEmail ?? 'n/a'} emergencyPhone=${(dto as { emergencyContactPhone?: string }).emergencyContactPhone ?? 'n/a'}`,
+    );
     return this.prisma.player.update({
       where: { id },
       data,
@@ -281,6 +286,11 @@ export class PlayersService {
       bioPT: (d.bioPT as string)?.trim() || null,
       bioEN: (d.bioEN as string)?.trim() || null,
       externalId: (d.externalId as string)?.trim() || null,
+      contactEmail: (d.contactEmail as string)?.trim() || null,
+      contactPhone: (d.contactPhone as string)?.trim() || null,
+      emergencyContactName: (d.emergencyContactName as string)?.trim() || null,
+      emergencyContactEmail: (d.emergencyContactEmail as string)?.trim() || null,
+      emergencyContactPhone: (d.emergencyContactPhone as string)?.trim() || null,
       medicalHistory: j(d.medicalHistory),
       psychologicalAssessment: j(d.psychologicalAssessment),
       onlineConsultations: j(d.onlineConsultations),
@@ -325,6 +335,11 @@ export class PlayersService {
       ...(d.bioPT !== undefined && { bioPT: (d.bioPT as string)?.trim() || null }),
       ...(d.bioEN !== undefined && { bioEN: (d.bioEN as string)?.trim() || null }),
       ...(d.externalId !== undefined && { externalId: (d.externalId as string)?.trim() || null }),
+      ...(d.contactEmail !== undefined && { contactEmail: (d.contactEmail as string)?.trim() || null }),
+      ...(d.contactPhone !== undefined && { contactPhone: (d.contactPhone as string)?.trim() || null }),
+      ...(d.emergencyContactName !== undefined && { emergencyContactName: (d.emergencyContactName as string)?.trim() || null }),
+      ...(d.emergencyContactEmail !== undefined && { emergencyContactEmail: (d.emergencyContactEmail as string)?.trim() || null }),
+      ...(d.emergencyContactPhone !== undefined && { emergencyContactPhone: (d.emergencyContactPhone as string)?.trim() || null }),
       ...(d.medicalHistory !== undefined && { medicalHistory: jsonOrNull(d.medicalHistory) }),
       ...(d.psychologicalAssessment !== undefined && { psychologicalAssessment: jsonOrNull(d.psychologicalAssessment) }),
       ...(d.onlineConsultations !== undefined && { onlineConsultations: jsonOrNull(d.onlineConsultations) }),

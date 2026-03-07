@@ -7,12 +7,14 @@ export interface ConsultationItem {
   playerName: string;
   tenantName?: string;
   tenantLogoUrl?: string;
+  category?: string;
   date?: string;
   time?: string;
   type?: string;
   link?: string;
   notes?: string;
   status?: string;
+  psychologist?: string;
 }
 
 @Injectable()
@@ -44,12 +46,14 @@ export class ConsultationsService {
           playerName: p.name,
           tenantName: p.tenant?.name,
           tenantLogoUrl: p.tenant?.logoUrl ?? undefined,
+          category: (p.category as string) ?? undefined,
           date,
           time: (c.time as string) ?? undefined,
           type: (c.type as string) ?? 'meet',
           link: (c.link as string) ?? undefined,
           notes: (c.notes as string) ?? undefined,
           status,
+          psychologist: (c.psychologist as string) ?? undefined,
         });
       }
     }

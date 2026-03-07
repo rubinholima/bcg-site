@@ -712,14 +712,14 @@ export function TimesCategoriasSection({
 
           {loading && (
             <p className="text-sm text-zinc-400 py-8">
-              {lang === "pt" ? "Carregando jogadores..." : "Loading players..."}
+              {lang === "pt" ? "Carregando atletas..." : "Loading players..."}
             </p>
           )}
 
           {!loading && !hasPlayers && (
             <p className="text-sm text-zinc-400 py-8">
               {lang === "pt"
-                ? "Nenhum jogador visível. Cadastre em Cadastros → Jogadores (filtrando por este clube), use Sync da planilha para importar, e marque cada jogador como visível (ícone do olho)."
+                ? "Nenhum atleta visível. Cadastre em Futebol → Atletas (filtrando por este clube), use Sync da planilha para importar, e marque cada atleta como visível (ícone do olho)."
                 : "No visible players. Add them in Players (filter by this club), use Sync to import from sheet, and mark each as visible (eye icon)."}
             </p>
           )}

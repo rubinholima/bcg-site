@@ -224,6 +224,12 @@ model Player {
   bioPT           String?  @db.Text
   bioEN           String?  @db.Text
   externalId      String?  // ID da linha no Google Sheets (para sync)
+  // Contato (para envio do link da consulta por e-mail/WhatsApp)
+  contactEmail    String?  // e-mail do atleta
+  contactPhone    String?  // telefone/WhatsApp (ex: 5511999999999)
+  emergencyContactName String?  // nome do contato/responsável em caso de emergência
+  emergencyContactEmail String? // e-mail do contato/responsável
+  emergencyContactPhone String? // telefone do contato/responsável
   // Extensões (histórico médico, avaliações, status, etc.)
   medicalHistory  Json?    // Array<{ date, type, description, daysOut, gamesMissed }>
   psychologicalAssessment Json?    // Array<{ date, evaluator, sections: anamnese psicológica esportiva }>

@@ -7,7 +7,7 @@ import { ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
-import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
+import { MODULE_DISPLAY_NAMES, DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 import {
   DASHBOARD_MENU,
   PLAYER_TABS,
@@ -105,7 +105,7 @@ export default function ModulosPage() {
         nodes.push({
           slug: tab.moduleSlug,
           label: tab.label,
-          path: `Jogadores › ${tab.label}`,
+          path: `${DASHBOARD_LABELS.atletas} › ${tab.label}`,
           depth: 0,
           isGroup: false,
         });
@@ -230,7 +230,7 @@ export default function ModulosPage() {
           <CardHeader>
             <CardTitle>Módulos do dashboard</CardTitle>
             <CardDescription>
-              Marque quais perfis podem acessar cada módulo. Super admin sempre tem acesso. Diretoria, Médico e Psicólogo são perfis específicos para abas dos jogadores.
+              Marque quais perfis podem acessar cada módulo. Super admin sempre tem acesso. Diretoria, Médico e Psicólogo são perfis específicos para abas dos atletas.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

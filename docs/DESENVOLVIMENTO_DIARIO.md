@@ -29,6 +29,31 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 7 DE MARÇO DE 2026 — ENCERRAMENTO (Contato emergência, Depto Médico, Fase 3 módulos, Jurídico no Futebol, Relatórios após Marketing)
+
+## **O QUE FOI FEITO NESTA SESSÃO**
+
+1. **Contato e emergência do jogador** — Campos `contactEmail`, `contactPhone`, `emergencyContactName`, `emergencyContactEmail`, `emergencyContactPhone` no cadastro; salvamento garantido (payload sempre envia os três de emergência; Prisma client regenerado). Formatação de telefone BR/EUA em `format-phone.ts`. Exibição no Depto Médico (bloco "Contato de emergência" no final do card).
+2. **Depto Médico** — Mensagem de sucesso ao salvar: banner verde na lista (dropdown) e modal + banner na página do atleta. DTO `medicalHistory` passou a aceitar objeto `{ profile, records }` além de array (corrige "medicalHistory must be an array").
+3. **Fase 3 — Novos módulos e rotas** — Migration `20260320000000_add_fase3_modules`: Module + ModuleRole para Adm (adm_financeiro, adm_compras, adm_rh, adm_patrimonio, adm_nutricao, adm_estoque), Futebol (futebol_comissao, futebol_fisiologia, futebol_analise), Relatórios (relatorios), Sócio Torcedor (socio_torcedor), Marketing (marketing). Menu: grupo Adm, itens Futebol (Comissão técnica, Fisiologia, Desempenho em Análise), Sócio Torcedor, Marketing. Páginas placeholder em `/dashboard/adm/*`, `/dashboard/futebol/comissao|fisiologia|analise`, `/dashboard/socio-torcedor`, `/dashboard/marketing`. Sidebar com estado de abertura para adm, futebol, relatórios, socio, marketing.
+4. **Menu** — "Jurídico" renomeado para **Depto Jurídico** e movido para dentro de **Futebol** (após Depto Psicologia). **Relatórios** movido para depois de **Marketing** (ordem: Sócio Torcedor → Marketing → Relatórios → Ferramentas → Configurações).
+
+### 📁 ARQUIVOS ENVOLVIDOS
+
+**API:** `prisma/schema.prisma`, `prisma/migrations/20260320000000_add_fase3_modules/`, `cadastros/dto/create-player.dto.ts`, `cadastros/dto/update-player.dto.ts`, `cadastros/players.service.ts`, `consultations/` (notify, controller, service, module).
+
+**Web:** `dashboard-menu.config.ts`, `sidebar.tsx`, `ModulePlaceholderPage.tsx`, `MedicalHistoryBlock.tsx`, `format-phone.ts`, `feedback-modal.tsx`, `player-module-types.ts`, `DashboardLayoutShell.tsx`; páginas: `medico/`, `relatorios/`, `adm/*`, `futebol/*`, `socio-torcedor/`, `marketing/`, `juridico/`, `diretoria/`, `psicologia/`, `consultas/` (incl. sessao, abrir-meet); `cadastros/jogadores/**` (edit, contact/emergency, handleSave); `configuracoes/modulos/page.tsx`.
+
+**Docs:** `DESENVOLVIMENTO_DIARIO.md`, `MODULOS_SIDEBAR_DESENHO.md`.
+
+### 🚀 FECHAMENTO (GIT)
+
+- **Commit:** `59e6587` — Contato/emergência jogador, Depto Médico (feedback salvar), Fase 3 módulos, Jurídico no Futebol, Relatórios após Marketing + encerramento 7 mar 2026
+- **Branch:** develop
+- **Push:** ✅ para origin/develop  
+
+---
+
 # <span style="color: red; font-size: 28px;">📅 6 DE MARÇO DE 2026 — ENCERRAMENTO (Controle Jurídico: modal Enviar, dropdown, pageCount PDF)</span>
 
 ## **MODAL ENVIAR PARA ASSINATURA, DROPDOWN E PÁGINAS REAIS DO PDF**
@@ -1058,6 +1083,139 @@ Resolver o login em produção: entrar e ir para o dashboard, sem voltar para a 
 
 > Todo o conteúdo que estava em arquivos .md separados em docs/ foi reunido aqui. Não criar novos .md de resumo.
 
+## MODULOS_SIDEBAR_DESENHO (Desenho da sidebar por módulos — produção segura)
+
+**Contexto:** Reorganizar o menu do dashboard em áreas (Adm, Futebol, Sócio Torcedor, Marketing, etc.) sem quebrar produção. Todas as URLs atuais continuam funcionando; nenhum slug de módulo existente é alterado no banco.
+
+### Regras para produção
+
+- **URLs:** Nenhuma rota existente é removida nem renomeada. Links antigos (ex.: `/dashboard/cadastros/jogadores`) continuam válidos.
+- **Módulos (Module/ModuleRole):** Nenhum slug já usado em permissões ou abas do jogador é alterado (`tipos`, `empresas`, `usuarios`, `medico`, `psicologia`, `diretoria`, `juridico`, etc.).
+- **Sidebar:** Apenas reorganização visual (grupos e rótulos). Cada item continua com o mesmo `moduleSlug` e `href` que hoje.
+- **Escopo por tenant:** Todos os módulos serão ajustados e separados por empresa/clube; cada menu e dado é filtrado pelo tenant em que o usuário está atuando.
+
+### Árvore desejada do menu (desenho)
+
+**Diretoria** = dashboard gerencial com todas as informações de todas as empresas, exclusivo da diretoria (acima de Empresas). **Empresas** = só esse nome (sem "Negócios"); Listagem + Tipos dentro. **Status** e **Avaliações** (hoje em Diretoria) passam para **Futebol → Análise**. **Relatórios** = novo menu para relatórios do app. Todos os módulos separados por empresa/clube (tenant).
+
+```
+Dashboard                    → href: /dashboard              moduleSlug: dashboard
+Grupo Master                 → href: /dashboard/grupo        moduleSlug: grupo_master
+
+Diretoria (grupo — exclusivo diretoria; dashboard gerencial)
+├── Dashboard gerencial      → /dashboard/diretoria          diretoria
+│   (visão de todas as empresas/clubes do grupo)
+└── (outros itens exclusivos da diretoria)
+
+Empresas (grupo colapsável — estrutura: empresas/clubes do grupo)
+├── Listagem                 → /dashboard/empresas           empresas
+└── Tipos de Negócios        → /dashboard/cadastros/tipos    tipos
+
+Adm (grupo colapsável — departamento administrativo)
+├── Financeiro               → /dashboard/adm/financeiro     adm_financeiro   [NOVO – fase 3]
+├── Compras                  → /dashboard/adm/compras       adm_compras      [NOVO – fase 3]
+├── RH                       → /dashboard/adm/rh            adm_rh           [NOVO – fase 3]
+├── Patrimônio               → /dashboard/adm/patrimonio    adm_patrimonio   [NOVO – fase 3]
+├── Nutrição                 → /dashboard/adm/nutricao      adm_nutricao     [NOVO – fase 3]
+└── Estoque                  → /dashboard/adm/estoque       adm_estoque      [NOVO – fase 3]
+
+Futebol (grupo colapsável)
+├── Categorias               → /dashboard/cadastros/categorias    tipos
+├── Campeonatos              → /dashboard/cadastros/campeonatos   tipos
+├── Estádios                 → /dashboard/cadastros/estadios     tipos
+├── Times adversários        → /dashboard/cadastros/times         tipos
+├── Atletas                → /dashboard/cadastros/jogadores     tipos
+├── Comissão técnica         → /dashboard/futebol/comissao        futebol_comissao [NOVO – fase 3]
+│   (técnicos, assistentes, etc.)
+├── Fisiologia               → /dashboard/futebol/fisiologia  futebol_fisiologia [NOVO – fase 3]
+└── Análise (subgrupo)
+    ├── Avaliações            → (aba do jogador + listagem)  diretoria
+    ├── Status                → (aba do jogador + listagem)  diretoria
+    └── Desempenho            → /dashboard/futebol/analise    futebol_analise   [NOVO – fase 3]
+
+Médico (módulo transversal)
+└── Histórico médico         → /dashboard/medico             medico
+
+Psicologia (módulo transversal)
+├── Avaliação psicológica    → (dentro do jogador; aba)      psicologia
+└── Consultas                → /dashboard/consultas           psicologia
+
+Jurídico (módulo transversal)
+└── Contratos / Documentos   → (dentro do jogador; aba + lista)   juridico
+
+Sócio Torcedor (grupo – fase 3)
+└── (a definir: Ingressos, Benefícios, Cadastro)  slugs: socio_*   [NOVO]
+
+Marketing (grupo – fase 3)
+└── (a definir: Campanhas, Redes; ou agrupar Notícias/Mídia)  [NOVO]
+
+Relatórios (grupo colapsável)
+└── (relatórios do app)      → /dashboard/relatorios/*       relatorios [NOVO]
+
+Ferramentas (grupo colapsável)
+├── Emails                   → /dashboard/emails            emails
+├── Senhas                   → /dashboard/senhas             vault
+├── Páginas                  → /dashboard/paginas            paginas
+├── Notícias                 → /dashboard/noticias          noticias
+└── Mídia                    → /dashboard/midia              midia
+
+Configurações                → /dashboard/configuracoes       configuracoes
+├── Usuários                 → /dashboard/usuarios           usuarios
+```
+
+### Mapeamento: item atual → nova localização
+
+| Hoje (menu)           | Nova localização (grupo) | href (mantido?)     | moduleSlug (mantido?) |
+|-----------------------|---------------------------|---------------------|------------------------|
+| Cadastros → Usuários  | **Configurações** → Usuários | /dashboard/usuarios | usuarios               |
+| Cadastros → Empresas  | **Empresas** (Listagem + Tipos) | /dashboard/empresas, /dashboard/cadastros/tipos | empresas, tipos |
+| Cadastros → Clubes    | Futebol                   | /dashboard/cadastros/* | tipos (todos)      |
+| (não existe)          | **Diretoria** (dashboard gerencial) | /dashboard/diretoria | diretoria        |
+| (não existe)          | **Futebol** → Comissão técnica, Análise (Avaliações, Status) | /dashboard/futebol/* | futebol_*, diretoria |
+| (não existe)          | **Relatórios**            | /dashboard/relatorios/* | relatorios [NOVO]  |
+| (não existe)          | **Adm** (só depto. adm)   | /dashboard/adm/*    | adm_* (novos – fase 3) |
+| (não existe na sidebar)| Médico                    | /dashboard/medico   | medico (já existe)     |
+| (não existe na sidebar)| Psicologia                | /dashboard/consultas | psicologia (já existe) |
+| (não existe na sidebar)| Jurídico                  | abas do jogador     | juridico               |
+| Abas Avaliações/Status | **Futebol → Análise** (menu); permissão continua `diretoria` | — | diretoria        |
+| Emails, Senhas, Páginas, Notícias, Mídia | **Ferramentas** (submenu) | mesmos hrefs | mesmos slugs           |
+
+**Resumo:** **Diretoria** acima de Empresas; dashboard gerencial com visão de todas as empresas. **Empresas** = só esse nome (Listagem + Tipos). **Futebol** inclui Comissão técnica e Análise (Avaliações, Status, Desempenho). **Relatórios** = novo menu. Todos os módulos separados por empresa/clube.
+
+### Fases de implementação (seguro para produção)
+
+**Fase 1 — Só reorganização (zero risco):**
+- Alterar apenas `dashboard-menu.config.ts`: o grupo "Cadastros" vira **Empresas** (Listagem + Tipos — sem nome "Negócios") e **Futebol** (Categorias, …, Jogadores). **Diretoria** vira grupo no topo (acima de Empresas) com link para dashboard gerencial. **Usuários** dentro de **Configurações**. **Emails, Senhas, Páginas, Notícias, Mídia** dentro de **Ferramentas**. **Mantendo todos os href e moduleSlug atuais**.
+- Atualizar `sidebar.tsx` para: Diretoria (acima), Empresas, Futebol, Ferramentas, Configurações (com Usuários). Lógica de `canAccessModule` e rotas permanece idêntica.
+- **Não** criar novos módulos no banco; **não** criar novas rotas. URLs continuam iguais.
+- Resultado: usuário vê "Diretoria", "Empresas", "Futebol", "Ferramentas", "Configurações". Nada quebra.
+
+**Fase 2 — Módulos transversais e Diretoria/Relatórios:**
+- Adicionar itens de primeiro nível: **Médico**, **Psicologia**, **Jurídico**. **Diretoria** já no topo (Fase 1) com dashboard gerencial. **Relatórios** como grupo (menu) com rotas futuras.
+- Módulos `medico`, `psicologia`, `juridico`, `diretoria` já existem no banco — só exibir na sidebar para quem tem acesso. Avaliações e Status no jogador continuam com permissão `diretoria`; no menu aparecem em **Futebol → Análise**.
+
+**Fase 3 — Novos módulos e rotas (incremental):**
+- Criar no banco novos Module: **Adm** (`adm_financeiro`, `adm_compras`, `adm_rh`, …), **Futebol** (`futebol_comissao`, `futebol_fisiologia`, `futebol_analise`), **Relatórios** (`relatorios`), Sócio Torcedor, Marketing.
+- Rotas: `/dashboard/adm/*`, `/dashboard/futebol/*` (incl. Comissão técnica e Análise com Avaliações/Status), `/dashboard/relatorios/*`. Todos os módulos separados por empresa/clube.
+
+### Abas do jogador
+
+**Avaliações** e **Status** continuam com `moduleSlug: diretoria` (quem tem acesso à diretoria vê). No **menu** da sidebar ficam em **Futebol → Análise**. Demais abas inalteradas; filtro por `canAccessModule(tab.moduleSlug)`.
+
+### Resumo
+
+- **Escopo:** Todos os módulos ajustados e separados por empresa/clube (tenant).
+- **Diretoria** = acima de Empresas; dashboard gerencial com todas as informações de todas as empresas, exclusivo da diretoria. Não é mais o menu de "Avaliações/Status" — esses vão para Futebol → Análise.
+- **Empresas** = só esse nome (sem "Negócios"): Listagem + Tipos de Negócios.
+- **Adm** = departamento administrativo (Financeiro, Compras, RH, Patrimônio, Nutrição, Estoque).
+- **Futebol** = Categorias, Campeonatos, Estádios, Times, Atletas, **Comissão técnica** (técnicos, assistentes), Fisiologia, **Análise** (Avaliações, Status, Desempenho — Avaliações e Status continuam com permissão `diretoria`).
+- **Relatórios** = novo menu para relatórios do app.
+- **Ferramentas** = Emails, Senhas, Páginas, Notícias, Mídia.
+- **Configurações** = Usuários (submenu) + telas atuais.
+- **Fase 1:** Diretoria (topo), Empresas, Futebol, Ferramentas, Configurações. Deploy seguro.
+- **Fase 2:** Médico, Psicologia, Jurídico, Relatórios (menu).
+- **Fase 3:** Adm, Futebol (Comissão técnica, Fisiologia, Análise), Relatórios (rotas), Sócio Torcedor, Marketing.
+
 ## DEPLOY-SERVER (Deploy no servidor — AWS Lightsail / Ubuntu)
 
 Passo a passo para rodar o projeto no servidor com **PM2**. Pressupõe: Node.js, pnpm, Git e PM2 instalados; PostgreSQL rodando (no mesmo servidor ou em 127.0.0.1).
@@ -1150,6 +1308,61 @@ Abrir só o projeto do dia. files.exclude e search.exclude para node_modules, di
 ## AWS_CREDENTIALS
 
 API usa AWS SDK (Cognito Admin). Credenciais: default chain ou AWS_ACCESS_KEY_ID/SECRET no .env. Dev: aws configure --profile bcg-dev e AWS_PROFILE no .env. IAM policy mínima para User Pool. Nunca commitar .env.
+
+## PARTE_3_ESCOPO_E_PACIENTES (Planejamento — escopo usuário, pacientes, listas, ADM)
+
+**Contexto:** Profissionalizar o app: tratar "jogadores" como **Atletas** na interface; estender Médico, Psicologia e Jurídico (e futuramente ADM) para **todo o grupo** — não só futebol. As listas não podem ter "cara de lista de atletas": devem servir a **pacientes** (atletas + comissão técnica + funcionários) em todas as empresas/clubes do grupo. Ao fazer o ADM, incluir **cadastro de funcionários** (e comissão); não pode ser só futebol.
+
+### 1. Escopo do usuário (quais empresas/clubes ele vê)
+
+- **Objetivo:** No cadastro de usuário, definir **quais empresas/clubes** ele pode acessar. Ex.: João vê só um clube; Maria vê dois; super_admin e diretores veem todos.
+- **Modelo de dados:** Criar relação User ↔ Tenant (ex.: tabela `UserTenantScope` ou `Membership`: `userId`, `tenantId`). Super_admin e roles de diretoria podem ter regra especial: "acesso a todos" (sem filtro por tenant).
+- **API:** Endpoints para ler/gravar tenants permitidos por usuário; em todas as listagens filtrar pelos tenants do usuário; super_admin/diretoria sem filtro.
+- **Frontend:** No formulário de usuário (novo/editar), multi-select de empresas/clubes. Ao selecionar uma empresa/clube no dashboard, exibir só as informações dessa entidade.
+
+### 2. Pacientes: modelo de dados (grupo inteiro)
+
+- **Decisão:** Estender a tabela **Player** (já usada por Médico, Psicologia, Jurídico) em vez de criar entidade separada. Assim histórico médico, avaliações, consultas e documentos jurídicos continuam no mesmo registro.
+- **Campos a adicionar:**
+  - **personType** (`String`, default `'atleta'`): `'atleta'` | `'comissao'` | `'funcionario'`. Define se a pessoa é atleta, comissão técnica ou funcionário.
+  - **role** ou **cargo** (`String?`): para comissão e funcionários — ex.: "Técnico", "Assistente", "Administrativo". Para atleta pode ficar null (usa-se `position`).
+- **Comportamento:** Para `personType = 'atleta'`: mantém `category`, `position`, `jerseyNumber` etc. (sync da planilha e CRUD atual). Para `comissao` e `funcionario`: `category` e `position` ficam null; opcionalmente preencher `role`/`cargo`. Todos têm `tenantId` (empresa ou clube do grupo).
+- **Cadastro:**
+  - **Atletas:** continuam sendo cadastrados em **Futebol → Atletas** (e sync da planilha); todos com `personType = 'atleta'`.
+  - **Funcionários e comissão:** cadastrados no **ADM** (quando existir): "Cadastro de funcionários" e "Comissão técnica" criam registros com `personType = 'funcionario'` ou `'comissao'`, vinculados a um tenant. O mesmo registro aparece nas listas de Médico, Psicologia e Jurídico — não fica "cara de lista só de atletas".
+
+### 3. Listas (Médico, Psicologia, Jurídico): ajuste para não parecer só atletas
+
+- **Filtros atuais:** Hoje: **Clube** (tenantId) + **Categoria** (principal, sub20, etc.) + busca por nome. Isso é 100% futebol.
+- **Filtros desejados (grupo inteiro):**
+  1. **Empresa/Clube** — mesmo que hoje, mas rótulo "Empresa/Clube" e listar **todos os tenants** (clubes e empresas). Continua um único dropdown.
+  2. **Tipo de pessoa** — novo: **Todos** | **Atleta** | **Comissão técnica** | **Funcionário**. Quando "Atleta", mostrar também o filtro **Categoria** (principal, sub20, …). Quando "Comissão" ou "Funcionário", o filtro Categoria fica oculto ou desconsiderado.
+  3. **Busca (nome)** — mantida.
+- **Tabela (colunas):**
+  - Foto, **Nome**, **Empresa/Clube** (em vez de só "Clube"), **Tipo** (Atleta / Comissão técnica / Funcionário).
+  - Para **Atleta:** exibir **Categoria** e **Posição** (como hoje).
+  - Para **Comissão/Funcionário:** exibir **Cargo** (campo `role`/`cargo`) ou "—" se vazio.
+  - Última coluna: link para Histórico médico / Avaliação e consultas / Documentos (conforme a tela).
+- **Textos da página:** Título do card pode ser "Pacientes" (ou "Atletas e demais pacientes") em vez de só "Atletas"; descrição: "Clique em uma pessoa para ver histórico médico" (ou equivalente). Assim a lista fica clara para todo o grupo.
+
+### 4. ADM: cadastro de funcionários (e comissão)
+
+- **Objetivo:** Quando implementar o módulo ADM, incluir **cadastro de funcionários** (e depois comissão técnica). Não pode ser só futebol — tem que ser pacientes (pessoas vinculadas a empresas/clubes do grupo).
+- **Fluxo:** Tela no ADM para criar/editar "Funcionário" ou "Comissão técnica": seleciona **Empresa/Clube** (tenant), **Nome**, **Cargo**/função, foto opcional. No backend, cria/atualiza registro na mesma tabela Player com `personType = 'funcionario'` ou `'comissao'`. Esses registros passam a aparecer nas listas de Médico, Psicologia e Jurídico (filtro por tipo).
+- **Futebol → Atletas:** Pode continuar listando só `personType = 'atleta'` (filtro fixo ou default), para não misturar com funcionários na tela de cadastro de atletas. Sync da planilha continua criando apenas atletas.
+
+### 5. Resumo e etapas de implementação
+
+| Item | Ação |
+|------|------|
+| **Schema** | Migration: adicionar em `Player`: `personType String @default("atleta")`, `role String?` (ou `cargo`). |
+| **API** | `GET /players`: aceitar query `personType` (atleta \| comissao \| funcionario). Create/update: aceitar `personType` e `role`. `findAll` filtrar por `personType` quando informado. |
+| **Médico / Psicologia / Jurídico** | Filtros: label "Empresa/Clube"; novo dropdown "Tipo de pessoa" (Todos, Atleta, Comissão técnica, Funcionário); Categoria só quando Tipo = Atleta (ou Todos). Tabela: coluna "Tipo"; coluna "Categoria" ou "Cargo" conforme o tipo. Textos: "Pacientes" / "atletas e demais pacientes". |
+| **Futebol → Atletas** | Listagem e sync continuam só para atletas (filtro `personType = 'atleta'` ou não enviar personType e default no backend para atleta nas rotas de cadastros/jogadores). |
+| **ADM (fase 3)** | Ao criar o módulo ADM: tela "Cadastro de funcionários" (e depois "Comissão técnica") que cria registros com `personType = funcionario`/`comissao`; mesma base (Player) para aparecer em Médico, Psicologia, Jurídico. |
+| **Escopo usuário** | Ver item 1; implementar em paralelo ou após as listas de pacientes. |
+
+---
 
 ## FASE2_ENTREGAVEIS / prd_site_bcg
 

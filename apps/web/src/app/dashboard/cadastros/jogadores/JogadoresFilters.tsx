@@ -59,7 +59,7 @@ export function JogadoresFilters() {
 
   return (
     <div className="flex flex-wrap items-end gap-2">
-      <div className="min-w-[200px]">
+      <div className="min-w-[240px]">
         <label className="text-xs text-muted-foreground mb-1 block">Clube</label>
         <Select
           value={tenantId || "all"}

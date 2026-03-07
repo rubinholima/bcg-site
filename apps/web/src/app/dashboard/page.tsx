@@ -92,7 +92,7 @@ const QUICK_LINKS = [
   { title: "Empresas", href: "/dashboard/empresas", icon: Building2 },
   { title: "Usuários", href: "/dashboard/usuarios", icon: Users },
   { title: "Emails", href: "/dashboard/emails", icon: Mail },
-  { title: "Tipos", href: "/dashboard/tipos", icon: Tag },
+  { title: "Tipos", href: "/dashboard/cadastros/tipos", icon: Tag },
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper },
   { title: "Mídia", href: "/dashboard/midia", icon: Image },
@@ -128,7 +128,7 @@ const STAT_CARDS = [
     key: "kinds" as const,
     label: "Tipos de empresa",
     icon: Tag,
-    href: "/dashboard/tipos",
+    href: "/dashboard/cadastros/tipos",
     accent: "from-violet-500/10 to-violet-600/5 border-violet-500/20",
     iconClass: "text-violet-600 dark:text-violet-400",
   },
@@ -197,11 +197,11 @@ export default async function DashboardPage() {
   return (
     <div className="w-full min-w-0 max-w-full space-y-8">
       {/* Welcome */}
-      <div className="rounded-2xl bg-gradient-to-br from-primary/8 via-primary/4 to-transparent border border-border p-6 md:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+      <div className="dashboard-hero-gradient rounded-2xl border border-border/80 p-6 md:p-8 shadow-lg animate-fade-in-up">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Dashboard — {groupName}
         </h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="mt-2 text-muted-foreground text-base">
           Central de gestão: empresas, usuários, emails corporativos e configurações.
         </p>
       </div>
@@ -210,27 +210,32 @@ export default async function DashboardPage() {
       <div>
         <h2 className="text-lg font-semibold text-foreground mb-4">Resumo</h2>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-          {STAT_CARDS.map(({ key, label, icon: Icon, href, accent, iconClass }) => {
+          {STAT_CARDS.map(({ key, label, icon: Icon, href, accent, iconClass }, i) => {
             const value = getStatValue(stats, tenantsCount, key);
             return (
-              <Link key={key} href={href} className="block group min-w-0">
+              <Link
+                key={key}
+                href={href}
+                className="block group min-w-0 dashboard-card-enter"
+                style={{ animationDelay: `${i * 50}ms` }}
+              >
                 <Card
-                  className={`min-w-0 overflow-hidden border bg-gradient-to-br ${accent} transition-all hover:shadow-md hover:border-primary/30`}
+                  className={`min-w-0 overflow-hidden border rounded-xl bg-gradient-to-br ${accent} dashboard-card-hover shadow-md`}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {label}
                     </CardTitle>
-                    <span className={`rounded-lg p-2 bg-background/70 ${iconClass}`}>
-                      <Icon className="h-4 w-4" />
+                    <span className={`rounded-xl p-2.5 bg-background/80 shadow-sm ${iconClass}`}>
+                      <Icon className="h-5 w-5" />
                     </span>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-2xl font-bold">
+                    <p className="text-2xl font-bold tracking-tight">
                       {value !== null ? value : "—"}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1 group-hover:text-foreground transition-colors">
-                      Ver detalhes <ArrowRight className="h-3 w-3" />
+                    <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1 group-hover:text-foreground transition-colors duration-200">
+                      Ver detalhes <ArrowRight className="h-3.5 w-3 transition-transform group-hover:translate-x-0.5" />
                     </p>
                   </CardContent>
                 </Card>
@@ -242,7 +247,7 @@ export default async function DashboardPage() {
 
       <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Últimas empresas */}
-        <Card className="min-w-0 lg:col-span-2">
+        <Card className="min-w-0 lg:col-span-2 rounded-xl shadow-md dashboard-card-hover overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Últimas empresas</CardTitle>
@@ -251,7 +256,7 @@ export default async function DashboardPage() {
               </CardDescription>
             </div>
             <Link href="/dashboard/empresas">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="transition-all duration-200 hover:shadow-md active:scale-[0.98]">
                 Ver todas
               </Button>
             </Link>
@@ -267,24 +272,26 @@ export default async function DashboardPage() {
                   <li key={t.id} className="py-3 first:pt-0 last:pb-0">
                     <Link
                       href={`/dashboard/empresas/${t.id}/edit`}
-                      className="flex items-center gap-3 hover:bg-muted/50 rounded-lg p-2 -mx-2 transition-colors"
+                      className="flex items-center gap-3 hover:bg-muted/50 rounded-xl p-3 -mx-1 transition-all duration-200 hover:shadow-sm group"
                     >
                       {t.logoUrl ? (
-                        <img
-                          src={getPublicImageUrl(t.logoUrl)}
-                          alt=""
-                          className="h-9 w-9 rounded-md object-contain bg-muted"
-                        />
+                        <div className="h-10 w-10 rounded-xl overflow-hidden bg-muted ring-2 ring-transparent group-hover:ring-primary/20 transition-all duration-200 flex-shrink-0">
+                          <img
+                            src={getPublicImageUrl(t.logoUrl)}
+                            alt=""
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
                       ) : (
-                        <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
-                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <div className="h-10 w-10 rounded-xl bg-muted flex items-center justify-center ring-2 ring-transparent group-hover:ring-primary/20 transition-all duration-200 flex-shrink-0">
+                          <Building2 className="h-5 w-5 text-muted-foreground" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{t.name}</p>
                         <p className="text-xs text-muted-foreground">{t.kind.name}</p>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </li>
                 ))}
@@ -292,7 +299,7 @@ export default async function DashboardPage() {
             )}
             <Link
               href="/dashboard/empresas/new"
-              className="mt-4 flex items-center gap-2 text-sm text-primary hover:underline"
+              className="mt-4 flex items-center gap-2 text-sm text-primary hover:underline font-medium transition-colors"
             >
               <Plus className="h-4 w-4" /> Nova empresa
             </Link>
@@ -300,7 +307,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Atalhos */}
-        <Card className="min-w-0">
+        <Card className="min-w-0 rounded-xl shadow-md dashboard-card-hover overflow-hidden">
           <CardHeader>
             <CardTitle>Atalhos</CardTitle>
             <CardDescription>
@@ -313,11 +320,13 @@ export default async function DashboardPage() {
                 <Link
                   key={href}
                   href={href}
-                  className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-all duration-200 hover:shadow-sm"
                 >
-                  <Icon className="h-4 w-4 text-muted-foreground" />
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/80 group-hover:bg-primary/10 transition-colors duration-200">
+                    <Icon className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                  </span>
                   {title}
-                  <ArrowRight className="h-3.5 w-3 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ArrowRight className="h-3.5 w-3 ml-auto text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all duration-200" />
                 </Link>
               ))}
             </nav>
@@ -327,7 +336,7 @@ export default async function DashboardPage() {
 
       {/* Última atividade + Resumo por tipo */}
       <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card className="min-w-0">
+        <Card className="min-w-0 rounded-xl shadow-md dashboard-card-hover overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-muted-foreground" />
@@ -367,7 +376,7 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="min-w-0">
+        <Card className="min-w-0 rounded-xl shadow-md dashboard-card-hover overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-muted-foreground" />
@@ -387,10 +396,10 @@ export default async function DashboardPage() {
                 {kindEntries.map(([kindName, count]) => (
                   <li
                     key={kindName}
-                    className="flex items-center justify-between text-sm"
+                    className="flex items-center justify-between text-sm py-1.5 px-2 rounded-lg hover:bg-muted/50 transition-colors duration-200"
                   >
                     <span>{kindName}</span>
-                    <span className="font-medium tabular-nums">{count}</span>
+                    <span className="font-semibold tabular-nums">{count}</span>
                   </li>
                 ))}
               </ul>
@@ -400,7 +409,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Avisos / Notificações */}
-      <Card className="min-w-0 border-amber-500/20 bg-amber-500/5">
+      <Card className="min-w-0 border-amber-500/20 bg-amber-500/5 rounded-xl shadow-md dashboard-card-hover overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />
