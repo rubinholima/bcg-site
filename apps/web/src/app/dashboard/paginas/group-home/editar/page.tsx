@@ -1133,7 +1133,8 @@ export default function EditarGroupHomePage() {
                       const interval = (block.config?.heroCarouselIntervalSeconds as HeroCarouselIntervalSeconds) ?? 10;
                       return (
                         <>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
+                          <p className="text-xs text-muted-foreground sm:col-span-2">Os dados do hero estão no banco (slides e títulos).</p>
+                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
                             <summary className="cursor-pointer px-3 py-2.5 font-medium">
                               Slides do carrossel (URL + título por foto)
                             </summary>
@@ -2113,9 +2114,17 @@ export default function EditarGroupHomePage() {
                         </details>
                       </div>
                     )}
-                    {block.type === "founder" && (
+                    {block.type === "founder" && (() => {
+                      const cfg = block.config ?? {};
+                      const founderPhoto = (cfg.founderPhoto as string) ?? (cfg.imageUrl as string) ?? "";
+                      const biographyPT = (cfg.biographyPT as string) ?? (cfg.bodyPt as string) ?? "";
+                      const biographyEN = (cfg.biographyEN as string) ?? (cfg.bodyEn as string) ?? "";
+                      const highlightQuotePT = (cfg.highlightQuotePT as string) ?? (cfg.quotePt as string) ?? "";
+                      const highlightQuoteEN = (cfg.highlightQuoteEN as string) ?? (cfg.quoteEn as string) ?? "";
+                      return (
                       <div className="space-y-3 sm:col-span-2">
-                        <details className="rounded-lg border border-border bg-muted/20">
+                        <p className="text-xs text-muted-foreground">Os dados do fundador, da biografia e do hero estão no banco; chaves antigas (imageUrl, bodyPt, quotePt) são lidas automaticamente.</p>
+                        <details className="rounded-lg border border-border bg-muted/20" open>
                           <summary className="cursor-pointer px-3 py-2 font-medium flex items-center gap-2">
                             <User className="h-4 w-4" /> Perfil do Fundador
                           </summary>
@@ -2123,9 +2132,9 @@ export default function EditarGroupHomePage() {
                             <div className="flex flex-wrap items-start gap-4">
                               <div className="flex flex-col items-center gap-2">
                                 <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-border bg-muted flex items-center justify-center shrink-0">
-                                  {(block.config?.founderPhoto as string)?.trim() ? (
+                                  {founderPhoto?.trim() ? (
                                     <img
-                                      src={getPublicImageUrl(block.config?.founderPhoto as string)}
+                                      src={getPublicImageUrl(founderPhoto)}
                                       alt=""
                                       className="h-full w-full object-cover"
                                     />
@@ -2137,7 +2146,7 @@ export default function EditarGroupHomePage() {
                                   label=""
                                   sizeKey="card"
                                   allowAllFolders
-                                  value={(block.config?.founderPhoto as string) ?? ""}
+                                  value={founderPhoto}
                                   onChange={(url) => updateBlockConfig(index, "founderPhoto", url)}
                                   placeholder="Adicionar foto do fundador"
                                 />
@@ -2171,14 +2180,14 @@ export default function EditarGroupHomePage() {
                             </div>
                           </div>
                         </details>
-                        <details className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20" open>
                           <summary className="cursor-pointer px-3 py-2 font-medium">Biografia</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <div className="space-y-2">
                               <Label>Biografia (PT)</Label>
                               <textarea
                                 placeholder="Texto longo em português. Parágrafos com quebra de linha preservada."
-                                value={(block.config?.biographyPT as string) ?? ""}
+                                value={biographyPT}
                                 onChange={(e) => updateBlockConfig(index, "biographyPT", e.target.value)}
                                 rows={6}
                                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -2188,7 +2197,7 @@ export default function EditarGroupHomePage() {
                               <Label>Biography (EN)</Label>
                               <textarea
                                 placeholder="Long text in English. Paragraphs with line breaks preserved."
-                                value={(block.config?.biographyEN as string) ?? ""}
+                                value={biographyEN}
                                 onChange={(e) => updateBlockConfig(index, "biographyEN", e.target.value)}
                                 rows={6}
                                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -2196,14 +2205,14 @@ export default function EditarGroupHomePage() {
                             </div>
                           </div>
                         </details>
-                        <details className="rounded-lg border border-border bg-muted/20">
+                        <details className="rounded-lg border border-border bg-muted/20" open>
                           <summary className="cursor-pointer px-3 py-2 font-medium">Destaque (citação)</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <div className="space-y-2">
                               <Label>Frase de destaque (PT)</Label>
                               <Input
                                 placeholder="Ex: lema ou frase em destaque"
-                                value={(block.config?.highlightQuotePT as string) ?? ""}
+                                value={highlightQuotePT}
                                 onChange={(e) => updateBlockConfig(index, "highlightQuotePT", e.target.value)}
                               />
                             </div>
@@ -2211,7 +2220,7 @@ export default function EditarGroupHomePage() {
                               <Label>Highlight quote (EN)</Label>
                               <Input
                                 placeholder="e.g. motto or highlight phrase"
-                                value={(block.config?.highlightQuoteEN as string) ?? ""}
+                                value={highlightQuoteEN}
                                 onChange={(e) => updateBlockConfig(index, "highlightQuoteEN", e.target.value)}
                               />
                             </div>
@@ -2255,7 +2264,8 @@ export default function EditarGroupHomePage() {
                           </div>
                         </details>
                       </div>
-                    )}
+                      );
+                    })()}
                     {block.type !== "header" && block.type !== "footer" && block.type !== "hero" && (
                       <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (textos e ícones)</summary>

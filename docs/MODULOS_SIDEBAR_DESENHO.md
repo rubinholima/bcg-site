@@ -94,20 +94,20 @@ Configurações                → /dashboard/configuracoes      configuracoes
 
 ## Mapeamento: item atual → nova localização
 
-| Hoje (menu)            | Nova localização (grupo) | href (mantido?)     | moduleSlug (mantido?) |
-|------------------------|---------------------------|---------------------|------------------------|
-| Cadastros → Usuários   | **Configurações** → Usuários | /dashboard/usuarios | usuarios               |
-| Cadastros → Empresas   | **Empresas** (Listagem + Tipos) | /dashboard/empresas, /dashboard/cadastros/tipos | empresas, tipos |
-| Cadastros → Clubes     | Futebol                   | /dashboard/cadastros/* | tipos (todos)       |
-| (não existe)           | **Diretoria** (dashboard gerencial) | /dashboard/diretoria | diretoria        |
-| (não existe)           | **Futebol** → Comissão técnica, Análise (Avaliações, Status) | /dashboard/futebol/* | futebol_*, diretoria |
-| (não existe)           | **Relatórios**            | /dashboard/relatorios/* | relatorios [NOVO]  |
-| (não existe)           | **Adm** (só depto. adm)   | /dashboard/adm/*    | adm_* (novos – fase 3) |
-| (não existe na sidebar)| Médico                    | /dashboard/medico   | medico (já existe)     |
-| (não existe na sidebar)| Psicologia                | /dashboard/consultas | psicologia (já existe)  |
-| (não existe na sidebar)| Jurídico                  | abas do jogador     | juridico               |
-| Abas Avaliações/Status | **Futebol → Análise** (menu); permissão continua `diretoria` | — | diretoria        |
-| Emails, Senhas, Páginas, Notícias, Mídia | **Ferramentas** (submenu) | mesmos hrefs | mesmos slugs           |
+| Hoje (menu)                              | Nova localização (grupo)                                     | href (mantido?)                                 | moduleSlug (mantido?)    |
+| ---------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------- | ------------------------ |
+| Cadastros → Usuários                     | **Configurações** → Usuários                                 | /dashboard/usuarios                             | usuarios                 |
+| Cadastros → Empresas                     | **Empresas** (Listagem + Tipos)                              | /dashboard/empresas, /dashboard/cadastros/tipos | empresas, tipos          |
+| Cadastros → Clubes                       | Futebol                                                      | /dashboard/cadastros/\*                         | tipos (todos)            |
+| (não existe)                             | **Diretoria** (dashboard gerencial)                          | /dashboard/diretoria                            | diretoria                |
+| (não existe)                             | **Futebol** → Comissão técnica, Análise (Avaliações, Status) | /dashboard/futebol/\*                           | futebol\_\*, diretoria   |
+| (não existe)                             | **Relatórios**                                               | /dashboard/relatorios/\*                        | relatorios [NOVO]        |
+| (não existe)                             | **Adm** (só depto. adm)                                      | /dashboard/adm/\*                               | adm\_\* (novos – fase 3) |
+| (não existe na sidebar)                  | Médico                                                       | /dashboard/medico                               | medico (já existe)       |
+| (não existe na sidebar)                  | Psicologia                                                   | /dashboard/consultas                            | psicologia (já existe)   |
+| (não existe na sidebar)                  | Jurídico                                                     | abas do jogador                                 | juridico                 |
+| Abas Avaliações/Status                   | **Futebol → Análise** (menu); permissão continua `diretoria` | —                                               | diretoria                |
+| Emails, Senhas, Páginas, Notícias, Mídia | **Ferramentas** (submenu)                                    | mesmos hrefs                                    | mesmos slugs             |
 
 **Resumo:** **Diretoria** acima de Empresas; dashboard gerencial com visão de todas as empresas. **Empresas** = só esse nome (Listagem + Tipos). **Futebol** inclui Comissão técnica e Análise (Avaliações, Status, Desempenho). **Relatórios** = novo menu. Todos os módulos separados por empresa/clube.
 
@@ -116,16 +116,19 @@ Configurações                → /dashboard/configuracoes      configuracoes
 ## Fases de implementação (seguro para produção)
 
 **Fase 1 — Só reorganização (zero risco):**
+
 - Alterar apenas `dashboard-menu.config.ts`: o grupo "Cadastros" vira **Empresas** (Listagem + Tipos — sem nome "Negócios") e **Futebol** (Categorias, …, Jogadores). **Diretoria** vira grupo no topo (acima de Empresas) com link para dashboard gerencial. **Usuários** dentro de **Configurações**. **Emails, Senhas, Páginas, Notícias, Mídia** dentro de **Ferramentas**. **Mantendo todos os href e moduleSlug atuais**.
 - Atualizar `sidebar.tsx` para: Diretoria (acima), Empresas, Futebol, Ferramentas, Configurações (com Usuários). Lógica de `canAccessModule` e rotas permanece idêntica.
 - **Não** criar novos módulos no banco; **não** criar novas rotas. URLs continuam iguais.
 - Resultado: usuário vê "Diretoria", "Empresas", "Futebol", "Ferramentas", "Configurações". Nada quebra.
 
 **Fase 2 — Módulos transversais e Diretoria/Relatórios:**
+
 - Adicionar itens de primeiro nível: **Médico**, **Psicologia**, **Jurídico**. **Diretoria** já no topo (Fase 1) com dashboard gerencial. **Relatórios** como grupo (menu) com rotas futuras.
 - Módulos `medico`, `psicologia`, `juridico`, `diretoria` já existem no banco — só exibir na sidebar para quem tem acesso. Avaliações e Status no jogador continuam com permissão `diretoria`; no menu aparecem em **Futebol → Análise**.
 
 **Fase 3 — Novos módulos e rotas (incremental):**
+
 - Criar no banco novos Module: **Adm** (`adm_financeiro`, `adm_compras`, `adm_rh`, …), **Futebol** (`futebol_comissao`, `futebol_fisiologia`, `futebol_analise`), **Relatórios** (`relatorios`), Sócio Torcedor, Marketing.
 - Rotas: `/dashboard/adm/*`, `/dashboard/futebol/*` (incl. Comissão técnica e Análise com Avaliações/Status), `/dashboard/relatorios/*`. Todos os módulos separados por empresa/clube.
 

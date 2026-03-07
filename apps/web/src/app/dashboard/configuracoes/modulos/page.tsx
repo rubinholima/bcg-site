@@ -12,6 +12,7 @@ import {
   DASHBOARD_MENU,
   PLAYER_TABS,
   getUniqueModuleSlugs,
+  type MenuItemConfig,
 } from "@/lib/dashboard-menu.config";
 
 interface ModulePermission {
@@ -75,16 +76,18 @@ export default function ModulosPage() {
 
   type RoleKey = "company_admin" | "editor" | "analista" | "diretoria" | "medico" | "psicologo";
 
-  /** Monta árvore de módulos a partir do menu + abas do jogador. Mescla com permissões da API. */
+  /** Monta árvore de módulos a partir do menu + abas do jogador. Mescla com permissões da API.
+   * A ordem segue o menu (ex.: Ferramentas › Emails, Ferramentas › Páginas) para o path e a listagem ficarem corretos. */
   const moduleTree = useMemo(() => {
     const permMap = new Map(modules.map((m) => [m.slug, m]));
     const nodes: ModuleTreeNode[] = [];
     const seen = new Set<string>();
 
-    function walk(items: typeof DASHBOARD_MENU, path: string, depth: number) {
+    function walk(items: MenuItemConfig[], path: string, depth: number) {
       for (const item of items) {
-        if (item.children) {
-          walk(item.children, path ? `${path} › ${item.label}` : item.label, depth + 1);
+        if (item.children?.length) {
+          const parentPath = path ? `${path} › ${item.label}` : item.label;
+          walk(item.children, parentPath, depth + 1);
         } else if (item.href && !item.external && !seen.has(item.moduleSlug)) {
           seen.add(item.moduleSlug);
           nodes.push({
@@ -112,8 +115,10 @@ export default function ModulosPage() {
       }
     }
 
-    for (const slug of getUniqueModuleSlugs()) {
+    const allSlugs = getUniqueModuleSlugs();
+    for (const slug of allSlugs) {
       if (!seen.has(slug) && permMap.has(slug)) {
+        seen.add(slug);
         nodes.push({
           slug,
           label: MODULE_DISPLAY_NAMES[slug] ?? slug,
@@ -126,15 +131,15 @@ export default function ModulosPage() {
     return nodes;
   }, [modules]);
 
+  /** Lista para a tabela: ordem do menu (moduleTree) e permissões do banco (API). Assim o path "Ferramentas › Páginas" e os checkmarks vêm corretos. */
   const displayModules = useMemo(() => {
     const permMap = new Map(modules.map((m) => [m.slug, m]));
-    const slugs = getUniqueModuleSlugs();
-    return slugs.map((slug) => {
-      const existing = permMap.get(slug);
-      const label = MODULE_DISPLAY_NAMES[slug] ?? moduleTree.find((n) => n.slug === slug)?.label ?? slug;
+    return moduleTree.map((node) => {
+      const existing = permMap.get(node.slug);
       return {
-        slug,
-        name: label,
+        slug: node.slug,
+        name: MODULE_DISPLAY_NAMES[node.slug] ?? node.label,
+        path: node.path,
         sortOrder: existing?.sortOrder ?? 0,
         company_admin: existing?.company_admin ?? false,
         editor: existing?.editor ?? false,
@@ -259,7 +264,7 @@ export default function ModulosPage() {
                   </thead>
                   <tbody>
                     {displayModules.map((m) => {
-                      const path = moduleTree.find((n) => n.slug === m.slug)?.path;
+                      const path = m.path;
                       return (
                         <tr key={m.slug} className="border-b last:border-0">
                           <td className="px-4 py-3">

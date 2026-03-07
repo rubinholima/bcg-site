@@ -29,6 +29,29 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 7 DE MARÇO DE 2026 — ENCERRAMENTO (Fundador/Hero: dados no banco, fallbacks no editor, script de verificação)
+
+## **O QUE FOI FEITO NESTA SESSÃO**
+
+1. **Fundador e Hero — dados no banco** — Confirmado via script que `Group.homeContent.blocks` (grupo bcg) contém os blocos hero e founder com config preenchido (heroSlides, titlePt; imageUrl, bodyPt, quotePt, etc.). O editor esperava chaves diferentes (founderPhoto, biographyPT, highlightQuotePT).
+2. **Fallbacks no editor (group-home editar)** — Bloco **founder**: leitura com compatibilidade retroativa — `founderPhoto ?? imageUrl`, `biographyPT ?? bodyPt`, `biographyEN ?? bodyEn`, `highlightQuotePT ?? quotePt`, `highlightQuoteEN ?? quoteEn`. Bloco **hero**: já lia heroSlides (e heroImages); adicionada nota de que os dados estão no banco e `<details>` do hero aberto por padrão. Mensagem na UI: "Os dados do fundador, da biografia e do hero estão no banco; chaves antigas (imageUrl, bodyPt, quotePt) são lidas automaticamente."
+3. **Fix parsing** — Removido `</details>` duplicado no bloco founder que causava "Expression expected" e Build Error em dev (e quebraria o build em produção).
+4. **Script de verificação** — `apps/api/scripts/check-group-home-blocks.ts`: lê Group bcg e imprime config dos blocos hero e founder (para confirmar dados no banco). Uso: `pnpm exec ts-node -r tsconfig-paths/register scripts/check-group-home-blocks.ts` (a partir de apps/api).
+
+### 📁 ARQUIVOS ENVOLVIDOS
+
+**Web:** `apps/web/src/app/dashboard/paginas/group-home/editar/page.tsx` (founder IIFE com fallbacks, hero note e open, fix </details> duplicado).
+
+**API:** `apps/api/scripts/check-group-home-blocks.ts` (novo).
+
+### 🚀 FECHAMENTO (GIT)
+
+- **Commit:** (a ser preenchido após o commit)
+- **Branch:** develop
+- **Push:** ✅ para origin/develop
+
+---
+
 # 📅 7 DE MARÇO DE 2026 — ENCERRAMENTO (Contato emergência, Depto Médico, Fase 3 módulos, Jurídico no Futebol, Relatórios após Marketing)
 
 ## **O QUE FOI FEITO NESTA SESSÃO**
