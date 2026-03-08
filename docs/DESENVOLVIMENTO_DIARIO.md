@@ -29,6 +29,28 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 7 DE MARÇO DE 2026 — ENCERRAMENTO (Cadastro Comissão Técnica, Psicólogos, Jurídico todos contratos)
+
+## **O QUE FOI FEITO NESTA SESSÃO**
+
+1. **Cadastro de Comissão Técnica** — Modelo Prisma `TechnicalStaff` (tenantId, name, photoUrl, role, categories JSON, birthDate, nacionalidade, cpf, rg, email, phone, address, licenças, contrato CLT/PJ/estágio, bio, notes). API Nest: `GET/POST/PATCH/DELETE /technical-staff` com filtros (tenantId, category, role, search). Frontend: listagem com filtros (Clube, Categoria, Função, Busca), tabela (foto, nome, função, clube, categorias, licença/validade, contrato até, ações), novo membro (dados básicos, licenças, vínculo), editar e excluir. Constantes em `staff-roles.ts` (funções e tipos de contrato). Visual alinhado ao cadastro de atletas.
+2. **Correções Comissão** — Parser Turbopack: tipo dos props da page extraído para `ComissaoPageProps` (evita "Expected ident"). `UpdateTechnicalStaffDto` definido explicitamente com todos os campos opcionais (PartialType não gerava tipos). Campo JSON `categories`: uso de `Prisma.JsonNull` no create em vez de `null`.
+3. **Outros no commit** — Módulo Psicólogos (API + web: listagem, novo, editar, excluir). Jurídico: endpoint e UI "Todos os contratos"; contrato assinado com opção Baixar. Ajustes em consultas, médico, sidebar, menu.
+
+### 📁 ARQUIVOS ENVOLVIDOS
+
+**API:** `prisma/schema.prisma` (TechnicalStaff), `cadastros/technical-staff.*`, `cadastros/dto/create-technical-staff.dto.ts`, `dto/update-technical-staff.dto.ts`, `cadastros.module.ts`; `psychologists/` (controller, service, module, DTOs); `all-legal-documents.controller.ts`, `legal-documents.*`, `consultations.*`, `hello-sign.service.ts`; migration `20260321000000_add_psychologist`.
+
+**Web:** `dashboard/futebol/comissao/` (page, ComissaoFilters, new, [id]/edit, [id]/delete), `lib/staff-roles.ts`; `psicologia/psicologos/` (listagem, novo, editar, excluir), `types/psychologist.ts`; `juridico/` (page, JuridicoFilters), `LegalDocumentsTab.tsx`; `medico/MedicoFilters`, `consultas/page.tsx`, `ConsultasCalendar.tsx`, `cadastros/jogadores/[id]/edit`, `sidebar.tsx`, `dashboard-menu.config.ts`, `player-module-types.ts`.
+
+### 🚀 FECHAMENTO (GIT)
+
+- **Commit:** `6c90258` — Cadastro Comissão Técnica completo + psicólogos API/web + jurídico todos contratos + fixes (parser page, DTO update, Prisma JsonNull); encerramento 7 mar 2026
+- **Branch:** develop
+- **Push:** em seguida para origin/develop
+
+---
+
 # 📅 7 DE MARÇO DE 2026 — ENCERRAMENTO (Fundador/Hero: dados no banco, fallbacks no editor, script de verificação)
 
 ## **O QUE FOI FEITO NESTA SESSÃO**
