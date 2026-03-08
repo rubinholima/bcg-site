@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -21,19 +21,45 @@ interface Tenant {
   categories?: string[] | null;
 }
 
-export function JuridicoFilters() {
+export interface PlayerOption {
+  id: string;
+  name: string;
+  category?: string | null;
+}
+
+interface JuridicoFiltersProps {
+  players: PlayerOption[];
+  selectedPlayerId: string;
+  onSelectPlayer: (id: string) => void;
+}
+
+export function JuridicoFilters({
+  players,
+  selectedPlayerId,
+  onSelectPlayer,
+}: JuridicoFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState(searchParams.get("tenantId") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [docType, setDocType] = useState(searchParams.get("docType") ?? "");
+  const [docStatus, setDocStatus] = useState(searchParams.get("docStatus") ?? "");
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
   }, []);
+
+  useEffect(() => {
+    setTenantId(searchParams.get("tenantId") ?? "");
+    setCategory(searchParams.get("category") ?? "");
+    setSearch(searchParams.get("search") ?? "");
+    setDocType(searchParams.get("docType") ?? "");
+    setDocStatus(searchParams.get("docStatus") ?? "");
+  }, [searchParams]);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const categoriesForDropdown = selectedTenant?.categories?.length
@@ -42,76 +68,177 @@ export function JuridicoFilters() {
       )
     : FIXTURE_CATEGORIES;
 
-  const applyFilters = () => {
-    const params = new URLSearchParams();
-    if (tenantId) params.set("tenantId", tenantId);
-    if (category) params.set("category", category);
-    if (search.trim()) params.set("search", search.trim());
-    router.push(`/dashboard/juridico?${params.toString()}`);
-  };
+  const applyFilters = useCallback(
+    (updates?: {
+      tenantId?: string;
+      category?: string;
+      search?: string;
+      docType?: string;
+      docStatus?: string;
+    }) => {
+      const t = updates?.tenantId !== undefined ? updates.tenantId : tenantId;
+      const c = updates?.category !== undefined ? updates.category : category;
+      const s = updates?.search !== undefined ? updates.search : search;
+      const dt = updates?.docType !== undefined ? updates.docType : docType;
+      const dst = updates?.docStatus !== undefined ? updates.docStatus : docStatus;
+      const params = new URLSearchParams();
+      if (t) params.set("tenantId", t);
+      if (c) params.set("category", c);
+      if (s.trim()) params.set("search", s.trim());
+      if (dt) params.set("docType", dt);
+      if (dst) params.set("docStatus", dst);
+      router.push(`/dashboard/juridico?${params.toString()}`);
+    },
+    [router, tenantId, category, search, docType, docStatus]
+  );
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setTenantId("");
     setCategory("");
     setSearch("");
+    setDocType("");
+    setDocStatus("");
+    onSelectPlayer("");
     router.push("/dashboard/juridico");
-  };
+  }, [router, onSelectPlayer]);
+
+  const categoryLabel = (cat: string | null | undefined) =>
+    cat
+      ? FIXTURE_CATEGORIES.find((c) => c.value === cat)?.labelPT ?? cat
+      : "—";
 
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <div className="min-w-[240px]">
-        <label className="text-xs text-muted-foreground mb-1 block">Clube</label>
-        <Select
-          value={tenantId || "all"}
-          onValueChange={(v) => {
-            setTenantId(v === "all" ? "" : v);
-            setCategory("");
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Todos os clubes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os clubes</SelectItem>
-            {tenants.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="min-w-[140px]">
-        <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
-        <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Todas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            {categoriesForDropdown.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.labelPT}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="min-w-[180px]">
-        <label className="text-xs text-muted-foreground mb-1 block">Busca (nome)</label>
-        <Input
-          placeholder="Buscar..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-        />
-      </div>
-      <Button variant="secondary" onClick={applyFilters}>
-        Filtrar
-      </Button>
-      <Button variant="ghost" onClick={clearFilters}>
-        Limpar
-      </Button>
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <h3 className="text-sm font-medium text-muted-foreground mb-3">
+          Filtros
+        </h3>
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[200px]">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Clube
+            </label>
+            <Select
+              value={tenantId || "all"}
+              onValueChange={(v) => {
+                const next = v === "all" ? "" : v;
+                setTenantId(next);
+                setCategory("");
+                onSelectPlayer("");
+                applyFilters({ tenantId: next, category: "", search });
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todos os clubes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os clubes</SelectItem>
+                {tenants.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-[160px]">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Categoria
+            </label>
+            <Select
+              value={category || "all"}
+              onValueChange={(v) => {
+                const next = v === "all" ? "" : v;
+                setCategory(next);
+                onSelectPlayer("");
+                applyFilters({ category: next });
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {categoriesForDropdown.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.labelPT}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-[220px]">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Atleta
+            </label>
+            <Select
+              value={selectedPlayerId || "none"}
+              onValueChange={(v) => onSelectPlayer(v === "none" ? "" : v)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione um atleta" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Selecione um atleta</SelectItem>
+                {players.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {categoryLabel(p.category)} • {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-[180px]">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Tipo de documento
+            </label>
+            <Select
+              value={docType || "all"}
+              onValueChange={(v) => applyFilters({ docType: v === "all" ? "" : v })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="contrato_trabalho">Contrato de trabalho</SelectItem>
+                <SelectItem value="contrato_imagem">Contrato de imagem</SelectItem>
+                <SelectItem value="formacao">Contrato de formação</SelectItem>
+                <SelectItem value="rescisao">Termo de rescisão</SelectItem>
+                <SelectItem value="transferencia">Termo de transferência</SelectItem>
+                <SelectItem value="aditivo">Aditivo contratual</SelectItem>
+                <SelectItem value="procuração">Procuração</SelectItem>
+                <SelectItem value="nda">NDA / Confidencialidade</SelectItem>
+                <SelectItem value="outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="min-w-[160px]">
+            <label className="text-xs text-muted-foreground mb-1 block">
+              Status
+            </label>
+            <Select
+              value={docStatus || "all"}
+              onValueChange={(v) => applyFilters({ docStatus: v === "all" ? "" : v })}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="draft">Rascunho</SelectItem>
+                <SelectItem value="pending_signature">Aguardando assinatura</SelectItem>
+                <SelectItem value="signed">Assinado</SelectItem>
+                <SelectItem value="expired">Expirado</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="outline" onClick={clearFilters}>
+            Limpar filtros
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

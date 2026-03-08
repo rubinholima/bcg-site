@@ -20,6 +20,7 @@ import { VaultModule } from './vault/vault.module';
 import { CadastrosModule } from './cadastros/cadastros.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { ConsultationsModule } from './consultations/consultations.module';
+import { PsychologistsModule } from './psychologists/psychologists.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { ConsultationsModule } from './consultations/consultations.module';
     CadastrosModule,
     IntegrationsModule,
     ConsultationsModule,
+    PsychologistsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

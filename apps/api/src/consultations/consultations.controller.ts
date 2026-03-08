@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Delete, Get, Param, Post, Controller, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Delete, Get, Param, Patch, Post, Controller, UseGuards } from '@nestjs/common';
 import { ConsultationsService } from './consultations.service';
 import { ConsultationNotifyService, NotifyConsultationPayload } from './consultation-notify.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -71,6 +71,28 @@ export class ConsultationsController {
   @RequireModule('psicologia')
   async removeConsultation(@Param('id') id: string) {
     const ok = await this.service.removeConsultation(id);
+    if (!ok) {
+      throw new BadRequestException('Consulta não encontrada');
+    }
+    return { success: true };
+  }
+
+  /** Atualiza data, horário, status (ex.: cancelar), psicólogo ou notas da consulta. */
+  @Patch(':id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('psicologia')
+  async updateConsultation(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      date?: string;
+      time?: string;
+      status?: string;
+      psychologist?: string;
+      notes?: string;
+    },
+  ) {
+    const ok = await this.service.updateConsultation(id, body);
     if (!ok) {
       throw new BadRequestException('Consulta não encontrada');
     }

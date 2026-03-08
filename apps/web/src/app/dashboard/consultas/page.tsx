@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Video, Loader2, User, Plus, Trash2, FileText, History } from "lucide-react";
@@ -23,6 +23,7 @@ import {
 } from "@/components/dashboard/player-module-types";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import type { Psychologist } from "@/types/psychologist";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 
 interface PlayerOption {
@@ -170,6 +171,7 @@ export default function ConsultasPage() {
   const [newTime, setNewTime] = useState("09:00");
   const [newNotes, setNewNotes] = useState("");
   const [newPsychologist, setNewPsychologist] = useState("");
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
   const [historyPlayerId, setHistoryPlayerId] = useState<string | null>(null);
   const [historyPlayerName, setHistoryPlayerName] = useState<string>("");
   const [psychList, setPsychList] = useState<PsychologicalAssessmentEntry[]>([]);
@@ -181,6 +183,19 @@ export default function ConsultasPage() {
     message: string;
     variant: FeedbackVariant;
   }>({ open: false, title: "", message: "", variant: "info" });
+
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const [leftColHeight, setLeftColHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const el = leftColRef.current;
+    if (!el) return;
+    const sync = () => setLeftColHeight(el.offsetHeight);
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    sync();
+    return () => ro.disconnect();
+  }, [filterAtleta, filterClube, filterCategoria]);
 
   const showFeedback = useCallback(
     (title: string, message: string, variant: FeedbackVariant = "info") => {
@@ -210,6 +225,9 @@ export default function ConsultasPage() {
     api.get<PlayerOption[]>("/players").then(({ data }) => {
       setPlayers(Array.isArray(data) ? data : []);
     });
+    api.get<Psychologist[]>("/psychologists").then(({ data }) => {
+      setPsychologists(Array.isArray(data) ? data : []);
+    }).catch(() => setPsychologists([]));
     api
       .get<{ available: boolean }>("/consultations/meet-available")
       .then(({ data }) => setMeetAvailable(data?.available ?? false))
@@ -313,6 +331,7 @@ export default function ConsultasPage() {
         setNewDate("");
         setNewTime("09:00");
         setNewNotes("");
+        setNewPsychologist("");
         // Enviar link por e-mail para o atleta (se tiver contactEmail cadastrado e SMTP configurado)
         try {
           const { data: notifyResult } = await api.post<{
@@ -455,8 +474,8 @@ export default function ConsultasPage() {
 
       {/* Layout: coluna esquerda = Filtros + Agendar Meet (como nas fotos); coluna direita = Calendário */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Coluna esquerda: Filtros (Clube, Atleta, Categoria) + Agendar consulta no Meet */}
-        <div className="space-y-6">
+        {/* Coluna esquerda: Filtros + Agendar consulta no Meet */}
+        <div ref={leftColRef} className="space-y-6">
           {/* Filtros: Clube (só clubes), Atleta, Categoria — no lugar do atleta como nas fotos */}
           <Card>
             <CardContent className="pt-6">
@@ -524,7 +543,7 @@ export default function ConsultasPage() {
                   </Select>
                 </div>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     setFilterClube("");
@@ -561,12 +580,39 @@ export default function ConsultasPage() {
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Psicólogo que fará a consulta</label>
-                      <Input
-                        className="w-full max-w-xs text-foreground"
-                        placeholder="Nome do psicólogo"
-                        value={newPsychologist}
-                        onChange={(e) => setNewPsychologist(e.target.value)}
-                      />
+                      <select
+                        className="flex h-10 w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                        value={
+                          psychologists.some((p) => p.name === newPsychologist)
+                            ? newPsychologist
+                            : newPsychologist.trim()
+                              ? "__outro__"
+                              : ""
+                        }
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setNewPsychologist(v === "__outro__" ? newPsychologist : v);
+                        }}
+                      >
+                        <option value="">— Selecione —</option>
+                        {psychologists
+                          .filter((p) => !p.calendarBlocked)
+                          .map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name}
+                              {p.crpOrEquivalent ? ` (${p.crpOrEquivalent})` : ""}
+                            </option>
+                          ))}
+                        <option value="__outro__">Outro…</option>
+                      </select>
+                      {!psychologists.some((p) => p.name === newPsychologist) && (
+                        <Input
+                          className="mt-2 w-full max-w-xs text-foreground"
+                          placeholder="Nome do psicólogo (quando não está na lista)"
+                          value={newPsychologist}
+                          onChange={(e) => setNewPsychologist(e.target.value)}
+                        />
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <div>
@@ -623,9 +669,12 @@ export default function ConsultasPage() {
           </Card>
         </div>
 
-        {/* Coluna direita: Calendário + Histórico do atleta (com rolagem) */}
-        <div className="space-y-4 flex flex-col min-h-0">
-          <Card className="shrink-0 max-h-[42vh] flex flex-col min-h-0">
+        {/* Coluna direita: alinhada ao Meet só quando o Histórico está fechado; ao abrir Histórico, a caixa pode expandir */}
+        <div
+          className="space-y-4 flex flex-col min-h-0 overflow-y-auto"
+          style={leftColHeight != null && historyPlayerId === null ? { maxHeight: leftColHeight } : undefined}
+        >
+          <Card className="shrink-0 flex flex-col min-h-0 flex-1 overflow-hidden">
             <CardContent className="pt-6 flex-1 flex flex-col min-h-0 overflow-hidden">
               <ConsultasCalendar
                 refreshTrigger={calendarRefreshTrigger}

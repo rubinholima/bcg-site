@@ -2,7 +2,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { HelloSignService } from '../hello-sign/hello-sign.service';
@@ -21,6 +23,8 @@ export const LEGAL_DOC_TYPES = [
 
 @Injectable()
 export class LegalDocumentsService {
+  private readonly logger = new Logger(LegalDocumentsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3: S3Service,
@@ -35,9 +39,36 @@ export class LegalDocumentsService {
     });
   }
 
-  async findOne(id: string, playerId: string) {
+  /** Lista todos os documentos legais do sistema (para a tela "Todos os contratos"). */
+  async findAll(filters?: { tenantId?: string; type?: string; status?: string }) {
+    const where: Record<string, unknown> = {};
+    if (filters?.tenantId?.trim()) {
+      where.player = { tenantId: filters.tenantId.trim() };
+    }
+    if (filters?.type?.trim()) {
+      where.type = filters.type.trim();
+    }
+    if (filters?.status?.trim()) {
+      where.status = filters.status.trim();
+    }
+    return this.prisma.legalDocument.findMany({
+      where: Object.keys(where).length > 0 ? where : undefined,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        player: {
+          select: { id: true, name: true, tenant: { select: { name: true } } },
+        },
+      },
+    });
+  }
+
+  async findOne(id: string, playerId: string, opts?: { includePlayer?: boolean }) {
     const doc = await this.prisma.legalDocument.findFirst({
       where: { id, playerId },
+      include:
+        opts?.includePlayer === true
+          ? { player: { select: { name: true } } }
+          : undefined,
     });
     if (!doc) throw new NotFoundException('Documento não encontrado');
     return doc;
@@ -170,32 +201,66 @@ export class LegalDocumentsService {
       throw new BadRequestException('Documento não foi enviado ao HelloSign.');
     }
 
-    const { status } = await this.helloSign.getSignatureRequestStatus(doc.adobeAgreementId);
+    let status: string;
+    try {
+      const result = await this.helloSign.getSignatureRequestStatus(doc.adobeAgreementId);
+      status = result.status;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`HelloSign getStatus falhou: ${msg}`);
+      throw new BadRequestException(
+        `Não foi possível consultar o HelloSign. ${msg} Verifique HELLOSIGN_API_KEY e HELLOSIGN_TEST_MODE (use true se o documento foi enviado em sandbox).`,
+      );
+    }
+
+    this.logger.log(`HelloSign status para ${doc.adobeAgreementId}: "${status}"`);
 
     const statusMap: Record<string, string> = {
       awaiting_signature: 'pending_signature',
       signed: 'signed',
+      complete: 'signed',
+      closed: 'signed',
       declined: 'cancelled',
       expired: 'expired',
     };
 
-    const ourStatus = statusMap[status] ?? 'pending_signature';
+    const ourStatus = statusMap[status.toLowerCase?.() ?? ''] ?? statusMap[status] ?? 'pending_signature';
 
     let signedFileKey: string | null = null;
     let signedFileUrl: string | null = null;
 
     if (ourStatus === 'signed') {
-      const signedPdf = await this.helloSign.getSignedDocument(doc.adobeAgreementId);
-      const uploadResult = await this.s3.uploadLegalDocument(
-        signedPdf,
-        playerId,
-        `signed_${doc.name}`,
-      );
-      signedFileKey = uploadResult.key;
-      signedFileUrl = uploadResult.url;
+      try {
+        const signedPdf = await this.helloSign.getSignedDocument(doc.adobeAgreementId);
+        const player = await this.prisma.player.findUnique({
+          where: { id: playerId },
+          select: { name: true },
+        });
+        const playerName = player?.name?.trim() ?? 'Atleta';
+        const pdfWithLabel = await this.addSignedLabelToPdf(signedPdf, playerName);
+        const safeName = `${playerName} - ${doc.name} - Assinado`.replace(
+          /[^a-zA-Z0-9\u00C0-\u024F\s._-]/g,
+          '_',
+        );
+        const uploadResult = await this.s3.uploadLegalDocument(
+          pdfWithLabel,
+          playerId,
+          `${safeName}.pdf`,
+        );
+        signedFileKey = uploadResult.key;
+        signedFileUrl = uploadResult.url;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`HelloSign getSignedDocument falhou: ${msg}`);
+        throw new BadRequestException(
+          `Contrato assinado no HelloSign, mas falha ao baixar o PDF: ${msg}. Tente novamente em alguns segundos.`,
+        );
+      }
+    } else if (status !== 'awaiting_signature' && status !== 'signed' && status !== 'complete') {
+      this.logger.warn(`Status HelloSign não mapeado: "${status}"`);
     }
 
-    return this.prisma.legalDocument.update({
+    const updated = await this.prisma.legalDocument.update({
       where: { id },
       data: {
         status: ourStatus,
@@ -203,6 +268,8 @@ export class LegalDocumentsService {
         signedFileUrl,
       },
     });
+
+    return { document: updated, helloSignStatus: status };
   }
 
   async delete(id: string, playerId: string) {
@@ -226,5 +293,28 @@ export class LegalDocumentsService {
       where: { id: playerId },
     });
     if (!player) throw new NotFoundException('Jogador não encontrado');
+  }
+
+  /**
+   * Adiciona no PDF a linha "Assinado - [Nome do atleta]" na última página.
+   */
+  private async addSignedLabelToPdf(pdfBuffer: Buffer, playerName: string): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.load(pdfBuffer, { ignoreEncryption: true });
+    const pages = pdfDoc.getPages();
+    if (pages.length === 0) return pdfBuffer;
+    const lastPage = pages[pages.length - 1];
+    const { height } = lastPage.getSize();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const text = `Assinado - ${playerName}`;
+    const fontSize = 10;
+    lastPage.drawText(text, {
+      x: 50,
+      y: height - 30,
+      size: fontSize,
+      font,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+    const bytes = await pdfDoc.save();
+    return Buffer.from(bytes);
   }
 }

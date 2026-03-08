@@ -55,6 +55,7 @@ export interface OnlineConsultation {
   link?: string;
   notes?: string;
   status?: "scheduled" | "completed" | "cancelled";
+  psychologist?: string;
 }
 
 export const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;

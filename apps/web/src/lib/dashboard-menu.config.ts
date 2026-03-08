@@ -197,9 +197,24 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       {
         slug: "psicologia",
         label: "Depto Psicologia",
-        href: "/dashboard/consultas",
         icon: ClipboardList,
         moduleSlug: "psicologia",
+        children: [
+          {
+            slug: "psicologia_consultas",
+            label: "Consultas",
+            href: "/dashboard/consultas",
+            icon: ClipboardList,
+            moduleSlug: "psicologia",
+          },
+          {
+            slug: "psicologia_psicologos",
+            label: "Psicólogos",
+            href: "/dashboard/psicologia/psicologos",
+            icon: UserCircle,
+            moduleSlug: "psicologia",
+          },
+        ],
       },
       {
         slug: "juridico",

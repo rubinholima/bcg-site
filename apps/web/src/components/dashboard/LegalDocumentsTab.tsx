@@ -92,7 +92,10 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
   const [showForm, setShowForm] = useState(false);
   const [sendModalDoc, setSendModalDoc] = useState<LegalDocumentEntry | null>(null);
   const [deleteModalDoc, setDeleteModalDoc] = useState<LegalDocumentEntry | null>(null);
+  const [syncInfo, setSyncInfo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docsRef = useRef(docs);
+  docsRef.current = docs;
 
   // Form state (novo documento)
   const [formType, setFormType] = useState<string>("contrato_trabalho");
@@ -126,6 +129,30 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
   useEffect(() => {
     loadDocs();
   }, [playerId]);
+
+  // Atualização automática a cada 60s para documentos "Aguardando assinatura"
+  useEffect(() => {
+    const pending = docs.filter(
+      (d) => d.status === "pending_signature" && d.adobeAgreementId
+    );
+    if (pending.length === 0) return;
+    const interval = setInterval(async () => {
+      const current = docsRef.current;
+      const toSync = current.find(
+        (d) => d.status === "pending_signature" && d.adobeAgreementId
+      );
+      if (!toSync) return;
+      try {
+        await api.post(
+          `/players/${playerId}/legal-documents/${toSync.id}/sync`
+        );
+        await loadDocs();
+      } catch {
+        // ignora erro (ex.: rede); próxima volta tenta de novo
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [docs, playerId]);
 
   const resetForm = () => {
     setFormType("contrato_trabalho");
@@ -214,9 +241,19 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
   const handleSync = async (doc: LegalDocumentEntry) => {
     setActionId(doc.id);
     setError(null);
+    setSyncInfo(null);
     try {
-      await api.post(`/players/${playerId}/legal-documents/${doc.id}/sync`);
+      const { data } = await api.post<{ document: LegalDocumentEntry; helloSignStatus: string }>(
+        `/players/${playerId}/legal-documents/${doc.id}/sync`
+      );
       await loadDocs();
+      const status = data.helloSignStatus ?? "";
+      if (status === "awaiting_signature" || data.document?.status === "pending_signature") {
+        setSyncInfo(
+          "Sincronizado. O HelloSign ainda indica: Aguardando assinatura. Se você já assinou, confira no painel do Dropbox Sign ou aguarde alguns minutos e clique em Buscar novamente."
+        );
+        setTimeout(() => setSyncInfo(null), 12000);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao sincronizar");
     } finally {
@@ -296,6 +333,12 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
           <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {syncInfo && (
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-700 dark:text-blue-300">
+            {syncInfo}
           </div>
         )}
 
@@ -426,17 +469,21 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                         <td className="p-3">{typeLabel}</td>
                         <td className="p-3 font-medium">{doc.name}</td>
                         <td className="p-3">
-                          <span
-                            className={
-                              doc.status === "signed"
-                                ? "text-green-600"
-                                : doc.status === "pending_signature"
-                                  ? "text-amber-600"
+                          {doc.status === "signed" ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-green-500/15 px-2 py-1 text-sm font-medium text-green-700 dark:text-green-400">
+                              Contrato assinado
+                            </span>
+                          ) : (
+                            <span
+                              className={
+                                doc.status === "pending_signature"
+                                  ? "text-amber-600 dark:text-amber-400"
                                   : "text-muted-foreground"
-                            }
-                          >
-                            {STATUS_LABELS[doc.status] ?? doc.status}
-                          </span>
+                              }
+                            >
+                              {STATUS_LABELS[doc.status] ?? doc.status}
+                            </span>
+                          )}
                         </td>
                         <td className="p-3">
                           {doc.signerEmail ? (
@@ -449,7 +496,18 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                           )}
                         </td>
                         <td className="p-3 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-1 flex-wrap">
+                            {doc.status === "signed" && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="gap-1.5"
+                                onClick={() => handleDownload(doc)}
+                              >
+                                <Download className="h-4 w-4" />
+                                Baixar contrato assinado
+                              </Button>
+                            )}
                             {doc.metadata?.signingUrl && (
                               <Button
                                 variant="ghost"
@@ -462,14 +520,16 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                                 <ExternalLink className="h-4 w-4" />
                               </Button>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Baixar PDF"
-                              onClick={() => handleDownload(doc)}
-                            >
-                              <Download className="h-4 w-4" />
-                            </Button>
+                            {doc.status !== "signed" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Baixar PDF"
+                                onClick={() => handleDownload(doc)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            )}
                             {canSend && (
                               <Button
                                 variant="ghost"
@@ -486,20 +546,40 @@ export function LegalDocumentsTab({ playerId, playerName }: LegalDocumentsTabPro
                               </Button>
                             )}
                             {doc.adobeAgreementId && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Sincronizar status do HelloSign"
-                                disabled={isLoading}
-                                onClick={() => handleSync(doc)}
-                              >
-                                <RefreshCw
-                                  className={cn(
-                                    "h-4 w-4",
-                                    isLoading && "animate-spin"
-                                  )}
-                                />
-                              </Button>
+                              <>
+                                {doc.status === "pending_signature" ? (
+                                  <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="gap-1.5"
+                                    title="Consultar HelloSign e atualizar status; se já assinado, baixa o PDF assinado"
+                                    disabled={isLoading}
+                                    onClick={() => handleSync(doc)}
+                                  >
+                                    {isLoading ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="h-4 w-4" />
+                                    )}
+                                    Buscar contrato assinado
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Sincronizar status do HelloSign"
+                                    disabled={isLoading}
+                                    onClick={() => handleSync(doc)}
+                                  >
+                                    <RefreshCw
+                                      className={cn(
+                                        "h-4 w-4",
+                                        isLoading && "animate-spin"
+                                      )}
+                                    />
+                                  </Button>
+                                )}
+                              </>
                             )}
                             <Button
                               variant="ghost"

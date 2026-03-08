@@ -117,14 +117,18 @@ export class LegalDocumentsController {
     @Param('playerId') playerId: string,
     @Param('id') id: string,
   ) {
-    const doc = await this.service.findOne(id, playerId);
+    const doc = await this.service.findOne(id, playerId, { includePlayer: true });
     const key = doc.signedFileKey ?? doc.fileKey;
     const buffer = await this.s3.getObjectBuffer(key);
-    const filename = (doc.name.endsWith('.pdf') ? doc.name : `${doc.name}.pdf`)
-      .replace(/[^a-zA-Z0-9._-]/g, '_');
+    const playerName = (doc as { player?: { name: string } }).player?.name?.trim();
+    const isSigned = !!doc.signedFileKey;
+    const filename = isSigned && playerName
+      ? `${playerName} - ${doc.name} - Assinado.pdf`
+      : (doc.name.endsWith('.pdf') ? doc.name : `${doc.name}.pdf`);
+    const safeFilename = filename.replace(/[^a-zA-Z0-9\u00C0-\u024F\s._-]/g, '_');
     return new StreamableFile(buffer, {
       type: 'application/pdf',
-      disposition: `attachment; filename="${filename}"`,
+      disposition: `attachment; filename="${safeFilename}"`,
     });
   }
 

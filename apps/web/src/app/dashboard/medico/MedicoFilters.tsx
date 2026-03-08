@@ -172,7 +172,7 @@ export function MedicoFilters({
               </SelectContent>
             </Select>
           </div>
-          <Button variant="ghost" onClick={clearFilters}>
+          <Button variant="outline" onClick={clearFilters}>
             Limpar filtros
           </Button>
         </div>

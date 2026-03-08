@@ -1,0 +1,204 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { api } from "@/lib/api";
+import type { Tenant } from "@/types/tenant";
+
+export default function NovoPsicologoPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    crpOrEquivalent: "",
+    bio: "",
+    tenantId: "",
+    calendarBlocked: false,
+  });
+
+  useEffect(() => {
+    api.get<Tenant[]>("/tenants").then(({ data }) => setTenants(Array.isArray(data) ? data : [])).catch(() => setTenants([]));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post("/psychologists", {
+        name: form.name.trim(),
+        email: form.email.trim() || undefined,
+        phone: form.phone.trim() || undefined,
+        crpOrEquivalent: form.crpOrEquivalent.trim() || undefined,
+        bio: form.bio.trim() || undefined,
+        tenantId: form.tenantId.trim() || undefined,
+        calendarBlocked: form.calendarBlocked,
+      });
+      router.push("/dashboard/psicologia/psicologos?success=true");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao cadastrar");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/dashboard/psicologia/psicologos">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Novo Psicólogo</h1>
+          <p className="text-muted-foreground mt-1">
+            Cadastre um psicólogo para usar na seleção de consultas e avaliações.
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Dados do psicólogo</CardTitle>
+          <CardDescription>
+            Estes dados aparecerão onde for necessário escolher ou exibir o psicólogo (consultas, e-mails, etc.).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome *</Label>
+                <Input
+                  id="name"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Ex.: Dr. João Silva"
+                  disabled={loading}
+                  className="text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="crpOrEquivalent">CRP / Registro profissional</Label>
+                <Input
+                  id="crpOrEquivalent"
+                  value={form.crpOrEquivalent}
+                  onChange={(e) => setForm((p) => ({ ...p, crpOrEquivalent: e.target.value }))}
+                  placeholder="Ex.: CRP 06/12345"
+                  disabled={loading}
+                  className="text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="email@exemplo.com"
+                  disabled={loading}
+                  className="text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder="+55 11 99999-9999"
+                  disabled={loading}
+                  className="text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio">Biografia / Observações</Label>
+              <textarea
+                id="bio"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                value={form.bio}
+                onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
+                placeholder="Breve descrição ou observações"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Clube / Empresa (opcional)</Label>
+              <Select
+                value={form.tenantId || "all"}
+                onValueChange={(v) => setForm((p) => ({ ...p, tenantId: v === "all" ? "" : v }))}
+                disabled={loading}
+              >
+                <SelectTrigger className="text-foreground">
+                  <SelectValue placeholder="Todos (atende qualquer clube/empresa)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos (atende qualquer clube/empresa)</SelectItem>
+                  {tenants.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Se deixar em &quot;Todos&quot;, o psicólogo poderá ser escolhido em consultas de qualquer clube/empresa.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 rounded-lg border border-input bg-muted/30 px-4 py-3">
+              <input
+                type="checkbox"
+                id="calendarBlocked"
+                checked={form.calendarBlocked}
+                onChange={(e) => setForm((p) => ({ ...p, calendarBlocked: e.target.checked }))}
+                disabled={loading}
+                className="rounded border-input"
+              />
+              <Label htmlFor="calendarBlocked" className="cursor-pointer font-normal">
+                Bloquear calendário (não disponível para agendamento)
+              </Label>
+            </div>
+
+            <div className="flex gap-4 pt-2">
+              <Button type="submit" disabled={loading || !form.name.trim()}>
+                {loading ? "Cadastrando..." : "Cadastrar"}
+              </Button>
+              <Link href="/dashboard/psicologia/psicologos">
+                <Button type="button" variant="outline" disabled={loading}>Cancelar</Button>
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

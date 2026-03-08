@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 
 const HELLOSIGN_BASE = 'https://api.hellosign.com/v3';
 
@@ -29,6 +29,8 @@ export interface HelloSignResult {
 
 @Injectable()
 export class HelloSignService {
+  private readonly logger = new Logger(HelloSignService.name);
+
   private getAuthHeader(): string {
     const apiKey = process.env.HELLOSIGN_API_KEY?.trim();
     if (!apiKey) {
@@ -122,7 +124,11 @@ export class HelloSignService {
    * Obtém o status atual da signature request.
    */
   async getSignatureRequestStatus(signatureRequestId: string): Promise<{ status: string }> {
-    const res = await fetch(`${HELLOSIGN_BASE}/signature_request/${signatureRequestId}`, {
+    const testMode = process.env.HELLOSIGN_TEST_MODE === 'true';
+    const url = new URL(`${HELLOSIGN_BASE}/signature_request/${signatureRequestId}`);
+    if (testMode) url.searchParams.set('test_mode', '1');
+    this.logger.log(`HelloSign GET status: ${url.toString().replace(/key=[^&]+/, 'key=***')}`);
+    const res = await fetch(url.toString(), {
       headers: { Authorization: this.getAuthHeader() },
     });
 
@@ -133,19 +139,47 @@ export class HelloSignService {
       );
     }
 
-    const data = (await res.json()) as { signature_request?: { status: string } };
-    const status = data.signature_request?.status ?? 'unknown';
-    return { status };
+    const data = (await res.json()) as Record<string, unknown>;
+    this.logger.log(
+      `HelloSign getStatus response (truncated): ${JSON.stringify(data).slice(0, 600)}`,
+    );
+    const sr = data.signature_request as Record<string, unknown> | undefined;
+    const nested = sr?.signature_request as Record<string, unknown> | undefined;
+    let status =
+      (sr?.status as string) ??
+      (nested?.status as string) ??
+      (data.status as string) ??
+      '';
+
+    if (!status && Array.isArray(sr?.signatures)) {
+      const sigs = sr.signatures as Array<Record<string, unknown>>;
+      const allHaveSignedAt = sigs.every((s) => s.signed_at != null && s.signed_at !== '');
+      const allSignedByCode = sigs.every(
+        (s) =>
+          s.status_code === 2 ||
+          s.status_code === 'signed' ||
+          (typeof s.status_code === 'string' && s.status_code.toLowerCase() === 'signed'),
+      );
+      if ((allHaveSignedAt || allSignedByCode) && sigs.length > 0) status = 'signed';
+    }
+
+    if (!status) status = 'unknown';
+    return { status: String(status) };
   }
 
   /**
    * Download do documento assinado (PDF).
    */
   async getSignedDocument(signatureRequestId: string): Promise<Buffer> {
-    const res = await fetch(
-      `${HELLOSIGN_BASE}/signature_request/files/${signatureRequestId}?file_type=pdf`,
-      { headers: { Authorization: this.getAuthHeader() } },
+    const testMode = process.env.HELLOSIGN_TEST_MODE === 'true';
+    const url = new URL(
+      `${HELLOSIGN_BASE}/signature_request/files/${signatureRequestId}`,
     );
+    url.searchParams.set('file_type', 'pdf');
+    if (testMode) url.searchParams.set('test_mode', '1');
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: this.getAuthHeader() },
+    });
 
     if (!res.ok) {
       if (res.status === 409) {

@@ -108,4 +108,52 @@ export class ConsultationsService {
     });
     return true;
   }
+
+  /**
+   * Atualiza uma consulta pelo id (formato playerId-index).
+   * Permite alterar data, horário, status (ex.: cancelar), psicólogo, notas.
+   */
+  async updateConsultation(
+    consultationId: string,
+    patch: {
+      date?: string;
+      time?: string;
+      status?: string;
+      psychologist?: string;
+      notes?: string;
+    },
+  ): Promise<boolean> {
+    const match = consultationId.match(/^(.+)-(\d+)$/);
+    if (!match) return false;
+    const [, playerId, indexStr] = match;
+    const index = parseInt(indexStr, 10);
+    if (!playerId || isNaN(index) || index < 0) return false;
+
+    const player = await this.prisma.player.findUnique({
+      where: { id: playerId },
+      select: { onlineConsultations: true },
+    });
+    if (!player) return false;
+
+    const list = Array.isArray(player.onlineConsultations)
+      ? (player.onlineConsultations as Record<string, unknown>[])
+      : [];
+    if (index >= list.length) return false;
+
+    const item = { ...list[index] } as Record<string, unknown>;
+    if (patch.date !== undefined) item.date = patch.date;
+    if (patch.time !== undefined) item.time = patch.time;
+    if (patch.status !== undefined) item.status = patch.status;
+    if (patch.psychologist !== undefined) item.psychologist = patch.psychologist;
+    if (patch.notes !== undefined) item.notes = patch.notes;
+
+    const next = [...list];
+    next[index] = item;
+
+    await this.prisma.player.update({
+      where: { id: playerId },
+      data: { onlineConsultations: next as object },
+    });
+    return true;
+  }
 }

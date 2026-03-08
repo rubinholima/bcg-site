@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import type { Psychologist } from "@/types/psychologist";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { ConsultasCalendar } from "@/components/dashboard/ConsultasCalendar";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -123,6 +124,7 @@ interface OnlineConsultation {
   link?: string;
   notes?: string;
   status?: "scheduled" | "completed" | "cancelled";
+  psychologist?: string;
 }
 
 interface EvaluationEntry {
@@ -240,6 +242,7 @@ export default function EditJogadorPage() {
   const [meetCreatingIdx, setMeetCreatingIdx] = useState<number | null>(null);
   const [meetAvailable, setMeetAvailable] = useState<boolean | null>(null);
   const [calendarRefreshTrigger, setCalendarRefreshTrigger] = useState(0);
+  const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -275,6 +278,14 @@ export default function EditJogadorPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!canAccessModule("psicologia")) return;
+    api
+      .get<Psychologist[]>("/psychologists")
+      .then(({ data }) => setPsychologists(Array.isArray(data) ? data : []))
+      .catch(() => setPsychologists([]));
+  }, [canAccessModule]);
 
   const categoriesForDropdown = (() => {
     const fromTenant = tenantCategories.length
@@ -954,7 +965,45 @@ export default function EditJogadorPage() {
                           <SelectItem value="cancelled">Cancelada</SelectItem>
                         </SelectContent>
                       </Select>
+                      <select
+                        className="flex h-10 min-w-[140px] max-w-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                        value={
+                          psychologists.some((p) => p.name === (c.psychologist ?? ""))
+                            ? (c.psychologist ?? "")
+                            : (c.psychologist ?? "").trim()
+                              ? "__outro__"
+                              : ""
+                        }
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          const next = [...consultationList];
+                          (next[idx] as OnlineConsultation).psychologist = v === "__outro__" ? (c.psychologist ?? "") : v;
+                          update({ onlineConsultations: next });
+                        }}
+                      >
+                        <option value="">— Psicólogo —</option>
+                        {psychologists
+                          .filter((p) => !p.calendarBlocked)
+                          .map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name}
+                            </option>
+                          ))}
+                        <option value="__outro__">Outro…</option>
+                      </select>
                     </div>
+                    {!psychologists.some((p) => p.name === (c.psychologist ?? "")) && (
+                      <Input
+                        className="w-full max-w-xs text-foreground"
+                        placeholder="Nome do psicólogo (quando não está na lista)"
+                        value={c.psychologist ?? ""}
+                        onChange={(e) => {
+                          const next = [...consultationList];
+                          (next[idx] as OnlineConsultation).psychologist = e.target.value || undefined;
+                          update({ onlineConsultations: next });
+                        }}
+                      />
+                    )}
                     <div className="flex gap-2 flex-1 min-w-0 flex-wrap">
                       <Input
                         className="flex-1 min-w-[200px]"

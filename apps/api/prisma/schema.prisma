@@ -69,6 +69,8 @@ model Tenant {
   workmailAccounts        WorkMailAccount[]
   pages                   Page[]
   players                 Player[]
+  psychologists           Psychologist[]
+  technicalStaff          TechnicalStaff[]
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)
@@ -273,6 +275,55 @@ model LegalDocument {
   @@index([playerId])
   @@index([status])
   @@index([adobeAgreementId])
+}
+
+// Comissão técnica (treinador, auxiliar, preparador físico, médico, etc.)
+model TechnicalStaff {
+  id                String    @id @default(cuid())
+  tenantId          String
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name              String
+  photoUrl          String?
+  role              String    // tecnico, auxiliar_tecnico, treinador_goleiros, preparador_fisico, medico, fisioterapeuta, fisiologista, psicologo, nutricionista, analista_desempenho, scout, massagista, enfermeiro, outro
+  categories        Json?    // categorias que atende: ["principal","sub20","sub17"] — null = todas
+  birthDate         String?   // YYYY-MM-DD
+  nationality       String?
+  cpf               String?
+  rg                String?
+  email             String?
+  phone             String?
+  address           String?   @db.Text
+  licenseType       String?   // CBF Licença A/B/C, CREF, CRM, CRP, etc.
+  licenseNumber     String?
+  licenseValidUntil DateTime?
+  contractType      String?   // CLT, PJ, estágio
+  contractStart     DateTime?
+  contractEnd       DateTime?
+  bio               String?   @db.Text
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  @@index([tenantId])
+  @@index([tenantId, role])
+}
+
+// Cadastro de psicólogos (Depto Psicologia) — popula seleção em consultas e avaliações
+model Psychologist {
+  id                String   @id @default(cuid())
+  name              String
+  email             String?
+  phone             String?
+  crpOrEquivalent   String?  // Registro profissional (ex.: CRP)
+  bio               String?  @db.Text
+  photoUrl          String?
+  tenantId          String?  // null = atende todos os clubes/empresas do grupo
+  tenant            Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  calendarBlocked   Boolean  @default(false)
+  attendanceLog     Json?    // Array<{ date, startTime?, endTime?, playerId?, playerName?, notes? }>
+  performanceSheet  Json?    // { summary?, metrics?, notes?, updatedAt? }
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@index([tenantId])
 }
 
 // Integrações centralizadas (planilhas Google únicas) — uma planilha por tipo, sistema filtra por slug

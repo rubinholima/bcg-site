@@ -1,16 +1,192 @@
-"use client";
+import Link from "next/link";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
+import { getStaffRoleLabel } from "@/lib/staff-roles";
+import { getCategoryLabel } from "@/lib/fixture-categories";
+import { ComissaoFilters } from "./ComissaoFilters";
 
-import { Users } from "lucide-react";
-import { ModulePlaceholderPage } from "@/components/dashboard/ModulePlaceholderPage";
+interface TechnicalStaffMember {
+  id: string;
+  name: string;
+  photoUrl?: string | null;
+  role: string;
+  categories?: string[] | null;
+  tenantId: string;
+  tenant?: { id: string; name: string; slug: string };
+  licenseType?: string | null;
+  licenseValidUntil?: string | null;
+  contractEnd?: string | null;
+}
 
-export default function FutebolComissaoPage() {
+async function getStaff(params: {
+  tenantId?: string;
+  category?: string;
+  role?: string;
+  search?: string;
+}): Promise<TechnicalStaffMember[]> {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params.tenantId) searchParams.set("tenantId", params.tenantId);
+    if (params.category) searchParams.set("category", params.category);
+    if (params.role) searchParams.set("role", params.role);
+    if (params.search) searchParams.set("search", params.search);
+    const { data } = await api.get<TechnicalStaffMember[]>(
+      `/technical-staff?${searchParams.toString()}`
+    );
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function formatDate(d: string | Date | null | undefined): string {
+  if (!d) return "—";
+  const date = typeof d === "string" ? new Date(d) : d;
+  return date.toLocaleDateString("pt-BR");
+}
+
+type ComissaoPageProps = {
+  searchParams: Promise<{
+    success?: string;
+    tenantId?: string;
+    category?: string;
+    role?: string;
+    search?: string;
+  }>;
+};
+
+export default async function ComissaoPage(props: ComissaoPageProps) {
+  const { searchParams } = props;
+  const params = await searchParams;
+  const staff = await getStaff({
+    tenantId: params.tenantId,
+    category: params.category,
+    role: params.role,
+    search: params.search,
+  });
+  const showSuccess = params.success === "true";
+
   return (
-    <ModulePlaceholderPage
-      title="Comissão técnica"
-      description="Técnicos, assistentes e comissão"
-      moduleSlug="futebol_comissao"
-      Icon={Users}
-      backHref="/dashboard"
-    />
+    <div className="space-y-6">
+      {showSuccess && (
+        <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 flex items-center gap-2 text-green-500">
+          <span>Operação realizada com sucesso!</span>
+        </div>
+      )}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Comissão técnica</h1>
+          <p className="text-muted-foreground">
+            Gerencie técnicos, auxiliares, preparadores físicos, médicos e demais membros da comissão por clube e categoria
+          </p>
+        </div>
+        <Link href="/dashboard/futebol/comissao/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo membro
+          </Button>
+        </Link>
+      </div>
+
+      <ComissaoFilters />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista da comissão técnica</CardTitle>
+          <CardDescription>
+            {staff.length === 0
+              ? "Nenhum membro cadastrado"
+              : `${staff.length} membro${staff.length > 1 ? "s" : ""} cadastrado${staff.length > 1 ? "s" : ""}`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {staff.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Nenhum membro encontrado.</p>
+              <Link href="/dashboard/futebol/comissao/new">
+                <Button variant="outline" className="mt-4">
+                  Cadastrar primeiro membro
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-14">Foto</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Clube</TableHead>
+                  <TableHead>Categorias</TableHead>
+                  <TableHead>Licença / Validade</TableHead>
+                  <TableHead>Contrato até</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {staff.map((s) => (
+                  <TableRow key={s.id}>
+                    <TableCell>
+                      {s.photoUrl ? (
+                        <div className="h-10 w-10 rounded overflow-hidden bg-muted flex items-center justify-center">
+                          <img
+                            src={getPublicImageUrl(s.photoUrl)}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                          —
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell>{getStaffRoleLabel(s.role)}</TableCell>
+                    <TableCell>{s.tenant?.name ?? s.tenantId}</TableCell>
+                    <TableCell>
+                      {Array.isArray(s.categories) && s.categories.length
+                        ? s.categories.map((c) => getCategoryLabel(c, "pt")).join(", ")
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {s.licenseType
+                        ? `${s.licenseType}${s.licenseValidUntil ? ` até ${formatDate(s.licenseValidUntil)}` : ""}`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>{formatDate(s.contractEnd)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link href={`/dashboard/futebol/comissao/${s.id}/edit`}>
+                          <Button variant="ghost" size="icon">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Link href={`/dashboard/futebol/comissao/${s.id}/delete`}>
+                          <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

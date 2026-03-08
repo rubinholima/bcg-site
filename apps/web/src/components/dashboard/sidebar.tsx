@@ -239,6 +239,7 @@ export function Sidebar() {
                         if (child.children?.length) {
                           const hasAccess = hasAccessToAnyChild(child.children, canAccessModule, canAccessDashboard);
                           if (!hasAccess) return null;
+                          const SubIcon = child.icon;
                           const isSubOpen =
                             child.slug === "analise"
                               ? analiseOpen
@@ -271,6 +272,7 @@ export function Sidebar() {
                                     <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                   )
                                 ) : null}
+                                {SubIcon && <SubIcon className="h-4 w-4 shrink-0" />}
                                 <span>{child.label}</span>
                               </button>
                               {(child.slug === "analise" || child.slug === "psicologia") && isSubOpen && (
