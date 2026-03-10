@@ -86,9 +86,9 @@
 
 ### 🚀 FECHAMENTO (GIT)
 
-- **Commit:** (será preenchido após o commit)
+- **Commit:** `fb35e9c` — Fisiologia, Análise, Avaliações, Financeiro/Omie, Depto Compras completo; encerramento 9 mar 2026
 - **Branch:** develop
-- **Push:** (será confirmado após push)
+- **Push:** ✅ para origin/develop
 
 ---
 
