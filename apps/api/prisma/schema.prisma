@@ -75,6 +75,10 @@ model Tenant {
   products                Product[]
   purchaseRequisitions    PurchaseRequisition[]
   purchaseOrders          PurchaseOrder[]
+  departments             Department[]
+  jobRoles                JobRole[]
+  employees               Employee[]
+  employments             Employment[]
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)
@@ -438,4 +442,117 @@ model StockMovement {
   createdAt     DateTime @default(now())
   @@index([productId])
   @@index([createdAt])
+}
+
+// ========== RH (Departamento de Futebol / Adm) ==========
+
+model Department {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name       String
+  code       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  jobRoles   JobRole[]
+  employments Employment[]
+  @@index([tenantId])
+}
+
+model JobRole {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  name         String
+  code         String?
+  type         String   // staff | athlete
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  employments  Employment[]
+  @@index([tenantId])
+  @@index([departmentId])
+}
+
+model Employee {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name       String
+  cpf        String?
+  rg         String?
+  email      String?
+  phone      String?
+  birthDate  DateTime?
+  type       String   // staff | athlete
+  categories Json?    // atleta: ["sub20","profissional","sub17"]
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  employments Employment[]
+  documents  EmployeeDocument[]
+  @@index([tenantId])
+  @@index([tenantId, type])
+}
+
+model Employment {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employeeId            String
+  employee              Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  jobRoleId             String
+  jobRole               JobRole  @relation(fields: [jobRoleId], references: [id], onDelete: Restrict)
+  departmentId          String?
+  department            Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  contractType          String   // CLT | PJ | estagio | atleta
+  startDate             DateTime
+  endDate               DateTime?
+  salaryBase            Float?
+  bankData              Json?    // { bank, agency, account, pix? }
+  status                String   @default("ativo") // ativo | afastado | desligado
+  notes                 String?  @db.Text
+  athleteData           Json?    // { numeroRegistroCBF, dataValidadeContrato, clausulaPenal? }
+  admissionChecklist    Json?    // [{ key, label, status, completedAt?, notes }]
+  terminationType       String?  // sem_justa_causa | justa_causa | pedido_demissao | fim_contrato
+  terminationNotes      String?  @db.Text
+  terminationChecklist  Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  leavePeriods          LeavePeriod[]
+  @@index([tenantId])
+  @@index([employeeId])
+  @@index([status])
+}
+
+model EmployeeDocument {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employmentId String?
+  documentType String   // RG, CPF, CTPS, reservista, contrato, exame_admissional, atestado
+  fileKey      String?
+  fileUrl      String?
+  validUntil   DateTime?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  @@index([employeeId])
+}
+
+model LeavePeriod {
+  id           String   @id @default(cuid())
+  employmentId String
+  employment   Employment @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+  type         String   // vacation | sick_leave | maternity | accident | other
+  startDate    DateTime
+  endDate      DateTime
+  documentRef  String?
+  catNumber    String?
+  notes        String?  @db.Text
+  status       String   @default("planned") // planned | approved | in_progress | completed | cancelled
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([employmentId])
+  @@index([type])
 }

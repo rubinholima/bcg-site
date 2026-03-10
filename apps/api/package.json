@@ -7,6 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "migrate:player-fix": "prisma db execute --file prisma/migrations/20260304000000_add_player_table/migration.sql",
+    "prisma:generate": "prisma generate",
     "seed:group-home": "ts-node -r tsconfig-paths/register scripts/seed-group-home.ts",
     "seed:local-user": "ts-node -r tsconfig-paths/register scripts/seed-local-user.ts",
     "fix:encoding": "ts-node -r tsconfig-paths/register scripts/fix-encoding.ts",

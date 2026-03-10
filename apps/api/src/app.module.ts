@@ -22,6 +22,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychologistsModule } from './psychologists/psychologists.module';
 import { ComprasModule } from './compras/compras.module';
+import { RhModule } from './rh/rh.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ComprasModule } from './compras/compras.module';
     ConsultationsModule,
     PsychologistsModule,
     ComprasModule,
+    RhModule,
   ],
   controllers: [AppController],
   providers: [AppService],
