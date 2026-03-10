@@ -2,10 +2,21 @@ import { Controller, Get, Patch, Body, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SuperAdminGuard } from '../auth/super-admin.guard';
 import { IntegrationsService } from './integrations.service';
+import { OmieService } from './omie/omie.service';
 
 @Controller('settings/integrations')
 export class IntegrationsController {
-  constructor(private readonly integrationsService: IntegrationsService) {}
+  constructor(
+    private readonly integrationsService: IntegrationsService,
+    private readonly omieService: OmieService,
+  ) {}
+
+  /** GET /settings/integrations/omie/status — status da integração Omie (base integração). */
+  @Get('omie/status')
+  @UseGuards(JwtAuthGuard)
+  async getOmieStatus() {
+    return this.omieService.getStatus();
+  }
 
   /** GET /settings/integrations/by-type?type=X — retorna config do tipo (sync). */
   @Get('by-type')

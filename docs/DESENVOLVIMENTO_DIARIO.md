@@ -29,6 +29,69 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 9 DE MARÇO DE 2026 — ENCERRAMENTO (Fisiologia, Análise, Avaliações, Financeiro/Omie, Depto Compras completo)
+
+## **O QUE FOI FEITO NESTA SESSÃO**
+
+### 1. Fisiologia (Depto Futebol)
+- **Schema:** Campo `Player.physiology` (Json) no Prisma para avaliação física do atleta.
+- **Migration:** `20260322000000_add_player_physiology`.
+- **API:** DTOs e endpoints em `players` para leitura/atualização de `physiology`; tipos em `physiology-types.ts`.
+- **Web:** Bloco `PhysiologyBlock`, filtros `FisiologiaFilters`, página `/dashboard/futebol/fisiologia` com filtro por Clube/Categoria/Atleta (estilo Médico/Jurídico).
+
+### 2. Análise de desempenho (Depto Futebol)
+- **Schema:** Campo `Player.analysisMetrics` (Json) no Prisma.
+- **Migration:** `20260323000000_add_player_analysis_metrics`.
+- **API:** DTOs e service para `analysisMetrics`; tipos em `analysis-types.ts`.
+- **Web:** `AnalysisBlock` (Status, Avaliações com dimensões e comportamento, Métricas scout, Relatório), `AnaliseFilters`, página `/dashboard/futebol/analise`.
+
+### 3. Sidebar e menu
+- Ajuste: marcar ativo apenas o primeiro item por `href` (evita dois itens destacados quando Avaliações e Status tinham o mesmo link).
+- Menu alterado: submenu **Diretoria** trocado por **Avaliações**; item único "Diretoria" quando aplicável.
+
+### 4. Avaliações (Depto Diretoria)
+- **Página:** `/dashboard/futebol/avaliacoes` com proteção `canAccessModule("diretoria")`.
+- **Bloco:** `EvaluationsBlock` com campo de comportamento; `AvaliacoesFilters` (Clube, Categoria, Atleta).
+- CRUD de avaliações na tela com mesma busca de jogador dos outros departamentos.
+
+### 5. Financeiro (Adm) e integração Omie
+- **API:** `OmieService` (env `OMIE_APP_KEY`, `OMIE_APP_SECRET`), teste ListarContasReceber; endpoint `GET /settings/integrations/omie/status`.
+- **Web:** Rota Next `/api/settings/integrations/omie/status`; card Omie em Configurações → Integrações; página `/dashboard/adm/financeiro` com status da integração e link para config.
+
+### 6. Departamento de Compras (Adm) — completo
+- **Schema Prisma:** Modelos `Supplier`, `Product`, `PurchaseRequisition`, `PurchaseOrder`, `StockMovement`. Relações no `Tenant`: `suppliers`, `products`, `purchaseRequisitions`, `purchaseOrders`. Migration `20260324000000_add_compras_models`.
+- **API:** Módulo `ComprasModule` com:
+  - **Fornecedores:** `GET/POST/PATCH/DELETE /compras/suppliers` (filtro tenantId, search).
+  - **Produtos:** `GET/POST/PATCH/DELETE /compras/products` e `GET /compras/products/stock-alerts` (produtos com currentStock ≤ stockMin).
+  - **Requisições de compra:** `GET/POST/PATCH/DELETE /compras/purchase-requisitions` (status: draft, sent, quotation, approved, rejected, ordered, received).
+  - **Ordens de compra:** `GET/POST/PATCH/DELETE /compras/purchase-orders` (vínculo opcional com requisição, fornecedor obrigatório).
+  - **Movimentações de estoque:** `GET /compras/stock-movements/by-product/:productId`, `POST /compras/stock-movements` (entrada/saída/ajuste; atualiza `product.currentStock`).
+- Rotas protegidas com `@RequireModule('adm_compras')` e `ModuleAccessGuard`.
+- **Dependência:** `class-transformer` adicionada na API (para DTOs com `@Type()` aninhados).
+- **Web:** Página `/dashboard/adm/compras` com:
+  - Filtro por clube/empresa; abas: Alertas de estoque | Produtos | Fornecedores | Requisições de compra | Ordens de compra.
+  - **CRUD Fornecedores:** dialog novo/editar (clube, nome, contato, e-mail, telefone, observações); excluir com confirmação.
+  - **CRUD Produtos:** dialog novo/editar (clube, nome, SKU, unidade, estoque mín./atual); excluir com confirmação.
+  - **CRUD Requisições:** dialog com itens dinâmicos (produto opcional, descrição, qtd, unidade, preço unit. estimado), solicitante, justificativa, total estimado, status (na edição); excluir com confirmação.
+  - **CRUD Ordens:** dialog com fornecedor (obrigatório), requisição (opcional), nº OP, previsão de entrega, itens (produto opcional, descrição, qtd, preço unit.), total, status (na edição); excluir com confirmação.
+  - Componentes em `compras/components/`: `SupplierFormDialog`, `ProductFormDialog`, `PurchaseRequisitionFormDialog`, `PurchaseOrderFormDialog`. AlertDialog único para confirmação de exclusão.
+
+### 📁 ARQUIVOS ENVOLVIDOS
+
+**API:** `prisma/schema.prisma` (physiology, analysisMetrics, modelos Compras, relações Tenant), migrations `20260322000000_add_player_physiology`, `20260323000000_add_player_analysis_metrics`, `20260324000000_add_compras_models`; `cadastros/players.service.ts`, `create-player.dto.ts`, `update-player.dto.ts`; `integrations/omie/omie.service.ts`, `integrations.module.ts`, `integrations.controller.ts`; `compras/` (module, DTOs, controllers, services); `app.module.ts` (ComprasModule); `package.json` (class-transformer).
+
+**Web:** `dashboard/futebol/fisiologia/` (page, FisiologiaFilters), `dashboard/futebol/analise/` (page, AnaliseFilters), `dashboard/futebol/avaliacoes/` (page, AvaliacoesFilters); `PhysiologyBlock.tsx`, `AnalysisBlock.tsx`, `EvaluationsBlock.tsx`; `physiology-types.ts`, `analysis-types.ts`; `dashboard-menu.config.ts`, `components/dashboard/sidebar.tsx`; `dashboard/adm/financeiro/page.tsx`, `dashboard/configuracoes/integracoes/page.tsx`, `app/api/settings/integrations/omie/status/route.ts`; `dashboard/adm/compras/page.tsx`, `dashboard/adm/compras/components/` (SupplierFormDialog, ProductFormDialog, PurchaseRequisitionFormDialog, PurchaseOrderFormDialog).
+
+**Docs:** `DESENVOLVIMENTO_DIARIO.md` (este encerramento).
+
+### 🚀 FECHAMENTO (GIT)
+
+- **Commit:** (será preenchido após o commit)
+- **Branch:** develop
+- **Push:** (será confirmado após push)
+
+---
+
 # 📅 7 DE MARÇO DE 2026 — ENCERRAMENTO (Cadastro Comissão Técnica, Psicólogos, Jurídico todos contratos)
 
 ## **O QUE FOI FEITO NESTA SESSÃO**
@@ -47,7 +110,7 @@
 
 - **Commit:** `6c90258` — Cadastro Comissão Técnica completo + psicólogos API/web + jurídico todos contratos + fixes (parser page, DTO update, Prisma JsonNull); encerramento 7 mar 2026
 - **Branch:** develop
-- **Push:** em seguida para origin/develop
+- **Push:** ✅ para origin/develop
 
 ---
 

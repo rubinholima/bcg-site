@@ -237,7 +237,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Heart,
         moduleSlug: "futebol_fisiologia",
       },
-      // Análise (Avaliações, Status — diretoria; Desempenho — futebol_analise)
+      // Análise: Avaliações (CRUD da comissão) e Desempenho (métricas + relatório)
       {
         slug: "analise",
         label: "Análise",
@@ -247,15 +247,8 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           {
             slug: "avaliacoes",
             label: "Avaliações",
-            href: "/dashboard/diretoria",
+            href: "/dashboard/futebol/avaliacoes",
             icon: Star,
-            moduleSlug: "diretoria",
-          },
-          {
-            slug: "status",
-            label: "Status",
-            href: "/dashboard/diretoria",
-            icon: Activity,
             moduleSlug: "diretoria",
           },
           {

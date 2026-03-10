@@ -70,7 +70,7 @@ export function Sidebar() {
   const [relatoriosOpen, setRelatoriosOpen] = useState(() => pathname?.startsWith("/dashboard/relatorios"));
   const [socioOpen, setSocioOpen] = useState(() => pathname?.startsWith("/dashboard/socio-torcedor"));
   const [marketingOpen, setMarketingOpen] = useState(() => pathname?.startsWith("/dashboard/marketing"));
-  const [analiseOpen, setAnaliseOpen] = useState(() => pathname?.startsWith("/dashboard/diretoria") || pathname?.startsWith("/dashboard/futebol/analise"));
+  const [analiseOpen, setAnaliseOpen] = useState(() => pathname?.startsWith("/dashboard/diretoria") || pathname?.startsWith("/dashboard/futebol/analise") || pathname?.startsWith("/dashboard/futebol/avaliacoes"));
 
   useEffect(() => {
     let cancelled = false;
@@ -277,26 +277,33 @@ export function Sidebar() {
                               </button>
                               {(child.slug === "analise" || child.slug === "psicologia") && isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">
-                                  {child.children
-                                    .filter((cc) => canAccessModule(cc.moduleSlug))
-                                    .map((cc) => {
-                                      const isChildActive = inPath(cc.href!);
-                                      return (
-                                        <Link
-                                          key={cc.slug}
-                                          href={cc.href!}
-                                          className={cn(
-                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
-                                            isChildActive
-                                              ? "dashboard-sidebar-active"
-                                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                                          )}
-                                        >
-                                          {cc.icon && <cc.icon className="h-4 w-4 shrink-0" />}
-                                          {cc.label}
-                                        </Link>
-                                      );
-                                    })}
+                                  {(() => {
+                                    let markedActiveHref: string | null = null;
+                                    return child.children
+                                      .filter((cc) => canAccessModule(cc.moduleSlug))
+                                      .map((cc) => {
+                                        const hrefMatches = inPath(cc.href!);
+                                        const isChildActive =
+                                          hrefMatches &&
+                                          (markedActiveHref === null || markedActiveHref !== cc.href) &&
+                                          (markedActiveHref = cc.href!, true);
+                                        return (
+                                          <Link
+                                            key={cc.slug}
+                                            href={cc.href!}
+                                            className={cn(
+                                              "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                              isChildActive
+                                                ? "dashboard-sidebar-active"
+                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                            )}
+                                          >
+                                            {cc.icon && <cc.icon className="h-4 w-4 shrink-0" />}
+                                            {cc.label}
+                                          </Link>
+                                        );
+                                      });
+                                  })()}
                                 </div>
                               )}
                             </div>

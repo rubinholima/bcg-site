@@ -21,6 +21,7 @@ import { CadastrosModule } from './cadastros/cadastros.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychologistsModule } from './psychologists/psychologists.module';
+import { ComprasModule } from './compras/compras.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { PsychologistsModule } from './psychologists/psychologists.module';
     IntegrationsModule,
     ConsultationsModule,
     PsychologistsModule,
+    ComprasModule,
   ],
   controllers: [AppController],
   providers: [AppService],

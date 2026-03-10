@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Download, ExternalLink } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, DollarSign, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,108 @@ interface ConfigDto {
   timesCategorias?: IntegrationItem;
   proximosJogos?: IntegrationItem;
   tabelaClassificacao?: IntegrationItem;
+}
+
+interface OmieStatus {
+  configured: boolean;
+  ok?: boolean;
+  message?: string;
+}
+
+function OmieIntegrationCard() {
+  const [status, setStatus] = useState<OmieStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    authFetch("/api/settings/integrations/omie/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: OmieStatus | null) => {
+        if (!cancelled) setStatus(data ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setStatus(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-emerald-600" />
+          <div>
+            <CardTitle>Omie (Financeiro)</CardTitle>
+            <CardDescription>
+              Integração com o ERP Omie para contas a receber, faturamento e finanças. Configure no servidor.
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {loading ? (
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Verificando status...
+          </p>
+        ) : status?.configured ? (
+          <div className="flex flex-wrap items-center gap-3">
+            {status.ok ? (
+              <>
+                <CheckCircle className="h-5 w-5 text-emerald-600" />
+                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  Integração configurada e conectada
+                </span>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-5 w-5 text-amber-600" />
+                <div>
+                  <span className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                    Configurado, mas falha na conexão
+                  </span>
+                  {status.message && (
+                    <p className="text-xs text-muted-foreground mt-1">{status.message}</p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2 text-sm">
+            <p className="font-medium text-foreground">Configure no servidor (variáveis de ambiente)</p>
+            <p className="text-muted-foreground">
+              No <code className="rounded bg-muted px-1">.env</code> da API, defina:
+            </p>
+            <ul className="list-disc list-inside text-muted-foreground space-y-1">
+              <li><code className="rounded bg-muted px-1">OMIE_APP_KEY</code> — chave do app no painel Omie</li>
+              <li><code className="rounded bg-muted px-1">OMIE_APP_SECRET</code> — secret do app (Resumo do app → exibir)</li>
+            </ul>
+            <a
+              href="https://developer.omie.com.br/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Documentação Omie
+            </a>
+          </div>
+        )}
+        <Link href="/dashboard/adm/financeiro">
+          <Button variant="outline" size="sm">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Ir para Financeiro
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function IntegracoesPage() {
@@ -173,6 +275,9 @@ export default function IntegracoesPage() {
           </Link>
         </CardContent>
       </Card>
+
+      {/* Base integração: Omie (Financeiro) */}
+      <OmieIntegrationCard />
 
       {/* Planilhas únicas */}
       <Card>

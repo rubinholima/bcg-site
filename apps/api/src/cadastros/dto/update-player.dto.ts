@@ -171,6 +171,9 @@ export class UpdatePlayerDto {
   medicalHistory?: unknown; // array de registros ou { profile, records }
 
   @IsOptional()
+  physiology?: unknown; // { profile?: {}, records: PhysiologyEntry[] }
+
+  @IsOptional()
   @IsArray()
   psychologicalAssessment?: unknown[];
 
@@ -202,6 +205,10 @@ export class UpdatePlayerDto {
   @IsString()
   @IsOptional()
   performanceAnalysis?: string;
+
+  @IsOptional()
+  @IsObject()
+  analysisMetrics?: unknown; // métricas scout estruturadas
 
   @IsOptional()
   @IsArray()

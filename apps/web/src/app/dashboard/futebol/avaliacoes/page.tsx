@@ -9,9 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { getPublicImageUrl } from "@/lib/media-url";
-import { AnalysisBlock } from "@/components/dashboard/AnalysisBlock";
-import { AnaliseFilters } from "./AnaliseFilters";
-import type { EvaluationEntry, AnalysisMetrics } from "@/lib/analysis-types";
+import { EvaluationsBlock } from "@/components/dashboard/EvaluationsBlock";
+import { AvaliacoesFilters } from "./AvaliacoesFilters";
+import type { EvaluationEntry } from "@/lib/analysis-types";
 
 interface Player {
   id: string;
@@ -25,15 +25,10 @@ interface Player {
 }
 
 interface PlayerFull extends Player {
-  status?: string | null;
-  statusDetails?: string | null;
-  statusUntil?: string | null;
   evaluations?: unknown;
-  analysisMetrics?: unknown;
-  performanceAnalysis?: string | null;
 }
 
-export default function AnalisePage() {
+export default function AvaliacoesPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
@@ -51,7 +46,7 @@ export default function AnalisePage() {
   const search = searchParams.get("search") ?? undefined;
 
   useEffect(() => {
-    if (!canAccessModule("futebol_analise") && !authLoading) return;
+    if (!canAccessModule("diretoria") && !authLoading) return;
     const params = new URLSearchParams();
     if (tenantId) params.set("tenantId", tenantId);
     if (category) params.set("category", category);
@@ -77,41 +72,11 @@ export default function AnalisePage() {
       .finally(() => setLoadingPlayer(false));
   }, [selectedPlayerId]);
 
-  const handleUpdate = useCallback(
-    (patch: {
-      status?: string | null;
-      statusDetails?: string | null;
-      statusUntil?: string | null;
-      evaluations?: EvaluationEntry[];
-      analysisMetrics?: AnalysisMetrics;
-      performanceAnalysis?: string | null;
-    }) => {
-      if (!selectedPlayer) return;
-      setSelectedPlayer((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          ...(patch.status !== undefined && { status: patch.status }),
-          ...(patch.statusDetails !== undefined && {
-            statusDetails: patch.statusDetails,
-          }),
-          ...(patch.statusUntil !== undefined && {
-            statusUntil: patch.statusUntil,
-          }),
-          ...(patch.evaluations !== undefined && {
-            evaluations: patch.evaluations,
-          }),
-          ...(patch.analysisMetrics !== undefined && {
-            analysisMetrics: patch.analysisMetrics,
-          }),
-          ...(patch.performanceAnalysis !== undefined && {
-            performanceAnalysis: patch.performanceAnalysis,
-          }),
-        };
-      });
-    },
-    [selectedPlayer]
-  );
+  const handleUpdate = useCallback((evaluations: EvaluationEntry[]) => {
+    setSelectedPlayer((prev) =>
+      prev ? { ...prev, evaluations } : null
+    );
+  }, []);
 
   const handleSave = async () => {
     if (!selectedPlayer?.id) return;
@@ -120,19 +85,9 @@ export default function AnalisePage() {
     setSuccessMessage(null);
     try {
       await api.patch(`/players/${selectedPlayer.id}`, {
-        status: selectedPlayer.status,
-        statusDetails: selectedPlayer.statusDetails,
-        statusUntil:
-          selectedPlayer.statusUntil != null
-            ? typeof selectedPlayer.statusUntil === "string"
-              ? selectedPlayer.statusUntil
-              : (selectedPlayer.statusUntil as Date).toISOString?.().slice(0, 10)
-            : null,
         evaluations: selectedPlayer.evaluations,
-        analysisMetrics: selectedPlayer.analysisMetrics,
-        performanceAnalysis: selectedPlayer.performanceAnalysis,
       });
-      setSuccessMessage("Análise salva com sucesso.");
+      setSuccessMessage("Avaliações salvas com sucesso.");
       setTimeout(() => setSuccessMessage(null), 6000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro ao salvar");
@@ -149,7 +104,7 @@ export default function AnalisePage() {
     );
   }
 
-  if (!canAccessModule("futebol_analise")) {
+  if (!canAccessModule("diretoria")) {
     router.replace("/403");
     return null;
   }
@@ -163,14 +118,14 @@ export default function AnalisePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Análise</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Avaliações</h1>
           <p className="text-muted-foreground">
-            Selecione um atleta para ver e editar status, avaliações, métricas e relatório
+            Selecione um atleta para ver e editar as avaliações da comissão (notas por dimensão)
           </p>
         </div>
       </div>
 
-      <AnaliseFilters
+      <AvaliacoesFilters
         players={players}
         selectedPlayerId={selectedPlayerId}
         onSelectPlayer={setSelectedPlayerId}
@@ -200,16 +155,12 @@ export default function AnalisePage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold">
-                    {selectedPlayer.jerseyNumber
-                      ? `${selectedPlayer.jerseyNumber} – `
-                      : ""}
+                    {selectedPlayer.jerseyNumber ? `${selectedPlayer.jerseyNumber} – ` : ""}
                     {selectedPlayer.name}
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     {selectedPlayer.tenant?.name}
-                    {selectedPlayer.category
-                      ? ` • ${selectedPlayer.category}`
-                      : ""}
+                    {selectedPlayer.category ? ` • ${selectedPlayer.category}` : ""}
                   </p>
                 </div>
                 <div className="ml-auto">
@@ -231,20 +182,13 @@ export default function AnalisePage() {
                 </div>
               )}
 
-              <AnalysisBlock
-                status={selectedPlayer.status}
-                statusDetails={selectedPlayer.statusDetails}
-                statusUntil={selectedPlayer.statusUntil}
+              <EvaluationsBlock
                 evaluations={selectedPlayer.evaluations}
-                analysisMetrics={selectedPlayer.analysisMetrics}
-                performanceAnalysis={selectedPlayer.performanceAnalysis}
                 onUpdate={handleUpdate}
               />
             </div>
           ) : (
-            <p className="text-muted-foreground py-6">
-              Atleta não encontrado.
-            </p>
+            <p className="text-muted-foreground py-6">Atleta não encontrado.</p>
           )}
         </>
       )}
@@ -253,8 +197,7 @@ export default function AnalisePage() {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <p>
-              Nenhum atleta encontrado com os filtros selecionados. Ajuste
-              Clube ou Categoria.
+              Nenhum atleta encontrado com os filtros selecionados. Ajuste Clube ou Categoria.
             </p>
           </CardContent>
         </Card>

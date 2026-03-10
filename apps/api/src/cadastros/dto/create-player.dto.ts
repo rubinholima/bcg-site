@@ -172,6 +172,9 @@ export class CreatePlayerDto {
   medicalHistory?: unknown; // array de registros ou { profile, records }
 
   @IsOptional()
+  physiology?: unknown; // { profile?: {}, records: PhysiologyEntry[] }
+
+  @IsOptional()
   @IsArray()
   psychologicalAssessment?: unknown[];
 
@@ -203,6 +206,10 @@ export class CreatePlayerDto {
   @IsString()
   @IsOptional()
   performanceAnalysis?: string;
+
+  @IsOptional()
+  @IsObject()
+  analysisMetrics?: unknown;
 
   @IsOptional()
   @IsArray()

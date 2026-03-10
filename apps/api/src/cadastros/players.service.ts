@@ -292,6 +292,7 @@ export class PlayersService {
       emergencyContactEmail: (d.emergencyContactEmail as string)?.trim() || null,
       emergencyContactPhone: (d.emergencyContactPhone as string)?.trim() || null,
       medicalHistory: j(d.medicalHistory),
+      physiology: j(d.physiology),
       psychologicalAssessment: j(d.psychologicalAssessment),
       onlineConsultations: j(d.onlineConsultations),
       evaluations: j(d.evaluations),
@@ -300,6 +301,7 @@ export class PlayersService {
       statusUntil: d.statusUntil ? new Date(d.statusUntil as string) : null,
       heatMapData: j(d.heatMapData),
       performanceAnalysis: (d.performanceAnalysis as string)?.trim() || null,
+      analysisMetrics: j(d.analysisMetrics),
       images: j(d.images),
       publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
     };
@@ -341,6 +343,7 @@ export class PlayersService {
       ...(d.emergencyContactEmail !== undefined && { emergencyContactEmail: (d.emergencyContactEmail as string)?.trim() || null }),
       ...(d.emergencyContactPhone !== undefined && { emergencyContactPhone: (d.emergencyContactPhone as string)?.trim() || null }),
       ...(d.medicalHistory !== undefined && { medicalHistory: jsonOrNull(d.medicalHistory) }),
+      ...(d.physiology !== undefined && { physiology: jsonOrNull(d.physiology) }),
       ...(d.psychologicalAssessment !== undefined && { psychologicalAssessment: jsonOrNull(d.psychologicalAssessment) }),
       ...(d.onlineConsultations !== undefined && { onlineConsultations: jsonOrNull(d.onlineConsultations) }),
       ...(d.evaluations !== undefined && { evaluations: jsonOrNull(d.evaluations) }),
@@ -349,6 +352,7 @@ export class PlayersService {
       ...(d.statusUntil !== undefined && { statusUntil: d.statusUntil ? new Date(d.statusUntil as string) : null }),
       ...(d.heatMapData !== undefined && { heatMapData: jsonOrNull(d.heatMapData) }),
       ...(d.performanceAnalysis !== undefined && { performanceAnalysis: (d.performanceAnalysis as string)?.trim() || null }),
+      ...(d.analysisMetrics !== undefined && { analysisMetrics: jsonOrNull(d.analysisMetrics) }),
       ...(d.images !== undefined && { images: jsonOrNull(d.images) }),
       ...(d.publicFields !== undefined && { publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull }),
     };

@@ -71,6 +71,10 @@ model Tenant {
   players                 Player[]
   psychologists           Psychologist[]
   technicalStaff          TechnicalStaff[]
+  suppliers               Supplier[]
+  products                Product[]
+  purchaseRequisitions    PurchaseRequisition[]
+  purchaseOrders          PurchaseOrder[]
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)
@@ -234,6 +238,7 @@ model Player {
   emergencyContactPhone String? // telefone do contato/responsável
   // Extensões (histórico médico, avaliações, status, etc.)
   medicalHistory  Json?    // Array<{ date, type, description, daysOut, gamesMissed }>
+  physiology      Json?    // { profile?: {}, records: PhysiologyEntry[] } — avaliações físicas (composição corporal, VO2, testes de campo)
   psychologicalAssessment Json?    // Array<{ date, evaluator, sections: anamnese psicológica esportiva }>
   onlineConsultations Json?    // Array<{ date, time?, type: meet, link?, notes?, status }>
   evaluations     Json?    // Array<{ date, evaluator, rating, notes }>
@@ -242,6 +247,7 @@ model Player {
   statusUntil     DateTime? // até quando (lesão/suspensão)
   heatMapData     Json?    // dados do mapa de calor
   performanceAnalysis String? @db.Text // análise de desempenho (texto livre ou JSON string)
+  analysisMetrics Json?    // métricas estruturadas de scout: gols, assistências, xG, xA, passes-chave, duelos, etc. (totais ou por 90)
   images          Json?    // Array<{ type, url }> fotos de apoio
   publicFields    Json?    // quais campos exibir na página pública: { medicalHistory, evaluations, status, marketValue, performanceAnalysis, images, highlights }
   createdAt       DateTime @default(now())
@@ -343,4 +349,93 @@ model VaultAuditLog {
   itemId      String?
   details     String?  @db.Text
   createdAt   DateTime @default(now())
+}
+
+// ========== DEPARTAMENTO DE COMPRAS (Adm) ==========
+// Fornecedor (por tenant/clube)
+model Supplier {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  purchaseOrders PurchaseOrder[]
+  @@index([tenantId])
+}
+
+// Produto/catálogo (estoque por tenant) — estoque mínimo gera alerta
+model Product {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  sku           String?  // código interno
+  unit          String   @default("un") // un, cx, kg, etc.
+  stockMin      Int      @default(0)   // abaixo disso = alerta
+  currentStock  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  stockMovements StockMovement[]
+  @@index([tenantId])
+  @@index([tenantId, currentStock])
+}
+
+// Requisição de compra — solicitante, itens, status, aprovação
+model PurchaseRequisition {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requestedByName String   // quem solicitou
+  requestedAt     DateTime @default(now())
+  status          String   @default("draft") // draft | sent | quotation | approved | rejected | ordered | received
+  justification   String?  @db.Text
+  items           Json     // [{ productId?, description, quantity, unit, estimatedUnitPrice? }]
+  totalEstimated  Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  purchaseOrders  PurchaseOrder[]
+  @@index([tenantId])
+  @@index([status])
+}
+
+// Ordem de compra — vinculada a fornecedor (e opcionalmente à requisição)
+model PurchaseOrder {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requisitionId    String?
+  requisition      PurchaseRequisition? @relation(fields: [requisitionId], references: [id], onDelete: SetNull)
+  supplierId       String
+  supplier         Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  orderNumber      String?  // número da OP
+  orderedAt        DateTime @default(now())
+  status           String   @default("draft") // draft | sent | approved | received | cancelled
+  items            Json     // [{ productId?, description, quantity, unitPrice }]
+  totalAmount      Float?
+  expectedDelivery DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@index([tenantId])
+  @@index([supplierId])
+  @@index([requisitionId])
+}
+
+// Movimentação de estoque — entrada (compra), saída (requisição), ajuste
+model StockMovement {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity      Int      // positivo = entrada, negativo = saída
+  type          String   // purchase | requisition | adjustment
+  referenceType String?  // order | requisition
+  referenceId   String?
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
+  @@index([productId])
+  @@index([createdAt])
 }
