@@ -112,7 +112,7 @@ export function PurchaseRequisitionFormDialog({
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof RequisitionItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof RequisitionItem, value: string | number | undefined) => {
     setItems((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
