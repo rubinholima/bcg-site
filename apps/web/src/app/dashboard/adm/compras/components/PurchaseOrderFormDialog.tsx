@@ -124,7 +124,7 @@ export function PurchaseOrderFormDialog({
     setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof OrderItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof OrderItem, value: string | number | undefined) => {
     setItems((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
