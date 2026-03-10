@@ -55,11 +55,9 @@ export function AnalysisBlock({
   const metrics = normalizeAnalysisMetrics(analysisMetrics);
 
   const statusUntilStr =
-    statusUntil instanceof Date
-      ? statusUntil.toISOString().slice(0, 10)
-      : typeof statusUntil === "string"
-        ? statusUntil.slice(0, 10)
-        : "";
+    typeof statusUntil === "string"
+      ? statusUntil.slice(0, 10)
+      : "";
 
   return (
     <div className="space-y-6">
