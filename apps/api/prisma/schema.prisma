@@ -79,6 +79,16 @@ model Tenant {
   jobRoles                JobRole[]
   employees               Employee[]
   employments             Employment[]
+  assetCategories         AssetCategory[]
+  assets                  Asset[]
+  nutritionCategories     NutritionCategory[]
+  nutritionMealTypes      NutritionMealType[]
+  nutritionMenus         NutritionMenu[]
+  nutritionCalendarEntries NutritionCalendarEntry[]
+  supplementGuides       SupplementGuide[]
+  socioPlans            SocioPlan[]
+  socioMembers          SocioMember[]
+  marketingPosts        MarketingPost[]
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)
@@ -257,6 +267,9 @@ model Player {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   legalDocuments  LegalDocument[]
+  assignedAssets  Asset[]  // uniformes/kit atribuídos ao jogador
+  nutritionAssessments NutritionAssessment[]
+  supplementGuides     SupplementGuide[]  // guias de suplementação específicos do jogador
   @@index([tenantId])
   @@index([tenantId, category])
 }
@@ -555,4 +568,235 @@ model LeavePeriod {
   updatedAt    DateTime @updatedAt
   @@index([employmentId])
   @@index([type])
+}
+
+// ========== Patrimônio (empresa + clube; clube tem kit: camisa, calção, meião) ==========
+
+model AssetCategory {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String   // ex.: Móveis, Equipamentos, Veículos, Kit uniforme
+  code      String?  // código opcional (ex.: MOV, EQU, KIT)
+  kind      String   @default("general") // general | uniform (uniform = exibe campos camisa/calção/meião)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+  @@index([tenantId])
+}
+
+model Asset {
+  id                String         @id @default(cuid())
+  tenantId          String
+  tenant            Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId        String
+  category          AssetCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tagNumber         String?        // número da etiqueta patrimonial (bens gerais)
+  description       String         // descrição do bem
+  location          String?        // setor/local onde está
+  responsibleName   String?       // nome do responsável (ou futuramente FK User)
+  acquisitionDate   DateTime?     // data de aquisição
+  acquisitionValue  Float?         // valor de aquisição (R$)
+  depreciationRate  Float?         // taxa de depreciação anual (%)
+  status            String         @default("em_uso") // em_uso | em_manutencao | emprestado | baixado
+  notes             String?        @db.Text
+  // Campos para kit uniforme (quando category.kind = uniform)
+  pieceType         String?        // camisa | calção | meião
+  size              String?       // P, M, G, GG, etc.
+  shirtNumber       Int?           // número da camisa (1-99)
+  assignedPlayerId  String?       // jogador com o item (só para clubes)
+  assignedPlayer    Player?       @relation(fields: [assignedPlayerId], references: [id], onDelete: SetNull)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  @@index([tenantId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([assignedPlayerId])
+  @@index([tenantId, pieceType])
+}
+
+// ========== Nutrição (clube: cardápios, calendário por categoria, avaliações) ==========
+
+model NutritionCategory {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name                String   // ex.: Sub-17, Profissional, Feminino
+  code                String?  // ex.: sub17, pro
+  dailyCaloriesTarget Int?     // meta calórica diária (kcal) para a categoria
+  notes               String?  @db.Text
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  menus               NutritionMenu[]
+  calendarEntries     NutritionCalendarEntry[]
+  supplementGuides   SupplementGuide[]
+  @@index([tenantId])
+}
+
+model NutritionMealType {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String   // ex.: Café da manhã, Almoço, Pré-jogo
+  code      String   // cafe_manha, almoco, pre_jogo, pos_jogo, lanche_manha, lanche_tarde, jantar, ceia
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  menuItems NutritionMenuItem[]
+  @@index([tenantId])
+}
+
+model NutritionMenu {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String   // ex.: Cardápio Semana 1 - Sub-17
+  categoryId  String?  // categoria a que se aplica (null = geral)
+  category    NutritionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  dayContext  String?  // treino | jogo | folga
+  validFrom   DateTime? // vigência início
+  validTo     DateTime? // vigência fim
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       NutritionMenuItem[]
+  calendarEntries NutritionCalendarEntry[]
+  @@index([tenantId])
+  @@index([categoryId])
+}
+
+model NutritionMenuItem {
+  id          String   @id @default(cuid())
+  menuId      String
+  menu        NutritionMenu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  mealTypeId  String
+  mealType    NutritionMealType @relation(fields: [mealTypeId], references: [id], onDelete: Restrict)
+  description String   @db.Text // ex.: Arroz integral, frango grelhado, salada
+  calories    Int?     // kcal
+  proteinG    Float?   // gramas proteína
+  carbsG      Float?   // gramas carboidrato
+  fatsG       Float?   // gramas gordura
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([menuId])
+  @@index([mealTypeId])
+}
+
+model NutritionCalendarEntry {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId String   // categoria (ex.: Sub-17)
+  category   NutritionCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  date       DateTime // dia do calendário
+  menuId     String   // cardápio a seguir nesse dia
+  menu       NutritionMenu @relation(fields: [menuId], references: [id], onDelete: Restrict)
+  dayContext String?  // treino | jogo | folga (opcional, pode vir do menu)
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([tenantId, categoryId, date])
+  @@index([tenantId])
+  @@index([categoryId])
+  @@index([date])
+}
+
+model NutritionAssessment {
+  id              String   @id @default(cuid())
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  assessedAt      DateTime // data da avaliação
+  weightKg        Float    // peso (kg)
+  heightCm        Float?   // estatura (cm)
+  bmi             Float?   // IMC calculado
+  bodyFatPercent  Float?   // % gordura corporal
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([playerId])
+  @@index([assessedAt])
+}
+
+model SupplementGuide {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categoryId String?  // null = time todo
+  category   NutritionCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  playerId   String?  // null = time ou categoria; preenchido = jogador específico (vem do cadastro)
+  player     Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  name       String   // ex.: Whey protein, Creatina
+  whenToTake String?  @db.Text // quando tomar (pré-treino, pós, etc.)
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([tenantId])
+  @@index([categoryId])
+  @@index([playerId])
+}
+
+// ========== Sócio Torcedor (por clube) ==========
+
+model SocioPlan {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name           String   // ex.: Diamante, Ouro, Prata, Bronze
+  slug           String   // ex.: diamante, ouro, prata
+  description    String?  @db.Text // descrição do plano
+  priceMonthly   Decimal  @db.Decimal(10, 2) // valor mensal
+  perks          Json?    // { ticketDiscountPercent, merchandiseDiscountPercent, foodDiscountPercent, earlyTicketHours, stadiumTour, exclusiveContent, welcomePack, customPerks[] }
+  sortOrder      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  members        SocioMember[]
+  @@unique([tenantId, slug])
+  @@index([tenantId])
+}
+
+model SocioMember {
+  id           String    @id @default(cuid())
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  planId       String
+  plan         SocioPlan @relation(fields: [planId], references: [id], onDelete: Restrict)
+  name         String
+  email        String
+  phone        String?
+  cpf          String?   // CPF para emissão de ingressos
+  status       String    @default("active") // active | suspended | cancelled
+  joinedAt     DateTime  @default(now())
+  points       Int       @default(0) // pontos de fidelidade
+  loyaltyTier  Int       @default(1) // 1-5 estrelas (antiguidade/engajamento)
+  externalId   String?   // ID em sistema externo (gate de ingressos, etc.)
+  notes        String?   @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  @@index([tenantId])
+  @@index([planId])
+  @@index([status])
+  @@index([tenantId, email])
+}
+
+// Postagens de marketing / redes sociais — calendário inspirado no Meta Business Suite
+model MarketingPost {
+  id          String    @id @default(cuid())
+  tenantId    String?   // null = postagem do grupo; preenchido = postagem do clube/empresa
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title       String?   // título curto (opcional)
+  content     String    @db.Text // texto da postagem
+  imageUrls   Json?     // ["url1","url2"] — imagens da mídia ou URL externa
+  platforms   Json?     // ["facebook","instagram","linkedin"] — destinos planejados
+  scheduledAt DateTime? // quando agendar publicação (null = rascunho)
+  status      String    @default("draft") // draft | scheduled | published | failed | cancelled
+  externalIds Json?     // { facebook: "xxx", instagram: "xxx" } — IDs após publicar no Meta
+  publishedAt DateTime? // quando foi publicado (se status=published)
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  @@index([tenantId])
+  @@index([scheduledAt])
+  @@index([status])
 }

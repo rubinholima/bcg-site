@@ -43,6 +43,7 @@ import {
   Megaphone,
   UtensilsCrossed,
   Warehouse,
+  Calendar,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
@@ -54,6 +55,8 @@ export interface MenuItemConfig {
   moduleSlug: string;
   children?: MenuItemConfig[];
   external?: boolean;
+  /** Agrupa visualmente com itens consecutivos (menos espaço entre eles) */
+  compactGroup?: string;
 }
 
 export interface PlayerTabConfig {
@@ -63,16 +66,15 @@ export interface PlayerTabConfig {
   moduleSlug: string | null;
 }
 
-/** Abas do formulário de jogador. Médico, Psicologia e Jurídico estão nos módulos dedicados. */
+/** Abas do formulário de jogador. Avaliação psicológica e Análise de desempenho exigem módulo. */
 export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "dados", label: "Dados base", icon: UserCircle, moduleSlug: null },
   { id: "psicologica", label: "Avaliação psicológica", icon: Brain, moduleSlug: "psicologia" },
-  { id: "avaliacoes", label: "Avaliações", icon: Star, moduleSlug: "diretoria" },
   { id: "status", label: "Status", icon: Activity, moduleSlug: "diretoria" },
   { id: "mapa", label: "Mapa / Posição", icon: Map, moduleSlug: null },
   { id: "momentos", label: "Melhores momentos", icon: Youtube, moduleSlug: null },
   { id: "imagens", label: "Imagens", icon: ImageIcon, moduleSlug: null },
-  { id: "desempenho", label: "Análise de desempenho", icon: BarChart3, moduleSlug: null },
+  { id: "desempenho", label: "Análise de desempenho", icon: BarChart3, moduleSlug: "futebol_analise" },
 ];
 
 /** Estrutura completa do menu do dashboard (Fase 1). */
@@ -130,19 +132,18 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
     ],
   },
-  // Adm (Fase 3 — departamento administrativo)
+  // Adm (Fase 3 — departamento administrativo). Financeiro, Compras e Estoque (Omie) agrupados.
   {
     slug: "adm",
     label: "Adm",
     icon: Building2,
     moduleSlug: "adm_financeiro",
     children: [
-      { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro" },
-      { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras" },
+      { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro", compactGroup: "omie" },
+      { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras", compactGroup: "omie" },
+      { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie" },
       { slug: "adm_rh", label: "RH", href: "/dashboard/adm/rh", icon: Users, moduleSlug: "adm_rh" },
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
-      { slug: "adm_nutricao", label: "Nutrição", href: "/dashboard/adm/nutricao", icon: UtensilsCrossed, moduleSlug: "adm_nutricao" },
-      { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque" },
     ],
   },
   // Futebol (Atletas primeiro, depois Categorias, Campeonatos, Estádios, Times, Médico, Psicologia, Comissão, Fisiologia, Análise)
@@ -237,6 +238,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Heart,
         moduleSlug: "futebol_fisiologia",
       },
+      {
+        slug: "adm_nutricao",
+        label: "Nutrição",
+        href: "/dashboard/adm/nutricao",
+        icon: UtensilsCrossed,
+        moduleSlug: "adm_nutricao",
+      },
       // Análise: Avaliações (CRUD da comissão) e Desempenho (métricas + relatório)
       {
         slug: "analise",
@@ -262,24 +270,26 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
     ],
   },
-  // Sócio Torcedor (Fase 3)
+  // Sócio Torcedor (Fase 3) — controle completo por clube: planos, sócios, perks, métricas
   {
     slug: "socio_torcedor",
     label: "Sócio Torcedor",
     icon: Ticket,
     moduleSlug: "socio_torcedor",
     children: [
-      { slug: "socio_dashboard", label: "Sócio Torcedor", href: "/dashboard/socio-torcedor", icon: Ticket, moduleSlug: "socio_torcedor" },
+      { slug: "socio_dashboard", label: "Visão geral", href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
+      { slug: "socio_planos", label: "Planos", href: "/dashboard/socio-torcedor/planos", icon: Heart, moduleSlug: "socio_torcedor" },
+      { slug: "socio_socios", label: "Sócios", href: "/dashboard/socio-torcedor/socios", icon: Users, moduleSlug: "socio_torcedor" },
     ],
   },
-  // Marketing (Fase 3)
+  // Marketing (Fase 3) — Calendário de conteúdo inspirado no Meta Business Suite
   {
     slug: "marketing",
     label: "Marketing",
     icon: Megaphone,
     moduleSlug: "marketing",
     children: [
-      { slug: "marketing_dashboard", label: "Marketing", href: "/dashboard/marketing", icon: Megaphone, moduleSlug: "marketing" },
+      { slug: "marketing_planner", label: "Planner", href: "/dashboard/marketing", icon: Calendar, moduleSlug: "marketing" },
     ],
   },
   // Relatórios (grupo — rotas futuras)
@@ -381,7 +391,7 @@ export function getUniqueModuleSlugs(): string[] {
     if (tab.moduleSlug) slugs.add(tab.moduleSlug);
   }
   slugs.add("psicologia").add("medico").add("diretoria").add("juridico").add("relatorios");
-  slugs.add("adm_financeiro").add("adm_compras").add("adm_rh").add("adm_patrimonio").add("adm_nutricao").add("adm_estoque");
+  slugs.add("adm_financeiro").add("adm_rh").add("adm_patrimonio").add("adm_nutricao");
   slugs.add("futebol_comissao").add("futebol_fisiologia").add("futebol_analise");
   slugs.add("socio_torcedor").add("marketing");
   return Array.from(slugs).sort();

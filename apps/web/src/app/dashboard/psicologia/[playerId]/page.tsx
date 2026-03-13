@@ -5,14 +5,13 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 /**
- * Redireciona para a ficha do jogador na aba de avaliação psicológica.
- * O conteúdo completo (avaliação + consultas) permanece na ficha do jogador
- * até que seja extraído para um bloco dedicado no módulo Psicologia.
+ * Redireciona para a ficha do jogador na aba Avaliação psicológica (relatório sintético).
+ * Somente visualização — gráficos, consultas, impressões do psicólogo, perfil e nível de atenção.
  */
 export default function PsicologiaPlayerRedirectPage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id as string | undefined;
+  const id = (params?.playerId ?? params?.id) as string | undefined;
   const { canAccessModule, loading: authLoading } = useAuth();
 
   useEffect(() => {

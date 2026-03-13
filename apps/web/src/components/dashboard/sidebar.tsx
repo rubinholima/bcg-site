@@ -48,7 +48,8 @@ export function Sidebar() {
       pathname?.startsWith("/dashboard/psicologia") ||
       pathname?.startsWith("/dashboard/consultas") ||
       pathname?.startsWith("/dashboard/juridico") ||
-      pathname?.startsWith("/dashboard/futebol")
+      pathname?.startsWith("/dashboard/futebol") ||
+      pathname?.startsWith("/dashboard/adm/nutricao")
   );
   const [admOpen, setAdmOpen] = useState(() => pathname?.startsWith("/dashboard/adm"));
   const [ferramentasOpen, setFerramentasOpen] = useState(
@@ -144,7 +145,7 @@ export function Sidebar() {
                   : item.slug === "adm"
                     ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                     : item.slug === "futebol"
-                      ? canAccessModule("tipos") || canAccessModule("diretoria") || canAccessModule("medico") || canAccessModule("psicologia") || canAccessModule("juridico") || canAccessModule("futebol_comissao") || canAccessModule("futebol_fisiologia") || canAccessModule("futebol_analise")
+                      ? canAccessModule("tipos") || canAccessModule("diretoria") || canAccessModule("medico") || canAccessModule("psicologia") || canAccessModule("juridico") || canAccessModule("futebol_comissao") || canAccessModule("futebol_fisiologia") || canAccessModule("futebol_analise") || canAccessModule("adm_nutricao")
                       : item.slug === "ferramentas"
                         ? hasAccessToAnyChild(item.children, canAccessModule, canAccessDashboard)
                         : item.slug === "configuracoes"
@@ -229,11 +230,10 @@ export function Sidebar() {
                 {isOpen && (
                   <div className="ml-4 space-y-0.5 border-l border-border pl-3">
                     {item.children
-                      .filter(
-                        (c) =>
-                          c.children?.length
-                            ? hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard)
-                            : canAccessModule(c.moduleSlug) || (c.moduleSlug === "emails" && canAccessDashboard)
+                      .filter((c) =>
+                        c.children?.length
+                          ? hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard)
+                          : canAccessModule(c.moduleSlug) || (c.moduleSlug === "emails" && canAccessDashboard)
                       )
                       .map((child) => {
                         if (child.children?.length) {
@@ -316,12 +316,14 @@ export function Sidebar() {
                             : child.href === "/dashboard/empresas"
                               ? pathname === "/dashboard/empresas" || pathname?.startsWith("/dashboard/tenants")
                               : inPath(child.href!);
+                        const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
                         return (
                           <Link
                             key={child.slug}
                             href={child.href!}
                             className={cn(
-                              "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                              "flex items-center gap-2 rounded-lg px-2 text-sm transition-all duration-200 dashboard-link-hover",
+                              compact ? "py-1" : "py-1.5",
                               isChildActive
                                 ? "dashboard-sidebar-active"
                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"

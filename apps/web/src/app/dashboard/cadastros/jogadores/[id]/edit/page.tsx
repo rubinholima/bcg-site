@@ -12,9 +12,6 @@ import {
   Youtube,
   Eye,
   EyeOff,
-  Video,
-  ExternalLink,
-  Calendar,
   Image as ImageIcon,
   Mail,
   Ruler,
@@ -35,9 +32,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import type { Psychologist } from "@/types/psychologist";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { ConsultasCalendar } from "@/components/dashboard/ConsultasCalendar";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
@@ -99,32 +94,6 @@ interface PlayerData {
   performanceAnalysis?: string | null;
   images?: unknown[] | null;
   publicFields?: Record<string, boolean> | null;
-}
-
-interface PsychologicalAssessmentEntry {
-  date?: string;
-  evaluator?: string;
-  dadosPessoais?: string;
-  historicoEsportivo?: string;
-  motivacaoObjetivos?: string;
-  ansiedadeEstresse?: string;
-  concentracaoFoco?: string;
-  autoconfianca?: string;
-  coping?: string;
-  relacoesInterpessoais?: string;
-  vidaForaEsporte?: string;
-  qualidadeVida?: string;
-  observacoes?: string;
-}
-
-interface OnlineConsultation {
-  date?: string;
-  time?: string;
-  type?: "meet";
-  link?: string;
-  notes?: string;
-  status?: "scheduled" | "completed" | "cancelled";
-  psychologist?: string;
 }
 
 interface EvaluationEntry {
@@ -235,14 +204,12 @@ export default function EditJogadorPage() {
 
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && PLAYER_TABS.some((t) => t.id === tab)) setActiveTab(tab);
+    if (!tab) return;
+    const normalized = tab === "gerencial" ? "psicologica" : tab;
+    if (PLAYER_TABS.some((t) => t.id === normalized)) setActiveTab(normalized);
   }, [searchParams]);
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [tenantCategories, setTenantCategories] = useState<string[]>([]);
-  const [meetCreatingIdx, setMeetCreatingIdx] = useState<number | null>(null);
-  const [meetAvailable, setMeetAvailable] = useState<boolean | null>(null);
-  const [calendarRefreshTrigger, setCalendarRefreshTrigger] = useState(0);
-  const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -263,29 +230,6 @@ export default function EditJogadorPage() {
     }
     load();
   }, [id]);
-
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .get<{ available: boolean }>("/consultations/meet-available")
-      .then(({ data }) => {
-        if (!cancelled) setMeetAvailable(data?.available ?? false);
-      })
-      .catch(() => {
-        if (!cancelled) setMeetAvailable(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!canAccessModule("psicologia")) return;
-    api
-      .get<Psychologist[]>("/psychologists")
-      .then(({ data }) => setPsychologists(Array.isArray(data) ? data : []))
-      .catch(() => setPsychologists([]));
-  }, [canAccessModule]);
 
   const categoriesForDropdown = (() => {
     const fromTenant = tenantCategories.length
@@ -368,9 +312,6 @@ export default function EditJogadorPage() {
     );
   }
 
-  const psychList = (player.psychologicalAssessment ?? []) as PsychologicalAssessmentEntry[];
-  const consultationList = (player.onlineConsultations ?? []) as OnlineConsultation[];
-  const evalList = (player.evaluations ?? []) as EvaluationEntry[];
   const imagesList = (player.images ?? []) as ImageEntry[];
 
   return (
@@ -822,404 +763,167 @@ export default function EditJogadorPage() {
         </Card>
       )}
 
-      {/* Tab: Avaliação psicológica */}
-      {activeTab === "psicologica" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Avaliação psicológica</CardTitle>
-            <CardDescription>
-              Anamnese específica para atletas de futebol — dados pessoais, histórico esportivo, motivação, ansiedade, concentração, autoconfiança, coping, relações e vida fora do esporte
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {psychList.map((entry, idx) => (
-              <div key={idx} className="rounded-lg border p-4 space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-2">
-                    <Input
-                      type="date"
-                      className="w-[165px] min-w-[165px]"
-                      placeholder="Data"
-                      value={entry.date ?? ""}
-                      onChange={(e) => {
-                        const next = [...psychList];
-                        (next[idx] as PsychologicalAssessmentEntry).date = e.target.value || undefined;
-                        update({ psychologicalAssessment: next });
-                      }}
-                    />
-                    <Input
-                      className="w-[180px]"
-                      placeholder="Avaliador/Psicólogo"
-                      value={entry.evaluator ?? ""}
-                      onChange={(e) => {
-                        const next = [...psychList];
-                        (next[idx] as PsychologicalAssessmentEntry).evaluator = e.target.value || undefined;
-                        update({ psychologicalAssessment: next });
-                      }}
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const next = psychList.filter((_, i) => i !== idx);
-                      update({ psychologicalAssessment: next });
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
+      {/* Tab: Avaliação psicológica — relatório sintético para gerência/diretoria (somente leitura) */}
+      {activeTab === "psicologica" && (() => {
+        const psychList = (player.psychologicalAssessment ?? []) as Array<{ date?: string; evaluator?: string; observacoes?: string; [k: string]: unknown }>;
+        const consultationList = (player.onlineConsultations ?? []) as Array<{ date?: string; time?: string; status?: string; psychologist?: string; notes?: string }>;
+        const completedConsultations = consultationList.filter((c) => c.status === "completed");
+        const scheduledConsultations = consultationList.filter((c) => c.status === "scheduled");
 
-                {[
-                  { key: "dadosPessoais", label: "Dados pessoais e contexto", placeholder: "Com quem mora, estado civil, filhos, escolaridade, profissão fora do esporte, rede de apoio familiar..." },
-                  { key: "historicoEsportivo", label: "Histórico esportivo", placeholder: "Anos praticando futebol, nível competitivo, lesões passadas, pausas na carreira, transições de clube..." },
-                  { key: "motivacaoObjetivos", label: "Motivação e objetivos", placeholder: "O que o leva a continuar, objetivos de curto e longo prazo, metas para a temporada..." },
-                  { key: "ansiedadeEstresse", label: "Ansiedade e estresse", placeholder: "Nível de ansiedade pré-jogo, situações estressantes, sintomas físicos/cognitivos, avaliação cognitiva da competição..." },
-                  { key: "concentracaoFoco", label: "Concentração e foco", placeholder: "Facilidade para manter o foco, situações de distração, rotinas pré-jogo..." },
-                  { key: "autoconfianca", label: "Autoconfiança", placeholder: "Nível geral de autoconfiança, variações em diferentes contextos (treino x jogo)..." },
-                  { key: "coping", label: "Estratégias de coping", placeholder: "Como lida com adversidades, pressão, derrotas; uso de coping ativo, evitativo..." },
-                  { key: "relacoesInterpessoais", label: "Relações interpessoais", placeholder: "Relação com comissão técnica, colegas de time, família em relação ao futebol..." },
-                  { key: "vidaForaEsporte", label: "Vida fora do esporte", placeholder: "Tempo livre, estudos, atividades, equilíbrio vida-treino..." },
-                  { key: "qualidadeVida", label: "Qualidade de vida e bem-estar", placeholder: "Percepção geral de bem-estar, sono, alimentação, descanso..." },
-                  { key: "observacoes", label: "Observações gerais", placeholder: "Outras informações relevantes da anamnese..." },
-                ].map(({ key, label, placeholder }) => (
-                  <div key={key} className="space-y-1">
-                    <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-                    <textarea
-                      className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      placeholder={placeholder}
-                      value={(entry as Record<string, string>)[key] ?? ""}
-                      onChange={(e) => {
-                        const next = [...psychList];
-                        const entry = next[idx] as Record<string, string | undefined>;
-                        entry[key] = e.target.value || undefined;
-                        update({ psychologicalAssessment: next });
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              onClick={() => update({ psychologicalAssessment: [...psychList, {}] })}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar avaliação psicológica
-            </Button>
+        // Nível de atenção: baseado em consultas realizadas, avaliações e pendentes
+        const totalCompleted = completedConsultations.length;
+        const totalScheduled = scheduledConsultations.length;
+        const hasAssessments = psychList.length > 0;
+        let nivelAtencao: "baixo" | "moderado" | "alto" = "baixo";
+        if (totalScheduled > 0 || totalCompleted >= 3 || (totalCompleted > 0 && !hasAssessments))
+          nivelAtencao = "moderado";
+        if (totalScheduled >= 2 || totalCompleted >= 5) nivelAtencao = "alto";
 
-            {/* Grupo Consultas: Consultas online | Calendário (50% | 50%) */}
-            <div className="space-y-4 rounded-lg border p-4 pt-6">
-              <h3 className="text-lg font-semibold">Consultas</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:divide-x lg:divide-border">
-                {/* Consultas online (Meet) — 50% */}
-                <div className="min-w-0 lg:pr-6">
-                  <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
-                    <Video className="h-4 w-4" />
-                    Consultas online
-                  </h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Marque consultas para atendimento via Google Meet. Use o seletor de data e horário e o botão para criar o link no Meet.
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <div className="overflow-y-auto max-h-[360px] space-y-3 pr-2 -mr-2">
-                  {consultationList.map((c, idx) => (
-                    <div key={idx} className="rounded-lg border p-4 space-y-2 flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-2">
-                      <div className="flex gap-2 flex-wrap flex-1">
-                        <Input
-                          type="date"
-                          className="w-[165px] min-w-[165px]"
-                          placeholder="Data"
-                          value={c.date ?? ""}
-                          onChange={(e) => {
-                            const next = [...consultationList];
-                            (next[idx] as OnlineConsultation).date = e.target.value || undefined;
-                            update({ onlineConsultations: next });
-                          }}
-                        />
-                        <Input
-                          type="time"
-                          className="w-[130px] min-w-[130px]"
-                          placeholder="Horário"
-                          value={c.time ?? ""}
-                          onChange={(e) => {
-                            const next = [...consultationList];
-                            (next[idx] as OnlineConsultation).time = e.target.value || undefined;
-                            update({ onlineConsultations: next });
-                          }}
-                        />
-                        <Select
-                        value={c.status ?? "scheduled"}
-                        onValueChange={(v: "scheduled" | "completed" | "cancelled") => {
-                          const next = [...consultationList];
-                          (next[idx] as OnlineConsultation).status = v;
-                          update({ onlineConsultations: next });
-                        }}
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="scheduled">Agendada</SelectItem>
-                          <SelectItem value="completed">Realizada</SelectItem>
-                          <SelectItem value="cancelled">Cancelada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <select
-                        className="flex h-10 min-w-[140px] max-w-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                        value={
-                          psychologists.some((p) => p.name === (c.psychologist ?? ""))
-                            ? (c.psychologist ?? "")
-                            : (c.psychologist ?? "").trim()
-                              ? "__outro__"
-                              : ""
-                        }
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          const next = [...consultationList];
-                          (next[idx] as OnlineConsultation).psychologist = v === "__outro__" ? (c.psychologist ?? "") : v;
-                          update({ onlineConsultations: next });
-                        }}
-                      >
-                        <option value="">— Psicólogo —</option>
-                        {psychologists
-                          .filter((p) => !p.calendarBlocked)
-                          .map((p) => (
-                            <option key={p.id} value={p.name}>
-                              {p.name}
-                            </option>
-                          ))}
-                        <option value="__outro__">Outro…</option>
-                      </select>
-                    </div>
-                    {!psychologists.some((p) => p.name === (c.psychologist ?? "")) && (
-                      <Input
-                        className="w-full max-w-xs text-foreground"
-                        placeholder="Nome do psicólogo (quando não está na lista)"
-                        value={c.psychologist ?? ""}
-                        onChange={(e) => {
-                          const next = [...consultationList];
-                          (next[idx] as OnlineConsultation).psychologist = e.target.value || undefined;
-                          update({ onlineConsultations: next });
-                        }}
-                      />
+        // Tipo de perfil: síntese do acompanhamento
+        let tipoPerfil = "Sem acompanhamento registrado";
+        if (psychList.length > 0 && consultationList.length > 0)
+          tipoPerfil = "Em acompanhamento regular";
+        else if (psychList.length > 0)
+          tipoPerfil = "Avaliação realizada — aguardando consultas";
+        else if (consultationList.length > 0)
+          tipoPerfil = "Consultas em andamento — avaliação pendente";
+
+        // Consultas por mês (para gráfico)
+        const byMonth: Record<string, number> = {};
+        consultationList.forEach((c) => {
+          if (c.date) {
+            const month = c.date.slice(0, 7);
+            byMonth[month] = (byMonth[month] ?? 0) + 1;
+          }
+        });
+        const sortedMonths = Object.keys(byMonth).sort();
+        const maxCount = Math.max(...Object.values(byMonth), 1);
+
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Avaliação psicológica</CardTitle>
+              <CardDescription>
+                Relatório sintético sobre a saúde psicológica do atleta — para gerência e diretoria. Somente visualização.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Resumo: Nível de atenção + Tipo de perfil */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Nível de atenção</p>
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium",
+                      nivelAtencao === "baixo" && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                      nivelAtencao === "moderado" && "bg-amber-500/20 text-amber-600 dark:text-amber-400",
+                      nivelAtencao === "alto" && "bg-rose-500/20 text-rose-600 dark:text-rose-400"
                     )}
-                    <div className="flex gap-2 flex-1 min-w-0 flex-wrap">
-                      <Input
-                        className="flex-1 min-w-[200px]"
-                        placeholder="Link da reunião (Meet)"
-                        value={c.link ?? ""}
-                        onChange={(e) => {
-                          const next = [...consultationList];
-                          (next[idx] as OnlineConsultation).link = e.target.value || undefined;
-                          update({ onlineConsultations: next });
-                        }}
-                      />
-                      {meetAvailable && c.date && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          disabled={meetCreatingIdx === idx}
-                          onClick={async () => {
-                            setMeetCreatingIdx(idx);
-                            try {
-                              const { data } = await api.post<{ meetLink: string; createdWithMeet?: boolean }>(
-                                "/consultations/create-meet",
-                                {
-                                  summary: `Consulta: ${player.name}`,
-                                  description: c.notes || undefined,
-                                  startDate: c.date,
-                                  startTime: c.time || "09:00",
-                                  endTime: c.time ? undefined : "10:00",
-                                }
-                              );
-                              if (data?.meetLink) {
-                                const next = [...consultationList];
-                                (next[idx] as OnlineConsultation).link = data.meetLink;
-                                const toSave = next;
-                                const withNewRow = [...next, { type: "meet", status: "scheduled" } as OnlineConsultation];
-                                update({ onlineConsultations: withNewRow });
-                                await api.patch(`/players/${id}`, { onlineConsultations: toSave });
-                                setCalendarRefreshTrigger((t) => t + 1);
-                                if (!data.createdWithMeet) {
-                                  alert("Evento criado. Abra o link e clique em \"Adicionar videoconferência do Google Meet\" no Calendar.");
-                                }
-                              }
-                            } catch (e: unknown) {
-                              const msg = e instanceof Error ? e.message : 'Erro ao criar evento no Meet';
-                              alert(msg);
-                            } finally {
-                              setMeetCreatingIdx(null);
-                            }
-                          }}
-                        >
-                          {meetCreatingIdx === idx ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                          ) : (
-                            <Video className="h-4 w-4 mr-1" />
-                          )}
-                          Criar no Meet
-                        </Button>
-                      )}
-                      {c.link && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          title="Abrir em nova aba"
-                          onClick={() => window.open(c.link, "_blank")}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <textarea
-                      className="w-full min-h-[72px] rounded-md border border-input bg-background px-3 py-2 text-sm resize-y"
-                      placeholder="Anotações da sessão: gravações, observações, notas..."
-                      value={c.notes ?? ""}
-                      onChange={(e) => {
-                        const next = [...consultationList];
-                        (next[idx] as OnlineConsultation).notes = e.target.value || undefined;
-                        update({ onlineConsultations: next });
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="shrink-0"
-                      onClick={() => {
-                        const next = consultationList.filter((_, i) => i !== idx);
-                        update({ onlineConsultations: next });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="shrink-0"
-                      onClick={() => update({ onlineConsultations: [...consultationList, { type: "meet", status: "scheduled" }] })}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Nova consulta online
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Calendário de consultas — 50% */}
-                <div className="min-w-0 lg:pl-6">
-                  <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
-                    <Calendar className="h-4 w-4" />
-                    Calendário de consultas
-                  </h4>
-                  <ConsultasCalendar refreshTrigger={calendarRefreshTrigger} />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Tab: Avaliações */}
-      {activeTab === "avaliacoes" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Avaliações</CardTitle>
-                <CardDescription>
-                  Avaliações periódicas de desempenho e potencial
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                title={isFieldPublic(player.publicFields, "evaluations") ? "Visível na página pública" : "Oculto na página pública"}
-                onClick={() => {
-                  const pf = { ...(player.publicFields ?? {}) };
-                  pf.evaluations = !isFieldPublic(player.publicFields, "evaluations");
-                  update({ publicFields: pf });
-                }}
-              >
-                {isFieldPublic(player.publicFields, "evaluations") ? <Eye className="h-4 w-4 text-amber-500" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {evalList.map((entry, idx) => (
-              <div key={idx} className="rounded-lg border p-4 space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Avaliação {idx + 1}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const next = evalList.filter((_, i) => i !== idx);
-                      update({ evaluations: next });
-                    }}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                    {nivelAtencao === "baixo" && "Baixo — acompanhamento regular"}
+                    {nivelAtencao === "moderado" && "Moderado — requer acompanhamento"}
+                    {nivelAtencao === "alto" && "Alto — atenção prioritária"}
+                  </span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <Input
-                    type="date"
-                    value={entry.date ?? ""}
-                    onChange={(e) => {
-                      const next = [...evalList];
-                      (next[idx] as EvaluationEntry).date = e.target.value || undefined;
-                      update({ evaluations: next });
-                    }}
-                  />
-                  <Input
-                    placeholder="Avaliador"
-                    value={entry.evaluator ?? ""}
-                    onChange={(e) => {
-                      const next = [...evalList];
-                      (next[idx] as EvaluationEntry).evaluator = e.target.value || undefined;
-                      update({ evaluations: next });
-                    }}
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    max={10}
-                    step={0.5}
-                    placeholder="Nota (0-10)"
-                    value={entry.rating ?? ""}
-                    onChange={(e) => {
-                      const next = [...evalList];
-                      (next[idx] as EvaluationEntry).rating = e.target.value ? Number(e.target.value) : undefined;
-                      update({ evaluations: next });
-                    }}
-                  />
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Tipo de perfil</p>
+                  <p className="text-foreground font-medium">{tipoPerfil}</p>
                 </div>
-                <textarea
-                  className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Observações"
-                  value={entry.notes ?? ""}
-                  onChange={(e) => {
-                    const next = [...evalList];
-                    (next[idx] as EvaluationEntry).notes = e.target.value || undefined;
-                    update({ evaluations: next });
-                  }}
-                />
               </div>
-            ))}
-            <Button
-              variant="outline"
-              onClick={() => update({ evaluations: [...evalList, {}] })}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar avaliação
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+
+              {/* Gráfico: Consultas por mês */}
+              {sortedMonths.length > 0 && (
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm font-medium text-foreground mb-4">Consultas por mês</p>
+                  <div className="flex items-end gap-2 h-24" aria-label="Gráfico de consultas por mês">
+                    {sortedMonths.map((month) => {
+                      const count = byMonth[month] ?? 0;
+                      const pct = (count / maxCount) * 100;
+                      return (
+                        <div key={month} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                          <div
+                            className="w-full rounded-t bg-primary/60 min-h-[8px] transition-all"
+                            style={{ height: `${Math.max(pct, 12)}%` }}
+                            title={`${month}: ${count} consulta(s)`}
+                          />
+                          <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                            {month.slice(5)}/{month.slice(2, 4)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Consultas realizadas e agendadas */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <p className="text-sm font-medium text-foreground">Consultas</p>
+                {consultationList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma consulta registrada.</p>
+                ) : (
+                  <div className="space-y-3 max-h-[280px] overflow-y-auto">
+                    {consultationList.map((c, idx) => {
+                      const dateStr = c.date ? `${c.date.slice(8, 10)}/${c.date.slice(5, 7)}/${c.date.slice(0, 4)}` : "—";
+                      const timeStr = c.time ?? "";
+                      const statusLabel =
+                        c.status === "completed" ? "Realizada" : c.status === "cancelled" ? "Cancelada" : "Agendada";
+                      return (
+                        <div key={idx} className="rounded border p-3 bg-muted/20">
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="font-medium text-foreground">{dateStr}</span>
+                            {timeStr && <span className="text-muted-foreground">{timeStr}</span>}
+                            <span
+                              className={cn(
+                                "rounded px-2 py-0.5 text-xs",
+                                c.status === "completed" && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                                c.status === "cancelled" && "bg-destructive/20 text-destructive",
+                                c.status === "scheduled" && "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                              )}
+                            >
+                              {statusLabel}
+                            </span>
+                            {c.psychologist && (
+                              <span className="text-muted-foreground">• {c.psychologist}</span>
+                            )}
+                          </div>
+                          {c.notes && (
+                            <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap">{c.notes}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Impressões do psicólogo (das avaliações) */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <p className="text-sm font-medium text-foreground">Impressões das avaliações</p>
+                {psychList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
+                ) : (
+                  <div className="space-y-3 max-h-[200px] overflow-y-auto">
+                    {psychList.map((entry, idx) => (
+                      <div key={idx} className="rounded border p-3 bg-muted/20">
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-1">
+                          {entry.date && <span>{entry.date}</span>}
+                          {entry.evaluator && <span>• {entry.evaluator}</span>}
+                        </div>
+                        {entry.observacoes ? (
+                          <p className="text-sm text-foreground/90 whitespace-pre-wrap">{entry.observacoes}</p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">Sem observações registradas.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Tab: Status */}
       {activeTab === "status" && (
@@ -1572,42 +1276,135 @@ export default function EditJogadorPage() {
         </Card>
       )}
 
-      {/* Tab: Análise de desempenho */}
-      {activeTab === "desempenho" && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Análise de desempenho</CardTitle>
-                <CardDescription>
-                  Anotações sobre desempenho, evolução e projeções
-                </CardDescription>
+      {/* Tab: Análise de desempenho — relatório sintético (somente leitura) baseado no depto de análise */}
+      {activeTab === "desempenho" && (() => {
+        const evalList = (player.evaluations ?? []) as Array<{ date?: string; evaluator?: string; rating?: number; notes?: string }>;
+        const ratings = evalList.map((e) => e.rating).filter((r): r is number => typeof r === "number" && !Number.isNaN(r));
+        const avgRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null;
+        const lastRating = ratings.length > 0 ? ratings[ratings.length - 1] : null;
+
+        // Indicador de evolução: baseado em média e tendência
+        let evolucao: "estavel" | "em_alta" | "em_atencao" = "estavel";
+        if (ratings.length >= 2) {
+          const tendencia = lastRating! - ratings[ratings.length - 2];
+          if (tendencia >= 0.5) evolucao = "em_alta";
+          else if (lastRating !== null && lastRating < 6) evolucao = "em_atencao";
+        } else if (lastRating !== null && lastRating < 6) evolucao = "em_atencao";
+
+        // Avaliações por mês (gráfico)
+        const byMonth: Record<string, number[]> = {};
+        evalList.forEach((e) => {
+          if (e.date) {
+            const month = e.date.slice(0, 7);
+            if (!byMonth[month]) byMonth[month] = [];
+            if (typeof e.rating === "number" && !Number.isNaN(e.rating))
+              byMonth[month].push(e.rating);
+          }
+        });
+        const sortedMonths = Object.keys(byMonth).sort();
+        const maxAvg = Math.max(...Object.values(byMonth).map((arr) => (arr.reduce((a, b) => a + b, 0) / Math.max(arr.length, 1))), 0.01);
+
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Análise de desempenho</CardTitle>
+              <CardDescription>
+                Relatório sintético baseado nas avaliações do departamento de análise — para gerência e diretoria. Somente visualização.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Resumo: Evolução + Média */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Evolução</p>
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium",
+                      evolucao === "estavel" && "bg-sky-500/20 text-sky-600 dark:text-sky-400",
+                      evolucao === "em_alta" && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                      evolucao === "em_atencao" && "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                    )}
+                  >
+                    {evolucao === "estavel" && "Estável"}
+                    {evolucao === "em_alta" && "Em alta"}
+                    {evolucao === "em_atencao" && "Requer atenção"}
+                  </span>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Média das avaliações</p>
+                  <p className="text-foreground font-medium text-lg">
+                    {avgRating !== null ? avgRating.toFixed(1) : "—"} {avgRating !== null && "/ 10"}
+                  </p>
+                </div>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                title={isFieldPublic(player.publicFields, "performanceAnalysis") ? "Visível na página pública" : "Oculto na página pública"}
-                onClick={() => {
-                  const pf = { ...(player.publicFields ?? {}) };
-                  pf.performanceAnalysis = !isFieldPublic(player.publicFields, "performanceAnalysis");
-                  update({ publicFields: pf });
-                }}
-              >
-                {isFieldPublic(player.publicFields, "performanceAnalysis") ? <Eye className="h-4 w-4 text-amber-500" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <textarea
-              className="w-full min-h-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={player.performanceAnalysis ?? ""}
-              onChange={(e) => update({ performanceAnalysis: e.target.value || null })}
-              placeholder="Analise o desempenho do atleta, pontos fortes, áreas de melhoria, projeção de carreira..."
-            />
-          </CardContent>
-        </Card>
-      )}
+
+              {/* Gráfico: Média das notas por mês */}
+              {sortedMonths.length > 0 && (
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm font-medium text-foreground mb-4">Evolução das notas (por mês)</p>
+                  <div className="flex items-end gap-2 h-24" aria-label="Gráfico de média das notas por mês">
+                    {sortedMonths.map((month) => {
+                      const vals = byMonth[month] ?? [];
+                      const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+                      const pct = Math.min(100, (avg / 10) * 100);
+                      return (
+                        <div key={month} className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                          <div
+                            className="w-full rounded-t bg-primary/60 min-h-[8px] transition-all"
+                            style={{ height: `${Math.max(pct, 12)}%` }}
+                            title={`${month}: média ${avg.toFixed(1)}`}
+                          />
+                          <span className="text-[10px] text-muted-foreground truncate w-full text-center">
+                            {month.slice(5)}/{month.slice(2, 4)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Avaliações do departamento de análise */}
+              <div className="rounded-lg border p-4 space-y-4">
+                <p className="text-sm font-medium text-foreground">Avaliações</p>
+                {evalList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma avaliação registrada pelo departamento de análise.</p>
+                ) : (
+                  <div className="space-y-3 max-h-[240px] overflow-y-auto">
+                    {evalList.map((entry, idx) => {
+                      const dateStr = entry.date ? `${entry.date.slice(8, 10)}/${entry.date.slice(5, 7)}/${entry.date.slice(0, 4)}` : "—";
+                      return (
+                        <div key={idx} className="rounded border p-3 bg-muted/20">
+                          <div className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="font-medium text-foreground">{dateStr}</span>
+                            {entry.evaluator && <span className="text-muted-foreground">• {entry.evaluator}</span>}
+                            {typeof entry.rating === "number" && !Number.isNaN(entry.rating) && (
+                              <span className="rounded px-2 py-0.5 bg-primary/20 text-primary font-medium">
+                                {entry.rating}/10
+                              </span>
+                            )}
+                          </div>
+                          {entry.notes && (
+                            <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap">{entry.notes}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Análise escrita (performanceAnalysis) */}
+              {player.performanceAnalysis && (
+                <div className="rounded-lg border p-4 space-y-2">
+                  <p className="text-sm font-medium text-foreground">Análise consolidada</p>
+                  <p className="text-sm text-foreground/90 whitespace-pre-wrap">{player.performanceAnalysis}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={loading}>

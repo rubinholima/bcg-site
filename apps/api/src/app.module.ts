@@ -23,6 +23,11 @@ import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychologistsModule } from './psychologists/psychologists.module';
 import { ComprasModule } from './compras/compras.module';
 import { RhModule } from './rh/rh.module';
+import { PatrimonioModule } from './patrimonio/patrimonio.module';
+import { NutricaoModule } from './nutricao/nutricao.module';
+import { SocioTorcedorModule } from './socio-torcedor/socio-torcedor.module';
+import { MarketingModule } from './marketing/marketing.module';
+import { DiretoriaModule } from './diretoria/diretoria.module';
 
 @Module({
   imports: [
@@ -48,6 +53,11 @@ import { RhModule } from './rh/rh.module';
     PsychologistsModule,
     ComprasModule,
     RhModule,
+    PatrimonioModule,
+    NutricaoModule,
+    SocioTorcedorModule,
+    MarketingModule,
+    DiretoriaModule,
   ],
   controllers: [AppController],
   providers: [AppService],
