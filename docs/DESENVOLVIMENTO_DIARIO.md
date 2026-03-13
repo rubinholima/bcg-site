@@ -29,6 +29,36 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 10 DE MARÇO DE 2026 — DEPLOY (Dashboard Diretoria clubes vs empresas, Marketing, Nutrição, Patrimônio, Sócio-torcedor)
+
+## **O QUE FOI FEITO**
+
+- **Dashboard Diretoria:** Separação por tipo de empresa — clubes (futebol) com jogadores, sócios, comissão, psicólogos; empresas (construtoras, etc.) com fornecedores, produtos, gasto mês, pagamentos a realizar. Gráficos: clubes (jogadores/sócios), empresas (gastos/pendências), crescimento (6 meses).
+- **Correção build:** Tooltip formatter do Recharts (formatter aceita `value | undefined`).
+- **Regra deploy:** `pnpm build` antes de commit; deploy-develop.mdc atualizado.
+
+## **TESTE ANTES DE SUBIR**
+
+Sempre rodar `pnpm build` na raiz antes de commitar. Se falhar, corrigir e só então fazer deploy.
+
+## **REBOOT NO SERVIDOR (System restart required)**
+
+Quando o Ubuntu mostrar **"*** System restart required ***"** no login:
+
+```bash
+sudo reboot
+```
+
+Após o reboot, reconectar via SSH e rodar o deploy: `cd ~/bcg-site && git pull origin develop && ./deploy.sh`.
+
+## **FECHAMENTO (GIT)**
+
+- **Commit:** `cdc54e3` — Dashboard Diretoria (clubes vs empresas), Marketing, Nutrição, Patrimônio, Sócio-torcedor; fix Tooltip; build ok
+- **Branch:** develop
+- **Push:** ✅ para origin/develop
+
+---
+
 # 📅 9 DE MARÇO DE 2026 — ENCERRAMENTO (Fisiologia, Análise, Avaliações, Financeiro/Omie, Depto Compras completo)
 
 ## **O QUE FOI FEITO NESTA SESSÃO**
@@ -1329,6 +1359,16 @@ Configurações                → /dashboard/configuracoes       configuracoes
 Passo a passo para rodar o projeto no servidor com **PM2**. Pressupõe: Node.js, pnpm, Git e PM2 instalados; PostgreSQL rodando (no mesmo servidor ou em 127.0.0.1).
 
 **1. Variáveis de ambiente** — Crie/edite `.env` em `apps/api` (e `apps/web` se precisar). Use `DATABASE_URL` com **127.0.0.1** (não localhost) e `&options=-c%20client_encoding%3DUTF8`. **2. Atualizar código:** `cd ~/bcg-site && git pull origin develop && pnpm install`. **3. API:** `cd apps/api && pnpm exec prisma generate && pnpm run build`; PM2: `pm2 start dist/main.js --name api` (ou `pm2 restart api`). **4. Web:** `cd apps/web && pnpm run build`; PM2: `pm2 start pnpm --name web -- start` (ou `pm2 restart web`). **5. Script único:** `./deploy.sh` na raiz (git pull, pnpm install, build API e Web, pm2 restart). **6. Nginx:** `location ^~ /api/auth/` deve ir para porta 3000 (Next) com `proxy_buffer_size 16k; proxy_buffers 4 16k;`. **7. Checklist:** NODE_ENV, DATABASE_URL 127.0.0.1, Prisma generate antes do build, PM2 api e web, portas e Nginx. **8. Erros comuns:** Prisma 6 (não 7), CRLF→LF, acentuação→fix:encoding e options na URL.
+
+## SERVER_REBOOT (System restart required)
+
+Quando o Ubuntu mostrar **"*** System restart required ***"** no login (após updates de kernel, etc.):
+
+```bash
+sudo reboot
+```
+
+Após o reboot, reconectar via SSH e rodar o deploy: `cd ~/bcg-site && git pull origin develop && ./deploy.sh`.
 
 ## SERVER_500_ERRO_AO_CONECTAR (Login 500 / "Erro ao conectar" no servidor)
 

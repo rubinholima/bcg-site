@@ -8,7 +8,7 @@ alwaysApply: true
 Quando o usuário escrever **deploy** (ou "commit e sobe", "sobe pro git", "commit git develop", etc.):
 
 1. **Antes de commitar — build local obrigatório:**
-   - Rodar `pnpm --filter web build` e `pnpm --filter api build` na raiz do projeto.
+   - Rodar `pnpm build` na raiz do monorepo (compila api + web).
    - Se algum build falhar, corrigir os erros (TypeScript, etc.) e só então prosseguir.
    - Objetivo: garantir que o que sobe para o servidor compila e não quebra o deploy.
 
