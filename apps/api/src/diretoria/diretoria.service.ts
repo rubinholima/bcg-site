@@ -294,23 +294,23 @@ export class DiretoriaService {
       });
     }
 
-    const result: { month: string; novosJogadores: number; novosSocios: number; gastoMes: number }[] = [];
-
-    for (const m of months) {
-      const [players, socios, orders] = await Promise.all([
-        this.prisma.player.count({ where: { createdAt: { gte: m.start, lte: m.end } } }),
-        this.prisma.socioMember.count({ where: { joinedAt: { gte: m.start, lte: m.end } } }),
-        this.prisma.purchaseOrder.findMany({
-          where: {
-            orderedAt: { gte: m.start, lte: m.end },
-            status: { not: 'cancelled' },
-          },
-          select: { totalAmount: true },
-        }),
-      ]);
-      const gastoMes = orders.reduce((s, o) => s + (o.totalAmount ?? 0), 0);
-      result.push({ month: m.month, novosJogadores: players, novosSocios: socios, gastoMes });
-    }
+    const result = await Promise.all(
+      months.map(async (m) => {
+        const [players, socios, orders] = await Promise.all([
+          this.prisma.player.count({ where: { createdAt: { gte: m.start, lte: m.end } } }),
+          this.prisma.socioMember.count({ where: { joinedAt: { gte: m.start, lte: m.end } } }),
+          this.prisma.purchaseOrder.findMany({
+            where: {
+              orderedAt: { gte: m.start, lte: m.end },
+              status: { not: 'cancelled' },
+            },
+            select: { totalAmount: true },
+          }),
+        ]);
+        const gastoMes = orders.reduce((s, o) => s + (o.totalAmount ?? 0), 0);
+        return { month: m.month, novosJogadores: players, novosSocios: socios, gastoMes };
+      }),
+    );
 
     return result;
   }

@@ -49,7 +49,7 @@ Quando o Ubuntu mostrar **"*** System restart required ***"** no login:
 sudo reboot
 ```
 
-Após o reboot, reconectar via SSH e rodar o deploy: `cd ~/bcg-site && git pull origin develop && ./deploy.sh`.
+Após o reboot, reconectar via SSH. **Se a API não subiu:** o PM2 não inicia processos automaticamente até configurar `pm2 startup` (uma vez). Ver seção **PM2_STARTUP** em DOCS CONSOLIDADOS. Enquanto isso, rodar: `cd ~/bcg-site && ./deploy.sh`.
 
 ## **FECHAMENTO (GIT)**
 
@@ -1360,6 +1360,24 @@ Passo a passo para rodar o projeto no servidor com **PM2**. Pressupõe: Node.js,
 
 **1. Variáveis de ambiente** — Crie/edite `.env` em `apps/api` (e `apps/web` se precisar). Use `DATABASE_URL` com **127.0.0.1** (não localhost) e `&options=-c%20client_encoding%3DUTF8`. **2. Atualizar código:** `cd ~/bcg-site && git pull origin develop && pnpm install`. **3. API:** `cd apps/api && pnpm exec prisma generate && pnpm run build`; PM2: `pm2 start dist/main.js --name api` (ou `pm2 restart api`). **4. Web:** `cd apps/web && pnpm run build`; PM2: `pm2 start pnpm --name web -- start` (ou `pm2 restart web`). **5. Script único:** `./deploy.sh` na raiz (git pull, pnpm install, build API e Web, pm2 restart). **6. Nginx:** `location ^~ /api/auth/` deve ir para porta 3000 (Next) com `proxy_buffer_size 16k; proxy_buffers 4 16k;`. **7. Checklist:** NODE_ENV, DATABASE_URL 127.0.0.1, Prisma generate antes do build, PM2 api e web, portas e Nginx. **8. Erros comuns:** Prisma 6 (não 7), CRLF→LF, acentuação→fix:encoding e options na URL.
 
+## PM2_STARTUP (API/Web não sobem após reboot — configurar uma vez)
+
+O PM2 **não inicia os processos automaticamente** após reboot. É preciso configurar o startup **uma vez** no servidor:
+
+```bash
+pm2 startup
+```
+
+O comando exibirá uma linha como `sudo env PATH=... pm2 startup systemd -u ubuntu --hp /home/ubuntu`. **Copie e execute essa linha** (com sudo). Depois:
+
+```bash
+pm2 save
+```
+
+A partir daí, após cada reboot o PM2 subirá sozinho e restaurará bcg-api e bcg-web. O `deploy.sh` já chama `pm2 save` ao final.
+
+**Se a API não subiu após o reboot:** rode `./deploy.sh` manualmente (ou `pm2 resurrect` se o PM2 já estiver rodando mas os processos não).
+
 ## SERVER_REBOOT (System restart required)
 
 Quando o Ubuntu mostrar **"*** System restart required ***"** no login (após updates de kernel, etc.):
@@ -1368,7 +1386,7 @@ Quando o Ubuntu mostrar **"*** System restart required ***"** no login (após up
 sudo reboot
 ```
 
-Após o reboot, reconectar via SSH e rodar o deploy: `cd ~/bcg-site && git pull origin develop && ./deploy.sh`.
+Após o reboot, reconectar via SSH. **Se PM2 startup foi configurado** (ver PM2_STARTUP acima), bcg-api e bcg-web já estarão rodando. Caso contrário, rodar: `cd ~/bcg-site && git pull origin develop && ./deploy.sh`.
 
 ## SERVER_500_ERRO_AO_CONECTAR (Login 500 / "Erro ao conectar" no servidor)
 

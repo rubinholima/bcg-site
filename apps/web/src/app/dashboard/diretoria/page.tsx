@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -117,28 +117,58 @@ export default function DiretoriaPage() {
   const { canAccessModule, loading: authLoading } = useAuth();
   const [data, setData] = useState<DiretoriaDashboard | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchDashboard = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    api
+      .get<DiretoriaDashboard>("/diretoria/dashboard", { signal: controller.signal })
+      .then(({ data: d }) => {
+        setData(d ?? null);
+        setError(null);
+      })
+      .catch((err) => {
+        setData(null);
+        setError(err?.message || "Erro ao carregar o relatório. Verifique se a API está online.");
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     if (!canAccessModule("diretoria") && !authLoading) return;
-    setLoading(true);
-    api
-      .get<DiretoriaDashboard>("/diretoria/dashboard")
-      .then(({ data: d }) => setData(d ?? null))
-      .catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, [canAccessModule, authLoading]);
+    fetchDashboard();
+  }, [canAccessModule, authLoading, fetchDashboard]);
 
   if (!canAccessModule("diretoria") && !authLoading) {
     router.replace("/403");
     return null;
   }
 
-  if (loading || !data) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-24">
         <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
       </div>
     );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4">
+        <p className="text-destructive text-center max-w-md">{error}</p>
+        <Button onClick={fetchDashboard}>Tentar novamente</Button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return null;
   }
 
   const { summary, clubs, empresas, chartClubs, chartEmpresas, chartGrowth } = data;
