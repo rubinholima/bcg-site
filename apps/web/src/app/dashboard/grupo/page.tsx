@@ -92,6 +92,7 @@ export default function GrupoPage() {
       const form = new FormData();
       form.append("file", file);
       form.append("scope", "group");
+      form.append("displayName", group?.name ?? "Boston City Group");
       const res = await authFetch("/api/upload/logo", {
         method: "POST",
         body: form,

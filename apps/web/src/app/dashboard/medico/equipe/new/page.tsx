@@ -28,6 +28,14 @@ export default function NovoMedicoEquipePage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [photoUrl, setPhotoUrl] = useState("");
   const [role, setRole] = useState("");
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!pendingPhotoFile) { setPendingPreviewUrl(null); return; }
+    const url = URL.createObjectURL(pendingPhotoFile);
+    setPendingPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingPhotoFile]);
   const [form, setForm] = useState({
     name: "",
     crmCoren: "",
@@ -53,15 +61,37 @@ export default function NovoMedicoEquipePage() {
       setError("Nome e cargo são obrigatórios.");
       return;
     }
+    if (pendingPhotoFile && !form.name?.trim()) {
+      setError("Preencha o nome completo antes de salvar a foto.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
+      let finalPhotoUrl = photoUrl.trim() || undefined;
+      if (pendingPhotoFile && form.name?.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingPhotoFile);
+        formData.append("sizeKey", "medico");
+        formData.append("displayName", getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico));
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const data = (await res.json()) as { url?: string; message?: string; error?: string };
+        if (!res.ok) {
+          setError(data?.message ?? data?.error ?? "Erro ao enviar foto.");
+          setLoading(false);
+          return;
+        }
+        if (data?.url) {
+          finalPhotoUrl = data.url;
+          setPendingPhotoFile(null);
+        }
+      }
       const { data } = await api.post<{ id: string }>("/medical-staff", {
         name: form.name.trim(),
         role,
         crmCoren: form.crmCoren.trim() || undefined,
         specialty: form.specialty.trim() || undefined,
-        photoUrl: photoUrl.trim() || undefined,
+        photoUrl: finalPhotoUrl,
         birthDate: form.birthDate.trim() || undefined,
         cpf: form.cpf.trim() || undefined,
         rg: form.rg.trim() || undefined,
@@ -108,18 +138,6 @@ export default function NovoMedicoEquipePage() {
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
             )}
 
-            <div className="space-y-2">
-              <Label>Foto</Label>
-              <PhotoUploadWithName
-                sizeKey="medico"
-                value={photoUrl}
-                onChange={setPhotoUrl}
-                disabled={loading}
-                namePlaceholder="Ex: foto-dr-joao-silva"
-                displayNameAuto={getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico) || undefined}
-              />
-            </div>
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome completo *</Label>
@@ -146,6 +164,22 @@ export default function NovoMedicoEquipePage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="medico"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                disabled={loading}
+                namePlaceholder="Ex: foto-dr-joao-silva"
+                deferredUpload
+                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
+                pendingFile={pendingPhotoFile}
+                requireNameToUpload={form.name}
+                displayNameAuto={getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico) || undefined}
+              />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

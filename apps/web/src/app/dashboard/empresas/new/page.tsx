@@ -104,6 +104,8 @@ export default function NovaEmpresaPage() {
         const form = new FormData();
         form.append("file", logoFile);
         form.append("scope", tenant.id);
+        const displayName = [formData.name, formData.country, formData.city].filter(Boolean).join(" - ") || formData.name;
+        if (displayName) form.append("displayName", displayName);
         const res = await fetch("/api/upload/logo", {
           method: "POST",
           credentials: "include",

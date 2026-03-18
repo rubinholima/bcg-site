@@ -25,6 +25,14 @@ export default function EditarPsicologoPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!pendingPhotoFile) { setPendingPreviewUrl(null); return; }
+    const url = URL.createObjectURL(pendingPhotoFile);
+    setPendingPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingPhotoFile]);
   const [consultationsFromSystem, setConsultationsFromSystem] = useState<Array<{
     id: string;
     date?: string;
@@ -108,16 +116,39 @@ export default function EditarPsicologoPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!psychologist) return;
+    if (pendingPhotoFile && !psychologist.name?.trim()) {
+      setError("Preencha o nome antes de salvar a foto.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
+      let photoUrl = psychologist.photoUrl ?? undefined;
+      if (pendingPhotoFile && psychologist.name?.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingPhotoFile);
+        formData.append("sizeKey", "psicologia");
+        formData.append("displayName", getPhotoDisplayName(psychologist.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia));
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const data = (await res.json()) as { url?: string; message?: string; error?: string };
+        if (!res.ok) {
+          setError(data?.message ?? data?.error ?? "Erro ao enviar foto.");
+          setSaving(false);
+          return;
+        }
+        if (data?.url) {
+          photoUrl = data.url;
+          setPendingPhotoFile(null);
+          setPsychologist((p) => (p ? { ...p, photoUrl: data.url ?? null } : p));
+        }
+      }
       await api.patch(`/psychologists/${psychologist.id}`, {
         name: psychologist.name,
         email: psychologist.email ?? undefined,
         phone: psychologist.phone ?? undefined,
         crpOrEquivalent: psychologist.crpOrEquivalent ?? undefined,
         bio: psychologist.bio ?? undefined,
-        photoUrl: psychologist.photoUrl ?? undefined,
+        photoUrl,
         tenantId: psychologist.tenantId ?? undefined,
         calendarBlocked: psychologist.calendarBlocked,
         attendanceLog: attendanceLog.length > 0 ? attendanceLog : undefined,
@@ -147,10 +178,10 @@ export default function EditarPsicologoPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          {psychologist.photoUrl ? (
+          {(pendingPreviewUrl || psychologist.photoUrl) ? (
             <div className="h-14 w-14 rounded-full overflow-hidden bg-muted border-2 border-border flex items-center justify-center">
               <img
-                src={getPublicImageUrl(psychologist.photoUrl)}
+                src={pendingPreviewUrl ?? getPublicImageUrl(psychologist.photoUrl!)}
                 alt=""
                 className="h-full w-full object-cover"
               />
@@ -184,17 +215,6 @@ export default function EditarPsicologoPage() {
             <CardDescription>Estes dados populam a seleção de psicólogo em consultas e e-mails.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Foto</Label>
-              <PhotoUploadWithName
-                sizeKey="psicologia"
-                value={psychologist.photoUrl ?? ""}
-                onChange={(v) => setPsychologist((p) => (p ? { ...p, photoUrl: v || null } : p))}
-                disabled={saving}
-                namePlaceholder="Ex: foto-nome-do-psicologo"
-                displayNameAuto={getPhotoDisplayName(psychologist.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia) || undefined}
-              />
-            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome *</Label>
@@ -204,6 +224,7 @@ export default function EditarPsicologoPage() {
                   value={psychologist.name}
                   onChange={(e) => setPsychologist((p) => (p ? { ...p, name: e.target.value } : p))}
                   disabled={saving}
+                  className="text-foreground"
                 />
               </div>
               <div className="space-y-2">
@@ -213,8 +234,25 @@ export default function EditarPsicologoPage() {
                   value={psychologist.crpOrEquivalent ?? ""}
                   onChange={(e) => setPsychologist((p) => (p ? { ...p, crpOrEquivalent: e.target.value || null } : p))}
                   disabled={saving}
+                  className="text-foreground"
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="psicologia"
+                value={psychologist.photoUrl ?? ""}
+                onChange={(v) => setPsychologist((p) => (p ? { ...p, photoUrl: v || null } : p))}
+                disabled={saving}
+                namePlaceholder="Ex: foto-nome-do-psicologo"
+                deferredUpload
+                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
+                pendingFile={pendingPhotoFile}
+                requireNameToUpload={psychologist.name}
+                displayNameAuto={getPhotoDisplayName(psychologist.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia) || undefined}
+                hidePreview
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

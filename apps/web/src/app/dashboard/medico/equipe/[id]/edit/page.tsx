@@ -32,6 +32,14 @@ export default function EditarMedicoEquipePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!pendingPhotoFile) { setPendingPreviewUrl(null); return; }
+    const url = URL.createObjectURL(pendingPhotoFile);
+    setPendingPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingPhotoFile]);
   useEffect(() => {
     if (!id) return;
     Promise.all([
@@ -49,15 +57,38 @@ export default function EditarMedicoEquipePage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!staff) return;
+    if (pendingPhotoFile && !staff.name?.trim()) {
+      setError("Preencha o nome completo antes de salvar a foto.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
+      let photoUrl = staff.photoUrl ?? undefined;
+      if (pendingPhotoFile && staff.name?.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingPhotoFile);
+        formData.append("sizeKey", "medico");
+        formData.append("displayName", getPhotoDisplayName(staff.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico));
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const data = (await res.json()) as { url?: string; message?: string; error?: string };
+        if (!res.ok) {
+          setError(data?.message ?? data?.error ?? "Erro ao enviar foto.");
+          setSaving(false);
+          return;
+        }
+        if (data?.url) {
+          photoUrl = data.url;
+          setPendingPhotoFile(null);
+          setStaff((p) => (p ? { ...p, photoUrl } : p));
+        }
+      }
       await api.patch(`/medical-staff/${staff.id}`, {
         name: staff.name,
         role: staff.role,
         crmCoren: staff.crmCoren ?? undefined,
         specialty: staff.specialty ?? undefined,
-        photoUrl: staff.photoUrl ?? undefined,
+        photoUrl,
         birthDate: staff.birthDate ?? undefined,
         cpf: staff.cpf ?? undefined,
         rg: staff.rg ?? undefined,
@@ -92,10 +123,10 @@ export default function EditarMedicoEquipePage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          {staff.photoUrl ? (
+          {(pendingPreviewUrl || staff.photoUrl) ? (
             <div className="h-14 w-14 rounded-full overflow-hidden bg-muted border-2 border-border flex items-center justify-center">
               <img
-                src={getPublicImageUrl(staff.photoUrl)}
+                src={pendingPreviewUrl ?? getPublicImageUrl(staff.photoUrl!)}
                 alt=""
                 className="h-full w-full object-cover"
               />
@@ -129,17 +160,6 @@ export default function EditarMedicoEquipePage() {
             <CardDescription>Estes dados permitem identificar o profissional em atendimentos e na equipe médica.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Foto</Label>
-              <PhotoUploadWithName
-                sizeKey="medico"
-                value={staff.photoUrl ?? ""}
-                onChange={(v) => setStaff((p) => (p ? { ...p, photoUrl: v || null } : p))}
-                disabled={saving}
-                namePlaceholder="Ex: foto-dr-joao-silva"
-                displayNameAuto={getPhotoDisplayName(staff.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico) || undefined}
-              />
-            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome completo *</Label>
@@ -165,6 +185,22 @@ export default function EditarMedicoEquipePage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="medico"
+                value={staff.photoUrl ?? ""}
+                onChange={(v) => setStaff((p) => (p ? { ...p, photoUrl: v || null } : p))}
+                disabled={saving}
+                namePlaceholder="Ex: foto-dr-joao-silva"
+                deferredUpload
+                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
+                pendingFile={pendingPhotoFile}
+                requireNameToUpload={staff.name}
+                displayNameAuto={getPhotoDisplayName(staff.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico) || undefined}
+                hidePreview
+              />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

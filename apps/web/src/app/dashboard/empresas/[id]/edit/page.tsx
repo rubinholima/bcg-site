@@ -147,6 +147,8 @@ export default function EditEmpresaPage() {
       const form = new FormData();
       form.append("file", file);
       form.append("scope", id);
+      const displayName = [formData.name, formData.country, formData.city].filter(Boolean).join(" - ") || formData.name;
+      if (displayName) form.append("displayName", displayName);
       const res = await fetch("/api/upload/logo", {
         method: "POST",
         credentials: "include",

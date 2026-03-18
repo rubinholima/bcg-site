@@ -37,6 +37,7 @@ export default function NewComissaoPage() {
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [birthDate, setBirthDate] = useState("");
   const [nationality, setNationality] = useState("");
   const [cpf, setCpf] = useState("");
@@ -71,16 +72,38 @@ export default function NewComissaoPage() {
       setError("Clube, nome e função são obrigatórios.");
       return;
     }
+    if (pendingPhotoFile && !name?.trim()) {
+      setError("Preencha o nome completo antes de salvar a foto.");
+      return;
+    }
     setLoading(true);
     setError(null);
 
     try {
+      let finalPhotoUrl = photoUrl.trim() || undefined;
+      if (pendingPhotoFile && name?.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingPhotoFile);
+        formData.append("sizeKey", "comissao");
+        formData.append("displayName", getPhotoDisplayName(name, PHOTO_DEPARTMENT_BY_SIZE_KEY.comissao));
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const dataRes = (await res.json()) as { url?: string; message?: string; error?: string };
+        if (!res.ok) {
+          setError(dataRes?.message ?? dataRes?.error ?? "Erro ao enviar foto.");
+          setLoading(false);
+          return;
+        }
+        if (dataRes?.url) {
+          finalPhotoUrl = dataRes.url;
+          setPendingPhotoFile(null);
+        }
+      }
       const { data } = await api.post<{ id: string }>("/technical-staff", {
         tenantId,
         name: name.trim(),
         role: role.trim(),
         categories: categories.length ? categories : undefined,
-        photoUrl: photoUrl.trim() || undefined,
+        photoUrl: finalPhotoUrl,
         birthDate: birthDate.trim() || undefined,
         nationality: nationality.trim() || undefined,
         cpf: cpf.trim() || undefined,
@@ -149,6 +172,10 @@ export default function NewComissaoPage() {
                 onChange={setPhotoUrl}
                 disabled={loading}
                 namePlaceholder="Ex: foto-joao-silva"
+                deferredUpload
+                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
+                pendingFile={pendingPhotoFile}
+                requireNameToUpload={name}
                 displayNameAuto={getPhotoDisplayName(name, PHOTO_DEPARTMENT_BY_SIZE_KEY.comissao) || undefined}
               />
             </div>

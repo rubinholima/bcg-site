@@ -15,6 +15,7 @@ import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { GroupService } from '../group/group.service';
+import { MediaMetaService } from '../media/media-meta.service';
 import { S3Service } from '../s3/s3.service';
 import { TenantsService } from '../tenants/tenants.service';
 
@@ -25,6 +26,7 @@ export class UploadController {
     private readonly s3: S3Service,
     private readonly tenantsService: TenantsService,
     private readonly groupService: GroupService,
+    private readonly mediaMeta: MediaMetaService,
   ) {}
 
   /**
@@ -40,6 +42,7 @@ export class UploadController {
   async uploadLogo(
     @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
     @Body('scope') scope: string | undefined,
+    @Body('displayName') displayName: string | undefined,
     @Req() req: Request,
   ) {
     if (!file?.buffer) {
@@ -84,6 +87,12 @@ export class UploadController {
       await this.groupService.updateLogoUrl('bcg', url);
     } else {
       await this.tenantsService.updateLogoUrl(scopeTrim, url);
+    }
+
+    const displayNameTrim =
+      typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
+    if (displayNameTrim) {
+      await this.mediaMeta.setDisplayName(key, displayNameTrim);
     }
 
     return { url, key };

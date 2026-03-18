@@ -26,6 +26,7 @@ export default function NovoPsicologoPage() {
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [photoUrl, setPhotoUrl] = useState("");
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -42,16 +43,38 @@ export default function NovoPsicologoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (pendingPhotoFile && !form.name?.trim()) {
+      setError("Preencha o nome antes de salvar a foto.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
+      let finalPhotoUrl = photoUrl.trim() || undefined;
+      if (pendingPhotoFile && form.name?.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingPhotoFile);
+        formData.append("sizeKey", "psicologia");
+        formData.append("displayName", getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia));
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const data = (await res.json()) as { url?: string; message?: string; error?: string };
+        if (!res.ok) {
+          setError(data?.message ?? data?.error ?? "Erro ao enviar foto.");
+          setLoading(false);
+          return;
+        }
+        if (data?.url) {
+          finalPhotoUrl = data.url;
+          setPendingPhotoFile(null);
+        }
+      }
       await api.post("/psychologists", {
         name: form.name.trim(),
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         crpOrEquivalent: form.crpOrEquivalent.trim() || undefined,
         bio: form.bio.trim() || undefined,
-        photoUrl: photoUrl.trim() || undefined,
+        photoUrl: finalPhotoUrl || undefined,
         tenantId: form.tenantId.trim() || undefined,
         calendarBlocked: form.calendarBlocked,
       });
@@ -90,18 +113,6 @@ export default function NovoPsicologoPage() {
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
             )}
-
-            <div className="space-y-2">
-              <Label>Foto</Label>
-              <PhotoUploadWithName
-                sizeKey="psicologia"
-                value={photoUrl}
-                onChange={setPhotoUrl}
-                disabled={loading}
-                namePlaceholder="Ex: foto-nome-do-psicologo"
-                displayNameAuto={getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia) || undefined}
-              />
-            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -154,6 +165,22 @@ export default function NovoPsicologoPage() {
                   className="text-foreground"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="psicologia"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                disabled={loading}
+                namePlaceholder="Ex: foto-nome-do-psicologo"
+                deferredUpload
+                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
+                pendingFile={pendingPhotoFile}
+                requireNameToUpload={form.name}
+                displayNameAuto={getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia) || undefined}
+              />
             </div>
 
             <div className="space-y-2">

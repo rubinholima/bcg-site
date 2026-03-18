@@ -9,5 +9,6 @@ import { MediaMetaService } from './media-meta.service';
   imports: [PrismaModule, AuthModule, S3Module],
   controllers: [MediaController],
   providers: [MediaMetaService],
+  exports: [MediaMetaService],
 })
 export class MediaModule {}
