@@ -352,8 +352,9 @@ export default function EditJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
           <Link href="/dashboard/cadastros/jogadores">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
@@ -387,7 +388,7 @@ export default function EditJogadorPage() {
         </Button>
       </div>
 
-      {error && (
+        {error && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
           {error}
         </div>
@@ -414,6 +415,7 @@ export default function EditJogadorPage() {
             </button>
           );
         })}
+        </div>
       </div>
 
       {/* Tab: Dados base */}

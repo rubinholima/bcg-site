@@ -171,7 +171,8 @@ export default function EditarPsicologoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
             <Link href="/dashboard/psicologia/psicologos">
@@ -202,6 +203,7 @@ export default function EditarPsicologoPage() {
         <Button type="submit" form="form-psychologist" disabled={saving}>
           {saving ? "Salvando..." : "Salvar alterações"}
         </Button>
+      </div>
       </div>
 
       <form id="form-psychologist" onSubmit={handleSave} className="space-y-6">

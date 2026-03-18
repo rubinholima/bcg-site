@@ -223,23 +223,35 @@ export default function EditComissaoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/futebol/comissao">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar comissão técnica</h1>
-          <p className="text-muted-foreground">
-            {staff.name} — {staff.tenant?.name ?? staff.tenantId}
-          </p>
+      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/futebol/comissao">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Editar comissão técnica</h1>
+            <p className="text-muted-foreground">
+              {staff.name} — {staff.tenant?.name ?? staff.tenantId}
+            </p>
+          </div>
         </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
+        <Button type="submit" form="form-comissao" disabled={saving}>
+          {saving ? "Salvando..." : "Salvar"}
+        </Button>
+        </div>
         {error && (
           <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+      </div>
+
+      <form id="form-comissao" onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive sm:hidden">
             {error}
           </div>
         )}

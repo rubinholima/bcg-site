@@ -135,7 +135,8 @@ export default function MedicoPlayerPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="flex items-center gap-4">
         <Link href="/dashboard/medico">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
@@ -182,13 +183,15 @@ export default function MedicoPlayerPage() {
             {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>
-      </div>
+        </div>
 
-      {error && (
+        {error && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
           {error}
         </div>
-      )}
+        )}
+
+      </div>
 
       {successBanner && (
         <div className="rounded-md bg-emerald-500/20 border border-emerald-500/40 p-3 text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">

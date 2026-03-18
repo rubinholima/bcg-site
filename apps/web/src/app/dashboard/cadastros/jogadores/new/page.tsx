@@ -92,7 +92,8 @@ export default function NewJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+        <div className="flex items-center gap-4">
         <Link href="/dashboard/cadastros/jogadores">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
@@ -104,6 +105,10 @@ export default function NewJogadorPage() {
             Cadastre um atleta. Após criar, edite para preencher histórico médico, avaliações e desempenho.
           </p>
         </div>
+        <Button type="submit" form="form-jogador-new" disabled={loading || !tenantId.trim() || !name.trim()}>
+          {loading ? "Cadastrando..." : "Cadastrar"}
+        </Button>
+      </div>
       </div>
 
       <Card>
@@ -114,7 +119,7 @@ export default function NewJogadorPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="form-jogador-new" onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                 {error}
