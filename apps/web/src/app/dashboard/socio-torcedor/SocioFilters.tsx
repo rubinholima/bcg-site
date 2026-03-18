@@ -46,7 +46,7 @@ export function SocioFilters({
   const [tenants, setTenants] = useState<Tenant[]>([]);
 
   useEffect(() => {
-    api.get<Tenant[]>("/tenants").then(({ data }) => {
+    api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
       const list = Array.isArray(data) ? data : [];
       setTenants(list.filter((t) => isClubForSocio(t.kind?.name)));
     });

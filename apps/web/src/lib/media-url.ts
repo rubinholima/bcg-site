@@ -77,3 +77,16 @@ export function isSvgUrl(url?: string | null): boolean {
   const v = String(url).toLowerCase();
   return v.endsWith(".svg") || v.includes(".svg?");
 }
+
+/** Extrai a key S3 do URL da mídia (para PATCH displayName). */
+export function urlToMediaKey(url: string | undefined | null): string {
+  if (!url || typeof url !== "string") return "";
+  const t = url.trim();
+  if (!t) return "";
+  try {
+    const path = t.startsWith("http") ? new URL(t).pathname : t.startsWith("/") ? t : `/${t}`;
+    return path.startsWith("/") ? path.slice(1) : path;
+  } catch {
+    return t.replace(/^\//, "");
+  }
+}

@@ -32,7 +32,7 @@ export function ComissaoFilters() {
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
 
   useEffect(() => {
-    api.get<Tenant[]>("/tenants").then(({ data }) => {
+    api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
   }, []);

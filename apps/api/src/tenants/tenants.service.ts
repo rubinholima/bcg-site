@@ -74,7 +74,14 @@ export class TenantsService {
   /** Slug do Grupo Master — não é empresa; nunca listar na lista de tenants. */
   private static readonly GROUP_MASTER_SLUG = 'bcg';
 
-  async findAll(): Promise<TenantResponseDto[]> {
+  /** Considera "clube" se o tipo contiver futebol/clube/football. */
+  private static isClubKind(kindName: string | null): boolean {
+    if (!kindName) return false;
+    const k = kindName.toLowerCase();
+    return k.includes('futebol') || k.includes('clube') || k.includes('football');
+  }
+
+  async findAll(clubsOnly = false): Promise<TenantResponseDto[]> {
     try {
       const tenants = await this.prisma.$queryRaw<TenantRow[]>`
         SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
@@ -86,7 +93,10 @@ export class TenantsService {
         WHERE t.slug != ${TenantsService.GROUP_MASTER_SLUG}
         ORDER BY t.name ASC
       `;
-      return tenants.map(mapRow);
+      const filtered = clubsOnly
+        ? tenants.filter((row) => TenantsService.isClubKind(row.kindName))
+        : tenants;
+      return filtered.map(mapRow);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(

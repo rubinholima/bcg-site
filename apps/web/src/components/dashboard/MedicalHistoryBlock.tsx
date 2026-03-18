@@ -19,6 +19,14 @@ import {
   type MedicalProfile,
   type MedicalEntry,
 } from "./player-module-types";
+import { MEDICAL_STAFF_ROLES } from "@/lib/medical-staff-roles";
+
+export interface MedicalStaffOption {
+  id: string;
+  name: string;
+  role: string;
+  crmCoren?: string | null;
+}
 
 function isFieldPublic(
   publicFields: Record<string, boolean> | null | undefined,
@@ -33,10 +41,16 @@ interface MedicalHistoryBlockProps {
   publicFields?: Record<string, boolean> | null;
   onUpdate: (patch: { medicalHistory?: { profile: MedicalProfile; records: MedicalEntry[] }; publicFields?: Record<string, boolean> }) => void;
   showPublicToggle?: boolean;
+  /** Lista de profissionais do Depto Médico para preencher "quem atendeu" */
+  medicalStaff?: MedicalStaffOption[];
   /** Contato de emergência (vem do cadastro do jogador — só leitura aqui) */
   emergencyContactName?: string | null;
   emergencyContactEmail?: string | null;
   emergencyContactPhone?: string | null;
+}
+
+function getRoleLabel(roleValue: string): string {
+  return MEDICAL_STAFF_ROLES.find((r) => r.value === roleValue)?.label ?? roleValue;
 }
 
 export function MedicalHistoryBlock({
@@ -44,6 +58,7 @@ export function MedicalHistoryBlock({
   publicFields,
   onUpdate,
   showPublicToggle = true,
+  medicalStaff = [],
   emergencyContactName,
   emergencyContactEmail,
   emergencyContactPhone,
@@ -235,6 +250,89 @@ export function MedicalHistoryBlock({
                     onUpdate({ medicalHistory: { profile: medicalProfile, records: next } });
                   }}
                 />
+              </div>
+              <div className="rounded-md border border-dashed border-border/60 bg-muted/20 p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Quem atendeu</p>
+                {medicalStaff.length > 0 && (
+                  <Select
+                    value={
+                      (entry.attendedByName || entry.attendedByRole || entry.attendedByCrm)
+                        ? medicalStaff.find(
+                            (s) =>
+                              s.name === (entry.attendedByName ?? "") &&
+                              s.role === (entry.attendedByRole ?? "") &&
+                              (s.crmCoren ?? "") === (entry.attendedByCrm ?? "")
+                          )?.id ?? "__manual__"
+                        : "__manual__"
+                    }
+                    onValueChange={(v) => {
+                      const next = [...medicalList];
+                      const rec = next[idx] as MedicalEntry;
+                      if (v === "__manual__") {
+                        rec.attendedByName = undefined;
+                        rec.attendedByRole = undefined;
+                        rec.attendedByCrm = undefined;
+                      } else {
+                        const staff = medicalStaff.find((s) => s.id === v);
+                        if (staff) {
+                          rec.attendedByName = staff.name;
+                          rec.attendedByRole = staff.role;
+                          rec.attendedByCrm = staff.crmCoren ?? undefined;
+                        }
+                      }
+                      onUpdate({ medicalHistory: { profile: medicalProfile, records: next } });
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-foreground">
+                      <SelectValue placeholder="Escolher profissional cadastrado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__manual__">— Ou preencher manualmente</SelectItem>
+                      {medicalStaff.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name} ({getRoleLabel(s.role)}){s.crmCoren ? ` — ${s.crmCoren}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <Input
+                    placeholder="Nome (ex: Dr. João Silva)"
+                    className="text-foreground h-9"
+                    value={entry.attendedByName ?? ""}
+                    onChange={(e) => {
+                      const next = [...medicalList];
+                      (next[idx] as MedicalEntry).attendedByName = e.target.value || undefined;
+                      onUpdate({ medicalHistory: { profile: medicalProfile, records: next } });
+                    }}
+                  />
+                  <Input
+                    placeholder="Cargo (ex: médico, enfermeiro)"
+                    className="text-foreground h-9"
+                    value={entry.attendedByRole ?? ""}
+                    onChange={(e) => {
+                      const next = [...medicalList];
+                      (next[idx] as MedicalEntry).attendedByRole = e.target.value || undefined;
+                      onUpdate({ medicalHistory: { profile: medicalProfile, records: next } });
+                    }}
+                  />
+                  <Input
+                    placeholder="CRM / COREN"
+                    className="text-foreground h-9"
+                    value={entry.attendedByCrm ?? ""}
+                    onChange={(e) => {
+                      const next = [...medicalList];
+                      (next[idx] as MedicalEntry).attendedByCrm = e.target.value || undefined;
+                      onUpdate({ medicalHistory: { profile: medicalProfile, records: next } });
+                    }}
+                  />
+                </div>
+                {(entry.attendedByName || entry.attendedByRole || entry.attendedByCrm) && (
+                  <p className="text-xs text-muted-foreground">
+                    Atendido por: {[entry.attendedByName, entry.attendedByRole, entry.attendedByCrm].filter(Boolean).join(" · ")}
+                  </p>
+                )}
               </div>
               <textarea
                 className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"

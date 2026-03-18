@@ -21,6 +21,7 @@ import { CadastrosModule } from './cadastros/cadastros.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychologistsModule } from './psychologists/psychologists.module';
+import { MedicalStaffModule } from './medical-staff/medical-staff.module';
 import { ComprasModule } from './compras/compras.module';
 import { RhModule } from './rh/rh.module';
 import { PatrimonioModule } from './patrimonio/patrimonio.module';
@@ -51,6 +52,7 @@ import { DiretoriaModule } from './diretoria/diretoria.module';
     IntegrationsModule,
     ConsultationsModule,
     PsychologistsModule,
+    MedicalStaffModule,
     ComprasModule,
     RhModule,
     PatrimonioModule,

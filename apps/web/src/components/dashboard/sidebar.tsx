@@ -68,6 +68,9 @@ export function Sidebar() {
   const [psicologiaOpen, setPsicologiaOpen] = useState(
     () => pathname?.startsWith("/dashboard/consultas") || pathname?.startsWith("/dashboard/psicologia")
   );
+  const [medicoOpen, setMedicoOpen] = useState(
+    () => pathname?.startsWith("/dashboard/medico")
+  );
   const [relatoriosOpen, setRelatoriosOpen] = useState(() => pathname?.startsWith("/dashboard/relatorios"));
   const [socioOpen, setSocioOpen] = useState(() => pathname?.startsWith("/dashboard/socio-torcedor"));
   const [marketingOpen, setMarketingOpen] = useState(() => pathname?.startsWith("/dashboard/marketing"));
@@ -245,13 +248,18 @@ export function Sidebar() {
                               ? analiseOpen
                               : child.slug === "psicologia"
                                 ? psicologiaOpen
-                                : true;
+                                : child.slug === "medico"
+                                  ? medicoOpen
+                                  : true;
                           const setSubOpen =
                             child.slug === "analise"
                               ? setAnaliseOpen
                               : child.slug === "psicologia"
                                 ? setPsicologiaOpen
-                                : () => {};
+                                : child.slug === "medico"
+                                  ? setMedicoOpen
+                                  : () => {};
+                          const hasExpandButton = ["analise", "psicologia", "medico"].includes(child.slug);
                           return (
                             <div key={child.slug} className="space-y-0.5">
                               <button
@@ -259,13 +267,14 @@ export function Sidebar() {
                                 onClick={() => {
                                   if (child.slug === "analise") setAnaliseOpen((o) => !o);
                                   if (child.slug === "psicologia") setPsicologiaOpen((o) => !o);
+                                  if (child.slug === "medico") setMedicoOpen((o) => !o);
                                 }}
                                 className={cn(
                                   "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                   "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 )}
                               >
-                                {(child.slug === "analise" || child.slug === "psicologia") ? (
+                                {hasExpandButton ? (
                                   isSubOpen ? (
                                     <ChevronDown className="h-4 w-4 shrink-0" aria-label="Recolher" />
                                   ) : (
@@ -275,7 +284,7 @@ export function Sidebar() {
                                 {SubIcon && <SubIcon className="h-4 w-4 shrink-0" />}
                                 <span>{child.label}</span>
                               </button>
-                              {(child.slug === "analise" || child.slug === "psicologia") && isSubOpen && (
+                              {hasExpandButton && isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">
                                   {(() => {
                                     let markedActiveHref: string | null = null;

@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MedicalHistoryBlock } from "@/components/dashboard/MedicalHistoryBlock";
+import { MedicalHistoryBlock, type MedicalStaffOption } from "@/components/dashboard/MedicalHistoryBlock";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
@@ -37,6 +37,7 @@ export default function MedicoPlayerPage() {
   const [error, setError] = useState<string | null>(null);
   const [successOpen, setSuccessOpen] = useState(false);
   const [successBanner, setSuccessBanner] = useState(false);
+  const [medicalStaff, setMedicalStaff] = useState<MedicalStaffOption[]>([]);
 
   useEffect(() => {
     if (!id || (!canAccessModule("medico") && !authLoading)) return;
@@ -47,6 +48,16 @@ export default function MedicoPlayerPage() {
       .catch(() => setPlayer(null))
       .finally(() => setLoading(false));
   }, [id, canAccessModule, authLoading]);
+
+  useEffect(() => {
+    if (!canAccessModule("medico") && !authLoading) return;
+    const tenantId = player?.tenant?.id;
+    const params = tenantId ? `?tenantId=${tenantId}` : "";
+    api
+      .get<MedicalStaffOption[]>(`/medical-staff${params}`)
+      .then(({ data }) => setMedicalStaff(Array.isArray(data) ? data : []))
+      .catch(() => setMedicalStaff([]));
+  }, [canAccessModule, authLoading, player?.tenant?.id]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -199,6 +210,7 @@ export default function MedicoPlayerPage() {
         publicFields={player.publicFields}
         onUpdate={handleUpdate}
         showPublicToggle={true}
+        medicalStaff={medicalStaff}
         emergencyContactName={player.emergencyContactName}
         emergencyContactEmail={player.emergencyContactEmail}
         emergencyContactPhone={player.emergencyContactPhone}

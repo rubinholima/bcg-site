@@ -33,6 +33,7 @@ import {
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
@@ -210,7 +211,6 @@ export default function EditJogadorPage() {
   }, [searchParams]);
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [tenantCategories, setTenantCategories] = useState<string[]>([]);
-
   useEffect(() => {
     async function load() {
       try {
@@ -433,16 +433,12 @@ export default function EditJogadorPage() {
               </div>
               <div className="flex-1 space-y-2">
                 <Label>Foto</Label>
-                <MediaPicker
+                <PhotoUploadWithName
                   sizeKey="jogadores"
                   value={player.photoUrl ?? ""}
                   onChange={(v) => update({ photoUrl: v || null })}
-                  placeholder="Escolher foto"
-                />
-                <Input
-                  placeholder="Ou URL"
-                  value={player.photoUrl ?? ""}
-                  onChange={(e) => update({ photoUrl: e.target.value || null })}
+                  urlPlaceholder="Ou URL"
+                  namePlaceholder="Ex: foto-nome-do-atleta"
                 />
               </div>
             </div>

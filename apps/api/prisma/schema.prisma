@@ -71,6 +71,7 @@ model Tenant {
   players                 Player[]
   psychologists           Psychologist[]
   technicalStaff          TechnicalStaff[]
+  medicalStaff            MedicalStaff[]
   suppliers               Supplier[]
   products                Product[]
   purchaseRequisitions    PurchaseRequisition[]
@@ -326,6 +327,30 @@ model TechnicalStaff {
   notes             String?   @db.Text
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  @@index([tenantId])
+  @@index([tenantId, role])
+}
+
+// Cadastro de médicos/enfermeiros/fisioterapeutas (Depto Médico) — popula seleção em atendimentos
+model MedicalStaff {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  name            String
+  role            String   // medico, enfermeiro, enfermeiro_tec, fisioterapeuta, nutricionista, fisiologista, massagista, outro
+  crmCoren        String?  // CRM (médico), COREN (enfermeiro), CREF (fisio), CRN (nutri), etc.
+  specialty       String?  // Especialidade (ex: ortopedia, cardiologia, enfermagem esportiva)
+  photoUrl        String?
+  birthDate       String?  // YYYY-MM-DD
+  cpf             String?
+  rg              String?
+  email           String?
+  phone           String?
+  address         String?  @db.Text
+  bio             String?  @db.Text
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   @@index([tenantId])
   @@index([tenantId, role])
 }

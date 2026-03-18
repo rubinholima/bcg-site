@@ -13,6 +13,8 @@ export const MEDIA_PLACEHOLDER_SIZES = {
   jogadores: { label: "Jogadores (fotos)", dimensions: "800×600" },
   jogadores_apoio: { label: "Imagens de apoio (jogadores)", dimensions: "800×600" },
   comissao: { label: "Comissão técnica (fotos)", dimensions: "800×600" },
+  medico: { label: "Depto médico (fotos)", dimensions: "800×600" },
+  psicologia: { label: "Psicologia (fotos)", dimensions: "800×600" },
   cta: { label: "CTA / chamada", dimensions: "1200×630" },
   gallery: { label: "Galeria", dimensions: "1200×800" },
   galeria_clubes: { label: "Galeria fotos clubes", dimensions: "1200×800" },

@@ -48,7 +48,7 @@ export function JuridicoFilters({
   const [docStatus, setDocStatus] = useState(searchParams.get("docStatus") ?? "");
 
   useEffect(() => {
-    api.get<Tenant[]>("/tenants").then(({ data }) => {
+    api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
   }, []);

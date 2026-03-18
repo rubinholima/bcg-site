@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
@@ -38,9 +39,10 @@ export class TenantsController {
   }
 
   @Get()
-  async findAll() {
+  async findAll(@Query('clubsOnly') clubsOnly?: string) {
     try {
-      return await this.tenantsService.findAll();
+      const clubsOnlyBool = clubsOnly === '1' || clubsOnly === 'true';
+      return await this.tenantsService.findAll(clubsOnlyBool);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(`GET /tenants: ${msg}`);

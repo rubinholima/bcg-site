@@ -191,9 +191,24 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       {
         slug: "medico",
         label: "Depto Médico",
-        href: "/dashboard/medico",
         icon: Stethoscope,
         moduleSlug: "medico",
+        children: [
+          {
+            slug: "medico_historico",
+            label: "Histórico médico",
+            href: "/dashboard/medico",
+            icon: Stethoscope,
+            moduleSlug: "medico",
+          },
+          {
+            slug: "medico_equipe",
+            label: "Médicos e equipe",
+            href: "/dashboard/medico/equipe",
+            icon: UserCircle,
+            moduleSlug: "medico",
+          },
+        ],
       },
       {
         slug: "psicologia",

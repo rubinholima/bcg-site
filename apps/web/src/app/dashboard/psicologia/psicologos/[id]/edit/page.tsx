@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPublicImageUrl } from "@/lib/media-url";
 import type { Psychologist } from "@/types/psychologist";
 import type { AttendanceLogEntry, PerformanceSheet } from "@/types/psychologist";
@@ -32,12 +33,11 @@ export default function EditarPsicologoPage() {
     status?: string;
     notes?: string;
   }>>([]);
-
   useEffect(() => {
     if (!id) return;
     Promise.all([
       api.get<Psychologist>(`/psychologists/${id}`).then(({ data }) => data),
-      api.get<Tenant[]>("/tenants").then(({ data }) => Array.isArray(data) ? data : []),
+      api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => Array.isArray(data) ? data : []),
     ])
       .then(([p, t]) => {
         setPsychologist(p ?? null);
@@ -116,6 +116,7 @@ export default function EditarPsicologoPage() {
         phone: psychologist.phone ?? undefined,
         crpOrEquivalent: psychologist.crpOrEquivalent ?? undefined,
         bio: psychologist.bio ?? undefined,
+        photoUrl: psychologist.photoUrl ?? undefined,
         tenantId: psychologist.tenantId ?? undefined,
         calendarBlocked: psychologist.calendarBlocked,
         attendanceLog: attendanceLog.length > 0 ? attendanceLog : undefined,
@@ -182,6 +183,16 @@ export default function EditarPsicologoPage() {
             <CardDescription>Estes dados populam a seleção de psicólogo em consultas e e-mails.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="psicologia"
+                value={psychologist.photoUrl ?? ""}
+                onChange={(v) => setPsychologist((p) => (p ? { ...p, photoUrl: v || null } : p))}
+                disabled={saving}
+                namePlaceholder="Ex: foto-nome-do-psicologo"
+              />
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome *</Label>

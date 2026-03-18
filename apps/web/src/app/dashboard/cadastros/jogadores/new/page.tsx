@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 
 interface Tenant {
@@ -37,7 +37,7 @@ export default function NewJogadorPage() {
   const [photoUrl, setPhotoUrl] = useState("");
 
   useEffect(() => {
-    api.get<Tenant[]>("/tenants").then(({ data }) => {
+    api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
   }, []);
@@ -172,18 +172,12 @@ export default function NewJogadorPage() {
 
             <div className="space-y-2">
               <Label>Foto</Label>
-              <MediaPicker
+              <PhotoUploadWithName
                 sizeKey="jogadores"
                 value={photoUrl}
                 onChange={setPhotoUrl}
-                placeholder="Escolher imagem"
-              />
-              <Input
-                className="mt-1"
-                placeholder="Ou colar URL da foto"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
                 disabled={loading}
+                namePlaceholder="Ex: foto-nome-do-atleta"
               />
             </div>
 

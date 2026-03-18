@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import type { Tenant } from "@/types/tenant";
 
 export default function NovoPsicologoPage() {
@@ -23,6 +24,7 @@ export default function NovoPsicologoPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [photoUrl, setPhotoUrl] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -34,7 +36,7 @@ export default function NovoPsicologoPage() {
   });
 
   useEffect(() => {
-    api.get<Tenant[]>("/tenants").then(({ data }) => setTenants(Array.isArray(data) ? data : [])).catch(() => setTenants([]));
+    api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => setTenants(Array.isArray(data) ? data : [])).catch(() => setTenants([]));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,6 +50,7 @@ export default function NovoPsicologoPage() {
         phone: form.phone.trim() || undefined,
         crpOrEquivalent: form.crpOrEquivalent.trim() || undefined,
         bio: form.bio.trim() || undefined,
+        photoUrl: photoUrl.trim() || undefined,
         tenantId: form.tenantId.trim() || undefined,
         calendarBlocked: form.calendarBlocked,
       });
@@ -86,6 +89,17 @@ export default function NovoPsicologoPage() {
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
             )}
+
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="psicologia"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                disabled={loading}
+                namePlaceholder="Ex: foto-nome-do-psicologo"
+              />
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { STAFF_ROLES, CONTRACT_TYPES } from "@/lib/staff-roles";
 
@@ -87,11 +87,10 @@ export default function EditComissaoPage() {
   const [contractEnd, setContractEnd] = useState("");
   const [bio, setBio] = useState("");
   const [notes, setNotes] = useState("");
-
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      api.get<Tenant[]>("/tenants"),
+      api.get<Tenant[]>("/tenants?clubsOnly=1"),
       api.get<StaffData>(`/technical-staff/${id}`),
     ])
       .then(([tenantsRes, staffRes]) => {
@@ -101,7 +100,8 @@ export default function EditComissaoPage() {
         setName(s.name ?? "");
         setRole(s.role ?? "");
         setCategories(Array.isArray(s.categories) ? s.categories : []);
-        setPhotoUrl(s.photoUrl ?? "");
+        const url = s.photoUrl ?? "";
+        setPhotoUrl(url);
         setBirthDate(s.birthDate ?? "");
         setNationality(s.nationality ?? "");
         setCpf(s.cpf ?? "");
@@ -220,6 +220,17 @@ export default function EditComissaoPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="comissao"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                disabled={saving}
+                namePlaceholder="Ex: foto-joao-silva"
+              />
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Clube</Label>
@@ -336,22 +347,6 @@ export default function EditComissaoPage() {
               <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} disabled={saving} />
             </div>
 
-            <div className="space-y-2">
-              <Label>Foto</Label>
-              <MediaPicker
-                sizeKey="comissao"
-                value={photoUrl}
-                onChange={setPhotoUrl}
-                placeholder="Escolher imagem"
-              />
-              <Input
-                className="mt-1"
-                placeholder="Ou colar URL da foto"
-                value={photoUrl}
-                onChange={(e) => setPhotoUrl(e.target.value)}
-                disabled={saving}
-              />
-            </div>
           </CardContent>
         </Card>
 

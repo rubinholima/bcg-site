@@ -34,6 +34,8 @@ interface MediaPickerProps {
   className?: string;
   /** Quando muda, recarrega a lista (ex: incrementar após upload para o novo aparecer no dropdown). */
   refreshTrigger?: unknown;
+  /** Oculta o link "Subir para mídia" quando a pasta está vazia. Use em cadastros que têm botão "Enviar nova foto" — o upload é direto. */
+  hideEmptyFolderHint?: boolean;
 }
 
 function filenameFromUrl(url: string): string {
@@ -57,6 +59,7 @@ export function MediaPicker({
   uploadFolderHint,
   galeriaSlug,
   refreshTrigger,
+  hideEmptyFolderHint = false,
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,7 +143,7 @@ export function MediaPicker({
             </SelectContent>
           </Select>
         </div>
-        {!loading && validItems.length === 0 && folder !== "logos" && (
+        {!loading && validItems.length === 0 && folder !== "logos" && !hideEmptyFolderHint && (
           <Link
             href={
               uploadFolderHint

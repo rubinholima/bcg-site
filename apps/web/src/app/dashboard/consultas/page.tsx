@@ -219,7 +219,7 @@ export default function ConsultasPage() {
 
   useEffect(() => {
     if (!canAccessModule("psicologia")) return;
-    api.get<TenantOption[]>("/tenants").then(({ data }) => {
+    api.get<TenantOption[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
     api.get<PlayerOption[]>("/players").then(({ data }) => {

@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
-import { MedicalHistoryBlock } from "@/components/dashboard/MedicalHistoryBlock";
+import { MedicalHistoryBlock, type MedicalStaffOption } from "@/components/dashboard/MedicalHistoryBlock";
 import { MedicoFilters } from "./MedicoFilters";
 
 interface Player {
@@ -42,6 +42,7 @@ export default function MedicoListPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [medicalStaff, setMedicalStaff] = useState<MedicalStaffOption[]>([]);
 
   const { canAccessModule, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -76,6 +77,16 @@ export default function MedicoListPage() {
       .catch(() => setSelectedPlayer(null))
       .finally(() => setLoadingPlayer(false));
   }, [selectedPlayerId]);
+
+  useEffect(() => {
+    if (!canAccessModule("medico") && !authLoading) return;
+    const tid = selectedPlayer?.tenantId ?? tenantId;
+    const params = tid ? `tenantId=${tid}` : "";
+    api
+      .get<MedicalStaffOption[]>(`/medical-staff?${params}`)
+      .then(({ data }) => setMedicalStaff(Array.isArray(data) ? data : []))
+      .catch(() => setMedicalStaff([]));
+  }, [canAccessModule, authLoading, selectedPlayer?.tenantId, tenantId]);
 
   const handleUpdate = useCallback(
     (patch: {
@@ -215,6 +226,7 @@ export default function MedicoListPage() {
                 publicFields={selectedPlayer.publicFields}
                 onUpdate={handleUpdate}
                 showPublicToggle={true}
+                medicalStaff={medicalStaff}
                 emergencyContactName={selectedPlayer.emergencyContactName}
                 emergencyContactEmail={selectedPlayer.emergencyContactEmail}
                 emergencyContactPhone={selectedPlayer.emergencyContactPhone}

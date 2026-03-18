@@ -16,6 +16,12 @@ export interface MedicalEntry {
   description?: string;
   daysOut?: number;
   gamesMissed?: number;
+  /** Quem atendeu: nome do médico/enfermeiro */
+  attendedByName?: string;
+  /** Cargo: médico, enfermeiro, fisioterapeuta, etc. */
+  attendedByRole?: string;
+  /** CRM, COREN ou outro registro profissional */
+  attendedByCrm?: string;
 }
 
 export function normalizeMedicalHistory(mh: unknown): { profile: MedicalProfile; records: MedicalEntry[] } {
