@@ -56,8 +56,8 @@
 
 ## **FECHAMENTO (GIT)**
 
-- **Último commit:** `5eb14ca` — feat: header sticky em páginas de cadastro/edição
-- **Commit anterior:** `60ac65c` — fix: deferred upload + displayName em medico, psicologia, comissao e logos
+- **Último commit:** `bc68c23` — docs: encerramento 18 mar 2026
+- **Commits do dia:** `60ac65c` (deferred upload + displayName), `5eb14ca` (header sticky)
 - **Branch:** develop
 - **Push:** ✅ para origin/develop
 
