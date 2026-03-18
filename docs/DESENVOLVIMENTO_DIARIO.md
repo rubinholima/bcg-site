@@ -29,6 +29,40 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 18 DE MARÇO DE 2026 — ENCERRAMENTO (Deferred upload, displayName fotos, header sticky)
+
+## **O QUE FOI FEITO**
+
+1. **Deferred upload + displayName em departamentos**
+   - Médico, psicologia e comissão: mesmo fluxo dos jogadores — foto só é enviada ao clicar em Salvar, com nome automático (nome-sobrenome-departamento).
+   - API: MediaMetaService exportado; UploadController aceita `displayName` em `/upload/logo` e grava no MediaMeta.
+   - Frontend: `pendingPhotoFile`, upload no `handleSave`/`handleSubmit` com `getPhotoDisplayName()`.
+
+2. **DisplayName em logos**
+   - Grupo: `displayName` = nome do grupo (ex.: Boston City Group).
+   - Empresa: `displayName` = nome - país - cidade (ex.: Clube ABC - Brasil - São Paulo).
+   - Arquivos: `grupo/page.tsx`, `empresas/[id]/edit`, `empresas/new`, `upload.controller.ts`, `upload.module.ts`, `media.module.ts`.
+
+3. **Header sticky em páginas de cadastro/edição**
+   - Jogadores (edit + new), Depto médico (equipe edit/new), Psicologia (psicólogos edit/new), Comissão (edit/new), Histórico médico (por jogador), Empresas (edit).
+   - Header fixo no topo: nome, avatar, botão Salvar/Cadastrar sempre visíveis ao rolar a página.
+   - Classes: `sticky top-0 z-20 -mx-4 sm:-mx-6 bg-background/95 backdrop-blur border-b`.
+
+## **ARQUIVOS ENVOLVIDOS**
+
+**API:** `media/media.module.ts` (exports MediaMetaService), `upload/upload.module.ts` (MediaModule), `upload/upload.controller.ts` (displayName + MediaMetaService).
+
+**Web:** `medico/equipe/[id]/edit`, `medico/equipe/new`, `medico/[playerId]`, `psicologia/psicologos/[id]/edit`, `psicologia/psicologos/new`, `futebol/comissao/[id]/edit`, `futebol/comissao/new`, `cadastros/jogadores/[id]/edit`, `cadastros/jogadores/new`, `empresas/[id]/edit`, `grupo/page.tsx`, `empresas/new`.
+
+## **FECHAMENTO (GIT)**
+
+- **Último commit:** `5eb14ca` — feat: header sticky em páginas de cadastro/edição
+- **Commit anterior:** `60ac65c` — fix: deferred upload + displayName em medico, psicologia, comissao e logos
+- **Branch:** develop
+- **Push:** ✅ para origin/develop
+
+---
+
 # 📅 10 DE MARÇO DE 2026 — DEPLOY (Dashboard Diretoria clubes vs empresas, Marketing, Nutrição, Patrimônio, Sócio-torcedor)
 
 ## **O QUE FOI FEITO**
