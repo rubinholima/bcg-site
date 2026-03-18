@@ -315,11 +315,16 @@ export default function NewLogisticaPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
-                    {filteredAwayFixtures.map((f) => (
-                      <SelectItem key={f.externalId} value={f.externalId}>
-                        {f.homeTeamName} vs {f.awayTeamName} — {new Date(f.startISO).toLocaleDateString("pt-BR")} — {f.venueName || "?"} — {f.competitionName || ""}
-                      </SelectItem>
-                    ))}
+                    {filteredAwayFixtures.map((f) => {
+                      const awayDisplay = /nosso\s+clube/i.test(f.awayTeamName || "")
+                        ? (selectedTenant?.name ?? "Nosso Clube")
+                        : (f.awayTeamName ?? "");
+                      return (
+                        <SelectItem key={f.externalId} value={f.externalId}>
+                          {f.homeTeamName} vs {awayDisplay} — {new Date(f.startISO).toLocaleDateString("pt-BR")} — {f.venueName || "?"} — {f.competitionName || ""}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -339,12 +344,15 @@ export default function NewLogisticaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="opponentName">Adversário</Label>
-                <Select value={visitingTeams.find((t) => t.name === opponentName) ? opponentName : "none"} onValueChange={(v) => setOpponentName(v === "none" ? "" : v)}>
+                <Select value={opponentName || "none"} onValueChange={(v) => setOpponentName(v === "none" ? "" : v)}>
                   <SelectTrigger id="opponentName">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
+                    {opponentName && !visitingTeams.some((t) => t.name === opponentName) && (
+                      <SelectItem value={opponentName}>{opponentName}</SelectItem>
+                    )}
                     {visitingTeams.map((t) => (
                       <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>
                     ))}
@@ -353,7 +361,7 @@ export default function NewLogisticaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stadiumName">Estádio</Label>
-                <Select value={stadiums.find((s) => s.name === stadiumName) ? stadiumName : "none"} onValueChange={(v) => {
+                <Select value={stadiumName || "none"} onValueChange={(v) => {
                   setStadiumName(v === "none" ? "" : v);
                   const s = stadiums.find((x) => x.name === v);
                   if (s) {
@@ -369,6 +377,9 @@ export default function NewLogisticaPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
+                    {stadiumName && !stadiums.some((s) => s.name === stadiumName) && (
+                      <SelectItem value={stadiumName}>{stadiumName}</SelectItem>
+                    )}
                     {stadiums.map((s) => (
                       <SelectItem key={s.id} value={s.name}>{s.name}{s.city ? ` (${s.city})` : ""}</SelectItem>
                     ))}
@@ -377,12 +388,15 @@ export default function NewLogisticaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="championshipName">Competição</Label>
-                <Select value={championships.find((c) => c.name === championshipName) ? championshipName : "none"} onValueChange={(v) => setChampionshipName(v === "none" ? "" : v)}>
+                <Select value={championshipName || "none"} onValueChange={(v) => setChampionshipName(v === "none" ? "" : v)}>
                   <SelectTrigger id="championshipName">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
+                    {championshipName && !championships.some((c) => c.name === championshipName) && (
+                      <SelectItem value={championshipName}>{championshipName}</SelectItem>
+                    )}
                     {championships.map((c) => (
                       <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                     ))}
