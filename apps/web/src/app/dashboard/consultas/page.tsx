@@ -52,6 +52,7 @@ interface ConsultationItem {
   notes?: string;
   status?: string;
   psychologist?: string;
+  durationSeconds?: number;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -126,6 +127,9 @@ function ConsultationRow({
         <span className={`rounded px-2 py-0.5 text-xs font-medium ${statusClass}`}>
           {statusLabel[status] ?? status}
         </span>
+        {status === "completed" && typeof item.durationSeconds === "number" && (
+          <span className="text-xs text-muted-foreground">Duração: {Math.floor(item.durationSeconds / 60)}min</span>
+        )}
         <Select value={status} onValueChange={handleStatusChange} disabled={saving}>
           <SelectTrigger className="w-[130px] h-8 text-xs">
             <SelectValue />

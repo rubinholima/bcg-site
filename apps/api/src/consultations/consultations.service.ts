@@ -5,6 +5,7 @@ import { GoogleCalendarService } from './google-calendar.service';
 export interface ConsultationItem {
   playerId: string;
   playerName: string;
+  playerPhotoUrl?: string;
   tenantName?: string;
   tenantLogoUrl?: string;
   category?: string;
@@ -15,6 +16,8 @@ export interface ConsultationItem {
   notes?: string;
   status?: string;
   psychologist?: string;
+  psychologistPhotoUrl?: string;
+  durationSeconds?: number;
 }
 
 @Injectable()
@@ -25,9 +28,15 @@ export class ConsultationsService {
   ) {}
 
   async listAllConsultations(): Promise<Array<ConsultationItem & { id: string; tenantId: string }>> {
-    const players = await this.prisma.player.findMany({
-      include: { tenant: { select: { name: true, logoUrl: true } } },
-    });
+    const [players, psychList] = await Promise.all([
+      this.prisma.player.findMany({
+        include: { tenant: { select: { name: true, logoUrl: true } } },
+      }),
+      this.prisma.psychologist.findMany({ select: { name: true, photoUrl: true } }),
+    ]);
+    const psychPhotoByName = new Map(
+      psychList.map((x) => [x.name.toLowerCase().trim(), x.photoUrl] as const)
+    );
 
     const result: Array<ConsultationItem & { id: string; tenantId: string }> = [];
 
@@ -39,11 +48,13 @@ export class ConsultationsService {
         const c = list[i];
         const date = (c.date as string) ?? '';
         const status = (c.status as string) ?? 'scheduled';
+        const psychName = (c.psychologist as string)?.trim();
         result.push({
           id: `${p.id}-${i}`,
           playerId: p.id,
           tenantId: p.tenantId,
           playerName: p.name,
+          playerPhotoUrl: (p.photoUrl as string) ?? undefined,
           tenantName: p.tenant?.name,
           tenantLogoUrl: p.tenant?.logoUrl ?? undefined,
           category: (p.category as string) ?? undefined,
@@ -53,7 +64,9 @@ export class ConsultationsService {
           link: (c.link as string) ?? undefined,
           notes: (c.notes as string) ?? undefined,
           status,
-          psychologist: (c.psychologist as string) ?? undefined,
+          psychologist: psychName ?? undefined,
+          psychologistPhotoUrl: psychName ? psychPhotoByName.get(psychName.toLowerCase()) ?? undefined : undefined,
+          durationSeconds: typeof c.durationSeconds === 'number' ? c.durationSeconds : undefined,
         });
       }
     }
@@ -121,6 +134,7 @@ export class ConsultationsService {
       status?: string;
       psychologist?: string;
       notes?: string;
+      durationSeconds?: number;
     },
   ): Promise<boolean> {
     const match = consultationId.match(/^(.+)-(\d+)$/);
@@ -131,7 +145,7 @@ export class ConsultationsService {
 
     const player = await this.prisma.player.findUnique({
       where: { id: playerId },
-      select: { onlineConsultations: true },
+      select: { onlineConsultations: true, name: true },
     });
     if (!player) return false;
 
@@ -146,6 +160,7 @@ export class ConsultationsService {
     if (patch.status !== undefined) item.status = patch.status;
     if (patch.psychologist !== undefined) item.psychologist = patch.psychologist;
     if (patch.notes !== undefined) item.notes = patch.notes;
+    if (patch.durationSeconds !== undefined) item.durationSeconds = patch.durationSeconds;
 
     const next = [...list];
     next[index] = item;
@@ -154,6 +169,39 @@ export class ConsultationsService {
       where: { id: playerId },
       data: { onlineConsultations: next as object },
     });
+
+    // Se sessão foi concluída com duração, registra no attendanceLog do psicólogo
+    if (
+      patch.status === 'completed' &&
+      typeof patch.durationSeconds === 'number' &&
+      patch.durationSeconds >= 0
+    ) {
+      const psychName = (item.psychologist as string)?.trim();
+      if (psychName) {
+        const psych = await this.prisma.psychologist.findFirst({
+          where: { name: { equals: psychName, mode: 'insensitive' } },
+          select: { id: true, attendanceLog: true },
+        });
+        if (psych) {
+          const log = Array.isArray(psych.attendanceLog) ? [...(psych.attendanceLog as object[])] : [];
+          const date = (item.date as string) ?? new Date().toISOString().slice(0, 10);
+          const time = (item.time as string) ?? new Date().toTimeString().slice(0, 5);
+            log.push({
+            date,
+            startTime: time,
+            playerId,
+            playerName: player?.name ?? '',
+            durationSeconds: patch.durationSeconds,
+            notes: (item.notes as string) ?? undefined,
+          });
+          await this.prisma.psychologist.update({
+            where: { id: psych.id },
+            data: { attendanceLog: log as object },
+          });
+        }
+      }
+    }
+
     return true;
   }
 }

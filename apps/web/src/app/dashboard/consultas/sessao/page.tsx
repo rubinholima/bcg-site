@@ -17,6 +17,7 @@ interface ConsultationEntry {
   notes?: string;
   status?: string;
   type?: string;
+  psychologist?: string;
 }
 
 function formatSessionDateTime(date?: string, time?: string): string {
@@ -107,20 +108,14 @@ export default function SessaoPage() {
 
   const handleEncerrar = useCallback(async () => {
     if (!consultationId || !entry) return;
-    const match = consultationId.match(/^(.+)-(\d+)$/);
-    if (!match) return;
-    const [, playerId, indexStr] = match;
-    const index = parseInt(indexStr ?? "", 10);
-    if (!playerId || isNaN(index) || index < 0) return;
 
     setEncerrando(true);
     try {
-      const { data } = await api.get<{ onlineConsultations?: ConsultationEntry[] }>(`/players/${playerId}`);
-      const list = Array.isArray(data?.onlineConsultations) ? [...data.onlineConsultations] : [];
-      if (index >= list.length) return;
-      const updated = { ...list[index], status: "completed", notes: notes.trim() || undefined };
-      list[index] = updated;
-      await api.patch(`/players/${playerId}`, { onlineConsultations: list });
+      await api.patch(`/consultations/${encodeURIComponent(consultationId)}`, {
+        status: "completed",
+        notes: notes.trim() || undefined,
+        durationSeconds: elapsed,
+      });
       setEncerrada(true);
       const consultasUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/dashboard/consultas`;
       if (typeof window !== "undefined" && window.opener) {
@@ -143,7 +138,7 @@ export default function SessaoPage() {
     } finally {
       setEncerrando(false);
     }
-  }, [consultationId, entry, notes]);
+  }, [consultationId, entry, notes, elapsed]);
 
   if (loading) {
     return (

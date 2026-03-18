@@ -77,7 +77,7 @@ export class ConsultationsController {
     return { success: true };
   }
 
-  /** Atualiza data, horário, status (ex.: cancelar), psicólogo ou notas da consulta. */
+  /** Atualiza data, horário, status (ex.: cancelar), psicólogo, notas ou duração da consulta. */
   @Patch(':id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('psicologia')
@@ -90,6 +90,7 @@ export class ConsultationsController {
       status?: string;
       psychologist?: string;
       notes?: string;
+      durationSeconds?: number;
     },
   ) {
     const ok = await this.service.updateConsultation(id, body);

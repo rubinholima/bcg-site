@@ -21,6 +21,7 @@ export type AttendanceLogEntry = {
   endTime?: string;
   playerId?: string;
   playerName?: string;
+  durationSeconds?: number;
   notes?: string;
 };
 

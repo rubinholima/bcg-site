@@ -32,6 +32,7 @@ interface Consultation {
   playerId: string;
   tenantId: string;
   playerName: string;
+  playerPhotoUrl?: string;
   tenantName?: string;
   tenantLogoUrl?: string;
   category?: string;
@@ -42,6 +43,7 @@ interface Consultation {
   notes?: string;
   status?: string;
   psychologist?: string;
+  psychologistPhotoUrl?: string;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -467,7 +469,15 @@ export function ConsultasCalendar({
                       >
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="flex min-w-0 items-center gap-2">
-                            <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            {c.playerPhotoUrl ? (
+                              <img
+                                src={getPublicImageUrl(c.playerPhotoUrl)}
+                                alt={c.playerName}
+                                className="h-8 w-8 rounded-full object-cover shrink-0"
+                              />
+                            ) : (
+                              <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            )}
                             <Link
                               href={`/dashboard/cadastros/jogadores/${c.playerId}/edit`}
                               className="truncate font-medium hover:underline"
@@ -494,7 +504,15 @@ export function ConsultasCalendar({
                           )}
                           {c.psychologist && (
                             <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <UserCircle className="h-3.5 w-3.5 shrink-0" />
+                              {c.psychologistPhotoUrl ? (
+                                <img
+                                  src={getPublicImageUrl(c.psychologistPhotoUrl)}
+                                  alt={c.psychologist}
+                                  className="h-6 w-6 rounded-full object-cover shrink-0"
+                                />
+                              ) : (
+                                <UserCircle className="h-3.5 w-3.5 shrink-0" />
+                              )}
                               {c.psychologist}
                             </span>
                           )}

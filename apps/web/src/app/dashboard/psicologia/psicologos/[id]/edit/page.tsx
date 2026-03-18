@@ -41,6 +41,7 @@ export default function EditarPsicologoPage() {
     playerId: string;
     status?: string;
     notes?: string;
+    durationSeconds?: number;
   }>>([]);
   useEffect(() => {
     if (!id) return;
@@ -59,7 +60,7 @@ export default function EditarPsicologoPage() {
   useEffect(() => {
     if (!psychologist?.name) return;
     api
-      .get<Array<{ id: string; playerId: string; playerName: string; date?: string; time?: string; status?: string; notes?: string; psychologist?: string }>>("/consultations")
+      .get<Array<{ id: string; playerId: string; playerName: string; date?: string; time?: string; status?: string; notes?: string; psychologist?: string; durationSeconds?: number }>>("/consultations")
       .then(({ data }) => {
         const list = Array.isArray(data) ? data : [];
         const byThis = list.filter(
@@ -74,6 +75,7 @@ export default function EditarPsicologoPage() {
             playerId: c.playerId,
             status: c.status,
             notes: c.notes,
+            durationSeconds: c.durationSeconds,
           }))
         );
       })
@@ -107,10 +109,15 @@ export default function EditarPsicologoPage() {
     setAttendanceLog(attendanceLog.filter((_, i) => i !== index));
   };
 
-  const updateAttendanceEntry = (index: number, field: keyof AttendanceLogEntry, value: string) => {
+  const updateAttendanceEntry = (
+    index: number,
+    field: "date" | "startTime" | "endTime" | "playerName" | "notes",
+    value: string
+  ) => {
     const next = [...attendanceLog];
-    (next[index] as Record<string, string>)[field] = value;
-    setAttendanceLog(next as AttendanceLogEntry[]);
+    const entry = next[index];
+    if (entry) entry[field] = value;
+    setAttendanceLog(next);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -343,6 +350,7 @@ export default function EditarPsicologoPage() {
                       <th className="p-2 text-left font-medium">Data</th>
                       <th className="p-2 text-left font-medium">Início</th>
                       <th className="p-2 text-left font-medium">Fim</th>
+                      <th className="p-2 text-left font-medium">Duração</th>
                       <th className="p-2 text-left font-medium">Atleta</th>
                       <th className="p-2 text-left font-medium">Observações</th>
                       <th className="w-10" />
@@ -377,6 +385,11 @@ export default function EditarPsicologoPage() {
                             onChange={(e) => updateAttendanceEntry(i, "endTime", e.target.value)}
                             disabled={saving}
                           />
+                        </td>
+                        <td className="p-2">
+                          {typeof entry.durationSeconds === "number"
+                            ? `${Math.floor(entry.durationSeconds / 60)}min`
+                            : "—"}
                         </td>
                         <td className="p-2">
                           <Input
@@ -455,6 +468,11 @@ export default function EditarPsicologoPage() {
                           }`}
                         >
                           {c.status === "completed" ? "Realizada" : c.status === "cancelled" ? "Cancelada" : "Agendada"}
+                        </span>
+                      )}
+                      {c.status === "completed" && typeof c.durationSeconds === "number" && (
+                        <span className="text-xs text-muted-foreground">
+                          {Math.floor(c.durationSeconds / 60)}min
                         </span>
                       )}
                     </div>
