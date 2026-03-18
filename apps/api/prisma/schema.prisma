@@ -90,6 +90,48 @@ model Tenant {
   socioPlans            SocioPlan[]
   socioMembers          SocioMember[]
   marketingPosts        MarketingPost[]
+  travelLogistics       TravelLogistics[]
+}
+
+// ========== Logística de deslocamento (Depto Futebol — só clubes) ==========
+// Planejamento de viagens para competições fora: transporte, hospedagem, alimentação (aval nutrição), custos
+model TravelLogistics {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category              String?   // principal, sub20, sub17, etc. — null = viagem multi-categoria
+  matchDate             DateTime  // data do jogo
+  opponentName          String?   // adversário
+  stadiumName           String?
+  city                  String?
+  country               String?
+  championshipName     String?   // competição
+  // Distância e transporte
+  distanceKm            Float?
+  transportType         String?   // aereo_comercial | aereo_fretado | rodoviario | misto
+  transportDetails      String?   @db.Text // detalhes: voos, horários
+  estimatedDeparture    DateTime?
+  estimatedArrival      DateTime?
+  // Hospedagem
+  hotelName             String?
+  hotelAddress         String?   @db.Text
+  accommodationRooms   Json?     // [{ personId?, personName, personType: 'player'|'staff', roomNumber, roommateId? }]
+  // Alimentação (com aval do depto nutrição)
+  mealPlan              Json?     // cardápio ou referência ao menu de nutrição
+  nutritionApprovedAt   DateTime?
+  nutritionApprovedBy   String?
+  // Custos estimados
+  estimatedCostTotal    Float?
+  estimatedCostBreakdown Json?    // { transport?: number, hotel?: number, meals?: number, other?: number }
+  // Status e observações
+  status                String    @default("rascunho") // rascunho | planejamento | aprovado | em_andamento | concluido | cancelado
+  weatherForecast       String?   @db.Text // previsão do tempo no local
+  notes                 String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  @@index([tenantId])
+  @@index([tenantId, matchDate])
+  @@index([status])
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)
@@ -200,6 +242,7 @@ model Stadium {
   id        String   @id @default(cuid())
   name      String   @unique
   city      String?
+  country   String?
   address   String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -148,7 +148,7 @@ export function Sidebar() {
                   : item.slug === "adm"
                     ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                     : item.slug === "futebol"
-                      ? canAccessModule("tipos") || canAccessModule("diretoria") || canAccessModule("medico") || canAccessModule("psicologia") || canAccessModule("juridico") || canAccessModule("futebol_comissao") || canAccessModule("futebol_fisiologia") || canAccessModule("futebol_analise") || canAccessModule("adm_nutricao")
+                      ? canAccessModule("tipos") || canAccessModule("diretoria") || canAccessModule("medico") || canAccessModule("psicologia") || canAccessModule("juridico") || canAccessModule("futebol_comissao") || canAccessModule("futebol_fisiologia") || canAccessModule("futebol_analise") || canAccessModule("futebol_logistica") || canAccessModule("adm_nutricao")
                       : item.slug === "ferramentas"
                         ? hasAccessToAnyChild(item.children, canAccessModule, canAccessDashboard)
                         : item.slug === "configuracoes"

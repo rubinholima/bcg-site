@@ -146,10 +146,10 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
     ],
   },
-  // Futebol (Atletas primeiro, depois Categorias, Campeonatos, Estádios, Times, Médico, Psicologia, Comissão, Fisiologia, Análise)
+  // Departamento de Futebol (Atletas, Categorias, Campeonatos, Estádios, Times, Médico, Psicologia, Comissão, Fisiologia, Análise, Logística)
   {
     slug: "futebol",
-    label: "Futebol",
+    label: "Depto Futebol",
     icon: Shirt,
     moduleSlug: "tipos",
     children: [
@@ -245,6 +245,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         href: "/dashboard/futebol/comissao",
         icon: Users,
         moduleSlug: "futebol_comissao",
+      },
+      {
+        slug: "futebol_logistica",
+        label: "Logística",
+        href: "/dashboard/futebol/logistica",
+        icon: Map,
+        moduleSlug: "futebol_logistica",
       },
       {
         slug: "futebol_fisiologia",
@@ -407,7 +414,7 @@ export function getUniqueModuleSlugs(): string[] {
   }
   slugs.add("psicologia").add("medico").add("diretoria").add("juridico").add("relatorios");
   slugs.add("adm_financeiro").add("adm_rh").add("adm_patrimonio").add("adm_nutricao");
-  slugs.add("futebol_comissao").add("futebol_fisiologia").add("futebol_analise");
+  slugs.add("futebol_comissao").add("futebol_fisiologia").add("futebol_analise").add("futebol_logistica");
   slugs.add("socio_torcedor").add("marketing");
   return Array.from(slugs).sort();
 }

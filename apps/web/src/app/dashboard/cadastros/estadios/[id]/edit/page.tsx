@@ -19,14 +19,16 @@ export default function EditEstadioPage() {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [address, setAddress] = useState("");
 
   useEffect(() => {
     async function loadEstadio() {
       try {
-        const { data } = await api.get<{ name: string; city?: string; address?: string }>(`/stadiums/${id}`);
+        const { data } = await api.get<{ name: string; city?: string; country?: string; address?: string }>(`/stadiums/${id}`);
         setName(data?.name ?? "");
         setCity(data?.city ?? "");
+        setCountry(data?.country ?? "");
         setAddress(data?.address ?? "");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao carregar estádio");
@@ -46,6 +48,7 @@ export default function EditEstadioPage() {
       await api.patch(`/stadiums/${id}`, {
         name: name.trim(),
         city: city.trim() || undefined,
+        country: country.trim() || undefined,
         address: address.trim() || undefined,
       });
       router.push("/dashboard/cadastros/estadios?success=true");
@@ -117,6 +120,18 @@ export default function EditEstadioPage() {
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Ex: São Paulo"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">País</Label>
+              <Input
+                id="country"
+                type="text"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="Ex: Brasil"
                 disabled={loading}
               />
             </div>

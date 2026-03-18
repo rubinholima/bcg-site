@@ -6,7 +6,10 @@ import {
   SofaScoreService,
   type NormalizedFixture,
 } from './sofascore.service';
-import { PagesService } from '../pages/pages.service';
+import {
+  PagesService,
+  type PageResponseDto,
+} from '../pages/pages.service';
 
 export function isClubKind(kindName: string | null): boolean {
   if (!kindName) return false;
@@ -279,6 +282,14 @@ export class PublicService {
   }
 
   /**
+   * Próximos jogos do tenant pelo ID. Usado pelo módulo Logística (evita dependência do slug).
+   */
+  async getFixturesForTenantId(tenantId: string): Promise<FixtureDto[]> {
+    const page = await this.pagesService.findByTenantId(tenantId);
+    return this.buildFixturesFromPage(page, tenantId);
+  }
+
+  /**
    * Próximos jogos do tenant (pelo slug). Usado pelos módulos "Próximos Jogos" e "Últimos Resultados".
    * Lê o bloco proximos_jogos da página; se dataSource=manual retorna lista manual;
    * se dataSource=sofascore usa tenant.sofascoreTeamId e aplica overrides.
@@ -286,8 +297,23 @@ export class PublicService {
    */
   async getFixturesForTenantSlug(slug: string): Promise<FixtureDto[]> {
     const page = await this.pagesService.findByTenantSlug(slug);
+    const tenant = page?.tenantId
+      ? await this.prisma.tenant.findUnique({
+          where: { id: page.tenantId },
+          select: { id: true },
+        })
+      : await this.prisma.tenant.findFirst({
+          where: { slug: { equals: slug.trim(), mode: 'insensitive' } },
+          select: { id: true },
+        });
+    return this.buildFixturesFromPage(page, tenant?.id ?? '');
+  }
+
+  private async buildFixturesFromPage(
+    page: PageResponseDto | null,
+    tenantIdForSofascore: string,
+  ): Promise<FixtureDto[]> {
     if (!page?.content?.blocks?.length) {
-      console.warn(`[fixtures] página não encontrada ou sem blocos para slug=${slug}`);
       return [];
     }
 
@@ -295,7 +321,6 @@ export class PublicService {
       (b) => String(b.type).toLowerCase() === 'proximos_jogos',
     );
     if (!block?.config) {
-      console.warn(`[fixtures] bloco proximos_jogos não encontrado na página slug=${slug}`);
       return [];
     }
 
@@ -353,14 +378,14 @@ export class PublicService {
     }
 
     // effectiveSource === 'sofascore'
-    const slugNorm = slug.trim();
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { slug: { equals: slugNorm, mode: 'insensitive' } },
-      select: { sofascoreTeamId: true },
-    });
+    const tenant = tenantIdForSofascore
+      ? await this.prisma.tenant.findUnique({
+          where: { id: tenantIdForSofascore },
+          select: { sofascoreTeamId: true },
+        })
+      : null;
     const teamId = tenant?.sofascoreTeamId?.trim();
     if (!teamId) {
-      console.warn(`[fixtures] tenant slug=${slug} sem sofascoreTeamId configurado`);
       return [];
     }
 
@@ -377,7 +402,7 @@ export class PublicService {
         (a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime(),
       );
       if (list.length === 0) {
-        console.warn(`[fixtures] SofaScore retornou 0 jogos para teamId=${teamId} (slug=${slug})`);
+        console.warn(`[fixtures] SofaScore retornou 0 jogos para teamId=${teamId}`);
       }
     } catch (err) {
       console.warn(`[fixtures] erro SofaScore teamId=${teamId}:`, err);

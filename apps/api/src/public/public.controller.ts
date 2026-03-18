@@ -80,6 +80,15 @@ export class PublicController {
   }
 
   /**
+   * GET /public/tenants/by-id/:tenantId/fixtures
+   * Próximos jogos pelo ID do tenant. Usado pelo módulo Logística (evita dependência do slug).
+   */
+  @Get('tenants/by-id/:tenantId/fixtures')
+  async getTenantFixturesById(@Param('tenantId') tenantId: string) {
+    return this.publicService.getFixturesForTenantId(tenantId);
+  }
+
+  /**
    * GET /public/tenants/:slug/fixtures
    * Próximos jogos do tenant (clube). Usado pelo módulo "Próximos Jogos" na página pública.
    */

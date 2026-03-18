@@ -13,5 +13,10 @@ export class UpdateStadiumDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(255)
+  country?: string;
+
+  @IsString()
+  @IsOptional()
   address?: string;
 }

@@ -26,6 +26,7 @@ export class StadiumsService {
       data: {
         name: dto.name.trim(),
         city: dto.city?.trim() || null,
+        country: dto.country?.trim() || null,
         address: dto.address?.trim() || null,
       },
     });
@@ -44,6 +45,7 @@ export class StadiumsService {
       data: {
         ...(dto.name && { name: dto.name.trim() }),
         ...(dto.city !== undefined && { city: dto.city?.trim() || null }),
+        ...(dto.country !== undefined && { country: dto.country?.trim() || null }),
         ...(dto.address !== undefined && { address: dto.address?.trim() || null }),
       },
     });

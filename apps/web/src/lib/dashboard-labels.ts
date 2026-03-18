@@ -37,4 +37,5 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   diretoria: "Diretoria (avalia\u00E7\u00F5es e status)",
   analista: "Analista",
   juridico: "Controle Jurídico",
+  futebol_logistica: "Log\u00EDstica (deslocamento)",
 };

@@ -16,6 +16,7 @@ export default function NewEstadioPage() {
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
   const [address, setAddress] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,6 +28,7 @@ export default function NewEstadioPage() {
       await api.post("/stadiums", {
         name: name.trim(),
         city: city.trim() || undefined,
+        country: country.trim() || undefined,
         address: address.trim() || undefined,
       });
       router.push("/dashboard/cadastros/estadios?success=true");
@@ -88,6 +90,18 @@ export default function NewEstadioPage() {
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Ex: São Paulo"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="country">País</Label>
+              <Input
+                id="country"
+                type="text"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+                placeholder="Ex: Brasil"
                 disabled={loading}
               />
             </div>

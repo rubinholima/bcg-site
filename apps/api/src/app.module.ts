@@ -29,6 +29,7 @@ import { NutricaoModule } from './nutricao/nutricao.module';
 import { SocioTorcedorModule } from './socio-torcedor/socio-torcedor.module';
 import { MarketingModule } from './marketing/marketing.module';
 import { DiretoriaModule } from './diretoria/diretoria.module';
+import { LogisticaModule } from './logistica/logistica.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { DiretoriaModule } from './diretoria/diretoria.module';
     SocioTorcedorModule,
     MarketingModule,
     DiretoriaModule,
+    LogisticaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -12,5 +12,10 @@ export class CreateStadiumDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(255)
+  country?: string;
+
+  @IsString()
+  @IsOptional()
   address?: string;
 }
