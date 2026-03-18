@@ -35,6 +35,7 @@ import { useAuth } from "@/context/AuthContext";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
@@ -211,6 +212,17 @@ export default function EditJogadorPage() {
   }, [searchParams]);
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [tenantCategories, setTenantCategories] = useState<string[]>([]);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!pendingPhotoFile) {
+      setPendingPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(pendingPhotoFile);
+    setPendingPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingPhotoFile]);
   useEffect(() => {
     async function load() {
       try {
@@ -248,13 +260,37 @@ export default function EditJogadorPage() {
 
   const handleSave = async () => {
     if (!player) return;
+    if (pendingPhotoFile && !player.name?.trim()) {
+      setError("Preencha o nome completo antes de salvar a foto.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
+      let photoUrl = player.photoUrl ?? undefined;
+      if (pendingPhotoFile && player.name?.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingPhotoFile);
+        formData.append("sizeKey", "jogadores");
+        formData.append("displayName", getPhotoDisplayName(player.name, player.category || PHOTO_DEPARTMENT_BY_SIZE_KEY.jogadores));
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const data = (await res.json()) as { url?: string; key?: string; message?: string; error?: string };
+        if (!res.ok) {
+          const errMsg = data?.message ?? data?.error ?? "Erro ao enviar foto.";
+          setError(typeof errMsg === "string" ? errMsg : "Erro ao enviar foto.");
+          setLoading(false);
+          return;
+        }
+        if (data?.url) {
+          photoUrl = data.url;
+          setPendingPhotoFile(null);
+          update({ photoUrl });
+        }
+      }
       await api.patch(`/players/${id}`, {
         category: player.category || undefined,
         name: player.name,
-        photoUrl: player.photoUrl || undefined,
+        photoUrl: photoUrl || undefined,
         birthDate: player.birthDate || undefined,
         nationality: player.nationality || undefined,
         contactEmail: player.contactEmail || undefined,
@@ -324,9 +360,9 @@ export default function EditJogadorPage() {
             </Button>
           </Link>
           <div className="h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0 border-2 border-border">
-            {player.photoUrl ? (
+            {(pendingPreviewUrl || player.photoUrl) ? (
               <img
-                src={getPublicImageUrl(player.photoUrl)}
+                src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
                 alt={player.name}
                 className="h-full w-full object-cover"
               />
@@ -417,31 +453,6 @@ export default function EditJogadorPage() {
                 <User className="h-4 w-4 text-primary" />
                 Foto e identificação
               </h3>
-            <div className="flex gap-4">
-              <div className="h-24 w-24 rounded overflow-hidden bg-muted shrink-0">
-                {player.photoUrl ? (
-                  <img
-                    src={getPublicImageUrl(player.photoUrl)}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                    <User className="h-10 w-10" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 space-y-2">
-                <Label>Foto</Label>
-                <PhotoUploadWithName
-                  sizeKey="jogadores"
-                  value={player.photoUrl ?? ""}
-                  onChange={(v) => update({ photoUrl: v || null })}
-                  urlPlaceholder="Ou URL"
-                  namePlaceholder="Ex: foto-nome-do-atleta"
-                />
-              </div>
-            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Nome completo *</Label>
@@ -470,6 +481,22 @@ export default function EditJogadorPage() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="jogadores"
+                value={player.photoUrl ?? ""}
+                onChange={(v) => update({ photoUrl: v || null })}
+                urlPlaceholder="Ou URL"
+                namePlaceholder="Ex: foto-nome-do-atleta"
+                deferredUpload
+                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
+                pendingFile={pendingPhotoFile}
+                requireNameToUpload={player.name}
+                displayNameAuto={getPhotoDisplayName(player.name, player.category || PHOTO_DEPARTMENT_BY_SIZE_KEY.jogadores) || undefined}
+                hidePreview
+              />
             </div>
             </div>
 

@@ -18,6 +18,7 @@ import {
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 
 interface Tenant {
   id: string;
@@ -35,6 +36,7 @@ export default function NewJogadorPage() {
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -59,12 +61,27 @@ export default function NewJogadorPage() {
     setError(null);
 
     try {
+      let finalPhotoUrl = photoUrl.trim() || undefined;
+      if (pendingPhotoFile && name.trim()) {
+        const formData = new FormData();
+        formData.append("file", pendingPhotoFile);
+        formData.append("sizeKey", "jogadores");
+        formData.append("displayName", getPhotoDisplayName(name, category || PHOTO_DEPARTMENT_BY_SIZE_KEY.jogadores));
+        const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
+        const dataRes = (await res.json()) as { url?: string; message?: string; error?: string };
+        if (!res.ok) {
+          setError(dataRes?.message ?? dataRes?.error ?? "Erro ao enviar foto.");
+          setLoading(false);
+          return;
+        }
+        if (dataRes?.url) finalPhotoUrl = dataRes.url;
+      }
       const { data } = await api.post<{ id: string }>("/players", {
         tenantId,
         name: name.trim(),
         category: category.trim() || undefined,
         birthDate: birthDate.trim() || undefined,
-        photoUrl: photoUrl.trim() || undefined,
+        photoUrl: finalPhotoUrl,
       });
       router.push(`/dashboard/cadastros/jogadores/${data?.id ?? ""}/edit?success=new`);
     } catch (err) {
@@ -178,6 +195,11 @@ export default function NewJogadorPage() {
                 onChange={setPhotoUrl}
                 disabled={loading}
                 namePlaceholder="Ex: foto-nome-do-atleta"
+                deferredUpload
+                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
+                pendingFile={pendingPhotoFile}
+                requireNameToUpload={name}
+                displayNameAuto={getPhotoDisplayName(name, category || PHOTO_DEPARTMENT_BY_SIZE_KEY.jogadores) || undefined}
               />
             </div>
 

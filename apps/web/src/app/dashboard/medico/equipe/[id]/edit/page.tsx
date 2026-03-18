@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { MEDICAL_STAFF_ROLES, getRegistryLabel } from "@/lib/medical-staff-roles";
 import type { MedicalStaff } from "@/types/medical-staff";
@@ -136,6 +137,7 @@ export default function EditarMedicoEquipePage() {
                 onChange={(v) => setStaff((p) => (p ? { ...p, photoUrl: v || null } : p))}
                 disabled={saving}
                 namePlaceholder="Ex: foto-dr-joao-silva"
+                displayNameAuto={getPhotoDisplayName(staff.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico) || undefined}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

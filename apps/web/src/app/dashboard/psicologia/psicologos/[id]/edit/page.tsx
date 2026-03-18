@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { getPublicImageUrl } from "@/lib/media-url";
 import type { Psychologist } from "@/types/psychologist";
 import type { AttendanceLogEntry, PerformanceSheet } from "@/types/psychologist";
@@ -191,6 +192,7 @@ export default function EditarPsicologoPage() {
                 onChange={(v) => setPsychologist((p) => (p ? { ...p, photoUrl: v || null } : p))}
                 disabled={saving}
                 namePlaceholder="Ex: foto-nome-do-psicologo"
+                displayNameAuto={getPhotoDisplayName(psychologist.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia) || undefined}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

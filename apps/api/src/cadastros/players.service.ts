@@ -62,6 +62,47 @@ export class PlayersService {
     });
   }
 
+  /** Verifica integrações antes de excluir — para exibir aviso na UI. */
+  async getDeleteImpact(id: string) {
+    const player = await this.prisma.player.findUnique({ where: { id } });
+    if (!player) throw new NotFoundException('Jogador não encontrado');
+
+    const [legalDocuments, nutritionAssessments, assignedAssets, supplementGuides] = await Promise.all([
+      this.prisma.legalDocument.count({ where: { playerId: id } }),
+      this.prisma.nutritionAssessment.count({ where: { playerId: id } }),
+      this.prisma.asset.count({ where: { assignedPlayerId: id } }),
+      this.prisma.supplementGuide.count({ where: { playerId: id } }),
+    ]);
+
+    const medicalHistoryEntries = Array.isArray(player.medicalHistory) ? player.medicalHistory.length : 0;
+    const psychologicalAssessments = Array.isArray(player.psychologicalAssessment) ? player.psychologicalAssessment.length : 0;
+    const onlineConsultations = Array.isArray(player.onlineConsultations) ? player.onlineConsultations.length : 0;
+    const evaluations = Array.isArray(player.evaluations) ? player.evaluations.length : 0;
+
+    const total =
+      legalDocuments +
+      nutritionAssessments +
+      assignedAssets +
+      supplementGuides +
+      medicalHistoryEntries +
+      psychologicalAssessments +
+      onlineConsultations +
+      evaluations;
+
+    return {
+      legalDocuments,
+      nutritionAssessments,
+      assignedAssets,
+      supplementGuides,
+      medicalHistoryEntries,
+      psychologicalAssessments,
+      onlineConsultations,
+      evaluations,
+      total,
+      hasIntegrations: total > 0,
+    };
+  }
+
   async remove(id: string) {
     await this.findOne(id);
     await this.prisma.player.delete({ where: { id } });

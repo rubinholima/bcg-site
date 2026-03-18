@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { STAFF_ROLES, CONTRACT_TYPES } from "@/lib/staff-roles";
 
@@ -228,6 +229,7 @@ export default function EditComissaoPage() {
                 onChange={setPhotoUrl}
                 disabled={saving}
                 namePlaceholder="Ex: foto-joao-silva"
+                displayNameAuto={getPhotoDisplayName(name, PHOTO_DEPARTMENT_BY_SIZE_KEY.comissao) || undefined}
               />
             </div>
 

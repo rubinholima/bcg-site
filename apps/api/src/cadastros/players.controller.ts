@@ -26,6 +26,11 @@ export class PlayersController {
     return this.service.findAll({ tenantId, category, search });
   }
 
+  @Get(':id/delete-impact')
+  getDeleteImpact(@Param('id') id: string) {
+    return this.service.getDeleteImpact(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);

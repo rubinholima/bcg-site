@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { MEDICAL_STAFF_ROLES, getRegistryLabel } from "@/lib/medical-staff-roles";
 import type { Tenant } from "@/types/tenant";
 
@@ -115,6 +116,7 @@ export default function NovoMedicoEquipePage() {
                 onChange={setPhotoUrl}
                 disabled={loading}
                 namePlaceholder="Ex: foto-dr-joao-silva"
+                displayNameAuto={getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.medico) || undefined}
               />
             </div>
 

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import type { Tenant } from "@/types/tenant";
 
 export default function NovoPsicologoPage() {
@@ -98,6 +99,7 @@ export default function NovoPsicologoPage() {
                 onChange={setPhotoUrl}
                 disabled={loading}
                 namePlaceholder="Ex: foto-nome-do-psicologo"
+                displayNameAuto={getPhotoDisplayName(form.name, PHOTO_DEPARTMENT_BY_SIZE_KEY.psicologia) || undefined}
               />
             </div>
 
