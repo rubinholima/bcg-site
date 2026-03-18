@@ -29,6 +29,38 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 18 DE MARÇO DE 2026 — ENCERRAMENTO (Consultas: fotos jogador/psicólogo, duração ao encerrar)
+
+## **O QUE FOI FEITO**
+
+1. **Fotos na lista de consultas**
+   - Substituição dos ícones genéricos (bonecos) pelas fotos reais do jogador e do psicólogo no calendário de consultas.
+   - API: `playerPhotoUrl` e `psychologistPhotoUrl` em `listAllConsultations()`.
+   - Web: `ConsultasCalendar.tsx` — `<img>` com foto quando existir; fallback para ícone.
+
+2. **Duração ao encerrar sessão**
+   - Ao clicar em "Encerrar sessão", o tempo do cronômetro é salvo: (a) na consulta do jogador (`durationSeconds` em `onlineConsultations`); (b) no cadastro do psicólogo (`attendanceLog` com `date`, `startTime`, `playerId`, `playerName`, `durationSeconds`, `notes`).
+   - API: `updateConsultation` aceita `durationSeconds`; ao marcar `completed`, grava no player e no psicólogo.
+   - Web: `sessao/page.tsx` — envia `durationSeconds` no PATCH ao encerrar.
+
+3. **Exibição da duração**
+   - Histórico de consultas (filtro por atleta): "Duração: Xmin" para consultas realizadas.
+   - Cadastro do psicólogo: coluna "Duração" na tabela de registro de presença.
+
+## **ARQUIVOS ENVOLVIDOS**
+
+**API:** `consultations/consultations.service.ts`, `consultations/consultations.controller.ts`.
+
+**Web:** `ConsultasCalendar.tsx`, `consultas/page.tsx`, `consultas/sessao/page.tsx`, `psicologia/psicologos/[id]/edit/page.tsx`, `types/psychologist.ts`.
+
+## **FECHAMENTO (GIT)**
+
+- **Último commit:** `c814277` — Consultas: fotos jogador/psicólogo, salvar duração ao encerrar sessão
+- **Branch:** develop
+- **Push:** ✅ para origin/develop
+
+---
+
 # 📅 18 DE MARÇO DE 2026 — ENCERRAMENTO (Deferred upload, displayName fotos, header sticky)
 
 ## **O QUE FOI FEITO**
