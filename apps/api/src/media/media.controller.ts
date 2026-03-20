@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { MediaMetaService } from './media-meta.service';
 import { S3Service } from '../s3/s3.service';
+import { displayNameFromUploadFilename } from '../common/upload-display-name';
 
 @Controller('media')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -80,7 +81,10 @@ export class MediaController {
     FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
   )
   async upload(
-    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @UploadedFile()
+    file:
+      | { buffer: Buffer; mimetype: string; originalname?: string }
+      | undefined,
     @Body('sizeKey') sizeKey?: string,
     @Body('slug') slug?: string,
     @Body('displayName') displayName?: string,
@@ -108,7 +112,12 @@ export class MediaController {
       key = result.key;
       url = result.url;
     }
-    const name = typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
+    const fromBody =
+      typeof displayName === 'string' && displayName.trim()
+        ? displayName.trim()
+        : null;
+    const fromFile = displayNameFromUploadFilename(file.originalname);
+    const name = fromBody ?? fromFile;
     if (name) await this.mediaMeta.setDisplayName(key, name);
     return { url, key };
   }

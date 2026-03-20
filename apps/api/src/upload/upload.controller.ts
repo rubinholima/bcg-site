@@ -19,6 +19,7 @@ import { MediaMetaService } from '../media/media-meta.service';
 import { S3Service } from '../s3/s3.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { EventsService } from '../events/events.service';
+import { displayNameFromUploadFilename } from '../common/upload-display-name';
 
 @Controller('upload')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -44,7 +45,10 @@ export class UploadController {
     FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }),
   )
   async uploadLogo(
-    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @UploadedFile()
+    file:
+      | { buffer: Buffer; mimetype: string; originalname?: string }
+      | undefined,
     @Body('scope') scope: string | undefined,
     @Body('displayName') displayName: string | undefined,
     @Req() req: Request,
@@ -74,16 +78,28 @@ export class UploadController {
         file.buffer,
         file.mimetype,
       );
-      const displayNameTrim =
-        typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
-      if (displayNameTrim) {
-        await this.mediaMeta.setDisplayName(key, displayNameTrim);
-      }
+      const fromBody =
+        typeof displayName === 'string' && displayName.trim()
+          ? displayName.trim()
+          : null;
+      const resolved =
+        fromBody ?? displayNameFromUploadFilename(file.originalname);
+      if (resolved) await this.mediaMeta.setDisplayName(key, resolved);
       return { url, key };
     }
 
     if (scopeTrim === 'external') {
-      const { key, url } = await this.s3.uploadLogoExternal(file.buffer, file.mimetype);
+      const { key, url } = await this.s3.uploadLogoExternal(
+        file.buffer,
+        file.mimetype,
+      );
+      const fromBody =
+        typeof displayName === 'string' && displayName.trim()
+          ? displayName.trim()
+          : null;
+      const resolved =
+        fromBody ?? displayNameFromUploadFilename(file.originalname);
+      if (resolved) await this.mediaMeta.setDisplayName(key, resolved);
       return { url, key };
     }
 
@@ -116,11 +132,13 @@ export class UploadController {
       await this.tenantsService.updateLogoUrl(scopeTrim, url);
     }
 
-    const displayNameTrim =
-      typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
-    if (displayNameTrim) {
-      await this.mediaMeta.setDisplayName(key, displayNameTrim);
-    }
+    const fromBody =
+      typeof displayName === 'string' && displayName.trim()
+        ? displayName.trim()
+        : null;
+    const resolved =
+      fromBody ?? displayNameFromUploadFilename(file.originalname);
+    if (resolved) await this.mediaMeta.setDisplayName(key, resolved);
 
     return { url, key };
   }

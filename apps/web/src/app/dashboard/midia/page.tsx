@@ -27,6 +27,7 @@ import {
   type MediaItem,
   type MediaPlaceholderSizeKey,
 } from "@/lib/media-placeholders";
+import { humanizeUploadFilename, mediaAssetOriginLabel } from "@/lib/upload-filename";
 import { useAuth } from "@/context/AuthContext";
 import {
   AlertDialog,
@@ -96,7 +97,11 @@ export default function MidiaPage() {
   const fetchList = (filter: string, slug?: string) => {
     setLoading(true);
     setError(null);
-    const useAll = filter === "logos" || filter === "media_all" || filter === "all_with_logos";
+    const useAll =
+      filter === "logos" ||
+      filter === "logos_external" ||
+      filter === "media_all" ||
+      filter === "all_with_logos";
     let qs: string;
     if (filter === "galeria_clubes" && slug?.trim()) {
       qs = `?sizeKey=galeria_clubes&slug=${encodeURIComponent(slug.trim())}`;
@@ -114,6 +119,9 @@ export default function MidiaPage() {
         let list = data.items ?? [];
         if (filter === "logos") {
           list = list.filter((i) => i.folder === "logos");
+        }
+        if (filter === "logos_external") {
+          list = list.filter((i) => i.key.startsWith("logos/external/"));
         }
         setItems(list);
         setDimensions({});
@@ -223,7 +231,8 @@ export default function MidiaPage() {
     formData.append("file", uploadFile);
     formData.append("sizeKey", uploadSizeKey);
     if (uploadSizeKey === "galeria_clubes" && galeriaSlug.trim()) formData.append("slug", galeriaSlug.trim());
-    if (uploadDisplayName.trim()) formData.append("displayName", uploadDisplayName.trim());
+    const nameToSend = uploadDisplayName.trim() || humanizeUploadFilename(uploadFile.name);
+    if (nameToSend) formData.append("displayName", nameToSend);
     fetch("/api/media", {
       method: "POST",
       credentials: "include",
@@ -250,7 +259,9 @@ export default function MidiaPage() {
     const formData = new FormData();
     formData.append("file", logoFile);
     formData.append("scope", logoScope.trim());
-    const displayNameToSet = logoDisplayName.trim();
+    const displayNameToSet =
+      logoDisplayName.trim() || humanizeUploadFilename(logoFile.name);
+    if (displayNameToSet) formData.append("displayName", displayNameToSet);
     fetch("/api/upload/logo", {
       method: "POST",
       credentials: "include",
@@ -271,11 +282,17 @@ export default function MidiaPage() {
             if (!r.ok) return r.json().then((d) => Promise.reject(new Error(d?.error ?? "Erro ao salvar nome")));
           });
         }
+        return undefined;
       })
       .then(() => {
         setLogoFile(null);
         setLogoDisplayName("");
-        if (filterSizeKey === "logos" || filterSizeKey === "all_with_logos") fetchList(filterSizeKey);
+        if (
+          filterSizeKey === "logos" ||
+          filterSizeKey === "logos_external" ||
+          filterSizeKey === "all_with_logos"
+        )
+          fetchList(filterSizeKey);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro no upload do logo"))
       .finally(() => setUploadingLogo(false));
@@ -365,9 +382,9 @@ export default function MidiaPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label>Nome da imagem (opcional)</Label>
+              <Label>Nome da imagem</Label>
               <Input
-                placeholder="Ex: Banner principal, Foto do fundador"
+                placeholder="Preenchido pelo nome do arquivo se vazio"
                 value={uploadDisplayName}
                 onChange={(e) => setUploadDisplayName(e.target.value)}
                 className="max-w-xs"
@@ -379,7 +396,24 @@ export default function MidiaPage() {
                 type="file"
                 accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
                 className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
-                onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setUploadFile(f);
+                  if (!f) return;
+                  const base = humanizeUploadFilename(f.name);
+                  if (!base) return;
+                  setUploadDisplayName((prev) => {
+                    if (prev.trim()) return prev;
+                    if (uploadSizeKey === "galeria_clubes" && galeriaSlug.trim()) {
+                      const t = tenants.find(
+                        (x) => ((x as { slug?: string }).slug ?? x.id) === galeriaSlug.trim(),
+                      );
+                      const club = t?.name?.trim() || galeriaSlug.trim();
+                      return `${club} — ${base}`;
+                    }
+                    return base;
+                  });
+                }}
               />
             </div>
             <Button type="submit" disabled={!uploadFile || uploading}>
@@ -419,7 +453,7 @@ export default function MidiaPage() {
             <div className="space-y-2">
               <Label>Nome</Label>
               <Input
-                placeholder="Ex.: Nome do clube adversário"
+                placeholder="Preenchido pelo nome do arquivo se vazio"
                 value={logoDisplayName}
                 onChange={(e) => setLogoDisplayName(e.target.value)}
                 className="max-w-xs"
@@ -431,7 +465,14 @@ export default function MidiaPage() {
                 type="file"
                 accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
                 className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-4 file:py-2 file:text-primary-foreground"
-                onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  setLogoFile(f);
+                  if (!f) return;
+                  const base = humanizeUploadFilename(f.name);
+                  if (!base) return;
+                  setLogoDisplayName((prev) => (prev.trim() ? prev : base));
+                }}
               />
             </div>
             <Button type="submit" disabled={!logoFile || uploadingLogo}>
@@ -446,7 +487,7 @@ export default function MidiaPage() {
         <CardHeader>
           <CardTitle>Imagens no S3</CardTitle>
           <CardDescription>
-            Bucket bcg-platform-assets: pasta <strong>media/</strong> (hero, cards, etc.) e pasta <strong>logos/</strong> (empresas/clubes). Clique no nome para editar e identificar nos seletores.
+            Bucket bcg-platform-assets: pasta <strong>media/</strong> (hero, cards, etc.) e pasta <strong>logos/</strong> (empresas/clubes e Clubes Adv em <code className="text-xs">logos/external/</code>). A coluna <strong>Origem</strong> indica a categoria. Clique no nome para editar.
           </CardDescription>
           <div className="pt-2 space-y-2">
             <Label className="text-muted-foreground">Filtrar por tamanho</Label>
@@ -458,6 +499,7 @@ export default function MidiaPage() {
                 <SelectContent>
                   <SelectItem value="media_all">Todas as pastas (mídia + logos)</SelectItem>
                   <SelectItem value="logos">Logos (empresas/clubes)</SelectItem>
+                  <SelectItem value="logos_external">Logos Clubes Adv</SelectItem>
                   <SelectItem value="all_with_logos">Tudo (mídia + logos)</SelectItem>
                   {MEDIA_PLACEHOLDER_KEYS.map((key) => (
                     <SelectItem key={key} value={key}>
@@ -499,8 +541,10 @@ export default function MidiaPage() {
             </p>
           ) : items.length === 0 ? (
             <p className="text-muted-foreground">
-              {filterSizeKey === "logos"
-                ? "Nenhum logo. Use o formulário “Enviar logo (empresa/clube)” acima."
+              {filterSizeKey === "logos" || filterSizeKey === "logos_external"
+                ? filterSizeKey === "logos_external"
+                  ? "Nenhum logo em Clubes Adv. Envie com escopo “Clubes Adv” acima."
+                  : "Nenhum logo. Use o formulário “Enviar logo (empresa/clube)” acima."
                 : filterSizeKey === "galeria_clubes"
                   ? "Nenhuma foto deste clube. Use o formulário acima e selecione o clube para enviar."
                   : "Nenhuma imagem nesta pasta. Envie uma acima."}
@@ -511,6 +555,7 @@ export default function MidiaPage() {
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left py-2 px-3 font-medium w-16">Foto</th>
+                    <th className="text-left py-2 px-3 font-medium w-[140px]">Origem</th>
                     <th className="text-left py-2 px-3 font-medium">Nome</th>
                     <th className="text-left py-2 px-3 font-medium w-20">KB</th>
                     <th className="text-left py-2 px-3 font-medium w-28">Pixels</th>
@@ -541,6 +586,9 @@ export default function MidiaPage() {
                             />
                           )}
                         </div>
+                      </td>
+                      <td className="py-1.5 px-3 align-middle text-xs text-muted-foreground whitespace-nowrap">
+                        {mediaAssetOriginLabel(item.key)}
                       </td>
                       <td className="py-1.5 px-3 max-w-[220px]">
                         {editingKey === item.key ? (
