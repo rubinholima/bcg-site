@@ -75,7 +75,10 @@ function findTabelaRowsFromPage(page: Page | undefined, excludeBlockId: string):
   if (!page?.content?.blocks?.length) return [];
   const all = collectAllBlocks(page.content.blocks);
   const tabela = all.find(
-    (b) => b.type === "tabela" && b.id !== excludeBlockId && ((b.config?.tabelaManualRows as TabelaStandingsRow[]) ?? []).length > 0
+    (b) =>
+      (b.type === "tabela" || b.type === "tabela_eventos") &&
+      b.id !== excludeBlockId &&
+      ((b.config?.tabelaManualRows as TabelaStandingsRow[]) ?? []).length > 0
   );
   return (tabela?.config?.tabelaManualRows as TabelaStandingsRow[]) ?? [];
 }

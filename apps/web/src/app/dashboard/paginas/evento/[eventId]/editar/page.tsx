@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -67,7 +67,10 @@ import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { authFetch } from "@/lib/authFetch";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
+import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { parseCompetitionFormat } from "@/lib/competition-format-fixtures-guide";
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
   return [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -194,7 +197,18 @@ function applyHeaderPresetOverwrite(
 }
 
 type EventContent = { theme?: PageTheme; blocks?: HomeContentBlock[] };
-type EventForEditor = { id: string; name: string; slug: string; status?: string; content: EventContent };
+type EventForEditor = {
+  id: string;
+  name: string;
+  slug: string;
+  status?: string;
+  tenantId?: string | null;
+  tenantName?: string | null;
+  category?: string;
+  /** JSON do formato da disputa (futebol), mesmo esquema de `CompetitionFormat`. */
+  competitionFormat?: unknown;
+  content: EventContent;
+};
 
 export default function EditarEventoPage() {
   const params = useParams();
@@ -214,6 +228,10 @@ export default function EditarEventoPage() {
   const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
 
   const blocks = normalizeBlocks(event?.content?.blocks ?? []);
+  const competitionFormatForGuide = useMemo(
+    () => (event?.competitionFormat != null ? parseCompetitionFormat(event.competitionFormat) : null),
+    [event?.competitionFormat],
+  );
   const resolvedModuleCategory = moduleTypeFilter === "geral" ? "geral" : tenantKindNameToModuleCategory(tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? "");
   const resolvedModuleLabel = moduleTypeFilter === "geral" ? "Geral" : (tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? moduleTypeFilter);
   const theme = (event?.content?.theme ?? {}) as PageTheme;
@@ -2562,7 +2580,36 @@ export default function EditarEventoPage() {
                               </div>
                             );
                           })()}
-                          {block.type === "tabela" && (
+                          {(block.type === "proximos_jogos" || block.type === "proximos_eventos") && (
+                            <ProximosJogosModuleEditor
+                              block={block}
+                              updateBlockConfigValue={(key, value) => updateBlockConfigValue(index, key, value)}
+                              setError={setError}
+                              mode="event"
+                              principalTeamName=""
+                              publicSlug={event.slug ?? ""}
+                              publicPreviewPath={`/eventos/${event.slug ?? ""}`}
+                              linkedTenantId={event.tenantId ?? null}
+                              canSyncSheets={!!event.slug?.trim()}
+                              eventCategory={event.category}
+                              competitionFormat={competitionFormatForGuide}
+                              eventEditHref={`/dashboard/eventos/${eventId}/editar`}
+                              eventDisplayName={event.name?.trim() ?? ""}
+                            />
+                          )}
+                          {(block.type === "ultimos_resultados" || block.type === "ultimos_eventos") && (
+                            <UltimosResultadosModuleEditor
+                              block={block}
+                              updateBlockConfigValue={(key, value) => updateBlockConfigValue(index, key, value)}
+                              publicSlug={event.slug ?? ""}
+                              fixturesFetchContext="event"
+                              showEventDataHint
+                              eventCategory={event.category}
+                              competitionFormat={competitionFormatForGuide}
+                              eventEditHref={`/dashboard/eventos/${eventId}/editar`}
+                            />
+                          )}
+                          {(block.type === "tabela" || block.type === "tabela_eventos") && (
                             <div className="space-y-4 rounded-lg border border-border p-3 bg-muted/10">
                               <p className="text-sm font-medium text-muted-foreground">Tabela Classificação — importe de Google Sheets</p>
                               <p className="text-xs text-muted-foreground">

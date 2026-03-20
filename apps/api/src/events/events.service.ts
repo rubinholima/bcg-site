@@ -37,6 +37,8 @@ export type EventResponseDto = {
   /** Presente quando o include Prisma trouxe slug/logoUrl (ex.: público por slug, findOne). */
   tenant?: EventTenantPublicDto | null;
   category: string;
+  /** principal | sub20 | sub15 | … — categoria única do torneio na página pública */
+  fixtureCategory: string | null;
   startDate: string | null;
   endDate: string | null;
   logoUrl: string | null;
@@ -54,6 +56,7 @@ export type CreateEventDto = {
   organizer: 'group' | 'tenant';
   tenantId?: string;
   category?: 'football' | 'other';
+  fixtureCategory?: string | null;
   startDate?: string;
   endDate?: string;
   logoUrl?: string;
@@ -68,6 +71,7 @@ export type UpdateEventDto = {
   organizer?: 'group' | 'tenant';
   tenantId?: string | null;
   category?: 'football' | 'other';
+  fixtureCategory?: string | null;
   startDate?: string | null;
   endDate?: string | null;
   logoUrl?: string | null;
@@ -85,6 +89,7 @@ function toDto(row: {
   tenantId: string | null;
   tenant?: { name: string; slug?: string | null; logoUrl?: string | null } | null;
   category: string;
+  fixtureCategory: string | null;
   startDate: Date | null;
   endDate: Date | null;
   logoUrl: string | null;
@@ -112,6 +117,7 @@ function toDto(row: {
         }
       : null,
     category: row.category,
+    fixtureCategory: row.fixtureCategory?.trim() || null,
     startDate: row.startDate ? row.startDate.toISOString().slice(0, 10) : null,
     endDate: row.endDate ? row.endDate.toISOString().slice(0, 10) : null,
     logoUrl: row.logoUrl,
@@ -376,6 +382,10 @@ export class EventsService {
         organizer: dto.organizer,
         tenantId,
         category: dto.category ?? 'football',
+        fixtureCategory:
+          dto.fixtureCategory != null && String(dto.fixtureCategory).trim()
+            ? String(dto.fixtureCategory).trim()
+            : null,
         startDate: dto.startDate ? new Date(dto.startDate) : null,
         endDate: dto.endDate ? new Date(dto.endDate) : null,
         logoUrl: dto.logoUrl?.trim() || null,
@@ -417,6 +427,12 @@ export class EventsService {
       data.tenantId = null;
     }
     if (dto.category !== undefined) data.category = dto.category;
+    if (dto.fixtureCategory !== undefined) {
+      data.fixtureCategory =
+        dto.fixtureCategory != null && String(dto.fixtureCategory).trim()
+          ? String(dto.fixtureCategory).trim()
+          : null;
+    }
     if (dto.startDate !== undefined)
       data.startDate = dto.startDate ? new Date(dto.startDate) : null;
     if (dto.endDate !== undefined)

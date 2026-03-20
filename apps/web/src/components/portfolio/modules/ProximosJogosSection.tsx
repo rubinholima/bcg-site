@@ -16,6 +16,10 @@ import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2 } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
+import {
+  fetchFixtures as fetchFixturesShared,
+  type FixturesFetchContext,
+} from "@/lib/fixtures-shared";
 
 export interface FixtureItem {
   externalId: string;
@@ -36,14 +40,6 @@ export interface FixtureItem {
   homeTeamLogoUrl?: string;
   /** Manual: logo do time visitante. */
   awayTeamLogoUrl?: string;
-}
-
-async function fetchFixtures(slug: string): Promise<FixtureItem[]> {
-  const url = `/api/public/tenants/${encodeURIComponent(slug)}/fixtures`;
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return Array.isArray(data) ? data : [];
 }
 
 function formatDate(iso: string, lang: "pt" | "en"): string {
@@ -262,6 +258,10 @@ export function ProximosJogosSection({
   inSection,
   sectionColumns,
   showTitle = true,
+  fixturesContext = "tenant",
+  competitionDisplayFallback,
+  lockedEventFixtureCategory,
+  eventPageLogoUrl,
 }: {
   block: HomeContentBlock;
   slug: string;
@@ -273,6 +273,14 @@ export function ProximosJogosSection({
   inSection?: boolean;
   sectionColumns?: 1 | 2 | 3;
   showTitle?: boolean;
+  /** `event` = GET /api/public/events/:slug/fixtures (página de evento). */
+  fixturesContext?: FixturesFetchContext;
+  /** Página do evento: exibir quando `competitionName` do jogo estiver vazio (ex.: nome do evento). */
+  competitionDisplayFallback?: string | null;
+  /** Página do evento: categoria única do cadastro — sem filtro “Todas”, só este rótulo/filtro. */
+  lockedEventFixtureCategory?: string | null;
+  /** Página do evento: logo no canto superior direito do card. */
+  eventPageLogoUrl?: string | null;
 }) {
   const [fixtures, setFixtures] = useState<FixtureItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -310,7 +318,7 @@ export function ProximosJogosSection({
 
   useEffect(() => {
     let cancelled = false;
-    fetchFixtures(slug).then((list) => {
+    fetchFixturesShared(slug, fixturesContext).then((list) => {
       if (!cancelled) {
         setFixtures(list);
         setLoading(false);
@@ -319,10 +327,10 @@ export function ProximosJogosSection({
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, fixturesContext]);
 
   useEffect(() => {
-    if (!slug?.trim()) return;
+    if (!slug?.trim() || fixturesContext === "event") return;
     let cancelled = false;
     fetch(`/api/public/tenants/${encodeURIComponent(slug)}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
@@ -335,7 +343,7 @@ export function ProximosJogosSection({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [slug]);
+  }, [slug, fixturesContext]);
 
   const [tick, setTick] = useState(0);
   useEffect(() => {
@@ -354,22 +362,44 @@ export function ProximosJogosSection({
     return Array.from(set).sort();
   }, [upcomingFixtures]);
 
-  /** Categorias para o filtro: sempre exibe todas, para o usuário poder filtrar (ex: Sub-15) mesmo sem jogos. */
+  /** Categorias para o filtro: tenant — lista completa; evento — não usa select. */
   const categoriesForFilter = useMemo(
     () => FIXTURE_CATEGORIES.map((c) => c.value),
     [],
   );
+
+  /** Página do evento: categoria do cadastro ou, se única nos jogos, inferida (nunca dropdown). */
+  const inferredEventCategory = useMemo(() => {
+    if (fixturesContext !== "event") return null;
+    const cats = new Set(
+      upcomingFixtures.map((f) => (f.category ?? "principal") as string),
+    );
+    if (cats.size !== 1) return null;
+    return Array.from(cats)[0] ?? null;
+  }, [fixturesContext, upcomingFixtures]);
+
+  const resolvedEventCategory =
+    fixturesContext === "event"
+      ? (lockedEventFixtureCategory?.trim() || inferredEventCategory || null)
+      : null;
+
+  const categoryFilterActive =
+    fixturesContext === "event"
+      ? resolvedEventCategory
+      : selectedCategory;
 
   const filteredFixtures = useMemo(() => {
     let list = upcomingFixtures;
     if (selectedDate) {
       list = list.filter((f) => dateKey(f.startISO) === selectedDate);
     }
-    if (selectedCategory) {
-      list = list.filter((f) => (f.category ?? "principal") === selectedCategory);
+    if (categoryFilterActive) {
+      list = list.filter(
+        (f) => (f.category ?? "principal") === categoryFilterActive,
+      );
     }
     return list;
-  }, [upcomingFixtures, selectedDate, selectedCategory]);
+  }, [upcomingFixtures, selectedDate, categoryFilterActive]);
 
   const cardCount = filteredFixtures.length;
   /** Marquee contínuo como o carrossel de logos: 3 cópias para loop fluido sem parar. */
@@ -387,6 +417,10 @@ export function ProximosJogosSection({
 
   const cardClassName =
     `min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:min-w-[300px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
+
+  const eventCardLogoRaw =
+    fixturesContext === "event" ? (eventPageLogoUrl?.trim() || "") : "";
+  const eventCardLogoSrc = eventCardLogoRaw ? getPublicImageUrl(eventCardLogoRaw) : "";
 
   return (
     <section
@@ -449,17 +483,25 @@ export function ProximosJogosSection({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-zinc-500">{lang === "pt" ? "Categoria:" : "Category:"}</span>
-              <Select value={selectedCategory ?? "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}>
-                <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{lang === "pt" ? "Todas" : "All"}</SelectItem>
-                  {categoriesForFilter.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{getCategoryLabel(cat, lang)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {fixturesContext === "event" ? (
+                <span className="inline-flex min-h-9 items-center rounded-md border border-white/20 bg-zinc-900/60 px-3 text-sm font-medium text-white">
+                  {resolvedEventCategory
+                    ? getCategoryLabel(resolvedEventCategory, lang)
+                    : (lang === "pt" ? "Todas" : "All")}
+                </span>
+              ) : (
+                <Select value={selectedCategory ?? "all"} onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}>
+                  <SelectTrigger className="w-[140px] h-9 border-white/20 bg-zinc-900/60 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{lang === "pt" ? "Todas" : "All"}</SelectItem>
+                    {categoriesForFilter.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{getCategoryLabel(cat, lang)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
         )}
@@ -485,18 +527,23 @@ export function ProximosJogosSection({
                 : {}),
             }}
           >
-                {carouselItems.map((f, index) => (
+                {carouselItems.map((f, index) => {
+                  const competitionLabel =
+                    (f.competitionName && String(f.competitionName).trim()) ||
+                    (competitionDisplayFallback && String(competitionDisplayFallback).trim()) ||
+                    "";
+                  return (
                   <div
                     key={`${f.externalId}-${index}`}
                     className={`${cardClassName} relative`}
                   >
-                    {/* Topo: competição + categoria + data à esquerda, Casa/Fora à direita */}
+                    {/* Topo: competição + categoria + data à esquerda; evento: logo à direita; tenant: Casa/Fora */}
                     <div className="mb-3 flex items-start justify-between gap-2">
-                      <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          {f.competitionName && (
+                          {competitionLabel && (
                             <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-                              {f.competitionName}
+                              {competitionLabel}
                             </span>
                           )}
                           <span className="text-xs font-medium text-amber-400/90">
@@ -507,20 +554,49 @@ export function ProximosJogosSection({
                           {formatDate(f.startISO, lang)}
                         </span>
                       </div>
-                      <span
-                        className={`shrink-0 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs ${
-                          isHome(f)
-                            ? "bg-emerald-500/15 text-emerald-300"
-                            : "bg-sky-500/15 text-sky-300"
-                        }`}
-                      >
-                        {isHome(f) ? (
-                          <Home className="h-3 w-3" />
-                        ) : (
-                          <Plane className="h-3 w-3" />
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        {eventCardLogoSrc ? (
+                          <div
+                            className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-zinc-800/80"
+                            title={competitionDisplayFallback ?? competitionLabel ?? ""}
+                          >
+                            {isSvgUrl(eventCardLogoRaw) ? (
+                              // eslint-disable-next-line @next/next/no-img-element -- SVG externo
+                              <img
+                                src={eventCardLogoSrc}
+                                alt=""
+                                width={40}
+                                height={40}
+                                className="max-h-full max-w-full object-contain"
+                              />
+                            ) : (
+                              <SmartImage
+                                src={eventCardLogoSrc}
+                                alt=""
+                                width={40}
+                                height={40}
+                                className="max-h-full max-w-full object-contain"
+                              />
+                            )}
+                          </div>
+                        ) : null}
+                        {fixturesContext !== "event" && (
+                          <span
+                            className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs ${
+                              isHome(f)
+                                ? "bg-emerald-500/15 text-emerald-300"
+                                : "bg-sky-500/15 text-sky-300"
+                            }`}
+                          >
+                            {isHome(f) ? (
+                              <Home className="h-3 w-3" />
+                            ) : (
+                              <Plane className="h-3 w-3" />
+                            )}
+                            {homeAwayLabel(f)}
+                          </span>
                         )}
-                        {homeAwayLabel(f)}
-                      </span>
+                      </div>
                     </div>
                     {/* Data em destaque */}
                     <div className="mb-3 text-2xl font-bold text-white">
@@ -623,7 +699,8 @@ export function ProximosJogosSection({
                       )}
                     </div>
                   </div>
-                ))}
+                );
+                })}
           </div>
         </div>
       )}

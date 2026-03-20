@@ -110,6 +110,9 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   // Clubes
   proximos_jogos: { pt: "Próximos jogos", en: "Upcoming matches" },
   ultimos_resultados: { pt: "Últimos resultados", en: "Last results" },
+  proximos_eventos: { pt: "Próximos jogos (evento)", en: "Upcoming matches (event)" },
+  ultimos_eventos: { pt: "Últimos resultados (evento)", en: "Last results (event)" },
+  tabela_eventos: { pt: "Tabela / classificação (evento)", en: "Standings (event)" },
   times_categorias: { pt: "Times por categorias", en: "Teams by category" },
   noticias: { pt: "Notícias", en: "News" },
   calendario: { pt: "Calendário / Agenda", en: "Calendar" },
@@ -209,6 +212,9 @@ export const EVENT_PAGE_MODULES_BY_CATEGORY: Record<
 > = {
   futebol: [
     { type: "galeria_eventos", label: "Galeria de fotos do evento" },
+    { type: "proximos_eventos", label: "Próximos jogos (evento)" },
+    { type: "ultimos_eventos", label: "Últimos resultados (evento)" },
+    { type: "tabela_eventos", label: "Tabela / classificação (evento)" },
   ],
   empresas: [],
   imobiliaria: [],
@@ -262,6 +268,9 @@ export const BLOCK_TYPES_WITH_BODY: HomeBlockType[] = [
   "eventos",
   "proximos_jogos",
   "ultimos_resultados",
+  "proximos_eventos",
+  "ultimos_eventos",
+  "tabela_eventos",
   "times_categorias",
   "noticias",
   "calendario",
@@ -399,14 +408,14 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.sectionPaddingTop = "compact";
     config.sectionPaddingBottom = "compact";
   }
-  if (type === "proximos_jogos") {
+  if (type === "proximos_jogos" || type === "proximos_eventos") {
     config.proximosJogosDataSource = "manual";
     config.proximosJogosManualFixtures = [];
     config.proximosJogosOverrides = {};
     config.proximosJogosPaddingTop = "compact";
     config.proximosJogosPaddingBottom = "compact";
   }
-  if (type === "ultimos_resultados") {
+  if (type === "ultimos_resultados" || type === "ultimos_eventos") {
     config.ultimosResultadosPaddingTop = "compact";
     config.ultimosResultadosPaddingBottom = "compact";
     config.ultimosResultadosMaxItems = 10;
@@ -442,7 +451,7 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.timesCategoriasPaddingTop = "compact";
     config.timesCategoriasPaddingBottom = "compact";
   }
-  if (type === "tabela") {
+  if (type === "tabela" || type === "tabela_eventos") {
     config.tabelaDataSource = "manual";
     config.tabelaManualRows = [];
     config.tabelaPaddingTop = "compact";

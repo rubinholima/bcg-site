@@ -3,7 +3,8 @@ import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { BlockRenderer } from "./BlockRenderer";
+import { BlockRenderer, type EventPageMetaForFixtures } from "./BlockRenderer";
+import type { FixturesFetchContext } from "@/lib/fixtures-shared";
 
 const PADDING_CLASSES = {
   minimal: { top: "pt-4 sm:pt-5", bottom: "pb-4 sm:pb-5" },
@@ -25,11 +26,17 @@ export function SectionBlockRenderer({
   slug,
   lang,
   page,
+  fixturesContext = "tenant",
+  initialUploadToken,
+  eventPageMeta,
 }: {
   block: HomeContentBlock;
   slug: string;
   lang: "pt" | "en";
   page: Page;
+  fixturesContext?: FixturesFetchContext;
+  initialUploadToken?: string | null;
+  eventPageMeta?: EventPageMetaForFixtures | null;
 }) {
   const columns = (block.config?.sectionColumns as 1 | 2 | 3) ?? 1;
   const layout = (block.config?.sectionLayout as string) ?? "50-50";
@@ -193,11 +200,24 @@ export function SectionBlockRenderer({
                 />
               )}
               {allModules.map((m) => {
-                const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                const fullBleed =
+                  (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
+                  m.config?.fullBleedCarousel === true;
                 const showModuleTitle = visibleLeft.length > 1;
                 return (
                   <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                    <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
+                    <BlockRenderer
+                      block={m}
+                      slug={slug}
+                      lang={lang}
+                      page={page}
+                      inSection
+                      sectionColumns={columns}
+                      showModuleTitle={showModuleTitle}
+                      fixturesContext={fixturesContext}
+                      initialUploadToken={initialUploadToken}
+                      eventPageMeta={eventPageMeta}
+                    />
                   </div>
                 );
               })}
@@ -219,11 +239,24 @@ export function SectionBlockRenderer({
                   />
                 )}
                 {visibleLeft.map((m) => {
-                  const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                  const fullBleed =
+                    (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
+                    m.config?.fullBleedCarousel === true;
                   const showModuleTitle = visibleLeft.length > 1;
                   return (
                     <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
+                      <BlockRenderer
+                        block={m}
+                        slug={slug}
+                        lang={lang}
+                        page={page}
+                        inSection
+                        sectionColumns={columns}
+                        showModuleTitle={showModuleTitle}
+                        fixturesContext={fixturesContext}
+                        initialUploadToken={initialUploadToken}
+                        eventPageMeta={eventPageMeta}
+                      />
                     </div>
                   );
                 })}
@@ -244,11 +277,24 @@ export function SectionBlockRenderer({
                     />
                   )}
                   {visibleMiddle.map((m) => {
-                    const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                    const fullBleed =
+                      (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
+                      m.config?.fullBleedCarousel === true;
                     const showModuleTitle = visibleMiddle.length > 1;
                     return (
                       <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                        <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
+                        <BlockRenderer
+                          block={m}
+                          slug={slug}
+                          lang={lang}
+                          page={page}
+                          inSection
+                          sectionColumns={columns}
+                          showModuleTitle={showModuleTitle}
+                          fixturesContext={fixturesContext}
+                          initialUploadToken={initialUploadToken}
+                          eventPageMeta={eventPageMeta}
+                        />
                       </div>
                     );
                   })}
@@ -269,11 +315,24 @@ export function SectionBlockRenderer({
                   />
                 )}
                 {visibleRight.map((m) => {
-                  const fullBleed = m.type === "proximos_jogos" && m.config?.fullBleedCarousel === true;
+                  const fullBleed =
+                    (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
+                    m.config?.fullBleedCarousel === true;
                   const showModuleTitle = visibleRight.length > 1;
                   return (
                     <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer block={m} slug={slug} lang={lang} page={page} inSection sectionColumns={columns} showModuleTitle={showModuleTitle} />
+                      <BlockRenderer
+                        block={m}
+                        slug={slug}
+                        lang={lang}
+                        page={page}
+                        inSection
+                        sectionColumns={columns}
+                        showModuleTitle={showModuleTitle}
+                        fixturesContext={fixturesContext}
+                        initialUploadToken={initialUploadToken}
+                        eventPageMeta={eventPageMeta}
+                      />
                     </div>
                   );
                 })}

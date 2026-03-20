@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { FixtureItem } from "@/lib/fixtures-shared";
-import { fetchFixtures } from "@/lib/fixtures-shared";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { fetchFixtures, type FixturesFetchContext } from "@/lib/fixtures-shared";
+import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { FixtureTeamLogo, isOurTeam } from "@/components/portfolio/FixtureTeamLogo";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
@@ -67,6 +68,7 @@ function FixtureDetailsModal({
   ourTeamLogoUrl,
   lang,
   onClose,
+  competitionDisplayFallback,
 }: {
   fixture: FixtureItem;
   score: { home: number; away: number } | null;
@@ -83,7 +85,12 @@ function FixtureDetailsModal({
   ourTeamLogoUrl?: string | null;
   lang: "pt" | "en";
   onClose: () => void;
+  competitionDisplayFallback?: string | null;
 }) {
+  const competitionLine =
+    (fixture.competitionName && String(fixture.competitionName).trim()) ||
+    (competitionDisplayFallback && String(competitionDisplayFallback).trim()) ||
+    "";
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
@@ -108,10 +115,10 @@ function FixtureDetailsModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs text-amber-400">
               {getCategoryLabel(fixture.category ?? "principal", lang)}
-              {fixture.competitionName && (
+              {competitionLine && (
                 <>
                   <span className="text-zinc-500">·</span>
-                  <span className="text-zinc-400">{fixture.competitionName}</span>
+                  <span className="text-zinc-400">{competitionLine}</span>
                 </>
               )}
             </div>
@@ -334,6 +341,10 @@ export function UltimosResultadosSection({
   titleAlign = "left",
   inSection,
   showTitle = true,
+  fixturesContext = "tenant",
+  competitionDisplayFallback,
+  lockedEventFixtureCategory,
+  eventPageLogoUrl,
 }: {
   block: HomeContentBlock;
   slug: string;
@@ -344,6 +355,10 @@ export function UltimosResultadosSection({
   titleAlign?: "left" | "center" | "right";
   inSection?: boolean;
   showTitle?: boolean;
+  fixturesContext?: FixturesFetchContext;
+  competitionDisplayFallback?: string | null;
+  lockedEventFixtureCategory?: string | null;
+  eventPageLogoUrl?: string | null;
 }) {
   const [fixtures, setFixtures] = useState<FixtureItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -357,7 +372,10 @@ export function UltimosResultadosSection({
   const slugAsName = slug?.trim()
     ? slug.trim().replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "";
-  const displayOurTeamName = tenantBySlug?.name ?? ourTeamName ?? (slugAsName || undefined);
+  const displayOurTeamName =
+    tenantBySlug?.name ??
+    ourTeamName ??
+    (fixturesContext === "event" ? undefined : slugAsName || undefined);
   const displayOurTeamLogoUrl = tenantBySlug?.logoUrl ?? ourTeamLogoUrl ?? undefined;
 
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
@@ -386,17 +404,17 @@ export function UltimosResultadosSection({
 
   useEffect(() => {
     let cancelled = false;
-    fetchFixtures(slug).then((list) => {
+    fetchFixtures(slug, fixturesContext).then((list) => {
       if (!cancelled) {
         setFixtures(list);
         setLoading(false);
       }
     });
     return () => { cancelled = true; };
-  }, [slug]);
+  }, [slug, fixturesContext]);
 
   useEffect(() => {
-    if (!slug?.trim()) return;
+    if (!slug?.trim() || fixturesContext === "event") return;
     let cancelled = false;
     fetch(`/api/public/tenants/${encodeURIComponent(slug)}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
@@ -409,7 +427,7 @@ export function UltimosResultadosSection({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [slug]);
+  }, [slug, fixturesContext]);
 
   const pastFixtures = useMemo(() => {
     const now = new Date();
@@ -420,13 +438,34 @@ export function UltimosResultadosSection({
 
   const categoriesForFilter = useMemo(() => FIXTURE_CATEGORIES.map((c) => c.value), []);
 
+  const inferredEventCategory = useMemo(() => {
+    if (fixturesContext !== "event") return null;
+    const cats = new Set(
+      pastFixtures.map((f) => (f.category ?? "principal") as string),
+    );
+    if (cats.size !== 1) return null;
+    return Array.from(cats)[0] ?? null;
+  }, [fixturesContext, pastFixtures]);
+
+  const resolvedEventCategory =
+    fixturesContext === "event"
+      ? (lockedEventFixtureCategory?.trim() || inferredEventCategory || null)
+      : null;
+
+  const categoryFilterActive =
+    fixturesContext === "event"
+      ? resolvedEventCategory
+      : selectedCategory;
+
   const filteredFixtures = useMemo(() => {
     let list = pastFixtures;
-    if (selectedCategory) {
-      list = list.filter((f) => (f.category ?? "principal") === selectedCategory);
+    if (categoryFilterActive) {
+      list = list.filter(
+        (f) => (f.category ?? "principal") === categoryFilterActive,
+      );
     }
     return list.slice(0, maxItems);
-  }, [pastFixtures, selectedCategory, maxItems]);
+  }, [pastFixtures, categoryFilterActive, maxItems]);
 
   const cardCount = filteredFixtures.length;
   const useMarquee = cardCount > 3;
@@ -437,7 +476,7 @@ export function UltimosResultadosSection({
 
   useEffect(() => {
     setCurrentIndex(0);
-  }, [selectedCategory, cardCount]);
+  }, [categoryFilterActive, cardCount]);
 
   const scrollCarouselToIndex = (idx: number) => {
     const el = carouselRef.current;
@@ -467,6 +506,10 @@ export function UltimosResultadosSection({
 
   const cardClassName =
     `w-[340px] min-w-[340px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:w-[400px] sm:min-w-[400px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
+
+  const eventCardLogoRaw =
+    fixturesContext === "event" ? (eventPageLogoUrl?.trim() || "") : "";
+  const eventCardLogoSrc = eventCardLogoRaw ? getPublicImageUrl(eventCardLogoRaw) : "";
 
   return (
     <section
@@ -512,22 +555,30 @@ export function UltimosResultadosSection({
             <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-zinc-500">{lang === "pt" ? "Categoria:" : "Category:"}</span>
-                <Select
-                  value={selectedCategory ?? "all"}
-                  onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}
-                >
-                  <SelectTrigger className="h-9 w-[140px] border-white/20 bg-white/5 text-white backdrop-blur-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{lang === "pt" ? "Todas" : "All"}</SelectItem>
-                    {categoriesForFilter.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {getCategoryLabel(cat, lang)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {fixturesContext === "event" ? (
+                  <span className="inline-flex min-h-9 items-center rounded-md border border-white/20 bg-white/5 px-3 text-sm font-medium text-white backdrop-blur-sm">
+                    {resolvedEventCategory
+                      ? getCategoryLabel(resolvedEventCategory, lang)
+                      : (lang === "pt" ? "Todas" : "All")}
+                  </span>
+                ) : (
+                  <Select
+                    value={selectedCategory ?? "all"}
+                    onValueChange={(v) => setSelectedCategory(v === "all" ? null : v)}
+                  >
+                    <SelectTrigger className="h-9 w-[140px] border-white/20 bg-white/5 text-white backdrop-blur-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{lang === "pt" ? "Todas" : "All"}</SelectItem>
+                      {categoriesForFilter.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {getCategoryLabel(cat, lang)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
@@ -575,6 +626,10 @@ export function UltimosResultadosSection({
               >
                 {carouselItems.map((f, index) => {
                   const score = getScore(f);
+                  const competitionLine =
+                    (f.competitionName && String(f.competitionName).trim()) ||
+                    (competitionDisplayFallback && String(competitionDisplayFallback).trim()) ||
+                    "";
                   const weWon =
                     score && isOurTeam(f.homeTeamName, displayOurTeamName)
                       ? score.home > score.away
@@ -589,12 +644,39 @@ export function UltimosResultadosSection({
                       style={{ scrollSnapAlign: "start" }}
                     >
                       <div className="mb-3 flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium uppercase tracking-wider text-amber-400/90">
+                        <span className="shrink-0 text-xs font-medium uppercase tracking-wider text-amber-400/90">
                           {getCategoryLabel(f.category ?? "principal", lang)}
                         </span>
-                        {f.competitionName && (
-                          <span className="truncate text-xs text-zinc-500">{f.competitionName}</span>
-                        )}
+                        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                          {competitionLine ? (
+                            <span className="truncate text-xs text-zinc-500">{competitionLine}</span>
+                          ) : null}
+                          {eventCardLogoSrc ? (
+                            <div
+                              className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-zinc-800/80"
+                              title={competitionDisplayFallback ?? competitionLine ?? ""}
+                            >
+                              {isSvgUrl(eventCardLogoRaw) ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- SVG externo
+                                <img
+                                  src={eventCardLogoSrc}
+                                  alt=""
+                                  width={36}
+                                  height={36}
+                                  className="max-h-full max-w-full object-contain"
+                                />
+                              ) : (
+                                <SmartImage
+                                  src={eventCardLogoSrc}
+                                  alt=""
+                                  width={36}
+                                  height={36}
+                                  className="max-h-full max-w-full object-contain"
+                                />
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                       <div className="mb-2 flex items-center gap-1.5 text-xs text-zinc-500">
                         <Calendar className="h-3.5 w-3.5 shrink-0" />
@@ -688,6 +770,7 @@ export function UltimosResultadosSection({
           ourTeamName={displayOurTeamName}
           ourTeamLogoUrl={displayOurTeamLogoUrl}
           lang={lang}
+          competitionDisplayFallback={competitionDisplayFallback}
           onClose={() => setDetailsFixture(null)}
         />
       )}

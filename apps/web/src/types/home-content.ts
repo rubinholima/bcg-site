@@ -65,6 +65,12 @@ export type HomeBlockType =
   // Clubes (futebol)
   | "proximos_jogos"
   | "ultimos_resultados"
+  /** Mesma lógica/config que proximos_jogos — só para páginas de evento (slug = evento). */
+  | "proximos_eventos"
+  /** Mesma lógica/config que ultimos_resultados — só para páginas de evento. */
+  | "ultimos_eventos"
+  /** Mesma lógica/config que tabela — só para páginas de evento. */
+  | "tabela_eventos"
   | "times_categorias"
   | "noticias"
   | "calendario"

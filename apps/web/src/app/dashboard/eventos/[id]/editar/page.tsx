@@ -29,6 +29,7 @@ import { CompetitionFormatEditor } from "@/components/dashboard/CompetitionForma
 import { EventPhotosCard } from "@/components/dashboard/EventPhotosCard";
 import type { CompetitionFormat } from "@/lib/competition-formats";
 import { emptyFormat } from "@/lib/competition-formats";
+import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 
 function slugify(s: string): string {
   return s
@@ -51,6 +52,7 @@ export default function EditarEventoPage() {
     tenantId: string | null;
     tenantName?: string | null;
     category: string;
+    fixtureCategory?: string | null;
     startDate: string | null;
     endDate: string | null;
     logoUrl: string | null;
@@ -108,6 +110,10 @@ export default function EditarEventoPage() {
         organizer: event.organizer,
         tenantId: event.organizer === "tenant" ? event.tenantId : null,
         category: event.category,
+        fixtureCategory:
+          event.category === "football"
+            ? (event.fixtureCategory?.trim() || null)
+            : null,
         startDate: event.startDate ?? undefined,
         endDate: event.endDate ?? undefined,
         logoUrl: event.logoUrl ?? undefined,
@@ -123,6 +129,9 @@ export default function EditarEventoPage() {
               logoUrl: updated.logoUrl ?? prev.logoUrl,
               status: updated.status,
               competitionFormat: updated.competitionFormat ?? prev.competitionFormat,
+              fixtureCategory:
+                (updated as { fixtureCategory?: string | null }).fixtureCategory ??
+                prev.fixtureCategory,
             }
           : null,
       );
@@ -276,7 +285,20 @@ export default function EditarEventoPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Select value={event.category} onValueChange={(v) => setEvent({ ...event, category: v })}>
+                <Select
+                  value={event.category}
+                  onValueChange={(v) =>
+                    setEvent((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            category: v,
+                            fixtureCategory: v === "football" ? prev.fixtureCategory : null,
+                          }
+                        : null,
+                    )
+                  }
+                >
                   <SelectTrigger className="text-foreground">
                     <SelectValue />
                   </SelectTrigger>
@@ -286,6 +308,35 @@ export default function EditarEventoPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {event.category === "football" ? (
+                <div className="space-y-2">
+                  <Label>Categoria do torneio</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Na página pública do evento, os jogos usam só esta faixa (Sub-15, Principal, etc.).
+                  </p>
+                  <Select
+                    value={event.fixtureCategory ?? "__none__"}
+                    onValueChange={(v) =>
+                      setEvent({
+                        ...event,
+                        fixtureCategory: v === "__none__" ? null : v,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="text-foreground">
+                      <SelectValue placeholder="Selecione…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— Não definido —</SelectItem>
+                      {FIXTURE_CATEGORIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.labelPT}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

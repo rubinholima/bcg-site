@@ -42,7 +42,15 @@ import { FaqSection } from "@/components/portfolio/modules/FaqSection";
 import { FormularioCapturaSection } from "@/components/portfolio/modules/FormularioCapturaSection";
 import { EventosSection } from "@/components/portfolio/modules/EventosSection";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
+import type { FixturesFetchContext } from "@/lib/fixtures-shared";
 import { Button } from "@/components/ui/button";
+
+export type EventPageMetaForFixtures = {
+  name: string;
+  fixtureCategory: string | null;
+  /** Logo do evento (URL); fallback do tenant pode vir já resolvido na página. */
+  logoUrl?: string | null;
+};
 
 const HIGHLIGHTS_ICON_MAP: Record<string, LucideIcon> = {
   Trophy,
@@ -127,6 +135,8 @@ export function BlockRenderer({
   sectionColumns,
   showModuleTitle,
   initialUploadToken,
+  fixturesContext = "tenant",
+  eventPageMeta,
 }: {
   block: HomeContentBlock;
   slug: string;
@@ -136,6 +146,10 @@ export function BlockRenderer({
   sectionColumns?: 1 | 2 | 3;
   showModuleTitle?: boolean;
   initialUploadToken?: string | null;
+  /** Em `/eventos/[slug]`, use `event` para buscar fixtures no conteúdo do evento. */
+  fixturesContext?: FixturesFetchContext;
+  /** Metadados do evento publicado (nome + categoria fixa de jogos). */
+  eventPageMeta?: EventPageMetaForFixtures | null;
 }) {
   /** Servidor pode devolver visible como boolean ou string; ocultar só quando false ou "false". */
   const v = block.config?.visible as boolean | string | undefined;
@@ -152,7 +166,15 @@ export function BlockRenderer({
 
   if (block.type === "section") {
     return (
-      <SectionBlockRenderer block={block} slug={slug} lang={lang} page={page} />
+      <SectionBlockRenderer
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fixturesContext={fixturesContext}
+        initialUploadToken={initialUploadToken}
+        eventPageMeta={eventPageMeta}
+      />
     );
   }
 
@@ -384,7 +406,7 @@ export function BlockRenderer({
     );
   }
 
-  if (block.type === "tabela") {
+  if (block.type === "tabela" || block.type === "tabela_eventos") {
     return (
       <TabelaClassificacaoSection
         key={block.id}
@@ -402,20 +424,34 @@ export function BlockRenderer({
     );
   }
 
-  if (block.type === "proximos_jogos") {
+  if (block.type === "proximos_jogos" || block.type === "proximos_eventos") {
+    const neutralEventFixtures = fixturesContext === "event";
+    const eventName =
+      (eventPageMeta?.name && eventPageMeta.name.trim()) ||
+      (page.title?.trim() || "");
     return (
       <ProximosJogosSection
         key={block.id}
         block={block}
         slug={slug}
         lang={lang}
-        ourTeamName={tenant?.name}
-        ourTeamLogoUrl={tenant?.logoUrl}
+        ourTeamName={neutralEventFixtures ? undefined : tenant?.name}
+        ourTeamLogoUrl={neutralEventFixtures ? undefined : tenant?.logoUrl}
         fullWidth={fullWidth}
         titleAlign={titleAlign}
         inSection={inSection}
         sectionColumns={sectionColumns}
         showTitle={shouldShowTitle}
+        fixturesContext={fixturesContext}
+        competitionDisplayFallback={
+          neutralEventFixtures ? (eventName || null) : null
+        }
+        lockedEventFixtureCategory={
+          neutralEventFixtures ? (eventPageMeta?.fixtureCategory ?? null) : null
+        }
+        eventPageLogoUrl={
+          neutralEventFixtures ? (eventPageMeta?.logoUrl ?? null) : null
+        }
       />
     );
   }
@@ -498,19 +534,33 @@ export function BlockRenderer({
       />
     );
   }
-  if (block.type === "ultimos_resultados") {
+  if (block.type === "ultimos_resultados" || block.type === "ultimos_eventos") {
+    const neutralEventFixtures = fixturesContext === "event";
+    const eventName =
+      (eventPageMeta?.name && eventPageMeta.name.trim()) ||
+      (page.title?.trim() || "");
     return (
       <UltimosResultadosSection
         key={block.id}
         block={block}
         slug={slug}
         lang={lang}
-        ourTeamName={tenant?.name}
-        ourTeamLogoUrl={tenant?.logoUrl}
+        ourTeamName={neutralEventFixtures ? undefined : tenant?.name}
+        ourTeamLogoUrl={neutralEventFixtures ? undefined : tenant?.logoUrl}
         fullWidth={fullWidth}
         titleAlign={titleAlign}
         inSection={inSection}
         showTitle={shouldShowTitle}
+        fixturesContext={fixturesContext}
+        competitionDisplayFallback={
+          neutralEventFixtures ? (eventName || null) : null
+        }
+        lockedEventFixtureCategory={
+          neutralEventFixtures ? (eventPageMeta?.fixtureCategory ?? null) : null
+        }
+        eventPageLogoUrl={
+          neutralEventFixtures ? (eventPageMeta?.logoUrl ?? null) : null
+        }
       />
     );
   }

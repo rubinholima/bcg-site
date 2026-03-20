@@ -21,6 +21,8 @@ export interface EventPublicDto {
   tenantName?: string | null;
   tenant?: { id: string; name: string; slug: string; logoUrl?: string | null } | null;
   category: string;
+  /** principal | sub15 | … — categoria única do torneio (futebol) */
+  fixtureCategory?: string | null;
   startDate: string | null;
   endDate: string | null;
   logoUrl: string | null;
@@ -60,7 +62,15 @@ function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
 
 const GENERIC_BLOCK_TYPES = [
   "header", "footer", "section", "text", "custom",
-  "proximos_jogos", "ultimos_resultados", "times_categorias", "noticias", "calendario", "tabela",
+  "proximos_jogos",
+  "ultimos_resultados",
+  "proximos_eventos",
+  "ultimos_eventos",
+  "times_categorias",
+  "noticias",
+  "calendario",
+  "tabela",
+  "tabela_eventos",
   "patrocinadores", "galeria", "galeria_eventos", "sobre", "servicos", "produtos", "equipe", "clientes", "contato",
   "hero", "highlights", "what", "founder", "how", "cta", "logo_carousel", "clubs", "companies", "eventos",
 ];
@@ -236,6 +246,15 @@ export default async function EventoSlugPage({
             lang={lang}
             page={page}
             initialUploadToken={uploadToken}
+            fixturesContext="event"
+            eventPageMeta={{
+              name: event.name,
+              fixtureCategory:
+                event.category === "football"
+                  ? (event.fixtureCategory?.trim() || null)
+                  : null,
+              logoUrl: event.logoUrl ?? event.tenant?.logoUrl ?? null,
+            }}
           />
         ))}
 

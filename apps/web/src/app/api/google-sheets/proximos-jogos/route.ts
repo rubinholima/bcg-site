@@ -127,9 +127,17 @@ function normalizeIsOurTeamHome(value: string): boolean | undefined {
   return undefined;
 }
 
-/** Extrai valor da coluna clube/slug da linha. Colunas: clube/slug, clube_slug, clube, slug. */
+/** Extrai valor da coluna de filtro (clube ou evento). Mesmo valor que o parâmetro `slug` na importação. */
 function getRowSlug(record: Record<string, string>): string {
-  const keys = ["clube_slug", "clube/slug", "clube", "slug"];
+  const keys = [
+    "clube_slug",
+    "clube/slug",
+    "evento_slug",
+    "evento/slug",
+    "event_slug",
+    "clube",
+    "slug",
+  ];
   for (const k of keys) {
     const v = record[k]?.trim();
     if (v) return v.toLowerCase();
@@ -185,9 +193,10 @@ function rowToFixture(headers: string[], row: string[]): ProximosJogosFixtureIte
 }
 
 /**
- * GET /api/google-sheets/proximos-jogos?spreadsheetId=...&gid=0
+ * GET /api/google-sheets/proximos-jogos?spreadsheetId=...&gid=0&slug=...
  * Planilha: "Qualquer pessoa com o link pode ver" ou link Publicar na Web.
  * Primeira linha = cabeçalho. Colunas: data, hora, time_casa, time_visitante, competicao, local, etc.
+ * Filtro opcional `slug`: a linha deve ter o mesmo valor na coluna clube/slug, evento/slug, slug, etc.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

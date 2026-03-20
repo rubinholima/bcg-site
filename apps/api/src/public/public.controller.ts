@@ -111,6 +111,12 @@ export class PublicController {
     return this.eventsService.getPhotosBySlug(slug);
   }
 
+  /** Fixtures (próximos/últimos) a partir do conteúdo do evento — módulos proximos_eventos / ultimos_eventos. */
+  @Get('events/:slug/fixtures')
+  async getEventFixtures(@Param('slug') slug: string) {
+    return this.publicService.getFixturesForEventSlug(slug);
+  }
+
   /**
    * GET /public/tenants?type=club|company&limit=50
    * Lista tenants públicos para carrossel de logos (só ativos, com logo por padrão).

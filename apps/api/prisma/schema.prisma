@@ -145,6 +145,8 @@ model Event {
   tenantId    String?   // preenchido quando organizer=tenant
   tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   category    String    @default("football") // football | other
+  /// Faixa do torneio (principal, sub15, …) — página pública do evento usa só esta categoria nos filtros de jogos
+  fixtureCategory String?
   startDate   DateTime?
   endDate     DateTime?
   logoUrl     String?

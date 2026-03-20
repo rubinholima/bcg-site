@@ -309,24 +309,86 @@ export class PublicService {
     return this.buildFixturesFromPage(page, tenant?.id ?? '');
   }
 
+  /**
+   * Próximos/últimos jogos a partir do conteúdo do evento (blocos proximos_eventos ou proximos_jogos).
+   * GET /public/events/:slug/fixtures
+   */
+  async getFixturesForEventSlug(slug: string): Promise<FixtureDto[]> {
+    const slugNorm = slug.trim();
+    const event = await this.prisma.event.findFirst({
+      where: {
+        slug: { equals: slugNorm, mode: 'insensitive' },
+        status: 'published',
+      },
+      select: {
+        content: true,
+        tenantId: true,
+        name: true,
+        fixtureCategory: true,
+      },
+    });
+    const blocks = (event?.content as { blocks?: unknown[] } | null)?.blocks;
+    if (!Array.isArray(blocks) || blocks.length === 0) {
+      return [];
+    }
+    const list = await this.buildFixturesFromBlocks(
+      blocks,
+      event?.tenantId ?? '',
+    );
+    const eventName = (event?.name ?? '').trim();
+    const lockCat = (event?.fixtureCategory ?? '').trim() || null;
+    let mapped = list.map((f) => ({
+      ...f,
+      competitionName: (f.competitionName ?? '').trim() || eventName,
+    }));
+    if (lockCat) {
+      mapped = mapped.filter(
+        (f) => (f.category ?? 'principal') === lockCat,
+      );
+    }
+    return mapped;
+  }
+
   private async buildFixturesFromPage(
     page: PageResponseDto | null,
     tenantIdForSofascore: string,
   ): Promise<FixtureDto[]> {
-    if (!page?.content?.blocks?.length) {
+    const blocks = page?.content?.blocks;
+    if (!Array.isArray(blocks) || blocks.length === 0) {
       return [];
     }
+    return this.buildFixturesFromBlocks(blocks, tenantIdForSofascore);
+  }
 
-    const block = page.content.blocks.find(
-      (b) => String(b.type).toLowerCase() === 'proximos_jogos',
-    );
+  private matchBlockType(
+    b: { type?: string },
+    allowed: readonly string[],
+  ): boolean {
+    const t = String(b.type ?? '').toLowerCase();
+    return allowed.includes(t);
+  }
+
+  private async buildFixturesFromBlocks(
+    blocks: unknown[],
+    tenantIdForSofascore: string,
+  ): Promise<FixtureDto[]> {
+    const block = blocks.find(
+      (b) =>
+        this.matchBlockType(b as { type?: string }, [
+          'proximos_jogos',
+          'proximos_eventos',
+        ]),
+    ) as { config?: Record<string, unknown> } | undefined;
     if (!block?.config) {
       return [];
     }
 
-    const resultadosBlock = page.content.blocks.find(
-      (b) => String(b.type).toLowerCase() === 'ultimos_resultados',
-    );
+    const resultadosBlock = blocks.find((b) =>
+      this.matchBlockType(b as { type?: string }, [
+        'ultimos_resultados',
+        'ultimos_eventos',
+      ]),
+    ) as { config?: Record<string, unknown> } | undefined;
     const resultadosManuais =
       (resultadosBlock?.config as Record<string, unknown>)?.resultadosManuais as
         | Record<string, { homeScore?: number; awayScore?: number }>

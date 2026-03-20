@@ -28,6 +28,7 @@ import { LogoUploadWithName } from "@/components/dashboard/LogoUploadWithName";
 import { CompetitionFormatEditor } from "@/components/dashboard/CompetitionFormatEditor";
 import type { CompetitionFormat } from "@/lib/competition-formats";
 import { emptyFormat } from "@/lib/competition-formats";
+import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 
 function slugify(s: string): string {
   return s
@@ -55,6 +56,7 @@ export default function NovoEventoPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState("");
   const [competitionFormat, setCompetitionFormat] = useState<CompetitionFormat | null>(null);
+  const [fixtureCategory, setFixtureCategory] = useState<string | null>(null);
 
   const canAccess = canAccessModule("eventos");
 
@@ -87,6 +89,8 @@ export default function NovoEventoPage() {
         organizer,
         tenantId: organizer === "tenant" ? tenantId || undefined : undefined,
         category,
+        fixtureCategory:
+          category === "football" && fixtureCategory ? fixtureCategory : undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         description: description.trim() || undefined,
@@ -221,7 +225,14 @@ export default function NovoEventoPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Categoria</Label>
-                <Select value={category} onValueChange={(v) => setCategory(v as "football" | "other")}>
+                <Select
+                  value={category}
+                  onValueChange={(v) => {
+                    const next = v as "football" | "other";
+                    setCategory(next);
+                    if (next !== "football") setFixtureCategory(null);
+                  }}
+                >
                   <SelectTrigger className="text-foreground">
                     <SelectValue />
                   </SelectTrigger>
@@ -231,27 +242,53 @@ export default function NovoEventoPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              {category === "football" ? (
                 <div className="space-y-2">
-                  <Label htmlFor="startDate">Data início</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                  />
+                  <Label>Categoria do torneio</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Página pública: só esta faixa nos jogos (Sub-15, Principal…).
+                  </p>
+                  <Select
+                    value={fixtureCategory ?? "__none__"}
+                    onValueChange={(v) =>
+                      setFixtureCategory(v === "__none__" ? null : v)
+                    }
+                  >
+                    <SelectTrigger className="text-foreground">
+                      <SelectValue placeholder="Selecione…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— Não definido —</SelectItem>
+                      {FIXTURE_CATEGORIES.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.labelPT}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="endDate">Data fim</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                  />
-                </div>
+              ) : null}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Data início</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endDate">Data fim</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                />
               </div>
             </div>
             {category === "football" && (

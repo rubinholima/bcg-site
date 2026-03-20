@@ -21,11 +21,22 @@ export interface FixtureItem {
 
 import { buildBackendUrl } from "@/lib/apiProxy";
 
-export async function fetchFixtures(slug: string): Promise<FixtureItem[]> {
+export type FixturesFetchContext = "tenant" | "event";
+
+export async function fetchFixtures(
+  slug: string,
+  context: FixturesFetchContext = "tenant"
+): Promise<FixtureItem[]> {
   const isClient = typeof window !== "undefined";
+  const path =
+    context === "event"
+      ? `/public/events/${encodeURIComponent(slug)}/fixtures`
+      : `/public/tenants/${encodeURIComponent(slug)}/fixtures`;
   const url = isClient
-    ? `/api/public/tenants/${encodeURIComponent(slug)}/fixtures`
-    : buildBackendUrl(`/public/tenants/${encodeURIComponent(slug)}/fixtures`);
+    ? context === "event"
+      ? `/api/public/events/${encodeURIComponent(slug)}/fixtures`
+      : `/api/public/tenants/${encodeURIComponent(slug)}/fixtures`
+    : buildBackendUrl(path);
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
   const data = await res.json();
