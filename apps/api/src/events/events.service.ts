@@ -20,6 +20,12 @@ export type EventContentDto = {
 
 export type CompetitionFormatDto = Record<string, unknown>;
 
+export type EventTenantPublicDto = {
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+};
+
 export type EventResponseDto = {
   id: string;
   slug: string;
@@ -28,6 +34,8 @@ export type EventResponseDto = {
   organizer: string;
   tenantId: string | null;
   tenantName?: string | null;
+  /** Presente quando o include Prisma trouxe slug/logoUrl (ex.: público por slug, findOne). */
+  tenant?: EventTenantPublicDto | null;
   category: string;
   startDate: string | null;
   endDate: string | null;
@@ -54,6 +62,7 @@ export type CreateEventDto = {
 };
 
 export type UpdateEventDto = {
+  slug?: string;
   name?: string;
   description?: string;
   organizer?: 'group' | 'tenant';
@@ -74,7 +83,7 @@ function toDto(row: {
   description: string | null;
   organizer: string;
   tenantId: string | null;
-  tenant?: { name: string } | null;
+  tenant?: { name: string; slug?: string | null; logoUrl?: string | null } | null;
   category: string;
   startDate: Date | null;
   endDate: Date | null;
@@ -95,6 +104,13 @@ function toDto(row: {
     organizer: row.organizer,
     tenantId: row.tenantId,
     tenantName: row.tenant?.name ?? null,
+    tenant: row.tenant
+      ? {
+          name: row.tenant.name,
+          slug: (row.tenant.slug ?? '').trim(),
+          logoUrl: row.tenant.logoUrl ?? null,
+        }
+      : null,
     category: row.category,
     startDate: row.startDate ? row.startDate.toISOString().slice(0, 10) : null,
     endDate: row.endDate ? row.endDate.toISOString().slice(0, 10) : null,
@@ -113,6 +129,86 @@ function slugify(s: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
+}
+
+/** Página inicial do evento (header, hero, texto, galeria, footer) — mesmo formato que Page.content */
+function buildDefaultEventPageContent(eventName: string): EventContentDto {
+  const tid = Date.now();
+  return {
+    theme: {
+      defaultLang: 'pt',
+      backgroundColor: '#0f0f12',
+      accentColor: '#fbbf24',
+    },
+    blocks: [
+      {
+        id: 'header',
+        type: 'header',
+        sortOrder: 0,
+        config: {
+          headerPreset: 'classic',
+          backgroundMode: 'solid',
+          backgroundColor: '#18181b',
+          headerTextColor: '#ffffff',
+          linkStyle: 'text',
+          logoSize: 'md',
+          sticky: false,
+          borderBottom: true,
+          borderColor: 'rgba(255,255,255,0.08)',
+          showLanguage: true,
+          showHomeLink: true,
+          headerLinks: [],
+        },
+      },
+      {
+        id: 'hero',
+        type: 'hero',
+        sortOrder: 1,
+        config: {
+          heroSlides: [
+            { url: '', titlePt: eventName, titleEn: eventName },
+          ],
+          heroCarouselEffect: 'fade',
+          heroCarouselIntervalSeconds: 10,
+        },
+      },
+      {
+        id: `text-${tid}`,
+        type: 'text',
+        sortOrder: 2,
+        config: {
+          titlePt: 'Sobre o evento',
+          titleEn: 'About the event',
+          bodyPt:
+            'Edite este texto e os demais módulos no dashboard: Páginas → Editar página do evento.',
+          bodyEn:
+            'Edit this text and other modules in the dashboard: Pages → Edit event page.',
+          visible: true,
+        },
+      },
+      {
+        id: 'galeria_eventos',
+        type: 'galeria_eventos',
+        sortOrder: 3,
+        config: {
+          titlePt: 'Galeria de fotos',
+          titleEn: 'Photo gallery',
+          backgroundColor: '#0f0f12',
+          visible: true,
+        },
+      },
+      {
+        id: 'footer',
+        type: 'footer',
+        sortOrder: 4,
+        config: {
+          footerText: '',
+          footerLinks: [],
+          backgroundColor: '#18181b',
+        },
+      },
+    ],
+  };
 }
 
 export type EventPhotoDto = {
@@ -167,24 +263,37 @@ export class EventsService {
     if (!row) {
       throw new NotFoundException(`Evento com ID "${id}" não encontrado`);
     }
-    return toDto(row as Parameters<typeof toDto>[0]);
+    const dto = toDto(row as Parameters<typeof toDto>[0]);
+    const blocks = (dto.content?.blocks ?? []) as unknown[];
+    if (!Array.isArray(blocks) || blocks.length === 0) {
+      const def = buildDefaultEventPageContent(dto.name);
+      return {
+        ...dto,
+        content: {
+          ...def,
+          theme: { ...def.theme, ...(dto.content?.theme ?? {}) },
+        },
+      };
+    }
+    return dto;
   }
 
   /**
-   * Público: lista eventos publicados cuja data final ainda não passou.
-   * Sem tenantId: todos os eventos publicados (grupo + clubes).
-   * Com tenantId: apenas eventos daquele tenant.
-   * Não retorna eventos em que endDate < hoje (ou startDate < hoje se endDate for null).
+   * Público: lista eventos publicados ainda “válidos” na agenda.
+   * Inclui: data fim ≥ hoje; ou sem data fim (em curso / a definir); ou ambas nulas.
+   * Sem tenantId: grupo + todos os tenants. Com tenantId: só eventos desse clube/empresa.
    */
   async findPublishedForPublic(tenantId?: string): Promise<EventResponseDto[]> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const where: Record<string, unknown> = {
+    const where: Prisma.EventWhereInput = {
       status: 'published',
       OR: [
         { endDate: { gte: today } },
         { endDate: null, startDate: { gte: today } },
+        { endDate: null, startDate: null },
+        { endDate: null, startDate: { lte: today } },
       ],
     };
     if (tenantId) {
@@ -211,16 +320,25 @@ export class EventsService {
     });
     if (!row) return null;
     const dto = toDto(row as Parameters<typeof toDto>[0]);
-    const rawBlocks = (dto.content.blocks ?? []) as Array<{
+    const existingBlocks = (dto.content.blocks ?? []) as Array<{
       id: string;
       type: string;
       sortOrder: number;
       config?: Record<string, unknown>;
     }>;
+    const def = buildDefaultEventPageContent(dto.name);
+    const baseContent =
+      Array.isArray(existingBlocks) && existingBlocks.length > 0
+        ? dto.content
+        : {
+            ...def,
+            theme: { ...def.theme, ...(dto.content?.theme ?? {}) },
+          };
+    const rawBlocks = (baseContent.blocks ?? []) as typeof existingBlocks;
     const blocks = await this.homeContentService.enrichBlocksWithGlobalPresence(
       rawBlocks,
     );
-    return { ...dto, content: { ...dto.content, blocks } };
+    return { ...dto, content: { ...baseContent, blocks } };
   }
 
   async create(dto: CreateEventDto): Promise<EventResponseDto> {
@@ -240,7 +358,12 @@ export class EventsService {
       );
     }
 
-    const content = (dto.content ?? { blocks: [] }) as object;
+    const incoming = dto.content as EventContentDto | undefined;
+    const blocks = incoming?.blocks;
+    const useDefault = !Array.isArray(blocks) || blocks.length === 0;
+    const content = (useDefault
+      ? buildDefaultEventPageContent(dto.name.trim())
+      : incoming) as object;
     const competitionFormat =
       dto.competitionFormat != null
         ? (dto.competitionFormat as Prisma.InputJsonValue)
@@ -265,15 +388,31 @@ export class EventsService {
   }
 
   async update(id: string, dto: UpdateEventDto): Promise<EventResponseDto> {
-    await this.findOne(id);
+    const current = await this.findOne(id);
     const data: Record<string, unknown> = {};
+    if (dto.slug !== undefined && dto.slug !== null) {
+      const newSlug = slugify(dto.slug) || slugify(current.name) || 'evento';
+      if (newSlug !== current.slug) {
+        const clash = await this.prisma.event.findFirst({
+          where: { slug: newSlug, NOT: { id } },
+        });
+        if (clash) {
+          throw new ConflictException(
+            `Já existe um evento com slug "${newSlug}". Escolha outro.`,
+          );
+        }
+        data.slug = newSlug;
+      }
+    }
     if (dto.name !== undefined) data.name = dto.name.trim();
     if (dto.description !== undefined)
       data.description = dto.description?.trim() || null;
     if (dto.organizer !== undefined) data.organizer = dto.organizer;
+    const effectiveOrganizer =
+      dto.organizer !== undefined ? dto.organizer : current.organizer;
     if (dto.tenantId !== undefined) {
       data.tenantId =
-        dto.organizer === 'tenant' && dto.tenantId ? dto.tenantId : null;
+        effectiveOrganizer === 'tenant' && dto.tenantId ? dto.tenantId : null;
     } else if (dto.organizer === 'group') {
       data.tenantId = null;
     }
@@ -291,12 +430,13 @@ export class EventsService {
           : (Prisma.JsonNull as unknown);
     if (dto.status !== undefined) data.status = dto.status;
 
-    const row = await this.prisma.event.update({
-      where: { id },
-      data: data as Parameters<typeof this.prisma.event.update>[0]['data'],
-      include: { tenant: { select: { name: true } } },
-    });
-    return toDto(row as Parameters<typeof toDto>[0]);
+    if (Object.keys(data).length > 0) {
+      await this.prisma.event.update({
+        where: { id },
+        data: data as Parameters<typeof this.prisma.event.update>[0]['data'],
+      });
+    }
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<{ deleted: boolean }> {

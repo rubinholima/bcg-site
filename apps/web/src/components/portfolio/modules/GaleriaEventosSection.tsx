@@ -8,7 +8,7 @@ import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Newspaper, Upload } from "lucide-react";
 
 type EventPhoto = { id: string; url: string; caption: string | null; sortOrder: number };
 
@@ -127,22 +127,28 @@ export function GaleriaEventosSection({
               />
             </div>
           )}
-          {uploadUrl ? (
-            <div className="mb-6">
-              <Button asChild size="lg" className="gap-2">
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            {uploadUrl ? (
+              <Button asChild size="lg" className="min-h-11 gap-2">
                 <Link href={uploadUrl}>
                   <Upload className="h-5 w-5" />
                   {lang === "pt" ? "Enviar fotos" : "Upload photos"}
                 </Link>
               </Button>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground mb-6">
-              {lang === "pt"
-                ? "O botão de envio aparecerá aqui quando o organizador gerar o link no dashboard (Eventos → Editar → Galeria de fotos)."
-                : "The upload button will appear here when the organizer generates the link in the dashboard."}
-            </p>
-          )}
+            ) : (
+              <p className="w-full text-sm text-muted-foreground sm:mr-auto sm:w-auto">
+                {lang === "pt"
+                  ? "O envio pelo fotógrafo aparece quando o organizador ativar o link."
+                  : "Photographer upload appears when the organizer enables the link."}
+              </p>
+            )}
+            <Button asChild size="lg" variant="outline" className="min-h-11 gap-2 border-white/25 bg-white/5 hover:bg-white/10">
+              <Link href="/imprensa">
+                <Newspaper className="h-5 w-5" />
+                {lang === "pt" ? "Imprensa" : "Press"}
+              </Link>
+            </Button>
+          </div>
           {photos.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
             {photos.map((photo) => (

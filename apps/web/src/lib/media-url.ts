@@ -1,5 +1,82 @@
-/** CloudFront — origem das mídias em produção. Funciona em local e servidor. */
+/**
+ * Resolução de URLs de mídia (S3 → o que o browser carrega)
+ *
+ * - **`next dev`:** URLs do bucket (`*.amazonaws.com`) e paths `logos/*` / `media/*` viram
+ *   **`/api/public/media-asset?key=...`** (mesma origem). Evita **ERR_BLOCKED_BY_ORB** do Chrome em `<img>`
+ *   cross-origin. O Next repassa ao Nest `GET /public/media`.
+ * - **Produção:** `NEXT_PUBLIC_MEDIA_ORIGIN` ou `www.bostoncitygroup.biz` + pathname (CloudFront).
+ *
+ * `NEXT_PUBLIC_MEDIA_RESOLUTION=cdn` no `.env.local` desliga o proxy em dev e força URL do CDN (útil se quiser
+ * testar igual produção).
+ */
 const BASE = "https://www.bostoncitygroup.biz";
+
+function useDevSameOriginMediaProxy(): boolean {
+  if (typeof process === "undefined") return false;
+  if (process.env.NODE_ENV !== "development") return false;
+  return process.env.NEXT_PUBLIC_MEDIA_RESOLUTION?.trim().toLowerCase() !== "cdn";
+}
+
+function isAllowedPublicMediaKey(key: string): boolean {
+  const k = key.trim().toLowerCase();
+  return k.startsWith("logos/") || k.startsWith("media/");
+}
+
+/** Extrai key `logos/...` ou `media/...` para o proxy público (dev). */
+function extractPublicMediaKey(sanitized: string): string | null {
+  const t = sanitized.trim();
+  if (!t) return null;
+  if (/amazonaws\.com/i.test(t)) {
+    const k = urlToMediaKey(t);
+    if (k && isAllowedPublicMediaKey(k)) return k;
+    /* path-style: s3.region.amazonaws.com/bucket/logos/... → extrai logos/... ou media/... */
+    const logosIdx = k.indexOf("logos/");
+    if (logosIdx >= 0) return k.slice(logosIdx);
+    const mediaIdx = k.indexOf("media/");
+    if (mediaIdx >= 0) return k.slice(mediaIdx);
+    return null;
+  }
+  if (/^https?:\/\//i.test(t)) {
+    try {
+      const u = new URL(t);
+      const host = u.hostname.toLowerCase();
+      if (host === "www.bostoncitygroup.biz" || host === "bostoncitygroup.biz") {
+        const k = u.pathname.replace(/^\/+/, "");
+        return k && isAllowedPublicMediaKey(k) ? k : null;
+      }
+      /* CloudFront / NEXT_PUBLIC_MEDIA_ORIGIN: mesmo host do origin configurado → extrai key para proxy em dev (ORB). */
+      const mo = mediaOrigin();
+      if (mo.startsWith("http://") || mo.startsWith("https://")) {
+        try {
+          const oh = new URL(mo).hostname.toLowerCase();
+          if (oh && host === oh) {
+            const k = u.pathname.replace(/^\/+/, "");
+            return k && isAllowedPublicMediaKey(k) ? k : null;
+          }
+        } catch {
+          /* continua */
+        }
+      }
+    } catch {
+      /* continua */
+    }
+  }
+  if (t.startsWith("/")) {
+    const k = t.replace(/^\/+/, "");
+    return k && isAllowedPublicMediaKey(k) ? k : null;
+  }
+  if (!t.includes("://")) {
+    const k = t.replace(/^\/+/, "");
+    if (isAllowedPublicMediaKey(k)) return k;
+  }
+  return null;
+}
+
+function mediaOrigin(): string {
+  if (typeof process === "undefined") return BASE;
+  const o = process.env.NEXT_PUBLIC_MEDIA_ORIGIN?.trim().replace(/\/$/, "") ?? "";
+  return o || BASE;
+}
 
 /**
  * Unwraps legacy /api/media/proxy?url=... so we resolve to a clean absolute URL (BASE + path).
@@ -53,17 +130,52 @@ export function getPublicImageUrl(url: string | undefined | null): string {
   const sanitized = unwrapLegacyProxyUrl(url.trim());
   if (!sanitized) return "";
 
-  const path = pathFrom(sanitized);
-  if (path) return `${BASE}${path}`;
+  const origin = mediaOrigin();
 
-  const u = sanitized.startsWith("http://") || sanitized.startsWith("https://")
-    ? sanitized
-    : "";
-  if (u && u.includes("amazonaws.com")) {
-    const p = pathFrom(u);
-    if (p) return `${BASE}${p}`;
+  if (useDevSameOriginMediaProxy()) {
+    const mediaKey = extractPublicMediaKey(sanitized);
+    if (mediaKey) {
+      return `/api/public/media-asset?key=${encodeURIComponent(mediaKey)}`;
+    }
   }
+
+  if (/amazonaws\.com/i.test(sanitized)) {
+    const p = pathFrom(sanitized);
+    if (p) return `${origin}${p}`;
+  }
+
+  // Outras URLs absolutas (CDN, Unsplash, etc.): manter
+  if (/^https?:\/\//i.test(sanitized)) {
+    try {
+      return new URL(sanitized).href;
+    } catch {
+      /* continua */
+    }
+  }
+
+  const path = pathFrom(sanitized);
+  if (path) return `${origin}${path}`;
+
+  const u = sanitized.startsWith("http://") || sanitized.startsWith("https://") ? sanitized : "";
   if (u) return u;
+  return "";
+}
+
+/**
+ * Último recurso: se `getPublicImageUrl` esvaziar mas houver key logos/* ou media/*, monta o proxy dev.
+ */
+export function resolveMediaUrlWithProxyFallback(raw: string | undefined | null): string {
+  const base = getPublicImageUrl(raw);
+  if (base) return base;
+  if (!raw || typeof raw !== "string") return "";
+  const t = unwrapLegacyProxyUrl(raw.trim());
+  if (!t) return "";
+  if (!useDevSameOriginMediaProxy()) return "";
+  const k = urlToMediaKey(t);
+  const kl = k.toLowerCase();
+  if ((kl.startsWith("logos/") || kl.startsWith("media/")) && k) {
+    return `/api/public/media-asset?key=${encodeURIComponent(k)}`;
+  }
   return "";
 }
 

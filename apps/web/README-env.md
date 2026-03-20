@@ -55,6 +55,17 @@ YOUTUBE_API_KEY=AIza...
 - **Padrão:** `https://www.bostoncitygroup.biz`
 - Usado por `getPublicImageUrl()` para converter URLs do bucket S3 em URLs do domínio oficial, permitindo uso de `next/image` com otimização.
 
+### `NEXT_PUBLIC_MEDIA_RESOLUTION` (opcional)
+
+| Valor | Efeito |
+|-------|--------|
+| *(omitido)* | Em **`next dev`**: imagens `logos/*` e `media/*` passam por **`/api/public/media-asset`** (mesma origem), evitando **ERR_BLOCKED_BY_ORB** no Chrome. Em **produção**: URL no **CDN** (`NEXT_PUBLIC_MEDIA_ORIGIN` ou `www.bostoncitygroup.biz` + path). |
+| **`cdn`** | Também em dev: **não** usa o proxy; força URL do CDN (útil para comparar com produção). |
+
+### `NEXT_PUBLIC_IMPRENSA_LOGO_URL` (opcional)
+
+Só na página `/imprensa`: fallback da logo se a API do evento não responder. Ver `lib/imprensa-event.ts`.
+
 ## Arquivos de Configuração
 
 ### `.env.local` (desenvolvimento local)

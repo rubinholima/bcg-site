@@ -20,7 +20,7 @@ export async function generateMetadata({
   const { token } = await params;
   const data = await getUploadPageData(token);
   return {
-    title: data?.valid ? `Enviar fotos — ${data.event.name}` : "Upload de fotos",
+    title: data?.valid ? `Enviar fotos — ${data.event.name}` : "Enviar fotos",
   };
 }
 
@@ -33,7 +33,7 @@ export default async function EventUploadPage({
   if (!data) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-zinc-950 text-white">
-        <p className="text-lg opacity-80">Link de upload inválido.</p>
+        <p className="text-lg opacity-80">Link de envio inválido.</p>
         <Link href="/" className="mt-4 text-sm font-medium text-amber-400 hover:opacity-90">
           ← Voltar ao início
         </Link>
@@ -44,7 +44,8 @@ export default async function EventUploadPage({
   if (!data.valid) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-zinc-950 text-white">
-        <p className="text-lg opacity-80">Este link de upload expirou.</p>
+        <p className="text-lg opacity-80">Este link de envio expirou.</p>
+        <p className="mt-2 text-center text-sm text-zinc-400">Peça um novo link ao organizador do evento.</p>
         <Link href={`/eventos/${data.event.slug}`} className="mt-4 text-sm font-medium text-amber-400 hover:opacity-90">
           Ver página do evento
         </Link>
@@ -55,21 +56,18 @@ export default async function EventUploadPage({
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="border-b border-white/10 px-4 py-4">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-4">
-          <h1 className="text-xl font-semibold">{data.event.name} — Enviar fotos</h1>
+        <div className="container mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3">
+          <h1 className="text-lg font-semibold leading-tight sm:text-xl">{data.event.name}</h1>
           <Link
             href={`/eventos/${data.event.slug}`}
-            className="text-sm text-amber-400 hover:opacity-90"
+            className="min-h-11 inline-flex items-center text-sm text-amber-400 hover:opacity-90"
           >
-            Ver página do evento
+            Página do evento
           </Link>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <p className="mb-6 text-muted-foreground">
-          Fotógrafos: envie suas fotos do evento aqui. Formatos aceitos: JPG, PNG, WebP (até 15 MB).
-        </p>
+      <main className="container mx-auto max-w-3xl px-4 py-6 sm:py-10">
         <EventUploadForm token={token} eventName={data.event.name} />
       </main>
     </div>

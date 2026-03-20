@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -117,7 +117,7 @@ export default function NovoEventoPage() {
         await api.patch(`/events/${ev.id}`, { logoUrl: finalLogoUrl });
       }
 
-      router.push(`/dashboard/eventos`);
+      router.push(`/dashboard/paginas/evento/${ev.id}/editar`);
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Erro ao criar evento";

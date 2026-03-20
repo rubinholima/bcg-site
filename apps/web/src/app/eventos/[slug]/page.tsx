@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
@@ -7,7 +8,8 @@ import { SmartImage } from "@/components/common/SmartImage";
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
 import { BlockRenderer } from "@/components/portfolio/modules/BlockRenderer";
-import { getServerBackendBaseUrl } from "@/lib/apiProxy";
+import { getAppBaseUrl, getBackendOriginForServerFetch } from "@/lib/apiProxy";
+import { normalizeEventSlugParam, publicEventSlugLookupVariants } from "@/lib/event-slug";
 
 export interface EventPublicDto {
   id: string;
@@ -26,15 +28,30 @@ export interface EventPublicDto {
   status: string;
 }
 
-async function getEventBySlug(slug: string): Promise<EventPublicDto | null> {
-  try {
-    const base = getServerBackendBaseUrl().replace(/\/$/, "");
-    const res = await fetch(`${base}/public/events/${encodeURIComponent(slug)}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return (await res.json()) as EventPublicDto;
-  } catch {
-    return null;
+async function fetchPublishedEventOnce(slug: string): Promise<EventPublicDto | null> {
+  const encoded = encodeURIComponent(slug);
+  const urls = [
+    `${getBackendOriginForServerFetch()}/public/events/${encoded}`,
+    `${getAppBaseUrl().replace(/\/$/, "")}/api/public/events/${encoded}`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) continue;
+      return (await res.json()) as EventPublicDto;
+    } catch {
+      /* tenta próxima origem */
+    }
   }
+  return null;
+}
+
+async function fetchPublishedEventResolved(rawSlug: string): Promise<EventPublicDto | null> {
+  for (const s of publicEventSlugLookupVariants(rawSlug)) {
+    const ev = await fetchPublishedEventOnce(s);
+    if (ev) return ev;
+  }
+  return null;
 }
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
@@ -52,7 +69,7 @@ export async function generateMetadata({
   params,
 }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  const event = await fetchPublishedEventResolved(slug);
   const name = event?.name ?? slug;
   const logoUrl = event?.logoUrl ?? event?.tenant?.logoUrl;
   const iconUrl = logoUrl ? getPublicImageUrl(logoUrl) : "/favicon.ico";
@@ -70,21 +87,63 @@ export default async function EventoSlugPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ lang?: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
   const { lang: langParam } = await searchParams;
-  const event = await getEventBySlug(slug);
+  const event = await fetchPublishedEventResolved(rawSlug);
+
+  if (event && event.slug !== rawSlug.trim()) {
+    redirect(`/eventos/${encodeURIComponent(event.slug)}`);
+  }
+
   const defaultLang = (event?.content?.theme as { defaultLang?: "pt" | "en" } | undefined)?.defaultLang ?? "pt";
   const lang = langParam === "en" ? "en" : langParam === "pt" ? "pt" : defaultLang;
 
-  if (!event?.content?.blocks?.length) {
+  if (!event) {
+    const suggestion = normalizeEventSlugParam(rawSlug);
+    const showSuggestedSlug = Boolean(suggestion && suggestion !== rawSlug.trim());
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-zinc-950 text-white">
-        <p className="text-lg opacity-80">
-          {event ? "Este evento ainda não tem conteúdo. Edite em Dashboard → Eventos." : "Evento não encontrado."}
-        </p>
-        <Link href="/" className="mt-4 text-sm font-medium text-amber-400 hover:opacity-90">
-          ← Voltar
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 bg-zinc-950 text-white">
+        <p className="text-lg text-zinc-300">Evento não encontrado.</p>
+        {showSuggestedSlug ? (
+          <Link
+            href={`/eventos/${encodeURIComponent(suggestion)}`}
+            className="text-sm font-medium text-amber-400 hover:underline"
+          >
+            Tentar /eventos/{suggestion}
+          </Link>
+        ) : null}
+        <Link href="/" className="text-sm text-zinc-400 hover:text-white">
+          ← Início
         </Link>
+      </div>
+    );
+  }
+
+  if (!event.content?.blocks?.length) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white">
+        <PortfolioFavicon slug={event.slug} logoUrl={event.logoUrl ?? event.tenant?.logoUrl} />
+        <PublicPortfolioHeader
+          slug={event.slug}
+          tenantName={event.name}
+          logoUrl={event.logoUrl ?? event.tenant?.logoUrl}
+          headerBlock={undefined}
+          lang={lang}
+          basePath="/eventos"
+        />
+        <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 py-16 text-center">
+          <p className="max-w-md text-lg text-zinc-300">
+            Este evento ainda não tem conteúdo público. Configure a página do evento no painel administrativo.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-6">
+            <Link href="/" className="text-sm font-medium text-amber-400 hover:underline">
+              ← Início
+            </Link>
+            <Link href={`/imprensa?event=${encodeURIComponent(event.slug)}`} className="text-sm text-zinc-400 hover:text-white">
+              Imprensa
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -111,10 +170,13 @@ export default async function EventoSlugPage({
   const headerBlock = blocks.find((b) => b.type === "header");
   const footerBlock = blocks.find((b) => b.type === "footer");
 
-  const base = getServerBackendBaseUrl().replace(/\/$/, "");
+  const base = getBackendOriginForServerFetch();
   let uploadToken: string | null = null;
   try {
-    const tokenRes = await fetch(`${base}/public/events/${encodeURIComponent(slug)}/upload-url`, { cache: "no-store" });
+    const tokenRes = await fetch(
+      `${base}/public/events/${encodeURIComponent(event.slug)}/upload-url`,
+      { cache: "no-store" },
+    );
     if (tokenRes.ok) {
       const data = (await tokenRes.json()) as { token?: string };
       uploadToken = data?.token ?? null;
@@ -155,9 +217,9 @@ export default async function EventoSlugPage({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <PortfolioFavicon slug={slug} logoUrl={event.logoUrl ?? event.tenant?.logoUrl} />
+      <PortfolioFavicon slug={event.slug} logoUrl={event.logoUrl ?? event.tenant?.logoUrl} />
       <PublicPortfolioHeader
-        slug={slug}
+        slug={event.slug}
         tenantName={event.name}
         logoUrl={event.logoUrl ?? event.tenant?.logoUrl}
         headerBlock={headerBlock}
@@ -167,7 +229,14 @@ export default async function EventoSlugPage({
 
       <main>
         {contentBlocks.map((block) => (
-          <BlockRenderer key={block.id} block={block} slug={slug} lang={lang} page={page} initialUploadToken={uploadToken} />
+          <BlockRenderer
+            key={block.id}
+            block={block}
+            slug={event.slug}
+            lang={lang}
+            page={page}
+            initialUploadToken={uploadToken}
+          />
         ))}
 
         <footer

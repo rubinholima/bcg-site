@@ -30,6 +30,14 @@ export function getServerBackendBaseUrl(): string {
   return process.env.API_INTERNAL_URL || "http://127.0.0.1:3001";
 }
 
+/**
+ * Origem do Nest para fetch no servidor (SSR), alinhada a `forwardRequest` / `getApiBaseUrl` no Node.
+ * Prioriza `API_BASE_URL` quando definida (comum em deploy).
+ */
+export function getBackendOriginForServerFetch(): string {
+  return (process.env.API_BASE_URL || process.env.API_INTERNAL_URL || "http://127.0.0.1:3001").replace(/\/$/, "");
+}
+
 /** URL base do app (Next.js) para fetches server-side às rotas /api. */
 export function getAppBaseUrl(): string {
   const url = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");

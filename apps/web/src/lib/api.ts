@@ -4,8 +4,10 @@ import { buildBackendUrl } from "@/lib/apiProxy";
 async function getErrorMessage(res: Response): Promise<string> {
   const text = await res.text().catch(() => res.statusText);
   try {
-    const json = JSON.parse(text) as { error?: string; message?: string };
-    return json?.error ?? json?.message ?? (text || res.statusText);
+    const json = JSON.parse(text) as { error?: string; message?: string | string[] };
+    const msg = json?.error ?? json?.message;
+    if (Array.isArray(msg)) return msg.join("; ");
+    return (typeof msg === "string" ? msg : null) ?? (text || res.statusText);
   } catch {
     if (text && text.length < 200 && !text.startsWith("<")) return text;
     const code = res.status;

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Link2, Copy, Loader2 } from "lucide-react";
+import { Trash2, Link2, Copy, Loader2, Upload } from "lucide-react";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
 
@@ -22,8 +22,12 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
   const [linkTemporary, setLinkTemporary] = useState(true);
   const [linkExpiresDays, setLinkExpiresDays] = useState(7);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
+    setCardError(null);
     try {
       const [pRes, lRes, uRes] = await Promise.all([
         api.get<EventPhoto[]>(`/events/${eventId}/photos`),
@@ -33,10 +37,11 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
       setPhotos(Array.isArray(pRes.data) ? pRes.data : []);
       setLinks(Array.isArray(lRes.data) ? lRes.data : []);
       setUploadTokens(Array.isArray(uRes.data) ? uRes.data : []);
-    } catch {
+    } catch (e) {
       setPhotos([]);
       setLinks([]);
       setUploadTokens([]);
+      setCardError(e instanceof Error ? e.message : "Erro ao carregar galeria.");
     } finally {
       setLoading(false);
     }
@@ -50,21 +55,43 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
     try {
       await api.delete(`/events/${eventId}/photos/${photoId}`);
       setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-    } catch {
-      // ignore
+      setCardError(null);
+    } catch (e) {
+      setCardError(e instanceof Error ? e.message : "Não foi possível remover a foto.");
+    }
+  };
+
+  const handleDashboardUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setCardError("Envie um arquivo de imagem (JPG, PNG, WebP…).");
+      return;
+    }
+    setUploading(true);
+    setCardError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      await api.postForm<EventPhoto>(`/events/${eventId}/photos`, form);
+      await load();
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (e) {
+      setCardError(e instanceof Error ? e.message : "Falha no upload.");
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleCreateLink = async () => {
     setCreatingLink(true);
+    setCardError(null);
     try {
       const { data } = await api.post<GalleryLink>(`/events/${eventId}/gallery-links`, {
         temporary: linkTemporary,
         expiresInDays: linkTemporary ? linkExpiresDays : undefined,
       });
       setLinks((prev) => [data, ...prev]);
-    } catch {
-      // ignore
+    } catch (e) {
+      setCardError(e instanceof Error ? e.message : "Não foi possível gerar o link.");
     } finally {
       setCreatingLink(false);
     }
@@ -74,8 +101,9 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
     try {
       await api.delete(`/events/${eventId}/gallery-links/${linkId}`);
       setLinks((prev) => prev.filter((l) => l.id !== linkId));
-    } catch {
-      // ignore
+      setCardError(null);
+    } catch (e) {
+      setCardError(e instanceof Error ? e.message : "Não foi possível revogar o link.");
     }
   };
 
@@ -105,21 +133,59 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {cardError && (
+          <div className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {cardError}
+          </div>
+        )}
+
+        <div>
+          <Label className="mb-2 block">Upload pelo dashboard</Label>
+          <p className="text-sm text-muted-foreground mb-2">
+            Envie fotos diretamente (até 15 MB por arquivo). As mesmas imagens aparecem na página pública e nos links de galeria.
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            id={`event-photos-file-${eventId}`}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleDashboardUpload(f);
+            }}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="gap-2"
+            disabled={uploading}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {uploading ? "Enviando…" : "Escolher imagem"}
+          </Button>
+        </div>
+
         <div className="border-b pb-4">
           <Label className="mb-2 block">Link para fotógrafos (upload na página pública)</Label>
           <p className="text-sm text-muted-foreground mb-2">
-            Gere um link e compartilhe com os fotógrafos. Eles acessam a página pública e enviam as fotos sem precisar de login.
+            Gere um link e compartilhe com fotógrafos e assessoria. A página permite{" "}
+            <strong className="text-foreground/90">selecionar várias fotos de uma vez</strong> no celular ou no computador
+            (central de envio em lote).
           </p>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={async () => {
+              setCardError(null);
               try {
                 const { data } = await api.post<UploadToken>(`/events/${eventId}/upload-tokens`, {});
                 setUploadTokens((prev) => [data, ...prev]);
-              } catch {
-                // ignore
+              } catch (e) {
+                setCardError(e instanceof Error ? e.message : "Não foi possível gerar o link de upload.");
               }
             }}
             className="gap-2 mb-2"
@@ -155,8 +221,9 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
                       try {
                         await api.delete(`/events/${eventId}/upload-tokens/${t.id}`);
                         setUploadTokens((prev) => prev.filter((u) => u.id !== t.id));
-                      } catch {
-                        // ignore
+                        setCardError(null);
+                      } catch (e) {
+                        setCardError(e instanceof Error ? e.message : "Não foi possível revogar o token.");
                       }
                     }}
                     title="Revogar"
@@ -172,7 +239,7 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
         {photos.length > 0 && (
           <div>
             <Label className="mb-2 block">{photos.length} foto(s)</Label>
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {photos.map((p) => (
                 <div key={p.id} className="relative group aspect-square rounded overflow-hidden bg-muted">
                   <img
@@ -194,7 +261,13 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
         )}
 
         <div className="border-t pt-4">
-          <Label className="mb-2 block">Gerar link compartilhável</Label>
+          <Label className="mb-2 block">Link para imprensa (galeria + download em lote)</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Jornalistas usam <strong className="text-foreground/90">/imprensa</strong>: release, logo do torneio (a do
+            cadastro do evento publicado) e só então colam este link ou o código para baixar fotos. URL direto da galeria
+            também vale. Ajuste o slug do evento na página com <code className="text-[10px]">NEXT_PUBLIC_IMPRENSA_EVENT_SLUG</code>{" "}
+            se não for <code className="text-[10px]">coffee-tournament</code>.
+          </p>
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex items-center gap-2">
               <input

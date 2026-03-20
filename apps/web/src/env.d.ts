@@ -10,6 +10,8 @@ declare namespace NodeJS {
     NEXT_PUBLIC_COGNITO_SCOPES?: string;
     NEXT_PUBLIC_APP_URL?: string;
     NEXT_PUBLIC_MEDIA_ORIGIN?: string;
+    /** auto | cdn | direct — ver comentário em lib/media-url.ts */
+    NEXT_PUBLIC_MEDIA_RESOLUTION?: string;
     COGNITO_DOMAIN?: string;
     COGNITO_CLIENT_ID?: string;
     COGNITO_SCOPE?: string;

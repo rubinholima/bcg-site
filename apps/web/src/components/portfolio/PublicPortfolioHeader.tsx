@@ -134,7 +134,11 @@ export function PublicPortfolioHeader({
     WebkitBackdropFilter: c.backgroundMode === "blur" ? "blur(12px)" : undefined,
   };
 
-  const logoSrc = logoUrl ? getPublicImageUrl(logoUrl) : null;
+  const fromProp = typeof logoUrl === "string" && logoUrl.trim() ? logoUrl.trim() : "";
+  const headerLogoUrl = (headerBlock?.config as { headerLogoUrl?: string } | undefined)?.headerLogoUrl;
+  const fromHeader = typeof headerLogoUrl === "string" && headerLogoUrl.trim() ? headerLogoUrl.trim() : "";
+  const resolvedLogoRaw = fromProp || fromHeader || null;
+  const logoSrc = resolvedLogoRaw ? getPublicImageUrl(resolvedLogoRaw) : null;
 
   const logoEl = (
     <>

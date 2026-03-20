@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,6 @@ import { emptyFormat } from "@/lib/competition-formats";
 
 export default function EditarEventoPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   const { canAccessModule, loading: authLoading } = useAuth();
   const [event, setEvent] = useState<{
@@ -88,7 +87,14 @@ export default function EditarEventoPage() {
     setError(null);
     setSaving(true);
     try {
-      await api.patch(`/events/${id}`, {
+      const { data: updated } = await api.patch<{
+        slug: string;
+        name: string;
+        logoUrl: string | null;
+        status: string;
+        competitionFormat: CompetitionFormat | null;
+      }>(`/events/${id}`, {
+        slug: event.slug?.trim() || undefined,
         name: event.name,
         description: event.description ?? undefined,
         organizer: event.organizer,
@@ -100,13 +106,23 @@ export default function EditarEventoPage() {
         competitionFormat: event.category === "football" ? (event.competitionFormat ?? emptyFormat("campeonato")) : null,
         status: event.status,
       });
+      setEvent((prev) =>
+        prev
+          ? {
+              ...prev,
+              slug: updated.slug,
+              name: updated.name,
+              logoUrl: updated.logoUrl ?? prev.logoUrl,
+              status: updated.status,
+              competitionFormat: updated.competitionFormat ?? prev.competitionFormat,
+            }
+          : null,
+      );
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: unknown) {
-      const msg = err && typeof err === "object" && "response" in err
-        ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
-        : "Erro ao salvar";
-      setError(msg ?? "Erro ao salvar");
+      const msg = err instanceof Error ? err.message : "Erro ao salvar";
+      setError(msg);
     } finally {
       setSaving(false);
     }
@@ -181,6 +197,21 @@ export default function EditarEventoPage() {
                   className="text-foreground"
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="slug">Slug (URL pública)</Label>
+                <Input
+                  id="slug"
+                  value={event.slug}
+                  onChange={(e) => setEvent({ ...event, slug: e.target.value })}
+                  className="text-foreground"
+                  placeholder="ex.: copa-2026"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Página: /eventos/{event.slug?.trim() || "…"}. Ao alterar, atualize links compartilhados.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={event.status} onValueChange={(v) => setEvent({ ...event, status: v })}>

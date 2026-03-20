@@ -26,6 +26,8 @@ interface EventItem {
   status: string;
   startDate: string | null;
   endDate: string | null;
+  organizer?: string;
+  tenantName?: string | null;
   content?: { blocks?: unknown[] };
 }
 
@@ -104,6 +106,7 @@ export default function EventosPage() {
                 <TableRow>
                   <TableHead className="w-14">Logo</TableHead>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Organizador</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Período</TableHead>
@@ -125,6 +128,13 @@ export default function EventosPage() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{ev.name}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {ev.organizer === "tenant" && ev.tenantName
+                        ? ev.tenantName
+                        : ev.organizer === "tenant"
+                          ? "Empresa (—)"
+                          : "Grupo BCG"}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{ev.slug}</TableCell>
                     <TableCell>
                       <span
