@@ -8,9 +8,10 @@ import { WorkmailModule } from '../workmail/workmail.module';
 import { PublicController } from './public.controller';
 import { PublicService } from './public.service';
 import { SofaScoreService } from './sofascore.service';
+import { EventsModule } from '../events/events.module';
 
 @Module({
-  imports: [PrismaModule, GroupModule, HomeContentModule, PagesModule, S3Module, WorkmailModule],
+  imports: [PrismaModule, GroupModule, HomeContentModule, PagesModule, S3Module, WorkmailModule, EventsModule],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService],
 })

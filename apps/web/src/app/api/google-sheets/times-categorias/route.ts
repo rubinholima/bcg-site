@@ -127,9 +127,10 @@ function normalizePosition(value: string): string {
 
 /** Índice da coluna clube/slug. -1 se não existir. */
 function getSlugColumnIndex(headers: string[]): number {
-  const targets = ["clube_slug", "clube/slug", "club_slug", "club/slug"];
+  const targets = ["clube_slug", "clube/slug", "club_slug", "club/slug", "clube", "slug"];
   for (let i = 0; i < headers.length; i++) {
-    if (targets.includes(normCol(headers[i]))) return i;
+    const n = normCol(headers[i].replace(/^\uFEFF/, ""));
+    if (targets.includes(n)) return i;
   }
   return -1;
 }
@@ -151,6 +152,8 @@ const COLUMN_MAP: Record<
   clube_slug: (p, v) => { p.clubSlug = v?.trim() || undefined; },
   "club/slug": (p, v) => { p.clubSlug = v?.trim() || undefined; },
   club_slug: (p, v) => { p.clubSlug = v?.trim() || undefined; },
+  clube: (p, v) => { if (v?.trim() && !p.clubSlug) p.clubSlug = v.trim(); },
+  slug: (p, v) => { if (v?.trim() && !p.clubSlug) p.clubSlug = v.trim(); },
   nosso_time: () => {},
   nome: (p, v) => { p.name = v || p.name; },
   name: (p, v) => { p.name = v || p.name; },
@@ -204,8 +207,8 @@ function rowToPlayer(headers: string[], row: string[], tenantName: string): { ca
   const player: PlayerItem = { id: `player-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, name: "", currentTeam: tenantName };
   let categoryId = "";
   for (let i = 0; i < headers.length; i++) {
-    const key = normCol(headers[i]);
-    const value = row[i]?.trim() ?? "";
+    const key = normCol((headers[i] ?? "").replace(/^\uFEFF/, ""));
+    const value = String(row[i] ?? "").trim();
     if (key === "categoria" || key === "category") {
       categoryId = value.toLowerCase().trim();
           const fixed = FIXTURE_CATEGORIES.find((c) => c.value === categoryId || c.labelPT.toLowerCase() === categoryId || c.labelEN.toLowerCase() === categoryId);

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, ImageIcon } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import { TenantKind } from "@/types/tenant-kind";
 import type { Tenant } from "@/types/tenant";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { isFootballKind } from "@/lib/home-data";
+import { LogoUploadWithName } from "@/components/dashboard/LogoUploadWithName";
 
 interface FormData {
   name: string;
@@ -39,14 +40,13 @@ interface FormData {
 
 export default function NovaEmpresaPage() {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [tipos, setTipos] = useState<TenantKind[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState("");
   const [formData, setFormData] = useState<FormData>({
     name: "",
     slug: "",
@@ -100,7 +100,7 @@ export default function NovaEmpresaPage() {
         categories: isClub && Array.isArray(formData.categories) && formData.categories.length > 0 ? formData.categories : null,
       };
       const { data: tenant } = await api.post<Tenant>("/tenants", payload);
-      if (logoFile && tenant?.id) {
+      if (logoFile && logoFile.type.startsWith("image/") && tenant?.id) {
         const form = new FormData();
         form.append("file", logoFile);
         form.append("scope", tenant.id);
@@ -115,6 +115,8 @@ export default function NovaEmpresaPage() {
           const err = await res.json().catch(() => ({}));
           throw new Error(err?.error ?? "Empresa criada, mas falha ao enviar logo.");
         }
+      } else if (logoUrl?.trim() && tenant?.id) {
+        await api.patch(`/tenants/${tenant.id}`, { logoUrl: logoUrl.trim() });
       }
       setSuccess(true);
       await new Promise((r) => setTimeout(r, 800));
@@ -123,28 +125,6 @@ export default function NovaEmpresaPage() {
       setError(err instanceof Error ? err.message : "Erro ao criar empresa");
       setLoading(false);
     }
-  };
-
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (logoPreview) URL.revokeObjectURL(logoPreview);
-    setLogoPreview(null);
-    setLogoFile(null);
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Selecione uma imagem (PNG, JPG, WebP ou SVG).");
-      return;
-    }
-    setError(null);
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
-    e.target.value = "";
-  };
-
-  const handleRemoveLogo = () => {
-    if (logoPreview) URL.revokeObjectURL(logoPreview);
-    setLogoPreview(null);
-    setLogoFile(null);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,65 +165,15 @@ export default function NovaEmpresaPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {logoPreview ? (
-            <div className="flex items-center gap-4">
-              <img
-                src={logoPreview}
-                alt="Preview do logo"
-                className="h-20 w-auto object-contain rounded border"
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                >
-                  Trocar
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveLogo}
-                  disabled={loading}
-                >
-                  Remover
-                </Button>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                className="hidden"
-                onChange={handleLogoChange}
-              />
-            </div>
-          ) : (
-            <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded border bg-muted">
-                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={loading}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Selecionar logo
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                className="hidden"
-                onChange={handleLogoChange}
-              />
-            </div>
-          )}
+          <LogoUploadWithName
+            value={logoUrl}
+            onChange={setLogoUrl}
+            displayNameAuto={[formData.name, formData.country, formData.city].filter(Boolean).join(" - ") || formData.name || "Logo da empresa"}
+            deferredUpload
+            onFileSelect={(f) => setLogoFile(f ?? null)}
+            pendingFile={logoFile}
+            urlPlaceholder="Ou colar URL da foto"
+          />
         </CardContent>
       </Card>
 

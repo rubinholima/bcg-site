@@ -16,6 +16,8 @@ export interface PublicPortfolioHeaderProps {
   logoUrl?: string | null;
   headerBlock: HomeContentBlock | undefined;
   lang?: "pt" | "en";
+  /** Base path para links (ex: /portfolio ou /eventos). Default: /portfolio */
+  basePath?: string;
 }
 
 function getHeaderConfig(headerBlock: HomeContentBlock | undefined) {
@@ -73,8 +75,16 @@ function linkVariant(style: "text" | "pill" | "button"): "ghost" | "outline" | "
 }
 
 /** Seletor PT/EN no mesmo estilo da página principal: caixa arredondada, item selecionado em destaque. */
-function PortfolioLangSelector({ slug, lang }: { slug: string; lang: "pt" | "en" }) {
-  const base = `/portfolio/${slug}`;
+function PortfolioLangSelector({
+  slug,
+  lang,
+  basePath = "/portfolio",
+}: {
+  slug: string;
+  lang: "pt" | "en";
+  basePath?: string;
+}) {
+  const base = `${basePath}/${slug}`;
   return (
     <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
       <Link
@@ -107,6 +117,7 @@ export function PublicPortfolioHeader({
   logoUrl,
   headerBlock,
   lang = "pt",
+  basePath = "/portfolio",
 }: PublicPortfolioHeaderProps) {
   const c = getHeaderConfig(headerBlock);
   const style: React.CSSProperties = {
@@ -161,9 +172,10 @@ export function PublicPortfolioHeader({
 
   const navLinks = <>{c.filteredLinks.map((link, i) => renderLink(link, i))}</>;
 
+  const pageUrl = `${basePath}/${slug}`;
   const actionsCompact = (
     <>
-      {c.showLanguage && <PortfolioLangSelector slug={slug} lang={lang} />}
+      {c.showLanguage && <PortfolioLangSelector slug={slug} lang={lang} basePath={basePath} />}
       {c.showHomeLink && (
         <Link href="/" className={navLinkClass} style={style}>
           ← Home
@@ -177,7 +189,7 @@ export function PublicPortfolioHeader({
       <header className="border-white/5 backdrop-blur-xl" style={headerStyle}>
         <div className="container mx-auto flex flex-col items-center gap-3 px-4 py-4 sm:px-6">
           <Link
-            href={`/portfolio/${slug}`}
+            href={pageUrl}
             className="flex shrink-0 items-center gap-2 font-semibold hover:opacity-90"
             style={style}
           >
@@ -197,7 +209,7 @@ export function PublicPortfolioHeader({
       <header className="border-white/5 py-2 backdrop-blur-xl" style={headerStyle}>
         <div className="container mx-auto flex h-12 items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            href={`/portfolio/${slug}`}
+            href={pageUrl}
             className="flex shrink-0 items-center gap-2 font-semibold hover:opacity-90"
             style={style}
           >
@@ -217,7 +229,7 @@ export function PublicPortfolioHeader({
       <header className="left-0 right-0 border-white/5 backdrop-blur-xl" style={headerStyle}>
         <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            href={`/portfolio/${slug}`}
+            href={pageUrl}
             className="flex shrink-0 items-center gap-2 font-semibold hover:opacity-90"
             style={style}
           >
@@ -237,7 +249,7 @@ export function PublicPortfolioHeader({
       <header className="sticky top-0 z-50 border-white/5 backdrop-blur-xl" style={headerStyle}>
         <div className="container mx-auto flex h-14 items-center gap-4 px-4 sm:px-6">
           <Link
-            href={`/portfolio/${slug}`}
+            href={pageUrl}
             className="flex shrink-0 items-center gap-2 font-semibold hover:opacity-90"
             style={style}
           >
@@ -259,7 +271,7 @@ export function PublicPortfolioHeader({
       <header className="sticky top-0 z-50 border-white/5 backdrop-blur-xl" style={headerStyle}>
         <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
           <Link
-            href={`/portfolio/${slug}`}
+            href={pageUrl}
             className="flex shrink-0 items-center gap-2 font-semibold hover:opacity-90"
             style={style}
           >
@@ -282,14 +294,14 @@ export function PublicPortfolioHeader({
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link
-          href={`/portfolio/${slug}`}
+          href={pageUrl}
           className="flex items-center gap-2 font-semibold transition-opacity hover:opacity-90"
           style={style}
         >
           {logoEl}
         </Link>
         <nav className="flex items-center gap-2 sm:gap-4">
-          {c.showLanguage && <PortfolioLangSelector slug={slug} lang={lang} />}
+          {c.showLanguage && <PortfolioLangSelector slug={slug} lang={lang} basePath={basePath} />}
           {navLinks}
           {c.showHomeLink && (
             <Link href="/" className={navLinkClass} style={style}>

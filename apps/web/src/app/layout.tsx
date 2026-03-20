@@ -58,7 +58,7 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
       </head>
-      <body className={`${inter.variable} ${geistMono.variable}`}>
+      <body className={`${inter.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <AuthProvider>
           <LayoutWithNav>{children}</LayoutWithNav>
         </AuthProvider>

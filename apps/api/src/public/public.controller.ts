@@ -2,16 +2,22 @@ import {
   Controller,
   Get,
   Param,
+  Post,
+  Body,
   Query,
   BadRequestException,
   StreamableFile,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { GroupService } from '../group/group.service';
 import { HomeContentService } from '../home-content/home-content.service';
 import { PagesService } from '../pages/pages.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { WorkMailService } from '../workmail/workmail.service';
+import { EventsService } from '../events/events.service';
 import { PublicService } from './public.service';
 
 @Controller('public')
@@ -21,6 +27,7 @@ export class PublicController {
     private readonly groupService: GroupService,
     private readonly homeContentService: HomeContentService,
     private readonly pagesService: PagesService,
+    private readonly eventsService: EventsService,
     private readonly prisma: PrismaService,
     private readonly s3: S3Service,
     private readonly workmailService: WorkMailService,
@@ -48,6 +55,60 @@ export class PublicController {
   @Get('group-home')
   async getGroupHome() {
     return this.groupService.getGroupHomePageShape();
+  }
+
+  /**
+   * GET /public/events?tenantId=...
+   * Lista eventos publicados. Sem tenantId: eventos do grupo (organizer=group).
+   * Com tenantId: eventos daquele clube/empresa.
+   */
+  @Get('events')
+  async getPublicEvents(@Query('tenantId') tenantId: string | undefined) {
+    return this.eventsService.findPublishedForPublic(tenantId?.trim() || undefined);
+  }
+
+  /** Galeria por link compartilhado (temporário ou permanente) — para /eventos/gallery/[token]. Deve vir antes de events/:slug. */
+  @Get('events/gallery/:token')
+  async getEventGalleryByToken(@Param('token') token: string) {
+    return this.eventsService.getPhotosByToken(token);
+  }
+
+  /** Dados do evento para página de upload (valida token). */
+  @Get('events/upload/:token')
+  async getEventByUploadToken(@Param('token') token: string) {
+    return this.eventsService.getEventByUploadToken(token);
+  }
+
+  /** Upload de foto via token — página pública para fotógrafos. */
+  @Post('events/upload/:token')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 15 * 1024 * 1024 } }))
+  async uploadPhotoByToken(
+    @Param('token') token: string,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @Body('caption') caption?: string,
+  ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Envie um arquivo (campo "file").');
+    }
+    return this.eventsService.uploadPhotoByToken(token, file.buffer, file.mimetype, caption);
+  }
+
+  /** URL de upload para fotógrafos (se houver token ativo) — para botão na página pública. */
+  @Get('events/:slug/upload-url')
+  async getEventUploadUrl(@Param('slug') slug: string) {
+    return this.eventsService.getUploadUrlBySlug(slug);
+  }
+
+  /** Evento público pelo slug — para /eventos/[slug] (só published). */
+  @Get('events/:slug')
+  async getEventBySlug(@Param('slug') slug: string) {
+    return this.eventsService.findPublishedBySlug(slug);
+  }
+
+  /** Fotos do evento pelo slug — para módulo galeria na página pública. */
+  @Get('events/:slug/photos')
+  async getEventPhotos(@Param('slug') slug: string) {
+    return this.eventsService.getPhotosBySlug(slug);
   }
 
   /**

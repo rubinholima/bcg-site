@@ -54,7 +54,6 @@ export async function POST(request: NextRequest) {
     { cache: "no-store", headers: { Accept: "application/json" } }
   );
   const sheetData = await sheetRes.json();
-
   if (!sheetRes.ok || !Array.isArray(sheetData.categories)) {
     return NextResponse.json(
       sheetData.error

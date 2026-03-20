@@ -47,5 +47,6 @@ export interface Page {
     name: string;
     slug: string;
     logoUrl?: string | null;
+    kind?: { id: string; name: string };
   } | null;
 }

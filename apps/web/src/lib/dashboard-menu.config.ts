@@ -359,6 +359,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "paginas",
       },
       {
+        slug: "eventos",
+        label: "Eventos",
+        href: "/dashboard/eventos",
+        icon: Calendar,
+        moduleSlug: "eventos",
+      },
+      {
         slug: "noticias",
         label: DASHBOARD_LABELS.noticias,
         href: "/dashboard/noticias",

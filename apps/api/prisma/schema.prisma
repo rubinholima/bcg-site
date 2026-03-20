@@ -91,6 +91,7 @@ model Tenant {
   socioMembers          SocioMember[]
   marketingPosts        MarketingPost[]
   travelLogistics       TravelLogistics[]
+  events                Event[]
 }
 
 // ========== Logística de deslocamento (Depto Futebol — só clubes) ==========
@@ -132,6 +133,69 @@ model TravelLogistics {
   @@index([tenantId])
   @@index([tenantId, matchDate])
   @@index([status])
+}
+
+// Evento (copa, torneio, etc.) — promovido pelo grupo ou tenant; landing page modular
+model Event {
+  id          String    @id @default(cuid())
+  slug        String    @unique // ex.: coffee-tournament
+  name        String    // Nome exibido (ex.: Coffee Tournament)
+  description String?   @db.Text
+  organizer   String    // group | tenant — quem promove
+  tenantId    String?   // preenchido quando organizer=tenant
+  tenant      Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  category    String    @default("football") // football | other
+  startDate   DateTime?
+  endDate     DateTime?
+  logoUrl     String?
+  content            Json      // { theme?, blocks: [{ id, type, sortOrder, config }] } — mesmo formato que Page
+  competitionFormat  Json?     // { formatType, clubsCount, ... } — quando category=football
+  status             String    @default("draft") // draft | published | archived
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  photos       EventPhoto[]
+  galleryLinks EventGalleryLink[]
+  uploadTokens EventUploadToken[]
+  @@index([organizer])
+  @@index([tenantId])
+  @@index([category])
+  @@index([status])
+}
+
+// Foto do evento — upload por fotógrafos; exibida na galeria pública e em links compartilhados
+model EventPhoto {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  s3Key     String   // media/eventos/{eventId}/{uuid}.{ext}
+  caption   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  @@index([eventId])
+}
+
+// Link compartilhável da galeria — temporário (expira) ou permanente
+model EventGalleryLink {
+  id        String    @id @default(cuid())
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  token     String    @unique // token na URL: /eventos/gallery/{token}
+  expiresAt DateTime? // null = permanente; preenchido = temporário
+  createdAt DateTime  @default(now())
+  @@index([eventId])
+  @@index([token])
+}
+
+// Token para fotógrafos fazerem upload na página pública — /eventos/upload/{token}
+model EventUploadToken {
+  id        String    @id @default(cuid())
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  expiresAt DateTime? // null = permanente
+  createdAt DateTime  @default(now())
+  @@index([eventId])
+  @@index([token])
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)

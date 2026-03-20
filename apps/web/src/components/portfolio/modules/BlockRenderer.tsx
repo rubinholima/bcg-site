@@ -29,6 +29,7 @@ import { ProximosJogosSection } from "@/components/portfolio/modules/ProximosJog
 import { UltimosResultadosSection } from "@/components/portfolio/modules/UltimosResultadosSection";
 import { NoticiasSection } from "@/components/portfolio/modules/NoticiasSection";
 import { GaleriaSection } from "@/components/portfolio/modules/GaleriaSection";
+import { GaleriaEventosSection } from "@/components/portfolio/modules/GaleriaEventosSection";
 import { PatrocinadoresSection } from "@/components/portfolio/modules/PatrocinadoresSection";
 import { TimesCategoriasSection } from "@/components/portfolio/modules/TimesCategoriasSection";
 import { TabelaClassificacaoSection } from "@/components/portfolio/modules/TabelaClassificacaoSection";
@@ -39,6 +40,7 @@ import { NumerosSection } from "@/components/portfolio/modules/NumerosSection";
 import { ComoFuncionaSection } from "@/components/portfolio/modules/ComoFuncionaSection";
 import { FaqSection } from "@/components/portfolio/modules/FaqSection";
 import { FormularioCapturaSection } from "@/components/portfolio/modules/FormularioCapturaSection";
+import { EventosSection } from "@/components/portfolio/modules/EventosSection";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Button } from "@/components/ui/button";
 
@@ -124,6 +126,7 @@ export function BlockRenderer({
   inSection,
   sectionColumns,
   showModuleTitle,
+  initialUploadToken,
 }: {
   block: HomeContentBlock;
   slug: string;
@@ -132,6 +135,7 @@ export function BlockRenderer({
   inSection?: boolean;
   sectionColumns?: 1 | 2 | 3;
   showModuleTitle?: boolean;
+  initialUploadToken?: string | null;
 }) {
   /** Servidor pode devolver visible como boolean ou string; ocultar só quando false ou "false". */
   const v = block.config?.visible as boolean | string | undefined;
@@ -331,6 +335,21 @@ export function BlockRenderer({
     return <LogoCarouselSection key={block.id} block={block} lang={lang} />;
   }
 
+  if (block.type === "eventos") {
+    return (
+      <EventosSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={showModuleTitle ?? !inSection}
+      />
+    );
+  }
+
   const shouldShowTitle = showModuleTitle || !inSection;
 
   if (block.type === "noticias") {
@@ -339,6 +358,10 @@ export function BlockRenderer({
 
   if (block.type === "galeria") {
     return <GaleriaSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
+  }
+
+  if (block.type === "galeria_eventos") {
+    return <GaleriaEventosSection key={block.id} block={block} slug={slug} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} initialUploadToken={initialUploadToken} />;
   }
 
   if (String(block.type).toLowerCase() === "patrocinadores") {

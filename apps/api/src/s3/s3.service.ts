@@ -45,7 +45,7 @@ export class S3Service {
   }
 
   /** URL pública do objeto: domínio oficial se configurado, senão S3 direto. */
-  private publicUrl(key: string): string {
+  getPublicUrl(key: string): string {
     if (PUBLIC_MEDIA_ORIGIN) {
       const path = key.startsWith('/') ? key : `/${key}`;
       return `${PUBLIC_MEDIA_ORIGIN}${path}`;
@@ -91,7 +91,7 @@ export class S3Service {
       );
     }
 
-    return { key, url: this.publicUrl(key) };
+    return { key, url: this.getPublicUrl(key) };
   }
 
   /**
@@ -119,7 +119,9 @@ export class S3Service {
     const pathSuffix =
       safeKey === 'galeria_clubes' && safeSub
         ? `${safeKey}/${safeSub}/${randomUUID()}.${ext}`
-        : `${safeKey}/${randomUUID()}.${ext}`;
+        : safeKey === 'eventos' && safeSub
+          ? `${safeKey}/${safeSub}/${randomUUID()}.${ext}`
+          : `${safeKey}/${randomUUID()}.${ext}`;
     const key = `${MEDIA_PREFIX}${pathSuffix}`;
 
     try {
@@ -138,7 +140,7 @@ export class S3Service {
       );
     }
 
-    return { key, url: this.publicUrl(key) };
+    return { key, url: this.getPublicUrl(key) };
   }
 
   /**
@@ -173,7 +175,44 @@ export class S3Service {
       );
     }
 
-    return { key, url: this.publicUrl(key) };
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
+   * Upload de logo de evento para logos/eventos/.
+   * Salva em logos/eventos/{eventId}.{ext}.
+   */
+  async uploadLogoEvent(
+    eventId: string,
+    buffer: Buffer,
+    contentType: string,
+  ): Promise<{ key: string; url: string }> {
+    if (!ALLOWED_TYPES.includes(contentType as (typeof ALLOWED_TYPES)[number])) {
+      throw new InternalServerErrorException(
+        `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}`,
+      );
+    }
+    const ext = EXT_BY_MIME[contentType] ?? 'png';
+    const safeId = eventId.replace(/[^a-z0-9_-]/gi, '_').slice(0, 64) || randomUUID();
+    const key = `logos/eventos/${safeId}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar logo do evento para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
   }
 
   /**
@@ -208,7 +247,7 @@ export class S3Service {
       );
     }
 
-    return { key, url: this.publicUrl(key) };
+    return { key, url: this.getPublicUrl(key) };
   }
 
   /**
@@ -240,7 +279,7 @@ export class S3Service {
       const items = (response.Contents ?? []).filter((o) => o.Key && !o.Key.endsWith('/'));
       return items.map((o) => ({
         key: o.Key!,
-        url: this.publicUrl(o.Key!),
+        url: this.getPublicUrl(o.Key!),
         size: o.Size ?? 0,
         lastModified: o.LastModified?.toISOString() ?? '',
       }));
@@ -282,7 +321,7 @@ export class S3Service {
         folder: string,
       ) => ({
         key: o.Key!,
-        url: this.publicUrl(o.Key!),
+        url: this.getPublicUrl(o.Key!),
         size: o.Size ?? 0,
         lastModified: o.LastModified?.toISOString() ?? '',
         folder,
@@ -362,7 +401,7 @@ export class S3Service {
       );
     }
 
-    return { key, url: this.publicUrl(key) };
+    return { key, url: this.getPublicUrl(key) };
   }
 
   /**

@@ -15,13 +15,16 @@
 - **Carrosséis** — Usar `el.scrollTo({ left: ... })` no container. **NUNCA** `scrollIntoView` (quebra o scroll vertical da página).
 - **Dashboard** — Não alterar estrutura base: Sidebar, Header, nome "BCG Platform". Layout em `apps/web/src/app/dashboard/layout.tsx`.
 - **Rotina do dia** — (1) Subir banco: `docker compose up -d db`. (2) Ler regras e desenvolvimento diário. (3) Confirmar objetivo antes de codar.
+- **NUNCA apagar/resetar o banco** — Proibido rodar `prisma migrate reset`. Apaga todos os dados (usuários, tenants, eventos, etc.) e é irreversível. Usar apenas `prisma migrate dev` ou `prisma migrate deploy`.
 - **Passo a passo com aprovação** — Tarefas com mais de um passo (deploy, config, etc.): dar **um passo** no chat, **esperar** o usuário aprovar ("ok", "próximo", "aprovo") e **só então** dar o próximo. Não mandar lista longa de uma vez; não mandar ler arquivo em vez dos passos. Exceção: se o usuário disser "pode fazer tudo" ou "rode tudo".
 - **Código** — TypeScript; tenant = empresa (conceito técnico vs UI); não quebrar monorepo.
 - **Módulos de página** — Padrão: cor de fundo, overlay, títulos PT/EN; Hero com carrossel; ver seção MODULOS_PAGINA em DOCS CONSOLIDADOS (final do arquivo).
 - **Módulos do dashboard** — Cadastrar em Module + ModuleRole no backend; sidebar com mesmo `moduleSlug`; proteger página com `canAccessModule("slug")`. Ver seção MODULOS_DASHBOARD em DOCS CONSOLIDADOS.
-- **Encerrar o dia** — Quando o usuário disser "encerre o dia": (1) Commit de tudo. (2) No **topo** da seção "POR DIA" abaixo, adicionar **📅 [DATA] — ENCERRAMENTO** (data do sistema via `date`), com o que foi feito, arquivos, commit e push. (3) `git push origin <branch>`.
+- **Encerrar o dia** — Quando o usuário disser "encerre o dia": (1) Commit de tudo. (2) No **topo** da seção "POR DIA" (logo abaixo das regras), adicionar **📅 [DATA] — ENCERRAMENTO** (data do sistema via `date`), com o que foi feito, arquivos, commit e push. (3) `git push origin <branch>`.
+- **Estrutura do doc** — O topo do arquivo tem sempre: (1) Regras diárias. (2) Imediatamente após, a seção "POR DIA — ENCERRAMENTOS". Nada entre elas.
 - **Git** — Trabalhar em branch; não commitar direto em main.
 - **Cursor OOM** — `NODE_OPTIONS=--max-old-space-size=8192`; abrir um projeto por vez; ao reabrir após OOM marcar "Don't restore editors". Ver seção CURSOR_EVITAR_OOM em DOCS CONSOLIDADOS.
+- **NUNCA apagar o banco** — **NUNCA** rodar `prisma migrate reset`. Ele apaga todos os dados. Usar só `migrate dev` ou `migrate deploy`. Se drift, propor alternativas — nunca reset.
 
 **Comandos principais:** `docker compose up -d db` | `pnpm install` (raiz) | `cd apps/web && pnpm dev` | `cd apps/api && pnpm start:dev`
 

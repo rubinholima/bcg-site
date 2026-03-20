@@ -56,6 +56,7 @@ export type HomeBlockType =
   | "what"
   | "clubs"
   | "companies"
+  | "eventos"
   | "founder"
   | "how"
   | "cta"
@@ -70,6 +71,7 @@ export type HomeBlockType =
   | "tabela"
   | "patrocinadores"
   | "galeria"
+  | "galeria_eventos" // Galeria de fotos do evento (Eventos → Futebol)
   // Empresas
   | "sobre"
   | "servicos"

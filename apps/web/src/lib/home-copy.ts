@@ -12,6 +12,7 @@ export interface CopySchema {
   };
   clubs: { title: string; subtext: string; visitSite: string; openProfile: string };
   companies: { title: string; subtext: string; visitWebsite: string; openProfile: string };
+  eventos: { title: string; subtext: string; viewEvent: string };
   founder: { title: string; body: string; bullets: string[]; quote: string };
   how: { title: string; body: string; bullets: string[] };
   cta: { title: string; body: string; contact: string; dashboard: string };
@@ -54,6 +55,11 @@ export const copy: { pt: CopySchema; en: CopySchema } = {
       subtext: "Um portfólio operado por segmentos — com clareza, organização e execução de longo prazo.",
       visitWebsite: "Acessar Site",
       openProfile: "Ver Perfil",
+    },
+    eventos: {
+      title: "Nossos Eventos",
+      subtext: "Campeonatos, copas e torneios organizados pelo grupo ou pelos clubes.",
+      viewEvent: "Ver evento",
     },
     founder: {
       title: "História do Fundador: Renato Valentim",
@@ -118,6 +124,11 @@ export const copy: { pt: CopySchema; en: CopySchema } = {
       subtext: "A segment-based portfolio — built for clarity, organization, and long-term execution.",
       visitWebsite: "Visit Website",
       openProfile: "Open Profile",
+    },
+    eventos: {
+      title: "Our Events",
+      subtext: "Championships, cups and tournaments organized by the group or clubs.",
+      viewEvent: "View event",
     },
     founder: {
       title: "Founder Story: Renato Valentim",

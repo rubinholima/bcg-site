@@ -18,6 +18,7 @@ import { GroupService } from '../group/group.service';
 import { MediaMetaService } from '../media/media-meta.service';
 import { S3Service } from '../s3/s3.service';
 import { TenantsService } from '../tenants/tenants.service';
+import { EventsService } from '../events/events.service';
 
 @Controller('upload')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -27,13 +28,16 @@ export class UploadController {
     private readonly tenantsService: TenantsService,
     private readonly groupService: GroupService,
     private readonly mediaMeta: MediaMetaService,
+    private readonly eventsService: EventsService,
   ) {}
 
   /**
    * POST /upload/logo
-   * Body (multipart/form-data): file (imagem), scope ('group' ou tenantId)
-   * - scope=group → apenas super_admin; logo do grupo (logos/group/logo.{ext})
-   * - scope={tenantId} → logo da empresa; atualiza Tenant.logoUrl
+   * Body (multipart/form-data): file (imagem), scope
+   * - scope=group → logo BCG (logos/group/)
+   * - scope=external → logos de times (logos/external/)
+   * - scope=event:{eventId} → logo do evento (logos/eventos/)
+   * - scope={tenantId} → logo da empresa (logos/tenants/)
    */
   @Post('logo')
   @UseInterceptors(
@@ -50,10 +54,33 @@ export class UploadController {
     }
     if (!scope || typeof scope !== 'string' || !scope.trim()) {
       throw new BadRequestException(
-        'Envie "scope": "group" (logo BCG), "external" (Clubes Adv) ou o ID da empresa (tenantId).',
+        'Envie "scope": "group", "external", "event:{eventId}" ou o ID da empresa (tenantId).',
       );
     }
     const scopeTrim = scope.trim();
+
+    if (scopeTrim.startsWith('event:')) {
+      const eventId = scopeTrim.replace(/^event:/, '').trim();
+      if (!eventId) {
+        throw new BadRequestException('scope=event:{eventId} — informe o ID do evento.');
+      }
+      try {
+        await this.eventsService.findOne(eventId);
+      } catch {
+        throw new NotFoundException(`Evento com ID "${eventId}" não encontrado.`);
+      }
+      const { key, url } = await this.s3.uploadLogoEvent(
+        eventId,
+        file.buffer,
+        file.mimetype,
+      );
+      const displayNameTrim =
+        typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
+      if (displayNameTrim) {
+        await this.mediaMeta.setDisplayName(key, displayNameTrim);
+      }
+      return { url, key };
+    }
 
     if (scopeTrim === 'external') {
       const { key, url } = await this.s3.uploadLogoExternal(file.buffer, file.mimetype);

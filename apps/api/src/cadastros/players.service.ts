@@ -193,13 +193,25 @@ export class PlayersService {
     return { created, updated };
   }
 
+  /** Normaliza slug para comparação (remove BOM, unifica hífens, trim). */
+  private normalizeSlug(s: string | undefined): string {
+    if (!s || typeof s !== 'string') return '';
+    return s
+      .replace(/^\uFEFF/, '')
+      .replace(/[\u2013\u2014\u2212\uFE58]/g, '-')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
   /** Sincroniza TODOS os jogadores da planilha, usando clubSlug para determinar o clube. */
   async syncFromSheetAll(categories: Array<{ id: string; players: Array<Record<string, unknown>> }>) {
     const tenants = await this.prisma.tenant.findMany({ select: { id: true, slug: true } });
     const slugToTenantId = new Map<string, string>();
     for (const t of tenants) {
       if (t.slug?.trim()) {
-        slugToTenantId.set(t.slug.trim().toLowerCase(), t.id);
+        const norm = this.normalizeSlug(t.slug);
+        if (norm) slugToTenantId.set(norm, t.id);
       }
     }
 
@@ -215,7 +227,7 @@ export class PlayersService {
         const name = (p.name as string)?.trim();
         if (!name) continue;
 
-        const clubSlug = (p.clubSlug as string)?.trim()?.toLowerCase();
+        const clubSlug = this.normalizeSlug(p.clubSlug as string);
         if (!clubSlug) {
           skipped++;
           continue;

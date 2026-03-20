@@ -68,7 +68,6 @@ import {
   mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
 import { api } from "@/lib/api";
-import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
 import { authFetch } from "@/lib/authFetch";
@@ -330,7 +329,6 @@ export default function EditarPaginaTenantPage() {
   const [openFixtureByBlockId, setOpenFixtureByBlockId] = useState<Record<string, number>>({});
   const [syncingProximosJogosBlockIndex, setSyncingProximosJogosBlockIndex] = useState<number | null>(null);
   const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
-  const [tenantKinds, setTenantKinds] = useState<TenantKind[]>([]);
   const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const proximosJogosUrlRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -338,12 +336,21 @@ export default function EditarPaginaTenantPage() {
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
 
+  /** Na página de clube/empresa: só Geral + o tipo do tenant. Ex: Americano (Futebol) → Geral e Futebol. */
+  const tenantKind = page?.tenant?.kind;
+  const allowedTypeOptions = tenantKind
+    ? [
+        { value: "geral" as const, label: "Geral" },
+        { value: tenantKind.id, label: tenantKind.name },
+      ]
+    : [{ value: "geral" as const, label: "Geral" }];
+
   const resolvedModuleCategory: ModuleCategory =
     moduleTypeFilter === "geral"
       ? "geral"
-      : tenantKindNameToModuleCategory(tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? "");
+      : tenantKindNameToModuleCategory(tenantKind?.id === moduleTypeFilter ? (tenantKind?.name ?? "") : "");
   const resolvedModuleLabel =
-    moduleTypeFilter === "geral" ? "Geral" : (tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? moduleTypeFilter);
+    moduleTypeFilter === "geral" ? "Geral" : (tenantKind?.id === moduleTypeFilter ? tenantKind?.name : moduleTypeFilter);
 
   const toggleBlockCollapsed = (blockId: string) => {
     setCollapsedBlockIds((prev) => {
@@ -390,20 +397,11 @@ export default function EditarPaginaTenantPage() {
     };
   }, [tenantId]);
 
+  /** Garante que moduleTypeFilter está permitido (ex: ao carregar página de Futebol, não manter "Empresas"). */
   useEffect(() => {
-    let cancelled = false;
-    api
-      .get<TenantKind[]>("/tenant-kinds")
-      .then(({ data }) => {
-        if (!cancelled && Array.isArray(data)) setTenantKinds(data);
-      })
-      .catch(() => {
-        if (!cancelled) setTenantKinds([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    const ok = moduleTypeFilter === "geral" || (tenantKind && moduleTypeFilter === tenantKind.id);
+    if (!ok && moduleTypeFilter) setModuleTypeFilter("geral");
+  }, [tenantKind?.id, moduleTypeFilter]);
 
   const setBlocks = (newBlocks: HomeContentBlock[]) => {
     const normalized = normalizeBlocks(newBlocks);
@@ -917,24 +915,18 @@ export default function EditarPaginaTenantPage() {
                   if (row.type === "add") {
                     return (
                       <div key="add-module" className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-red-500/50 bg-red-500/15 dark:bg-red-950/50 px-3 py-4">
-                        {tenantKinds.length > 0 && (
-                          <>
-                            <span className="text-sm font-semibold text-muted-foreground">Tipo de negócio:</span>
-                            <Select value={moduleTypeFilter} onValueChange={(v) => setModuleTypeFilter(v)}>
-                              <SelectTrigger className="w-[180px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="geral">Geral</SelectItem>
-                                {tenantKinds.map((k) => (
-                                  <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <span className="text-sm font-semibold text-muted-foreground ml-2">Adicionar módulo:</span>
-                          </>
-                        )}
-                        {tenantKinds.length === 0 && <span className="text-sm font-semibold text-muted-foreground">Adicionar módulo:</span>}
+                        <span className="text-sm font-semibold text-muted-foreground">Tipo de negócio:</span>
+                        <Select value={moduleTypeFilter} onValueChange={(v) => setModuleTypeFilter(v)}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allowedTypeOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm font-semibold text-muted-foreground ml-2">Adicionar módulo:</span>
                         <Select
                           value=""
                           onValueChange={(value) => {
@@ -942,27 +934,15 @@ export default function EditarPaginaTenantPage() {
                           }}
                         >
                           <SelectTrigger className="w-[240px]">
-                            <SelectValue placeholder="Hero, Destaques, Texto…" />
+                            <SelectValue placeholder={`${resolvedModuleLabel}…`} />
                           </SelectTrigger>
                           <SelectContent>
-                            {[
-                              ...(resolvedModuleCategory !== "geral"
-                                ? [
-                                    <SelectGroup key="geral">
-                                      <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
-                                      {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral").map((opt) => (
-                                        <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
-                                      ))}
-                                    </SelectGroup>,
-                                  ]
-                                : []),
-                              <SelectGroup key={moduleTypeFilter}>
-                                <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
-                                {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory).map((opt) => (
-                                  <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
-                                ))}
-                              </SelectGroup>,
-                            ]}
+                            <SelectGroup key={resolvedModuleCategory}>
+                              <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
+                              {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory).map((opt) => (
+                                <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectGroup>
                           </SelectContent>
                         </Select>
                       </div>

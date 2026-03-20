@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Copy, Home, Loader2, Pencil, Plus, Trophy, Briefcase } from "lucide-react";
+import { Building2, Briefcase, Calendar, Copy, Home, Loader2, Pencil, Plus, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -23,8 +23,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import type { Page } from "@/types/page";
 import type { Tenant } from "@/types/tenant";
+
+interface EventItem {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  logoUrl: string | null;
+  status: string;
+  content?: { blocks?: unknown[] };
+}
 
 /** Clube se o tipo contiver futebol/clube/football. */
 function isClubKind(kindName: string | null | undefined): boolean {
@@ -47,8 +59,10 @@ function sortTenantsByKind(tenants: Tenant[]): { clubs: Tenant[]; companies: Ten
 
 export default function PaginasPage() {
   const router = useRouter();
+  const { canAccessModule } = useAuth();
   const [pages, setPages] = useState<Page[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState<string | null>(null);
   const [creatingFromCopy, setCreatingFromCopy] = useState<string | null>(null);
@@ -58,20 +72,32 @@ export default function PaginasPage() {
   const [replaceModal, setReplaceModal] = useState<{ tenantId: string; sourcePageId: string; tenantName: string; sourceName: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const canAccessEventos = canAccessModule("eventos");
+
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
+    const fetches: Promise<unknown>[] = [
       fetch("/api/pages", { credentials: "include" }).then((r) =>
         r.ok ? r.json() : [],
       ),
       fetch("/api/tenants", { credentials: "include" }).then((r) =>
         r.ok ? r.json() : [],
       ),
-    ])
-      .then(([pagesData, tenantsData]) => {
+    ];
+    if (canAccessEventos) {
+      fetches.push(
+        api.get<EventItem[]>("/events").then((r) => (Array.isArray(r.data) ? r.data : []))
+      );
+    }
+    Promise.all(fetches)
+      .then((results) => {
         if (!cancelled) {
-          setPages(Array.isArray(pagesData) ? pagesData : []);
-          setTenants(Array.isArray(tenantsData) ? tenantsData : []);
+          setPages(Array.isArray(results[0]) ? results[0] : []);
+          setTenants(Array.isArray(results[1]) ? results[1] : []);
+          if (canAccessEventos && results[2] !== undefined) {
+            const evs = results[2] as EventItem[];
+            setEvents(Array.isArray(evs) ? evs : []);
+          }
         }
       })
       .catch(() => {
@@ -83,7 +109,14 @@ export default function PaginasPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [canAccessEventos]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#eventos") {
+      const el = document.getElementById("eventos");
+      el?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [loading]);
 
   const pageByTenantId = new Map(pages.map((p) => [p.tenantId, p]));
 
@@ -429,6 +462,64 @@ export default function PaginasPage() {
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {companies.map(renderTenantCard)}
+          </div>
+        </div>
+      )}
+
+      {/* Eventos — editar páginas (cadastro em Eventos) */}
+      {canAccessEventos && events.length > 0 && (
+        <div id="eventos" className="space-y-4 pt-6 border-t border-border">
+          <h2 className="flex items-center gap-2.5 text-xl font-bold uppercase tracking-wider">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/20">
+              <Calendar className="h-4 w-4 text-violet-500" />
+            </span>
+            Eventos — editar páginas
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Cadastre eventos em <Link href="/dashboard/eventos" className="text-primary hover:underline">Eventos</Link>. Aqui você edita a landing page modular de cada um.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {events.map((ev) => {
+              const hasContent = Array.isArray(ev.content?.blocks) && ev.content.blocks.length > 0;
+              return (
+                <Card key={ev.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      {ev.logoUrl ? (
+                        <img
+                          src={getPublicImageUrl(ev.logoUrl)}
+                          alt=""
+                          className="h-8 w-8 rounded object-contain border"
+                        />
+                      ) : (
+                        <Calendar className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <CardTitle className="text-lg">{ev.name}</CardTitle>
+                    </div>
+                    <CardDescription>
+                      {hasContent ? "Cabeçalho, rodapé, módulos." : "Crie a página com módulos."}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Link href={`/dashboard/paginas/evento/${ev.id}/editar`} className="block">
+                      <Button variant="outline" className="w-full">
+                        {hasContent ? (
+                          <>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar página
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Criar página
+                          </>
+                        )}
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       )}

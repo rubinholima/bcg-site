@@ -8,6 +8,7 @@ import {
   formatPhone,
   type PortfolioItem,
 } from "@/lib/public-portfolio";
+import { fetchPublicEvents, type PublicEventItem } from "@/lib/public-events";
 import { copy, type Lang } from "@/lib/home-copy";
 import {
   getOrderedBlocks,
@@ -34,6 +35,7 @@ import {
   BarChart3,
   Briefcase,
   Building2,
+  Calendar,
   Check,
   CheckCircle,
   ChevronDown,
@@ -73,6 +75,7 @@ const HIGHLIGHTS_ICON_MAP: Record<string, LucideIcon> = {
 const LANG_KEY = "bcg_lang";
 const CLUBS_ID = "clubs";
 const COMPANIES_ID = "companies";
+const EVENTOS_ID = "eventos";
 const ABOUT_ID = "about";
 const FOUNDER_ID = "founder";
 const HOW_ID = "how";
@@ -82,17 +85,20 @@ export interface HomeClientProps {
   /** Dados do servidor (evita fetch client que passa pelo Nginx e pode corromper UTF-8). */
   initialGroupHome?: Page | null;
   initialPortfolio?: PortfolioItem[] | null;
+  initialEvents?: PublicEventItem[] | null;
   initialGroup?: Group | null;
 }
 
 export default function HomeClient({
   initialGroupHome,
   initialPortfolio,
+  initialEvents,
   initialGroup,
 }: HomeClientProps = {}) {
   const hasServerData =
     initialGroupHome !== undefined &&
     initialPortfolio !== undefined &&
+    initialEvents !== undefined &&
     initialGroup !== undefined;
 
   const theme = initialGroupHome?.content?.theme as { defaultLang?: "pt" | "en" } | undefined;
@@ -100,6 +106,9 @@ export default function HomeClient({
   const [lang, setLang] = useState<Lang>(defaultLang);
   const [portfolio, setPortfolio] = useState<PortfolioItem[] | null>(
     initialPortfolio ?? null
+  );
+  const [events, setEvents] = useState<PublicEventItem[] | null>(
+    initialEvents ?? null
   );
   const [groupHome, setGroupHome] = useState<Page | null>(
     initialGroupHome ?? null
@@ -165,9 +174,10 @@ export default function HomeClient({
         }
         return r.ok ? r.json() : null;
       }),
+      fetchPublicEvents(),
       fetchGroup(),
     ])
-      .then(([portfolioData, pageData, groupData]: [PortfolioItem[] | null, Page | null | { __apiUnavailable: true }, Awaited<ReturnType<typeof fetchGroup>>]) => {
+      .then(([portfolioData, pageData, eventsData, groupData]: [PortfolioItem[] | null, Page | null | { __apiUnavailable: true }, PublicEventItem[], Awaited<ReturnType<typeof fetchGroup>>]) => {
         const isUnavailable = pageData && typeof pageData === "object" && "__apiUnavailable" in pageData;
         if (isUnavailable) {
           setApiUnavailable(true);
@@ -176,6 +186,7 @@ export default function HomeClient({
           setGroupHome(pageData as Page | null);
         }
         setPortfolio(portfolioData ?? null);
+        setEvents(Array.isArray(eventsData) ? eventsData : []);
         setGroupMaster(groupData ?? null);
         setError(false);
       })
@@ -768,6 +779,64 @@ export default function HomeClient({
         </AnimateInView>
             );
           }
+          if (block.type === "eventos") {
+            const eventosList = events ?? [];
+            if (!loading && eventosList.length === 0) return null;
+            return (
+        <AnimateInView key={block.id}>
+          <section
+            id={EVENTOS_ID}
+            className={`relative scroll-mt-24 border-b border-white/5 overflow-hidden ${sectionPaddingClass(block)}`}
+            style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(39 39 42 / 0.3)" }}
+          >
+            {block.config?.backgroundImage && (
+              <div className="absolute inset-0">
+                <SmartImage
+                  src={getPublicImageUrl(block.config.backgroundImage as string)}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                />
+                <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
+              </div>
+            )}
+            <div className="container relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+              <SectionTitle
+                title={blockTitle(block, t.eventos.title)}
+                gradientStart={titleGradientStart(block)}
+                gradientEnd={titleGradientEnd(block)}
+                className="animate-on-scroll"
+              />
+              <p className="animate-on-scroll mt-3 text-zinc-400 animate-delay-100">
+                {(lang === "pt" ? (block.config?.bodyPt as string) : (block.config?.bodyEn as string))?.trim() || t.eventos.subtext}
+              </p>
+              {loading ? (
+                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-56 animate-pulse rounded-2xl border border-white/10 bg-zinc-800/50"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {eventosList.map((item, i) => (
+                    <div
+                      key={item.id}
+                      className={`animate-on-scroll ${["animate-delay-200", "animate-delay-300", "animate-delay-400", "animate-delay-500", "animate-delay-600", "animate-delay-700"][i % 6]}`}
+                    >
+                      <EventCard item={item} viewLabel={t.eventos.viewEvent} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </AnimateInView>
+            );
+          }
           if (block.type === "founder") {
             const cfg = block.config ?? {};
             const founderName = blockTitle(block, t.founder.title);
@@ -1234,6 +1303,57 @@ export default function HomeClient({
         </footer>
       </main>
     </div>
+  );
+}
+
+function EventCard({
+  item,
+  viewLabel,
+}: {
+  item: PublicEventItem;
+  viewLabel: string;
+}) {
+  const period =
+    item.startDate && item.endDate
+      ? `${item.startDate} a ${item.endDate}`
+      : item.startDate ?? "";
+  return (
+    <article className="group flex flex-col rounded-2xl border border-white/10 bg-zinc-900/80 p-6 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-amber-500/25 hover:shadow-xl hover:shadow-amber-500/10">
+      <div className="flex flex-col items-center text-center">
+        {item.logoUrl ? (
+          <img
+            src={getPublicImageUrl(item.logoUrl)}
+            alt=""
+            className="h-16 w-16 rounded-xl object-contain sm:h-20 sm:w-20"
+          />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-zinc-800 text-amber-500/80 sm:h-20 sm:w-20">
+            <Calendar className="h-8 w-8 sm:h-10 sm:w-10" />
+          </div>
+        )}
+        <h3 className="mt-4 text-lg font-semibold text-white">{item.name}</h3>
+        {period && (
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
+            <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+            {period}
+          </p>
+        )}
+        {item.description && (
+          <p className="mt-2 line-clamp-2 text-sm text-zinc-400">
+            {item.description}
+          </p>
+        )}
+        <div className="mt-4">
+          <Link
+            href={`/eventos/${item.slug}`}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            {viewLabel}
+          </Link>
+        </div>
+      </div>
+    </article>
   );
 }
 

@@ -101,6 +101,7 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   what: { pt: "O que fazemos", en: "What we do" },
   clubs: { pt: "Clubes", en: "Clubs" },
   companies: { pt: "Empresas", en: "Companies" },
+  eventos: { pt: "Nossos Eventos", en: "Our Events" },
   founder: { pt: "Fundador", en: "Founder" },
   how: { pt: "Como funciona", en: "How it works" },
   cta: { pt: "CTA final", en: "CTA" },
@@ -115,6 +116,7 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   tabela: { pt: "Tabela / Classificação", en: "Standings" },
   patrocinadores: { pt: "Patrocinadores", en: "Sponsors" },
   galeria: { pt: "Galeria de fotos", en: "Photo gallery" },
+  galeria_eventos: { pt: "Galeria de fotos do evento", en: "Event photo gallery" },
   // Empresas
   sobre: { pt: "Sobre nós", en: "About us" },
   servicos: { pt: "Serviços", en: "Services" },
@@ -186,6 +188,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: Mod
   { type: "contato", label: "Contato", category: "empresas" },
   { type: "global_presence", label: "Presença Global / Expansão", category: "empresas" },
   { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)", category: "empresas" },
+  { type: "eventos", label: "Nossos Eventos", category: "geral" },
   // Imobiliária
   { type: "imoveis_destaque", label: "Imóveis em destaque", category: "imobiliaria" },
   { type: "formulario_captura", label: "Formulário de captura (leads)", category: "imobiliaria" },
@@ -194,6 +197,22 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: Mod
   { type: "como_funciona", label: "Como funciona (processo)", category: "imobiliaria" },
   { type: "faq", label: "Perguntas frequentes", category: "imobiliaria" },
 ];
+
+/**
+ * Módulos específicos para páginas de EVENTOS, por tipo de negócio.
+ * Quando o usuário seleciona Futebol/Empresas/etc. no editor de evento, só vê estes.
+ * Geral: usa MODULE_OPTIONS (todos). Quando criar módulos para eventos->futebol, adicionar aqui.
+ */
+export const EVENT_PAGE_MODULES_BY_CATEGORY: Record<
+  Exclude<ModuleCategory, "geral">,
+  { type: HomeBlockType; label: string }[]
+> = {
+  futebol: [
+    { type: "galeria_eventos", label: "Galeria de fotos do evento" },
+  ],
+  empresas: [],
+  imobiliaria: [],
+};
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
   if (type === "custom" && id.startsWith("custom-")) return BLOCK_LABELS.custom[lang] + ` (${id})`;
@@ -238,6 +257,9 @@ export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
 export const BLOCK_TYPES_WITH_BODY: HomeBlockType[] = [
   "text",
   "custom",
+  "clubs",
+  "companies",
+  "eventos",
   "proximos_jogos",
   "ultimos_resultados",
   "times_categorias",
@@ -406,6 +428,10 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.galeriaPaddingTop = "compact";
     config.galeriaPaddingBottom = "compact";
   }
+  if (type === "galeria_eventos") {
+    config.titlePt = "Galeria de fotos";
+    config.titleEn = "Photo gallery";
+  }
   if (type === "patrocinadores") {
     config.patrocinadoresManualItems = [];
     config.patrocinadoresPaddingTop = "compact";
@@ -565,6 +591,7 @@ export function buildTFromBlocks(
   const whatBlock = getBlockByType(blocks, "what");
   const clubsBlock = getBlockByType(blocks, "clubs");
   const companiesBlock = getBlockByType(blocks, "companies");
+  const eventosBlock = getBlockByType(blocks, "eventos");
   const founderBlock = getBlockByType(blocks, "founder");
   const howBlock = getBlockByType(blocks, "how");
   const ctaBlock = getBlockByType(blocks, "cta");
@@ -602,6 +629,9 @@ export function buildTFromBlocks(
 
   const companiesTitle = (companiesBlock?.config?.[titleKey] as string)?.trim() || copyLang.companies?.title || "";
   const companiesSubtext = (companiesBlock?.config?.[bodyKey] as string)?.trim() || copyLang.companies?.subtext || "";
+
+  const eventosTitle = (eventosBlock?.config?.[titleKey] as string)?.trim() || copyLang.eventos?.title || "";
+  const eventosSubtext = (eventosBlock?.config?.[bodyKey] as string)?.trim() || copyLang.eventos?.subtext || "";
 
   const founderTitle = (founderBlock?.config?.[titleKey] as string)?.trim() || copyLang.founder?.title || "";
   const founderBody = (founderBlock?.config?.[bodyKey] as string)?.trim() || copyLang.founder?.body || "";
@@ -643,6 +673,11 @@ export function buildTFromBlocks(
       subtext: companiesSubtext,
       visitWebsite: copyLang.companies?.visitWebsite ?? "",
       openProfile: copyLang.companies?.openProfile ?? "",
+    },
+    eventos: {
+      title: eventosTitle,
+      subtext: eventosSubtext,
+      viewEvent: copyLang.eventos?.viewEvent ?? "",
     },
     founder: {
       title: founderTitle,

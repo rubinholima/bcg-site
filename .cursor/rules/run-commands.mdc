@@ -10,8 +10,15 @@ alwaysApply: true
 - Use o diretório correto do monorepo (ex.: `apps/api`, `apps/web`) ou raiz conforme o comando.
 - Exemplos: `pnpm install`, `pnpm exec prisma migrate dev`, `pnpm exec prisma generate`, `pnpm run seed:group-home`, `pnpm build`, `pnpm --filter api start:dev`.
 
+## NUNCA apagar o banco
+
+- **PROIBIDO** rodar `prisma migrate reset`. Apaga TODOS os dados (usuários, tenants, jogadores, eventos — tudo). Irreversível.
+- Migrações: usar apenas `prisma migrate dev` (aplica pendentes) ou `prisma migrate deploy` (produção).
+- Se drift/conflito: usar `migrate resolve` ou corrigir migration — **jamais** reset.
+
 ## Prisma generate — parar a API antes
 
 - **Antes de rodar `prisma generate`** (em `apps/api` ou `pnpm --filter api run prisma:generate`), **sempre parar o processo da API** que está rodando (ex.: `pnpm --filter api start:dev`). O processo segura o `.dll` do cliente Prisma e causa **EPERM** ao tentar regenerar.
 - **Como parar:** encerrar o terminal onde a API está rodando (Ctrl+C) ou, se estiver em segundo plano, matar o processo na porta 3001: `netstat -ano | findstr :3001` e em seguida `taskkill /F /PID <pid>` (Windows).
 - Depois de rodar `prisma generate`, a API pode ser iniciada de novo.
+

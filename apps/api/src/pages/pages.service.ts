@@ -23,7 +23,13 @@ export type PageResponseDto = {
   content: PageContentDto;
   createdAt: string;
   updatedAt: string;
-  tenant?: { id: string; name: string; slug: string; logoUrl?: string | null };
+  tenant?: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl?: string | null;
+    kind?: { id: string; name: string };
+  };
 };
 
 export type CreatePageDto = {
@@ -70,9 +76,25 @@ export class PagesService {
   async findByTenantId(tenantId: string): Promise<PageResponseDto | null> {
     const row = await this.prisma.page.findFirst({
       where: { tenantId },
-      include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
+      include: {
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            logoUrl: true,
+            kind: { select: { id: true, name: true } },
+          },
+        },
+      },
     });
     if (!row) return null;
+    const tenant = row.tenant
+      ? {
+          ...row.tenant,
+          kind: row.tenant.kind ?? undefined,
+        }
+      : undefined;
     return {
       id: row.id,
       tenantId: row.tenantId,
@@ -81,7 +103,7 @@ export class PagesService {
       content: (row.content as PageContentDto) ?? { blocks: [] },
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
-      tenant: row.tenant ?? undefined,
+      tenant,
     };
   }
 

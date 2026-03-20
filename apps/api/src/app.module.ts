@@ -30,6 +30,7 @@ import { SocioTorcedorModule } from './socio-torcedor/socio-torcedor.module';
 import { MarketingModule } from './marketing/marketing.module';
 import { DiretoriaModule } from './diretoria/diretoria.module';
 import { LogisticaModule } from './logistica/logistica.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { LogisticaModule } from './logistica/logistica.module';
     MarketingModule,
     DiretoriaModule,
     LogisticaModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
