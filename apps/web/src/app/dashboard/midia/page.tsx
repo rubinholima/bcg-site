@@ -51,7 +51,7 @@ function thumbSrc(key: string): string {
 }
 
 export default function MidiaPage() {
-  const { canAccessModule } = useAuth();
+  const { canAccessModule, isSuperAdmin } = useAuth();
   const searchParams = useSearchParams();
   const folderParam = searchParams.get("folder");
   const slugParam = searchParams.get("slug");
@@ -83,6 +83,12 @@ export default function MidiaPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
   const [confirmDeleteItem, setConfirmDeleteItem] = useState<MediaItem | null>(null);
+  const [migrateLoading, setMigrateLoading] = useState(false);
+  const [migrateResult, setMigrateResult] = useState<{
+    migratedFiles: number;
+    dbRowsUpdated: number;
+    errors: string[];
+  } | null>(null);
 
   useEffect(() => {
     if (!canAccessModule("midia")) return;
@@ -217,7 +223,7 @@ export default function MidiaPage() {
 
   const originLabelFromKey = (key: string): string => {
     if (key.startsWith("logos/clubes-adv/")) return "Clubes Adv";
-    if (key.startsWith("logos/external/")) return "Clubes Adv (legado)";
+    if (key.startsWith("logos/external/")) return "Clubes Adv";
     if (key.startsWith("logos/group/")) return "Grupo (BCG)";
     if (key.startsWith("logos/tenants/")) return "Empresa / clube";
     if (key.startsWith("logos/eventos/")) return "Evento";
@@ -234,8 +240,7 @@ export default function MidiaPage() {
       const parts = item.key.split("/");
       if (parts[1] === "group") return "Logo grupo";
       if (parts[1] === "tenants" && parts[2]) return `Logo ${parts[2]}`;
-      if (parts[1] === "clubes-adv") return "Logo (Clubes Adv)";
-      if (parts[1] === "external") return "Logo (Clubes Adv, legado)";
+      if (parts[1] === "clubes-adv" || parts[1] === "external") return "Logo (Clubes Adv)";
       return parts.slice(1, -1).join(" / ") || "Logo";
     }
     const last = item.key.split("/").pop() ?? "";
@@ -342,6 +347,77 @@ export default function MidiaPage() {
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
+      )}
+
+      {isSuperAdmin && (
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardHeader>
+            <CardTitle className="text-base">Migração: pasta legada → Clubes Adv</CardTitle>
+            <CardDescription>
+              Arquivos antigos em <code className="text-xs">logos/external/</code> devem ficar em{" "}
+              <code className="text-xs">logos/clubes-adv/</code> (mesma pasta dos novos envios). Esta ação copia os
+              arquivos no S3, atualiza nomes no banco e substitui URLs em cadastros e nos blocos de página (incl.{" "}
+              <strong>Próximos Jogos</strong> de clubes e eventos). Execute <strong>uma vez</strong> após deploy.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={migrateLoading}
+              onClick={() => {
+                void (async () => {
+                  setMigrateLoading(true);
+                  setError(null);
+                  setMigrateResult(null);
+                  try {
+                    const res = await fetch("/api/media/migrate-external-logos", {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                    const data = (await res.json().catch(() => ({}))) as {
+                      error?: string;
+                      migratedFiles?: number;
+                      dbRowsUpdated?: number;
+                      errors?: string[];
+                    };
+                    if (!res.ok) throw new Error(data.error ?? "Falha na migração");
+                    setMigrateResult({
+                      migratedFiles: data.migratedFiles ?? 0,
+                      dbRowsUpdated: data.dbRowsUpdated ?? 0,
+                      errors: Array.isArray(data.errors) ? data.errors : [],
+                    });
+                    fetchList(
+                      filterSizeKey,
+                      filterSizeKey === "galeria_clubes" ? galeriaSlug : undefined,
+                      { silent: true },
+                    );
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : "Erro na migração");
+                  } finally {
+                    setMigrateLoading(false);
+                  }
+                })();
+              }}
+            >
+              {migrateLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2 inline" />
+              ) : null}
+              Migrar logos (external → clubes-adv)
+            </Button>
+            {migrateResult && (
+              <p className="text-sm text-muted-foreground">
+                Arquivos movidos: {migrateResult.migratedFiles}. Atualizações no banco (linhas afetadas):{" "}
+                {migrateResult.dbRowsUpdated}.
+                {migrateResult.errors.length > 0 ? (
+                  <span className="block mt-1 text-amber-600">
+                    Avisos: {migrateResult.errors.join(" · ")}
+                  </span>
+                ) : null}
+              </p>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <Card>

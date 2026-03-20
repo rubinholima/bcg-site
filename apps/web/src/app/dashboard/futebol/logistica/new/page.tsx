@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { namesMatch } from "@/lib/names-match";
+import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 import { isFootballKind } from "@/lib/home-data";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { RoomAssignmentTable, type RoomAssignment } from "../components/RoomAssignmentTable";
@@ -133,8 +134,8 @@ export default function NewLogisticaPage() {
 
   const refreshVisitingTeams = useCallback(async () => {
     try {
-      const { data } = await api.get<VisitingTeam[]>("/visiting-teams");
-      setVisitingTeams(Array.isArray(data) ? data : []);
+      const list = await fetchVisitingTeamsMergedWithS3();
+      setVisitingTeams(list);
     } catch {
       /* mantém lista anterior */
     }
@@ -142,14 +143,14 @@ export default function NewLogisticaPage() {
 
   const refreshLogisticaCadastros = useCallback(async () => {
     try {
-      const [cRes, sRes, vRes] = await Promise.all([
+      const [cRes, sRes, vMerged] = await Promise.all([
         api.get<Championship[]>("/championships"),
         api.get<Stadium[]>("/stadiums"),
-        api.get<VisitingTeam[]>("/visiting-teams"),
+        fetchVisitingTeamsMergedWithS3(),
       ]);
       setChampionships(Array.isArray(cRes.data) ? cRes.data : []);
       setStadiums(Array.isArray(sRes.data) ? sRes.data : []);
-      setVisitingTeams(Array.isArray(vRes.data) ? vRes.data : []);
+      setVisitingTeams(vMerged);
     } catch {
       /* mantém listas anteriores */
     }
@@ -163,11 +164,11 @@ export default function NewLogisticaPage() {
     Promise.all([
       api.get<Championship[]>("/championships"),
       api.get<Stadium[]>("/stadiums"),
-      api.get<VisitingTeam[]>("/visiting-teams"),
-    ]).then(([cRes, sRes, vRes]) => {
+      fetchVisitingTeamsMergedWithS3(),
+    ]).then(([cRes, sRes, vMerged]) => {
       setChampionships(Array.isArray(cRes.data) ? cRes.data : []);
       setStadiums(Array.isArray(sRes.data) ? sRes.data : []);
-      setVisitingTeams(Array.isArray(vRes.data) ? vRes.data : []);
+      setVisitingTeams(vMerged);
     }).catch(() => {});
   }, []);
 

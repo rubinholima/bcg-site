@@ -5,16 +5,20 @@ import {
   Patch,
   Delete,
   Query,
+  Req,
   UseInterceptors,
   UploadedFile,
   Body,
   UseGuards,
   BadRequestException,
   StreamableFile,
+  ForbiddenException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
+import { ExternalLogosMigrationService } from './external-logos-migration.service';
 import { MediaMetaService } from './media-meta.service';
 import { S3Service } from '../s3/s3.service';
 import { displayNameFromUploadFilename } from '../common/upload-display-name';
@@ -25,6 +29,7 @@ export class MediaController {
   constructor(
     private readonly s3: S3Service,
     private readonly mediaMeta: MediaMetaService,
+    private readonly externalLogosMigration: ExternalLogosMigrationService,
   ) {}
 
   /**
@@ -146,5 +151,20 @@ export class MediaController {
     const name = displayName === null || displayName === undefined ? null : String(displayName);
     await this.mediaMeta.setDisplayName(k, name);
     return { ok: true };
+  }
+
+  /**
+   * POST /media/migrate-external-logos — move logos de logos/external/ para logos/clubes-adv/,
+   * atualiza URLs no banco (incl. blocos Próximos Jogos em Page/Event/Group). Só super_admin.
+   */
+  @Post('migrate-external-logos')
+  async migrateExternalLogos(@Req() req: Request) {
+    const user = (req as Request & { user?: CognitoJwtPayload }).user;
+    const role = user?.role;
+    const groups = user?.['cognito:groups'] ?? [];
+    if (role !== 'super_admin' && !groups.includes('super_admin')) {
+      throw new ForbiddenException('Apenas super admin pode executar a migração.');
+    }
+    return this.externalLogosMigration.run();
   }
 }

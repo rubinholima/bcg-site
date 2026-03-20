@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { namesMatch } from "@/lib/names-match";
+import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 
 export type SelectWithCreateType = "championship" | "stadium" | "visiting-team";
 
@@ -78,15 +79,20 @@ export function SelectWithCreate<T extends BaseItem>({
     async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) setLoading(true);
       try {
-        const { data } = await api.get<T[]>(config.list);
-        setItems((data ?? []) as T[]);
+        if (!isVisitingTeam) {
+          const { data } = await api.get<T[]>(config.list);
+          setItems((data ?? []) as T[]);
+          return;
+        }
+        const merged = await fetchVisitingTeamsMergedWithS3();
+        setItems(merged as unknown as T[]);
       } catch {
         if (!opts?.silent) setItems([]);
       } finally {
         if (!opts?.silent) setLoading(false);
       }
     },
-    [config.list],
+    [config.list, isVisitingTeam],
   );
 
   useEffect(() => {

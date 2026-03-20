@@ -37,4 +37,23 @@ export class MediaMetaService {
     if (!k) return;
     await this.prisma.mediaMeta.deleteMany({ where: { key: k } });
   }
+
+  /** Migra metadados de logos/external → logos/clubes-adv (mesmo arquivo, nova key). */
+  async migrateMediaKey(oldKey: string, newKey: string): Promise<void> {
+    const ok = oldKey?.trim();
+    const nk = newKey?.trim();
+    if (!ok || !nk) return;
+    const oldRow = await this.prisma.mediaMeta.findUnique({ where: { key: ok } });
+    const newRow = await this.prisma.mediaMeta.findUnique({ where: { key: nk } });
+    const displayName =
+      oldRow?.displayName?.trim() || newRow?.displayName?.trim() || null;
+    await this.prisma.mediaMeta.deleteMany({ where: { key: ok } });
+    if (displayName !== null || oldRow || newRow) {
+      await this.prisma.mediaMeta.upsert({
+        where: { key: nk },
+        create: { key: nk, displayName },
+        update: { displayName: displayName ?? undefined },
+      });
+    }
+  }
 }

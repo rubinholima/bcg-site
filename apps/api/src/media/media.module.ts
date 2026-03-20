@@ -4,11 +4,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { S3Module } from '../s3/s3.module';
 import { MediaController } from './media.controller';
 import { MediaMetaService } from './media-meta.service';
+import { ExternalLogosMigrationService } from './external-logos-migration.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, S3Module],
   controllers: [MediaController],
-  providers: [MediaMetaService],
+  providers: [MediaMetaService, ExternalLogosMigrationService],
   exports: [MediaMetaService],
 })
 export class MediaModule {}

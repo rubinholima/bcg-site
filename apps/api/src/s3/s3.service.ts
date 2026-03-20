@@ -1,5 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PutObjectCommand, S3Client, ListObjectsV2Command, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  PutObjectCommand,
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  CopyObjectCommand,
+} from '@aws-sdk/client-s3';
 import type { Readable } from 'stream';
 import { getAwsClientConfig } from '../common/aws-credentials';
 import { randomUUID } from 'crypto';
@@ -219,7 +226,7 @@ export class S3Service {
 
   /**
    * Upload de logo de time adversário (Clubes Adv) para logos/clubes-adv/.
-   * Legado: arquivos antigos podem permanecer em logos/external/.
+   * Pasta legada logos/external/ deve ser migrada via POST /media/migrate-external-logos.
    */
   async uploadLogoExternal(
     buffer: Buffer,
@@ -347,6 +354,44 @@ export class S3Service {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Falha ao listar assets no S3: ${message}`,
+      );
+    }
+  }
+
+  /**
+   * Lista apenas as keys (paths) sob um prefixo (ex.: logos/external/).
+   */
+  async listKeysUnderPrefix(prefix: string): Promise<string[]> {
+    const safe = prefix.replace(/^\/+/, '').replace(/\.\./g, '');
+    const items = await this.listAllObjectsUnderPrefix(safe);
+    return items.map((o) => o.Key!).filter(Boolean);
+  }
+
+  /**
+   * Copia um objeto dentro do mesmo bucket (ex.: logos/external/x → logos/clubes-adv/x).
+   */
+  async copyObject(sourceKey: string, destKey: string): Promise<void> {
+    const safeSource = sourceKey.replace(/^\/+/, '').replace(/\.\./g, '');
+    const safeDest = destKey.replace(/^\/+/, '').replace(/\.\./g, '');
+    if (
+      !safeSource.startsWith(LOGOS_PREFIX) ||
+      !safeDest.startsWith(LOGOS_PREFIX)
+    ) {
+      throw new InternalServerErrorException('Key inválida para cópia');
+    }
+    try {
+      const copySource = `${this.bucket}/${encodeURIComponent(safeSource)}`;
+      await this.client.send(
+        new CopyObjectCommand({
+          Bucket: this.bucket,
+          Key: safeDest,
+          CopySource: copySource,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao copiar objeto no S3: ${message}`,
       );
     }
   }
