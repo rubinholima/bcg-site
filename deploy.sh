@@ -23,10 +23,13 @@ echo "[deploy] API: prisma migrate + generate + build..."
 cd apps/api
 pnpm exec prisma migrate deploy
 pnpm exec prisma generate
+rm -rf dist .nest tsconfig.build.tsbuildinfo tsconfig.prod.tsbuildinfo 2>/dev/null || true
 pnpm run build
 if [ ! -f dist/main.js ] && [ ! -f dist/src/main.js ]; then
-  echo "[deploy] ERRO: build da API nao gerou main.js. Conteudo de dist:"
-  ls -la dist/ 2>/dev/null || true
+  echo "[deploy] ERRO: build da API nao gerou main.js."
+  echo "[deploy] Conteudo de dist:"
+  ls -laR dist/ 2>/dev/null || true
+  echo "[deploy] Verifique erros do nest build acima."
   exit 1
 fi
 cd ../..
