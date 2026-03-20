@@ -55,6 +55,10 @@ export function buildBackendUrl(path: string, search?: string): string {
   const baseUrl = getApiBaseUrl();
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   const url = `${baseUrl}${cleanPath}`;
+  /** Evita ?key=a?key=b quando o path já traz query (ex.: proxy mal montado). */
+  if (cleanPath.includes("?")) {
+    return url;
+  }
   return search ? `${url}${search.startsWith("?") ? search : `?${search}`}` : url;
 }
 

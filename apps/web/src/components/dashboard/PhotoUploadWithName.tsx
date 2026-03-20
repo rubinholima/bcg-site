@@ -74,7 +74,10 @@ export function PhotoUploadWithName({
     if (!value?.trim()) return;
     const key = urlToMediaKey(value);
     if (!key?.trim()) return;
-    fetch(`/api/media?sizeKey=${encodeURIComponent(sizeKey)}`, { credentials: "include" })
+    fetch(`/api/media?sizeKey=${encodeURIComponent(sizeKey)}`, {
+      credentials: "include",
+      cache: "no-store",
+    })
       .then((r) => (r.ok ? r.json() : { items: [] }))
       .then((d: { items?: Array<{ key?: string; url?: string; displayName?: string | null }> }) => {
         const item = (d.items ?? []).find(

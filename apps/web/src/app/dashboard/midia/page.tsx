@@ -58,10 +58,13 @@ export default function MidiaPage() {
   const initialFolder = (folderParam && MEDIA_PLACEHOLDER_KEYS.includes(folderParam as MediaPlaceholderSizeKey))
     ? (folderParam as MediaPlaceholderSizeKey)
     : null;
+  const initialClubesAdv = folderParam === "clubes_adv";
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterSizeKey, setFilterSizeKey] = useState<string>(initialFolder ?? "media_all");
+  const [filterSizeKey, setFilterSizeKey] = useState<string>(
+    initialFolder ?? (initialClubesAdv ? "clubes_adv" : "media_all"),
+  );
   const [galeriaSlug, setGaleriaSlug] = useState<string>(slugParam ?? "");
   const [uploading, setUploading] = useState(false);
   const [uploadSizeKey, setUploadSizeKey] = useState<MediaPlaceholderSizeKey>(initialFolder ?? "hero");
@@ -93,9 +96,11 @@ export default function MidiaPage() {
     if (slugParam?.trim()) setGaleriaSlug(slugParam.trim());
   }, [slugParam]);
 
-  const fetchList = (filter: string, slug?: string) => {
-    setLoading(true);
-    setError(null);
+  const fetchList = (filter: string, slug?: string, opts?: { silent?: boolean }) => {
+    if (!opts?.silent) {
+      setLoading(true);
+      setError(null);
+    }
     const useAll = filter === "logos" || filter === "media_all" || filter === "all_with_logos";
     let qs: string;
     if (filter === "galeria_clubes" && slug?.trim()) {
@@ -115,12 +120,23 @@ export default function MidiaPage() {
         if (filter === "logos") {
           list = list.filter((i) => i.folder === "logos");
         }
+        if (filter === "clubes_adv") {
+          list = list.filter(
+            (i) =>
+              i.key.startsWith("logos/clubes-adv/") ||
+              i.key.startsWith("logos/external/"),
+          );
+        }
         setItems(list);
         setDimensions({});
         setImgErrors({});
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Erro"))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!opts?.silent) setError(err instanceof Error ? err.message : "Erro");
+      })
+      .finally(() => {
+        if (!opts?.silent) setLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -191,6 +207,7 @@ export default function MidiaPage() {
         throw new Error((data as { error?: string })?.error ?? "Falha ao apagar");
       }
       setItems((prev) => prev.filter((i) => i.key !== item.key));
+      fetchList(filterSizeKey, filterSizeKey === "galeria_clubes" ? galeriaSlug : undefined, { silent: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao apagar");
     } finally {
@@ -280,7 +297,13 @@ export default function MidiaPage() {
       .then(() => {
         setLogoFile(null);
         setLogoDisplayName("");
-        if (filterSizeKey === "logos" || filterSizeKey === "all_with_logos") fetchList(filterSizeKey);
+        if (
+          filterSizeKey === "logos" ||
+          filterSizeKey === "all_with_logos" ||
+          filterSizeKey === "clubes_adv"
+        ) {
+          fetchList(filterSizeKey);
+        }
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro no upload do logo"))
       .finally(() => setUploadingLogo(false));
@@ -463,6 +486,7 @@ export default function MidiaPage() {
                 <SelectContent>
                   <SelectItem value="media_all">Todas as pastas (mídia + logos)</SelectItem>
                   <SelectItem value="logos">Logos (empresas/clubes)</SelectItem>
+                  <SelectItem value="clubes_adv">Clubes Adv (adversários)</SelectItem>
                   <SelectItem value="all_with_logos">Tudo (mídia + logos)</SelectItem>
                   {MEDIA_PLACEHOLDER_KEYS.map((key) => (
                     <SelectItem key={key} value={key}>
@@ -506,7 +530,9 @@ export default function MidiaPage() {
             <p className="text-muted-foreground">
               {filterSizeKey === "logos"
                 ? "Nenhum logo. Use o formulário “Enviar logo (empresa/clube)” acima."
-                : filterSizeKey === "galeria_clubes"
+                : filterSizeKey === "clubes_adv"
+                  ? "Nenhum logo em Clubes Adv. Envie com escopo “Clubes Adv” no formulário acima."
+                  : filterSizeKey === "galeria_clubes"
                   ? "Nenhuma foto deste clube. Use o formulário acima e selecione o clube para enviar."
                   : "Nenhuma imagem nesta pasta. Envie uma acima."}
             </p>

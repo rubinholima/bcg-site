@@ -63,6 +63,7 @@ export function MediaPicker({
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openNonce, setOpenNonce] = useState(0);
 
   useEffect(() => {
     const useLogosOnly = folder === "logos";
@@ -78,7 +79,7 @@ export function MediaPicker({
     }
     let cancelled = false;
     queueMicrotask(() => setLoading(true));
-    fetch(`/api/media${qs}`, { credentials: "include" })
+    fetch(`/api/media${qs}`, { credentials: "include", cache: "no-store" })
       .then((res) => (res.ok ? res.json() : { items: [] }))
       .then((data: { items: MediaItem[] }) => {
         if (cancelled) return [];
@@ -97,7 +98,7 @@ export function MediaPicker({
     return () => {
       cancelled = true;
     };
-  }, [sizeKey, allowAllFolders, folder, galeriaSlug, refreshTrigger]);
+  }, [sizeKey, allowAllFolders, folder, galeriaSlug, refreshTrigger, openNonce]);
 
   const dimensions = folder === "logos" ? "Logo" : MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";
   const validItems = items.filter((item) => item.url?.trim());
@@ -118,7 +119,13 @@ export function MediaPicker({
       )}
       <div className="flex flex-col gap-2 mt-1">
         <div className="flex gap-2">
-          <Select value={displayValue} onValueChange={(v) => onChange(v === "__none__" ? "" : v)}>
+          <Select
+            value={displayValue}
+            onOpenChange={(open) => {
+              if (open) setOpenNonce((n) => n + 1);
+            }}
+            onValueChange={(v) => onChange(v === "__none__" ? "" : v)}
+          >
             <SelectTrigger className="flex-1">
               <SelectValue placeholder={loading ? "Carregando…" : placeholder} />
             </SelectTrigger>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Plus } from "lucide-react";
 import {
   Select,
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { namesMatch } from "@/lib/names-match";
 
 export type SelectWithCreateType = "championship" | "stadium" | "visiting-team";
 
@@ -73,21 +74,32 @@ export function SelectWithCreate<T extends BaseItem>({
   const labels = LABEL_MAP[type];
   const isVisitingTeam = type === "visiting-team";
 
-  const loadItems = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get<T[]>(config.list);
-      setItems((data ?? []) as T[]);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadItems = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setLoading(true);
+      try {
+        const { data } = await api.get<T[]>(config.list);
+        setItems((data ?? []) as T[]);
+      } catch {
+        if (!opts?.silent) setItems([]);
+      } finally {
+        if (!opts?.silent) setLoading(false);
+      }
+    },
+    [config.list],
+  );
 
   useEffect(() => {
-    loadItems();
-  }, [type]);
+    void loadItems();
+  }, [loadItems]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "visible") void loadItems({ silent: true });
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [loadItems]);
 
   const uploadLogoToMedia = async (file: File): Promise<string> => {
     const formData = new FormData();
@@ -128,17 +140,12 @@ export function SelectWithCreate<T extends BaseItem>({
         body,
       );
       if (data?.id) {
-        const newItem = {
-          id: data.id,
-          name: data.name,
-          ...(isVisitingTeam && { logoUrl: data.logoUrl }),
-        } as T;
-        setItems((prev) => [...prev, newItem]);
         onChange(data.name, data.logoUrl ?? undefined);
         setCreateOpen(false);
         setCreateName("");
         setCreateLogoFile(null);
         setCreateLogoPreview(null);
+        await loadItems({ silent: true });
       }
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : "Erro ao criar");
@@ -175,7 +182,8 @@ export function SelectWithCreate<T extends BaseItem>({
   };
 
   const valueMatch = value?.trim();
-  const selectedId = items.find((i) => i.name === valueMatch)?.id ?? (valueMatch ? "__custom__" : "__none__");
+  const selectedId =
+    items.find((i) => namesMatch(i.name, valueMatch))?.id ?? (valueMatch ? "__custom__" : "__none__");
 
   return (
     <div className={className}>
@@ -187,6 +195,9 @@ export function SelectWithCreate<T extends BaseItem>({
       <div className="flex gap-2 mt-1">
         <Select
           value={selectedId}
+          onOpenChange={(open) => {
+            if (open) void loadItems({ silent: true });
+          }}
           onValueChange={(v) => {
             if (v === "__create__") {
               setCreateOpen(true);
@@ -207,7 +218,7 @@ export function SelectWithCreate<T extends BaseItem>({
             <SelectItem value="__none__">
               {placeholder}
             </SelectItem>
-            {valueMatch && !items.some((i) => i.name === valueMatch) && (
+            {valueMatch && !items.some((i) => namesMatch(i.name, valueMatch)) && (
               <SelectItem value="__custom__">
                 {logoUrlProp ? (
                   <span className="flex items-center gap-2">

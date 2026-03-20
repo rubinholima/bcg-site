@@ -29,7 +29,8 @@ export async function DELETE(request: NextRequest) {
   if (!key?.trim()) {
     return NextResponse.json({ error: "Query 'key' é obrigatória" }, { status: 400 });
   }
-  return forwardRequest(request, `/media?key=${encodeURIComponent(key.trim())}`, { requireAuth: true });
+  /** Path sem query: forwardRequest já repassa ?key= da requisição. Duplicar ?key na URL quebrava o DELETE no S3 (objeto não era apagado e “voltava” na lista). */
+  return forwardRequest(request, "/media", { requireAuth: true });
 }
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { namesMatch } from "@/lib/names-match";
 import { isFootballKind } from "@/lib/home-data";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { RoomAssignmentTable, type RoomAssignment } from "../components/RoomAssignmentTable";
@@ -112,6 +113,48 @@ export default function NewLogisticaPage() {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("rascunho");
 
+  const refreshChampionships = useCallback(async () => {
+    try {
+      const { data } = await api.get<Championship[]>("/championships");
+      setChampionships(Array.isArray(data) ? data : []);
+    } catch {
+      /* mantém lista anterior */
+    }
+  }, []);
+
+  const refreshStadiums = useCallback(async () => {
+    try {
+      const { data } = await api.get<Stadium[]>("/stadiums");
+      setStadiums(Array.isArray(data) ? data : []);
+    } catch {
+      /* mantém lista anterior */
+    }
+  }, []);
+
+  const refreshVisitingTeams = useCallback(async () => {
+    try {
+      const { data } = await api.get<VisitingTeam[]>("/visiting-teams");
+      setVisitingTeams(Array.isArray(data) ? data : []);
+    } catch {
+      /* mantém lista anterior */
+    }
+  }, []);
+
+  const refreshLogisticaCadastros = useCallback(async () => {
+    try {
+      const [cRes, sRes, vRes] = await Promise.all([
+        api.get<Championship[]>("/championships"),
+        api.get<Stadium[]>("/stadiums"),
+        api.get<VisitingTeam[]>("/visiting-teams"),
+      ]);
+      setChampionships(Array.isArray(cRes.data) ? cRes.data : []);
+      setStadiums(Array.isArray(sRes.data) ? sRes.data : []);
+      setVisitingTeams(Array.isArray(vRes.data) ? vRes.data : []);
+    } catch {
+      /* mantém listas anteriores */
+    }
+  }, []);
+
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
       const list = Array.isArray(data) ? data : [];
@@ -128,7 +171,30 @@ export default function NewLogisticaPage() {
     }).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "visible") void refreshLogisticaCadastros();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [refreshLogisticaCadastros]);
+
   const selectedTenant = tenants.find((t) => t.id === tenantId);
+
+  const opponentValueForSelect =
+    opponentName.trim() === ""
+      ? ""
+      : visitingTeams.find((t) => namesMatch(t.name, opponentName))?.name ?? opponentName;
+
+  const stadiumValueForSelect =
+    stadiumName.trim() === ""
+      ? ""
+      : stadiums.find((s) => namesMatch(s.name, stadiumName))?.name ?? stadiumName;
+
+  const championshipValueForSelect =
+    championshipName.trim() === ""
+      ? ""
+      : championships.find((c) => namesMatch(c.name, championshipName))?.name ?? championshipName;
 
   useEffect(() => {
     if (!tenantId || dataSource !== "fixture") {
@@ -344,13 +410,19 @@ export default function NewLogisticaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="opponentName">Adversário</Label>
-                <Select value={opponentName || "none"} onValueChange={(v) => setOpponentName(v === "none" ? "" : v)}>
+                <Select
+                  value={opponentValueForSelect || "none"}
+                  onValueChange={(v) => setOpponentName(v === "none" ? "" : v)}
+                  onOpenChange={(open) => {
+                    if (open) void refreshVisitingTeams();
+                  }}
+                >
                   <SelectTrigger id="opponentName">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
-                    {opponentName && !visitingTeams.some((t) => t.name === opponentName) && (
+                    {opponentName && !visitingTeams.some((t) => namesMatch(t.name, opponentName)) && (
                       <SelectItem value={opponentName}>{opponentName}</SelectItem>
                     )}
                     {visitingTeams.map((t) => (
@@ -361,7 +433,12 @@ export default function NewLogisticaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="stadiumName">Estádio</Label>
-                <Select value={stadiumName || "none"} onValueChange={(v) => {
+                <Select
+                  value={stadiumValueForSelect || "none"}
+                  onOpenChange={(open) => {
+                    if (open) void refreshStadiums();
+                  }}
+                  onValueChange={(v) => {
                   setStadiumName(v === "none" ? "" : v);
                   const s = stadiums.find((x) => x.name === v);
                   if (s) {
@@ -371,13 +448,14 @@ export default function NewLogisticaPage() {
                     setCity("");
                     setCountry("");
                   }
-                }}>
+                }}
+                >
                   <SelectTrigger id="stadiumName">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
-                    {stadiumName && !stadiums.some((s) => s.name === stadiumName) && (
+                    {stadiumName && !stadiums.some((s) => namesMatch(s.name, stadiumName)) && (
                       <SelectItem value={stadiumName}>{stadiumName}</SelectItem>
                     )}
                     {stadiums.map((s) => (
@@ -388,13 +466,19 @@ export default function NewLogisticaPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="championshipName">Competição</Label>
-                <Select value={championshipName || "none"} onValueChange={(v) => setChampionshipName(v === "none" ? "" : v)}>
+                <Select
+                  value={championshipValueForSelect || "none"}
+                  onOpenChange={(open) => {
+                    if (open) void refreshChampionships();
+                  }}
+                  onValueChange={(v) => setChampionshipName(v === "none" ? "" : v)}
+                >
                   <SelectTrigger id="championshipName">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
-                    {championshipName && !championships.some((c) => c.name === championshipName) && (
+                    {championshipName && !championships.some((c) => namesMatch(c.name, championshipName)) && (
                       <SelectItem value={championshipName}>{championshipName}</SelectItem>
                     )}
                     {championships.map((c) => (

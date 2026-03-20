@@ -43,7 +43,9 @@ export const api = {
   async get<T>(path: string, init?: RequestInit): Promise<{ data: T }> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? { "Content-Type": "application/json", ...init?.headers } : await getServerHeaders(init);
-    const res = await fetch(url, { ...init, headers, credentials: "include" });
+    const browserCache: RequestInit =
+      typeof window !== "undefined" ? { cache: "no-store" as RequestCache } : {};
+    const res = await fetch(url, { ...browserCache, ...init, headers, credentials: "include" });
     if (!res.ok) throw new Error(await getErrorMessage(res));
     const data = (await res.json().catch(() => ({}))) as T;
     return { data };
