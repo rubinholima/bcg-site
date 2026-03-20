@@ -36,7 +36,7 @@ export class UploadController {
    * POST /upload/logo
    * Body (multipart/form-data): file (imagem), scope
    * - scope=group → logo BCG (logos/group/)
-   * - scope=external → logos de times (logos/external/)
+   * - scope=external → Clubes Adv (logos/clubes-adv/)
    * - scope=event:{eventId} → logo do evento (logos/eventos/)
    * - scope={tenantId} → logo da empresa (logos/tenants/)
    */
@@ -78,13 +78,11 @@ export class UploadController {
         file.buffer,
         file.mimetype,
       );
-      const fromBody =
-        typeof displayName === 'string' && displayName.trim()
-          ? displayName.trim()
-          : null;
-      const resolved =
-        fromBody ?? displayNameFromUploadFilename(file.originalname);
-      if (resolved) await this.mediaMeta.setDisplayName(key, resolved);
+      const displayNameTrim =
+        typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
+      if (displayNameTrim) {
+        await this.mediaMeta.setDisplayName(key, displayNameTrim);
+      }
       return { url, key };
     }
 
@@ -93,13 +91,13 @@ export class UploadController {
         file.buffer,
         file.mimetype,
       );
-      const fromBody =
+      const displayNameTrim =
         typeof displayName === 'string' && displayName.trim()
           ? displayName.trim()
-          : null;
-      const resolved =
-        fromBody ?? displayNameFromUploadFilename(file.originalname);
-      if (resolved) await this.mediaMeta.setDisplayName(key, resolved);
+          : displayNameFromUploadFilename(file.originalname);
+      if (displayNameTrim) {
+        await this.mediaMeta.setDisplayName(key, displayNameTrim);
+      }
       return { url, key };
     }
 
@@ -132,13 +130,11 @@ export class UploadController {
       await this.tenantsService.updateLogoUrl(scopeTrim, url);
     }
 
-    const fromBody =
-      typeof displayName === 'string' && displayName.trim()
-        ? displayName.trim()
-        : null;
-    const resolved =
-      fromBody ?? displayNameFromUploadFilename(file.originalname);
-    if (resolved) await this.mediaMeta.setDisplayName(key, resolved);
+    const displayNameTrim =
+      typeof displayName === 'string' && displayName.trim() ? displayName.trim() : null;
+    if (displayNameTrim) {
+      await this.mediaMeta.setDisplayName(key, displayNameTrim);
+    }
 
     return { url, key };
   }

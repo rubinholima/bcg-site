@@ -112,12 +112,10 @@ export class MediaController {
       key = result.key;
       url = result.url;
     }
-    const fromBody =
+    const name =
       typeof displayName === 'string' && displayName.trim()
         ? displayName.trim()
-        : null;
-    const fromFile = displayNameFromUploadFilename(file.originalname);
-    const name = fromBody ?? fromFile;
+        : displayNameFromUploadFilename(file.originalname);
     if (name) await this.mediaMeta.setDisplayName(key, name);
     return { url, key };
   }
@@ -130,6 +128,7 @@ export class MediaController {
     const k = typeof key === 'string' ? key.trim() : '';
     if (!k) throw new BadRequestException('Query "key" é obrigatória.');
     await this.s3.deleteObject(k);
+    await this.mediaMeta.removeByKey(k);
     return { ok: true };
   }
 

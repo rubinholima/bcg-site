@@ -30,4 +30,11 @@ export class MediaMetaService {
       update: { displayName: name },
     });
   }
+
+  /** Remove metadados quando o objeto foi apagado do S3 (evita nomes órfãos). */
+  async removeByKey(key: string): Promise<void> {
+    const k = key?.trim();
+    if (!k) return;
+    await this.prisma.mediaMeta.deleteMany({ where: { key: k } });
+  }
 }

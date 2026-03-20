@@ -22,6 +22,8 @@ const EXT_BY_MIME: Record<string, string> = {
 
 const MEDIA_PREFIX = 'media/';
 const LOGOS_PREFIX = 'logos/';
+/** Logos de adversários (Clubes Adv) — pasta dedicada no bucket */
+const LOGOS_CLUBES_ADV_PREFIX = 'logos/clubes-adv/';
 const LEGAL_PREFIX = 'legal/';
 
 /** Quando definido, URLs públicas são retornadas via este domínio (CloudFront OAC) em vez de s3.amazonaws.com. */
@@ -216,8 +218,8 @@ export class S3Service {
   }
 
   /**
-   * Upload de logo de time adversário/externo para logos/external/.
-   * Usado no módulo Próximos Jogos (lista manual) para logos de visitantes/casa contrária.
+   * Upload de logo de time adversário (Clubes Adv) para logos/clubes-adv/.
+   * Legado: arquivos antigos podem permanecer em logos/external/.
    */
   async uploadLogoExternal(
     buffer: Buffer,
@@ -229,7 +231,7 @@ export class S3Service {
       );
     }
     const ext = EXT_BY_MIME[contentType] ?? 'png';
-    const key = `logos/external/${randomUUID()}.${ext}`;
+    const key = `${LOGOS_CLUBES_ADV_PREFIX}${randomUUID()}.${ext}`;
 
     try {
       await this.client.send(
@@ -251,6 +253,33 @@ export class S3Service {
   }
 
   /**
+   * Lista todos os objetos sob um prefixo (paginação S3 — antes só 500 itens e cortava a lista).
+   */
+  private async listAllObjectsUnderPrefix(
+    prefix: string,
+  ): Promise<Array<{ Key?: string; Size?: number; LastModified?: Date }>> {
+    const out: Array<{ Key?: string; Size?: number; LastModified?: Date }> = [];
+    let continuationToken: string | undefined;
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          MaxKeys: 1000,
+          ContinuationToken: continuationToken,
+        }),
+      );
+      for (const o of response.Contents ?? []) {
+        if (o.Key && !o.Key.endsWith('/')) out.push(o);
+      }
+      continuationToken = response.IsTruncated
+        ? response.NextContinuationToken
+        : undefined;
+    } while (continuationToken);
+    return out;
+  }
+
+  /**
    * Lista objetos na pasta media/ (ou media/{sizeKey}/).
    * Quando sizeKey é "galeria_clubes" e subfolder (slug) é informado: media/galeria_clubes/{slug}/.
    * Retorna key, url, size (bytes), lastModified.
@@ -269,14 +298,7 @@ export class S3Service {
     }
 
     try {
-      const response = await this.client.send(
-        new ListObjectsV2Command({
-          Bucket: this.bucket,
-          Prefix: prefix,
-          MaxKeys: 500,
-        }),
-      );
-      const items = (response.Contents ?? []).filter((o) => o.Key && !o.Key.endsWith('/'));
+      const items = await this.listAllObjectsUnderPrefix(prefix);
       return items.map((o) => ({
         key: o.Key!,
         url: this.getPublicUrl(o.Key!),
@@ -299,21 +321,9 @@ export class S3Service {
     Array<{ key: string; url: string; size: number; lastModified: string; folder: string }>
   > {
     try {
-      const [logosRes, mediaRes] = await Promise.all([
-        this.client.send(
-          new ListObjectsV2Command({
-            Bucket: this.bucket,
-            Prefix: LOGOS_PREFIX,
-            MaxKeys: 500,
-          }),
-        ),
-        this.client.send(
-          new ListObjectsV2Command({
-            Bucket: this.bucket,
-            Prefix: MEDIA_PREFIX,
-            MaxKeys: 500,
-          }),
-        ),
+      const [logosRaw, mediaRaw] = await Promise.all([
+        this.listAllObjectsUnderPrefix(LOGOS_PREFIX),
+        this.listAllObjectsUnderPrefix(MEDIA_PREFIX),
       ]);
 
       const toItem = (
@@ -327,12 +337,8 @@ export class S3Service {
         folder,
       });
 
-      const logos = (logosRes.Contents ?? [])
-        .filter((o) => o.Key && !o.Key.endsWith('/'))
-        .map((o) => toItem(o, 'logos'));
-      const media = (mediaRes.Contents ?? [])
-        .filter((o) => o.Key && !o.Key.endsWith('/'))
-        .map((o) => toItem(o, 'media'));
+      const logos = logosRaw.map((o) => toItem(o, 'logos'));
+      const media = mediaRaw.map((o) => toItem(o, 'media'));
 
       return [...logos, ...media].sort(
         (a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime(),
