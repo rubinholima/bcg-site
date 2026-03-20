@@ -30,6 +30,14 @@ import { EventPhotosCard } from "@/components/dashboard/EventPhotosCard";
 import type { CompetitionFormat } from "@/lib/competition-formats";
 import { emptyFormat } from "@/lib/competition-formats";
 
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 export default function EditarEventoPage() {
   const params = useParams();
   const id = params.id as string;
@@ -192,7 +200,14 @@ export default function EditarEventoPage() {
                 <Input
                   id="name"
                   value={event.name}
-                  onChange={(e) => setEvent({ ...event, name: e.target.value })}
+                  onChange={(e) => {
+                    const newName = e.target.value;
+                    const newSlug =
+                      !event.slug || event.slug === slugify(event.name)
+                        ? slugify(newName)
+                        : event.slug;
+                    setEvent({ ...event, name: newName, slug: newSlug });
+                  }}
                   required
                   className="text-foreground"
                 />
