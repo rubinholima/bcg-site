@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Upload, Copy, Check, ImageOff, Pencil, Loader2, Trash2 } from "lucide-react";
@@ -89,6 +89,27 @@ export default function MidiaPage() {
     dbRowsUpdated: number;
     errors: string[];
   } | null>(null);
+  /** Quantos arquivos ainda estão em logos/external/ — card some quando for 0. */
+  const [legacyExternalCount, setLegacyExternalCount] = useState<number | null>(null);
+
+  const refreshLegacyExternalCount = useCallback(() => {
+    if (!isSuperAdmin) return;
+    fetch("/api/media?all=1", { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((data: { items?: MediaItem[] }) => {
+        const n = (data.items ?? []).filter((i) => i.key.startsWith("logos/external/")).length;
+        setLegacyExternalCount(n);
+      })
+      .catch(() => setLegacyExternalCount(0));
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
+    if (!canAccessModule("midia") || !isSuperAdmin) {
+      setLegacyExternalCount(null);
+      return;
+    }
+    refreshLegacyExternalCount();
+  }, [canAccessModule, isSuperAdmin, refreshLegacyExternalCount]);
 
   useEffect(() => {
     if (!canAccessModule("midia")) return;
@@ -111,7 +132,8 @@ export default function MidiaPage() {
     let qs: string;
     if (filter === "galeria_clubes" && slug?.trim()) {
       qs = `?sizeKey=galeria_clubes&slug=${encodeURIComponent(slug.trim())}`;
-    } else if (useAll) {
+    } else if (useAll || filter === "clubes_adv") {
+      /** clubes_adv: precisa de ?all=1 (logos no S3); ?sizeKey= listaria media/clubes_adv/, errado. */
       qs = "?all=1";
     } else {
       qs = `?sizeKey=${encodeURIComponent(filter)}`;
@@ -349,15 +371,28 @@ export default function MidiaPage() {
         </div>
       )}
 
-      {isSuperAdmin && (
+      {migrateResult && (
+        <div className="rounded-lg border border-green-500/40 bg-green-500/10 px-4 py-3 text-sm text-green-200">
+          Migração concluída: {migrateResult.migratedFiles} arquivo(s) no S3, {migrateResult.dbRowsUpdated} linha(s)
+          no banco atualizadas.
+          {migrateResult.errors.length > 0 ? (
+            <span className="block mt-1 text-amber-300">
+              Avisos: {migrateResult.errors.join(" · ")}
+            </span>
+          ) : null}
+        </div>
+      )}
+
+      {isSuperAdmin && legacyExternalCount !== null && legacyExternalCount > 0 && (
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardHeader>
             <CardTitle className="text-base">Migração: pasta legada → Clubes Adv</CardTitle>
             <CardDescription>
-              Arquivos antigos em <code className="text-xs">logos/external/</code> devem ficar em{" "}
-              <code className="text-xs">logos/clubes-adv/</code> (mesma pasta dos novos envios). Esta ação copia os
-              arquivos no S3, atualiza nomes no banco e substitui URLs em cadastros e nos blocos de página (incl.{" "}
-              <strong>Próximos Jogos</strong> de clubes e eventos). Execute <strong>uma vez</strong> após deploy.
+              Ainda há <strong>{legacyExternalCount}</strong> arquivo(s) em{" "}
+              <code className="text-xs">logos/external/</code>. Eles devem ficar em{" "}
+              <code className="text-xs">logos/clubes-adv/</code> (mesma pasta dos novos envios). Esta ação copia no S3,
+              atualiza o banco e URLs nos blocos (incl. <strong>Próximos Jogos</strong>). Execute{" "}
+              <strong>uma vez</strong> por ambiente; quando não houver mais arquivos legados, este aviso some.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -392,6 +427,7 @@ export default function MidiaPage() {
                       filterSizeKey === "galeria_clubes" ? galeriaSlug : undefined,
                       { silent: true },
                     );
+                    refreshLegacyExternalCount();
                   } catch (e) {
                     setError(e instanceof Error ? e.message : "Erro na migração");
                   } finally {
@@ -405,17 +441,6 @@ export default function MidiaPage() {
               ) : null}
               Migrar logos (external → clubes-adv)
             </Button>
-            {migrateResult && (
-              <p className="text-sm text-muted-foreground">
-                Arquivos movidos: {migrateResult.migratedFiles}. Atualizações no banco (linhas afetadas):{" "}
-                {migrateResult.dbRowsUpdated}.
-                {migrateResult.errors.length > 0 ? (
-                  <span className="block mt-1 text-amber-600">
-                    Avisos: {migrateResult.errors.join(" · ")}
-                  </span>
-                ) : null}
-              </p>
-            )}
           </CardContent>
         </Card>
       )}
