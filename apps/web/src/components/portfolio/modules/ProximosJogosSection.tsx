@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import Image from "next/image";
-import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isSvgUrl, resolvePublicMediaUrlForDisplay } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2 } from "lucide-react";
@@ -125,7 +125,7 @@ function TeamLogo({
   const logoBoxStyle = { width: size, height: size, minWidth: size, minHeight: size };
 
   if (logoUrlOverride?.trim()) {
-    const src = getPublicImageUrl(logoUrlOverride);
+    const src = resolvePublicMediaUrlForDisplay(logoUrlOverride);
     if (src) {
       const useImg = isSvgUrl(logoUrlOverride);
       return (

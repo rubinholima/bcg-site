@@ -108,12 +108,13 @@ export class PublicService {
       const away = (f.awayTeamName ?? '').trim();
       let homeTeamLogoUrl = f.homeTeamLogoUrl;
       let awayTeamLogoUrl = f.awayTeamLogoUrl;
-      if (!homeTeamLogoUrl?.trim() && home) {
+      /** Sempre que o mapa tiver logo (cadastro + S3), usa URL canônica — corrige JSON vazio ou URL de dev/localhost. */
+      if (home) {
         const nk = normalizeTeamNameKeyForMerge(home);
         const url = nk ? map.get(nk) : undefined;
         if (url) homeTeamLogoUrl = url;
       }
-      if (!awayTeamLogoUrl?.trim() && away) {
+      if (away) {
         const nk = normalizeTeamNameKeyForMerge(away);
         const url = nk ? map.get(nk) : undefined;
         if (url) awayTeamLogoUrl = url;

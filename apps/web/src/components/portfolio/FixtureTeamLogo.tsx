@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Building2 } from "lucide-react";
-import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { getPublicImageUrl, isSvgUrl, resolvePublicMediaUrlForDisplay } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 
 const EXTERNAL_LOGO_EXTENSIONS = [".png", ".webp", ".svg"] as const;
@@ -50,7 +50,7 @@ export function FixtureTeamLogo({
   const [showPlaceholder, setShowPlaceholder] = useState(false);
 
   if (logoUrlOverride?.trim()) {
-    const src = getPublicImageUrl(logoUrlOverride);
+    const src = resolvePublicMediaUrlForDisplay(logoUrlOverride);
     if (src) {
       const useImg = isSvgUrl(logoUrlOverride);
       return (

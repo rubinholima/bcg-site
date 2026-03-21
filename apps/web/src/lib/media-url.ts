@@ -159,7 +159,8 @@ export function getPublicImageUrl(url: string | undefined | null): string {
   const origin = mediaOrigin();
 
   if (useDevSameOriginMediaProxy()) {
-    const mediaKey = extractPublicMediaKey(sanitized);
+    const mediaKey =
+      mediaKeyFromStoredUrl(sanitized) ?? extractPublicMediaKey(sanitized);
     if (mediaKey) {
       return `/api/public/media-asset?key=${encodeURIComponent(mediaKey)}`;
     }
@@ -185,6 +186,25 @@ export function getPublicImageUrl(url: string | undefined | null): string {
   const u = sanitized.startsWith("http://") || sanitized.startsWith("https://") ? sanitized : "";
   if (u) return u;
   return "";
+}
+
+/**
+ * Para cards públicos (ex.: logos de jogos): prioriza key `logos/*`/`media/*` para não devolver
+ * URL de localhost ou formato que `getPublicImageUrl` não trate — evita cair no fallback estático.
+ */
+export function resolvePublicMediaUrlForDisplay(url: string | undefined | null): string {
+  if (!url || typeof url !== "string") return "";
+  const t = url.trim();
+  if (!t) return "";
+  const k = mediaKeyFromStoredUrl(t);
+  if (k) {
+    if (useDevSameOriginMediaProxy()) {
+      return `/api/public/media-asset?key=${encodeURIComponent(k)}`;
+    }
+    const origin = mediaOrigin();
+    return `${origin.replace(/\/$/, "")}/${k}`;
+  }
+  return getPublicImageUrl(t);
 }
 
 /**
