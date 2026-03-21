@@ -10,6 +10,12 @@ import {
   PagesService,
   type PageResponseDto,
 } from '../pages/pages.service';
+import { S3Service } from '../s3/s3.service';
+import { MediaMetaService } from '../media/media-meta.service';
+import {
+  buildVisitingTeamLogoUrlByMergeKey,
+  normalizeTeamNameKeyForMerge,
+} from './visiting-team-logo-merge.util';
 
 export function isClubKind(kindName: string | null): boolean {
   if (!kindName) return false;
@@ -60,7 +66,83 @@ export class PublicService {
     private readonly prisma: PrismaService,
     private readonly pagesService: PagesService,
     private readonly sofaScore: SofaScoreService,
+    private readonly s3: S3Service,
+    private readonly mediaMeta: MediaMetaService,
   ) {}
+
+  /** Logos de adversários (S3 clubes-adv + cadastro) para preencher cards públicos quando o JSON não tem URL. */
+  private async buildVisitingTeamLogoMergeMap(): Promise<Map<string, string>> {
+    const [teams, assets] = await Promise.all([
+      this.prisma.visitingTeam.findMany({ orderBy: { name: 'asc' } }),
+      this.s3.listAllAssets(),
+    ]);
+    const advAssets = assets.filter(
+      (a) =>
+        a.key.startsWith('logos/clubes-adv/') ||
+        a.key.startsWith('logos/external/'),
+    );
+    const displayNames = await this.mediaMeta.getDisplayNames(
+      advAssets.map((a) => a.key),
+    );
+    const advItems = advAssets.map((a) => ({
+      key: a.key,
+      url: a.url,
+      displayName: displayNames[a.key] ?? null,
+    }));
+    return buildVisitingTeamLogoUrlByMergeKey(
+      teams.map((t) => ({
+        id: t.id,
+        name: t.name,
+        logoUrl: t.logoUrl,
+      })),
+      advItems,
+    );
+  }
+
+  private enrichFixturesWithVisitingLogos(
+    list: FixtureDto[],
+    map: Map<string, string>,
+  ): FixtureDto[] {
+    return list.map((f) => {
+      const home = (f.homeTeamName ?? '').trim();
+      const away = (f.awayTeamName ?? '').trim();
+      let homeTeamLogoUrl = f.homeTeamLogoUrl;
+      let awayTeamLogoUrl = f.awayTeamLogoUrl;
+      if (!homeTeamLogoUrl?.trim() && home) {
+        const nk = normalizeTeamNameKeyForMerge(home);
+        const url = nk ? map.get(nk) : undefined;
+        if (url) homeTeamLogoUrl = url;
+      }
+      if (!awayTeamLogoUrl?.trim() && away) {
+        const nk = normalizeTeamNameKeyForMerge(away);
+        const url = nk ? map.get(nk) : undefined;
+        if (url) awayTeamLogoUrl = url;
+      }
+      if (
+        homeTeamLogoUrl === f.homeTeamLogoUrl &&
+        awayTeamLogoUrl === f.awayTeamLogoUrl
+      ) {
+        return f;
+      }
+      return {
+        ...f,
+        homeTeamLogoUrl,
+        awayTeamLogoUrl,
+      };
+    });
+  }
+
+  private async enrichFixturesWithVisitingLogosAsync(
+    list: FixtureDto[],
+  ): Promise<FixtureDto[]> {
+    if (list.length === 0) return list;
+    try {
+      const map = await this.buildVisitingTeamLogoMergeMap();
+      return this.enrichFixturesWithVisitingLogos(list, map);
+    } catch {
+      return list;
+    }
+  }
 
   /**
    * Jogadores do tenant pelo slug, agrupados por categoria. Só inclui jogadores com teamPage visível
@@ -436,7 +518,7 @@ export class PublicService {
                 new Date(a.startISO).getTime() - new Date(b.startISO).getTime(),
             )
         : [];
-      return list;
+      return this.enrichFixturesWithVisitingLogosAsync(list);
     }
 
     // effectiveSource === 'sofascore'
@@ -507,7 +589,7 @@ export class PublicService {
           new Date(a.startISO).getTime() - new Date(b.startISO).getTime(),
       );
 
-    return out;
+    return this.enrichFixturesWithVisitingLogosAsync(out);
   }
 
   async getPortfolio(): Promise<PortfolioItemDto[]> {

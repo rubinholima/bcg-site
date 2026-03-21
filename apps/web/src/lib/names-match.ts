@@ -8,7 +8,8 @@ export function normalizeNameKey(s: string): string {
  * tudo que não for letra/número, para unificar "América-MG" com "AmericaMG".
  */
 export function normalizeTeamNameKeyForMerge(s: string): string {
-  const t = s.trim().normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("pt-BR");
+  let t = s.trim().normalize("NFD").replace(/\p{M}/gu, "").toLocaleLowerCase("pt-BR");
+  t = t.replace(/\b(de|da|do|das|dos)\b/g, "");
   return t.replace(/[^a-z0-9]/g, "");
 }
 

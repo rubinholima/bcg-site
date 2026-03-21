@@ -9,9 +9,19 @@ import { PublicController } from './public.controller';
 import { PublicService } from './public.service';
 import { SofaScoreService } from './sofascore.service';
 import { EventsModule } from '../events/events.module';
+import { MediaModule } from '../media/media.module';
 
 @Module({
-  imports: [PrismaModule, GroupModule, HomeContentModule, PagesModule, S3Module, WorkmailModule, EventsModule],
+  imports: [
+    PrismaModule,
+    GroupModule,
+    HomeContentModule,
+    PagesModule,
+    S3Module,
+    MediaModule,
+    WorkmailModule,
+    EventsModule,
+  ],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService],
 })
