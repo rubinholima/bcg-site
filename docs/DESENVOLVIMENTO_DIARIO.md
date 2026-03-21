@@ -62,10 +62,10 @@
 
 ## **FECHAMENTO (GIT)**
 
-- **Último commit:** `dd76469` — docs: encerramento 20 mar 2026 — midia clubes adv, visiting teams, fixtures públicos
-- **Commits do dia (referência):** `0978e32` (midia Clubes Adv), `3ad7104` (merge visiting teams), `d0efc99` (API pública fixtures + logos), `5ac36e8` (resolvePublicMediaUrl + enrich), `dd76469` / `32d81c6` / `a45bf66` (atualizações do encerramento no diário)
 - **Branch:** develop
-- **Push:** ✅ para origin/develop (working tree limpo; não commitados: `backup_clean.sql`, `temp_legal_orig.txt` — arquivos locais fora do versionamento)
+- **Push:** ✅ para origin/develop (inclui atualização deste encerramento em `docs/DESENVOLVIMENTO_DIARIO.md`)
+- **Commits do dia (referência):** `0978e32` (midia Clubes Adv), `3ad7104` (merge visiting teams), `d0efc99` (API pública fixtures + logos), `5ac36e8` (resolvePublicMediaUrl + enrich), `dd76469` … `a79a534` (documentação / encerramento)
+- **Não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` (locais)
 
 ---
 
