@@ -62,7 +62,8 @@
 
 ## **FECHAMENTO (GIT)**
 
-- **Último commit:** `5ac36e8` — fix(public): logos de jogos — resolvePublicMediaUrlForDisplay + enrich sempre do mapa
+- **Último commit:** `dd76469` — docs: encerramento 20 mar 2026 — midia clubes adv, visiting teams, fixtures públicos
+- **Commits do dia (referência):** `0978e32` (midia Clubes Adv), `3ad7104` (merge visiting teams), `d0efc99` (API pública fixtures + logos), `5ac36e8` (resolvePublicMediaUrl + enrich), `dd76469` (este encerramento)
 - **Branch:** develop
 - **Push:** ✅ para origin/develop (working tree limpo; não commitados: `backup_clean.sql`, `temp_legal_orig.txt` — arquivos locais fora do versionamento)
 
