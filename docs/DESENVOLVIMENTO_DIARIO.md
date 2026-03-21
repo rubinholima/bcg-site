@@ -32,6 +32,42 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 20 DE MARÇO DE 2026 — ENCERRAMENTO (Mídia Clubes Adv, merge times visitantes, logos nos fixtures públicos)
+
+## **O QUE FOI FEITO**
+
+1. **Dashboard Mídia — filtro “Clubes Adv”**
+   - A listagem usava `?sizeKey=clubes_adv` (prefixo `media/clubes-adv/` no S3) em vez dos logos em `logos/clubes-adv/`. Ajuste: usar `?all=1` e filtrar no cliente por `logos/clubes-adv/` e `logos/external/`.
+
+2. **Select de time visitante / adversário (cadastro + S3)**
+   - Merge entre `VisitingTeam` e logos reais no bucket: deduplicação por nome (acentos, hífens, remoção de `de`/`da`/`do`); só entra cadastro com `logoUrl` que resolve para arquivo existente; correspondência por **basename** após migração `external` → `clubes-adv`; fallback de rótulo para arquivo só UUID sem nome na Mídia.
+   - `mediaKeyFromStoredUrl` no web para URLs salvas (incl. `/api/public/media-asset?key=...`).
+
+3. **API pública — fixtures (Próximos jogos / evento)**
+   - `PublicService` enriquece `homeTeamLogoUrl` / `awayTeamLogoUrl` com o mesmo mapa S3 + cadastro + `MediaMeta` (`visiting-team-logo-merge.util.ts`, `MediaModule` no `PublicModule`).
+   - Enriquecimento **sempre** aplica URL canônica quando o nome do time bate no mapa (corrige JSON vazio ou URL antiga).
+
+4. **Página pública — exibição da imagem**
+   - `resolvePublicMediaUrlForDisplay` em `media-url.ts`: prioriza key `logos/*`/`media/*`; proxy em dev com `mediaKeyFromStoredUrl` + `extractPublicMediaKey`.
+   - `ProximosJogosSection` e `FixtureTeamLogo` usam essa resolução para não cair no fallback estático `/logos/teams-externos/...`.
+
+5. **Deploys**
+   - Vários commits/push em `develop` ao longo do dia (midia, visiting-teams, public fixtures, fix de URL pública).
+
+## **ARQUIVOS ENVOLVIDOS (PRINCIPAIS)**
+
+**Web:** `apps/web/src/app/dashboard/midia/page.tsx`, `apps/web/src/lib/visiting-teams-merge.ts`, `apps/web/src/lib/names-match.ts`, `apps/web/src/lib/media-url.ts`, `apps/web/src/components/portfolio/modules/ProximosJogosSection.tsx`, `apps/web/src/components/portfolio/FixtureTeamLogo.tsx`.
+
+**API:** `apps/api/src/public/public.service.ts`, `apps/api/src/public/public.module.ts`, `apps/api/src/public/visiting-team-logo-merge.util.ts`.
+
+## **FECHAMENTO (GIT)**
+
+- **Último commit:** `5ac36e8` — fix(public): logos de jogos — resolvePublicMediaUrlForDisplay + enrich sempre do mapa
+- **Branch:** develop
+- **Push:** ✅ para origin/develop (working tree limpo; não commitados: `backup_clean.sql`, `temp_legal_orig.txt` — arquivos locais fora do versionamento)
+
+---
+
 # 📅 18 DE MARÇO DE 2026 — ENCERRAMENTO (Consultas: fotos jogador/psicólogo, duração ao encerrar)
 
 ## **O QUE FOI FEITO**
