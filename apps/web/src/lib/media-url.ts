@@ -22,6 +22,32 @@ function isAllowedPublicMediaKey(key: string): boolean {
   return k.startsWith("logos/") || k.startsWith("media/");
 }
 
+/**
+ * Extrai a key `logos/...` ou `media/...` a partir do URL salvo no cadastro
+ * (S3, CDN, proxy dev `/api/public/media-asset?key=...`).
+ */
+export function mediaKeyFromStoredUrl(url: string | undefined | null): string | null {
+  if (!url || typeof url !== "string") return null;
+  const sanitized = unwrapLegacyProxyUrl(url.trim());
+  if (!sanitized) return null;
+  if (sanitized.includes("media-asset") && sanitized.includes("key=")) {
+    try {
+      const qIdx = sanitized.indexOf("?");
+      const query = qIdx >= 0 ? sanitized.slice(qIdx) : "";
+      const params = new URLSearchParams(query);
+      const key = params.get("key");
+      if (key) {
+        const decoded = decodeURIComponent(key);
+        const k = decoded.trim();
+        if (isAllowedPublicMediaKey(k)) return k;
+      }
+    } catch {
+      /* continua */
+    }
+  }
+  return extractPublicMediaKey(sanitized);
+}
+
 /** Extrai key `logos/...` ou `media/...` para o proxy público (dev). */
 function extractPublicMediaKey(sanitized: string): string | null {
   const t = sanitized.trim();
