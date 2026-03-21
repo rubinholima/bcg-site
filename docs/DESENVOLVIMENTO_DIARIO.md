@@ -64,7 +64,7 @@
 
 - **Branch:** develop
 - **Push:** ✅ para origin/develop (inclui atualização deste encerramento em `docs/DESENVOLVIMENTO_DIARIO.md`)
-- **Commits do dia (referência):** `0978e32` (midia Clubes Adv), `3ad7104` (merge visiting teams), `d0efc99` (API pública fixtures + logos), `5ac36e8` (resolvePublicMediaUrl + enrich), `dd76469` … `a79a534` (documentação / encerramento)
+- **Commits do dia (referência):** `0978e32` (midia Clubes Adv), `3ad7104` (merge visiting teams), `d0efc99` (API pública fixtures + logos), `5ac36e8` (resolvePublicMediaUrl + enrich); em seguida commits só em `docs/DESENVOLVIMENTO_DIARIO.md` para este encerramento
 - **Não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` (locais)
 
 ---
