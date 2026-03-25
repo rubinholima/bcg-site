@@ -15,9 +15,10 @@ import { NutritionAssessmentsController } from './nutrition-assessments.controll
 import { NutritionAssessmentsService } from './nutrition-assessments.service';
 import { SupplementGuidesController } from './supplement-guides.controller';
 import { SupplementGuidesService } from './supplement-guides.service';
+import { CadastrosModule } from '../cadastros/cadastros.module';
 
 @Module({
-  imports: [AuthModule, ModulesModule],
+  imports: [AuthModule, ModulesModule, CadastrosModule],
   controllers: [
     NutritionCategoriesController,
     NutritionMealTypesController,

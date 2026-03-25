@@ -80,6 +80,8 @@ interface PlayerOption {
   category?: string | null;
   weight?: number | null;
   height?: number | null;
+  bmi?: number | null;
+  bodyFatPercent?: number | null;
 }
 
 export default function AdmNutricaoPage() {

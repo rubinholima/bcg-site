@@ -34,6 +34,8 @@ interface PlayerOption {
   category?: string | null;
   weight?: number | null;
   height?: number | null;
+  bmi?: number | null;
+  bodyFatPercent?: number | null;
 }
 
 interface NutritionAssessmentFormDialogProps {
@@ -82,12 +84,14 @@ export function NutritionAssessmentFormDialog({
   }, [open, edit, players]);
 
   useEffect(() => {
-    if (open && !edit && playerId && !weightKg && !heightCm) {
+    if (open && !edit && playerId && !weightKg && !heightCm && !bmi && !bodyFatPercent) {
       const p = players.find((x) => x.id === playerId);
       if (p?.weight != null) setWeightKg(String(p.weight));
       if (p?.height != null) setHeightCm(String(p.height));
+      if (p?.bmi != null) setBmi(String(p.bmi));
+      if (p?.bodyFatPercent != null) setBodyFatPercent(String(p.bodyFatPercent));
     }
-  }, [open, edit, playerId, players, weightKg, heightCm]);
+  }, [open, edit, playerId, players, weightKg, heightCm, bmi, bodyFatPercent]);
 
   const handlePlayerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
@@ -98,6 +102,10 @@ export function NutritionAssessmentFormDialog({
       else setWeightKg("");
       if (p?.height != null) setHeightCm(String(p.height));
       else setHeightCm("");
+      if (p?.bmi != null) setBmi(String(p.bmi));
+      else setBmi("");
+      if (p?.bodyFatPercent != null) setBodyFatPercent(String(p.bodyFatPercent));
+      else setBodyFatPercent("");
     }
   };
 
@@ -176,7 +184,7 @@ export function NutritionAssessmentFormDialog({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Peso e estatura podem vir do cadastro do jogador. IMC e % gordura costumam ser do departamento médico/fisiologia.
+              Peso, estatura, IMC e % gordura podem ser pré-preenchidos pelo cadastro do atleta (valores alinhados com fisiologia e nutrição).
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

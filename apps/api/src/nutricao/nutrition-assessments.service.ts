@@ -1,11 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PlayersService } from '../cadastros/players.service';
 import { CreateNutritionAssessmentDto } from './dto/create-nutrition-assessment.dto';
 import { UpdateNutritionAssessmentDto } from './dto/update-nutrition-assessment.dto';
 
 @Injectable()
 export class NutritionAssessmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly playersService: PlayersService,
+  ) {}
 
   async findByPlayer(playerId: string) {
     const player = await this.prisma.player.findUnique({ where: { id: playerId } });
@@ -40,7 +44,7 @@ export class NutritionAssessmentsService {
     const player = await this.prisma.player.findUnique({ where: { id: dto.playerId } });
     if (!player) throw new NotFoundException('Jogador não encontrado');
     const assessedAt = new Date(dto.assessedAt);
-    return this.prisma.nutritionAssessment.create({
+    const created = await this.prisma.nutritionAssessment.create({
       data: {
         playerId: dto.playerId,
         assessedAt,
@@ -52,11 +56,13 @@ export class NutritionAssessmentsService {
       },
       include: { player: { select: { id: true, name: true } } },
     });
+    await this.playersService.syncBodyMetricsFromSources(dto.playerId);
+    return created;
   }
 
   async update(id: string, dto: UpdateNutritionAssessmentDto) {
-    await this.findOne(id);
-    return this.prisma.nutritionAssessment.update({
+    const existing = await this.findOne(id);
+    const updated = await this.prisma.nutritionAssessment.update({
       where: { id },
       data: {
         ...(dto.assessedAt != null && { assessedAt: new Date(dto.assessedAt) }),
@@ -68,10 +74,14 @@ export class NutritionAssessmentsService {
       },
       include: { player: { select: { id: true, name: true } } },
     });
+    await this.playersService.syncBodyMetricsFromSources(existing.playerId);
+    return updated;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
+    const playerId = existing.playerId;
     await this.prisma.nutritionAssessment.delete({ where: { id } });
+    await this.playersService.syncBodyMetricsFromSources(playerId);
   }
 }

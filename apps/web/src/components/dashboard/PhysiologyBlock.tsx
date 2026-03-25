@@ -14,6 +14,12 @@ import {
 interface PhysiologyBlockProps {
   physiology: unknown;
   onUpdate: (patch: { physiology: PhysiologyData }) => void;
+  /** Valores atuais do cadastro — pré-preenchem nova avaliação */
+  cadastroWeight?: number | null;
+  cadastroHeight?: number | null;
+  cadastroBmi?: number | null;
+  cadastroBodyFatPercent?: number | null;
+  cadastroLeanMassKg?: number | null;
 }
 
 function numVal(v: number | undefined): string {
@@ -21,7 +27,15 @@ function numVal(v: number | undefined): string {
   return String(v);
 }
 
-export function PhysiologyBlock({ physiology, onUpdate }: PhysiologyBlockProps) {
+export function PhysiologyBlock({
+  physiology,
+  onUpdate,
+  cadastroWeight,
+  cadastroHeight,
+  cadastroBmi,
+  cadastroBodyFatPercent,
+  cadastroLeanMassKg,
+}: PhysiologyBlockProps) {
   const { records } = normalizePhysiology(physiology);
 
   const updateRecord = (idx: number, field: keyof PhysiologyEntry, value: string | number | undefined) => {
@@ -37,7 +51,14 @@ export function PhysiologyBlock({ physiology, onUpdate }: PhysiologyBlockProps) 
   };
 
   const addRecord = () => {
-    onUpdate({ physiology: { profile: {}, records: [...records, {}] } });
+    const today = new Date().toISOString().slice(0, 10);
+    const next: PhysiologyEntry = { date: today };
+    if (cadastroWeight != null && cadastroWeight > 0) next.weight = cadastroWeight;
+    if (cadastroHeight != null && cadastroHeight > 0) next.height = cadastroHeight;
+    if (cadastroBmi != null && cadastroBmi > 0) next.bmi = cadastroBmi;
+    if (cadastroBodyFatPercent != null && cadastroBodyFatPercent > 0) next.fatPercent = cadastroBodyFatPercent;
+    if (cadastroLeanMassKg != null && cadastroLeanMassKg > 0) next.leanMass = cadastroLeanMassKg;
+    onUpdate({ physiology: { profile: {}, records: [...records, next] } });
   };
 
   return (

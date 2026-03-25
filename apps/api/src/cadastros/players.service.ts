@@ -3,6 +3,10 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
+import {
+  applyCadastroMetricsToLatestPhysiology,
+  computeBestSharedMetricsFromSources,
+} from './body-metrics.util';
 
 @Injectable()
 export class PlayersService {
@@ -50,16 +54,106 @@ export class PlayersService {
   }
 
   async update(id: string, dto: UpdatePlayerDto) {
-    await this.findOne(id);
-    const data = this.toUpdateData(dto);
+    const current = await this.prisma.player.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Jogador não encontrado');
+
+    const data = this.toUpdateData(dto) as Prisma.PlayerUpdateInput;
+
+    if (dto.weight !== undefined) {
+      data.weightManualAt = new Date();
+    }
+    if (dto.height !== undefined) {
+      data.heightManualAt = new Date();
+    }
+    if (dto.bmi !== undefined) {
+      data.bmiManualAt = new Date();
+    }
+    if (dto.bodyFatPercent !== undefined) {
+      data.bodyFatPercentManualAt = new Date();
+    }
+    if (dto.leanMassKg !== undefined) {
+      data.leanMassManualAt = new Date();
+    }
+
+    const cadastroBodyPatch =
+      dto.physiology === undefined &&
+      (dto.weight !== undefined ||
+        dto.height !== undefined ||
+        dto.bmi !== undefined ||
+        dto.bodyFatPercent !== undefined ||
+        dto.leanMassKg !== undefined);
+    if (cadastroBodyPatch) {
+      const merged = applyCadastroMetricsToLatestPhysiology(current.physiology, {
+        weight: dto.weight as number | null | undefined,
+        height: dto.height as number | null | undefined,
+        bmi: dto.bmi as number | null | undefined,
+        bodyFatPercent: dto.bodyFatPercent as number | null | undefined,
+        leanMassKg: dto.leanMassKg as number | null | undefined,
+      });
+      data.physiology = merged as unknown as Prisma.InputJsonValue;
+    }
+
     this.logger.log(
       `Player update ${id} contact/emergency: contactEmail=${(dto as { contactEmail?: string }).contactEmail ?? 'n/a'} contactPhone=${(dto as { contactPhone?: string }).contactPhone ?? 'n/a'} emergencyName=${(dto as { emergencyContactName?: string }).emergencyContactName ?? 'n/a'} emergencyEmail=${(dto as { emergencyContactEmail?: string }).emergencyContactEmail ?? 'n/a'} emergencyPhone=${(dto as { emergencyContactPhone?: string }).emergencyContactPhone ?? 'n/a'}`,
     );
-    return this.prisma.player.update({
+    await this.prisma.player.update({
       where: { id },
       data,
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
+
+    await this.syncBodyMetricsFromSources(id);
+    return this.findOne(id);
+  }
+
+  /**
+   * Alinha peso, altura, IMC, % gordura e massa magra do cadastro com medições (fisiologia + nutrição).
+   * Respeita *ManualAt quando o cadastro foi editado manualmente após a medição mais recente daquela métrica.
+   */
+  async syncBodyMetricsFromSources(playerId: string): Promise<void> {
+    const player = await this.prisma.player.findUnique({ where: { id: playerId } });
+    if (!player) return;
+
+    const nutrition = await this.prisma.nutritionAssessment.findMany({
+      where: { playerId },
+      select: { assessedAt: true, weightKg: true, heightCm: true, bmi: true, bodyFatPercent: true },
+    });
+
+    const { bestWeight, bestHeight, bestBmi, bestBodyFat, bestLeanMass } = computeBestSharedMetricsFromSources(
+      player.physiology,
+      nutrition,
+    );
+
+    const weightManualMs = player.weightManualAt?.getTime() ?? 0;
+    const heightManualMs = player.heightManualAt?.getTime() ?? 0;
+    const bmiManualMs = player.bmiManualAt?.getTime() ?? 0;
+    const bfManualMs = player.bodyFatPercentManualAt?.getTime() ?? 0;
+    const leanManualMs = player.leanMassManualAt?.getTime() ?? 0;
+
+    const patch: Prisma.PlayerUpdateInput = {};
+    if (bestWeight && bestWeight.t > weightManualMs) {
+      patch.weight = bestWeight.v;
+      patch.weightManualAt = null;
+    }
+    if (bestHeight && bestHeight.t > heightManualMs) {
+      patch.height = bestHeight.v;
+      patch.heightManualAt = null;
+    }
+    if (bestBmi && bestBmi.t > bmiManualMs) {
+      patch.bmi = bestBmi.v;
+      patch.bmiManualAt = null;
+    }
+    if (bestBodyFat && bestBodyFat.t > bfManualMs) {
+      patch.bodyFatPercent = bestBodyFat.v;
+      patch.bodyFatPercentManualAt = null;
+    }
+    if (bestLeanMass && bestLeanMass.t > leanManualMs) {
+      patch.leanMassKg = bestLeanMass.v;
+      patch.leanMassManualAt = null;
+    }
+
+    if (Object.keys(patch).length === 0) return;
+    await this.prisma.player.update({ where: { id: playerId }, data: patch });
   }
 
   /** Verifica integrações antes de excluir — para exibir aviso na UI. */
@@ -320,6 +414,9 @@ export class PlayersService {
       nationality: (d.nationality as string)?.trim() || null,
       height: d.height != null ? (d.height as number) : null,
       weight: d.weight != null ? (d.weight as number) : null,
+      bmi: d.bmi != null ? (d.bmi as number) : null,
+      bodyFatPercent: d.bodyFatPercent != null ? (d.bodyFatPercent as number) : null,
+      leanMassKg: d.leanMassKg != null ? (d.leanMassKg as number) : null,
       preferredFoot: (d.preferredFoot as string)?.trim() || null,
       jerseyNumber: d.jerseyNumber != null ? (d.jerseyNumber as number) : null,
       position: (d.position as string)?.trim() || null,
@@ -371,6 +468,9 @@ export class PlayersService {
       ...(d.nationality !== undefined && { nationality: (d.nationality as string)?.trim() || null }),
       ...(d.height !== undefined && { height: d.height as number | null }),
       ...(d.weight !== undefined && { weight: d.weight as number | null }),
+      ...(d.bmi !== undefined && { bmi: d.bmi as number | null }),
+      ...(d.bodyFatPercent !== undefined && { bodyFatPercent: d.bodyFatPercent as number | null }),
+      ...(d.leanMassKg !== undefined && { leanMassKg: d.leanMassKg as number | null }),
       ...(d.preferredFoot !== undefined && { preferredFoot: (d.preferredFoot as string)?.trim() || null }),
       ...(d.jerseyNumber !== undefined && { jerseyNumber: d.jerseyNumber as number | null }),
       ...(d.position !== undefined && { position: (d.position as string)?.trim() || null }),

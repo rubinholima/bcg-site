@@ -51,6 +51,24 @@ export class CreatePlayerDto {
   @Max(150)
   weight?: number;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(10)
+  @Max(60)
+  bmi?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(70)
+  bodyFatPercent?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(20)
+  @Max(150)
+  leanMassKg?: number;
+
   @IsString()
   @IsOptional()
   @MaxLength(32)

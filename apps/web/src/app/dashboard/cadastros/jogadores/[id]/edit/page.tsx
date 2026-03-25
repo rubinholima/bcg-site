@@ -61,6 +61,9 @@ interface PlayerData {
   nationality?: string | null;
   height?: number | null;
   weight?: number | null;
+  bmi?: number | null;
+  bodyFatPercent?: number | null;
+  leanMassKg?: number | null;
   preferredFoot?: string | null;
   jerseyNumber?: number | null;
   position?: string | null;
@@ -300,6 +303,9 @@ export default function EditJogadorPage() {
         emergencyContactPhone: (player.emergencyContactPhone ?? "").trim() || null,
         height: player.height ?? undefined,
         weight: player.weight ?? undefined,
+        bmi: player.bmi ?? undefined,
+        bodyFatPercent: player.bodyFatPercent ?? undefined,
+        leanMassKg: player.leanMassKg ?? undefined,
         preferredFoot: player.preferredFoot || undefined,
         jerseyNumber: player.jerseyNumber ?? undefined,
         position: player.position || undefined,
@@ -585,7 +591,7 @@ export default function EditJogadorPage() {
                 <Ruler className="h-4 w-4 text-primary" />
                 Características físicas
               </h3>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2">
                 <Label>Altura (cm)</Label>
                 <Input
@@ -606,6 +612,45 @@ export default function EditJogadorPage() {
                   value={player.weight ?? ""}
                   onChange={(e) => update({ weight: e.target.value ? Number(e.target.value) : null })}
                   placeholder="78"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>IMC</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={10}
+                  max={60}
+                  className="text-foreground"
+                  value={player.bmi ?? ""}
+                  onChange={(e) => update({ bmi: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="22.5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>% Gordura corporal</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min={1}
+                  max={70}
+                  className="text-foreground"
+                  value={player.bodyFatPercent ?? ""}
+                  onChange={(e) => update({ bodyFatPercent: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="12"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Massa magra (kg)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min={20}
+                  max={150}
+                  className="text-foreground"
+                  value={player.leanMassKg ?? ""}
+                  onChange={(e) => update({ leanMassKg: e.target.value ? Number(e.target.value) : null })}
+                  placeholder="68"
                 />
               </div>
               <div className="space-y-2">

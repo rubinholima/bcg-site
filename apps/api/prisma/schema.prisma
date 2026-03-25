@@ -335,6 +335,17 @@ model Player {
   nationality     String?
   height          Int?     // cm
   weight          Int?     // kg
+  /** Última vez que peso foi definido manualmente no cadastro; sync de fisiologia/nutrição só sobrescreve se medição for mais recente */
+  weightManualAt  DateTime?
+  /** Idem para altura */
+  heightManualAt  DateTime?
+  /** IMC e composição — valores atuais alinhados com fisiologia/nutrição (medição mais recente) */
+  bmi             Float?
+  bodyFatPercent  Float?
+  leanMassKg      Float?
+  bmiManualAt           DateTime?
+  bodyFatPercentManualAt DateTime?
+  leanMassManualAt      DateTime?
   preferredFoot   String?  // left, right, both
   jerseyNumber    Int?
   position        String?  // GK, CB, etc.

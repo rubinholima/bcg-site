@@ -26,6 +26,11 @@ interface Player {
 
 interface PlayerFull extends Player {
   physiology?: unknown;
+  weight?: number | null;
+  height?: number | null;
+  bmi?: number | null;
+  bodyFatPercent?: number | null;
+  leanMassKg?: number | null;
 }
 
 export default function FisiologiaPage() {
@@ -95,6 +100,8 @@ export default function FisiologiaPage() {
       await api.patch(`/players/${selectedPlayer.id}`, {
         physiology: selectedPlayer.physiology,
       });
+      const { data: fresh } = await api.get<PlayerFull>(`/players/${selectedPlayer.id}`);
+      if (fresh) setSelectedPlayer(fresh);
       setSuccessMessage("Avaliação física salva com sucesso.");
       setTimeout(() => setSuccessMessage(null), 6000);
     } catch (e) {
@@ -193,6 +200,11 @@ export default function FisiologiaPage() {
               <PhysiologyBlock
                 physiology={selectedPlayer.physiology}
                 onUpdate={handleUpdate}
+                cadastroWeight={selectedPlayer.weight}
+                cadastroHeight={selectedPlayer.height}
+                cadastroBmi={selectedPlayer.bmi}
+                cadastroBodyFatPercent={selectedPlayer.bodyFatPercent}
+                cadastroLeanMassKg={selectedPlayer.leanMassKg}
               />
             </div>
           ) : (
