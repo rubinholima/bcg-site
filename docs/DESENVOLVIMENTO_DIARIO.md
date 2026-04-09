@@ -62,6 +62,7 @@
 ## **FECHAMENTO (GIT)**
 
 - **Branch:** develop
+- **Hash:** `4658b08`
 - **Commit:** `feat(diretoria): Omie compras por mês, layout fluxo 2/3+1/3; credenciais Omie por tenant; financeiro`
 - **Push:** ✅ para `origin/develop`
 - **Não versionados (locais):** `backup_clean.sql`, `temp_legal_orig.txt`
