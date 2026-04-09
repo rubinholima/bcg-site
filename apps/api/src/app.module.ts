@@ -31,6 +31,7 @@ import { MarketingModule } from './marketing/marketing.module';
 import { DiretoriaModule } from './diretoria/diretoria.module';
 import { LogisticaModule } from './logistica/logistica.module';
 import { EventsModule } from './events/events.module';
+import { FinanceiroModule } from './financeiro/financeiro.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { EventsModule } from './events/events.module';
     DiretoriaModule,
     LogisticaModule,
     EventsModule,
+    FinanceiroModule,
   ],
   controllers: [AppController],
   providers: [AppService],

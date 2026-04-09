@@ -32,6 +32,42 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 9 DE ABRIL DE 2026 — ENCERRAMENTO (Diretoria + Omie: fluxo de caixa, compras por mês, credenciais por tenant)
+
+## **O QUE FOI FEITO**
+
+1. **Dashboard Diretoria**
+   - Integração de **pedidos de compra** (API Omie `PesquisarPedCompra`): agregação por **data de inclusão** do pedido, janela de **6 meses** (`chartComprasPorMes`) e totais por empresa no mês corrente + pendentes.
+   - **Fluxo de caixa**: KPIs (receber / pagar / saldo); abaixo, grid **2/3 + 1/3** — gráfico **a receber e a pagar por empresa** alinhado aos dois primeiros cards e **saldo por empresa** (barras horizontais) alinhado ao terceiro.
+   - **Grade inferior** (ordem fixa): coluna **Compras** (6 meses + por empresa), **Clubes** (jogadores/sócios), **Crescimento** (6 meses). Textos de UI enxutos.
+
+2. **API — Omie e Diretoria**
+   - `OmieService`: paginação compras, `chavesUltimosMesesIso`, acúmulo por mês (`parseOmieDataDdmmaaaa` para não conflitar com `parseDataBR` legado), `resumoPedidosCompraDashboard` com histórico + pendentes.
+   - `DiretoriaService` / `GET /diretoria/omie-financeiro`: `chartComprasPorMes`, `chartComprasPorEmpresa`, campos de compras por empresa no DTO.
+
+3. **Credenciais Omie por empresa (tenant)**
+   - Prisma: campos cifrados `omieAppKeyEnc` / `omieAppSecretEnc` (+ IVs), migration `20260409120000_tenant_omie_credentials`.
+   - `TenantsService`: gravar/limpar credenciais; `OmieService` usa credenciais do tenant quando configuradas.
+   - Web: edição de empresa, tipo `Tenant`, rota proxy status Omie; módulo **financeiro** (Nest) para telas administrativas.
+
+4. **Build**
+   - `pnpm build` na raiz executado com sucesso antes do commit.
+
+## **ARQUIVOS ENVOLVIDOS (PRINCIPAIS)**
+
+**API:** `apps/api/src/integrations/omie/omie.service.ts`, `apps/api/src/diretoria/*`, `apps/api/src/tenants/*`, `apps/api/src/financeiro/`, `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/20260409120000_tenant_omie_credentials/`, `app.module`, `dashboard.service`, `vault.module`, etc.
+
+**Web:** `apps/web/src/app/dashboard/diretoria/page.tsx`, `apps/web/src/app/dashboard/empresas/[id]/edit/page.tsx`, `apps/web/src/app/dashboard/adm/financeiro/page.tsx`, `apps/web/src/types/tenant.ts`, `apps/web/src/app/api/settings/integrations/omie/status/route.ts`, `AnaliseFilters.tsx` (ajuste pontual).
+
+## **FECHAMENTO (GIT)**
+
+- **Branch:** develop
+- **Commit:** `feat(diretoria): Omie compras por mês, layout fluxo 2/3+1/3; credenciais Omie por tenant; financeiro`
+- **Push:** ✅ para `origin/develop`
+- **Não versionados (locais):** `backup_clean.sql`, `temp_legal_orig.txt`
+
+---
+
 # 📅 20 DE MARÇO DE 2026 — ENCERRAMENTO (Mídia Clubes Adv, merge times visitantes, logos nos fixtures públicos)
 
 ## **O QUE FOI FEITO**

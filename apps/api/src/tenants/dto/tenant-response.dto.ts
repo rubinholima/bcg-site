@@ -21,6 +21,8 @@ export class TenantResponseDto {
   footballDataTeamId: string | null;
   apiFutebolTeamId: string | null;
   categories: string[] | null;
+  /** True se há App Key e Secret Omie salvos (cifrados); segredos nunca são expostos na API */
+  omieIntegrationConfigured: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
 }

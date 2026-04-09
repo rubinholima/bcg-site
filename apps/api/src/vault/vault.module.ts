@@ -10,6 +10,6 @@ import { VaultController } from './vault.controller';
   imports: [AuthModule, ModulesModule],
   controllers: [VaultController],
   providers: [VaultEncryptionService, VaultService, ModuleAccessGuard],
-  exports: [VaultService],
+  exports: [VaultService, VaultEncryptionService],
 })
 export class VaultModule {}

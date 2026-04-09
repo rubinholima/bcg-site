@@ -1,5 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { OmieService } from '../integrations/omie/omie.service';
+
+function labelMesPtBrFromIsoKey(key: string): string {
+  const [y, m] = key.split('-');
+  if (!y || !m) return key;
+  const yi = parseInt(y, 10);
+  const mi = parseInt(m, 10);
+  if (!Number.isFinite(yi) || !Number.isFinite(mi)) return key;
+  const d = new Date(yi, mi - 1, 1);
+  return d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
+}
 
 /** Clubes de futebol — exibe jogadores, sócios, comissão, etc. */
 function isFootballClub(kindName: string | null | undefined): boolean {
@@ -66,9 +77,53 @@ export interface DiretoriaDashboardDto {
   chartGrowth: { month: string; novosJogadores: number; novosSocios: number; gastoMes: number }[];
 }
 
+export interface DiretoriaOmieEmpresaDto {
+  tenantId: string;
+  tenantName: string;
+  receberAberto: number;
+  pagarAberto: number;
+  ok: boolean;
+  erroReceber?: string;
+  erroPagar?: string;
+  avisoReceber?: string;
+  avisoPagar?: string;
+  /** Pedidos de compra (mês corrente) — integração leitura. */
+  comprasValorMes: number;
+  comprasPendentes: number;
+  okCompras: boolean;
+  erroCompras?: string;
+  avisoCompras?: string;
+}
+
+export interface DiretoriaOmieFinanceiroDto {
+  geradoEm: string;
+  tenantsComIntegracao: number;
+  empresas: DiretoriaOmieEmpresaDto[];
+  totais: {
+    receberAberto: number;
+    pagarAberto: number;
+    liquido: number;
+    linhasOk: number;
+  };
+  /** Dados prontos para Recharts (nome curto). */
+  chartPorEmpresa: { name: string; receber: number; pagar: number; liquido: number }[];
+  /** Pedidos de compra no mês por empresa (gráfico “Empresas”). */
+  chartComprasPorEmpresa: { name: string; valorMes: number; pendentes: number }[];
+  totaisCompras: {
+    valorMes: number;
+    pendentes: number;
+    linhasOk: number;
+  };
+  /** Soma de todas as empresas por mês (pedidos por data de inclusão). */
+  chartComprasPorMes: { month: string; valor: number }[];
+}
+
 @Injectable()
 export class DiretoriaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly omie: OmieService,
+  ) {}
 
   async getDashboard(): Promise<DiretoriaDashboardDto> {
     const now = new Date();
@@ -313,5 +368,197 @@ export class DiretoriaService {
     );
 
     return result;
+  }
+
+  /**
+   * Soma títulos **em aberto** no Omie (a receber / a pagar) por empresa com integração configurada.
+   * Limita páginas por consulta para o dashboard não estourar tempo; avisos vêm no DTO por linha.
+   */
+  async getOmieFinanceiro(): Promise<DiretoriaOmieFinanceiroDto> {
+    const tenants = await this.prisma.tenant.findMany({
+      where: {
+        slug: { not: 'bcg' },
+        omieAppKeyEnc: { not: null },
+        omieAppSecretEnc: { not: null },
+      },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const resumoOpts = {
+      filtro: 'em_aberto' as const,
+      maxPaginas: 40,
+      pauseEntrePaginasMs: 120,
+    };
+
+    const empresas: DiretoriaOmieEmpresaDto[] = [];
+    let totRec = 0;
+    let totPag = 0;
+    let linhasOk = 0;
+
+    const errMsg = (e: unknown): string => {
+      if (e instanceof BadRequestException) return e.message;
+      if (e instanceof Error) return e.message;
+      return 'Erro ao consultar o Omie.';
+    };
+
+    const mesKeysCompras = OmieService.chavesUltimosMesesIso(6);
+    const aggComprasPorMes: Record<string, number> = Object.fromEntries(mesKeysCompras.map((k) => [k, 0]));
+
+    for (const t of tenants) {
+      let receberAberto = 0;
+      let pagarAberto = 0;
+      let erroReceber: string | undefined;
+      let erroPagar: string | undefined;
+      let avisoReceber: string | undefined;
+      let avisoPagar: string | undefined;
+      let ok = true;
+
+      try {
+        const r = await this.omie.resumoContasReceber(t.id, resumoOpts);
+        if (r.ok) {
+          receberAberto = r.somaValorTotal;
+          avisoReceber = r.aviso;
+        } else {
+          ok = false;
+          erroReceber = r.message ?? 'Falha ao somar contas a receber.';
+        }
+      } catch (e) {
+        ok = false;
+        erroReceber = errMsg(e);
+      }
+
+      await this.sleepMs(400);
+
+      try {
+        const p = await this.omie.resumoContasPagar(t.id, resumoOpts);
+        if (p.ok) {
+          pagarAberto = p.somaValorTotal;
+          avisoPagar = p.aviso;
+        } else {
+          ok = false;
+          erroPagar = p.message ?? 'Falha ao somar contas a pagar.';
+        }
+      } catch (e) {
+        ok = false;
+        erroPagar = errMsg(e);
+      }
+
+      let comprasValorMes = 0;
+      let comprasPendentes = 0;
+      let okCompras = false;
+      let erroCompras: string | undefined;
+      let avisoCompras: string | undefined;
+
+      await this.sleepMs(350);
+      try {
+        const pc = await this.omie.resumoPedidosCompraDashboard(t.id, {
+          maxPaginasPorConsulta: 12,
+          pauseEntrePaginasMs: 120,
+          pauseEntreConsultasMs: 200,
+        });
+        if (pc.ok) {
+          okCompras = true;
+          comprasValorMes = pc.valorMesTotal;
+          comprasPendentes = pc.valorMesPendentes;
+          avisoCompras = pc.aviso;
+          for (const k of mesKeysCompras) {
+            aggComprasPorMes[k] += pc.comprasPorMesKey[k] ?? 0;
+          }
+        } else {
+          erroCompras = pc.message ?? 'Falha ao consolidar pedidos de compra.';
+        }
+      } catch (e) {
+        erroCompras = errMsg(e);
+      }
+
+      if (ok) {
+        linhasOk += 1;
+        totRec += receberAberto;
+        totPag += pagarAberto;
+      }
+
+      empresas.push({
+        tenantId: t.id,
+        tenantName: t.name,
+        receberAberto,
+        pagarAberto,
+        ok,
+        erroReceber,
+        erroPagar,
+        avisoReceber,
+        avisoPagar,
+        comprasValorMes,
+        comprasPendentes,
+        okCompras,
+        erroCompras,
+        avisoCompras,
+      });
+
+      await this.sleepMs(400);
+    }
+
+    const chartPorEmpresa = empresas
+      .filter((e) => e.ok)
+      .map((e) => {
+        const short = e.tenantName.length > 14 ? `${e.tenantName.slice(0, 12)}…` : e.tenantName;
+        return {
+          name: short,
+          receber: e.receberAberto,
+          pagar: e.pagarAberto,
+          liquido: Math.round((e.receberAberto - e.pagarAberto) * 100) / 100,
+        };
+      });
+
+    const chartComprasPorEmpresa = empresas
+      .filter((e) => e.okCompras)
+      .map((e) => {
+        const short = e.tenantName.length > 14 ? `${e.tenantName.slice(0, 12)}…` : e.tenantName;
+        return {
+          name: short,
+          valorMes: e.comprasValorMes,
+          pendentes: e.comprasPendentes,
+        };
+      });
+
+    let totComprasMes = 0;
+    let totComprasPend = 0;
+    let linhasComprasOk = 0;
+    for (const e of empresas) {
+      if (e.okCompras) {
+        linhasComprasOk += 1;
+        totComprasMes += e.comprasValorMes;
+        totComprasPend += e.comprasPendentes;
+      }
+    }
+
+    const chartComprasPorMes = mesKeysCompras.map((k) => ({
+      month: labelMesPtBrFromIsoKey(k),
+      valor: Math.round((aggComprasPorMes[k] ?? 0) * 100) / 100,
+    }));
+
+    return {
+      geradoEm: new Date().toISOString(),
+      tenantsComIntegracao: tenants.length,
+      empresas,
+      totais: {
+        receberAberto: Math.round(totRec * 100) / 100,
+        pagarAberto: Math.round(totPag * 100) / 100,
+        liquido: Math.round((totRec - totPag) * 100) / 100,
+        linhasOk,
+      },
+      chartPorEmpresa,
+      chartComprasPorEmpresa,
+      totaisCompras: {
+        valorMes: Math.round(totComprasMes * 100) / 100,
+        pendentes: Math.round(totComprasPend * 100) / 100,
+        linhasOk: linhasComprasOk,
+      },
+      chartComprasPorMes,
+    };
+  }
+
+  private sleepMs(ms: number): Promise<void> {
+    return new Promise((r) => setTimeout(r, ms));
   }
 }

@@ -11,10 +11,18 @@ export class IntegrationsController {
     private readonly omieService: OmieService,
   ) {}
 
-  /** GET /settings/integrations/omie/status — status da integração Omie (base integração). */
+  /**
+   * GET /settings/integrations/omie/status
+   * - Sem query: status via OMIE_APP_KEY / OMIE_APP_SECRET no servidor (legado).
+   * - ?tenantId=: credenciais Omie da empresa (Tenant), cifradas no banco.
+   */
   @Get('omie/status')
   @UseGuards(JwtAuthGuard)
-  async getOmieStatus() {
+  async getOmieStatus(@Query('tenantId') tenantId?: string) {
+    const tid = tenantId?.trim();
+    if (tid) {
+      return this.omieService.getStatusForTenant(tid);
+    }
     return this.omieService.getStatus();
   }
 

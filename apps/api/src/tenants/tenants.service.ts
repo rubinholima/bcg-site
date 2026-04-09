@@ -3,42 +3,28 @@ import {
   InternalServerErrorException,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
+import { VaultEncryptionService } from '../vault/vault-encryption.service';
 import { TenantResponseDto } from './dto/tenant-response.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 
-interface TenantRow {
-  id: string;
-  name: string;
-  slug: string;
-  kindId: string | null;
-  kindName: string | null;
-  logoUrl: string | null;
-  location: string | null;
-  address: string | null;
-  contactName: string | null;
-  contactPhone: string | null;
-  lat: number | null;
-  lng: number | null;
-  city: string | null;
-  country: string | null;
-  websiteUrl: string | null;
-  sofascoreTeamId: string | null;
-  footballDataTeamId: string | null;
-  apiFutebolTeamId: string | null;
-  categories: unknown;
-  createdAt: Date;
-  updatedAt: Date;
-}
+const tenantListInclude = {
+  kind: { select: { id: true, name: true } },
+} satisfies Prisma.TenantInclude;
 
-function mapRow(row: TenantRow): TenantResponseDto {
+type TenantWithKind = Prisma.TenantGetPayload<{ include: typeof tenantListInclude }>;
+
+function mapTenant(row: TenantWithKind): TenantResponseDto {
   let categories: string[] | null;
-  if (Array.isArray(row.categories)) {
-    categories = row.categories as string[];
-  } else if (row.categories != null && typeof row.categories === 'object') {
-    categories = JSON.parse(JSON.stringify(row.categories)) as string[];
+  const c = row.categories;
+  if (Array.isArray(c)) {
+    categories = c as string[];
+  } else if (c != null && typeof c === 'object') {
+    categories = JSON.parse(JSON.stringify(c)) as string[];
   } else {
     categories = null;
   }
@@ -50,8 +36,8 @@ function mapRow(row: TenantRow): TenantResponseDto {
     address: row.address ?? null,
     contactName: row.contactName ?? null,
     contactPhone: row.contactPhone ?? null,
-    kindId: row.kindId ?? '',
-    kind: { id: row.kindId ?? '', name: row.kindName ?? '' },
+    kindId: row.kindId,
+    kind: { id: row.kind.id, name: row.kind.name },
     logoUrl: row.logoUrl ?? null,
     lat: row.lat ?? null,
     lng: row.lng ?? null,
@@ -62,6 +48,7 @@ function mapRow(row: TenantRow): TenantResponseDto {
     footballDataTeamId: row.footballDataTeamId ?? null,
     apiFutebolTeamId: row.apiFutebolTeamId ?? null,
     categories,
+    omieIntegrationConfigured: !!(row.omieAppKeyEnc && row.omieAppSecretEnc),
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
     updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
   };
@@ -69,7 +56,10 @@ function mapRow(row: TenantRow): TenantResponseDto {
 
 @Injectable()
 export class TenantsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly encryption: VaultEncryptionService,
+  ) {}
 
   /** Slug do Grupo Master — não é empresa; nunca listar na lista de tenants. */
   private static readonly GROUP_MASTER_SLUG = 'bcg';
@@ -83,20 +73,15 @@ export class TenantsService {
 
   async findAll(clubsOnly = false): Promise<TenantResponseDto[]> {
     try {
-      const tenants = await this.prisma.$queryRaw<TenantRow[]>`
-        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
-          t.location, t.address, t."contactName", t."contactPhone",
-          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId", t."footballDataTeamId", t."apiFutebolTeamId", t.categories,
-          t."createdAt", t."updatedAt"
-        FROM "Tenant" t
-        LEFT JOIN "TenantKind" k ON k.id = t."kindId"
-        WHERE t.slug != ${TenantsService.GROUP_MASTER_SLUG}
-        ORDER BY t.name ASC
-      `;
+      const tenants = await this.prisma.tenant.findMany({
+        where: { slug: { not: TenantsService.GROUP_MASTER_SLUG } },
+        include: tenantListInclude,
+        orderBy: { name: 'asc' },
+      });
       const filtered = clubsOnly
-        ? tenants.filter((row) => TenantsService.isClubKind(row.kindName))
+        ? tenants.filter((row) => TenantsService.isClubKind(row.kind.name))
         : tenants;
-      return filtered.map(mapRow);
+      return filtered.map(mapTenant);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
@@ -107,20 +92,14 @@ export class TenantsService {
 
   async findOne(id: string): Promise<TenantResponseDto> {
     try {
-      const rows = await this.prisma.$queryRaw<TenantRow[]>`
-        SELECT t.id, t.name, t.slug, t."kindId", k.name as "kindName", t."logoUrl",
-          t.location, t.address, t."contactName", t."contactPhone",
-          t.lat, t.lng, t.city, t.country, t."websiteUrl", t."sofascoreTeamId", t."footballDataTeamId", t."apiFutebolTeamId", t.categories,
-          t."createdAt", t."updatedAt"
-        FROM "Tenant" t
-        LEFT JOIN "TenantKind" k ON k.id = t."kindId"
-        WHERE t.id = ${id}
-      `;
-      const row = rows[0];
+      const row = await this.prisma.tenant.findUnique({
+        where: { id },
+        include: tenantListInclude,
+      });
       if (!row) {
         throw new NotFoundException(`Empresa com ID "${id}" não encontrada`);
       }
-      return mapRow(row);
+      return mapTenant(row);
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
       const message = err instanceof Error ? err.message : String(err);
@@ -230,15 +209,27 @@ export class TenantsService {
             : JSON.stringify(Array.isArray(dto.categories) ? dto.categories : []),
         );
       }
-      if (updates.length === 0) return this.findOne(id);
-      updates.push(`"updatedAt" = $${++idx}`);
-      values.push(now);
-      const whereIdx = idx + 1;
-      values.push(id);
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE "Tenant" SET ${updates.join(', ')} WHERE id = $${whereIdx}`,
-        ...values,
-      );
+
+      const hasOmieChange =
+        dto.omieCredentialsClear === true ||
+        !!(dto.omieAppKey && String(dto.omieAppKey).trim()) ||
+        !!(dto.omieAppSecret && String(dto.omieAppSecret).trim());
+
+      if (updates.length === 0 && !hasOmieChange) {
+        return this.findOne(id);
+      }
+      if (updates.length > 0) {
+        updates.push(`"updatedAt" = $${++idx}`);
+        values.push(now);
+        const whereIdx = idx + 1;
+        values.push(id);
+        await this.prisma.$executeRawUnsafe(
+          `UPDATE "Tenant" SET ${updates.join(', ')} WHERE id = $${whereIdx}`,
+          ...values,
+        );
+      }
+
+      await this.persistOmieCredentials(id, dto);
       return this.findOne(id);
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
@@ -254,6 +245,83 @@ export class TenantsService {
 
   async updateLogoUrl(tenantId: string, logoUrl: string): Promise<TenantResponseDto> {
     return this.update(tenantId, { logoUrl });
+  }
+
+  private async persistOmieCredentials(id: string, dto: UpdateTenantDto): Promise<void> {
+    if (dto.omieCredentialsClear === true) {
+      await this.prisma.tenant.update({
+        where: { id },
+        data: {
+          omieAppKeyEnc: null,
+          omieAppKeyIv: null,
+          omieAppSecretEnc: null,
+          omieAppSecretIv: null,
+        },
+      });
+      return;
+    }
+    const key = dto.omieAppKey?.trim();
+    const secret = dto.omieAppSecret?.trim();
+    if (!key && !secret) return;
+    if (!key || !secret) {
+      throw new BadRequestException(
+        'Informe App Key e App Secret do Omie juntos para gravar a integração.',
+      );
+    }
+    try {
+      const ek = this.encryption.encrypt(key);
+      const es = this.encryption.encrypt(secret);
+      await this.prisma.tenant.update({
+        where: { id },
+        data: {
+          omieAppKeyEnc: ek.encrypted,
+          omieAppKeyIv: ek.iv,
+          omieAppSecretEnc: es.encrypted,
+          omieAppSecretIv: es.iv,
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('VAULT_MASTER_KEY')) {
+        throw new InternalServerErrorException(
+          'VAULT_MASTER_KEY não configurada no servidor — necessária para criptografar credenciais Omie.',
+        );
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Credenciais Omie em texto claro para chamadas à API (uso interno — ex.: OmieService).
+   */
+  async getDecryptedOmieCredentials(
+    tenantId: string,
+  ): Promise<{ appKey: string; appSecret: string } | null> {
+    const row = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: {
+        omieAppKeyEnc: true,
+        omieAppKeyIv: true,
+        omieAppSecretEnc: true,
+        omieAppSecretIv: true,
+      },
+    });
+    if (
+      !row?.omieAppKeyEnc ||
+      !row?.omieAppKeyIv ||
+      !row?.omieAppSecretEnc ||
+      !row?.omieAppSecretIv
+    ) {
+      return null;
+    }
+    try {
+      return {
+        appKey: this.encryption.decrypt(row.omieAppKeyEnc, row.omieAppKeyIv),
+        appSecret: this.encryption.decrypt(row.omieAppSecretEnc, row.omieAppSecretIv),
+      };
+    } catch {
+      return null;
+    }
   }
 
   async remove(id: string): Promise<void> {

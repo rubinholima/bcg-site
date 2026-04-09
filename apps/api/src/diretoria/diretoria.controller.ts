@@ -16,4 +16,10 @@ export class DiretoriaController {
   getDashboard() {
     return this.service.getDashboard();
   }
+
+  /** Consolidação por empresa: títulos em aberto e pedidos de compra do mês — pode levar vários segundos. */
+  @Get('omie-financeiro')
+  getOmieFinanceiro() {
+    return this.service.getOmieFinanceiro();
+  }
 }

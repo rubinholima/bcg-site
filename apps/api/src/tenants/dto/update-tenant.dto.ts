@@ -1,4 +1,4 @@
-import { IsString, IsOptional, Matches, MaxLength, MinLength, IsNumber } from 'class-validator';
+import { IsString, IsOptional, Matches, MaxLength, MinLength, IsNumber, IsBoolean } from 'class-validator';
 
 export class UpdateTenantDto {
   @IsString()
@@ -78,4 +78,21 @@ export class UpdateTenantDto {
 
   @IsOptional()
   categories?: string[] | null;
+
+  /** Nova App Key Omie (enviar junto com omieAppSecret para gravar; nunca retornada na leitura) */
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  omieAppKey?: string;
+
+  /** Novo App Secret Omie */
+  @IsString()
+  @IsOptional()
+  @MaxLength(512)
+  omieAppSecret?: string;
+
+  /** Se true, remove credenciais Omie desta empresa */
+  @IsOptional()
+  @IsBoolean()
+  omieCredentialsClear?: boolean;
 }

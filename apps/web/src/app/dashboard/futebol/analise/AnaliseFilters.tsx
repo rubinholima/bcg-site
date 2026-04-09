@@ -43,21 +43,16 @@ export function AnaliseFilters({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [tenantId, setTenantId] = useState(searchParams.get("tenantId") ?? "");
-  const [category, setCategory] = useState(searchParams.get("category") ?? "");
-  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+
+  const tenantId = searchParams.get("tenantId") ?? "";
+  const category = searchParams.get("category") ?? "";
+  const search = searchParams.get("search") ?? "";
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
   }, []);
-
-  useEffect(() => {
-    setTenantId(searchParams.get("tenantId") ?? "");
-    setCategory(searchParams.get("category") ?? "");
-    setSearch(searchParams.get("search") ?? "");
-  }, [searchParams]);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const categoriesForDropdown = selectedTenant?.categories?.length
@@ -81,9 +76,6 @@ export function AnaliseFilters({
   );
 
   const clearFilters = useCallback(() => {
-    setTenantId("");
-    setCategory("");
-    setSearch("");
     onSelectPlayer("");
     router.push(ANALISE_BASE);
   }, [router, onSelectPlayer]);
@@ -108,8 +100,6 @@ export function AnaliseFilters({
               value={tenantId || "all"}
               onValueChange={(v) => {
                 const next = v === "all" ? "" : v;
-                setTenantId(next);
-                setCategory("");
                 onSelectPlayer("");
                 applyFilters({ tenantId: next, category: "", search });
               }}
@@ -135,7 +125,6 @@ export function AnaliseFilters({
               value={category || "all"}
               onValueChange={(v) => {
                 const next = v === "all" ? "" : v;
-                setCategory(next);
                 onSelectPlayer("");
                 applyFilters({ category: next });
               }}

@@ -21,6 +21,8 @@ export interface Tenant {
   footballDataTeamId: string | null;
   apiFutebolTeamId: string | null;
   categories: string[] | null;
+  /** Credenciais Omie salvas (sem expor segredos) */
+  omieIntegrationConfigured?: boolean;
   createdAt: string;
   updatedAt: string;
 }

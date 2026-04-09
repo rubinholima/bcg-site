@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { WorkMailService } from '../workmail/workmail.service';
 
+/** Mesmo slug excluído da listagem de empresas (grupo master). */
+const TENANT_COUNT_EXCLUDE_SLUG = 'bcg';
+
 export interface LastActivityDto {
   name: string;
   createdAt: string;
@@ -36,13 +39,14 @@ export class DashboardService {
       lastTenantRow,
       lastUserRow,
     ] = await Promise.all([
-      this.prisma.tenant.count(),
+      this.prisma.tenant.count({ where: { slug: { not: TENANT_COUNT_EXCLUDE_SLUG } } }),
       this.prisma.tenantKind.count(),
       this.prisma.user.count(),
       this.prisma.tenant.count({ where: { workmailOrganizationId: { not: null } } }),
       this.prisma.workMailAccount.count(),
       this.prisma.page.count(),
       this.prisma.tenant.findFirst({
+        where: { slug: { not: TENANT_COUNT_EXCLUDE_SLUG } },
         orderBy: { createdAt: 'desc' },
         select: { name: true, createdAt: true },
       }),

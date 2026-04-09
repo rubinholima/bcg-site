@@ -64,6 +64,11 @@ model Tenant {
   footballDataTeamId      String?  // ID do time no football-data.org (API gratuita, mais estável)
   apiFutebolTeamId        String?  // ID do time na API Futebol (estaduais, amador, categorias de base)
   categories              Json?    // Categorias que o clube joga: ["principal","sub20","sub17","sub15","feminino"]
+  // Omie (ERP): credenciais por empresa — cifrado com VAULT_MASTER_KEY (aes-256-gcm); IV em coluna própria
+  omieAppKeyEnc           String?  @db.Text
+  omieAppKeyIv            String?
+  omieAppSecretEnc        String?  @db.Text
+  omieAppSecretIv         String?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   workmailAccounts        WorkMailAccount[]

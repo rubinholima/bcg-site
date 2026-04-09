@@ -36,6 +36,9 @@ interface FormData {
   websiteUrl?: string;
   sofascoreTeamId?: string;
   categories?: string[];
+  omieAppKey: string;
+  omieAppSecret: string;
+  omieCredentialsClear: boolean;
 }
 
 export default function EditEmpresaPage() {
@@ -52,6 +55,9 @@ export default function EditEmpresaPage() {
     name: "",
     slug: "",
     kindId: "",
+    omieAppKey: "",
+    omieAppSecret: "",
+    omieCredentialsClear: false,
   });
   useEffect(() => {
     async function load() {
@@ -78,6 +84,9 @@ export default function EditEmpresaPage() {
             categories: Array.isArray((empresa as { categories?: string[] | null })?.categories)
               ? (empresa as { categories?: string[] }).categories ?? []
               : [],
+            omieAppKey: "",
+            omieAppSecret: "",
+            omieCredentialsClear: false,
           });
         }
         setTipos(tiposList ?? []);
@@ -102,14 +111,26 @@ export default function EditEmpresaPage() {
         websiteUrl = "https://" + websiteUrl;
       }
       const isClub = isFootballKind(tipos.find((t) => t.id === formData.kindId)?.name ?? "");
-      const payload = {
-        ...formData,
+      const {
+        omieAppKey,
+        omieAppSecret,
+        omieCredentialsClear,
+        ...formRest
+      } = formData;
+      const payload: Record<string, unknown> = {
+        ...formRest,
         websiteUrl: websiteUrl || undefined,
         lat: formData.lat === "" || formData.lat === undefined ? undefined : Number(formData.lat),
         lng: formData.lng === "" || formData.lng === undefined ? undefined : Number(formData.lng),
         sofascoreTeamId: isClub ? ((formData.sofascoreTeamId ?? "").trim() || null) : null,
         categories: isClub && Array.isArray(formData.categories) && formData.categories.length > 0 ? formData.categories : null,
       };
+      if (omieCredentialsClear) {
+        payload.omieCredentialsClear = true;
+      } else if (omieAppKey.trim() && omieAppSecret.trim()) {
+        payload.omieAppKey = omieAppKey.trim();
+        payload.omieAppSecret = omieAppSecret.trim();
+      }
       await api.patch(`/tenants/${id}`, payload);
       router.push("/dashboard/empresas?success=true");
     } catch (err) {
@@ -387,6 +408,81 @@ export default function EditEmpresaPage() {
                   disabled={loading}
                 />
               </div>
+            </div>
+
+            <div id="integracao-omie" className="scroll-mt-24 space-y-4 pt-2 border-t border-border/50">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Integração Omie (ERP)</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Financeiro, compras e estoque. Use o App Key e o Secret do painel Omie (Resumo do app).
+                  Os valores são gravados <strong className="text-foreground">criptografados</strong> no
+                  servidor (mesma chave <code className="rounded bg-muted px-1 text-xs">VAULT_MASTER_KEY</code>{" "}
+                  do cofre de senhas). Em produção o procedimento é o mesmo: configure a variável na API.
+                </p>
+                {empresa?.omieIntegrationConfigured ? (
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">
+                    Credenciais Omie já salvas para esta empresa. Para trocar, informe novo par abaixo; para
+                    remover, marque a opção no final.
+                  </p>
+                ) : (
+                  <p className="text-xs text-amber-600 dark:text-amber-400/90 mt-2">
+                    Nenhuma credencial Omie salva ainda para esta empresa.
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="omieAppKey">App Key</Label>
+                  <Input
+                    id="omieAppKey"
+                    name="omieAppKey"
+                    type="password"
+                    autoComplete="off"
+                    value={formData.omieAppKey}
+                    onChange={handleChange}
+                    placeholder={
+                      empresa?.omieIntegrationConfigured
+                        ? "Deixe vazio para manter a atual"
+                        : "Cole a App Key"
+                    }
+                    disabled={loading || formData.omieCredentialsClear}
+                    className="text-foreground font-mono text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="omieAppSecret">App Secret</Label>
+                  <Input
+                    id="omieAppSecret"
+                    name="omieAppSecret"
+                    type="password"
+                    autoComplete="new-password"
+                    value={formData.omieAppSecret}
+                    onChange={handleChange}
+                    placeholder={
+                      empresa?.omieIntegrationConfigured
+                        ? "Deixe vazio para manter o atual"
+                        : "Cole o App Secret"
+                    }
+                    disabled={loading || formData.omieCredentialsClear}
+                    className="text-foreground font-mono text-sm"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.omieCredentialsClear}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      omieCredentialsClear: e.target.checked,
+                      ...(e.target.checked ? { omieAppKey: "", omieAppSecret: "" } : {}),
+                    }))
+                  }
+                  disabled={loading}
+                />
+                Remover credenciais Omie desta empresa
+              </label>
             </div>
 
             {isFootballKind(tipos.find((t) => t.id === formData.kindId)?.name ?? "") && (
