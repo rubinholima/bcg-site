@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserRole } from "@/types/user";
+import { selectableRolesForActor } from "@/lib/user-roles";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Admin",
@@ -33,6 +34,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 export default function NovoUsuarioPage() {
   const router = useRouter();
   const { isSuperAdmin, isCompanyAdmin } = useAuth();
+  const roleSelectOptions = selectableRolesForActor(isSuperAdmin);
   const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,6 +62,21 @@ export default function NovoUsuarioPage() {
 
   useEffect(() => {
     void loadTenants();
+  }, [loadTenants]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadTenants();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [loadTenants]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,13 +234,11 @@ export default function NovoUsuarioPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(["super_admin", "company_admin", "editor", "analista", "diretoria", "medico", "psicologo", "user"] as UserRole[]).map(
-                    (r) => (
-                      <SelectItem key={r} value={r}>
-                        {ROLE_LABELS[r]}
-                      </SelectItem>
-                    )
-                  )}
+                  {roleSelectOptions.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {ROLE_LABELS[r]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -231,9 +246,10 @@ export default function NovoUsuarioPage() {
             {canManageTenantScope && tenants.length > 0 && (
               <div className="space-y-3 rounded-lg border border-border p-4">
                 <div>
-                  <Label>Empresas / clubes que este utilizador pode ver</Label>
+                  <Label>Empresas / clubes que este usuário pode ver</Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Nenhuma selecionada = vê todas as empresas. Marque uma ou mais para restringir (ex. só Villa
+                    A lista é atualizada ao voltar para esta aba (ex.: depois de cadastrar uma empresa nova).
+                    Nenhuma selecionada = vê todas as empresas. Marque uma ou mais para restringir (ex.: só Villa
                     Nova).
                   </p>
                 </div>

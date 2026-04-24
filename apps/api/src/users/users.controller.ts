@@ -45,10 +45,13 @@ export class UsersController {
   @Post()
   async create(@Req() req: Request & { user: CognitoJwtPayload }, @Body() dto: CreateUserDto) {
     const actorRole = (req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user') as string;
+    if (actorRole === 'company_admin' && dto.role === 'super_admin') {
+      throw new ForbiddenException('Company admin não pode criar usuário com perfil super admin.');
+    }
     if (dto.tenantIds !== undefined) {
       if (actorRole !== 'super_admin' && actorRole !== 'company_admin') {
         throw new ForbiddenException(
-          'Apenas super admin ou company admin podem definir o escopo de empresas do utilizador.',
+          'Apenas super admin ou company admin podem definir o escopo de empresas do usuário.',
         );
       }
       await this.tenantAccess.assertActorCanAssignTenants(req.user.sub, actorRole, dto.tenantIds);
@@ -58,10 +61,23 @@ export class UsersController {
 
   @Patch(':username/role')
   async updateRole(
+    @Req() req: Request & { user: CognitoJwtPayload },
     @Param('username') username: string,
     @Body() dto: UpdateRoleDto,
   ) {
-    await this.usersService.updateRole(decodeURIComponent(username), dto.role as UserRole);
+    const actorRole = (req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user') as string;
+    const decoded = decodeURIComponent(username);
+    const target = await this.usersService.findOne(decoded);
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    if (actorRole === 'company_admin' && target.role === 'super_admin') {
+      throw new ForbiddenException('Company admin não pode alterar o perfil de um super admin.');
+    }
+    if (actorRole === 'company_admin' && dto.role === 'super_admin') {
+      throw new ForbiddenException('Company admin não pode atribuir perfil super admin.');
+    }
+    await this.usersService.updateRole(decoded, dto.role as UserRole);
     return { ok: true };
   }
 
@@ -72,15 +88,26 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ) {
     const actorRole = (req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user') as string;
+    const decoded = decodeURIComponent(username);
+    const target = await this.usersService.findOne(decoded);
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    if (actorRole === 'company_admin' && target.role === 'super_admin') {
+      throw new ForbiddenException('Company admin não pode alterar um usuário super admin.');
+    }
+    if (actorRole === 'company_admin' && dto.role === 'super_admin') {
+      throw new ForbiddenException('Company admin não pode atribuir perfil super admin.');
+    }
     if (dto.tenantIds !== undefined) {
       if (actorRole !== 'super_admin' && actorRole !== 'company_admin') {
         throw new ForbiddenException(
-          'Apenas super admin ou company admin podem definir o escopo de empresas do utilizador.',
+          'Apenas super admin ou company admin podem definir o escopo de empresas do usuário.',
         );
       }
       await this.tenantAccess.assertActorCanAssignTenants(req.user.sub, actorRole, dto.tenantIds);
     }
-    await this.usersService.update(decodeURIComponent(username), {
+    await this.usersService.update(decoded, {
       name: dto.name,
       email: dto.email,
       role: dto.role as UserRole,
@@ -91,8 +118,17 @@ export class UsersController {
   }
 
   @Delete(':username')
-  async remove(@Param('username') username: string) {
-    await this.usersService.remove(decodeURIComponent(username));
+  async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('username') username: string) {
+    const actorRole = (req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user') as string;
+    const decoded = decodeURIComponent(username);
+    const target = await this.usersService.findOne(decoded);
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    if (actorRole === 'company_admin' && target.role === 'super_admin') {
+      throw new ForbiddenException('Company admin não pode remover um usuário super admin.');
+    }
+    await this.usersService.remove(decoded);
     return { ok: true };
   }
 }

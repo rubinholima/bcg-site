@@ -18,6 +18,8 @@ export interface UserListItem {
   enabled: boolean;
   /** Escopo de empresas (vazio = sem restrição / vê todas). */
   tenantIds?: string[];
+  /** Empresas com nome (lista de usuários). */
+  tenants?: { id: string; name: string }[];
   createdAt?: string;
   updatedAt?: string;
 }

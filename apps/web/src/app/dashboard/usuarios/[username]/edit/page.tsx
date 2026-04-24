@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserListItem, UserRole } from "@/types/user";
+import { selectableRolesForActor } from "@/lib/user-roles";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Admin",
@@ -35,9 +36,11 @@ export default function EditUsuarioPage() {
   const params = useParams();
   const { isSuperAdmin, isCompanyAdmin } = useAuth();
   const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
+  const roleSelectOptions = selectableRolesForActor(isSuperAdmin);
   const username = decodeURIComponent(params.username as string);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [cannotEdit, setCannotEdit] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
@@ -64,7 +67,24 @@ export default function EditUsuarioPage() {
   }, [loadTenants]);
 
   useEffect(() => {
+    const refresh = () => {
+      void loadTenants();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [loadTenants]);
+
+  useEffect(() => {
     async function load() {
+      setCannotEdit(false);
+      setError(null);
       try {
         const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
           credentials: "include",
@@ -81,17 +101,24 @@ export default function EditUsuarioPage() {
           role: data.role ?? "user",
           tenantIds: data.tenantIds ?? [],
         });
+        if (isCompanyAdmin && data.role === "super_admin") {
+          setCannotEdit(true);
+          setError("Company admin não pode editar usuário super admin.");
+        } else {
+          setCannotEdit(false);
+        }
       } catch {
         setError("Erro ao carregar usuário.");
       } finally {
         setLoadingData(false);
       }
     }
-    load();
-  }, [username]);
+    void load();
+  }, [username, isCompanyAdmin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cannotEdit) return;
     setLoading(true);
     setError(null);
     try {
@@ -171,7 +198,7 @@ export default function EditUsuarioPage() {
                   setFormData((prev) => ({ ...prev, email: e.target.value }))
                 }
                 placeholder="usuario@exemplo.com"
-                disabled={loading}
+                disabled={loading || cannotEdit}
               />
             </div>
 
@@ -185,32 +212,36 @@ export default function EditUsuarioPage() {
                   setFormData((prev) => ({ ...prev, name: e.target.value }))
                 }
                 placeholder="Nome completo"
-                disabled={loading}
+                disabled={loading || cannotEdit}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="role">Role (grupo)</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) =>
-                  setFormData((prev) => ({ ...prev, role: value as UserRole }))
-                }
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(["super_admin", "company_admin", "editor", "analista", "diretoria", "medico", "psicologo", "user"] as UserRole[]).map(
-                    (r) => (
+              {cannotEdit ? (
+                <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm">
+                  {ROLE_LABELS[formData.role]}
+                </div>
+              ) : (
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, role: value as UserRole }))
+                  }
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roleSelectOptions.map((r) => (
                       <SelectItem key={r} value={r}>
                         {ROLE_LABELS[r]}
                       </SelectItem>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {canManageTenantScope && tenants.length > 0 && (
@@ -218,7 +249,8 @@ export default function EditUsuarioPage() {
                 <div>
                   <Label>Empresas / clubes visíveis</Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Nenhuma selecionada = utilizador vê todas as empresas (comportamento padrão). Selecione
+                    A lista é atualizada ao voltar para esta aba (ex.: depois de cadastrar uma empresa nova).
+                    Nenhuma selecionada = o usuário vê todas as empresas (comportamento padrão). Selecione
                     uma ou mais para restringir (ex.: só Villa Nova).
                   </p>
                 </div>
@@ -241,7 +273,7 @@ export default function EditUsuarioPage() {
                                 : prev.tenantIds.filter((id) => id !== t.id),
                             }));
                           }}
-                          disabled={loading}
+                          disabled={loading || cannotEdit}
                         />
                         <span>{t.name}</span>
                       </label>
@@ -252,7 +284,7 @@ export default function EditUsuarioPage() {
             )}
 
             <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || cannotEdit}>
                 {loading ? "Salvando..." : "Salvar"}
               </Button>
               <Link href="/dashboard/usuarios">

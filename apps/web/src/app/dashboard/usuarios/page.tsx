@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { authFetch } from "@/lib/authFetch";
+import { selectableRolesForActor } from "@/lib/user-roles";
+import { useAuth } from "@/context/AuthContext";
 import type { UserListItem, UserRole } from "@/types/user";
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -46,12 +48,17 @@ function filterUsers(
   if (role && role !== "all") list = list.filter((u) => u.role === role);
   if (q && q.trim()) {
     const lower = q.trim().toLowerCase();
-    list = list.filter(
-      (u) =>
+    list = list.filter((u) => {
+      const tenantsMatch =
+        (u.tenants ?? []).some((t) => t.name.toLowerCase().includes(lower)) ||
+        (u.tenantIds ?? []).some((id) => id.toLowerCase().includes(lower));
+      return (
         (u.email ?? "").toLowerCase().includes(lower) ||
         (u.name ?? "").toLowerCase().includes(lower) ||
-        (u.username ?? "").toLowerCase().includes(lower),
-    );
+        (u.username ?? "").toLowerCase().includes(lower) ||
+        tenantsMatch
+      );
+    });
   }
   return list;
 }
@@ -59,6 +66,8 @@ function filterUsers(
 export default function UsuariosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isSuperAdmin, isCompanyAdmin } = useAuth();
+  const roleOptionsForSelect = selectableRolesForActor(isSuperAdmin);
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +126,7 @@ export default function UsuariosPage() {
   }, [fetchUsers]);
 
   const handleRoleChange = async (username: string, role: UserRole) => {
+    if (!isSuperAdmin && role === "super_admin") return;
     setUpdating(username);
     try {
       const res = await authFetch(`/api/users/${encodeURIComponent(username)}/role`, {
@@ -265,6 +275,7 @@ export default function UsuariosPage() {
                 <TableRow>
                   <TableHead>Email</TableHead>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Empresas</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -276,27 +287,38 @@ export default function UsuariosPage() {
                     <TableCell className="text-muted-foreground">
                       {u.name ?? "—"}
                     </TableCell>
+                    <TableCell className="max-w-[220px] text-sm text-muted-foreground">
+                      {(u.tenants?.length ?? 0) > 0
+                        ? u.tenants!.map((t) => t.name).join(", ")
+                        : u.role === "super_admin"
+                          ? "—"
+                          : "Todas"}
+                    </TableCell>
                     <TableCell>
-                      <Select
-                        value={u.role}
-                        onValueChange={(value) =>
-                          handleRoleChange(u.username, value as UserRole)
-                        }
-                        disabled={updating === u.username}
-                      >
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(["super_admin", "company_admin", "editor", "analista", "diretoria", "medico", "psicologo", "user"] as UserRole[]).map(
-                            (r) => (
+                      {!isSuperAdmin && u.role === "super_admin" ? (
+                        <span className="text-sm text-muted-foreground">
+                          {ROLE_LABELS.super_admin}
+                        </span>
+                      ) : (
+                        <Select
+                          value={u.role}
+                          onValueChange={(value) =>
+                            handleRoleChange(u.username, value as UserRole)
+                          }
+                          disabled={updating === u.username}
+                        >
+                          <SelectTrigger className="w-[140px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {roleOptionsForSelect.map((r) => (
                               <SelectItem key={r} value={r}>
                                 {ROLE_LABELS[r]}
                               </SelectItem>
-                            )
-                          )}
-                        </SelectContent>
-                      </Select>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -305,20 +327,24 @@ export default function UsuariosPage() {
                             Salvando...
                           </span>
                         ) : null}
-                        <Link
-                          href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/edit`}
-                        >
-                          <Button variant="ghost" size="icon">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link
-                          href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/delete`}
-                        >
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </Link>
+                        {!(isCompanyAdmin && u.role === "super_admin") ? (
+                          <>
+                            <Link
+                              href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/edit`}
+                            >
+                              <Button variant="ghost" size="icon">
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <Link
+                              href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/delete`}
+                            >
+                              <Button variant="ghost" size="icon">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </Link>
+                          </>
+                        ) : null}
                       </div>
                     </TableCell>
                   </TableRow>

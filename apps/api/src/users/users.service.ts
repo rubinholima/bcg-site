@@ -23,6 +23,8 @@ export interface UserListItem {
   enabled: boolean;
   /** Empresas/clubes atribuídos (escopo). Vazio = sem linhas em UserTenant (ver todas, exceto super_admin). */
   tenantIds?: string[];
+  /** Nomes para exibição na lista (mesmo conjunto que tenantIds). */
+  tenants?: { id: string; name: string }[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -36,7 +38,11 @@ export class UsersService {
   async findAll(): Promise<UserListItem[]> {
     const users = await this.prisma.user.findMany({
       orderBy: { email: 'asc' },
-      include: { userTenants: { select: { tenantId: true } } },
+      include: {
+        userTenants: {
+          include: { tenant: { select: { id: true, name: true } } },
+        },
+      },
     });
     return users.map((u) => ({
       id: u.id,
@@ -47,6 +53,7 @@ export class UsersService {
       role: (u.role as UserRole) ?? 'editor',
       enabled: Boolean(u.passwordHash || u.cognitoSub),
       tenantIds: u.userTenants.map((t) => t.tenantId),
+      tenants: u.userTenants.map((t) => ({ id: t.tenant.id, name: t.tenant.name })),
       createdAt: u.createdAt?.toISOString(),
       updatedAt: u.updatedAt?.toISOString(),
     }));
@@ -56,7 +63,11 @@ export class UsersService {
     const email = decodeURIComponent(username).trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
       where: { email },
-      include: { userTenants: { select: { tenantId: true } } },
+      include: {
+        userTenants: {
+          include: { tenant: { select: { id: true, name: true } } },
+        },
+      },
     });
     if (!user) return null;
     return {
@@ -68,6 +79,7 @@ export class UsersService {
       role: (user.role as UserRole) ?? 'editor',
       enabled: Boolean(user.passwordHash || user.cognitoSub),
       tenantIds: user.userTenants.map((t) => t.tenantId),
+      tenants: user.userTenants.map((t) => ({ id: t.tenant.id, name: t.tenant.name })),
       createdAt: user.createdAt?.toISOString(),
       updatedAt: user.updatedAt?.toISOString(),
     };
