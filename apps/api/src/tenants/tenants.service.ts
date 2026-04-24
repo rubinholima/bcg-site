@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -71,10 +72,17 @@ export class TenantsService {
     return k.includes('futebol') || k.includes('clube') || k.includes('football');
   }
 
-  async findAll(clubsOnly = false): Promise<TenantResponseDto[]> {
+  async findAll(
+    clubsOnly = false,
+    allowedTenantIds: string[] | null = null,
+  ): Promise<TenantResponseDto[]> {
     try {
+      const where: Prisma.TenantWhereInput = {
+        slug: { not: TenantsService.GROUP_MASTER_SLUG },
+        ...(allowedTenantIds?.length ? { id: { in: allowedTenantIds } } : {}),
+      };
       const tenants = await this.prisma.tenant.findMany({
-        where: { slug: { not: TenantsService.GROUP_MASTER_SLUG } },
+        where,
         include: tenantListInclude,
         orderBy: { name: 'asc' },
       });
@@ -90,13 +98,16 @@ export class TenantsService {
     }
   }
 
-  async findOne(id: string): Promise<TenantResponseDto> {
+  async findOne(id: string, allowedTenantIds: string[] | null = null): Promise<TenantResponseDto> {
     try {
       const row = await this.prisma.tenant.findUnique({
         where: { id },
         include: tenantListInclude,
       });
       if (!row) {
+        throw new NotFoundException(`Empresa com ID "${id}" não encontrada`);
+      }
+      if (allowedTenantIds?.length && !allowedTenantIds.includes(row.id)) {
         throw new NotFoundException(`Empresa com ID "${id}" não encontrada`);
       }
       return mapTenant(row);
@@ -109,7 +120,12 @@ export class TenantsService {
     }
   }
 
-  async create(dto: CreateTenantDto): Promise<TenantResponseDto> {
+  async create(dto: CreateTenantDto, allowedTenantIds: string[] | null = null): Promise<TenantResponseDto> {
+    if (allowedTenantIds?.length) {
+      throw new ForbiddenException(
+        'Utilizador com escopo por empresa não pode criar novas empresas. Peça a um super admin.',
+      );
+    }
     try {
       const id = crypto.randomUUID();
       const now = new Date();
@@ -121,9 +137,10 @@ export class TenantsService {
         INSERT INTO "Tenant" (id, name, slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "sofascoreTeamId", categories, "createdAt", "updatedAt")
         VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${dto.address ?? null}, ${dto.contactName ?? null}, ${dto.contactPhone ?? null}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${dto.city ?? null}, ${dto.country ?? null}, ${dto.websiteUrl ?? null}, ${(dto.sofascoreTeamId ?? "").trim() || null}, ${categoriesJson}::jsonb, ${now}, ${now})
       `;
-      return this.findOne(id);
+      return this.findOne(id, allowedTenantIds);
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
+      if (err instanceof ForbiddenException) throw err;
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes('unique') || message.includes('duplicate')) {
         throw new ConflictException('Já existe uma empresa com este slug.');
@@ -134,8 +151,12 @@ export class TenantsService {
     }
   }
 
-  async update(id: string, dto: UpdateTenantDto): Promise<TenantResponseDto> {
-    await this.findOne(id);
+  async update(
+    id: string,
+    dto: UpdateTenantDto,
+    allowedTenantIds: string[] | null = null,
+  ): Promise<TenantResponseDto> {
+    await this.findOne(id, allowedTenantIds);
     try {
       const now = new Date();
       const updates: string[] = [];
@@ -216,7 +237,7 @@ export class TenantsService {
         !!(dto.omieAppSecret && String(dto.omieAppSecret).trim());
 
       if (updates.length === 0 && !hasOmieChange) {
-        return this.findOne(id);
+        return this.findOne(id, allowedTenantIds);
       }
       if (updates.length > 0) {
         updates.push(`"updatedAt" = $${++idx}`);
@@ -230,7 +251,7 @@ export class TenantsService {
       }
 
       await this.persistOmieCredentials(id, dto);
-      return this.findOne(id);
+      return this.findOne(id, allowedTenantIds);
     } catch (err) {
       if (err instanceof NotFoundException) throw err;
       const message = err instanceof Error ? err.message : String(err);
@@ -243,8 +264,12 @@ export class TenantsService {
     }
   }
 
-  async updateLogoUrl(tenantId: string, logoUrl: string): Promise<TenantResponseDto> {
-    return this.update(tenantId, { logoUrl });
+  async updateLogoUrl(
+    tenantId: string,
+    logoUrl: string,
+    allowedTenantIds: string[] | null = null,
+  ): Promise<TenantResponseDto> {
+    return this.update(tenantId, { logoUrl }, allowedTenantIds);
   }
 
   private async persistOmieCredentials(id: string, dto: UpdateTenantDto): Promise<void> {
@@ -324,8 +349,8 @@ export class TenantsService {
     }
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(id: string, allowedTenantIds: string[] | null = null): Promise<void> {
+    await this.findOne(id, allowedTenantIds);
     try {
       await this.prisma.$executeRaw`DELETE FROM "Tenant" WHERE id = ${id}`;
     } catch (err) {

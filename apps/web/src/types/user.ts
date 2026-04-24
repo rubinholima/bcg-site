@@ -16,6 +16,8 @@ export interface UserListItem {
   name: string | null;
   role: UserRole;
   enabled: boolean;
+  /** Escopo de empresas (vazio = sem restrição / vê todas). */
+  tenantIds?: string[];
   createdAt?: string;
   updatedAt?: string;
 }

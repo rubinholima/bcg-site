@@ -8,11 +8,13 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import { TenantAccessService } from '../auth/tenant-access.service';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { GroupService } from '../group/group.service';
 import { MediaMetaService } from '../media/media-meta.service';
@@ -30,6 +32,7 @@ export class UploadController {
     private readonly groupService: GroupService,
     private readonly mediaMeta: MediaMetaService,
     private readonly eventsService: EventsService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   /**
@@ -109,8 +112,14 @@ export class UploadController {
       }
     }
     if (scopeTrim !== 'group') {
+      const user = (req as Request & { user?: CognitoJwtPayload }).user;
+      if (!user?.sub) {
+        throw new UnauthorizedException();
+      }
+      const role = user.role ?? user['cognito:groups']?.[0] ?? 'user';
+      const allowed = await this.tenantAccess.getAllowedTenantIds(user.sub, role);
       try {
-        await this.tenantsService.findOne(scopeTrim);
+        await this.tenantsService.findOne(scopeTrim, allowed);
       } catch {
         throw new NotFoundException(
           `Empresa com ID "${scopeTrim}" não encontrada.`,
@@ -127,7 +136,13 @@ export class UploadController {
     if (scopeTrim === 'group') {
       await this.groupService.updateLogoUrl('bcg', url);
     } else {
-      await this.tenantsService.updateLogoUrl(scopeTrim, url);
+      const user = (req as Request & { user?: CognitoJwtPayload }).user;
+      if (!user?.sub) {
+        throw new UnauthorizedException();
+      }
+      const role = user.role ?? user['cognito:groups']?.[0] ?? 'user';
+      const allowed = await this.tenantAccess.getAllowedTenantIds(user.sub, role);
+      await this.tenantsService.updateLogoUrl(scopeTrim, url, allowed);
     }
 
     const displayNameTrim =

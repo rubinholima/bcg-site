@@ -20,7 +20,7 @@ export class SuperAdminGuard implements CanActivate {
       throw new ForbiddenException('Not authenticated');
     }
     const groups: string[] = user['cognito:groups'] ?? [];
-    if (groups.includes('super_admin')) {
+    if (groups.includes('super_admin') || user.role === 'super_admin') {
       return true;
     }
     const received = groups.length ? groups.join(', ') : '(nenhum role)';

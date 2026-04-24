@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,6 +21,8 @@ export interface UserListItem {
   name: string | null;
   role: UserRole;
   enabled: boolean;
+  /** Empresas/clubes atribuídos (escopo). Vazio = sem linhas em UserTenant (ver todas, exceto super_admin). */
+  tenantIds?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -34,6 +36,7 @@ export class UsersService {
   async findAll(): Promise<UserListItem[]> {
     const users = await this.prisma.user.findMany({
       orderBy: { email: 'asc' },
+      include: { userTenants: { select: { tenantId: true } } },
     });
     return users.map((u) => ({
       id: u.id,
@@ -43,6 +46,7 @@ export class UsersService {
       name: u.name,
       role: (u.role as UserRole) ?? 'editor',
       enabled: Boolean(u.passwordHash || u.cognitoSub),
+      tenantIds: u.userTenants.map((t) => t.tenantId),
       createdAt: u.createdAt?.toISOString(),
       updatedAt: u.updatedAt?.toISOString(),
     }));
@@ -52,6 +56,7 @@ export class UsersService {
     const email = decodeURIComponent(username).trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
       where: { email },
+      include: { userTenants: { select: { tenantId: true } } },
     });
     if (!user) return null;
     return {
@@ -62,6 +67,7 @@ export class UsersService {
       name: user.name,
       role: (user.role as UserRole) ?? 'editor',
       enabled: Boolean(user.passwordHash || user.cognitoSub),
+      tenantIds: user.userTenants.map((t) => t.tenantId),
       createdAt: user.createdAt?.toISOString(),
       updatedAt: user.updatedAt?.toISOString(),
     };
@@ -82,6 +88,9 @@ export class UsersService {
         role: (dto.role as UserRole) ?? 'editor',
       },
     });
+    if (dto.tenantIds !== undefined) {
+      await this.replaceUserTenants(user.id, dto.tenantIds);
+    }
     return { username: user.email, sub: user.id };
   }
 
@@ -95,7 +104,7 @@ export class UsersService {
 
   async update(
     username: string,
-    dto: { name?: string | null; email?: string; role?: UserRole; password?: string },
+    dto: { name?: string | null; email?: string; role?: UserRole; password?: string; tenantIds?: string[] },
   ): Promise<void> {
     const user = await this.findByUsername(username);
     const data: { name?: string | null; email?: string; role?: string; passwordHash?: string; updatedAt: Date } = {
@@ -117,6 +126,29 @@ export class UsersService {
     await this.prisma.user.update({
       where: { id: user.id },
       data,
+    });
+    if (dto.tenantIds !== undefined) {
+      await this.replaceUserTenants(user.id, dto.tenantIds);
+    }
+  }
+
+  private async replaceUserTenants(userId: string, tenantIds: string[]): Promise<void> {
+    const unique = [...new Set(tenantIds.map((id) => id.trim()).filter(Boolean))];
+    if (unique.length > 0) {
+      const count = await this.prisma.tenant.count({
+        where: { id: { in: unique }, slug: { not: 'bcg' } },
+      });
+      if (count !== unique.length) {
+        throw new BadRequestException('Uma ou mais empresas são inválidas.');
+      }
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.userTenant.deleteMany({ where: { userId } });
+      if (unique.length > 0) {
+        await tx.userTenant.createMany({
+          data: unique.map((tenantId) => ({ userId, tenantId })),
+        });
+      }
     });
   }
 

@@ -7,22 +7,32 @@ import {
   Body,
   Param,
   Query,
+  Req,
+  UseGuards,
   InternalServerErrorException,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import { DashboardRolesGuard } from '../auth/roles.guard';
+import { SuperAdminGuard } from '../auth/super-admin.guard';
+import { TenantAccessService } from '../auth/tenant-access.service';
 
 @Controller('tenants')
+@UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class TenantsController {
   constructor(
     private readonly tenantsService: TenantsService,
     private readonly prisma: PrismaService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
-  /** Debug: testa conexão e query direta; retorna { ok, error?, count? } */
+  /** Debug: testa conexão e query direta; retorna { ok, error?, count? } — apenas super_admin. */
   @Get('debug')
+  @UseGuards(SuperAdminGuard)
   async debug() {
     try {
       const count = await this.prisma.tenant.count();
@@ -39,10 +49,15 @@ export class TenantsController {
   }
 
   @Get()
-  async findAll(@Query('clubsOnly') clubsOnly?: string) {
+  async findAll(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('clubsOnly') clubsOnly?: string,
+  ) {
     try {
       const clubsOnlyBool = clubsOnly === '1' || clubsOnly === 'true';
-      return await this.tenantsService.findAll(clubsOnlyBool);
+      const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+      const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+      return await this.tenantsService.findAll(clubsOnlyBool, allowed);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(`GET /tenants: ${msg}`);
@@ -50,22 +65,34 @@ export class TenantsController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.tenantsService.findOne(id);
+  async findOne(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+    return this.tenantsService.findOne(id, allowed);
   }
 
   @Post()
-  async create(@Body() dto: CreateTenantDto) {
-    return this.tenantsService.create(dto);
+  async create(@Req() req: Request & { user: CognitoJwtPayload }, @Body() dto: CreateTenantDto) {
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+    return this.tenantsService.create(dto, allowed);
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateTenantDto) {
-    return this.tenantsService.update(id, dto);
+  async update(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdateTenantDto,
+  ) {
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+    return this.tenantsService.update(id, dto, allowed);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string) {
-    await this.tenantsService.remove(id);
+  async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+    await this.tenantsService.remove(id, allowed);
   }
 }

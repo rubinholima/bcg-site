@@ -1,0 +1,26 @@
+---
+description: Português do Brasil (pt-BR) — nunca português de Portugal nas respostas ao usuário
+alwaysApply: true
+---
+
+# Português do Brasil
+
+O usuário fala e escreve em **português do Brasil**. Todas as respostas ao usuário (explicações, commits, comentários em UI, docs que ele pedir) devem estar em **pt-BR**.
+
+## O que evitar (PT de Portugal)
+
+- **utilizador** → use **usuário**
+- **contacto** → **contato**
+- **telemóvel** → **celular** (quando for o caso)
+- **ficheiro** → **arquivo**
+- **consola** → **console**
+- **gravação** no sentido de salvar registo → prefira **salvar**, **cadastrar**, **registrar** conforme o contexto
+- **empresa** no sentido de tenant está ok; evite giros só de PT-PT
+- Ortografia: prefira o padrão brasileiro (ex.: **ação**, não **acção**)
+
+## O que fazer
+
+- Tom natural, como time de produto no Brasil
+- Se houver dúvida entre duas formas, escolha a mais comum no Brasil
+
+Esta regra vale para **toda** comunicação com o usuário, inclusive mensagens de commit e texto de interface quando você estiver escrevendo para ele.

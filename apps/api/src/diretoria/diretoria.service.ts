@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OmieService } from '../integrations/omie/omie.service';
 
@@ -125,13 +126,19 @@ export class DiretoriaService {
     private readonly omie: OmieService,
   ) {}
 
-  async getDashboard(): Promise<DiretoriaDashboardDto> {
+  private tenantScopeWhere(allowedTenantIds: string[] | null): Prisma.TenantWhereInput {
+    const w: Prisma.TenantWhereInput = { slug: { not: 'bcg' } };
+    if (allowedTenantIds?.length) w.id = { in: allowedTenantIds };
+    return w;
+  }
+
+  async getDashboard(allowedTenantIds: string[] | null): Promise<DiretoriaDashboardDto> {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     const tenants = await this.prisma.tenant.findMany({
-      where: { slug: { not: 'bcg' } },
+      where: this.tenantScopeWhere(allowedTenantIds),
       include: { kind: { select: { id: true, name: true } } },
       orderBy: { name: 'asc' },
     });
@@ -218,9 +225,24 @@ export class DiretoriaService {
         where: { tenantId: { in: tenantIds } },
         _count: { id: true },
       }),
-      this.prisma.tenant.count({ where: { createdAt: { gte: startOfMonth }, slug: { not: 'bcg' } } }),
-      this.prisma.player.count({ where: { createdAt: { gte: startOfMonth } } }),
-      this.prisma.socioMember.count({ where: { joinedAt: { gte: startOfMonth } } }),
+      this.prisma.tenant.count({
+        where: {
+          createdAt: { gte: startOfMonth },
+          ...this.tenantScopeWhere(allowedTenantIds),
+        },
+      }),
+      this.prisma.player.count({
+        where: {
+          createdAt: { gte: startOfMonth },
+          ...(allowedTenantIds?.length ? { tenantId: { in: allowedTenantIds } } : {}),
+        },
+      }),
+      this.prisma.socioMember.count({
+        where: {
+          joinedAt: { gte: startOfMonth },
+          ...(allowedTenantIds?.length ? { tenantId: { in: allowedTenantIds } } : {}),
+        },
+      }),
     ]);
 
     const toMap = <T extends { tenantId: string; _count: { id: number } }>(arr: T[]) =>
@@ -302,7 +324,7 @@ export class DiretoriaService {
       };
     });
 
-    const chartGrowth = await this.getGrowthChartData(now);
+    const chartGrowth = await this.getGrowthChartData(now, allowedTenantIds);
 
     const totalGastoMes = Object.values(ordersByTenant).reduce((a, b) => a + b.gastoMes, 0);
     const totalPagamentosARealizar = Object.values(ordersByTenant).reduce((a, b) => a + b.pendente, 0);
@@ -336,7 +358,10 @@ export class DiretoriaService {
     };
   }
 
-  private async getGrowthChartData(now: Date): Promise<{ month: string; novosJogadores: number; novosSocios: number; gastoMes: number }[]> {
+  private async getGrowthChartData(
+    now: Date,
+    allowedTenantIds: string[] | null,
+  ): Promise<{ month: string; novosJogadores: number; novosSocios: number; gastoMes: number }[]> {
     const months: { month: string; start: Date; end: Date }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -351,13 +376,21 @@ export class DiretoriaService {
 
     const result = await Promise.all(
       months.map(async (m) => {
+        const tenantFilter = allowedTenantIds?.length
+          ? { tenantId: { in: allowedTenantIds } as const }
+          : {};
         const [players, socios, orders] = await Promise.all([
-          this.prisma.player.count({ where: { createdAt: { gte: m.start, lte: m.end } } }),
-          this.prisma.socioMember.count({ where: { joinedAt: { gte: m.start, lte: m.end } } }),
+          this.prisma.player.count({
+            where: { createdAt: { gte: m.start, lte: m.end }, ...tenantFilter },
+          }),
+          this.prisma.socioMember.count({
+            where: { joinedAt: { gte: m.start, lte: m.end }, ...tenantFilter },
+          }),
           this.prisma.purchaseOrder.findMany({
             where: {
               orderedAt: { gte: m.start, lte: m.end },
               status: { not: 'cancelled' },
+              ...tenantFilter,
             },
             select: { totalAmount: true },
           }),
@@ -374,10 +407,10 @@ export class DiretoriaService {
    * Soma títulos **em aberto** no Omie (a receber / a pagar) por empresa com integração configurada.
    * Limita páginas por consulta para o dashboard não estourar tempo; avisos vêm no DTO por linha.
    */
-  async getOmieFinanceiro(): Promise<DiretoriaOmieFinanceiroDto> {
+  async getOmieFinanceiro(allowedTenantIds: string[] | null): Promise<DiretoriaOmieFinanceiroDto> {
     const tenants = await this.prisma.tenant.findMany({
       where: {
-        slug: { not: 'bcg' },
+        ...this.tenantScopeWhere(allowedTenantIds),
         omieAppKeyEnc: { not: null },
         omieAppSecretEnc: { not: null },
       },

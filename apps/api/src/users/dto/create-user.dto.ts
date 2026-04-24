@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 
 export type UserRole =
   | 'super_admin'
@@ -24,4 +24,10 @@ export class CreateUserDto {
 
   @IsEnum(['super_admin', 'company_admin', 'editor', 'analista', 'diretoria', 'medico', 'psicologo', 'user'])
   role: UserRole;
+
+  /** Empresas/clubes que o utilizador pode ver (vazio = sem restrição). Só super_admin / company_admin. */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tenantIds?: string[];
 }

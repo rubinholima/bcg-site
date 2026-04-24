@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/context/AuthContext";
 import {
   Select,
   SelectContent,
@@ -30,15 +32,35 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 export default function NovoUsuarioPage() {
   const router = useRouter();
+  const { isSuperAdmin, isCompanyAdmin } = useAuth();
+  const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     email: "",
     name: "",
     temporaryPassword: "",
     temporaryPasswordConfirm: "",
     role: "user" as UserRole,
+    tenantIds: [] as string[],
   });
+
+  const loadTenants = useCallback(async () => {
+    if (!canManageTenantScope) return;
+    try {
+      const res = await fetch("/api/tenants", { credentials: "include" });
+      if (!res.ok) return;
+      const list = (await res.json()) as { id: string; name: string }[];
+      setTenants(Array.isArray(list) ? list : []);
+    } catch {
+      /* ignore */
+    }
+  }, [canManageTenantScope]);
+
+  useEffect(() => {
+    void loadTenants();
+  }, [loadTenants]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,16 +75,20 @@ export default function NovoUsuarioPage() {
     setLoading(true);
     setError(null);
     try {
+      const body: Record<string, unknown> = {
+        email: formData.email.trim(),
+        name: formData.name.trim() || undefined,
+        temporaryPassword: formData.temporaryPassword,
+        role: formData.role,
+      };
+      if (canManageTenantScope) {
+        body.tenantIds = formData.tenantIds;
+      }
       const res = await fetch("/api/users", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email.trim(),
-          name: formData.name.trim() || undefined,
-          temporaryPassword: formData.temporaryPassword,
-          role: formData.role,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -86,7 +112,7 @@ export default function NovoUsuarioPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Novo Usuário</h1>
           <p className="text-muted-foreground">
-            Cadastre um usuário no Cognito e defina o role (grupo)
+            Defina e-mail, senha temporária, perfil e, se aplicável, quais empresas pode ver
           </p>
         </div>
       </div>
@@ -201,6 +227,44 @@ export default function NovoUsuarioPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {canManageTenantScope && tenants.length > 0 && (
+              <div className="space-y-3 rounded-lg border border-border p-4">
+                <div>
+                  <Label>Empresas / clubes que este utilizador pode ver</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Nenhuma selecionada = vê todas as empresas. Marque uma ou mais para restringir (ex. só Villa
+                    Nova).
+                  </p>
+                </div>
+                <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                  {tenants.map((t) => {
+                    const checked = formData.tenantIds.includes(t.id);
+                    return (
+                      <label
+                        key={t.id}
+                        className="flex cursor-pointer items-center gap-2 text-sm"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) => {
+                            const on = v === true;
+                            setFormData((prev) => ({
+                              ...prev,
+                              tenantIds: on
+                                ? [...prev.tenantIds, t.id]
+                                : prev.tenantIds.filter((id) => id !== t.id),
+                            }));
+                          }}
+                          disabled={loading}
+                        />
+                        <span>{t.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading}>

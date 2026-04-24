@@ -4,6 +4,7 @@ import { JwtAuthGuard, CognitoJwtPayload } from './jwt-auth.guard';
 import { DashboardRolesGuard } from './roles.guard';
 import { MeService } from './me.service';
 import { ModulesService } from '../modules/modules.service';
+import { TenantAccessService } from './tenant-access.service';
 
 export type MeRole =
   | 'super_admin'
@@ -19,6 +20,8 @@ export interface MeResponse {
   user: { id: string; email: string; name: string | null; cognitoSub: string };
   groups: string[];
   role: MeRole;
+  /** null = sem escopo (todas as empresas). Lista = só esses tenantIds. */
+  tenantIds: string[] | null;
 }
 
 @Controller('me')
@@ -27,6 +30,7 @@ export class MeController {
   constructor(
     private readonly meService: MeService,
     private readonly modulesService: ModulesService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
 
   @Get()
@@ -53,6 +57,7 @@ export class MeController {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+    const tenantIds = await this.tenantAccess.getAllowedTenantIds(user.id, role);
     return {
       user: {
         id: user.id,
@@ -62,6 +67,7 @@ export class MeController {
       },
       groups: groups.length ? groups : [role],
       role,
+      tenantIds,
     };
   }
 

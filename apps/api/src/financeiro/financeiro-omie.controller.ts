@@ -1,8 +1,10 @@
-import { BadRequestException, Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { BadRequestException, Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
+import { TenantAccessService } from '../auth/tenant-access.service';
 import {
   OmieService,
   type FinanceiroRelatorioFiltros,
@@ -51,12 +53,30 @@ function relatorioFiltrosFromQuery(q: {
 @Controller('financeiro/omie')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class FinanceiroOmieController {
-  constructor(private readonly omie: OmieService) {}
+  constructor(
+    private readonly omie: OmieService,
+    private readonly tenantAccess: TenantAccessService,
+  ) {}
+
+  private async requireTenantScope(
+    req: Request & { user: CognitoJwtPayload },
+    tenantIdRaw: string | undefined,
+  ): Promise<string> {
+    if (!tenantIdRaw?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório.');
+    }
+    const tenantId = tenantIdRaw.trim();
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+    this.tenantAccess.assertCanAccessTenant(allowed, tenantId);
+    return tenantId;
+  }
 
   @Get('contas-receber/resumo')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_financeiro')
-  resumoContasReceber(
+  async resumoContasReceber(
+    @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId: string,
     @Query('filtro') filtro?: string,
     @Query('busca') busca?: string,
@@ -70,9 +90,7 @@ export class FinanceiroOmieController {
     @Query('cpfCnpj') cpfCnpj?: string,
     @Query('contaCorrenteId') contaCorrenteId?: string,
   ) {
-    if (!tenantId?.trim()) {
-      throw new BadRequestException('tenantId é obrigatório.');
-    }
+    const tid = await this.requireTenantScope(req, tenantId);
     const filtrosRelatorio = relatorioFiltrosFromQuery({
       dataEmissaoDe,
       dataEmissaoAte,
@@ -84,7 +102,7 @@ export class FinanceiroOmieController {
       cpfCnpj,
       contaCorrenteId,
     });
-    return this.omie.resumoContasReceber(tenantId.trim(), {
+    return this.omie.resumoContasReceber(tid, {
       filtro: parseFiltro(filtro),
       busca: busca?.trim() || undefined,
       filtrosRelatorio,
@@ -94,7 +112,8 @@ export class FinanceiroOmieController {
   @Get('contas-pagar/resumo')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_financeiro')
-  resumoContasPagar(
+  async resumoContasPagar(
+    @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId: string,
     @Query('filtro') filtro?: string,
     @Query('busca') busca?: string,
@@ -108,9 +127,7 @@ export class FinanceiroOmieController {
     @Query('cpfCnpj') cpfCnpj?: string,
     @Query('contaCorrenteId') contaCorrenteId?: string,
   ) {
-    if (!tenantId?.trim()) {
-      throw new BadRequestException('tenantId é obrigatório.');
-    }
+    const tid = await this.requireTenantScope(req, tenantId);
     const filtrosRelatorio = relatorioFiltrosFromQuery({
       dataEmissaoDe,
       dataEmissaoAte,
@@ -122,7 +139,7 @@ export class FinanceiroOmieController {
       cpfCnpj,
       contaCorrenteId,
     });
-    return this.omie.resumoContasPagar(tenantId.trim(), {
+    return this.omie.resumoContasPagar(tid, {
       filtro: parseFiltro(filtro),
       busca: busca?.trim() || undefined,
       filtrosRelatorio,
@@ -132,7 +149,8 @@ export class FinanceiroOmieController {
   @Get('contas-receber')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_financeiro')
-  listContasReceber(
+  async listContasReceber(
+    @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId: string,
     @Query('pagina') pagina?: string,
     @Query('registros') registros?: string,
@@ -148,9 +166,7 @@ export class FinanceiroOmieController {
     @Query('cpfCnpj') cpfCnpj?: string,
     @Query('contaCorrenteId') contaCorrenteId?: string,
   ) {
-    if (!tenantId?.trim()) {
-      throw new BadRequestException('tenantId é obrigatório.');
-    }
+    const tid = await this.requireTenantScope(req, tenantId);
     const p = parsePositiveInt(pagina, 1);
     const r = parsePositiveInt(registros, 20, 100);
     const filtrosRelatorio = relatorioFiltrosFromQuery({
@@ -164,7 +180,7 @@ export class FinanceiroOmieController {
       cpfCnpj,
       contaCorrenteId,
     });
-    return this.omie.listContasReceber(tenantId.trim(), {
+    return this.omie.listContasReceber(tid, {
       pagina: p,
       registrosPorPagina: r,
       filtro: parseFiltro(filtro),
@@ -176,7 +192,8 @@ export class FinanceiroOmieController {
   @Get('contas-pagar')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_financeiro')
-  listContasPagar(
+  async listContasPagar(
+    @Req() req: Request & { user: CognitoJwtPayload },
     @Query('tenantId') tenantId: string,
     @Query('pagina') pagina?: string,
     @Query('registros') registros?: string,
@@ -192,9 +209,7 @@ export class FinanceiroOmieController {
     @Query('cpfCnpj') cpfCnpj?: string,
     @Query('contaCorrenteId') contaCorrenteId?: string,
   ) {
-    if (!tenantId?.trim()) {
-      throw new BadRequestException('tenantId é obrigatório.');
-    }
+    const tid = await this.requireTenantScope(req, tenantId);
     const p = parsePositiveInt(pagina, 1);
     const r = parsePositiveInt(registros, 20, 100);
     const filtrosRelatorio = relatorioFiltrosFromQuery({
@@ -208,7 +223,7 @@ export class FinanceiroOmieController {
       cpfCnpj,
       contaCorrenteId,
     });
-    return this.omie.listContasPagar(tenantId.trim(), {
+    return this.omie.listContasPagar(tid, {
       pagina: p,
       registrosPorPagina: r,
       filtro: parseFiltro(filtro),

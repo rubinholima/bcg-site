@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/context/AuthContext";
 import {
   Select,
   SelectContent,
@@ -31,15 +33,35 @@ const ROLE_LABELS: Record<UserRole, string> = {
 export default function EditUsuarioPage() {
   const router = useRouter();
   const params = useParams();
+  const { isSuperAdmin, isCompanyAdmin } = useAuth();
+  const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
   const username = decodeURIComponent(params.username as string);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
     email: "",
     name: "",
     role: "user" as UserRole,
+    tenantIds: [] as string[],
   });
+
+  const loadTenants = useCallback(async () => {
+    if (!canManageTenantScope) return;
+    try {
+      const res = await fetch("/api/tenants", { credentials: "include" });
+      if (!res.ok) return;
+      const list = (await res.json()) as { id: string; name: string }[];
+      setTenants(Array.isArray(list) ? list : []);
+    } catch {
+      /* ignore */
+    }
+  }, [canManageTenantScope]);
+
+  useEffect(() => {
+    void loadTenants();
+  }, [loadTenants]);
 
   useEffect(() => {
     async function load() {
@@ -57,6 +79,7 @@ export default function EditUsuarioPage() {
           email: data.email ?? "",
           name: data.name ?? "",
           role: data.role ?? "user",
+          tenantIds: data.tenantIds ?? [],
         });
       } catch {
         setError("Erro ao carregar usuário.");
@@ -72,15 +95,19 @@ export default function EditUsuarioPage() {
     setLoading(true);
     setError(null);
     try {
+      const body: Record<string, unknown> = {
+        email: formData.email.trim() || undefined,
+        name: formData.name.trim() || undefined,
+        role: formData.role,
+      };
+      if (canManageTenantScope) {
+        body.tenantIds = formData.tenantIds;
+      }
       const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.email.trim() || undefined,
-          name: formData.name.trim() || undefined,
-          role: formData.role,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -114,7 +141,7 @@ export default function EditUsuarioPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Editar Usuário</h1>
           <p className="text-muted-foreground">
-            Alterar nome, e-mail ou role no Cognito
+            Alterar nome, e-mail, perfil e, quando aplicável, empresas visíveis
           </p>
         </div>
       </div>
@@ -185,6 +212,44 @@ export default function EditUsuarioPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {canManageTenantScope && tenants.length > 0 && (
+              <div className="space-y-3 rounded-lg border border-border p-4">
+                <div>
+                  <Label>Empresas / clubes visíveis</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Nenhuma selecionada = utilizador vê todas as empresas (comportamento padrão). Selecione
+                    uma ou mais para restringir (ex.: só Villa Nova).
+                  </p>
+                </div>
+                <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                  {tenants.map((t) => {
+                    const checked = formData.tenantIds.includes(t.id);
+                    return (
+                      <label
+                        key={t.id}
+                        className="flex cursor-pointer items-center gap-2 text-sm"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(v) => {
+                            const on = v === true;
+                            setFormData((prev) => ({
+                              ...prev,
+                              tenantIds: on
+                                ? [...prev.tenantIds, t.id]
+                                : prev.tenantIds.filter((id) => id !== t.id),
+                            }));
+                          }}
+                          disabled={loading}
+                        />
+                        <span>{t.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={loading}>

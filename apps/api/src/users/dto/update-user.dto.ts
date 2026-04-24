@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 
 export type UserRole =
   | 'super_admin'
@@ -27,4 +27,10 @@ export class UpdateUserDto {
   @MinLength(6, { message: 'Senha deve ter no mínimo 6 caracteres' })
   @IsOptional()
   password?: string;
+
+  /** IDs de Tenant permitidos para este utilizador (vazio = remove restrição). Só super_admin / company_admin. */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tenantIds?: string[];
 }

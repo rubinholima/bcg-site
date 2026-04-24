@@ -17,6 +17,8 @@ interface AuthState {
   groups: string[];
   role: MeResponse["role"] | null;
   modules: string[];
+  /** null = sem escopo (todas as empresas); lista = só esses tenants */
+  tenantIds: string[] | null;
   loading: boolean;
 }
 
@@ -38,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     groups: [],
     role: null,
     modules: [],
+    tenantIds: null,
     loading: true,
   });
 
@@ -45,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authFetch("/api/me");
       if (!res.ok) {
-        setState({ user: null, groups: [], role: null, modules: [], loading: false });
+        setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, loading: false });
         return;
       }
       const data: MeResponse = await res.json();
@@ -105,17 +108,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         groups: data.groups ?? [],
         role: data.role,
         modules,
+        tenantIds: data.tenantIds ?? null,
         loading: false,
       });
     } catch {
-      setState({ user: null, groups: [], role: null, modules: [], loading: false });
+      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, loading: false });
     }
   }, []);
 
   useEffect(() => {
     // Na página de login não chama /api/me (evita 401 no console)
     if (pathname === "/login") {
-      setState({ user: null, groups: [], role: null, modules: [], loading: false });
+      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, loading: false });
       return;
     }
     fetchMe();

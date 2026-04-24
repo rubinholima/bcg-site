@@ -8,6 +8,7 @@ import { CredentialsAuthService } from './credentials-auth.service';
 import { InternalAuthController } from './internal-auth.controller';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JWT_ISSUER } from './credentials-auth.service';
+import { TenantAccessService } from './tenant-access.service';
 
 const jwtSecret = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
 
@@ -21,7 +22,7 @@ const jwtSecret = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
     }),
   ],
   controllers: [MeController, InternalAuthController],
-  providers: [MeService, CredentialsAuthService, JwtAuthGuard],
-  exports: [MeService, JwtModule, JwtAuthGuard],
+  providers: [MeService, CredentialsAuthService, JwtAuthGuard, TenantAccessService],
+  exports: [MeService, JwtModule, JwtAuthGuard, TenantAccessService],
 })
 export class AuthModule {}
