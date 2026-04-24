@@ -63,6 +63,30 @@ function filterUsers(
   return list;
 }
 
+function EmpresasAcessoCell({ u }: { u: UserListItem }) {
+  const tenants = u.tenants ?? [];
+  if (tenants.length > 0) {
+    return (
+      <div className="flex max-w-[min(100vw-8rem,28rem)] flex-wrap gap-1">
+        {tenants.map((t) => (
+          <span
+            key={t.id}
+            className="inline-flex max-w-full truncate rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-foreground"
+            title={t.name}
+          >
+            {t.name}
+          </span>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <span className="text-sm text-muted-foreground" title="Sem empresas marcadas no cadastro = acesso a todas">
+      Todas as empresas
+    </span>
+  );
+}
+
 export default function UsuariosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -203,12 +227,12 @@ export default function UsuariosPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="filtro-usuarios-busca" className="text-xs">
-              Buscar (email ou nome)
+              Buscar (email, nome ou empresa)
             </Label>
             <Input
               id="filtro-usuarios-busca"
               type="search"
-              placeholder="Email ou nome..."
+              placeholder="Email, nome ou empresa..."
               className="w-[200px]"
               value={filterQ}
               onChange={(e) => setFilterQ(e.target.value)}
@@ -227,7 +251,7 @@ export default function UsuariosPage() {
               : users.length === 0
                 ? "Nenhum usuário no pool."
                 : filteredUsers.length === users.length
-                  ? `${users.length} usuário(s). Altere o role no select.`
+                  ? `${users.length} usuário(s). A coluna Empresas mostra o acesso por clube; altere o role no select.`
                   : `${filteredUsers.length} de ${users.length} usuário(s)`}
           </CardDescription>
         </CardHeader>
@@ -270,12 +294,13 @@ export default function UsuariosPage() {
               ) : null}
             </div>
           ) : (
-            <Table>
+            <div className="overflow-x-auto rounded-md border border-border">
+              <Table className="min-w-[720px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Empresas</TableHead>
+                  <TableHead className="min-w-[12rem]">Empresas (acesso)</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -287,12 +312,8 @@ export default function UsuariosPage() {
                     <TableCell className="text-muted-foreground">
                       {u.name ?? "—"}
                     </TableCell>
-                    <TableCell className="max-w-[220px] text-sm text-muted-foreground">
-                      {(u.tenants?.length ?? 0) > 0
-                        ? u.tenants!.map((t) => t.name).join(", ")
-                        : u.role === "super_admin"
-                          ? "—"
-                          : "Todas"}
+                    <TableCell className="align-top py-3">
+                      <EmpresasAcessoCell u={u} />
                     </TableCell>
                     <TableCell>
                       {!isSuperAdmin && u.role === "super_admin" ? (
@@ -351,6 +372,7 @@ export default function UsuariosPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
