@@ -57,7 +57,7 @@ export function Header() {
             <span className="hidden sm:inline">Ver site</span>
           </a>
         </Button>
-        <span className="hidden max-w-[220px] truncate text-sm text-muted-foreground sm:inline" title={displayUser}>
+        <span className="max-w-[260px] truncate text-sm text-muted-foreground" title={displayUser}>
           {displayUser}
         </span>
         <Button
