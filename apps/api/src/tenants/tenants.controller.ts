@@ -10,6 +10,7 @@ import {
   Req,
   UseGuards,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
@@ -29,6 +30,12 @@ export class TenantsController {
     private readonly prisma: PrismaService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
+
+  private assertSuperAdminForWrite(role: string | undefined) {
+    if (role !== 'super_admin') {
+      throw new ForbiddenException('Somente super admin pode criar, editar ou excluir empresas.');
+    }
+  }
 
   /** Debug: testa conexão e query direta; retorna { ok, error?, count? } — apenas super_admin. */
   @Get('debug')
@@ -74,6 +81,7 @@ export class TenantsController {
   @Post()
   async create(@Req() req: Request & { user: CognitoJwtPayload }, @Body() dto: CreateTenantDto) {
     const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    this.assertSuperAdminForWrite(role);
     const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
     return this.tenantsService.create(dto, allowed);
   }
@@ -85,6 +93,7 @@ export class TenantsController {
     @Body() dto: UpdateTenantDto,
   ) {
     const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    this.assertSuperAdminForWrite(role);
     const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
     return this.tenantsService.update(id, dto, allowed);
   }
@@ -92,6 +101,7 @@ export class TenantsController {
   @Delete(':id')
   async remove(@Req() req: Request & { user: CognitoJwtPayload }, @Param('id') id: string) {
     const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    this.assertSuperAdminForWrite(role);
     const allowed = await this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
     await this.tenantsService.remove(id, allowed);
   }

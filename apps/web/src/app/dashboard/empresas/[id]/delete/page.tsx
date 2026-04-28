@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DeleteEmpresaPage() {
   const router = useRouter();
+  const { isSuperAdmin, loading: authLoading } = useAuth();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -63,6 +65,21 @@ export default function DeleteEmpresaPage() {
           <Link href="/dashboard/empresas">
             <Button variant="outline" className="mt-4">
               Voltar
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authLoading && !isSuperAdmin) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8 text-muted-foreground">
+          <p>Somente super admin pode excluir empresas. Esta área é apenas de listagem para os demais usuários.</p>
+          <Link href="/dashboard/empresas">
+            <Button variant="outline" className="mt-4">
+              Voltar para lista
             </Button>
           </Link>
         </div>

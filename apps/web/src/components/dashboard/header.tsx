@@ -5,9 +5,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
 import type { Group } from "@/types/group";
+import { useAuth } from "@/context/AuthContext";
 
 export function Header() {
   const [group, setGroup] = useState<Group | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
@@ -23,6 +25,7 @@ export function Header() {
   }, []);
 
   const name = group?.name ?? "Grupo Master";
+  const displayUser = user?.name?.trim() || user?.email || "Usuário";
 
   return (
     <header className="flex h-16 min-w-0 items-center justify-between gap-4 border-b border-border bg-card/95 backdrop-blur-sm px-4 sm:px-6 shadow-sm">
@@ -54,8 +57,8 @@ export function Header() {
             <span className="hidden sm:inline">Ver site</span>
           </a>
         </Button>
-        <span className="hidden truncate text-sm text-muted-foreground sm:inline">
-          {name}
+        <span className="hidden max-w-[220px] truncate text-sm text-muted-foreground sm:inline" title={displayUser}>
+          {displayUser}
         </span>
         <Button
           variant="ghost"

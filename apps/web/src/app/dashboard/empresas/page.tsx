@@ -15,6 +15,7 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
 import { EmpresasFilters } from "@/components/dashboard/EmpresasFilters";
+import type { MeResponse } from "@/types/auth";
 
 async function getTenants(): Promise<Tenant[]> {
   try {
@@ -33,6 +34,15 @@ async function getTenantKinds(): Promise<TenantKind[]> {
   } catch (error) {
     console.error("Erro ao carregar tipos:", error);
     return [];
+  }
+}
+
+async function getCanManageCompanies(): Promise<boolean> {
+  try {
+    const { data } = await api.get<MeResponse>("/me");
+    return data?.role === "super_admin";
+  } catch {
+    return false;
   }
 }
 
@@ -59,7 +69,11 @@ export default async function EmpresasPage({
 }: {
   searchParams: Promise<{ success?: string; tipo?: string; q?: string }>;
 }) {
-  const [tenants, kinds] = await Promise.all([getTenants(), getTenantKinds()]);
+  const [tenants, kinds, canManageCompanies] = await Promise.all([
+    getTenants(),
+    getTenantKinds(),
+    getCanManageCompanies(),
+  ]);
   const params = await searchParams;
   const showSuccess = params.success === "true";
   const tipo = params.tipo ?? null;
@@ -77,15 +91,19 @@ export default async function EmpresasPage({
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
           <p className="text-muted-foreground">
-            Gerencie as empresas do grupo
+            {canManageCompanies
+              ? "Gerencie as empresas do grupo"
+              : "Listagem de empresas (somente visualização)"}
           </p>
         </div>
-        <Link href="/dashboard/empresas/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Empresa
-          </Button>
-        </Link>
+        {canManageCompanies ? (
+          <Link href="/dashboard/empresas/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Empresa
+            </Button>
+          </Link>
+        ) : null}
       </div>
 
       {kinds.length > 0 && (
@@ -118,7 +136,7 @@ export default async function EmpresasPage({
                     Limpar filtros
                   </Button>
                 </Link>
-              ) : tenants.length === 0 ? (
+              ) : tenants.length === 0 && canManageCompanies ? (
                 <Link href="/dashboard/empresas/new">
                   <Button variant="outline" className="mt-4">
                     Criar primeira empresa
@@ -135,7 +153,9 @@ export default async function EmpresasPage({
                   <TableHead>Slug</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Criado em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  {canManageCompanies ? (
+                    <TableHead className="text-right">Ações</TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -164,25 +184,27 @@ export default async function EmpresasPage({
                         minute: "2-digit",
                       })}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/dashboard/paginas/tenant/${t.id}/editar`} title="Página da empresa">
-                          <Button variant="ghost" size="icon">
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/dashboard/empresas/${t.id}/edit`}>
-                          <Button variant="ghost" size="icon">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/dashboard/empresas/${t.id}/delete`}>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </TableCell>
+                    {canManageCompanies ? (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/dashboard/paginas/tenant/${t.id}/editar`} title="Página da empresa">
+                            <Button variant="ghost" size="icon">
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Link href={`/dashboard/empresas/${t.id}/edit`}>
+                            <Button variant="ghost" size="icon">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Link href={`/dashboard/empresas/${t.id}/delete`}>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </TableCell>
+                    ) : null}
                   </TableRow>
                 ))}
               </TableBody>

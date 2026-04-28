@@ -21,6 +21,7 @@ import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { isFootballKind } from "@/lib/home-data";
+import { useAuth } from "@/context/AuthContext";
 
 interface FormData {
   name: string;
@@ -43,6 +44,7 @@ interface FormData {
 
 export default function EditEmpresaPage() {
   const router = useRouter();
+  const { isSuperAdmin, loading: authLoading } = useAuth();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -158,6 +160,21 @@ export default function EditEmpresaPage() {
       <div className="space-y-6">
         <div className="text-center py-8 text-muted-foreground">
           <p>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authLoading && !isSuperAdmin) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8 text-muted-foreground">
+          <p>Somente super admin pode editar empresas. Esta área é apenas de listagem para os demais usuários.</p>
+          <Link href="/dashboard/empresas">
+            <Button variant="outline" className="mt-4">
+              Voltar para lista
+            </Button>
+          </Link>
         </div>
       </div>
     );

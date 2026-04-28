@@ -21,6 +21,7 @@ import type { Tenant } from "@/types/tenant";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { isFootballKind } from "@/lib/home-data";
 import { LogoUploadWithName } from "@/components/dashboard/LogoUploadWithName";
+import { useAuth } from "@/context/AuthContext";
 
 interface FormData {
   name: string;
@@ -40,6 +41,7 @@ interface FormData {
 
 export default function NovaEmpresaPage() {
   const router = useRouter();
+  const { isSuperAdmin, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -140,6 +142,21 @@ export default function NovaEmpresaPage() {
       setFormData((prev) => ({ ...prev, slug: slug || prev.slug }));
     }
   };
+
+  if (!authLoading && !isSuperAdmin) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8 text-muted-foreground">
+          <p>Somente super admin pode criar empresas. Esta área é apenas de listagem para os demais usuários.</p>
+          <Link href="/dashboard/empresas">
+            <Button variant="outline" className="mt-4">
+              Voltar para lista
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
