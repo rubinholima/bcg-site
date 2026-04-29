@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, ChevronRight, Download } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Download, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -463,22 +463,22 @@ export default function ModulosPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ permissions }),
       });
-      if (!res.ok) throw new Error(await res.text().catch(() => "Erro ao aplicar modelo"));
+      if (!res.ok) throw new Error(await res.text().catch(() => "Erro ao aplicar pacote"));
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; changedCells?: number };
       setModules(next as ModulePermission[]);
       setDirty(false);
       if (typeof data.changedCells === "number") {
         setSaveBanner(
           data.changedCells > 0
-            ? `Modelo “${preset.title}”: ${data.changedCells} célula(s) gravada(s); auditoria atualizada.`
-            : `Modelo “${preset.title}”: nada a alterar vs. servidor (já igual).`,
+            ? `Pacote “${preset.title}”: ${data.changedCells} célula(s) gravada(s); auditoria atualizada.`
+            : `Pacote “${preset.title}”: nada a alterar vs. servidor (já igual).`,
         );
       } else {
-        setSaveBanner(`Modelo “${preset.title}” gravado no servidor.`);
+        setSaveBanner(`Pacote “${preset.title}” gravado no servidor.`);
       }
       await refreshAudit();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao aplicar modelo");
+      setError(err instanceof Error ? err.message : "Erro ao aplicar pacote");
     } finally {
       setSaving(false);
       setPresetDialogOpen(false);
@@ -579,27 +579,62 @@ export default function ModulosPage() {
         )}
 
         <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle className="text-lg">Modelos prontos e exportação institucional</CardTitle>
-            <CardDescription>
-              Modelos <strong>somam</strong> permissões nas células indicadas (marcam ligado); não eliminam acessos que
-              você já concedeu antes. Combine com revisão área por área abaixo. Export JSON para arquivo interno /
-              evidência documental — não inclui dados de usuários, só políticas por módulo.
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-lg">Pacotes prontos e cópia da política</CardTitle>
+            <CardDescription className="text-sm sm:text-base leading-relaxed max-w-none">
+              Trecho opcional: use quando quiser <strong>começar por um pacote sugerido</strong> ou <strong>baixar o que está
+              valendo agora</strong> como arquivo — sem dados pessoais, só caixas ligadas/desligadas na matriz.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
-              <div className="flex-1 min-w-0 max-w-xl space-y-2">
-                <span className="text-sm font-medium text-foreground">Modelo institucional</span>
+          <CardContent className="space-y-6">
+            <div
+              className="rounded-xl border border-border/80 bg-muted/35 px-4 py-4 space-y-3"
+              role="region"
+              aria-labelledby="preset-help-heading"
+            >
+              <p
+                id="preset-help-heading"
+                className="text-sm font-semibold text-foreground flex items-start gap-2.5 leading-snug"
+              >
+                <Info className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
+                Como isso funciona (em três pontos)
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-2.5 pl-1 list-none border-s-2 border-primary/35 ps-4 ms-2">
+                <li>
+                  <strong className="text-foreground/95">Pacotes só ligam permissões novas.</strong> Ou seja, marcam
+                  “sim” onde o pacote recomenda — <strong>não desligam</strong> algo que já estava permitido antes. Para
+                  restringir, abra a matriz logo abaixo, desmarque as células e use{' '}
+                  <strong className="text-foreground/90">&quot;Salvar todas as alterações&quot;</strong>.
+                </li>
+                <li>
+                  Ao <strong className="text-foreground/95">confirmar um pacote</strong>, gravamos esse acréscimo no
+                  servidor (com registro na auditoria), igual ao salvamento manual.
+                </li>
+                <li>
+                  <strong className="text-foreground/95">Exportar JSON</strong> gera apenas o “mapa” atual de permissões por
+                  módulo e papel — <strong>não há nomes nem e-mails de usuários.</strong> Útil para evidência interna ou
+                  backup da política.
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+              <div className="flex-1 min-w-0 space-y-2 max-w-xl">
+                <div>
+                  <span className="text-sm font-medium text-foreground">Passo 1 — Escolher um pacote (opcional)</span>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Cada opção descreve para quais <strong>módulos</strong> o pacote sugere o acesso em cada <strong>papel</strong>.
+                  </p>
+                </div>
                 <Select
                   value={presetId || "__unset"}
                   onValueChange={(v) => setPresetId(v === "__unset" ? "" : v)}
                 >
                   <SelectTrigger className="w-full text-foreground">
-                    <SelectValue placeholder="Selecionar modelo…" />
+                    <SelectValue placeholder="Nenhum — escolher depois na matriz…" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__unset">Selecionar…</SelectItem>
+                    <SelectItem value="__unset">Nenhum selecionado</SelectItem>
                     {PERMISSION_PRESETS.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.title}
@@ -608,39 +643,62 @@ export default function ModulosPage() {
                   </SelectContent>
                 </Select>
                 {presetId && getPresetById(presetId) && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-border pl-3">
                     {getPresetById(presetId)!.description}
                   </p>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={!presetId || saving}
-                  onClick={() => presetId && setPresetDialogOpen(true)}
-                >
-                  Aplicar modelo no servidor
-                </Button>
-                <Button type="button" variant="outline" onClick={handleExportSnapshot} disabled={saving}>
-                  <Download className="h-4 w-4 mr-2" aria-hidden />
-                  Exportar JSON
-                </Button>
+
+              <div className="shrink-0 space-y-2 sm:pt-6">
+                <span className="text-sm font-medium text-foreground block">Passos 2 e 3</span>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={!presetId || saving}
+                    onClick={() => presetId && setPresetDialogOpen(true)}
+                  >
+                    Aplicar pacote ao servidor…
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleExportSnapshot}
+                    disabled={saving}
+                    title="Apenas política (módulos × papéis); sem dados de usuários"
+                  >
+                    <Download className="h-4 w-4 mr-2" aria-hidden />
+                    Baixar política (JSON)
+                  </Button>
+                </div>
+                <p className="text-[11px] text-muted-foreground max-w-[280px] leading-relaxed">
+                  &quot;Aplicar&quot; abre uma confirmação: você vê um resumo e só então gravamos. O arquivo JSON você pode gerar a
+                  qualquer momento — não altera permissões no sistema.
+                </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 pt-1 border-t border-border/60">
-              <span className="text-xs text-muted-foreground w-full sm:w-auto sm:mr-2">
-                Módulos com pelo menos um acesso ativo (visão atual):
-              </span>
-              {roleActivatedCounts.map(({ role, label, count }) => (
-                <span
-                  key={role}
-                  className="text-xs px-2.5 py-1 rounded-md bg-muted text-foreground/90"
-                  title={ROLE_LABELS[role].hint}
-                >
-                  {label}: <strong className="font-semibold">{count}</strong>
-                </span>
-              ))}
+
+            <div className="pt-2 border-t border-border/60 space-y-2">
+              <p className="text-xs font-medium text-foreground">
+                Panorama rápido — por <strong>papel</strong>, quantos <strong>módulos</strong> estão liberados na matriz agora
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Ou seja: para cada papel, o número conta quantos módulos <strong className="text-foreground/90">têm esse papel
+                permitido</strong> na matriz que você vê agora — inclusive se você alterou caixas nesta tela e ainda não clicou
+                em &quot;Salvar todas as alterações&quot;.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {roleActivatedCounts.map(({ role, label, count }) => (
+                  <span
+                    key={role}
+                    className="text-xs px-2.5 py-1.5 rounded-md bg-muted text-foreground/90 leading-tight"
+                    title={`${ROLE_LABELS[role].hint} — neste papel, quantos módulos têm permissão ligada.`}
+                  >
+                    <span className="text-muted-foreground">{label}: </span>
+                    <strong className="font-semibold tabular-nums">{count}</strong>
+                  </span>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -873,12 +931,12 @@ export default function ModulosPage() {
         <AlertDialog open={presetDialogOpen} onOpenChange={(open) => !saving && setPresetDialogOpen(open)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmar modelo no servidor</AlertDialogTitle>
+              <AlertDialogTitle>Confirmar aplicação do pacote</AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-2 text-sm text-muted-foreground text-left pt-2">
                   <p>
-                    O modelo apenas <strong>liga permissões novas</strong> onde indicado. Permissões que já existiam
-                    continuam ligadas até você desmarcá-las na matriz acima.
+                    O pacote apenas <strong>liga permissões novas</strong> onde está previsto — não desliga algo que já
+                    existia até você tirar manualmente na matriz.
                   </p>
                   {presetId && getPresetById(presetId) && (
                     <p className="text-foreground/90">{getPresetById(presetId)!.description}</p>
