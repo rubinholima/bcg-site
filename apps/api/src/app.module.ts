@@ -32,6 +32,7 @@ import { DiretoriaModule } from './diretoria/diretoria.module';
 import { LogisticaModule } from './logistica/logistica.module';
 import { EventsModule } from './events/events.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
+import { BostonTvModule } from './boston-tv/boston-tv.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { FinanceiroModule } from './financeiro/financeiro.module';
     LogisticaModule,
     EventsModule,
     FinanceiroModule,
+    BostonTvModule,
   ],
   controllers: [AppController],
   providers: [AppService],

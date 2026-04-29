@@ -109,6 +109,8 @@ model Tenant {
   socioPlans            SocioPlan[]
   socioMembers          SocioMember[]
   marketingPosts        MarketingPost[]
+  bostonTvPlaylists     BostonTvPlaylist[]
+  bostonTvScreens       BostonTvScreen[]
   travelLogistics       TravelLogistics[]
   events                Event[]
   userTenants           UserTenant[]
@@ -943,6 +945,56 @@ model SocioMember {
   @@index([planId])
   @@index([status])
   @@index([tenantId, email])
+}
+
+/// Boston TV — sinalização digital interna (player em /tv/play/[token])
+model BostonTvPlaylist {
+  id          String   @id @default(cuid())
+  tenantId  String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  items       BostonTvPlaylistItem[]
+  screens     BostonTvScreen[]
+
+  @@index([tenantId])
+}
+
+model BostonTvPlaylistItem {
+  id              String   @id @default(cuid())
+  playlistId      String
+  playlist        BostonTvPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  sortOrder       Int      @default(0)
+  /** image_url | video_url | youtube_video */
+  contentType     String
+  url             String   @db.Text
+  /** Imagem/slide: obrigatório (segundos na tela). Vídeo: opcional. */
+  durationSeconds Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([playlistId])
+}
+
+model BostonTvScreen {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name             String
+  locationHint     String?
+  /** Token secreto na URL pública do player */
+  playerToken      String   @unique
+  playlistId       String?
+  playlist         BostonTvPlaylist? @relation(fields: [playlistId], references: [id], onDelete: SetNull)
+  scheduleTimezone String   @default("America/Sao_Paulo")
+  /** Janelas: [{ "weekdays":[1-7], "start":"HH:mm", "end":"HH:mm" }] — 1=seg … 7=dom. null/vazio = sempre exibir (sem blecaute por agenda). */
+  weeklySchedule   Json?
+  lastSeenAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 // Postagens de marketing / redes sociais — calendário inspirado no Meta Business Suite

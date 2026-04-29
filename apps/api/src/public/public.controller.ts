@@ -19,6 +19,7 @@ import { S3Service } from '../s3/s3.service';
 import { WorkMailService } from '../workmail/workmail.service';
 import { EventsService } from '../events/events.service';
 import { PublicService } from './public.service';
+import { BostonTvService } from '../boston-tv/boston-tv.service';
 
 @Controller('public')
 export class PublicController {
@@ -31,6 +32,7 @@ export class PublicController {
     private readonly prisma: PrismaService,
     private readonly s3: S3Service,
     private readonly workmailService: WorkMailService,
+    private readonly bostonTvService: BostonTvService,
   ) {}
 
   @Get('portfolio')
@@ -214,5 +216,16 @@ export class PublicController {
     return new StreamableFile(body, {
       type: contentType,
     });
+  }
+
+  /** Boston TV — configuração para o player web (Smart TV via URL com token secreto). */
+  @Get('boston-tv/play/:token')
+  getBostonTvPlayer(@Param('token') token: string) {
+    return this.bostonTvService.getPublicPlayerPayload(token);
+  }
+
+  @Post('boston-tv/play/:token/ping')
+  bostonTvPing(@Param('token') token: string) {
+    return this.bostonTvService.touchPlayer(token);
   }
 }

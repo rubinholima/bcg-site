@@ -44,6 +44,7 @@ import {
   UtensilsCrossed,
   Warehouse,
   Calendar,
+  Tv,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
@@ -312,6 +313,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     moduleSlug: "marketing",
     children: [
       { slug: "marketing_planner", label: "Planner", href: "/dashboard/marketing", icon: Calendar, moduleSlug: "marketing" },
+      {
+        slug: "marketing_boston_tv",
+        label: "Boston TV",
+        href: "/dashboard/marketing/boston-tv",
+        icon: Tv,
+        moduleSlug: "marketing",
+      },
     ],
   },
   // Relatórios (grupo — rotas futuras)

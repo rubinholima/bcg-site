@@ -10,6 +10,7 @@ import { PublicService } from './public.service';
 import { SofaScoreService } from './sofascore.service';
 import { EventsModule } from '../events/events.module';
 import { MediaModule } from '../media/media.module';
+import { BostonTvModule } from '../boston-tv/boston-tv.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MediaModule } from '../media/media.module';
     MediaModule,
     WorkmailModule,
     EventsModule,
+    BostonTvModule,
   ],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService],
