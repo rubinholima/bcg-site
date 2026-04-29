@@ -4,11 +4,13 @@ import { TenantsModule } from '../tenants/tenants.module';
 import { IntegrationsController } from './integrations.controller';
 import { IntegrationsService } from './integrations.service';
 import { OmieService } from './omie/omie.service';
+import { MetaOAuthController } from './meta/meta-oauth.controller';
+import { MetaOAuthService } from './meta/meta-oauth.service';
 
 @Module({
   imports: [forwardRef(() => AuthModule), TenantsModule],
-  controllers: [IntegrationsController],
-  providers: [IntegrationsService, OmieService],
+  controllers: [IntegrationsController, MetaOAuthController],
+  providers: [IntegrationsService, OmieService, MetaOAuthService],
   exports: [IntegrationsService, OmieService],
 })
 export class IntegrationsModule {}
