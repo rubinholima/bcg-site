@@ -16,7 +16,7 @@ export default function PsicologiaPlayerRedirectPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!canAccessModule("psicologia")) {
+    if (!canAccessModule("saude")) {
       router.replace("/403");
       return;
     }

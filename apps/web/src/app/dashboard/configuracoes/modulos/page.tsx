@@ -83,49 +83,85 @@ interface ModuleTreeNode {
   depth: number;
 }
 
-/** Nó da árvore para ordem igual ao menu. */
-const ROLE_KEYS = [
-  "company_admin",
-  "editor",
-  "analista",
-  "diretoria",
-  "medico",
-  "psicologo",
+/** Colunas institucionais na matriz: Gerente = tenant; Administrativo = operação; Saúde = médico + psicólogo (sempre juntos). */
+export type InstitutionMatrixCol =
+  | "company_admin"
+  | "editor"
+  | "analista"
+  | "diretoria"
+  | "saude_staff";
+
+/** Rótulos e chaves persistidas (`medico` e `psicologo` na API). */
+const MATRIX_COLUMNS: readonly {
+  id: InstitutionMatrixCol;
+  shortLabel: string;
+  hintLabel: string;
+}[] = [
+  {
+    id: "company_admin",
+    shortLabel: "Gerente",
+    hintLabel:
+      "Gestor(a) / administrador(a) da empresa ou clube (tenant): libera estruturas conforme marcações aqui.",
+  },
+  {
+    id: "editor",
+    shortLabel: "Administrativo",
+    hintLabel:
+      "Equipe administrativa e cadastros do dia a dia (produção, operação administrativa quando liberado).",
+  },
+  {
+    id: "analista",
+    shortLabel: "Analista",
+    hintLabel: "Análises operacionais e relatórios (escopo habitualmente mais restrito).",
+  },
+  {
+    id: "diretoria",
+    shortLabel: "Diretoria",
+    hintLabel: "Dados sensíveis dos atletas e avaliações (área institucional).",
+  },
+  {
+    id: "saude_staff",
+    shortLabel: "Saúde",
+    hintLabel:
+      "Equipe médica e psicológica: marca ou desmarca médico + psicólogo na mesma política.",
+  },
 ] as const;
 
-type RoleKey = (typeof ROLE_KEYS)[number];
+function applyMatrixColumnToRow(
+  row: ModulePermission,
+  columnId: InstitutionMatrixCol,
+  value: boolean,
+): ModulePermission {
+  if (columnId === "saude_staff") {
+    return { ...row, medico: value, psicologo: value };
+  }
+  return {
+    ...row,
+    [columnId]: value,
+  };
+}
 
-const ROLE_LABELS: Record<RoleKey, { short: string; hint: string }> = {
-  company_admin: {
-    short: "Company Admin",
-    hint: "Administrador do tenant / clube; aceso amplo sujeito aos módulos marcados.",
-  },
-  editor: {
-    short: "Editor",
-    hint: "Produção de conteúdo e cadastros do dia a dia quando liberado.",
-  },
-  analista: {
-    short: "Analista",
-    hint: "Análises e relatórios operacionais (escopo habitualmente mais restrito).",
-  },
-  diretoria: {
-    short: "Diretoria",
-    hint: "Dados sensíveis dos atletas e avaliações (área institucional).",
-  },
-  medico: {
-    short: "Médico",
-    hint: "Histórico e dados de saúde — tratar conforme LGPD.",
-  },
-  psicologo: {
-    short: "Psicólogo",
-    hint: "Avaliações psicológicas e relacionadas (sigilo profissional).",
-  },
+/** Valor visual da checkbox (coluna Saúde = médico ∧ psicólogo). */
+function matrixCheckboxChecked(mod: ModulePermission, columnId: InstitutionMatrixCol): boolean {
+  if (columnId === "saude_staff") {
+    return Boolean(mod.medico && mod.psicologo);
+  }
+  return Boolean(mod[columnId]);
+}
+
+/** Papéis armazenados na API por módulo (auditoria e presets). */
+const AUDIT_ROLE_LABELS: Record<string, { short: string }> = {
+  company_admin: { short: "Gerente (tenant)" },
+  editor: { short: "Administrativo" },
+  analista: { short: "Analista" },
+  diretoria: { short: "Diretoria" },
+  medico: { short: "Médico" },
+  psicologo: { short: "Psicólogo" },
 };
 
 function auditChangeLabel(row: AuditChangeRow): string {
   const mod = MODULE_DISPLAY_NAMES[row.slug] ?? row.slug;
-  const rk = row.role as RoleKey;
-  const rl = ROLE_LABELS[rk]?.short ?? row.role;
+  const rl = AUDIT_ROLE_LABELS[row.role]?.short ?? row.role;
   return `${mod} (${rl}): ${row.from ? "ativo" : "inativo"} → ${row.to ? "ativo" : "inativo"}`;
 }
 
@@ -326,10 +362,19 @@ export default function ModulosPage() {
 
   const roleActivatedCounts = useMemo(
     () =>
-      ROLE_KEYS.map((role) => ({
-        role,
-        label: ROLE_LABELS[role].short,
-        count: mergedModuleState.filter((m) => m[role]).length,
+      MATRIX_COLUMNS.map((col) => ({
+        colId: col.id,
+        label: col.shortLabel,
+        count: (() => {
+          if (col.id === "saude_staff") {
+            return mergedModuleState.filter((m) => m.medico && m.psicologo).length;
+          }
+          const key = col.id as keyof Pick<
+            ModulePermission,
+            "company_admin" | "editor" | "analista" | "diretoria"
+          >;
+          return mergedModuleState.filter((m) => m[key]).length;
+        })(),
       })),
     [mergedModuleState],
   );
@@ -361,8 +406,8 @@ export default function ModulosPage() {
     }));
   }, [filteredRows]);
 
-  /** Marca/desmarca um perfil em todos os módulos visíveis desta área. */
-  const handleBulkArea = useCallback((areaKey: string, role: RoleKey, value: boolean) => {
+  /** Marca/desmarca uma coluna (Gerente … Saúde) em todos os módulos visíveis desta área. */
+  const handleBulkArea = useCallback((areaKey: string, columnId: InstitutionMatrixCol, value: boolean) => {
     const slugs = filteredRows
       .filter((r) => (r.functionalArea || "outros") === areaKey)
       .map((r) => r.slug);
@@ -373,20 +418,20 @@ export default function ModulosPage() {
       for (const slug of slugs) {
         const d = filteredRows.find((r) => r.slug === slug);
         if (!d) continue;
-        const existing = bySlug.get(slug);
-        bySlug.set(slug, {
+        const raw = bySlug.get(slug);
+        const existing: ModulePermission = {
           slug,
           name: MODULE_DISPLAY_NAMES[slug] ?? d.name,
           sortOrder: d.sortOrder,
           functionalArea: d.functionalArea,
-          company_admin: existing?.company_admin ?? d.company_admin,
-          editor: existing?.editor ?? d.editor,
-          analista: existing?.analista ?? d.analista,
-          diretoria: existing?.diretoria ?? d.diretoria,
-          medico: existing?.medico ?? d.medico,
-          psicologo: existing?.psicologo ?? d.psicologo,
-          [role]: value,
-        });
+          company_admin: raw?.company_admin ?? d.company_admin,
+          editor: raw?.editor ?? d.editor,
+          analista: raw?.analista ?? d.analista,
+          diretoria: raw?.diretoria ?? d.diretoria,
+          medico: raw?.medico ?? d.medico,
+          psicologo: raw?.psicologo ?? d.psicologo,
+        };
+        bySlug.set(slug, applyMatrixColumnToRow(existing, columnId, value));
       }
       return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
     });
@@ -394,16 +439,30 @@ export default function ModulosPage() {
     setSaveBanner(null);
   }, [filteredRows]);
 
-  const handleToggle = (slug: string, role: RoleKey, value: boolean) => {
+  const handleToggle = (slug: string, columnId: InstitutionMatrixCol, value: boolean) => {
     setModules((prev) => {
-      const found = prev.find((m) => m.slug === slug);
       const dm = displayModules.find((x) => x.slug === slug);
+      const baseFromDisplay: ModulePermission | null = dm
+        ? {
+            slug: dm.slug,
+            name: MODULE_DISPLAY_NAMES[dm.slug] ?? dm.name,
+            sortOrder: dm.sortOrder,
+            functionalArea: dm.functionalArea,
+            company_admin: dm.company_admin,
+            editor: dm.editor,
+            analista: dm.analista,
+            diretoria: dm.diretoria,
+            medico: dm.medico,
+            psicologo: dm.psicologo,
+          }
+        : null;
+      const found = prev.find((m) => m.slug === slug);
       if (found) {
-        return prev.map((m) => (m.slug === slug ? { ...m, [role]: value } : m));
+        return prev.map((m) => (m.slug === slug ? applyMatrixColumnToRow(m, columnId, value) : m));
       }
-      return [
-        ...prev,
-        {
+      const base =
+        baseFromDisplay ??
+        ({
           slug,
           name: MODULE_DISPLAY_NAMES[slug] ?? dm?.name ?? slug,
           sortOrder: dm?.sortOrder ?? 0,
@@ -414,9 +473,8 @@ export default function ModulosPage() {
           diretoria: false,
           medico: false,
           psicologo: false,
-          [role]: value,
-        } satisfies ModulePermission,
-      ];
+        } satisfies ModulePermission);
+      return [...prev, applyMatrixColumnToRow(base, columnId, value)];
     });
     setDirty(true);
     setSaveBanner(null);
@@ -688,16 +746,19 @@ export default function ModulosPage() {
                 em &quot;Salvar todas as alterações&quot;.
               </p>
               <div className="flex flex-wrap gap-2 pt-1">
-                {roleActivatedCounts.map(({ role, label, count }) => (
+                {roleActivatedCounts.map(({ colId, label, count }) => {
+                  const hint = MATRIX_COLUMNS.find((c) => c.id === colId)?.hintLabel ?? "";
+                  return (
                   <span
-                    key={role}
+                    key={colId}
                     className="text-xs px-2.5 py-1.5 rounded-md bg-muted text-foreground/90 leading-tight"
-                    title={`${ROLE_LABELS[role].hint} — neste papel, quantos módulos têm permissão ligada.`}
+                    title={hint ? `${hint} Quantidade de módulos com esse tipo de acesso ligado.` : undefined}
                   >
                     <span className="text-muted-foreground">{label}: </span>
                     <strong className="font-semibold tabular-nums">{count}</strong>
                   </span>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </CardContent>
@@ -734,8 +795,8 @@ export default function ModulosPage() {
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2 items-center shrink-0 pt-1">
-                        {(ROLE_KEYS as readonly RoleKey[]).map((rk) => (
-                          <div key={rk} className="flex rounded-md border bg-background shadow-sm overflow-hidden">
+                        {MATRIX_COLUMNS.map((col) => (
+                          <div key={col.id} className="flex rounded-md border bg-background shadow-sm overflow-hidden">
                             <Button
                               type="button"
                               variant="outline"
@@ -744,10 +805,10 @@ export default function ModulosPage() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleBulkArea(area, rk, true);
+                                handleBulkArea(area, col.id, true);
                               }}
                             >
-                              ✓ {ROLE_LABELS[rk].short}
+                              ✓ {col.shortLabel}
                             </Button>
                             <Button
                               type="button"
@@ -757,7 +818,7 @@ export default function ModulosPage() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleBulkArea(area, rk, false);
+                                handleBulkArea(area, col.id, false);
                               }}
                             >
                               ✕
@@ -779,24 +840,15 @@ export default function ModulosPage() {
                             <th className="sticky left-0 z-[1] bg-muted/95 backdrop-blur supports-[backdrop-filter]:bg-muted/85 px-3 py-3 text-left font-medium w-[220px] sm:w-[260px]">
                               Módulo
                             </th>
-                            <th className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[100px]" title={ROLE_LABELS.company_admin.hint}>
-                              Co. Admin
-                            </th>
-                            <th className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[100px]" title={ROLE_LABELS.editor.hint}>
-                              Editor
-                            </th>
-                            <th className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[90px]" title={ROLE_LABELS.analista.hint}>
-                              Analist.
-                            </th>
-                            <th className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[90px]" title={ROLE_LABELS.diretoria.hint}>
-                              Diret.
-                            </th>
-                            <th className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[90px]" title={ROLE_LABELS.medico.hint}>
-                              Médico
-                            </th>
-                            <th className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[100px]" title={ROLE_LABELS.psicologo.hint}>
-                              Psicól.
-                            </th>
+                            {MATRIX_COLUMNS.map((col) => (
+                              <th
+                                key={col.id}
+                                className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[110px]"
+                                title={col.hintLabel}
+                              >
+                                {col.shortLabel}
+                              </th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody>
@@ -812,14 +864,14 @@ export default function ModulosPage() {
                                     </div>
                                   )}
                                 </td>
-                                {(ROLE_KEYS as readonly RoleKey[]).map((role) => (
-                                  <td key={role} className="px-2 py-3 align-middle">
+                                {MATRIX_COLUMNS.map((col) => (
+                                  <td key={col.id} className="px-2 py-3 align-middle">
                                     <input
                                       type="checkbox"
-                                      checked={Boolean(mod[role])}
-                                      onChange={(e) => handleToggle(m.slug, role, e.target.checked)}
+                                      checked={matrixCheckboxChecked(mod, col.id)}
+                                      onChange={(e) => handleToggle(m.slug, col.id, e.target.checked)}
                                       className="h-5 w-5 rounded-md border-input accent-primary cursor-pointer shrink-0"
-                                      aria-label={`${ROLE_LABELS[role].short}: ${MODULE_DISPLAY_NAMES[m.slug] ?? m.name}`}
+                                      aria-label={`${col.shortLabel}: ${MODULE_DISPLAY_NAMES[m.slug] ?? m.name}`}
                                     />
                                   </td>
                                 ))}

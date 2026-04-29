@@ -222,7 +222,7 @@ export default function ConsultasPage() {
   }, [calendarRefreshTrigger, fetchConsultations]);
 
   useEffect(() => {
-    if (!canAccessModule("psicologia")) return;
+    if (!canAccessModule("saude")) return;
     api.get<TenantOption[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
@@ -455,7 +455,7 @@ export default function ConsultasPage() {
     );
   }
 
-  if (!canAccessModule("psicologia")) {
+  if (!canAccessModule("saude")) {
     router.replace("/403");
     return null;
   }

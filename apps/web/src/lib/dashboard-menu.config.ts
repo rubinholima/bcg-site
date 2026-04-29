@@ -70,7 +70,7 @@ export interface PlayerTabConfig {
 /** Abas do formulário de jogador. Avaliação psicológica e Análise de desempenho exigem módulo. */
 export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "dados", label: "Dados base", icon: UserCircle, moduleSlug: null },
-  { id: "psicologica", label: "Avaliação psicológica", icon: Brain, moduleSlug: "psicologia" },
+  { id: "psicologica", label: "Avaliação psicológica", icon: Brain, moduleSlug: "saude" },
   { id: "status", label: "Status", icon: Activity, moduleSlug: "diretoria" },
   { id: "mapa", label: "Mapa / Posição", icon: Map, moduleSlug: null },
   { id: "momentos", label: "Melhores momentos", icon: Youtube, moduleSlug: null },
@@ -193,21 +193,21 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         slug: "medico",
         label: "Depto Médico",
         icon: Stethoscope,
-        moduleSlug: "medico",
+        moduleSlug: "saude",
         children: [
           {
             slug: "medico_historico",
             label: "Histórico médico",
             href: "/dashboard/medico",
             icon: Stethoscope,
-            moduleSlug: "medico",
+            moduleSlug: "saude",
           },
           {
             slug: "medico_equipe",
             label: "Médicos e equipe",
             href: "/dashboard/medico/equipe",
             icon: UserCircle,
-            moduleSlug: "medico",
+            moduleSlug: "saude",
           },
         ],
       },
@@ -215,21 +215,21 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         slug: "psicologia",
         label: "Depto Psicologia",
         icon: ClipboardList,
-        moduleSlug: "psicologia",
+        moduleSlug: "saude",
         children: [
           {
             slug: "psicologia_consultas",
             label: "Consultas",
             href: "/dashboard/consultas",
             icon: ClipboardList,
-            moduleSlug: "psicologia",
+            moduleSlug: "saude",
           },
           {
             slug: "psicologia_psicologos",
             label: "Psicólogos",
             href: "/dashboard/psicologia/psicologos",
             icon: UserCircle,
-            moduleSlug: "psicologia",
+            moduleSlug: "saude",
           },
         ],
       },
@@ -318,7 +318,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         label: "Boston TV",
         href: "/dashboard/marketing/boston-tv",
         icon: Tv,
-        moduleSlug: "marketing",
+        moduleSlug: "boston_tv",
       },
     ],
   },
@@ -427,9 +427,9 @@ export function getUniqueModuleSlugs(): string[] {
   for (const tab of PLAYER_TABS) {
     if (tab.moduleSlug) slugs.add(tab.moduleSlug);
   }
-  slugs.add("psicologia").add("medico").add("diretoria").add("juridico").add("relatorios");
+  slugs.add("saude").add("diretoria").add("juridico").add("relatorios");
   slugs.add("adm_financeiro").add("adm_rh").add("adm_patrimonio").add("adm_nutricao");
   slugs.add("futebol_comissao").add("futebol_fisiologia").add("futebol_analise").add("futebol_logistica");
-  slugs.add("socio_torcedor").add("marketing");
+  slugs.add("socio_torcedor").add("marketing").add("boston_tv");
   return Array.from(slugs).sort();
 }

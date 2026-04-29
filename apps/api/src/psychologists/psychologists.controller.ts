@@ -24,35 +24,35 @@ export class PsychologistsController {
 
   @Get()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   list(@Query('tenantId') tenantId?: string) {
     return this.service.findAll(tenantId);
   }
 
   @Get(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   create(@Body() dto: CreatePsychologistDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   update(@Param('id') id: string, @Body() dto: UpdatePsychologistDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

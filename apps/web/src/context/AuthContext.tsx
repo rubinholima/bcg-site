@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               "empresas",
               "emails",
               "tipos",
-              "psicologia",
+              "saude",
               "paginas",
               "noticias",
               "midia",

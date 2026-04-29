@@ -40,11 +40,12 @@ export const MODULE_AREA_META: Record<
   },
   saude_dados_sensiveis: {
     title: "Saúde e dados sensíveis",
-    description: "Médico, psicologia e jurídico (LGPD e confidencialidade).",
+    description: "Departamento médico, psicológico e jurídico — LGPD e confidencialidade.",
   },
   conteudo_midia: {
     title: "Conteúdo e mídia",
-    description: "Páginas, notícias, mídia, eventos e marketing.",
+    description:
+      "Páginas, notícias, mídia, eventos; marketing (Planner); Boston TV e conteúdo para telas/redes.",
   },
   adm_departamentos: {
     title: "Administrativo & financeiro",

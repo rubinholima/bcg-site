@@ -52,7 +52,7 @@ export default function MedicoListPage() {
   const search = searchParams.get("search") ?? undefined;
 
   useEffect(() => {
-    if (!canAccessModule("medico") && !authLoading) return;
+    if (!canAccessModule("saude") && !authLoading) return;
     const params = new URLSearchParams();
     if (tenantId) params.set("tenantId", tenantId);
     if (category) params.set("category", category);
@@ -79,7 +79,7 @@ export default function MedicoListPage() {
   }, [selectedPlayerId]);
 
   useEffect(() => {
-    if (!canAccessModule("medico") && !authLoading) return;
+    if (!canAccessModule("saude") && !authLoading) return;
     const tid = selectedPlayer?.tenantId ?? tenantId;
     const params = tid ? `tenantId=${tid}` : "";
     api
@@ -133,7 +133,7 @@ export default function MedicoListPage() {
     );
   }
 
-  if (!canAccessModule("medico")) {
+  if (!canAccessModule("saude")) {
     router.replace("/403");
     return null;
   }

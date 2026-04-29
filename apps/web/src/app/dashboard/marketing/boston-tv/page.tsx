@@ -48,7 +48,7 @@ interface ScreenRow {
 }
 
 export default function BostonTvDashboardPage() {
-  const { tenantIds } = useAuth();
+  const { tenantIds, canAccessModule, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantFilter, setTenantFilter] = useState("");
 
@@ -165,6 +165,19 @@ export default function BostonTvDashboardPage() {
     await api.post(`/boston-tv/screens/${id}/regenerate-token`, {});
     await refresh();
   };
+
+  if (!canAccessModule("boston_tv") && !authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+        <p>Você não tem acesso ao módulo Boston TV.</p>
+        <Link href="/dashboard">
+          <Button variant="link" className="mt-2">
+            Voltar ao dashboard
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 type Item = {
   id: string;
@@ -48,6 +49,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 export default function EditBostonTvPlaylistPage() {
   const params = useParams();
+  const { canAccessModule, loading: authLoading } = useAuth();
   const id = params.id as string;
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +99,19 @@ export default function EditBostonTvPlaylistPage() {
     await api.delete(`/boston-tv/playlists/${id}/items/${itemId}`);
     await load();
   };
+
+  if (!canAccessModule("boston_tv") && !authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+        <p>Você não tem acesso ao módulo Boston TV.</p>
+        <Link href="/dashboard">
+          <Button variant="link" className="mt-2">
+            Voltar ao dashboard
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   if (loading && !playlist) {
     return (

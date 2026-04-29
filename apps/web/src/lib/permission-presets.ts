@@ -45,18 +45,20 @@ export const PERMISSION_PRESETS: readonly PermissionPreset[] = [
     id: "conteudo-midia-equipe-editorial",
     title: "Conteúdo e mídia (editor)",
     description:
-      "Páginas, notícias, mídia, eventos e marketing — equipe típica de comunicação.",
+      "Páginas, notícias, mídia, eventos, marketing (Planner) e Boston TV — equipe típica de comunicação.",
     grants: [
       { role: "editor", slug: "paginas" },
       { role: "editor", slug: "noticias" },
       { role: "editor", slug: "midia" },
       { role: "editor", slug: "eventos" },
       { role: "editor", slug: "marketing" },
+      { role: "editor", slug: "boston_tv" },
       { role: "company_admin", slug: "paginas" },
       { role: "company_admin", slug: "noticias" },
       { role: "company_admin", slug: "midia" },
       { role: "company_admin", slug: "eventos" },
       { role: "company_admin", slug: "marketing" },
+      { role: "company_admin", slug: "boston_tv" },
     ],
   },
   {
@@ -98,11 +100,10 @@ export const PERMISSION_PRESETS: readonly PermissionPreset[] = [
     description:
       "Médico, psicologia, diretoria e jurídico — habilitar só para pessoas credenciadas.",
     grants: [
-      { role: "medico", slug: "medico" },
-      { role: "psicologo", slug: "psicologia" },
+      { role: "medico", slug: "saude" },
+      { role: "psicologo", slug: "saude" },
+      { role: "company_admin", slug: "saude" },
       { role: "diretoria", slug: "diretoria" },
-      { role: "company_admin", slug: "medico" },
-      { role: "company_admin", slug: "psicologia" },
       { role: "company_admin", slug: "diretoria" },
       { role: "editor", slug: "juridico" },
       { role: "diretoria", slug: "juridico" },

@@ -148,19 +148,17 @@ export function Sidebar() {
                   : item.slug === "adm"
                     ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                     : item.slug === "futebol"
-                      ? canAccessModule("tipos") || canAccessModule("diretoria") || canAccessModule("medico") || canAccessModule("psicologia") || canAccessModule("juridico") || canAccessModule("futebol_comissao") || canAccessModule("futebol_fisiologia") || canAccessModule("futebol_analise") || canAccessModule("futebol_logistica") || canAccessModule("adm_nutricao")
+                      ? canAccessModule("tipos") || canAccessModule("diretoria") || canAccessModule("saude") || canAccessModule("juridico") || canAccessModule("futebol_comissao") || canAccessModule("futebol_fisiologia") || canAccessModule("futebol_analise") || canAccessModule("futebol_logistica") || canAccessModule("adm_nutricao")
                       : item.slug === "ferramentas"
                         ? hasAccessToAnyChild(item.children, canAccessModule, canAccessDashboard)
                         : item.slug === "configuracoes"
                           ? canAccessModule("configuracoes") || canAccessModule("usuarios")
-                          : item.slug === "psicologia"
-                            ? canAccessModule("psicologia")
-                            : item.slug === "relatorios"
+                          : item.slug === "relatorios"
                               ? canAccessModule("relatorios")
                               : item.slug === "socio_torcedor"
                                 ? canAccessModule("socio_torcedor")
                                 : item.slug === "marketing"
-                                  ? canAccessModule("marketing")
+                                  ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                                   : false;
 
             if (!showGroup) return null;
@@ -174,19 +172,17 @@ export function Sidebar() {
                     ? admOpen
                     : item.slug === "futebol"
                       ? futebolOpen
-                      : item.slug === "ferramentas"
-                        ? ferramentasOpen
-                        : item.slug === "configuracoes"
-                          ? configOpen
-                          : item.slug === "psicologia"
-                            ? psicologiaOpen
-                            : item.slug === "relatorios"
-                              ? relatoriosOpen
-                              : item.slug === "socio_torcedor"
-                                ? socioOpen
-                                : item.slug === "marketing"
-                                  ? marketingOpen
-                                  : false;
+                    : item.slug === "ferramentas"
+                      ? ferramentasOpen
+                      : item.slug === "configuracoes"
+                        ? configOpen
+                        : item.slug === "relatorios"
+                          ? relatoriosOpen
+                          : item.slug === "socio_torcedor"
+                            ? socioOpen
+                            : item.slug === "marketing"
+                              ? marketingOpen
+                              : false;
             const setOpen =
               item.slug === "diretoria"
                 ? setDiretoriaOpen
@@ -196,19 +192,17 @@ export function Sidebar() {
                     ? setAdmOpen
                     : item.slug === "futebol"
                       ? setFutebolOpen
-                      : item.slug === "ferramentas"
-                        ? setFerramentasOpen
-                        : item.slug === "configuracoes"
-                          ? setConfigOpen
-                          : item.slug === "psicologia"
-                            ? setPsicologiaOpen
-                            : item.slug === "relatorios"
-                              ? setRelatoriosOpen
-                              : item.slug === "socio_torcedor"
-                                ? setSocioOpen
-                                : item.slug === "marketing"
-                                  ? setMarketingOpen
-                                  : () => {};
+                    : item.slug === "ferramentas"
+                      ? setFerramentasOpen
+                      : item.slug === "configuracoes"
+                        ? setConfigOpen
+                        : item.slug === "relatorios"
+                          ? setRelatoriosOpen
+                          : item.slug === "socio_torcedor"
+                            ? setSocioOpen
+                            : item.slug === "marketing"
+                              ? setMarketingOpen
+                              : () => {};
 
             return (
               <div key={item.slug} className="space-y-0.5">
