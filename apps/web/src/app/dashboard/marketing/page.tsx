@@ -114,7 +114,7 @@ function formatDateTime(iso: string | null): string {
 export default function MarketingPage() {
   const searchParams = useSearchParams();
   const tenantParam = searchParams.get("tenantId") ?? "";
-  const { canAccessModule, loading: authLoading } = useAuth();
+  const { canAccessModule, loading: authLoading, isSuperAdmin } = useAuth();
 
   const [posts, setPosts] = useState<MarketingPost[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -472,11 +472,31 @@ export default function MarketingPage() {
           </Card>
 
           <Card className="border-dashed border-amber-500/50 bg-amber-500/5">
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2 text-amber-600 dark:text-amber-500">Integração Meta</h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                Em breve: conectar contas do Facebook e Instagram para publicar automaticamente via Meta Business API.
+            <CardContent className="pt-6 space-y-3">
+              <h3 className="font-semibold text-amber-600 dark:text-amber-500">Integração Meta</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Conecte Facebook/Instagram via OAuth. Depois da autorização você volta para este planner.
+                Próximos passos no backend: salvar token por empresa e publicação automática.
               </p>
+              {searchParams.get("meta") === "ok" && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-500">
+                  Autorização com a Meta concluída (token de curta duração obtido no servidor).
+                </p>
+              )}
+              {searchParams.get("meta_err") && (
+                <p className="text-xs text-destructive break-words">
+                  {searchParams.get("meta_err")}
+                </p>
+              )}
+              {isSuperAdmin ? (
+                <Button asChild type="button" className="w-full sm:w-auto">
+                  <a href="/api/integration/meta/oauth/start">Conectar com a Meta</a>
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Só o super admin pode iniciar a conexão com a Meta nesta fase.
+                </p>
+              )}
             </CardContent>
           </Card>
           <Card>
