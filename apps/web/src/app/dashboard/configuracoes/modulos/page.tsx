@@ -83,7 +83,7 @@ interface ModuleTreeNode {
   depth: number;
 }
 
-/** Colunas institucionais na matriz: Gerente = tenant; Administrativo = operação; Saúde = médico + psicólogo (sempre juntos). */
+/** Colunas institucionais na matriz. Chaves de API inalteradas: `company_admin`, `editor`, etc. Saúde = médico + psicólogo (sempre juntos). */
 export type InstitutionMatrixCol =
   | "company_admin"
   | "editor"
@@ -95,19 +95,23 @@ export type InstitutionMatrixCol =
 const MATRIX_COLUMNS: readonly {
   id: InstitutionMatrixCol;
   shortLabel: string;
+  /** Linha opcional abaixo do título principal (synonyms: gerência, administrativo). */
+  matrixSubLabel?: string;
   hintLabel: string;
 }[] = [
   {
     id: "company_admin",
-    shortLabel: "Gerente",
+    shortLabel: "Company admin",
+    matrixSubLabel: "Gerência no tenant",
     hintLabel:
-      "Gestor(a) / administrador(a) da empresa ou clube (tenant): libera estruturas conforme marcações aqui.",
+      "Perfil company_admin: administrador da empresa ou clube no tenant; gestão e liberação estrutural (também chamado de gerência).",
   },
   {
     id: "editor",
-    shortLabel: "Administrativo",
+    shortLabel: "Editor",
+    matrixSubLabel: "Administrativo",
     hintLabel:
-      "Equipe administrativa e cadastros do dia a dia (produção, operação administrativa quando liberado).",
+      "Perfil editor: produção de conteúdo, cadastros e uso operacional do dia a dia quando esta coluna está marcada.",
   },
   {
     id: "analista",
@@ -151,8 +155,8 @@ function matrixCheckboxChecked(mod: ModulePermission, columnId: InstitutionMatri
 
 /** Papéis armazenados na API por módulo (auditoria e presets). */
 const AUDIT_ROLE_LABELS: Record<string, { short: string }> = {
-  company_admin: { short: "Gerente (tenant)" },
-  editor: { short: "Administrativo" },
+  company_admin: { short: "Company admin" },
+  editor: { short: "Editor" },
   analista: { short: "Analista" },
   diretoria: { short: "Diretoria" },
   medico: { short: "Médico" },
@@ -406,7 +410,7 @@ export default function ModulosPage() {
     }));
   }, [filteredRows]);
 
-  /** Marca/desmarca uma coluna (Gerente … Saúde) em todos os módulos visíveis desta área. */
+  /** Marca/desmarca uma coluna (Company admin, Editor … Saúde) em todos os módulos visíveis desta área. */
   const handleBulkArea = useCallback((areaKey: string, columnId: InstitutionMatrixCol, value: boolean) => {
     const slugs = filteredRows
       .filter((r) => (r.functionalArea || "outros") === areaKey)
@@ -801,14 +805,25 @@ export default function ModulosPage() {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-8 px-2 text-[11px] border-0 rounded-none border-e"
+                              className="h-auto min-h-[2rem] px-2 py-1 text-[11px] border-0 rounded-none border-e flex flex-col gap-0.5 items-start"
+                              title={
+                                col.matrixSubLabel
+                                  ? `${col.shortLabel} — ${col.matrixSubLabel}`
+                                  : `${col.shortLabel}: ${col.hintLabel}`
+                              }
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleBulkArea(area, col.id, true);
                               }}
                             >
-                              ✓ {col.shortLabel}
+                              <span className="flex items-center gap-1">
+                                <span aria-hidden>✓</span>
+                                <span className="leading-tight text-left">{col.shortLabel}</span>
+                              </span>
+                              {col.matrixSubLabel ? (
+                                <span className="text-[10px] text-muted-foreground leading-tight">{col.matrixSubLabel}</span>
+                              ) : null}
                             </Button>
                             <Button
                               type="button"
@@ -843,10 +858,15 @@ export default function ModulosPage() {
                             {MATRIX_COLUMNS.map((col) => (
                               <th
                                 key={col.id}
-                                className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[110px]"
+                                className="px-2 py-3 text-left align-top max-w-[118px]"
                                 title={col.hintLabel}
                               >
-                                {col.shortLabel}
+                                <span className="block text-xs font-medium text-foreground leading-snug">{col.shortLabel}</span>
+                                {col.matrixSubLabel ? (
+                                  <span className="block text-[10px] text-muted-foreground font-normal mt-0.5 leading-tight">
+                                    {col.matrixSubLabel}
+                                  </span>
+                                ) : null}
                               </th>
                             ))}
                           </tr>
@@ -871,7 +891,7 @@ export default function ModulosPage() {
                                       checked={matrixCheckboxChecked(mod, col.id)}
                                       onChange={(e) => handleToggle(m.slug, col.id, e.target.checked)}
                                       className="h-5 w-5 rounded-md border-input accent-primary cursor-pointer shrink-0"
-                                      aria-label={`${col.shortLabel}: ${MODULE_DISPLAY_NAMES[m.slug] ?? m.name}`}
+                                      aria-label={`${col.shortLabel}${col.matrixSubLabel ? ` (${col.matrixSubLabel})` : ""}: ${MODULE_DISPLAY_NAMES[m.slug] ?? m.name}`}
                                     />
                                   </td>
                                 ))}
