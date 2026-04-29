@@ -11,6 +11,8 @@ const DASHBOARD_ROLES = new Set([
   'super_admin',
   'company_admin',
   'editor',
+  'gerente',
+  'administrativo',
   'analista',
   'diretoria',
   'medico',

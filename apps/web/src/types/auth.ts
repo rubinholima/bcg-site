@@ -9,6 +9,8 @@ export type MeRole =
   | "super_admin"
   | "company_admin"
   | "editor"
+  | "gerente"
+  | "administrativo"
   | "analista"
   | "diretoria"
   | "medico"

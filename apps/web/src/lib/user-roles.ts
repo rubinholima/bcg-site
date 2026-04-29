@@ -5,6 +5,8 @@ export const USER_ROLES_ORDER: UserRole[] = [
   "super_admin",
   "company_admin",
   "editor",
+  "gerente",
+  "administrativo",
   "analista",
   "diretoria",
   "medico",

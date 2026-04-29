@@ -1,14 +1,9 @@
-import { IsArray, IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { USER_ROLES } from './update-role.dto';
+import type { UserRole as UpdateRoleUserRole } from './update-role.dto';
 
-export type UserRole =
-  | 'super_admin'
-  | 'company_admin'
-  | 'editor'
-  | 'analista'
-  | 'diretoria'
-  | 'medico'
-  | 'psicologo'
-  | 'user';
+/** Mesmo tipo que update-role ao alterar papel no PATCH de usuário. */
+export type UserRole = UpdateRoleUserRole;
 
 export class UpdateUserDto {
   @IsString()
@@ -19,7 +14,7 @@ export class UpdateUserDto {
   @IsOptional()
   email?: string;
 
-  @IsEnum(['super_admin', 'company_admin', 'editor', 'analista', 'diretoria', 'medico', 'psicologo', 'user'])
+  @IsIn([...USER_ROLES])
   @IsOptional()
   role?: UserRole;
 

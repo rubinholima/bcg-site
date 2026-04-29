@@ -14,6 +14,8 @@ export type PermissionsBody = Record<
   {
     company_admin?: boolean;
     editor?: boolean;
+    gerente?: boolean;
+    administrativo?: boolean;
     analista?: boolean;
     diretoria?: boolean;
     medico?: boolean;

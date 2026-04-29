@@ -13,7 +13,7 @@ model User {
   email        String   @unique
   name         String?
   passwordHash String?  // login próprio (bcrypt); null = só Cognito
-  role         String?  @default("editor") // super_admin | company_admin | editor | user
+  role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   /** Escopo de empresas/clubes: vazio = sem restrição (vê todas, exceto super_admin que ignora tabela). Com linhas = só esses tenants. */
@@ -306,7 +306,7 @@ model ModuleRole {
   id       String  @id @default(cuid())
   moduleId String
   module   Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  role     String  // super_admin | company_admin | editor
+  role     String  // super_admin | company_admin | editor | gerente | administrativo | …
   canAccess Boolean @default(true)
   @@unique([moduleId, role])
 }

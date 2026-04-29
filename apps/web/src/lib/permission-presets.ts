@@ -6,6 +6,8 @@
 export const MANAGED_ROLES = [
   "company_admin",
   "editor",
+  "gerente",
+  "administrativo",
   "analista",
   "diretoria",
   "medico",
@@ -21,6 +23,8 @@ export interface ModulePermissionRow {
   functionalArea?: string;
   company_admin: boolean;
   editor: boolean;
+  gerente: boolean;
+  administrativo: boolean;
   analista: boolean;
   diretoria: boolean;
   medico: boolean;
@@ -151,6 +155,8 @@ export function applyAdditivePreset(
       functionalArea: d.functionalArea,
       company_admin: b?.company_admin ?? false,
       editor: b?.editor ?? false,
+      gerente: b?.gerente ?? false,
+      administrativo: b?.administrativo ?? false,
       analista: b?.analista ?? false,
       diretoria: b?.diretoria ?? false,
       medico: b?.medico ?? false,
@@ -168,7 +174,7 @@ export function applyAdditivePreset(
   return out.sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-const EXPORT_SCHEMA_VERSION = 1 as const;
+const EXPORT_SCHEMA_VERSION = 2 as const;
 
 export function buildMatrixExportPayload(rows: ModulePermissionRow[]): {
   schemaVersion: typeof EXPORT_SCHEMA_VERSION;
@@ -180,6 +186,8 @@ export function buildMatrixExportPayload(rows: ModulePermissionRow[]): {
     permissions[m.slug] = {
       company_admin: m.company_admin,
       editor: m.editor,
+      gerente: m.gerente,
+      administrativo: m.administrativo,
       analista: m.analista,
       diretoria: m.diretoria,
       medico: m.medico,

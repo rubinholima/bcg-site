@@ -56,6 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data.role === "super_admin" ||
         data.role === "company_admin" ||
         data.role === "editor" ||
+        data.role === "gerente" ||
+        data.role === "administrativo" ||
         data.role === "analista" ||
         data.role === "diretoria" ||
         data.role === "medico" ||
@@ -132,6 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isSuperAdmin ||
     isCompanyAdmin ||
     isEditor ||
+    state.role === "gerente" ||
+    state.role === "administrativo" ||
     state.role === "analista" ||
     state.role === "diretoria" ||
     state.role === "medico" ||

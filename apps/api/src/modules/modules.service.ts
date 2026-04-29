@@ -5,6 +5,8 @@ import { PrismaService } from '../prisma/prisma.service';
 const MANAGED_ROLES = [
   'company_admin',
   'editor',
+  'gerente',
+  'administrativo',
   'analista',
   'diretoria',
   'medico',
@@ -20,6 +22,8 @@ export interface ModuleWithPermissions {
   functionalArea: string;
   company_admin: boolean;
   editor: boolean;
+  gerente: boolean;
+  administrativo: boolean;
   analista: boolean;
   diretoria: boolean;
   medico: boolean;
@@ -90,6 +94,8 @@ export class ModulesService {
       functionalArea: m.functionalArea,
       company_admin: getRoleAccess(m.roles, 'company_admin'),
       editor: getRoleAccess(m.roles, 'editor'),
+      gerente: getRoleAccess(m.roles, 'gerente'),
+      administrativo: getRoleAccess(m.roles, 'administrativo'),
       analista: getRoleAccess(m.roles, 'analista'),
       diretoria: getRoleAccess(m.roles, 'diretoria'),
       medico: getRoleAccess(m.roles, 'medico'),

@@ -32,6 +32,8 @@ const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Admin",
   company_admin: "Company Admin",
   editor: "Editor",
+  gerente: "Gerente",
+  administrativo: "Administrativo",
   analista: "Analista",
   diretoria: "Diretoria",
   medico: "Médico",
