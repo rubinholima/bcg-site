@@ -1,12 +1,29 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
 import { MODULE_DISPLAY_NAMES, DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 import {
@@ -16,6 +33,13 @@ import {
   type MenuItemConfig,
 } from "@/lib/dashboard-menu.config";
 import { getAreaMeta, sortAreaKeys } from "@/lib/module-functional-areas";
+import {
+  applyAdditivePreset,
+  buildMatrixExportPayload,
+  getPresetById,
+  PERMISSION_PRESETS,
+  type ModulePermissionRow,
+} from "@/lib/permission-presets";
 
 interface ModulePermission {
   slug: string;
@@ -36,12 +60,20 @@ interface DisplayRow extends Omit<ModulePermission, "functionalArea"> {
   path: string;
 }
 
+interface AuditChangeRow {
+  slug: string;
+  role: string;
+  from: boolean;
+  to: boolean;
+}
+
 interface AuditEntry {
   id: string;
   createdAt: string;
   actorSub: string;
   actorEmail: string | null;
   changeCount: number;
+  changes?: AuditChangeRow[];
 }
 
 interface ModuleTreeNode {
@@ -90,6 +122,53 @@ const ROLE_LABELS: Record<RoleKey, { short: string; hint: string }> = {
   },
 };
 
+function auditChangeLabel(row: AuditChangeRow): string {
+  const mod = MODULE_DISPLAY_NAMES[row.slug] ?? row.slug;
+  const rk = row.role as RoleKey;
+  const rl = ROLE_LABELS[rk]?.short ?? row.role;
+  return `${mod} (${rl}): ${row.from ? "ativo" : "inativo"} → ${row.to ? "ativo" : "inativo"}`;
+}
+
+function buildPermissionsPayload(
+  displayRows: DisplayRow[],
+  modulesState: ModulePermission[],
+): Record<
+  string,
+  {
+    company_admin: boolean;
+    editor: boolean;
+    analista: boolean;
+    diretoria: boolean;
+    medico: boolean;
+    psicologo: boolean;
+  }
+> {
+  const map = new Map(modulesState.map((m) => [m.slug, m]));
+  const out: Record<
+    string,
+    {
+      company_admin: boolean;
+      editor: boolean;
+      analista: boolean;
+      diretoria: boolean;
+      medico: boolean;
+      psicologo: boolean;
+    }
+  > = {};
+  for (const d of displayRows) {
+    const mod = map.get(d.slug);
+    out[d.slug] = {
+      company_admin: mod?.company_admin ?? d.company_admin,
+      editor: mod?.editor ?? d.editor,
+      analista: mod?.analista ?? d.analista,
+      diretoria: mod?.diretoria ?? d.diretoria,
+      medico: mod?.medico ?? d.medico,
+      psicologo: mod?.psicologo ?? d.psicologo,
+    };
+  }
+  return out;
+}
+
 export default function ModulosPage() {
   const router = useRouter();
   const { isSuperAdmin, loading: authLoading } = useAuth();
@@ -102,6 +181,20 @@ export default function ModulosPage() {
   const [search, setSearch] = useState("");
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [presetId, setPresetId] = useState<string>("");
+  const [presetDialogOpen, setPresetDialogOpen] = useState(false);
+  const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
+
+  const refreshAudit = useCallback(async () => {
+    try {
+      const res = await fetch("/api/settings/modules/audit?details=1", { credentials: "include" });
+      if (!res.ok) return;
+      const data = (await res.json()) as { entries?: AuditEntry[] };
+      if (data.entries) setAuditEntries(data.entries);
+    } catch {
+      /* ignora falha opcional em auditoria */
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !isSuperAdmin) {
@@ -134,21 +227,13 @@ export default function ModulosPage() {
   useEffect(() => {
     if (!isSuperAdmin) return;
     let cancelled = false;
-    fetch("/api/settings/modules/audit", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { entries?: AuditEntry[] } | null) => {
-        if (!cancelled && data?.entries) setAuditEntries(data.entries);
-      })
-      .catch(() => {
-        /* auditoria opcional */
-      })
-      .finally(() => {
-        if (!cancelled) setAuditLoading(false);
-      });
+    refreshAudit().finally(() => {
+      if (!cancelled) setAuditLoading(false);
+    });
     return () => {
       cancelled = true;
     };
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, refreshAudit]);
 
   /** Ordem igual à sidebar/menu. */
   const moduleTree = useMemo(() => {
@@ -220,6 +305,34 @@ export default function ModulosPage() {
       };
     });
   }, [modules, moduleTree]);
+
+  /** Estado efetivo da matriz (API + edição local); usado para salvar, exportar e presets. */
+  const mergedModuleState = useMemo<ModulePermission[]>(
+    () =>
+      displayModules.map((d) => ({
+        slug: d.slug,
+        name: MODULE_DISPLAY_NAMES[d.slug] ?? d.name,
+        sortOrder: d.sortOrder,
+        functionalArea: d.functionalArea,
+        company_admin: d.company_admin,
+        editor: d.editor,
+        analista: d.analista,
+        diretoria: d.diretoria,
+        medico: d.medico,
+        psicologo: d.psicologo,
+      })),
+    [displayModules],
+  );
+
+  const roleActivatedCounts = useMemo(
+    () =>
+      ROLE_KEYS.map((role) => ({
+        role,
+        label: ROLE_LABELS[role].short,
+        count: mergedModuleState.filter((m) => m[role]).length,
+      })),
+    [mergedModuleState],
+  );
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -309,33 +422,75 @@ export default function ModulosPage() {
     setSaveBanner(null);
   };
 
+  const handleExportSnapshot = useCallback(() => {
+    const payload = buildMatrixExportPayload(mergedModuleState as ModulePermissionRow[]);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `bcg-matriz-permissoes-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setSaveBanner("Exportação JSON gerada (backup / compliance). Mantenha o arquivo sob controle.");
+  }, [mergedModuleState]);
+
+  const runApplyPreset = useCallback(async () => {
+    const preset = getPresetById(presetId);
+    if (!preset || !mergedModuleState.length || !displayModules.length) {
+      setPresetDialogOpen(false);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setSaveBanner(null);
+    try {
+      const next = applyAdditivePreset(
+        displayModules.map((d) => ({
+          slug: d.slug,
+          sortOrder: d.sortOrder,
+          functionalArea: d.functionalArea,
+          name: MODULE_DISPLAY_NAMES[d.slug] ?? d.name,
+        })),
+        mergedModuleState as ModulePermissionRow[],
+        preset.grants,
+      );
+      const permissions = buildPermissionsPayload(displayModules, next as ModulePermission[]);
+      const res = await fetch("/api/settings/modules", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permissions }),
+      });
+      if (!res.ok) throw new Error(await res.text().catch(() => "Erro ao aplicar modelo"));
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; changedCells?: number };
+      setModules(next as ModulePermission[]);
+      setDirty(false);
+      if (typeof data.changedCells === "number") {
+        setSaveBanner(
+          data.changedCells > 0
+            ? `Modelo “${preset.title}”: ${data.changedCells} célula(s) gravada(s); auditoria atualizada.`
+            : `Modelo “${preset.title}”: nada a alterar vs. servidor (já igual).`,
+        );
+      } else {
+        setSaveBanner(`Modelo “${preset.title}” gravado no servidor.`);
+      }
+      await refreshAudit();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao aplicar modelo");
+    } finally {
+      setSaving(false);
+      setPresetDialogOpen(false);
+    }
+  }, [presetId, mergedModuleState, displayModules, refreshAudit]);
+
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     setSaveBanner(null);
     try {
-      const permissions: Record<
-        string,
-        {
-          company_admin: boolean;
-          editor: boolean;
-          analista: boolean;
-          diretoria: boolean;
-          medico: boolean;
-          psicologo: boolean;
-        }
-      > = {};
-      for (const m of displayModules) {
-        const mod = modules.find((x) => x.slug === m.slug);
-        permissions[m.slug] = {
-          company_admin: mod?.company_admin ?? m.company_admin,
-          editor: mod?.editor ?? m.editor,
-          analista: mod?.analista ?? m.analista,
-          diretoria: mod?.diretoria ?? m.diretoria,
-          medico: mod?.medico ?? m.medico,
-          psicologo: mod?.psicologo ?? m.psicologo,
-        };
-      }
+      const permissions = buildPermissionsPayload(displayModules, mergedModuleState);
       const res = await fetch("/api/settings/modules", {
         method: "PATCH",
         credentials: "include",
@@ -352,10 +507,7 @@ export default function ModulosPage() {
           setSaveBanner("Nenhuma alteração efetiva — valores já iguais ao servidor.");
         }
       } else setSaveBanner("Alterações gravadas.");
-      const aud = await fetch("/api/settings/modules/audit", { credentials: "include" })
-        .then((r) => (r.ok ? r.json() : null))
-        .catch(() => null);
-      if (aud?.entries) setAuditEntries(aud.entries);
+      await refreshAudit();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
@@ -417,6 +569,82 @@ export default function ModulosPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
+        )}
+        {saveBanner && (
+          <div className="rounded-md border border-green-700/40 bg-green-950/35 p-3 text-sm text-green-100">
+            {saveBanner}
+          </div>
+        )}
+
+        <Card className="border-dashed">
+          <CardHeader>
+            <CardTitle className="text-lg">Modelos prontos e exportação institucional</CardTitle>
+            <CardDescription>
+              Modelos <strong>somam</strong> permissões nas células indicadas (marcam ligado); não eliminam acessos que
+              você já concedeu antes. Combine com revisão área por área abaixo. Export JSON para arquivo interno /
+              evidência documental — não inclui dados de usuários, só políticas por módulo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+              <div className="flex-1 min-w-0 max-w-xl space-y-2">
+                <span className="text-sm font-medium text-foreground">Modelo institucional</span>
+                <Select
+                  value={presetId || "__unset"}
+                  onValueChange={(v) => setPresetId(v === "__unset" ? "" : v)}
+                >
+                  <SelectTrigger className="w-full text-foreground">
+                    <SelectValue placeholder="Selecionar modelo…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__unset">Selecionar…</SelectItem>
+                    {PERMISSION_PRESETS.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {presetId && getPresetById(presetId) && (
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {getPresetById(presetId)!.description}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={!presetId || saving}
+                  onClick={() => presetId && setPresetDialogOpen(true)}
+                >
+                  Aplicar modelo no servidor
+                </Button>
+                <Button type="button" variant="outline" onClick={handleExportSnapshot} disabled={saving}>
+                  <Download className="h-4 w-4 mr-2" aria-hidden />
+                  Exportar JSON
+                </Button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1 border-t border-border/60">
+              <span className="text-xs text-muted-foreground w-full sm:w-auto sm:mr-2">
+                Módulos com pelo menos um acesso ativo (visão atual):
+              </span>
+              {roleActivatedCounts.map(({ role, label, count }) => (
+                <span
+                  key={role}
+                  className="text-xs px-2.5 py-1 rounded-md bg-muted text-foreground/90"
+                  title={ROLE_LABELS[role].hint}
+                >
+                  {label}: <strong className="font-semibold">{count}</strong>
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Matriz por área funcional</CardTitle>
@@ -426,15 +654,6 @@ export default function ModulosPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
-            )}
-            {saveBanner && (
-              <div className="rounded-md border border-green-700/40 bg-green-950/35 p-3 text-sm text-green-100">
-                {saveBanner}
-              </div>
-            )}
-
             {loading ? (
               <p className="text-muted-foreground py-8">Carregando módulos...</p>
             ) : (
@@ -586,6 +805,7 @@ export default function ModulosPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/40">
+                      <th className="w-10 px-2 py-2" aria-label="Detalhar" />
                       <th className="px-3 py-2 text-left font-medium">Data (UTC)</th>
                       <th className="px-3 py-2 text-left font-medium">E-mail</th>
                       <th className="px-3 py-2 text-left font-medium">Células alteradas</th>
@@ -593,15 +813,55 @@ export default function ModulosPage() {
                   </thead>
                   <tbody>
                     {auditEntries.slice(0, 15).map((e) => (
-                      <tr key={e.id} className="border-b last:border-b-0">
-                        <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
-                          {new Date(e.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
-                        </td>
-                        <td className="px-3 py-2 max-w-[200px] truncate" title={e.actorEmail ?? e.actorSub}>
-                          {e.actorEmail ?? "(sem e-mail)"}
-                        </td>
-                        <td className="px-3 py-2">{e.changeCount}</td>
-                      </tr>
+                      <Fragment key={e.id}>
+                        <tr className="border-b last:border-b-0 hover:bg-muted/20">
+                          <td className="px-2 py-1 align-middle w-10">
+                            <button
+                              type="button"
+                              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted"
+                              aria-expanded={expandedAuditId === e.id}
+                              aria-label={expandedAuditId === e.id ? "Ocultar detalhes da alteração" : "Ver detalhes"}
+                              onClick={() =>
+                                setExpandedAuditId((id) =>
+                                  id === e.id ? null : e.id,
+                                )
+                              }
+                            >
+                              {expandedAuditId === e.id ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </button>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
+                            {new Date(e.createdAt).toLocaleString("pt-BR", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            })}
+                          </td>
+                          <td className="px-3 py-2 max-w-[200px] truncate" title={e.actorEmail ?? e.actorSub}>
+                            {e.actorEmail ?? "(sem e-mail)"}
+                          </td>
+                          <td className="px-3 py-2">{e.changeCount}</td>
+                        </tr>
+                        {expandedAuditId === e.id &&
+                          e.changes &&
+                          e.changes.length > 0 && (
+                            <tr className="border-b bg-muted/15">
+                              <td colSpan={4} className="px-4 py-3 text-xs leading-relaxed text-muted-foreground">
+                                <span className="font-medium text-foreground block mb-2">Alterações gravadas neste pacote:</span>
+                                <ul className="list-disc pl-5 space-y-1 max-h-48 overflow-y-auto">
+                                  {e.changes.map((c, i) => (
+                                    <li key={`${e.id}-${i}-${c.slug}-${c.role}`}>
+                                      {auditChangeLabel(c)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </td>
+                            </tr>
+                          )}
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -609,6 +869,40 @@ export default function ModulosPage() {
             )}
           </CardContent>
         </Card>
+
+        <AlertDialog open={presetDialogOpen} onOpenChange={(open) => !saving && setPresetDialogOpen(open)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar modelo no servidor</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm text-muted-foreground text-left pt-2">
+                  <p>
+                    O modelo apenas <strong>liga permissões novas</strong> onde indicado. Permissões que já existiam
+                    continuam ligadas até você desmarcá-las na matriz acima.
+                  </p>
+                  {presetId && getPresetById(presetId) && (
+                    <p className="text-foreground/90">{getPresetById(presetId)!.description}</p>
+                  )}
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel type="button" disabled={saving}>
+                Cancelar
+              </AlertDialogCancel>
+              <AlertDialogAction
+                type="button"
+                disabled={saving}
+                onClick={(ev) => {
+                  ev.preventDefault();
+                  void runApplyPreset();
+                }}
+              >
+                {saving ? "Gravando…" : "Aplicar e gravar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

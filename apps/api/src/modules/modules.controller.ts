@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Req, Query, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { CognitoJwtPayload, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SuperAdminGuard } from '../auth/super-admin.guard';
 import {
   computeMatrixChanges,
+  MatrixChangeRow,
   ModulesService,
   ModuleWithPermissions,
 } from './modules.service';
@@ -27,16 +28,20 @@ export class ModulesController {
 
   /** Histórico de alterações na matriz (somente auditoria — não interfere em autorização). */
   @Get('audit')
-  async getAuditHistory(): Promise<{
+  async getAuditHistory(
+    @Query('details') details?: string,
+  ): Promise<{
     entries: Array<{
       id: string;
       createdAt: string;
       actorSub: string;
       actorEmail: string | null;
       changeCount: number;
+      changes?: MatrixChangeRow[];
     }>;
   }> {
-    const entries = await this.modulesService.getRecentAuditEntries(40);
+    const includeChanges = details === '1' || details === 'true';
+    const entries = await this.modulesService.getRecentAuditEntries(40, { includeChanges });
     return {
       entries: entries.map((e) => ({
         id: e.id,
@@ -44,6 +49,7 @@ export class ModulesController {
         actorEmail: e.actorEmail,
         changeCount: e.changeCount,
         createdAt: e.createdAt.toISOString(),
+        ...(includeChanges && e.changes ? { changes: e.changes } : {}),
       })),
     };
   }

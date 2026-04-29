@@ -107,28 +107,35 @@ export class ModulesService {
   }
 
   /** Últimas alterações na matriz de permissões. */
-  async getRecentAuditEntries(limit = 50): Promise<
+  async getRecentAuditEntries(
+    limit = 50,
+    options?: { includeChanges?: boolean },
+  ): Promise<
     Array<{
       id: string;
       createdAt: Date;
       actorSub: string;
       actorEmail: string | null;
       changeCount: number;
+      changes?: MatrixChangeRow[];
     }>
   > {
     const rows = await this.prisma.permissionMatrixAudit.findMany({
       orderBy: { createdAt: 'desc' },
       take: Math.min(limit, 100),
     });
-    return rows.map((r) => ({
-      id: r.id,
-      createdAt: r.createdAt,
-      actorSub: r.actorSub,
-      actorEmail: r.actorEmail,
-      changeCount: Array.isArray(r.changes as unknown[])
-        ? (r.changes as unknown[]).length
-        : 0,
-    }));
+    return rows.map((r) => {
+      const raw = r.changes;
+      const list = Array.isArray(raw) ? (raw as unknown as MatrixChangeRow[]) : [];
+      return {
+        id: r.id,
+        createdAt: r.createdAt,
+        actorSub: r.actorSub,
+        actorEmail: r.actorEmail,
+        changeCount: list.length,
+        changes: options?.includeChanges ? list : undefined,
+      };
+    });
   }
 
   async insertAudit(actorSub: string, actorEmail: string | undefined, changes: MatrixChangeRow[]): Promise<void> {
