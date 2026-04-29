@@ -1,12 +1,52 @@
-import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
+import { CognitoJwtPayload, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SuperAdminGuard } from '../auth/super-admin.guard';
-import { ModulesService, ModuleWithPermissions } from './modules.service';
+import {
+  computeMatrixChanges,
+  ModulesService,
+  ModuleWithPermissions,
+} from './modules.service';
+
+export type PermissionsBody = Record<
+  string,
+  {
+    company_admin?: boolean;
+    editor?: boolean;
+    analista?: boolean;
+    diretoria?: boolean;
+    medico?: boolean;
+    psicologo?: boolean;
+  }
+>;
 
 @Controller('settings/modules')
 @UseGuards(JwtAuthGuard, SuperAdminGuard)
 export class ModulesController {
   constructor(private readonly modulesService: ModulesService) {}
+
+  /** Histórico de alterações na matriz (somente auditoria — não interfere em autorização). */
+  @Get('audit')
+  async getAuditHistory(): Promise<{
+    entries: Array<{
+      id: string;
+      createdAt: string;
+      actorSub: string;
+      actorEmail: string | null;
+      changeCount: number;
+    }>;
+  }> {
+    const entries = await this.modulesService.getRecentAuditEntries(40);
+    return {
+      entries: entries.map((e) => ({
+        id: e.id,
+        actorSub: e.actorSub,
+        actorEmail: e.actorEmail,
+        changeCount: e.changeCount,
+        createdAt: e.createdAt.toISOString(),
+      })),
+    };
+  }
 
   @Get()
   async getAll(): Promise<ModuleWithPermissions[]> {
@@ -15,22 +55,19 @@ export class ModulesController {
 
   @Patch()
   async updatePermissions(
-    @Body()
-    body: {
-      permissions: Record<
-        string,
-        {
-          company_admin?: boolean;
-          editor?: boolean;
-          analista?: boolean;
-          diretoria?: boolean;
-          medico?: boolean;
-          psicologo?: boolean;
-        }
-      >;
-    },
-  ): Promise<{ ok: boolean }> {
-    await this.modulesService.updatePermissions(body.permissions ?? {});
-    return { ok: true };
+    @Req() req: Request & { user?: CognitoJwtPayload },
+    @Body() body: { permissions: PermissionsBody },
+  ): Promise<{ ok: boolean; changedCells?: number }> {
+    const permissions = body.permissions ?? {};
+    const touched = new Set(Object.keys(permissions));
+    const before = await this.modulesService.getAllWithPermissions();
+    await this.modulesService.updatePermissions(permissions);
+    const after = await this.modulesService.getAllWithPermissions();
+    const changes = computeMatrixChanges(before, after, touched);
+    const user = req.user;
+    if (user?.sub && changes.length) {
+      await this.modulesService.insertAudit(user.sub, user.email, changes);
+    }
+    return { ok: true, changedCells: changes.length };
   }
 }

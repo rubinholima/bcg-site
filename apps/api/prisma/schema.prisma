@@ -280,11 +280,25 @@ model MediaMeta {
 
 // Módulos do dashboard (Grupo Master, Empresas, Usuários, etc.)
 model Module {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  sortOrder Int      @default(0)
-  roles     ModuleRole[]
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  sortOrder       Int      @default(0)
+  /// Agrupamento lógico na UI de permissões (Configurações → Módulos). Chave estável: estrategico, empresa_usuarios, etc.
+  functionalArea  String   @default("outros")
+  roles           ModuleRole[]
+  @@index([functionalArea])
+}
+
+/// Auditoria de alterações na matriz de permissões (super admin). Não altera o modelo de autorização em runtime.
+model PermissionMatrixAudit {
+  id          String   @id @default(cuid())
+  actorSub    String
+  actorEmail  String?
+  createdAt   DateTime @default(now())
+  /// Lista de mudanças: [{ slug, role, from, to }]
+  changes     Json
+  @@index([createdAt])
 }
 
 // Quais roles podem acessar cada módulo (super_admin sempre pode)
