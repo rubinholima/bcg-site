@@ -32,6 +32,45 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 29 DE ABRIL DE 2026 — ENCERRAMENTO (Planner Marketing: Meta Facebook + Instagram, agendamento real, imagens no padrão media-url)
+
+## **O QUE FOI FEITO**
+
+1. **Publicação Meta na mesma implementação (FB + IG)**
+   - `MetaOAuthService.publishMarketingPostScheduled`: lê `platforms` do post; publica na **Página** (feed com texto ou `/photos` com imagem pública + legenda) e no **Instagram** (`/{ig-user-id}/media` + `media_publish`) quando a Página tem **Instagram Business** vinculado.
+   - URL de imagem para a Graph API via **`graphPublicImageUrl`** (domínio oficial, `key=` em query, S3 BCG, `META_IMAGE_PUBLIC_ORIGIN`); Instagram exige imagem HTTPS pública.
+   - `externalIds` parciais (ex.: só Facebook) e `notes` com erros por plataforma; status `published` / `failed` conforme resultado.
+
+2. **Agendamento real (cron)**
+   - Dependência **`@nestjs/schedule`**; **`ScheduleModule.forRoot()`** no `AppModule`.
+   - **`MarketingSchedulerService`**: a cada minuto busca `MarketingPost` com `status: scheduled` e `scheduledAt <= now`, chama `publishMarketingPostScheduled`; **ignora** itens só com LinkedIn (sem Meta). Desligar com **`META_SCHEDULER_DISABLED=1`** se várias instâncias da API sem lock.
+
+3. **Rota “publicar agora”**
+   - `POST .../publish-facebook` passa a exigir Facebook e/ou Instagram marcados e delega ao mesmo fluxo `publishMarketingPostScheduled` (sem divergir do cron).
+
+4. **Dashboard Marketing — miniaturas das imagens**
+   - Alinhado ao padrão do diário em **`media-url.ts`**: `resolvePublicMediaUrlForDisplay` → `resolveMediaUrlWithProxyFallback` → `getPublicImageUrl` (função local `plannerMediaThumbSrc` em `marketing/page.tsx`).
+
+5. **Build**
+   - `pnpm build` na raiz executado com sucesso antes do commit da feature.
+
+## **ARQUIVOS ENVOLVIDOS (PRINCIPAIS)**
+
+**API:** `apps/api/package.json`, `pnpm-lock.yaml`, `apps/api/src/app.module.ts`, `apps/api/src/integrations/meta/meta-oauth.service.ts`, `apps/api/src/marketing/marketing.module.ts`, `apps/api/src/marketing/marketing-scheduler.service.ts` (novo).
+
+**Web:** `apps/web/src/app/dashboard/marketing/page.tsx`.
+
+## **FECHAMENTO (GIT)**
+
+- **Branch:** develop
+- **`b543118` —** `marketing: agendamento Meta (FB/IG), ScheduleModule e miniaturas via media-url` (código + lockfile)
+- **`docs/` —** entrada **29 abril 2026** (este arquivo) incluída no mesmo push para `develop`
+- **Push:** ✅ commits da feature + documentação para `origin/develop`
+- **Build:** `pnpm build` na raiz ok antes do push do encerramento
+- **Não versionados (locais):** `backup_clean.sql`, `temp_legal_orig.txt`
+
+---
+
 # 📅 9 DE ABRIL DE 2026 — ENCERRAMENTO (Diretoria + Omie: fluxo de caixa, compras por mês, credenciais por tenant)
 
 ## **O QUE FOI FEITO**
