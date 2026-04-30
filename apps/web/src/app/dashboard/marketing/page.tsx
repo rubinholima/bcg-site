@@ -478,6 +478,20 @@ export default function MarketingPage() {
                 Conecte Facebook/Instagram via OAuth. Depois da autorização você volta para este planner.
                 Próximos passos no backend: salvar token por empresa e publicação automática.
               </p>
+              <p className="text-xs text-amber-700/90 dark:text-amber-400/90 leading-relaxed rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
+                Na tela do Facebook use o mesmo <strong className="font-medium">e-mail ou celular cadastrados na sua conta Meta</strong> — não é o mesmo do login do site BCG. Se o Chrome sugerir e-mails corporativos (@bostoncitygroup.biz), ignore e digite manualmente o que você usa em{" "}
+                <strong className="font-medium">facebook.com</strong>. A mensagem “informações de login incorretas” vem do Facebook (validação de senha/conta), não da nossa API.
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Autorização no app da Meta</strong> (docs: fluxo manual OAuth): em{" "}
+                <strong className="font-medium">Configurações → Básico</strong>, em <strong className="font-medium">Domínios do app</strong> inclua{" "}
+                <code className="text-[11px]">bostoncitygroup.biz</code>; em <strong className="font-medium">Plataforma → Site</strong>, defina a URL do site em{" "}
+                <code className="text-[11px]">https://www.bostoncitygroup.biz</code>. Em{" "}
+                <strong className="font-medium">Produtos → Login do Facebook → Configurações</strong>, mantenha{" "}
+                <strong className="font-medium">Login OAuth do cliente</strong> e <strong className="font-medium">Login OAuth na Web</strong> ativos e cadastre em{" "}
+                <strong className="font-medium">URIs de redirecionamento OAuth válidos</strong> exatamente a mesma URL do servidor{" "}
+                <code className="text-[11px]">META_OAUTH_REDIRECT_URI</code> (inclui <code className="text-[11px]">www</code> e caminho iguais).
+              </p>
               {searchParams.get("meta") === "ok" && (
                 <p className="text-xs text-emerald-600 dark:text-emerald-500">
                   Autorização com a Meta concluída (token de curta duração obtido no servidor).
@@ -490,7 +504,9 @@ export default function MarketingPage() {
               )}
               {isSuperAdmin ? (
                 <Button asChild type="button" className="w-full sm:w-auto">
-                  <a href="/api/integration/meta/oauth/start">Conectar com a Meta</a>
+                  <a href="/api/integration/meta/oauth/start" rel="noopener noreferrer">
+                    Conectar com a Meta
+                  </a>
                 </Button>
               ) : (
                 <p className="text-xs text-muted-foreground">

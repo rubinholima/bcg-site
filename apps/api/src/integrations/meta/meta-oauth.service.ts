@@ -2,8 +2,15 @@ import { BadRequestException, ServiceUnavailableException } from '@nestjs/common
 import * as jwt from 'jsonwebtoken';
 import type { CognitoJwtPayload } from '../../auth/jwt-auth.guard';
 
-const FB_DIALOG = 'https://www.facebook.com/v22.0/dialog/oauth';
-const GRAPH_TOKEN = 'https://graph.facebook.com/v22.0/oauth/access_token';
+/** Mesma versão no diálogo e na troca de token (manual: facebook-login/guides/advanced/manual-flow). */
+function graphVersions(): { dialogUrl: string; tokenUrl: string } {
+  const v = process.env.META_GRAPH_API_VERSION?.trim() || 'v22.0';
+  const ver = /^v\d+(\.\d+)?$/.test(v) ? v : 'v22.0';
+  return {
+    dialogUrl: `https://www.facebook.com/${ver}/dialog/oauth`,
+    tokenUrl: `https://graph.facebook.com/${ver}/oauth/access_token`,
+  };
+}
 
 /** Emails básicos para o primeiro passo; aumente os escopos quando for publicar nas Páginas/IG (revisão Meta). */
 const DEFAULT_SCOPES = 'public_profile,email';
@@ -62,7 +69,8 @@ export class MetaOAuthService {
       response_type: 'code',
       scope: scopes,
     });
-    return `${FB_DIALOG}?${params.toString()}`;
+    const { dialogUrl } = graphVersions();
+    return `${dialogUrl}?${params.toString()}`;
   }
 
   verifyState(state: string): jwt.JwtPayload {
@@ -86,7 +94,8 @@ export class MetaOAuthService {
       client_secret: this.appSecret,
       code,
     });
-    const url = `${GRAPH_TOKEN}?${params.toString()}`;
+    const { tokenUrl } = graphVersions();
+    const url = `${tokenUrl}?${params.toString()}`;
     const res = await fetch(url, { method: 'GET' });
     const data = (await res.json()) as { access_token?: string; error?: unknown };
     if (!res.ok || !data.access_token) {
