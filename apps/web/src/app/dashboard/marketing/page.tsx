@@ -32,8 +32,21 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { getPublicImageUrl } from "@/lib/media-url";
+import {
+  getPublicImageUrl,
+  resolveMediaUrlWithProxyFallback,
+  resolvePublicMediaUrlForDisplay,
+} from "@/lib/media-url";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+
+function plannerMediaThumbSrc(raw: string): string {
+  return (
+    resolvePublicMediaUrlForDisplay(raw) ||
+    resolveMediaUrlWithProxyFallback(raw) ||
+    getPublicImageUrl(raw) ||
+    raw
+  );
+}
 
 interface Tenant {
   id: string;
@@ -598,7 +611,7 @@ export default function MarketingPage() {
                 {formData.imageUrls.map((url, idx) => (
                   <div key={idx} className="relative group">
                     <img
-                      src={getPublicImageUrl(url) || url}
+                      src={plannerMediaThumbSrc(url)}
                       alt=""
                       className="w-20 h-20 object-cover rounded border"
                     />

@@ -29,6 +29,54 @@ interface MetaUserConnectionConfig {
 /** Emails básicos para o primeiro passo; escopos extras exigem revisão Meta para publicar em Páginas. */
 const DEFAULT_SCOPES = 'public_profile,email';
 
+/** URL HTTPS pública para a Meta baixar a imagem (IG exige). Use META_IMAGE_PUBLIC_ORIGIN se diferente do site. */
+export function graphPublicImageUrl(raw: string): string | null {
+  const t = typeof raw === 'string' ? raw.trim() : '';
+  if (!t) return null;
+  const origin =
+    process.env.META_IMAGE_PUBLIC_ORIGIN?.trim().replace(/\/$/, '') ?? 'https://www.bostoncitygroup.biz';
+
+  if (/^https:\/\/bcg-platform-assets\.s3[a-z0-9.-]*\.amazonaws\.com\//i.test(t)) return t;
+
+  try {
+    const qi = t.indexOf('?');
+    if (qi !== -1 && t.includes('key=')) {
+      const params = new URLSearchParams(t.slice(qi + 1));
+      const key = params.get('key');
+      if (key) {
+        const k = decodeURIComponent(key).trim();
+        if (k.startsWith('media/') || k.startsWith('logos/')) return `${origin}/${k}`;
+      }
+    }
+  } catch {
+    /* continua */
+  }
+
+  try {
+    if (/^https:\/\//i.test(t)) {
+      const u = new URL(t);
+      const host = u.hostname.toLowerCase();
+      if (host === 'www.bostoncitygroup.biz' || host === 'bostoncitygroup.biz')
+        return `${origin}${u.pathname}${u.search}`;
+      if (/amazonaws\.com$/i.test(host)) return t;
+      if (/facebook\.com|fbcdn\.net/i.test(host)) return t;
+      return t;
+    }
+  } catch {
+    return null;
+  }
+
+  const pathish = t.replace(/^\/+/, '');
+  if (
+    pathish.startsWith('media/') ||
+    pathish.startsWith('logos/')
+  )
+    return `${origin}/${pathish}`;
+
+  if (/amazonaws\.com/i.test(t) && (t.includes('/media/') || t.includes('/logos/'))) return t;
+  return null;
+}
+
 @Injectable()
 export class MetaOAuthService {
   constructor(private readonly prisma: PrismaService) {}
@@ -230,46 +278,179 @@ export class MetaOAuthService {
     return { pageId: pick.id, accessToken: pick.access_token };
   }
 
-  /** Publica texto (e link opcional da primeira imagem) no feed da Página. */
-  async publishMarketingPostToFacebook(postId: string): Promise<{ postId: string; pageId: string }> {
+  private async getInstagramBusinessUserId(
+    pageId: string,
+    pageAccessToken: string,
+  ): Promise<string | null> {
+    const { graphBase } = graphVersions();
+    const url = `${graphBase}/${encodeURIComponent(pageId)}?fields=instagram_business_account&access_token=${encodeURIComponent(pageAccessToken)}`;
+    const res = await fetch(url, { method: 'GET' });
+    const data = (await res.json()) as {
+      instagram_business_account?: { id: string };
+      error?: { message?: string };
+    };
+    if (!res.ok || data.error) return null;
+    return data.instagram_business_account?.id ?? null;
+  }
+
+  /**
+   * Publicação manual ou agendada: Facebook e/ou Instagram conforme `platforms` do post.
+   */
+  async publishMarketingPostScheduled(postId: string): Promise<{
+    facebook?: string;
+    instagram?: string;
+    errors: string[];
+  }> {
     const post = await this.prisma.marketingPost.findUnique({ where: { id: postId } });
     if (!post) throw new BadRequestException('Postagem não encontrada.');
 
+    const platforms = (Array.isArray(post.platforms) ? post.platforms : []) as string[];
+    const want = new Set(platforms.map((p) => String(p).toLowerCase()));
+    if (!want.has('facebook') && !want.has('instagram')) {
+      return { errors: [] };
+    }
+
+    const ext = { ...((post.externalIds as Record<string, string> | null) ?? {}) };
+    const errors: string[] = [];
+
     const { pageId, accessToken } = await this.resolvePageAccessToken();
+    const { graphBase } = graphVersions();
 
     const parts = [post.title?.trim(), post.content?.trim()].filter(Boolean);
     const message = parts.join('\n\n').slice(0, 8000);
     const imageUrls = (post.imageUrls as string[] | null) ?? [];
-    const firstImg = typeof imageUrls[0] === 'string' ? imageUrls[0].trim() : '';
+    const firstRaw = typeof imageUrls[0] === 'string' ? imageUrls[0].trim() : '';
+    const publicImage = firstRaw ? graphPublicImageUrl(firstRaw) : null;
 
-    const body = new URLSearchParams();
-    body.set('access_token', accessToken);
-    body.set('message', message);
-    if (firstImg) body.set('link', firstImg);
-
-    const { graphBase } = graphVersions();
-    const url = `${graphBase}/${encodeURIComponent(pageId)}/feed`;
-    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
-    const j = (await res.json()) as { id?: string; error?: { message?: string } };
-
-    if (!res.ok || !j.id || j.error) {
-      throw new BadRequestException(
-        j.error?.message ?? 'Falha ao publicar no Facebook. Confira permissões e reconexão Meta.',
-      );
+    if (want.has('facebook') && !ext.facebook) {
+      try {
+        if (publicImage) {
+          const body = new URLSearchParams();
+          body.set('access_token', accessToken);
+          body.set('url', publicImage);
+          body.set('published', 'true');
+          if (message) body.set('caption', message.slice(0, 8000));
+          const res = await fetch(`${graphBase}/${encodeURIComponent(pageId)}/photos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+          });
+          const j = (await res.json()) as { id?: string; error?: { message?: string } };
+          if (!res.ok || !j.id || j.error) {
+            throw new Error(j.error?.message ?? 'Falha ao publicar foto na Página.');
+          }
+          ext.facebook = j.id;
+        } else {
+          const body = new URLSearchParams();
+          body.set('access_token', accessToken);
+          body.set('message', message || ' ');
+          const res = await fetch(`${graphBase}/${encodeURIComponent(pageId)}/feed`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body,
+          });
+          const j = (await res.json()) as { id?: string; error?: { message?: string } };
+          if (!res.ok || !j.id || j.error) {
+            throw new Error(j.error?.message ?? 'Falha ao publicar no feed da Página.');
+          }
+          ext.facebook = j.id;
+        }
+      } catch (e) {
+        errors.push(`Facebook: ${e instanceof Error ? e.message : String(e)}`);
+      }
     }
 
-    const ext = ((post.externalIds as Record<string, string> | null) ?? {}) as Record<string, string>;
-    ext.facebook = j.id;
+    if (want.has('instagram') && !ext.instagram) {
+      if (!publicImage) {
+        errors.push('Instagram: é necessário pelo menos uma imagem com URL pública (mídia BCG ou S3).');
+      } else {
+        const igUserId = await this.getInstagramBusinessUserId(pageId, accessToken);
+        if (!igUserId) {
+          errors.push('Instagram: Página sem conta Instagram Business vinculada ou sem permissão.');
+        } else {
+          try {
+            const cap = message.slice(0, 2200);
+            const create = new URLSearchParams();
+            create.set('access_token', accessToken);
+            create.set('image_url', publicImage);
+            create.set('caption', cap || ' ');
+            const r1 = await fetch(`${graphBase}/${encodeURIComponent(igUserId)}/media`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: create,
+            });
+            const j1 = (await r1.json()) as { id?: string; error?: { message?: string } };
+            if (!r1.ok || !j1.id || j1.error) {
+              throw new Error(j1.error?.message ?? 'Falha ao criar mídia no Instagram.');
+            }
+            const pub = new URLSearchParams();
+            pub.set('access_token', accessToken);
+            pub.set('creation_id', j1.id);
+            const r2 = await fetch(`${graphBase}/${encodeURIComponent(igUserId)}/media_publish`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: pub,
+            });
+            const j2 = (await r2.json()) as { id?: string; error?: { message?: string } };
+            if (!r2.ok || !j2.id || j2.error) {
+              throw new Error(j2.error?.message ?? 'Falha ao publicar no Instagram.');
+            }
+            ext.instagram = j2.id;
+          } catch (e) {
+            errors.push(`Instagram: ${e instanceof Error ? e.message : String(e)}`);
+          }
+        }
+      }
+    }
+
+    const needFb = want.has('facebook');
+    const needIg = want.has('instagram');
+    const success =
+      errors.length === 0 && (!needFb || !!ext.facebook) && (!needIg || !!ext.instagram);
+
+    const notesJoined = errors.length
+      ? [post.notes, errors.join(' | ')].filter(Boolean).join(' | ')
+      : post.notes;
+
     await this.prisma.marketingPost.update({
       where: { id: postId },
       data: {
-        externalIds: ext,
-        status: 'published',
-        publishedAt: new Date(),
+        externalIds: ext as object,
+        status:
+          success && (needFb || needIg) ? 'published' : errors.length > 0 ? 'failed' : post.status,
+        publishedAt: success && (needFb || needIg) ? new Date() : post.publishedAt ?? undefined,
+        notes: notesJoined,
       },
     });
 
-    return { postId: j.id, pageId };
+    return { facebook: ext.facebook, instagram: ext.instagram, errors };
+  }
+
+  /** Publicar agora (rota planner): Meta conforme Facebook/Instagram marcados. */
+  async publishMarketingPostToFacebook(postId: string): Promise<{ postId: string; pageId: string }> {
+    const post = await this.prisma.marketingPost.findUnique({ where: { id: postId } });
+    if (!post) throw new BadRequestException('Postagem não encontrada.');
+    const pl = ((post.platforms as string[]) ?? []).map((p) => String(p).toLowerCase());
+    if (!pl.includes('facebook') && !pl.includes('instagram')) {
+      throw new BadRequestException('Marque Facebook e/ou Instagram nesta postagem.');
+    }
+    const { pageId } = await this.resolvePageAccessToken();
+    const r = await this.publishMarketingPostScheduled(postId);
+    const want = new Set(pl);
+    if (r.errors.length > 0) {
+      throw new BadRequestException(r.errors.join('; '));
+    }
+    const metaOk =
+      (!want.has('facebook') || !!r.facebook) && (!want.has('instagram') || !!r.instagram);
+    if (!metaOk) {
+      throw new BadRequestException(
+        'Publicação incompleta. Verifique conta Instagram Business, permissões da Página e URL pública das imagens.',
+      );
+    }
+    return {
+      postId: r.facebook ?? r.instagram ?? postId,
+      pageId,
+    };
   }
 
   successRedirect(): string {
