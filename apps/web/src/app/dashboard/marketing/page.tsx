@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   ArrowLeft,
   Megaphone,
@@ -30,13 +30,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -61,6 +54,9 @@ interface MarketingPost {
   notes: string | null;
   createdAt: string;
 }
+
+const SELECT_NATIVE_CLASS =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho",
@@ -113,11 +109,15 @@ function formatDateTime(iso: string | null): string {
 
 export default function MarketingPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const tenantParam = searchParams.get("tenantId") ?? "";
   const { canAccessModule, loading: authLoading, isSuperAdmin } = useAuth();
 
   const [posts, setPosts] = useState<MarketingPost[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [metaStatus, setMetaStatus] = useState<{ connected: boolean; expiresAt: string | null } | null>(null);
+  const [publishingFb, setPublishingFb] = useState(false);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState(() => new Date().getMonth());
@@ -149,6 +149,16 @@ export default function MarketingPage() {
       .catch(() => setPosts([]))
       .finally(() => setLoading(false));
   }, [year, month, tenantParam]);
+
+  const metaQueryFlag = searchParams.get("meta");
+
+  useEffect(() => {
+    if (!canAccessModule("marketing") || authLoading) return;
+    api
+      .get<{ connected: boolean; expiresAt: string | null }>("/integration/meta/status")
+      .then(({ data }) => setMetaStatus(data))
+      .catch(() => setMetaStatus({ connected: false, expiresAt: null }));
+  }, [canAccessModule, authLoading, metaQueryFlag]);
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants").then(({ data }) => {
@@ -270,6 +280,21 @@ export default function MarketingPage() {
     }
   };
 
+  const handlePublishFacebook = async () => {
+    if (!formEdit?.id) return;
+    setPublishingFb(true);
+    try {
+      await api.post(`/marketing/posts/${formEdit.id}/publish-facebook`);
+      setFormOpen(false);
+      fetchPosts();
+      alert("Publicado no Facebook.");
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Falha ao publicar no Facebook.");
+    } finally {
+      setPublishingFb(false);
+    }
+  };
+
   const addImage = (url: string) => {
     if (url && !formData.imageUrls.includes(url)) {
       setFormData((d) => ({ ...d, imageUrls: [...d.imageUrls, url] }));
@@ -325,28 +350,24 @@ export default function MarketingPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Select
-            value={tenantParam || "all"}
-            onValueChange={(v) => {
-              const params = new URLSearchParams();
-              if (v && v !== "all") params.set("tenantId", v);
-              window.history.replaceState(null, "", `/dashboard/marketing${params.toString() ? `?${params}` : ""}`);
-              fetchPosts();
+          <select
+            className={SELECT_NATIVE_CLASS + " w-[min(220px,calc(100vw-120px))] min-h-10 shrink-0"}
+            aria-label="Filtrar por empresa"
+            value={tenantParam ? tenantParam : "all"}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "all") router.replace(pathname);
+              else router.replace(`${pathname}?tenantId=${encodeURIComponent(v)}`);
             }}
           >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="group">Grupo (BCG)</SelectItem>
-              {tenants.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <option value="all">Todos</option>
+            <option value="group">Grupo (BCG)</option>
+            {tenants.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
           <Button onClick={() => openNewPost()}>
             <Plus className="h-4 w-4 mr-2" />
             Nova postagem
@@ -474,46 +495,29 @@ export default function MarketingPage() {
           <Card className="border-dashed border-amber-500/50 bg-amber-500/5">
             <CardContent className="pt-6 space-y-3">
               <h3 className="font-semibold text-amber-600 dark:text-amber-500">Integração Meta</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Conecte Facebook/Instagram via OAuth. Depois da autorização você volta para este planner.
-                Próximos passos no backend: salvar token por empresa e publicação automática.
-                Ao clicar em Conectar, a barra do navegador deve mudar para <strong className="font-medium text-foreground">facebook.com</strong>{" "}
-                (sessão na Meta no domínio certo — necessário para o login funcionar).
+              <p className="text-sm">
+                {metaStatus?.connected ? (
+                  <span className="text-emerald-600 dark:text-emerald-500 font-medium">
+                    Conectado
+                    {metaStatus.expiresAt
+                      ? ` — token válido até ${formatDateTime(metaStatus.expiresAt)}`
+                      : ""}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Não conectado</span>
+                )}
               </p>
-              <p className="text-xs text-amber-700/90 dark:text-amber-400/90 leading-relaxed rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
-                Na tela do Facebook use o mesmo <strong className="font-medium">e-mail ou celular cadastrados na sua conta Meta</strong> — não é o mesmo do login do site BCG. Se o Chrome sugerir e-mails corporativos (@bostoncitygroup.biz), ignore e digite manualmente o que você usa em{" "}
-                <strong className="font-medium">facebook.com</strong>. A mensagem “informações de login incorretas” vem do Facebook (validação de senha/conta), não da nossa API.
-              </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <strong className="text-foreground">Autorização no app da Meta</strong> (docs: fluxo manual OAuth): em{" "}
-                <strong className="font-medium">Configurações → Básico</strong>, em <strong className="font-medium">Domínios do app</strong> inclua{" "}
-                <code className="text-[11px]">bostoncitygroup.biz</code>; em <strong className="font-medium">Plataforma → Site</strong>, defina a URL do site em{" "}
-                <code className="text-[11px]">https://www.bostoncitygroup.biz</code>. Em{" "}
-                <strong className="font-medium">Produtos → Login do Facebook → Configurações</strong>, mantenha{" "}
-                <strong className="font-medium">Login OAuth do cliente</strong> e <strong className="font-medium">Login OAuth na Web</strong> ativos e cadastre em{" "}
-                <strong className="font-medium">URIs de redirecionamento OAuth válidos</strong> exatamente a mesma URL do servidor{" "}
-                <code className="text-[11px]">META_OAUTH_REDIRECT_URI</code> (inclui <code className="text-[11px]">www</code> e caminho iguais).
-              </p>
-              {searchParams.get("meta") === "ok" && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-500">
-                  Autorização com a Meta concluída (token de curta duração obtido no servidor).
-                </p>
-              )}
               {searchParams.get("meta_err") && (
-                <p className="text-xs text-destructive break-words">
-                  {searchParams.get("meta_err")}
-                </p>
+                <p className="text-xs text-destructive break-words">{searchParams.get("meta_err")}</p>
               )}
               {isSuperAdmin ? (
-                <Button asChild type="button" className="w-full sm:w-auto">
+                <Button asChild type="button" className="w-full sm:w-auto min-h-10">
                   <a href="/api/integration/meta/oauth/start" rel="noopener noreferrer">
-                    Conectar com a Meta
+                    {metaStatus?.connected ? "Reconectar com a Meta" : "Conectar com a Meta"}
                   </a>
                 </Button>
               ) : (
-                <p className="text-xs text-muted-foreground">
-                  Só o super admin pode iniciar a conexão com a Meta nesta fase.
-                </p>
+                <p className="text-xs text-muted-foreground">Só o super admin pode conectar ou reconectar a Meta.</p>
               )}
             </CardContent>
           </Card>
@@ -554,22 +558,21 @@ export default function MarketingPage() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Destino</Label>
-              <Select
-                value={formData.tenantId ?? "group"}
-                onValueChange={(v) => setFormData((d) => ({ ...d, tenantId: v === "group" ? null : v }))}
+              <select
+                className={SELECT_NATIVE_CLASS}
+                value={formData.tenantId == null ? "group" : formData.tenantId}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFormData((d) => ({ ...d, tenantId: v === "group" ? null : v }));
+                }}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="group">Grupo (BCG)</SelectItem>
-                  {tenants.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="group">Grupo (BCG)</option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-2">
               <Label>Título (opcional)</Label>
@@ -650,20 +653,17 @@ export default function MarketingPage() {
             </div>
             <div className="grid gap-2">
               <Label>Status</Label>
-              <Select
+              <select
+                className={SELECT_NATIVE_CLASS}
                 value={formData.status}
-                onValueChange={(v) => setFormData((d) => ({ ...d, status: v }))}
+                onChange={(e) => setFormData((d) => ({ ...d, status: e.target.value }))}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Rascunho</SelectItem>
-                  <SelectItem value="scheduled">Agendada</SelectItem>
-                  <SelectItem value="published">Publicada</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
+                {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-2">
               <Label>Notas (opcional)</Label>
@@ -675,7 +675,22 @@ export default function MarketingPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between">
+            <div className="flex flex-wrap gap-2 order-2 sm:order-1">
+              {isSuperAdmin && formEdit?.id && metaStatus?.connected && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-10"
+                  disabled={publishingFb || !formData.content.trim()}
+                  onClick={handlePublishFacebook}
+                >
+                  {publishingFb ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Facebook className="h-4 w-4 mr-2" />}
+                  Publicar no Facebook
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 justify-end order-1 sm:order-2">
             {formEdit && (
               <Button
                 variant="destructive"
@@ -693,6 +708,7 @@ export default function MarketingPage() {
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Salvar
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

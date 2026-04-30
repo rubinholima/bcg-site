@@ -11,21 +11,21 @@ import type { Request, Response } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../../auth/jwt-auth.guard';
 import { SuperAdminGuard } from '../../auth/super-admin.guard';
 import { MetaOAuthService } from './meta-oauth.service';
+import { DashboardRolesGuard } from '../../auth/roles.guard';
+import { ModuleAccessGuard } from '../../auth/module-access.guard';
+import { RequireModule } from '../../auth/require-module.decorator';
 
 /**
- * OAuth Meta (Facebook Login) — deve bater com Valid OAuth Redirect URIs do app.
- *
- * Produção (via Next proxy): GET https://www.bostoncitygroup.biz/api/integration/meta/oauth/callback
+ * OAuth Meta — rotas:
+ * - GET integration/meta/oauth/start
+ * - GET integration/meta/oauth/callback
+ * - GET integration/meta/status
  */
-@Controller('integration/meta/oauth')
+@Controller('integration/meta')
 export class MetaOAuthController {
   constructor(private readonly metaOauth: MetaOAuthService) {}
 
-  /**
-   * Inicia o fluxo: redireciona o navegador para a tela da Meta.
-   * Requer JWT + super admin até definirmos política por empresa.
-   */
-  @Get('start')
+  @Get('oauth/start')
   @UseGuards(JwtAuthGuard, SuperAdminGuard)
   start(@Req() req: Request & { user: CognitoJwtPayload }, @Res() res: Response) {
     try {
@@ -48,8 +48,7 @@ export class MetaOAuthController {
     }
   }
 
-  /** Callback público chamado pela Meta após o usuário autorizar (ou negar). */
-  @Get('callback')
+  @Get('oauth/callback')
   async callback(
     @Query('code') code: string | undefined,
     @Query('state') state: string | undefined,
@@ -70,8 +69,8 @@ export class MetaOAuthController {
 
     try {
       this.metaOauth.verifyState(state);
-      await this.metaOauth.exchangeCodeForShortLivedToken(code);
-      // Próximo passo (outro PR): trocar por long-lived token, obter Page token, salvar em MetaConnection por tenant.
+      const tokens = await this.metaOauth.exchangeCodeForShortLivedToken(code);
+      await this.metaOauth.persistOAuthTokens(tokens);
     } catch (e: unknown) {
       const msg =
         e instanceof Error && e.message ? e.message : 'Falha ao concluir login com a Meta.';
@@ -79,5 +78,13 @@ export class MetaOAuthController {
     }
 
     return res.redirect(302, this.metaOauth.successRedirect());
+  }
+
+  /** Indica se há token válido gravado (sem expor segredo). */
+  @Get('status')
+  @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
+  @RequireModule('marketing')
+  async status() {
+    return this.metaOauth.getConnectionStatus();
   }
 }
