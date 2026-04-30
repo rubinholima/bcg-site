@@ -477,6 +477,8 @@ export default function MarketingPage() {
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Conecte Facebook/Instagram via OAuth. Depois da autorização você volta para este planner.
                 Próximos passos no backend: salvar token por empresa e publicação automática.
+                Ao clicar em Conectar, a barra do navegador deve mudar para <strong className="font-medium text-foreground">facebook.com</strong>{" "}
+                (sessão na Meta no domínio certo — necessário para o login funcionar).
               </p>
               <p className="text-xs text-amber-700/90 dark:text-amber-400/90 leading-relaxed rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
                 Na tela do Facebook use o mesmo <strong className="font-medium">e-mail ou celular cadastrados na sua conta Meta</strong> — não é o mesmo do login do site BCG. Se o Chrome sugerir e-mails corporativos (@bostoncitygroup.biz), ignore e digite manualmente o que você usa em{" "}
