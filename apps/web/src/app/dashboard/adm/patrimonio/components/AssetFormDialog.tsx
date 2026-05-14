@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Camera } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { api } from "@/lib/api";
-import { patrimonioMediaThumbSrc } from "../patrimonio-media";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
 import { ASSET_PIECE_LABEL } from "../patrimonio-labels";
@@ -101,8 +100,6 @@ export function AssetFormDialog({
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const isUniform = selectedCategory?.kind === "uniform";
   const tenantCategories = categories.filter((c) => c.tenant.id === (edit ? edit.tenant.id : catTenantId || tenantId));
-  const rawPhoto = photoUrl.trim();
-  const photoPreviewSrc = rawPhoto ? patrimonioMediaThumbSrc(rawPhoto) || rawPhoto : "";
 
   const playerTenantId = edit?.tenant.id || catTenantId || tenantId;
 
@@ -225,7 +222,7 @@ export function AssetFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full min-w-0 max-h-[min(90vh,calc(100dvh-2rem))] overflow-y-auto overflow-x-hidden sm:p-8">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{edit ? "Editar bem" : "Novo bem patrimonial"}</DialogTitle>
@@ -337,43 +334,20 @@ export function AssetFormDialog({
               />
             </div>
 
-            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Camera className="h-4 w-4 shrink-0 opacity-70" />
-                Foto do bem
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Registro visual opcional. Mesmo padrão de exibição do dashboard (resolvePublicMediaUrlForDisplay → proxy). Escolha na biblioteca (pasta Patrimônio) ou cole URL.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="h-28 w-28 rounded-md overflow-hidden bg-muted shrink-0 border border-border mx-auto sm:mx-0">
-                  {photoPreviewSrc ? (
-                    <img src={photoPreviewSrc} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs text-center px-1">
-                      Sem foto
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 w-full min-w-0 space-y-2">
-                  <MediaPicker
-                    label="Imagem"
-                    sizeKey="patrimonio"
-                    allowAllFolders
-                    uploadFolderHint="patrimonio"
-                    value={photoUrl}
-                    onChange={setPhotoUrl}
-                    placeholder="Patrimônio ou biblioteca completa…"
-                    hideEmptyFolderHint
-                  />
-                  <Input
-                    className="text-foreground"
-                    placeholder="Ou cole a URL da imagem"
-                    value={photoUrl}
-                    onChange={(e) => setPhotoUrl(e.target.value)}
-                  />
-                </div>
-              </div>
+            <div className="grid gap-2 border-t border-border pt-4">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="patrimonio"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                placeholder="Escolher da biblioteca"
+                urlPlaceholder="URL da imagem"
+                allowAllFolders
+                uploadFolderHint="patrimonio"
+                displayNameAuto={description.trim() || undefined}
+                showAutomaticPhotoNameNote={false}
+                showFileFormatHint={false}
+              />
             </div>
 
             {!isUniform && (

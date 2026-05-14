@@ -14,7 +14,7 @@ import {
   Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -190,25 +190,20 @@ export default function AdmPatrimonioPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-6 pb-6 pt-2 md:pt-4">
       <div className="flex flex-col gap-4">
         <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" />
           Voltar ao dashboard
         </Link>
-        <Card>
-          <CardHeader>
+        <Card className="w-full min-w-0 overflow-hidden border-border">
+          <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <Warehouse className="h-8 w-8 text-muted-foreground" />
-              <div>
-                <CardTitle>Patrimônio</CardTitle>
-                <CardDescription>
-                  Com «Todos», itens agrupados por clube/empresa no índice abaixo. Miniaturas seguem a cadeia media-url do projeto (proxy em dev / CDN em produção). Envie fotos de patrimônio pela pasta Patrimônio em Mídia.
-                </CardDescription>
-              </div>
+              <Warehouse className="h-8 w-8 text-muted-foreground shrink-0" />
+              <CardTitle className="text-xl">Patrimônio</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 min-w-0 px-3 sm:px-6">
             <div className="flex flex-wrap items-center gap-4">
               <div className="grid gap-2 min-w-[200px] flex-1 sm:flex-none">
                 <label className="text-sm font-medium text-muted-foreground">Clube/Empresa</label>
@@ -308,13 +303,13 @@ export default function AdmPatrimonioPage() {
                             </span>
                           </div>
                         )}
-                        <Table className="w-full text-sm">
+                        <Table className="w-full table-fixed text-sm">
                           <TableHeader>
                             <TableRow className="hover:bg-transparent">
-                              <TableHead className="w-[28%] min-w-0">Categoria</TableHead>
+                              <TableHead className="w-[30%] min-w-0">Categoria</TableHead>
                               <TableHead className="w-[12%] min-w-0">Código</TableHead>
                               <TableHead className="min-w-0">Tipo</TableHead>
-                              <TableHead className="w-[72px] text-right pr-2">Ações</TableHead>
+                              <TableHead className="w-[76px] text-right pr-1">Ações</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -387,16 +382,16 @@ export default function AdmPatrimonioPage() {
                             </span>
                           </div>
                         )}
-                        <Table className="w-full text-sm">
+                        <Table className="w-full table-fixed text-sm">
                           <TableHeader>
                             <TableRow className="hover:bg-transparent">
-                              <TableHead className="w-11 px-2">Foto</TableHead>
+                              <TableHead className="w-10 px-1">Foto</TableHead>
                               <TableHead className="min-w-0 w-[24%]">Descrição</TableHead>
-                              <TableHead className="min-w-0">Categoria</TableHead>
-                              <TableHead className="min-w-0 hidden sm:table-cell">Kit / nº / jogador</TableHead>
-                              <TableHead className="min-w-0 hidden md:table-cell">Local</TableHead>
-                              <TableHead className="w-[88px] min-w-0">Situação</TableHead>
-                              <TableHead className="w-[72px] text-right pr-2">Ações</TableHead>
+                              <TableHead className="min-w-0 w-[22%]">Categoria</TableHead>
+                              <TableHead className="min-w-0 hidden sm:table-cell w-[18%]">Kit / nº / jogador</TableHead>
+                              <TableHead className="min-w-0 hidden md:table-cell w-[14%]">Local</TableHead>
+                              <TableHead className="w-[5.5rem] min-w-0">Situação</TableHead>
+                              <TableHead className="w-[4.5rem] text-right pr-1">Ações</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
