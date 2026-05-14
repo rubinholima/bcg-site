@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { api } from "@/lib/api";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { patrimonioMediaThumbSrc } from "../patrimonio-media";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
 import { ASSET_PIECE_LABEL } from "../patrimonio-labels";
@@ -56,10 +56,9 @@ interface AssetFormDialogProps {
   onOpenChange: (open: boolean) => void;
   tenants: Tenant[];
   categories: AssetCategoryRow[];
-  players: PlayerOption[];
   tenantId: string;
   edit?: AssetRow | null;
-  onSuccess: () => void;
+  onSuccess: (savedTenantId: string) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -76,12 +75,12 @@ export function AssetFormDialog({
   onOpenChange,
   tenants,
   categories,
-  players,
   tenantId,
   edit,
   onSuccess,
 }: AssetFormDialogProps) {
   const [saving, setSaving] = useState(false);
+  const [dialogPlayers, setDialogPlayers] = useState<PlayerOption[]>([]);
   const [catTenantId, setCatTenantId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [tagNumber, setTagNumber] = useState("");
@@ -102,6 +101,29 @@ export function AssetFormDialog({
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const isUniform = selectedCategory?.kind === "uniform";
   const tenantCategories = categories.filter((c) => c.tenant.id === (edit ? edit.tenant.id : catTenantId || tenantId));
+  const rawPhoto = photoUrl.trim();
+  const photoPreviewSrc = rawPhoto ? patrimonioMediaThumbSrc(rawPhoto) || rawPhoto : "";
+
+  const playerTenantId = edit?.tenant.id || catTenantId || tenantId;
+
+  useEffect(() => {
+    if (!open || !playerTenantId) {
+      setDialogPlayers([]);
+      return;
+    }
+    let cancelled = false;
+    api
+      .get<PlayerOption[]>(`/players?tenantId=${encodeURIComponent(playerTenantId)}`)
+      .then(({ data }) => {
+        if (!cancelled) setDialogPlayers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDialogPlayers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, playerTenantId, edit?.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -191,7 +213,7 @@ export function AssetFormDialog({
           assignedPlayerId: isUniform && assignedPlayerId ? assignedPlayerId : undefined,
         });
       }
-      onSuccess();
+      onSuccess(tenantIdForSubmit);
       onOpenChange(false);
     } catch (err) {
       console.error(err);
@@ -294,7 +316,7 @@ export function AssetFormDialog({
                     onChange={(e) => setAssignedPlayerId(e.target.value)}
                   >
                     <option value="">Nenhum</option>
-                    {players.map((p) => (
+                    {dialogPlayers.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
                       </option>
@@ -321,31 +343,27 @@ export function AssetFormDialog({
                 Foto do bem
               </div>
               <p className="text-xs text-muted-foreground">
-                Registro visual opcional. Escolha na mídia ou cole a URL abaixo.
+                Registro visual opcional. Mesmo padrão de exibição do dashboard (resolvePublicMediaUrlForDisplay → proxy). Escolha na biblioteca (pasta Patrimônio) ou cole URL.
               </p>
-              <div className="flex gap-4 items-start">
-                <div className="h-28 w-28 rounded-md overflow-hidden bg-muted shrink-0 border border-border">
-                  {photoUrl.trim() ? (
-                    <img
-                      src={getPublicImageUrl(photoUrl.trim())}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <div className="h-28 w-28 rounded-md overflow-hidden bg-muted shrink-0 border border-border mx-auto sm:mx-0">
+                  {photoPreviewSrc ? (
+                    <img src={photoPreviewSrc} alt="" className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs text-center px-1">
                       Sem foto
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex-1 w-full min-w-0 space-y-2">
                   <MediaPicker
                     label="Imagem"
-                    sizeKey="card"
+                    sizeKey="patrimonio"
                     allowAllFolders
-                    uploadFolderHint="card"
+                    uploadFolderHint="patrimonio"
                     value={photoUrl}
                     onChange={setPhotoUrl}
-                    placeholder="Escolher da biblioteca…"
+                    placeholder="Patrimônio ou biblioteca completa…"
                     hideEmptyFolderHint
                   />
                   <Input

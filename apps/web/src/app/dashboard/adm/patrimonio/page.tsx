@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -39,7 +39,7 @@ import { Tenant } from "@/types/tenant";
 import { AssetCategoryFormDialog, type AssetCategoryRow } from "./components/AssetCategoryFormDialog";
 import { AssetFormDialog, type AssetRow } from "./components/AssetFormDialog";
 import { ASSET_CATEGORY_KIND_LABEL, ASSET_PIECE_LABEL } from "./patrimonio-labels";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { patrimonioMediaThumbSrc } from "./patrimonio-media";
 
 type TabId = "categorias" | "bens";
 
@@ -47,12 +47,6 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "categorias", label: "Categorias", icon: FolderTree },
   { id: "bens", label: "Bens patrimoniais", icon: Package },
 ];
-
-interface PlayerOption {
-  id: string;
-  name: string;
-  jerseyNumber: number | null;
-}
 
 const NATIVE_SELECT_CLASS =
   "rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-full min-w-0";
@@ -64,6 +58,22 @@ const STATUS_LABEL: Record<string, string> = {
   baixado: "Baixado",
 };
 
+function groupRowsByTenant<T extends { tenant: { id: string; name: string; slug: string } }>(rows: T[]) {
+  const m = new Map<string, { tenant: T["tenant"]; items: T[] }>();
+  for (const r of rows) {
+    const id = r.tenant.id;
+    let g = m.get(id);
+    if (!g) {
+      g = { tenant: r.tenant, items: [] };
+      m.set(id, g);
+    }
+    g.items.push(r);
+  }
+  return [...m.values()].sort((a, b) =>
+    a.tenant.name.localeCompare(b.tenant.name, "pt", { sensitivity: "base" }),
+  );
+}
+
 export default function AdmPatrimonioPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
@@ -73,7 +83,6 @@ export default function AdmPatrimonioPage() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<AssetCategoryRow[]>([]);
   const [assets, setAssets] = useState<AssetRow[]>([]);
-  const [players, setPlayers] = useState<PlayerOption[]>([]);
 
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryEdit, setCategoryEdit] = useState<AssetCategoryRow | null>(null);
@@ -96,9 +105,10 @@ export default function AdmPatrimonioPage() {
     }
   }, []);
 
-  const loadCategories = useCallback(async () => {
+  const loadCategories = useCallback(async (forTenant?: string) => {
     try {
-      const qs = tenantId ? `?tenantId=${encodeURIComponent(tenantId)}` : "";
+      const eff = forTenant !== undefined ? forTenant : tenantId;
+      const qs = eff ? `?tenantId=${encodeURIComponent(eff)}` : "";
       const { data } = await api.get<AssetCategoryRow[]>(`/patrimonio/asset-categories${qs}`);
       setCategories(Array.isArray(data) ? data : []);
     } catch {
@@ -106,10 +116,11 @@ export default function AdmPatrimonioPage() {
     }
   }, [tenantId]);
 
-  const loadAssets = useCallback(async () => {
+  const loadAssets = useCallback(async (forTenant?: string) => {
     try {
+      const eff = forTenant !== undefined ? forTenant : tenantId;
       const params = new URLSearchParams();
-      if (tenantId) params.set("tenantId", tenantId);
+      if (eff) params.set("tenantId", eff);
       if (filterStatus) params.set("status", filterStatus);
       if (filterPieceType) params.set("pieceType", filterPieceType);
       const qs = params.toString() ? `?${params.toString()}` : "";
@@ -119,19 +130,6 @@ export default function AdmPatrimonioPage() {
       setAssets([]);
     }
   }, [tenantId, filterStatus, filterPieceType]);
-
-  const loadPlayers = useCallback(async () => {
-    if (!tenantId) {
-      setPlayers([]);
-      return;
-    }
-    try {
-      const { data } = await api.get<PlayerOption[]>(`/players?tenantId=${encodeURIComponent(tenantId)}`);
-      setPlayers(Array.isArray(data) ? data : []);
-    } catch {
-      setPlayers([]);
-    }
-  }, [tenantId]);
 
   useEffect(() => {
     if (!canAccessModule("adm_patrimonio") && !authLoading) return;
@@ -149,13 +147,24 @@ export default function AdmPatrimonioPage() {
   }, [activeTab, tenantId, canAccessModule, loadCategories, loadAssets]);
 
   useEffect(() => {
+    if (!canAccessModule("adm_patrimonio")) return;
     loadCategories();
     loadAssets();
-  }, [tenantId, loadCategories, loadAssets]);
+  }, [tenantId, filterStatus, filterPieceType, canAccessModule, loadCategories, loadAssets]);
 
-  useEffect(() => {
-    loadPlayers();
-  }, [tenantId, loadPlayers]);
+  const showTenantIndex = !tenantId;
+
+  const categoryGroups = useMemo(() => {
+    if (categories.length === 0) return [];
+    if (tenantId) return [{ tenant: categories[0]!.tenant, items: categories }];
+    return groupRowsByTenant(categories);
+  }, [categories, tenantId]);
+
+  const assetGroups = useMemo(() => {
+    if (assets.length === 0) return [];
+    if (tenantId) return [{ tenant: assets[0]!.tenant, items: assets }];
+    return groupRowsByTenant(assets);
+  }, [assets, tenantId]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteKind || !deleteId) return;
@@ -194,7 +203,7 @@ export default function AdmPatrimonioPage() {
               <div>
                 <CardTitle>Patrimônio</CardTitle>
                 <CardDescription>
-                  Bens patrimoniais (empresa e clube). Para clubes: kit uniforme (camisa, calção, meião) com tamanho, número e jogador atribuído.
+                  Com «Todos», itens agrupados por clube/empresa no índice abaixo. Miniaturas seguem a cadeia media-url do projeto (proxy em dev / CDN em produção). Envie fotos de patrimônio pela pasta Patrimônio em Mídia.
                 </CardDescription>
               </div>
             </div>
@@ -278,41 +287,68 @@ export default function AdmPatrimonioPage() {
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : !tenantId ? (
-                  <p className="text-sm text-muted-foreground py-4">Selecione um clube/empresa para listar categorias.</p>
+                ) : categories.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">
+                    {tenantId
+                      ? "Nenhuma categoria para este clube/empresa. Use «Nova categoria»."
+                      : "Nenhuma categoria cadastrada. Use «Nova categoria» ou filtre por clube/empresa acima."}
+                  </p>
                 ) : (
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Categoria</TableHead>
-                          <TableHead>Código</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead>Clube/Empresa</TableHead>
-                          <TableHead className="w-[100px]">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {categories.map((c) => (
-                          <TableRow key={c.id}>
-                            <TableCell className="font-medium">{c.name}</TableCell>
-                            <TableCell>{c.code ?? "—"}</TableCell>
-                            <TableCell>{ASSET_CATEGORY_KIND_LABEL[c.kind] ?? c.kind}</TableCell>
-                            <TableCell>{c.tenant.name}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCategoryEdit(c); setCategoryDialogOpen(true); }}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeleteKind("category"); setDeleteId(c.id); }}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <div className="space-y-5">
+                    {categoryGroups.map((group) => (
+                      <div
+                        key={group.tenant.id}
+                        className="rounded-lg border border-border bg-card shadow-sm overflow-hidden"
+                      >
+                        {showTenantIndex && (
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 bg-muted/50 border-b border-border">
+                            <span className="font-semibold text-foreground text-sm">{group.tenant.name}</span>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {group.items.length} {group.items.length === 1 ? "categoria" : "categorias"}
+                            </span>
+                          </div>
+                        )}
+                        <Table className="w-full text-sm">
+                          <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                              <TableHead className="w-[28%] min-w-0">Categoria</TableHead>
+                              <TableHead className="w-[12%] min-w-0">Código</TableHead>
+                              <TableHead className="min-w-0">Tipo</TableHead>
+                              <TableHead className="w-[72px] text-right pr-2">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {group.items.map((c) => (
+                              <TableRow key={c.id}>
+                                <TableCell className="font-medium align-middle min-w-0">
+                                  <span className="line-clamp-2 break-words" title={c.name}>
+                                    {c.name}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="align-middle text-muted-foreground whitespace-normal break-all min-w-0">
+                                  {c.code ?? "—"}
+                                </TableCell>
+                                <TableCell className="align-middle min-w-0">
+                                  <span className="line-clamp-2 text-xs sm:text-sm text-muted-foreground" title={ASSET_CATEGORY_KIND_LABEL[c.kind] ?? c.kind}>
+                                    {ASSET_CATEGORY_KIND_LABEL[c.kind] ?? c.kind}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right align-middle">
+                                  <div className="flex justify-end gap-0.5">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => { setCategoryEdit(c); setCategoryDialogOpen(true); }}>
+                                      <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => { setDeleteKind("category"); setDeleteId(c.id); }}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
@@ -321,7 +357,7 @@ export default function AdmPatrimonioPage() {
             {activeTab === "bens" && (
               <>
                 <div className="flex justify-end">
-                  <Button onClick={() => { setAssetEdit(null); setAssetDialogOpen(true); }} disabled={!tenantId && tenants.length > 0}>
+                  <Button onClick={() => { setAssetEdit(null); setAssetDialogOpen(true); }} disabled={tenants.length === 0}>
                     <Plus className="h-4 w-4 mr-2" />
                     Novo bem
                   </Button>
@@ -330,67 +366,108 @@ export default function AdmPatrimonioPage() {
                   <div className="flex justify-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-                ) : !tenantId && tenants.length > 0 ? (
-                  <p className="text-sm text-muted-foreground py-4">Selecione um clube/empresa para listar bens.</p>
+                ) : assets.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">
+                    {tenantId
+                      ? "Nenhum bem para este clube/empresa com os filtros atuais."
+                      : "Nenhum bem cadastrado. Use «Novo bem» ou filtre por clube/empresa."}
+                  </p>
                 ) : (
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Descrição</TableHead>
-                          <TableHead className="w-14">Foto</TableHead>
-                          <TableHead>Categoria</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead>Peça</TableHead>
-                          <TableHead>Nº / Tamanho</TableHead>
-                          <TableHead>Jogador</TableHead>
-                          <TableHead>Localização</TableHead>
-                          <TableHead>Situação</TableHead>
-                          <TableHead className="w-[100px]">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {assets.map((a) => (
-                          <TableRow key={a.id}>
-                            <TableCell className="font-medium">{a.description}</TableCell>
-                            <TableCell>
-                              {a.photoUrl?.trim() ? (
-                                <img
-                                  src={getPublicImageUrl(a.photoUrl.trim())}
-                                  alt=""
-                                  className="h-10 w-10 rounded object-cover border border-border"
-                                />
-                              ) : (
-                                <span className="text-muted-foreground text-xs">—</span>
-                              )}
-                            </TableCell>
-                            <TableCell>{a.category.name}</TableCell>
-                            <TableCell className="max-w-[140px] text-xs text-muted-foreground">
-                              {ASSET_CATEGORY_KIND_LABEL[a.category.kind] ?? a.category.kind}
-                            </TableCell>
-                            <TableCell>{a.pieceType ? ASSET_PIECE_LABEL[a.pieceType] ?? a.pieceType : "—"}</TableCell>
-                            <TableCell>
-                              {a.shirtNumber != null ? `#${a.shirtNumber}` : ""}
-                              {a.size ? ` ${a.size}` : ""}
-                              {!a.shirtNumber && !a.size ? (a.tagNumber ?? "—") : ""}
-                            </TableCell>
-                            <TableCell>{a.assignedPlayer?.name ?? "—"}</TableCell>
-                            <TableCell>{a.location ?? "—"}</TableCell>
-                            <TableCell>{STATUS_LABEL[a.status] ?? a.status}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setAssetEdit(a); setAssetDialogOpen(true); }}>
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeleteKind("asset"); setDeleteId(a.id); }}>
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <div className="space-y-5">
+                    {assetGroups.map((group) => (
+                      <div
+                        key={group.tenant.id}
+                        className="rounded-lg border border-border bg-card shadow-sm overflow-hidden"
+                      >
+                        {showTenantIndex && (
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 bg-muted/50 border-b border-border">
+                            <span className="font-semibold text-foreground text-sm">{group.tenant.name}</span>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {group.items.length} {group.items.length === 1 ? "bem" : "bens"}
+                            </span>
+                          </div>
+                        )}
+                        <Table className="w-full text-sm">
+                          <TableHeader>
+                            <TableRow className="hover:bg-transparent">
+                              <TableHead className="w-11 px-2">Foto</TableHead>
+                              <TableHead className="min-w-0 w-[24%]">Descrição</TableHead>
+                              <TableHead className="min-w-0">Categoria</TableHead>
+                              <TableHead className="min-w-0 hidden sm:table-cell">Kit / nº / jogador</TableHead>
+                              <TableHead className="min-w-0 hidden md:table-cell">Local</TableHead>
+                              <TableHead className="w-[88px] min-w-0">Situação</TableHead>
+                              <TableHead className="w-[72px] text-right pr-2">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {group.items.map((a) => {
+                              const thumb = patrimonioMediaThumbSrc(a.photoUrl);
+                              const kitLine = [
+                                a.pieceType ? ASSET_PIECE_LABEL[a.pieceType] ?? a.pieceType : null,
+                                a.shirtNumber != null ? `#${a.shirtNumber}` : null,
+                                a.size?.trim() || null,
+                                a.assignedPlayer?.name || null,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ");
+                              const tagOrKit = kitLine || (a.tagNumber ? `Etq. ${a.tagNumber}` : "—");
+                              return (
+                                <TableRow key={a.id}>
+                                  <TableCell className="px-2 align-middle w-11">
+                                    {thumb ? (
+                                      <img
+                                        src={thumb}
+                                        alt=""
+                                        className="h-9 w-9 rounded object-cover border border-border"
+                                      />
+                                    ) : (
+                                      <span className="text-muted-foreground text-xs">—</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="align-middle min-w-0 font-medium">
+                                    <span className="line-clamp-2 break-words" title={a.description}>
+                                      {a.description}
+                                    </span>
+                                    <span className="mt-1 block text-xs text-muted-foreground sm:hidden">{tagOrKit}</span>
+                                  </TableCell>
+                                  <TableCell className="align-middle min-w-0">
+                                    <div className="line-clamp-1 font-medium" title={a.category.name}>
+                                      {a.category.name}
+                                    </div>
+                                    <div className="line-clamp-2 text-[11px] sm:text-xs text-muted-foreground" title={ASSET_CATEGORY_KIND_LABEL[a.category.kind] ?? a.category.kind}>
+                                      {ASSET_CATEGORY_KIND_LABEL[a.category.kind] ?? a.category.kind}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="align-middle min-w-0 hidden sm:table-cell text-xs text-muted-foreground">
+                                    <span className="line-clamp-3 break-words" title={tagOrKit}>
+                                      {tagOrKit}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="align-middle min-w-0 hidden md:table-cell">
+                                    <span className="line-clamp-2 text-xs break-words" title={a.location ?? ""}>
+                                      {a.location ?? "—"}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="align-middle text-xs whitespace-normal min-w-0">
+                                    {STATUS_LABEL[a.status] ?? a.status}
+                                  </TableCell>
+                                  <TableCell className="text-right align-middle">
+                                    <div className="flex justify-end gap-0.5">
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => { setAssetEdit(a); setAssetDialogOpen(true); }}>
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-destructive" onClick={() => { setDeleteKind("asset"); setDeleteId(a.id); }}>
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ))}
                   </div>
                 )}
               </>
@@ -404,7 +481,13 @@ export default function AdmPatrimonioPage() {
         onOpenChange={setCategoryDialogOpen}
         tenants={tenants}
         edit={categoryEdit}
-        onSuccess={() => { loadCategories(); setCategoryEdit(null); }}
+        onSuccess={(savedTenantId) => {
+          setCategoryEdit(null);
+          if (savedTenantId) {
+            setTenantId(savedTenantId);
+            void loadCategories(savedTenantId);
+          }
+        }}
       />
 
       <AssetFormDialog
@@ -412,10 +495,16 @@ export default function AdmPatrimonioPage() {
         onOpenChange={setAssetDialogOpen}
         tenants={tenants}
         categories={categories}
-        players={players}
         tenantId={tenantId}
         edit={assetEdit}
-        onSuccess={() => { loadAssets(); loadCategories(); setAssetEdit(null); }}
+        onSuccess={(savedTenantId) => {
+          setAssetEdit(null);
+          if (savedTenantId) {
+            setTenantId(savedTenantId);
+            void loadAssets(savedTenantId);
+            void loadCategories(savedTenantId);
+          }
+        }}
       />
 
       <AlertDialog open={!!deleteKind} onOpenChange={(open) => !open && setDeleteKind(null)}>

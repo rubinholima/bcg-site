@@ -32,7 +32,7 @@ interface AssetCategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   tenants: Tenant[];
   edit?: AssetCategoryRow | null;
-  onSuccess: () => void;
+  onSuccess: (savedTenantId: string) => void;
 }
 
 export function AssetCategoryFormDialog({
@@ -82,7 +82,7 @@ export function AssetCategoryFormDialog({
           kind,
         });
       }
-      onSuccess();
+      onSuccess(tenantId);
       onOpenChange(false);
     } catch (err) {
       console.error(err);
