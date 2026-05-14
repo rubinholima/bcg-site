@@ -13,7 +13,6 @@ import {
   FileText,
   Image,
   Settings,
-  BookOpen,
   Newspaper,
   Tag,
   Users,
@@ -86,13 +85,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    moduleSlug: "dashboard",
-  },
-  {
-    slug: "app_manual",
-    label: "Manual",
-    href: "/dashboard/manual",
-    icon: BookOpen,
     moduleSlug: "dashboard",
   },
   {

@@ -105,7 +105,7 @@ export default function ManualPage() {
               sócio-torcedor e ferramentas (email, senhas, páginas, mídia).
             </p>
             <p>
-              O item <strong>Manual</strong> no menu lateral (ícone de livro) abre esta página a qualquer momento.
+              O ícone <strong>?</strong> no canto superior do dashboard abre este manual.
             </p>
             <p>
               O menu à esquerda reflete os <strong>módulos</strong> liberados para o seu usuário. Se não vir

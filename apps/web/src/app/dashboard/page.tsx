@@ -13,7 +13,6 @@ import {
   Mail,
   Bell,
   Clock,
-  BookOpen,
 } from "lucide-react";
 import { Tenant } from "@/types/tenant";
 import type { Group } from "@/types/group";
@@ -96,7 +95,6 @@ const QUICK_LINKS = [
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper },
   { title: "Mídia", href: "/dashboard/midia", icon: Image },
-  { title: "Manual", href: "/dashboard/manual", icon: BookOpen },
   { title: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
 ] as const;
 
