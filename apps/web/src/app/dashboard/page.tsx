@@ -13,13 +13,13 @@ import {
   Mail,
   Bell,
   Clock,
+  BookOpen,
 } from "lucide-react";
 import { Tenant } from "@/types/tenant";
 import type { Group } from "@/types/group";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -96,6 +96,7 @@ const QUICK_LINKS = [
   { title: "Páginas", href: "/dashboard/paginas", icon: FileText },
   { title: "Notícias", href: "/dashboard/noticias", icon: Newspaper },
   { title: "Mídia", href: "/dashboard/midia", icon: Image },
+  { title: "Manual", href: "/dashboard/manual", icon: BookOpen },
   { title: "Configurações", href: "/dashboard/configuracoes", icon: Settings },
 ] as const;
 
@@ -201,9 +202,6 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Dashboard — {groupName}
         </h1>
-        <p className="mt-2 text-muted-foreground text-base">
-          Central de gestão: empresas, usuários, emails corporativos e configurações.
-        </p>
       </div>
 
       {/* Stats */}
@@ -251,9 +249,6 @@ export default async function DashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle>Últimas empresas</CardTitle>
-              <CardDescription>
-                Empresas cadastradas na plataforma
-              </CardDescription>
             </div>
             <Link href="/dashboard/empresas">
               <Button variant="outline" size="sm" className="transition-all duration-200 hover:shadow-md active:scale-[0.98]">
@@ -310,9 +305,6 @@ export default async function DashboardPage() {
         <Card className="min-w-0 rounded-xl shadow-md dashboard-card-hover overflow-hidden">
           <CardHeader>
             <CardTitle>Atalhos</CardTitle>
-            <CardDescription>
-              Acesso rápido às áreas do dashboard
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <nav className="flex flex-col gap-1">
@@ -342,9 +334,6 @@ export default async function DashboardPage() {
               <Clock className="h-5 w-5 text-muted-foreground" />
               Última atividade
             </CardTitle>
-            <CardDescription>
-              Última empresa e último usuário cadastrados
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {stats?.lastTenant ? (
@@ -382,9 +371,6 @@ export default async function DashboardPage() {
               <Tag className="h-5 w-5 text-muted-foreground" />
               Resumo por tipo
             </CardTitle>
-            <CardDescription>
-              Empresas agrupadas por tipo
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {kindEntries.length === 0 ? (
@@ -415,16 +401,10 @@ export default async function DashboardPage() {
             <Bell className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             Avisos
           </CardTitle>
-          <CardDescription>
-            Alertas e notificações do sistema (em breve)
-          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Nenhum aviso no momento. Aqui poderão aparecer alertas como token
-            WorkMail próximo do vencimento, entre outros.
-          </p>
-        </CardContent>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Nenhum aviso no momento.</p>
+          </CardContent>
       </Card>
 
       {/* Data da última atualização */}

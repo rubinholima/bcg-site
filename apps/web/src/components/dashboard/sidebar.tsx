@@ -113,7 +113,11 @@ export function Sidebar() {
           const Icon = item.icon!;
 
           if (item.href && !item.children?.length) {
-            if (!canAccessModule(item.moduleSlug) && !(item.moduleSlug === "emails" && canAccessDashboard)) {
+            const canSee =
+              item.slug === "app_manual"
+                ? Boolean(canAccessDashboard)
+                : canAccessModule(item.moduleSlug) || (item.moduleSlug === "emails" && canAccessDashboard);
+            if (!canSee) {
               return null;
             }
             const isActive =

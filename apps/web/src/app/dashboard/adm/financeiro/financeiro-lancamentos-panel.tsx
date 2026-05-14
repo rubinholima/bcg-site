@@ -11,7 +11,7 @@ import {
   Landmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -288,17 +288,17 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 print:hidden">
           <Card className="border-border/80">
             <CardHeader className="pb-2 pt-4 px-4">
-              <CardDescription className="flex items-center gap-1.5">
+              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                 <Landmark className="h-3.5 w-3.5" />
                 Em aberto
-              </CardDescription>
+              </p>
               <CardTitle className="text-lg tabular-nums">{formatMoney(resumo.emAbertoValor)}</CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 text-xs text-muted-foreground">{resumo.emAbertoCount} título(s)</CardContent>
           </Card>
           <Card className="border-amber-500/30 bg-amber-500/5">
             <CardHeader className="pb-2 pt-4 px-4">
-              <CardDescription>Vencidos (pendentes)</CardDescription>
+              <p className="text-xs font-medium text-muted-foreground">Vencidos (pendentes)</p>
               <CardTitle className="text-lg tabular-nums text-amber-700 dark:text-amber-400">
                 {formatMoney(resumo.vencidosValor)}
               </CardTitle>
@@ -307,7 +307,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
           </Card>
           <Card className="border-border/80 sm:col-span-2 lg:col-span-1">
             <CardHeader className="pb-2 pt-4 px-4">
-              <CardDescription>Quitados no mês (calendário)</CardDescription>
+              <p className="text-xs font-medium text-muted-foreground">Quitados no mês</p>
               <CardTitle className="text-lg tabular-nums">{formatMoney(resumo.pagosNoMesValor)}</CardTitle>
             </CardHeader>
             <CardContent className="px-4 pb-4 text-xs text-muted-foreground">{resumo.pagosNoMesCount} baixa(s)</CardContent>
@@ -318,7 +318,6 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
       <Card>
         <CardHeader className="print:hidden">
           <CardTitle className="text-base">Filtros</CardTitle>
-          <CardDescription>Busque por contraparte, descrição, referência ou categoria.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 print:hidden">
@@ -383,7 +382,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
                   {list.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-muted-foreground text-sm py-10 text-center">
-                        Nenhum lançamento neste filtro. Inclua um novo título ou ajuste os filtros.
+                        Nenhum lançamento.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -457,9 +456,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto text-foreground">
           <DialogHeader>
             <DialogTitle>{editing ? "Editar lançamento" : "Novo lançamento"}</DialogTitle>
-            <DialogDescription>
-              {modo === "pagar" ? "Conta a pagar — fornecedor ou despesa." : "Conta a receber — cliente ou receita."}
-            </DialogDescription>
+            <DialogDescription className="sr-only">Lançamento</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -468,7 +465,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
                 id="fl-contraparte"
                 value={form.contraparte}
                 onChange={(e) => setForm((f) => ({ ...f, contraparte: e.target.value }))}
-                placeholder="Opcional"
+                placeholder=""
               />
             </div>
             <div className="space-y-2">
@@ -477,7 +474,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
                 id="fl-desc"
                 value={form.descricao}
                 onChange={(e) => setForm((f) => ({ ...f, descricao: e.target.value }))}
-                placeholder="Ex.: Aluguel arena — parcela 3/12"
+                placeholder=""
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -525,7 +522,6 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
                   value={form.settledAt}
                   onChange={(e) => setForm((f) => ({ ...f, settledAt: e.target.value }))}
                 />
-                <p className="text-xs text-muted-foreground">Se vazio, usa a data de hoje ao salvar.</p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -535,16 +531,16 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
                   id="fl-cat"
                   value={form.categoria}
                   onChange={(e) => setForm((f) => ({ ...f, categoria: e.target.value }))}
-                  placeholder="Opcional"
+                  placeholder=""
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="fl-ref">Referência (NF, contrato)</Label>
+                <Label htmlFor="fl-ref">Referência</Label>
                 <Input
                   id="fl-ref"
                   value={form.referencia}
                   onChange={(e) => setForm((f) => ({ ...f, referencia: e.target.value }))}
-                  placeholder="Opcional"
+                  placeholder=""
                 />
               </div>
             </div>

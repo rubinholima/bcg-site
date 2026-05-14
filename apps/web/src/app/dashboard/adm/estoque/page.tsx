@@ -15,11 +15,10 @@ import {
   AlertTriangle,
   Layers,
   Shield,
-  Sparkles,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -258,19 +257,10 @@ export default function AdmEstoquePage() {
               </Button>
             </Link>
             <div>
-              <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 mb-1">
-                <Sparkles className="h-4 w-4" />
-                <span className="text-xs font-semibold uppercase tracking-wider">Operação & futebol</span>
-              </div>
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight flex flex-wrap items-center gap-3 text-foreground">
                 <Warehouse className="h-9 w-9 md:h-10 md:w-10 text-emerald-500" />
-                Estoque inteligente
+                Estoque
               </h1>
-              <p className="mt-2 max-w-2xl text-muted-foreground text-sm md:text-base leading-relaxed">
-                Controle por <strong className="font-medium text-foreground">categoria de material</strong> e{" "}
-                <strong className="font-medium text-foreground">categorias de time</strong> cadastradas no clube
-                (principal, base, feminino…). Entradas e saídas ficam registradas para auditoria.
-              </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 shrink-0">
@@ -322,7 +312,6 @@ export default function AdmEstoquePage() {
             <Package className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <div className="flex-1">
               <CardTitle className="text-lg">Clube / empresa</CardTitle>
-              <CardDescription>Filtros aplicam sobre o catálogo interno (não depende de Omie).</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -384,11 +373,6 @@ export default function AdmEstoquePage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {clubCategories.length === 0 && tenantId ? (
-                  <p className="text-xs text-muted-foreground">
-                    Sem categorias no cadastro do clube — filtro só por família de material.
-                  </p>
-                ) : null}
               </div>
               <div className="space-y-2">
                 <Label>Busca</Label>
@@ -411,7 +395,7 @@ export default function AdmEstoquePage() {
         <div className="rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 to-transparent px-4 py-3 flex flex-wrap items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
           <p className="text-sm text-foreground">
-            <span className="font-semibold">{alerts.length}</span> item(ns) em alerta (estoque ≤ mínimo configurado).
+            <span className="font-semibold">{alerts.length}</span> alertas
           </p>
         </div>
       ) : null}
@@ -424,7 +408,7 @@ export default function AdmEstoquePage() {
       ) : tenantId && products.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-14 text-center text-muted-foreground text-sm">
-            Nenhum produto neste filtro. Crie o primeiro item ou ajuste os filtros.
+            Nenhum produto.
           </CardContent>
         </Card>
       ) : tenantId ? (
@@ -440,7 +424,6 @@ export default function AdmEstoquePage() {
                   </div>
                   <div>
                     <h2 className="text-lg font-semibold text-foreground">{INVENTORY_KIND_LABELS[kind]}</h2>
-                    <p className="text-xs text-muted-foreground">{items.length} item(ns)</p>
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -457,10 +440,11 @@ export default function AdmEstoquePage() {
                       >
                         <CardHeader className="pb-2 pt-5">
                           <CardTitle className="text-base leading-snug pr-16 line-clamp-2">{p.name}</CardTitle>
-                          <CardDescription className="flex flex-wrap gap-x-2 gap-y-1 items-center">
-                            {p.sku ? <span className="font-mono text-xs">{p.sku}</span> : null}
-                            <span>· {p.unit}</span>
-                          </CardDescription>
+                          <p className="flex flex-wrap gap-x-2 gap-y-1 items-center text-xs text-muted-foreground">
+                            {p.sku ? <span className="font-mono">{p.sku}</span> : null}
+                            {p.sku ? <span>·</span> : null}
+                            <span>{p.unit}</span>
+                          </p>
                         </CardHeader>
                         <CardContent className="space-y-4 pb-5">
                           {tags.length > 0 ? (
@@ -474,9 +458,7 @@ export default function AdmEstoquePage() {
                                 </span>
                               ))}
                             </div>
-                          ) : (
-                            <p className="text-[11px] text-muted-foreground mb-3">Todo o clube</p>
-                          )}
+                          ) : null}
                           <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                               <span className="text-muted-foreground">Saldo</span>
@@ -527,7 +509,6 @@ export default function AdmEstoquePage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Lista compacta</CardTitle>
-              <CardDescription>Visão tabular para conferência rápida.</CardDescription>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <Table>
@@ -590,15 +571,14 @@ export default function AdmEstoquePage() {
         <DialogContent className="text-foreground max-w-md">
           <DialogHeader>
             <DialogTitle>Movimentar estoque</DialogTitle>
-            <DialogDescription>
-              {moveProduct ? (
-                <>
-                  <strong>{moveProduct.name}</strong> — saldo atual {moveProduct.currentStock} {moveProduct.unit}.
-                </>
-              ) : null}
-            </DialogDescription>
+            <DialogDescription className="sr-only">Movimentação de quantidade</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {moveProduct ? (
+              <p className="text-sm text-muted-foreground">
+                {moveProduct.name} · {moveProduct.currentStock} {moveProduct.unit}
+              </p>
+            ) : null}
             <div className="flex gap-2">
               <Button
                 type="button"

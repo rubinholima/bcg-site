@@ -185,9 +185,6 @@ export function ProductFormDialog({
             {tenantCategories.length > 0 ? (
               <div className="grid gap-2">
                 <Label>Categorias de futebol (times)</Label>
-                <p className="text-xs text-muted-foreground">
-                  Marcado = item dedicado a essa categoria. Vazio = vale para todo o clube.
-                </p>
                 <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto rounded-md border border-border p-2">
                   {tenantCategories.map((slug) => (
                     <label
@@ -205,13 +202,7 @@ export function ProductFormDialog({
                   ))}
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground rounded-md border border-dashed border-border p-3">
-                Esta empresa não tem categorias de futebol cadastradas. Inclua em{" "}
-                <span className="font-medium">Empresas → editar</span> para filtrar estoque por time (principal, sub-20,
-                etc.).
-              </p>
-            )}
+            ) : null}
             <div className="grid gap-2">
               <Label htmlFor="product-name">Nome *</Label>
               <Input

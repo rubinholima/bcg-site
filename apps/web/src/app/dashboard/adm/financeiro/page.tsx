@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -85,9 +85,6 @@ export default function AdmFinanceiroPage() {
         </Link>
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
-          <p className="text-muted-foreground">
-            Contas a pagar e a receber por empresa. Visão consolidada Omie fica na área da Diretoria.
-          </p>
         </div>
       </div>
 
@@ -97,7 +94,6 @@ export default function AdmFinanceiroPage() {
             <Building2 className="h-5 w-5 shrink-0 text-muted-foreground mt-0.5" />
             <div>
               <CardTitle className="text-lg">Empresa</CardTitle>
-              <CardDescription>Selecione a empresa para lançamentos e resumos.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -132,11 +128,6 @@ export default function AdmFinanceiroPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedTenant && (
-                <p className="text-xs text-muted-foreground">
-                  Relatórios e totais Omie por empresa: módulo <strong className="font-medium">Diretoria</strong>.
-                </p>
-              )}
             </div>
           )}
         </CardContent>
