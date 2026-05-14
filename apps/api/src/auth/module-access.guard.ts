@@ -18,11 +18,11 @@ export class ModuleAccessGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const requiredSlug = this.reflector.get<string | undefined>(
+    const required = this.reflector.get<string | string[] | undefined>(
       REQUIRED_MODULE_KEY,
       context.getHandler(),
     );
-    if (!requiredSlug) return true;
+    if (!required) return true;
 
     const request = context.switchToHttp().getRequest<Request>();
     const user = (request as Request & { user?: CognitoJwtPayload }).user;
@@ -33,8 +33,11 @@ export class ModuleAccessGuard implements CanActivate {
     const role = user.role ?? user['cognito:groups']?.[0] ?? 'user';
     if (role === 'super_admin') return true;
     const slugs = await this.modulesService.getSlugsForRole(role);
-    if (slugs.includes(requiredSlug)) return true;
+    const needed = Array.isArray(required) ? required : [required];
+    if (needed.some((s) => slugs.includes(s))) return true;
 
-    throw new ForbiddenException(`Acesso negado: módulo ${requiredSlug} requerido`);
+    throw new ForbiddenException(
+      `Acesso negado: um dos módulos requeridos: ${needed.join(', ')}`,
+    );
   }
 }

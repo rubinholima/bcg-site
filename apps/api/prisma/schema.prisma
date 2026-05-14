@@ -603,11 +603,16 @@ model Product {
   unit          String   @default("un") // un, cx, kg, etc.
   stockMin      Int      @default(0)   // abaixo disso = alerta
   currentStock  Int      @default(0)
+  /// uniforme | material_treino | bola_equipamento | nutricao_hidratacao | saude_fisioterapia | vestuario_lazer | documental | geral
+  inventoryKind String   @default("geral")
+  /// Categorias de futebol do clube (ex.: principal, sub20) — null ou [] = vale para todas
+  squadTags     Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   stockMovements StockMovement[]
   @@index([tenantId])
   @@index([tenantId, currentStock])
+  @@index([tenantId, inventoryKind])
 }
 
 // Requisição de compra — solicitante, itens, status, aprovação
