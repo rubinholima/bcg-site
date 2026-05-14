@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import { FinanceiroLancamentosPanel } from "./financeiro-lancamentos-panel";
 
 const STORAGE_TENANT_KEY = "adm_financeiro_tenant_id";
 
@@ -283,12 +284,15 @@ function formatExtrasBaixa(b: BaixaResumo): string {
   return `${sign}${net.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`;
 }
 
+type AreaTab = "operacao" | "omie";
+
 export default function AdmFinanceiroPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
   const [tenantId, setTenantId] = useState("");
+  const [areaTab, setAreaTab] = useState<AreaTab>("operacao");
 
   const [modo, setModo] = useState<ModoTitulo>("receber");
   const [filtro, setFiltro] = useState<FiltroTitulo>("todos");
@@ -545,8 +549,14 @@ export default function AdmFinanceiroPage() {
 
   return (
     <div className="space-y-6 print:max-w-none">
-      <div className="hidden print:block text-center border-b border-zinc-800 pb-3 mb-4 text-zinc-900 bg-white">
-        <h1 className="text-xl font-bold">Relatório financeiro</h1>
+      <div
+        className={
+          areaTab === "omie"
+            ? "hidden print:block text-center border-b border-zinc-800 pb-3 mb-4 text-zinc-900 bg-white"
+            : "hidden"
+        }
+      >
+        <h1 className="text-xl font-bold">Relatório financeiro (Omie)</h1>
         {selectedTenant && <p className="text-sm mt-1">{selectedTenant.name}</p>}
         <p className="text-xs mt-2 space-y-0.5">
           {linhasResumoImpressao.map((l) => (
@@ -580,11 +590,21 @@ export default function AdmFinanceiroPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Relatório financeiro</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
           <p className="text-muted-foreground">
-            Contas a receber e a pagar, com filtros e totais. Baixas e alterações no sistema de gestão.
+            Contas a pagar e a receber do grupo (cadastro interno). A aba Omie oferece relatórios gerenciais quando a
+            integração estiver configurada.
           </p>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 print:hidden">
+        <Button type="button" variant={areaTab === "operacao" ? "default" : "outline"} size="sm" onClick={() => setAreaTab("operacao")}>
+          Lançamentos
+        </Button>
+        <Button type="button" variant={areaTab === "omie" ? "default" : "outline"} size="sm" onClick={() => setAreaTab("omie")}>
+          Omie (gerencial)
+        </Button>
       </div>
 
       <Card className="print:hidden">
@@ -593,7 +613,11 @@ export default function AdmFinanceiroPage() {
             <Building2 className="h-5 w-5 shrink-0 text-muted-foreground mt-0.5" />
             <div>
               <CardTitle className="text-lg">Empresa</CardTitle>
-              <CardDescription>Selecione a empresa para carregar os títulos.</CardDescription>
+              <CardDescription>
+                {areaTab === "operacao"
+                  ? "Selecione a empresa para lançamentos e filtros."
+                  : "Selecione a empresa para carregar os títulos no Omie."}
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -634,9 +658,9 @@ export default function AdmFinanceiroPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {selectedTenant && !hasCred && (
+              {selectedTenant && !hasCred && areaTab === "omie" && (
                 <p className="text-sm text-amber-600 dark:text-amber-400/90">
-                  Integração não configurada para esta empresa.{" "}
+                  Integração Omie não configurada para esta empresa — necessária só para a visão gerencial abaixo.{" "}
                   <Link
                     href={`/dashboard/empresas/${tenantId}/edit#integracao-omie`}
                     className="underline font-medium"
@@ -650,12 +674,16 @@ export default function AdmFinanceiroPage() {
         </CardContent>
       </Card>
 
-      {tenantId && hasCred && (
+      {tenantId && areaTab === "operacao" && <FinanceiroLancamentosPanel tenantId={tenantId} />}
+
+      {tenantId && areaTab === "omie" && hasCred && (
         <Card className="print:shadow-none print:border print:border-zinc-300 print:bg-white print:text-zinc-900">
           <CardHeader className="print:hidden">
             <div className="flex flex-col gap-2">
-              <CardTitle>Títulos</CardTitle>
-              <CardDescription>Filtre por período e situação. O total geral é atualizado automaticamente.</CardDescription>
+              <CardTitle>Títulos (Omie)</CardTitle>
+              <CardDescription>
+                Leitura dos títulos no ERP para conferência e impressão. Lançamentos do dia a dia ficam na aba Lançamentos.
+              </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
