@@ -1,4 +1,5 @@
 import { IsString, IsOptional, MaxLength, IsIn } from 'class-validator';
+import { ASSET_CATEGORY_KINDS } from '../asset-category-kinds';
 
 export class CreateAssetCategoryDto {
   @IsString()
@@ -15,6 +16,6 @@ export class CreateAssetCategoryDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['general', 'uniform'])
-  kind?: 'general' | 'uniform';
+  @IsIn([...ASSET_CATEGORY_KINDS])
+  kind?: string;
 }

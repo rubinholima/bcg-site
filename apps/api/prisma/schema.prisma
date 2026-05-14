@@ -787,6 +787,7 @@ model Asset {
   shirtNumber       Int?           // número da camisa (1-99)
   assignedPlayerId  String?       // jogador com o item (só para clubes)
   assignedPlayer    Player?       @relation(fields: [assignedPlayerId], references: [id], onDelete: SetNull)
+  photoUrl          String?        // foto registrada do bem (URL da mídia / proxy)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   @@index([tenantId])

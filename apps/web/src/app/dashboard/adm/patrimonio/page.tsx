@@ -33,18 +33,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { AssetCategoryFormDialog, type AssetCategoryRow } from "./components/AssetCategoryFormDialog";
 import { AssetFormDialog, type AssetRow } from "./components/AssetFormDialog";
+import { ASSET_CATEGORY_KIND_LABEL, ASSET_PIECE_LABEL } from "./patrimonio-labels";
+import { getPublicImageUrl } from "@/lib/media-url";
 
 type TabId = "categorias" | "bens";
 
@@ -59,17 +54,14 @@ interface PlayerOption {
   jerseyNumber: number | null;
 }
 
+const NATIVE_SELECT_CLASS =
+  "rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-full min-w-0";
+
 const STATUS_LABEL: Record<string, string> = {
   em_uso: "Em uso",
   em_manutencao: "Em manutenção",
   emprestado: "Emprestado",
   baixado: "Baixado",
-};
-
-const PIECE_LABEL: Record<string, string> = {
-  camisa: "Camisa",
-  calção: "Calção",
-  meião: "Meião",
 };
 
 export default function AdmPatrimonioPage() {
@@ -209,55 +201,52 @@ export default function AdmPatrimonioPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center gap-4">
-              <div className="grid gap-2 min-w-[200px]">
+              <div className="grid gap-2 min-w-[200px] flex-1 sm:flex-none">
                 <label className="text-sm font-medium text-muted-foreground">Clube/Empresa</label>
-                <Select value={tenantId || "__all__"} onValueChange={(v) => setTenantId(v === "__all__" ? "" : v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Todos</SelectItem>
-                    {tenants.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  className={NATIVE_SELECT_CLASS + " min-h-10"}
+                  value={tenantId || "__all__"}
+                  onChange={(e) => setTenantId(e.target.value === "__all__" ? "" : e.target.value)}
+                >
+                  <option value="__all__">Todos</option>
+                  {tenants.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               {activeTab === "bens" && (
                 <>
-                  <div className="grid gap-2 min-w-[140px]">
+                  <div className="grid gap-2 min-w-[140px] flex-1 sm:flex-none">
                     <label className="text-sm font-medium text-muted-foreground">Situação</label>
-                    <Select value={filterStatus || "__all__"} onValueChange={(v) => setFilterStatus(v === "__all__" ? "" : v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">Todas</SelectItem>
-                        {Object.entries(STATUS_LABEL).map(([v, l]) => (
-                          <SelectItem key={v} value={v}>
-                            {l}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select
+                      className={NATIVE_SELECT_CLASS + " min-h-10"}
+                      value={filterStatus || "__all__"}
+                      onChange={(e) => setFilterStatus(e.target.value === "__all__" ? "" : e.target.value)}
+                    >
+                      <option value="__all__">Todas</option>
+                      {Object.entries(STATUS_LABEL).map(([v, l]) => (
+                        <option key={v} value={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="grid gap-2 min-w-[120px]">
+                  <div className="grid gap-2 min-w-[160px] flex-1 sm:flex-none">
                     <label className="text-sm font-medium text-muted-foreground">Peça (kit)</label>
-                    <Select value={filterPieceType || "__all__"} onValueChange={(v) => setFilterPieceType(v === "__all__" ? "" : v)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">Todas</SelectItem>
-                        {Object.entries(PIECE_LABEL).map(([v, l]) => (
-                          <SelectItem key={v} value={v}>
-                            {l}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <select
+                      className={NATIVE_SELECT_CLASS + " min-h-10"}
+                      value={filterPieceType || "__all__"}
+                      onChange={(e) => setFilterPieceType(e.target.value === "__all__" ? "" : e.target.value)}
+                    >
+                      <option value="__all__">Todas</option>
+                      {Object.entries(ASSET_PIECE_LABEL).map(([v, l]) => (
+                        <option key={v} value={v}>
+                          {l}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </>
               )}
@@ -308,7 +297,7 @@ export default function AdmPatrimonioPage() {
                           <TableRow key={c.id}>
                             <TableCell className="font-medium">{c.name}</TableCell>
                             <TableCell>{c.code ?? "—"}</TableCell>
-                            <TableCell>{c.kind === "uniform" ? "Kit uniforme" : "Geral"}</TableCell>
+                            <TableCell>{ASSET_CATEGORY_KIND_LABEL[c.kind] ?? c.kind}</TableCell>
                             <TableCell>{c.tenant.name}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
@@ -349,7 +338,9 @@ export default function AdmPatrimonioPage() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Descrição</TableHead>
+                          <TableHead className="w-14">Foto</TableHead>
                           <TableHead>Categoria</TableHead>
+                          <TableHead>Tipo</TableHead>
                           <TableHead>Peça</TableHead>
                           <TableHead>Nº / Tamanho</TableHead>
                           <TableHead>Jogador</TableHead>
@@ -362,8 +353,22 @@ export default function AdmPatrimonioPage() {
                         {assets.map((a) => (
                           <TableRow key={a.id}>
                             <TableCell className="font-medium">{a.description}</TableCell>
+                            <TableCell>
+                              {a.photoUrl?.trim() ? (
+                                <img
+                                  src={getPublicImageUrl(a.photoUrl.trim())}
+                                  alt=""
+                                  className="h-10 w-10 rounded object-cover border border-border"
+                                />
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
                             <TableCell>{a.category.name}</TableCell>
-                            <TableCell>{a.pieceType ? PIECE_LABEL[a.pieceType] ?? a.pieceType : "—"}</TableCell>
+                            <TableCell className="max-w-[140px] text-xs text-muted-foreground">
+                              {ASSET_CATEGORY_KIND_LABEL[a.category.kind] ?? a.category.kind}
+                            </TableCell>
+                            <TableCell>{a.pieceType ? ASSET_PIECE_LABEL[a.pieceType] ?? a.pieceType : "—"}</TableCell>
                             <TableCell>
                               {a.shirtNumber != null ? `#${a.shirtNumber}` : ""}
                               {a.size ? ` ${a.size}` : ""}

@@ -12,15 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import { ASSET_CATEGORY_KIND_OPTIONS, ASSET_CATEGORY_KIND_LABEL } from "../patrimonio-labels";
+
+const NATIVE_SELECT_CLASS =
+  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 export interface AssetCategoryRow {
   id: string;
@@ -38,11 +35,6 @@ interface AssetCategoryFormDialogProps {
   onSuccess: () => void;
 }
 
-const KIND_OPTIONS = [
-  { value: "general", label: "Geral (móveis, equipamentos, veículos)" },
-  { value: "uniform", label: "Kit uniforme (camisa, calção, meião)" },
-];
-
 export function AssetCategoryFormDialog({
   open,
   onOpenChange,
@@ -54,7 +46,7 @@ export function AssetCategoryFormDialog({
   const [tenantId, setTenantId] = useState("");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [kind, setKind] = useState<"general" | "uniform">("general");
+  const [kind, setKind] = useState("general");
 
   useEffect(() => {
     if (!open) return;
@@ -62,7 +54,7 @@ export function AssetCategoryFormDialog({
       setTenantId(edit.tenant.id);
       setName(edit.name);
       setCode(edit.code ?? "");
-      setKind((edit.kind as "general" | "uniform") || "general");
+      setKind(edit.kind && ASSET_CATEGORY_KIND_LABEL[edit.kind] ? edit.kind : "general");
     } else {
       setTenantId(tenants[0]?.id ?? "");
       setName("");
@@ -114,7 +106,7 @@ export function AssetCategoryFormDialog({
                 id="cat-tenant"
                 required
                 disabled={!!edit}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className={NATIVE_SELECT_CLASS}
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
               >
@@ -146,19 +138,19 @@ export function AssetCategoryFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label>Tipo</Label>
-              <Select value={kind} onValueChange={(v) => setKind(v as "general" | "uniform")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {KIND_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="cat-kind">Tipo</Label>
+              <select
+                id="cat-kind"
+                className={NATIVE_SELECT_CLASS}
+                value={kind}
+                onChange={(e) => setKind(e.target.value)}
+              >
+                {ASSET_CATEGORY_KIND_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <DialogFooter>

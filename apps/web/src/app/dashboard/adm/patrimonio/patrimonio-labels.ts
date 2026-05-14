@@ -1,0 +1,77 @@
+/** Labels PT para AssetCategory.kind (valores = API / banco). */
+export const ASSET_CATEGORY_KIND_LABEL: Record<string, string> = {
+  general: "Geral (outros bens)",
+  uniform: "Kit / uniforme (campos de peça, tamanho, jogador)",
+  furniture: "Móveis, estantes e fixações",
+  it_equipment: "Informática, rede e eletrônicos",
+  vehicle: "Veículos e transporte",
+  machinery: "Máquinas, ferramentas e equipamentos industriais",
+  sports_equipment: "Material esportivo (não kit)",
+  medical: "Médico, fisioterapia e hospitalar",
+  infrastructure: "Infraestrutura e obras",
+  kitchen: "Cozinha, copa e refeitório",
+  office: "Material de escritório e papelaria",
+  audiovisual: "Áudio, vídeo, TV e som",
+  security: "Segurança, CFTV e controle de acesso",
+  musical: "Instrumentos musicais",
+  library: "Biblioteca e acervo",
+  clothing_other: "Vestuário geral (não kit)",
+  bedding: "Enxoval, camas e têxteis",
+  cleaning: "Higiene, limpeza e saneantes",
+  garden: "Jardinagem e paisagismo",
+  laboratory: "Laboratório e pesquisa",
+  art: "Arte, decoração e troféus",
+  others: "Outros",
+};
+
+/** Ordem sugerida no formulário (mais usados primeiro). */
+const KIND_ORDER = [
+  "general",
+  "uniform",
+  "furniture",
+  "it_equipment",
+  "vehicle",
+  "machinery",
+  "office",
+  "sports_equipment",
+  "kitchen",
+  "medical",
+  "infrastructure",
+  "audiovisual",
+  "security",
+  "musical",
+  "library",
+  "clothing_other",
+  "bedding",
+  "cleaning",
+  "garden",
+  "laboratory",
+  "art",
+  "others",
+] as const;
+
+export const ASSET_CATEGORY_KIND_OPTIONS = KIND_ORDER.map((value) => ({
+  value,
+  label: ASSET_CATEGORY_KIND_LABEL[value] ?? value,
+}));
+
+/** Labels PT para peça de kit (Asset.pieceType). */
+export const ASSET_PIECE_LABEL: Record<string, string> = {
+  camisa: "Camisa",
+  calção: "Calção",
+  meião: "Meião",
+  agasalho: "Agasalho / moletom",
+  jaqueta: "Jaqueta / corta-vento",
+  colete_treino: "Colete de treino",
+  bermuda: "Bermuda",
+  shorts: "Shorts",
+  meia_curta: "Meia curta / meião curto",
+  luvas: "Luvas",
+  chuteira: "Chuteira",
+  caneleira: "Caneleira",
+  faixa_capitao: "Faixa de capitão",
+  bone: "Boné",
+  touca: "Touca / bandana",
+  toalha: "Toalha",
+  mochila_esportiva: "Mochila / bolsa esportiva",
+};

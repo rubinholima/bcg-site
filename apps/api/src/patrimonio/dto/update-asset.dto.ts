@@ -8,6 +8,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { ASSET_PIECE_TYPES } from '../asset-piece-types';
 
 export class UpdateAssetDto {
   @IsString()
@@ -23,6 +24,11 @@ export class UpdateAssetDto {
   @IsOptional()
   @MaxLength(500)
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(2048)
+  photoUrl?: string;
 
   @IsString()
   @IsOptional()
@@ -60,7 +66,7 @@ export class UpdateAssetDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['camisa', 'calção', 'meião'])
+  @IsIn([...ASSET_PIECE_TYPES])
   pieceType?: string;
 
   @IsString()

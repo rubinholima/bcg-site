@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,16 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
+import { ASSET_PIECE_LABEL } from "../patrimonio-labels";
+
+const NATIVE_SELECT_CLASS =
+  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 export interface AssetRow {
   id: string;
@@ -29,6 +28,7 @@ export interface AssetRow {
   categoryId: string;
   tagNumber: string | null;
   description: string;
+  photoUrl: string | null;
   location: string | null;
   responsibleName: string | null;
   acquisitionDate: string | null;
@@ -69,11 +69,7 @@ const STATUS_OPTIONS = [
   { value: "baixado", label: "Baixado" },
 ];
 
-const PIECE_OPTIONS = [
-  { value: "camisa", label: "Camisa" },
-  { value: "calção", label: "Calção" },
-  { value: "meião", label: "Meião" },
-];
+const PIECE_OPTIONS = Object.entries(ASSET_PIECE_LABEL).map(([value, label]) => ({ value, label }));
 
 export function AssetFormDialog({
   open,
@@ -90,6 +86,7 @@ export function AssetFormDialog({
   const [categoryId, setCategoryId] = useState("");
   const [tagNumber, setTagNumber] = useState("");
   const [description, setDescription] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
   const [location, setLocation] = useState("");
   const [responsibleName, setResponsibleName] = useState("");
   const [acquisitionDate, setAcquisitionDate] = useState("");
@@ -113,6 +110,7 @@ export function AssetFormDialog({
       setCategoryId(edit.categoryId);
       setTagNumber(edit.tagNumber ?? "");
       setDescription(edit.description);
+      setPhotoUrl(edit.photoUrl ?? "");
       setLocation(edit.location ?? "");
       setResponsibleName(edit.responsibleName ?? "");
       setAcquisitionDate(edit.acquisitionDate ? edit.acquisitionDate.slice(0, 10) : "");
@@ -129,6 +127,7 @@ export function AssetFormDialog({
       setCategoryId("");
       setTagNumber("");
       setDescription("");
+      setPhotoUrl("");
       setLocation("");
       setResponsibleName("");
       setAcquisitionDate("");
@@ -148,16 +147,18 @@ export function AssetFormDialog({
     const tenantIdForSubmit = edit ? edit.tenantId : catTenantId;
     if (!tenantIdForSubmit?.trim() || !categoryId?.trim() || !description?.trim()) return;
     if (isUniform && !pieceType) {
-      alert("Para kit uniforme, selecione o tipo de peça (camisa, calção ou meião).");
+      alert("Para kit uniforme, selecione o tipo de peça.");
       return;
     }
     setSaving(true);
     try {
+      const photoPayloadCreate = photoUrl.trim() || undefined;
       if (edit) {
         await api.patch(`/patrimonio/assets/${edit.id}`, {
           categoryId: categoryId || undefined,
           tagNumber: tagNumber.trim() || undefined,
           description: description.trim(),
+          photoUrl: photoUrl.trim(),
           location: location.trim() || undefined,
           responsibleName: responsibleName.trim() || undefined,
           acquisitionDate: acquisitionDate || undefined,
@@ -176,6 +177,7 @@ export function AssetFormDialog({
           categoryId,
           tagNumber: tagNumber.trim() || undefined,
           description: description.trim(),
+          photoUrl: photoPayloadCreate,
           location: location.trim() || undefined,
           responsibleName: responsibleName.trim() || undefined,
           acquisitionDate: acquisitionDate || undefined,
@@ -212,7 +214,7 @@ export function AssetFormDialog({
               <select
                 required
                 disabled={!!edit}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className={NATIVE_SELECT_CLASS}
                 value={edit ? edit.tenant.id : catTenantId}
                 onChange={(e) => setCatTenantId(e.target.value)}
               >
@@ -225,54 +227,56 @@ export function AssetFormDialog({
               </select>
             </div>
             <div className="grid gap-2">
-              <Label>Categoria *</Label>
-              <Select
-                value={categoryId}
-                onValueChange={setCategoryId}
+              <Label htmlFor="asset-category">Categoria *</Label>
+              <select
+                id="asset-category"
                 required
                 disabled={!!edit}
+                className={NATIVE_SELECT_CLASS}
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tenantCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name} {c.kind === "uniform" ? "(kit)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="">Selecione a categoria</option>
+                {tenantCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.kind === "uniform" ? "(kit)" : ""}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {isUniform && (
               <div className="grid grid-cols-2 gap-4 border-t pt-4">
                 <div className="grid gap-2">
-                  <Label>Tipo de peça *</Label>
-                  <Select value={pieceType} onValueChange={setPieceType} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Camisa / Calção / Meião" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PIECE_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="asset-piece">Tipo de peça *</Label>
+                  <select
+                    id="asset-piece"
+                    required
+                    className={NATIVE_SELECT_CLASS}
+                    value={pieceType}
+                    onChange={(e) => setPieceType(e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {PIECE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="grid gap-2">
-                  <Label>Tamanho</Label>
+                  <Label htmlFor="asset-size">Tamanho</Label>
                   <Input
+                    id="asset-size"
                     value={size}
                     onChange={(e) => setSize(e.target.value)}
                     placeholder="P, M, G, GG"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Número da camisa</Label>
+                  <Label htmlFor="asset-shirt">Número da camisa</Label>
                   <Input
+                    id="asset-shirt"
                     type="number"
                     min={1}
                     max={99}
@@ -282,20 +286,20 @@ export function AssetFormDialog({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Atribuído ao jogador</Label>
-                  <Select value={assignedPlayerId || "__none__"} onValueChange={(v) => setAssignedPlayerId(v === "__none__" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Nenhum" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Nenhum</SelectItem>
-                      {players.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="asset-player">Atribuído ao jogador</Label>
+                  <select
+                    id="asset-player"
+                    className={NATIVE_SELECT_CLASS}
+                    value={assignedPlayerId}
+                    onChange={(e) => setAssignedPlayerId(e.target.value)}
+                  >
+                    <option value="">Nenhum</option>
+                    {players.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             )}
@@ -310,6 +314,50 @@ export function AssetFormDialog({
                 required
               />
             </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Camera className="h-4 w-4 shrink-0 opacity-70" />
+                Foto do bem
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Registro visual opcional. Escolha na mídia ou cole a URL abaixo.
+              </p>
+              <div className="flex gap-4 items-start">
+                <div className="h-28 w-28 rounded-md overflow-hidden bg-muted shrink-0 border border-border">
+                  {photoUrl.trim() ? (
+                    <img
+                      src={getPublicImageUrl(photoUrl.trim())}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs text-center px-1">
+                      Sem foto
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <MediaPicker
+                    label="Imagem"
+                    sizeKey="card"
+                    allowAllFolders
+                    uploadFolderHint="card"
+                    value={photoUrl}
+                    onChange={setPhotoUrl}
+                    placeholder="Escolher da biblioteca…"
+                    hideEmptyFolderHint
+                  />
+                  <Input
+                    className="text-foreground"
+                    placeholder="Ou cole a URL da imagem"
+                    value={photoUrl}
+                    onChange={(e) => setPhotoUrl(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             {!isUniform && (
               <div className="grid gap-2">
                 <Label htmlFor="asset-tag">Nº etiqueta patrimonial</Label>
@@ -377,19 +425,19 @@ export function AssetFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label>Situação</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="asset-status">Situação</Label>
+              <select
+                id="asset-status"
+                className={NATIVE_SELECT_CLASS}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="asset-notes">Observações</Label>

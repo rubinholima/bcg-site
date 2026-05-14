@@ -62,6 +62,7 @@ export class AssetsService {
         categoryId: dto.categoryId,
         tagNumber: dto.tagNumber ?? null,
         description: dto.description,
+        photoUrl: dto.photoUrl?.trim() ? dto.photoUrl.trim() : null,
         location: dto.location ?? null,
         responsibleName: dto.responsibleName ?? null,
         acquisitionDate: dto.acquisitionDate ? new Date(dto.acquisitionDate) : null,
@@ -96,6 +97,7 @@ export class AssetsService {
     if (dto.categoryId != null) data.categoryId = dto.categoryId;
     if (dto.tagNumber !== undefined) data.tagNumber = dto.tagNumber ?? null;
     if (dto.description != null) data.description = dto.description;
+    if (dto.photoUrl !== undefined) data.photoUrl = dto.photoUrl?.trim() ? dto.photoUrl.trim() : null;
     if (dto.location !== undefined) data.location = dto.location ?? null;
     if (dto.responsibleName !== undefined) data.responsibleName = dto.responsibleName ?? null;
     if (dto.acquisitionDate !== undefined) data.acquisitionDate = dto.acquisitionDate ? new Date(dto.acquisitionDate) : null;
