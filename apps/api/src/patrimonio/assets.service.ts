@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssetDto } from './dto/create-asset.dto';
 import { UpdateAssetDto } from './dto/update-asset.dto';
@@ -60,18 +61,18 @@ export class AssetsService {
       data: {
         tenantId: dto.tenantId,
         categoryId: dto.categoryId,
-        tagNumber: dto.tagNumber ?? null,
-        description: dto.description,
+        tagNumber: cadastroUpper(dto.tagNumber),
+        description: cadastroUpperRequired(dto.description),
         photoUrl: dto.photoUrl?.trim() ? dto.photoUrl.trim() : null,
-        location: dto.location ?? null,
-        responsibleName: dto.responsibleName ?? null,
+        location: cadastroUpper(dto.location),
+        responsibleName: cadastroUpper(dto.responsibleName),
         acquisitionDate: dto.acquisitionDate ? new Date(dto.acquisitionDate) : null,
         acquisitionValue: dto.acquisitionValue ?? null,
         depreciationRate: dto.depreciationRate ?? null,
         status: dto.status ?? 'em_uso',
-        notes: dto.notes ?? null,
+        notes: cadastroUpper(dto.notes),
         pieceType: dto.pieceType ?? null,
-        size: dto.size ?? null,
+        size: cadastroUpper(dto.size),
         shirtNumber: dto.shirtNumber ?? null,
         assignedPlayerId: dto.assignedPlayerId ?? null,
       },
@@ -84,29 +85,46 @@ export class AssetsService {
   }
 
   async update(id: string, dto: UpdateAssetDto) {
-    await this.findOne(id);
-    if (dto.categoryId) {
-      const category = await this.prisma.assetCategory.findUnique({ where: { id: dto.categoryId } });
-      if (!category) throw new NotFoundException('Categoria não encontrada');
+    const current = await this.findOne(id);
+    let targetTenantId = current.tenantId;
+
+    if (dto.tenantId !== undefined && dto.tenantId !== null && String(dto.tenantId).trim() !== '') {
+      const tid = String(dto.tenantId).trim();
+      const tenant = await this.prisma.tenant.findUnique({ where: { id: tid } });
+      if (!tenant) throw new NotFoundException('Tenant não encontrado');
+      targetTenantId = tid;
     }
+
+    const effectiveCategoryId = dto.categoryId ?? current.categoryId;
+    const category = await this.prisma.assetCategory.findUnique({ where: { id: effectiveCategoryId } });
+    if (!category) throw new NotFoundException('Categoria não encontrada');
+    if (category.tenantId !== targetTenantId) {
+      throw new BadRequestException('Categoria não pertence ao clube/empresa selecionado. Ajuste clube ou categoria.');
+    }
+
     if (dto.assignedPlayerId !== undefined && dto.assignedPlayerId !== null && dto.assignedPlayerId !== '') {
       const player = await this.prisma.player.findUnique({ where: { id: dto.assignedPlayerId } });
       if (!player) throw new NotFoundException('Jogador não encontrado');
+      if (player.tenantId !== targetTenantId) throw new BadRequestException('Jogador não pertence ao clube selecionado.');
     }
+
     const data: Record<string, unknown> = {};
+    if (dto.tenantId !== undefined && dto.tenantId !== null && String(dto.tenantId).trim() !== '') {
+      data.tenantId = targetTenantId;
+    }
     if (dto.categoryId != null) data.categoryId = dto.categoryId;
-    if (dto.tagNumber !== undefined) data.tagNumber = dto.tagNumber ?? null;
-    if (dto.description != null) data.description = dto.description;
+    if (dto.tagNumber !== undefined) data.tagNumber = cadastroUpper(dto.tagNumber);
+    if (dto.description != null) data.description = cadastroUpperRequired(dto.description);
     if (dto.photoUrl !== undefined) data.photoUrl = dto.photoUrl?.trim() ? dto.photoUrl.trim() : null;
-    if (dto.location !== undefined) data.location = dto.location ?? null;
-    if (dto.responsibleName !== undefined) data.responsibleName = dto.responsibleName ?? null;
+    if (dto.location !== undefined) data.location = cadastroUpper(dto.location);
+    if (dto.responsibleName !== undefined) data.responsibleName = cadastroUpper(dto.responsibleName);
     if (dto.acquisitionDate !== undefined) data.acquisitionDate = dto.acquisitionDate ? new Date(dto.acquisitionDate) : null;
     if (dto.acquisitionValue !== undefined) data.acquisitionValue = dto.acquisitionValue ?? null;
     if (dto.depreciationRate !== undefined) data.depreciationRate = dto.depreciationRate ?? null;
     if (dto.status != null) data.status = dto.status;
-    if (dto.notes !== undefined) data.notes = dto.notes ?? null;
+    if (dto.notes !== undefined) data.notes = cadastroUpper(dto.notes);
     if (dto.pieceType !== undefined) data.pieceType = dto.pieceType ?? null;
-    if (dto.size !== undefined) data.size = dto.size ?? null;
+    if (dto.size !== undefined) data.size = cadastroUpper(dto.size);
     if (dto.shirtNumber !== undefined) data.shirtNumber = dto.shirtNumber ?? null;
     if (dto.assignedPlayerId !== undefined) data.assignedPlayerId = dto.assignedPlayerId ?? null;
     return this.prisma.asset.update({

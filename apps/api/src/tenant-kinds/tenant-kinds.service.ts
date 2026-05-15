@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTenantKindDto } from './dto/create-tenant-kind.dto';
 import { UpdateTenantKindDto } from './dto/update-tenant-kind.dto';
@@ -29,17 +30,17 @@ export class TenantKindsService {
   }
 
   async create(createTenantKindDto: CreateTenantKindDto): Promise<TenantKindResponseDto> {
-    // Verificar se o nome já existe
-    const existingKind = await this.prisma.tenantKind.findUnique({
-      where: { name: createTenantKindDto.name },
+    const name = cadastroUpperRequired(createTenantKindDto.name);
+    const existingKind = await this.prisma.tenantKind.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
     });
 
     if (existingKind) {
-      throw new ConflictException(`Tipo com nome "${createTenantKindDto.name}" já existe`);
+      throw new ConflictException(`Tipo com nome "${name}" já existe`);
     }
 
     return this.prisma.tenantKind.create({
-      data: createTenantKindDto,
+      data: { ...createTenantKindDto, name },
     });
   }
 
@@ -47,23 +48,28 @@ export class TenantKindsService {
     // Verificar se existe
     await this.findOne(id);
 
-    // Se está atualizando o nome, verificar se não existe outro com o mesmo nome
     if (updateTenantKindDto.name) {
+      const name = cadastroUpperRequired(updateTenantKindDto.name);
       const existingKind = await this.prisma.tenantKind.findFirst({
         where: {
-          name: updateTenantKindDto.name,
+          name: { equals: name, mode: 'insensitive' },
           id: { not: id },
         },
       });
 
       if (existingKind) {
-        throw new ConflictException(`Tipo com nome "${updateTenantKindDto.name}" já existe`);
+        throw new ConflictException(`Tipo com nome "${name}" já existe`);
       }
+    }
+
+    const data = { ...updateTenantKindDto };
+    if (updateTenantKindDto.name) {
+      data.name = cadastroUpperRequired(updateTenantKindDto.name);
     }
 
     return this.prisma.tenantKind.update({
       where: { id },
-      data: updateTenantKindDto,
+      data,
     });
   }
 

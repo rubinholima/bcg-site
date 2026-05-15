@@ -160,6 +160,10 @@ export default function ManualPage() {
               <strong>estádios</strong>, <strong>times adversários</strong>.
             </p>
             <p>
+              <strong>Regra de digitação:</strong> nomes e textos de cadastro são gravados e exibidos em{" "}
+              <strong>MAIÚSCULAS</strong>; <strong>e-mails</strong> ficam sempre em minúsculas.
+            </p>
+            <p>
               <strong>Exemplo:</strong> preencher <em>categorias</em> no cadastro do clube permite filtrar itens
               de estoque “só Sub-17” ou “só Feminino”.
             </p>

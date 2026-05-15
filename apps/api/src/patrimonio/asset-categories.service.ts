@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAssetCategoryDto } from './dto/create-asset-category.dto';
 import { UpdateAssetCategoryDto } from './dto/update-asset-category.dto';
@@ -32,8 +33,8 @@ export class AssetCategoriesService {
     return this.prisma.assetCategory.create({
       data: {
         tenantId: dto.tenantId,
-        name: dto.name,
-        code: dto.code ?? null,
+        name: cadastroUpperRequired(dto.name),
+        code: cadastroUpper(dto.code),
         kind: dto.kind ?? 'general',
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
@@ -45,8 +46,8 @@ export class AssetCategoriesService {
     return this.prisma.assetCategory.update({
       where: { id },
       data: {
-        ...(dto.name != null && { name: dto.name }),
-        ...(dto.code !== undefined && { code: dto.code ?? null }),
+        ...(dto.name != null && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.code !== undefined && { code: cadastroUpper(dto.code) }),
         ...(dto.kind != null && { kind: dto.kind }),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },

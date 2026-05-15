@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { FinanceiroLancamento, Prisma } from '@prisma/client';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFinanceiroLancamentoDto } from './dto/create-financeiro-lancamento.dto';
 import { UpdateFinanceiroLancamentoDto } from './dto/update-financeiro-lancamento.dto';
@@ -148,14 +149,14 @@ export class FinanceiroLancamentosService {
         tenantId: dto.tenantId,
         tipo: dto.tipo,
         status,
-        contraparte: dto.contraparte?.trim() ? dto.contraparte.trim() : null,
-        descricao: dto.descricao.trim(),
+        contraparte: cadastroUpper(dto.contraparte),
+        descricao: cadastroUpperRequired(dto.descricao),
         valor: dto.valor,
         dueDate: new Date(dto.dueDate),
         settledAt,
-        categoria: dto.categoria?.trim() ? dto.categoria.trim() : null,
-        referencia: dto.referencia?.trim() ? dto.referencia.trim() : null,
-        notas: dto.notas?.trim() ? dto.notas.trim() : null,
+        categoria: cadastroUpper(dto.categoria),
+        referencia: cadastroUpper(dto.referencia),
+        notas: cadastroUpper(dto.notas),
       },
     });
     return serialize(row);
@@ -183,19 +184,15 @@ export class FinanceiroLancamentosService {
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
         ...(dto.status !== undefined ? { status: dto.status } : {}),
         ...(dto.contraparte !== undefined
-          ? { contraparte: dto.contraparte?.trim() ? dto.contraparte.trim() : null }
+          ? { contraparte: cadastroUpper(dto.contraparte) }
           : {}),
-        ...(dto.descricao !== undefined ? { descricao: dto.descricao.trim() } : {}),
+        ...(dto.descricao !== undefined ? { descricao: cadastroUpperRequired(dto.descricao) } : {}),
         ...(dto.valor !== undefined ? { valor: dto.valor } : {}),
         ...(dto.dueDate !== undefined ? { dueDate: new Date(dto.dueDate) } : {}),
         ...(settledAt !== undefined ? { settledAt } : {}),
-        ...(dto.categoria !== undefined
-          ? { categoria: dto.categoria?.trim() ? dto.categoria.trim() : null }
-          : {}),
-        ...(dto.referencia !== undefined
-          ? { referencia: dto.referencia?.trim() ? dto.referencia.trim() : null }
-          : {}),
-        ...(dto.notas !== undefined ? { notas: dto.notas?.trim() ? dto.notas.trim() : null } : {}),
+        ...(dto.categoria !== undefined ? { categoria: cadastroUpper(dto.categoria) } : {}),
+        ...(dto.referencia !== undefined ? { referencia: cadastroUpper(dto.referencia) } : {}),
+        ...(dto.notas !== undefined ? { notas: cadastroUpper(dto.notas) } : {}),
       },
     });
     return serialize(row);

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { cadastroJsonStringArray, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -64,15 +65,15 @@ export class ProductsService {
     return this.prisma.product.create({
       data: {
         tenantId: dto.tenantId,
-        name: dto.name,
-        sku: dto.sku ?? null,
+        name: cadastroUpperRequired(dto.name),
+        sku: cadastroUpper(dto.sku),
         unit: dto.unit ?? 'un',
         stockMin: dto.stockMin ?? 0,
         currentStock: dto.currentStock ?? 0,
         inventoryKind: dto.inventoryKind ?? 'geral',
         squadTags:
           dto.squadTags && dto.squadTags.length > 0
-            ? dto.squadTags.map((s) => s.trim()).filter(Boolean)
+            ? (cadastroJsonStringArray(dto.squadTags) as Prisma.InputJsonValue)
             : Prisma.JsonNull,
       },
       include: { tenant: { select: { id: true, name: true, slug: true, categories: true } } },
@@ -82,8 +83,8 @@ export class ProductsService {
   async update(id: string, dto: UpdateProductDto) {
     await this.findOne(id);
     const data: Prisma.ProductUpdateInput = {};
-    if (dto.name != null) data.name = dto.name;
-    if (dto.sku !== undefined) data.sku = dto.sku ?? null;
+    if (dto.name != null) data.name = cadastroUpperRequired(dto.name);
+    if (dto.sku !== undefined) data.sku = cadastroUpper(dto.sku);
     if (dto.unit !== undefined) data.unit = dto.unit ?? 'un';
     if (dto.stockMin !== undefined) data.stockMin = dto.stockMin;
     if (dto.currentStock !== undefined) data.currentStock = dto.currentStock;
@@ -91,7 +92,7 @@ export class ProductsService {
     if (dto.squadTags !== undefined) {
       data.squadTags =
         dto.squadTags.length > 0
-          ? dto.squadTags.map((s) => s.trim()).filter(Boolean)
+          ? (cadastroJsonStringArray(dto.squadTags) as Prisma.InputJsonValue)
           : Prisma.JsonNull;
     }
     return this.prisma.product.update({

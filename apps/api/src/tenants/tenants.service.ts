@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { VaultEncryptionService } from '../vault/vault-encryption.service';
 import { TenantResponseDto } from './dto/tenant-response.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
@@ -131,11 +132,15 @@ export class TenantsService {
       const now = new Date();
       const categoriesJson =
         dto.categories && Array.isArray(dto.categories) && dto.categories.length > 0
-          ? JSON.stringify(dto.categories)
+          ? JSON.stringify(
+              dto.categories.map((c) =>
+                typeof c === 'string' ? cadastroUpperRequired(c) : cadastroUpperRequired(String(c)),
+              ),
+            )
           : null;
       await this.prisma.$executeRaw`
         INSERT INTO "Tenant" (id, name, slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "sofascoreTeamId", categories, "createdAt", "updatedAt")
-        VALUES (${id}, ${dto.name}, ${dto.slug}, ${dto.kindId}, ${dto.address ?? null}, ${dto.contactName ?? null}, ${dto.contactPhone ?? null}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${dto.city ?? null}, ${dto.country ?? null}, ${dto.websiteUrl ?? null}, ${(dto.sofascoreTeamId ?? "").trim() || null}, ${categoriesJson}::jsonb, ${now}, ${now})
+        VALUES (${id}, ${cadastroUpperRequired(dto.name)}, ${dto.slug}, ${dto.kindId}, ${cadastroUpper(dto.address)}, ${cadastroUpper(dto.contactName)}, ${cadastroUpper(dto.contactPhone)}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${cadastroUpper(dto.city)}, ${cadastroUpper(dto.country)}, ${dto.websiteUrl?.trim() || null}, ${(dto.sofascoreTeamId ?? "").trim() || null}, ${categoriesJson}::jsonb, ${now}, ${now})
       `;
       return this.findOne(id, allowedTenantIds);
     } catch (err) {
@@ -164,7 +169,7 @@ export class TenantsService {
       let idx = 0;
       if (dto.name !== undefined) {
         updates.push(`name = $${++idx}`);
-        values.push(dto.name);
+        values.push(cadastroUpperRequired(dto.name));
       }
       if (dto.slug !== undefined) {
         updates.push(`slug = $${++idx}`);
@@ -180,15 +185,15 @@ export class TenantsService {
       }
       if (dto.address !== undefined) {
         updates.push(`address = $${++idx}`);
-        values.push(dto.address);
+        values.push(cadastroUpper(dto.address));
       }
       if (dto.contactName !== undefined) {
         updates.push(`"contactName" = $${++idx}`);
-        values.push(dto.contactName);
+        values.push(cadastroUpper(dto.contactName));
       }
       if (dto.contactPhone !== undefined) {
         updates.push(`"contactPhone" = $${++idx}`);
-        values.push(dto.contactPhone);
+        values.push(cadastroUpper(dto.contactPhone));
       }
       if (dto.lat !== undefined) {
         updates.push(`lat = $${++idx}`);
@@ -200,11 +205,11 @@ export class TenantsService {
       }
       if (dto.city !== undefined) {
         updates.push(`city = $${++idx}`);
-        values.push(dto.city);
+        values.push(cadastroUpper(dto.city));
       }
       if (dto.country !== undefined) {
         updates.push(`country = $${++idx}`);
-        values.push(dto.country);
+        values.push(cadastroUpper(dto.country));
       }
       if (dto.websiteUrl !== undefined) {
         updates.push(`"websiteUrl" = $${++idx}`);
@@ -227,7 +232,11 @@ export class TenantsService {
         values.push(
           dto.categories === null || (Array.isArray(dto.categories) && dto.categories.length === 0)
             ? null
-            : JSON.stringify(Array.isArray(dto.categories) ? dto.categories : []),
+            : JSON.stringify(
+                (Array.isArray(dto.categories) ? dto.categories : []).map((c) =>
+                  typeof c === 'string' ? cadastroUpperRequired(c) : cadastroUpperRequired(String(c)),
+                ),
+              ),
         );
       }
 

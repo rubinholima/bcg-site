@@ -1,5 +1,11 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import {
+  cadastroEmail,
+  cadastroJsonStringArray,
+  cadastroUpper,
+  cadastroUpperRequired,
+} from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
@@ -215,8 +221,9 @@ export class PlayersService {
       const players = Array.isArray(cat.players) ? cat.players : [];
 
       for (const p of players) {
-        const name = (p.name as string)?.trim();
-        if (!name) continue;
+        const nameRaw = (p.name as string)?.trim();
+        if (!nameRaw) continue;
+        const name = cadastroUpperRequired(nameRaw);
 
         const data: Prisma.PlayerUncheckedCreateInput = {
           tenantId,
@@ -224,14 +231,18 @@ export class PlayersService {
           category: categoryId,
           photoUrl: (p.photoUrl as string)?.trim() || null,
           birthDate: (p.birthDate as string)?.trim() || null,
-          nationality: (p.nationality as string)?.trim() || null,
+          nationality: cadastroUpper((p.nationality as string) ?? undefined),
           height: p.height != null ? Number(p.height) : null,
           weight: p.weight != null ? Number(p.weight) : null,
           preferredFoot: (p.preferredFoot as string)?.trim() || null,
           jerseyNumber: p.jerseyNumber != null ? Number(p.jerseyNumber) : null,
-          position: (p.position as string)?.trim() || null,
-          currentTeam: (p.currentTeam as string)?.trim() || null,
-          previousTeams: p.previousTeams != null ? (p.previousTeams as object) : Prisma.JsonNull,
+          position: cadastroUpper((p.position as string) ?? undefined),
+          currentTeam: cadastroUpper((p.currentTeam as string) ?? undefined),
+          previousTeams: Array.isArray(p.previousTeams) && p.previousTeams.every((x) => typeof x === 'string')
+            ? cadastroJsonStringArray(p.previousTeams)
+            : p.previousTeams != null
+              ? (p.previousTeams as object)
+              : Prisma.JsonNull,
           seasonHistory: p.seasonHistory != null ? (p.seasonHistory as object) : Prisma.JsonNull,
           socialMedia: p.socialMedia != null ? (p.socialMedia as object) : Prisma.JsonNull,
           matchesPlayed: p.matchesPlayed != null ? Number(p.matchesPlayed) : null,
@@ -241,18 +252,23 @@ export class PlayersService {
           redCards: p.redCards != null ? Number(p.redCards) : null,
           marketValue: p.marketValue != null ? Number(p.marketValue) : null,
           highlights: p.highlights != null ? (p.highlights as string[]) : Prisma.JsonNull,
-          bioPT: (p.bioPT as string)?.trim() || null,
-          bioEN: (p.bioEN as string)?.trim() || null,
+          bioPT: cadastroUpper((p.bioPT as string) ?? undefined),
+          bioEN: cadastroUpper((p.bioEN as string) ?? undefined),
         };
 
         const existing = await this.prisma.player.findFirst({
-          where: { tenantId, category: categoryId, name },
+          where: {
+            tenantId,
+            category: categoryId,
+            name: { equals: name, mode: 'insensitive' },
+          },
         });
 
         if (existing) {
           await this.prisma.player.update({
             where: { id: existing.id },
             data: {
+              name: data.name,
               photoUrl: data.photoUrl,
               birthDate: data.birthDate,
               nationality: data.nationality,
@@ -318,8 +334,9 @@ export class PlayersService {
       const players = Array.isArray(cat.players) ? cat.players : [];
 
       for (const p of players) {
-        const name = (p.name as string)?.trim();
-        if (!name) continue;
+        const nameRaw = (p.name as string)?.trim();
+        if (!nameRaw) continue;
+        const name = cadastroUpperRequired(nameRaw);
 
         const clubSlug = this.normalizeSlug(p.clubSlug as string);
         if (!clubSlug) {
@@ -339,14 +356,18 @@ export class PlayersService {
           category: categoryId,
           photoUrl: (p.photoUrl as string)?.trim() || null,
           birthDate: (p.birthDate as string)?.trim() || null,
-          nationality: (p.nationality as string)?.trim() || null,
+          nationality: cadastroUpper((p.nationality as string) ?? undefined),
           height: p.height != null ? Number(p.height) : null,
           weight: p.weight != null ? Number(p.weight) : null,
           preferredFoot: (p.preferredFoot as string)?.trim() || null,
           jerseyNumber: p.jerseyNumber != null ? Number(p.jerseyNumber) : null,
-          position: (p.position as string)?.trim() || null,
-          currentTeam: (p.currentTeam as string)?.trim() || null,
-          previousTeams: p.previousTeams != null ? (p.previousTeams as object) : Prisma.JsonNull,
+          position: cadastroUpper((p.position as string) ?? undefined),
+          currentTeam: cadastroUpper((p.currentTeam as string) ?? undefined),
+          previousTeams: Array.isArray(p.previousTeams) && p.previousTeams.every((x) => typeof x === 'string')
+            ? cadastroJsonStringArray(p.previousTeams)
+            : p.previousTeams != null
+              ? (p.previousTeams as object)
+              : Prisma.JsonNull,
           seasonHistory: p.seasonHistory != null ? (p.seasonHistory as object) : Prisma.JsonNull,
           socialMedia: p.socialMedia != null ? (p.socialMedia as object) : Prisma.JsonNull,
           matchesPlayed: p.matchesPlayed != null ? Number(p.matchesPlayed) : null,
@@ -356,18 +377,23 @@ export class PlayersService {
           redCards: p.redCards != null ? Number(p.redCards) : null,
           marketValue: p.marketValue != null ? Number(p.marketValue) : null,
           highlights: p.highlights != null ? (p.highlights as string[]) : Prisma.JsonNull,
-          bioPT: (p.bioPT as string)?.trim() || null,
-          bioEN: (p.bioEN as string)?.trim() || null,
+          bioPT: cadastroUpper((p.bioPT as string) ?? undefined),
+          bioEN: cadastroUpper((p.bioEN as string) ?? undefined),
         };
 
         const existing = await this.prisma.player.findFirst({
-          where: { tenantId, category: categoryId, name },
+          where: {
+            tenantId,
+            category: categoryId,
+            name: { equals: name, mode: 'insensitive' },
+          },
         });
 
         if (existing) {
           await this.prisma.player.update({
             where: { id: existing.id },
             data: {
+              name: data.name,
               photoUrl: data.photoUrl,
               birthDate: data.birthDate,
               nationality: data.nationality,
@@ -405,13 +431,18 @@ export class PlayersService {
   private toCreateData(dto: CreatePlayerDto): Prisma.PlayerUncheckedCreateInput {
     const d = dto as unknown as Record<string, unknown>;
     const j = (v: unknown) => (v != null ? (v as object) : Prisma.JsonNull);
+    const prev = d.previousTeams;
+    const previousTeams =
+      Array.isArray(prev) && prev.every((x) => typeof x === 'string')
+        ? cadastroJsonStringArray(prev)
+        : j(d.previousTeams);
     return {
       tenantId: dto.tenantId,
-      name: dto.name.trim(),
+      name: cadastroUpperRequired(dto.name),
       category: (d.category as string)?.trim() || null,
       photoUrl: (d.photoUrl as string)?.trim() || null,
       birthDate: (d.birthDate as string)?.trim() || null,
-      nationality: (d.nationality as string)?.trim() || null,
+      nationality: cadastroUpper((d.nationality as string) ?? undefined),
       height: d.height != null ? (d.height as number) : null,
       weight: d.weight != null ? (d.weight as number) : null,
       bmi: d.bmi != null ? (d.bmi as number) : null,
@@ -419,11 +450,11 @@ export class PlayersService {
       leanMassKg: d.leanMassKg != null ? (d.leanMassKg as number) : null,
       preferredFoot: (d.preferredFoot as string)?.trim() || null,
       jerseyNumber: d.jerseyNumber != null ? (d.jerseyNumber as number) : null,
-      position: (d.position as string)?.trim() || null,
+      position: cadastroUpper((d.position as string) ?? undefined),
       fieldPositionX: d.fieldPositionX != null ? (d.fieldPositionX as number) : null,
       fieldPositionY: d.fieldPositionY != null ? (d.fieldPositionY as number) : null,
-      currentTeam: (d.currentTeam as string)?.trim() || null,
-      previousTeams: j(d.previousTeams),
+      currentTeam: cadastroUpper((d.currentTeam as string) ?? undefined),
+      previousTeams,
       seasonHistory: j(d.seasonHistory),
       socialMedia: j(d.socialMedia),
       matchesPlayed: d.matchesPlayed != null ? (d.matchesPlayed as number) : null,
@@ -433,24 +464,24 @@ export class PlayersService {
       redCards: d.redCards != null ? (d.redCards as number) : null,
       marketValue: d.marketValue != null ? (d.marketValue as number) : null,
       highlights: j(d.highlights),
-      bioPT: (d.bioPT as string)?.trim() || null,
-      bioEN: (d.bioEN as string)?.trim() || null,
+      bioPT: cadastroUpper((d.bioPT as string) ?? undefined),
+      bioEN: cadastroUpper((d.bioEN as string) ?? undefined),
       externalId: (d.externalId as string)?.trim() || null,
-      contactEmail: (d.contactEmail as string)?.trim() || null,
-      contactPhone: (d.contactPhone as string)?.trim() || null,
-      emergencyContactName: (d.emergencyContactName as string)?.trim() || null,
-      emergencyContactEmail: (d.emergencyContactEmail as string)?.trim() || null,
-      emergencyContactPhone: (d.emergencyContactPhone as string)?.trim() || null,
+      contactEmail: cadastroEmail((d.contactEmail as string) ?? undefined),
+      contactPhone: cadastroUpper((d.contactPhone as string) ?? undefined),
+      emergencyContactName: cadastroUpper((d.emergencyContactName as string) ?? undefined),
+      emergencyContactEmail: cadastroEmail((d.emergencyContactEmail as string) ?? undefined),
+      emergencyContactPhone: cadastroUpper((d.emergencyContactPhone as string) ?? undefined),
       medicalHistory: j(d.medicalHistory),
       physiology: j(d.physiology),
       psychologicalAssessment: j(d.psychologicalAssessment),
       onlineConsultations: j(d.onlineConsultations),
       evaluations: j(d.evaluations),
       status: (d.status as string)?.trim() || null,
-      statusDetails: (d.statusDetails as string)?.trim() || null,
+      statusDetails: cadastroUpper((d.statusDetails as string) ?? undefined),
       statusUntil: d.statusUntil ? new Date(d.statusUntil as string) : null,
       heatMapData: j(d.heatMapData),
-      performanceAnalysis: (d.performanceAnalysis as string)?.trim() || null,
+      performanceAnalysis: cadastroUpper((d.performanceAnalysis as string) ?? undefined),
       analysisMetrics: j(d.analysisMetrics),
       images: j(d.images),
       publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
@@ -462,10 +493,10 @@ export class PlayersService {
     const jsonOrNull = (v: unknown) => (v != null ? (v as object) : Prisma.JsonNull);
     return {
       ...(d.category !== undefined && { category: (d.category as string)?.trim() || null }),
-      ...(d.name !== undefined && { name: (d.name as string)?.trim() }),
+      ...(d.name !== undefined && { name: cadastroUpperRequired(d.name as string) }),
       ...(d.photoUrl !== undefined && { photoUrl: (d.photoUrl as string)?.trim() || null }),
       ...(d.birthDate !== undefined && { birthDate: (d.birthDate as string)?.trim() || null }),
-      ...(d.nationality !== undefined && { nationality: (d.nationality as string)?.trim() || null }),
+      ...(d.nationality !== undefined && { nationality: cadastroUpper((d.nationality as string) ?? undefined) }),
       ...(d.height !== undefined && { height: d.height as number | null }),
       ...(d.weight !== undefined && { weight: d.weight as number | null }),
       ...(d.bmi !== undefined && { bmi: d.bmi as number | null }),
@@ -473,11 +504,16 @@ export class PlayersService {
       ...(d.leanMassKg !== undefined && { leanMassKg: d.leanMassKg as number | null }),
       ...(d.preferredFoot !== undefined && { preferredFoot: (d.preferredFoot as string)?.trim() || null }),
       ...(d.jerseyNumber !== undefined && { jerseyNumber: d.jerseyNumber as number | null }),
-      ...(d.position !== undefined && { position: (d.position as string)?.trim() || null }),
+      ...(d.position !== undefined && { position: cadastroUpper((d.position as string) ?? undefined) }),
       ...(d.fieldPositionX !== undefined && { fieldPositionX: d.fieldPositionX as number | null }),
       ...(d.fieldPositionY !== undefined && { fieldPositionY: d.fieldPositionY as number | null }),
-      ...(d.currentTeam !== undefined && { currentTeam: (d.currentTeam as string)?.trim() || null }),
-      ...(d.previousTeams !== undefined && { previousTeams: jsonOrNull(d.previousTeams) }),
+      ...(d.currentTeam !== undefined && { currentTeam: cadastroUpper((d.currentTeam as string) ?? undefined) }),
+      ...(d.previousTeams !== undefined && {
+        previousTeams:
+          Array.isArray(d.previousTeams) && (d.previousTeams as unknown[]).every((x) => typeof x === 'string')
+            ? cadastroJsonStringArray(d.previousTeams)
+            : (jsonOrNull(d.previousTeams) as Prisma.InputJsonValue),
+      }),
       ...(d.seasonHistory !== undefined && { seasonHistory: jsonOrNull(d.seasonHistory) }),
       ...(d.socialMedia !== undefined && { socialMedia: jsonOrNull(d.socialMedia) }),
       ...(d.matchesPlayed !== undefined && { matchesPlayed: d.matchesPlayed as number | null }),
@@ -487,27 +523,39 @@ export class PlayersService {
       ...(d.redCards !== undefined && { redCards: d.redCards as number | null }),
       ...(d.marketValue !== undefined && { marketValue: d.marketValue as number | null }),
       ...(d.highlights !== undefined && { highlights: jsonOrNull(d.highlights) }),
-      ...(d.bioPT !== undefined && { bioPT: (d.bioPT as string)?.trim() || null }),
-      ...(d.bioEN !== undefined && { bioEN: (d.bioEN as string)?.trim() || null }),
+      ...(d.bioPT !== undefined && { bioPT: cadastroUpper((d.bioPT as string) ?? undefined) }),
+      ...(d.bioEN !== undefined && { bioEN: cadastroUpper((d.bioEN as string) ?? undefined) }),
       ...(d.externalId !== undefined && { externalId: (d.externalId as string)?.trim() || null }),
-      ...(d.contactEmail !== undefined && { contactEmail: (d.contactEmail as string)?.trim() || null }),
-      ...(d.contactPhone !== undefined && { contactPhone: (d.contactPhone as string)?.trim() || null }),
-      ...(d.emergencyContactName !== undefined && { emergencyContactName: (d.emergencyContactName as string)?.trim() || null }),
-      ...(d.emergencyContactEmail !== undefined && { emergencyContactEmail: (d.emergencyContactEmail as string)?.trim() || null }),
-      ...(d.emergencyContactPhone !== undefined && { emergencyContactPhone: (d.emergencyContactPhone as string)?.trim() || null }),
+      ...(d.contactEmail !== undefined && { contactEmail: cadastroEmail((d.contactEmail as string) ?? undefined) }),
+      ...(d.contactPhone !== undefined && { contactPhone: cadastroUpper((d.contactPhone as string) ?? undefined) }),
+      ...(d.emergencyContactName !== undefined && {
+        emergencyContactName: cadastroUpper((d.emergencyContactName as string) ?? undefined),
+      }),
+      ...(d.emergencyContactEmail !== undefined && {
+        emergencyContactEmail: cadastroEmail((d.emergencyContactEmail as string) ?? undefined),
+      }),
+      ...(d.emergencyContactPhone !== undefined && {
+        emergencyContactPhone: cadastroUpper((d.emergencyContactPhone as string) ?? undefined),
+      }),
       ...(d.medicalHistory !== undefined && { medicalHistory: jsonOrNull(d.medicalHistory) }),
       ...(d.physiology !== undefined && { physiology: jsonOrNull(d.physiology) }),
-      ...(d.psychologicalAssessment !== undefined && { psychologicalAssessment: jsonOrNull(d.psychologicalAssessment) }),
+      ...(d.psychologicalAssessment !== undefined && {
+        psychologicalAssessment: jsonOrNull(d.psychologicalAssessment),
+      }),
       ...(d.onlineConsultations !== undefined && { onlineConsultations: jsonOrNull(d.onlineConsultations) }),
       ...(d.evaluations !== undefined && { evaluations: jsonOrNull(d.evaluations) }),
       ...(d.status !== undefined && { status: (d.status as string)?.trim() || null }),
-      ...(d.statusDetails !== undefined && { statusDetails: (d.statusDetails as string)?.trim() || null }),
+      ...(d.statusDetails !== undefined && { statusDetails: cadastroUpper((d.statusDetails as string) ?? undefined) }),
       ...(d.statusUntil !== undefined && { statusUntil: d.statusUntil ? new Date(d.statusUntil as string) : null }),
       ...(d.heatMapData !== undefined && { heatMapData: jsonOrNull(d.heatMapData) }),
-      ...(d.performanceAnalysis !== undefined && { performanceAnalysis: (d.performanceAnalysis as string)?.trim() || null }),
+      ...(d.performanceAnalysis !== undefined && {
+        performanceAnalysis: cadastroUpper((d.performanceAnalysis as string) ?? undefined),
+      }),
       ...(d.analysisMetrics !== undefined && { analysisMetrics: jsonOrNull(d.analysisMetrics) }),
       ...(d.images !== undefined && { images: jsonOrNull(d.images) }),
-      ...(d.publicFields !== undefined && { publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull }),
+      ...(d.publicFields !== undefined && {
+        publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
+      }),
     };
   }
 }

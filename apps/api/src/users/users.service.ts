@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
+import { cadastroUpper } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -97,7 +98,7 @@ export class UsersService {
     const user = await this.prisma.user.create({
       data: {
         email,
-        name: dto.name ?? null,
+        name: dto.name != null ? cadastroUpper(dto.name) : null,
         passwordHash,
         role: (dto.role as UserRole) ?? 'editor',
       },
@@ -124,7 +125,7 @@ export class UsersService {
     const data: { name?: string | null; email?: string; role?: string; passwordHash?: string; updatedAt: Date } = {
       updatedAt: new Date(),
     };
-    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.name !== undefined) data.name = dto.name != null ? cadastroUpper(dto.name) : null;
     if (dto.email !== undefined) {
       const email = dto.email.trim().toLowerCase();
       if (email !== user.email) {

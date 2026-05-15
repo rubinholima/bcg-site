@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { cadastroEmail, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -44,19 +45,19 @@ export class MedicalStaffService {
   }) {
     return this.prisma.medicalStaff.create({
       data: {
-        name: data.name,
-        role: data.role,
-        crmCoren: data.crmCoren ?? null,
-        specialty: data.specialty ?? null,
+        name: cadastroUpperRequired(data.name),
+        role: cadastroUpperRequired(data.role),
+        crmCoren: cadastroUpper(data.crmCoren),
+        specialty: cadastroUpper(data.specialty),
         photoUrl: data.photoUrl ?? null,
         birthDate: data.birthDate ?? null,
-        cpf: data.cpf ?? null,
-        rg: data.rg ?? null,
-        email: data.email ?? null,
-        phone: data.phone ?? null,
-        address: data.address ?? null,
-        bio: data.bio ?? null,
-        notes: data.notes ?? null,
+        cpf: cadastroUpper(data.cpf),
+        rg: cadastroUpper(data.rg),
+        email: cadastroEmail(data.email),
+        phone: cadastroUpper(data.phone),
+        address: cadastroUpper(data.address),
+        bio: cadastroUpper(data.bio),
+        notes: cadastroUpper(data.notes),
         tenantId: data.tenantId ?? null,
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
@@ -83,19 +84,19 @@ export class MedicalStaffService {
     return this.prisma.medicalStaff.update({
       where: { id },
       data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.role !== undefined && { role: data.role }),
-        ...(data.crmCoren !== undefined && { crmCoren: data.crmCoren ?? null }),
-        ...(data.specialty !== undefined && { specialty: data.specialty ?? null }),
+        ...(data.name !== undefined && { name: cadastroUpperRequired(data.name) }),
+        ...(data.role !== undefined && { role: cadastroUpperRequired(data.role) }),
+        ...(data.crmCoren !== undefined && { crmCoren: cadastroUpper(data.crmCoren) }),
+        ...(data.specialty !== undefined && { specialty: cadastroUpper(data.specialty) }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl ?? null }),
         ...(data.birthDate !== undefined && { birthDate: data.birthDate ?? null }),
-        ...(data.cpf !== undefined && { cpf: data.cpf ?? null }),
-        ...(data.rg !== undefined && { rg: data.rg ?? null }),
-        ...(data.email !== undefined && { email: data.email ?? null }),
-        ...(data.phone !== undefined && { phone: data.phone ?? null }),
-        ...(data.address !== undefined && { address: data.address ?? null }),
-        ...(data.bio !== undefined && { bio: data.bio ?? null }),
-        ...(data.notes !== undefined && { notes: data.notes ?? null }),
+        ...(data.cpf !== undefined && { cpf: cadastroUpper(data.cpf) }),
+        ...(data.rg !== undefined && { rg: cadastroUpper(data.rg) }),
+        ...(data.email !== undefined && { email: cadastroEmail(data.email) }),
+        ...(data.phone !== undefined && { phone: cadastroUpper(data.phone) }),
+        ...(data.address !== undefined && { address: cadastroUpper(data.address) }),
+        ...(data.bio !== undefined && { bio: cadastroUpper(data.bio) }),
+        ...(data.notes !== undefined && { notes: cadastroUpper(data.notes) }),
         ...(data.tenantId !== undefined && { tenantId: data.tenantId ?? null }),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },

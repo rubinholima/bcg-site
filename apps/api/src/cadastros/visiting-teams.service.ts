@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVisitingTeamDto } from './dto/create-visiting-team.dto';
 import { UpdateVisitingTeamDto } from './dto/update-visiting-team.dto';
@@ -18,13 +19,14 @@ export class VisitingTeamsService {
   }
 
   async create(dto: CreateVisitingTeamDto) {
-    const existing = await this.prisma.visitingTeam.findUnique({
-      where: { name: dto.name.trim() },
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.visitingTeam.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
     });
-    if (existing) throw new ConflictException(`Time "${dto.name}" já existe`);
+    if (existing) throw new ConflictException(`Time "${name}" já existe`);
     return this.prisma.visitingTeam.create({
       data: {
-        name: dto.name.trim(),
+        name,
         logoUrl: dto.logoUrl?.trim() || null,
       },
     });
@@ -33,15 +35,16 @@ export class VisitingTeamsService {
   async update(id: string, dto: UpdateVisitingTeamDto) {
     await this.findOne(id);
     if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
       const existing = await this.prisma.visitingTeam.findFirst({
-        where: { name: dto.name.trim(), id: { not: id } },
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
       });
-      if (existing) throw new ConflictException(`Time "${dto.name}" já existe`);
+      if (existing) throw new ConflictException(`Time "${name}" já existe`);
     }
     return this.prisma.visitingTeam.update({
       where: { id },
       data: {
-        ...(dto.name && { name: dto.name.trim() }),
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
         ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl?.trim() || null }),
       },
     });

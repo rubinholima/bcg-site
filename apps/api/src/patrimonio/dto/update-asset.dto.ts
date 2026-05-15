@@ -13,6 +13,10 @@ import { ASSET_PIECE_TYPES } from '../asset-piece-types';
 export class UpdateAssetDto {
   @IsString()
   @IsOptional()
+  tenantId?: string;
+
+  @IsString()
+  @IsOptional()
   categoryId?: string;
 
   @IsString()

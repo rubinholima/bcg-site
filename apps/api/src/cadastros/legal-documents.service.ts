@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { cadastroEmail, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { HelloSignService } from '../hello-sign/hello-sign.service';
@@ -95,16 +96,16 @@ export class LegalDocumentsService {
       data: {
         playerId,
         type: data.type,
-        name: data.name,
+        name: cadastroUpperRequired(data.name),
         fileKey: data.fileKey,
-        fileUrl: data.fileUrl ?? null,
+        fileUrl: data.fileUrl?.trim() || null,
         status: 'draft',
-        signerEmail: data.signerEmail ?? null,
-        signerName: data.signerName ?? null,
+        signerEmail: cadastroEmail(data.signerEmail),
+        signerName: cadastroUpper(data.signerName),
         pageCount: data.pageCount ?? null,
         validFrom: data.validFrom ? new Date(data.validFrom) : null,
         validUntil: data.validUntil ? new Date(data.validUntil) : null,
-        notes: data.notes ?? null,
+        notes: cadastroUpper(data.notes),
       },
     });
   }
@@ -146,8 +147,8 @@ export class LegalDocumentsService {
         fileBuffer,
         fileName,
         agreementName: doc.name,
-        signerEmail: signerEmail.trim(),
-        signerName: signerName?.trim(),
+        signerEmail: cadastroEmail(signerEmail) ?? signerEmail.trim().toLowerCase(),
+        signerName: cadastroUpper(signerName) ?? undefined,
         message,
         signatureField: validatedSignatureField,
       });
@@ -176,8 +177,8 @@ export class LegalDocumentsService {
       data: {
         status: 'pending_signature',
         adobeAgreementId: result.signatureRequestId,
-        signerEmail: signerEmail.trim(),
-        signerName: signerName?.trim() ?? null,
+        signerEmail: cadastroEmail(signerEmail) ?? signerEmail.trim().toLowerCase(),
+        signerName: cadastroUpper(signerName) ?? null,
         metadata: result.signingUrl
           ? { signingUrl: result.signingUrl }
           : (doc.metadata as object) ?? {},

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { cadastroEmail, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
@@ -39,11 +40,11 @@ export class SuppliersService {
     return this.prisma.supplier.create({
       data: {
         tenantId: dto.tenantId,
-        name: dto.name,
-        contactName: dto.contactName ?? null,
-        email: dto.email ?? null,
-        phone: dto.phone ?? null,
-        notes: dto.notes ?? null,
+        name: cadastroUpperRequired(dto.name),
+        contactName: cadastroUpper(dto.contactName),
+        email: cadastroEmail(dto.email),
+        phone: cadastroUpper(dto.phone),
+        notes: cadastroUpper(dto.notes),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
@@ -54,11 +55,11 @@ export class SuppliersService {
     return this.prisma.supplier.update({
       where: { id },
       data: {
-        ...(dto.name != null && { name: dto.name }),
-        ...(dto.contactName !== undefined && { contactName: dto.contactName ?? null }),
-        ...(dto.email !== undefined && { email: dto.email ?? null }),
-        ...(dto.phone !== undefined && { phone: dto.phone ?? null }),
-        ...(dto.notes !== undefined && { notes: dto.notes ?? null }),
+        ...(dto.name != null && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.contactName !== undefined && { contactName: cadastroUpper(dto.contactName) }),
+        ...(dto.email !== undefined && { email: cadastroEmail(dto.email) }),
+        ...(dto.phone !== undefined && { phone: cadastroUpper(dto.phone) }),
+        ...(dto.notes !== undefined && { notes: cadastroUpper(dto.notes) }),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });

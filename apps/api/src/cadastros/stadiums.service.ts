@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStadiumDto } from './dto/create-stadium.dto';
 import { UpdateStadiumDto } from './dto/update-stadium.dto';
@@ -18,16 +19,17 @@ export class StadiumsService {
   }
 
   async create(dto: CreateStadiumDto) {
-    const existing = await this.prisma.stadium.findUnique({
-      where: { name: dto.name.trim() },
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.stadium.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
     });
-    if (existing) throw new ConflictException(`Estádio "${dto.name}" já existe`);
+    if (existing) throw new ConflictException(`Estádio "${name}" já existe`);
     return this.prisma.stadium.create({
       data: {
-        name: dto.name.trim(),
-        city: dto.city?.trim() || null,
-        country: dto.country?.trim() || null,
-        address: dto.address?.trim() || null,
+        name,
+        city: cadastroUpper(dto.city),
+        country: cadastroUpper(dto.country),
+        address: cadastroUpper(dto.address),
       },
     });
   }
@@ -35,18 +37,19 @@ export class StadiumsService {
   async update(id: string, dto: UpdateStadiumDto) {
     await this.findOne(id);
     if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
       const existing = await this.prisma.stadium.findFirst({
-        where: { name: dto.name.trim(), id: { not: id } },
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
       });
-      if (existing) throw new ConflictException(`Estádio "${dto.name}" já existe`);
+      if (existing) throw new ConflictException(`Estádio "${name}" já existe`);
     }
     return this.prisma.stadium.update({
       where: { id },
       data: {
-        ...(dto.name && { name: dto.name.trim() }),
-        ...(dto.city !== undefined && { city: dto.city?.trim() || null }),
-        ...(dto.country !== undefined && { country: dto.country?.trim() || null }),
-        ...(dto.address !== undefined && { address: dto.address?.trim() || null }),
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.city !== undefined && { city: cadastroUpper(dto.city) }),
+        ...(dto.country !== undefined && { country: cadastroUpper(dto.country) }),
+        ...(dto.address !== undefined && { address: cadastroUpper(dto.address) }),
       },
     });
   }

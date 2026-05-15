@@ -161,9 +161,16 @@ export function AssetFormDialog({
     }
   }, [open, edit, tenantId]);
 
+  useEffect(() => {
+    if (!open) return;
+    if (!catTenantId || !categoryId) return;
+    const exists = categories.some((c) => c.id === categoryId && c.tenant.id === catTenantId);
+    if (!exists) setCategoryId("");
+  }, [open, catTenantId, categoryId, categories]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tenantIdForSubmit = edit ? edit.tenantId : catTenantId;
+    const tenantIdForSubmit = catTenantId;
     if (!tenantIdForSubmit?.trim() || !categoryId?.trim() || !description?.trim()) return;
     if (isUniform && !pieceType) {
       alert("Para kit uniforme, selecione o tipo de peça.");
@@ -174,6 +181,7 @@ export function AssetFormDialog({
       const photoPayloadCreate = photoUrl.trim() || undefined;
       if (edit) {
         await api.patch(`/patrimonio/assets/${edit.id}`, {
+          tenantId: catTenantId,
           categoryId: categoryId || undefined,
           tagNumber: tagNumber.trim() || undefined,
           description: description.trim(),
@@ -232,9 +240,8 @@ export function AssetFormDialog({
               <Label>Clube/Empresa *</Label>
               <select
                 required
-                disabled={!!edit}
                 className={NATIVE_SELECT_CLASS}
-                value={edit ? edit.tenant.id : catTenantId}
+                value={catTenantId}
                 onChange={(e) => setCatTenantId(e.target.value)}
               >
                 <option value="">Selecione</option>
@@ -250,7 +257,6 @@ export function AssetFormDialog({
               <select
                 id="asset-category"
                 required
-                disabled={!!edit}
                 className={NATIVE_SELECT_CLASS}
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}

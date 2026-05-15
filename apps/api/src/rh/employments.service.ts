@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmploymentDto } from './dto/create-employment.dto';
 import { UpdateEmploymentDto } from './dto/update-employment.dto';
@@ -57,13 +58,13 @@ export class EmploymentsService {
         employeeId: dto.employeeId,
         jobRoleId: dto.jobRoleId,
         departmentId: dto.departmentId ?? null,
-        contractType: dto.contractType,
+        contractType: cadastroUpperRequired(dto.contractType),
         startDate: new Date(dto.startDate),
         endDate: dto.endDate ? new Date(dto.endDate) : null,
         salaryBase: dto.salaryBase ?? null,
         bankData: dto.bankData != null ? (dto.bankData as Prisma.InputJsonValue) : Prisma.JsonNull,
         status: dto.status ?? 'ativo',
-        notes: dto.notes ?? null,
+        notes: cadastroUpper(dto.notes),
         athleteData: dto.athleteData != null ? (dto.athleteData as Prisma.InputJsonValue) : Prisma.JsonNull,
         admissionChecklist: dto.admissionChecklist != null ? (dto.admissionChecklist as Prisma.InputJsonValue) : Prisma.JsonNull,
       },
@@ -81,17 +82,17 @@ export class EmploymentsService {
     const data: Record<string, unknown> = {};
     if (dto.jobRoleId != null) data.jobRoleId = dto.jobRoleId;
     if (dto.departmentId !== undefined) data.departmentId = dto.departmentId ?? null;
-    if (dto.contractType != null) data.contractType = dto.contractType;
+    if (dto.contractType != null) data.contractType = cadastroUpperRequired(dto.contractType);
     if (dto.startDate != null) data.startDate = new Date(dto.startDate);
     if (dto.endDate !== undefined) data.endDate = dto.endDate ? new Date(dto.endDate) : null;
     if (dto.salaryBase !== undefined) data.salaryBase = dto.salaryBase ?? null;
     if (dto.bankData !== undefined) data.bankData = dto.bankData ?? null;
     if (dto.status != null) data.status = dto.status;
-    if (dto.notes !== undefined) data.notes = dto.notes ?? null;
+    if (dto.notes !== undefined) data.notes = cadastroUpper(dto.notes);
     if (dto.athleteData !== undefined) data.athleteData = dto.athleteData ?? null;
     if (dto.admissionChecklist !== undefined) data.admissionChecklist = dto.admissionChecklist ?? null;
-    if (dto.terminationType !== undefined) data.terminationType = dto.terminationType ?? null;
-    if (dto.terminationNotes !== undefined) data.terminationNotes = dto.terminationNotes ?? null;
+    if (dto.terminationType !== undefined) data.terminationType = cadastroUpper(dto.terminationType);
+    if (dto.terminationNotes !== undefined) data.terminationNotes = cadastroUpper(dto.terminationNotes);
     if (dto.terminationChecklist !== undefined) data.terminationChecklist = dto.terminationChecklist ?? null;
     return this.prisma.employment.update({
       where: { id },
