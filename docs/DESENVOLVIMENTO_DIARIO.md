@@ -113,9 +113,11 @@ Estes commits estavam em `develop` à frente de `main` e passam a fazer parte de
 
 ## **FECHAMENTO (GIT) — 14/05/2026**
 
-- **Branch de trabalho:** `develop` (HEAD pré-merge documentado: `8aa31fe` antes do commit deste encerramento no diário).  
-- **Ações:** (1) Commit atualizando **apenas** `docs/DESENVOLVIMENTO_DIARIO.md` em `develop`. (2) **`git merge develop`** em **`main`** (merge commit registrado em `git log main -1` após a operação). (3) **`git push origin main`** e **`git push origin develop`**.  
-- **`main` anterior:** `74c8fa9` (ponta antes do merge do dia).  
+- **Branch de trabalho:** `develop` — último commit **antes** do merge em `main`: `818e4b6` (só documentação do diário); funcionalidades imediatamente anteriores: `8aa31fe` (cadastros + patrimônio).  
+- **Merge em `main`:** commit **`528e8e254a40674e27c310cca1e7e05b4a1a2e88`** — mensagem: `chore(release): merge develop em main — encerramento 14/05/2026 (cadastros, patrimônio, manual, ADM, marketing, permissões)`.  
+- **`main` antes do merge:** `74c8fa9`.  
+- **Pós-merge:** `main` contém **todo** o histórico de `develop` listado na seção de commits acima, mais o merge commit acima.  
+- **Push:** `git push origin main` e `git push origin develop` (manter remotes alinhados).  
 - **Não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` (locais).  
 
 ---
