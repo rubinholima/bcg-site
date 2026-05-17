@@ -12,16 +12,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
+import { ASSET_PIECE_LABEL } from "../patrimonio-labels";
+
+const NATIVE_SELECT_CLASS =
+  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 export interface AssetRow {
   id: string;
@@ -29,6 +27,7 @@ export interface AssetRow {
   categoryId: string;
   tagNumber: string | null;
   description: string;
+  photoUrl: string | null;
   location: string | null;
   responsibleName: string | null;
   acquisitionDate: string | null;
@@ -56,10 +55,9 @@ interface AssetFormDialogProps {
   onOpenChange: (open: boolean) => void;
   tenants: Tenant[];
   categories: AssetCategoryRow[];
-  players: PlayerOption[];
   tenantId: string;
   edit?: AssetRow | null;
-  onSuccess: () => void;
+  onSuccess: (savedTenantId: string) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -69,27 +67,24 @@ const STATUS_OPTIONS = [
   { value: "baixado", label: "Baixado" },
 ];
 
-const PIECE_OPTIONS = [
-  { value: "camisa", label: "Camisa" },
-  { value: "calção", label: "Calção" },
-  { value: "meião", label: "Meião" },
-];
+const PIECE_OPTIONS = Object.entries(ASSET_PIECE_LABEL).map(([value, label]) => ({ value, label }));
 
 export function AssetFormDialog({
   open,
   onOpenChange,
   tenants,
   categories,
-  players,
   tenantId,
   edit,
   onSuccess,
 }: AssetFormDialogProps) {
   const [saving, setSaving] = useState(false);
+  const [dialogPlayers, setDialogPlayers] = useState<PlayerOption[]>([]);
   const [catTenantId, setCatTenantId] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [tagNumber, setTagNumber] = useState("");
   const [description, setDescription] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
   const [location, setLocation] = useState("");
   const [responsibleName, setResponsibleName] = useState("");
   const [acquisitionDate, setAcquisitionDate] = useState("");
@@ -106,6 +101,27 @@ export function AssetFormDialog({
   const isUniform = selectedCategory?.kind === "uniform";
   const tenantCategories = categories.filter((c) => c.tenant.id === (edit ? edit.tenant.id : catTenantId || tenantId));
 
+  const playerTenantId = edit?.tenant.id || catTenantId || tenantId;
+
+  useEffect(() => {
+    if (!open || !playerTenantId) {
+      setDialogPlayers([]);
+      return;
+    }
+    let cancelled = false;
+    api
+      .get<PlayerOption[]>(`/players?tenantId=${encodeURIComponent(playerTenantId)}`)
+      .then(({ data }) => {
+        if (!cancelled) setDialogPlayers(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setDialogPlayers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, playerTenantId, edit?.id]);
+
   useEffect(() => {
     if (!open) return;
     if (edit) {
@@ -113,6 +129,7 @@ export function AssetFormDialog({
       setCategoryId(edit.categoryId);
       setTagNumber(edit.tagNumber ?? "");
       setDescription(edit.description);
+      setPhotoUrl(edit.photoUrl ?? "");
       setLocation(edit.location ?? "");
       setResponsibleName(edit.responsibleName ?? "");
       setAcquisitionDate(edit.acquisitionDate ? edit.acquisitionDate.slice(0, 10) : "");
@@ -129,6 +146,7 @@ export function AssetFormDialog({
       setCategoryId("");
       setTagNumber("");
       setDescription("");
+      setPhotoUrl("");
       setLocation("");
       setResponsibleName("");
       setAcquisitionDate("");
@@ -143,21 +161,31 @@ export function AssetFormDialog({
     }
   }, [open, edit, tenantId]);
 
+  useEffect(() => {
+    if (!open) return;
+    if (!catTenantId || !categoryId) return;
+    const exists = categories.some((c) => c.id === categoryId && c.tenant.id === catTenantId);
+    if (!exists) setCategoryId("");
+  }, [open, catTenantId, categoryId, categories]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const tenantIdForSubmit = edit ? edit.tenantId : catTenantId;
+    const tenantIdForSubmit = catTenantId;
     if (!tenantIdForSubmit?.trim() || !categoryId?.trim() || !description?.trim()) return;
     if (isUniform && !pieceType) {
-      alert("Para kit uniforme, selecione o tipo de peça (camisa, calção ou meião).");
+      alert("Para kit uniforme, selecione o tipo de peça.");
       return;
     }
     setSaving(true);
     try {
+      const photoPayloadCreate = photoUrl.trim() || undefined;
       if (edit) {
         await api.patch(`/patrimonio/assets/${edit.id}`, {
+          tenantId: catTenantId,
           categoryId: categoryId || undefined,
           tagNumber: tagNumber.trim() || undefined,
           description: description.trim(),
+          photoUrl: photoUrl.trim(),
           location: location.trim() || undefined,
           responsibleName: responsibleName.trim() || undefined,
           acquisitionDate: acquisitionDate || undefined,
@@ -176,6 +204,7 @@ export function AssetFormDialog({
           categoryId,
           tagNumber: tagNumber.trim() || undefined,
           description: description.trim(),
+          photoUrl: photoPayloadCreate,
           location: location.trim() || undefined,
           responsibleName: responsibleName.trim() || undefined,
           acquisitionDate: acquisitionDate || undefined,
@@ -189,7 +218,7 @@ export function AssetFormDialog({
           assignedPlayerId: isUniform && assignedPlayerId ? assignedPlayerId : undefined,
         });
       }
-      onSuccess();
+      onSuccess(tenantIdForSubmit);
       onOpenChange(false);
     } catch (err) {
       console.error(err);
@@ -201,7 +230,7 @@ export function AssetFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full min-w-0 max-h-[min(90vh,calc(100dvh-2rem))] overflow-y-auto overflow-x-hidden sm:p-8">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{edit ? "Editar bem" : "Novo bem patrimonial"}</DialogTitle>
@@ -211,9 +240,8 @@ export function AssetFormDialog({
               <Label>Clube/Empresa *</Label>
               <select
                 required
-                disabled={!!edit}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                value={edit ? edit.tenant.id : catTenantId}
+                className={NATIVE_SELECT_CLASS}
+                value={catTenantId}
                 onChange={(e) => setCatTenantId(e.target.value)}
               >
                 <option value="">Selecione</option>
@@ -225,54 +253,55 @@ export function AssetFormDialog({
               </select>
             </div>
             <div className="grid gap-2">
-              <Label>Categoria *</Label>
-              <Select
-                value={categoryId}
-                onValueChange={setCategoryId}
+              <Label htmlFor="asset-category">Categoria *</Label>
+              <select
+                id="asset-category"
                 required
-                disabled={!!edit}
+                className={NATIVE_SELECT_CLASS}
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tenantCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name} {c.kind === "uniform" ? "(kit)" : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="">Selecione a categoria</option>
+                {tenantCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.kind === "uniform" ? "(kit)" : ""}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {isUniform && (
               <div className="grid grid-cols-2 gap-4 border-t pt-4">
                 <div className="grid gap-2">
-                  <Label>Tipo de peça *</Label>
-                  <Select value={pieceType} onValueChange={setPieceType} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Camisa / Calção / Meião" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PIECE_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="asset-piece">Tipo de peça *</Label>
+                  <select
+                    id="asset-piece"
+                    required
+                    className={NATIVE_SELECT_CLASS}
+                    value={pieceType}
+                    onChange={(e) => setPieceType(e.target.value)}
+                  >
+                    <option value="">Selecione...</option>
+                    {PIECE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="grid gap-2">
-                  <Label>Tamanho</Label>
+                  <Label htmlFor="asset-size">Tamanho</Label>
                   <Input
+                    id="asset-size"
                     value={size}
                     onChange={(e) => setSize(e.target.value)}
                     placeholder="P, M, G, GG"
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Número da camisa</Label>
+                  <Label htmlFor="asset-shirt">Número da camisa</Label>
                   <Input
+                    id="asset-shirt"
                     type="number"
                     min={1}
                     max={99}
@@ -282,20 +311,20 @@ export function AssetFormDialog({
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Atribuído ao jogador</Label>
-                  <Select value={assignedPlayerId || "__none__"} onValueChange={(v) => setAssignedPlayerId(v === "__none__" ? "" : v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Nenhum" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">Nenhum</SelectItem>
-                      {players.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="asset-player">Atribuído ao jogador</Label>
+                  <select
+                    id="asset-player"
+                    className={NATIVE_SELECT_CLASS}
+                    value={assignedPlayerId}
+                    onChange={(e) => setAssignedPlayerId(e.target.value)}
+                  >
+                    <option value="">Nenhum</option>
+                    {dialogPlayers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             )}
@@ -310,6 +339,23 @@ export function AssetFormDialog({
                 required
               />
             </div>
+
+            <div className="grid gap-2 border-t border-border pt-4">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="patrimonio"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                placeholder="Escolher da biblioteca"
+                urlPlaceholder="URL da imagem"
+                allowAllFolders
+                uploadFolderHint="patrimonio"
+                displayNameAuto={description.trim() || undefined}
+                showAutomaticPhotoNameNote={false}
+                showFileFormatHint={false}
+              />
+            </div>
+
             {!isUniform && (
               <div className="grid gap-2">
                 <Label htmlFor="asset-tag">Nº etiqueta patrimonial</Label>
@@ -377,19 +423,19 @@ export function AssetFormDialog({
               />
             </div>
             <div className="grid gap-2">
-              <Label>Situação</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="asset-status">Situação</Label>
+              <select
+                id="asset-status"
+                className={NATIVE_SELECT_CLASS}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="asset-notes">Observações</Label>

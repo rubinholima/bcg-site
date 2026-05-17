@@ -6,6 +6,8 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { StockMovementsService } from './stock-movements.service';
 import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
 
+const COMPRAS_ESTOQUE_MODULES = ['adm_compras', 'adm_estoque'] as const;
+
 @Controller('compras/stock-movements')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class StockMovementsController {
@@ -13,14 +15,14 @@ export class StockMovementsController {
 
   @Get('by-product/:productId')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_compras')
+  @RequireModule([...COMPRAS_ESTOQUE_MODULES])
   findByProduct(@Param('productId') productId: string, @Query('limit') limit?: string) {
     return this.service.findByProduct(productId, limit ? parseInt(limit, 10) : 50);
   }
 
   @Post()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_compras')
+  @RequireModule([...COMPRAS_ESTOQUE_MODULES])
   create(@Body() dto: CreateStockMovementDto) {
     return this.service.create(dto);
   }

@@ -26,7 +26,7 @@ import { PatchBostonTvScreenDto } from './dto/patch-boston-tv-screen.dto';
 
 @Controller('boston-tv')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
-@RequireModule('marketing')
+@RequireModule('boston_tv')
 export class BostonTvController {
   constructor(
     private readonly bostonTv: BostonTvService,

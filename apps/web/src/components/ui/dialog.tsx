@@ -100,7 +100,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         <dialog
           ref={dialogRef}
           onCancel={handleCancel}
-          className="fixed left-[50%] top-[50%] z-50 w-[min(32rem,calc(100vw-2rem))] rounded-xl border border-border bg-card p-0 shadow-2xl outline-none backdrop:bg-black/60 transition-none -translate-x-1/2 -translate-y-1/2"
+          className="fixed left-[50%] top-[50%] z-50 w-[min(56rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] rounded-xl border border-border bg-card p-0 shadow-2xl outline-none backdrop:bg-black/60 transition-none -translate-x-1/2 -translate-y-1/2"
         >
           <div ref={ref} className={cn("grid w-full gap-4 p-6 text-foreground", className)} {...props}>
             {children}

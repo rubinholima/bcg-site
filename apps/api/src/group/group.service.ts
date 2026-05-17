@@ -3,6 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { HomeContentService } from '../home-content/home-content.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -113,12 +114,12 @@ export class GroupService {
       const updated = await this.prisma.group.update({
         where: { slug },
         data: {
-          ...(dto.name !== undefined && { name: dto.name }),
+          ...(dto.name !== undefined && { name: cadastroUpperRequired(dto.name) }),
           ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl }),
-          ...(dto.description !== undefined && { description: dto.description }),
-          ...(dto.address !== undefined && { address: dto.address }),
-          ...(dto.contactName !== undefined && { contactName: dto.contactName }),
-          ...(dto.contactPhone !== undefined && { contactPhone: dto.contactPhone }),
+          ...(dto.description !== undefined && { description: cadastroUpper(dto.description) }),
+          ...(dto.address !== undefined && { address: cadastroUpper(dto.address) }),
+          ...(dto.contactName !== undefined && { contactName: cadastroUpper(dto.contactName) }),
+          ...(dto.contactPhone !== undefined && { contactPhone: cadastroUpper(dto.contactPhone) }),
           ...(dto.homeContent !== undefined && { homeContent: dto.homeContent as object }),
           ...(dto.moduleDefaults !== undefined && { moduleDefaults: dto.moduleDefaults as object }),
         },

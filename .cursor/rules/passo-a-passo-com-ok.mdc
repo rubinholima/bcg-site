@@ -1,0 +1,17 @@
+---
+description: Instruções procedimentais sempre em um passo por vez até OK do usuário
+alwaysApply: true
+---
+
+# Passo a passo com confirmação (OK)
+
+**Obrigatório** quando o usuário pedir ajuda procedural (Meta, servidor, deploy, painel, configuração, ordem de tarefas) ou quando a tarefa envolver **vários passos manuais** que ele execute no próprio ambiente:
+
+1. **Envie apenas UM passo** por mensagem — claro e curto — o que fazer agora e onde clicar/arquivar apenas o necessário.
+2. **Não** antecipe o próximo passo na mesma mensagem como lista longa nem envie checklist completo até ele pedir.
+3. **Pare.** Peça explicitamente que ele responda **OK** (ou equivalente) quando tiver feito esse passo.
+4. Somente na mensagem **seguinte**, após ele confirmar (**OK**, “feito”, “pronto”), envie **o próximo único passo**.
+5. Se ele disser “pula”, “lista tudo”, “manda completo”, “sem OK” ou **explicitamente** pedir o guia inteiro — aí pode entregar vários passos ou o fluxo completo de uma vez.
+6. Código/execução de ferramentas no repositório: pode continuar trabalhando tecnicamente quando a tarefa for implementação; a regra de **OK entre passos** aplica-se à **orientação dirigida ao usuário** (o que ele faz na tela, no servidor, no painel), não a bloquear cada linha de código.
+
+**Prioridade:** se outra regra do projeto contradizer só no tom, esta regra vale para ritmo procedural com este usuário.

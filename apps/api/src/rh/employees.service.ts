@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { cadastroEmail, cadastroJsonStringArray, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
@@ -50,15 +51,15 @@ export class EmployeesService {
     return this.prisma.employee.create({
       data: {
         tenantId: dto.tenantId,
-        name: dto.name,
-        cpf: dto.cpf ?? null,
-        rg: dto.rg ?? null,
-        email: dto.email ?? null,
-        phone: dto.phone ?? null,
+        name: cadastroUpperRequired(dto.name),
+        cpf: cadastroUpper(dto.cpf),
+        rg: cadastroUpper(dto.rg),
+        email: cadastroEmail(dto.email),
+        phone: cadastroUpper(dto.phone),
         birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
         type: dto.type,
-        categories: dto.categories != null ? dto.categories : Prisma.JsonNull,
-        notes: dto.notes ?? null,
+        categories: dto.categories != null ? cadastroJsonStringArray(dto.categories) : Prisma.JsonNull,
+        notes: cadastroUpper(dto.notes),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
@@ -69,15 +70,15 @@ export class EmployeesService {
     return this.prisma.employee.update({
       where: { id },
       data: {
-        ...(dto.name != null && { name: dto.name }),
-        ...(dto.cpf !== undefined && { cpf: dto.cpf ?? null }),
-        ...(dto.rg !== undefined && { rg: dto.rg ?? null }),
-        ...(dto.email !== undefined && { email: dto.email ?? null }),
-        ...(dto.phone !== undefined && { phone: dto.phone ?? null }),
+        ...(dto.name != null && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.cpf !== undefined && { cpf: cadastroUpper(dto.cpf) }),
+        ...(dto.rg !== undefined && { rg: cadastroUpper(dto.rg) }),
+        ...(dto.email !== undefined && { email: cadastroEmail(dto.email) }),
+        ...(dto.phone !== undefined && { phone: cadastroUpper(dto.phone) }),
         ...(dto.birthDate !== undefined && { birthDate: dto.birthDate ? new Date(dto.birthDate) : null }),
         ...(dto.type != null && { type: dto.type }),
-        ...(dto.categories !== undefined && { categories: dto.categories ?? Prisma.JsonNull }),
-        ...(dto.notes !== undefined && { notes: dto.notes ?? null }),
+        ...(dto.categories !== undefined && { categories: cadastroJsonStringArray(dto.categories) }),
+        ...(dto.notes !== undefined && { notes: cadastroUpper(dto.notes) }),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });

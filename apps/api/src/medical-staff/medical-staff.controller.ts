@@ -24,35 +24,35 @@ export class MedicalStaffController {
 
   @Get()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('medico')
+  @RequireModule('saude')
   list(@Query('tenantId') tenantId?: string) {
     return this.service.findAll(tenantId);
   }
 
   @Get(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('medico')
+  @RequireModule('saude')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('medico')
+  @RequireModule('saude')
   create(@Body() dto: CreateMedicalStaffDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('medico')
+  @RequireModule('saude')
   update(@Param('id') id: string, @Body() dto: UpdateMedicalStaffDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('medico')
+  @RequireModule('saude')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
+import { CircleHelp, Home } from "lucide-react";
 import type { Group } from "@/types/group";
 import { useAuth } from "@/context/AuthContext";
 
@@ -46,6 +46,17 @@ export function Header() {
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="shrink-0 text-muted-foreground hover:text-foreground"
+          title="Manual da plataforma"
+        >
+          <Link href="/dashboard/manual" aria-label="Abrir manual da plataforma">
+            <CircleHelp className="h-5 w-5" />
+          </Link>
+        </Button>
         <Button
           variant="outline"
           size="sm"

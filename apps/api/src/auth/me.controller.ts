@@ -10,6 +10,8 @@ export type MeRole =
   | 'super_admin'
   | 'company_admin'
   | 'editor'
+  | 'gerente'
+  | 'administrativo'
   | 'analista'
   | 'diretoria'
   | 'medico'
@@ -45,6 +47,8 @@ export class MeController {
           g === 'super_admin' ||
           g === 'company_admin' ||
           g === 'editor' ||
+          g === 'gerente' ||
+          g === 'administrativo' ||
           g === 'analista' ||
           g === 'diretoria' ||
           g === 'medico' ||

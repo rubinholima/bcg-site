@@ -16,21 +16,21 @@ export class ConsultationsController {
 
   @Get()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   async list() {
     return this.service.listAllConsultations();
   }
 
   @Get('meet-available')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   meetAvailable() {
     return { available: this.service.isGoogleMeetAvailable() };
   }
 
   @Post('create-meet')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   async createMeet(
     @Body()
     body: {
@@ -68,7 +68,7 @@ export class ConsultationsController {
 
   @Delete(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   async removeConsultation(@Param('id') id: string) {
     const ok = await this.service.removeConsultation(id);
     if (!ok) {
@@ -80,7 +80,7 @@ export class ConsultationsController {
   /** Atualiza data, horário, status (ex.: cancelar), psicólogo, notas ou duração da consulta. */
   @Patch(':id')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   async updateConsultation(
     @Param('id') id: string,
     @Body()
@@ -103,7 +103,7 @@ export class ConsultationsController {
   /** Envia o link da consulta por e-mail para o atleta (usa contactEmail do cadastro). */
   @Post('notify-player')
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('psicologia')
+  @RequireModule('saude')
   async notifyPlayer(
     @Body()
     body: { playerId: string; link: string; date: string; time?: string; psychologist?: string },

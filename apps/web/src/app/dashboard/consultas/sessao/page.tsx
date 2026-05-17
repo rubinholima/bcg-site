@@ -148,7 +148,7 @@ export default function SessaoPage() {
     );
   }
 
-  if (!canAccessModule("psicologia")) {
+  if (!canAccessModule("saude")) {
     router.replace("/403");
     return null;
   }

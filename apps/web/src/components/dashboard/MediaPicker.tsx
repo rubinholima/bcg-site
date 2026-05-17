@@ -4,13 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   MEDIA_PLACEHOLDER_SIZES,
   type MediaItem,
   type MediaPlaceholderSizeKey,
@@ -37,6 +30,9 @@ interface MediaPickerProps {
   /** Oculta o link "Subir para mídia" quando a pasta está vazia. Use em cadastros que têm botão "Enviar nova foto" — o upload é direto. */
   hideEmptyFolderHint?: boolean;
 }
+
+const NATIVE_SELECT_CLASS =
+  "flex h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 function filenameFromUrl(url: string): string {
   try {
@@ -103,7 +99,12 @@ export function MediaPicker({
   const dimensions = folder === "logos" ? "Logo" : MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";
   const validItems = items.filter((item) => item.url?.trim());
   const valueInList = validItems.some((item) => item.url === value);
-  const displayValue = value?.trim() || "__none__";
+  const nativeValue =
+    value?.trim() && !valueInList ? value.trim() : value?.trim() || "__none__";
+
+  const handleNativeChange = (v: string) => {
+    onChange(v === "__none__" ? "" : v);
+  };
 
   return (
     <div className={className}>
@@ -119,36 +120,26 @@ export function MediaPicker({
       )}
       <div className="flex flex-col gap-2 mt-1">
         <div className="flex gap-2">
-          <Select
-            value={displayValue}
-            onOpenChange={(open) => {
-              if (open) setOpenNonce((n) => n + 1);
-            }}
-            onValueChange={(v) => onChange(v === "__none__" ? "" : v)}
-          >
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder={loading ? "Carregando…" : placeholder} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__none__">
-                {placeholder}
-              </SelectItem>
-              {value?.trim() && !valueInList && (
-                <SelectItem value={value}>
-                  <span className="truncate block max-w-[280px]" title={value}>
-                    {filenameFromUrl(value)} (selecionado)
-                  </span>
-                </SelectItem>
-              )}
-              {validItems.map((item) => (
-                <SelectItem key={item.key} value={item.url}>
-                  <span className="truncate block max-w-[280px]" title={item.url}>
-                    {item.displayName?.trim() || item.key.split("/").pop() || item.url}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <select
+          className={NATIVE_SELECT_CLASS}
+          aria-label={label || placeholder}
+          disabled={loading}
+          value={nativeValue}
+          onFocus={() => setOpenNonce((n) => n + 1)}
+          onChange={(e) => handleNativeChange(e.target.value)}
+        >
+          <option value="__none__">{loading ? "Carregando…" : placeholder}</option>
+          {value?.trim() && !valueInList && (
+            <option value={value.trim()}>
+              {filenameFromUrl(value)} (selecionado)
+            </option>
+          )}
+          {validItems.map((item) => (
+            <option key={item.key} value={item.url}>
+              {item.displayName?.trim() || item.key.split("/").pop() || item.url}
+            </option>
+          ))}
+        </select>
         </div>
         {!loading && validItems.length === 0 && folder !== "logos" && !hideEmptyFolderHint && (
           <Link

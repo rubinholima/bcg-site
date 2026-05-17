@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { getPublicImageUrl, urlToMediaKey } from "@/lib/media-url";
+import { getPublicImageUrl, urlToMediaKey, resolvePublicMediaUrlForDisplay, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
 import type { MediaPlaceholderSizeKey } from "@/lib/media-placeholders";
 
 /** Pastas por departamento: medico, psicologia, comissao, jogadores, etc. */
@@ -15,6 +15,7 @@ const SIZE_KEY_TO_LABEL: Record<string, string> = {
   psicologia: "Psicologia",
   comissao: "Comissão técnica",
   jogadores: "Jogadores",
+  patrimonio: "Patrimônio",
 };
 
 interface PhotoUploadWithNameProps {
@@ -37,6 +38,13 @@ interface PhotoUploadWithNameProps {
   requireNameToUpload?: string;
   /** Nome da foto preenchido automaticamente (ex: nome do atleta). Obrigatório mas não precisa escrever. */
   displayNameAuto?: string;
+  /** Mostrar linha “Nome da foto: … (automático)” quando displayNameAuto está definido */
+  showAutomaticPhotoNameNote?: boolean;
+  /** Texto “PNG, JPG…” abaixo do botão de envio */
+  showFileFormatHint?: boolean;
+  /** Listar todas as pastas no seletor de mídia */
+  allowAllFolders?: boolean;
+  uploadFolderHint?: MediaPlaceholderSizeKey;
   /** Ocultar preview quadrado (ex: quando header já mostra avatar) */
   hidePreview?: boolean;
 }
@@ -55,6 +63,10 @@ export function PhotoUploadWithName({
   pendingFile,
   requireNameToUpload,
   displayNameAuto,
+  showAutomaticPhotoNameNote = true,
+  showFileFormatHint = true,
+  allowAllFolders = false,
+  uploadFolderHint,
   hidePreview = false,
 }: PhotoUploadWithNameProps) {
   const [photoDisplayName, setPhotoDisplayName] = useState("");
@@ -186,6 +198,14 @@ export function PhotoUploadWithName({
   const canUpload = !requireNameToUpload || requireNameToUpload.trim().length > 0;
   const effectivePreview = pendingFile && pendingPreviewUrl ? pendingPreviewUrl : value;
 
+  const resolvedPreviewUrl =
+    effectivePreview && !effectivePreview.startsWith("blob:")
+      ? resolvePublicMediaUrlForDisplay(effectivePreview) ||
+        resolveMediaUrlWithProxyFallback(effectivePreview) ||
+        getPublicImageUrl(effectivePreview) ||
+        effectivePreview
+      : effectivePreview;
+
   const folderLabel = SIZE_KEY_TO_LABEL[sizeKey] ?? sizeKey;
 
   return (
@@ -207,7 +227,7 @@ export function PhotoUploadWithName({
         <div className="h-24 w-24 rounded overflow-hidden bg-muted shrink-0">
           {effectivePreview ? (
             <img
-              src={effectivePreview.startsWith("blob:") ? effectivePreview : getPublicImageUrl(effectivePreview)}
+              src={resolvedPreviewUrl ?? ""}
               alt=""
               className="h-full w-full object-cover"
             />
@@ -221,6 +241,8 @@ export function PhotoUploadWithName({
         <div className="flex-1 space-y-2 min-w-0">
           <MediaPicker
             sizeKey={sizeKey}
+            allowAllFolders={allowAllFolders}
+            uploadFolderHint={uploadFolderHint}
             value={value}
             onChange={onChange}
             placeholder={placeholder}
@@ -240,7 +262,7 @@ export function PhotoUploadWithName({
             />
           </div>
           )}
-          {displayNameAuto && (
+          {displayNameAuto && showAutomaticPhotoNameNote && (
           <p className="text-xs text-muted-foreground">Nome da foto: {displayNameAuto.trim() || "—"} (automático)</p>
           )}
           <input
@@ -265,9 +287,11 @@ export function PhotoUploadWithName({
                 Preencha o nome completo para selecionar foto.
               </p>
             )}
+            {showFileFormatHint && (
             <p className="text-xs text-muted-foreground">
               PNG, JPG, WebP ou SVG — até 10 MB. Recomendado: 800×600 px.
             </p>
+            )}
           </div>
           <Input
             placeholder={urlPlaceholder}

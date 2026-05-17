@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
@@ -31,8 +32,8 @@ export class DepartmentsService {
     return this.prisma.department.create({
       data: {
         tenantId: dto.tenantId,
-        name: dto.name,
-        code: dto.code ?? null,
+        name: cadastroUpperRequired(dto.name),
+        code: cadastroUpper(dto.code),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
@@ -43,8 +44,8 @@ export class DepartmentsService {
     return this.prisma.department.update({
       where: { id },
       data: {
-        ...(dto.name != null && { name: dto.name }),
-        ...(dto.code !== undefined && { code: dto.code ?? null }),
+        ...(dto.name != null && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.code !== undefined && { code: cadastroUpper(dto.code) }),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });

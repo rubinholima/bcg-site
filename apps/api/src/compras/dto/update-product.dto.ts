@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsInt, Min, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, MaxLength, IsArray, IsIn } from 'class-validator';
+import { INVENTORY_KINDS } from '../inventory-kinds';
 
 export class UpdateProductDto {
   @IsString()
@@ -25,4 +26,14 @@ export class UpdateProductDto {
   @Min(0)
   @IsOptional()
   currentStock?: number;
+
+  @IsString()
+  @IsOptional()
+  @IsIn([...INVENTORY_KINDS])
+  inventoryKind?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  squadTags?: string[];
 }

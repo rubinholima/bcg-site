@@ -32,6 +32,133 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 14 DE MAIO DE 2026 — ENCERRAMENTO (Merge develop → main: cadastros normalizados, patrimônio, manual no header, ADM financeiro/estoque, Marketing Meta, permissões)
+
+## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
+
+- **`main` foi alinhada com `develop`** nesta data: todo o trabalho listado abaixo está na branch **`main`** remota (`origin/main`), não só em `develop`.
+- **Regra nova de dados:** textos de cadastro gravados em **MAIÚSCULAS** (pt-BR); **e-mails** sempre **minúsculos**. Implementação central em `apps/api/src/common/cadastro-text.ts` — **usar estes helpers** em novos CRUDs; **não** aplicar em URLs, slugs, IDs externos, enums técnicos, JSON profundo, highlights como URL, campos de integração (ex.: `Player.category`, `status`, `preferredFoot` mantidos como já documentado no código).
+- **Patrimônio:** bem pode **mudar de clube e de categoria** no editar; API valida categoria do novo clube e jogador atribuído no mesmo tenant (`PATCH` aceita `tenantId`). UI: `AssetFormDialog.tsx`.
+- **Manual da plataforma:** acesso pelo ícone **?** no **header** do dashboard (`header.tsx`); item foi **removido da sidebar**; rota `/dashboard/manual`. Há parágrafo no manual sobre maiúsculas/e-mail.
+- **Financeiro ADM:** lançamentos internos (pagar/receber) **sem** Omie na tela ADM; Omie permanece visão **Diretoria/gerencial** onde já existia.
+- **Estoque ADM:** produtos/movimentos alinhados a futebol (`inventoryKind`, `squadTags`, categorias do tenant).
+- **Marketing:** OAuth Meta, publicação FB/IG, scheduler (`MarketingSchedulerService`), variáveis `META_*`; imagens via padrão `media-url`.
+- **Permissões / Saúde / Boston TV:** matriz de módulos, roles gerente/administrativo, módulo Saúde unificado, ajustes de UX em configurações.
+- **Arquivos locais não versionados (se existirem):** `backup_clean.sql`, `temp_legal_orig.txt` — não entrar em commits.
+- **`pnpm build`:** API (`apps/api`) e Web (`apps/web`) foram verificados após as alterações recentes de cadastro/patrimônio; repetir se tocar nos mesmos pacotes.
+
+## **O QUE FOI FEITO (RESUMO POR TEMA)**
+
+1. **Normalização de cadastros (API)**  
+   - Novo módulo `cadastro-text.ts` (`cadastroUpper`, `cadastroUpperRequired`, `cadastroEmail`, `cadastroJsonStringArray`).  
+   - Aplicado em: cadastros (campeonatos, estádios, times visitantes, comissão, jogadores com regras de exceção, jurídico), tenants, usuários (nome), RH (funcionários, vínculos, deptos, cargos), compras (fornecedores, produtos), financeiro ADM (textos dos lançamentos), patrimônio (categorias e bens), tipos de empresa, equipe médica, psicólogos, grupo master.  
+   - Documentação de uso e limites no próprio arquivo-fonte + parágrafo em `apps/web/src/app/dashboard/manual/page.tsx`.
+
+2. **Patrimônio**  
+   - `UpdateAssetDto` com `tenantId` opcional; `assets.service` valida coerência clube/categoria/jogador.  
+   - Web: selects de clube e categoria **editáveis**; reset de categoria ao trocar clube se inválida; `PATCH` envia `tenantId`.
+
+3. **Manual / dashboard**  
+   - Link do manual no header (`CircleHelp`); remoção do item no menu lateral e ajustes de texto introdutório.
+
+4. **Área administrativa (trabalho acumulado já em `develop`)**  
+   - Financeiro interno ADM; estoque com famílias/tags de time; evoluções anteriores de patrimônio (foto, media-url, UX).
+
+5. **Marketing Meta (trabalho acumulado)**  
+   - OAuth, publicação, cron de agendamento, proxy para redirects, miniaturas alinhadas a `media-url`.
+
+6. **Permissões e configuração (trabalho acumulado)**  
+   - Matriz, presets, auditoria, roles novas, módulo Saúde, Boston TV, ESLint API (`fileURLToPath`).
+
+## **COMMITS INTEGRADOS EM `main` (ordem: mais recente primeiro)**
+
+Estes commits estavam em `develop` à frente de `main` e passam a fazer parte de `main` com o merge do dia **14/05/2026** (histórico completo no `git log`):
+
+- `8aa31fe` — feat(api): cadastros em maiúsculas e e-mails minúsculos; patrimônio permite mudar clube e categoria  
+- `a9fc6fc` — feat(web): manual no header (?), remove do menu lateral  
+- `81b67b3` — feat(docs): manual no menu, atalho no dashboard e UI sem textos de ajuda longos  
+- `773c992` — feat(adm): estoque por futebol + financeiro sem Omie no ADM  
+- `8be4635` — feat(financeiro): contas pagar/receber internas e Omie como gerencial  
+- `aa5217b` — fix(ui): patrimonio layout largo, PhotoUploadWithName, dialog mais amplo, preview media-url  
+- `eff2254` — fix(patrimonio): UX lista agrupada, media-url nas fotos, sem scroll-x; pasta patrimonio na mídia  
+- `8ab96ce` — feat(patrimonio): select nativo em modais, foto do bem, tipos de categoria e peça  
+- `9d67584` — docs: encerramento 29 abril 2026 — Marketing Meta FB/IG e media-url no Planner  
+- `b543118` — marketing: agendamento Meta (FB/IG), ScheduleModule e miniaturas via media-url  
+- `8820f97` — fix(MediaPicker): select nativo para funcionar dentro de dialog (Planner imagens)  
+- `afe7684` — chore(cursor): regra passo a passo — um passo por vez até OK do usuário  
+- `a5ccf82` — feat(marketing): selects nativos no modal, token Meta persistido, status, publicação Facebook  
+- `2854043` — fix(api-proxy): repassar redirects ao navegador para OAuth Meta funcionar  
+- `8e218c1` — feat(meta-oauth): versão Graph configurável e checklist de autorização na UI do Marketing  
+- `bd2ff7d` — feat(marketing): botão Conectar Meta no Planner (OAuth start, só super admin)  
+- `3b5eded` — feat(api): OAuth Meta — rotas integration/meta/oauth start e callback  
+- `90bcca1` — feat(permissoes): roles gerente e administrativo na matriz e usuarios  
+- `cdb2d6a` — fix(config): matriz de módulos — restaura rótulos Company admin e Editor  
+- `496a962` — feat: módulo Saúde (unifica médico/psico), Boston TV próprio e matriz Gerente/Adm/Saúde  
+- `5fd35e1` — fix(api): eslint.config.mjs usa fileURLToPath para tsconfigRootDir (corrige TS2339)  
+- `44a1431` — feat(web): UX explicativo em permissões (pacotes, JSON e panorama)  
+- `26a7097` — feat(config): matriz de módulos com presets, export JSON e auditoria detalhada  
+- `29f5b30` — feat(permissões): áreas funcionais na matriz, ações em lote e auditoria  
+
+## **ARQUIVOS / PASTAS-CHAVE (RASTREIO RÁPIDO)**
+
+| Área | Caminhos principais |
+|------|---------------------|
+| Regra de texto | `apps/api/src/common/cadastro-text.ts` |
+| Patrimônio API | `apps/api/src/patrimonio/*`, DTO `update-asset.dto.ts` |
+| Patrimônio Web | `apps/web/src/app/dashboard/adm/patrimonio/components/AssetFormDialog.tsx` |
+| Manual / header | `apps/web/src/components/dashboard/header.tsx`, `apps/web/src/app/dashboard/manual/page.tsx`, `apps/web/src/lib/dashboard-menu.config.ts` |
+| Financeiro ADM | `apps/api/src/financeiro/*`, `apps/web/src/app/dashboard/adm/financeiro/*` |
+| Estoque | `apps/api/src/compras/products.service.ts`, `apps/web/.../adm/estoque/*` |
+| Marketing Meta | `apps/api/src/integrations/meta/*`, `apps/api/src/marketing/*`, Planner web |
+
+## **FECHAMENTO (GIT) — 14/05/2026**
+
+- **Branch de trabalho:** `develop` (HEAD pré-merge documentado: `8aa31fe` antes do commit deste encerramento no diário).  
+- **Ações:** (1) Commit atualizando **apenas** `docs/DESENVOLVIMENTO_DIARIO.md` em `develop`. (2) **`git merge develop`** em **`main`** (merge commit registrado em `git log main -1` após a operação). (3) **`git push origin main`** e **`git push origin develop`**.  
+- **`main` anterior:** `74c8fa9` (ponta antes do merge do dia).  
+- **Não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` (locais).  
+
+---
+
+# 📅 29 DE ABRIL DE 2026 — ENCERRAMENTO (Planner Marketing: Meta Facebook + Instagram, agendamento real, imagens no padrão media-url)
+
+## **O QUE FOI FEITO**
+
+1. **Publicação Meta na mesma implementação (FB + IG)**
+   - `MetaOAuthService.publishMarketingPostScheduled`: lê `platforms` do post; publica na **Página** (feed com texto ou `/photos` com imagem pública + legenda) e no **Instagram** (`/{ig-user-id}/media` + `media_publish`) quando a Página tem **Instagram Business** vinculado.
+   - URL de imagem para a Graph API via **`graphPublicImageUrl`** (domínio oficial, `key=` em query, S3 BCG, `META_IMAGE_PUBLIC_ORIGIN`); Instagram exige imagem HTTPS pública.
+   - `externalIds` parciais (ex.: só Facebook) e `notes` com erros por plataforma; status `published` / `failed` conforme resultado.
+
+2. **Agendamento real (cron)**
+   - Dependência **`@nestjs/schedule`**; **`ScheduleModule.forRoot()`** no `AppModule`.
+   - **`MarketingSchedulerService`**: a cada minuto busca `MarketingPost` com `status: scheduled` e `scheduledAt <= now`, chama `publishMarketingPostScheduled`; **ignora** itens só com LinkedIn (sem Meta). Desligar com **`META_SCHEDULER_DISABLED=1`** se várias instâncias da API sem lock.
+
+3. **Rota “publicar agora”**
+   - `POST .../publish-facebook` passa a exigir Facebook e/ou Instagram marcados e delega ao mesmo fluxo `publishMarketingPostScheduled` (sem divergir do cron).
+
+4. **Dashboard Marketing — miniaturas das imagens**
+   - Alinhado ao padrão do diário em **`media-url.ts`**: `resolvePublicMediaUrlForDisplay` → `resolveMediaUrlWithProxyFallback` → `getPublicImageUrl` (função local `plannerMediaThumbSrc` em `marketing/page.tsx`).
+
+5. **Build**
+   - `pnpm build` na raiz executado com sucesso antes do commit da feature.
+
+## **ARQUIVOS ENVOLVIDOS (PRINCIPAIS)**
+
+**API:** `apps/api/package.json`, `pnpm-lock.yaml`, `apps/api/src/app.module.ts`, `apps/api/src/integrations/meta/meta-oauth.service.ts`, `apps/api/src/marketing/marketing.module.ts`, `apps/api/src/marketing/marketing-scheduler.service.ts` (novo).
+
+**Web:** `apps/web/src/app/dashboard/marketing/page.tsx`.
+
+## **FECHAMENTO (GIT)**
+
+- **Branch:** develop
+- **`b543118` —** `marketing: agendamento Meta (FB/IG), ScheduleModule e miniaturas via media-url` (código + lockfile)
+- **`docs/` —** entrada **29 abril 2026** (este arquivo) incluída no mesmo push para `develop`
+- **Push:** ✅ commits da feature + documentação para `origin/develop`
+- **Build:** `pnpm build` na raiz ok antes do push do encerramento
+- **Não versionados (locais):** `backup_clean.sql`, `temp_legal_orig.txt`
+
+---
+
 # 📅 9 DE ABRIL DE 2026 — ENCERRAMENTO (Diretoria + Omie: fluxo de caixa, compras por mês, credenciais por tenant)
 
 ## **O QUE FOI FEITO**

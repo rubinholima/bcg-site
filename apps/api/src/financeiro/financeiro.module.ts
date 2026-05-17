@@ -4,10 +4,12 @@ import { ModulesModule } from '../modules/modules.module';
 import { IntegrationsModule } from '../integrations/integrations.module';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { FinanceiroOmieController } from './financeiro-omie.controller';
+import { FinanceiroLancamentosController } from './financeiro-lancamentos.controller';
+import { FinanceiroLancamentosService } from './financeiro-lancamentos.service';
 
 @Module({
   imports: [AuthModule, ModulesModule, IntegrationsModule],
-  controllers: [FinanceiroOmieController],
-  providers: [ModuleAccessGuard],
+  controllers: [FinanceiroOmieController, FinanceiroLancamentosController],
+  providers: [ModuleAccessGuard, FinanceiroLancamentosService],
 })
 export class FinanceiroModule {}

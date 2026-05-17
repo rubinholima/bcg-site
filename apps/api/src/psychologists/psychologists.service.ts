@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { cadastroEmail, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -41,11 +42,11 @@ export class PsychologistsService {
   }) {
     return this.prisma.psychologist.create({
       data: {
-        name: data.name,
-        email: data.email ?? null,
-        phone: data.phone ?? null,
-        crpOrEquivalent: data.crpOrEquivalent ?? null,
-        bio: data.bio ?? null,
+        name: cadastroUpperRequired(data.name),
+        email: cadastroEmail(data.email),
+        phone: cadastroUpper(data.phone),
+        crpOrEquivalent: cadastroUpper(data.crpOrEquivalent),
+        bio: cadastroUpper(data.bio),
         photoUrl: data.photoUrl ?? null,
         tenantId: data.tenantId ?? null,
         calendarBlocked: data.calendarBlocked ?? false,
@@ -75,11 +76,11 @@ export class PsychologistsService {
     return this.prisma.psychologist.update({
       where: { id },
       data: {
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.email !== undefined && { email: data.email ?? null }),
-        ...(data.phone !== undefined && { phone: data.phone ?? null }),
-        ...(data.crpOrEquivalent !== undefined && { crpOrEquivalent: data.crpOrEquivalent ?? null }),
-        ...(data.bio !== undefined && { bio: data.bio ?? null }),
+        ...(data.name !== undefined && { name: cadastroUpperRequired(data.name) }),
+        ...(data.email !== undefined && { email: cadastroEmail(data.email) }),
+        ...(data.phone !== undefined && { phone: cadastroUpper(data.phone) }),
+        ...(data.crpOrEquivalent !== undefined && { crpOrEquivalent: cadastroUpper(data.crpOrEquivalent) }),
+        ...(data.bio !== undefined && { bio: cadastroUpper(data.bio) }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl ?? null }),
         ...(data.tenantId !== undefined && { tenantId: data.tenantId ?? null }),
         ...(data.calendarBlocked !== undefined && { calendarBlocked: data.calendarBlocked }),

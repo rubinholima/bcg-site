@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { cadastroEmail, cadastroJsonStringArray, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTechnicalStaffDto } from './dto/create-technical-staff.dto';
 import { UpdateTechnicalStaffDto } from './dto/update-technical-staff.dto';
@@ -55,25 +56,25 @@ export class TechnicalStaffService {
 
     const data = {
       tenantId: dto.tenantId,
-      name: dto.name,
+      name: cadastroUpperRequired(dto.name),
       photoUrl: dto.photoUrl ?? null,
-      role: dto.role,
-      categories: dto.categories != null ? dto.categories : Prisma.JsonNull,
+      role: cadastroUpperRequired(dto.role),
+      categories: dto.categories != null ? cadastroJsonStringArray(dto.categories) : Prisma.JsonNull,
       birthDate: dto.birthDate ?? null,
-      nationality: dto.nationality ?? null,
-      cpf: dto.cpf ?? null,
-      rg: dto.rg ?? null,
-      email: dto.email ?? null,
-      phone: dto.phone ?? null,
-      address: dto.address ?? null,
-      licenseType: dto.licenseType ?? null,
-      licenseNumber: dto.licenseNumber ?? null,
+      nationality: cadastroUpper(dto.nationality),
+      cpf: cadastroUpper(dto.cpf),
+      rg: cadastroUpper(dto.rg),
+      email: cadastroEmail(dto.email),
+      phone: cadastroUpper(dto.phone),
+      address: cadastroUpper(dto.address),
+      licenseType: cadastroUpper(dto.licenseType),
+      licenseNumber: cadastroUpper(dto.licenseNumber),
       licenseValidUntil: dto.licenseValidUntil ? new Date(dto.licenseValidUntil) : null,
-      contractType: dto.contractType ?? null,
+      contractType: cadastroUpper(dto.contractType),
       contractStart: dto.contractStart ? new Date(dto.contractStart) : null,
       contractEnd: dto.contractEnd ? new Date(dto.contractEnd) : null,
-      bio: dto.bio ?? null,
-      notes: dto.notes ?? null,
+      bio: cadastroUpper(dto.bio),
+      notes: cadastroUpper(dto.notes),
     };
     return this.prisma.technicalStaff.create({
       data,
@@ -84,25 +85,25 @@ export class TechnicalStaffService {
   async update(id: string, dto: UpdateTechnicalStaffDto) {
     await this.findOne(id);
     const data: Record<string, unknown> = {};
-    if (dto.name != null) data.name = dto.name;
+    if (dto.name != null) data.name = cadastroUpperRequired(dto.name);
     if (dto.photoUrl != null) data.photoUrl = dto.photoUrl;
-    if (dto.role != null) data.role = dto.role;
-    if (dto.categories != null) data.categories = dto.categories;
+    if (dto.role != null) data.role = cadastroUpperRequired(dto.role);
+    if (dto.categories != null) data.categories = cadastroJsonStringArray(dto.categories);
     if (dto.birthDate != null) data.birthDate = dto.birthDate;
-    if (dto.nationality != null) data.nationality = dto.nationality;
-    if (dto.cpf != null) data.cpf = dto.cpf;
-    if (dto.rg != null) data.rg = dto.rg;
-    if (dto.email != null) data.email = dto.email;
-    if (dto.phone != null) data.phone = dto.phone;
-    if (dto.address != null) data.address = dto.address;
-    if (dto.licenseType != null) data.licenseType = dto.licenseType;
-    if (dto.licenseNumber != null) data.licenseNumber = dto.licenseNumber;
+    if (dto.nationality != null) data.nationality = cadastroUpper(dto.nationality);
+    if (dto.cpf != null) data.cpf = cadastroUpper(dto.cpf);
+    if (dto.rg != null) data.rg = cadastroUpper(dto.rg);
+    if (dto.email != null) data.email = cadastroEmail(dto.email);
+    if (dto.phone != null) data.phone = cadastroUpper(dto.phone);
+    if (dto.address != null) data.address = cadastroUpper(dto.address);
+    if (dto.licenseType != null) data.licenseType = cadastroUpper(dto.licenseType);
+    if (dto.licenseNumber != null) data.licenseNumber = cadastroUpper(dto.licenseNumber);
     if (dto.licenseValidUntil != null) data.licenseValidUntil = dto.licenseValidUntil ? new Date(dto.licenseValidUntil) : null;
-    if (dto.contractType != null) data.contractType = dto.contractType;
+    if (dto.contractType != null) data.contractType = cadastroUpper(dto.contractType);
     if (dto.contractStart != null) data.contractStart = dto.contractStart ? new Date(dto.contractStart) : null;
     if (dto.contractEnd != null) data.contractEnd = dto.contractEnd ? new Date(dto.contractEnd) : null;
-    if (dto.bio != null) data.bio = dto.bio;
-    if (dto.notes != null) data.notes = dto.notes;
+    if (dto.bio != null) data.bio = cadastroUpper(dto.bio);
+    if (dto.notes != null) data.notes = cadastroUpper(dto.notes);
     return this.prisma.technicalStaff.update({
       where: { id },
       data,

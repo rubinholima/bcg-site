@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   ArrowLeft,
   Megaphone,
@@ -30,17 +30,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
-import { getPublicImageUrl } from "@/lib/media-url";
+import {
+  getPublicImageUrl,
+  resolveMediaUrlWithProxyFallback,
+  resolvePublicMediaUrlForDisplay,
+} from "@/lib/media-url";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+
+function plannerMediaThumbSrc(raw: string): string {
+  return (
+    resolvePublicMediaUrlForDisplay(raw) ||
+    resolveMediaUrlWithProxyFallback(raw) ||
+    getPublicImageUrl(raw) ||
+    raw
+  );
+}
 
 interface Tenant {
   id: string;
@@ -61,6 +67,9 @@ interface MarketingPost {
   notes: string | null;
   createdAt: string;
 }
+
+const SELECT_NATIVE_CLASS =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho",
@@ -113,11 +122,15 @@ function formatDateTime(iso: string | null): string {
 
 export default function MarketingPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const tenantParam = searchParams.get("tenantId") ?? "";
-  const { canAccessModule, loading: authLoading } = useAuth();
+  const { canAccessModule, loading: authLoading, isSuperAdmin } = useAuth();
 
   const [posts, setPosts] = useState<MarketingPost[]>([]);
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [metaStatus, setMetaStatus] = useState<{ connected: boolean; expiresAt: string | null } | null>(null);
+  const [publishingFb, setPublishingFb] = useState(false);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [month, setMonth] = useState(() => new Date().getMonth());
@@ -149,6 +162,16 @@ export default function MarketingPage() {
       .catch(() => setPosts([]))
       .finally(() => setLoading(false));
   }, [year, month, tenantParam]);
+
+  const metaQueryFlag = searchParams.get("meta");
+
+  useEffect(() => {
+    if (!canAccessModule("marketing") || authLoading) return;
+    api
+      .get<{ connected: boolean; expiresAt: string | null }>("/integration/meta/status")
+      .then(({ data }) => setMetaStatus(data))
+      .catch(() => setMetaStatus({ connected: false, expiresAt: null }));
+  }, [canAccessModule, authLoading, metaQueryFlag]);
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants").then(({ data }) => {
@@ -270,6 +293,21 @@ export default function MarketingPage() {
     }
   };
 
+  const handlePublishFacebook = async () => {
+    if (!formEdit?.id) return;
+    setPublishingFb(true);
+    try {
+      await api.post(`/marketing/posts/${formEdit.id}/publish-facebook`);
+      setFormOpen(false);
+      fetchPosts();
+      alert("Publicado no Facebook.");
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Falha ao publicar no Facebook.");
+    } finally {
+      setPublishingFb(false);
+    }
+  };
+
   const addImage = (url: string) => {
     if (url && !formData.imageUrls.includes(url)) {
       setFormData((d) => ({ ...d, imageUrls: [...d.imageUrls, url] }));
@@ -325,28 +363,24 @@ export default function MarketingPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Select
-            value={tenantParam || "all"}
-            onValueChange={(v) => {
-              const params = new URLSearchParams();
-              if (v && v !== "all") params.set("tenantId", v);
-              window.history.replaceState(null, "", `/dashboard/marketing${params.toString() ? `?${params}` : ""}`);
-              fetchPosts();
+          <select
+            className={SELECT_NATIVE_CLASS + " w-[min(220px,calc(100vw-120px))] min-h-10 shrink-0"}
+            aria-label="Filtrar por empresa"
+            value={tenantParam ? tenantParam : "all"}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "all") router.replace(pathname);
+              else router.replace(`${pathname}?tenantId=${encodeURIComponent(v)}`);
             }}
           >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="group">Grupo (BCG)</SelectItem>
-              {tenants.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <option value="all">Todos</option>
+            <option value="group">Grupo (BCG)</option>
+            {tenants.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
           <Button onClick={() => openNewPost()}>
             <Plus className="h-4 w-4 mr-2" />
             Nova postagem
@@ -472,11 +506,32 @@ export default function MarketingPage() {
           </Card>
 
           <Card className="border-dashed border-amber-500/50 bg-amber-500/5">
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2 text-amber-600 dark:text-amber-500">Integração Meta</h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                Em breve: conectar contas do Facebook e Instagram para publicar automaticamente via Meta Business API.
+            <CardContent className="pt-6 space-y-3">
+              <h3 className="font-semibold text-amber-600 dark:text-amber-500">Integração Meta</h3>
+              <p className="text-sm">
+                {metaStatus?.connected ? (
+                  <span className="text-emerald-600 dark:text-emerald-500 font-medium">
+                    Conectado
+                    {metaStatus.expiresAt
+                      ? ` — token válido até ${formatDateTime(metaStatus.expiresAt)}`
+                      : ""}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Não conectado</span>
+                )}
               </p>
+              {searchParams.get("meta_err") && (
+                <p className="text-xs text-destructive break-words">{searchParams.get("meta_err")}</p>
+              )}
+              {isSuperAdmin ? (
+                <Button asChild type="button" className="w-full sm:w-auto min-h-10">
+                  <a href="/api/integration/meta/oauth/start" rel="noopener noreferrer">
+                    {metaStatus?.connected ? "Reconectar com a Meta" : "Conectar com a Meta"}
+                  </a>
+                </Button>
+              ) : (
+                <p className="text-xs text-muted-foreground">Só o super admin pode conectar ou reconectar a Meta.</p>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -516,22 +571,21 @@ export default function MarketingPage() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Destino</Label>
-              <Select
-                value={formData.tenantId ?? "group"}
-                onValueChange={(v) => setFormData((d) => ({ ...d, tenantId: v === "group" ? null : v }))}
+              <select
+                className={SELECT_NATIVE_CLASS}
+                value={formData.tenantId == null ? "group" : formData.tenantId}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFormData((d) => ({ ...d, tenantId: v === "group" ? null : v }));
+                }}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="group">Grupo (BCG)</SelectItem>
-                  {tenants.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <option value="group">Grupo (BCG)</option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-2">
               <Label>Título (opcional)</Label>
@@ -557,7 +611,7 @@ export default function MarketingPage() {
                 {formData.imageUrls.map((url, idx) => (
                   <div key={idx} className="relative group">
                     <img
-                      src={getPublicImageUrl(url) || url}
+                      src={plannerMediaThumbSrc(url)}
                       alt=""
                       className="w-20 h-20 object-cover rounded border"
                     />
@@ -612,20 +666,17 @@ export default function MarketingPage() {
             </div>
             <div className="grid gap-2">
               <Label>Status</Label>
-              <Select
+              <select
+                className={SELECT_NATIVE_CLASS}
                 value={formData.status}
-                onValueChange={(v) => setFormData((d) => ({ ...d, status: v }))}
+                onChange={(e) => setFormData((d) => ({ ...d, status: e.target.value }))}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Rascunho</SelectItem>
-                  <SelectItem value="scheduled">Agendada</SelectItem>
-                  <SelectItem value="published">Publicada</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
+                {Object.entries(STATUS_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-2">
               <Label>Notas (opcional)</Label>
@@ -637,7 +688,22 @@ export default function MarketingPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between">
+            <div className="flex flex-wrap gap-2 order-2 sm:order-1">
+              {isSuperAdmin && formEdit?.id && metaStatus?.connected && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="min-h-10"
+                  disabled={publishingFb || !formData.content.trim()}
+                  onClick={handlePublishFacebook}
+                >
+                  {publishingFb ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Facebook className="h-4 w-4 mr-2" />}
+                  Publicar no Facebook
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 justify-end order-1 sm:order-2">
             {formEdit && (
               <Button
                 variant="destructive"
@@ -655,6 +721,7 @@ export default function MarketingPage() {
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Salvar
             </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

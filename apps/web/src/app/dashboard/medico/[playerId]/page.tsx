@@ -40,7 +40,7 @@ export default function MedicoPlayerPage() {
   const [medicalStaff, setMedicalStaff] = useState<MedicalStaffOption[]>([]);
 
   useEffect(() => {
-    if (!id || (!canAccessModule("medico") && !authLoading)) return;
+    if (!id || (!canAccessModule("saude") && !authLoading)) return;
     setLoading(true);
     api
       .get<PlayerData>(`/players/${id}`)
@@ -50,7 +50,7 @@ export default function MedicoPlayerPage() {
   }, [id, canAccessModule, authLoading]);
 
   useEffect(() => {
-    if (!canAccessModule("medico") && !authLoading) return;
+    if (!canAccessModule("saude") && !authLoading) return;
     const tenantId = player?.tenant?.id;
     const params = tenantId ? `?tenantId=${tenantId}` : "";
     api
@@ -61,7 +61,7 @@ export default function MedicoPlayerPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!canAccessModule("medico")) {
+    if (!canAccessModule("saude")) {
       router.replace("/403");
     }
   }, [canAccessModule, authLoading, router]);
@@ -101,7 +101,7 @@ export default function MedicoPlayerPage() {
     }
   };
 
-  if (authLoading || !canAccessModule("medico")) {
+  if (authLoading || !canAccessModule("saude")) {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-muted-foreground">Carregando...</p>

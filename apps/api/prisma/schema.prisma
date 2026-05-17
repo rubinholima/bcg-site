@@ -13,7 +13,7 @@ model User {
   email        String   @unique
   name         String?
   passwordHash String?  // login próprio (bcrypt); null = só Cognito
-  role         String?  @default("editor") // super_admin | company_admin | editor | user
+  role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   /** Escopo de empresas/clubes: vazio = sem restrição (vê todas, exceto super_admin que ignora tabela). Com linhas = só esses tenants. */
@@ -114,6 +114,33 @@ model Tenant {
   travelLogistics       TravelLogistics[]
   events                Event[]
   userTenants           UserTenant[]
+  financeiroLancamentos FinanceiroLancamento[]
+}
+
+/// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
+model FinanceiroLancamento {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// pagar | receber
+  tipo         String
+  /// pendente | pago | cancelado
+  status       String   @default("pendente")
+  contraparte  String?  // cliente ou fornecedor (texto livre)
+  descricao    String
+  valor        Decimal  @db.Decimal(14, 2)
+  dueDate      DateTime // vencimento
+  settledAt    DateTime? // data de quitação (pago/recebido)
+  categoria    String?
+  referencia   String?  // NF, contrato, pedido
+  notas        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, tipo])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
 }
 
 // ========== Logística de deslocamento (Depto Futebol — só clubes) ==========
@@ -280,11 +307,25 @@ model MediaMeta {
 
 // Módulos do dashboard (Grupo Master, Empresas, Usuários, etc.)
 model Module {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
-  sortOrder Int      @default(0)
-  roles     ModuleRole[]
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  sortOrder       Int      @default(0)
+  /// Agrupamento lógico na UI de permissões (Configurações → Módulos). Chave estável: estrategico, empresa_usuarios, etc.
+  functionalArea  String   @default("outros")
+  roles           ModuleRole[]
+  @@index([functionalArea])
+}
+
+/// Auditoria de alterações na matriz de permissões (super admin). Não altera o modelo de autorização em runtime.
+model PermissionMatrixAudit {
+  id          String   @id @default(cuid())
+  actorSub    String
+  actorEmail  String?
+  createdAt   DateTime @default(now())
+  /// Lista de mudanças: [{ slug, role, from, to }]
+  changes     Json
+  @@index([createdAt])
 }
 
 // Quais roles podem acessar cada módulo (super_admin sempre pode)
@@ -292,7 +333,7 @@ model ModuleRole {
   id       String  @id @default(cuid())
   moduleId String
   module   Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  role     String  // super_admin | company_admin | editor
+  role     String  // super_admin | company_admin | editor | gerente | administrativo | …
   canAccess Boolean @default(true)
   @@unique([moduleId, role])
 }
@@ -562,11 +603,16 @@ model Product {
   unit          String   @default("un") // un, cx, kg, etc.
   stockMin      Int      @default(0)   // abaixo disso = alerta
   currentStock  Int      @default(0)
+  /// uniforme | material_treino | bola_equipamento | nutricao_hidratacao | saude_fisioterapia | vestuario_lazer | documental | geral
+  inventoryKind String   @default("geral")
+  /// Categorias de futebol do clube (ex.: principal, sub20) — null ou [] = vale para todas
+  squadTags     Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   stockMovements StockMovement[]
   @@index([tenantId])
   @@index([tenantId, currentStock])
+  @@index([tenantId, inventoryKind])
 }
 
 // Requisição de compra — solicitante, itens, status, aprovação
@@ -773,6 +819,7 @@ model Asset {
   shirtNumber       Int?           // número da camisa (1-99)
   assignedPlayerId  String?       // jogador com o item (só para clubes)
   assignedPlayer    Player?       @relation(fields: [assignedPlayerId], references: [id], onDelete: SetNull)
+  photoUrl          String?        // foto registrada do bem (URL da mídia / proxy)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   @@index([tenantId])

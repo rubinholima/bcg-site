@@ -172,12 +172,22 @@ export async function forwardRequest(
 
   // Faz a requisição ao backend
   try {
+    /** Sem manual, o fetch segue 302 (ex.: OAuth Meta → facebook.com) e devolve HTML como 200 — URL no browser fica /api/... e quebra login/cookies. */
     const res = await fetch(backendUrl, {
       method,
       headers,
       body,
       cache,
+      redirect: "manual",
     });
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("Location");
+      if (location?.trim()) {
+        const target = new URL(location.trim(), request.nextUrl.origin).href;
+        return NextResponse.redirect(target, res.status);
+      }
+    }
 
     // Lê a resposta
     const contentType = res.headers.get("content-type") ?? "";

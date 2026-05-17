@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJobRoleDto } from './dto/create-job-role.dto';
 import { UpdateJobRoleDto } from './dto/update-job-role.dto';
@@ -44,8 +45,8 @@ export class JobRolesService {
       data: {
         tenantId: dto.tenantId,
         departmentId: dto.departmentId ?? null,
-        name: dto.name,
-        code: dto.code ?? null,
+        name: cadastroUpperRequired(dto.name),
+        code: cadastroUpper(dto.code),
         type: dto.type,
       },
       include: {
@@ -61,8 +62,8 @@ export class JobRolesService {
       where: { id },
       data: {
         ...(dto.departmentId !== undefined && { departmentId: dto.departmentId ?? null }),
-        ...(dto.name != null && { name: dto.name }),
-        ...(dto.code !== undefined && { code: dto.code ?? null }),
+        ...(dto.name != null && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.code !== undefined && { code: cadastroUpper(dto.code) }),
         ...(dto.type != null && { type: dto.type }),
       },
       include: {

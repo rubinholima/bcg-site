@@ -39,7 +39,7 @@ export default function PsicologiaListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!canAccessModule("psicologia") && !authLoading) return;
+    if (!canAccessModule("saude") && !authLoading) return;
     const tenantId = searchParams.get("tenantId") ?? undefined;
     const category = searchParams.get("category") ?? undefined;
     const search = searchParams.get("search") ?? undefined;
@@ -63,7 +63,7 @@ export default function PsicologiaListPage() {
     );
   }
 
-  if (!canAccessModule("psicologia")) {
+  if (!canAccessModule("saude")) {
     router.replace("/403");
     return null;
   }
