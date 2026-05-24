@@ -491,28 +491,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     ],
   },
   {
-    slug: "ferramentas",
-    label: "Ferramentas",
-    icon: Wrench,
-    moduleSlug: "emails",
-    children: [
-      {
-        slug: "emails",
-        label: "Emails",
-        href: "/dashboard/emails",
-        icon: Mail,
-        moduleSlug: "emails",
-      },
-      {
-        slug: "vault",
-        label: "Senhas",
-        href: "/dashboard/senhas",
-        icon: KeyRound,
-        moduleSlug: "vault",
-      },
-    ],
-  },
-  {
     slug: "academias",
     label: "Academias",
     icon: GraduationCap,
@@ -545,6 +523,28 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       { slug: "socio_dashboard", label: "Visão geral", href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
       { slug: "socio_socios", label: "Sócios", href: "/dashboard/socio-torcedor/socios", icon: Users, moduleSlug: "socio_torcedor" },
       hubRelatorio("socio_torcedor"),
+    ],
+  },
+  {
+    slug: "ferramentas",
+    label: "Ferramentas",
+    icon: Wrench,
+    moduleSlug: "emails",
+    children: [
+      {
+        slug: "emails",
+        label: "Emails",
+        href: "/dashboard/emails",
+        icon: Mail,
+        moduleSlug: "emails",
+      },
+      {
+        slug: "vault",
+        label: "Senhas",
+        href: "/dashboard/senhas",
+        icon: KeyRound,
+        moduleSlug: "vault",
+      },
     ],
   },
   {
