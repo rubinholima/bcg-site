@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import { EMPLOYEE_TYPES } from "@/lib/employee-types";
 
 export interface EmployeeRow {
   id: string;
@@ -156,8 +157,9 @@ export function EmployeeFormDialog({
                 value={type}
                 onChange={(e) => setType(e.target.value)}
               >
-                <option value="staff">Staff (funcionário)</option>
-                <option value="athlete">Atleta</option>
+                <option value="staff">{EMPLOYEE_TYPES.staff}</option>
+                <option value="dirigente">{EMPLOYEE_TYPES.dirigente}</option>
+                <option value="athlete">{EMPLOYEE_TYPES.athlete}</option>
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">

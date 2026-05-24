@@ -47,6 +47,7 @@ import {
   Calendar,
   Tv,
   Database,
+  Briefcase,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
@@ -92,21 +93,21 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
   {
     slug: "grupo_master",
     label: "Grupo Master",
-    href: "/dashboard/grupo",
     icon: Globe,
     moduleSlug: "grupo_master",
-  },
-  {
-    slug: "diretoria",
-    label: "Diretoria",
-    icon: BarChart3,
-    moduleSlug: "diretoria",
     children: [
       {
+        slug: "grupo_config",
+        label: "Configuração do grupo",
+        href: "/dashboard/grupo",
+        icon: Globe,
+        moduleSlug: "grupo_master",
+      },
+      {
         slug: "diretoria_dashboard",
-        label: "Dashboard gerencial",
+        label: "Diretoria",
         href: "/dashboard/diretoria",
-        icon: LayoutDashboard,
+        icon: BarChart3,
         moduleSlug: "diretoria",
       },
     ],
@@ -148,8 +149,15 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         ],
       },
       {
+        slug: "cad_funcionarios",
+        label: "Funcionários",
+        href: "/dashboard/cadastros/funcionarios",
+        icon: Briefcase,
+        moduleSlug: "adm_rh",
+      },
+      {
         slug: "cad_futebol",
-        label: "Futebol — base",
+        label: "Futebol",
         icon: Shirt,
         moduleSlug: "tipos",
         children: [
@@ -198,8 +206,8 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         ],
       },
       {
-        slug: "cad_pessoas",
-        label: "Pessoas — saúde",
+        slug: "cad_saude",
+        label: "Saúde",
         icon: Stethoscope,
         moduleSlug: "saude",
         children: [
@@ -250,14 +258,14 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     ],
   },
   {
-    slug: "futebol",
-    label: "Depto Futebol",
-    icon: Shirt,
+    slug: "saude",
+    label: "Saúde",
+    icon: Stethoscope,
     moduleSlug: "saude",
     children: [
       {
         slug: "medico",
-        label: "Depto Médico",
+        label: "Médico",
         icon: Stethoscope,
         moduleSlug: "saude",
         children: [
@@ -272,7 +280,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
       {
         slug: "psicologia",
-        label: "Depto Psicologia",
+        label: "Psicologia",
         icon: ClipboardList,
         moduleSlug: "saude",
         children: [
@@ -286,8 +294,37 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         ],
       },
       {
+        slug: "saude_fisiologia",
+        label: "Fisiologia",
+        href: "/dashboard/futebol/fisiologia",
+        icon: Heart,
+        moduleSlug: "futebol_fisiologia",
+      },
+      {
+        slug: "saude_fisioterapia",
+        label: "Fisioterapia",
+        href: "/dashboard/saude/fisioterapia",
+        icon: Activity,
+        moduleSlug: "saude",
+      },
+      {
+        slug: "saude_nutricao",
+        label: "Nutrição",
+        href: "/dashboard/adm/nutricao",
+        icon: UtensilsCrossed,
+        moduleSlug: "adm_nutricao",
+      },
+    ],
+  },
+  {
+    slug: "futebol",
+    label: "Depto Futebol",
+    icon: Shirt,
+    moduleSlug: "juridico",
+    children: [
+      {
         slug: "juridico",
-        label: "Depto Jurídico",
+        label: "Jurídico",
         href: "/dashboard/juridico",
         icon: Scale,
         moduleSlug: "juridico",
@@ -298,20 +335,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         href: "/dashboard/futebol/logistica",
         icon: Map,
         moduleSlug: "futebol_logistica",
-      },
-      {
-        slug: "futebol_fisiologia",
-        label: "Fisiologia",
-        href: "/dashboard/futebol/fisiologia",
-        icon: Heart,
-        moduleSlug: "futebol_fisiologia",
-      },
-      {
-        slug: "adm_nutricao",
-        label: "Nutrição",
-        href: "/dashboard/adm/nutricao",
-        icon: UtensilsCrossed,
-        moduleSlug: "adm_nutricao",
       },
       {
         slug: "analise",

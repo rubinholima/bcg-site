@@ -43,11 +43,21 @@ function isCadastrosPath(pathname: string | null): boolean {
 function isFutebolOperacaoPath(pathname: string | null): boolean {
   if (!pathname) return false;
   return (
+    pathname.startsWith("/dashboard/juridico") ||
+    pathname.startsWith("/dashboard/futebol/logistica") ||
+    pathname.startsWith("/dashboard/futebol/analise") ||
+    pathname.startsWith("/dashboard/futebol/avaliacoes")
+  );
+}
+
+function isSaudePath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
     (pathname.startsWith("/dashboard/medico") && !pathname.startsWith("/dashboard/medico/equipe")) ||
     pathname.startsWith("/dashboard/consultas") ||
     (pathname.startsWith("/dashboard/psicologia") && !pathname.startsWith("/dashboard/psicologia/psicologos")) ||
-    pathname.startsWith("/dashboard/juridico") ||
-    (pathname.startsWith("/dashboard/futebol") && !pathname.startsWith("/dashboard/futebol/comissao")) ||
+    pathname.startsWith("/dashboard/futebol/fisiologia") ||
+    pathname.startsWith("/dashboard/saude") ||
     pathname.startsWith("/dashboard/adm/nutricao")
   );
 }
@@ -69,8 +79,12 @@ export function Sidebar() {
   const inPath = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname?.startsWith(href + "/"));
 
-  const [diretoriaOpen, setDiretoriaOpen] = useState(() => pathname?.startsWith("/dashboard/diretoria"));
+  const [grupoMasterOpen, setGrupoMasterOpen] = useState(
+    () =>
+      pathname?.startsWith("/dashboard/grupo") || pathname?.startsWith("/dashboard/diretoria")
+  );
   const [cadastrosOpen, setCadastrosOpen] = useState(() => isCadastrosPath(pathname));
+  const [saudeOpen, setSaudeOpen] = useState(() => isSaudePath(pathname));
   const [futebolOpen, setFutebolOpen] = useState(() => isFutebolOperacaoPath(pathname));
   const [admOpen, setAdmOpen] = useState(
     () =>
@@ -108,7 +122,6 @@ export function Sidebar() {
   const [marketingOpen, setMarketingOpen] = useState(() => pathname?.startsWith("/dashboard/marketing"));
   const [analiseOpen, setAnaliseOpen] = useState(
     () =>
-      pathname?.startsWith("/dashboard/diretoria") ||
       pathname?.startsWith("/dashboard/futebol/analise") ||
       pathname?.startsWith("/dashboard/futebol/avaliacoes")
   );
@@ -201,21 +214,22 @@ export function Sidebar() {
 
           if (item.children?.length) {
             const showGroup =
-              item.slug === "diretoria"
-                ? canAccessModule("diretoria")
+              item.slug === "grupo_master"
+                ? canAccessModule("grupo_master") || canAccessModule("diretoria")
                 : item.slug === "cadastros"
                   ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                   : item.slug === "adm"
                     ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
-                    : item.slug === "futebol"
-                      ? canAccessModule("diretoria") ||
-                        canAccessModule("saude") ||
-                        canAccessModule("juridico") ||
+                    : item.slug === "saude"
+                      ? canAccessModule("saude") ||
                         canAccessModule("futebol_fisiologia") ||
-                        canAccessModule("futebol_analise") ||
-                        canAccessModule("futebol_logistica") ||
                         canAccessModule("adm_nutricao")
-                      : item.slug === "ferramentas"
+                      : item.slug === "futebol"
+                        ? canAccessModule("diretoria") ||
+                          canAccessModule("juridico") ||
+                          canAccessModule("futebol_analise") ||
+                          canAccessModule("futebol_logistica")
+                        : item.slug === "ferramentas"
                         ? hasAccessToAnyChild(item.children, canAccessModule, canAccessDashboard)
                         : item.slug === "configuracoes"
                           ? canAccessModule("configuracoes") ||
@@ -232,15 +246,17 @@ export function Sidebar() {
             if (!showGroup) return null;
 
             const isOpen =
-              item.slug === "diretoria"
-                ? diretoriaOpen
+              item.slug === "grupo_master"
+                ? grupoMasterOpen
                 : item.slug === "cadastros"
                   ? cadastrosOpen
                   : item.slug === "adm"
                     ? admOpen
-                    : item.slug === "futebol"
-                      ? futebolOpen
-                      : item.slug === "ferramentas"
+                    : item.slug === "saude"
+                      ? saudeOpen
+                      : item.slug === "futebol"
+                        ? futebolOpen
+                        : item.slug === "ferramentas"
                         ? ferramentasOpen
                         : item.slug === "configuracoes"
                           ? configOpen
@@ -252,15 +268,17 @@ export function Sidebar() {
                                 ? marketingOpen
                                 : false;
             const setOpen =
-              item.slug === "diretoria"
-                ? setDiretoriaOpen
+              item.slug === "grupo_master"
+                ? setGrupoMasterOpen
                 : item.slug === "cadastros"
                   ? setCadastrosOpen
                   : item.slug === "adm"
                     ? setAdmOpen
-                    : item.slug === "futebol"
-                      ? setFutebolOpen
-                      : item.slug === "ferramentas"
+                    : item.slug === "saude"
+                      ? setSaudeOpen
+                      : item.slug === "futebol"
+                        ? setFutebolOpen
+                        : item.slug === "ferramentas"
                         ? setFerramentasOpen
                         : item.slug === "configuracoes"
                           ? setConfigOpen
@@ -369,7 +387,11 @@ export function Sidebar() {
                               pathname?.startsWith("/dashboard/configuracoes/")
                             : child.href === "/dashboard/empresas"
                               ? pathname === "/dashboard/empresas" || pathname?.startsWith("/dashboard/tenants")
-                              : inPath(child.href!);
+                              : child.href === "/dashboard/grupo"
+                                ? pathname?.startsWith("/dashboard/grupo")
+                                : child.href === "/dashboard/diretoria"
+                                  ? pathname?.startsWith("/dashboard/diretoria")
+                                  : inPath(child.href!);
                         const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
                         return (
                           <Link
