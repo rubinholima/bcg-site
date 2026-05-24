@@ -48,6 +48,7 @@ import {
   Tv,
   Database,
   Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
@@ -512,6 +513,30 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     ],
   },
   {
+    slug: "academias",
+    label: "Academias",
+    icon: GraduationCap,
+    moduleSlug: "academias",
+    children: [
+      {
+        slug: "academias_gestao",
+        label: "Gestão",
+        href: "https://academias.bostoncitygroup.biz",
+        icon: LayoutDashboard,
+        moduleSlug: "academias",
+        external: true,
+      },
+      {
+        slug: "academias_portal",
+        label: "Portal do aluno",
+        href: "https://aluno.bostoncitygroup.biz",
+        icon: UserCircle,
+        moduleSlug: "academias",
+        external: true,
+      },
+    ],
+  },
+  {
     slug: "socio_torcedor",
     label: "Sócio Torcedor",
     icon: Ticket,
@@ -558,8 +583,12 @@ export function getUniqueModuleSlugs(): string[] {
   const slugs = new Set<string>();
   function walk(items: MenuItemConfig[]) {
     for (const item of items) {
-      if (item.children?.length) walk(item.children);
-      if (item.href && !item.external) slugs.add(item.moduleSlug);
+      if (item.children?.length) {
+        walk(item.children);
+        slugs.add(item.moduleSlug);
+      } else if (item.href && !item.external) {
+        slugs.add(item.moduleSlug);
+      }
     }
   }
   walk(DASHBOARD_MENU);

@@ -41,4 +41,5 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   futebol_logistica: "Log\u00EDstica (deslocamento)",
   marketing: "Marketing (Planner)",
   boston_tv: "Boston TV",
+  academias: "Academias (gest\u00E3o e portal do aluno)",
 };

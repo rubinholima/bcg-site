@@ -202,6 +202,31 @@ function nestedDefaultOpen(
   return child.children.some((cc) => cc.href && inPath(cc.href));
 }
 
+function SidebarMenuLink({
+  href,
+  external,
+  className,
+  children,
+}: {
+  href: string;
+  external?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (external) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        {children}
+      </a>
+    );
+  }
+  return (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 export function Sidebar() {
   return (
     <Suspense fallback={<div className="flex h-full border-r border-border bg-card p-4" />}>
@@ -248,6 +273,7 @@ function SidebarNav() {
     () => pathname?.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)
   );
   const [socioOpen, setSocioOpen] = useState(() => isSocioPath(pathname, relHub));
+  const [academiasOpen, setAcademiasOpen] = useState(false);
   const [marketingOpen, setMarketingOpen] = useState(() => isMarketingPath(pathname, relHub));
   const [analiseOpen, setAnaliseOpen] = useState(
     () =>
@@ -307,6 +333,7 @@ function SidebarNav() {
     ferramentas: ferramentasOpen,
     configuracoes: configOpen,
     socio_torcedor: socioOpen,
+    academias: academiasOpen,
     marketing: marketingOpen,
   };
   const hasAnyHubOpen = Object.values(hubOpenState).some(Boolean);
@@ -381,9 +408,10 @@ function SidebarNav() {
                   ? pathname?.startsWith("/dashboard/grupo")
                   : inPath(item.href);
             return (
-              <Link
+              <SidebarMenuLink
                 key={item.slug}
                 href={item.href!}
+                external={item.external}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                   standaloneFocusClass(item.slug),
@@ -394,7 +422,7 @@ function SidebarNav() {
               >
                 <Icon className="h-5 w-5 shrink-0" />
                 <span>{item.label}</span>
-              </Link>
+              </SidebarMenuLink>
             );
           }
 
@@ -433,7 +461,9 @@ function SidebarNav() {
                             canAccessModule("empresas")
                           : item.slug === "socio_torcedor"
                               ? canAccessModule("socio_torcedor") || canAccessModule("relatorios")
-                              : item.slug === "marketing"
+                              : item.slug === "academias"
+                                ? canAccessModule("academias")
+                                : item.slug === "marketing"
                                 ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard) ||
                                   canAccessModule("relatorios")
                                 : false;
@@ -461,7 +491,9 @@ function SidebarNav() {
                           ? configOpen
                           : item.slug === "socio_torcedor"
                               ? socioOpen
-                              : item.slug === "marketing"
+                              : item.slug === "academias"
+                                ? academiasOpen
+                                : item.slug === "marketing"
                                 ? marketingOpen
                                 : false;
             const setOpen =
@@ -485,7 +517,9 @@ function SidebarNav() {
                           ? setConfigOpen
                           : item.slug === "socio_torcedor"
                               ? setSocioOpen
-                              : item.slug === "marketing"
+                              : item.slug === "academias"
+                                ? setAcademiasOpen
+                                : item.slug === "marketing"
                                 ? setMarketingOpen
                                 : () => {};
 
@@ -560,13 +594,15 @@ function SidebarNav() {
                                       .map((cc) => {
                                         const hrefMatches = resolveLinkActive(cc.href, pathname, relHub);
                                         const isChildActive =
+                                          !cc.external &&
                                           hrefMatches &&
                                           (markedActiveHref === null || markedActiveHref !== cc.href) &&
                                           (markedActiveHref = cc.href!, true);
                                         return (
-                                          <Link
+                                          <SidebarMenuLink
                                             key={cc.slug}
                                             href={cc.href!}
+                                            external={cc.external}
                                             className={cn(
                                               "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
                                               isChildActive
@@ -576,7 +612,7 @@ function SidebarNav() {
                                           >
                                             {cc.icon && <cc.icon className="h-4 w-4 shrink-0" />}
                                             {cc.label}
-                                          </Link>
+                                          </SidebarMenuLink>
                                         );
                                       });
                                   })()}
@@ -586,12 +622,13 @@ function SidebarNav() {
                           );
                         }
                         const ChildIcon = child.icon!;
-                        const isChildActive = resolveLinkActive(child.href, pathname, relHub);
+                        const isChildActive = !child.external && resolveLinkActive(child.href, pathname, relHub);
                         const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
                         return (
-                          <Link
+                          <SidebarMenuLink
                             key={child.slug}
                             href={child.href!}
+                            external={child.external}
                             className={cn(
                               "flex items-center gap-2 rounded-lg px-2 text-sm transition-all duration-200 dashboard-link-hover",
                               compact ? "py-1" : "py-1.5",
@@ -602,7 +639,7 @@ function SidebarNav() {
                           >
                             <ChildIcon className="h-4 w-4 shrink-0" />
                             {child.label}
-                          </Link>
+                          </SidebarMenuLink>
                         );
                       })}
                   </div>
