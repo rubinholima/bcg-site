@@ -12,6 +12,7 @@ import {
 import type { Group } from "@/types/group";
 import type { MenuItemConfig } from "@/lib/dashboard-menu.config";
 import { DASHBOARD_MENU } from "@/lib/dashboard-menu.config";
+import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 
 /** Verifica se o usuário tem acesso a pelo menos um filho do grupo (recursivo). */
 function hasAccessToAnyChild(
@@ -79,10 +80,12 @@ function isFutebolOperacaoPath(pathname: string | null, relHub: string | null): 
   if (relHub === "futebol") return true;
   if (!pathname) return false;
   return (
+    pathname === "/dashboard/futebol" ||
     pathname.startsWith("/dashboard/futebol/logistica") ||
     pathname.startsWith("/dashboard/futebol/analise") ||
     pathname.startsWith("/dashboard/futebol/avaliacoes") ||
-    pathname.startsWith("/dashboard/futebol/agenda")
+    pathname.startsWith("/dashboard/futebol/agenda") ||
+    pathname.startsWith("/dashboard/futebol/comissao")
   );
 }
 
@@ -111,6 +114,7 @@ function isSaudePath(pathname: string | null, relHub: string | null): boolean {
 
 function isAdmPath(pathname: string | null, relHub: string | null): boolean {
   if (relHub === "adm") return true;
+  if (pathname === "/dashboard/adm") return true;
   return !!pathname?.startsWith("/dashboard/adm") && !pathname.startsWith("/dashboard/adm/nutricao");
 }
 
@@ -133,6 +137,34 @@ function isSocioPath(pathname: string | null, relHub: string | null): boolean {
   );
 }
 
+function isFerramentasPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname.startsWith("/dashboard/emails") || pathname.startsWith("/dashboard/senhas");
+}
+
+function isConfigPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname.startsWith("/dashboard/configuracoes");
+}
+
+/** Hub ativo pela rota atual (inclui ?hub= em relatórios). */
+function getPathnameHub(pathname: string | null, relHub: string | null): string | null {
+  if (relHub) return relHub;
+  if (!pathname || pathname === "/dashboard") return null;
+  if (isGrupoMasterPath(pathname, null)) return "grupo_master";
+  if (isCadastrosPath(pathname, null)) return "cadastros";
+  if (isAdmPath(pathname, null)) return "adm";
+  if (isSaudePath(pathname, null)) return "saude";
+  if (isFutebolOperacaoPath(pathname, null)) return "futebol";
+  if (isJuridicoPath(pathname, null)) return "juridico";
+  if (isEventosPath(pathname, null)) return "eventos";
+  if (isMarketingPath(pathname, null)) return "marketing";
+  if (isSocioPath(pathname, null)) return "socio_torcedor";
+  if (isFerramentasPath(pathname)) return "ferramentas";
+  if (isConfigPath(pathname)) return "configuracoes";
+  return null;
+}
+
 function resolveLinkActive(
   href: string | undefined,
   pathname: string | null,
@@ -149,6 +181,10 @@ function resolveLinkActive(
   }
   if (href === "/dashboard/grupo") return !!pathname?.startsWith("/dashboard/grupo");
   if (href === "/dashboard/diretoria") return !!pathname?.startsWith("/dashboard/diretoria");
+  if (href === "/dashboard/futebol") return pathname === "/dashboard/futebol";
+  if (href === "/dashboard/adm") return pathname === "/dashboard/adm";
+  if (href === "/dashboard/saude") return pathname === "/dashboard/saude";
+  if (href === "/dashboard/cadastros") return pathname === "/dashboard/cadastros";
   if (href === "/dashboard/cadastros/tipos") return !!pathname?.startsWith("/dashboard/cadastros/tipos");
   return inPathHelper(href, pathname);
 }
@@ -178,7 +214,7 @@ function SidebarNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const relHub = pathname?.startsWith("/dashboard/relatorios") ? searchParams.get("hub") : null;
-  const { canAccessModule, canAccessDashboard } = useAuth();
+  const { canAccessModule, canAccessDashboard, role, modules } = useAuth();
   const [group, setGroup] = useState<Group | null>(null);
 
   const inPath = (href: string) =>
@@ -256,11 +292,42 @@ function SidebarNav() {
   };
 
   const name = group?.name ?? "Grupo Master";
+  const homeRoute = getHomeDashboardRoute(role, modules);
+  const homeMenu = getDashboardHomeMenuItem(role, modules);
+
+  const pathnameHub = getPathnameHub(pathname, relHub);
+  const hubOpenState: Record<string, boolean> = {
+    grupo_master: grupoMasterOpen,
+    cadastros: cadastrosOpen,
+    adm: admOpen,
+    saude: saudeOpen,
+    futebol: futebolOpen,
+    juridico: juridicoOpen,
+    eventos: eventosOpen,
+    ferramentas: ferramentasOpen,
+    configuracoes: configOpen,
+    socio_torcedor: socioOpen,
+    marketing: marketingOpen,
+  };
+  const hasAnyHubOpen = Object.values(hubOpenState).some(Boolean);
+  const focusMode = pathnameHub !== null || hasAnyHubOpen;
+
+  const hubFocusClass = (slug: string, isOpen: boolean) => {
+    if (!focusMode) return "";
+    const isFocused = pathnameHub === slug || isOpen;
+    return isFocused ? "opacity-100" : "opacity-[0.38] hover:opacity-65";
+  };
+
+  const standaloneFocusClass = (slug: string | null) => {
+    if (!focusMode) return "";
+    if (slug && pathnameHub === slug) return "opacity-100";
+    return "opacity-[0.38] hover:opacity-65";
+  };
 
   return (
     <div className="flex h-full flex-col border-r border-border bg-card shadow-sm">
       <div className="flex h-16 items-center border-b border-border px-6">
-        <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
+        <Link href={homeRoute} className="flex min-w-0 items-center gap-2">
           <img
             src="/bcg-logo.png"
             alt=""
@@ -278,6 +345,31 @@ function SidebarNav() {
         {DASHBOARD_MENU.map((item) => {
           const Icon = item.icon!;
 
+          if (item.slug === "dashboard") {
+            if (!canAccessDashboard) return null;
+            if (homeMenu.href === "/dashboard" && !canAccessModule("dashboard")) return null;
+            const isActive =
+              homeMenu.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === homeMenu.href;
+            return (
+              <Link
+                key={homeMenu.slug}
+                href={homeMenu.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                  standaloneFocusClass(null),
+                  isActive
+                    ? "dashboard-sidebar-active"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
+                )}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                <span>{homeMenu.label}</span>
+              </Link>
+            );
+          }
+
           if (item.href && !item.children?.length) {
             if (!canAccessModule(item.moduleSlug) && !(item.moduleSlug === "emails" && canAccessDashboard)) {
               return null;
@@ -294,6 +386,7 @@ function SidebarNav() {
                 href={item.href!}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                  standaloneFocusClass(item.slug),
                   isActive
                     ? "dashboard-sidebar-active"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
@@ -397,7 +490,10 @@ function SidebarNav() {
                                 : () => {};
 
             return (
-              <div key={item.slug} className="space-y-0.5">
+              <div
+                key={item.slug}
+                className={cn("space-y-0.5 transition-opacity duration-200", hubFocusClass(item.slug, isOpen))}
+              >
                 <button
                   type="button"
                   onClick={() => setOpen((o) => !o)}
@@ -405,8 +501,9 @@ function SidebarNav() {
                     "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
                     "font-bold uppercase tracking-wide",
                     isOpen
-                      ? "bg-accent/50 text-accent-foreground"
-                      : "text-foreground/90 hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
+                      ? "bg-accent/50 text-accent-foreground shadow-sm"
+                      : "text-foreground/90 hover:bg-accent hover:text-accent-foreground dashboard-link-hover",
+                    focusMode && (pathnameHub === item.slug || isOpen) && "ring-1 ring-primary/25"
                   )}
                 >
                   {isOpen ? (

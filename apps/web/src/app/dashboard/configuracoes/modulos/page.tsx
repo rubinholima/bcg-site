@@ -54,6 +54,7 @@ interface ModulePermission {
   diretoria: boolean;
   medico: boolean;
   psicologo: boolean;
+  comissao: boolean;
 }
 
 interface DisplayRow extends Omit<ModulePermission, "functionalArea"> {
@@ -93,6 +94,7 @@ export type InstitutionMatrixCol =
   | "administrativo"
   | "analista"
   | "diretoria"
+  | "comissao"
   | "saude_staff";
 
 const MATRIX_COLUMNS: readonly {
@@ -132,6 +134,11 @@ const MATRIX_COLUMNS: readonly {
     hintLabel: "Dados sensíveis dos atletas e avaliações (área institucional).",
   },
   {
+    id: "comissao",
+    shortLabel: "Comissão",
+    hintLabel: "Quadro técnico: futebol operacional (comissão, logística, análise, fisiologia).",
+  },
+  {
     id: "saude_staff",
     shortLabel: "Saúde",
     hintLabel:
@@ -169,6 +176,7 @@ const AUDIT_ROLE_LABELS: Record<string, { short: string }> = {
   administrativo: { short: "Administrativo" },
   analista: { short: "Analista" },
   diretoria: { short: "Diretoria" },
+  comissao: { short: "Comissão" },
   medico: { short: "Médico" },
   psicologo: { short: "Psicólogo" },
 };
@@ -193,6 +201,7 @@ function buildPermissionsPayload(
     diretoria: boolean;
     medico: boolean;
     psicologo: boolean;
+    comissao: boolean;
   }
 > {
   const map = new Map(modulesState.map((m) => [m.slug, m]));
@@ -207,6 +216,7 @@ function buildPermissionsPayload(
       diretoria: boolean;
       medico: boolean;
       psicologo: boolean;
+      comissao: boolean;
     }
   > = {};
   for (const d of displayRows) {
@@ -220,6 +230,7 @@ function buildPermissionsPayload(
       diretoria: mod?.diretoria ?? d.diretoria,
       medico: mod?.medico ?? d.medico,
       psicologo: mod?.psicologo ?? d.psicologo,
+      comissao: mod?.comissao ?? d.comissao,
     };
   }
   return out;
@@ -242,6 +253,7 @@ function normalizeModuleRows(data: unknown): ModulePermission[] {
       diretoria: r.diretoria ?? false,
       medico: r.medico ?? false,
       psicologo: r.psicologo ?? false,
+      comissao: r.comissao ?? false,
     };
   });
 }
@@ -381,6 +393,7 @@ export default function ModulosPage() {
         diretoria: existing?.diretoria ?? false,
         medico: existing?.medico ?? false,
         psicologo: existing?.psicologo ?? false,
+        comissao: existing?.comissao ?? false,
       };
     });
   }, [modules, moduleTree]);
@@ -401,6 +414,7 @@ export default function ModulosPage() {
         diretoria: d.diretoria,
         medico: d.medico,
         psicologo: d.psicologo,
+        comissao: d.comissao,
       })),
     [displayModules],
   );
@@ -416,7 +430,7 @@ export default function ModulosPage() {
           }
           const key = col.id as keyof Pick<
             ModulePermission,
-            "company_admin" | "editor" | "gerente" | "administrativo" | "analista" | "diretoria"
+            "company_admin" | "editor" | "gerente" | "administrativo" | "analista" | "diretoria" | "comissao"
           >;
           return mergedModuleState.filter((m) => m[key]).length;
         })(),
@@ -477,6 +491,7 @@ export default function ModulosPage() {
           diretoria: raw?.diretoria ?? d.diretoria,
           medico: raw?.medico ?? d.medico,
           psicologo: raw?.psicologo ?? d.psicologo,
+          comissao: raw?.comissao ?? d.comissao,
         };
         bySlug.set(slug, applyMatrixColumnToRow(existing, columnId, value));
       }
@@ -503,6 +518,7 @@ export default function ModulosPage() {
             diretoria: dm.diretoria,
             medico: dm.medico,
             psicologo: dm.psicologo,
+            comissao: dm.comissao,
           }
         : null;
       const found = prev.find((m) => m.slug === slug);
@@ -524,6 +540,7 @@ export default function ModulosPage() {
           diretoria: false,
           medico: false,
           psicologo: false,
+          comissao: false,
         } satisfies ModulePermission);
       return [...prev, applyMatrixColumnToRow(base, columnId, value)];
     });

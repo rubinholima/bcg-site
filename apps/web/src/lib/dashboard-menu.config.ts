@@ -153,6 +153,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     moduleSlug: "tipos",
     children: [
       {
+        slug: "cad_visao",
+        label: "Visão geral",
+        href: "/dashboard/cadastros",
+        icon: LayoutDashboard,
+        moduleSlug: "tipos",
+      },
+      {
         slug: "cad_funcionarios",
         label: "Funcionários",
         href: "/dashboard/cadastros/funcionarios",
@@ -255,6 +262,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     icon: Building2,
     moduleSlug: "adm_financeiro",
     children: [
+      {
+        slug: "adm_visao",
+        label: "Visão geral",
+        href: "/dashboard/adm",
+        icon: LayoutDashboard,
+        moduleSlug: "adm_financeiro",
+      },
       { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro", compactGroup: "omie" },
       { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras", compactGroup: "omie" },
       { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie" },
@@ -269,6 +283,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     icon: Stethoscope,
     moduleSlug: "saude",
     children: [
+      {
+        slug: "saude_visao",
+        label: "Visão geral",
+        href: "/dashboard/saude",
+        icon: LayoutDashboard,
+        moduleSlug: "saude",
+      },
       {
         slug: "medico",
         label: "Médico",
@@ -329,6 +350,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     icon: Shirt,
     moduleSlug: "futebol_logistica",
     children: [
+      {
+        slug: "futebol_visao",
+        label: "Visão geral",
+        href: "/dashboard/futebol",
+        icon: LayoutDashboard,
+        moduleSlug: "futebol_logistica",
+      },
       {
         slug: "futebol_agenda",
         label: "Agenda",
@@ -425,7 +453,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
   },
   {
     slug: "marketing",
-    label: "Depto de Marketing",
+    label: "Depto de Mkt",
     icon: Megaphone,
     moduleSlug: "marketing",
     children: [

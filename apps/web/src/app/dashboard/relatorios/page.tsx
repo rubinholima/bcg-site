@@ -16,7 +16,7 @@ const HUB_LABELS: Record<string, string> = {
   futebol: "Depto Futebol",
   juridico: "Depto Jurídico",
   eventos: "Depto de Eventos",
-  marketing: "Depto de Marketing",
+  marketing: "Depto de Mkt",
   socio_torcedor: "Sócio Torcedor",
 };
 

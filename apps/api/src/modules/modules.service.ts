@@ -11,6 +11,7 @@ const MANAGED_ROLES = [
   'diretoria',
   'medico',
   'psicologo',
+  'comissao',
 ] as const;
 
 export type ManagedRoleKey = (typeof MANAGED_ROLES)[number];
@@ -28,6 +29,7 @@ export interface ModuleWithPermissions {
   diretoria: boolean;
   medico: boolean;
   psicologo: boolean;
+  comissao: boolean;
 }
 
 export interface MatrixChangeRow {
@@ -100,6 +102,7 @@ export class ModulesService {
       diretoria: getRoleAccess(m.roles, 'diretoria'),
       medico: getRoleAccess(m.roles, 'medico'),
       psicologo: getRoleAccess(m.roles, 'psicologo'),
+      comissao: getRoleAccess(m.roles, 'comissao'),
     };
   }
 

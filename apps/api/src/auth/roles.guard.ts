@@ -17,6 +17,7 @@ const DASHBOARD_ROLES = new Set([
   'diretoria',
   'medico',
   'psicologo',
+  'comissao',
 ]);
 
 /**

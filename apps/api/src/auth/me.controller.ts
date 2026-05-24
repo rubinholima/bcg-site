@@ -16,6 +16,7 @@ export type MeRole =
   | 'diretoria'
   | 'medico'
   | 'psicologo'
+  | 'comissao'
   | 'user';
 
 export interface MeResponse {
@@ -52,7 +53,8 @@ export class MeController {
           g === 'analista' ||
           g === 'diretoria' ||
           g === 'medico' ||
-          g === 'psicologo',
+          g === 'psicologo' ||
+          g === 'comissao',
       );
       if (r) role = r as MeRole;
     }

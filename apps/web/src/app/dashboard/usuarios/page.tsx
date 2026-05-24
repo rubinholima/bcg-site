@@ -38,6 +38,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   diretoria: "Diretoria",
   medico: "Médico",
   psicologo: "Psicólogo",
+  comissao: "Comissão técnica",
   user: "Usuário",
 };
 

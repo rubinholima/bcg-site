@@ -14,6 +14,7 @@ export type UserRole =
   | 'diretoria'
   | 'medico'
   | 'psicologo'
+  | 'comissao'
   | 'user';
 
 export interface UserListItem {

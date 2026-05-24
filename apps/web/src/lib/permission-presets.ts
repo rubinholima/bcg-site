@@ -12,6 +12,7 @@ export const MANAGED_ROLES = [
   "diretoria",
   "medico",
   "psicologo",
+  "comissao",
 ] as const;
 
 export type ManagedRoleKey = (typeof MANAGED_ROLES)[number];
@@ -29,6 +30,7 @@ export interface ModulePermissionRow {
   diretoria: boolean;
   medico: boolean;
   psicologo: boolean;
+  comissao: boolean;
 }
 
 export interface PresetGrant {
@@ -87,6 +89,10 @@ export const PERMISSION_PRESETS: readonly PermissionPreset[] = [
     title: "Futebol — quadro técnico e métricas",
     description: "Comissão, fisiologia, desempenho e logística — sem dados clínicos sensíveis.",
     grants: [
+      { role: "comissao", slug: "futebol_comissao" },
+      { role: "comissao", slug: "futebol_logistica" },
+      { role: "comissao", slug: "futebol_analise" },
+      { role: "comissao", slug: "futebol_fisiologia" },
       { role: "editor", slug: "futebol_comissao" },
       { role: "editor", slug: "futebol_fisiologia" },
       { role: "editor", slug: "futebol_analise" },
@@ -161,6 +167,7 @@ export function applyAdditivePreset(
       diretoria: b?.diretoria ?? false,
       medico: b?.medico ?? false,
       psicologo: b?.psicologo ?? false,
+      comissao: b?.comissao ?? false,
     };
   });
 
@@ -192,6 +199,7 @@ export function buildMatrixExportPayload(rows: ModulePermissionRow[]): {
       diretoria: m.diretoria,
       medico: m.medico,
       psicologo: m.psicologo,
+      comissao: m.comissao,
     };
   }
   return {

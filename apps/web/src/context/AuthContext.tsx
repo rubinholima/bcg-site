@@ -61,7 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data.role === "analista" ||
         data.role === "diretoria" ||
         data.role === "medico" ||
-        data.role === "psicologo";
+        data.role === "psicologo" ||
+        data.role === "comissao";
       let modules: string[] = [];
       if (canAccessDashboard) {
         try {
@@ -139,7 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     state.role === "analista" ||
     state.role === "diretoria" ||
     state.role === "medico" ||
-    state.role === "psicologo";
+    state.role === "psicologo" ||
+    state.role === "comissao";
   const canAccessModule = (slug: string) =>
     isSuperAdmin || state.modules.includes(slug);
 

@@ -11,6 +11,7 @@ export const USER_ROLES_ORDER: UserRole[] = [
   "diretoria",
   "medico",
   "psicologo",
+  "comissao",
   "user",
 ];
 

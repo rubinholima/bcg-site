@@ -15,6 +15,7 @@ export type MeRole =
   | "diretoria"
   | "medico"
   | "psicologo"
+  | "comissao"
   | "user";
 
 export interface MeResponse {

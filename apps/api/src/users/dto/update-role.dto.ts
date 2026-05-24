@@ -10,6 +10,7 @@ export const USER_ROLES = [
   'diretoria',
   'medico',
   'psicologo',
+  'comissao',
   'user',
 ] as const;
 
