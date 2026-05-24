@@ -125,8 +125,9 @@ export default function FuncionariosCadastroPage() {
             Funcionários
           </h1>
           <p className="mt-1 max-w-2xl text-muted-foreground">
-            Cadastro mestre de colaboradores das empresas e clubes (funcionários e dirigentes). Usado pelo RH
-            para vínculos, férias e documentos. Atletas e comissão técnica têm cadastros próprios em Futebol.
+            Cadastro mestre de pessoas do clube/empresa — funcionários, dirigentes, comissão técnica, saúde e demais
+            departamentos. Cada pessoa terá departamento e foto na listagem (como atletas), evitando cadastros
+            duplicados. Aprofundamos módulo a módulo em seguida.
           </p>
         </div>
         <Button

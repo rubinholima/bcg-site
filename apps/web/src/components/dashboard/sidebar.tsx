@@ -26,15 +26,31 @@ function hasAccessToAnyChild(
   });
 }
 
+function isGrupoMasterPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/dashboard/grupo") ||
+    pathname.startsWith("/dashboard/diretoria") ||
+    pathname.startsWith("/dashboard/empresas") ||
+    pathname.startsWith("/dashboard/tenants") ||
+    pathname.startsWith("/dashboard/cadastros/tipos") ||
+    pathname.startsWith("/dashboard/usuarios")
+  );
+}
+
+function isMedicoCadastroPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/dashboard/medico/equipe") ||
+    pathname.startsWith("/dashboard/medico/enfermeiros")
+  );
+}
+
 function isCadastrosPath(pathname: string | null): boolean {
   if (!pathname) return false;
   return (
-    pathname.startsWith("/dashboard/empresas") ||
-    pathname.startsWith("/dashboard/tenants") ||
     pathname.startsWith("/dashboard/cadastros") ||
-    pathname.startsWith("/dashboard/usuarios") ||
-    pathname.startsWith("/dashboard/futebol/comissao") ||
-    pathname.startsWith("/dashboard/medico/equipe") ||
+    isMedicoCadastroPath(pathname) ||
     pathname.startsWith("/dashboard/psicologia/psicologos") ||
     pathname.startsWith("/dashboard/socio-torcedor/planos")
   );
@@ -53,7 +69,7 @@ function isFutebolOperacaoPath(pathname: string | null): boolean {
 function isSaudePath(pathname: string | null): boolean {
   if (!pathname) return false;
   return (
-    (pathname.startsWith("/dashboard/medico") && !pathname.startsWith("/dashboard/medico/equipe")) ||
+    (pathname.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)) ||
     pathname.startsWith("/dashboard/consultas") ||
     (pathname.startsWith("/dashboard/psicologia") && !pathname.startsWith("/dashboard/psicologia/psicologos")) ||
     pathname.startsWith("/dashboard/futebol/fisiologia") ||
@@ -79,10 +95,7 @@ export function Sidebar() {
   const inPath = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname?.startsWith(href + "/"));
 
-  const [grupoMasterOpen, setGrupoMasterOpen] = useState(
-    () =>
-      pathname?.startsWith("/dashboard/grupo") || pathname?.startsWith("/dashboard/diretoria")
-  );
+  const [grupoMasterOpen, setGrupoMasterOpen] = useState(() => isGrupoMasterPath(pathname));
   const [cadastrosOpen, setCadastrosOpen] = useState(() => isCadastrosPath(pathname));
   const [saudeOpen, setSaudeOpen] = useState(() => isSaudePath(pathname));
   const [futebolOpen, setFutebolOpen] = useState(() => isFutebolOperacaoPath(pathname));
@@ -111,7 +124,7 @@ export function Sidebar() {
       (pathname?.startsWith("/dashboard/psicologia") && !pathname?.startsWith("/dashboard/psicologia/psicologos"))
   );
   const [medicoOpen, setMedicoOpen] = useState(
-    () => pathname?.startsWith("/dashboard/medico") && !pathname?.startsWith("/dashboard/medico/equipe")
+    () => pathname?.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)
   );
   const [relatoriosOpen, setRelatoriosOpen] = useState(() => pathname?.startsWith("/dashboard/relatorios"));
   const [socioOpen, setSocioOpen] = useState(
@@ -215,7 +228,11 @@ export function Sidebar() {
           if (item.children?.length) {
             const showGroup =
               item.slug === "grupo_master"
-                ? canAccessModule("grupo_master") || canAccessModule("diretoria")
+                ? canAccessModule("grupo_master") ||
+                  canAccessModule("diretoria") ||
+                  canAccessModule("empresas") ||
+                  canAccessModule("tipos") ||
+                  canAccessModule("usuarios")
                 : item.slug === "cadastros"
                   ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                   : item.slug === "adm"
@@ -296,10 +313,11 @@ export function Sidebar() {
                   type="button"
                   onClick={() => setOpen((o) => !o)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                    "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
+                    "font-bold uppercase tracking-wide",
                     isOpen
                       ? "bg-accent/50 text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
+                      : "text-foreground/90 hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
                   )}
                 >
                   {isOpen ? (
@@ -330,7 +348,8 @@ export function Sidebar() {
                                 type="button"
                                 onClick={() => toggleNestedChild(child)}
                                 className={cn(
-                                  "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
+                                  "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 dashboard-link-hover",
+                                  "font-semibold uppercase tracking-wide",
                                   "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 )}
                               >
@@ -391,7 +410,9 @@ export function Sidebar() {
                                 ? pathname?.startsWith("/dashboard/grupo")
                                 : child.href === "/dashboard/diretoria"
                                   ? pathname?.startsWith("/dashboard/diretoria")
-                                  : inPath(child.href!);
+                                  : child.href === "/dashboard/cadastros/tipos"
+                                    ? pathname?.startsWith("/dashboard/cadastros/tipos")
+                                    : inPath(child.href!);
                         const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
                         return (
                           <Link

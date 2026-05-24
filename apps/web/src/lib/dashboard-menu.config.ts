@@ -110,6 +110,27 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: BarChart3,
         moduleSlug: "diretoria",
       },
+      {
+        slug: "grupo_empresas",
+        label: "Empresas / clubes",
+        href: "/dashboard/empresas",
+        icon: Building2,
+        moduleSlug: "empresas",
+      },
+      {
+        slug: "grupo_tipos",
+        label: "Tipos de negócio",
+        href: "/dashboard/cadastros/tipos",
+        icon: Tag,
+        moduleSlug: "tipos",
+      },
+      {
+        slug: "grupo_usuarios",
+        label: DASHBOARD_LABELS.usuarios,
+        href: "/dashboard/usuarios",
+        icon: Users,
+        moduleSlug: "usuarios",
+      },
     ],
   },
   // MDM — dados mestre (hub único; mesmas URLs de antes)
@@ -119,35 +140,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     icon: Database,
     moduleSlug: "tipos",
     children: [
-      {
-        slug: "cad_grupo",
-        label: "Grupo e acesso",
-        icon: Building2,
-        moduleSlug: "empresas",
-        children: [
-          {
-            slug: "cad_empresas",
-            label: "Empresas / clubes",
-            href: "/dashboard/empresas",
-            icon: Building2,
-            moduleSlug: "empresas",
-          },
-          {
-            slug: "cad_tipos",
-            label: "Tipos de negócio",
-            href: "/dashboard/cadastros/tipos",
-            icon: Tag,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_usuarios",
-            label: DASHBOARD_LABELS.usuarios,
-            href: "/dashboard/usuarios",
-            icon: Users,
-            moduleSlug: "usuarios",
-          },
-        ],
-      },
       {
         slug: "cad_funcionarios",
         label: "Funcionários",
@@ -196,13 +188,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: Layers,
             moduleSlug: "tipos",
           },
-          {
-            slug: "cad_comissao",
-            label: "Comissão técnica",
-            href: "/dashboard/futebol/comissao",
-            icon: Users,
-            moduleSlug: "futebol_comissao",
-          },
         ],
       },
       {
@@ -212,10 +197,17 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "saude",
         children: [
           {
-            slug: "cad_medico_equipe",
-            label: "Médicos e equipe",
+            slug: "cad_medicos",
+            label: "Médicos",
             href: "/dashboard/medico/equipe",
             icon: Stethoscope,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "cad_enfermeiros",
+            label: "Enfermeiros",
+            href: "/dashboard/medico/enfermeiros",
+            icon: Heart,
             moduleSlug: "saude",
           },
           {

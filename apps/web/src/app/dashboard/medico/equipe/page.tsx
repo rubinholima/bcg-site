@@ -68,9 +68,9 @@ export default function MedicoEquipePage() {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Médicos e equipe</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Médicos</h1>
           <p className="text-muted-foreground mt-1">
-            Cadastro de médicos, enfermeiros, fisioterapeutas e demais profissionais do Depto Médico. Popula a seleção em atendimentos.
+            Cadastro de médicos do departamento de saúde (em migração para o cadastro único de funcionários).
           </p>
         </div>
         <Link href="/dashboard/medico/equipe/new" className="shrink-0">
