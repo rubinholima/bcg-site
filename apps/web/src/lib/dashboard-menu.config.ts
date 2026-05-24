@@ -51,6 +51,17 @@ import {
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
+/** Relatórios por hub — query `hub` filtra na página de relatórios. */
+export function hubRelatorio(hub: string): MenuItemConfig {
+  return {
+    slug: `rel_${hub}`,
+    label: "Relatórios",
+    href: `/dashboard/relatorios?hub=${hub}`,
+    icon: BarChart3,
+    moduleSlug: "relatorios",
+  };
+}
+
 export interface MenuItemConfig {
   slug: string;
   label: string;
@@ -131,6 +142,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Users,
         moduleSlug: "usuarios",
       },
+      hubRelatorio("grupo_master"),
     ],
   },
   // MDM — dados mestre (hub único; mesmas URLs de antes)
@@ -234,11 +246,12 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
         ],
       },
+      hubRelatorio("cadastros"),
     ],
   },
   {
     slug: "adm",
-    label: "Adm",
+    label: "Depto Adm",
     icon: Building2,
     moduleSlug: "adm_financeiro",
     children: [
@@ -247,11 +260,12 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie" },
       { slug: "adm_rh", label: "RH", href: "/dashboard/adm/rh", icon: Users, moduleSlug: "adm_rh" },
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
+      hubRelatorio("adm"),
     ],
   },
   {
     slug: "saude",
-    label: "Saúde",
+    label: "Depto de Saúde",
     icon: Stethoscope,
     moduleSlug: "saude",
     children: [
@@ -306,20 +320,29 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: UtensilsCrossed,
         moduleSlug: "adm_nutricao",
       },
+      hubRelatorio("saude"),
     ],
   },
   {
     slug: "futebol",
     label: "Depto Futebol",
     icon: Shirt,
-    moduleSlug: "juridico",
+    moduleSlug: "futebol_logistica",
     children: [
       {
-        slug: "juridico",
-        label: "Jurídico",
-        href: "/dashboard/juridico",
-        icon: Scale,
-        moduleSlug: "juridico",
+        slug: "futebol_agenda",
+        label: "Agenda",
+        icon: Calendar,
+        moduleSlug: "futebol_logistica",
+        children: [
+          {
+            slug: "futebol_agenda_cal",
+            label: "Calendário",
+            href: "/dashboard/futebol/agenda",
+            icon: Calendar,
+            moduleSlug: "futebol_logistica",
+          },
+        ],
       },
       {
         slug: "futebol_logistica",
@@ -350,21 +373,59 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
         ],
       },
+      hubRelatorio("futebol"),
     ],
   },
   {
-    slug: "socio_torcedor",
-    label: "Sócio Torcedor",
-    icon: Ticket,
-    moduleSlug: "socio_torcedor",
+    slug: "juridico",
+    label: "Depto Jurídico",
+    icon: Scale,
+    moduleSlug: "juridico",
     children: [
-      { slug: "socio_dashboard", label: "Visão geral", href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
-      { slug: "socio_socios", label: "Sócios", href: "/dashboard/socio-torcedor/socios", icon: Users, moduleSlug: "socio_torcedor" },
+      {
+        slug: "juridico_visao",
+        label: "Visão geral",
+        href: "/dashboard/juridico",
+        icon: Scale,
+        moduleSlug: "juridico",
+      },
+      hubRelatorio("juridico"),
+    ],
+  },
+  {
+    slug: "eventos",
+    label: "Depto de Eventos",
+    icon: Calendar,
+    moduleSlug: "eventos",
+    children: [
+      {
+        slug: "eventos_lista",
+        label: "Eventos",
+        href: "/dashboard/eventos",
+        icon: Calendar,
+        moduleSlug: "eventos",
+      },
+      {
+        slug: "eventos_boston_hall",
+        label: "Boston City Hall",
+        icon: Building2,
+        moduleSlug: "eventos",
+        children: [
+          {
+            slug: "boston_hall_visao",
+            label: "Visão geral",
+            href: "/dashboard/eventos/boston-city-hall",
+            icon: Building2,
+            moduleSlug: "eventos",
+          },
+        ],
+      },
+      hubRelatorio("eventos"),
     ],
   },
   {
     slug: "marketing",
-    label: "Marketing",
+    label: "Depto de Marketing",
     icon: Megaphone,
     moduleSlug: "marketing",
     children: [
@@ -376,21 +437,28 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Tv,
         moduleSlug: "boston_tv",
       },
-    ],
-  },
-  {
-    slug: "relatorios",
-    label: "Relatórios",
-    icon: BarChart3,
-    moduleSlug: "relatorios",
-    children: [
       {
-        slug: "relatorios_dashboard",
-        label: "Relatórios",
-        href: "/dashboard/relatorios",
-        icon: BarChart3,
-        moduleSlug: "relatorios",
+        slug: "marketing_midias",
+        label: "Mídias",
+        href: "/dashboard/midia",
+        icon: Image,
+        moduleSlug: "midia",
       },
+      {
+        slug: "marketing_paginas",
+        label: "Construção Web",
+        href: "/dashboard/paginas",
+        icon: FileText,
+        moduleSlug: "paginas",
+      },
+      {
+        slug: "marketing_noticias",
+        label: "RSS Notícias",
+        href: "/dashboard/noticias",
+        icon: Newspaper,
+        moduleSlug: "noticias",
+      },
+      hubRelatorio("marketing"),
     ],
   },
   {
@@ -413,34 +481,17 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: KeyRound,
         moduleSlug: "vault",
       },
-      {
-        slug: "paginas",
-        label: DASHBOARD_LABELS.paginas,
-        href: "/dashboard/paginas",
-        icon: FileText,
-        moduleSlug: "paginas",
-      },
-      {
-        slug: "eventos",
-        label: "Eventos",
-        href: "/dashboard/eventos",
-        icon: Calendar,
-        moduleSlug: "eventos",
-      },
-      {
-        slug: "noticias",
-        label: DASHBOARD_LABELS.noticias,
-        href: "/dashboard/noticias",
-        icon: Newspaper,
-        moduleSlug: "noticias",
-      },
-      {
-        slug: "midia",
-        label: DASHBOARD_LABELS.midia,
-        href: "/dashboard/midia",
-        icon: Image,
-        moduleSlug: "midia",
-      },
+    ],
+  },
+  {
+    slug: "socio_torcedor",
+    label: "Sócio Torcedor",
+    icon: Ticket,
+    moduleSlug: "socio_torcedor",
+    children: [
+      { slug: "socio_dashboard", label: "Visão geral", href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
+      { slug: "socio_socios", label: "Sócios", href: "/dashboard/socio-torcedor/socios", icon: Users, moduleSlug: "socio_torcedor" },
+      hubRelatorio("socio_torcedor"),
     ],
   },
   {
@@ -490,6 +541,6 @@ export function getUniqueModuleSlugs(): string[] {
   slugs.add("saude").add("diretoria").add("juridico").add("relatorios");
   slugs.add("adm_financeiro").add("adm_rh").add("adm_patrimonio").add("adm_nutricao");
   slugs.add("futebol_comissao").add("futebol_fisiologia").add("futebol_analise").add("futebol_logistica");
-  slugs.add("socio_torcedor").add("marketing").add("boston_tv");
+  slugs.add("socio_torcedor").add("marketing").add("boston_tv").add("eventos");
   return Array.from(slugs).sort();
 }

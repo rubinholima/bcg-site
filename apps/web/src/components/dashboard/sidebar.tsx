@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -26,7 +26,25 @@ function hasAccessToAnyChild(
   });
 }
 
-function isGrupoMasterPath(pathname: string | null): boolean {
+function relatorioHub(href: string | undefined): string | null {
+  if (!href?.includes("/dashboard/relatorios")) return null;
+  const match = href.match(/[?&]hub=([^&]+)/);
+  return match?.[1] ?? null;
+}
+
+function isRelatorioLinkActive(
+  href: string | undefined,
+  pathname: string | null,
+  currentHub: string | null
+): boolean {
+  const expected = relatorioHub(href);
+  if (expected === null) return false;
+  if (!pathname?.startsWith("/dashboard/relatorios")) return false;
+  return expected === currentHub;
+}
+
+function isGrupoMasterPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "grupo_master") return true;
   if (!pathname) return false;
   return (
     pathname.startsWith("/dashboard/grupo") ||
@@ -46,7 +64,8 @@ function isMedicoCadastroPath(pathname: string | null): boolean {
   );
 }
 
-function isCadastrosPath(pathname: string | null): boolean {
+function isCadastrosPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "cadastros") return true;
   if (!pathname) return false;
   return (
     pathname.startsWith("/dashboard/cadastros") ||
@@ -56,17 +75,29 @@ function isCadastrosPath(pathname: string | null): boolean {
   );
 }
 
-function isFutebolOperacaoPath(pathname: string | null): boolean {
+function isFutebolOperacaoPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "futebol") return true;
   if (!pathname) return false;
   return (
-    pathname.startsWith("/dashboard/juridico") ||
     pathname.startsWith("/dashboard/futebol/logistica") ||
     pathname.startsWith("/dashboard/futebol/analise") ||
-    pathname.startsWith("/dashboard/futebol/avaliacoes")
+    pathname.startsWith("/dashboard/futebol/avaliacoes") ||
+    pathname.startsWith("/dashboard/futebol/agenda")
   );
 }
 
-function isSaudePath(pathname: string | null): boolean {
+function isJuridicoPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "juridico") return true;
+  return !!pathname?.startsWith("/dashboard/juridico");
+}
+
+function isEventosPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "eventos") return true;
+  return !!pathname?.startsWith("/dashboard/eventos");
+}
+
+function isSaudePath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "saude") return true;
   if (!pathname) return false;
   return (
     (pathname.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)) ||
@@ -76,6 +107,54 @@ function isSaudePath(pathname: string | null): boolean {
     pathname.startsWith("/dashboard/saude") ||
     pathname.startsWith("/dashboard/adm/nutricao")
   );
+}
+
+function isAdmPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "adm") return true;
+  return !!pathname?.startsWith("/dashboard/adm") && !pathname.startsWith("/dashboard/adm/nutricao");
+}
+
+function isMarketingPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "marketing") return true;
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/dashboard/marketing") ||
+    pathname.startsWith("/dashboard/paginas") ||
+    pathname.startsWith("/dashboard/noticias") ||
+    pathname.startsWith("/dashboard/midia")
+  );
+}
+
+function isSocioPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "socio_torcedor") return true;
+  return (
+    !!pathname?.startsWith("/dashboard/socio-torcedor") &&
+    !pathname.startsWith("/dashboard/socio-torcedor/planos")
+  );
+}
+
+function resolveLinkActive(
+  href: string | undefined,
+  pathname: string | null,
+  currentHub: string | null
+): boolean {
+  if (!href) return false;
+  if (isRelatorioLinkActive(href, pathname, currentHub)) return true;
+  if (relatorioHub(href)) return false;
+  if (href === "/dashboard/configuracoes") {
+    return pathname === "/dashboard/configuracoes" || !!pathname?.startsWith("/dashboard/configuracoes/");
+  }
+  if (href === "/dashboard/empresas") {
+    return pathname === "/dashboard/empresas" || !!pathname?.startsWith("/dashboard/tenants");
+  }
+  if (href === "/dashboard/grupo") return !!pathname?.startsWith("/dashboard/grupo");
+  if (href === "/dashboard/diretoria") return !!pathname?.startsWith("/dashboard/diretoria");
+  if (href === "/dashboard/cadastros/tipos") return !!pathname?.startsWith("/dashboard/cadastros/tipos");
+  return inPathHelper(href, pathname);
+}
+
+function inPathHelper(href: string, pathname: string | null): boolean {
+  return pathname === href || (href !== "/dashboard" && !!pathname?.startsWith(href + "/"));
 }
 
 function nestedDefaultOpen(
@@ -88,28 +167,34 @@ function nestedDefaultOpen(
 }
 
 export function Sidebar() {
+  return (
+    <Suspense fallback={<div className="flex h-full border-r border-border bg-card p-4" />}>
+      <SidebarNav />
+    </Suspense>
+  );
+}
+
+function SidebarNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const relHub = pathname?.startsWith("/dashboard/relatorios") ? searchParams.get("hub") : null;
   const { canAccessModule, canAccessDashboard } = useAuth();
   const [group, setGroup] = useState<Group | null>(null);
 
   const inPath = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname?.startsWith(href + "/"));
 
-  const [grupoMasterOpen, setGrupoMasterOpen] = useState(() => isGrupoMasterPath(pathname));
-  const [cadastrosOpen, setCadastrosOpen] = useState(() => isCadastrosPath(pathname));
-  const [saudeOpen, setSaudeOpen] = useState(() => isSaudePath(pathname));
-  const [futebolOpen, setFutebolOpen] = useState(() => isFutebolOperacaoPath(pathname));
-  const [admOpen, setAdmOpen] = useState(
-    () =>
-      pathname?.startsWith("/dashboard/adm") && !pathname?.startsWith("/dashboard/adm/nutricao")
-  );
+  const [grupoMasterOpen, setGrupoMasterOpen] = useState(() => isGrupoMasterPath(pathname, relHub));
+  const [cadastrosOpen, setCadastrosOpen] = useState(() => isCadastrosPath(pathname, relHub));
+  const [saudeOpen, setSaudeOpen] = useState(() => isSaudePath(pathname, relHub));
+  const [futebolOpen, setFutebolOpen] = useState(() => isFutebolOperacaoPath(pathname, relHub));
+  const [juridicoOpen, setJuridicoOpen] = useState(() => isJuridicoPath(pathname, relHub));
+  const [eventosOpen, setEventosOpen] = useState(() => isEventosPath(pathname, relHub));
+  const [admOpen, setAdmOpen] = useState(() => isAdmPath(pathname, relHub));
   const [ferramentasOpen, setFerramentasOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/emails") ||
-      pathname?.startsWith("/dashboard/senhas") ||
-      pathname?.startsWith("/dashboard/paginas") ||
-      pathname?.startsWith("/dashboard/noticias") ||
-      pathname?.startsWith("/dashboard/midia")
+      pathname?.startsWith("/dashboard/senhas")
   );
   const [configOpen, setConfigOpen] = useState(
     () =>
@@ -126,13 +211,8 @@ export function Sidebar() {
   const [medicoOpen, setMedicoOpen] = useState(
     () => pathname?.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)
   );
-  const [relatoriosOpen, setRelatoriosOpen] = useState(() => pathname?.startsWith("/dashboard/relatorios"));
-  const [socioOpen, setSocioOpen] = useState(
-    () =>
-      pathname?.startsWith("/dashboard/socio-torcedor") &&
-      !pathname?.startsWith("/dashboard/socio-torcedor/planos")
-  );
-  const [marketingOpen, setMarketingOpen] = useState(() => pathname?.startsWith("/dashboard/marketing"));
+  const [socioOpen, setSocioOpen] = useState(() => isSocioPath(pathname, relHub));
+  const [marketingOpen, setMarketingOpen] = useState(() => isMarketingPath(pathname, relHub));
   const [analiseOpen, setAnaliseOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/futebol/analise") ||
@@ -232,32 +312,37 @@ export function Sidebar() {
                   canAccessModule("diretoria") ||
                   canAccessModule("empresas") ||
                   canAccessModule("tipos") ||
-                  canAccessModule("usuarios")
+                  canAccessModule("usuarios") ||
+                  canAccessModule("relatorios")
                 : item.slug === "cadastros"
                   ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                   : item.slug === "adm"
                     ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
-                    : item.slug === "saude"
+                      : item.slug === "saude"
                       ? canAccessModule("saude") ||
                         canAccessModule("futebol_fisiologia") ||
-                        canAccessModule("adm_nutricao")
+                        canAccessModule("adm_nutricao") ||
+                        canAccessModule("relatorios")
                       : item.slug === "futebol"
                         ? canAccessModule("diretoria") ||
-                          canAccessModule("juridico") ||
                           canAccessModule("futebol_analise") ||
-                          canAccessModule("futebol_logistica")
-                        : item.slug === "ferramentas"
+                          canAccessModule("futebol_logistica") ||
+                          canAccessModule("relatorios")
+                        : item.slug === "juridico"
+                          ? canAccessModule("juridico") || canAccessModule("relatorios")
+                          : item.slug === "eventos"
+                            ? canAccessModule("eventos") || canAccessModule("relatorios")
+                            : item.slug === "ferramentas"
                         ? hasAccessToAnyChild(item.children, canAccessModule, canAccessDashboard)
-                        : item.slug === "configuracoes"
+                          : item.slug === "configuracoes"
                           ? canAccessModule("configuracoes") ||
                             canAccessModule("usuarios") ||
                             canAccessModule("empresas")
-                          : item.slug === "relatorios"
-                            ? canAccessModule("relatorios")
-                            : item.slug === "socio_torcedor"
-                              ? canAccessModule("socio_torcedor")
+                          : item.slug === "socio_torcedor"
+                              ? canAccessModule("socio_torcedor") || canAccessModule("relatorios")
                               : item.slug === "marketing"
-                                ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
+                                ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard) ||
+                                  canAccessModule("relatorios")
                                 : false;
 
             if (!showGroup) return null;
@@ -273,13 +358,15 @@ export function Sidebar() {
                       ? saudeOpen
                       : item.slug === "futebol"
                         ? futebolOpen
-                        : item.slug === "ferramentas"
+                        : item.slug === "juridico"
+                          ? juridicoOpen
+                          : item.slug === "eventos"
+                            ? eventosOpen
+                            : item.slug === "ferramentas"
                         ? ferramentasOpen
                         : item.slug === "configuracoes"
                           ? configOpen
-                          : item.slug === "relatorios"
-                            ? relatoriosOpen
-                            : item.slug === "socio_torcedor"
+                          : item.slug === "socio_torcedor"
                               ? socioOpen
                               : item.slug === "marketing"
                                 ? marketingOpen
@@ -295,13 +382,15 @@ export function Sidebar() {
                       ? setSaudeOpen
                       : item.slug === "futebol"
                         ? setFutebolOpen
-                        : item.slug === "ferramentas"
+                        : item.slug === "juridico"
+                          ? setJuridicoOpen
+                          : item.slug === "eventos"
+                            ? setEventosOpen
+                            : item.slug === "ferramentas"
                         ? setFerramentasOpen
                         : item.slug === "configuracoes"
                           ? setConfigOpen
-                          : item.slug === "relatorios"
-                            ? setRelatoriosOpen
-                            : item.slug === "socio_torcedor"
+                          : item.slug === "socio_torcedor"
                               ? setSocioOpen
                               : item.slug === "marketing"
                                 ? setMarketingOpen
@@ -372,7 +461,7 @@ export function Sidebar() {
                                           (cc.moduleSlug === "emails" && canAccessDashboard)
                                       )
                                       .map((cc) => {
-                                        const hrefMatches = inPath(cc.href!);
+                                        const hrefMatches = resolveLinkActive(cc.href, pathname, relHub);
                                         const isChildActive =
                                           hrefMatches &&
                                           (markedActiveHref === null || markedActiveHref !== cc.href) &&
@@ -400,19 +489,7 @@ export function Sidebar() {
                           );
                         }
                         const ChildIcon = child.icon!;
-                        const isChildActive =
-                          child.href === "/dashboard/configuracoes"
-                            ? pathname === "/dashboard/configuracoes" ||
-                              pathname?.startsWith("/dashboard/configuracoes/")
-                            : child.href === "/dashboard/empresas"
-                              ? pathname === "/dashboard/empresas" || pathname?.startsWith("/dashboard/tenants")
-                              : child.href === "/dashboard/grupo"
-                                ? pathname?.startsWith("/dashboard/grupo")
-                                : child.href === "/dashboard/diretoria"
-                                  ? pathname?.startsWith("/dashboard/diretoria")
-                                  : child.href === "/dashboard/cadastros/tipos"
-                                    ? pathname?.startsWith("/dashboard/cadastros/tipos")
-                                    : inPath(child.href!);
+                        const isChildActive = resolveLinkActive(child.href, pathname, relHub);
                         const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
                         return (
                           <Link
