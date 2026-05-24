@@ -1,0 +1,26 @@
+================================================================================
+BACKUP COMPLETO — NAVEGAÇÃO DO DASHBOARD (PRÉ-CAMADA MDM)
+================================================================================
+Data: 24/05/2026
+Motivo: Reorganização profissional do menu — hub "Cadastros" (dados mestre / MDM)
+        separado dos módulos operacionais. Formatação e agrupamento da sidebar
+        estão sendo alterados; este backup permite restaurar o estado anterior
+        integralmente se houver problema.
+
+Arquivos incluídos (cópia fiel do momento do backup):
+  - dashboard-menu.config.ts   (fonte do menu: apps/web/src/lib/...)
+  - sidebar.tsx                (renderização: apps/web/src/components/dashboard/...)
+  - MODULOS_SIDEBAR_DESENHO.md (referência de desenho anterior)
+
+COMO RESTAURAR (PowerShell, na raiz do repositório):
+  Copy-Item "docs\backups\navegacao-pre-mdm-20260524\dashboard-menu.config.ts" `
+    "apps\web\src\lib\dashboard-menu.config.ts" -Force
+  Copy-Item "docs\backups\navegacao-pre-mdm-20260524\sidebar.tsx" `
+    "apps\web\src\components\dashboard\sidebar.tsx" -Force
+
+Depois: pnpm --filter web build  (validar compilação)
+
+Branch Git de segurança (se criada): backup/navegacao-pre-mdm-20260524
+Commit de backup: ver git log -- docs/backups/navegacao-pre-mdm-20260524
+
+================================================================================

@@ -26,41 +26,6 @@ function hasAccessToAnyChild(
   });
 }
 
-function isCadastrosPath(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return (
-    pathname.startsWith("/dashboard/empresas") ||
-    pathname.startsWith("/dashboard/tenants") ||
-    pathname.startsWith("/dashboard/cadastros") ||
-    pathname.startsWith("/dashboard/usuarios") ||
-    pathname.startsWith("/dashboard/futebol/comissao") ||
-    pathname.startsWith("/dashboard/medico/equipe") ||
-    pathname.startsWith("/dashboard/psicologia/psicologos") ||
-    pathname.startsWith("/dashboard/socio-torcedor/planos")
-  );
-}
-
-function isFutebolOperacaoPath(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return (
-    (pathname.startsWith("/dashboard/medico") && !pathname.startsWith("/dashboard/medico/equipe")) ||
-    pathname.startsWith("/dashboard/consultas") ||
-    (pathname.startsWith("/dashboard/psicologia") && !pathname.startsWith("/dashboard/psicologia/psicologos")) ||
-    pathname.startsWith("/dashboard/juridico") ||
-    (pathname.startsWith("/dashboard/futebol") && !pathname.startsWith("/dashboard/futebol/comissao")) ||
-    pathname.startsWith("/dashboard/adm/nutricao")
-  );
-}
-
-function nestedDefaultOpen(
-  child: MenuItemConfig,
-  pathname: string | null,
-  inPath: (href: string) => boolean
-): boolean {
-  if (!child.children?.length) return false;
-  return child.children.some((cc) => cc.href && inPath(cc.href));
-}
-
 export function Sidebar() {
   const pathname = usePathname();
   const { canAccessModule, canAccessDashboard } = useAuth();
@@ -70,12 +35,23 @@ export function Sidebar() {
     pathname === href || (href !== "/dashboard" && pathname?.startsWith(href + "/"));
 
   const [diretoriaOpen, setDiretoriaOpen] = useState(() => pathname?.startsWith("/dashboard/diretoria"));
-  const [cadastrosOpen, setCadastrosOpen] = useState(() => isCadastrosPath(pathname));
-  const [futebolOpen, setFutebolOpen] = useState(() => isFutebolOperacaoPath(pathname));
-  const [admOpen, setAdmOpen] = useState(
+  const [empresasOpen, setEmpresasOpen] = useState(
     () =>
-      pathname?.startsWith("/dashboard/adm") && !pathname?.startsWith("/dashboard/adm/nutricao")
+      pathname?.startsWith("/dashboard/empresas") ||
+      pathname?.startsWith("/dashboard/tenants") ||
+      pathname === "/dashboard/cadastros/tipos"
   );
+  const [futebolOpen, setFutebolOpen] = useState(
+    () =>
+      pathname?.startsWith("/dashboard/cadastros") ||
+      pathname?.startsWith("/dashboard/medico") ||
+      pathname?.startsWith("/dashboard/psicologia") ||
+      pathname?.startsWith("/dashboard/consultas") ||
+      pathname?.startsWith("/dashboard/juridico") ||
+      pathname?.startsWith("/dashboard/futebol") ||
+      pathname?.startsWith("/dashboard/adm/nutricao")
+  );
+  const [admOpen, setAdmOpen] = useState(() => pathname?.startsWith("/dashboard/adm"));
   const [ferramentasOpen, setFerramentasOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/emails") ||
@@ -87,32 +63,18 @@ export function Sidebar() {
   const [configOpen, setConfigOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/configuracoes") ||
-      pathname?.startsWith("/dashboard/usuarios") ||
-      pathname?.startsWith("/dashboard/empresas") ||
-      pathname?.startsWith("/dashboard/tenants")
+      pathname?.startsWith("/dashboard/usuarios")
   );
   const [psicologiaOpen, setPsicologiaOpen] = useState(
-    () =>
-      pathname?.startsWith("/dashboard/consultas") ||
-      (pathname?.startsWith("/dashboard/psicologia") && !pathname?.startsWith("/dashboard/psicologia/psicologos"))
+    () => pathname?.startsWith("/dashboard/consultas") || pathname?.startsWith("/dashboard/psicologia")
   );
   const [medicoOpen, setMedicoOpen] = useState(
-    () => pathname?.startsWith("/dashboard/medico") && !pathname?.startsWith("/dashboard/medico/equipe")
+    () => pathname?.startsWith("/dashboard/medico")
   );
   const [relatoriosOpen, setRelatoriosOpen] = useState(() => pathname?.startsWith("/dashboard/relatorios"));
-  const [socioOpen, setSocioOpen] = useState(
-    () =>
-      pathname?.startsWith("/dashboard/socio-torcedor") &&
-      !pathname?.startsWith("/dashboard/socio-torcedor/planos")
-  );
+  const [socioOpen, setSocioOpen] = useState(() => pathname?.startsWith("/dashboard/socio-torcedor"));
   const [marketingOpen, setMarketingOpen] = useState(() => pathname?.startsWith("/dashboard/marketing"));
-  const [analiseOpen, setAnaliseOpen] = useState(
-    () =>
-      pathname?.startsWith("/dashboard/diretoria") ||
-      pathname?.startsWith("/dashboard/futebol/analise") ||
-      pathname?.startsWith("/dashboard/futebol/avaliacoes")
-  );
-  const [nestedOpen, setNestedOpen] = useState<Record<string, boolean>>({});
+  const [analiseOpen, setAnaliseOpen] = useState(() => pathname?.startsWith("/dashboard/diretoria") || pathname?.startsWith("/dashboard/futebol/analise") || pathname?.startsWith("/dashboard/futebol/avaliacoes"));
 
   useEffect(() => {
     let cancelled = false;
@@ -126,28 +88,6 @@ export function Sidebar() {
       cancelled = true;
     };
   }, []);
-
-  const toggleNested = (child: MenuItemConfig) => {
-    setNestedOpen((prev) => ({
-      ...prev,
-      [child.slug]: !(prev[child.slug] ?? nestedDefaultOpen(child, pathname, inPath)),
-    }));
-  };
-
-  const isNestedExpanded = (child: MenuItemConfig): boolean => {
-    if (child.slug === "analise") return analiseOpen;
-    if (child.slug === "psicologia") return psicologiaOpen;
-    if (child.slug === "medico") return medicoOpen;
-    if (nestedOpen[child.slug] !== undefined) return nestedOpen[child.slug];
-    return nestedDefaultOpen(child, pathname, inPath);
-  };
-
-  const toggleNestedChild = (child: MenuItemConfig) => {
-    if (child.slug === "analise") setAnaliseOpen((o) => !o);
-    else if (child.slug === "psicologia") setPsicologiaOpen((o) => !o);
-    else if (child.slug === "medico") setMedicoOpen((o) => !o);
-    else toggleNested(child);
-  };
 
   const name = group?.name ?? "Grupo Master";
 
@@ -203,74 +143,66 @@ export function Sidebar() {
             const showGroup =
               item.slug === "diretoria"
                 ? canAccessModule("diretoria")
-                : item.slug === "cadastros"
-                  ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
+                : item.slug === "empresas"
+                  ? canAccessModule("empresas") || canAccessModule("tipos")
                   : item.slug === "adm"
                     ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                     : item.slug === "futebol"
-                      ? canAccessModule("diretoria") ||
-                        canAccessModule("saude") ||
-                        canAccessModule("juridico") ||
-                        canAccessModule("futebol_fisiologia") ||
-                        canAccessModule("futebol_analise") ||
-                        canAccessModule("futebol_logistica") ||
-                        canAccessModule("adm_nutricao")
+                      ? canAccessModule("tipos") || canAccessModule("diretoria") || canAccessModule("saude") || canAccessModule("juridico") || canAccessModule("futebol_comissao") || canAccessModule("futebol_fisiologia") || canAccessModule("futebol_analise") || canAccessModule("futebol_logistica") || canAccessModule("adm_nutricao")
                       : item.slug === "ferramentas"
                         ? hasAccessToAnyChild(item.children, canAccessModule, canAccessDashboard)
                         : item.slug === "configuracoes"
-                          ? canAccessModule("configuracoes") ||
-                            canAccessModule("usuarios") ||
-                            canAccessModule("empresas")
+                          ? canAccessModule("configuracoes") || canAccessModule("usuarios")
                           : item.slug === "relatorios"
-                            ? canAccessModule("relatorios")
-                            : item.slug === "socio_torcedor"
-                              ? canAccessModule("socio_torcedor")
-                              : item.slug === "marketing"
-                                ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
-                                : false;
+                              ? canAccessModule("relatorios")
+                              : item.slug === "socio_torcedor"
+                                ? canAccessModule("socio_torcedor")
+                                : item.slug === "marketing"
+                                  ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
+                                  : false;
 
             if (!showGroup) return null;
 
             const isOpen =
               item.slug === "diretoria"
                 ? diretoriaOpen
-                : item.slug === "cadastros"
-                  ? cadastrosOpen
+                : item.slug === "empresas"
+                  ? empresasOpen
                   : item.slug === "adm"
                     ? admOpen
                     : item.slug === "futebol"
                       ? futebolOpen
-                      : item.slug === "ferramentas"
-                        ? ferramentasOpen
-                        : item.slug === "configuracoes"
-                          ? configOpen
-                          : item.slug === "relatorios"
-                            ? relatoriosOpen
-                            : item.slug === "socio_torcedor"
-                              ? socioOpen
-                              : item.slug === "marketing"
-                                ? marketingOpen
-                                : false;
+                    : item.slug === "ferramentas"
+                      ? ferramentasOpen
+                      : item.slug === "configuracoes"
+                        ? configOpen
+                        : item.slug === "relatorios"
+                          ? relatoriosOpen
+                          : item.slug === "socio_torcedor"
+                            ? socioOpen
+                            : item.slug === "marketing"
+                              ? marketingOpen
+                              : false;
             const setOpen =
               item.slug === "diretoria"
                 ? setDiretoriaOpen
-                : item.slug === "cadastros"
-                  ? setCadastrosOpen
+                : item.slug === "empresas"
+                  ? setEmpresasOpen
                   : item.slug === "adm"
                     ? setAdmOpen
                     : item.slug === "futebol"
                       ? setFutebolOpen
-                      : item.slug === "ferramentas"
-                        ? setFerramentasOpen
-                        : item.slug === "configuracoes"
-                          ? setConfigOpen
-                          : item.slug === "relatorios"
-                            ? setRelatoriosOpen
-                            : item.slug === "socio_torcedor"
-                              ? setSocioOpen
-                              : item.slug === "marketing"
-                                ? setMarketingOpen
-                                : () => {};
+                    : item.slug === "ferramentas"
+                      ? setFerramentasOpen
+                      : item.slug === "configuracoes"
+                        ? setConfigOpen
+                        : item.slug === "relatorios"
+                          ? setRelatoriosOpen
+                          : item.slug === "socio_torcedor"
+                            ? setSocioOpen
+                            : item.slug === "marketing"
+                              ? setMarketingOpen
+                              : () => {};
 
             return (
               <div key={item.slug} className="space-y-0.5">
@@ -305,35 +237,53 @@ export function Sidebar() {
                           const hasAccess = hasAccessToAnyChild(child.children, canAccessModule, canAccessDashboard);
                           if (!hasAccess) return null;
                           const SubIcon = child.icon;
-                          const isSubOpen = isNestedExpanded(child);
+                          const isSubOpen =
+                            child.slug === "analise"
+                              ? analiseOpen
+                              : child.slug === "psicologia"
+                                ? psicologiaOpen
+                                : child.slug === "medico"
+                                  ? medicoOpen
+                                  : true;
+                          const setSubOpen =
+                            child.slug === "analise"
+                              ? setAnaliseOpen
+                              : child.slug === "psicologia"
+                                ? setPsicologiaOpen
+                                : child.slug === "medico"
+                                  ? setMedicoOpen
+                                  : () => {};
+                          const hasExpandButton = ["analise", "psicologia", "medico"].includes(child.slug);
                           return (
                             <div key={child.slug} className="space-y-0.5">
                               <button
                                 type="button"
-                                onClick={() => toggleNestedChild(child)}
+                                onClick={() => {
+                                  if (child.slug === "analise") setAnaliseOpen((o) => !o);
+                                  if (child.slug === "psicologia") setPsicologiaOpen((o) => !o);
+                                  if (child.slug === "medico") setMedicoOpen((o) => !o);
+                                }}
                                 className={cn(
                                   "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                   "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 )}
                               >
-                                {isSubOpen ? (
-                                  <ChevronDown className="h-4 w-4 shrink-0" aria-label="Recolher" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
-                                )}
+                                {hasExpandButton ? (
+                                  isSubOpen ? (
+                                    <ChevronDown className="h-4 w-4 shrink-0" aria-label="Recolher" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
+                                  )
+                                ) : null}
                                 {SubIcon && <SubIcon className="h-4 w-4 shrink-0" />}
                                 <span>{child.label}</span>
                               </button>
-                              {isSubOpen && (
+                              {hasExpandButton && isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">
                                   {(() => {
                                     let markedActiveHref: string | null = null;
                                     return child.children
-                                      .filter(
-                                        (cc) =>
-                                          canAccessModule(cc.moduleSlug) ||
-                                          (cc.moduleSlug === "emails" && canAccessDashboard)
-                                      )
+                                      .filter((cc) => canAccessModule(cc.moduleSlug))
                                       .map((cc) => {
                                         const hrefMatches = inPath(cc.href!);
                                         const isChildActive =
@@ -365,8 +315,7 @@ export function Sidebar() {
                         const ChildIcon = child.icon!;
                         const isChildActive =
                           child.href === "/dashboard/configuracoes"
-                            ? pathname === "/dashboard/configuracoes" ||
-                              pathname?.startsWith("/dashboard/configuracoes/")
+                            ? pathname === "/dashboard/configuracoes" || pathname?.startsWith("/dashboard/configuracoes/")
                             : child.href === "/dashboard/empresas"
                               ? pathname === "/dashboard/empresas" || pathname?.startsWith("/dashboard/tenants")
                               : inPath(child.href!);

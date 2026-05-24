@@ -2,9 +2,8 @@
  * Fonte de verdade do menu do dashboard.
  * Menus, submenus e abas dos jogadores — ao adicionar itens aqui,
  * eles aparecem automaticamente na sidebar e em Configurações → Módulos.
- *
- * MDM (dados mestre): grupo "Cadastros" — cadastros únicos reutilizados pelos módulos.
- * Operação: demais grupos — movimentações e telas do dia a dia (URLs inalteradas).
+ * Fase 1: Diretoria, Empresas, Futebol, Ferramentas, Configurações (com Usuários).
+ * Fase 3: Adm, Futebol (Comissão, Fisiologia, Análise/Desempenho), Relatórios, Sócio Torcedor, Marketing.
  */
 
 import type { LucideIcon } from "lucide-react";
@@ -46,7 +45,6 @@ import {
   Warehouse,
   Calendar,
   Tv,
-  Database,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
@@ -80,7 +78,7 @@ export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "desempenho", label: "Análise de desempenho", icon: BarChart3, moduleSlug: "futebol_analise" },
 ];
 
-/** Estrutura completa do menu do dashboard. */
+/** Estrutura completa do menu do dashboard (Fase 1). */
 export const DASHBOARD_MENU: MenuItemConfig[] = [
   {
     slug: "dashboard",
@@ -96,6 +94,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     icon: Globe,
     moduleSlug: "grupo_master",
   },
+  // Diretoria (acima de Empresas)
   {
     slug: "diretoria",
     label: "Diretoria",
@@ -111,131 +110,30 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
     ],
   },
-  // MDM — dados mestre (hub único; mesmas URLs de antes)
+  // Empresas (Listagem + Tipos)
   {
-    slug: "cadastros",
-    label: "Cadastros",
-    icon: Database,
-    moduleSlug: "tipos",
+    slug: "empresas",
+    label: "Empresas",
+    icon: Building2,
+    moduleSlug: "empresas",
     children: [
       {
-        slug: "cad_grupo",
-        label: "Grupo e acesso",
+        slug: "empresas_listagem",
+        label: "Listagem",
+        href: "/dashboard/empresas",
         icon: Building2,
         moduleSlug: "empresas",
-        children: [
-          {
-            slug: "cad_empresas",
-            label: "Empresas / clubes",
-            href: "/dashboard/empresas",
-            icon: Building2,
-            moduleSlug: "empresas",
-          },
-          {
-            slug: "cad_tipos",
-            label: "Tipos de negócio",
-            href: "/dashboard/cadastros/tipos",
-            icon: Tag,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_usuarios",
-            label: DASHBOARD_LABELS.usuarios,
-            href: "/dashboard/usuarios",
-            icon: Users,
-            moduleSlug: "usuarios",
-          },
-        ],
       },
       {
-        slug: "cad_futebol",
-        label: "Futebol — base",
-        icon: Shirt,
+        slug: "tipos_negocio",
+        label: "Tipos de Negócios",
+        href: "/dashboard/cadastros/tipos",
+        icon: Tag,
         moduleSlug: "tipos",
-        children: [
-          {
-            slug: "cad_jogadores",
-            label: DASHBOARD_LABELS.atletas,
-            href: "/dashboard/cadastros/jogadores",
-            icon: UserCircle,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_campeonatos",
-            label: "Campeonatos",
-            href: "/dashboard/cadastros/campeonatos",
-            icon: Trophy,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_estadios",
-            label: DASHBOARD_LABELS.estadios,
-            href: "/dashboard/cadastros/estadios",
-            icon: MapPin,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_times",
-            label: DASHBOARD_LABELS.timesAdversarios,
-            href: "/dashboard/cadastros/times",
-            icon: Shirt,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_categorias",
-            label: "Categorias de jogos",
-            href: "/dashboard/cadastros/categorias",
-            icon: Layers,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_comissao",
-            label: "Comissão técnica",
-            href: "/dashboard/futebol/comissao",
-            icon: Users,
-            moduleSlug: "futebol_comissao",
-          },
-        ],
-      },
-      {
-        slug: "cad_pessoas",
-        label: "Pessoas — saúde",
-        icon: Stethoscope,
-        moduleSlug: "saude",
-        children: [
-          {
-            slug: "cad_medico_equipe",
-            label: "Médicos e equipe",
-            href: "/dashboard/medico/equipe",
-            icon: Stethoscope,
-            moduleSlug: "saude",
-          },
-          {
-            slug: "cad_psicologos",
-            label: "Psicólogos",
-            href: "/dashboard/psicologia/psicologos",
-            icon: UserCircle,
-            moduleSlug: "saude",
-          },
-        ],
-      },
-      {
-        slug: "cad_programas",
-        label: "Programas",
-        icon: Ticket,
-        moduleSlug: "socio_torcedor",
-        children: [
-          {
-            slug: "cad_socio_planos",
-            label: "Planos sócio-torcedor",
-            href: "/dashboard/socio-torcedor/planos",
-            icon: Heart,
-            moduleSlug: "socio_torcedor",
-          },
-        ],
       },
     ],
   },
+  // Adm (Fase 3 — departamento administrativo). Financeiro, Compras e Estoque (Omie) agrupados.
   {
     slug: "adm",
     label: "Adm",
@@ -249,12 +147,48 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
     ],
   },
+  // Departamento de Futebol (Atletas, Categorias, Campeonatos, Estádios, Times, Médico, Psicologia, Comissão, Fisiologia, Análise, Logística)
   {
     slug: "futebol",
     label: "Depto Futebol",
     icon: Shirt,
-    moduleSlug: "saude",
+    moduleSlug: "tipos",
     children: [
+      {
+        slug: "jogadores",
+        label: DASHBOARD_LABELS.atletas,
+        href: "/dashboard/cadastros/jogadores",
+        icon: UserCircle,
+        moduleSlug: "tipos",
+      },
+      {
+        slug: "categorias",
+        label: "Categorias",
+        href: "/dashboard/cadastros/categorias",
+        icon: Layers,
+        moduleSlug: "tipos",
+      },
+      {
+        slug: "campeonatos",
+        label: "Campeonatos",
+        href: "/dashboard/cadastros/campeonatos",
+        icon: Trophy,
+        moduleSlug: "tipos",
+      },
+      {
+        slug: "estadios",
+        label: DASHBOARD_LABELS.estadios,
+        href: "/dashboard/cadastros/estadios",
+        icon: MapPin,
+        moduleSlug: "tipos",
+      },
+      {
+        slug: "times",
+        label: DASHBOARD_LABELS.timesAdversarios,
+        href: "/dashboard/cadastros/times",
+        icon: Shirt,
+        moduleSlug: "tipos",
+      },
       {
         slug: "medico",
         label: "Depto Médico",
@@ -266,6 +200,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Histórico médico",
             href: "/dashboard/medico",
             icon: Stethoscope,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "medico_equipe",
+            label: "Médicos e equipe",
+            href: "/dashboard/medico/equipe",
+            icon: UserCircle,
             moduleSlug: "saude",
           },
         ],
@@ -283,6 +224,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: ClipboardList,
             moduleSlug: "saude",
           },
+          {
+            slug: "psicologia_psicologos",
+            label: "Psicólogos",
+            href: "/dashboard/psicologia/psicologos",
+            icon: UserCircle,
+            moduleSlug: "saude",
+          },
         ],
       },
       {
@@ -291,6 +239,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         href: "/dashboard/juridico",
         icon: Scale,
         moduleSlug: "juridico",
+      },
+      {
+        slug: "futebol_comissao",
+        label: "Comissão técnica",
+        href: "/dashboard/futebol/comissao",
+        icon: Users,
+        moduleSlug: "futebol_comissao",
       },
       {
         slug: "futebol_logistica",
@@ -313,6 +268,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: UtensilsCrossed,
         moduleSlug: "adm_nutricao",
       },
+      // Análise: Avaliações (CRUD da comissão) e Desempenho (métricas + relatório)
       {
         slug: "analise",
         label: "Análise",
@@ -337,6 +293,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
     ],
   },
+  // Sócio Torcedor (Fase 3) — controle completo por clube: planos, sócios, perks, métricas
   {
     slug: "socio_torcedor",
     label: "Sócio Torcedor",
@@ -344,9 +301,11 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     moduleSlug: "socio_torcedor",
     children: [
       { slug: "socio_dashboard", label: "Visão geral", href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
+      { slug: "socio_planos", label: "Planos", href: "/dashboard/socio-torcedor/planos", icon: Heart, moduleSlug: "socio_torcedor" },
       { slug: "socio_socios", label: "Sócios", href: "/dashboard/socio-torcedor/socios", icon: Users, moduleSlug: "socio_torcedor" },
     ],
   },
+  // Marketing (Fase 3) — Calendário de conteúdo inspirado no Meta Business Suite
   {
     slug: "marketing",
     label: "Marketing",
@@ -363,6 +322,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
     ],
   },
+  // Relatórios (grupo — rotas futuras)
   {
     slug: "relatorios",
     label: "Relatórios",
@@ -378,6 +338,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
     ],
   },
+  // Ferramentas (Emails, Senhas, Páginas, Notícias, Mídia)
   {
     slug: "ferramentas",
     label: "Ferramentas",
@@ -428,6 +389,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
     ],
   },
+  // Configurações (Geral + Usuários)
   {
     slug: "configuracoes",
     label: DASHBOARD_LABELS.configuracoes,
@@ -442,14 +404,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "configuracoes",
       },
       {
-        slug: "config_empresas",
-        label: "Empresas / clubes",
-        href: "/dashboard/empresas",
-        icon: Building2,
-        moduleSlug: "empresas",
-      },
-      {
-        slug: "config_usuarios",
+        slug: "usuarios",
         label: DASHBOARD_LABELS.usuarios,
         href: "/dashboard/usuarios",
         icon: Users,
