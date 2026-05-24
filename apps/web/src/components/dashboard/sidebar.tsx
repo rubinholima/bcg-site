@@ -13,6 +13,7 @@ import type { Group } from "@/types/group";
 import type { MenuItemConfig } from "@/lib/dashboard-menu.config";
 import { DASHBOARD_MENU } from "@/lib/dashboard-menu.config";
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
+import { useDashboardShell } from "@/context/DashboardShellContext";
 
 /** Verifica se o usuário tem acesso a pelo menos um filho do grupo (recursivo). */
 function hasAccessToAnyChild(
@@ -212,21 +213,23 @@ function SidebarMenuLink({
   external,
   className,
   children,
+  onNavigate,
 }: {
   href: string;
   external?: boolean;
   className?: string;
   children: React.ReactNode;
+  onNavigate?: () => void;
 }) {
   if (external) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} onClick={onNavigate}>
         {children}
       </a>
     );
   }
   return (
-    <Link href={href} className={className}>
+    <Link href={href} className={className} onClick={onNavigate}>
       {children}
     </Link>
   );
@@ -245,6 +248,7 @@ function SidebarNav() {
   const searchParams = useSearchParams();
   const relHub = pathname?.startsWith("/dashboard/relatorios") ? searchParams.get("hub") : null;
   const { canAccessModule, canAccessDashboard, role, modules } = useAuth();
+  const { onNavClick } = useDashboardShell();
   const [group, setGroup] = useState<Group | null>(null);
 
   const inPath = (href: string) =>
@@ -359,7 +363,7 @@ function SidebarNav() {
   return (
     <div className="flex h-full flex-col border-r border-border bg-card shadow-sm">
       <div className="flex h-16 items-center border-b border-border px-6">
-        <Link href={homeRoute} className="flex min-w-0 items-center gap-2">
+        <Link href={homeRoute} className="flex min-w-0 items-center gap-2" onClick={onNavClick}>
           <img
             src="/bcg-logo.png"
             alt=""
@@ -388,6 +392,7 @@ function SidebarNav() {
               <Link
                 key={homeMenu.slug}
                 href={homeMenu.href}
+                onClick={onNavClick}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                   standaloneFocusClass(null),
@@ -417,6 +422,7 @@ function SidebarNav() {
                 key={item.slug}
                 href={item.href!}
                 external={item.external}
+                onNavigate={onNavClick}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                   standaloneFocusClass(item.slug),
@@ -608,6 +614,7 @@ function SidebarNav() {
                                             key={cc.slug}
                                             href={cc.href!}
                                             external={cc.external}
+                                            onNavigate={onNavClick}
                                             className={cn(
                                               "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
                                               isChildActive
@@ -634,6 +641,7 @@ function SidebarNav() {
                             key={child.slug}
                             href={child.href!}
                             external={child.external}
+                            onNavigate={onNavClick}
                             className={cn(
                               "flex items-center gap-2 rounded-lg px-2 text-sm transition-all duration-200 dashboard-link-hover",
                               compact ? "py-1" : "py-1.5",

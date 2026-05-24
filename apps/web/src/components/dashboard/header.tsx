@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CircleHelp, Home } from "lucide-react";
+import { CircleHelp, Home, Menu, PanelLeftClose } from "lucide-react";
 import type { Group } from "@/types/group";
 import { useAuth } from "@/context/AuthContext";
+import { useDashboardShell } from "@/context/DashboardShellContext";
 
 export function Header() {
   const [group, setGroup] = useState<Group | null>(null);
   const { user } = useAuth();
+  const { sidebarOpen, toggleSidebar } = useDashboardShell();
 
   useEffect(() => {
     let cancelled = false;
@@ -28,29 +30,44 @@ export function Header() {
   const displayUser = user?.name?.trim() || user?.email || "Usuário";
 
   return (
-    <header className="flex h-16 min-w-0 items-center justify-between gap-4 border-b border-border bg-card/95 backdrop-blur-sm px-4 sm:px-6 shadow-sm">
-      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
+    <header className="flex h-14 min-w-0 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 backdrop-blur-sm shadow-sm sm:h-16 sm:gap-4 sm:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 shrink-0 lg:hidden"
+          onClick={toggleSidebar}
+          aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={sidebarOpen}
+        >
+          {sidebarOpen ? (
+            <PanelLeftClose className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
+        </Button>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20 sm:h-9 sm:w-9">
           <img
             src="/bcg-logo.png"
             alt=""
             width={28}
             height={28}
-            className="h-7 w-7 object-contain"
+            className="h-6 w-6 object-contain sm:h-7 sm:w-7"
           />
         </div>
-        <span className="truncate text-sm font-semibold tracking-tight">
-          <span className="text-muted-foreground font-medium">Dashboard</span>
-          <span className="text-foreground mx-1.5">·</span>
-          {name}
+        <span className="min-w-0 truncate text-xs font-semibold tracking-tight sm:text-sm">
+          <span className="font-medium text-muted-foreground">Dashboard</span>
+          <span className="mx-1 text-foreground">·</span>
+          <span className="text-foreground">{name}</span>
         </span>
       </div>
-      <div className="flex shrink-0 items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <Button
           variant="ghost"
           size="icon"
           asChild
-          className="shrink-0 text-muted-foreground hover:text-foreground"
+          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
           title="Manual da plataforma"
         >
           <Link href="/dashboard/manual" aria-label="Abrir manual da plataforma">
@@ -59,32 +76,25 @@ export function Header() {
         </Button>
         <Button
           variant="outline"
-          size="sm"
+          size="icon"
           asChild
-          className="transition-all duration-200 hover:shadow-md active:scale-[0.98] gap-1.5"
+          className="h-9 w-9 shrink-0 sm:h-9 sm:w-auto sm:px-3"
         >
           <a href="/" target="_blank" rel="noopener noreferrer" title="Abrir home do grupo em nova aba">
             <Home className="h-4 w-4" />
-            <span className="hidden sm:inline">Ver site</span>
+            <span className="hidden sm:ml-1.5 sm:inline">Ver site</span>
           </a>
         </Button>
-        <span className="max-w-[260px] truncate text-sm text-muted-foreground" title={displayUser}>
+        <span
+          className="hidden max-w-[140px] truncate text-sm text-muted-foreground md:inline"
+          title={displayUser}
+        >
           {displayUser}
         </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="transition-all duration-200 hover:bg-accent/80"
-        >
+        <Button variant="ghost" size="sm" asChild className="px-2 text-xs sm:text-sm">
           <a href="/api/auth/logout">Sair</a>
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          asChild
-          className="transition-all duration-200 hover:shadow-md active:scale-[0.98]"
-        >
+        <Button variant="outline" size="sm" asChild className="hidden px-2 sm:inline-flex">
           <Link href="/dashboard">Início</Link>
         </Button>
       </div>
