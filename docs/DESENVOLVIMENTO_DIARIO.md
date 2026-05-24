@@ -32,6 +32,41 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 24 DE MAIO DE 2026 — ENCERRAMENTO (Dashboard mobile, menu Academias embed, infra Academias Lightsail)
+
+## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
+
+- **Dashboard BCG no celular:** sidebar vira **gaveta** no mobile (ícone ☰ no header); no desktop (≥1024px) continua fixo. Contexto: `DashboardShellContext.tsx`; shell: `DashboardLayoutShell.tsx`, `header.tsx`, `sidebar.tsx`.
+- **Academias no menu BCG:** links internos `/dashboard/academias/gestao` e `/dashboard/academias/portal` com iframe (`DashboardEmbedFrame.tsx`, `academias-embed.ts`). **Ferramentas** é penúltimo item (antes de Configurações).
+- **Servidor Academias (Lightsail `52.71.253.45`) — fora deste repo:** login OK em `academias.bostoncitygroup.biz`; CORS só no Apache (Nest `enableCors` removido no container); `DATABASE_URL` → `127.0.0.1` em `/opt/boston/.env.prd`; usuário `rl@bostoncitygroup.biz` (senha scrypt, mín. 6 chars); cache anti-JS antigo no vhost Apache. **Pendente:** dados (franquia/academia), portal aluno deploy, fix permanente CORS no código-fonte Academias, `frame-ancestors` se iframe BCG ficar em branco.
+- **Arquivos locais não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` — não commitar.
+- **BCG produção:** após push, rodar `./deploy.sh` no servidor se o CI não aplicar sozinho; `prisma migrate deploy` se migrations pendentes (módulo `academias`, role `comissao`).
+
+## **O QUE FOI FEITO**
+
+1. **Menu e navegação (web)**  
+   - Ferramentas reposicionada antes de Configurações.  
+   - Hub Academias com embed interno (Gestão + Portal do aluno).
+
+2. **Responsivo dashboard inteiro (web)**  
+   - Menu hamburger, overlay, sidebar oculto por padrão no mobile.  
+   - Header compacto; conteúdo em tela cheia.
+
+3. **Infra Academias (SSH, não commitado)**  
+   - Correção CORS (Apache + patch/remoção Nest).  
+   - Banco conectado; primeiro usuário admin; login 201 via curl e browser.  
+   - Limpeza de cache no navegador + headers Apache no frontend gestão.
+
+## **COMMITS DO DIA (`develop`)**
+
+- `857e4ac` — fix(dashboard): Ferramentas penúltima no menu  
+- `5f3d4a2` — feat(academias): embed gestão e portal dentro do dashboard BCG  
+- `c900b61` — feat(dashboard): sidebar colapsável e layout responsivo no mobile  
+
+**Branch:** `develop` · **Push:** enviado para `origin/develop`
+
+---
+
 # 📅 14 DE MAIO DE 2026 — ENCERRAMENTO (Merge develop → main: cadastros normalizados, patrimônio, manual no header, ADM financeiro/estoque, Marketing Meta, permissões)
 
 ## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
