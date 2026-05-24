@@ -142,6 +142,10 @@ function isFerramentasPath(pathname: string | null): boolean {
   return pathname.startsWith("/dashboard/emails") || pathname.startsWith("/dashboard/senhas");
 }
 
+function isAcademiasPath(pathname: string | null): boolean {
+  return !!pathname?.startsWith("/dashboard/academias");
+}
+
 function isConfigPath(pathname: string | null): boolean {
   if (!pathname) return false;
   return pathname.startsWith("/dashboard/configuracoes");
@@ -160,6 +164,7 @@ function getPathnameHub(pathname: string | null, relHub: string | null): string 
   if (isEventosPath(pathname, null)) return "eventos";
   if (isMarketingPath(pathname, null)) return "marketing";
   if (isSocioPath(pathname, null)) return "socio_torcedor";
+  if (isAcademiasPath(pathname)) return "academias";
   if (isFerramentasPath(pathname)) return "ferramentas";
   if (isConfigPath(pathname)) return "configuracoes";
   return null;
@@ -273,7 +278,7 @@ function SidebarNav() {
     () => pathname?.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)
   );
   const [socioOpen, setSocioOpen] = useState(() => isSocioPath(pathname, relHub));
-  const [academiasOpen, setAcademiasOpen] = useState(false);
+  const [academiasOpen, setAcademiasOpen] = useState(() => isAcademiasPath(pathname));
   const [marketingOpen, setMarketingOpen] = useState(() => isMarketingPath(pathname, relHub));
   const [analiseOpen, setAnaliseOpen] = useState(
     () =>
