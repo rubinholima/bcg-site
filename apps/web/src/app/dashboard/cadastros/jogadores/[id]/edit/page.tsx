@@ -33,7 +33,12 @@ import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
-import { parseRegistrationProfile, type PlayerRegistrationProfile } from "@/lib/player-registration-profile";
+import {
+  getRegistrationIdentifiersError,
+  parseRegistrationProfile,
+  seedCategoryHistoryIfEmpty,
+  type PlayerRegistrationProfile,
+} from "@/lib/player-registration-profile";
 
 const STATUS_OPTIONS = [
   { value: "available", label: "Apto" },
@@ -195,7 +200,8 @@ export default function EditJogadorPage() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const { canAccessModule } = useAuth();
+  const { canAccessModule, user } = useAuth();
+  const responsibleUserName = user?.name?.trim() || user?.email || "Sistema";
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -264,6 +270,16 @@ export default function EditJogadorPage() {
     if (!player) return;
     if (pendingPhotoFile && !player.name?.trim()) {
       setError("Preencha o nome completo antes de salvar a foto.");
+      return;
+    }
+    const profile = seedCategoryHistoryIfEmpty(
+      parseRegistrationProfile(player.registrationProfile),
+      player.category,
+      responsibleUserName,
+    );
+    const registrationError = getRegistrationIdentifiersError(profile);
+    if (registrationError) {
+      setError(registrationError);
       return;
     }
     setLoading(true);
@@ -335,7 +351,7 @@ export default function EditJogadorPage() {
         performanceAnalysis: player.performanceAnalysis || undefined,
         images: player.images ?? undefined,
         publicFields: player.publicFields ?? undefined,
-        registrationProfile: player.registrationProfile ?? undefined,
+        registrationProfile: profile,
       });
       router.push("/dashboard/cadastros/jogadores?success=true");
     } catch (err) {
@@ -432,7 +448,7 @@ export default function EditJogadorPage() {
               <div>
                 <CardTitle>Cadastro do atleta</CardTitle>
                 <CardDescription>
-                  Dados pessoais, esportivos, endereços e informações complementares — seções expansíveis
+                  Dados pessoais, esportivos, documentos, endereços, viagens e informações complementares — seções expansíveis
                 </CardDescription>
               </div>
               <Button
@@ -478,16 +494,20 @@ export default function EditJogadorPage() {
               pendingPhotoFile={pendingPhotoFile}
               onNameChange={(v) => update({ name: v })}
               onCategoryChange={(v) => update({ category: v })}
+              responsibleUserName={responsibleUserName}
               onPhotoUrlChange={(v) => update({ photoUrl: v })}
               onPendingPhotoFile={setPendingPhotoFile}
               onPlayerField={(field, value) => update({ [field]: value } as Partial<PlayerData>)}
               onProfileChange={(next) => update({ registrationProfile: next })}
+              canAccessLogistica={canAccessModule("futebol_logistica")}
+              canAccessJuridico={canAccessModule("juridico")}
+              canAccessRh={canAccessModule("adm_rh")}
+              tenantName={player.tenant?.name}
             />
           </CardContent>
         </Card>
       )}
 
-      {/* Tab: Avaliação psicológica — relatório sintético para gerência/diretoria (somente leitura) */}
       {/* Tab: Avaliação psicológica — relatório sintético para gerência/diretoria (somente leitura) */}
       {activeTab === "psicologica" && (() => {
         const psychList = (player.psychologicalAssessment ?? []) as Array<{ date?: string; evaluator?: string; observacoes?: string; [k: string]: unknown }>;

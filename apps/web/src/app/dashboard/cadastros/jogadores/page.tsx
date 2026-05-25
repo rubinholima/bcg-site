@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 import { JogadoresFilters } from "./JogadoresFilters";
 import { JogadoresGroupedList } from "./JogadoresGroupedList";
+import { JogadoresLoanedSection } from "./JogadoresLoanedSection";
 import { SyncPlayersButton } from "./SyncPlayersButton";
 
 interface Player {
@@ -16,8 +17,9 @@ interface Player {
   position?: string | null;
   category?: string | null;
   tenantId: string;
-  tenant?: { id: string; name: string; slug: string };
+  tenant?: { id: string; name: string; slug: string; logoUrl?: string | null };
   status?: string | null;
+  registrationProfile?: unknown;
 }
 
 async function getPlayers(params: {
@@ -25,12 +27,32 @@ async function getPlayers(params: {
   category?: string;
   position?: string;
   search?: string;
+  situation?: string;
+  archived?: boolean;
 }): Promise<Player[]> {
   try {
     const searchParams = new URLSearchParams();
     if (params.tenantId) searchParams.set("tenantId", params.tenantId);
     if (params.category) searchParams.set("category", params.category);
     if (params.position) searchParams.set("position", params.position);
+    if (params.search) searchParams.set("search", params.search);
+    if (params.situation) searchParams.set("situation", params.situation);
+    if (params.archived) searchParams.set("archived", "1");
+    const { data } = await api.get<Player[]>(`/players?${searchParams.toString()}`);
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+async function getLoanedPlayers(params: {
+  tenantId?: string;
+  search?: string;
+}): Promise<Player[]> {
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set("loaned", "1");
+    if (params.tenantId) searchParams.set("tenantId", params.tenantId);
     if (params.search) searchParams.set("search", params.search);
     const { data } = await api.get<Player[]>(`/players?${searchParams.toString()}`);
     return data ?? [];
@@ -48,15 +70,23 @@ export default async function JogadoresPage({
     category?: string;
     position?: string;
     search?: string;
+    situation?: string;
   }>;
 }) {
   const params = await searchParams;
-  const players = await getPlayers({
-    tenantId: params.tenantId,
-    category: params.category,
-    position: params.position,
-    search: params.search,
-  });
+  const [players, loanedPlayers] = await Promise.all([
+    getPlayers({
+      tenantId: params.tenantId,
+      category: params.category,
+      position: params.position,
+      search: params.search,
+      situation: params.situation,
+    }),
+    getLoanedPlayers({
+      tenantId: params.tenantId,
+      search: params.search,
+    }),
+  ]);
   const showSuccess = params.success === "true";
   const groupByTeam = !params.tenantId;
   const distinctTeams = new Set(players.map((p) => p.tenantId)).size;
@@ -75,7 +105,7 @@ export default async function JogadoresPage({
             Gerencie os atletas por clube e categoria — clique na linha para abrir o cadastro
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2">
           <SyncPlayersButton />
           <Link href="/dashboard/cadastros/jogadores/new">
             <Button>
@@ -99,7 +129,7 @@ export default async function JogadoresPage({
                 : `${players.length} atleta${players.length > 1 ? "s" : ""} — agrupado por categoria`}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {players.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <p>Nenhum atleta encontrado.</p>
@@ -112,6 +142,8 @@ export default async function JogadoresPage({
           ) : (
             <JogadoresGroupedList players={players} groupByTeam={groupByTeam && distinctTeams > 1} />
           )}
+
+          <JogadoresLoanedSection players={loanedPlayers} />
         </CardContent>
       </Card>
     </div>

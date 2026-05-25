@@ -1,5 +1,6 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import {
   cadastroEmail,
   cadastroJsonStringArray,
@@ -7,6 +8,7 @@ import {
   cadastroUpperRequired,
 } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import {
@@ -18,35 +20,396 @@ import {
 export class PlayersService {
   private readonly logger = new Logger(PlayersService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly s3: S3Service,
+  ) {}
 
-  async findAll(filters?: { tenantId?: string; category?: string; position?: string; search?: string }) {
-    const where: Record<string, unknown> = {};
+  async findAll(filters?: {
+    tenantId?: string;
+    category?: string;
+    position?: string;
+    search?: string;
+    situation?: string;
+    archived?: boolean;
+    loaned?: boolean;
+  }) {
+    const where: Prisma.PlayerWhereInput = {};
     if (filters?.tenantId) where.tenantId = filters.tenantId;
     if (filters?.category) where.category = filters.category;
     if (filters?.position?.trim()) where.position = filters.position.trim();
     if (filters?.search?.trim()) {
-      where.OR = [
-        { name: { contains: filters.search.trim(), mode: 'insensitive' as const } },
-        { currentTeam: { contains: filters.search.trim(), mode: 'insensitive' as const } },
-        { position: { contains: filters.search.trim(), mode: 'insensitive' as const } },
+      const term = filters.search.trim();
+      const or: Prisma.PlayerWhereInput[] = [
+        { name: { contains: term, mode: 'insensitive' } },
+        { currentTeam: { contains: term, mode: 'insensitive' } },
+        { position: { contains: term, mode: 'insensitive' } },
+        {
+          registrationProfile: {
+            path: ['personal', 'cpf'],
+            string_contains: term,
+            mode: 'insensitive',
+          },
+        },
+        {
+          registrationProfile: {
+            path: ['sports', 'cbf'],
+            string_contains: term,
+            mode: 'insensitive',
+          },
+        },
       ];
+
+      const cpfDigits = term.replace(/\D/g, '');
+      if (cpfDigits.length >= 3) {
+        const ids = await this.findPlayerIdsByCpfDigits(cpfDigits, filters);
+        if (ids.length) or.push({ id: { in: ids } });
+      }
+
+      where.OR = or;
     }
-    const players = await this.prisma.player.findMany({
+    let players = await this.prisma.player.findMany({
       where,
       orderBy: [{ tenant: { name: 'asc' } }, { category: 'asc' }, { name: 'asc' }],
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
+
+    if (filters?.archived) {
+      players = players.filter((p) => this.isArchivedPlayer(p.registrationProfile));
+    } else if (filters?.loaned) {
+      players = players.filter((p) => this.isLoanedPlayer(p.registrationProfile));
+    } else if (filters?.situation?.trim()) {
+      const wanted = filters.situation.trim();
+      players = players.filter((p) => this.getPlayerSituation(p.registrationProfile) === wanted);
+    } else {
+      players = players.filter(
+        (p) =>
+          !this.isArchivedPlayer(p.registrationProfile) && !this.isLoanedPlayer(p.registrationProfile),
+      );
+    }
+
     return players;
+  }
+
+  private getPlayerSituation(registrationProfile: unknown): string {
+    const profile = this.parseRegistrationProfile(registrationProfile);
+    const raw = profile.sports?.situation;
+    if (!raw || raw === 'elenco') return 'ativo';
+    if (raw === 'inativo') return 'desligado';
+    return raw;
+  }
+
+  private isArchivedPlayer(registrationProfile: unknown): boolean {
+    return this.getPlayerSituation(registrationProfile) === 'desligado';
+  }
+
+  private isLoanedPlayer(registrationProfile: unknown): boolean {
+    return this.getPlayerSituation(registrationProfile) === 'emprestado';
+  }
+
+  private async findPlayerIdsByCpfDigits(
+    digits: string,
+    filters?: { tenantId?: string; category?: string; position?: string },
+  ): Promise<string[]> {
+    const pattern = `%${digits}%`;
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM "Player"
+      WHERE regexp_replace(COALESCE("registrationProfile"->'personal'->>'cpf', ''), '[^0-9]', '', 'g') LIKE ${pattern}
+      ${filters?.tenantId ? Prisma.sql`AND "tenantId" = ${filters.tenantId}` : Prisma.empty}
+      ${filters?.category ? Prisma.sql`AND category = ${filters.category}` : Prisma.empty}
+      ${filters?.position?.trim() ? Prisma.sql`AND position = ${filters.position.trim()}` : Prisma.empty}
+    `;
+    return rows.map((r) => r.id);
   }
 
   async findOne(id: string) {
     const player = await this.prisma.player.findUnique({
       where: { id },
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
     if (!player) throw new NotFoundException('Jogador não encontrado');
     return player;
+  }
+
+  /** Viagens do hub de logística vinculadas ao atleta (quarto ou categoria). */
+  async findTravelHistory(playerId: string) {
+    const player = await this.findOne(playerId);
+    const travels = await this.prisma.travelLogistics.findMany({
+      where: {
+        tenantId: player.tenantId,
+        status: { notIn: ['rascunho', 'cancelado'] },
+      },
+      orderBy: [{ matchDate: 'desc' }, { createdAt: 'desc' }],
+      include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
+    });
+    return travels.filter(
+      (t) =>
+        this.playerInAccommodationRooms(t.accommodationRooms, playerId) ||
+        this.travelMatchesPlayerCategory(t.category, player.category),
+    );
+  }
+
+  private playerInAccommodationRooms(rooms: unknown, playerId: string): boolean {
+    if (!Array.isArray(rooms)) return false;
+    for (const room of rooms) {
+      if (!room || typeof room !== 'object') continue;
+      const r = room as Record<string, unknown>;
+      if (r.personType === 'player' && r.personId === playerId) return true;
+      const occupants = r.occupants;
+      if (!Array.isArray(occupants)) continue;
+      for (const occ of occupants) {
+        if (!occ || typeof occ !== 'object') continue;
+        const o = occ as Record<string, unknown>;
+        if (o.personType === 'player' && o.personId === playerId) return true;
+      }
+    }
+    return false;
+  }
+
+  private travelMatchesPlayerCategory(
+    travelCategory: string | null | undefined,
+    playerCategory: string | null | undefined,
+  ): boolean {
+    if (!playerCategory) return false;
+    if (!travelCategory) return true;
+    return travelCategory === playerCategory;
+  }
+
+  /** Contratos do atleta — Jurídico (LegalDocument) + RH (Employment por CPF). */
+  async findContractsOverview(playerId: string) {
+    const player = await this.findOne(playerId);
+    const profile = this.parseRegistrationProfile(player.registrationProfile);
+    const tenantName = player.tenant?.name ?? 'Clube';
+
+    const economicRights = this.resolveEconomicRights(profile, tenantName);
+
+    const legalDocs = await this.prisma.legalDocument.findMany({
+      where: { playerId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const cpf = profile.personal?.cpf?.replace(/\D/g, '') ?? '';
+    const rhRows = cpf
+      ? await this.findRhContractsForCpf(player.tenantId, cpf, tenantName)
+      : [];
+
+    const juridicoRows = legalDocs.map((doc) => {
+      const start = doc.validFrom ?? doc.createdAt;
+      const end = doc.validUntil;
+      const meta = doc.metadata as Record<string, unknown> | null;
+      return {
+        id: `juridico-${doc.id}`,
+        source: 'juridico' as const,
+        displayId: this.displayContractId(doc.id),
+        startDate: start ? start.toISOString() : null,
+        endDate: end ? end.toISOString() : null,
+        economicRightsClub: tenantName,
+        status: this.legalStatusLabel(doc.status),
+        contractType: this.legalTypeLabel(doc.type),
+        destinationClub:
+          typeof meta?.destinationClub === 'string'
+            ? meta.destinationClub
+            : typeof meta?.clubeDestino === 'string'
+              ? meta.clubeDestino
+              : null,
+        executionPercent: this.executionPercent(start, end),
+        juridicoDocumentId: doc.id,
+      };
+    });
+
+    const contracts = [...juridicoRows, ...rhRows].sort((a, b) => {
+      const da = a.startDate ? new Date(a.startDate).getTime() : 0;
+      const db = b.startDate ? new Date(b.startDate).getTime() : 0;
+      return db - da;
+    });
+
+    return { economicRights, contracts, tenantName };
+  }
+
+  private assertRegistrationIdentifiers(profile: Record<string, unknown> | undefined) {
+    if (!profile || typeof profile !== 'object') {
+      throw new BadRequestException('Preencha o CPF do atleta (11 dígitos).');
+    }
+    const personal = profile.personal as { cpf?: string } | undefined;
+    const cpfDigits = (personal?.cpf ?? '').replace(/\D/g, '');
+    if (cpfDigits.length < 11) {
+      throw new BadRequestException('Preencha o CPF do atleta (11 dígitos).');
+    }
+  }
+
+  private parseRegistrationProfile(raw: unknown): {
+    personal?: { cpf?: string; clubArrivalDate?: string };
+    sports?: { situation?: string };
+    contracts?: { economicRights?: Array<{ id: string; clubName: string; percentage: number }> };
+  } {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+    return raw as {
+      personal?: { cpf?: string };
+      contracts?: { economicRights?: Array<{ id: string; clubName: string; percentage: number }> };
+    };
+  }
+
+  private resolveEconomicRights(
+    profile: ReturnType<PlayersService['parseRegistrationProfile']>,
+    tenantName: string,
+  ) {
+    const rows = profile.contracts?.economicRights;
+    if (Array.isArray(rows) && rows.length > 0) return rows;
+    return [{ id: 'default', clubName: tenantName, percentage: 100 }];
+  }
+
+  private async findRhContractsForCpf(tenantId: string, cpf: string, tenantName: string) {
+    const employees = await this.prisma.employee.findMany({
+      where: { tenantId, type: 'athlete' },
+      include: {
+        employments: {
+          include: { jobRole: { select: { name: true } } },
+          orderBy: { startDate: 'desc' },
+        },
+      },
+    });
+
+    const matched = employees.filter((e) => (e.cpf?.replace(/\D/g, '') ?? '') === cpf);
+    const rows: Array<{
+      id: string;
+      source: 'rh';
+      displayId: string;
+      startDate: string | null;
+      endDate: string | null;
+      economicRightsClub: string;
+      status: string;
+      contractType: string;
+      destinationClub: string | null;
+      executionPercent: number | null;
+      rhEmploymentId: string;
+    }> = [];
+
+    for (const employee of matched) {
+      for (const emp of employee.employments) {
+        const athleteData = emp.athleteData as Record<string, unknown> | null;
+        rows.push({
+          id: `rh-${emp.id}`,
+          source: 'rh',
+          displayId: this.displayContractId(emp.id),
+          startDate: emp.startDate.toISOString(),
+          endDate: emp.endDate ? emp.endDate.toISOString() : null,
+          economicRightsClub: tenantName,
+          status: this.rhStatusLabel(emp.status),
+          contractType: this.rhContractTypeLabel(emp.contractType),
+          destinationClub:
+            typeof athleteData?.clubeDestino === 'string' ? athleteData.clubeDestino : null,
+          executionPercent: this.executionPercent(emp.startDate, emp.endDate),
+          rhEmploymentId: emp.id,
+        });
+      }
+    }
+    return rows;
+  }
+
+  private displayContractId(id: string): string {
+    let hash = 0;
+    for (let i = 0; i < id.length; i += 1) {
+      hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+    }
+    return String((hash % 9000) + 100);
+  }
+
+  private executionPercent(
+    startDate: Date | null | undefined,
+    endDate: Date | null | undefined,
+  ): number | null {
+    if (!startDate || !endDate) return null;
+    const start = startDate.getTime();
+    const end = endDate.getTime();
+    if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return null;
+    const now = Date.now();
+    const elapsed = Math.min(Math.max(now - start, 0), end - start);
+    return Math.round((elapsed / (end - start)) * 100);
+  }
+
+  private legalTypeLabel(type: string): string {
+    const map: Record<string, string> = {
+      contrato_trabalho: 'Contrato de trabalho',
+      contrato_imagem: 'Contrato de imagem',
+      formacao: 'Contrato de formação',
+      rescisao: 'Termo de rescisão',
+      transferencia: 'Termo de transferência',
+      aditivo: 'Aditivo contratual',
+      procuração: 'Procuração',
+      nda: 'NDA / Confidencialidade',
+      outro: 'Outro',
+    };
+    return map[type] ?? type;
+  }
+
+  private legalStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      draft: 'Rascunho',
+      pending_signature: 'Aguardando assinatura',
+      signed: 'Ativo',
+      expired: 'Expirado',
+      cancelled: 'Cancelado',
+    };
+    return map[status] ?? status;
+  }
+
+  private rhContractTypeLabel(type: string): string {
+    const map: Record<string, string> = {
+      CLT: 'CLT',
+      PJ: 'PJ',
+      estagio: 'Estágio',
+      atleta: 'Contrato de atleta',
+    };
+    return map[type] ?? type;
+  }
+
+  private rhStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      ativo: 'Ativo',
+      afastado: 'Afastado',
+      desligado: 'Encerrado',
+    };
+    return map[status] ?? status;
+  }
+
+  async uploadRegistrationDocument(
+    playerId: string,
+    file: { buffer: Buffer; originalname: string; mimetype?: string },
+    name: string,
+    documentType: string,
+  ) {
+    await this.findOne(playerId);
+    if (!name?.trim()) throw new BadRequestException('Nome do documento é obrigatório');
+    if (!documentType?.trim()) throw new BadRequestException('Tipo do documento é obrigatório');
+
+    const lower = file.originalname?.toLowerCase() ?? '';
+    const allowed =
+      lower.endsWith('.pdf') ||
+      lower.endsWith('.png') ||
+      lower.endsWith('.jpg') ||
+      lower.endsWith('.jpeg') ||
+      lower.endsWith('.webp') ||
+      file.mimetype === 'application/pdf' ||
+      file.mimetype?.startsWith('image/');
+    if (!allowed) {
+      throw new BadRequestException('Envie PDF ou imagem (PNG, JPG, WEBP).');
+    }
+
+    const uploaded = await this.s3.uploadPlayerRegistrationDocument(
+      file.buffer,
+      playerId,
+      file.originalname || 'documento.pdf',
+      file.mimetype,
+    );
+
+    return {
+      id: randomUUID(),
+      name: name.trim(),
+      documentType: documentType.trim(),
+      fileKey: uploaded.key,
+      fileUrl: uploaded.url,
+      uploadedAt: new Date().toISOString(),
+    };
   }
 
   async create(dto: CreatePlayerDto) {
@@ -56,13 +419,17 @@ export class PlayersService {
     const data = this.toCreateData(dto);
     return this.prisma.player.create({
       data,
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
   }
 
   async update(id: string, dto: UpdatePlayerDto) {
     const current = await this.prisma.player.findUnique({ where: { id } });
     if (!current) throw new NotFoundException('Jogador não encontrado');
+
+    if (dto.registrationProfile !== undefined) {
+      this.assertRegistrationIdentifiers(dto.registrationProfile);
+    }
 
     const data = this.toUpdateData(dto) as Prisma.PlayerUpdateInput;
 
@@ -106,7 +473,7 @@ export class PlayersService {
     await this.prisma.player.update({
       where: { id },
       data,
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
 
     await this.syncBodyMetricsFromSources(id);

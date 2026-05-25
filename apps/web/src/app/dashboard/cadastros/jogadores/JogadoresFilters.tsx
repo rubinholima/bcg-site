@@ -14,6 +14,7 @@ import {
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
+import { SPORTS_SITUATION_OPTIONS } from "@/lib/player-registration-profile";
 
 interface Tenant {
   id: string;
@@ -22,7 +23,17 @@ interface Tenant {
   categories?: string[] | null;
 }
 
-export function JogadoresFilters() {
+interface JogadoresFiltersProps {
+  archivedMode?: boolean;
+  loanedMode?: boolean;
+  basePath?: string;
+}
+
+export function JogadoresFilters({
+  archivedMode = false,
+  loanedMode = false,
+  basePath = "/dashboard/cadastros/jogadores",
+}: JogadoresFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -30,6 +41,7 @@ export function JogadoresFilters() {
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [position, setPosition] = useState(searchParams.get("position") ?? "");
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [situation, setSituation] = useState(searchParams.get("situation") ?? "");
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -50,7 +62,8 @@ export function JogadoresFilters() {
     if (category) params.set("category", category);
     if (position) params.set("position", position);
     if (search.trim()) params.set("search", search.trim());
-    router.push(`/dashboard/cadastros/jogadores?${params.toString()}`);
+    if (!archivedMode && !loanedMode && situation) params.set("situation", situation);
+    router.push(`${basePath}?${params.toString()}`);
   };
 
   const clearFilters = () => {
@@ -58,7 +71,8 @@ export function JogadoresFilters() {
     setCategory("");
     setPosition("");
     setSearch("");
-    router.push("/dashboard/cadastros/jogadores");
+    setSituation("");
+    router.push(basePath);
   };
 
   return (
@@ -85,42 +99,104 @@ export function JogadoresFilters() {
           </SelectContent>
         </Select>
       </div>
-      <div className="min-w-[140px]">
-        <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
-        <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Todas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            {categoriesForDropdown.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
-                {c.labelPT}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="min-w-[160px]">
-        <label className="text-xs text-muted-foreground mb-1 block">Posição</label>
-        <Select value={position || "all"} onValueChange={(v) => setPosition(v === "all" ? "" : v)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Todas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            {FOOTBALL_POSITIONS.map((pos) => (
-              <SelectItem key={pos.value} value={pos.value}>
-                {pos.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {!archivedMode && !loanedMode ? (
+        <div className="min-w-[140px]">
+          <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
+          <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {categoriesForDropdown.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.labelPT}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {!archivedMode && !loanedMode ? (
+        <div className="min-w-[160px]">
+          <label className="text-xs text-muted-foreground mb-1 block">Posição</label>
+          <Select value={position || "all"} onValueChange={(v) => setPosition(v === "all" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {FOOTBALL_POSITIONS.map((pos) => (
+                <SelectItem key={pos.value} value={pos.value}>
+                  {pos.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {archivedMode ? (
+        <div className="min-w-[140px]">
+          <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
+          <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {categoriesForDropdown.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.labelPT}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {archivedMode ? (
+        <div className="min-w-[160px]">
+          <label className="text-xs text-muted-foreground mb-1 block">Posição</label>
+          <Select value={position || "all"} onValueChange={(v) => setPosition(v === "all" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              {FOOTBALL_POSITIONS.map((pos) => (
+                <SelectItem key={pos.value} value={pos.value}>
+                  {pos.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {!archivedMode && !loanedMode ? (
+        <div className="min-w-[150px]">
+          <label className="text-xs text-muted-foreground mb-1 block">Situação</label>
+          <Select value={situation || "all"} onValueChange={(v) => setSituation(v === "all" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Ativos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Ativos (padrão)</SelectItem>
+              {SPORTS_SITUATION_OPTIONS.filter(
+                (o) => o.value !== "desligado" && o.value !== "emprestado",
+              ).map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
       <div className="min-w-[180px]">
-        <label className="text-xs text-muted-foreground mb-1 block">Busca (nome, time, posição)</label>
+        <label className="text-xs text-muted-foreground mb-1 block">
+          Busca (nome, CPF, registro CBF…)
+        </label>
         <Input
-          placeholder="Buscar..."
+          placeholder="Nome, CPF ou registro CBF"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && applyFilters()}

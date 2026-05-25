@@ -49,6 +49,7 @@ import {
   Database,
   Briefcase,
   GraduationCap,
+  Archive,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
@@ -181,6 +182,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             moduleSlug: "tipos",
           },
           {
+            slug: "cad_jogadores_desligados",
+            label: "Atletas desligados",
+            href: "/dashboard/cadastros/jogadores/arquivo",
+            icon: Archive,
+            moduleSlug: "tipos",
+          },
+          {
             slug: "cad_campeonatos",
             label: "Campeonatos",
             href: "/dashboard/cadastros/campeonatos",
@@ -203,7 +211,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
           {
             slug: "cad_categorias",
-            label: "Categorias de jogos",
+            label: "Categoria",
             href: "/dashboard/cadastros/categorias",
             icon: Layers,
             moduleSlug: "tipos",

@@ -5,6 +5,13 @@ export function canAccessMasterDashboard(role: MeRole | null | undefined): boole
   return role === "super_admin";
 }
 
+/** Painel da empresa (/dashboard/clube) — apenas company_admin. */
+export function canAccessCompanyDashboard(role: MeRole | null | undefined): boolean {
+  return role === "company_admin";
+}
+
+export const COMPANY_DASHBOARD_ROUTE = "/dashboard/clube";
+
 interface HubHomeRule {
   route: string;
   roles?: MeRole[];
@@ -13,7 +20,8 @@ interface HubHomeRule {
 
 /** Prioridade: primeiro match define a home do usuário (exceto super_admin). */
 const HUB_HOME_RULES: HubHomeRule[] = [
-  { route: "/dashboard/diretoria", roles: ["diretoria", "company_admin"], modules: ["diretoria"] },
+  { route: COMPANY_DASHBOARD_ROUTE, roles: ["company_admin"] },
+  { route: "/dashboard/diretoria", roles: ["diretoria"], modules: ["diretoria"] },
   {
     route: "/dashboard/futebol",
     roles: ["comissao", "analista"],
@@ -83,6 +91,9 @@ export function getDashboardHomeMenuItem(
 ): DashboardHomeMenuItem {
   if (canAccessMasterDashboard(role)) {
     return { slug: "dashboard", label: "Dashboard Master", href: "/dashboard" };
+  }
+  if (canAccessCompanyDashboard(role)) {
+    return { slug: "company_dashboard", label: "Painel da Empresa", href: COMPANY_DASHBOARD_ROUTE };
   }
   return {
     slug: "home",

@@ -21,6 +21,14 @@ export interface DashboardStatsDto {
   lastUser: LastActivityDto | null;
 }
 
+export interface CompanyDashboardStatsDto {
+  tenantName: string;
+  tenantsCount: number;
+  playersCount: number;
+  usersCount: number;
+  pagesCount: number;
+}
+
 @Injectable()
 export class DashboardService {
   constructor(
@@ -89,6 +97,52 @@ export class DashboardService {
       pagesCount,
       lastTenant,
       lastUser,
+    };
+  }
+
+  /** KPIs do painel company_admin — escopo por tenantIds (null = todas exceto BCG master). */
+  async getCompanyStats(tenantIds: string[] | null): Promise<CompanyDashboardStatsDto> {
+    const tenantWhere =
+      tenantIds && tenantIds.length > 0
+        ? { id: { in: tenantIds } }
+        : { slug: { not: TENANT_COUNT_EXCLUDE_SLUG } };
+
+    const tenants = await this.prisma.tenant.findMany({
+      where: tenantWhere,
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const ids = tenants.map((t) => t.id);
+    const tenantName =
+      tenants.length === 0
+        ? 'Empresa'
+        : tenants.length === 1
+          ? tenants[0].name
+          : `${tenants[0].name} +${tenants.length - 1}`;
+
+    if (ids.length === 0) {
+      return {
+        tenantName,
+        tenantsCount: 0,
+        playersCount: 0,
+        usersCount: 0,
+        pagesCount: 0,
+      };
+    }
+
+    const [playersCount, usersCount, pagesCount] = await Promise.all([
+      this.prisma.player.count({ where: { tenantId: { in: ids } } }),
+      this.prisma.userTenant.count({ where: { tenantId: { in: ids } } }),
+      this.prisma.page.count({ where: { tenantId: { in: ids } } }),
+    ]);
+
+    return {
+      tenantName,
+      tenantsCount: tenants.length,
+      playersCount,
+      usersCount,
+      pagesCount,
     };
   }
 }

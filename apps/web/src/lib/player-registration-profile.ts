@@ -102,11 +102,146 @@ export interface PlayerRegistrationProfile {
     flipFlops?: string;
     notes?: string;
   };
+  travel?: {
+    passports?: PlayerPassport[];
+    visas?: PlayerTravelVisa[];
+    loyaltyPrograms?: PlayerLoyaltyProgram[];
+  };
+  documents?: PlayerRegistrationDocument[];
+  contracts?: {
+    economicRights?: PlayerEconomicRight[];
+  };
+  categoryHistory?: PlayerCategoryHistoryEntry[];
+  /** Dados do empréstimo (situação = emprestado) */
+  loan?: PlayerLoanInfo;
+}
+
+export interface PlayerLoanInfo {
+  destinationClub?: string;
+  startDate?: string;
+  endDate?: string;
+  psychologicalSupport?: boolean;
+  notes?: string;
+}
+
+export interface PlayerCategoryHistoryEntry {
+  id: string;
+  displayId?: number;
+  /** Categoria em que estava (Na Categoria) */
+  fromCategory?: string | null;
+  entryDate: string;
+  exitDate?: string | null;
+  /** Categoria para qual migrou (Para Categoria) */
+  toCategory?: string | null;
+  migrationType: "automatic" | "manual";
+  updatedAt: string;
+  responsible?: string;
+}
+
+export interface PlayerEconomicRight {
+  id: string;
+  clubName: string;
+  percentage: number;
+}
+
+export interface PlayerRegistrationDocument {
+  id: string;
+  name: string;
+  documentType: string;
+  fileKey?: string;
+  fileUrl: string;
+  uploadedAt: string;
+}
+
+export const PLAYER_DOCUMENT_TYPE_OPTIONS = [
+  { value: "rg", label: "RG" },
+  { value: "cpf", label: "CPF" },
+  { value: "ctps", label: "CTPS" },
+  { value: "certidao", label: "Certidão" },
+  { value: "comprovante_residencia", label: "Comprovante de residência" },
+  { value: "documento_esportivo", label: "Documento esportivo" },
+  { value: "outro", label: "Outros" },
+] as const;
+
+export function getPlayerDocumentTypeLabel(value: string): string {
+  return PLAYER_DOCUMENT_TYPE_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
+export function normalizeDocumentsProfile(
+  documents: PlayerRegistrationProfile["documents"],
+): PlayerRegistrationDocument[] {
+  return Array.isArray(documents) ? documents : [];
+}
+
+export function normalizeEconomicRights(
+  profile: PlayerRegistrationProfile,
+  tenantName?: string | null,
+): PlayerEconomicRight[] {
+  const rows = profile.contracts?.economicRights;
+  if (Array.isArray(rows) && rows.length > 0) return rows;
+  if (tenantName?.trim()) {
+    return [{ id: "default", clubName: tenantName.trim(), percentage: 100 }];
+  }
+  return [];
+}
+
+export interface PlayerPassport {
+  id: string;
+  number?: string;
+  issuingCountry?: string;
+  issueDate?: string;
+  validUntil?: string;
+  authority?: string;
+  preferred?: boolean;
+}
+
+export interface PlayerTravelVisa {
+  id: string;
+  country?: string;
+  visaType?: string;
+  number?: string;
+  issueDate?: string;
+  validUntil?: string;
+  passportNumber?: string;
+}
+
+export interface PlayerLoyaltyProgram {
+  id: string;
+  transportCompany?: string;
+  programName?: string;
+  membershipNumber?: string;
+}
+
+export function createTravelRowId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `travel-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function normalizeTravelProfile(travel: PlayerRegistrationProfile["travel"]): NonNullable<PlayerRegistrationProfile["travel"]> {
+  return {
+    passports: Array.isArray(travel?.passports) ? travel.passports : [],
+    visas: Array.isArray(travel?.visas) ? travel.visas : [],
+    loyaltyPrograms: Array.isArray(travel?.loyaltyPrograms) ? travel.loyaltyPrograms : [],
+  };
 }
 
 export function parseRegistrationProfile(raw: unknown): PlayerRegistrationProfile {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
   return raw as PlayerRegistrationProfile;
+}
+
+export function normalizeCpfDigits(value?: string | null): string {
+  return (value ?? "").replace(/\D/g, "");
+}
+
+/** Valida identificadores obrigatórios do cadastro (CPF para RH/contratos). */
+export function getRegistrationIdentifiersError(profile: PlayerRegistrationProfile): string | null {
+  if (normalizeCpfDigits(profile.personal?.cpf).length < 11) {
+    return "Preencha o CPF do atleta (11 dígitos).";
+  }
+  return null;
 }
 
 export function computeAge(birthDate?: string | null): number | null {
@@ -156,11 +291,173 @@ export const RH_FACTOR_OPTIONS = [
 ] as const;
 
 export const SPORTS_SITUATION_OPTIONS = [
-  { value: "elenco", label: "Elenco" },
+  { value: "ativo", label: "Ativo" },
   { value: "emprestado", label: "Emprestado" },
   { value: "teste", label: "Teste" },
-  { value: "inativo", label: "Inativo" },
+  { value: "desligado", label: "Desligado" },
 ] as const;
+
+export function normalizeSportsSituation(value?: string | null): string {
+  if (!value || value === "elenco") return "ativo";
+  if (value === "inativo") return "desligado";
+  return value;
+}
+
+export function getSportsSituationLabel(value?: string | null): string {
+  const norm = normalizeSportsSituation(value);
+  return SPORTS_SITUATION_OPTIONS.find((o) => o.value === norm)?.label ?? norm;
+}
+
+export function isArchivedSportsSituation(value?: string | null): boolean {
+  const norm = normalizeSportsSituation(value);
+  return norm === "desligado";
+}
+
+export function createCategoryHistoryId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `cat-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function normalizeCategoryHistory(
+  history: PlayerRegistrationProfile["categoryHistory"],
+): PlayerCategoryHistoryEntry[] {
+  return Array.isArray(history) ? history : [];
+}
+
+export function formatProfileDate(iso?: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso.length === 10 ? `${iso}T12:00:00` : iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR");
+}
+
+export function computeDaysInCategory(entry: PlayerCategoryHistoryEntry): number | null {
+  const start = new Date(entry.entryDate.length === 10 ? `${entry.entryDate}T12:00:00` : entry.entryDate);
+  if (Number.isNaN(start.getTime())) return null;
+  const endRaw = entry.exitDate ?? new Date().toISOString().slice(0, 10);
+  const end = new Date(endRaw.length === 10 ? `${endRaw}T12:00:00` : endRaw);
+  if (Number.isNaN(end.getTime())) return null;
+  const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+  return diff >= 0 ? diff : 0;
+}
+
+export function computeTotalClubDays(history: PlayerCategoryHistoryEntry[]): number {
+  return history.reduce((sum, entry) => sum + (computeDaysInCategory(entry) ?? 0), 0);
+}
+
+export function getCategoryMigrationLabel(type: PlayerCategoryHistoryEntry["migrationType"]): string {
+  return type === "automatic" ? "Automático" : "Manual";
+}
+
+export function seedCategoryHistoryIfEmpty(
+  profile: PlayerRegistrationProfile,
+  currentCategory: string | null | undefined,
+  responsible: string,
+): PlayerRegistrationProfile {
+  if (!currentCategory?.trim()) return profile;
+  const history = normalizeCategoryHistory(profile.categoryHistory);
+  if (history.length > 0) return profile;
+  const entryDate = profile.personal?.clubArrivalDate?.trim() || new Date().toISOString().slice(0, 10);
+  return {
+    ...profile,
+    categoryHistory: [
+      {
+        id: createCategoryHistoryId(),
+        displayId: 1001,
+        entryDate,
+        toCategory: currentCategory,
+        migrationType: "automatic",
+        updatedAt: new Date().toISOString(),
+        responsible,
+      },
+    ],
+  };
+}
+
+export function appendCategoryHistoryOnChange(
+  profile: PlayerRegistrationProfile,
+  params: {
+    previousCategory: string | null | undefined;
+    newCategory: string | null | undefined;
+    responsible: string;
+    migrationType?: PlayerCategoryHistoryEntry["migrationType"];
+  },
+): PlayerRegistrationProfile {
+  const { previousCategory, newCategory, responsible, migrationType = "automatic" } = params;
+  if (previousCategory === newCategory) return profile;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date().toISOString();
+  let history = normalizeCategoryHistory(profile.categoryHistory);
+
+  if (history.length === 0 && previousCategory) {
+    history = [
+      {
+        id: createCategoryHistoryId(),
+        displayId: 1001,
+        entryDate: profile.personal?.clubArrivalDate?.trim() || today,
+        toCategory: previousCategory,
+        migrationType: "automatic",
+        updatedAt: now,
+        responsible,
+      },
+    ];
+  }
+
+  if (history.length > 0) {
+    const lastIdx = history.length - 1;
+    const last = history[lastIdx];
+    if (!last.exitDate) {
+      history = history.map((row, i) =>
+        i === lastIdx
+          ? {
+              ...row,
+              exitDate: today,
+              toCategory: newCategory ?? row.toCategory,
+              updatedAt: now,
+              responsible,
+            }
+          : row,
+      );
+    }
+  }
+
+  if (newCategory?.trim()) {
+    const maxDisplay = history.reduce((max, row) => Math.max(max, row.displayId ?? 1000), 1000);
+    history = [
+      ...history,
+      {
+        id: createCategoryHistoryId(),
+        displayId: maxDisplay + 1,
+        fromCategory: previousCategory ?? undefined,
+        entryDate: today,
+        toCategory: newCategory,
+        migrationType,
+        updatedAt: now,
+        responsible,
+      },
+    ];
+  }
+
+  return { ...profile, categoryHistory: history };
+}
+
+export function normalizeLoanProfile(loan: PlayerRegistrationProfile["loan"]): PlayerLoanInfo {
+  if (!loan || typeof loan !== "object") return {};
+  return loan;
+}
+
+export function getLoanPsychologicalSupportLabel(value?: boolean | null): string {
+  if (value === true) return "Sim";
+  if (value === false) return "Não";
+  return "—";
+}
+
+export function isLoanedPlayer(profile: PlayerRegistrationProfile): boolean {
+  return normalizeSportsSituation(profile.sports?.situation) === "emprestado";
+}
 
 export const PIX_KEY_TYPE_OPTIONS = [
   { value: "cpf", label: "CPF" },

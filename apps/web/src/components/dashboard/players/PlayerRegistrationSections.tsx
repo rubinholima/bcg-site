@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
+import { formatCpfForDisplay, formatCpfInput } from "@/lib/format-cpf";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import {
@@ -26,11 +27,18 @@ import {
   RH_FACTOR_OPTIONS,
   SKIN_COLOR_OPTIONS,
   SPORTS_SITUATION_OPTIONS,
+  appendCategoryHistoryOnChange,
   computeAge,
+  normalizeSportsSituation,
   type PlayerAddressBlock,
   type PlayerRegistrationProfile,
 } from "@/lib/player-registration-profile";
 import { ExpandableSection, FormGrid, RequiredMark, SectionDivider } from "./ExpandableSection";
+import { PlayerDocumentsSection } from "./PlayerDocumentsSection";
+import { PlayerContractsSection } from "./PlayerContractsSection";
+import { PlayerCategoryHistorySection } from "./PlayerCategoryHistorySection";
+import { PlayerLoanSection } from "./PlayerLoanSection";
+import { PlayerTravelTab } from "./PlayerTravelTab";
 
 interface CategoryOption {
   value: string;
@@ -64,6 +72,11 @@ interface PlayerRegistrationSectionsProps {
   onPendingPhotoFile: (f: File | null) => void;
   onPlayerField: (field: string, value: unknown) => void;
   onProfileChange: (next: PlayerRegistrationProfile) => void;
+  canAccessLogistica?: boolean;
+  canAccessJuridico?: boolean;
+  canAccessRh?: boolean;
+  tenantName?: string | null;
+  responsibleUserName?: string;
 }
 
 function patchProfile(
@@ -119,7 +132,28 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
     onPendingPhotoFile,
     onPlayerField,
     onProfileChange,
+    canAccessLogistica = false,
+    canAccessJuridico = false,
+    canAccessRh = false,
+    tenantName,
+    responsibleUserName = "Sistema",
   } = props;
+
+  const handleCategoryChange = (v: string | null) => {
+    const nextProfile = appendCategoryHistoryOnChange(profile, {
+      previousCategory: category,
+      newCategory: v,
+      responsible: responsibleUserName,
+    });
+    onProfileChange(nextProfile);
+    onCategoryChange(v);
+  };
+
+  const handleSituationChange = (v: string) => {
+    onProfileChange(patchProfile(profile, "sports", { situation: v || undefined }));
+    if (v === "desligado") onPlayerField("status", "not_in_squad");
+    else if (v === "ativo") onPlayerField("status", "available");
+  };
 
   const age = computeAge(birthDate);
   const personal = profile.personal ?? {};
@@ -132,7 +166,7 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
 
   return (
     <div className="space-y-4">
-      <ExpandableSection title="Identificação e foto" description="Nome, categoria e avatar" defaultOpen>
+      <ExpandableSection title="Identificação e foto" description="Nome, categoria e avatar">
         <FormGrid cols={4}>
           <div className="space-y-2 sm:col-span-2">
             <Label>
@@ -153,7 +187,7 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           </div>
           <div className="space-y-2">
             <Label>Categoria</Label>
-            <Select value={category || "none"} onValueChange={(v) => onCategoryChange(v === "none" ? null : v)}>
+            <Select value={category || "none"} onValueChange={(v) => handleCategoryChange(v === "none" ? null : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="—" />
               </SelectTrigger>
@@ -167,11 +201,39 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2">
+            <Label>Situação no clube</Label>
+            <Select
+              value={normalizeSportsSituation(sports.situation)}
+              onValueChange={handleSituationChange}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SPORTS_SITUATION_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {normalizeSportsSituation(sports.situation) === "desligado" ? (
+              <p className="text-xs text-amber-600 dark:text-amber-500">
+                Desligados saem da lista principal e ficam em Cadastros → Futebol → Atletas desligados.
+              </p>
+            ) : null}
+            {normalizeSportsSituation(sports.situation) === "emprestado" ? (
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                Emprestados saem da lista por categoria e aparecem em Atletas emprestados. Preencha a seção Empréstimo.
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-2">
             <Label>ID interno</Label>
             <Input value={playerId.slice(-8).toUpperCase()} readOnly className="bg-muted/50 text-muted-foreground" />
           </div>
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2">
             <Label>Matrícula RH</Label>
             <Input
               value={personal.rhEnrollment ?? ""}
@@ -200,7 +262,7 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         </FormGrid>
       </ExpandableSection>
 
-      <ExpandableSection title="Dados pessoais" description="Documentos, contato e filiação" defaultOpen>
+      <ExpandableSection title="Dados pessoais" description="Documentos, contato e filiação">
         <FormGrid cols={4}>
           <div className="space-y-2">
             <Label>Chegada no clube</Label>
@@ -256,9 +318,17 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               <RequiredMark />
             </Label>
             <Input
-              value={personal.cpf ?? ""}
-              onChange={(e) => onProfileChange(patchProfile(profile, "personal", { cpf: e.target.value || undefined }))}
+              value={formatCpfForDisplay(personal.cpf)}
+              onChange={(e) =>
+                onProfileChange(
+                  patchProfile(profile, "personal", {
+                    cpf: formatCpfInput(e.target.value) || undefined,
+                  }),
+                )
+              }
               placeholder="000.000.000-00"
+              inputMode="numeric"
+              maxLength={14}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
@@ -397,6 +467,23 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         </FormGrid>
       </ExpandableSection>
 
+      <PlayerDocumentsSection
+        playerId={playerId}
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
+
+      <PlayerContractsSection
+        playerId={playerId}
+        tenantName={tenantName}
+        profile={profile}
+        onProfileChange={onProfileChange}
+        canAccessJuridico={canAccessJuridico}
+        canAccessRh={canAccessRh}
+      />
+
+      <PlayerLoanSection profile={profile} tenantName={tenantName} onProfileChange={onProfileChange} />
+
       <ExpandableSection title="Dados esportivos" description="Categoria, posição, registros e trajetória">
         <FormGrid cols={6}>
           <div className="space-y-2">
@@ -452,28 +539,6 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
                 <SelectItem value="left">Esquerdo</SelectItem>
                 <SelectItem value="right">Direito</SelectItem>
                 <SelectItem value="both">Ambidestro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Situação</Label>
-            <Select
-              value={sports.situation ?? status ?? "elenco"}
-              onValueChange={(v) => {
-                onProfileChange(patchProfile(profile, "sports", { situation: v || undefined }));
-                if (v === "inativo") onPlayerField("status", "not_in_squad");
-                else if (v === "elenco") onPlayerField("status", "available");
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SPORTS_SITUATION_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
@@ -573,6 +638,8 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           </div>
         </FormGrid>
       </ExpandableSection>
+
+      <PlayerCategoryHistorySection profile={profile} currentCategory={category} />
 
       <ExpandableSection title="Endereços" description="Residência principal e endereço local">
         <div className="mb-4 flex items-center gap-2">
@@ -966,6 +1033,13 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           </div>
         </div>
       </ExpandableSection>
+
+      <PlayerTravelTab
+        playerId={playerId}
+        profile={profile}
+        onProfileChange={onProfileChange}
+        canAccessLogistica={canAccessLogistica}
+      />
 
       <ExpandableSection title="Rouparia" description="Tamanhos de uniformes e calçados">
         <FormGrid cols={6}>

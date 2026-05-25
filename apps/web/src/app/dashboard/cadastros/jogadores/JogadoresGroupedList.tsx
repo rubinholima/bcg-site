@@ -16,6 +16,7 @@ import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-ta
 import { getPublicImageUrl } from "@/lib/media-url";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
+import { getSportsSituationLabel, parseRegistrationProfile } from "@/lib/player-registration-profile";
 import { cn } from "@/lib/utils";
 
 export interface JogadorListItem {
@@ -26,8 +27,9 @@ export interface JogadorListItem {
   position?: string | null;
   category?: string | null;
   tenantId: string;
-  tenant?: { id: string; name: string; slug: string };
+  tenant?: { id: string; name: string; slug: string; logoUrl?: string | null };
   status?: string | null;
+  registrationProfile?: unknown;
 }
 
 interface JogadoresGroupedListProps {
@@ -44,7 +46,7 @@ function PlayerTable({ rows }: { rows: JogadorListItem[] }) {
           <TableHead>Nome</TableHead>
           <TableHead>Nº</TableHead>
           <TableHead>Posição</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Situação</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -65,7 +67,9 @@ function PlayerTable({ rows }: { rows: JogadorListItem[] }) {
             <TableCell className="font-medium">{p.name}</TableCell>
             <TableCell>{p.jerseyNumber ?? "—"}</TableCell>
             <TableCell>{getPositionLabel(p.position) || p.position || "—"}</TableCell>
-            <TableCell>{p.status ?? "available"}</TableCell>
+            <TableCell>
+              {getSportsSituationLabel(parseRegistrationProfile(p.registrationProfile).sports?.situation)}
+            </TableCell>
             <TableRowActions>
               <div className="flex justify-end gap-2">
                 <Link href={`/dashboard/cadastros/jogadores/${p.id}/edit`}>
@@ -123,10 +127,12 @@ function CategoryBlock({
 
 function TeamBlock({
   teamName,
+  teamLogoUrl,
   categories,
   defaultOpen,
 }: {
   teamName: string;
+  teamLogoUrl?: string | null;
   categories: Array<{ key: string; players: JogadorListItem[] }>;
   defaultOpen?: boolean;
 }) {
@@ -141,8 +147,16 @@ function TeamBlock({
         className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-muted/20 sm:px-5"
       >
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Users className="h-5 w-5" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-muted">
+            {teamLogoUrl ? (
+              <img
+                src={getPublicImageUrl(teamLogoUrl)}
+                alt=""
+                className="h-full w-full object-contain p-0.5"
+              />
+            ) : (
+              <Users className="h-5 w-5 text-primary" />
+            )}
           </div>
           <div className="min-w-0">
             <p className="truncate font-semibold text-foreground">{teamName}</p>
@@ -191,11 +205,12 @@ export function JogadoresGroupedList({ players, groupByTeam }: JogadoresGroupedL
       return { teams: null as null, categories: groupByCategory(players) };
     }
 
-    const teamMap = new Map<string, { name: string; players: JogadorListItem[] }>();
+    const teamMap = new Map<string, { name: string; logoUrl?: string | null; players: JogadorListItem[] }>();
     for (const p of players) {
       const key = p.tenantId;
       const name = p.tenant?.name ?? p.tenantId;
-      const entry = teamMap.get(key) ?? { name, players: [] };
+      const entry = teamMap.get(key) ?? { name, logoUrl: p.tenant?.logoUrl ?? null, players: [] };
+      if (!entry.logoUrl && p.tenant?.logoUrl) entry.logoUrl = p.tenant.logoUrl;
       entry.players.push(p);
       teamMap.set(key, entry);
     }
@@ -203,6 +218,7 @@ export function JogadoresGroupedList({ players, groupByTeam }: JogadoresGroupedL
     const teams = [...teamMap.entries()]
       .map(([, value]) => ({
         teamName: value.name,
+        teamLogoUrl: value.logoUrl,
         categories: groupByCategory(value.players),
       }))
       .sort((a, b) => a.teamName.localeCompare(b.teamName, "pt-BR"));
@@ -217,6 +233,7 @@ export function JogadoresGroupedList({ players, groupByTeam }: JogadoresGroupedL
           <TeamBlock
             key={team.teamName}
             teamName={team.teamName}
+            teamLogoUrl={team.teamLogoUrl}
             categories={team.categories}
             defaultOpen={index === 0}
           />

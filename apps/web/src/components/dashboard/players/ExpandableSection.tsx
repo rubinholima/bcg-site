@@ -33,7 +33,7 @@ export function ExpandableSection({
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-foreground">{title}</h3>
             {badge != null && badge !== "" ? (
               <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
                 {badge}

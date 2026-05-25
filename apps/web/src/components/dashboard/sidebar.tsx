@@ -192,6 +192,18 @@ function resolveLinkActive(
   if (href === "/dashboard/saude") return pathname === "/dashboard/saude";
   if (href === "/dashboard/cadastros") return pathname === "/dashboard/cadastros";
   if (href === "/dashboard/cadastros/tipos") return !!pathname?.startsWith("/dashboard/cadastros/tipos");
+  if (href === "/dashboard/cadastros/jogadores") {
+    if (!pathname?.startsWith("/dashboard/cadastros/jogadores")) return false;
+    if (pathname.startsWith("/dashboard/cadastros/jogadores/arquivo")) return false;
+    if (pathname.startsWith("/dashboard/cadastros/jogadores/emprestados")) return false;
+    return true;
+  }
+  if (href === "/dashboard/cadastros/jogadores/arquivo") {
+    return !!pathname?.startsWith("/dashboard/cadastros/jogadores/arquivo");
+  }
+  if (href === "/dashboard/cadastros/jogadores/emprestados") {
+    return !!pathname?.startsWith("/dashboard/cadastros/jogadores/emprestados");
+  }
   return inPathHelper(href, pathname);
 }
 
@@ -383,11 +395,17 @@ function SidebarNav() {
 
           if (item.slug === "dashboard") {
             if (!canAccessDashboard) return null;
-            if (homeMenu.href === "/dashboard" && !canAccessModule("dashboard")) return null;
+            if (
+              homeMenu.href === "/dashboard" &&
+              !canAccessModule("dashboard") &&
+              role !== "super_admin"
+            ) {
+              return null;
+            }
             const isActive =
               homeMenu.href === "/dashboard"
                 ? pathname === "/dashboard"
-                : pathname === homeMenu.href;
+                : pathname === homeMenu.href || pathname?.startsWith(`${homeMenu.href}/`);
             return (
               <Link
                 key={homeMenu.slug}
@@ -603,23 +621,88 @@ function SidebarNav() {
                                           (cc.moduleSlug === "emails" && canAccessDashboard)
                                       )
                                       .map((cc) => {
+                                        if (cc.children?.length) {
+                                          const hasCcAccess = hasAccessToAnyChild(
+                                            cc.children,
+                                            canAccessModule,
+                                            canAccessDashboard,
+                                          );
+                                          if (!hasCcAccess) return null;
+                                          const CcIcon = cc.icon;
+                                          const isCcOpen =
+                                            nestedOpen[cc.slug] ??
+                                            nestedDefaultOpen(cc, pathname, inPath);
+                                          return (
+                                            <div key={cc.slug} className="space-y-0.5">
+                                              <button
+                                                type="button"
+                                                onClick={() => toggleNested(cc)}
+                                                className={cn(
+                                                  "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 dashboard-link-hover",
+                                                  "font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                                )}
+                                              >
+                                                {isCcOpen ? (
+                                                  <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-label="Recolher" />
+                                                ) : (
+                                                  <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-label="Expandir" />
+                                                )}
+                                                {CcIcon && <CcIcon className="h-3.5 w-3.5 shrink-0" />}
+                                                <span>{cc.label}</span>
+                                              </button>
+                                              {isCcOpen ? (
+                                                <div className="ml-3 space-y-0.5 border-l border-border pl-2">
+                                                  {cc.children
+                                                    .filter(
+                                                      (ccc) =>
+                                                        canAccessModule(ccc.moduleSlug) ||
+                                                        (ccc.moduleSlug === "emails" && canAccessDashboard),
+                                                    )
+                                                    .map((ccc) => {
+                                                      const isLeafActive =
+                                                        !ccc.external &&
+                                                        resolveLinkActive(ccc.href, pathname, relHub);
+                                                      return (
+                                                        <SidebarMenuLink
+                                                          key={ccc.slug}
+                                                          href={ccc.href!}
+                                                          external={ccc.external}
+                                                          onNavigate={onNavClick}
+                                                          className={cn(
+                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                                            isLeafActive
+                                                              ? "dashboard-sidebar-active"
+                                                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                                          )}
+                                                        >
+                                                          {ccc.icon && <ccc.icon className="h-4 w-4 shrink-0" />}
+                                                          {ccc.label}
+                                                        </SidebarMenuLink>
+                                                      );
+                                                    })}
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                          );
+                                        }
+                                        if (!cc.href) return null;
                                         const hrefMatches = resolveLinkActive(cc.href, pathname, relHub);
                                         const isChildActive =
                                           !cc.external &&
                                           hrefMatches &&
                                           (markedActiveHref === null || markedActiveHref !== cc.href) &&
-                                          (markedActiveHref = cc.href!, true);
+                                          (markedActiveHref = cc.href, true);
                                         return (
                                           <SidebarMenuLink
                                             key={cc.slug}
-                                            href={cc.href!}
+                                            href={cc.href}
                                             external={cc.external}
                                             onNavigate={onNavClick}
                                             className={cn(
                                               "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
                                               isChildActive
                                                 ? "dashboard-sidebar-active"
-                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                             )}
                                           >
                                             {cc.icon && <cc.icon className="h-4 w-4 shrink-0" />}
@@ -633,13 +716,14 @@ function SidebarNav() {
                             </div>
                           );
                         }
+                        if (!child.href) return null;
                         const ChildIcon = child.icon!;
                         const isChildActive = !child.external && resolveLinkActive(child.href, pathname, relHub);
                         const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
                         return (
                           <SidebarMenuLink
                             key={child.slug}
-                            href={child.href!}
+                            href={child.href}
                             external={child.external}
                             onNavigate={onNavClick}
                             className={cn(

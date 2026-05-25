@@ -456,6 +456,57 @@ export class S3Service {
   }
 
   /**
+   * Upload de documento do cadastro do atleta (PDF ou imagem).
+   * Salva em media/jogadores-documentos/{playerId}/{uuid}.{ext}
+   */
+  async uploadPlayerRegistrationDocument(
+    buffer: Buffer,
+    playerId: string,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; url: string }> {
+    const lower = filename.toLowerCase();
+    let ext = 'pdf';
+    let contentType = 'application/pdf';
+    if (lower.endsWith('.png')) {
+      ext = 'png';
+      contentType = 'image/png';
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      ext = 'jpg';
+      contentType = 'image/jpeg';
+    } else if (lower.endsWith('.webp')) {
+      ext = 'webp';
+      contentType = 'image/webp';
+    } else if (lower.endsWith('.pdf')) {
+      ext = 'pdf';
+      contentType = 'application/pdf';
+    } else if (mimeType?.startsWith('image/')) {
+      ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+      contentType = mimeType;
+    }
+
+    const key = `media/jogadores-documentos/${playerId}/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar documento para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
    * Retorna o buffer de um objeto (para envio ao Adobe Sign).
    */
   async getObjectBuffer(key: string): Promise<Buffer> {
