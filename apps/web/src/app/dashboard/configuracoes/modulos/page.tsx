@@ -25,14 +25,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/context/AuthContext";
-import { MODULE_DISPLAY_NAMES, DASHBOARD_LABELS } from "@/lib/dashboard-labels";
+import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
 import {
-  DASHBOARD_MENU,
-  PLAYER_TABS,
+  getMenuDepartmentGroups,
   getUniqueModuleSlugs,
-  type MenuItemConfig,
+  type MenuDepartmentGroup,
 } from "@/lib/dashboard-menu.config";
-import { getAreaMeta, sortAreaKeys } from "@/lib/module-functional-areas";
 import {
   applyAdditivePreset,
   buildMatrixExportPayload,
@@ -64,6 +62,13 @@ interface DisplayRow extends Omit<ModulePermission, "functionalArea"> {
   functionalArea: string;
   /** Caminho amigável no menu (breadcrumb). */
   path: string;
+  /** Itens do menu lateral que este módulo libera. */
+  menuLabels: string[];
+  departmentId: string;
+}
+
+interface DepartmentSection extends MenuDepartmentGroup {
+  rows: DisplayRow[];
 }
 
 interface AuditChangeRow {
@@ -80,13 +85,6 @@ interface AuditEntry {
   actorEmail: string | null;
   changeCount: number;
   changes?: AuditChangeRow[];
-}
-
-interface ModuleTreeNode {
-  slug: string;
-  label: string;
-  path: string;
-  depth: number;
 }
 
 /** Papéis armazenados na API por módulo (auditoria e presets). */
@@ -264,65 +262,61 @@ export default function ModulosPage() {
     };
   }, [isSuperAdmin, refreshAudit]);
 
-  /** Ordem igual à sidebar/menu. */
-  const moduleTree = useMemo(() => {
-    const nodes: ModuleTreeNode[] = [];
-    const seen = new Set<string>();
+  const menuDepartments = useMemo(() => getMenuDepartmentGroups(), []);
 
-    function walk(items: MenuItemConfig[], path: string, depth: number) {
-      for (const item of items) {
-        if (item.children?.length) {
-          const parentPath = path ? `${path} › ${item.label}` : item.label;
-          walk(item.children, parentPath, depth + 1);
-        } else if (item.href && !item.external && !seen.has(item.moduleSlug)) {
-          seen.add(item.moduleSlug);
-          nodes.push({
-            slug: item.moduleSlug,
-            label: item.label,
-            path: path ? `${path} › ${item.label}` : item.label,
-            depth,
-          });
-        }
-      }
-    }
-    walk(DASHBOARD_MENU, "", 0);
-
-    for (const tab of PLAYER_TABS) {
-      if (tab.moduleSlug && !seen.has(tab.moduleSlug)) {
-        seen.add(tab.moduleSlug);
-        nodes.push({
-          slug: tab.moduleSlug,
-          label: tab.label,
-          path: `${DASHBOARD_LABELS.atletas} › ${tab.label}`,
-          depth: 0,
+  const slugToDepartment = useMemo(() => {
+    const map = new Map<string, { departmentId: string; departmentLabel: string; menuLabels: string[] }>();
+    for (const dept of menuDepartments) {
+      for (const mod of dept.modules) {
+        const prev = map.get(mod.slug);
+        const labels = prev
+          ? [...prev.menuLabels, ...mod.menuLabels.filter((l) => !prev.menuLabels.includes(l))]
+          : mod.menuLabels;
+        map.set(mod.slug, {
+          departmentId: dept.id,
+          departmentLabel: dept.label,
+          menuLabels: labels,
         });
       }
     }
-
-    const permMap = new Map(modules.map((m) => [m.slug, m]));
-    const allSlugs = getUniqueModuleSlugs();
-    for (const slug of allSlugs) {
-      if (!seen.has(slug) && permMap.has(slug)) {
-        seen.add(slug);
-        nodes.push({
-          slug,
-          label: MODULE_DISPLAY_NAMES[slug] ?? slug,
-          path: slug,
-          depth: 0,
-        });
-      }
-    }
-    return nodes;
-  }, [modules]);
+    return map;
+  }, [menuDepartments]);
 
   const displayModules: DisplayRow[] = useMemo(() => {
     const permMap = new Map(modules.map((m) => [m.slug, m]));
-    return moduleTree.map((node) => {
-      const existing = permMap.get(node.slug);
+    const slugOrder: string[] = [];
+    const seen = new Set<string>();
+
+    for (const dept of menuDepartments) {
+      for (const mod of dept.modules) {
+        if (!seen.has(mod.slug)) {
+          seen.add(mod.slug);
+          slugOrder.push(mod.slug);
+        }
+      }
+    }
+    for (const slug of getUniqueModuleSlugs()) {
+      if (!seen.has(slug)) {
+        seen.add(slug);
+        slugOrder.push(slug);
+      }
+    }
+    for (const m of modules) {
+      if (!seen.has(m.slug)) {
+        seen.add(m.slug);
+        slugOrder.push(m.slug);
+      }
+    }
+
+    return slugOrder.map((slug) => {
+      const existing = permMap.get(slug);
+      const deptInfo = slugToDepartment.get(slug);
       return {
-        slug: node.slug,
-        name: MODULE_DISPLAY_NAMES[node.slug] ?? node.label,
-        path: node.path,
+        slug,
+        name: MODULE_DISPLAY_NAMES[slug] ?? existing?.name ?? slug,
+        path: deptInfo ? `${deptInfo.departmentLabel} › ${MODULE_DISPLAY_NAMES[slug] ?? slug}` : slug,
+        menuLabels: deptInfo?.menuLabels ?? [],
+        departmentId: deptInfo?.departmentId ?? "outros",
         sortOrder: existing?.sortOrder ?? 0,
         functionalArea: existing?.functionalArea ?? "outros",
         company_admin: existing?.company_admin ?? false,
@@ -336,7 +330,7 @@ export default function ModulosPage() {
         comissao: existing?.comissao ?? false,
       };
     });
-  }, [modules, moduleTree]);
+  }, [modules, menuDepartments, slugToDepartment]);
 
   /** Estado efetivo da matriz (API + edição local); usado para salvar, exportar e presets. */
   const mergedModuleState = useMemo<ModulePermission[]>(
@@ -361,13 +355,15 @@ export default function ModulosPage() {
 
   const roleSummary = useMemo(() => {
     const enabled = mergedModuleState.filter((m) => roleChecked(m, selectedRole));
-    const sections = new Set(enabled.map((m) => m.functionalArea || "outros"));
+    const departments = new Set(
+      displayModules.filter((d) => roleChecked(d, selectedRole)).map((d) => d.departmentId),
+    );
     return {
       moduleCount: enabled.length,
-      sectionCount: sections.size,
+      sectionCount: departments.size,
       enabledModules: enabled.map((m) => MODULE_DISPLAY_NAMES[m.slug] ?? m.name),
     };
-  }, [mergedModuleState, selectedRole]);
+  }, [mergedModuleState, selectedRole, displayModules]);
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -376,43 +372,56 @@ export default function ModulosPage() {
       (m) =>
         m.name.toLowerCase().includes(q) ||
         m.path.toLowerCase().includes(q) ||
-        m.slug.toLowerCase().includes(q),
+        m.slug.toLowerCase().includes(q) ||
+        m.menuLabels.some((l) => l.toLowerCase().includes(q)),
     );
   }, [displayModules, search]);
 
-  /** Agrupa por área funcional (API / banco). */
-  const areasWithModules = useMemo(() => {
-    const map = new Map<string, DisplayRow[]>();
-    for (const m of filteredRows) {
-      const a = m.functionalArea || "outros";
-      if (!map.has(a)) map.set(a, []);
-      map.get(a)!.push(m);
-    }
-    const ordered = sortAreaKeys([...map.keys()]);
-    return ordered.map((area) => ({
-      area,
-      meta: getAreaMeta(area),
-      modules: map.get(area) ?? [],
-    }));
-  }, [filteredRows]);
+  /** Agrupa por menu lateral (Depto Adm, Cadastros, etc.). */
+  const departmentsWithModules = useMemo((): DepartmentSection[] => {
+    const rowBySlug = new Map(filteredRows.map((r) => [r.slug, r]));
+    const usedSlugs = new Set<string>();
+    const sections: DepartmentSection[] = [];
 
-  /** Marca/desmarca um perfil em todos os módulos visíveis desta seção. */
-  const handleSectionAccess = useCallback(
-    (areaKey: string, role: ManagedRoleKey, value: boolean) => {
-      const slugs = filteredRows
-        .filter((r) => (r.functionalArea || "outros") === areaKey)
-        .map((r) => r.slug);
-      if (slugs.length === 0) return;
+    for (const dept of menuDepartments) {
+      const rows: DisplayRow[] = [];
+      for (const mod of dept.modules) {
+        const row = rowBySlug.get(mod.slug);
+        if (row) {
+          rows.push(row);
+          usedSlugs.add(mod.slug);
+        }
+      }
+      if (rows.length > 0) {
+        sections.push({ ...dept, rows });
+      }
+    }
+
+    const orphanRows = filteredRows.filter((r) => !usedSlugs.has(r.slug));
+    if (orphanRows.length > 0) {
+      sections.push({
+        id: "outros",
+        label: "Outros módulos",
+        modules: orphanRows.map((r) => ({ slug: r.slug, menuLabels: r.menuLabels })),
+        rows: orphanRows,
+      });
+    }
+
+    return sections;
+  }, [filteredRows, menuDepartments]);
+
+  /** Marca/desmarca um perfil em todos os módulos visíveis deste menu. */
+  const handleDepartmentAccess = useCallback(
+    (rows: DisplayRow[], role: ManagedRoleKey, value: boolean) => {
+      if (rows.length === 0) return;
 
       setModules((prev) => {
         const bySlug = new Map(prev.map((m) => [m.slug, { ...m }]));
-        for (const slug of slugs) {
-          const d = filteredRows.find((r) => r.slug === slug);
-          if (!d) continue;
-          const raw = bySlug.get(slug);
+        for (const d of rows) {
+          const raw = bySlug.get(d.slug);
           const existing: ModulePermission = {
-            slug,
-            name: MODULE_DISPLAY_NAMES[slug] ?? d.name,
+            slug: d.slug,
+            name: MODULE_DISPLAY_NAMES[d.slug] ?? d.name,
             sortOrder: d.sortOrder,
             functionalArea: d.functionalArea,
             company_admin: raw?.company_admin ?? d.company_admin,
@@ -425,19 +434,66 @@ export default function ModulosPage() {
             psicologo: raw?.psicologo ?? d.psicologo,
             comissao: raw?.comissao ?? d.comissao,
           };
-          bySlug.set(slug, applyRoleToRow(existing, role, value));
+          bySlug.set(d.slug, applyRoleToRow(existing, role, value));
         }
         return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
       });
       setDirty(true);
       setSaveBanner(null);
     },
-    [filteredRows],
+    [],
   );
 
-  const handleSectionToggle = (areaKey: string, role: ManagedRoleKey, rows: DisplayRow[]) => {
+  const handleDepartmentToggle = (role: ManagedRoleKey, rows: DisplayRow[]) => {
     const state = getSectionAccessState(rows, role);
-    handleSectionAccess(areaKey, role, state !== "all");
+    handleDepartmentAccess(rows, role, state !== "all");
+  };
+
+  const handleModuleToggle = (slug: string, role: ManagedRoleKey, value: boolean) => {
+    setModules((prev) => {
+      const dm = displayModules.find((x) => x.slug === slug);
+      const baseFromDisplay: ModulePermission | null = dm
+        ? {
+            slug: dm.slug,
+            name: MODULE_DISPLAY_NAMES[dm.slug] ?? dm.name,
+            sortOrder: dm.sortOrder,
+            functionalArea: dm.functionalArea,
+            company_admin: dm.company_admin,
+            editor: dm.editor,
+            gerente: dm.gerente,
+            administrativo: dm.administrativo,
+            analista: dm.analista,
+            diretoria: dm.diretoria,
+            medico: dm.medico,
+            psicologo: dm.psicologo,
+            comissao: dm.comissao,
+          }
+        : null;
+      const found = prev.find((m) => m.slug === slug);
+      if (found) {
+        return prev.map((m) => (m.slug === slug ? applyRoleToRow(m, role, value) : m));
+      }
+      const base =
+        baseFromDisplay ??
+        ({
+          slug,
+          name: MODULE_DISPLAY_NAMES[slug] ?? dm?.name ?? slug,
+          sortOrder: dm?.sortOrder ?? 0,
+          functionalArea: dm?.functionalArea ?? "outros",
+          company_admin: false,
+          editor: false,
+          gerente: false,
+          administrativo: false,
+          analista: false,
+          diretoria: false,
+          medico: false,
+          psicologo: false,
+          comissao: false,
+        } satisfies ModulePermission);
+      return [...prev, applyRoleToRow(base, role, value)];
+    });
+    setDirty(true);
+    setSaveBanner(null);
   };
 
   const handleExportSnapshot = useCallback(() => {
@@ -653,25 +709,25 @@ export default function ModulosPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Acesso por seção</CardTitle>
+            <CardTitle className="text-lg">Acesso por menu</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (
               <p className="text-muted-foreground py-8 text-center">Carregando…</p>
-            ) : areasWithModules.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center">Nenhuma seção com o termo pesquisado.</p>
+            ) : departmentsWithModules.length === 0 ? (
+              <p className="text-muted-foreground py-8 text-center">Nenhum menu com o termo pesquisado.</p>
             ) : (
-              areasWithModules.map(({ area, meta, modules: rows }) => {
+              departmentsWithModules.map(({ id, label, rows }) => {
                 const access = getSectionAccessState(rows, selectedRole);
                 const enabledInSection = rows.filter((r) => r[selectedRole]).length;
                 return (
                   <div
-                    key={area}
+                    key={id}
                     className="rounded-xl border bg-card px-4 py-4 sm:px-5 space-y-3"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
-                        <h3 className="font-semibold text-foreground">{meta.title}</h3>
+                        <h3 className="font-semibold text-foreground">{label}</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {enabledInSection}/{rows.length} módulos liberados
                           {access === "partial" ? " · parcial" : ""}
@@ -679,7 +735,7 @@ export default function ModulosPage() {
                       </div>
                       <label className="flex items-center gap-3 cursor-pointer shrink-0 self-start sm:self-center">
                         <span className="text-sm text-muted-foreground">
-                          {access === "all" ? "Liberado" : access === "partial" ? "Parcial" : "Bloqueado"}
+                          {access === "all" ? "Tudo liberado" : access === "partial" ? "Parcial" : "Bloqueado"}
                         </span>
                         <input
                           type="checkbox"
@@ -687,26 +743,37 @@ export default function ModulosPage() {
                           ref={(el) => {
                             if (el) el.indeterminate = access === "partial";
                           }}
-                          onChange={() => handleSectionToggle(area, selectedRole, rows)}
+                          onChange={() => handleDepartmentToggle(selectedRole, rows)}
                           className="h-5 w-5 rounded-md border-input accent-primary cursor-pointer"
-                          aria-label={`Acesso à seção ${meta.title}`}
+                          aria-label={`Liberar menu ${label}`}
                         />
                       </label>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="divide-y divide-border/60 rounded-lg border border-border/60 overflow-hidden">
                       {rows.map((m) => {
                         const on = m[selectedRole];
+                        const moduleName = MODULE_DISPLAY_NAMES[m.slug] ?? m.name;
                         return (
-                          <span
+                          <label
                             key={m.slug}
-                            className={`text-xs px-2 py-0.5 rounded-md border ${
-                              on
-                                ? "bg-primary/10 border-primary/25 text-foreground"
-                                : "bg-muted/40 border-transparent text-muted-foreground line-through decoration-muted-foreground/50"
-                            }`}
+                            className="flex items-start gap-3 px-3 py-3 sm:px-4 cursor-pointer hover:bg-muted/20"
                           >
-                            {MODULE_DISPLAY_NAMES[m.slug] ?? m.name}
-                          </span>
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={(e) => handleModuleToggle(m.slug, selectedRole, e.target.checked)}
+                              className="h-5 w-5 mt-0.5 rounded-md border-input accent-primary cursor-pointer shrink-0"
+                              aria-label={`${moduleName} — ${MANAGED_ROLE_LABELS[selectedRole]}`}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="text-sm font-medium text-foreground block">{moduleName}</span>
+                              {m.menuLabels.length > 0 ? (
+                                <span className="text-xs text-muted-foreground block mt-0.5">
+                                  Menu: {m.menuLabels.join(", ")}
+                                </span>
+                              ) : null}
+                            </span>
+                          </label>
                         );
                       })}
                     </div>

@@ -31,7 +31,7 @@ import {
   Brain,
   Star,
   Activity,
-  Map,
+  Map as MapIcon,
   Youtube,
   ImageIcon,
   Scale,
@@ -88,7 +88,7 @@ export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "dados", label: "Dados base", icon: UserCircle, moduleSlug: null },
   { id: "psicologica", label: "Avaliação psicológica", icon: Brain, moduleSlug: "saude" },
   { id: "status", label: "Status", icon: Activity, moduleSlug: "diretoria" },
-  { id: "mapa", label: "Mapa / Posição", icon: Map, moduleSlug: null },
+  { id: "mapa", label: "Mapa / Posição", icon: MapIcon, moduleSlug: null },
   { id: "momentos", label: "Melhores momentos", icon: Youtube, moduleSlug: null },
   { id: "imagens", label: "Imagens", icon: ImageIcon, moduleSlug: null },
   { id: "desempenho", label: "Análise de desempenho", icon: BarChart3, moduleSlug: "futebol_analise" },
@@ -385,7 +385,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         slug: "futebol_logistica",
         label: "Logística",
         href: "/dashboard/futebol/logistica",
-        icon: Map,
+        icon: MapIcon,
         moduleSlug: "futebol_logistica",
       },
       {
@@ -602,8 +602,92 @@ export function getUniqueModuleSlugs(): string[] {
     if (tab.moduleSlug) slugs.add(tab.moduleSlug);
   }
   slugs.add("saude").add("diretoria").add("juridico").add("relatorios");
-  slugs.add("adm_financeiro").add("adm_rh").add("adm_patrimonio").add("adm_nutricao");
-  slugs.add("futebol_comissao").add("futebol_fisiologia").add("futebol_analise").add("futebol_logistica");
-  slugs.add("socio_torcedor").add("marketing").add("boston_tv").add("eventos");
+  slugs
+    .add("adm_financeiro")
+    .add("adm_compras")
+    .add("adm_estoque")
+    .add("adm_rh")
+    .add("adm_patrimonio")
+    .add("adm_nutricao");
+  slugs
+    .add("futebol_comissao")
+    .add("futebol_fisiologia")
+    .add("futebol_analise")
+    .add("futebol_logistica");
+  slugs.add("socio_torcedor").add("marketing").add("boston_tv").add("eventos").add("academias");
   return Array.from(slugs).sort();
+}
+
+export interface MenuDepartmentModule {
+  slug: string;
+  menuLabels: string[];
+}
+
+/** Agrupa módulos como no menu lateral (Depto Adm, Cadastros, etc.). */
+export interface MenuDepartmentGroup {
+  id: string;
+  label: string;
+  modules: MenuDepartmentModule[];
+}
+
+/** Coleta slugs + rótulos de menu por departamento de primeiro nível. */
+export function getMenuDepartmentGroups(): MenuDepartmentGroup[] {
+  const groups: MenuDepartmentGroup[] = [];
+
+  function collectFromTop(top: MenuItemConfig) {
+    const bySlug = new Map<string, string[]>();
+
+    function addLabel(slug: string, label: string) {
+      const list = bySlug.get(slug) ?? [];
+      if (!list.includes(label)) list.push(label);
+      bySlug.set(slug, list);
+    }
+
+    function walk(items: MenuItemConfig[]) {
+      for (const item of items) {
+        if (item.children?.length) {
+          walk(item.children);
+        } else if (item.href && !item.external) {
+          addLabel(item.moduleSlug, item.label);
+        }
+      }
+    }
+
+    if (top.children?.length) {
+      walk(top.children);
+    } else if (top.href && !top.external) {
+      addLabel(top.moduleSlug, top.label);
+    }
+
+    const modules = [...bySlug.entries()]
+      .map(([slug, labels]) => ({ slug, menuLabels: [...labels].sort() }))
+      .sort((a, b) => a.slug.localeCompare(b.slug));
+
+    if (modules.length > 0) {
+      groups.push({ id: top.slug, label: top.label, modules });
+    }
+  }
+
+  for (const top of DASHBOARD_MENU) {
+    collectFromTop(top);
+  }
+
+  const playerBySlug = new Map<string, string[]>();
+  for (const tab of PLAYER_TABS) {
+    if (!tab.moduleSlug) continue;
+    const list = playerBySlug.get(tab.moduleSlug) ?? [];
+    if (!list.includes(tab.label)) list.push(tab.label);
+    playerBySlug.set(tab.moduleSlug, list);
+  }
+  if (playerBySlug.size > 0) {
+    groups.push({
+      id: "player_tabs",
+      label: `${DASHBOARD_LABELS.atletas} (abas)`,
+      modules: [...playerBySlug.entries()]
+        .map(([slug, labels]) => ({ slug, menuLabels: [...labels].sort() }))
+        .sort((a, b) => a.slug.localeCompare(b.slug)),
+    });
+  }
+
+  return groups;
 }
