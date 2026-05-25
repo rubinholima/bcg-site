@@ -11,6 +11,7 @@ export const PHOTO_DEPARTMENT_BY_SIZE_KEY: Record<string, string> = {
   comissao: "Comissão técnica",
   medico: "Depto Médico",
   psicologia: "Psicologia",
+  rh: "RH",
 };
 
 /** Padrão único: nome completo + departamento. Usar em todas as páginas com fotos. */

@@ -716,6 +716,7 @@ model Employee {
   type       String   // staff | athlete
   categories Json?    // atleta: ["sub20","profissional","sub17"]
   notes      String?  @db.Text
+  photoUrl   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   employments Employment[]

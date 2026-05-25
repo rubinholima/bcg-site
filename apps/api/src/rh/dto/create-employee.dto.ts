@@ -43,4 +43,8 @@ export class CreateEmployeeDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
 }

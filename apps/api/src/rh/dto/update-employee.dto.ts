@@ -42,4 +42,8 @@ export class UpdateEmployeeDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
 }

@@ -41,11 +41,11 @@ import { AssetFormDialog, type AssetRow } from "./components/AssetFormDialog";
 import { ASSET_CATEGORY_KIND_LABEL, ASSET_PIECE_LABEL } from "./patrimonio-labels";
 import { patrimonioMediaThumbSrc } from "./patrimonio-media";
 
-type TabId = "categorias" | "bens";
+type TabId = "bens" | "categorias";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: "categorias", label: "Categorias", icon: FolderTree },
   { id: "bens", label: "Bens patrimoniais", icon: Package },
+  { id: "categorias", label: "Categorias", icon: FolderTree },
 ];
 
 const NATIVE_SELECT_CLASS =
@@ -77,7 +77,7 @@ function groupRowsByTenant<T extends { tenant: { id: string; name: string; slug:
 export default function AdmPatrimonioPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabId>("categorias");
+  const [activeTab, setActiveTab] = useState<TabId>("bens");
   const [tenantId, setTenantId] = useState("");
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);

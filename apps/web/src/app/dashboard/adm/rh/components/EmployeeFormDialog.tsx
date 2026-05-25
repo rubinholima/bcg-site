@@ -12,9 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { api } from "@/lib/api";
-import { Tenant } from "@/types/tenant";
+import { formatCpfForDisplay, formatCpfInput } from "@/lib/format-cpf";
+import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { EMPLOYEE_TYPES } from "@/lib/employee-types";
+import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
+import { Tenant } from "@/types/tenant";
 
 export interface EmployeeRow {
   id: string;
@@ -27,6 +31,7 @@ export interface EmployeeRow {
   type: string;
   categories: string[] | null;
   notes: string | null;
+  photoUrl: string | null;
   tenant: { id: string; name: string; slug: string };
 }
 
@@ -55,19 +60,21 @@ export function EmployeeFormDialog({
   const [birthDate, setBirthDate] = useState("");
   const [type, setType] = useState("staff");
   const [notes, setNotes] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
 
   useEffect(() => {
     if (!open) return;
     if (edit) {
       setTenantId(edit.tenant.id);
       setName(edit.name);
-      setCpf(edit.cpf ?? "");
-      setRg(edit.rg ?? "");
+      setCpf(formatCpfForDisplay(edit.cpf));
+      setRg((edit.rg ?? "").toLocaleUpperCase("pt-BR"));
       setEmail(edit.email ?? "");
-      setPhone(edit.phone ?? "");
+      setPhone(formatPhoneForDisplay(edit.phone));
       setBirthDate(edit.birthDate ? edit.birthDate.slice(0, 10) : "");
       setType(edit.type);
-      setNotes(edit.notes ?? "");
+      setNotes((edit.notes ?? "").toLocaleUpperCase("pt-BR"));
+      setPhotoUrl(edit.photoUrl ?? "");
     } else {
       setTenantId(tenants[0]?.id ?? "");
       setName("");
@@ -78,6 +85,7 @@ export function EmployeeFormDialog({
       setBirthDate("");
       setType("staff");
       setNotes("");
+      setPhotoUrl("");
     }
   }, [open, edit, tenants]);
 
@@ -88,7 +96,7 @@ export function EmployeeFormDialog({
     try {
       const payload = {
         tenantId,
-        name: name.trim(),
+        name: name.trim().toLocaleUpperCase("pt-BR"),
         cpf: cpf.trim() || undefined,
         rg: rg.trim() || undefined,
         email: email.trim() || undefined,
@@ -96,6 +104,7 @@ export function EmployeeFormDialog({
         birthDate: birthDate || undefined,
         type,
         notes: notes.trim() || undefined,
+        photoUrl: photoUrl.trim() || undefined,
       };
       if (edit) {
         await api.patch(`/rh/employees/${edit.id}`, payload);
@@ -126,7 +135,7 @@ export function EmployeeFormDialog({
                 id="emp-tenant"
                 required
                 disabled={!!edit}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground uppercase"
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
               >
@@ -143,9 +152,29 @@ export function EmployeeFormDialog({
               <Input
                 id="emp-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nome completo"
+                onChange={(e) => setName(e.target.value.toLocaleUpperCase("pt-BR"))}
+                placeholder="NOME COMPLETO"
+                className="uppercase"
                 required
+              />
+            </div>
+            <div className="grid gap-2 border-t border-border pt-4">
+              <Label>Foto</Label>
+              <PhotoUploadWithName
+                sizeKey="rh"
+                value={photoUrl}
+                onChange={setPhotoUrl}
+                placeholder="Escolher da biblioteca"
+                urlPlaceholder="URL da foto"
+                allowAllFolders
+                uploadFolderHint="rh"
+                displayNameAuto={
+                  name.trim()
+                    ? getPhotoDisplayName(name, PHOTO_DEPARTMENT_BY_SIZE_KEY.rh)
+                    : undefined
+                }
+                showAutomaticPhotoNameNote={false}
+                showFileFormatHint={false}
               />
             </div>
             <div className="grid gap-2">
@@ -168,13 +197,20 @@ export function EmployeeFormDialog({
                 <Input
                   id="emp-cpf"
                   value={cpf}
-                  onChange={(e) => setCpf(e.target.value)}
+                  onChange={(e) => setCpf(formatCpfInput(e.target.value))}
                   placeholder="000.000.000-00"
+                  inputMode="numeric"
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="emp-rg">RG</Label>
-                <Input id="emp-rg" value={rg} onChange={(e) => setRg(e.target.value)} placeholder="RG" />
+                <Input
+                  id="emp-rg"
+                  value={rg}
+                  onChange={(e) => setRg(e.target.value.toLocaleUpperCase("pt-BR"))}
+                  placeholder="RG"
+                  className="uppercase"
+                />
               </div>
             </div>
             <div className="grid gap-2">
@@ -193,7 +229,7 @@ export function EmployeeFormDialog({
                 id="emp-email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value.toLowerCase())}
                 placeholder="email@exemplo.com"
               />
             </div>
@@ -203,17 +239,19 @@ export function EmployeeFormDialog({
                 id="emp-phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                onBlur={(e) => setPhone(formatPhoneForDisplay(e.target.value))}
                 placeholder="(11) 99999-9999"
+                inputMode="tel"
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="emp-notes">Observações</Label>
               <textarea
                 id="emp-notes"
-                className="min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                className="min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground uppercase"
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Observações"
+                onChange={(e) => setNotes(e.target.value.toLocaleUpperCase("pt-BR"))}
+                placeholder="OBSERVAÇÕES"
               />
             </div>
           </div>

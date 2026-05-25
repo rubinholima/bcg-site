@@ -60,6 +60,7 @@ export class EmployeesService {
         type: dto.type,
         categories: dto.categories != null ? cadastroJsonStringArray(dto.categories) : Prisma.JsonNull,
         notes: cadastroUpper(dto.notes),
+        photoUrl: dto.photoUrl?.trim() || null,
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
@@ -79,6 +80,7 @@ export class EmployeesService {
         ...(dto.type != null && { type: dto.type }),
         ...(dto.categories !== undefined && { categories: cadastroJsonStringArray(dto.categories) }),
         ...(dto.notes !== undefined && { notes: cadastroUpper(dto.notes) }),
+        ...(dto.photoUrl !== undefined && { photoUrl: dto.photoUrl?.trim() || null }),
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });

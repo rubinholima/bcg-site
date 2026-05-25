@@ -44,21 +44,28 @@ import { JobRoleFormDialog, type JobRoleRow } from "./components/JobRoleFormDial
 import { EmployeeFormDialog, type EmployeeRow } from "./components/EmployeeFormDialog";
 import { EmploymentFormDialog, type EmploymentRow } from "./components/EmploymentFormDialog";
 import { LeavePeriodFormDialog, type LeavePeriodRow } from "./components/LeavePeriodFormDialog";
+import { getEmployeeTypeLabel } from "@/lib/employee-types";
+import {
+  cadastroDisplayUpper,
+  employeeCpfDisplay,
+  employeePhoneDisplay,
+} from "@/lib/rh-employee-display";
+import { getPublicImageUrl } from "@/lib/media-url";
 
 type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
+  { id: "colaboradores", label: "Colaboradores", icon: UserCircle },
   { id: "departamentos", label: "Departamentos", icon: Building2 },
   { id: "cargos", label: "Cargos", icon: Briefcase },
-  { id: "colaboradores", label: "Colaboradores", icon: UserCircle },
   { id: "vinculos", label: "Vínculos", icon: FileText },
-  { id: "ferias", label: "Férias e afastamentos", icon: Calendar },
+  { id: "ferias", label: "Férias", icon: Calendar },
 ];
 
 export default function AdmRHPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabId>("departamentos");
+  const [activeTab, setActiveTab] = useState<TabId>("colaboradores");
   const [tenantId, setTenantId] = useState("");
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -402,9 +409,11 @@ export default function AdmRHPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-14">Foto</TableHead>
                         <TableHead>Clube/Empresa</TableHead>
                         <TableHead>Nome</TableHead>
                         <TableHead>CPF</TableHead>
+                        <TableHead>Telefone</TableHead>
                         <TableHead>E-mail</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead className="w-24">Ações</TableHead>
@@ -413,11 +422,27 @@ export default function AdmRHPage() {
                     <TableBody>
                       {employees.map((e) => (
                         <TableRow key={e.id}>
-                          <TableCell>{e.tenant?.name ?? "—"}</TableCell>
-                          <TableCell>{e.name}</TableCell>
-                          <TableCell>{e.cpf ?? "—"}</TableCell>
+                          <TableCell>
+                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+                              {e.photoUrl ? (
+                                <img
+                                  src={getPublicImageUrl(e.photoUrl)}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                                  <UserCircle className="h-5 w-5" />
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="uppercase">{cadastroDisplayUpper(e.tenant?.name)}</TableCell>
+                          <TableCell className="font-medium uppercase">{cadastroDisplayUpper(e.name)}</TableCell>
+                          <TableCell>{employeeCpfDisplay(e.cpf)}</TableCell>
+                          <TableCell>{employeePhoneDisplay(e.phone)}</TableCell>
                           <TableCell>{e.email ?? "—"}</TableCell>
-                          <TableCell>{e.type}</TableCell>
+                          <TableCell>{getEmployeeTypeLabel(e.type)}</TableCell>
                           <TableCell>
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEmpEdit(e); setEmpDialogOpen(true); }}>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Briefcase, Loader2, Pencil, Plus, Trash2, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,12 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { getEmployeeTypeLabel } from "@/lib/employee-types";
+import {
+  cadastroDisplayUpper,
+  employeeCpfDisplay,
+  employeePhoneDisplay,
+} from "@/lib/rh-employee-display";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { EmployeeFormDialog, type EmployeeRow } from "@/app/dashboard/adm/rh/components/EmployeeFormDialog";
 
 export default function FuncionariosCadastroPage() {
@@ -210,9 +216,11 @@ export default function FuncionariosCadastroPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-14">Foto</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Clube / empresa</TableHead>
                     <TableHead>Tipo</TableHead>
+                    <TableHead className="hidden md:table-cell">CPF</TableHead>
                     <TableHead className="hidden md:table-cell">E-mail</TableHead>
                     <TableHead className="hidden sm:table-cell">Telefone</TableHead>
                     <TableHead className="w-[100px]">Ações</TableHead>
@@ -227,11 +235,27 @@ export default function FuncionariosCadastroPage() {
                         setDialogOpen(true);
                       }}
                     >
-                      <TableCell className="font-medium">{emp.name}</TableCell>
-                      <TableCell>{emp.tenant?.name ?? "—"}</TableCell>
+                      <TableCell>
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+                          {emp.photoUrl ? (
+                            <img
+                              src={getPublicImageUrl(emp.photoUrl)}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                              <UserCircle className="h-5 w-5" />
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium uppercase">{cadastroDisplayUpper(emp.name)}</TableCell>
+                      <TableCell className="uppercase">{cadastroDisplayUpper(emp.tenant?.name)}</TableCell>
                       <TableCell>{getEmployeeTypeLabel(emp.type)}</TableCell>
+                      <TableCell className="hidden md:table-cell">{employeeCpfDisplay(emp.cpf)}</TableCell>
                       <TableCell className="hidden md:table-cell">{emp.email ?? "—"}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{emp.phone ?? "—"}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{employeePhoneDisplay(emp.phone)}</TableCell>
                       <TableRowActions align="left">
                         <div className="flex gap-1">
                           <Button

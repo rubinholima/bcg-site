@@ -16,6 +16,7 @@ const SIZE_KEY_TO_LABEL: Record<string, string> = {
   comissao: "Comissão técnica",
   jogadores: "Jogadores",
   patrimonio: "Patrimônio",
+  rh: "RH",
 };
 
 interface PhotoUploadWithNameProps {
