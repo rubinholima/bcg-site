@@ -21,9 +21,10 @@ export class PlayersController {
   findAll(
     @Query('tenantId') tenantId?: string,
     @Query('category') category?: string,
+    @Query('position') position?: string,
     @Query('search') search?: string,
   ) {
-    return this.service.findAll({ tenantId, category, search });
+    return this.service.findAll({ tenantId, category, position, search });
   }
 
   @Get(':id/delete-impact')

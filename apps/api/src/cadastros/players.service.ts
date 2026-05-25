@@ -20,10 +20,11 @@ export class PlayersService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(filters?: { tenantId?: string; category?: string; search?: string }) {
+  async findAll(filters?: { tenantId?: string; category?: string; position?: string; search?: string }) {
     const where: Record<string, unknown> = {};
     if (filters?.tenantId) where.tenantId = filters.tenantId;
     if (filters?.category) where.category = filters.category;
+    if (filters?.position?.trim()) where.position = filters.position.trim();
     if (filters?.search?.trim()) {
       where.OR = [
         { name: { contains: filters.search.trim(), mode: 'insensitive' as const } },
@@ -485,6 +486,7 @@ export class PlayersService {
       analysisMetrics: j(d.analysisMetrics),
       images: j(d.images),
       publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
+      registrationProfile: j(d.registrationProfile),
     };
   }
 
@@ -555,6 +557,9 @@ export class PlayersService {
       ...(d.images !== undefined && { images: jsonOrNull(d.images) }),
       ...(d.publicFields !== undefined && {
         publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
+      }),
+      ...(d.registrationProfile !== undefined && {
+        registrationProfile: jsonOrNull(d.registrationProfile),
       }),
     };
   }

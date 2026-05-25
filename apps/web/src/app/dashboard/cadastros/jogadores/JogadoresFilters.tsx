@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
 
 interface Tenant {
   id: string;
@@ -27,6 +28,7 @@ export function JogadoresFilters() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState(searchParams.get("tenantId") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [position, setPosition] = useState(searchParams.get("position") ?? "");
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export function JogadoresFilters() {
     const params = new URLSearchParams();
     if (tenantId) params.set("tenantId", tenantId);
     if (category) params.set("category", category);
+    if (position) params.set("position", position);
     if (search.trim()) params.set("search", search.trim());
     router.push(`/dashboard/cadastros/jogadores?${params.toString()}`);
   };
@@ -53,6 +56,7 @@ export function JogadoresFilters() {
   const clearFilters = () => {
     setTenantId("");
     setCategory("");
+    setPosition("");
     setSearch("");
     router.push("/dashboard/cadastros/jogadores");
   };
@@ -92,6 +96,22 @@ export function JogadoresFilters() {
             {categoriesForDropdown.map((c) => (
               <SelectItem key={c.value} value={c.value}>
                 {c.labelPT}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="min-w-[160px]">
+        <label className="text-xs text-muted-foreground mb-1 block">Posição</label>
+        <Select value={position || "all"} onValueChange={(v) => setPosition(v === "all" ? "" : v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Todas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            {FOOTBALL_POSITIONS.map((pos) => (
+              <SelectItem key={pos.value} value={pos.value}>
+                {pos.label}
               </SelectItem>
             ))}
           </SelectContent>

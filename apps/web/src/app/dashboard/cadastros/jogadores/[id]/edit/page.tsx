@@ -13,11 +13,6 @@ import {
   Eye,
   EyeOff,
   Image as ImageIcon,
-  Mail,
-  Ruler,
-  Trophy,
-  BarChart3,
-  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,13 +28,12 @@ import {
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
-import { formatPhoneForDisplay } from "@/lib/format-phone";
-import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
+import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
+import { parseRegistrationProfile, type PlayerRegistrationProfile } from "@/lib/player-registration-profile";
 
 const STATUS_OPTIONS = [
   { value: "available", label: "Apto" },
@@ -99,6 +93,7 @@ interface PlayerData {
   performanceAnalysis?: string | null;
   images?: unknown[] | null;
   publicFields?: Record<string, boolean> | null;
+  registrationProfile?: PlayerRegistrationProfile | null;
 }
 
 interface EvaluationEntry {
@@ -230,7 +225,11 @@ export default function EditJogadorPage() {
     async function load() {
       try {
         const { data } = await api.get<PlayerData>(`/players/${id}`);
-        setPlayer(data ?? null);
+        setPlayer(
+          data
+            ? { ...data, registrationProfile: parseRegistrationProfile(data.registrationProfile) }
+            : null,
+        );
         if (data?.tenantId) {
           const { data: tenant } = await api.get<{ categories?: string[] | null }>(`/tenants/${data.tenantId}`);
           setTenantCategories(Array.isArray(tenant?.categories) ? tenant.categories : []);
@@ -336,6 +335,7 @@ export default function EditJogadorPage() {
         performanceAnalysis: player.performanceAnalysis || undefined,
         images: player.images ?? undefined,
         publicFields: player.publicFields ?? undefined,
+        registrationProfile: player.registrationProfile ?? undefined,
       });
       router.push("/dashboard/cadastros/jogadores?success=true");
     } catch (err) {
@@ -430,16 +430,16 @@ export default function EditJogadorPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Dados base</CardTitle>
+                <CardTitle>Cadastro do atleta</CardTitle>
                 <CardDescription>
-                  Informações do atleta (mesmas do Times por Categorias e Google Sheets)
+                  Dados pessoais, esportivos, endereços e informações complementares — seções expansíveis
                 </CardDescription>
               </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                title={isFieldPublic(player.publicFields, "teamPage") ? "Visível na página do time (Times por Categorias)" : "Oculto da página do time"}
+                title={isFieldPublic(player.publicFields, "teamPage") ? "Visível na página do time" : "Oculto da página do time"}
                 onClick={() => {
                   const pf = { ...(player.publicFields ?? {}) };
                   pf.teamPage = !isFieldPublic(player.publicFields, "teamPage");
@@ -454,385 +454,40 @@ export default function EditJogadorPage() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Seção: Foto e identificação */}
-            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
-                <User className="h-4 w-4 text-primary" />
-                Foto e identificação
-              </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Nome completo *</Label>
-                <Input
-                  value={player.name}
-                  onChange={(e) => update({ name: e.target.value })}
-                  placeholder="Nome do atleta"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select
-                  value={player.category || "none"}
-                  onValueChange={(v) => update({ category: v === "none" ? null : v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {categoriesForDropdown.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {c.labelPT}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Foto</Label>
-              <PhotoUploadWithName
-                sizeKey="jogadores"
-                value={player.photoUrl ?? ""}
-                onChange={(v) => update({ photoUrl: v || null })}
-                urlPlaceholder="Ou URL"
-                namePlaceholder="Ex: foto-nome-do-atleta"
-                deferredUpload
-                onFileSelect={(f) => setPendingPhotoFile(f ?? null)}
-                pendingFile={pendingPhotoFile}
-                requireNameToUpload={player.name}
-                displayNameAuto={getPhotoDisplayName(player.name, player.category || PHOTO_DEPARTMENT_BY_SIZE_KEY.jogadores) || undefined}
-                hidePreview
-              />
-            </div>
-            </div>
-
-            {/* Seção: Dados pessoais */}
-            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
-                <Mail className="h-4 w-4 text-primary" />
-                Dados pessoais
-              </h3>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <Label>Data nascimento</Label>
-                <Input
-                  type="date"
-                  className="text-foreground"
-                  value={player.birthDate ?? ""}
-                  onChange={(e) => update({ birthDate: e.target.value || null })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Nacionalidade</Label>
-                <Input
-                  value={player.nationality ?? ""}
-                  onChange={(e) => update({ nationality: e.target.value || null })}
-                  placeholder="Ex: Brasil"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>E-mail de contato</Label>
-                <Input
-                  type="email"
-                  value={player.contactEmail ?? ""}
-                  onChange={(e) => update({ contactEmail: e.target.value || null })}
-                  placeholder="Para envio do link da consulta"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone / WhatsApp</Label>
-                <Input
-                  value={player.contactPhone ?? ""}
-                  onChange={(e) => update({ contactPhone: e.target.value || null })}
-                  onBlur={(e) => {
-                    const formatted = formatPhoneForDisplay(e.target.value);
-                    if (formatted !== (player.contactPhone ?? "")) update({ contactPhone: formatted || null });
-                  }}
-                  placeholder="Ex: 5511999999999 ou 6178036866"
-                />
-              </div>
-              <div className="space-y-2 lg:col-span-2">
-                <Label>Contato/responsável (emergência)</Label>
-                <Input
-                  value={player.emergencyContactName ?? ""}
-                  onChange={(e) => update({ emergencyContactName: e.target.value || null })}
-                  placeholder="Nome do contato ou responsável"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>E-mail do responsável (emergência)</Label>
-                <Input
-                  type="email"
-                  value={player.emergencyContactEmail ?? ""}
-                  onChange={(e) => update({ emergencyContactEmail: e.target.value || null })}
-                  placeholder="E-mail do responsável"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Telefone do responsável (emergência)</Label>
-                <Input
-                  value={player.emergencyContactPhone ?? ""}
-                  onChange={(e) => update({ emergencyContactPhone: e.target.value || null })}
-                  onBlur={(e) => {
-                    const formatted = formatPhoneForDisplay(e.target.value);
-                    if (formatted !== (player.emergencyContactPhone ?? "")) update({ emergencyContactPhone: formatted || null });
-                  }}
-                  placeholder="Ex: 5511999999999 ou 6178036866"
-                />
-              </div>
-            </div>
-            </div>
-
-            {/* Seção: Características físicas */}
-            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
-                <Ruler className="h-4 w-4 text-primary" />
-                Características físicas
-              </h3>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="space-y-2">
-                <Label>Altura (cm)</Label>
-                <Input
-                  type="number"
-                  min={50}
-                  max={250}
-                  value={player.height ?? ""}
-                  onChange={(e) => update({ height: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="182"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Peso (kg)</Label>
-                <Input
-                  type="number"
-                  min={30}
-                  max={150}
-                  value={player.weight ?? ""}
-                  onChange={(e) => update({ weight: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="78"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>IMC</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min={10}
-                  max={60}
-                  className="text-foreground"
-                  value={player.bmi ?? ""}
-                  onChange={(e) => update({ bmi: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="22.5"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>% Gordura corporal</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min={1}
-                  max={70}
-                  className="text-foreground"
-                  value={player.bodyFatPercent ?? ""}
-                  onChange={(e) => update({ bodyFatPercent: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="12"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Massa magra (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min={20}
-                  max={150}
-                  className="text-foreground"
-                  value={player.leanMassKg ?? ""}
-                  onChange={(e) => update({ leanMassKg: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="68"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Pé predominante</Label>
-                <Select
-                  value={player.preferredFoot ?? ""}
-                  onValueChange={(v) => update({ preferredFoot: v || null })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="left">Esquerdo</SelectItem>
-                    <SelectItem value="right">Direito</SelectItem>
-                    <SelectItem value="both">Ambos</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            </div>
-
-            {/* Seção: Informações de futebol */}
-            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
-                <Trophy className="h-4 w-4 text-primary" />
-                Informações de futebol
-              </h3>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="space-y-2">
-                <Label>Posição</Label>
-                <Select
-                  value={player.position ?? ""}
-                  onValueChange={(v) => update({ position: v || null })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FOOTBALL_POSITIONS.map((pos) => (
-                      <SelectItem key={pos.value} value={pos.value}>
-                        {pos.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Nº camisa</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={99}
-                  value={player.jerseyNumber ?? ""}
-                  onChange={(e) => update({ jerseyNumber: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="10"
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-                <Label>Time atual</Label>
-                <Input
-                  value={player.currentTeam ?? ""}
-                  onChange={(e) => update({ currentTeam: e.target.value || null })}
-                  placeholder="Ex: Americano FC"
-                />
-              </div>
-            </div>
-            </div>
-
-            {/* Seção: Estatísticas */}
-            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
-                <BarChart3 className="h-4 w-4 text-primary" />
-                Estatísticas
-              </h3>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <Label>Jogos</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={player.matchesPlayed ?? ""}
-                  onChange={(e) => update({ matchesPlayed: e.target.value ? Number(e.target.value) : null })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Gols</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={player.goals ?? ""}
-                  onChange={(e) => update({ goals: e.target.value ? Number(e.target.value) : null })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Assistências</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={player.assists ?? ""}
-                  onChange={(e) => update({ assists: e.target.value ? Number(e.target.value) : null })}
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-1">
-                  <Label>Valor mercado (€)</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    title={isFieldPublic(player.publicFields, "marketValue") ? "Visível na página pública" : "Oculto na página pública"}
-                    onClick={() => {
-                      const pf = { ...(player.publicFields ?? {}) };
-                      pf.marketValue = !isFieldPublic(player.publicFields, "marketValue");
-                      update({ publicFields: pf });
-                    }}
-                  >
-                    {isFieldPublic(player.publicFields, "marketValue") ? <Eye className="h-3 w-3 text-amber-500" /> : <EyeOff className="h-3 w-3 text-muted-foreground" />}
-                  </Button>
-                </div>
-                <Input
-                  type="number"
-                  min={0}
-                  value={player.marketValue ?? ""}
-                  onChange={(e) => update({ marketValue: e.target.value ? Number(e.target.value) : null })}
-                  placeholder="120000"
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Cartões amarelos</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={player.yellowCards ?? ""}
-                  onChange={(e) => update({ yellowCards: e.target.value ? Number(e.target.value) : null })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Cartões vermelhos</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={player.redCards ?? ""}
-                  onChange={(e) => update({ redCards: e.target.value ? Number(e.target.value) : null })}
-                />
-              </div>
-            </div>
-            </div>
-
-            {/* Seção: Biografia */}
-            <div className="rounded-xl border border-border/70 bg-muted/30 p-5 space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-1 border-b border-border/50">
-                <FileText className="h-4 w-4 text-primary" />
-                Biografia
-              </h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Biografia (PT)</Label>
-                <textarea
-                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                  value={player.bioPT ?? ""}
-                  onChange={(e) => update({ bioPT: e.target.value || null })}
-                  placeholder="Biografia em português"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Biografia (EN)</Label>
-                <textarea
-                  className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                  value={player.bioEN ?? ""}
-                  onChange={(e) => update({ bioEN: e.target.value || null })}
-                  placeholder="Biography in English"
-                />
-              </div>
-            </div>
-            </div>
+          <CardContent>
+            <PlayerRegistrationSections
+              playerId={player.id}
+              name={player.name}
+              category={player.category}
+              photoUrl={player.photoUrl}
+              birthDate={player.birthDate}
+              nationality={player.nationality}
+              contactEmail={player.contactEmail}
+              contactPhone={player.contactPhone}
+              emergencyContactName={player.emergencyContactName}
+              emergencyContactEmail={player.emergencyContactEmail}
+              emergencyContactPhone={player.emergencyContactPhone}
+              height={player.height}
+              weight={player.weight}
+              preferredFoot={player.preferredFoot}
+              jerseyNumber={player.jerseyNumber}
+              position={player.position}
+              status={player.status}
+              profile={parseRegistrationProfile(player.registrationProfile)}
+              categoriesForDropdown={categoriesForDropdown}
+              pendingPhotoFile={pendingPhotoFile}
+              onNameChange={(v) => update({ name: v })}
+              onCategoryChange={(v) => update({ category: v })}
+              onPhotoUrlChange={(v) => update({ photoUrl: v })}
+              onPendingPhotoFile={setPendingPhotoFile}
+              onPlayerField={(field, value) => update({ [field]: value } as Partial<PlayerData>)}
+              onProfileChange={(next) => update({ registrationProfile: next })}
+            />
           </CardContent>
         </Card>
       )}
 
+      {/* Tab: Avaliação psicológica — relatório sintético para gerência/diretoria (somente leitura) */}
       {/* Tab: Avaliação psicológica — relatório sintético para gerência/diretoria (somente leitura) */}
       {activeTab === "psicologica" && (() => {
         const psychList = (player.psychologicalAssessment ?? []) as Array<{ date?: string; evaluator?: string; observacoes?: string; [k: string]: unknown }>;

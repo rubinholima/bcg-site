@@ -235,4 +235,8 @@ export class UpdatePlayerDto {
   @IsOptional()
   @IsObject()
   publicFields?: Record<string, boolean>;
+
+  @IsOptional()
+  @IsObject()
+  registrationProfile?: Record<string, unknown>;
 }

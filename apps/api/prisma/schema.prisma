@@ -448,6 +448,8 @@ model Player {
   analysisMetrics Json?    // métricas estruturadas de scout: gols, assistências, xG, xA, passes-chave, duelos, etc. (totais ou por 90)
   images          Json?    // Array<{ type, url }> fotos de apoio
   publicFields    Json?    // quais campos exibir na página pública: { medicalHistory, evaluations, status, marketValue, performanceAnalysis, images, highlights }
+  /** Cadastro estendido: dados pessoais, endereço, extras, características, rouparia, etc. */
+  registrationProfile Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   legalDocuments  LegalDocument[]

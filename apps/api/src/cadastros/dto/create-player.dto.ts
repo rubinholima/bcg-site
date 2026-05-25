@@ -236,4 +236,8 @@ export class CreatePlayerDto {
   @IsOptional()
   @IsObject()
   publicFields?: Record<string, boolean>;
+
+  @IsOptional()
+  @IsObject()
+  registrationProfile?: Record<string, unknown>;
 }
