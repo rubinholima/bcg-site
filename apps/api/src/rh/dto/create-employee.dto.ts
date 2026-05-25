@@ -47,4 +47,9 @@ export class CreateEmployeeDto {
   @IsString()
   @IsOptional()
   photoUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  playerId?: string | null;
 }

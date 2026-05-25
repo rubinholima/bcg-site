@@ -33,16 +33,21 @@ import { Tenant } from "@/types/tenant";
 import { getEmployeeTypeLabel } from "@/lib/employee-types";
 import {
   cadastroDisplayUpper,
+  employeeCodeDisplay,
   employeeCpfDisplay,
   employeePhoneDisplay,
 } from "@/lib/rh-employee-display";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { EmployeeFormDialog, type EmployeeRow } from "@/app/dashboard/adm/rh/components/EmployeeFormDialog";
+import { type DepartmentRow } from "@/app/dashboard/adm/rh/components/DepartmentFormDialog";
+import { type JobRoleRow } from "@/app/dashboard/adm/rh/components/JobRoleFormDialog";
 
 export default function FuncionariosCadastroPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [departments, setDepartments] = useState<DepartmentRow[]>([]);
+  const [jobRoles, setJobRoles] = useState<JobRoleRow[]>([]);
   const [employees, setEmployees] = useState<EmployeeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantId, setTenantId] = useState("");
@@ -61,6 +66,30 @@ export default function FuncionariosCadastroPage() {
       setTenants([]);
     }
   }, []);
+
+  const loadDepartments = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (tenantId) params.set("tenantId", tenantId);
+      const qs = params.toString();
+      const { data } = await api.get<DepartmentRow[]>(`/rh/departments${qs ? `?${qs}` : ""}`);
+      setDepartments(Array.isArray(data) ? data : []);
+    } catch {
+      setDepartments([]);
+    }
+  }, [tenantId]);
+
+  const loadJobRoles = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (tenantId) params.set("tenantId", tenantId);
+      const qs = params.toString();
+      const { data } = await api.get<JobRoleRow[]>(`/rh/job-roles${qs ? `?${qs}` : ""}`);
+      setJobRoles(Array.isArray(data) ? data : []);
+    } catch {
+      setJobRoles([]);
+    }
+  }, [tenantId]);
 
   const loadEmployees = useCallback(async () => {
     setLoading(true);
@@ -90,8 +119,10 @@ export default function FuncionariosCadastroPage() {
 
   useEffect(() => {
     if (authLoading || !canAccessModule("adm_rh")) return;
+    loadDepartments();
+    loadJobRoles();
     loadEmployees();
-  }, [authLoading, canAccessModule, loadEmployees]);
+  }, [authLoading, canAccessModule, loadDepartments, loadJobRoles, loadEmployees]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -189,7 +220,7 @@ export default function FuncionariosCadastroPage() {
               id="filtro-search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nome, CPF ou e-mail"
+              placeholder="Nome, CPF, matrícula ou e-mail"
             />
           </div>
         </CardContent>
@@ -217,9 +248,11 @@ export default function FuncionariosCadastroPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-14">Foto</TableHead>
+                    <TableHead className="hidden sm:table-cell">Matrícula</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Clube / empresa</TableHead>
                     <TableHead>Tipo</TableHead>
+                    <TableHead className="hidden lg:table-cell">Futebol</TableHead>
                     <TableHead className="hidden md:table-cell">CPF</TableHead>
                     <TableHead className="hidden md:table-cell">E-mail</TableHead>
                     <TableHead className="hidden sm:table-cell">Telefone</TableHead>
@@ -250,9 +283,25 @@ export default function FuncionariosCadastroPage() {
                           )}
                         </div>
                       </TableCell>
+                      <TableCell className="hidden sm:table-cell font-mono text-xs uppercase">
+                        {employeeCodeDisplay(emp.code)}
+                      </TableCell>
                       <TableCell className="font-medium uppercase">{cadastroDisplayUpper(emp.name)}</TableCell>
                       <TableCell className="uppercase">{cadastroDisplayUpper(emp.tenant?.name)}</TableCell>
                       <TableCell>{getEmployeeTypeLabel(emp.type)}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {emp.playerId ? (
+                          <Link
+                            href={`/dashboard/cadastros/jogadores/${emp.playerId}/edit`}
+                            className="text-sm text-primary hover:underline uppercase"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {cadastroDisplayUpper(emp.player?.name ?? "Atleta")}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
                       <TableCell className="hidden md:table-cell">{employeeCpfDisplay(emp.cpf)}</TableCell>
                       <TableCell className="hidden md:table-cell">{emp.email ?? "—"}</TableCell>
                       <TableCell className="hidden sm:table-cell">{employeePhoneDisplay(emp.phone)}</TableCell>
@@ -292,6 +341,8 @@ export default function FuncionariosCadastroPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         tenants={tenants}
+        jobRoles={jobRoles}
+        departments={departments}
         edit={edit}
         onSuccess={loadEmployees}
       />

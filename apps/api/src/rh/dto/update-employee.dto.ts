@@ -46,4 +46,8 @@ export class UpdateEmployeeDto {
   @IsString()
   @IsOptional()
   photoUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  playerId?: string | null;
 }

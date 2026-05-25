@@ -456,6 +456,7 @@ model Player {
   assignedAssets  Asset[]  // uniformes/kit atribuídos ao jogador
   nutritionAssessments NutritionAssessment[]
   supplementGuides     SupplementGuide[]  // guias de suplementação específicos do jogador
+  rhEmployee           Employee?
   @@index([tenantId])
   @@index([tenantId, category])
 }
@@ -707,22 +708,29 @@ model Employee {
   id         String   @id @default(cuid())
   tenantId   String
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /** Matrícula RH legível (ex.: BCF-000042) — única por tenant */
+  code       String?
   name       String
   cpf        String?
   rg         String?
   email      String?
   phone      String?
   birthDate  DateTime?
-  type       String   // staff | athlete
+  type       String   // staff | athlete | dirigente
   categories Json?    // atleta: ["sub20","profissional","sub17"]
   notes      String?  @db.Text
   photoUrl   String?
+  /** Cadastro operacional Futebol (atleta/comissão) — evita duplicidade de pessoa */
+  playerId   String?  @unique
+  player     Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   employments Employment[]
   documents  EmployeeDocument[]
+  @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])
+  @@index([playerId])
 }
 
 model Employment {

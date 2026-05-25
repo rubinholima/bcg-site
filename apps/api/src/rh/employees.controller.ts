@@ -6,6 +6,7 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { EmployeesService } from './employees.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { LinkPlayerDto } from './dto/link-player.dto';
 
 @Controller('rh/employees')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -23,6 +24,13 @@ export class EmployeesController {
     return this.service.findAll(tenantId, type, search);
   }
 
+  @Get('by-player/:playerId')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_rh')
+  findByPlayer(@Param('playerId') playerId: string) {
+    return this.service.findByPlayerId(playerId);
+  }
+
   @Get(':id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
@@ -35,6 +43,27 @@ export class EmployeesController {
   @RequireModule('adm_rh')
   create(@Body() dto: CreateEmployeeDto) {
     return this.service.create(dto);
+  }
+
+  @Post(':id/link-player')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_rh')
+  linkPlayer(@Param('id') id: string, @Body() dto: LinkPlayerDto) {
+    return this.service.linkPlayer(id, dto.playerId);
+  }
+
+  @Post(':id/create-player')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_rh')
+  createPlayer(@Param('id') id: string) {
+    return this.service.createPlayer(id);
+  }
+
+  @Post(':id/unlink-player')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_rh')
+  unlinkPlayer(@Param('id') id: string) {
+    return this.service.unlinkPlayer(id);
   }
 
   @Patch(':id')

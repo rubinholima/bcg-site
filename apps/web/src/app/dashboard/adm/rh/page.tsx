@@ -47,6 +47,7 @@ import { LeavePeriodFormDialog, type LeavePeriodRow } from "./components/LeavePe
 import { getEmployeeTypeLabel } from "@/lib/employee-types";
 import {
   cadastroDisplayUpper,
+  employeeCodeDisplay,
   employeeCpfDisplay,
   employeePhoneDisplay,
 } from "@/lib/rh-employee-display";
@@ -410,8 +411,10 @@ export default function AdmRHPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-14">Foto</TableHead>
+                        <TableHead className="hidden sm:table-cell">Matrícula</TableHead>
                         <TableHead>Clube/Empresa</TableHead>
                         <TableHead>Nome</TableHead>
+                        <TableHead className="hidden lg:table-cell">Futebol</TableHead>
                         <TableHead>CPF</TableHead>
                         <TableHead>Telefone</TableHead>
                         <TableHead>E-mail</TableHead>
@@ -437,8 +440,23 @@ export default function AdmRHPage() {
                               )}
                             </div>
                           </TableCell>
+                          <TableCell className="hidden sm:table-cell font-mono text-xs uppercase">
+                            {employeeCodeDisplay(e.code)}
+                          </TableCell>
                           <TableCell className="uppercase">{cadastroDisplayUpper(e.tenant?.name)}</TableCell>
                           <TableCell className="font-medium uppercase">{cadastroDisplayUpper(e.name)}</TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {e.playerId ? (
+                              <Link
+                                href={`/dashboard/cadastros/jogadores/${e.playerId}/edit`}
+                                className="text-sm text-primary hover:underline uppercase"
+                              >
+                                {cadastroDisplayUpper(e.player?.name ?? "Atleta")}
+                              </Link>
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
                           <TableCell>{employeeCpfDisplay(e.cpf)}</TableCell>
                           <TableCell>{employeePhoneDisplay(e.phone)}</TableCell>
                           <TableCell>{e.email ?? "—"}</TableCell>
@@ -585,7 +603,7 @@ export default function AdmRHPage() {
 
       <DepartmentFormDialog open={deptDialogOpen} onOpenChange={setDeptDialogOpen} tenants={tenants} edit={deptEdit} onSuccess={() => { loadDepartments(); setDeptEdit(null); }} />
       <JobRoleFormDialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen} tenants={tenants} departments={departments} edit={roleEdit} onSuccess={() => { loadJobRoles(); setRoleEdit(null); }} />
-      <EmployeeFormDialog open={empDialogOpen} onOpenChange={setEmpDialogOpen} tenants={tenants} edit={empEdit} onSuccess={() => { loadEmployees(); setEmpEdit(null); }} />
+      <EmployeeFormDialog open={empDialogOpen} onOpenChange={setEmpDialogOpen} tenants={tenants} jobRoles={jobRoles} departments={departments} edit={empEdit} onSuccess={() => { loadEmployees(); loadEmployments(); setEmpEdit(null); }} />
       <EmploymentFormDialog open={emplDialogOpen} onOpenChange={setEmplDialogOpen} tenants={tenants} employees={employees} jobRoles={jobRoles} departments={departments} edit={emplEdit} onSuccess={() => { loadEmployments(); setEmplEdit(null); }} />
       <LeavePeriodFormDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen} employments={employments} edit={leaveEdit} onSuccess={() => { loadLeavePeriods(); setLeaveEdit(null); }} />
 

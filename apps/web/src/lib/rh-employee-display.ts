@@ -17,3 +17,14 @@ export function employeePhoneDisplay(value: string | null | undefined): string {
   const formatted = formatPhoneForDisplay(value);
   return formatted || "—";
 }
+
+/** ID interno curto (últimos 8 caracteres do cuid). */
+export function employeeInternalIdDisplay(id: string | null | undefined): string {
+  if (!id?.trim()) return "—";
+  return id.slice(-8).toUpperCase();
+}
+
+export function employeeCodeDisplay(code: string | null | undefined): string {
+  const t = (code ?? "").trim();
+  return t || "—";
+}

@@ -237,10 +237,17 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
             <Label>Matrícula RH</Label>
             <Input
               value={personal.rhEnrollment ?? ""}
+              readOnly={!!personal.rhEnrollment?.trim()}
+              className={personal.rhEnrollment?.trim() ? "bg-muted/50 text-muted-foreground uppercase font-mono" : undefined}
               onChange={(e) =>
                 onProfileChange(patchProfile(profile, "personal", { rhEnrollment: e.target.value || undefined }))
               }
             />
+            {personal.rhEnrollment?.trim() ? (
+              <p className="text-xs text-muted-foreground">
+                Preenchida automaticamente pelo cadastro RH vinculado.
+              </p>
+            ) : null}
           </div>
           <div className="space-y-2 sm:col-span-4">
             <Label>Foto / Avatar</Label>
