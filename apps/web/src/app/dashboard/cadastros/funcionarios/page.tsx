@@ -3,20 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Briefcase, Loader2, Pencil, Plus, Trash2, UserCircle } from "lucide-react";
+import { ArrowLeft, Briefcase, Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,17 +21,10 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
-import { getEmployeeTypeLabel } from "@/lib/employee-types";
-import {
-  cadastroDisplayUpper,
-  employeeCodeDisplay,
-  employeeCpfDisplay,
-  employeePhoneDisplay,
-} from "@/lib/rh-employee-display";
-import { getPublicImageUrl } from "@/lib/media-url";
 import { EmployeeFormDialog, type EmployeeRow } from "@/app/dashboard/adm/rh/components/EmployeeFormDialog";
 import { type DepartmentRow } from "@/app/dashboard/adm/rh/components/DepartmentFormDialog";
 import { type JobRoleRow } from "@/app/dashboard/adm/rh/components/JobRoleFormDialog";
+import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosGroupedList";
 
 export default function FuncionariosCadastroPage() {
   const router = useRouter();
@@ -147,6 +131,9 @@ export default function FuncionariosCadastroPage() {
     );
   }
 
+  const distinctTeams = new Set(employees.map((e) => e.tenant.id)).size;
+  const groupByTeam = !tenantId && distinctTeams > 1;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -232,10 +219,12 @@ export default function FuncionariosCadastroPage() {
           <CardDescription>
             {employees.length === 0
               ? "Nenhum registro encontrado"
-              : `${employees.length} registro${employees.length > 1 ? "s" : ""}`}
+              : groupByTeam
+                ? `${employees.length} registro${employees.length > 1 ? "s" : ""} em ${distinctTeams} empresas — clique na linha para editar`
+                : `${employees.length} registro${employees.length > 1 ? "s" : ""} — clique na linha para editar`}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -243,96 +232,16 @@ export default function FuncionariosCadastroPage() {
           ) : employees.length === 0 ? (
             <p className="py-8 text-center text-muted-foreground">Nenhum funcionário cadastrado.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-14">Foto</TableHead>
-                    <TableHead className="hidden sm:table-cell">Matrícula</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Clube / empresa</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead className="hidden lg:table-cell">Futebol</TableHead>
-                    <TableHead className="hidden md:table-cell">CPF</TableHead>
-                    <TableHead className="hidden md:table-cell">E-mail</TableHead>
-                    <TableHead className="hidden sm:table-cell">Telefone</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {employees.map((emp) => (
-                    <ClickableTableRow
-                      key={emp.id}
-                      onClick={() => {
-                        setEdit(emp);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      <TableCell>
-                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-                          {emp.photoUrl ? (
-                            <img
-                              src={getPublicImageUrl(emp.photoUrl)}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                              <UserCircle className="h-5 w-5" />
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell font-mono text-xs uppercase">
-                        {employeeCodeDisplay(emp.code)}
-                      </TableCell>
-                      <TableCell className="font-medium uppercase">{cadastroDisplayUpper(emp.name)}</TableCell>
-                      <TableCell className="uppercase">{cadastroDisplayUpper(emp.tenant?.name)}</TableCell>
-                      <TableCell>{getEmployeeTypeLabel(emp.type)}</TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {emp.playerId ? (
-                          <Link
-                            href={`/dashboard/cadastros/jogadores/${emp.playerId}/edit`}
-                            className="text-sm text-primary hover:underline uppercase"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {cadastroDisplayUpper(emp.player?.name ?? "Atleta")}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">{employeeCpfDisplay(emp.cpf)}</TableCell>
-                      <TableCell className="hidden md:table-cell">{emp.email ?? "—"}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{employeePhoneDisplay(emp.phone)}</TableCell>
-                      <TableRowActions align="left">
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Editar"
-                            onClick={() => {
-                              setEdit(emp);
-                              setDialogOpen(true);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Excluir"
-                            onClick={() => setDeleteId(emp.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableRowActions>
-                    </ClickableTableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <FuncionariosGroupedList
+              employees={employees}
+              groupByTeam={groupByTeam}
+              hideTenantColumn={!!tenantId || groupByTeam}
+              onEdit={(emp) => {
+                setEdit(emp);
+                setDialogOpen(true);
+              }}
+              onDelete={setDeleteId}
+            />
           )}
         </CardContent>
       </Card>

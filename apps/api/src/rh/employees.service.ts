@@ -12,7 +12,7 @@ import {
 } from './employee-player-link';
 
 const employeeInclude = {
-  tenant: { select: { id: true, name: true, slug: true } },
+  tenant: { select: { id: true, name: true, slug: true, logoUrl: true } },
   player: { select: { id: true, name: true, category: true, position: true } },
 } as const;
 

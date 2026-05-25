@@ -42,7 +42,7 @@ export interface EmployeeRow {
   photoUrl: string | null;
   playerId: string | null;
   player?: { id: string; name: string; category: string | null; position: string | null } | null;
-  tenant: { id: string; name: string; slug: string };
+  tenant: { id: string; name: string; slug: string; logoUrl?: string | null };
 }
 
 interface ActiveEmployment {

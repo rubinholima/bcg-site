@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,14 +45,7 @@ import { JobRoleFormDialog, type JobRoleRow } from "./components/JobRoleFormDial
 import { EmployeeFormDialog, type EmployeeRow } from "./components/EmployeeFormDialog";
 import { EmploymentFormDialog, type EmploymentRow } from "./components/EmploymentFormDialog";
 import { LeavePeriodFormDialog, type LeavePeriodRow } from "./components/LeavePeriodFormDialog";
-import { getEmployeeTypeLabel } from "@/lib/employee-types";
-import {
-  cadastroDisplayUpper,
-  employeeCodeDisplay,
-  employeeCpfDisplay,
-  employeePhoneDisplay,
-} from "@/lib/rh-employee-display";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosGroupedList";
 
 type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias";
 
@@ -221,6 +215,9 @@ export default function AdmRHPage() {
     return null;
   }
 
+  const distinctTeams = new Set(employees.map((e) => e.tenant.id)).size;
+  const groupByTeam = !tenantId && distinctTeams > 1;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -310,11 +307,17 @@ export default function AdmRHPage() {
                     </TableHeader>
                     <TableBody>
                       {departments.map((d) => (
-                        <TableRow key={d.id}>
+                        <ClickableTableRow
+                          key={d.id}
+                          onClick={() => {
+                            setDeptEdit(d);
+                            setDeptDialogOpen(true);
+                          }}
+                        >
                           <TableCell>{d.tenant?.name ?? "—"}</TableCell>
                           <TableCell>{d.name}</TableCell>
                           <TableCell>{d.code ?? "—"}</TableCell>
-                          <TableCell>
+                          <TableRowActions align="left">
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setDeptEdit(d); setDeptDialogOpen(true); }}>
                                 <Pencil className="h-4 w-4" />
@@ -323,8 +326,8 @@ export default function AdmRHPage() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </TableRowActions>
+                        </ClickableTableRow>
                       ))}
                     </TableBody>
                   </Table>
@@ -364,13 +367,19 @@ export default function AdmRHPage() {
                     </TableHeader>
                     <TableBody>
                       {jobRoles.map((r) => (
-                        <TableRow key={r.id}>
+                        <ClickableTableRow
+                          key={r.id}
+                          onClick={() => {
+                            setRoleEdit(r);
+                            setRoleDialogOpen(true);
+                          }}
+                        >
                           <TableCell>{r.tenant?.name ?? "—"}</TableCell>
                           <TableCell>{r.name}</TableCell>
                           <TableCell>{r.code ?? "—"}</TableCell>
                           <TableCell>{r.department?.name ?? "—"}</TableCell>
                           <TableCell>{r.type}</TableCell>
-                          <TableCell>
+                          <TableRowActions align="left">
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setRoleEdit(r); setRoleDialogOpen(true); }}>
                                 <Pencil className="h-4 w-4" />
@@ -379,8 +388,8 @@ export default function AdmRHPage() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </TableRowActions>
+                        </ClickableTableRow>
                       ))}
                     </TableBody>
                   </Table>
@@ -395,7 +404,7 @@ export default function AdmRHPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <CardTitle>Colaboradores</CardTitle>
-                    <CardDescription>Pessoas (staff ou atletas) cadastradas no RH.</CardDescription>
+                    <CardDescription>Pessoas (staff ou atletas) cadastradas no RH — clique na linha para editar.</CardDescription>
                   </div>
                   <Button size="sm" onClick={() => { setEmpEdit(null); setEmpDialogOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -403,78 +412,30 @@ export default function AdmRHPage() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 {employees.length === 0 ? (
                   <p className="text-muted-foreground text-sm">Nenhum colaborador cadastrado.</p>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-14">Foto</TableHead>
-                        <TableHead className="hidden sm:table-cell">Matrícula</TableHead>
-                        <TableHead>Clube/Empresa</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead className="hidden lg:table-cell">Futebol</TableHead>
-                        <TableHead>CPF</TableHead>
-                        <TableHead>Telefone</TableHead>
-                        <TableHead>E-mail</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead className="w-24">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {employees.map((e) => (
-                        <TableRow key={e.id}>
-                          <TableCell>
-                            <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-                              {e.photoUrl ? (
-                                <img
-                                  src={getPublicImageUrl(e.photoUrl)}
-                                  alt=""
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                                  <UserCircle className="h-5 w-5" />
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell font-mono text-xs uppercase">
-                            {employeeCodeDisplay(e.code)}
-                          </TableCell>
-                          <TableCell className="uppercase">{cadastroDisplayUpper(e.tenant?.name)}</TableCell>
-                          <TableCell className="font-medium uppercase">{cadastroDisplayUpper(e.name)}</TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            {e.playerId ? (
-                              <Link
-                                href={`/dashboard/cadastros/jogadores/${e.playerId}/edit`}
-                                className="text-sm text-primary hover:underline uppercase"
-                              >
-                                {cadastroDisplayUpper(e.player?.name ?? "Atleta")}
-                              </Link>
-                            ) : (
-                              "—"
-                            )}
-                          </TableCell>
-                          <TableCell>{employeeCpfDisplay(e.cpf)}</TableCell>
-                          <TableCell>{employeePhoneDisplay(e.phone)}</TableCell>
-                          <TableCell>{e.email ?? "—"}</TableCell>
-                          <TableCell>{getEmployeeTypeLabel(e.type)}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEmpEdit(e); setEmpDialogOpen(true); }}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeleteKind("employee"); setDeleteId(e.id); }}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      {groupByTeam
+                        ? `${employees.length} colaborador${employees.length > 1 ? "es" : ""} em ${distinctTeams} empresas — agrupado por clube/empresa e tipo`
+                        : `${employees.length} colaborador${employees.length > 1 ? "es" : ""} — agrupado por tipo`}
+                    </p>
+                    <FuncionariosGroupedList
+                      employees={employees}
+                      groupByTeam={groupByTeam}
+                      hideTenantColumn={!!tenantId || groupByTeam}
+                      onEdit={(e) => {
+                        setEmpEdit(e);
+                        setEmpDialogOpen(true);
+                      }}
+                      onDelete={(id) => {
+                        setDeleteKind("employee");
+                        setDeleteId(id);
+                      }}
+                    />
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -512,14 +473,20 @@ export default function AdmRHPage() {
                     </TableHeader>
                     <TableBody>
                       {employments.map((e) => (
-                        <TableRow key={e.id}>
+                        <ClickableTableRow
+                          key={e.id}
+                          onClick={() => {
+                            setEmplEdit(e);
+                            setEmplDialogOpen(true);
+                          }}
+                        >
                           <TableCell>{e.tenant?.name ?? "—"}</TableCell>
                           <TableCell>{e.employee?.name ?? e.employeeId}</TableCell>
                           <TableCell>{e.jobRole?.name ?? "—"}</TableCell>
                           <TableCell>{e.contractType}</TableCell>
                           <TableCell>{new Date(e.startDate).toLocaleDateString("pt-BR")}</TableCell>
                           <TableCell>{e.status}</TableCell>
-                          <TableCell>
+                          <TableRowActions align="left">
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEmplEdit(e); setEmplDialogOpen(true); }}>
                                 <Pencil className="h-4 w-4" />
@@ -528,8 +495,8 @@ export default function AdmRHPage() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </TableRowActions>
+                        </ClickableTableRow>
                       ))}
                     </TableBody>
                   </Table>
@@ -573,13 +540,19 @@ export default function AdmRHPage() {
                         const vinculoLabel = emp ? `${emp.employee?.name ?? "—"} — ${emp.jobRole?.name ?? "—"}` : p.employmentId;
                         const tipoLabel = p.type === "vacation" ? "Férias" : p.type === "sick_leave" ? "Licença saúde" : p.type === "maternity" ? "Maternidade" : p.type === "accident" ? "Acidente" : p.type;
                         return (
-                        <TableRow key={p.id}>
+                        <ClickableTableRow
+                          key={p.id}
+                          onClick={() => {
+                            setLeaveEdit(p);
+                            setLeaveDialogOpen(true);
+                          }}
+                        >
                           <TableCell>{vinculoLabel}</TableCell>
                           <TableCell>{tipoLabel}</TableCell>
                           <TableCell>{new Date(p.startDate).toLocaleDateString("pt-BR")}</TableCell>
                           <TableCell>{new Date(p.endDate).toLocaleDateString("pt-BR")}</TableCell>
                           <TableCell>{p.status}</TableCell>
-                          <TableCell>
+                          <TableRowActions align="left">
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setLeaveEdit(p); setLeaveDialogOpen(true); }}>
                                 <Pencil className="h-4 w-4" />
@@ -588,8 +561,8 @@ export default function AdmRHPage() {
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </TableRowActions>
+                        </ClickableTableRow>
                         );
                       })}
                     </TableBody>
