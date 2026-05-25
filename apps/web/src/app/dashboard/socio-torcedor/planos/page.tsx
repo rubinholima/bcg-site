@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -198,7 +199,10 @@ export default function SocioPlanosPage() {
                     const price = typeof p.priceMonthly === "string" ? parseFloat(p.priceMonthly) : p.priceMonthly;
                     const perks = formatPerks(p.perks ?? null);
                     return (
-                      <TableRow key={p.id}>
+                      <ClickableTableRow
+                        key={p.id}
+                        href={`/dashboard/socio-torcedor/planos/${p.id}/editar?tenantId=${tenantId}`}
+                      >
                         <TableCell>
                           <div className="font-medium">{p.name}</div>
                           {p.description && (
@@ -222,10 +226,10 @@ export default function SocioPlanosPage() {
                             {perks.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableRowActions align="left">
                           <div className="flex gap-1">
                             <Link href={`/dashboard/socio-torcedor/planos/${p.id}/editar?tenantId=${tenantId}`}>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" aria-label="Editar">
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             </Link>
@@ -235,12 +239,13 @@ export default function SocioPlanosPage() {
                               onClick={() => setDeleteId(p.id)}
                               disabled={(p._count?.members ?? 0) > 0}
                               title={(p._count?.members ?? 0) > 0 ? "Exclua os sócios antes" : "Excluir"}
+                              aria-label="Excluir"
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </TableRowActions>
+                      </ClickableTableRow>
                     );
                   })}
                 </TableBody>

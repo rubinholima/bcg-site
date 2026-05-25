@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getCategoryLabel } from "@/lib/fixture-categories";
@@ -166,7 +167,7 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
                 </TableHeader>
                 <TableBody>
                   {items.map((item) => (
-                    <TableRow key={item.id}>
+                    <ClickableTableRow key={item.id} href={`/dashboard/futebol/logistica/${item.id}/edit`}>
                       <TableCell>{formatDate(item.matchDate)}</TableCell>
                       <TableCell>{item.tenant?.name ?? item.tenantId}</TableCell>
                       <TableCell>
@@ -197,21 +198,21 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
                           {STATUS_LABELS[item.status] ?? item.status}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableRowActions>
                         <div className="flex justify-end gap-2">
                           <Link href={`/dashboard/futebol/logistica/${item.id}/edit`}>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Editar">
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </Link>
                           <Link href={`/dashboard/futebol/logistica/${item.id}/delete`}>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Excluir">
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </Link>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </TableRowActions>
+                    </ClickableTableRow>
                   ))}
                 </TableBody>
               </Table>

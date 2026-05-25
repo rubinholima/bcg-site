@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 
@@ -92,27 +93,27 @@ export default async function EstadiosPage({
               </TableHeader>
               <TableBody>
                 {stadiums.map((s) => (
-                  <TableRow key={s.id}>
+                  <ClickableTableRow key={s.id} href={`/dashboard/cadastros/estadios/${s.id}/edit`}>
                     <TableCell className="font-medium">{s.name}</TableCell>
                     <TableCell className="text-muted-foreground">{s.city ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground max-w-[200px] truncate" title={s.address}>
                       {s.address ?? "—"}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableRowActions>
                       <div className="flex justify-end gap-2">
                         <Link href={`/dashboard/cadastros/estadios/${s.id}/edit`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Editar">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/cadastros/estadios/${s.id}/delete`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Excluir">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </Link>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </TableRowActions>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

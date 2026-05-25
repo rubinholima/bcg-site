@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -91,7 +92,7 @@ export default async function TimesPage({
               </TableHeader>
               <TableBody>
                 {teams.map((t) => (
-                  <TableRow key={t.id}>
+                  <ClickableTableRow key={t.id} href={`/dashboard/cadastros/times/${t.id}/edit`}>
                     <TableCell>
                       {t.logoUrl ? (
                         <div className="h-10 w-10 rounded overflow-hidden bg-muted flex items-center justify-center">
@@ -108,21 +109,21 @@ export default async function TimesPage({
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell className="text-right">
+                    <TableRowActions>
                       <div className="flex justify-end gap-2">
                         <Link href={`/dashboard/cadastros/times/${t.id}/edit`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Editar">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/cadastros/times/${t.id}/delete`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Excluir">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </Link>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </TableRowActions>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

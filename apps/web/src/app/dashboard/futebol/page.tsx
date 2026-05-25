@@ -9,6 +9,7 @@ import {
   Heart,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
+import { FutebolHubInsights } from "@/components/dashboard/hub/FutebolHubInsights";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 
 const LINKS = [
@@ -63,6 +64,8 @@ export default function FutebolHubPage() {
       subtitle={`Visão geral operacional — ${DASHBOARD_LABELS.atletas}, logística, comissão e análise.`}
       hubId="futebol"
       links={[...LINKS]}
-    />
+    >
+      <FutebolHubInsights />
+    </HubDashboardPage>
   );
 }

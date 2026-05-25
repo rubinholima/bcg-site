@@ -9,6 +9,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
+import { CadastrosHubInsights } from "@/components/dashboard/hub/CadastrosHubInsights";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 
 const LINKS = [
@@ -63,6 +64,8 @@ export default function CadastrosHubPage() {
       subtitle="Visão geral de cadastros — funcionários, atletas, equipe de saúde e programas."
       hubId="cadastros"
       links={[...LINKS]}
-    />
+    >
+      <CadastrosHubInsights />
+    </HubDashboardPage>
   );
 }

@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -160,7 +161,7 @@ export default async function EmpresasPage({
               </TableHeader>
               <TableBody>
                 {filtered.map((t) => (
-                  <TableRow key={t.id}>
+                  <ClickableTableRow key={t.id} href={`/dashboard/empresas/${t.id}/edit`}>
                     <TableCell>
                       {t.logoUrl ? (
                         <img
@@ -185,27 +186,27 @@ export default async function EmpresasPage({
                       })}
                     </TableCell>
                     {canManageCompanies ? (
-                      <TableCell className="text-right">
+                      <TableRowActions>
                         <div className="flex justify-end gap-2">
                           <Link href={`/dashboard/paginas/tenant/${t.id}/editar`} title="Página da empresa">
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Página da empresa">
                               <FileText className="h-4 w-4" />
                             </Button>
                           </Link>
                           <Link href={`/dashboard/empresas/${t.id}/edit`}>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Editar">
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </Link>
                           <Link href={`/dashboard/empresas/${t.id}/delete`}>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" aria-label="Excluir">
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </Link>
                         </div>
-                      </TableCell>
+                      </TableRowActions>
                     ) : null}
-                  </TableRow>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

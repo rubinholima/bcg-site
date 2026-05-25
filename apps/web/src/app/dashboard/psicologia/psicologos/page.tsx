@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -123,7 +124,7 @@ export default function PsicologosPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((p) => (
-                  <TableRow key={p.id}>
+                  <ClickableTableRow key={p.id} href={`/dashboard/psicologia/psicologos/${p.id}/edit`}>
                     <TableCell>
                       {p.photoUrl ? (
                         <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
@@ -171,21 +172,21 @@ export default function PsicologosPage() {
                         <span className="text-muted-foreground text-sm">Disponível</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableRowActions>
                       <div className="flex justify-end gap-1">
                         <Link href={`/dashboard/psicologia/psicologos/${p.id}/edit`}>
-                          <Button variant="ghost" size="icon" title="Editar">
+                          <Button variant="ghost" size="icon" title="Editar" aria-label="Editar">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/psicologia/psicologos/${p.id}/delete`}>
-                          <Button variant="ghost" size="icon" title="Excluir" className="text-destructive hover:text-destructive">
+                          <Button variant="ghost" size="icon" title="Excluir" aria-label="Excluir" className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </Link>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </TableRowActions>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

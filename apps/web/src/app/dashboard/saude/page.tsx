@@ -8,6 +8,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
+import { SaudeHubInsights } from "@/components/dashboard/hub/SaudeHubInsights";
 
 const LINKS = [
   {
@@ -61,6 +62,8 @@ export default function SaudeHubPage() {
       subtitle="Visão geral clínica — médico, psicologia, fisiologia e nutrição."
       hubId="saude"
       links={[...LINKS]}
-    />
+    >
+      <SaudeHubInsights />
+    </HubDashboardPage>
   );
 }

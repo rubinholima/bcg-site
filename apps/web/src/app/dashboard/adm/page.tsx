@@ -9,6 +9,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
+import { AdmHubInsights } from "@/components/dashboard/hub/AdmHubInsights";
 
 const LINKS = [
   {
@@ -62,6 +63,8 @@ export default function AdmHubPage() {
       subtitle="Visão geral administrativa — financeiro, compras, estoque, RH e patrimônio."
       hubId="adm"
       links={[...LINKS]}
-    />
+    >
+      <AdmHubInsights />
+    </HubDashboardPage>
   );
 }

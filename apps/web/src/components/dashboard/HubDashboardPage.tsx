@@ -19,9 +19,11 @@ interface HubDashboardPageProps {
   subtitle: string;
   hubId: string;
   links: HubDashboardLink[];
+  /** Bloco visual opcional (KPIs, gráficos, agenda) entre o hero e os atalhos */
+  children?: React.ReactNode;
 }
 
-export function HubDashboardPage({ title, subtitle, hubId, links }: HubDashboardPageProps) {
+export function HubDashboardPage({ title, subtitle, hubId, links, children }: HubDashboardPageProps) {
   const { canAccessModule, canAccessDashboard } = useAuth();
 
   const visibleLinks = links.filter((link) => {
@@ -36,6 +38,8 @@ export function HubDashboardPage({ title, subtitle, hubId, links }: HubDashboard
         <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground md:text-base">{subtitle}</p>
       </div>
+
+      {children}
 
       <div>
         <h2 className="mb-4 text-lg font-semibold text-foreground">Atalhos</h2>

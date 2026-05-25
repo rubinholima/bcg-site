@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import {
   Select,
   SelectContent,
@@ -259,7 +260,10 @@ export default function SocioSociosPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredMembers.map((m) => (
-                      <TableRow key={m.id}>
+                      <ClickableTableRow
+                        key={m.id}
+                        href={`/dashboard/socio-torcedor/socios/${m.id}/editar?tenantId=${tenantId}`}
+                      >
                         <TableCell className="font-medium">{m.name}</TableCell>
                         <TableCell>
                           <span className="flex items-center gap-1 text-sm">
@@ -290,19 +294,19 @@ export default function SocioSociosPage() {
                           </span>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{formatDate(m.joinedAt)}</TableCell>
-                        <TableCell>
+                        <TableRowActions align="left">
                           <div className="flex gap-1">
                             <Link href={`/dashboard/socio-torcedor/socios/${m.id}/editar?tenantId=${tenantId}`}>
-                              <Button variant="ghost" size="icon">
+                              <Button variant="ghost" size="icon" aria-label="Editar">
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             </Link>
-                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(m.id)}>
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteId(m.id)} aria-label="Excluir">
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
+                        </TableRowActions>
+                      </ClickableTableRow>
                     ))}
                   </TableBody>
                 </Table>

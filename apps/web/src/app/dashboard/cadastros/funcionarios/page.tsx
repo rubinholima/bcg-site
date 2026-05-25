@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -219,13 +220,19 @@ export default function FuncionariosCadastroPage() {
                 </TableHeader>
                 <TableBody>
                   {employees.map((emp) => (
-                    <TableRow key={emp.id}>
+                    <ClickableTableRow
+                      key={emp.id}
+                      onClick={() => {
+                        setEdit(emp);
+                        setDialogOpen(true);
+                      }}
+                    >
                       <TableCell className="font-medium">{emp.name}</TableCell>
                       <TableCell>{emp.tenant?.name ?? "—"}</TableCell>
                       <TableCell>{getEmployeeTypeLabel(emp.type)}</TableCell>
                       <TableCell className="hidden md:table-cell">{emp.email ?? "—"}</TableCell>
                       <TableCell className="hidden sm:table-cell">{emp.phone ?? "—"}</TableCell>
-                      <TableCell>
+                      <TableRowActions align="left">
                         <div className="flex gap-1">
                           <Button
                             variant="ghost"
@@ -247,8 +254,8 @@ export default function FuncionariosCadastroPage() {
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </TableRowActions>
+                    </ClickableTableRow>
                   ))}
                 </TableBody>
               </Table>

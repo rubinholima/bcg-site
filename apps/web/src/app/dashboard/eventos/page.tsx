@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { api } from "@/lib/api";
@@ -115,7 +116,7 @@ export default function EventosPage() {
               </TableHeader>
               <TableBody>
                 {events.map((ev) => (
-                  <TableRow key={ev.id}>
+                  <ClickableTableRow key={ev.id} href={`/dashboard/eventos/${ev.id}/editar`}>
                     <TableCell>
                       {ev.logoUrl ? (
                         <img
@@ -156,21 +157,21 @@ export default function EventosPage() {
                           ? ev.startDate
                           : "—"}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableRowActions>
                       <div className="flex justify-end gap-2">
                         <Link href={`/dashboard/eventos/${ev.id}/editar`} title="Dados do evento">
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Editar evento">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/paginas/evento/${ev.id}/editar`} title="Editar página">
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Editar página">
                             <FileText className="h-4 w-4" />
                           </Button>
                         </Link>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </TableRowActions>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

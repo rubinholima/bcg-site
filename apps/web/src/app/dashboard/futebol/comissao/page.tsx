@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -136,7 +137,7 @@ export default async function ComissaoPage(props: ComissaoPageProps) {
               </TableHeader>
               <TableBody>
                 {staff.map((s) => (
-                  <TableRow key={s.id}>
+                  <ClickableTableRow key={s.id} href={`/dashboard/futebol/comissao/${s.id}/edit`}>
                     <TableCell>
                       {s.photoUrl ? (
                         <div className="h-10 w-10 rounded overflow-hidden bg-muted flex items-center justify-center">
@@ -166,21 +167,21 @@ export default async function ComissaoPage(props: ComissaoPageProps) {
                         : "—"}
                     </TableCell>
                     <TableCell>{formatDate(s.contractEnd)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableRowActions>
                       <div className="flex justify-end gap-2">
                         <Link href={`/dashboard/futebol/comissao/${s.id}/edit`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Editar">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/futebol/comissao/${s.id}/delete`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Excluir">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </Link>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </TableRowActions>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>

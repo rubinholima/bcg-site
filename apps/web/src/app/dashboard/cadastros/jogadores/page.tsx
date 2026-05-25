@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -117,7 +118,7 @@ export default async function JogadoresPage({
               </TableHeader>
               <TableBody>
                 {players.map((p) => (
-                  <TableRow key={p.id}>
+                  <ClickableTableRow key={p.id} href={`/dashboard/cadastros/jogadores/${p.id}/edit`}>
                     <TableCell>
                       {p.photoUrl ? (
                         <div className="h-10 w-10 rounded overflow-hidden bg-muted flex items-center justify-center">
@@ -139,21 +140,21 @@ export default async function JogadoresPage({
                     <TableCell>{p.category ?? "—"}</TableCell>
                     <TableCell>{p.tenant?.name ?? p.tenantId}</TableCell>
                     <TableCell>{p.status ?? "available"}</TableCell>
-                    <TableCell className="text-right">
+                    <TableRowActions>
                       <div className="flex justify-end gap-2">
                         <Link href={`/dashboard/cadastros/jogadores/${p.id}/edit`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Editar">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         </Link>
                         <Link href={`/dashboard/cadastros/jogadores/${p.id}/delete`}>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" aria-label="Excluir">
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </Link>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </TableRowActions>
+                  </ClickableTableRow>
                 ))}
               </TableBody>
             </Table>
