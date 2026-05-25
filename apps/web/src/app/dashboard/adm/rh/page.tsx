@@ -43,6 +43,7 @@ import { Tenant } from "@/types/tenant";
 import { DepartmentFormDialog, type DepartmentRow } from "./components/DepartmentFormDialog";
 import { JobRoleFormDialog, type JobRoleRow } from "./components/JobRoleFormDialog";
 import { EmployeeFormDialog, type EmployeeRow } from "./components/EmployeeFormDialog";
+import { EmployeeLinkPlayerDialog } from "./components/EmployeeLinkPlayerDialog";
 import { EmploymentFormDialog, type EmploymentRow } from "./components/EmploymentFormDialog";
 import { LeavePeriodFormDialog, type LeavePeriodRow } from "./components/LeavePeriodFormDialog";
 import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosGroupedList";
@@ -76,6 +77,7 @@ export default function AdmRHPage() {
   const [roleEdit, setRoleEdit] = useState<JobRoleRow | null>(null);
   const [empDialogOpen, setEmpDialogOpen] = useState(false);
   const [empEdit, setEmpEdit] = useState<EmployeeRow | null>(null);
+  const [linkEmp, setLinkEmp] = useState<EmployeeRow | null>(null);
   const [emplDialogOpen, setEmplDialogOpen] = useState(false);
   const [emplEdit, setEmplEdit] = useState<EmploymentRow | null>(null);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
@@ -216,7 +218,6 @@ export default function AdmRHPage() {
   }
 
   const distinctTeams = new Set(employees.map((e) => e.tenant.id)).size;
-  const groupByTeam = !tenantId && distinctTeams > 1;
 
   return (
     <div className="space-y-6">
@@ -418,14 +419,11 @@ export default function AdmRHPage() {
                 ) : (
                   <>
                     <p className="text-sm text-muted-foreground">
-                      {groupByTeam
-                        ? `${employees.length} colaborador${employees.length > 1 ? "es" : ""} em ${distinctTeams} empresas — agrupado por clube/empresa e tipo`
-                        : `${employees.length} colaborador${employees.length > 1 ? "es" : ""} — agrupado por tipo`}
+                      {employees.length} colaborador{employees.length > 1 ? "es" : ""}
+                      {distinctTeams > 1 ? ` em ${distinctTeams} empresas` : ""} — clube/empresa, depois tipo. Clique na linha para editar.
                     </p>
                     <FuncionariosGroupedList
                       employees={employees}
-                      groupByTeam={groupByTeam}
-                      hideTenantColumn={!!tenantId || groupByTeam}
                       onEdit={(e) => {
                         setEmpEdit(e);
                         setEmpDialogOpen(true);
@@ -434,6 +432,7 @@ export default function AdmRHPage() {
                         setDeleteKind("employee");
                         setDeleteId(id);
                       }}
+                      onLinkPlayer={setLinkEmp}
                     />
                   </>
                 )}
@@ -577,6 +576,7 @@ export default function AdmRHPage() {
       <DepartmentFormDialog open={deptDialogOpen} onOpenChange={setDeptDialogOpen} tenants={tenants} edit={deptEdit} onSuccess={() => { loadDepartments(); setDeptEdit(null); }} />
       <JobRoleFormDialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen} tenants={tenants} departments={departments} edit={roleEdit} onSuccess={() => { loadJobRoles(); setRoleEdit(null); }} />
       <EmployeeFormDialog open={empDialogOpen} onOpenChange={setEmpDialogOpen} tenants={tenants} jobRoles={jobRoles} departments={departments} edit={empEdit} onSuccess={() => { loadEmployees(); loadEmployments(); setEmpEdit(null); }} />
+      <EmployeeLinkPlayerDialog open={!!linkEmp} onOpenChange={(open) => !open && setLinkEmp(null)} employee={linkEmp} onSuccess={() => { loadEmployees(); setLinkEmp(null); }} />
       <EmploymentFormDialog open={emplDialogOpen} onOpenChange={setEmplDialogOpen} tenants={tenants} employees={employees} jobRoles={jobRoles} departments={departments} edit={emplEdit} onSuccess={() => { loadEmployments(); setEmplEdit(null); }} />
       <LeavePeriodFormDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen} employments={employments} edit={leaveEdit} onSuccess={() => { loadLeavePeriods(); setLeaveEdit(null); }} />
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Briefcase, ChevronDown, Pencil, Trash2, UserCircle } from "lucide-react";
+import { Briefcase, ChevronDown, Link2, Pencil, Trash2, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -26,22 +26,23 @@ import { type EmployeeRow } from "@/app/dashboard/adm/rh/components/EmployeeForm
 
 interface FuncionariosGroupedListProps {
   employees: EmployeeRow[];
-  groupByTeam: boolean;
   onEdit: (employee: EmployeeRow) => void;
   onDelete: (id: string) => void;
-  hideTenantColumn?: boolean;
+  onLinkPlayer: (employee: EmployeeRow) => void;
 }
 
 function EmployeeTable({
   rows,
-  hideTenantColumn,
+  hideTypeColumn,
   onEdit,
   onDelete,
+  onLinkPlayer,
 }: {
   rows: EmployeeRow[];
-  hideTenantColumn?: boolean;
+  hideTypeColumn?: boolean;
   onEdit: (employee: EmployeeRow) => void;
   onDelete: (id: string) => void;
+  onLinkPlayer: (employee: EmployeeRow) => void;
 }) {
   return (
     <Table>
@@ -50,22 +51,17 @@ function EmployeeTable({
           <TableHead className="w-14">Foto</TableHead>
           <TableHead className="hidden sm:table-cell">Matrícula</TableHead>
           <TableHead>Nome</TableHead>
-          {!hideTenantColumn ? <TableHead>Clube / empresa</TableHead> : null}
-          <TableHead>Tipo</TableHead>
+          {!hideTypeColumn ? <TableHead>Tipo</TableHead> : null}
           <TableHead className="hidden lg:table-cell">Futebol</TableHead>
           <TableHead className="hidden md:table-cell">CPF</TableHead>
           <TableHead className="hidden md:table-cell">E-mail</TableHead>
           <TableHead className="hidden sm:table-cell">Telefone</TableHead>
-          <TableHead className="w-[100px]">Ações</TableHead>
+          <TableHead className="w-[120px]">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {rows.map((emp) => (
-          <ClickableTableRow
-            key={emp.id}
-            className="cursor-pointer"
-            onClick={() => onEdit(emp)}
-          >
+          <ClickableTableRow key={emp.id} className="cursor-pointer" onClick={() => onEdit(emp)}>
             <TableCell>
               <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
                 {emp.photoUrl ? (
@@ -81,10 +77,7 @@ function EmployeeTable({
               {employeeCodeDisplay(emp.code)}
             </TableCell>
             <TableCell className="font-medium uppercase">{cadastroDisplayUpper(emp.name)}</TableCell>
-            {!hideTenantColumn ? (
-              <TableCell className="uppercase">{cadastroDisplayUpper(emp.tenant?.name)}</TableCell>
-            ) : null}
-            <TableCell>{getEmployeeTypeLabel(emp.type)}</TableCell>
+            {!hideTypeColumn ? <TableCell>{getEmployeeTypeLabel(emp.type)}</TableCell> : null}
             <TableCell className="hidden lg:table-cell">
               {emp.playerId ? (
                 <Link
@@ -95,7 +88,18 @@ function EmployeeTable({
                   {cadastroDisplayUpper(emp.player?.name ?? "Atleta")}
                 </Link>
               ) : (
-                "—"
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-xs uppercase"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLinkPlayer(emp);
+                  }}
+                >
+                  Vincular
+                </Button>
               )}
             </TableCell>
             <TableCell className="hidden md:table-cell">{employeeCpfDisplay(emp.cpf)}</TableCell>
@@ -103,6 +107,18 @@ function EmployeeTable({
             <TableCell className="hidden sm:table-cell">{employeePhoneDisplay(emp.phone)}</TableCell>
             <TableRowActions align="left">
               <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Vincular Futebol"
+                  title="Vínculo com Futebol"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onLinkPlayer(emp);
+                  }}
+                >
+                  <Link2 className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -138,16 +154,16 @@ function TypeBlock({
   typeKey,
   employees,
   defaultOpen,
-  hideTenantColumn,
   onEdit,
   onDelete,
+  onLinkPlayer,
 }: {
   typeKey: string;
   employees: EmployeeRow[];
   defaultOpen?: boolean;
-  hideTenantColumn?: boolean;
   onEdit: (employee: EmployeeRow) => void;
   onDelete: (id: string) => void;
+  onLinkPlayer: (employee: EmployeeRow) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const label = getEmployeeTypeLabel(typeKey);
@@ -169,9 +185,10 @@ function TypeBlock({
         <div className="overflow-x-auto border-t border-border/60 bg-background/50 p-2 sm:p-3">
           <EmployeeTable
             rows={employees}
-            hideTenantColumn={hideTenantColumn}
+            hideTypeColumn
             onEdit={onEdit}
             onDelete={onDelete}
+            onLinkPlayer={onLinkPlayer}
           />
         </div>
       ) : null}
@@ -186,6 +203,7 @@ function TeamBlock({
   defaultOpen,
   onEdit,
   onDelete,
+  onLinkPlayer,
 }: {
   teamName: string;
   teamLogoUrl?: string | null;
@@ -193,6 +211,7 @@ function TeamBlock({
   defaultOpen?: boolean;
   onEdit: (employee: EmployeeRow) => void;
   onDelete: (id: string) => void;
+  onLinkPlayer: (employee: EmployeeRow) => void;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const total = types.reduce((acc, t) => acc + t.employees.length, 0);
@@ -234,9 +253,9 @@ function TeamBlock({
               typeKey={typeGroup.key}
               employees={typeGroup.employees}
               defaultOpen={index === 0}
-              hideTenantColumn
               onEdit={onEdit}
               onDelete={onDelete}
+              onLinkPlayer={onLinkPlayer}
             />
           ))}
         </div>
@@ -272,16 +291,11 @@ function groupByType(employees: EmployeeRow[]) {
 
 export function FuncionariosGroupedList({
   employees,
-  groupByTeam,
   onEdit,
   onDelete,
-  hideTenantColumn,
+  onLinkPlayer,
 }: FuncionariosGroupedListProps) {
-  const grouped = useMemo(() => {
-    if (!groupByTeam) {
-      return { teams: null as null, types: groupByType(employees) };
-    }
-
+  const teams = useMemo(() => {
     const teamMap = new Map<
       string,
       { name: string; logoUrl?: string | null; employees: EmployeeRow[] }
@@ -295,46 +309,29 @@ export function FuncionariosGroupedList({
       teamMap.set(key, entry);
     }
 
-    const teams = [...teamMap.entries()]
+    return [...teamMap.entries()]
       .map(([, value]) => ({
         teamName: value.name,
         teamLogoUrl: value.logoUrl,
         types: groupByType(value.employees),
       }))
       .sort((a, b) => a.teamName.localeCompare(b.teamName, "pt-BR"));
+  }, [employees]);
 
-    return { teams, types: null as null };
-  }, [employees, groupByTeam]);
-
-  if (groupByTeam && grouped.teams) {
-    return (
-      <div className="space-y-4">
-        {grouped.teams.map((team, index) => (
-          <TeamBlock
-            key={team.teamName}
-            teamName={team.teamName}
-            teamLogoUrl={team.teamLogoUrl}
-            types={team.types}
-            defaultOpen={index === 0}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ))}
-      </div>
-    );
-  }
+  if (teams.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      {grouped.types?.map((typeGroup, index) => (
-        <TypeBlock
-          key={typeGroup.key}
-          typeKey={typeGroup.key}
-          employees={typeGroup.employees}
-          defaultOpen={index === 0}
-          hideTenantColumn={hideTenantColumn}
+    <div className="space-y-4">
+      {teams.map((team, index) => (
+        <TeamBlock
+          key={team.teamName}
+          teamName={team.teamName}
+          teamLogoUrl={team.teamLogoUrl}
+          types={team.types}
+          defaultOpen={teams.length === 1 || index === 0}
           onEdit={onEdit}
           onDelete={onDelete}
+          onLinkPlayer={onLinkPlayer}
         />
       ))}
     </div>

@@ -22,6 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { EmployeeFormDialog, type EmployeeRow } from "@/app/dashboard/adm/rh/components/EmployeeFormDialog";
+import { EmployeeLinkPlayerDialog } from "@/app/dashboard/adm/rh/components/EmployeeLinkPlayerDialog";
 import { type DepartmentRow } from "@/app/dashboard/adm/rh/components/DepartmentFormDialog";
 import { type JobRoleRow } from "@/app/dashboard/adm/rh/components/JobRoleFormDialog";
 import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosGroupedList";
@@ -39,6 +40,7 @@ export default function FuncionariosCadastroPage() {
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [edit, setEdit] = useState<EmployeeRow | null>(null);
+  const [linkEmp, setLinkEmp] = useState<EmployeeRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -132,7 +134,6 @@ export default function FuncionariosCadastroPage() {
   }
 
   const distinctTeams = new Set(employees.map((e) => e.tenant.id)).size;
-  const groupByTeam = !tenantId && distinctTeams > 1;
 
   return (
     <div className="space-y-6">
@@ -219,9 +220,7 @@ export default function FuncionariosCadastroPage() {
           <CardDescription>
             {employees.length === 0
               ? "Nenhum registro encontrado"
-              : groupByTeam
-                ? `${employees.length} registro${employees.length > 1 ? "s" : ""} em ${distinctTeams} empresas — clique na linha para editar`
-                : `${employees.length} registro${employees.length > 1 ? "s" : ""} — clique na linha para editar`}
+              : `${employees.length} registro${employees.length > 1 ? "s" : ""}${distinctTeams > 1 ? ` em ${distinctTeams} empresas` : ""} — clube/empresa, depois tipo. Clique na linha para editar.`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -234,13 +233,12 @@ export default function FuncionariosCadastroPage() {
           ) : (
             <FuncionariosGroupedList
               employees={employees}
-              groupByTeam={groupByTeam}
-              hideTenantColumn={!!tenantId || groupByTeam}
               onEdit={(emp) => {
                 setEdit(emp);
                 setDialogOpen(true);
               }}
               onDelete={setDeleteId}
+              onLinkPlayer={setLinkEmp}
             />
           )}
         </CardContent>
@@ -253,6 +251,13 @@ export default function FuncionariosCadastroPage() {
         jobRoles={jobRoles}
         departments={departments}
         edit={edit}
+        onSuccess={loadEmployees}
+      />
+
+      <EmployeeLinkPlayerDialog
+        open={!!linkEmp}
+        onOpenChange={(open) => !open && setLinkEmp(null)}
+        employee={linkEmp}
         onSuccess={loadEmployees}
       />
 
