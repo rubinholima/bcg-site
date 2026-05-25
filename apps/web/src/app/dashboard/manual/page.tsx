@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 const NAV = [
   { id: "intro", label: "Introdução" },
   { id: "acesso", label: "Acesso e perfis" },
+  { id: "permissoes-modulos", label: "Permissões (módulos)" },
   { id: "dashboard", label: "Dashboard e Grupo" },
   { id: "diretoria", label: "Diretoria" },
   { id: "empresas", label: "Empresas" },
@@ -117,12 +118,48 @@ export default function ManualPage() {
           <Section id="acesso" title="Acesso e perfis">
             <p>
               O login pode ser corporativo (OIDC/Cognito ou fluxo definido no ambiente). Perfis comuns:{" "}
-              <strong>super admin</strong> (tudo), <strong>company admin</strong>, <strong>editor</strong>,{" "}
-              <strong>gerente</strong>, <strong>diretoria</strong>, funções médicas/psico, etc.
+              <strong>super admin</strong> (tudo), <strong>admin da empresa</strong>, <strong>editor</strong>,{" "}
+              <strong>gerente</strong>, <strong>administrativo</strong>, <strong>diretoria</strong>,{" "}
+              <strong>comissão</strong>, <strong>médico</strong>, <strong>psicólogo</strong>, etc.
             </p>
             <p>
               <strong>Exemplo:</strong> um coordenador de base pode ter apenas Depto Futebol (jogadores,
               categorias) e Estoque, sem Financeiro nem Usuários.
+            </p>
+          </Section>
+
+          <Section id="permissoes-modulos" title="Permissões por perfil (Configurações → Módulos)">
+            <p>
+              Somente <strong>super admin</strong> altera permissões em{" "}
+              <strong>Configurações → Módulos</strong>. A tela trabalha por <strong>perfil</strong> (papel do
+              usuário) e por <strong>seção</strong> do menu — não é necessário marcar item a item.
+            </p>
+            <ol className="list-decimal pl-5 space-y-2">
+              <li>
+                Escolha o <strong>perfil</strong> no topo (ex.: Administrativo para o financeiro, RH ou
+                compras).
+              </li>
+              <li>
+                Em cada <strong>seção</strong>, use o interruptor para liberar ou bloquear todos os módulos
+                daquela área de uma vez.
+              </li>
+              <li>
+                A lista abaixo do interruptor mostra o que esse perfil passa a ver no menu (Financeiro,
+                Compras, Estoque, etc.).
+              </li>
+              <li>
+                Clique em <strong>Salvar alterações</strong> ao terminar. Super admin continua com acesso total
+                sem depender da matriz.
+              </li>
+            </ol>
+            <p>
+              <strong>Financeiro (Adm):</strong> perfil <strong>Administrativo</strong> → seção{" "}
+              <strong>Administrativo &amp; financeiro</strong> → liberar. O usuário precisa ter role{" "}
+              <strong>administrativo</strong> em Usuários.
+            </p>
+            <p>
+              <strong>Pacotes prontos</strong> só <em>acrescentam</em> permissões; para restringir, bloqueie a
+              seção e salve. <strong>Exportar JSON</strong> gera backup da política (sem dados de usuários).
             </p>
           </Section>
 

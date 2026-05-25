@@ -17,6 +17,19 @@ export const MANAGED_ROLES = [
 
 export type ManagedRoleKey = (typeof MANAGED_ROLES)[number];
 
+/** Rótulos na tela Configurações → Módulos (por perfil). */
+export const MANAGED_ROLE_LABELS: Record<ManagedRoleKey, string> = {
+  company_admin: "Admin da empresa",
+  editor: "Editor",
+  gerente: "Gerente",
+  administrativo: "Administrativo",
+  analista: "Analista",
+  diretoria: "Diretoria",
+  medico: "Médico",
+  psicologo: "Psicólogo",
+  comissao: "Comissão",
+};
+
 export interface ModulePermissionRow {
   slug: string;
   name: string;

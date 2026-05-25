@@ -3,9 +3,9 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ChevronDown, ChevronRight, Download, Info } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,7 +37,10 @@ import {
   applyAdditivePreset,
   buildMatrixExportPayload,
   getPresetById,
+  MANAGED_ROLE_LABELS,
+  MANAGED_ROLES,
   PERMISSION_PRESETS,
+  type ManagedRoleKey,
   type ModulePermissionRow,
 } from "@/lib/permission-presets";
 
@@ -86,100 +89,36 @@ interface ModuleTreeNode {
   depth: number;
 }
 
-/** Colunas da matriz — company_admin e editor inalterados; gerente e administrativo são papéis distintos (ModuleRole). */
-export type InstitutionMatrixCol =
-  | "company_admin"
-  | "editor"
-  | "gerente"
-  | "administrativo"
-  | "analista"
-  | "diretoria"
-  | "comissao"
-  | "saude_staff";
-
-const MATRIX_COLUMNS: readonly {
-  id: InstitutionMatrixCol;
-  shortLabel: string;
-  hintLabel: string;
-}[] = [
-  {
-    id: "company_admin",
-    shortLabel: "Company admin",
-    hintLabel: "Role company_admin na API: administrador da empresa ou clube no tenant.",
-  },
-  {
-    id: "editor",
-    shortLabel: "Editor",
-    hintLabel: "Role editor: produção de conteúdo e cadastros liberados nesta coluna.",
-  },
-  {
-    id: "gerente",
-    shortLabel: "Gerente",
-    hintLabel: "Role gerente: papel distinto de company admin e editor; marque por módulo quem com perfil gerente acessa.",
-  },
-  {
-    id: "administrativo",
-    shortLabel: "Administrativo",
-    hintLabel:
-      "Role administrativo: papel operacional/administrativo distinto de company admin e de editor; marque por módulo.",
-  },
-  {
-    id: "analista",
-    shortLabel: "Analista",
-    hintLabel: "Análises operacionais e relatórios (escopo habitualmente mais restrito).",
-  },
-  {
-    id: "diretoria",
-    shortLabel: "Diretoria",
-    hintLabel: "Dados sensíveis dos atletas e avaliações (área institucional).",
-  },
-  {
-    id: "comissao",
-    shortLabel: "Comissão",
-    hintLabel: "Quadro técnico: futebol operacional (comissão, logística, análise, fisiologia).",
-  },
-  {
-    id: "saude_staff",
-    shortLabel: "Saúde",
-    hintLabel:
-      "Equipe médica e psicológica: marca ou desmarca médico + psicólogo na mesma política.",
-  },
-] as const;
-
-function applyMatrixColumnToRow(
-  row: ModulePermission,
-  columnId: InstitutionMatrixCol,
-  value: boolean,
-): ModulePermission {
-  if (columnId === "saude_staff") {
-    return { ...row, medico: value, psicologo: value };
-  }
-  return {
-    ...row,
-    [columnId]: value,
-  };
-}
-
-/** Valor visual da checkbox (coluna Saúde = médico ∧ psicólogo). */
-function matrixCheckboxChecked(mod: ModulePermission, columnId: InstitutionMatrixCol): boolean {
-  if (columnId === "saude_staff") {
-    return Boolean(mod.medico && mod.psicologo);
-  }
-  return Boolean(mod[columnId]);
-}
-
 /** Papéis armazenados na API por módulo (auditoria e presets). */
 const AUDIT_ROLE_LABELS: Record<string, { short: string }> = {
-  company_admin: { short: "Company admin" },
-  editor: { short: "Editor" },
-  gerente: { short: "Gerente" },
-  administrativo: { short: "Administrativo" },
-  analista: { short: "Analista" },
-  diretoria: { short: "Diretoria" },
-  comissao: { short: "Comissão" },
-  medico: { short: "Médico" },
-  psicologo: { short: "Psicólogo" },
+  company_admin: { short: MANAGED_ROLE_LABELS.company_admin },
+  editor: { short: MANAGED_ROLE_LABELS.editor },
+  gerente: { short: MANAGED_ROLE_LABELS.gerente },
+  administrativo: { short: MANAGED_ROLE_LABELS.administrativo },
+  analista: { short: MANAGED_ROLE_LABELS.analista },
+  diretoria: { short: MANAGED_ROLE_LABELS.diretoria },
+  comissao: { short: MANAGED_ROLE_LABELS.comissao },
+  medico: { short: MANAGED_ROLE_LABELS.medico },
+  psicologo: { short: MANAGED_ROLE_LABELS.psicologo },
 };
+
+function applyRoleToRow(row: ModulePermission, role: ManagedRoleKey, value: boolean): ModulePermission {
+  return { ...row, [role]: value };
+}
+
+function roleChecked(mod: ModulePermission, role: ManagedRoleKey): boolean {
+  return Boolean(mod[role]);
+}
+
+type SectionAccessState = "all" | "none" | "partial";
+
+function getSectionAccessState(rows: DisplayRow[], role: ManagedRoleKey): SectionAccessState {
+  if (rows.length === 0) return "none";
+  const enabled = rows.filter((r) => r[role]).length;
+  if (enabled === 0) return "none";
+  if (enabled === rows.length) return "all";
+  return "partial";
+}
 
 function auditChangeLabel(row: AuditChangeRow): string {
   const mod = MODULE_DISPLAY_NAMES[row.slug] ?? row.slug;
@@ -268,6 +207,7 @@ export default function ModulosPage() {
   const [modules, setModules] = useState<ModulePermission[]>([]);
   const [dirty, setDirty] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedRole, setSelectedRole] = useState<ManagedRoleKey>("administrativo");
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [presetId, setPresetId] = useState<string>("");
@@ -419,24 +359,15 @@ export default function ModulosPage() {
     [displayModules],
   );
 
-  const roleActivatedCounts = useMemo(
-    () =>
-      MATRIX_COLUMNS.map((col) => ({
-        colId: col.id,
-        label: col.shortLabel,
-        count: (() => {
-          if (col.id === "saude_staff") {
-            return mergedModuleState.filter((m) => m.medico && m.psicologo).length;
-          }
-          const key = col.id as keyof Pick<
-            ModulePermission,
-            "company_admin" | "editor" | "gerente" | "administrativo" | "analista" | "diretoria" | "comissao"
-          >;
-          return mergedModuleState.filter((m) => m[key]).length;
-        })(),
-      })),
-    [mergedModuleState],
-  );
+  const roleSummary = useMemo(() => {
+    const enabled = mergedModuleState.filter((m) => roleChecked(m, selectedRole));
+    const sections = new Set(enabled.map((m) => m.functionalArea || "outros"));
+    return {
+      moduleCount: enabled.length,
+      sectionCount: sections.size,
+      enabledModules: enabled.map((m) => MODULE_DISPLAY_NAMES[m.slug] ?? m.name),
+    };
+  }, [mergedModuleState, selectedRole]);
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -465,87 +396,48 @@ export default function ModulosPage() {
     }));
   }, [filteredRows]);
 
-  /** Marca/desmarca uma coluna (Company admin, Editor … Saúde) em todos os módulos visíveis desta área. */
-  const handleBulkArea = useCallback((areaKey: string, columnId: InstitutionMatrixCol, value: boolean) => {
-    const slugs = filteredRows
-      .filter((r) => (r.functionalArea || "outros") === areaKey)
-      .map((r) => r.slug);
-    if (slugs.length === 0) return;
+  /** Marca/desmarca um perfil em todos os módulos visíveis desta seção. */
+  const handleSectionAccess = useCallback(
+    (areaKey: string, role: ManagedRoleKey, value: boolean) => {
+      const slugs = filteredRows
+        .filter((r) => (r.functionalArea || "outros") === areaKey)
+        .map((r) => r.slug);
+      if (slugs.length === 0) return;
 
-    setModules((prev) => {
-      const bySlug = new Map(prev.map((m) => [m.slug, { ...m }]));
-      for (const slug of slugs) {
-        const d = filteredRows.find((r) => r.slug === slug);
-        if (!d) continue;
-        const raw = bySlug.get(slug);
-        const existing: ModulePermission = {
-          slug,
-          name: MODULE_DISPLAY_NAMES[slug] ?? d.name,
-          sortOrder: d.sortOrder,
-          functionalArea: d.functionalArea,
-          company_admin: raw?.company_admin ?? d.company_admin,
-          editor: raw?.editor ?? d.editor,
-          gerente: raw?.gerente ?? d.gerente,
-          administrativo: raw?.administrativo ?? d.administrativo,
-          analista: raw?.analista ?? d.analista,
-          diretoria: raw?.diretoria ?? d.diretoria,
-          medico: raw?.medico ?? d.medico,
-          psicologo: raw?.psicologo ?? d.psicologo,
-          comissao: raw?.comissao ?? d.comissao,
-        };
-        bySlug.set(slug, applyMatrixColumnToRow(existing, columnId, value));
-      }
-      return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
-    });
-    setDirty(true);
-    setSaveBanner(null);
-  }, [filteredRows]);
+      setModules((prev) => {
+        const bySlug = new Map(prev.map((m) => [m.slug, { ...m }]));
+        for (const slug of slugs) {
+          const d = filteredRows.find((r) => r.slug === slug);
+          if (!d) continue;
+          const raw = bySlug.get(slug);
+          const existing: ModulePermission = {
+            slug,
+            name: MODULE_DISPLAY_NAMES[slug] ?? d.name,
+            sortOrder: d.sortOrder,
+            functionalArea: d.functionalArea,
+            company_admin: raw?.company_admin ?? d.company_admin,
+            editor: raw?.editor ?? d.editor,
+            gerente: raw?.gerente ?? d.gerente,
+            administrativo: raw?.administrativo ?? d.administrativo,
+            analista: raw?.analista ?? d.analista,
+            diretoria: raw?.diretoria ?? d.diretoria,
+            medico: raw?.medico ?? d.medico,
+            psicologo: raw?.psicologo ?? d.psicologo,
+            comissao: raw?.comissao ?? d.comissao,
+          };
+          bySlug.set(slug, applyRoleToRow(existing, role, value));
+        }
+        return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
+      });
+      setDirty(true);
+      setSaveBanner(null);
+    },
+    [filteredRows],
+  );
 
-  const handleToggle = (slug: string, columnId: InstitutionMatrixCol, value: boolean) => {
-    setModules((prev) => {
-      const dm = displayModules.find((x) => x.slug === slug);
-      const baseFromDisplay: ModulePermission | null = dm
-        ? {
-            slug: dm.slug,
-            name: MODULE_DISPLAY_NAMES[dm.slug] ?? dm.name,
-            sortOrder: dm.sortOrder,
-            functionalArea: dm.functionalArea,
-            company_admin: dm.company_admin,
-            editor: dm.editor,
-            gerente: dm.gerente,
-            administrativo: dm.administrativo,
-            analista: dm.analista,
-            diretoria: dm.diretoria,
-            medico: dm.medico,
-            psicologo: dm.psicologo,
-            comissao: dm.comissao,
-          }
-        : null;
-      const found = prev.find((m) => m.slug === slug);
-      if (found) {
-        return prev.map((m) => (m.slug === slug ? applyMatrixColumnToRow(m, columnId, value) : m));
-      }
-      const base =
-        baseFromDisplay ??
-        ({
-          slug,
-          name: MODULE_DISPLAY_NAMES[slug] ?? dm?.name ?? slug,
-          sortOrder: dm?.sortOrder ?? 0,
-          functionalArea: dm?.functionalArea ?? "outros",
-          company_admin: false,
-          editor: false,
-          gerente: false,
-          administrativo: false,
-          analista: false,
-          diretoria: false,
-          medico: false,
-          psicologo: false,
-          comissao: false,
-        } satisfies ModulePermission);
-      return [...prev, applyMatrixColumnToRow(base, columnId, value)];
-    });
-    setDirty(true);
-    setSaveBanner(null);
+  const handleSectionToggle = (areaKey: string, role: ManagedRoleKey, rows: DisplayRow[]) => {
+    const state = getSectionAccessState(rows, role);
+    handleSectionAccess(areaKey, role, state !== "all");
   };
 
   const handleExportSnapshot = useCallback(() => {
@@ -667,31 +559,43 @@ export default function ModulosPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Permissões e governança</h1>
-          <p className="mt-2 text-muted-foreground text-sm sm:text-base leading-relaxed max-w-3xl">
-            As políticas abaixo valem por <strong>papel corporativo</strong> (ex.: Editor, Company Admin): escolhem quais
-            módulos do dashboard cada perfil vê e usa. Agrupamos por área para você aplicar permissões sem varrer uma
-            tabela infinita linha a linha — use <strong>ações nesta área</strong> para marcar um perfil em todos os itens do
-            bloco de uma só vez. Alterações ficam registradas em auditoria. Super admin continua sempre com acesso total.
-          </p>
+        <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Acessos ao sistema</h1>
+          <Link
+            href="/dashboard/manual#permissoes-modulos"
+            className="text-sm text-primary hover:underline"
+          >
+            Ajuda
+          </Link>
         </div>
       </div>
 
-      <div className="space-y-4 max-w-[1200px]">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+      <div className="space-y-4 max-w-[960px]">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex-1 min-w-0 max-w-md">
             <label htmlFor="mod-search" className="sr-only">
-              Buscar módulos
+              Buscar seções ou módulos
             </label>
             <Input
               id="mod-search"
               type="search"
-              placeholder="Buscar por nome, caminho ou identificador do módulo…"
+              placeholder="Buscar seção ou módulo…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="text-foreground"
             />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {dirty && (
+              <Button type="button" onClick={handleSave} disabled={saving}>
+                {saving ? "Salvando…" : "Salvar alterações"}
+              </Button>
+            )}
+            <Link href="/dashboard/configuracoes">
+              <Button type="button" variant="outline" disabled={saving}>
+                Voltar
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -704,275 +608,165 @@ export default function ModulosPage() {
           </div>
         )}
 
-        <Card className="border-dashed">
-          <CardHeader className="space-y-3">
-            <CardTitle className="text-lg">Pacotes prontos e cópia da política</CardTitle>
-            <CardDescription className="text-sm sm:text-base leading-relaxed max-w-none">
-              Trecho opcional: use quando quiser <strong>começar por um pacote sugerido</strong> ou <strong>baixar o que está
-              valendo agora</strong> como arquivo — sem dados pessoais, só caixas ligadas/desligadas na matriz.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div
-              className="rounded-xl border border-border/80 bg-muted/35 px-4 py-4 space-y-3"
-              role="region"
-              aria-labelledby="preset-help-heading"
-            >
-              <p
-                id="preset-help-heading"
-                className="text-sm font-semibold text-foreground flex items-start gap-2.5 leading-snug"
-              >
-                <Info className="h-5 w-5 shrink-0 text-primary mt-0.5" aria-hidden />
-                Como isso funciona (em três pontos)
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-2.5 pl-1 list-none border-s-2 border-primary/35 ps-4 ms-2">
-                <li>
-                  <strong className="text-foreground/95">Pacotes só ligam permissões novas.</strong> Ou seja, marcam
-                  “sim” onde o pacote recomenda — <strong>não desligam</strong> algo que já estava permitido antes. Para
-                  restringir, abra a matriz logo abaixo, desmarque as células e use{' '}
-                  <strong className="text-foreground/90">&quot;Salvar todas as alterações&quot;</strong>.
-                </li>
-                <li>
-                  Ao <strong className="text-foreground/95">confirmar um pacote</strong>, gravamos esse acréscimo no
-                  servidor (com registro na auditoria), igual ao salvamento manual.
-                </li>
-                <li>
-                  <strong className="text-foreground/95">Exportar JSON</strong> gera apenas o “mapa” atual de permissões por
-                  módulo e papel — <strong>não há nomes nem e-mails de usuários.</strong> Útil para evidência interna ou
-                  backup da política.
-                </li>
-              </ul>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-              <div className="flex-1 min-w-0 space-y-2 max-w-xl">
-                <div>
-                  <span className="text-sm font-medium text-foreground">Passo 1 — Escolher um pacote (opcional)</span>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    Cada opção descreve para quais <strong>módulos</strong> o pacote sugere o acesso em cada <strong>papel</strong>.
-                  </p>
-                </div>
-                <Select
-                  value={presetId || "__unset"}
-                  onValueChange={(v) => setPresetId(v === "__unset" ? "" : v)}
-                >
-                  <SelectTrigger className="w-full text-foreground">
-                    <SelectValue placeholder="Nenhum — escolher depois na matriz…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__unset">Nenhum selecionado</SelectItem>
-                    {PERMISSION_PRESETS.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {presetId && getPresetById(presetId) && (
-                  <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-border pl-3">
-                    {getPresetById(presetId)!.description}
-                  </p>
-                )}
-              </div>
-
-              <div className="shrink-0 space-y-2 sm:pt-6">
-                <span className="text-sm font-medium text-foreground block">Passos 2 e 3</span>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={!presetId || saving}
-                    onClick={() => presetId && setPresetDialogOpen(true)}
-                  >
-                    Aplicar pacote ao servidor…
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleExportSnapshot}
-                    disabled={saving}
-                    title="Apenas política (módulos × papéis); sem dados de usuários"
-                  >
-                    <Download className="h-4 w-4 mr-2" aria-hidden />
-                    Baixar política (JSON)
-                  </Button>
-                </div>
-                <p className="text-[11px] text-muted-foreground max-w-[280px] leading-relaxed">
-                  &quot;Aplicar&quot; abre uma confirmação: você vê um resumo e só então gravamos. O arquivo JSON você pode gerar a
-                  qualquer momento — não altera permissões no sistema.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-border/60 space-y-2">
-              <p className="text-xs font-medium text-foreground">
-                Panorama rápido — por <strong>papel</strong>, quantos <strong>módulos</strong> estão liberados na matriz agora
-              </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Ou seja: para cada papel, o número conta quantos módulos <strong className="text-foreground/90">têm esse papel
-                permitido</strong> na matriz que você vê agora — inclusive se você alterou caixas nesta tela e ainda não clicou
-                em &quot;Salvar todas as alterações&quot;.
-              </p>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {roleActivatedCounts.map(({ colId, label, count }) => {
-                  const hint = MATRIX_COLUMNS.find((c) => c.id === colId)?.hintLabel ?? "";
-                  return (
-                  <span
-                    key={colId}
-                    className="text-xs px-2.5 py-1.5 rounded-md bg-muted text-foreground/90 leading-tight"
-                    title={hint ? `${hint} Quantidade de módulos com esse tipo de acesso ligado.` : undefined}
-                  >
-                    <span className="text-muted-foreground">{label}: </span>
-                    <strong className="font-semibold tabular-nums">{count}</strong>
-                  </span>
-                  );
-                })}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle>Matriz por área funcional</CardTitle>
-            <CardDescription>
-              Dobre cada grupo para revisar apenas o que importa neste momento (LGPD na área de saúde, ADM só em
-              departamentos administrativos, etc.).
-            </CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Perfil</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {loading ? (
-              <p className="text-muted-foreground py-8">Carregando módulos...</p>
-            ) : (
-              <div className="space-y-4">
-                {areasWithModules.length === 0 && (
-                  <p className="text-muted-foreground py-8 text-center">Nenhum módulo com o termo pesquisado.</p>
-                )}
-
-                {areasWithModules.map(({ area, meta, modules: rows }) => (
-                  <details
-                    key={area}
-                    className="group rounded-xl border bg-card overflow-hidden shadow-sm scroll-mt-4 open:shadow-md"
-                  >
-                    <summary className="cursor-pointer select-none px-4 py-4 sm:px-6 list-none [&::-webkit-details-marker]:hidden flex flex-wrap items-start justify-between gap-3 bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <div className="min-w-0 flex-1">
-                        <span className="font-semibold text-base text-foreground block">{meta.title}</span>
-                        <span className="text-sm text-muted-foreground mt-0.5 block max-w-xl">{meta.description}</span>
-                        <span className="text-xs text-muted-foreground mt-1 block">
-                          {rows.length} módulo{rows.length === 1 ? "" : "s"} nesta área
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 items-center shrink-0 pt-1">
-                        {MATRIX_COLUMNS.map((col) => (
-                          <div key={col.id} className="flex rounded-md border bg-background shadow-sm overflow-hidden">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 px-2 text-[11px] border-0 rounded-none border-e"
-                              title={`${col.shortLabel}: ${col.hintLabel}`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleBulkArea(area, col.id, true);
-                              }}
-                            >
-                              ✓ {col.shortLabel}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 px-2 text-[11px] border-0 rounded-none"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleBulkArea(area, col.id, false);
-                              }}
-                            >
-                              ✕
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                      <span className="hidden sm:inline text-muted-foreground group-open:hidden text-xs whitespace-nowrap">
-                        Abrir ▸
-                      </span>
-                      <span className="hidden sm:inline text-muted-foreground not-group-open:hidden text-xs whitespace-nowrap">
-                        Fechar ▸
-                      </span>
-                    </summary>
-                    <div className="overflow-x-auto border-t">
-                      <table className="w-full text-sm min-w-[1000px]">
-                        <thead>
-                          <tr className="border-b bg-muted/40">
-                            <th className="sticky left-0 z-[1] bg-muted/95 backdrop-blur supports-[backdrop-filter]:bg-muted/85 px-3 py-3 text-left font-medium w-[220px] sm:w-[260px]">
-                              Módulo
-                            </th>
-                            {MATRIX_COLUMNS.map((col) => (
-                              <th
-                                key={col.id}
-                                className="px-2 py-3 text-left font-normal text-xs text-muted-foreground max-w-[104px]"
-                                title={col.hintLabel}
-                              >
-                                {col.shortLabel}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {rows.map((m) => {
-                            const mod = modules.find((x) => x.slug === m.slug) ?? m;
-                            return (
-                              <tr key={`${area}-${m.slug}`} className="border-b last:border-b-0">
-                                <td className="sticky left-0 z-[1] bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90 px-3 py-3 align-top border-r border-border/50">
-                                  <div className="font-medium leading-snug">{MODULE_DISPLAY_NAMES[m.slug] ?? m.name}</div>
-                                  {m.path && m.path !== m.name && (
-                                    <div className="text-xs text-muted-foreground mt-1 leading-snug line-clamp-2">
-                                      {m.path}
-                                    </div>
-                                  )}
-                                </td>
-                                {MATRIX_COLUMNS.map((col) => (
-                                  <td key={col.id} className="px-2 py-3 align-middle">
-                                    <input
-                                      type="checkbox"
-                                      checked={matrixCheckboxChecked(mod, col.id)}
-                                      onChange={(e) => handleToggle(m.slug, col.id, e.target.checked)}
-                                      className="h-5 w-5 rounded-md border-input accent-primary cursor-pointer shrink-0"
-                                      aria-label={`${col.shortLabel}: ${MODULE_DISPLAY_NAMES[m.slug] ?? m.name}`}
-                                    />
-                                  </td>
-                                ))}
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </details>
-                ))}
-              </div>
-            )}
-            <div className="flex flex-wrap gap-3 pt-2">
-              {dirty && (
-                <Button type="button" onClick={handleSave} disabled={saving}>
-                  {saving ? "Salvando..." : "Salvar todas as alterações"}
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {MANAGED_ROLES.map((role) => (
+                <Button
+                  key={role}
+                  type="button"
+                  size="sm"
+                  variant={selectedRole === role ? "default" : "outline"}
+                  className="shrink-0"
+                  onClick={() => setSelectedRole(role)}
+                >
+                  {MANAGED_ROLE_LABELS[role]}
                 </Button>
+              ))}
+            </div>
+            <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-2">
+              <p className="text-sm font-medium text-foreground">
+                {MANAGED_ROLE_LABELS[selectedRole]} — {roleSummary.moduleCount} módulo
+                {roleSummary.moduleCount === 1 ? "" : "s"} em {roleSummary.sectionCount} seção
+                {roleSummary.sectionCount === 1 ? "" : "ões"}
+              </p>
+              {roleSummary.enabledModules.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {roleSummary.enabledModules.map((name) => (
+                    <span
+                      key={name}
+                      className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-foreground border border-primary/20"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum módulo liberado para este perfil.</p>
               )}
-              <Link href="/dashboard/configuracoes">
-                <Button type="button" variant="outline" disabled={saving}>
-                  Voltar
-                </Button>
-              </Link>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Histórico de alterações na matriz</CardTitle>
-            <CardDescription>Quem ajustou políticas nesta tela (últimos registros; não altera regras ao visualizar).</CardDescription>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Acesso por seção</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {loading ? (
+              <p className="text-muted-foreground py-8 text-center">Carregando…</p>
+            ) : areasWithModules.length === 0 ? (
+              <p className="text-muted-foreground py-8 text-center">Nenhuma seção com o termo pesquisado.</p>
+            ) : (
+              areasWithModules.map(({ area, meta, modules: rows }) => {
+                const access = getSectionAccessState(rows, selectedRole);
+                const enabledInSection = rows.filter((r) => r[selectedRole]).length;
+                return (
+                  <div
+                    key={area}
+                    className="rounded-xl border bg-card px-4 py-4 sm:px-5 space-y-3"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground">{meta.title}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {enabledInSection}/{rows.length} módulos liberados
+                          {access === "partial" ? " · parcial" : ""}
+                        </p>
+                      </div>
+                      <label className="flex items-center gap-3 cursor-pointer shrink-0 self-start sm:self-center">
+                        <span className="text-sm text-muted-foreground">
+                          {access === "all" ? "Liberado" : access === "partial" ? "Parcial" : "Bloqueado"}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={access === "all"}
+                          ref={(el) => {
+                            if (el) el.indeterminate = access === "partial";
+                          }}
+                          onChange={() => handleSectionToggle(area, selectedRole, rows)}
+                          className="h-5 w-5 rounded-md border-input accent-primary cursor-pointer"
+                          aria-label={`Acesso à seção ${meta.title}`}
+                        />
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {rows.map((m) => {
+                        const on = m[selectedRole];
+                        return (
+                          <span
+                            key={m.slug}
+                            className={`text-xs px-2 py-0.5 rounded-md border ${
+                              on
+                                ? "bg-primary/10 border-primary/25 text-foreground"
+                                : "bg-muted/40 border-transparent text-muted-foreground line-through decoration-muted-foreground/50"
+                            }`}
+                          >
+                            {MODULE_DISPLAY_NAMES[m.slug] ?? m.name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-dashed">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Pacotes e backup</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+              <Select
+                value={presetId || "__unset"}
+                onValueChange={(v) => setPresetId(v === "__unset" ? "" : v)}
+              >
+                <SelectTrigger className="w-full sm:max-w-md text-foreground">
+                  <SelectValue placeholder="Pacote pronto (opcional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__unset">Nenhum</SelectItem>
+                  {PERMISSION_PRESETS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={!presetId || saving}
+                  onClick={() => presetId && setPresetDialogOpen(true)}
+                >
+                  Aplicar pacote
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportSnapshot}
+                  disabled={saving}
+                >
+                  <Download className="h-4 w-4 mr-2" aria-hidden />
+                  Exportar JSON
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Histórico</CardTitle>
           </CardHeader>
           <CardContent>
             {auditLoading ? (
@@ -1053,16 +847,10 @@ export default function ModulosPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar aplicação do pacote</AlertDialogTitle>
-              <AlertDialogDescription asChild>
-                <div className="space-y-2 text-sm text-muted-foreground text-left pt-2">
-                  <p>
-                    O pacote apenas <strong>liga permissões novas</strong> onde está previsto — não desliga algo que já
-                    existia até você tirar manualmente na matriz.
-                  </p>
-                  {presetId && getPresetById(presetId) && (
-                    <p className="text-foreground/90">{getPresetById(presetId)!.description}</p>
-                  )}
-                </div>
+              <AlertDialogDescription>
+                {presetId && getPresetById(presetId)
+                  ? getPresetById(presetId)!.title
+                  : "Aplicar pacote de permissões?"}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
