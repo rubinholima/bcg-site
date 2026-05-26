@@ -32,6 +32,52 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 25 DE MAIO DE 2026 — ENCERRAMENTO (RH colaboradores, cadastro de atletas, hubs dashboard, permissões)
+
+## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
+
+- **RH / Colaboradores:** cadastro mestre em `Employee` com **matrícula** (`code`, ex. `COL-000001`), **cargo** via vínculo ativo (`Employment`), **foto** (`photoUrl`) e link opcional com atleta (`playerId`). **Vínculo Futebol fica fora do form RH** — usar `EmployeeLinkPlayerDialog` na lista (ícone/botão Vincular). Modal do colaborador: **coluna única**, seções expansíveis (`ExpandableSection`), largura total do dialog, sem scroll lateral (`EmployeeFormDialog.tsx`).
+- **Lista RH:** agrupada **empresa → tipo → tabela**, linhas clicáveis (`FuncionariosGroupedList.tsx`); mesma lista em ADM → RH e Cadastros → Funcionários.
+- **Atleta ↔ RH:** matrícula RH no perfil do jogador preenchida automaticamente quando há vínculo (`RhEmployeeLinkCard`, `PlayerRegistrationSections`); sync CPF/RG em `employee-player-link.ts`.
+- **Migrations pendentes no servidor:** `20260525120000_employee_photo_url` e `20260525140000_employee_code_player_link` — rodar `pnpm --filter api exec prisma migrate deploy` após deploy.
+- **Cadastro de atletas:** seções expansíveis, lista agrupada por empresa/categoria, documentos, situação (desligado/emprestado), empréstimos, arquivo de desligados e emprestados.
+- **Dashboard:** hubs visuais ADM, Saúde e Cadastros; linhas clicáveis em várias listagens (`ClickableTableRow`).
+- **Configurações → Módulos:** acessos por perfil, presets de permissão, Financeiro incluído na tela de acessos.
+- **Arquivos locais não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` — não commitar.
+
+## **O QUE FOI FEITO**
+
+1. **RH (API + web)**  
+   - Migrations: foto do colaborador; matrícula `code` + `playerId` link com `Player`.  
+   - Endpoints: link/create/unlink atleta, `GET by-player/:playerId`, geração de matrícula.  
+   - UI: form com seções (empresa/tipo, identificação+foto, pessoais, contato, observações); lista agrupada; diálogo de vínculo Futebol separado; card RH no edit do jogador.
+
+2. **Cadastros — Futebol / atletas**  
+   - `registrationProfile` expandido; seções expansíveis no edit; lista agrupada; filtros; páginas emprestados e arquivo de desligados; documentos, contratos, empréstimo, histórico de categoria.
+
+3. **Dashboard e UX**  
+   - Hubs ADM, Saúde, Cadastros com insights; linhas clicáveis em listagens de cadastros, eventos, comissão, etc.
+
+4. **Permissões**  
+   - Tela de módulos com acessos por perfil; presets; correção para listar todos os menus (incl. Financeiro).
+
+## **COMMITS DO DIA (`develop`)**
+
+- `75399ad` — fix(rh): modal colaborador em coluna única com seções expansíveis  
+- `3f895eb` — feat(rh): form compacto, lista empresa→tipo e vínculo Futebol separado  
+- `9242d0d` — feat(rh): lista agrupada por empresa e linhas clicáveis em todas as abas  
+- `f168d9e` — feat(rh): matrícula, cargo no colaborador e vínculo com cadastro de atleta  
+- `a3755df` — feat(rh): foto do colaborador, abas reordenadas e listagem formatada  
+- `91cba6b` — fix(config): listar todos os menus na tela de acessos incluindo Financeiro  
+- `1f98bee` — feat(config): acessos por perfil e seção na tela de módulos  
+- `18c17d1` — feat(cadastros): documentos, situação, empréstimos e arquivo de desligados  
+- `c2f87bc` — feat(cadastros): cadastro de atletas com seções expansíveis e lista agrupada  
+- `638bb62` — feat(dashboard): hubs visuais ADM/Saúde/Cadastros e linhas clicáveis nas listagens  
+
+**Branch:** `develop` · **Último commit:** `75399ad` · **Push:** enviado para `origin/develop`
+
+---
+
 # 📅 24 DE MAIO DE 2026 — ENCERRAMENTO (Dashboard mobile, menu Academias embed, infra Academias Lightsail)
 
 ## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
