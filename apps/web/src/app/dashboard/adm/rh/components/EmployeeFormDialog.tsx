@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import {
+  ExpandableSection,
+  FormGrid,
+} from "@/components/dashboard/players/ExpandableSection";
+import {
   Dialog,
   DialogContent,
   DialogFooter,
@@ -61,7 +65,7 @@ interface EmployeeFormDialogProps {
 }
 
 const selectClassName =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground uppercase";
+  "w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground uppercase";
 
 export function EmployeeFormDialog({
   open,
@@ -219,209 +223,222 @@ export function EmployeeFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="mx-auto w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <form onSubmit={handleSubmit}>
+      <DialogContent className="w-full min-w-0 max-h-[min(90vh,calc(100dvh-2rem))] overflow-y-auto overflow-x-hidden sm:p-8">
+        <form onSubmit={handleSubmit} className="min-w-0">
           <DialogHeader>
             <DialogTitle>{edit ? "Editar colaborador" : "Novo colaborador"}</DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="emp-tenant">Clube / Empresa *</Label>
-                <select
-                  id="emp-tenant"
-                  required
-                  disabled={!!edit}
-                  className={selectClassName}
-                  value={tenantId}
-                  onChange={(e) => handleTenantChange(e.target.value)}
-                >
-                  <option value="">Selecione</option>
-                  {tenants.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+          <div className="min-w-0 space-y-4 py-4">
+            <ExpandableSection
+              title="Empresa e tipo"
+              description="Clube/empresa, tipo e matrícula"
+              defaultOpen
+            >
+              <FormGrid cols={2}>
+                <div className="grid min-w-0 gap-2 sm:col-span-2">
+                  <Label htmlFor="emp-tenant">Clube / Empresa *</Label>
+                  <select
+                    id="emp-tenant"
+                    required
+                    disabled={!!edit}
+                    className={selectClassName}
+                    value={tenantId}
+                    onChange={(e) => handleTenantChange(e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {tenants.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor="emp-type">Tipo *</Label>
+                  <select
+                    id="emp-type"
+                    required
+                    className={selectClassName}
+                    value={type}
+                    onChange={(e) => setType(e.target.value)}
+                  >
+                    <option value="staff">{EMPLOYEE_TYPES.staff}</option>
+                    <option value="dirigente">{EMPLOYEE_TYPES.dirigente}</option>
+                    <option value="athlete">{EMPLOYEE_TYPES.athlete}</option>
+                  </select>
+                </div>
+                <div className="grid min-w-0 gap-2">
+                  <Label className="text-muted-foreground">Matrícula RH</Label>
+                  <Input
+                    readOnly
+                    value={edit ? employeeCodeDisplay(edit.code) : "Gerada ao salvar"}
+                    className="bg-muted/50 font-mono text-sm uppercase text-muted-foreground"
+                  />
+                </div>
+                <div className="grid min-w-0 gap-2 sm:col-span-2">
+                  <Label className="text-muted-foreground">ID interno</Label>
+                  <Input
+                    readOnly
+                    value={edit ? employeeInternalIdDisplay(edit.id) : "Gerado ao salvar"}
+                    className="bg-muted/50 font-mono text-sm text-muted-foreground"
+                  />
+                </div>
+              </FormGrid>
+            </ExpandableSection>
 
-              <div className="grid gap-2">
-                <Label htmlFor="emp-type">Tipo *</Label>
-                <select
-                  id="emp-type"
-                  required
-                  className={selectClassName}
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                >
-                  <option value="staff">{EMPLOYEE_TYPES.staff}</option>
-                  <option value="dirigente">{EMPLOYEE_TYPES.dirigente}</option>
-                  <option value="athlete">{EMPLOYEE_TYPES.athlete}</option>
-                </select>
-              </div>
+            <ExpandableSection
+              title="Identificação e foto"
+              description="Nome, cargo, departamento e avatar"
+              defaultOpen
+            >
+              <FormGrid cols={2}>
+                <div className="grid min-w-0 gap-2 sm:col-span-2">
+                  <Label htmlFor="emp-name">Nome *</Label>
+                  <Input
+                    id="emp-name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value.toLocaleUpperCase("pt-BR"))}
+                    placeholder="NOME COMPLETO"
+                    className="uppercase"
+                    required
+                  />
+                </div>
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor="emp-jobRole">
+                    Cargo *
+                    {loadingEmployment && (
+                      <Loader2 className="ml-2 inline h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                    )}
+                  </Label>
+                  <select
+                    id="emp-jobRole"
+                    required
+                    disabled={!tenantId || loadingEmployment}
+                    className={selectClassName}
+                    value={jobRoleId}
+                    onChange={(e) => handleJobRoleChange(e.target.value)}
+                  >
+                    <option value="">Selecione o cargo</option>
+                    {tenantJobRoles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor="emp-department">Departamento</Label>
+                  <select
+                    id="emp-department"
+                    disabled={!tenantId || loadingEmployment}
+                    className={selectClassName}
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {tenantDepartments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid min-w-0 gap-2 sm:col-span-2">
+                  <Label>Foto</Label>
+                  <div className="min-w-0 max-w-full overflow-hidden">
+                    <PhotoUploadWithName
+                      sizeKey="rh"
+                      value={photoUrl}
+                      onChange={setPhotoUrl}
+                      placeholder="Escolher da biblioteca"
+                      urlPlaceholder="URL da foto"
+                      allowAllFolders
+                      uploadFolderHint="rh"
+                      displayNameAuto={
+                        name.trim()
+                          ? getPhotoDisplayName(name, PHOTO_DEPARTMENT_BY_SIZE_KEY.rh)
+                          : undefined
+                      }
+                      showAutomaticPhotoNameNote={false}
+                    />
+                  </div>
+                </div>
+              </FormGrid>
+            </ExpandableSection>
 
-              <div className="grid gap-2">
-                <Label className="text-muted-foreground">Matrícula RH</Label>
-                <Input
-                  readOnly
-                  value={edit ? employeeCodeDisplay(edit.code) : "Gerada ao salvar"}
-                  className="bg-muted/50 font-mono text-sm uppercase text-muted-foreground"
+            <ExpandableSection title="Dados pessoais" description="CPF, RG e nascimento">
+              <FormGrid cols={2}>
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor="emp-cpf">CPF</Label>
+                  <Input
+                    id="emp-cpf"
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCpfInput(e.target.value))}
+                    placeholder="000.000.000-00"
+                    inputMode="numeric"
+                  />
+                </div>
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor="emp-rg">RG</Label>
+                  <Input
+                    id="emp-rg"
+                    value={rg}
+                    onChange={(e) => setRg(e.target.value.toLocaleUpperCase("pt-BR"))}
+                    placeholder="RG"
+                    className="uppercase"
+                  />
+                </div>
+                <div className="grid min-w-0 gap-2 sm:col-span-2">
+                  <Label htmlFor="emp-birthDate">Data de nascimento</Label>
+                  <Input
+                    id="emp-birthDate"
+                    type="date"
+                    className="text-foreground"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                  />
+                </div>
+              </FormGrid>
+            </ExpandableSection>
+
+            <ExpandableSection title="Contato" description="E-mail e telefone">
+              <FormGrid cols={2}>
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor="emp-email">E-mail</Label>
+                  <Input
+                    id="emp-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor="emp-phone">Telefone</Label>
+                  <Input
+                    id="emp-phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    onBlur={(e) => setPhone(formatPhoneForDisplay(e.target.value))}
+                    placeholder="(11) 99999-9999"
+                    inputMode="tel"
+                  />
+                </div>
+              </FormGrid>
+            </ExpandableSection>
+
+            <ExpandableSection title="Observações">
+              <div className="grid min-w-0 gap-2">
+                <textarea
+                  id="emp-notes"
+                  className="min-h-[72px] w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground uppercase"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value.toLocaleUpperCase("pt-BR"))}
+                  placeholder="OBSERVAÇÕES"
                 />
               </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="emp-name">Nome *</Label>
-              <Input
-                id="emp-name"
-                value={name}
-                onChange={(e) => setName(e.target.value.toLocaleUpperCase("pt-BR"))}
-                placeholder="NOME COMPLETO"
-                className="uppercase"
-                required
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="emp-jobRole">
-                  Cargo *
-                  {loadingEmployment && (
-                    <Loader2 className="ml-2 inline h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                  )}
-                </Label>
-                <select
-                  id="emp-jobRole"
-                  required
-                  disabled={!tenantId || loadingEmployment}
-                  className={selectClassName}
-                  value={jobRoleId}
-                  onChange={(e) => handleJobRoleChange(e.target.value)}
-                >
-                  <option value="">Selecione o cargo</option>
-                  {tenantJobRoles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="emp-department">Departamento</Label>
-                <select
-                  id="emp-department"
-                  disabled={!tenantId || loadingEmployment}
-                  className={selectClassName}
-                  value={departmentId}
-                  onChange={(e) => setDepartmentId(e.target.value)}
-                >
-                  <option value="">Selecione</option>
-                  {tenantDepartments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label className="text-muted-foreground">ID interno</Label>
-              <Input
-                readOnly
-                value={edit ? employeeInternalIdDisplay(edit.id) : "Gerado ao salvar"}
-                className="bg-muted/50 font-mono text-sm text-muted-foreground"
-              />
-            </div>
-
-            <div className="grid gap-2 border-t border-border pt-4">
-              <Label>Foto</Label>
-              <PhotoUploadWithName
-                sizeKey="rh"
-                value={photoUrl}
-                onChange={setPhotoUrl}
-                placeholder="Escolher da biblioteca"
-                urlPlaceholder="URL da foto"
-                allowAllFolders
-                uploadFolderHint="rh"
-                displayNameAuto={
-                  name.trim() ? getPhotoDisplayName(name, PHOTO_DEPARTMENT_BY_SIZE_KEY.rh) : undefined
-                }
-                showAutomaticPhotoNameNote={false}
-                showFileFormatHint={false}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="emp-cpf">CPF</Label>
-                <Input
-                  id="emp-cpf"
-                  value={cpf}
-                  onChange={(e) => setCpf(formatCpfInput(e.target.value))}
-                  placeholder="000.000.000-00"
-                  inputMode="numeric"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="emp-rg">RG</Label>
-                <Input
-                  id="emp-rg"
-                  value={rg}
-                  onChange={(e) => setRg(e.target.value.toLocaleUpperCase("pt-BR"))}
-                  placeholder="RG"
-                  className="uppercase"
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="emp-birthDate">Data de nascimento</Label>
-              <Input
-                id="emp-birthDate"
-                type="date"
-                className="text-foreground"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="emp-email">E-mail</Label>
-                <Input
-                  id="emp-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                  placeholder="email@exemplo.com"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="emp-phone">Telefone</Label>
-                <Input
-                  id="emp-phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  onBlur={(e) => setPhone(formatPhoneForDisplay(e.target.value))}
-                  placeholder="(11) 99999-9999"
-                  inputMode="tel"
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="emp-notes">Observações</Label>
-              <textarea
-                id="emp-notes"
-                className="min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground uppercase"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value.toLocaleUpperCase("pt-BR"))}
-                placeholder="OBSERVAÇÕES"
-              />
-            </div>
+            </ExpandableSection>
           </div>
 
           <DialogFooter>
