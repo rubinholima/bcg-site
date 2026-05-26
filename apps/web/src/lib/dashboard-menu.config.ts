@@ -304,7 +304,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
       {
         slug: "requisicoes_ti",
-        label: "Requisição de TI",
+        label: "Atendimento e suporte",
         href: "/dashboard/requisicoes/ti",
         icon: Monitor,
         moduleSlug: "requisicoes",

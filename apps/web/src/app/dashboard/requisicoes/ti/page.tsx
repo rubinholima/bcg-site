@@ -31,7 +31,6 @@ import {
   TI_TICKET_STATUS_LABELS,
   TiSupportTicketRow,
 } from "@/lib/purchase-workflow-types";
-import { PurchaseRequisitionWorkflowPanel } from "@/app/dashboard/adm/compras/components/PurchaseRequisitionWorkflowPanel";
 
 export default function RequisicaoTiPage() {
   const router = useRouter();
@@ -105,10 +104,10 @@ export default function RequisicaoTiPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Monitor className="h-8 w-8" />
-            Requisição de TI
+            Atendimento e suporte — TI
           </h1>
           <p className="text-muted-foreground">
-            Abra chamados de suporte ou solicite equipamento de TI (fluxo de compras).
+            Atendimento e suporte — abra chamados para a equipe de TI.
           </p>
         </div>
       </div>
@@ -152,16 +151,6 @@ export default function RequisicaoTiPage() {
           )}
         </CardContent>
       </Card>
-
-      <PurchaseRequisitionWorkflowPanel
-        mode="requester"
-        tenants={tenants}
-        requestType="ti"
-        listTitle="Requisições de equipamento"
-        newButtonLabel="Nova requisição de equipamento"
-        formTitle="Nova requisição de equipamento TI"
-        defaultTenantId={tenants[0]?.id}
-      />
 
       <Dialog open={ticketOpen} onOpenChange={setTicketOpen}>
         <DialogContent className="max-h-[90vh]">

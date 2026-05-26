@@ -31,7 +31,6 @@ import {
   TI_TICKET_STATUS_LABELS,
   TiSupportTicketRow,
 } from "@/lib/purchase-workflow-types";
-import { PurchaseRequisitionWorkflowPanel } from "@/app/dashboard/adm/compras/components/PurchaseRequisitionWorkflowPanel";
 import { WorkflowInboxBanner } from "@/components/settings/WorkflowInboxBanner";
 
 export default function TiAtendimentoPage() {
@@ -121,7 +120,7 @@ export default function TiAtendimentoPage() {
             TI — Atendimento
           </h1>
           <p className="text-muted-foreground">
-            Chamados de suporte e requisições de equipamento (fluxo de compras).
+            Chamados de suporte — atendimento da equipe de TI.
           </p>
         </div>
       </div>
@@ -178,8 +177,6 @@ export default function TiAtendimentoPage() {
           )}
         </CardContent>
       </Card>
-
-      <PurchaseRequisitionWorkflowPanel mode="compras" tenants={tenants} requestType="ti" defaultTenantId={tenants[0]?.id} />
 
       <Dialog open={ticketOpen} onOpenChange={setTicketOpen}>
         <DialogContent>

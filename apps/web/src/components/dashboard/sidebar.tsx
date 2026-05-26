@@ -189,6 +189,9 @@ function resolveLinkActive(
   if (href === "/dashboard/configuracoes") {
     return pathname === "/dashboard/configuracoes";
   }
+  if (href === "/dashboard/requisicoes") {
+    return pathname === "/dashboard/requisicoes";
+  }
   if (href === "/dashboard/empresas") {
     return pathname === "/dashboard/empresas" || !!pathname?.startsWith("/dashboard/tenants");
   }
@@ -216,6 +219,24 @@ function resolveLinkActive(
 
 function inPathHelper(href: string, pathname: string | null): boolean {
   return pathname === href || (href !== "/dashboard" && !!pathname?.startsWith(href + "/"));
+}
+
+/** Entre irmãos do menu, só o href mais específico fica ativo (evita dois marcados). */
+function pickMostSpecificActiveHref(
+  items: MenuItemConfig[],
+  pathname: string | null,
+  relHub: string | null,
+): string | null {
+  let best: string | null = null;
+  let bestLen = -1;
+  for (const item of items) {
+    if (!item.href || item.external) continue;
+    if (resolveLinkActive(item.href, pathname, relHub) && item.href.length > bestLen) {
+      bestLen = item.href.length;
+      best = item.href;
+    }
+  }
+  return best;
 }
 
 function nestedDefaultOpen(
@@ -570,6 +591,13 @@ function SidebarNav() {
                                 ? setMarketingOpen
                                 : () => {};
 
+            const visibleHubChildren = item.children.filter((c) =>
+              c.children?.length
+                ? hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard)
+                : canAccessModule(c.moduleSlug) || (c.moduleSlug === "emails" && canAccessDashboard),
+            );
+            const activeHubChildHref = pickMostSpecificActiveHref(visibleHubChildren, pathname, relHub);
+
             return (
               <div key={item.slug} className="relative shrink-0 space-y-0.5">
                 <button
@@ -677,7 +705,8 @@ function SidebarNav() {
                           }
                           if (!child.href) return null;
                           const ChildIcon = child.icon!;
-                          const isChildActive = !child.external && resolveLinkActive(child.href, pathname, relHub);
+                          const isChildActive =
+                            !child.external && child.href === activeHubChildHref;
                           return (
                             <SidebarMenuLink
                               key={child.slug}
@@ -843,7 +872,8 @@ function SidebarNav() {
                         }
                         if (!child.href) return null;
                         const ChildIcon = child.icon!;
-                        const isChildActive = !child.external && resolveLinkActive(child.href, pathname, relHub);
+                        const isChildActive =
+                          !child.external && child.href === activeHubChildHref;
                         const compact = "compactGroup" in child && (child as MenuItemConfig & { compactGroup?: string }).compactGroup;
                         return (
                           <SidebarMenuLink

@@ -47,7 +47,7 @@ export default function RequisicoesPage() {
             Requisição de compra
           </h1>
           <p className="text-muted-foreground">
-            Solicite materiais para sua área. Acompanhe cotações, aprovações e assine o recebimento.
+            Solicite materiais ou equipamento de TI para sua área. Acompanhe cotações, aprovações e assine o recebimento.
           </p>
         </div>
       </div>
@@ -57,8 +57,18 @@ export default function RequisicoesPage() {
         tenants={tenants}
         requestType="compra"
         listTitle="Requisições de compra"
-        newButtonLabel="Nova requisição"
+        newButtonLabel="Nova requisição de compra"
         formTitle="Nova requisição de compra"
+        defaultTenantId={tenants[0]?.id}
+      />
+
+      <PurchaseRequisitionWorkflowPanel
+        mode="requester"
+        tenants={tenants}
+        requestType="ti"
+        listTitle="Requisições de equipamento TI"
+        newButtonLabel="Nova requisição de equipamento"
+        formTitle="Nova requisição de equipamento TI"
         defaultTenantId={tenants[0]?.id}
       />
     </div>
