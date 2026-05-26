@@ -26,7 +26,8 @@ export class CreateEmploymentDto {
   endDate?: string;
 
   @IsNumber()
-  salaryBase: number;
+  @IsOptional()
+  salaryBase?: number;
 
   @IsOptional()
   @IsObject()

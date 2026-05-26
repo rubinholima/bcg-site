@@ -61,7 +61,7 @@ export class EmploymentsService {
         contractType: cadastroUpperRequired(dto.contractType),
         startDate: new Date(dto.startDate),
         endDate: dto.endDate ? new Date(dto.endDate) : null,
-        salaryBase: dto.salaryBase,
+        salaryBase: dto.salaryBase ?? null,
         bankData: dto.bankData != null ? (dto.bankData as Prisma.InputJsonValue) : Prisma.JsonNull,
         status: dto.status ?? 'ativo',
         notes: cadastroUpper(dto.notes),
