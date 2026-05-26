@@ -61,7 +61,7 @@ export class EmploymentsService {
         contractType: cadastroUpperRequired(dto.contractType),
         startDate: new Date(dto.startDate),
         endDate: dto.endDate ? new Date(dto.endDate) : null,
-        salaryBase: dto.salaryBase ?? null,
+        salaryBase: dto.salaryBase,
         bankData: dto.bankData != null ? (dto.bankData as Prisma.InputJsonValue) : Prisma.JsonNull,
         status: dto.status ?? 'ativo',
         notes: cadastroUpper(dto.notes),
@@ -70,7 +70,7 @@ export class EmploymentsService {
       },
       include: {
         tenant: { select: { id: true, name: true, slug: true } },
-        employee: { select: { id: true, name: true, type: true } },
+        employee: { select: { id: true, name: true, type: true, email: true } },
         jobRole: { select: { id: true, name: true, type: true } },
         department: { select: { id: true, name: true } },
       },

@@ -95,10 +95,14 @@ model Tenant {
   products                Product[]
   purchaseRequisitions    PurchaseRequisition[]
   purchaseOrders          PurchaseOrder[]
+  purchaseSettings        PurchaseSetting[]
+  tiSupportTickets        TiSupportTicket[]
   departments             Department[]
   jobRoles                JobRole[]
   employees               Employee[]
   employments             Employment[]
+  contractTemplates       ContractTemplate[]
+  employmentContracts     EmploymentContract[]
   assetCategories         AssetCategory[]
   assets                  Asset[]
   nutritionCategories     NutritionCategory[]
@@ -115,6 +119,7 @@ model Tenant {
   events                Event[]
   userTenants           UserTenant[]
   financeiroLancamentos FinanceiroLancamento[]
+  customers             Customer[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -126,7 +131,11 @@ model FinanceiroLancamento {
   tipo         String
   /// pendente | pago | cancelado
   status       String   @default("pendente")
-  contraparte  String?  // cliente ou fornecedor (texto livre)
+  contraparte  String?  // legado / nome exibido quando cadastro vinculado
+  supplierId   String?
+  supplier     Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
   descricao    String
   valor        Decimal  @db.Decimal(14, 2)
   dueDate      DateTime // vencimento
@@ -141,6 +150,25 @@ model FinanceiroLancamento {
   @@index([tenantId, tipo])
   @@index([tenantId, status])
   @@index([tenantId, dueDate])
+  @@index([supplierId])
+  @@index([customerId])
+}
+
+/// Cliente (contas a receber) — cadastro mestre por tenant
+model Customer {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name        String
+  document    String?  // CPF/CNPJ
+  contactName String?
+  email       String?
+  phone       String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  financeiroLancamentos FinanceiroLancamento[]
+  @@index([tenantId])
 }
 
 // ========== Logística de deslocamento (Depto Futebol — só clubes) ==========
@@ -586,6 +614,7 @@ model Supplier {
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
+  document    String?  // CPF/CNPJ
   contactName String?
   email       String?
   phone       String?
@@ -593,6 +622,8 @@ model Supplier {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   purchaseOrders PurchaseOrder[]
+  quotes         PurchaseQuote[]
+  financeiroLancamentos FinanceiroLancamento[]
   @@index([tenantId])
 }
 
@@ -618,20 +649,122 @@ model Product {
   @@index([tenantId, inventoryKind])
 }
 
-// Requisição de compra — solicitante, itens, status, aprovação
+// Requisição de compra — solicitante, itens, cotações, aprovações
 model PurchaseRequisition {
-  id              String   @id @default(cuid())
-  tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  requestedByName String   // quem solicitou
-  requestedAt     DateTime @default(now())
-  status          String   @default("draft") // draft | sent | quotation | approved | rejected | ordered | received
-  justification   String?  @db.Text
-  items           Json     // [{ productId?, description, quantity, unit, estimatedUnitPrice? }]
-  totalEstimated  Float?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  purchaseOrders  PurchaseOrder[]
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requestedByUserId String?
+  requestedByName   String
+  requestedAt       DateTime @default(now())
+  requestType       String   @default("compra") // compra | ti
+  departmentName    String?
+  status            String   @default("rascunho")
+  justification     String?  @db.Text
+  items             Json     // [{ productId?, description, quantity, unit, estimatedUnitPrice?, isPatrimonial? }]
+  totalEstimated    Float?
+  approvedTotal     Float?
+  selectedQuoteId   String?  @unique
+  selectedQuote     PurchaseQuote? @relation("SelectedQuote", fields: [selectedQuoteId], references: [id], onDelete: SetNull)
+  isPatrimonial     Boolean  @default(false)
+  rejectionReason   String?  @db.Text
+  requesterEmail    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  quotes            PurchaseQuote[] @relation("RequisitionQuotes")
+  approvals         PurchaseApproval[]
+  receipt           PurchaseReceipt?
+  purchaseOrders    PurchaseOrder[]
+  assets            Asset[]
+  @@index([tenantId])
+  @@index([status])
+  @@index([requestedByUserId])
+  @@index([requestType])
+}
+
+model PurchaseQuote {
+  id             String   @id @default(cuid())
+  requisitionId  String
+  requisition    PurchaseRequisition @relation("RequisitionQuotes", fields: [requisitionId], references: [id], onDelete: Cascade)
+  supplierId     String?
+  supplier       Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierName   String
+  items          Json     // [{ description, quantity, unit, unitPrice }]
+  totalAmount    Float
+  deliveryDays   Int?
+  notes          String?  @db.Text
+  attachmentUrl  String?
+  isWinner       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  selectedFor    PurchaseRequisition? @relation("SelectedQuote")
+  purchaseOrders PurchaseOrder[]
+  @@index([requisitionId])
+  @@index([supplierId])
+}
+
+model PurchaseApproval {
+  id            String   @id @default(cuid())
+  requisitionId String
+  requisition   PurchaseRequisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  role          String   // financeiro | diretoria
+  approverUserId String?
+  approverName  String
+  decision      String   // approved | rejected
+  notes         String?  @db.Text
+  decidedAt     DateTime @default(now())
+  @@index([requisitionId])
+  @@index([role])
+}
+
+model PurchaseSetting {
+  id                    String   @id @default(cuid())
+  tenantId              String   @unique
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  approvalThresholdBrl  Float    @default(5000)
+  minQuotes             Int      @default(2)
+  maxQuotes             Int      @default(4)
+  comprasNotifyEmail    String?
+  comprasNotifyPhone    String?
+  financeiroNotifyEmail String?
+  financeiroNotifyPhone String?
+  tiNotifyEmail         String?
+  tiNotifyPhone         String?
+  diretoriaNotifyEmail  String?
+  diretoriaNotifyPhone  String?
+  updatedAt             DateTime @updatedAt
+}
+
+model PurchaseReceipt {
+  id                 String   @id @default(cuid())
+  requisitionId      String   @unique
+  requisition        PurchaseRequisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+  receivedAt         DateTime @default(now())
+  receivedByName     String?
+  signerEmail        String?
+  signerName         String?
+  helloSignRequestId String?
+  signatureStatus    String   @default("pending") // pending | sent | signed
+  signedAt           DateTime?
+  metadata           Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model TiSupportTicket {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requestedByUserId String?
+  requestedByName   String
+  subject           String
+  description       String?  @db.Text
+  priority          String   @default("normal") // baixa | normal | alta | urgente
+  status            String   @default("aberto") // aberto | em_atendimento | resolvido | fechado
+  assignedToName    String?
+  resolutionNotes   String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
   @@index([tenantId])
   @@index([status])
 }
@@ -643,6 +776,8 @@ model PurchaseOrder {
   tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   requisitionId    String?
   requisition      PurchaseRequisition? @relation(fields: [requisitionId], references: [id], onDelete: SetNull)
+  quoteId          String?
+  quote            PurchaseQuote? @relation(fields: [quoteId], references: [id], onDelete: SetNull)
   supplierId       String
   supplier         Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
   orderNumber      String?  // número da OP
@@ -656,6 +791,7 @@ model PurchaseOrder {
   @@index([tenantId])
   @@index([supplierId])
   @@index([requisitionId])
+  @@index([quoteId])
 }
 
 // Movimentação de estoque — entrada (compra), saída (requisição), ajuste
@@ -716,10 +852,21 @@ model Employee {
   email      String?
   phone      String?
   birthDate  DateTime?
-  type       String   // staff | athlete | dirigente
+  type       String   // staff | athlete | dirigente | temporario | estagio
   categories Json?    // atleta: ["sub20","profissional","sub17"]
   notes      String?  @db.Text
   photoUrl   String?
+  /** Endereço: { street, number, complement, neighborhood, city, state, zipCode } */
+  address    Json?
+  pisNumber  String?
+  voterTitle String?
+  ctpsUrl    String?
+  pixKey     String?
+  admissionMedicalExamDate     DateTime?
+  admissionMedicalExamFileUrl  String?
+  dismissalMedicalExamDate     DateTime?
+  dismissalMedicalExamFileUrl  String?
+  hasMinorChildren             Boolean  @default(false)
   /** Cadastro operacional Futebol (atleta/comissão) — evita duplicidade de pessoa */
   playerId   String?  @unique
   player     Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
@@ -727,6 +874,7 @@ model Employee {
   updatedAt  DateTime @updatedAt
   employments Employment[]
   documents  EmployeeDocument[]
+  dependents EmployeeDependent[]
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])
@@ -758,6 +906,7 @@ model Employment {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   leavePeriods          LeavePeriod[]
+  contracts             EmploymentContract[]
   @@index([tenantId])
   @@index([employeeId])
   @@index([status])
@@ -768,12 +917,27 @@ model EmployeeDocument {
   employeeId   String
   employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employmentId String?
-  documentType String   // RG, CPF, CTPS, reservista, contrato, exame_admissional, atestado
+  documentType String   // RG, CPF, CTPS, reservista, contrato, exame_admissional, exame_demissional, atestado
   fileKey      String?
   fileUrl      String?
   validUntil   DateTime?
   notes        String?  @db.Text
   createdAt    DateTime @default(now())
+  @@index([employeeId])
+}
+
+/** Filhos menores de 14 anos (documentação salário-família / eSocial) */
+model EmployeeDependent {
+  id                      String   @id @default(cuid())
+  employeeId              String
+  employee                Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  name                    String
+  birthDate               DateTime
+  birthCertificateFileUrl String?
+  schoolAttendanceFileUrl String?
+  vaccinationCardFileUrl  String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
   @@index([employeeId])
 }
 
@@ -792,6 +956,56 @@ model LeavePeriod {
   updatedAt    DateTime @updatedAt
   @@index([employmentId])
   @@index([type])
+}
+
+/** Modelo de contrato base (Depto Jurídico) — PDF com campos AcroForm preenchíveis pelo RH. */
+model ContractTemplate {
+  id             String   @id @default(cuid())
+  tenantId       String?
+  tenant         Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name           String
+  type           String   // contrato_trabalho, contrato_imagem, CLT, PJ, estagio, atleta, etc.
+  fileKey        String
+  fileUrl        String?
+  pdfFieldNames  Json?    // ["nome_completo","cpf",...] detectados no upload
+  fieldMapping   Json?    // { "nome_completo": "employee.name", "cpf": "employee.cpf" }
+  signaturePage  Int      @default(1)
+  pageCount      Int?
+  active         Boolean  @default(true)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  contracts      EmploymentContract[]
+  @@index([tenantId])
+  @@index([type])
+  @@index([active])
+}
+
+/** Instância de contrato gerada no vínculo RH (PDF preenchido + assinatura). */
+model EmploymentContract {
+  id                   String           @id @default(cuid())
+  tenantId             String
+  tenant               Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  employmentId         String
+  employment           Employment       @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+  templateId           String
+  template             ContractTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  name                 String
+  fileKey              String
+  fileUrl              String?
+  signedFileKey        String?
+  signedFileUrl        String?
+  status               String           @default("draft") // draft | pending_signature | signed | expired | cancelled
+  helloSignRequestId   String?
+  signerEmail          String?
+  signerName           String?
+  metadata             Json?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  @@index([tenantId])
+  @@index([employmentId])
+  @@index([templateId])
+  @@index([status])
 }
 
 // ========== Patrimônio (empresa + clube; clube tem kit: camisa, calção, meião) ==========
@@ -830,6 +1044,9 @@ model Asset {
   shirtNumber       Int?           // número da camisa (1-99)
   assignedPlayerId  String?       // jogador com o item (só para clubes)
   assignedPlayer    Player?       @relation(fields: [assignedPlayerId], references: [id], onDelete: SetNull)
+  purchaseRequisitionId String?
+  purchaseRequisition   PurchaseRequisition? @relation(fields: [purchaseRequisitionId], references: [id], onDelete: SetNull)
+  purchaseOrderId   String?
   photoUrl          String?        // foto registrada do bem (URL da mídia / proxy)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt

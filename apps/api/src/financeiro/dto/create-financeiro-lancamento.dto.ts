@@ -27,6 +27,14 @@ export class CreateFinanceiroLancamentoDto {
   contraparte?: string;
 
   @IsString()
+  @IsOptional()
+  supplierId?: string;
+
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+
+  @IsString()
   @MaxLength(2000)
   descricao: string;
 

@@ -230,7 +230,7 @@ export function AssetFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full min-w-0 max-h-[min(90vh,calc(100dvh-2rem))] overflow-y-auto overflow-x-hidden sm:p-8">
+      <DialogContent className="w-[min(48rem,calc(100vw-1.5rem))] max-h-[min(90vh,calc(100dvh-2rem))]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{edit ? "Editar bem" : "Novo bem patrimonial"}</DialogTitle>

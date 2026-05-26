@@ -1,0 +1,9 @@
+-- Alertas por e-mail: responsáveis Compras, Financeiro, TI e Diretoria
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "comprasNotifyEmail" TEXT;
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "comprasNotifyPhone" TEXT;
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "financeiroNotifyEmail" TEXT;
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "financeiroNotifyPhone" TEXT;
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "tiNotifyEmail" TEXT;
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "tiNotifyPhone" TEXT;
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "diretoriaNotifyEmail" TEXT;
+ALTER TABLE "PurchaseSetting" ADD COLUMN IF NOT EXISTS "diretoriaNotifyPhone" TEXT;

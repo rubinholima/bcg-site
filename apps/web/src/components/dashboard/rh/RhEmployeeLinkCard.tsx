@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, Users } from "lucide-react";
+import { ExternalLink, Loader2, RefreshCw, UserPlus, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { employeeCodeDisplay, employeeInternalIdDisplay } from "@/lib/rh-employee-display";
 
 interface RhEmployeeSummary {
@@ -17,26 +19,62 @@ interface RhEmployeeLinkCardProps {
 }
 
 export function RhEmployeeLinkCard({ playerId }: RhEmployeeLinkCardProps) {
+  const { canAccessModule } = useAuth();
+  const canRh = canAccessModule("adm_rh");
+
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [employee, setEmployee] = useState<RhEmployeeSummary | null>(null);
 
+  const loadEmployee = useCallback(async () => {
+    if (!canRh) {
+      setEmployee(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data } = await api.get<RhEmployeeSummary>(`/rh/employees/by-player/${playerId}`);
+      setEmployee(data);
+    } catch {
+      setEmployee(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [canRh, playerId]);
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const { data } = await api.get<RhEmployeeSummary>(`/rh/employees/by-player/${playerId}`);
-        if (!cancelled) setEmployee(data);
-      } catch {
-        if (!cancelled) setEmployee(null);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [playerId]);
+    loadEmployee();
+  }, [loadEmployee]);
+
+  const handleCreateFromPlayer = async () => {
+    setSaving(true);
+    try {
+      const { data } = await api.post<RhEmployeeSummary>(`/rh/employees/from-player/${playerId}`);
+      setEmployee(data);
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : "Erro ao criar colaborador RH");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSync = async () => {
+    if (!employee) return;
+    setSaving(true);
+    try {
+      const { data } = await api.post<RhEmployeeSummary>(`/rh/employees/${employee.id}/sync-identity`);
+      setEmployee(data);
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : "Erro ao sincronizar dados");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!canRh) return null;
 
   if (loading) {
     return (
@@ -57,19 +95,33 @@ export function RhEmployeeLinkCard({ playerId }: RhEmployeeLinkCardProps) {
               Colaborador RH vinculado
             </p>
             <p className="mt-1 text-muted-foreground">
-              Matrícula <span className="font-mono uppercase text-foreground">{employeeCodeDisplay(employee.code)}</span>
+              Matrícula{" "}
+              <span className="font-mono uppercase text-foreground">{employeeCodeDisplay(employee.code)}</span>
               {" · "}
               ID <span className="font-mono text-foreground">{employeeInternalIdDisplay(employee.id)}</span>
             </p>
             <p className="mt-0.5 uppercase">{employee.name}</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Nome, CPF, RG, contato e foto são sincronizados automaticamente entre RH e Futebol ao salvar.
+            </p>
           </div>
-          <Link
-            href="/dashboard/adm/rh"
-            className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 hover:underline shrink-0"
-          >
-            Abrir RH
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Button type="button" variant="outline" size="sm" disabled={saving} onClick={handleSync}>
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Sincronizar
+            </Button>
+            <Link
+              href="/dashboard/adm/rh"
+              className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
+            >
+              Abrir RH
+              <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -79,12 +131,27 @@ export function RhEmployeeLinkCard({ playerId }: RhEmployeeLinkCardProps) {
     <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
       <p className="font-medium">Sem vínculo com RH</p>
       <p className="mt-1 text-muted-foreground">
-        Cadastre este atleta em{" "}
+        Crie o colaborador RH com os dados deste atleta (nome, CPF, contato, foto) ou vincule manualmente em{" "}
         <Link href="/dashboard/adm/rh" className="text-foreground underline">
-          ADM → RH → Colaboradores
-        </Link>{" "}
-        e vincule ao cadastro de atleta para unificar matrícula, contrato e dados operacionais.
+          ADM → RH
+        </Link>
+        .
       </p>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className="mt-3"
+        disabled={saving}
+        onClick={handleCreateFromPlayer}
+      >
+        {saving ? (
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        ) : (
+          <UserPlus className="h-4 w-4 mr-2" />
+        )}
+        Criar colaborador RH com dados deste atleta
+      </Button>
     </div>
   );
 }

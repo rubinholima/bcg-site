@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Link2, Settings, Sliders } from "lucide-react";
+import { ArrowLeft, ClipboardList, Link2, Settings, Sliders } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
@@ -10,6 +10,11 @@ import { useAuth } from "@/context/AuthContext";
 export default function ConfiguracoesPage() {
   const router = useRouter();
   const { canAccessModule, isSuperAdmin, loading } = useAuth();
+
+  const canViewComprasSettings =
+    canAccessModule("configuracoes") ||
+    canAccessModule("adm_compras") ||
+    canAccessModule("adm_financeiro");
 
   if (loading) {
     return (
@@ -19,7 +24,7 @@ export default function ConfiguracoesPage() {
     );
   }
 
-  if (!canAccessModule("configuracoes")) {
+  if (!canAccessModule("configuracoes") && !canViewComprasSettings) {
     router.replace("/403");
     return null;
   }
@@ -41,6 +46,21 @@ export default function ConfiguracoesPage() {
       </div>
 
       <div className="grid gap-4">
+        {canViewComprasSettings && (
+          <Link href="/dashboard/configuracoes/compras">
+            <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+              <CardHeader className="flex flex-row items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <ClipboardList className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Requisições</CardTitle>
+                </div>
+              </CardHeader>
+            </Card>
+          </Link>
+        )}
+
         {isSuperAdmin && (
           <>
             <Link href="/dashboard/configuracoes/modulos">
@@ -76,7 +96,7 @@ export default function ConfiguracoesPage() {
           </>
         )}
 
-        {!isSuperAdmin && (
+        {!isSuperAdmin && !canViewComprasSettings && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

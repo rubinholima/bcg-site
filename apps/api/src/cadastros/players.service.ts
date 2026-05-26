@@ -15,6 +15,7 @@ import {
   applyCadastroMetricsToLatestPhysiology,
   computeBestSharedMetricsFromSources,
 } from './body-metrics.util';
+import { syncLinkedIdentityByPlayerId } from '../rh/employee-player-link';
 
 @Injectable()
 export class PlayersService {
@@ -475,6 +476,17 @@ export class PlayersService {
       data,
       include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
+
+    const identityTouched =
+      dto.name !== undefined ||
+      dto.birthDate !== undefined ||
+      dto.photoUrl !== undefined ||
+      dto.contactEmail !== undefined ||
+      dto.contactPhone !== undefined ||
+      dto.registrationProfile !== undefined;
+    if (identityTouched) {
+      await syncLinkedIdentityByPlayerId(this.prisma, id);
+    }
 
     await this.syncBodyMetricsFromSources(id);
     return this.findOne(id);

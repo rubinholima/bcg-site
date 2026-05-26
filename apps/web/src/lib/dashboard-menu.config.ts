@@ -35,6 +35,7 @@ import {
   Youtube,
   ImageIcon,
   Scale,
+  CheckCircle,
   ClipboardList,
   DollarSign,
   ShoppingCart,
@@ -50,6 +51,8 @@ import {
   Briefcase,
   GraduationCap,
   Archive,
+  Monitor,
+  Truck,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
@@ -124,6 +127,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "diretoria",
       },
       {
+        slug: "diretoria_aprovacoes_compras",
+        label: "Aprovações compras",
+        href: "/dashboard/diretoria/aprovacoes-compras",
+        icon: CheckCircle,
+        moduleSlug: "diretoria",
+      },
+      {
         slug: "grupo_empresas",
         label: "Empresas / clubes",
         href: "/dashboard/empresas",
@@ -167,6 +177,20 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         href: "/dashboard/cadastros/funcionarios",
         icon: Briefcase,
         moduleSlug: "adm_rh",
+      },
+      {
+        slug: "cad_fornecedores",
+        label: "Fornecedores",
+        href: "/dashboard/cadastros/fornecedores",
+        icon: Truck,
+        moduleSlug: "adm_financeiro",
+      },
+      {
+        slug: "cad_clientes",
+        label: "Clientes",
+        href: "/dashboard/cadastros/clientes",
+        icon: Users,
+        moduleSlug: "adm_financeiro",
       },
       {
         slug: "cad_futebol",
@@ -266,6 +290,28 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     ],
   },
   {
+    slug: "requisicoes",
+    label: "Requisições",
+    icon: ClipboardList,
+    moduleSlug: "requisicoes",
+    children: [
+      {
+        slug: "requisicoes_compra",
+        label: "Requisição de compra",
+        href: "/dashboard/requisicoes",
+        icon: ShoppingCart,
+        moduleSlug: "requisicoes",
+      },
+      {
+        slug: "requisicoes_ti",
+        label: "Requisição de TI",
+        href: "/dashboard/requisicoes/ti",
+        icon: Monitor,
+        moduleSlug: "requisicoes",
+      },
+    ],
+  },
+  {
     slug: "adm",
     label: "Depto Adm",
     icon: Building2,
@@ -279,7 +325,9 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "adm_financeiro",
       },
       { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro", compactGroup: "omie" },
+      { slug: "adm_financeiro_aprovacoes", label: "Aprovações compras", href: "/dashboard/adm/financeiro/aprovacoes", icon: CheckCircle, moduleSlug: "adm_financeiro" },
       { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras", compactGroup: "omie" },
+      { slug: "adm_ti", label: "TI — Atendimento", href: "/dashboard/adm/ti", icon: Monitor, moduleSlug: "adm_ti" },
       { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie" },
       { slug: "adm_rh", label: "RH", href: "/dashboard/adm/rh", icon: Users, moduleSlug: "adm_rh" },
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
@@ -424,6 +472,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         label: "Visão geral",
         href: "/dashboard/juridico",
         icon: Scale,
+        moduleSlug: "juridico",
+      },
+      {
+        slug: "juridico_contratos_base",
+        label: "Contratos base",
+        href: "/dashboard/juridico/contratos-base",
+        icon: FileText,
         moduleSlug: "juridico",
       },
       hubRelatorio("juridico"),
@@ -580,6 +635,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Users,
         moduleSlug: "usuarios",
       },
+      {
+        slug: "config_compras",
+        label: "Requisições",
+        href: "/dashboard/configuracoes/compras",
+        icon: ClipboardList,
+        moduleSlug: "configuracoes",
+      },
     ],
   },
 ];
@@ -608,7 +670,9 @@ export function getUniqueModuleSlugs(): string[] {
     .add("adm_estoque")
     .add("adm_rh")
     .add("adm_patrimonio")
-    .add("adm_nutricao");
+    .add("adm_nutricao")
+    .add("requisicoes")
+    .add("adm_ti");
   slugs
     .add("futebol_comissao")
     .add("futebol_fisiologia")

@@ -101,6 +101,7 @@ export class MediaController {
     const sizeLower = size.toLowerCase();
     const isExternalLogos = sizeLower === 'external_logos';
     const isCompetitions = sizeLower === 'competitions' || sizeLower === 'competitions_logos';
+    const isRhDocumentos = sizeLower === 'rh_documentos';
     const subfolder = typeof slug === 'string' && slug.trim() ? slug.trim() : undefined;
     let key: string;
     let url: string;
@@ -110,6 +111,14 @@ export class MediaController {
       url = result.url;
     } else if (isCompetitions) {
       const result = await this.s3.uploadLogoCompetition(file.buffer, file.mimetype);
+      key = result.key;
+      url = result.url;
+    } else if (isRhDocumentos) {
+      const result = await this.s3.uploadRhDocument(
+        file.buffer,
+        file.originalname || 'documento.pdf',
+        file.mimetype,
+      );
       key = result.key;
       url = result.url;
     } else {

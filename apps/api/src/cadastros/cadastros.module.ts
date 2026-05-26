@@ -10,7 +10,9 @@ import { PlayersService } from './players.service';
 import { LegalDocumentsController } from './legal-documents.controller';
 import { AllLegalDocumentsController } from './all-legal-documents.controller';
 import { LegalDocumentsService } from './legal-documents.service';
+import { ContractTemplatesController } from './contract-templates.controller';
 import { S3Module } from '../s3/s3.module';
+import { ContractsModule } from '../contracts/contracts.module';
 import { HelloSignModule } from '../hello-sign/hello-sign.module';
 import { AuthModule } from '../auth/auth.module';
 import { ModulesModule } from '../modules/modules.module';
@@ -26,6 +28,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
     PlayersController,
     LegalDocumentsController,
     AllLegalDocumentsController,
+    ContractTemplatesController,
     TechnicalStaffController,
   ],
   providers: [
@@ -37,7 +40,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
     TechnicalStaffService,
     ModuleAccessGuard,
   ],
-  imports: [AuthModule, ModulesModule, S3Module, HelloSignModule],
+  imports: [AuthModule, ModulesModule, S3Module, HelloSignModule, ContractsModule],
   exports: [ChampionshipsService, StadiumsService, VisitingTeamsService, PlayersService, TechnicalStaffService],
 })
 export class CadastrosModule {}

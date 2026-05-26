@@ -18,6 +18,7 @@ import { Tenant } from "@/types/tenant";
 export interface SupplierRow {
   id: string;
   name: string;
+  document?: string | null;
   contactName: string | null;
   email: string | null;
   phone: string | null;
@@ -43,6 +44,7 @@ export function SupplierFormDialog({
   const [saving, setSaving] = useState(false);
   const [tenantId, setTenantId] = useState("");
   const [name, setName] = useState("");
+  const [document, setDocument] = useState("");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -53,6 +55,7 @@ export function SupplierFormDialog({
     if (edit) {
       setTenantId(edit.tenant.id);
       setName(edit.name);
+      setDocument(edit.document ?? "");
       setContactName(edit.contactName ?? "");
       setEmail(edit.email ?? "");
       setPhone(edit.phone ?? "");
@@ -60,6 +63,7 @@ export function SupplierFormDialog({
     } else {
       setTenantId(tenants[0]?.id ?? "");
       setName("");
+      setDocument("");
       setContactName("");
       setEmail("");
       setPhone("");
@@ -75,6 +79,7 @@ export function SupplierFormDialog({
       if (edit) {
         await api.patch(`/compras/suppliers/${edit.id}`, {
           name: name.trim(),
+          document: document.trim() || undefined,
           contactName: contactName.trim() || undefined,
           email: email.trim() || undefined,
           phone: phone.trim() || undefined,
@@ -84,6 +89,7 @@ export function SupplierFormDialog({
         await api.post("/compras/suppliers", {
           tenantId,
           name: name.trim(),
+          document: document.trim() || undefined,
           contactName: contactName.trim() || undefined,
           email: email.trim() || undefined,
           phone: phone.trim() || undefined,
@@ -135,6 +141,10 @@ export function SupplierFormDialog({
                 placeholder="Nome do fornecedor"
                 required
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="supplier-document">CPF / CNPJ</Label>
+              <Input id="supplier-document" value={document} onChange={(e) => setDocument(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="supplier-contact">Nome do contato</Label>

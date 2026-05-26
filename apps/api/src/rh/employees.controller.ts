@@ -31,6 +31,13 @@ export class EmployeesController {
     return this.service.findByPlayerId(playerId);
   }
 
+  @Post('from-player/:playerId')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_rh')
+  createFromPlayer(@Param('playerId') playerId: string) {
+    return this.service.createFromPlayer(playerId);
+  }
+
   @Get(':id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('adm_rh')
@@ -43,6 +50,13 @@ export class EmployeesController {
   @RequireModule('adm_rh')
   create(@Body() dto: CreateEmployeeDto) {
     return this.service.create(dto);
+  }
+
+  @Post(':id/sync-identity')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_rh')
+  syncIdentity(@Param('id') id: string) {
+    return this.service.syncIdentity(id);
   }
 
   @Post(':id/link-player')

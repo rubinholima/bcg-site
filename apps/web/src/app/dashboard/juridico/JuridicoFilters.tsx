@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { getEmployeeTypeLabel } from "@/lib/employee-types";
 
 interface Tenant {
   id: string;
@@ -21,22 +22,25 @@ interface Tenant {
   categories?: string[] | null;
 }
 
-export interface PlayerOption {
+export interface PersonOption {
   id: string;
   name: string;
+  type?: string;
+  playerId?: string | null;
+  tenantName?: string;
   category?: string | null;
 }
 
 interface JuridicoFiltersProps {
-  players: PlayerOption[];
-  selectedPlayerId: string;
-  onSelectPlayer: (id: string) => void;
+  persons: PersonOption[];
+  selectedPersonId: string;
+  onSelectPerson: (id: string) => void;
 }
 
 export function JuridicoFilters({
-  players,
-  selectedPlayerId,
-  onSelectPlayer,
+  persons,
+  selectedPersonId,
+  onSelectPerson,
 }: JuridicoFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,14 +102,9 @@ export function JuridicoFilters({
     setSearch("");
     setDocType("");
     setDocStatus("");
-    onSelectPlayer("");
+    onSelectPerson("");
     router.push("/dashboard/juridico");
-  }, [router, onSelectPlayer]);
-
-  const categoryLabel = (cat: string | null | undefined) =>
-    cat
-      ? FIXTURE_CATEGORIES.find((c) => c.value === cat)?.labelPT ?? cat
-      : "—";
+  }, [router, onSelectPerson]);
 
   return (
     <Card>
@@ -124,7 +123,7 @@ export function JuridicoFilters({
                 const next = v === "all" ? "" : v;
                 setTenantId(next);
                 setCategory("");
-                onSelectPlayer("");
+                onSelectPerson("");
                 applyFilters({ tenantId: next, category: "", search });
               }}
             >
@@ -150,7 +149,7 @@ export function JuridicoFilters({
               onValueChange={(v) => {
                 const next = v === "all" ? "" : v;
                 setCategory(next);
-                onSelectPlayer("");
+                onSelectPerson("");
                 applyFilters({ category: next });
               }}
             >
@@ -169,20 +168,22 @@ export function JuridicoFilters({
           </div>
           <div className="min-w-[220px]">
             <label className="text-xs text-muted-foreground mb-1 block">
-              Atleta
+              Nome
             </label>
             <Select
-              value={selectedPlayerId || "none"}
-              onValueChange={(v) => onSelectPlayer(v === "none" ? "" : v)}
+              value={selectedPersonId || "none"}
+              onValueChange={(v) => onSelectPerson(v === "none" ? "" : v)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Selecione um atleta" />
+                <SelectValue placeholder="Selecione um nome" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Selecione um atleta</SelectItem>
-                {players.map((p) => (
+                <SelectItem value="none">Selecione um nome</SelectItem>
+                {persons.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {categoryLabel(p.category)} • {p.name}
+                    {p.name}
+                    {p.type ? ` · ${getEmployeeTypeLabel(p.type)}` : ""}
+                    {!tenantId && p.tenantName ? ` · ${p.tenantName}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>

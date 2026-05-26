@@ -16,6 +16,7 @@ const NAV = [
   { id: "diretoria", label: "Diretoria" },
   { id: "empresas", label: "Empresas" },
   { id: "adm", label: "Administrativo" },
+  { id: "requisicoes", label: "Requisições" },
   { id: "futebol", label: "Depto Futebol" },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
@@ -236,6 +237,36 @@ export default function ManualPage() {
             <p>
               <strong>Exemplo estoque:</strong> criar item “Bola nº 5 — categoria Treino — mínimo 20 unidades”;
               dar entrada +50 após compra; saída -10 para torneio.
+            </p>
+          </Section>
+
+          <Section id="requisicoes" title="Requisições — fluxo, aprovações e alertas">
+            <p>
+              <strong>Fluxo:</strong> requisição → cotações (2 a 4) → financeiro → diretoria (se acima do
+              limite configurado) → ordem de compra → recebimento → assinatura.
+            </p>
+            <p>
+              O solicitante envia a requisição; Compras registra de 2 a 4 cotações; Financeiro aprova; acima
+              do limite em reais, a Diretoria também aprova; Compras gera a OP, confirma recebimento
+              (patrimônio ou estoque) e dispara o termo de assinatura ao solicitante.
+            </p>
+            <p>
+              <strong>Módulos envolvidos:</strong> Requisições, Compras, Financeiro, Diretoria e TI
+              (requisições de equipamento e chamados de suporte).
+            </p>
+            <p>
+              <strong>Configurações → Requisições:</strong> por clube/empresa, defina limite da diretoria,
+              mínimo e máximo de cotações, e os e-mails/telefones dos responsáveis (Compras, Financeiro, TI,
+              Diretoria). A tabela na tela lista todos os responsáveis já cadastrados por empresa.
+            </p>
+            <p>
+              <strong>Alertas por e-mail:</strong> nova requisição enviada avisa Compras (e TI se for
+              equipamento); envio para aprovação avisa Financeiro; valor acima do limite avisa Diretoria;
+              novo chamado TI avisa o responsável de TI. Quem tem acesso à fila vê um banner com pendências.
+              O envio usa SMTP do servidor (<code className="text-foreground">SMTP_HOST</code>,{" "}
+              <code className="text-foreground">SMTP_USER</code>, <code className="text-foreground">SMTP_PASS</code>
+              ). Telefone cadastrado aparece no e-mail como referência; SMS/WhatsApp automático ainda não
+              está disponível.
             </p>
           </Section>
 

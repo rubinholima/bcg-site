@@ -49,6 +49,8 @@ export interface FinanceiroLancamentoRow {
   tipo: Modo;
   status: StatusTitulo;
   contraparte: string | null;
+  supplierId: string | null;
+  customerId: string | null;
   descricao: string;
   valor: number;
   dueDate: string;
@@ -111,6 +113,7 @@ function statusLabel(s: StatusTitulo): string {
 }
 
 const emptyForm = {
+  cadastroId: "",
   contraparte: "",
   descricao: "",
   valor: "",
@@ -143,6 +146,18 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
   const [editing, setEditing] = useState<FinanceiroLancamentoRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [suppliers, setSuppliers] = useState<Array<{ id: string; name: string }>>([]);
+  const [customers, setCustomers] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    api.get<Array<{ id: string; name: string }>>(`/compras/suppliers?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(({ data }) => setSuppliers(Array.isArray(data) ? data : []))
+      .catch(() => setSuppliers([]));
+    api.get<Array<{ id: string; name: string }>>(`/financeiro/customers?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(({ data }) => setCustomers(Array.isArray(data) ? data : []))
+      .catch(() => setCustomers([]));
+  }, [tenantId]);
 
   useEffect(() => {
     const t = setTimeout(() => setBuscaDebounced(buscaInput.trim()), 350);
@@ -194,6 +209,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
   function openEdit(row: FinanceiroLancamentoRow) {
     setEditing(row);
     setForm({
+      cadastroId: row.supplierId ?? row.customerId ?? "",
       contraparte: row.contraparte ?? "",
       descricao: row.descricao,
       valor: String(row.valor),
@@ -214,9 +230,14 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
     setSaving(true);
     try {
       const tipo = editing ? editing.tipo : modo;
+      const cadastroPayload =
+        modo === "pagar" || tipo === "pagar"
+          ? { supplierId: form.cadastroId || undefined, customerId: undefined }
+          : { customerId: form.cadastroId || undefined, supplierId: undefined };
       const base = {
         tipo,
-        contraparte: form.contraparte.trim() || undefined,
+        ...cadastroPayload,
+        contraparte: form.cadastroId ? undefined : form.contraparte.trim() || undefined,
         descricao: form.descricao.trim(),
         valor: valorNum,
         dueDate: `${form.dueDate}T12:00:00.000Z`,
@@ -460,14 +481,41 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="fl-contraparte">{modo === "pagar" ? "Fornecedor / favorecido" : "Cliente / pagador"}</Label>
-              <Input
-                id="fl-contraparte"
-                value={form.contraparte}
-                onChange={(e) => setForm((f) => ({ ...f, contraparte: e.target.value }))}
-                placeholder=""
-              />
+              <Label htmlFor="fl-cadastro">
+                {modo === "pagar" ? "Fornecedor cadastrado" : "Cliente cadastrado"}
+              </Label>
+              <select
+                id="fl-cadastro"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                value={form.cadastroId}
+                onChange={(e) => setForm((f) => ({ ...f, cadastroId: e.target.value, contraparte: "" }))}
+              >
+                <option value="">— Selecione ou use texto abaixo —</option>
+                {(modo === "pagar" ? suppliers : customers).map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Cadastre em{" "}
+                <a
+                  href={modo === "pagar" ? "/dashboard/cadastros/fornecedores" : "/dashboard/cadastros/clientes"}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {modo === "pagar" ? "Cadastros → Fornecedores" : "Cadastros → Clientes"}
+                </a>
+              </p>
             </div>
+            {!form.cadastroId && (
+              <div className="space-y-2">
+                <Label htmlFor="fl-contraparte">{modo === "pagar" ? "Fornecedor / favorecido (texto)" : "Cliente / pagador (texto)"}</Label>
+                <Input
+                  id="fl-contraparte"
+                  value={form.contraparte}
+                  onChange={(e) => setForm((f) => ({ ...f, contraparte: e.target.value }))}
+                  placeholder=""
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="fl-desc">Descrição *</Label>
               <Input

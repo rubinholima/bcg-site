@@ -8,6 +8,11 @@ export class UpdateSupplierDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(32)
+  document?: string;
+
+  @IsString()
+  @IsOptional()
   @MaxLength(255)
   contactName?: string;
 

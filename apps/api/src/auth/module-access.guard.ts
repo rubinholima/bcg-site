@@ -18,9 +18,9 @@ export class ModuleAccessGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const required = this.reflector.get<string | string[] | undefined>(
+    const required = this.reflector.getAllAndOverride<string | string[] | undefined>(
       REQUIRED_MODULE_KEY,
-      context.getHandler(),
+      [context.getHandler(), context.getClass()],
     );
     if (!required) return true;
 

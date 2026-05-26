@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CircleHelp, Home, Menu, PanelLeftClose } from "lucide-react";
+import { CircleHelp, Home, Menu, PanelLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { Group } from "@/types/group";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardShell } from "@/context/DashboardShellContext";
@@ -11,7 +11,17 @@ import { useDashboardShell } from "@/context/DashboardShellContext";
 export function Header() {
   const [group, setGroup] = useState<Group | null>(null);
   const { user } = useAuth();
-  const { sidebarOpen, toggleSidebar } = useDashboardShell();
+  const { sidebarOpen, toggleSidebar, sidebarDesktopMode, cycleSidebarDesktopMode } = useDashboardShell();
+
+  const sidebarModeTitle =
+    sidebarDesktopMode === "expanded"
+      ? "Menu expandido — clique para só ícones"
+      : sidebarDesktopMode === "icons"
+        ? "Menu só ícones — clique para ocultar"
+        : "Menu oculto — clique para expandir";
+
+  const SidebarModeIcon =
+    sidebarDesktopMode === "hidden" ? PanelLeft : sidebarDesktopMode === "icons" ? PanelLeftOpen : PanelLeft;
 
   useEffect(() => {
     let cancelled = false;
@@ -63,6 +73,17 @@ export function Header() {
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="hidden h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground lg:inline-flex"
+          title={sidebarModeTitle}
+          aria-label={sidebarModeTitle}
+          onClick={cycleSidebarDesktopMode}
+        >
+          <SidebarModeIcon className="h-5 w-5" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"

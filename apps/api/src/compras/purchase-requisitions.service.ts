@@ -37,7 +37,7 @@ export class PurchaseRequisitionsService {
         justification: dto.justification ?? null,
         items: dto.items as object,
         totalEstimated: dto.totalEstimated ?? null,
-        status: 'draft',
+        status: 'rascunho',
       },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });

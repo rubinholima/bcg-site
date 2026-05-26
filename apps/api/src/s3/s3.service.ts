@@ -456,6 +456,67 @@ export class S3Service {
   }
 
   /**
+   * Upload de modelo de contrato base (PDF AcroForm).
+   * Salva em legal/templates/{scope}/{uuid}.pdf
+   */
+  async uploadContractTemplate(
+    buffer: Buffer,
+    scope: string,
+    filename: string,
+  ): Promise<{ key: string; url: string }> {
+    const safeScope = scope.replace(/[^a-zA-Z0-9_-]/g, '_') || 'global';
+    const key = `${LEGAL_PREFIX}templates/${safeScope}/${randomUUID()}.pdf`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: 'application/pdf',
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar modelo de contrato para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
+   * Upload de contrato gerado no vínculo RH.
+   * Salva em legal/rh/{employmentId}/{uuid}.pdf
+   */
+  async uploadEmploymentContract(
+    buffer: Buffer,
+    employmentId: string,
+    filename: string,
+  ): Promise<{ key: string; url: string }> {
+    const key = `${LEGAL_PREFIX}rh/${employmentId}/${randomUUID()}.pdf`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: 'application/pdf',
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar contrato RH para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
    * Upload de documento do cadastro do atleta (PDF ou imagem).
    * Salva em media/jogadores-documentos/{playerId}/{uuid}.{ext}
    */
@@ -500,6 +561,56 @@ export class S3Service {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Falha ao enviar documento para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
+   * Upload de documentos RH (PDF ou imagem).
+   * Salva em media/rh_documentos/{uuid}.{ext}
+   */
+  async uploadRhDocument(
+    buffer: Buffer,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; url: string }> {
+    const lower = filename.toLowerCase();
+    let ext = 'pdf';
+    let contentType = 'application/pdf';
+    if (lower.endsWith('.png')) {
+      ext = 'png';
+      contentType = 'image/png';
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      ext = 'jpg';
+      contentType = 'image/jpeg';
+    } else if (lower.endsWith('.webp')) {
+      ext = 'webp';
+      contentType = 'image/webp';
+    } else if (lower.endsWith('.pdf')) {
+      ext = 'pdf';
+      contentType = 'application/pdf';
+    } else if (mimeType?.startsWith('image/')) {
+      ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+      contentType = mimeType;
+    }
+
+    const key = `${MEDIA_PREFIX}rh_documentos/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar documento RH para S3: ${message}`,
       );
     }
 

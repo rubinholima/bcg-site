@@ -41,6 +41,7 @@ export class SuppliersService {
       data: {
         tenantId: dto.tenantId,
         name: cadastroUpperRequired(dto.name),
+        document: dto.document?.trim() || null,
         contactName: cadastroUpper(dto.contactName),
         email: cadastroEmail(dto.email),
         phone: cadastroUpper(dto.phone),
@@ -56,6 +57,7 @@ export class SuppliersService {
       where: { id },
       data: {
         ...(dto.name != null && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.document !== undefined && { document: dto.document?.trim() || null }),
         ...(dto.contactName !== undefined && { contactName: cadastroUpper(dto.contactName) }),
         ...(dto.email !== undefined && { email: cadastroEmail(dto.email) }),
         ...(dto.phone !== undefined && { phone: cadastroUpper(dto.phone) }),

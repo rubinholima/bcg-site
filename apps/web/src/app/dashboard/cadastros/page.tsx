@@ -7,6 +7,8 @@ import {
   Stethoscope,
   Brain,
   Ticket,
+  Truck,
+  Users,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { CadastrosHubInsights } from "@/components/dashboard/hub/CadastrosHubInsights";
@@ -19,6 +21,20 @@ const LINKS = [
     href: "/dashboard/cadastros/funcionarios",
     icon: Briefcase,
     moduleSlug: "adm_rh",
+  },
+  {
+    title: "Fornecedores",
+    description: "Cadastro para contas a pagar e compras.",
+    href: "/dashboard/cadastros/fornecedores",
+    icon: Truck,
+    moduleSlug: "adm_financeiro",
+  },
+  {
+    title: "Clientes",
+    description: "Cadastro para contas a receber.",
+    href: "/dashboard/cadastros/clientes",
+    icon: Users,
+    moduleSlug: "adm_financeiro",
   },
   {
     title: DASHBOARD_LABELS.atletas,

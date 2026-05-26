@@ -3,43 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, UserCircle, User, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, UserCircle, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { getPublicImageUrl } from "@/lib/media-url";
-import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
-import { JuridicoFilters } from "./JuridicoFilters";
+import { getEmployeeTypeLabel } from "@/lib/employee-types";
+import { JuridicoFilters, type PersonOption } from "./JuridicoFilters";
+import { JuridicoAllContractsCard } from "./JuridicoAllContractsCard";
+import { JuridicoPersonContractsPanel } from "./JuridicoPersonContractsPanel";
 import { LegalDocumentsTab } from "@/components/dashboard/LegalDocumentsTab";
-
-const DOC_TYPE_LABELS: Record<string, string> = {
-  contrato_trabalho: "Contrato de trabalho",
-  contrato_imagem: "Contrato de imagem",
-  formacao: "Contrato de formação",
-  rescisao: "Termo de rescisão",
-  transferencia: "Termo de transferência",
-  aditivo: "Aditivo contratual",
-  procuração: "Procuração",
-  nda: "NDA / Confidencialidade",
-  outro: "Outro",
-};
-
-const DOC_STATUS_LABELS: Record<string, string> = {
-  draft: "Rascunho",
-  pending_signature: "Aguardando assinatura",
-  signed: "Assinado",
-  expired: "Expirado",
-  cancelled: "Cancelado",
-};
 
 interface Player {
   id: string;
@@ -52,31 +26,20 @@ interface Player {
   tenant?: { id: string; name: string; slug: string };
 }
 
-interface LegalDocWithPlayer {
-  id: string;
-  playerId: string;
-  type: string;
-  name: string;
-  status: string;
-  createdAt: string;
-  player: { id: string; name: string; tenant?: { name: string } | null };
-}
-
 export default function JuridicoListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { canAccessModule, loading: authLoading } = useAuth();
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedPlayerId, setSelectedPlayerId] = useState("");
+  const [persons, setPersons] = useState<PersonOption[]>([]);
+  const [loadingPersons, setLoadingPersons] = useState(true);
+  const [selectedPersonId, setSelectedPersonId] = useState("");
+  const [selectedPerson, setSelectedPerson] = useState<PersonOption | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [loadingPlayer, setLoadingPlayer] = useState(false);
   const [selectedFromList, setSelectedFromList] = useState(false);
-  const [allDocs, setAllDocs] = useState<LegalDocWithPlayer[]>([]);
-  const [loadingDocs, setLoadingDocs] = useState(true);
 
-  const handleSelectPlayerFromFilters = (id: string) => {
-    setSelectedPlayerId(id);
+  const handleSelectPersonFromFilters = (id: string) => {
+    setSelectedPersonId(id);
     setSelectedFromList(false);
   };
 
@@ -92,46 +55,37 @@ export default function JuridicoListPage() {
     if (tenantId) params.set("tenantId", tenantId);
     if (category) params.set("category", category);
     if (search) params.set("search", search);
-    setLoading(true);
+    setLoadingPersons(true);
     api
-      .get<Player[]>(`/players?${params.toString()}`)
-      .then(({ data }) => setPlayers(Array.isArray(data) ? data : []))
-      .catch(() => setPlayers([]))
-      .finally(() => setLoading(false));
+      .get<PersonOption[]>(`/juridico/person-options?${params.toString()}`)
+      .then(({ data }) => setPersons(Array.isArray(data) ? data : []))
+      .catch(() => setPersons([]))
+      .finally(() => setLoadingPersons(false));
   }, [canAccessModule, authLoading, tenantId, category, search]);
 
   useEffect(() => {
-    if (!canAccessModule("juridico") || authLoading) return;
-    const params = new URLSearchParams();
-    if (tenantId) params.set("tenantId", tenantId);
-    if (docType) params.set("type", docType);
-    if (docStatus) params.set("status", docStatus);
-    setLoadingDocs(true);
-    api
-      .get<LegalDocWithPlayer[]>(`/legal-documents?${params.toString()}`)
-      .then(({ data }) => setAllDocs(Array.isArray(data) ? data : []))
-      .catch(() => setAllDocs([]))
-      .finally(() => setLoadingDocs(false));
-  }, [canAccessModule, authLoading, tenantId, docType, docStatus]);
-
-  useEffect(() => {
-    if (!selectedPlayerId) {
+    if (!selectedPersonId) {
+      setSelectedPerson(null);
       setSelectedPlayer(null);
       return;
     }
-    const fromList = players.find((p) => p.id === selectedPlayerId);
-    if (fromList) {
-      setSelectedPlayer(fromList);
+    const fromList = persons.find((p) => p.id === selectedPersonId);
+    setSelectedPerson(fromList ?? null);
+
+    const playerId = fromList?.playerId;
+    if (!playerId) {
+      setSelectedPlayer(null);
       setLoadingPlayer(false);
       return;
     }
+
     setLoadingPlayer(true);
     api
-      .get<Player>(`/players/${selectedPlayerId}`)
+      .get<Player>(`/players/${playerId}`)
       .then(({ data }) => setSelectedPlayer(data))
       .catch(() => setSelectedPlayer(null))
       .finally(() => setLoadingPlayer(false));
-  }, [selectedPlayerId, players]);
+  }, [selectedPersonId, persons]);
 
   if (authLoading) {
     return (
@@ -146,12 +100,6 @@ export default function JuridicoListPage() {
     return null;
   }
 
-  const playerOptions = players.map((p) => ({
-    id: p.id,
-    name: p.name,
-    category: p.category,
-  }));
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -163,110 +111,48 @@ export default function JuridicoListPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Jurídico</h1>
           <p className="text-muted-foreground">
-            Selecione um atleta nos filtros para ver contratos e documentos
+            Contratos de colaboradores (RH) e atletas. Filtre por clube ou veja todos, conforme seu acesso.
           </p>
         </div>
       </div>
 
       <JuridicoFilters
-        players={playerOptions}
-        selectedPlayerId={selectedPlayerId}
-        onSelectPlayer={handleSelectPlayerFromFilters}
+        persons={persons}
+        selectedPersonId={selectedPersonId}
+        onSelectPerson={handleSelectPersonFromFilters}
       />
 
-      {(!selectedPlayerId || selectedFromList) && (
-      <Card>
-        <CardContent className="pt-6">
-          <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Todos os contratos
-          </h3>
-          {loadingDocs ? (
-            <div className="py-8 text-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
-              Carregando contratos...
-            </div>
-          ) : allDocs.length === 0 ? (
-            <p className="py-6 text-sm text-muted-foreground text-center">
-              Nenhum contrato encontrado com os filtros selecionados.
-            </p>
-          ) : (
-            <div className="overflow-x-auto rounded-md border border-border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Atleta</TableHead>
-                    <TableHead>Clube</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Criado em</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allDocs.map((doc) => (
-                    <TableRow
-                      key={doc.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => {
-                        setSelectedPlayerId(doc.playerId);
-                        setSelectedFromList(true);
-                      }}
-                    >
-                      <TableCell className="font-medium">
-                        {doc.player.name}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {doc.player.tenant?.name ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {DOC_TYPE_LABELS[doc.type] ?? doc.type}
-                      </TableCell>
-                      <TableCell>{doc.name}</TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            doc.status === "signed"
-                              ? "text-green-600 dark:text-green-400 font-medium"
-                              : doc.status === "pending_signature"
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-muted-foreground"
-                          }
-                        >
-                          {DOC_STATUS_LABELS[doc.status] ?? doc.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right text-muted-foreground text-sm">
-                        {doc.createdAt
-                          ? new Date(doc.createdAt).toLocaleDateString("pt-BR")
-                          : "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {(!selectedPersonId || selectedFromList) && (
+        <JuridicoAllContractsCard
+          tenantId={tenantId}
+          docType={docType}
+          docStatus={docStatus}
+          onSelectPlayer={(id) => {
+            const person = persons.find((p) => p.playerId === id);
+            if (person) {
+              setSelectedPersonId(person.id);
+            }
+            setSelectedFromList(true);
+          }}
+        />
       )}
 
-      {selectedPlayerId && (
+      {selectedPersonId && !selectedFromList && (
         <>
-          {loadingPlayer ? (
+          {loadingPlayer && selectedPerson?.playerId ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : selectedPlayer ? (
+          ) : selectedPerson ? (
             <div className="space-y-6">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0 border-2 border-border">
-                      {selectedPlayer.photoUrl ? (
+                      {selectedPlayer?.photoUrl ? (
                         <img
                           src={getPublicImageUrl(selectedPlayer.photoUrl)}
-                          alt={selectedPlayer.name}
+                          alt={selectedPerson.name}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -277,45 +163,57 @@ export default function JuridicoListPage() {
                     </div>
                     <div>
                       <h2 className="text-xl font-semibold">
-                        {selectedPlayer.jerseyNumber ? `${selectedPlayer.jerseyNumber} – ` : ""}
-                        {selectedPlayer.name}
+                        {selectedPlayer?.jerseyNumber
+                          ? `${selectedPlayer.jerseyNumber} – `
+                          : ""}
+                        {selectedPerson.name}
                       </h2>
                       <p className="text-sm text-muted-foreground">
-                        {selectedPlayer.tenant?.name}
-                        {selectedPlayer.category ? ` • ${selectedPlayer.category}` : ""}
+                        {selectedPerson.tenantName ?? selectedPlayer?.tenant?.name}
+                        {selectedPerson.type
+                          ? ` · ${getEmployeeTypeLabel(selectedPerson.type)}`
+                          : ""}
+                        {selectedPlayer?.category ? ` · ${selectedPlayer.category}` : ""}
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <LegalDocumentsTab
-                playerId={selectedPlayer.id}
-                playerName={selectedPlayer.name}
+              <JuridicoPersonContractsPanel
+                employeeId={selectedPerson.id}
+                employeeName={selectedPerson.name}
+                tenantId={tenantId}
               />
+
+              {selectedPerson.playerId && selectedPlayer && (
+                <LegalDocumentsTab
+                  playerId={selectedPlayer.id}
+                  playerName={selectedPlayer.name}
+                />
+              )}
             </div>
           ) : (
-            <p className="text-muted-foreground py-6">
-              Atleta não encontrado.
-            </p>
+            <p className="text-muted-foreground py-6">Pessoa não encontrada.</p>
           )}
         </>
       )}
 
-      {!selectedPlayerId && !loading && players.length === 0 && (
+      {!selectedPersonId && !loadingPersons && persons.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <UserCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>Nenhum atleta encontrado com os filtros selecionados. Ajuste Clube ou Categoria.</p>
-            <Link href="/dashboard/cadastros/jogadores">
+            <p>
+              Nenhum colaborador encontrado com os filtros selecionados. Ajuste Clube ou Categoria, ou cadastre no RH.
+            </p>
+            <Link href="/dashboard/adm/rh">
               <Button variant="outline" className="mt-4">
-                Ir para {DASHBOARD_LABELS.atletas}
+                Ir para RH
               </Button>
             </Link>
           </CardContent>
         </Card>
       )}
-
     </div>
   );
 }

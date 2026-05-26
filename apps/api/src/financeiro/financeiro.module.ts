@@ -6,10 +6,13 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { FinanceiroOmieController } from './financeiro-omie.controller';
 import { FinanceiroLancamentosController } from './financeiro-lancamentos.controller';
 import { FinanceiroLancamentosService } from './financeiro-lancamentos.service';
+import { CustomersController } from './customers.controller';
+import { CustomersService } from './customers.service';
 
 @Module({
   imports: [AuthModule, ModulesModule, IntegrationsModule],
-  controllers: [FinanceiroOmieController, FinanceiroLancamentosController],
-  providers: [ModuleAccessGuard, FinanceiroLancamentosService],
+  controllers: [FinanceiroOmieController, FinanceiroLancamentosController, CustomersController],
+  providers: [ModuleAccessGuard, FinanceiroLancamentosService, CustomersService],
+  exports: [CustomersService],
 })
 export class FinanceiroModule {}

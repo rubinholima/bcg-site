@@ -45,6 +45,7 @@ import { JobRoleFormDialog, type JobRoleRow } from "./components/JobRoleFormDial
 import { EmployeeFormDialog, type EmployeeRow } from "./components/EmployeeFormDialog";
 import { EmployeeLinkPlayerDialog } from "./components/EmployeeLinkPlayerDialog";
 import { EmploymentFormDialog, type EmploymentRow } from "./components/EmploymentFormDialog";
+import { EmploymentContractsDialog } from "./components/EmploymentContractsDialog";
 import { LeavePeriodFormDialog, type LeavePeriodRow } from "./components/LeavePeriodFormDialog";
 import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosGroupedList";
 
@@ -80,6 +81,8 @@ export default function AdmRHPage() {
   const [linkEmp, setLinkEmp] = useState<EmployeeRow | null>(null);
   const [emplDialogOpen, setEmplDialogOpen] = useState(false);
   const [emplEdit, setEmplEdit] = useState<EmploymentRow | null>(null);
+  const [contractsEmployment, setContractsEmployment] = useState<EmploymentRow | null>(null);
+  const [contractsDialogOpen, setContractsDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [leaveEdit, setLeaveEdit] = useState<LeavePeriodRow | null>(null);
 
@@ -446,7 +449,9 @@ export default function AdmRHPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <CardTitle>Vínculos</CardTitle>
-                    <CardDescription>Contratos (CLT, PJ, estágio, atleta) dos colaboradores.</CardDescription>
+                    <CardDescription>
+                      Vínculos CLT, PJ, estágio e atleta. Use <strong>Contrato PDF</strong> na linha ou abra o vínculo → seção &quot;Contrato e assinatura&quot;.
+                    </CardDescription>
                   </div>
                   <Button size="sm" onClick={() => { setEmplEdit(null); setEmplDialogOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -467,7 +472,8 @@ export default function AdmRHPage() {
                         <TableHead>Contrato</TableHead>
                         <TableHead>Admissão</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="w-24">Ações</TableHead>
+                        <TableHead className="min-w-[7rem]">Contrato PDF</TableHead>
+                        <TableHead className="w-32">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -485,12 +491,28 @@ export default function AdmRHPage() {
                           <TableCell>{e.contractType}</TableCell>
                           <TableCell>{new Date(e.startDate).toLocaleDateString("pt-BR")}</TableCell>
                           <TableCell>{e.status}</TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 whitespace-nowrap"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                setContractsEmployment(e);
+                                setContractsDialogOpen(true);
+                              }}
+                            >
+                              <FileText className="mr-1.5 h-4 w-4 shrink-0" />
+                              Contrato PDF
+                            </Button>
+                          </TableCell>
                           <TableRowActions align="left">
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEmplEdit(e); setEmplDialogOpen(true); }}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(ev) => { ev.stopPropagation(); setEmplEdit(e); setEmplDialogOpen(true); }}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => { setDeleteKind("employment"); setDeleteId(e.id); }}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(ev) => { ev.stopPropagation(); setDeleteKind("employment"); setDeleteId(e.id); }}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -577,7 +599,30 @@ export default function AdmRHPage() {
       <JobRoleFormDialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen} tenants={tenants} departments={departments} edit={roleEdit} onSuccess={() => { loadJobRoles(); setRoleEdit(null); }} />
       <EmployeeFormDialog open={empDialogOpen} onOpenChange={setEmpDialogOpen} tenants={tenants} jobRoles={jobRoles} departments={departments} edit={empEdit} onSuccess={() => { loadEmployees(); loadEmployments(); setEmpEdit(null); }} />
       <EmployeeLinkPlayerDialog open={!!linkEmp} onOpenChange={(open) => !open && setLinkEmp(null)} employee={linkEmp} onSuccess={() => { loadEmployees(); setLinkEmp(null); }} />
-      <EmploymentFormDialog open={emplDialogOpen} onOpenChange={setEmplDialogOpen} tenants={tenants} employees={employees} jobRoles={jobRoles} departments={departments} edit={emplEdit} onSuccess={() => { loadEmployments(); setEmplEdit(null); }} />
+      <EmploymentFormDialog
+        open={emplDialogOpen}
+        onOpenChange={setEmplDialogOpen}
+        tenants={tenants}
+        employees={employees}
+        jobRoles={jobRoles}
+        departments={departments}
+        edit={emplEdit}
+        onSuccess={() => { loadEmployments(); setEmplEdit(null); }}
+        onOpenContracts={(row) => {
+          setContractsEmployment(row);
+          setContractsDialogOpen(true);
+        }}
+        onAfterCreate={(row) => {
+          loadEmployments();
+          setContractsEmployment(row);
+          setContractsDialogOpen(true);
+        }}
+      />
+      <EmploymentContractsDialog
+        open={contractsDialogOpen}
+        onOpenChange={setContractsDialogOpen}
+        employment={contractsEmployment}
+      />
       <LeavePeriodFormDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen} employments={employments} edit={leaveEdit} onSuccess={() => { loadLeavePeriods(); setLeaveEdit(null); }} />
 
       <AlertDialog open={!!deleteKind} onOpenChange={(open) => !open && setDeleteKind(null)}>

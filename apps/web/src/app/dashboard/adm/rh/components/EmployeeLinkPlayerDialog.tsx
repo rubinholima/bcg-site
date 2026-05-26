@@ -140,8 +140,8 @@ export function EmployeeLinkPlayerDialog({
           </div>
 
           <p className="text-sm text-muted-foreground">
-            O cadastro de atleta fica no módulo Futebol. Aqui você apenas vincula ou cria o registro operacional
-            (médico, psicologia, jurídico usam esse cadastro).
+            Ao vincular, nome, CPF, RG, contato, foto e matrícula são alinhados nos dois cadastros (RH ↔ Futebol).
+            Campos vazios em um lado são preenchidos com o que existir no outro.
           </p>
 
           {linkedPlayerId ? (

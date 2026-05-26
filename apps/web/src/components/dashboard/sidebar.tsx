@@ -73,7 +73,9 @@ function isCadastrosPath(pathname: string | null, relHub: string | null): boolea
     pathname.startsWith("/dashboard/cadastros") ||
     isMedicoCadastroPath(pathname) ||
     pathname.startsWith("/dashboard/psicologia/psicologos") ||
-    pathname.startsWith("/dashboard/socio-torcedor/planos")
+    pathname.startsWith("/dashboard/socio-torcedor/planos") ||
+    pathname.startsWith("/dashboard/cadastros/fornecedores") ||
+    pathname.startsWith("/dashboard/cadastros/clientes")
   );
 }
 
@@ -119,6 +121,10 @@ function isAdmPath(pathname: string | null, relHub: string | null): boolean {
   return !!pathname?.startsWith("/dashboard/adm") && !pathname.startsWith("/dashboard/adm/nutricao");
 }
 
+function isRequisicoesPath(pathname: string | null): boolean {
+  return !!pathname?.startsWith("/dashboard/requisicoes");
+}
+
 function isMarketingPath(pathname: string | null, relHub: string | null): boolean {
   if (relHub === "marketing") return true;
   if (!pathname) return false;
@@ -159,6 +165,7 @@ function getPathnameHub(pathname: string | null, relHub: string | null): string 
   if (isGrupoMasterPath(pathname, null)) return "grupo_master";
   if (isCadastrosPath(pathname, null)) return "cadastros";
   if (isAdmPath(pathname, null)) return "adm";
+  if (isRequisicoesPath(pathname)) return "requisicoes";
   if (isSaudePath(pathname, null)) return "saude";
   if (isFutebolOperacaoPath(pathname, null)) return "futebol";
   if (isJuridicoPath(pathname, null)) return "juridico";
@@ -180,7 +187,7 @@ function resolveLinkActive(
   if (isRelatorioLinkActive(href, pathname, currentHub)) return true;
   if (relatorioHub(href)) return false;
   if (href === "/dashboard/configuracoes") {
-    return pathname === "/dashboard/configuracoes" || !!pathname?.startsWith("/dashboard/configuracoes/");
+    return pathname === "/dashboard/configuracoes";
   }
   if (href === "/dashboard/empresas") {
     return pathname === "/dashboard/empresas" || !!pathname?.startsWith("/dashboard/tenants");
@@ -226,22 +233,24 @@ function SidebarMenuLink({
   className,
   children,
   onNavigate,
+  title,
 }: {
   href: string;
   external?: boolean;
   className?: string;
   children: React.ReactNode;
   onNavigate?: () => void;
+  title?: string;
 }) {
   if (external) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={className} onClick={onNavigate}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} title={title} onClick={onNavigate}>
         {children}
       </a>
     );
   }
   return (
-    <Link href={href} className={className} onClick={onNavigate}>
+    <Link href={href} className={className} title={title} onClick={onNavigate}>
       {children}
     </Link>
   );
@@ -260,7 +269,9 @@ function SidebarNav() {
   const searchParams = useSearchParams();
   const relHub = pathname?.startsWith("/dashboard/relatorios") ? searchParams.get("hub") : null;
   const { canAccessModule, canAccessDashboard, role, modules } = useAuth();
-  const { onNavClick } = useDashboardShell();
+  const { onNavClick, sidebarDesktopMode, setSidebarDesktopMode } = useDashboardShell();
+  const collapsed = sidebarDesktopMode === "icons";
+  const [flyoutSlug, setFlyoutSlug] = useState<string | null>(null);
   const [group, setGroup] = useState<Group | null>(null);
 
   const inPath = (href: string) =>
@@ -273,6 +284,7 @@ function SidebarNav() {
   const [juridicoOpen, setJuridicoOpen] = useState(() => isJuridicoPath(pathname, relHub));
   const [eventosOpen, setEventosOpen] = useState(() => isEventosPath(pathname, relHub));
   const [admOpen, setAdmOpen] = useState(() => isAdmPath(pathname, relHub));
+  const [requisicoesOpen, setRequisicoesOpen] = useState(() => isRequisicoesPath(pathname));
   const [ferramentasOpen, setFerramentasOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/emails") ||
@@ -342,40 +354,28 @@ function SidebarNav() {
   const homeRoute = getHomeDashboardRoute(role, modules);
   const homeMenu = getDashboardHomeMenuItem(role, modules);
 
-  const pathnameHub = getPathnameHub(pathname, relHub);
-  const hubOpenState: Record<string, boolean> = {
-    grupo_master: grupoMasterOpen,
-    cadastros: cadastrosOpen,
-    adm: admOpen,
-    saude: saudeOpen,
-    futebol: futebolOpen,
-    juridico: juridicoOpen,
-    eventos: eventosOpen,
-    ferramentas: ferramentasOpen,
-    configuracoes: configOpen,
-    socio_torcedor: socioOpen,
-    academias: academiasOpen,
-    marketing: marketingOpen,
-  };
-  const hasAnyHubOpen = Object.values(hubOpenState).some(Boolean);
-  const focusMode = pathnameHub !== null || hasAnyHubOpen;
+  useEffect(() => {
+    if (!collapsed) setFlyoutSlug(null);
+  }, [collapsed]);
 
-  const hubFocusClass = (slug: string, isOpen: boolean) => {
-    if (!focusMode) return "";
-    const isFocused = pathnameHub === slug || isOpen;
-    return isFocused ? "opacity-100" : "opacity-[0.38] hover:opacity-65";
-  };
-
-  const standaloneFocusClass = (slug: string | null) => {
-    if (!focusMode) return "";
-    if (slug && pathnameHub === slug) return "opacity-100";
-    return "opacity-[0.38] hover:opacity-65";
-  };
+  useEffect(() => {
+    setFlyoutSlug(null);
+  }, [pathname]);
 
   return (
-    <div className="flex h-full flex-col border-r border-border bg-card shadow-sm">
-      <div className="flex h-16 items-center border-b border-border px-6">
-        <Link href={homeRoute} className="flex min-w-0 items-center gap-2" onClick={onNavClick}>
+    <div className="relative flex h-full flex-col border-r border-border bg-card shadow-sm">
+      <div
+        className={cn(
+          "flex h-16 shrink-0 items-center border-b border-border",
+          collapsed ? "justify-center px-2" : "px-6",
+        )}
+      >
+        <Link
+          href={homeRoute}
+          className={cn("flex min-w-0 items-center gap-2", collapsed && "justify-center")}
+          onClick={onNavClick}
+          title={collapsed ? `Dashboard ${name}` : undefined}
+        >
           <img
             src="/bcg-logo.png"
             alt=""
@@ -383,13 +383,24 @@ function SidebarNav() {
             height={32}
             className="h-8 w-8 flex-shrink-0 rounded object-contain"
           />
-          <span className="truncate text-lg font-semibold">
-            <span className="text-muted-foreground">Dashboard</span> {name}
-          </span>
+          {!collapsed && (
+            <span className="truncate text-lg font-semibold">
+              <span className="text-muted-foreground">Dashboard</span> {name}
+            </span>
+          )}
         </Link>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
+      {flyoutSlug ? (
+        <button
+          type="button"
+          aria-label="Fechar submenu"
+          className="fixed inset-0 z-40 hidden lg:block"
+          onClick={() => setFlyoutSlug(null)}
+        />
+      ) : null}
+
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden p-4">
         {DASHBOARD_MENU.map((item) => {
           const Icon = item.icon!;
 
@@ -412,15 +423,15 @@ function SidebarNav() {
                 href={homeMenu.href}
                 onClick={onNavClick}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
-                  standaloneFocusClass(null),
+                  "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                  collapsed && "justify-center px-2",
                   isActive
                     ? "dashboard-sidebar-active"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
                 )}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span>{homeMenu.label}</span>
+                {!collapsed && <span className="truncate">{homeMenu.label}</span>}
               </Link>
             );
           }
@@ -442,15 +453,16 @@ function SidebarNav() {
                 external={item.external}
                 onNavigate={onNavClick}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
-                  standaloneFocusClass(item.slug),
+                  "flex shrink-0 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                  collapsed && "justify-center px-2",
                   isActive
                     ? "dashboard-sidebar-active"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground dashboard-link-hover"
                 )}
+                title={collapsed ? item.label : undefined}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                <span>{item.label}</span>
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </SidebarMenuLink>
             );
           }
@@ -495,7 +507,9 @@ function SidebarNav() {
                                 : item.slug === "marketing"
                                 ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard) ||
                                   canAccessModule("relatorios")
-                                : false;
+                                : item.slug === "requisicoes"
+                                  ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
+                                  : false;
 
             if (!showGroup) return null;
 
@@ -506,6 +520,8 @@ function SidebarNav() {
                   ? cadastrosOpen
                   : item.slug === "adm"
                     ? admOpen
+                    : item.slug === "requisicoes"
+                      ? requisicoesOpen
                     : item.slug === "saude"
                       ? saudeOpen
                       : item.slug === "futebol"
@@ -532,6 +548,8 @@ function SidebarNav() {
                   ? setCadastrosOpen
                   : item.slug === "adm"
                     ? setAdmOpen
+                    : item.slug === "requisicoes"
+                      ? setRequisicoesOpen
                     : item.slug === "saude"
                       ? setSaudeOpen
                       : item.slug === "futebol"
@@ -553,31 +571,138 @@ function SidebarNav() {
                                 : () => {};
 
             return (
-              <div
-                key={item.slug}
-                className={cn("space-y-0.5 transition-opacity duration-200", hubFocusClass(item.slug, isOpen))}
-              >
+              <div key={item.slug} className="relative shrink-0 space-y-0.5">
                 <button
                   type="button"
-                  onClick={() => setOpen((o) => !o)}
+                  title={collapsed ? item.label : undefined}
+                  onClick={() => {
+                    if (collapsed) {
+                      setFlyoutSlug((s) => (s === item.slug ? null : item.slug));
+                    } else {
+                      setOpen((o) => !o);
+                    }
+                  }}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
-                    "font-bold uppercase tracking-wide",
-                    isOpen
+                    "flex w-full shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
+                    "font-bold uppercase tracking-wide whitespace-nowrap",
+                    collapsed && "justify-center px-2",
+                    isOpen || flyoutSlug === item.slug
                       ? "bg-accent/50 text-accent-foreground shadow-sm"
                       : "text-foreground/90 hover:bg-accent hover:text-accent-foreground dashboard-link-hover",
-                    focusMode && (pathnameHub === item.slug || isOpen) && "ring-1 ring-primary/25"
                   )}
                 >
-                  {isOpen ? (
-                    <ChevronDown className="h-4 w-4 shrink-0 dashboard-chevron-transition" aria-label="Recolher" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 dashboard-chevron-transition" aria-label="Expandir" />
-                  )}
+                  {!collapsed &&
+                    (isOpen ? (
+                      <ChevronDown className="h-4 w-4 shrink-0 dashboard-chevron-transition" aria-label="Recolher" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 shrink-0 dashboard-chevron-transition" aria-label="Expandir" />
+                    ))}
                   <Icon className="h-5 w-5 shrink-0" />
-                  <span>{item.label}</span>
+                  {!collapsed && <span className="min-w-0 truncate">{item.label}</span>}
                 </button>
-                {isOpen && (
+                {collapsed && flyoutSlug === item.slug ? (
+                  <div className="fixed left-[4.5rem] top-16 z-50 hidden max-h-[calc(100dvh-4rem)] w-64 overflow-y-auto rounded-r-lg border border-border bg-card p-3 shadow-xl lg:block">
+                    <p className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      {item.label}
+                    </p>
+                    <div className="space-y-0.5 border-l border-border pl-3">
+                      {item.children
+                        .filter((c) =>
+                          c.children?.length
+                            ? hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard)
+                            : canAccessModule(c.moduleSlug) || (c.moduleSlug === "emails" && canAccessDashboard),
+                        )
+                        .map((child) => {
+                          if (child.children?.length) {
+                            const hasAccess = hasAccessToAnyChild(child.children, canAccessModule, canAccessDashboard);
+                            if (!hasAccess) return null;
+                            const SubIcon = child.icon;
+                            const isSubOpen = isNestedExpanded(child);
+                            return (
+                              <div key={child.slug} className="space-y-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleNestedChild(child)}
+                                  className={cn(
+                                    "flex w-full shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 dashboard-link-hover",
+                                    "font-semibold uppercase tracking-wide whitespace-nowrap",
+                                    "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                  )}
+                                >
+                                  {isSubOpen ? (
+                                    <ChevronDown className="h-4 w-4 shrink-0" aria-label="Recolher" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
+                                  )}
+                                  {SubIcon && <SubIcon className="h-4 w-4 shrink-0" />}
+                                  <span className="truncate">{child.label}</span>
+                                </button>
+                                {isSubOpen && (
+                                  <div className="ml-4 space-y-0.5 border-l border-border pl-2">
+                                    {child.children
+                                      .filter(
+                                        (cc) =>
+                                          canAccessModule(cc.moduleSlug) ||
+                                          (cc.moduleSlug === "emails" && canAccessDashboard),
+                                      )
+                                      .map((cc) => {
+                                        if (!cc.href) return null;
+                                        const isChildActive =
+                                          !cc.external && resolveLinkActive(cc.href, pathname, relHub);
+                                        return (
+                                          <SidebarMenuLink
+                                            key={cc.slug}
+                                            href={cc.href}
+                                            external={cc.external}
+                                            onNavigate={() => {
+                                              onNavClick();
+                                              setFlyoutSlug(null);
+                                            }}
+                                            className={cn(
+                                              "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                              isChildActive
+                                                ? "dashboard-sidebar-active"
+                                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                            )}
+                                          >
+                                            {cc.icon && <cc.icon className="h-4 w-4 shrink-0" />}
+                                            <span className="truncate">{cc.label}</span>
+                                          </SidebarMenuLink>
+                                        );
+                                      })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          if (!child.href) return null;
+                          const ChildIcon = child.icon!;
+                          const isChildActive = !child.external && resolveLinkActive(child.href, pathname, relHub);
+                          return (
+                            <SidebarMenuLink
+                              key={child.slug}
+                              href={child.href}
+                              external={child.external}
+                              onNavigate={() => {
+                                onNavClick();
+                                setFlyoutSlug(null);
+                              }}
+                              className={cn(
+                                "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                isChildActive
+                                  ? "dashboard-sidebar-active"
+                                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                              )}
+                            >
+                              <ChildIcon className="h-4 w-4 shrink-0" />
+                              <span className="truncate">{child.label}</span>
+                            </SidebarMenuLink>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ) : null}
+                {!collapsed && isOpen && (
                   <div className="ml-4 space-y-0.5 border-l border-border pl-3">
                     {item.children
                       .filter((c) =>
@@ -597,8 +722,8 @@ function SidebarNav() {
                                 type="button"
                                 onClick={() => toggleNestedChild(child)}
                                 className={cn(
-                                  "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 dashboard-link-hover",
-                                  "font-semibold uppercase tracking-wide",
+                                  "flex w-full shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 dashboard-link-hover",
+                                  "font-semibold uppercase tracking-wide whitespace-nowrap",
                                   "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 )}
                               >
@@ -608,7 +733,7 @@ function SidebarNav() {
                                   <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                 )}
                                 {SubIcon && <SubIcon className="h-4 w-4 shrink-0" />}
-                                <span>{child.label}</span>
+                                <span className="truncate">{child.label}</span>
                               </button>
                               {isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">

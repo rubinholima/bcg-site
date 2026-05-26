@@ -10,7 +10,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
   const isSessaoPage = pathname.includes("/consultas/sessao");
   const isAcademiasEmbed = pathname.startsWith("/dashboard/academias/");
-  const { sidebarOpen, closeSidebar } = useDashboardShell();
+  const { sidebarOpen, closeSidebar, sidebarDesktopMode } = useDashboardShell();
+
+  const desktopHidden = sidebarDesktopMode === "hidden";
+  const desktopIcons = sidebarDesktopMode === "icons";
 
   if (isSessaoPage) {
     return (
@@ -33,8 +36,12 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[min(100vw-2.5rem,16rem)] shrink-0 transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-64 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 shrink-0 transition-[width,transform] duration-200 ease-out lg:static lg:z-auto",
+          "w-[min(100vw-2.5rem,16rem)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          desktopHidden && "lg:pointer-events-none lg:w-0 lg:overflow-hidden lg:border-0 lg:opacity-0",
+          !desktopHidden && desktopIcons && "lg:w-[4.5rem]",
+          !desktopHidden && !desktopIcons && "lg:w-64",
         )}
       >
         <Sidebar />

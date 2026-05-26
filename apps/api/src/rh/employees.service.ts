@@ -1,19 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { cadastroEmail, cadastroJsonStringArray, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import {
+  createEmployeeFromPlayer,
   createPlayerFromEmployee,
   generateEmployeeCode,
+  syncLinkedIdentityBidirectional,
   syncPlayerFromEmployee,
   unlinkPlayerFromEmployee,
 } from './employee-player-link';
+import { employeeDocumentationCreate, employeeDocumentationPatch } from './employee-documentation.util';
 
 const employeeInclude = {
   tenant: { select: { id: true, name: true, slug: true, logoUrl: true } },
   player: { select: { id: true, name: true, category: true, position: true } },
+  dependents: { orderBy: { birthDate: 'asc' as const } },
 } as const;
 
 @Injectable()
@@ -85,6 +89,7 @@ export class EmployeesService {
         categories: dto.categories != null ? cadastroJsonStringArray(dto.categories) : Prisma.JsonNull,
         notes: cadastroUpper(dto.notes),
         photoUrl: dto.photoUrl?.trim() || null,
+        ...employeeDocumentationCreate(dto),
       },
       include: { ...employeeInclude, tenant: { select: { id: true, name: true, slug: true } } },
     });
@@ -112,6 +117,7 @@ export class EmployeesService {
         ...(dto.categories !== undefined && { categories: cadastroJsonStringArray(dto.categories) }),
         ...(dto.notes !== undefined && { notes: cadastroUpper(dto.notes) }),
         ...(dto.photoUrl !== undefined && { photoUrl: dto.photoUrl?.trim() || null }),
+        ...employeeDocumentationPatch(dto),
       },
       include: employeeInclude,
     });
@@ -121,14 +127,14 @@ export class EmployeesService {
         await unlinkPlayerFromEmployee(this.prisma, id);
       } else if (dto.playerId !== existing.playerId) {
         await syncPlayerFromEmployee(this.prisma, updated, dto.playerId);
-      } else if (existing.playerId) {
-        await syncPlayerFromEmployee(this.prisma, updated, existing.playerId);
+      } else {
+        await syncLinkedIdentityBidirectional(this.prisma, id);
       }
       return this.findOne(id);
     }
 
     if (existing.playerId) {
-      await syncPlayerFromEmployee(this.prisma, updated, existing.playerId);
+      await syncLinkedIdentityBidirectional(this.prisma, id);
     }
 
     return updated;
@@ -149,6 +155,20 @@ export class EmployeesService {
   async unlinkPlayer(id: string) {
     await this.findOne(id);
     await unlinkPlayerFromEmployee(this.prisma, id);
+    return this.findOne(id);
+  }
+
+  async createFromPlayer(playerId: string) {
+    const employee = await createEmployeeFromPlayer(this.prisma, playerId);
+    return this.findOne(employee.id);
+  }
+
+  async syncIdentity(id: string) {
+    const emp = await this.findOne(id);
+    if (!emp.playerId) {
+      throw new BadRequestException('Colaborador não possui atleta vinculado');
+    }
+    await syncLinkedIdentityBidirectional(this.prisma, id);
     return this.findOne(id);
   }
 

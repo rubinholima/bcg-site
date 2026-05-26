@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import type { FinanceiroLancamento, Prisma } from '@prisma/client';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
@@ -24,6 +24,46 @@ function startOfTodayUtc(): Date {
 @Injectable()
 export class FinanceiroLancamentosService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private async resolveCadastroLink(
+    tenantId: string,
+    tipo: 'pagar' | 'receber',
+    input: { supplierId?: string; customerId?: string; contraparte?: string },
+  ) {
+    if (tipo === 'pagar' && input.supplierId) {
+      const supplier = await this.prisma.supplier.findFirst({
+        where: { id: input.supplierId, tenantId },
+      });
+      if (!supplier) throw new NotFoundException('Fornecedor não encontrado');
+      return {
+        supplierId: supplier.id,
+        customerId: null as string | null,
+        contraparte: supplier.name,
+      };
+    }
+    if (tipo === 'receber' && input.customerId) {
+      const customer = await this.prisma.customer.findFirst({
+        where: { id: input.customerId, tenantId },
+      });
+      if (!customer) throw new NotFoundException('Cliente não encontrado');
+      return {
+        supplierId: null as string | null,
+        customerId: customer.id,
+        contraparte: customer.name,
+      };
+    }
+    if (tipo === 'pagar' && input.customerId) {
+      throw new BadRequestException('Conta a pagar deve usar fornecedor cadastrado');
+    }
+    if (tipo === 'receber' && input.supplierId) {
+      throw new BadRequestException('Conta a receber deve usar cliente cadastrado');
+    }
+    return {
+      supplierId: null as string | null,
+      customerId: null as string | null,
+      contraparte: cadastroUpper(input.contraparte),
+    };
+  }
 
   private buildListWhere(
     tenantId: string,
@@ -144,12 +184,20 @@ export class FinanceiroLancamentosService {
       settledAt = dto.settledAt ? new Date(dto.settledAt) : new Date();
     }
 
+    const cadastro = await this.resolveCadastroLink(dto.tenantId, dto.tipo, {
+      supplierId: dto.supplierId,
+      customerId: dto.customerId,
+      contraparte: dto.contraparte,
+    });
+
     const row = await this.prisma.financeiroLancamento.create({
       data: {
         tenantId: dto.tenantId,
         tipo: dto.tipo,
         status,
-        contraparte: cadastroUpper(dto.contraparte),
+        contraparte: cadastro.contraparte,
+        supplierId: cadastro.supplierId,
+        customerId: cadastro.customerId,
         descricao: cadastroUpperRequired(dto.descricao),
         valor: dto.valor,
         dueDate: new Date(dto.dueDate),
@@ -178,14 +226,30 @@ export class FinanceiroLancamentosService {
       if (dto.settledAt === undefined) settledAt = null;
     }
 
+    const tipo = (dto.tipo ?? existing.tipo) as 'pagar' | 'receber';
+    const cadastro =
+      dto.supplierId !== undefined || dto.customerId !== undefined || dto.contraparte !== undefined
+        ? await this.resolveCadastroLink(existing.tenantId, tipo, {
+            supplierId: dto.supplierId,
+            customerId: dto.customerId,
+            contraparte: dto.contraparte ?? existing.contraparte ?? undefined,
+          })
+        : null;
+
     const row = await this.prisma.financeiroLancamento.update({
       where: { id },
       data: {
         ...(dto.tipo !== undefined ? { tipo: dto.tipo } : {}),
         ...(dto.status !== undefined ? { status: dto.status } : {}),
-        ...(dto.contraparte !== undefined
-          ? { contraparte: cadastroUpper(dto.contraparte) }
-          : {}),
+        ...(cadastro
+          ? {
+              contraparte: cadastro.contraparte,
+              supplierId: cadastro.supplierId,
+              customerId: cadastro.customerId,
+            }
+          : dto.contraparte !== undefined
+            ? { contraparte: cadastroUpper(dto.contraparte) }
+            : {}),
         ...(dto.descricao !== undefined ? { descricao: cadastroUpperRequired(dto.descricao) } : {}),
         ...(dto.valor !== undefined ? { valor: dto.valor } : {}),
         ...(dto.dueDate !== undefined ? { dueDate: new Date(dto.dueDate) } : {}),

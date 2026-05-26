@@ -39,13 +39,25 @@ async function getServerHeaders(init?: RequestInit): Promise<Record<string, stri
   return base;
 }
 
+async function request(url: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erro de rede";
+    if (message.includes("fetch failed") || message.includes("Failed to fetch")) {
+      throw new Error("Não foi possível conectar ao servidor. Verifique se a API está rodando (porta 3001).");
+    }
+    throw err instanceof Error ? err : new Error(message);
+  }
+}
+
 export const api = {
   async get<T>(path: string, init?: RequestInit): Promise<{ data: T }> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? { "Content-Type": "application/json", ...init?.headers } : await getServerHeaders(init);
     const browserCache: RequestInit =
       typeof window !== "undefined" ? { cache: "no-store" as RequestCache } : {};
-    const res = await fetch(url, { ...browserCache, ...init, headers, credentials: "include" });
+    const res = await request(url, { ...browserCache, ...init, headers, credentials: "include" });
     if (!res.ok) throw new Error(await getErrorMessage(res));
     const data = (await res.json().catch(() => ({}))) as T;
     return { data };
@@ -53,7 +65,7 @@ export const api = {
   async post<T>(path: string, body?: unknown, init?: RequestInit): Promise<{ data: T }> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? { "Content-Type": "application/json", ...init?.headers } : await getServerHeaders(init);
-    const res = await fetch(url, {
+    const res = await request(url, {
       method: "POST",
       body: body !== undefined ? JSON.stringify(body) : undefined,
       ...init,
@@ -67,7 +79,7 @@ export const api = {
   async patch<T>(path: string, body?: unknown, init?: RequestInit): Promise<{ data: T }> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? { "Content-Type": "application/json", ...init?.headers } : await getServerHeaders(init);
-    const res = await fetch(url, {
+    const res = await request(url, {
       method: "PATCH",
       body: body !== undefined ? JSON.stringify(body) : undefined,
       ...init,
@@ -81,7 +93,7 @@ export const api = {
   async delete(path: string, init?: RequestInit): Promise<void> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? {} : await getServerHeaders(init);
-    const res = await fetch(url, { method: "DELETE", ...init, headers, credentials: "include" });
+    const res = await request(url, { method: "DELETE", ...init, headers, credentials: "include" });
     if (!res.ok) throw new Error(await getErrorMessage(res));
   },
   /** POST com FormData (para upload de arquivos). Não define Content-Type para o browser definir o boundary. */
@@ -90,7 +102,7 @@ export const api = {
     const headers: Record<string, string> =
       typeof window !== "undefined" ? {} : await getServerHeaders(init);
     delete headers["Content-Type"]; // FormData precisa que o browser defina multipart boundary
-    const res = await fetch(url, {
+    const res = await request(url, {
       method: "POST",
       body: formData,
       ...init,

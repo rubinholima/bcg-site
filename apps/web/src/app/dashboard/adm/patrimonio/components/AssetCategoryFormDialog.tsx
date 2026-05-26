@@ -94,7 +94,7 @@ export function AssetCategoryFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full min-w-0 max-h-[min(90vh,100dvh-2rem)] overflow-y-auto overflow-x-hidden sm:p-8">
+      <DialogContent className="w-full min-w-0 sm:max-w-md max-h-[min(90vh,100dvh-2rem)] overflow-y-auto overflow-x-hidden sm:p-8">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{edit ? "Editar categoria" : "Nova categoria"}</DialogTitle>

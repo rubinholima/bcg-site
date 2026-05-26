@@ -26,6 +26,14 @@ export class UpdateFinanceiroLancamentoDto {
 
   @IsString()
   @IsOptional()
+  supplierId?: string;
+
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+
+  @IsString()
+  @IsOptional()
   @MaxLength(2000)
   descricao?: string;
 

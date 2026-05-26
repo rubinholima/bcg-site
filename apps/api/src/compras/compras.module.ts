@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { ModulesModule } from '../modules/modules.module';
+import { HelloSignModule } from '../hello-sign/hello-sign.module';
 import { SuppliersController } from './suppliers.controller';
 import { SuppliersService } from './suppliers.service';
 import { ProductsController } from './products.controller';
@@ -11,16 +12,26 @@ import { PurchaseOrdersController } from './purchase-orders.controller';
 import { PurchaseOrdersService } from './purchase-orders.service';
 import { StockMovementsController } from './stock-movements.controller';
 import { StockMovementsService } from './stock-movements.service';
+import { PurchaseWorkflowController, MyRequisitionsController } from './purchase-workflow.controller';
+import { PurchaseWorkflowService } from './purchase-workflow.service';
+import { TiSupportController, TiPublicController } from './ti-support.controller';
+import { TiSupportService } from './ti-support.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
+import { MailService } from '../common/mail.service';
+import { WorkflowNotifyService } from './workflow-notify.service';
 
 @Module({
-  imports: [AuthModule, ModulesModule],
+  imports: [AuthModule, ModulesModule, HelloSignModule],
   controllers: [
     SuppliersController,
     ProductsController,
     PurchaseRequisitionsController,
     PurchaseOrdersController,
     StockMovementsController,
+    PurchaseWorkflowController,
+    MyRequisitionsController,
+    TiSupportController,
+    TiPublicController,
   ],
   providers: [
     SuppliersService,
@@ -28,8 +39,20 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
     PurchaseRequisitionsService,
     PurchaseOrdersService,
     StockMovementsService,
+    PurchaseWorkflowService,
+    TiSupportService,
     ModuleAccessGuard,
+    MailService,
+    WorkflowNotifyService,
   ],
-  exports: [SuppliersService, ProductsService, PurchaseRequisitionsService, PurchaseOrdersService, StockMovementsService],
+  exports: [
+    SuppliersService,
+    ProductsService,
+    PurchaseRequisitionsService,
+    PurchaseOrdersService,
+    StockMovementsService,
+    PurchaseWorkflowService,
+    TiSupportService,
+  ],
 })
 export class ComprasModule {}

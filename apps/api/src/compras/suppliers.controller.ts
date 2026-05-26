@@ -8,41 +8,32 @@ import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
 @Controller('compras/suppliers')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
+@RequireModule(['adm_compras', 'adm_financeiro'])
 export class SuppliersController {
   constructor(private readonly service: SuppliersService) {}
 
   @Get()
-  @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_compras')
   findAll(@Query('tenantId') tenantId?: string, @Query('search') search?: string) {
     return this.service.findAll(tenantId, search);
   }
 
   @Get(':id')
-  @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_compras')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_compras')
   create(@Body() dto: CreateSupplierDto) {
     return this.service.create(dto);
   }
 
   @Patch(':id')
-  @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_compras')
   update(@Param('id') id: string, @Body() dto: UpdateSupplierDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_compras')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

@@ -1,4 +1,6 @@
-import { IsString, IsOptional, IsArray, MaxLength, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsArray, MaxLength, IsDateString, IsBoolean, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { EmployeeAddressDto } from './employee-address.dto';
 
 export class CreateEmployeeDto {
   @IsString()
@@ -34,7 +36,7 @@ export class CreateEmployeeDto {
 
   @IsString()
   @MaxLength(32)
-  type: string; // staff | athlete
+  type: string; // staff | athlete | dirigente | temporario | estagio
 
   @IsOptional()
   @IsArray()
@@ -52,4 +54,47 @@ export class CreateEmployeeDto {
   @IsOptional()
   @MaxLength(32)
   playerId?: string | null;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => EmployeeAddressDto)
+  address?: EmployeeAddressDto;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(32)
+  pisNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  voterTitle?: string;
+
+  @IsString()
+  @IsOptional()
+  ctpsUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  pixKey?: string;
+
+  @IsDateString()
+  @IsOptional()
+  admissionMedicalExamDate?: string;
+
+  @IsString()
+  @IsOptional()
+  admissionMedicalExamFileUrl?: string;
+
+  @IsDateString()
+  @IsOptional()
+  dismissalMedicalExamDate?: string;
+
+  @IsString()
+  @IsOptional()
+  dismissalMedicalExamFileUrl?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  hasMinorChildren?: boolean;
 }
