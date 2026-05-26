@@ -75,14 +75,14 @@ function payloadSummary(payload: Record<string, unknown> | null): string[] {
   add("RG", "rg");
   add("PIS", "pisNumber");
   add("Título de eleitor", "voterTitle");
-  add("CTPS (URL)", "ctpsUrl");
+  add("CTPS (link)", "ctpsUrl");
   add("PIX", "pixKey");
-  add("Foto (URL)", "photoUrl");
+  add("Foto", "photoUrl");
   add("Nascimento", "birthDate");
   add("Exame admissional", "admissionMedicalExamDate");
-  add("Link exame admissional", "admissionMedicalExamFileUrl");
+  add("Arquivo exame admissional", "admissionMedicalExamFileUrl");
   add("Exame demissional", "dismissalMedicalExamDate");
-  add("Link exame demissional", "dismissalMedicalExamFileUrl");
+  add("Arquivo exame demissional", "dismissalMedicalExamFileUrl");
   add("Observações", "notes");
   if (payload.hasMinorChildren === true) {
     const deps = payload.dependents;

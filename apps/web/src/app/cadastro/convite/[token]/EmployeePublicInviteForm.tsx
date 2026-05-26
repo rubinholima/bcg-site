@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getApiBaseUrl } from "@/lib/apiProxy";
 import {
-  EMPTY_EMPLOYEE_ADDRESS,
   parseEmployeeAddress,
   type EmployeeAddress,
   type EmployeeDependentRow,
@@ -18,13 +17,12 @@ import {
   type PlayerRegistrationDocument,
 } from "@/lib/player-registration-profile";
 import type { PublicRegistrationInviteData } from "./page";
+import { PublicInviteFileUpload } from "./PublicInviteFileUpload";
 
 const EMPLOYEE_DOC_TYPES = [
   ...PLAYER_DOCUMENT_TYPE_OPTIONS,
-  { value: "ctps", label: "CTPS (arquivo)" },
-  { value: "exame_admissional", label: "Exame admissional" },
-  { value: "exame_demissional", label: "Exame demissional" },
   { value: "reservista", label: "Reservista" },
+  { value: "comprovante_residencia", label: "Comprovante de residência" },
 ] as const;
 
 function str(v: unknown): string {
@@ -243,8 +241,9 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <p className="text-sm text-zinc-400">
-        Olá, <span className="text-white font-medium">{initial.name}</span>. Preencha todos os campos
-        abaixo. Campos de link aceitam URL (https://…).
+        Olá, <span className="text-white font-medium">{initial.name}</span>. Preencha os dados e envie
+        fotos ou PDFs dos documentos — no celular você pode tirar foto na hora. A CTPS digital é o único
+        campo em link (URL).
       </p>
 
       <section className="space-y-4">
@@ -278,16 +277,16 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
               onChange={(e) => setBirthDate(e.target.value)}
             />
           </Field>
-          <Field label="Foto (URL)" id="photoUrl">
-            <Input
-              id="photoUrl"
-              type="url"
-              className="text-foreground"
-              value={photoUrl}
-              onChange={(e) => setPhotoUrl(e.target.value)}
-              placeholder="https://…"
-            />
-          </Field>
+          <PublicInviteFileUpload
+            token={token}
+            label="Foto"
+            value={photoUrl}
+            onChange={setPhotoUrl}
+            documentType="foto"
+            documentName="Foto do colaborador"
+            mode="photo"
+            className="sm:col-span-2"
+          />
         </div>
       </section>
 
@@ -316,7 +315,7 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
               onChange={(e) => setVoterTitle(e.target.value)}
             />
           </Field>
-          <Field label="CTPS digital (URL)" id="ctps" className="sm:col-span-2">
+          <Field label="CTPS digital (link)" id="ctps" className="sm:col-span-2">
             <Input
               id="ctps"
               type="url"
@@ -325,6 +324,9 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
               onChange={(e) => setCtpsUrl(e.target.value)}
               placeholder="https://link-da-ctps-digital"
             />
+            <p className="text-xs text-zinc-500">
+              Cole aqui o link da CTPS digital (gov.br). Os demais documentos são enviados como arquivo abaixo.
+            </p>
           </Field>
           <Field label="Chave PIX" id="pix" className="sm:col-span-2">
             <Input
@@ -413,16 +415,14 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
               onChange={(e) => setAdmissionMedicalExamDate(e.target.value)}
             />
           </Field>
-          <Field label="Link do exame admissional (URL)" id="adm-url">
-            <Input
-              id="adm-url"
-              type="url"
-              className="text-foreground"
-              value={admissionMedicalExamFileUrl}
-              onChange={(e) => setAdmissionMedicalExamFileUrl(e.target.value)}
-              placeholder="https://…"
-            />
-          </Field>
+          <PublicInviteFileUpload
+            token={token}
+            label="Exame admissional"
+            value={admissionMedicalExamFileUrl}
+            onChange={setAdmissionMedicalExamFileUrl}
+            documentType="exame_admissional"
+            documentName="Exame admissional"
+          />
           <Field label="Data exame demissional" id="dismiss-date">
             <Input
               id="dismiss-date"
@@ -432,23 +432,21 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
               onChange={(e) => setDismissalMedicalExamDate(e.target.value)}
             />
           </Field>
-          <Field label="Link do exame demissional (URL)" id="dismiss-url">
-            <Input
-              id="dismiss-url"
-              type="url"
-              className="text-foreground"
-              value={dismissalMedicalExamFileUrl}
-              onChange={(e) => setDismissalMedicalExamFileUrl(e.target.value)}
-              placeholder="https://…"
-            />
-          </Field>
+          <PublicInviteFileUpload
+            token={token}
+            label="Exame demissional"
+            value={dismissalMedicalExamFileUrl}
+            onChange={setDismissalMedicalExamFileUrl}
+            documentType="exame_demissional"
+            documentName="Exame demissional"
+          />
         </div>
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-400">Anexos</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-400">Outros anexos</h2>
         <p className="text-sm text-zinc-400">
-          Envie PDF ou foto (RG, CPF, comprovante de residência, CTPS, etc.) ou use os campos de URL acima.
+          RG, CPF, comprovante de residência, reservista e outros documentos extras.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Nome do documento" id="doc-name">
@@ -479,8 +477,8 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
               id="doc-file"
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
-              className="text-foreground file:text-foreground"
+              accept="application/pdf,image/*,.pdf,.png,.jpg,.jpeg,.webp,.heic,.heif"
+              className="text-foreground file:text-foreground min-h-11"
               onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
             />
           </Field>
@@ -586,36 +584,33 @@ export function EmployeePublicInviteForm({ token, initial }: EmployeePublicInvit
                       onChange={(e) => updateDependent(index, { birthDate: e.target.value })}
                     />
                   </Field>
-                  <Field label="Certidão de nascimento (URL)" id={`dep-cert-${index}`} className="sm:col-span-2">
-                    <Input
-                      id={`dep-cert-${index}`}
-                      type="url"
-                      className="text-foreground"
-                      value={dep.birthCertificateFileUrl ?? ""}
-                      onChange={(e) => updateDependent(index, { birthCertificateFileUrl: e.target.value })}
-                      placeholder="https://…"
-                    />
-                  </Field>
-                  <Field label="Declaração escolar (URL)" id={`dep-school-${index}`} className="sm:col-span-2">
-                    <Input
-                      id={`dep-school-${index}`}
-                      type="url"
-                      className="text-foreground"
-                      value={dep.schoolAttendanceFileUrl ?? ""}
-                      onChange={(e) => updateDependent(index, { schoolAttendanceFileUrl: e.target.value })}
-                      placeholder="https://…"
-                    />
-                  </Field>
-                  <Field label="Cartão de vacina (URL)" id={`dep-vac-${index}`} className="sm:col-span-2">
-                    <Input
-                      id={`dep-vac-${index}`}
-                      type="url"
-                      className="text-foreground"
-                      value={dep.vaccinationCardFileUrl ?? ""}
-                      onChange={(e) => updateDependent(index, { vaccinationCardFileUrl: e.target.value })}
-                      placeholder="https://…"
-                    />
-                  </Field>
+                  <PublicInviteFileUpload
+                    token={token}
+                    label="Certidão de nascimento"
+                    value={dep.birthCertificateFileUrl ?? ""}
+                    onChange={(url) => updateDependent(index, { birthCertificateFileUrl: url })}
+                    documentType="certidao_nascimento"
+                    documentName={`Certidão de nascimento — filho ${index + 1}`}
+                    className="sm:col-span-2"
+                  />
+                  <PublicInviteFileUpload
+                    token={token}
+                    label="Declaração escolar"
+                    value={dep.schoolAttendanceFileUrl ?? ""}
+                    onChange={(url) => updateDependent(index, { schoolAttendanceFileUrl: url })}
+                    documentType="declaracao_escolar"
+                    documentName={`Declaração escolar — filho ${index + 1}`}
+                    className="sm:col-span-2"
+                  />
+                  <PublicInviteFileUpload
+                    token={token}
+                    label="Cartão de vacina"
+                    value={dep.vaccinationCardFileUrl ?? ""}
+                    onChange={(url) => updateDependent(index, { vaccinationCardFileUrl: url })}
+                    documentType="cartao_vacina"
+                    documentName={`Cartão de vacina — filho ${index + 1}`}
+                    className="sm:col-span-2"
+                  />
                 </div>
               </div>
             ))}

@@ -253,6 +253,8 @@ export class RegistrationInviteService {
       lower.endsWith('.jpg') ||
       lower.endsWith('.jpeg') ||
       lower.endsWith('.webp') ||
+      lower.endsWith('.heic') ||
+      lower.endsWith('.heif') ||
       file.mimetype === 'application/pdf' ||
       file.mimetype?.startsWith('image/');
     if (!allowed) {
