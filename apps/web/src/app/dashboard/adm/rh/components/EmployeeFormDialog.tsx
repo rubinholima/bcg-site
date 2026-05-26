@@ -121,6 +121,8 @@ export function EmployeeFormDialog({
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [depDialogOpen, setDepDialogOpen] = useState(false);
   const [depEditIndex, setDepEditIndex] = useState<number | null>(null);
+  /** Colaborador já gravado ao enviar convite antes de clicar em Salvar */
+  const [persistedEmployeeId, setPersistedEmployeeId] = useState<string | null>(null);
 
   const tenantJobRoles = jobRoles.filter((r) => r.tenant.id === tenantId);
   const tenantDepartments = departments.filter((d) => d.tenant.id === tenantId);
@@ -167,7 +169,10 @@ export function EmployeeFormDialog({
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setPersistedEmployeeId(null);
+      return;
+    }
 
     const resetEmploymentFields = () => {
       setJobRoleId("");
@@ -176,6 +181,7 @@ export function EmployeeFormDialog({
     };
 
     if (edit) {
+      setPersistedEmployeeId(edit.id);
       setTenantId(edit.tenant.id);
       setType(edit.type);
       setName(edit.name);
@@ -219,6 +225,7 @@ export function EmployeeFormDialog({
         }
       })();
     } else {
+      setPersistedEmployeeId(null);
       setTenantId(tenants[0]?.id ?? "");
       setType("staff");
       setName("");
@@ -311,38 +318,59 @@ export function EmployeeFormDialog({
     setDepEditIndex(null);
   };
 
+  const buildEmployeePayload = () => ({
+    tenantId,
+    name: name.trim().toLocaleUpperCase("pt-BR"),
+    cpf: cpf.trim() || undefined,
+    rg: rg.trim() || undefined,
+    email: email.trim() || undefined,
+    phone: phone.trim() || undefined,
+    birthDate: birthDate || undefined,
+    type,
+    notes: notes.trim() || undefined,
+    photoUrl: photoUrl.trim() || undefined,
+    ...buildDocumentationPayload(),
+  });
+
+  const saveEmployeeRecord = async (): Promise<string> => {
+    const payload = buildEmployeePayload();
+    const existingId = edit?.id ?? persistedEmployeeId;
+
+    if (existingId) {
+      await api.patch(`/rh/employees/${existingId}`, payload);
+      await syncEmployment(existingId);
+      await syncDependents(existingId);
+      setPersistedEmployeeId(existingId);
+      return existingId;
+    }
+
+    const { data } = await api.post<{ id: string }>("/rh/employees", payload);
+    await syncEmployment(data.id);
+    await syncDependents(data.id);
+    setPersistedEmployeeId(data.id);
+    return data.id;
+  };
+
+  const ensureEmployeeForInvite = async (): Promise<string | null> => {
+    if (!tenantId?.trim() || !name?.trim() || !jobRoleId?.trim()) {
+      alert("Preencha clube/empresa, nome completo e cargo antes de enviar o convite.");
+      return null;
+    }
+    try {
+      return await saveEmployeeRecord();
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : "Erro ao cadastrar colaborador");
+      return null;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tenantId?.trim() || !name?.trim() || !jobRoleId?.trim()) return;
     setSaving(true);
     try {
-      const payload = {
-        tenantId,
-        name: name.trim().toLocaleUpperCase("pt-BR"),
-        cpf: cpf.trim() || undefined,
-        rg: rg.trim() || undefined,
-        email: email.trim() || undefined,
-        phone: phone.trim() || undefined,
-        birthDate: birthDate || undefined,
-        type,
-        notes: notes.trim() || undefined,
-        photoUrl: photoUrl.trim() || undefined,
-        ...buildDocumentationPayload(),
-      };
-
-      let employeeId: string;
-      if (edit) {
-        await api.patch(`/rh/employees/${edit.id}`, payload);
-        employeeId = edit.id;
-        await syncEmployment(edit.id);
-      } else {
-        const { data } = await api.post<{ id: string }>("/rh/employees", payload);
-        employeeId = data.id;
-        await syncEmployment(data.id);
-      }
-
-      await syncDependents(employeeId);
-
+      await saveEmployeeRecord();
       onSuccess();
       onOpenChange(false);
     } catch (err) {
@@ -362,15 +390,6 @@ export function EmployeeFormDialog({
           </DialogHeader>
 
           <div className="min-w-0 space-y-4 py-4">
-            {edit?.id ? (
-              <RegistrationInviteCard
-                subjectType="employee"
-                subjectId={edit.id}
-                name={name || edit.name}
-                contactEmail={email}
-                contactPhone={phone}
-              />
-            ) : null}
             <ExpandableSection
               title="Empresa e tipo"
               description="Clube/empresa, tipo e matrícula"
@@ -541,6 +560,14 @@ export function EmployeeFormDialog({
                     />
                   </div>
                 </FormGrid>
+                <RegistrationInviteCard
+                  subjectType="employee"
+                  subjectId={edit?.id ?? persistedEmployeeId ?? undefined}
+                  name={name || edit?.name || ""}
+                  contactEmail={email}
+                  contactPhone={phone}
+                  ensureSubjectId={edit?.id || persistedEmployeeId ? undefined : ensureEmployeeForInvite}
+                />
               </div>
             </ExpandableSection>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Copy, Loader2, Mail, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,10 +18,21 @@ interface InviteResponse {
 
 interface RegistrationInviteCardProps {
   subjectType: "player" | "employee";
-  subjectId: string;
+  /** ID já existente; omita se usar ensureSubjectId (ex.: novo colaborador) */
+  subjectId?: string;
   name: string;
   contactEmail?: string | null;
   contactPhone?: string | null;
+  /** Cadastra/salva antes de gerar o convite (novo colaborador) */
+  ensureSubjectId?: () => Promise<string | null>;
+  /** Texto extra quando ainda não há ID (opcional) */
+  newSubjectHint?: string;
+}
+
+function inviteBasePath(subjectType: "player" | "employee", subjectId: string): string {
+  return subjectType === "player"
+    ? `/registration-invites/player/${encodeURIComponent(subjectId)}`
+    : `/registration-invites/employee/${encodeURIComponent(subjectId)}`;
 }
 
 export function RegistrationInviteCard({
@@ -30,21 +41,43 @@ export function RegistrationInviteCard({
   name,
   contactEmail,
   contactPhone,
+  ensureSubjectId,
+  newSubjectHint,
 }: RegistrationInviteCardProps) {
   const [loading, setLoading] = useState<"email" | "whatsapp" | null>(null);
   const [lastUrl, setLastUrl] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "ok" | "error"; msg: string } | null>(null);
+  const [resolvedId, setResolvedId] = useState<string | null>(subjectId ?? null);
 
-  const basePath =
-    subjectType === "player"
-      ? `/registration-invites/player/${encodeURIComponent(subjectId)}`
-      : `/registration-invites/employee/${encodeURIComponent(subjectId)}`;
+  useEffect(() => {
+    setResolvedId(subjectId ?? null);
+  }, [subjectId]);
+
+  const displayName = name.trim() || "colaborador";
+
+  const resolveSubjectId = async (): Promise<string | null> => {
+    if (resolvedId) return resolvedId;
+    if (subjectId) {
+      setResolvedId(subjectId);
+      return subjectId;
+    }
+    if (!ensureSubjectId) {
+      setFeedback({ type: "error", msg: "Salve o cadastro antes de enviar o convite." });
+      return null;
+    }
+    const id = await ensureSubjectId();
+    if (id) setResolvedId(id);
+    return id;
+  };
 
   const handleEmail = async () => {
     setLoading("email");
     setFeedback(null);
     try {
-      const { data } = await api.post<InviteResponse>(basePath, { sendEmail: true });
+      const id = await resolveSubjectId();
+      if (!id) return;
+
+      const { data } = await api.post<InviteResponse>(inviteBasePath(subjectType, id), { sendEmail: true });
       setLastUrl(data.url);
       if (data.emailSent) {
         setFeedback({ type: "ok", msg: `Link enviado por e-mail para ${contactEmail?.trim() || "o contato cadastrado"}.` });
@@ -67,7 +100,10 @@ export function RegistrationInviteCard({
     setLoading("whatsapp");
     setFeedback(null);
     try {
-      const { data } = await api.post<InviteResponse>(`${basePath}/whatsapp`, {});
+      const id = await resolveSubjectId();
+      if (!id) return;
+
+      const { data } = await api.post<InviteResponse>(`${inviteBasePath(subjectType, id)}/whatsapp`, {});
       setLastUrl(data.url);
       const phone = data.contactPhone ?? contactPhone;
       const waUrl = buildWhatsAppUrl(phone, data.whatsappMessage ?? data.url);
@@ -102,7 +138,13 @@ export function RegistrationInviteCard({
       <CardHeader className="pb-2">
         <CardTitle className="text-base">Convite de cadastro</CardTitle>
         <CardDescription>
-          Envie um link para {name} completar dados e documentos. Após o envio, o RH aprova em ADM → RH → Aprovações.
+          Envie um link para {displayName} completar dados e documentos. Após o envio, o RH aprova em ADM → RH → Aprovações.
+          {!subjectId && !resolvedId && ensureSubjectId ? (
+            <span className="mt-1 block">
+              {newSubjectHint ??
+                "Informe e-mail ou telefone acima. Ao enviar, o colaborador é cadastrado automaticamente."}
+            </span>
+          ) : null}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
