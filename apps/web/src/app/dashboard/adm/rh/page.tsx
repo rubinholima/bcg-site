@@ -15,6 +15,7 @@ import {
   UserCircle,
   FileText,
   Calendar,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,11 +49,13 @@ import { EmploymentFormDialog, type EmploymentRow } from "./components/Employmen
 import { EmploymentContractsDialog } from "./components/EmploymentContractsDialog";
 import { LeavePeriodFormDialog, type LeavePeriodRow } from "./components/LeavePeriodFormDialog";
 import { FuncionariosGroupedList } from "@/components/dashboard/rh/FuncionariosGroupedList";
+import { RegistrationApprovalsPanel } from "./components/RegistrationApprovalsPanel";
 
-type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias";
+type TabId = "departamentos" | "cargos" | "colaboradores" | "vinculos" | "ferias" | "aprovacoes";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "colaboradores", label: "Colaboradores", icon: UserCircle },
+  { id: "aprovacoes", label: "Aprovações", icon: ClipboardCheck },
   { id: "departamentos", label: "Departamentos", icon: Building2 },
   { id: "cargos", label: "Cargos", icon: Briefcase },
   { id: "vinculos", label: "Vínculos", icon: FileText },
@@ -442,6 +445,8 @@ export default function AdmRHPage() {
               </CardContent>
             </Card>
           )}
+
+          {activeTab === "aprovacoes" && <RegistrationApprovalsPanel tenantId={tenantId} />}
 
           {activeTab === "vinculos" && (
             <Card>

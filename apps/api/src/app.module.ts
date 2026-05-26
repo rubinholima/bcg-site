@@ -34,6 +34,7 @@ import { LogisticaModule } from './logistica/logistica.module';
 import { EventsModule } from './events/events.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
 import { BostonTvModule } from './boston-tv/boston-tv.module';
+import { RegistrationInviteModule } from './registration-invite/registration-invite.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { BostonTvModule } from './boston-tv/boston-tv.module';
     EventsModule,
     FinanceiroModule,
     BostonTvModule,
+    RegistrationInviteModule,
   ],
   controllers: [AppController],
   providers: [AppService],

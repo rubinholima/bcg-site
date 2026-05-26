@@ -120,6 +120,7 @@ model Tenant {
   userTenants           UserTenant[]
   financeiroLancamentos FinanceiroLancamento[]
   customers             Customer[]
+  registrationInvites   RegistrationInvite[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -485,8 +486,39 @@ model Player {
   nutritionAssessments NutritionAssessment[]
   supplementGuides     SupplementGuide[]  // guias de suplementação específicos do jogador
   rhEmployee           Employee?
+  registrationInvites  RegistrationInvite[]
   @@index([tenantId])
   @@index([tenantId, category])
+}
+
+/** Link público para atleta/colaborador completar cadastro (token único, expiração opcional) */
+model RegistrationInvite {
+  id              String    @id @default(cuid())
+  token           String    @unique
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  subjectType     String    // player | employee
+  playerId        String?
+  player          Player?   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  employeeId      String?
+  employee        Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  expiresAt         DateTime?
+  completedAt       DateTime?
+  /** pending | approved | rejected — fluxo de aprovação RH */
+  reviewStatus      String?
+  submittedPayload  Json?
+  submittedDocuments Json?
+  submittedAt       DateTime?
+  reviewedAt        DateTime?
+  reviewedByUserId  String?
+  rejectionReason   String?   @db.Text
+  createdByUserId   String?
+  createdAt         DateTime  @default(now())
+  @@index([token])
+  @@index([playerId])
+  @@index([employeeId])
+  @@index([tenantId])
+  @@index([reviewStatus])
 }
 
 model LegalDocument {
@@ -875,6 +907,7 @@ model Employee {
   employments Employment[]
   documents  EmployeeDocument[]
   dependents EmployeeDependent[]
+  registrationInvites RegistrationInvite[]
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, type])

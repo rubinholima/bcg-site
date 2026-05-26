@@ -11,6 +11,7 @@ import { SofaScoreService } from './sofascore.service';
 import { EventsModule } from '../events/events.module';
 import { MediaModule } from '../media/media.module';
 import { BostonTvModule } from '../boston-tv/boston-tv.module';
+import { RegistrationInviteModule } from '../registration-invite/registration-invite.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { BostonTvModule } from '../boston-tv/boston-tv.module';
     WorkmailModule,
     EventsModule,
     BostonTvModule,
+    RegistrationInviteModule,
   ],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService],

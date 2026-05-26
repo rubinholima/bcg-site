@@ -34,6 +34,7 @@ import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
+import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
   getRegistrationIdentifiersError,
   parseRegistrationProfile,
@@ -472,6 +473,13 @@ export default function EditJogadorPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <RegistrationInviteCard
+              subjectType="player"
+              subjectId={player.id}
+              name={player.name}
+              contactEmail={player.contactEmail}
+              contactPhone={player.contactPhone}
+            />
             <RhEmployeeLinkCard playerId={player.id} />
             <PlayerRegistrationSections
               playerId={player.id}

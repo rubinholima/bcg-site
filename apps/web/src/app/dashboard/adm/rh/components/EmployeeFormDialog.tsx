@@ -30,6 +30,7 @@ import { Tenant } from "@/types/tenant";
 import { type DepartmentRow } from "./DepartmentFormDialog";
 import { type JobRoleRow } from "./JobRoleFormDialog";
 import { EmployeeAddressFields } from "./EmployeeAddressFields";
+import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import { EmployeeDependentsSection } from "./EmployeeDependentsSection";
 import { EmployeeDependentFormDialog } from "./EmployeeDependentFormDialog";
 import { RhDateDocumentRow, RhInlineDocumentPicker } from "./RhInlineDocumentPicker";
@@ -361,6 +362,15 @@ export function EmployeeFormDialog({
           </DialogHeader>
 
           <div className="min-w-0 space-y-4 py-4">
+            {edit?.id ? (
+              <RegistrationInviteCard
+                subjectType="employee"
+                subjectId={edit.id}
+                name={name || edit.name}
+                contactEmail={email}
+                contactPhone={phone}
+              />
+            ) : null}
             <ExpandableSection
               title="Empresa e tipo"
               description="Clube/empresa, tipo e matrícula"

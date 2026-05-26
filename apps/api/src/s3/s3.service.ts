@@ -568,6 +568,57 @@ export class S3Service {
   }
 
   /**
+   * Upload de documento via convite público de cadastro (pendente aprovação RH).
+   * Salva em media/cadastro-convite/{inviteId}/{uuid}.{ext}
+   */
+  async uploadRegistrationInviteDocument(
+    buffer: Buffer,
+    inviteId: string,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; url: string }> {
+    const lower = filename.toLowerCase();
+    let ext = 'pdf';
+    let contentType = 'application/pdf';
+    if (lower.endsWith('.png')) {
+      ext = 'png';
+      contentType = 'image/png';
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      ext = 'jpg';
+      contentType = 'image/jpeg';
+    } else if (lower.endsWith('.webp')) {
+      ext = 'webp';
+      contentType = 'image/webp';
+    } else if (lower.endsWith('.pdf')) {
+      ext = 'pdf';
+      contentType = 'application/pdf';
+    } else if (mimeType?.startsWith('image/')) {
+      ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+      contentType = mimeType;
+    }
+
+    const key = `media/cadastro-convite/${inviteId}/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar documento para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
    * Upload de documentos RH (PDF ou imagem).
    * Salva em media/rh_documentos/{uuid}.{ext}
    */

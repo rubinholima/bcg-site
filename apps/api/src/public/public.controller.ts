@@ -20,6 +20,9 @@ import { WorkMailService } from '../workmail/workmail.service';
 import { EventsService } from '../events/events.service';
 import { PublicService } from './public.service';
 import { BostonTvService } from '../boston-tv/boston-tv.service';
+import { RegistrationInviteService } from '../registration-invite/registration-invite.service';
+import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
+import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
 
 @Controller('public')
 export class PublicController {
@@ -33,6 +36,7 @@ export class PublicController {
     private readonly s3: S3Service,
     private readonly workmailService: WorkMailService,
     private readonly bostonTvService: BostonTvService,
+    private readonly registrationInviteService: RegistrationInviteService,
   ) {}
 
   @Get('portfolio')
@@ -227,5 +231,46 @@ export class PublicController {
   @Post('boston-tv/play/:token/ping')
   bostonTvPing(@Param('token') token: string) {
     return this.bostonTvService.touchPlayer(token);
+  }
+
+  /** Cadastro por convite — formulário público (atleta ou colaborador) */
+  @Get('registration-invite/:token')
+  getRegistrationInvite(@Param('token') token: string) {
+    return this.registrationInviteService.getPublicForm(token);
+  }
+
+  @Post('registration-invite/:token/player')
+  submitPlayerRegistrationInvite(
+    @Param('token') token: string,
+    @Body() body: SubmitPlayerRegistrationDto,
+  ) {
+    return this.registrationInviteService.submitPlayer(token, body);
+  }
+
+  @Post('registration-invite/:token/employee')
+  submitEmployeeRegistrationInvite(
+    @Param('token') token: string,
+    @Body() body: SubmitEmployeeRegistrationDto,
+  ) {
+    return this.registrationInviteService.submitEmployee(token, body);
+  }
+
+  @Post('registration-invite/:token/documents')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 25 * 1024 * 1024 } }))
+  uploadRegistrationInviteDocument(
+    @Param('token') token: string,
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype?: string } | undefined,
+    @Body('name') name?: string,
+    @Body('documentType') documentType?: string,
+  ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Envie um arquivo (campo "file").');
+    }
+    return this.registrationInviteService.uploadDocument(
+      token,
+      file,
+      name ?? '',
+      documentType ?? '',
+    );
   }
 }
