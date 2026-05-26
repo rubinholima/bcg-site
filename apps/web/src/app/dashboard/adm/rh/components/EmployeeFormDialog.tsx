@@ -450,13 +450,10 @@ export function EmployeeFormDialog({
             </ExpandableSection>
 
             <ExpandableSection
-              title="Dados pessoais"
-              description="Identificação, endereço e contato"
+              title="Contato e convite"
+              description="Nome, e-mail ou telefone — envie o link de cadastro"
               defaultOpen
             >
-              {loadingDetails ? (
-                <p className="mb-4 text-sm text-muted-foreground">Carregando dados…</p>
-              ) : null}
               <div className="space-y-4">
                 <FormGrid cols={2}>
                   <div className="grid min-w-0 gap-2 sm:col-span-2">
@@ -470,16 +467,28 @@ export function EmployeeFormDialog({
                       required
                     />
                   </div>
-                </FormGrid>
-                <p className="text-sm font-medium text-foreground">Endereço</p>
-                <EmployeeAddressFields
-                  address={address}
-                  onChange={setAddress}
-                  birthDate={birthDate}
-                  onBirthDateChange={setBirthDate}
-                />
-                <FormGrid cols={2}>
                   <div className="grid min-w-0 gap-2">
+                    <Label htmlFor="emp-email">E-mail</Label>
+                    <Input
+                      id="emp-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value.toLowerCase())}
+                      placeholder="email@exemplo.com"
+                    />
+                  </div>
+                  <div className="grid min-w-0 gap-2">
+                    <Label htmlFor="emp-phone">Telefone / WhatsApp</Label>
+                    <Input
+                      id="emp-phone"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      onBlur={(e) => setPhone(formatPhoneForDisplay(e.target.value))}
+                      placeholder="(11) 99999-9999"
+                      inputMode="tel"
+                    />
+                  </div>
+                  <div className="grid min-w-0 gap-2 sm:col-span-2">
                     <Label htmlFor="emp-jobRole">
                       Cargo *
                       {loadingEmployment && (
@@ -502,6 +511,35 @@ export function EmployeeFormDialog({
                       ))}
                     </select>
                   </div>
+                </FormGrid>
+                <RegistrationInviteCard
+                  subjectType="employee"
+                  subjectId={edit?.id ?? persistedEmployeeId ?? undefined}
+                  name={name || edit?.name || ""}
+                  contactEmail={email}
+                  contactPhone={phone}
+                  ensureSubjectId={edit?.id || persistedEmployeeId ? undefined : ensureEmployeeForInvite}
+                />
+              </div>
+            </ExpandableSection>
+
+            <ExpandableSection
+              title="Dados pessoais"
+              description="Endereço, departamento e foto"
+              defaultOpen={!!edit}
+            >
+              {loadingDetails ? (
+                <p className="mb-4 text-sm text-muted-foreground">Carregando dados…</p>
+              ) : null}
+              <div className="space-y-4">
+                <p className="text-sm font-medium text-foreground">Endereço</p>
+                <EmployeeAddressFields
+                  address={address}
+                  onChange={setAddress}
+                  birthDate={birthDate}
+                  onBirthDateChange={setBirthDate}
+                />
+                <FormGrid cols={2}>
                   <div className="grid min-w-0 gap-2">
                     <Label htmlFor="emp-department">Departamento</Label>
                     <select
@@ -538,36 +576,7 @@ export function EmployeeFormDialog({
                       />
                     </div>
                   </div>
-                  <div className="grid min-w-0 gap-2">
-                    <Label htmlFor="emp-email">E-mail</Label>
-                    <Input
-                      id="emp-email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value.toLowerCase())}
-                      placeholder="email@exemplo.com"
-                    />
-                  </div>
-                  <div className="grid min-w-0 gap-2">
-                    <Label htmlFor="emp-phone">Telefone</Label>
-                    <Input
-                      id="emp-phone"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      onBlur={(e) => setPhone(formatPhoneForDisplay(e.target.value))}
-                      placeholder="(11) 99999-9999"
-                      inputMode="tel"
-                    />
-                  </div>
                 </FormGrid>
-                <RegistrationInviteCard
-                  subjectType="employee"
-                  subjectId={edit?.id ?? persistedEmployeeId ?? undefined}
-                  name={name || edit?.name || ""}
-                  contactEmail={email}
-                  contactPhone={phone}
-                  ensureSubjectId={edit?.id || persistedEmployeeId ? undefined : ensureEmployeeForInvite}
-                />
               </div>
             </ExpandableSection>
 
