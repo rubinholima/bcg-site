@@ -1,5 +1,34 @@
-import { IsEmail, IsObject, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { SubmittedDocumentsMixin } from './submitted-document.dto';
+
+export class EmployeeDependentSubmitDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  birthDate: string;
+
+  @IsOptional()
+  @IsString()
+  birthCertificateFileUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  schoolAttendanceFileUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  vaccinationCardFileUrl?: string;
+}
 
 export class SubmitEmployeeRegistrationDto extends SubmittedDocumentsMixin {
   @IsOptional()
@@ -36,5 +65,43 @@ export class SubmitEmployeeRegistrationDto extends SubmittedDocumentsMixin {
 
   @IsOptional()
   @IsString()
+  ctpsUrl?: string;
+
+  @IsOptional()
+  @IsString()
   pixKey?: string;
+
+  @IsOptional()
+  @IsString()
+  photoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  admissionMedicalExamDate?: string;
+
+  @IsOptional()
+  @IsString()
+  admissionMedicalExamFileUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  dismissalMedicalExamDate?: string;
+
+  @IsOptional()
+  @IsString()
+  dismissalMedicalExamFileUrl?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasMinorChildren?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => EmployeeDependentSubmitDto)
+  dependents?: EmployeeDependentSubmitDto[];
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

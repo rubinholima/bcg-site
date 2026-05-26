@@ -29,7 +29,16 @@ export interface PublicRegistrationInviteData {
   phone?: string | null;
   pisNumber?: string | null;
   voterTitle?: string | null;
+  ctpsUrl?: string | null;
   pixKey?: string | null;
+  photoUrl?: string | null;
+  admissionMedicalExamDate?: string | null;
+  admissionMedicalExamFileUrl?: string | null;
+  dismissalMedicalExamDate?: string | null;
+  dismissalMedicalExamFileUrl?: string | null;
+  hasMinorChildren?: boolean;
+  dependents?: unknown;
+  notes?: string | null;
 }
 
 async function getInviteData(token: string): Promise<PublicRegistrationInviteData | null> {

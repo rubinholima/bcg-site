@@ -10,6 +10,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { RejectRegistrationDto } from './dto/reject-registration.dto';
 import { SubmittedDocumentDto } from './dto/submitted-document.dto';
+import {
+  employeeDocumentationPatch,
+  normalizeDependentName,
+} from '../rh/employee-documentation.util';
+import { EmployeeAddressDto } from '../rh/dto/employee-address.dto';
 import { SubmitEmployeeRegistrationDto } from './dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from './dto/submit-player-registration.dto';
 
@@ -81,6 +86,9 @@ function employeeDocType(value: string): string {
     rg: 'RG',
     cpf: 'CPF',
     ctps: 'CTPS',
+    exame_admissional: 'exame_admissional',
+    exame_demissional: 'exame_demissional',
+    reservista: 'reservista',
     certidao: 'certidao',
     comprovante_residencia: 'comprovante_residencia',
     documento_esportivo: 'documento_esportivo',
@@ -297,7 +305,25 @@ export class RegistrationInviteService {
             address: true,
             pisNumber: true,
             voterTitle: true,
+            ctpsUrl: true,
             pixKey: true,
+            photoUrl: true,
+            admissionMedicalExamDate: true,
+            admissionMedicalExamFileUrl: true,
+            dismissalMedicalExamDate: true,
+            dismissalMedicalExamFileUrl: true,
+            hasMinorChildren: true,
+            notes: true,
+            dependents: {
+              orderBy: { birthDate: 'asc' },
+              select: {
+                name: true,
+                birthDate: true,
+                birthCertificateFileUrl: true,
+                schoolAttendanceFileUrl: true,
+                vaccinationCardFileUrl: true,
+              },
+            },
           },
         },
       },
@@ -380,6 +406,16 @@ export class RegistrationInviteService {
 
     if (invite.subjectType === 'employee' && invite.employee) {
       const emp = invite.employee;
+      const preferPayload = canFill && reviewStatus === 'rejected';
+      const dependentsFromDb = emp.dependents.map((d) => ({
+        name: d.name,
+        birthDate: d.birthDate.toISOString().slice(0, 10),
+        birthCertificateFileUrl: d.birthCertificateFileUrl ?? '',
+        schoolAttendanceFileUrl: d.schoolAttendanceFileUrl ?? '',
+        vaccinationCardFileUrl: d.vaccinationCardFileUrl ?? '',
+      }));
+      const dependentsPayload = Array.isArray(payload?.dependents) ? payload.dependents : null;
+
       return {
         ...base,
         subjectType: 'employee' as const,
@@ -392,12 +428,34 @@ export class RegistrationInviteService {
           (payload?.birthDate as string) ??
           emp.birthDate?.toISOString().slice(0, 10) ??
           null,
-        address: canFill && reviewStatus === 'rejected' && payload?.address
-          ? payload.address
-          : (emp.address ?? {}),
+        address:
+          preferPayload && payload?.address
+            ? payload.address
+            : (emp.address ?? {}),
         pisNumber: (payload?.pisNumber as string) ?? emp.pisNumber,
         voterTitle: (payload?.voterTitle as string) ?? emp.voterTitle,
+        ctpsUrl: (payload?.ctpsUrl as string) ?? emp.ctpsUrl,
         pixKey: (payload?.pixKey as string) ?? emp.pixKey,
+        photoUrl: (payload?.photoUrl as string) ?? emp.photoUrl,
+        admissionMedicalExamDate:
+          (payload?.admissionMedicalExamDate as string) ??
+          emp.admissionMedicalExamDate?.toISOString().slice(0, 10) ??
+          null,
+        admissionMedicalExamFileUrl:
+          (payload?.admissionMedicalExamFileUrl as string) ?? emp.admissionMedicalExamFileUrl,
+        dismissalMedicalExamDate:
+          (payload?.dismissalMedicalExamDate as string) ??
+          emp.dismissalMedicalExamDate?.toISOString().slice(0, 10) ??
+          null,
+        dismissalMedicalExamFileUrl:
+          (payload?.dismissalMedicalExamFileUrl as string) ?? emp.dismissalMedicalExamFileUrl,
+        hasMinorChildren:
+          typeof payload?.hasMinorChildren === 'boolean'
+            ? payload.hasMinorChildren
+            : emp.hasMinorChildren,
+        dependents:
+          preferPayload && dependentsPayload ? dependentsPayload : dependentsFromDb,
+        notes: (payload?.notes as string) ?? emp.notes,
       };
     }
 
@@ -605,6 +663,19 @@ export class RegistrationInviteService {
       ? new Date(`${dto.birthDate.trim()}T12:00:00.000Z`)
       : undefined;
 
+    const docPatch = employeeDocumentationPatch({
+      address: dto.address as EmployeeAddressDto | undefined,
+      pisNumber: dto.pisNumber,
+      voterTitle: dto.voterTitle,
+      ctpsUrl: dto.ctpsUrl,
+      pixKey: dto.pixKey,
+      admissionMedicalExamDate: dto.admissionMedicalExamDate,
+      admissionMedicalExamFileUrl: dto.admissionMedicalExamFileUrl,
+      dismissalMedicalExamDate: dto.dismissalMedicalExamDate,
+      dismissalMedicalExamFileUrl: dto.dismissalMedicalExamFileUrl,
+      hasMinorChildren: dto.hasMinorChildren,
+    });
+
     await this.prisma.employee.update({
       where: { id: employeeId },
       data: {
@@ -613,12 +684,29 @@ export class RegistrationInviteService {
         email: dto.email?.trim() || undefined,
         phone: dto.phone?.trim() || undefined,
         birthDate,
-        address: (dto.address ?? undefined) as Prisma.InputJsonValue | undefined,
-        pisNumber: dto.pisNumber?.trim() || undefined,
-        voterTitle: dto.voterTitle?.trim() || undefined,
-        pixKey: dto.pixKey?.trim() || undefined,
+        photoUrl: dto.photoUrl?.trim() || undefined,
+        notes: dto.notes?.trim() || undefined,
+        ...docPatch,
       },
     });
+
+    await this.prisma.employeeDependent.deleteMany({ where: { employeeId } });
+    if (dto.hasMinorChildren && dto.dependents?.length) {
+      await Promise.all(
+        dto.dependents.map((dep) =>
+          this.prisma.employeeDependent.create({
+            data: {
+              employeeId,
+              name: normalizeDependentName(dep.name),
+              birthDate: new Date(`${dep.birthDate.trim()}T12:00:00.000Z`),
+              birthCertificateFileUrl: dep.birthCertificateFileUrl?.trim() || null,
+              schoolAttendanceFileUrl: dep.schoolAttendanceFileUrl?.trim() || null,
+              vaccinationCardFileUrl: dep.vaccinationCardFileUrl?.trim() || null,
+            },
+          }),
+        ),
+      );
+    }
 
     for (const doc of documents) {
       await this.prisma.employeeDocument.create({

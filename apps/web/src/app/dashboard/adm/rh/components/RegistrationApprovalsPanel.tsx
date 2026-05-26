@@ -73,7 +73,25 @@ function payloadSummary(payload: Record<string, unknown> | null): string[] {
   add("Telefone", "phone");
   add("CPF", "cpf");
   add("RG", "rg");
+  add("PIS", "pisNumber");
+  add("Título de eleitor", "voterTitle");
+  add("CTPS (URL)", "ctpsUrl");
+  add("PIX", "pixKey");
+  add("Foto (URL)", "photoUrl");
   add("Nascimento", "birthDate");
+  add("Exame admissional", "admissionMedicalExamDate");
+  add("Link exame admissional", "admissionMedicalExamFileUrl");
+  add("Exame demissional", "dismissalMedicalExamDate");
+  add("Link exame demissional", "dismissalMedicalExamFileUrl");
+  add("Observações", "notes");
+  if (payload.hasMinorChildren === true) {
+    const deps = payload.dependents;
+    if (Array.isArray(deps) && deps.length > 0) {
+      lines.push(`Filhos menores: ${deps.length}`);
+    } else {
+      lines.push("Filhos menores: sim");
+    }
+  }
   return lines;
 }
 

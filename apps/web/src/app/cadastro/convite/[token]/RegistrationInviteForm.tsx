@@ -17,6 +17,7 @@ import {
   type PlayerRegistrationDocument,
 } from "@/lib/player-registration-profile";
 import type { PublicRegistrationInviteData } from "./page";
+import { EmployeePublicInviteForm } from "./EmployeePublicInviteForm";
 
 function str(v: unknown): string {
   return typeof v === "string" ? v : "";
@@ -55,6 +56,10 @@ interface RegistrationInviteFormProps {
 }
 
 export function RegistrationInviteForm({ token, initial }: RegistrationInviteFormProps) {
+  if (initial.subjectType === "employee") {
+    return <EmployeePublicInviteForm token={token} initial={initial} />;
+  }
+
   const personal = (initial.personal ?? {}) as Record<string, unknown>;
 
   const [saving, setSaving] = useState(false);
