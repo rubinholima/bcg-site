@@ -1015,8 +1015,8 @@ export default function ModulosPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Acesso por menu</CardTitle>
             <p className="text-sm text-muted-foreground font-normal mt-1">
-              Cada linha é um item do menu — marque individualmente. Grupos Omie (Financeiro, Compras,
-              Estoque) compartilham permissão porque dependem uns dos outros.
+              Cada linha é um item do menu — marque individualmente. Financeiro, Compras e Estoque são
+              permissões independentes.
             </p>
           </CardHeader>
           <CardContent>

@@ -134,7 +134,7 @@ export const PERMISSION_PRESETS: readonly PermissionPreset[] = [
   },
   {
     id: "adm-financeiro-operacoes",
-    title: "Administrativo & financeiro (Omie / estoque)",
+    title: "Administrativo & financeiro (estoque / compras)",
     description: "Financeiro, compras, estoque, RH, patrimônio e nutrição.",
     grants: [
       { role: "company_admin", slug: "adm_financeiro" },

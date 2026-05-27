@@ -8,7 +8,7 @@
  * **Relatórios** sempre por último em cada dept.
  *
  * REGRA Acessos: cada item de menu tem slug de permissão individual (accessSlug);
- * accessGroup só para itens que dependem uns dos outros (ex.: Omie).
+ * accessGroup só para itens que compartilham a mesma permissão (raro).
  * Sync automático via buildModuleCatalog() ao abrir Configurações → Acessos.
  */
 
@@ -64,9 +64,7 @@ import {
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
-export const ACCESS_GROUP_LABELS: Record<string, string> = {
-  omie: "Omie — Financeiro, Compras e Estoque",
-};
+export const ACCESS_GROUP_LABELS: Record<string, string> = {};
 
 /** Relatórios por hub — query `hub` filtra na página de relatórios. */
 export function hubRelatorio(hub: string): MenuItemConfig {
@@ -282,11 +280,11 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
         ],
       },
-      { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro", compactGroup: "omie", accessGroup: "omie" },
+      { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro" },
       { slug: "adm_financeiro_aprovacoes", label: "Aprovações compras", href: "/dashboard/adm/financeiro/aprovacoes", icon: CheckCircle, moduleSlug: "adm_financeiro" },
-      { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras", compactGroup: "omie", accessGroup: "omie" },
+      { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras" },
       { slug: "adm_ti", label: "TI — Atendimento", href: "/dashboard/adm/ti", icon: Monitor, moduleSlug: "adm_ti" },
-      { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie", accessGroup: "omie" },
+      { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque" },
       { slug: "adm_rh", label: "RH", href: "/dashboard/adm/rh", icon: Users, moduleSlug: "adm_rh" },
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
       hubRelatorio("adm"),

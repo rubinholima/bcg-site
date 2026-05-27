@@ -47,11 +47,6 @@ export interface ModuleCatalogEntry {
   impliesSlug?: string;
 }
 
-/** Grupos de permissão compartilhada → módulos de API liberados juntos. */
-const ACCESS_GROUP_IMPLIES: Record<string, string[]> = {
-  group_omie: ['adm_financeiro', 'adm_compras', 'adm_estoque'],
-};
-
 export interface UserModulePermissions {
   userId: string;
   email: string;
@@ -103,10 +98,6 @@ export class ModulesService {
     });
     for (const mod of modules) {
       if (mod.impliesSlug) out.add(mod.impliesSlug);
-    }
-    for (const slug of slugs) {
-      const groupSlugs = ACCESS_GROUP_IMPLIES[slug];
-      if (groupSlugs) groupSlugs.forEach((s) => out.add(s));
     }
     return Array.from(out);
   }
@@ -212,7 +203,52 @@ export class ModulesService {
         created++;
       }
     }
+    await this.migrateLegacyGroupOmiePermissions();
     return { created, updated };
+  }
+
+  /**
+   * group_omie não existe mais no catálogo — copia permissões antigas para Financeiro, Compras e Estoque.
+   */
+  private async migrateLegacyGroupOmiePermissions(): Promise<void> {
+    const legacySlug = 'group_omie';
+    const targetSlugs = ['adm__adm_financeiro', 'adm__adm_compras', 'adm__adm_estoque'];
+
+    const legacy = await this.prisma.module.findUnique({ where: { slug: legacySlug } });
+    if (!legacy) return;
+
+    const targets = await this.prisma.module.findMany({
+      where: { slug: { in: targetSlugs } },
+      select: { id: true, slug: true },
+    });
+    if (targets.length === 0) return;
+
+    for (const role of MANAGED_ROLES) {
+      const legacyRole = await this.prisma.moduleRole.findUnique({
+        where: { moduleId_role: { moduleId: legacy.id, role } },
+      });
+      if (!legacyRole?.canAccess) continue;
+      for (const target of targets) {
+        await this.prisma.moduleRole.updateMany({
+          where: { moduleId: target.id, role },
+          data: { canAccess: true },
+        });
+      }
+    }
+
+    const legacyUserRows = await this.prisma.userModuleAccess.findMany({
+      where: { moduleId: legacy.id, canAccess: true },
+      select: { userId: true },
+    });
+    for (const { userId } of legacyUserRows) {
+      for (const target of targets) {
+        await this.prisma.userModuleAccess.upsert({
+          where: { userId_moduleId: { userId, moduleId: target.id } },
+          create: { userId, moduleId: target.id, canAccess: true },
+          update: { canAccess: true },
+        });
+      }
+    }
   }
 
   /** Permissões de um usuário (para tela Acessos → Usuário). */
