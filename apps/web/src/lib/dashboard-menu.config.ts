@@ -62,6 +62,7 @@ import {
   Truck,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
+import { BCH_LOGO_STATIC } from "./boston-city-hall";
 
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
 export const ACCESS_GROUP_LABELS: Record<string, string> = {};
@@ -92,6 +93,8 @@ export interface MenuItemConfig {
   accessSlug?: string;
   /** Mesmo valor = mesma permissão (só para módulos interdependentes). */
   accessGroup?: string;
+  /** Logo no menu (substitui o ícone Lucide quando definido). */
+  menuLogoSrc?: string;
 }
 
 /** Slug de permissão usado no Acessos e na sidebar. */
@@ -550,6 +553,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         slug: "eventos_boston_hall",
         label: "Boston City Hall",
         icon: Building2,
+        menuLogoSrc: BCH_LOGO_STATIC,
         moduleSlug: "eventos",
         children: [
           {

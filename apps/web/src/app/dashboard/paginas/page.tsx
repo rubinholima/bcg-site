@@ -537,7 +537,7 @@ export default function PaginasPage() {
             <img
               src={bchLogoSrc(bchTenant.logoUrl)}
               alt=""
-              className="h-8 w-8 rounded-full object-cover ring-1 ring-border"
+              className="h-8 w-8 shrink-0 rounded-full object-contain ring-1 ring-border"
             />
             Boston City Hall
           </h2>

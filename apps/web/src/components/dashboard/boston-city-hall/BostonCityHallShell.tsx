@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, CalendarDays, ClipboardList, ContactRound, Kanban, LayoutDashboard } from "lucide-react";
-import { BCH_LOGO_STATIC } from "@/lib/boston-city-hall";
+import { BostonCityHallLogo } from "@/components/dashboard/boston-city-hall/BostonCityHallLogo";
 import { DEPT_HUB_MENU_LABEL } from "@/lib/dashboard-labels";
 import { cn } from "@/lib/utils";
 
@@ -40,11 +40,7 @@ export function BostonCityHallShell({
         </Link>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <img
-              src={BCH_LOGO_STATIC}
-              alt="Boston City Hall"
-              className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-border sm:h-14 sm:w-14"
-            />
+            <BostonCityHallLogo size="lg" className="ring-1 ring-border rounded-full" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
               {description ? (

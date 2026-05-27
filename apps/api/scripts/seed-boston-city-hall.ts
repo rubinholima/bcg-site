@@ -29,7 +29,9 @@ const KIND_NAMES = ['LOCAL DE EVENTOS', 'EVENTOS', 'RESTAURANTE', 'CONSTRUTORA']
 
 function resolveLogoFilePath(): string | null {
   const candidates = [
+    path.resolve(cwd, '../../apps/web/public/boston-city-hall-logo.png'),
     path.resolve(cwd, '../../apps/web/public/logos/boston-city-hall.png'),
+    path.resolve(cwd, '../web/public/boston-city-hall-logo.png'),
     path.resolve(cwd, '../web/public/logos/boston-city-hall.png'),
   ];
   for (const p of candidates) {
@@ -122,7 +124,7 @@ async function main() {
       console.warn('Falha ao enviar logo (tenant segue sem logoUrl no S3):', err);
     }
   } else {
-    console.warn('Arquivo apps/web/public/logos/boston-city-hall.png não encontrado.');
+    console.warn('Arquivo boston-city-hall-logo.png não encontrado em apps/web/public/.');
   }
 
   const existingPage = await prisma.page.findUnique({

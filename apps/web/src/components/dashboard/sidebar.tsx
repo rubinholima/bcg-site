@@ -19,6 +19,23 @@ import {
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 
+function SidebarMenuIcon({ item, className = "h-4 w-4 shrink-0" }: { item: MenuItemConfig; className?: string }) {
+  if (item.menuLogoSrc) {
+    return (
+      <img
+        src={item.menuLogoSrc}
+        alt=""
+        className={cn(className, "rounded-full object-contain")}
+      />
+    );
+  }
+  if (item.icon) {
+    const Icon = item.icon;
+    return <Icon className={className} />;
+  }
+  return null;
+}
+
 /** Verifica se o usuário tem acesso a pelo menos um filho do grupo (recursivo). */
 function hasAccessToAnyChild(
   children: MenuItemConfig[],
@@ -687,7 +704,6 @@ function SidebarNav() {
                               canAccessDashboard,
                             );
                             if (!hasAccess) return null;
-                            const SubIcon = child.icon;
                             const isSubOpen = isNestedExpanded(child);
                             return (
                               <div key={child.slug} className="space-y-0.5">
@@ -705,7 +721,7 @@ function SidebarNav() {
                                   ) : (
                                     <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                   )}
-                                  {SubIcon && <SubIcon className="h-4 w-4 shrink-0" />}
+                                  <SidebarMenuIcon item={child} />
                                   <span className="truncate">{child.label}</span>
                                 </button>
                                 {isSubOpen && (
@@ -811,7 +827,6 @@ function SidebarNav() {
                             canAccessDashboard,
                           );
                           if (!hasAccess) return null;
-                          const SubIcon = child.icon;
                           const isSubOpen = isNestedExpanded(child);
                           return (
                             <div key={child.slug} className="space-y-0.5">
@@ -829,7 +844,7 @@ function SidebarNav() {
                                 ) : (
                                   <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                 )}
-                                {SubIcon && <SubIcon className="h-4 w-4 shrink-0" />}
+                                <SidebarMenuIcon item={child} />
                                 <span className="truncate">{child.label}</span>
                               </button>
                               {isSubOpen && (
