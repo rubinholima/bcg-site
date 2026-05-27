@@ -110,7 +110,7 @@ export default function CompanyDashboardPage() {
     <CompanyDashboardGate>
       <HubDashboardPage
         title="Painel da Empresa"
-        subtitle="Visão geral do clube — atalhos para os módulos liberados ao seu perfil."
+        subtitle="Dash do clube — atalhos para os módulos liberados ao seu perfil."
         hubId="clube"
         links={[...COMPANY_LINKS]}
       >

@@ -144,7 +144,10 @@ export const MODULE_CATEGORIES = [
   { id: "futebol", label: "Futebol (clubes)" },
   { id: "empresas", label: "Empresas (geral)" },
   { id: "imobiliaria", label: "Imobiliária" },
+  { id: "eventos", label: "Eventos" },
 ] as const;
+
+export const MODULE_TYPE_FILTER_EVENTOS = "eventos";
 
 export type ModuleCategory = (typeof MODULE_CATEGORIES)[number]["id"];
 
@@ -153,8 +156,66 @@ export function tenantKindNameToModuleCategory(kindName: string): ModuleCategory
   const k = kindName.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
   if (k.includes("futebol") || k.includes("clube") || k.includes("football")) return "futebol";
   if (k.includes("imobiliar") || k.includes("imoveis") || k.includes("imóveis")) return "imobiliaria";
+  if (k.includes("evento") || k.includes("venue") || k.includes("local de evento")) return "eventos";
   if (k.includes("empresa")) return "empresas";
   return "geral";
+}
+
+export function resolveModuleCategoryFromFilter(
+  moduleTypeFilter: string,
+  context?: {
+    tenantKind?: { id: string; name: string } | null;
+    tenantKinds?: { id: string; name: string }[];
+  },
+): ModuleCategory {
+  if (moduleTypeFilter === "geral") return "geral";
+  if (moduleTypeFilter === MODULE_TYPE_FILTER_EVENTOS) return "eventos";
+  const kind =
+    context?.tenantKind?.id === moduleTypeFilter
+      ? context.tenantKind
+      : context?.tenantKinds?.find((k) => k.id === moduleTypeFilter);
+  if (kind) return tenantKindNameToModuleCategory(kind.name);
+  return "geral";
+}
+
+export function resolveModuleFilterLabel(
+  moduleTypeFilter: string,
+  context?: {
+    tenantKind?: { id: string; name: string } | null;
+    tenantKinds?: { id: string; name: string }[];
+  },
+): string {
+  if (moduleTypeFilter === "geral") return "Geral";
+  if (moduleTypeFilter === MODULE_TYPE_FILTER_EVENTOS) return "Eventos";
+  const kind =
+    context?.tenantKind?.id === moduleTypeFilter
+      ? context.tenantKind
+      : context?.tenantKinds?.find((k) => k.id === moduleTypeFilter);
+  return kind?.name ?? moduleTypeFilter;
+}
+
+/** Módulos de venue/eventos cadastrados em imobiliária mas exibidos na categoria Eventos */
+export const EVENTOS_SHARED_IMOBILIARIA_TYPES: HomeBlockType[] = [
+  "formulario_captura",
+  "diferenciais",
+  "numeros",
+  "como_funciona",
+  "faq",
+];
+
+export function getMiddleModuleOptionsForCategory(category: ModuleCategory) {
+  const middle = MODULE_OPTIONS.filter((o) => o.type !== "header" && o.type !== "footer");
+  if (category === "geral") return middle.filter((o) => o.category === "geral");
+  if (category === "eventos") {
+    return middle.filter(
+      (o) => o.category === "eventos" || EVENTOS_SHARED_IMOBILIARIA_TYPES.includes(o.type),
+    );
+  }
+  return middle.filter((o) => o.category === category);
+}
+
+export function getModuleCategoryLabel(category: ModuleCategory): string {
+  return MODULE_CATEGORIES.find((c) => c.id === category)?.label ?? category;
 }
 
 /** Opções para o dropdown "Adicionar módulo" — agrupadas por categoria */
@@ -191,7 +252,12 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: Mod
   { type: "contato", label: "Contato", category: "empresas" },
   { type: "global_presence", label: "Presença Global / Expansão", category: "empresas" },
   { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)", category: "empresas" },
-  { type: "eventos", label: "Nossos Eventos", category: "geral" },
+  // Eventos (páginas de venue, torneios, Boston City Hall, etc.)
+  { type: "eventos", label: "Nossos Eventos", category: "eventos" },
+  { type: "galeria_eventos", label: "Galeria de fotos do evento", category: "eventos" },
+  { type: "proximos_eventos", label: "Próximos jogos (evento)", category: "eventos" },
+  { type: "ultimos_eventos", label: "Últimos resultados (evento)", category: "eventos" },
+  { type: "tabela_eventos", label: "Tabela / classificação (evento)", category: "eventos" },
   // Imobiliária
   { type: "imoveis_destaque", label: "Imóveis em destaque", category: "imobiliaria" },
   { type: "formulario_captura", label: "Formulário de captura (leads)", category: "imobiliaria" },
@@ -218,7 +284,17 @@ export const EVENT_PAGE_MODULES_BY_CATEGORY: Record<
   ],
   empresas: [],
   imobiliaria: [],
+  eventos: [],
 };
+
+/** Módulos para páginas de evento quando o filtro não é Geral */
+export function getEventPageModulesForCategory(category: ModuleCategory): { type: HomeBlockType; label: string }[] {
+  if (category === "geral") return [];
+  if (category === "eventos") {
+    return getMiddleModuleOptionsForCategory("eventos").map((o) => ({ type: o.type, label: o.label }));
+  }
+  return EVENT_PAGE_MODULES_BY_CATEGORY[category] ?? [];
+}
 
 export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"): string {
   if (type === "custom" && id.startsWith("custom-")) return BLOCK_LABELS.custom[lang] + ` (${id})`;

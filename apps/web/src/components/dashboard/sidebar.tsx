@@ -222,6 +222,18 @@ function resolveLinkActive(
   if (href === "/dashboard/futebol") return pathname === "/dashboard/futebol";
   if (href === "/dashboard/adm") return pathname === "/dashboard/adm";
   if (href === "/dashboard/saude") return pathname === "/dashboard/saude";
+  if (href === "/dashboard/eventos/boston-city-hall") {
+    return pathname === "/dashboard/eventos/boston-city-hall";
+  }
+  if (href === "/dashboard/futebol/logistica") {
+    return (
+      !!pathname?.startsWith("/dashboard/futebol/logistica") &&
+      !pathname.startsWith("/dashboard/futebol/logistica/agenda")
+    );
+  }
+  if (href === "/dashboard/futebol/logistica/agenda") {
+    return pathname === "/dashboard/futebol/logistica/agenda";
+  }
   if (href === "/dashboard/cadastros") return pathname === "/dashboard/cadastros";
   if (href === "/dashboard/cadastros/tipos") return !!pathname?.startsWith("/dashboard/cadastros/tipos");
   if (href === "/dashboard/cadastros/jogadores") {
@@ -698,16 +710,29 @@ function SidebarNav() {
                                 </button>
                                 {isSubOpen && (
                                   <div className="ml-4 space-y-0.5 border-l border-border pl-2">
-                                    {child.children
-                                      .filter(
+                                    {(() => {
+                                      const bchLeaves = child.children.filter(
                                         (cc) =>
-                                          canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
-                                          (cc.moduleSlug === "emails" && canAccessDashboard),
-                                      )
-                                      .map((cc) => {
+                                          cc.href &&
+                                          !cc.children?.length &&
+                                          (canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
+                                            (cc.moduleSlug === "emails" && canAccessDashboard)),
+                                      );
+                                      const activeBchHref = pickMostSpecificActiveHref(
+                                        bchLeaves,
+                                        pathname,
+                                        relHub,
+                                      );
+                                      return child.children
+                                        .filter(
+                                          (cc) =>
+                                            canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
+                                            (cc.moduleSlug === "emails" && canAccessDashboard),
+                                        )
+                                        .map((cc) => {
                                         if (!cc.href) return null;
                                         const isChildActive =
-                                          !cc.external && resolveLinkActive(cc.href, pathname, relHub);
+                                          !cc.external && cc.href === activeBchHref;
                                         return (
                                           <SidebarMenuLink
                                             key={cc.slug}
@@ -728,7 +753,8 @@ function SidebarNav() {
                                             <span className="truncate">{cc.label}</span>
                                           </SidebarMenuLink>
                                         );
-                                      })}
+                                      });
+                                    })()}
                                   </div>
                                 )}
                               </div>
@@ -809,7 +835,18 @@ function SidebarNav() {
                               {isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">
                                   {(() => {
-                                    let markedActiveHref: string | null = null;
+                                    const nestedLeaves = child.children.filter(
+                                      (cc) =>
+                                        cc.href &&
+                                        !cc.children?.length &&
+                                        (canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
+                                          (cc.moduleSlug === "emails" && canAccessDashboard)),
+                                    );
+                                    const activeNestedHref = pickMostSpecificActiveHref(
+                                      nestedLeaves,
+                                      pathname,
+                                      relHub,
+                                    );
                                     return child.children
                                       .filter(
                                         (cc) =>
@@ -887,12 +924,8 @@ function SidebarNav() {
                                           );
                                         }
                                         if (!cc.href) return null;
-                                        const hrefMatches = resolveLinkActive(cc.href, pathname, relHub);
                                         const isChildActive =
-                                          !cc.external &&
-                                          hrefMatches &&
-                                          (markedActiveHref === null || markedActiveHref !== cc.href) &&
-                                          (markedActiveHref = cc.href, true);
+                                          !cc.external && cc.href === activeNestedHref;
                                         return (
                                           <SidebarMenuLink
                                             key={cc.slug}

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Building2, Briefcase, Calendar, Copy, Home, Loader2, Pencil, Plus, Trophy } from "lucide-react";
+import { Building2, Briefcase, Calendar, Copy, ExternalLink, Home, Loader2, Pencil, Plus, Trophy } from "lucide-react";
+import { BCH_PUBLIC_PATH, BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -112,9 +113,10 @@ export default function PaginasPage() {
   }, [canAccessEventos]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#eventos") {
-      const el = document.getElementById("eventos");
-      el?.scrollIntoView({ behavior: "smooth" });
+    if (typeof window === "undefined" || loading) return;
+    const hash = window.location.hash.replace("#", "");
+    if (hash === "eventos" || hash === "boston-city-hall") {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" });
     }
   }, [loading]);
 
@@ -148,6 +150,7 @@ export default function PaginasPage() {
       }
       const page = (await res.json()) as Page;
       setPages((prev) => [...prev, page]);
+      router.push(`/dashboard/paginas/tenant/${tenantId}/editar`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar página");
     } finally {
@@ -242,159 +245,162 @@ export default function PaginasPage() {
     );
   }
 
-  const { clubs, companies } = sortTenantsByKind(tenants);
+  const { clubs, companies: companiesAll } = sortTenantsByKind(tenants);
+  const bchTenant = tenants.find((t) => t.slug === BCH_SLUG) ?? null;
+  const bchPage = bchTenant ? pageByTenantId.get(bchTenant.id) : undefined;
+  const companies = companiesAll.filter((t) => t.slug !== BCH_SLUG);
 
   const renderTenantCard = (tenant: Tenant) => {
     const page = pageByTenantId.get(tenant.id);
     return (
       <Card key={tenant.id}>
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  {tenant.logoUrl ? (
-                    <img
-                      src={getPublicImageUrl(tenant.logoUrl)}
-                      alt=""
-                      className="h-8 w-8 rounded object-contain border"
-                    />
-                  ) : (
-                    <Building2 className="h-5 w-5 text-muted-foreground" />
-                  )}
-                  <CardTitle className="text-lg">{tenant.name}</CardTitle>
-                </div>
-                <CardDescription>
-                  {page
-                    ? "Página específica. Edite módulos, aparência e textos."
-                    : "Crie a página e monte com módulos."}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {page ? (
-                  <div className="space-y-3">
-                    <Link href={`/dashboard/paginas/tenant/${tenant.id}/editar`} className="block">
-                      <Button variant="outline" className="w-full">
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Editar página
-                      </Button>
-                    </Link>
-                    {getSourcePagesForTenant(tenant).length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          Copiar módulos de outra página:
-                        </span>
-                        <div className="flex gap-2">
-                          <Select
-                            value={replaceSourceByTenant[tenant.id] ?? ""}
-                            onValueChange={(v) =>
-                              setReplaceSourceByTenant((prev) => ({
-                                ...prev,
-                                [tenant.id]: v,
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Selecione uma página" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getSourcePagesForTenant(tenant).map((p) => {
-                                const t = tenants.find((x) => x.id === p.tenantId);
-                                return (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    {t?.name ?? p.tenant?.name ?? "Página"}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={
-                              !replaceSourceByTenant[tenant.id] ||
-                              replaceFromCopy === tenant.id
-                            }
-                            onClick={() => openReplaceModal(tenant.id)}
-                          >
-                            {replaceFromCopy === tenant.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                            Copiar
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      disabled={creating === tenant.id}
-                      onClick={() => handleCreatePage(tenant.id)}
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            {tenant.logoUrl ? (
+              <img
+                src={getPublicImageUrl(tenant.logoUrl)}
+                alt=""
+                className="h-8 w-8 rounded object-contain border"
+              />
+            ) : (
+              <Building2 className="h-5 w-5 text-muted-foreground" />
+            )}
+            <CardTitle className="text-lg">{tenant.name}</CardTitle>
+          </div>
+          <CardDescription>
+            {page
+              ? "Página específica. Edite módulos, aparência e textos."
+              : "Crie a página e monte com módulos."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {page ? (
+            <div className="space-y-3">
+              <Link href={`/dashboard/paginas/tenant/${tenant.id}/editar`} className="block">
+                <Button variant="outline" className="w-full">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar página
+                </Button>
+              </Link>
+              {getSourcePagesForTenant(tenant).length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    Copiar módulos de outra página:
+                  </span>
+                  <div className="flex gap-2">
+                    <Select
+                      value={replaceSourceByTenant[tenant.id] ?? ""}
+                      onValueChange={(v) =>
+                        setReplaceSourceByTenant((prev) => ({
+                          ...prev,
+                          [tenant.id]: v,
+                        }))
+                      }
                     >
-                      {creating === tenant.id ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Selecione uma página" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getSourcePagesForTenant(tenant).map((p) => {
+                          const t = tenants.find((x) => x.id === p.tenantId);
+                          return (
+                            <SelectItem key={p.id} value={p.id}>
+                              {t?.name ?? p.tenant?.name ?? "Página"}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={
+                        !replaceSourceByTenant[tenant.id] ||
+                        replaceFromCopy === tenant.id
+                      }
+                      onClick={() => openReplaceModal(tenant.id)}
+                    >
+                      {replaceFromCopy === tenant.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Plus className="mr-2 h-4 w-4" />
+                        <Copy className="h-4 w-4" />
                       )}
-                      Criar página
+                      Copiar
                     </Button>
-                    {getSourcePagesForTenant(tenant).length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-xs text-muted-foreground">
-                          ou copiar módulos de:
-                        </span>
-                        <div className="flex gap-2">
-                          <Select
-                            value={copySourceByTenant[tenant.id] ?? ""}
-                            onValueChange={(v) =>
-                              setCopySourceByTenant((prev) => ({
-                                ...prev,
-                                [tenant.id]: v,
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Selecione uma página" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {getSourcePagesForTenant(tenant).map((p) => {
-                                const t = tenants.find((x) => x.id === p.tenantId);
-                                return (
-                                  <SelectItem key={p.id} value={p.id}>
-                                    {t?.name ?? p.tenant?.name ?? "Página"}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            disabled={
-                              !copySourceByTenant[tenant.id] ||
-                              creatingFromCopy === tenant.id
-                            }
-                            onClick={() => {
-                              const src = copySourceByTenant[tenant.id];
-                              if (src) handleCreateFromCopy(tenant.id, src);
-                            }}
-                          >
-                            {creatingFromCopy === tenant.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                            Copiar
-                          </Button>
-                        </div>
-                      </div>
-                    )}
                   </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={creating === tenant.id}
+                onClick={() => handleCreatePage(tenant.id)}
+              >
+                {creating === tenant.id ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="mr-2 h-4 w-4" />
                 )}
-              </CardContent>
-            </Card>
+                Criar página
+              </Button>
+              {getSourcePagesForTenant(tenant).length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    ou copiar módulos de:
+                  </span>
+                  <div className="flex gap-2">
+                    <Select
+                      value={copySourceByTenant[tenant.id] ?? ""}
+                      onValueChange={(v) =>
+                        setCopySourceByTenant((prev) => ({
+                          ...prev,
+                          [tenant.id]: v,
+                        }))
+                      }
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Selecione uma página" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getSourcePagesForTenant(tenant).map((p) => {
+                          const t = tenants.find((x) => x.id === p.tenantId);
+                          return (
+                            <SelectItem key={p.id} value={p.id}>
+                              {t?.name ?? p.tenant?.name ?? "Página"}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={
+                        !copySourceByTenant[tenant.id] ||
+                        creatingFromCopy === tenant.id
+                      }
+                      onClick={() => {
+                        const src = copySourceByTenant[tenant.id];
+                        if (src) handleCreateFromCopy(tenant.id, src);
+                      }}
+                    >
+                      {creatingFromCopy === tenant.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      Copiar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     );
   };
 
@@ -520,6 +526,62 @@ export default function PaginasPage() {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Boston City Hall — venue (abaixo de Eventos) */}
+      {canAccessEventos && bchTenant && (
+        <div id="boston-city-hall" className="space-y-4 pt-6 border-t border-border">
+          <h2 className="flex items-center gap-2.5 text-xl font-bold uppercase tracking-wider">
+            <img
+              src={bchLogoSrc(bchTenant.logoUrl)}
+              alt=""
+              className="h-8 w-8 rounded-full object-cover ring-1 ring-border"
+            />
+            Boston City Hall
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Página pública</CardTitle>
+                <CardDescription>
+                  Site do venue — espaços, agenda, solicitação de evento e FAQ.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {bchPage ? (
+                  <>
+                    <Link href={`/dashboard/paginas/tenant/${bchTenant.id}/editar`} className="block">
+                      <Button variant="outline" className="w-full">
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar página
+                      </Button>
+                    </Link>
+                    <Link href={BCH_PUBLIC_PATH} target="_blank" rel="noopener noreferrer" className="block">
+                      <Button variant="secondary" className="w-full">
+                        <ExternalLink className="mr-2 h-4 w-4" />
+                        Ver site público
+                      </Button>
+                    </Link>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    disabled={creating === bchTenant.id}
+                    onClick={() => handleCreatePage(bchTenant.id)}
+                  >
+                    {creating === bchTenant.id ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="mr-2 h-4 w-4" />
+                    )}
+                    Criar página
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}

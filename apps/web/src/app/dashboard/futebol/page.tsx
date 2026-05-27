@@ -62,14 +62,14 @@ const LINKS = [
     moduleSlug: "tipos",
   },
   {
-    title: "Agenda",
-    description: "Calendário de jogos, treinos e compromissos do departamento.",
-    href: "/dashboard/futebol/agenda",
+    title: "Logística — Agenda",
+    description: "Calendário operacional: viagens, treinos, jogos e compromissos.",
+    href: "/dashboard/futebol/logistica/agenda",
     icon: Calendar,
     moduleSlug: "futebol_logistica",
   },
   {
-    title: "Logística",
+    title: "Logística — Viagens",
     description: "Viagens, hospedagem e deslocamentos da equipe.",
     href: "/dashboard/futebol/logistica",
     icon: Map,
@@ -109,7 +109,7 @@ export default function FutebolHubPage() {
   return (
     <HubDashboardPage
       title="Depto Futebol"
-      subtitle={`Visão geral operacional — ${DASHBOARD_LABELS.atletas}, logística, comissão e análise.`}
+      subtitle={`Dash operacional — ${DASHBOARD_LABELS.atletas}, logística, comissão e análise.`}
       hubId="futebol"
       links={[...LINKS]}
     >

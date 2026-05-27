@@ -81,7 +81,7 @@ export default function SaudeHubPage() {
   return (
     <HubDashboardPage
       title="Depto de Saúde"
-      subtitle="Visão geral clínica — médico, psicologia, fisiologia e nutrição."
+      subtitle="Dash clínico — médico, psicologia, fisiologia e nutrição."
       hubId="saude"
       links={[...LINKS]}
     >

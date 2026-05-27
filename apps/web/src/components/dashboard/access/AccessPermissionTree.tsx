@@ -39,8 +39,12 @@ function filterTree(nodes: MenuAccessTreeNode[], q: string): MenuAccessTreeNode[
 
 interface AccessPermissionTreeProps {
   tree: MenuAccessTreeNode[];
-  isEnabled: (accessSlug: string, legacyModuleSlug?: string) => boolean;
-  onToggleAccess: (accessSlug: string, value: boolean) => void;
+  isEnabled: (accessSlug: string) => boolean;
+  onToggleAccess: (
+    accessSlug: string,
+    value: boolean,
+    opts?: { moduleSlug?: string; accessGroup?: string },
+  ) => void;
   search?: string;
   readOnly?: boolean;
 }
@@ -59,8 +63,12 @@ function AccessTreeNodeRow({
   depth: number;
   expanded: boolean;
   onToggleExpand: () => void;
-  isEnabled: (accessSlug: string, legacyModuleSlug?: string) => boolean;
-  onToggleAccess: (accessSlug: string, value: boolean) => void;
+  isEnabled: (accessSlug: string) => boolean;
+  onToggleAccess: (
+    accessSlug: string,
+    value: boolean,
+    opts?: { moduleSlug?: string; accessGroup?: string },
+  ) => void;
   readOnly?: boolean;
   searchActive: boolean;
 }) {
@@ -70,7 +78,7 @@ function AccessTreeNodeRow({
   const enabledCount = leafSlugs.filter((s) => isEnabled(s)).length;
 
   if (node.kind === "leaf" && node.accessSlug) {
-    const on = isEnabled(node.accessSlug, node.moduleSlug);
+    const on = isEnabled(node.accessSlug);
     const modLabel = node.moduleSlug ? (MODULE_DISPLAY_NAMES[node.moduleSlug] ?? node.moduleSlug) : null;
     const groupLabel =
       node.accessGroup && ACCESS_GROUP_LABELS[node.accessGroup]
@@ -90,7 +98,12 @@ function AccessTreeNodeRow({
           type="checkbox"
           checked={on}
           disabled={readOnly}
-          onChange={(e) => onToggleAccess(node.accessSlug!, e.target.checked)}
+          onChange={(e) =>
+            onToggleAccess(node.accessSlug!, e.target.checked, {
+              moduleSlug: node.moduleSlug,
+              accessGroup: node.accessGroup,
+            })
+          }
           className="h-5 w-5 mt-0.5 rounded-md border-input accent-primary cursor-pointer shrink-0 disabled:cursor-not-allowed"
           aria-label={node.label}
         />
@@ -203,8 +216,12 @@ function AccessTreeNode({
 }: {
   node: MenuAccessTreeNode;
   depth: number;
-  isEnabled: (accessSlug: string, legacyModuleSlug?: string) => boolean;
-  onToggleAccess: (accessSlug: string, value: boolean) => void;
+  isEnabled: (accessSlug: string) => boolean;
+  onToggleAccess: (
+    accessSlug: string,
+    value: boolean,
+    opts?: { moduleSlug?: string; accessGroup?: string },
+  ) => void;
   readOnly?: boolean;
   searchActive: boolean;
 }) {

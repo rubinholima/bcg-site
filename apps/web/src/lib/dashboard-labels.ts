@@ -2,6 +2,9 @@
  * Labels do dashboard com acentuação correta.
  * Usa escape Unicode para garantir exibição correta em qualquer encoding.
  */
+/** Primeiro item do menu de cada departamento (antes "Visão geral"). */
+export const DEPT_HUB_MENU_LABEL = "Dash";
+
 export const DASHBOARD_LABELS = {
   usuarios: "Usu\u00E1rios",       // á
   paginas: "P\u00E1ginas",        // á

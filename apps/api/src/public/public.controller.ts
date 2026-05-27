@@ -21,6 +21,7 @@ import { EventsService } from '../events/events.service';
 import { PublicService } from './public.service';
 import { BostonTvService } from '../boston-tv/boston-tv.service';
 import { RegistrationInviteService } from '../registration-invite/registration-invite.service';
+import { BostonCityHallService } from '../boston-city-hall/boston-city-hall.service';
 import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
 
@@ -37,6 +38,7 @@ export class PublicController {
     private readonly workmailService: WorkMailService,
     private readonly bostonTvService: BostonTvService,
     private readonly registrationInviteService: RegistrationInviteService,
+    private readonly bostonCityHallService: BostonCityHallService,
   ) {}
 
   @Get('portfolio')
@@ -245,6 +247,45 @@ export class PublicController {
     @Body() body: SubmitPlayerRegistrationDto,
   ) {
     return this.registrationInviteService.submitPlayer(token, body);
+  }
+
+  @Post('venue-lead')
+  createVenueLead(
+    @Body()
+    body: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      message?: string;
+      eventType?: string;
+      guestCount?: number | string;
+      preferredDate?: string;
+      venue?: string;
+    },
+  ) {
+    const name = body.name?.trim();
+    const email = body.email?.trim();
+    const message = body.message?.trim();
+    if (!name || !email || !message) {
+      throw new BadRequestException('Nome, email e mensagem são obrigatórios');
+    }
+    const guestRaw = body.guestCount;
+    const guestCount =
+      typeof guestRaw === 'number'
+        ? guestRaw
+        : typeof guestRaw === 'string' && guestRaw.trim()
+          ? Number.parseInt(guestRaw, 10)
+          : undefined;
+
+    return this.bostonCityHallService.createPipelineLeadFromWebsite({
+      name,
+      email,
+      phone: body.phone?.trim(),
+      message,
+      eventType: body.eventType?.trim(),
+      guestCount: Number.isFinite(guestCount) ? guestCount : undefined,
+      preferredDate: body.preferredDate?.trim(),
+    });
   }
 
   @Post('registration-invite/:token/employee')

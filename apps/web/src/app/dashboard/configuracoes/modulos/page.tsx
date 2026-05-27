@@ -590,32 +590,51 @@ export default function ModulosPage() {
   }, [mergedModuleState, selectedRole]);
 
   const isAccessEnabled = useCallback(
-    (accessSlug: string, legacyModuleSlug?: string) => {
-      const read = (slug: string) => {
-        if (accessMode === "role") {
-          if (rolePermissionsMap.has(slug)) return rolePermissionsMap.get(slug) ?? false;
-          return false;
-        }
-        if (userCustomAccess) {
-          if (slug in userPermissions) return userPermissions[slug] ?? false;
-        }
-        const userRole = selectedUserRole as ManagedRoleKey;
-        const mod = mergedModuleState.find((m) => m.slug === slug);
-        return mod ? roleChecked(mod, userRole) : false;
-      };
-      if (read(accessSlug)) return true;
-      if (legacyModuleSlug && legacyModuleSlug !== accessSlug && read(legacyModuleSlug)) return true;
-      return false;
+    (accessSlug: string) => {
+      if (accessMode === "role") {
+        return rolePermissionsMap.get(accessSlug) ?? false;
+      }
+      if (userCustomAccess) {
+        return userPermissions[accessSlug] ?? false;
+      }
+      const userRole = selectedUserRole as ManagedRoleKey;
+      const mod = mergedModuleState.find((m) => m.slug === accessSlug);
+      return mod ? roleChecked(mod, userRole) : false;
     },
     [accessMode, rolePermissionsMap, userCustomAccess, userPermissions, selectedUserRole, mergedModuleState],
   );
 
-  const handleTreeToggleAccess = (accessSlug: string, value: boolean) => {
+  const handleTreeToggleAccess = (
+    accessSlug: string,
+    value: boolean,
+    opts?: { moduleSlug?: string; accessGroup?: string },
+  ) => {
     if (accessMode === "role") {
       handleModuleToggle(accessSlug, selectedRole, value);
+      // Ao desmarcar, desliga também o slug legado compartilhado (ex.: requisicoes)
+      // para não ficar “preso” marcado via permissão antiga fora da árvore.
+      if (
+        !value &&
+        opts?.moduleSlug &&
+        opts.moduleSlug !== accessSlug &&
+        !opts.accessGroup
+      ) {
+        handleModuleToggle(opts.moduleSlug, selectedRole, false);
+      }
       return;
     }
-    setUserPermissions((prev) => ({ ...prev, [accessSlug]: value }));
+    setUserPermissions((prev) => {
+      const next = { ...prev, [accessSlug]: value };
+      if (
+        !value &&
+        opts?.moduleSlug &&
+        opts.moduleSlug !== accessSlug &&
+        !opts.accessGroup
+      ) {
+        next[opts.moduleSlug] = false;
+      }
+      return next;
+    });
     setUserCustomAccess(true);
     setUserDirty(true);
     setSaveBanner(null);

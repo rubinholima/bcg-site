@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { api } from "@/lib/api";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { LogisticaFilters } from "./LogisticaFilters";
+import { FutebolLogisticaNav } from "@/components/dashboard/futebol/FutebolLogisticaNav";
 
 interface TravelLogisticsItem {
   id: string;
@@ -112,20 +113,22 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
           <span>Operação realizada com sucesso!</span>
         </div>
       )}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Logística</h1>
-          <p className="text-muted-foreground">
-            Planejamento de deslocamentos para competições fora: transporte, hospedagem, alimentação (aval nutrição) e custos — somente clubes
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Logística — Viagens</h1>
+          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+            Planejamento de deslocamentos: transporte, hospedagem, alimentação e custos — somente clubes.
           </p>
         </div>
         <Link href="/dashboard/futebol/logistica/new">
-          <Button>
+          <Button className="min-h-[44px] shrink-0">
             <Plus className="mr-2 h-4 w-4" />
             Novo planejamento
           </Button>
         </Link>
       </div>
+
+      <FutebolLogisticaNav />
 
       <LogisticaFilters />
 

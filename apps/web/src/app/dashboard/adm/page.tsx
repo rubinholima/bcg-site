@@ -75,7 +75,7 @@ export default function AdmHubPage() {
   return (
     <HubDashboardPage
       title="Depto Adm"
-      subtitle="Visão geral administrativa — financeiro, compras, clientes, fornecedores, estoque, RH e patrimônio."
+      subtitle="Dash administrativo — financeiro, compras, clientes, fornecedores, estoque, RH e patrimônio."
       hubId="adm"
       links={[...LINKS]}
     >

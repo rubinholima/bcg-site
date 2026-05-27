@@ -54,8 +54,10 @@ import { getCtaPresetContent, CTA_PRESET_OPTIONS, type CtaPresetId } from "@/lib
 import type { Page, PageTheme } from "@/types/page";
 import {
   getBlockLabel,
-  MODULE_OPTIONS,
-  tenantKindNameToModuleCategory,
+  MODULE_TYPE_FILTER_EVENTOS,
+  resolveModuleCategoryFromFilter,
+  resolveModuleFilterLabel,
+  getMiddleModuleOptionsForCategory,
   createBlock,
   BLOCK_TYPES_WITH_BODY,
   mergeGlobalPresenceCounters,
@@ -79,11 +81,6 @@ function normalizeBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
   const list = [header, ...middle, footer];
   return list.map((b, i) => ({ ...b, sortOrder: i }));
 }
-
-/** Opções para adicionar só no meio (sem cabeçalho/rodapé no dropdown). */
-const MIDDLE_MODULE_OPTIONS = MODULE_OPTIONS.filter(
-  (o) => o.type !== "header" && o.type !== "footer",
-);
 
 type HeaderPreset = "classic" | "centered" | "minimal" | "overlay" | "sticky" | "split";
 
@@ -206,8 +203,8 @@ export default function EditarGroupHomePage() {
   const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
-  const resolvedModuleCategory = moduleTypeFilter === "geral" ? "geral" : tenantKindNameToModuleCategory(tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? "");
-  const resolvedModuleLabel = moduleTypeFilter === "geral" ? "Geral" : (tenantKinds.find((k) => k.id === moduleTypeFilter)?.name ?? moduleTypeFilter);
+  const resolvedModuleCategory = resolveModuleCategoryFromFilter(moduleTypeFilter, { tenantKinds });
+  const resolvedModuleLabel = resolveModuleFilterLabel(moduleTypeFilter, { tenantKinds });
   const theme = (page?.content?.theme ?? {}) as PageTheme;
   /** Servidor pode devolver visible como boolean ou string "true"/"false"; tratar os dois. */
   const isBlockHidden = (b: HomeContentBlock) => {
@@ -708,6 +705,7 @@ export default function EditarGroupHomePage() {
                               <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="geral">Geral</SelectItem>
+                                <SelectItem value={MODULE_TYPE_FILTER_EVENTOS}>Eventos</SelectItem>
                                 {tenantKinds.map((k) => (
                                   <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
                                 ))}
@@ -726,14 +724,14 @@ export default function EditarGroupHomePage() {
                               ...(resolvedModuleCategory !== "geral" ? [
                                 <SelectGroup key="geral">
                                   <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
-                                  {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral").map((opt) => (
+                                  {getMiddleModuleOptionsForCategory("geral").map((opt) => (
                                     <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                   ))}
                                 </SelectGroup>,
                               ] : []),
                               <SelectGroup key={moduleTypeFilter}>
                                 <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
-                                {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory).map((opt) => (
+                                {getMiddleModuleOptionsForCategory(resolvedModuleCategory).map((opt) => (
                                   <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                 ))}
                               </SelectGroup>,
@@ -781,14 +779,10 @@ export default function EditarGroupHomePage() {
                   } : undefined}
                 >
                   <div className="flex items-center gap-2">
-                    {isFixed ? (
-                      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                        Fixo
-                      </span>
-                    ) : (
+                    {!isFixed && (
                       <div
                         draggable
-                        className="flex cursor-grab items-center gap-2 active:cursor-grabbing"
+                        className="flex shrink-0 cursor-grab items-center active:cursor-grabbing"
                         onDragStart={(e) => {
                           e.dataTransfer.setData("text/plain", String(index));
                           e.dataTransfer.effectAllowed = "move";
@@ -797,20 +791,30 @@ export default function EditarGroupHomePage() {
                         onDragEnd={(e) => {
                           (e.currentTarget as HTMLElement).closest(".module-card")?.classList.remove("opacity-60");
                         }}
+                        onClick={(e) => e.stopPropagation()}
                         title="Arrastar para reordenar"
                       >
-                        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
-                        <span className="font-medium">
-                          {sectionLabel}
-                        </span>
+                        <GripVertical className="h-4 w-4 text-muted-foreground" aria-hidden />
                       </div>
                     )}
-                    {isFixed ? (
-                      <span className="font-medium">
-                        {sectionLabel}
-                      </span>
-                    ) : null}
-                    <div className="ml-auto flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="flex min-h-[44px] flex-1 items-center gap-2 rounded-md px-1 text-left transition-colors hover:bg-muted/40"
+                      onClick={() => toggleBlockCollapsed(block.id)}
+                    >
+                      {isFixed ? (
+                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Fixo
+                        </span>
+                      ) : null}
+                      <span className="font-medium">{sectionLabel}</span>
+                      {collapsedBlockIds.has(block.id) ? (
+                        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronUp className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                      )}
+                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
                       {!isFixed && (
                         <Button
                           type="button"
@@ -828,21 +832,6 @@ export default function EditarGroupHomePage() {
                           )}
                         </Button>
                       )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => toggleBlockCollapsed(block.id)}
-                        title={collapsedBlockIds.has(block.id) ? "Expandir módulo" : "Recolher módulo"}
-                        aria-label={collapsedBlockIds.has(block.id) ? "Expandir módulo" : "Recolher módulo"}
-                      >
-                        {collapsedBlockIds.has(block.id) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronUp className="h-4 w-4" />
-                        )}
-                      </Button>
                       <Button
                         type="button"
                         variant="ghost"

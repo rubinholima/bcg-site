@@ -4,7 +4,7 @@
  * eles aparecem automaticamente na sidebar e em Configurações → Módulos.
  *
  * Operação: demais grupos — movimentações e telas do dia a dia (URLs inalteradas).
- * Cadastros MDM ficam dentro de cada departamento — submenu **Cadastros** logo após Visão geral;
+ * Cadastros MDM ficam dentro de cada departamento — submenu **Cadastros** logo após o Dash;
  * **Relatórios** sempre por último em cada dept.
  *
  * REGRA Acessos: cada item de menu tem slug de permissão individual (accessSlug);
@@ -57,10 +57,11 @@ import {
   Archive,
   Monitor,
   Sliders,
+  Kanban,
   Link2,
   Truck,
 } from "lucide-react";
-import { DASHBOARD_LABELS } from "./dashboard-labels";
+import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
 export const ACCESS_GROUP_LABELS: Record<string, string> = {
@@ -254,7 +255,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     children: [
       {
         slug: "adm_visao",
-        label: "Visão geral",
+        label: DEPT_HUB_MENU_LABEL,
         href: "/dashboard/adm",
         icon: LayoutDashboard,
         moduleSlug: "adm_financeiro",
@@ -299,7 +300,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     children: [
       {
         slug: "saude_visao",
-        label: "Visão geral",
+        label: DEPT_HUB_MENU_LABEL,
         href: "/dashboard/saude",
         icon: LayoutDashboard,
         moduleSlug: "saude",
@@ -395,7 +396,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     children: [
       {
         slug: "futebol_visao",
-        label: "Visão geral",
+        label: DEPT_HUB_MENU_LABEL,
         href: "/dashboard/futebol",
         icon: LayoutDashboard,
         moduleSlug: "futebol_logistica",
@@ -451,26 +452,26 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         ],
       },
       {
-        slug: "futebol_agenda",
-        label: "Agenda",
-        icon: Calendar,
+        slug: "futebol_logistica",
+        label: "Logística",
+        icon: MapIcon,
         moduleSlug: "futebol_logistica",
         children: [
           {
-            slug: "futebol_agenda_cal",
-            label: "Calendário",
-            href: "/dashboard/futebol/agenda",
+            slug: "futebol_logistica_agenda",
+            label: "Agenda",
+            href: "/dashboard/futebol/logistica/agenda",
             icon: Calendar,
             moduleSlug: "futebol_logistica",
           },
+          {
+            slug: "futebol_logistica_viagens",
+            label: "Viagens",
+            href: "/dashboard/futebol/logistica",
+            icon: MapIcon,
+            moduleSlug: "futebol_logistica",
+          },
         ],
-      },
-      {
-        slug: "futebol_logistica",
-        label: "Logística",
-        href: "/dashboard/futebol/logistica",
-        icon: MapIcon,
-        moduleSlug: "futebol_logistica",
       },
       {
         slug: "analise",
@@ -519,7 +520,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     children: [
       {
         slug: "juridico_visao",
-        label: "Visão geral",
+        label: DEPT_HUB_MENU_LABEL,
         href: "/dashboard/juridico",
         icon: Scale,
         moduleSlug: "juridico",
@@ -555,9 +556,37 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         children: [
           {
             slug: "boston_hall_visao",
-            label: "Visão geral",
+            label: DEPT_HUB_MENU_LABEL,
             href: "/dashboard/eventos/boston-city-hall",
             icon: Building2,
+            moduleSlug: "eventos",
+          },
+          {
+            slug: "boston_hall_agenda",
+            label: "Agenda",
+            href: "/dashboard/eventos/boston-city-hall/agenda",
+            icon: Calendar,
+            moduleSlug: "eventos",
+          },
+          {
+            slug: "boston_hall_crm",
+            label: "CRM",
+            href: "/dashboard/eventos/boston-city-hall/crm",
+            icon: Users,
+            moduleSlug: "eventos",
+          },
+          {
+            slug: "boston_hall_reservas",
+            label: "Reservas",
+            href: "/dashboard/eventos/boston-city-hall/reservas",
+            icon: ClipboardList,
+            moduleSlug: "eventos",
+          },
+          {
+            slug: "boston_hall_pipeline",
+            label: "Pipeline",
+            href: "/dashboard/eventos/boston-city-hall/pipeline",
+            icon: Kanban,
             moduleSlug: "eventos",
           },
         ],
@@ -631,7 +660,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     icon: Ticket,
     moduleSlug: "socio_torcedor",
     children: [
-      { slug: "socio_dashboard", label: "Visão geral", href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
+      { slug: "socio_dashboard", label: DEPT_HUB_MENU_LABEL, href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
       {
         slug: "socio_cadastros",
         label: "Cadastros",

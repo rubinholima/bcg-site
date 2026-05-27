@@ -60,13 +60,16 @@ import { getCtaPresetContent, CTA_PRESET_OPTIONS, type CtaPresetId } from "@/lib
 import type { Page, PageTheme } from "@/types/page";
 import {
   getBlockLabel,
-  MODULE_OPTIONS,
   type ModuleCategory,
-  tenantKindNameToModuleCategory,
+  MODULE_TYPE_FILTER_EVENTOS,
+  resolveModuleCategoryFromFilter,
+  resolveModuleFilterLabel,
+  getMiddleModuleOptionsForCategory,
   createBlock,
   BLOCK_TYPES_WITH_BODY,
   mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
+import { BCH_SLUG } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
@@ -202,11 +205,6 @@ function normalizeBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
   return list.map((b, i) => ({ ...b, sortOrder: i }));
 }
 
-/** Opções para adicionar só no meio (sem cabeçalho/rodapé no dropdown). */
-const MIDDLE_MODULE_OPTIONS = MODULE_OPTIONS.filter(
-  (o) => o.type !== "header" && o.type !== "footer",
-);
-
 type HeaderPreset = "classic" | "centered" | "minimal" | "overlay" | "sticky" | "split";
 
 const HEADER_PRESET_OPTIONS: { value: HeaderPreset; label: string }[] = [
@@ -336,21 +334,18 @@ export default function EditarPaginaTenantPage() {
 
   const blocks = normalizeBlocks(page?.content?.blocks ?? []);
 
-  /** Na página de clube/empresa: só Geral + o tipo do tenant. Ex: Americano (Futebol) → Geral e Futebol. */
+  /** Na página de clube/empresa: Geral, Eventos e o tipo do tenant (se houver). */
   const tenantKind = page?.tenant?.kind;
-  const allowedTypeOptions = tenantKind
-    ? [
-        { value: "geral" as const, label: "Geral" },
-        { value: tenantKind.id, label: tenantKind.name },
-      ]
-    : [{ value: "geral" as const, label: "Geral" }];
+  const allowedTypeOptions = [
+    { value: "geral" as const, label: "Geral" },
+    { value: MODULE_TYPE_FILTER_EVENTOS, label: "Eventos" },
+    ...(tenantKind ? [{ value: tenantKind.id, label: tenantKind.name }] : []),
+  ];
 
-  const resolvedModuleCategory: ModuleCategory =
-    moduleTypeFilter === "geral"
-      ? "geral"
-      : tenantKindNameToModuleCategory(tenantKind?.id === moduleTypeFilter ? (tenantKind?.name ?? "") : "");
-  const resolvedModuleLabel =
-    moduleTypeFilter === "geral" ? "Geral" : (tenantKind?.id === moduleTypeFilter ? tenantKind?.name : moduleTypeFilter);
+  const resolvedModuleCategory: ModuleCategory = resolveModuleCategoryFromFilter(moduleTypeFilter, {
+    tenantKind,
+  });
+  const resolvedModuleLabel = resolveModuleFilterLabel(moduleTypeFilter, { tenantKind });
 
   const toggleBlockCollapsed = (blockId: string) => {
     setCollapsedBlockIds((prev) => {
@@ -382,6 +377,9 @@ export default function EditarPaginaTenantPage() {
             },
           });
           setCollapsedBlockIds(new Set(normalized.map((b) => b.id)));
+          if (data.tenant?.slug === BCH_SLUG) {
+            setModuleTypeFilter(MODULE_TYPE_FILTER_EVENTOS);
+          }
         } else if (!cancelled) {
           setPage(data);
         }
@@ -397,9 +395,12 @@ export default function EditarPaginaTenantPage() {
     };
   }, [tenantId]);
 
-  /** Garante que moduleTypeFilter está permitido (ex: ao carregar página de Futebol, não manter "Empresas"). */
+  /** Garante que moduleTypeFilter está permitido (Geral, Eventos ou tipo do tenant). */
   useEffect(() => {
-    const ok = moduleTypeFilter === "geral" || (tenantKind && moduleTypeFilter === tenantKind.id);
+    const ok =
+      moduleTypeFilter === "geral" ||
+      moduleTypeFilter === MODULE_TYPE_FILTER_EVENTOS ||
+      (tenantKind && moduleTypeFilter === tenantKind.id);
     if (!ok && moduleTypeFilter) setModuleTypeFilter("geral");
   }, [tenantKind?.id, moduleTypeFilter]);
 
@@ -939,7 +940,7 @@ export default function EditarPaginaTenantPage() {
                           <SelectContent>
                             <SelectGroup key={resolvedModuleCategory}>
                               <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
-                              {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory).map((opt) => (
+                              {getMiddleModuleOptionsForCategory(resolvedModuleCategory).map((opt) => (
                                 <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                               ))}
                             </SelectGroup>
@@ -986,14 +987,10 @@ export default function EditarPaginaTenantPage() {
                   } : undefined}
                 >
                   <div className="flex items-center gap-2">
-                    {isFixed ? (
-                      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-                        Fixo
-                      </span>
-                    ) : (
+                    {!isFixed && (
                       <div
                         draggable
-                        className="flex cursor-grab items-center gap-2 active:cursor-grabbing"
+                        className="flex shrink-0 cursor-grab items-center active:cursor-grabbing"
                         onDragStart={(e) => {
                           e.dataTransfer.setData("text/plain", String(index));
                           e.dataTransfer.effectAllowed = "move";
@@ -1002,20 +999,30 @@ export default function EditarPaginaTenantPage() {
                         onDragEnd={(e) => {
                           (e.currentTarget as HTMLElement).closest(".module-card")?.classList.remove("opacity-60");
                         }}
+                        onClick={(e) => e.stopPropagation()}
                         title="Arrastar para reordenar"
                       >
-                        <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" aria-hidden />
-                        <span className="font-medium">
-                          {sectionLabel}
-                        </span>
+                        <GripVertical className="h-4 w-4 text-muted-foreground" aria-hidden />
                       </div>
                     )}
-                    {isFixed ? (
-                      <span className="font-medium">
-                        {sectionLabel}
-                      </span>
-                    ) : null}
-                    <div className="ml-auto flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="flex min-h-[44px] flex-1 items-center gap-2 rounded-md px-1 text-left transition-colors hover:bg-muted/40"
+                      onClick={() => toggleBlockCollapsed(block.id)}
+                    >
+                      {isFixed ? (
+                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Fixo
+                        </span>
+                      ) : null}
+                      <span className="font-medium">{sectionLabel}</span>
+                      {collapsedBlockIds.has(block.id) ? (
+                        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <ChevronUp className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                      )}
+                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
                       {!isFixed && (
                         <Button
                           type="button"
@@ -1033,21 +1040,6 @@ export default function EditarPaginaTenantPage() {
                           )}
                         </Button>
                       )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => toggleBlockCollapsed(block.id)}
-                        title={collapsedBlockIds.has(block.id) ? "Expandir módulo" : "Recolher módulo"}
-                        aria-label={collapsedBlockIds.has(block.id) ? "Expandir módulo" : "Recolher módulo"}
-                      >
-                        {collapsedBlockIds.has(block.id) ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronUp className="h-4 w-4" />
-                        )}
-                      </Button>
                       <Button
                         type="button"
                         variant="ghost"
@@ -1425,7 +1417,7 @@ export default function EditarPaginaTenantPage() {
                                       ? [
                                           <SelectGroup key="geral">
                                             <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
-                                            {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral" && o.type !== "section").map((opt) => (
+                                            {getMiddleModuleOptionsForCategory("geral").filter((o) => o.type !== "section").map((opt) => (
                                               <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                             ))}
                                           </SelectGroup>,
@@ -1433,7 +1425,7 @@ export default function EditarPaginaTenantPage() {
                                       : []),
                                     <SelectGroup key={moduleTypeFilter}>
                                       <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
-                                      {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory && o.type !== "section").map((opt) => (
+                                      {getMiddleModuleOptionsForCategory(resolvedModuleCategory).filter((o) => o.type !== "section").map((opt) => (
                                         <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                       ))}
                                     </SelectGroup>,
@@ -1505,14 +1497,14 @@ export default function EditarPaginaTenantPage() {
                                       ...(resolvedModuleCategory !== "geral" ? [
                                         <SelectGroup key="geral">
                                           <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
-                                          {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral" && o.type !== "section").map((opt) => (
+                                          {getMiddleModuleOptionsForCategory("geral").filter((o) => o.type !== "section").map((opt) => (
                                             <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                           ))}
                                         </SelectGroup>,
                                       ] : []),
                                       <SelectGroup key={moduleTypeFilter}>
                                         <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
-                                        {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory && o.type !== "section").map((opt) => (
+                                        {getMiddleModuleOptionsForCategory(resolvedModuleCategory).filter((o) => o.type !== "section").map((opt) => (
                                           <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                         ))}
                                       </SelectGroup>,
@@ -1637,14 +1629,14 @@ export default function EditarPaginaTenantPage() {
                                       ...(resolvedModuleCategory !== "geral" ? [
                                         <SelectGroup key="geral">
                                           <SelectLabel className="text-xs font-semibold text-muted-foreground">Geral</SelectLabel>
-                                          {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === "geral" && o.type !== "section").map((opt) => (
+                                          {getMiddleModuleOptionsForCategory("geral").filter((o) => o.type !== "section").map((opt) => (
                                             <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                           ))}
                                         </SelectGroup>,
                                       ] : []),
                                       <SelectGroup key={moduleTypeFilter}>
                                         <SelectLabel className="text-xs font-semibold text-muted-foreground">{resolvedModuleLabel}</SelectLabel>
-                                        {MIDDLE_MODULE_OPTIONS.filter((o) => o.category === resolvedModuleCategory && o.type !== "section").map((opt) => (
+                                        {getMiddleModuleOptionsForCategory(resolvedModuleCategory).filter((o) => o.type !== "section").map((opt) => (
                                           <SelectItem key={opt.type} value={opt.type}>{opt.label}</SelectItem>
                                         ))}
                                       </SelectGroup>,

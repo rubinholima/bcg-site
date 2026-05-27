@@ -84,6 +84,13 @@ const GENERIC_BLOCK_TYPES = [
   "how",
   "cta",
   "logo_carousel",
+  "diferenciais",
+  "numeros",
+  "como_funciona",
+  "faq",
+  "formulario_captura",
+  "imoveis_destaque",
+  "galeria_eventos",
 ];
 
 function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {

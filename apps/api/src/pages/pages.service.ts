@@ -4,6 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { buildBostonCityHallPageContent } from './boston-city-hall-page-default';
 
 export type PageContentDto = {
   theme?: Record<string, unknown>;
@@ -159,7 +160,13 @@ export class PagesService {
     }
 
     let content: PageContentDto = { blocks: [] };
-    if (dto.sourcePageId) {
+    if (
+      tenant.slug === 'boston-city-hall' &&
+      !dto.sourcePageId &&
+      slug === 'main'
+    ) {
+      content = buildBostonCityHallPageContent();
+    } else if (dto.sourcePageId) {
       const source = await this.prisma.page.findUnique({
         where: { id: dto.sourcePageId },
         include: { tenant: { include: { kind: true } } },

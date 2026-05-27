@@ -12,6 +12,7 @@ import { EventsModule } from '../events/events.module';
 import { MediaModule } from '../media/media.module';
 import { BostonTvModule } from '../boston-tv/boston-tv.module';
 import { RegistrationInviteModule } from '../registration-invite/registration-invite.module';
+import { BostonCityHallModule } from '../boston-city-hall/boston-city-hall.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RegistrationInviteModule } from '../registration-invite/registration-in
     EventsModule,
     BostonTvModule,
     RegistrationInviteModule,
+    BostonCityHallModule,
   ],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService],

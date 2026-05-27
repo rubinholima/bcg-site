@@ -119,6 +119,7 @@ model Tenant {
   bostonTvPlaylists     BostonTvPlaylist[]
   bostonTvScreens       BostonTvScreen[]
   travelLogistics       TravelLogistics[]
+  footballAgendaEntries FootballAgendaEntry[]
   events                Event[]
   userTenants           UserTenant[]
   financeiroLancamentos FinanceiroLancamento[]
@@ -214,6 +215,29 @@ model TravelLogistics {
   @@index([tenantId])
   @@index([tenantId, matchDate])
   @@index([status])
+  footballAgendaEntries FootballAgendaEntry[]
+}
+
+/** Compromissos operacionais do Depto Futebol (treinos, reuniões, jogos, etc.) — exibidos na agenda junto com viagens. */
+model FootballAgendaEntry {
+  id                String            @id @default(cuid())
+  tenantId          String
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category          String?
+  type              String            // treino | reuniao | jogo | compromisso | preparacao | outro
+  title             String
+  startAt           DateTime
+  endAt             DateTime?
+  allDay            Boolean           @default(false)
+  location          String?
+  description       String?           @db.Text
+  status            String            @default("confirmado") // confirmado | provisorio | cancelado
+  travelLogisticsId String?
+  travelLogistics   TravelLogistics?  @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  @@index([tenantId, startAt])
+  @@index([travelLogisticsId])
 }
 
 // Evento (copa, torneio, etc.) — promovido pelo grupo ou tenant; landing page modular
@@ -1343,4 +1367,69 @@ model MarketingPost {
   @@index([tenantId])
   @@index([scheduledAt])
   @@index([status])
+}
+
+// Boston City Hall — venue: espaços, reservas e pipeline comercial
+model VenueSpace {
+  id               String         @id @default(cuid())
+  venueSlug        String         @default("boston-city-hall")
+  name             String
+  slug             String
+  capacityStanding Int?
+  capacitySeated   Int?
+  sortOrder        Int            @default(0)
+  active           Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  bookings         VenueBooking[]
+
+  @@unique([venueSlug, slug])
+  @@index([venueSlug])
+}
+
+model VenueBooking {
+  id             String              @id @default(cuid())
+  venueSlug      String              @default("boston-city-hall")
+  spaceId        String
+  space          VenueSpace          @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  title          String
+  eventType      String?
+  startAt        DateTime
+  endAt          DateTime
+  status         String              @default("hold")
+  pipelineLeadId String?             @unique
+  pipelineLead   VenuePipelineLead?  @relation(fields: [pipelineLeadId], references: [id], onDelete: SetNull)
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  guestCount     Int?
+  notes          String?             @db.Text
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([venueSlug, startAt])
+  @@index([spaceId])
+  @@index([status])
+}
+
+model VenuePipelineLead {
+  id            String        @id @default(cuid())
+  venueSlug     String        @default("boston-city-hall")
+  contactName   String
+  contactEmail  String
+  contactPhone  String?
+  companyName   String?
+  eventType     String?
+  guestCount    Int?
+  preferredDate DateTime?
+  message       String?       @db.Text
+  stage         String        @default("lead")
+  source        String        @default("manual")
+  notes         String?       @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  booking       VenueBooking?
+
+  @@index([venueSlug, stage])
+  @@index([createdAt])
 }
