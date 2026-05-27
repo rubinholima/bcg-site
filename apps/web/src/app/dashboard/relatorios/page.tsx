@@ -34,7 +34,12 @@ function RelatoriosContent() {
     );
   }
 
-  if (!canAccessModule("relatorios")) {
+  if (!hub) {
+    router.replace("/403");
+    return null;
+  }
+
+  if (!canAccessModule(`relatorios_${hub}`) && !canAccessModule("relatorios")) {
     router.replace("/403");
     return null;
   }

@@ -7,8 +7,9 @@
  * Cadastros MDM ficam dentro de cada departamento — submenu **Cadastros** logo após Visão geral;
  * **Relatórios** sempre por último em cada dept.
  *
- * REGRA Acessos: todo item com href aqui (e PLAYER_TABS) deve aparecer em Configurações → Acessos
- * via getMenuAccessTree() + sync automático ao abrir a tela (buildModuleCatalog).
+ * REGRA Acessos: cada item de menu tem slug de permissão individual (accessSlug);
+ * accessGroup só para itens que dependem uns dos outros (ex.: Omie).
+ * Sync automático via buildModuleCatalog() ao abrir Configurações → Acessos.
  */
 
 import type { LucideIcon } from "lucide-react";
@@ -61,6 +62,11 @@ import {
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
 
+/** Rótulos de grupos de permissão compartilhada (accessGroup). */
+export const ACCESS_GROUP_LABELS: Record<string, string> = {
+  omie: "Omie — Financeiro, Compras e Estoque",
+};
+
 /** Relatórios por hub — query `hub` filtra na página de relatórios. */
 export function hubRelatorio(hub: string): MenuItemConfig {
   return {
@@ -69,6 +75,7 @@ export function hubRelatorio(hub: string): MenuItemConfig {
     href: `/dashboard/relatorios?hub=${hub}`,
     icon: BarChart3,
     moduleSlug: "relatorios",
+    accessSlug: `relatorios_${hub}`,
   };
 }
 
@@ -82,6 +89,61 @@ export interface MenuItemConfig {
   external?: boolean;
   /** Agrupa visualmente com itens consecutivos (menos espaço entre eles) */
   compactGroup?: string;
+  /** Permissão individual no Acessos (padrão: deptSlug__itemSlug). */
+  accessSlug?: string;
+  /** Mesmo valor = mesma permissão (só para módulos interdependentes). */
+  accessGroup?: string;
+}
+
+/** Slug de permissão usado no Acessos e na sidebar. */
+export function resolveMenuAccessSlug(item: MenuItemConfig, pathPrefix: string): string {
+  if (item.accessSlug) return item.accessSlug;
+  if (item.accessGroup) return `group_${item.accessGroup}`;
+  return `${pathPrefix}__${item.slug}`;
+}
+
+export interface MenuAccessCatalogEntry {
+  slug: string;
+  name: string;
+  moduleSlug: string;
+  sortOrder: number;
+  impliesSlug?: string;
+}
+
+/** Verifica acesso a um item folha do menu (com fallback ao moduleSlug legado). */
+export function canAccessMenuLeaf(
+  item: MenuItemConfig,
+  pathPrefix: string,
+  canAccessModule: (slug: string) => boolean,
+): boolean {
+  const accessSlug = resolveMenuAccessSlug(item, pathPrefix);
+  return canAccessModule(accessSlug) || canAccessModule(item.moduleSlug);
+}
+
+/** Verifica acesso a item do menu (folha ou ramo com filho liberado). */
+export function hasAccessToMenuItem(
+  item: MenuItemConfig,
+  pathPrefix: string,
+  canAccessModule: (slug: string) => boolean,
+  canAccessDashboard?: boolean,
+): boolean {
+  if (item.moduleSlug === "emails" && canAccessDashboard) return true;
+  if (item.children?.length) {
+    const nestedPrefix = `${pathPrefix}/${item.slug}`;
+    return item.children.some((c) =>
+      hasAccessToMenuItem(c, nestedPrefix, canAccessModule, canAccessDashboard),
+    );
+  }
+  if (item.href && !item.external) return canAccessMenuLeaf(item, pathPrefix, canAccessModule);
+  return canAccessModule(item.moduleSlug);
+}
+
+/** Relatórios de um departamento (hub). */
+export function canAccessHubRelatorios(
+  hub: string,
+  canAccessModule: (slug: string) => boolean,
+): boolean {
+  return canAccessModule(`relatorios_${hub}`) || canAccessModule("relatorios");
 }
 
 export interface PlayerTabConfig {
@@ -219,11 +281,11 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
         ],
       },
-      { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro", compactGroup: "omie" },
+      { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro", compactGroup: "omie", accessGroup: "omie" },
       { slug: "adm_financeiro_aprovacoes", label: "Aprovações compras", href: "/dashboard/adm/financeiro/aprovacoes", icon: CheckCircle, moduleSlug: "adm_financeiro" },
-      { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras", compactGroup: "omie" },
+      { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras", compactGroup: "omie", accessGroup: "omie" },
       { slug: "adm_ti", label: "TI — Atendimento", href: "/dashboard/adm/ti", icon: Monitor, moduleSlug: "adm_ti" },
-      { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie" },
+      { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie", accessGroup: "omie" },
       { slug: "adm_rh", label: "RH", href: "/dashboard/adm/rh", icon: Users, moduleSlug: "adm_rh" },
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
       hubRelatorio("adm"),
@@ -656,40 +718,86 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
   },
 ];
 
-/** Extrai todos os slugs de módulo únicos (folhas do menu + abas do jogador). */
-export function getUniqueModuleSlugs(): string[] {
-  const slugs = new Set<string>();
-  function walk(items: MenuItemConfig[]) {
+/** Catálogo de permissões por item de menu (+ módulos só de API). */
+export function getMenuAccessCatalog(): MenuAccessCatalogEntry[] {
+  const bySlug = new Map<string, MenuAccessCatalogEntry>();
+  let sortOrder = 0;
+
+  function addEntry(slug: string, name: string, moduleSlug: string, accessGroup?: string) {
+    if (bySlug.has(slug)) return;
+    const displayName =
+      slug.startsWith("group_") && accessGroup
+        ? (ACCESS_GROUP_LABELS[accessGroup] ?? name)
+        : name;
+    const impliesSlug = slug.startsWith("group_") ? undefined : moduleSlug !== slug ? moduleSlug : undefined;
+    bySlug.set(slug, {
+      slug,
+      name: displayName,
+      moduleSlug,
+      sortOrder: sortOrder++,
+      impliesSlug,
+    });
+  }
+
+  function walk(items: MenuItemConfig[], pathPrefix: string) {
     for (const item of items) {
       if (item.children?.length) {
-        walk(item.children);
-        slugs.add(item.moduleSlug);
+        walk(item.children, `${pathPrefix}/${item.slug}`);
       } else if (item.href && !item.external) {
-        slugs.add(item.moduleSlug);
+        const slug = resolveMenuAccessSlug(item, pathPrefix);
+        addEntry(slug, item.label, item.moduleSlug, item.accessGroup);
       }
     }
   }
-  walk(DASHBOARD_MENU);
-  for (const tab of PLAYER_TABS) {
-    if (tab.moduleSlug) slugs.add(tab.moduleSlug);
+
+  for (const top of DASHBOARD_MENU) {
+    if (top.children?.length) {
+      walk(top.children, top.slug);
+    } else if (top.href && !top.external) {
+      addEntry(resolveMenuAccessSlug(top, top.slug), top.label, top.moduleSlug, top.accessGroup);
+    }
   }
-  slugs.add("saude").add("diretoria").add("juridico").add("relatorios");
-  slugs
-    .add("adm_financeiro")
-    .add("adm_compras")
-    .add("adm_estoque")
-    .add("adm_rh")
-    .add("adm_patrimonio")
-    .add("adm_nutricao")
-    .add("requisicoes")
-    .add("adm_ti");
-  slugs
-    .add("futebol_comissao")
-    .add("futebol_fisiologia")
-    .add("futebol_analise")
-    .add("futebol_logistica");
-  slugs.add("socio_torcedor").add("marketing").add("boston_tv").add("eventos").add("academias");
-  return Array.from(slugs).sort();
+
+  for (const tab of PLAYER_TABS) {
+    if (!tab.moduleSlug) continue;
+    addEntry(`player_tab__${tab.id}`, `${DASHBOARD_LABELS.atletas} — ${tab.label}`, tab.moduleSlug);
+  }
+
+  for (const extra of API_ONLY_MODULE_SLUGS) {
+    addEntry(extra.slug, extra.name, extra.slug);
+  }
+
+  return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+const API_ONLY_MODULE_SLUGS: Array<{ slug: string; name: string }> = [
+  { slug: "vault_manage", name: "Senhas / Vault (gerenciar)" },
+  { slug: "vault_reveal", name: "Senhas / Vault (revelar/copiar)" },
+  { slug: "vault_export", name: "Senhas / Vault (exportar)" },
+  { slug: "integracoes", name: "Integrações" },
+  { slug: "psicologia", name: "Psicologia — legado auditoria" },
+  { slug: "medico", name: "Médico — legado auditoria" },
+  { slug: "analista", name: "Analista" },
+];
+
+/** Catálogo para sync com a API. */
+export function buildModuleCatalog(names?: Record<string, string>): Array<{
+  slug: string;
+  name: string;
+  sortOrder: number;
+  impliesSlug?: string;
+}> {
+  return getMenuAccessCatalog().map((e) => ({
+    slug: e.slug,
+    name: names?.[e.slug] ?? e.name,
+    sortOrder: e.sortOrder,
+    ...(e.impliesSlug ? { impliesSlug: e.impliesSlug } : {}),
+  }));
+}
+
+/** Slugs únicos do catálogo de acessos (sync + matriz). */
+export function getUniqueModuleSlugs(): string[] {
+  return getMenuAccessCatalog().map((e) => e.slug);
 }
 
 export interface MenuDepartmentModule {
@@ -709,16 +817,24 @@ export interface MenuAccessTreeNode {
   id: string;
   label: string;
   kind: "group" | "leaf";
+  /** Slug de permissão (folhas) — individual ou group_* */
+  accessSlug?: string;
+  accessGroup?: string;
   moduleSlug?: string;
   menuSlug?: string;
   href?: string;
   children: MenuAccessTreeNode[];
 }
 
-/** Coleta todos os moduleSlug das folhas de um nó. */
+/** Coleta accessSlug das folhas de um nó. */
+export function collectTreeAccessSlugs(node: MenuAccessTreeNode): string[] {
+  if (node.kind === "leaf" && node.accessSlug) return [node.accessSlug];
+  return node.children.flatMap(collectTreeAccessSlugs);
+}
+
+/** @deprecated Use collectTreeAccessSlugs */
 export function collectTreeModuleSlugs(node: MenuAccessTreeNode): string[] {
-  if (node.kind === "leaf" && node.moduleSlug) return [node.moduleSlug];
-  return node.children.flatMap(collectTreeModuleSlugs);
+  return collectTreeAccessSlugs(node);
 }
 
 function walkMenuAccessItems(items: MenuItemConfig[], pathPrefix: string): MenuAccessTreeNode[] {
@@ -737,10 +853,13 @@ function walkMenuAccessItems(items: MenuItemConfig[], pathPrefix: string): MenuA
         });
       }
     } else if (item.href && !item.external) {
+      const accessSlug = resolveMenuAccessSlug(item, pathPrefix);
       nodes.push({
         id,
         label: item.label,
         kind: "leaf",
+        accessSlug,
+        accessGroup: item.accessGroup,
         moduleSlug: item.moduleSlug,
         menuSlug: item.slug,
         href: item.href,
@@ -775,6 +894,8 @@ export function getMenuAccessTree(): MenuAccessTreeNode[] {
         id: top.slug,
         label: top.label,
         kind: "leaf",
+        accessSlug: resolveMenuAccessSlug(top, top.slug),
+        accessGroup: top.accessGroup,
         moduleSlug: top.moduleSlug,
         menuSlug: top.slug,
         href: top.href,
@@ -786,10 +907,12 @@ export function getMenuAccessTree(): MenuAccessTreeNode[] {
   const playerChildren: MenuAccessTreeNode[] = [];
   for (const tab of PLAYER_TABS) {
     if (!tab.moduleSlug) continue;
+    const accessSlug = `player_tab__${tab.id}`;
     playerChildren.push({
       id: `player_tabs/${tab.id}`,
       label: tab.label,
       kind: "leaf",
+      accessSlug,
       moduleSlug: tab.moduleSlug,
       menuSlug: tab.id,
       children: [],
@@ -808,19 +931,6 @@ export function getMenuAccessTree(): MenuAccessTreeNode[] {
   return roots;
 }
 
-/** Catálogo para sync com a API (nomes amigáveis preenchidos no front). */
-export function buildModuleCatalog(names: Record<string, string>): Array<{
-  slug: string;
-  name: string;
-  sortOrder: number;
-}> {
-  return getUniqueModuleSlugs().map((slug, index) => ({
-    slug,
-    name: names[slug] ?? slug,
-    sortOrder: index,
-  }));
-}
-
 /** Coleta slugs + rótulos de menu por departamento de primeiro nível. */
 export function getMenuDepartmentGroups(): MenuDepartmentGroup[] {
   const groups: MenuDepartmentGroup[] = [];
@@ -834,20 +944,20 @@ export function getMenuDepartmentGroups(): MenuDepartmentGroup[] {
       bySlug.set(slug, list);
     }
 
-    function walk(items: MenuItemConfig[]) {
+    function walk(items: MenuItemConfig[], pathPrefix: string) {
       for (const item of items) {
         if (item.children?.length) {
-          walk(item.children);
+          walk(item.children, `${pathPrefix}/${item.slug}`);
         } else if (item.href && !item.external) {
-          addLabel(item.moduleSlug, item.label);
+          addLabel(resolveMenuAccessSlug(item, pathPrefix), item.label);
         }
       }
     }
 
     if (top.children?.length) {
-      walk(top.children);
+      walk(top.children, top.slug);
     } else if (top.href && !top.external) {
-      addLabel(top.moduleSlug, top.label);
+      addLabel(resolveMenuAccessSlug(top, top.slug), top.label);
     }
 
     const modules = [...bySlug.entries()]
@@ -866,9 +976,10 @@ export function getMenuDepartmentGroups(): MenuDepartmentGroup[] {
   const playerBySlug = new Map<string, string[]>();
   for (const tab of PLAYER_TABS) {
     if (!tab.moduleSlug) continue;
-    const list = playerBySlug.get(tab.moduleSlug) ?? [];
+    const slug = `player_tab__${tab.id}`;
+    const list = playerBySlug.get(slug) ?? [];
     if (!list.includes(tab.label)) list.push(tab.label);
-    playerBySlug.set(tab.moduleSlug, list);
+    playerBySlug.set(slug, list);
   }
   if (playerBySlug.size > 0) {
     groups.push({

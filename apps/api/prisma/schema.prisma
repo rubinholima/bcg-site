@@ -345,6 +345,8 @@ model Module {
   sortOrder       Int      @default(0)
   /// Agrupamento lógico na UI de permissões (Configurações → Módulos). Chave estável: estrategico, empresa_usuarios, etc.
   functionalArea  String   @default("outros")
+  /// Módulo de API liberado junto com este slug de menu (ex.: adm__adm_clientes → adm_financeiro).
+  impliesSlug     String?
   roles           ModuleRole[]
   userAccess      UserModuleAccess[]
   @@index([functionalArea])

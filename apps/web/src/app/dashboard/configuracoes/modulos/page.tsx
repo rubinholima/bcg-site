@@ -589,20 +589,37 @@ export default function ModulosPage() {
     return map;
   }, [mergedModuleState, selectedRole]);
 
-  const isModuleEnabled = useCallback(
-    (slug: string) => {
-      if (accessMode === "role") {
-        return rolePermissionsMap.get(slug) ?? false;
-      }
-      if (userCustomAccess) {
-        return userPermissions[slug] ?? false;
-      }
-      const userRole = selectedUserRole as ManagedRoleKey;
-      const mod = mergedModuleState.find((m) => m.slug === slug);
-      return mod ? roleChecked(mod, userRole) : false;
+  const isAccessEnabled = useCallback(
+    (accessSlug: string, legacyModuleSlug?: string) => {
+      const read = (slug: string) => {
+        if (accessMode === "role") {
+          if (rolePermissionsMap.has(slug)) return rolePermissionsMap.get(slug) ?? false;
+          return false;
+        }
+        if (userCustomAccess) {
+          if (slug in userPermissions) return userPermissions[slug] ?? false;
+        }
+        const userRole = selectedUserRole as ManagedRoleKey;
+        const mod = mergedModuleState.find((m) => m.slug === slug);
+        return mod ? roleChecked(mod, userRole) : false;
+      };
+      if (read(accessSlug)) return true;
+      if (legacyModuleSlug && legacyModuleSlug !== accessSlug && read(legacyModuleSlug)) return true;
+      return false;
     },
     [accessMode, rolePermissionsMap, userCustomAccess, userPermissions, selectedUserRole, mergedModuleState],
   );
+
+  const handleTreeToggleAccess = (accessSlug: string, value: boolean) => {
+    if (accessMode === "role") {
+      handleModuleToggle(accessSlug, selectedRole, value);
+      return;
+    }
+    setUserPermissions((prev) => ({ ...prev, [accessSlug]: value }));
+    setUserCustomAccess(true);
+    setUserDirty(true);
+    setSaveBanner(null);
+  };
 
   const applySlugsToRole = useCallback(
     (slugs: string[], role: ManagedRoleKey, value: boolean) => {
@@ -635,32 +652,6 @@ export default function ModulosPage() {
     },
     [displayModules],
   );
-
-  const handleTreeToggleModule = (slug: string, value: boolean) => {
-    if (accessMode === "role") {
-      handleModuleToggle(slug, selectedRole, value);
-      return;
-    }
-    setUserPermissions((prev) => ({ ...prev, [slug]: value }));
-    setUserCustomAccess(true);
-    setUserDirty(true);
-    setSaveBanner(null);
-  };
-
-  const handleTreeToggleModules = (slugs: string[], value: boolean) => {
-    if (accessMode === "role") {
-      applySlugsToRole(slugs, selectedRole, value);
-      return;
-    }
-    setUserPermissions((prev) => {
-      const next = { ...prev };
-      for (const slug of slugs) next[slug] = value;
-      return next;
-    });
-    setUserCustomAccess(true);
-    setUserDirty(true);
-    setSaveBanner(null);
-  };
 
   const handlePersonalizeUser = async () => {
     if (!selectedUserId) return;
@@ -1005,8 +996,8 @@ export default function ModulosPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Acesso por menu</CardTitle>
             <p className="text-sm text-muted-foreground font-normal mt-1">
-              Mesma estrutura do menu lateral — cada bloco com linha destacada é um departamento;
-              Cadastros e demais subseções aparecem na ordem do menu.
+              Cada linha é um item do menu — marque individualmente. Grupos Omie (Financeiro, Compras,
+              Estoque) compartilham permissão porque dependem uns dos outros.
             </p>
           </CardHeader>
           <CardContent>
@@ -1015,9 +1006,8 @@ export default function ModulosPage() {
             ) : (
               <AccessPermissionTree
                 tree={menuTree}
-                isEnabled={isModuleEnabled}
-                onToggleModule={handleTreeToggleModule}
-                onToggleModules={handleTreeToggleModules}
+                isEnabled={isAccessEnabled}
+                onToggleAccess={handleTreeToggleAccess}
                 search={search}
                 readOnly={accessMode === "user" && !userCustomAccess}
               />

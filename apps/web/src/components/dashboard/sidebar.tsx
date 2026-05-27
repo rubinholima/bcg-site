@@ -11,21 +11,24 @@ import {
 } from "lucide-react";
 import type { Group } from "@/types/group";
 import type { MenuItemConfig } from "@/lib/dashboard-menu.config";
-import { DASHBOARD_MENU } from "@/lib/dashboard-menu.config";
+import {
+  DASHBOARD_MENU,
+  canAccessMenuLeaf,
+  hasAccessToMenuItem,
+} from "@/lib/dashboard-menu.config";
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 
 /** Verifica se o usuário tem acesso a pelo menos um filho do grupo (recursivo). */
 function hasAccessToAnyChild(
   children: MenuItemConfig[],
+  pathPrefix: string,
   canAccessModule: (slug: string) => boolean,
-  canAccessDashboard?: boolean
+  canAccessDashboard?: boolean,
 ): boolean {
-  return children.some((c) => {
-    if (c.moduleSlug === "emails" && canAccessDashboard) return true;
-    if (c.children?.length) return hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard);
-    return canAccessModule(c.moduleSlug);
-  });
+  return children.some((c) =>
+    hasAccessToMenuItem(c, pathPrefix, canAccessModule, canAccessDashboard),
+  );
 }
 
 function relatorioHub(href: string | undefined): string | null {
@@ -533,7 +536,10 @@ function SidebarNav() {
           }
 
           if (item.href && !item.children?.length) {
-            if (!canAccessModule(item.moduleSlug) && !(item.moduleSlug === "emails" && canAccessDashboard)) {
+            if (
+              !canAccessMenuLeaf(item, item.slug, canAccessModule) &&
+              !(item.moduleSlug === "emails" && canAccessDashboard)
+            ) {
               return null;
             }
             const isActive =
@@ -564,49 +570,12 @@ function SidebarNav() {
           }
 
           if (item.children?.length) {
-            const showGroup =
-              item.slug === "grupo_master"
-                ? canAccessModule("grupo_master") ||
-                  canAccessModule("diretoria") ||
-                  canAccessModule("empresas") ||
-                  canAccessModule("tipos") ||
-                  canAccessModule("usuarios") ||
-                  canAccessModule("relatorios")
-                : item.slug === "adm"
-                    ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
-                      : item.slug === "saude"
-                      ? canAccessModule("saude") ||
-                        canAccessModule("futebol_fisiologia") ||
-                        canAccessModule("adm_nutricao") ||
-                        canAccessModule("relatorios")
-                      : item.slug === "futebol"
-                        ? canAccessModule("tipos") ||
-                          canAccessModule("futebol_comissao") ||
-                          canAccessModule("futebol_fisiologia") ||
-                          canAccessModule("diretoria") ||
-                          canAccessModule("futebol_analise") ||
-                          canAccessModule("futebol_logistica") ||
-                          canAccessModule("relatorios")
-                        : item.slug === "juridico"
-                          ? canAccessModule("juridico") || canAccessModule("relatorios")
-                          : item.slug === "eventos"
-                            ? canAccessModule("eventos") || canAccessModule("relatorios")
-                            : item.slug === "ferramentas"
-                        ? hasAccessToAnyChild(item.children, canAccessModule, canAccessDashboard)
-                          : item.slug === "configuracoes"
-                          ? canAccessModule("configuracoes") ||
-                            canAccessModule("usuarios") ||
-                            canAccessModule("empresas")
-                          : item.slug === "socio_torcedor"
-                              ? canAccessModule("socio_torcedor") || canAccessModule("relatorios")
-                              : item.slug === "academias"
-                                ? canAccessModule("academias")
-                                : item.slug === "marketing"
-                                ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard) ||
-                                  canAccessModule("relatorios")
-                                : item.slug === "requisicoes"
-                                  ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
-                                  : false;
+            const showGroup = hasAccessToAnyChild(
+              item.children ?? [],
+              item.slug,
+              canAccessModule,
+              canAccessDashboard,
+            );
 
             if (!showGroup) return null;
 
@@ -639,8 +608,9 @@ function SidebarNav() {
 
             const visibleHubChildren = item.children.filter((c) =>
               c.children?.length
-                ? hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard)
-                : canAccessModule(c.moduleSlug) || (c.moduleSlug === "emails" && canAccessDashboard),
+                ? hasAccessToAnyChild(c.children, `${item.slug}/${c.slug}`, canAccessModule, canAccessDashboard)
+                : canAccessMenuLeaf(c, item.slug, canAccessModule) ||
+                  (c.moduleSlug === "emails" && canAccessDashboard),
             );
             const activeHubChildHref = pickMostSpecificActiveHref(visibleHubChildren, pathname, relHub);
 
@@ -687,12 +657,23 @@ function SidebarNav() {
                       {item.children
                         .filter((c) =>
                           c.children?.length
-                            ? hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard)
-                            : canAccessModule(c.moduleSlug) || (c.moduleSlug === "emails" && canAccessDashboard),
+                            ? hasAccessToAnyChild(
+                                c.children,
+                                `${item.slug}/${c.slug}`,
+                                canAccessModule,
+                                canAccessDashboard,
+                              )
+                            : canAccessMenuLeaf(c, item.slug, canAccessModule) ||
+                              (c.moduleSlug === "emails" && canAccessDashboard),
                         )
                         .map((child) => {
                           if (child.children?.length) {
-                            const hasAccess = hasAccessToAnyChild(child.children, canAccessModule, canAccessDashboard);
+                            const hasAccess = hasAccessToAnyChild(
+                              child.children,
+                              `${item.slug}/${child.slug}`,
+                              canAccessModule,
+                              canAccessDashboard,
+                            );
                             if (!hasAccess) return null;
                             const SubIcon = child.icon;
                             const isSubOpen = isNestedExpanded(child);
@@ -720,7 +701,7 @@ function SidebarNav() {
                                     {child.children
                                       .filter(
                                         (cc) =>
-                                          canAccessModule(cc.moduleSlug) ||
+                                          canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
                                           (cc.moduleSlug === "emails" && canAccessDashboard),
                                       )
                                       .map((cc) => {
@@ -786,12 +767,23 @@ function SidebarNav() {
                     {item.children
                       .filter((c) =>
                         c.children?.length
-                          ? hasAccessToAnyChild(c.children, canAccessModule, canAccessDashboard)
-                          : canAccessModule(c.moduleSlug) || (c.moduleSlug === "emails" && canAccessDashboard)
+                          ? hasAccessToAnyChild(
+                              c.children,
+                              `${item.slug}/${c.slug}`,
+                              canAccessModule,
+                              canAccessDashboard,
+                            )
+                          : canAccessMenuLeaf(c, item.slug, canAccessModule) ||
+                            (c.moduleSlug === "emails" && canAccessDashboard),
                       )
                       .map((child) => {
                         if (child.children?.length) {
-                          const hasAccess = hasAccessToAnyChild(child.children, canAccessModule, canAccessDashboard);
+                          const hasAccess = hasAccessToAnyChild(
+                            child.children,
+                            `${item.slug}/${child.slug}`,
+                            canAccessModule,
+                            canAccessDashboard,
+                          );
                           if (!hasAccess) return null;
                           const SubIcon = child.icon;
                           const isSubOpen = isNestedExpanded(child);
@@ -821,13 +813,14 @@ function SidebarNav() {
                                     return child.children
                                       .filter(
                                         (cc) =>
-                                          canAccessModule(cc.moduleSlug) ||
-                                          (cc.moduleSlug === "emails" && canAccessDashboard)
+                                          canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
+                                          (cc.moduleSlug === "emails" && canAccessDashboard),
                                       )
                                       .map((cc) => {
                                         if (cc.children?.length) {
                                           const hasCcAccess = hasAccessToAnyChild(
                                             cc.children,
+                                            `${item.slug}/${child.slug}/${cc.slug}`,
                                             canAccessModule,
                                             canAccessDashboard,
                                           );
@@ -859,7 +852,11 @@ function SidebarNav() {
                                                   {cc.children
                                                     .filter(
                                                       (ccc) =>
-                                                        canAccessModule(ccc.moduleSlug) ||
+                                                        canAccessMenuLeaf(
+                                                          ccc,
+                                                          `${item.slug}/${child.slug}/${cc.slug}`,
+                                                          canAccessModule,
+                                                        ) ||
                                                         (ccc.moduleSlug === "emails" && canAccessDashboard),
                                                     )
                                                     .map((ccc) => {

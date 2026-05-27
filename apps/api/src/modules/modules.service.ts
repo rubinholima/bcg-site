@@ -44,7 +44,13 @@ export interface ModuleCatalogEntry {
   name: string;
   sortOrder?: number;
   functionalArea?: string;
+  impliesSlug?: string;
 }
+
+/** Grupos de permissão compartilhada → módulos de API liberados juntos. */
+const ACCESS_GROUP_IMPLIES: Record<string, string[]> = {
+  group_omie: ['adm_financeiro', 'adm_compras', 'adm_estoque'],
+};
 
 export interface UserModulePermissions {
   userId: string;
@@ -86,6 +92,25 @@ export function computeMatrixChanges(
 export class ModulesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Slugs efetivos (menu + módulos de API implícitos). */
+  private async expandModuleSlugs(slugs: string[]): Promise<string[]> {
+    const out = new Set(slugs);
+    if (slugs.length === 0) return [];
+
+    const modules = await this.prisma.module.findMany({
+      where: { slug: { in: slugs } },
+      select: { slug: true, impliesSlug: true },
+    });
+    for (const mod of modules) {
+      if (mod.impliesSlug) out.add(mod.impliesSlug);
+    }
+    for (const slug of slugs) {
+      const groupSlugs = ACCESS_GROUP_IMPLIES[slug];
+      if (groupSlugs) groupSlugs.forEach((s) => out.add(s));
+    }
+    return Array.from(out);
+  }
+
   /** Lista de slugs que a role pode acessar. */
   async getSlugsForRole(role: string): Promise<string[]> {
     const rows = await this.prisma.moduleRole.findMany({
@@ -96,7 +121,8 @@ export class ModulesService {
       include: { module: true },
       orderBy: { module: { sortOrder: 'asc' } },
     });
-    return rows.map((r) => r.module.slug);
+    const raw = rows.map((r) => r.module.slug);
+    return this.expandModuleSlugs(raw);
   }
 
   /** Todos os slugs cadastrados. */
@@ -132,7 +158,8 @@ export class ModulesService {
         include: { module: true },
         orderBy: { module: { sortOrder: 'asc' } },
       });
-      return rows.map((r) => r.module.slug);
+      const raw = rows.map((r) => r.module.slug);
+      return this.expandModuleSlugs(raw);
     }
     return this.getSlugsForRole(role);
   }
@@ -163,6 +190,7 @@ export class ModulesService {
             name: entry.name,
             sortOrder,
             ...(entry.functionalArea ? { functionalArea: entry.functionalArea } : {}),
+            impliesSlug: entry.impliesSlug ?? null,
           },
         });
         updated++;
@@ -173,6 +201,7 @@ export class ModulesService {
             name: entry.name,
             sortOrder,
             functionalArea: entry.functionalArea ?? 'outros',
+            impliesSlug: entry.impliesSlug ?? null,
           },
         });
         for (const role of MANAGED_ROLES) {
