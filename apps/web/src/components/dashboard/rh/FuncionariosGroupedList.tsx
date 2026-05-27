@@ -31,6 +31,10 @@ interface FuncionariosGroupedListProps {
   onLinkPlayer: (employee: EmployeeRow) => void;
 }
 
+function isFootballLinkRelevant(type: string | null | undefined): boolean {
+  return type?.trim() === "athlete";
+}
+
 function EmployeeTable({
   rows,
   hideTypeColumn,
@@ -44,6 +48,8 @@ function EmployeeTable({
   onDelete: (id: string) => void;
   onLinkPlayer: (employee: EmployeeRow) => void;
 }) {
+  const showFootballColumn = rows.some((r) => isFootballLinkRelevant(r.type));
+
   return (
     <Table>
       <TableHeader>
@@ -52,7 +58,11 @@ function EmployeeTable({
           <TableHead className="hidden sm:table-cell">Matrícula</TableHead>
           <TableHead>Nome</TableHead>
           {!hideTypeColumn ? <TableHead>Tipo</TableHead> : null}
-          <TableHead className="hidden lg:table-cell">Futebol</TableHead>
+          {showFootballColumn ? (
+            <TableHead className="hidden lg:table-cell" title="Liga cadastro RH ao atleta no módulo Futebol">
+              Futebol
+            </TableHead>
+          ) : null}
           <TableHead className="hidden md:table-cell">CPF</TableHead>
           <TableHead className="hidden md:table-cell">E-mail</TableHead>
           <TableHead className="hidden sm:table-cell">Telefone</TableHead>
@@ -78,47 +88,55 @@ function EmployeeTable({
             </TableCell>
             <TableCell className="font-medium uppercase">{cadastroDisplayUpper(emp.name)}</TableCell>
             {!hideTypeColumn ? <TableCell>{getEmployeeTypeLabel(emp.type)}</TableCell> : null}
-            <TableCell className="hidden lg:table-cell">
-              {emp.playerId ? (
-                <Link
-                  href={`/dashboard/cadastros/jogadores/${emp.playerId}/edit`}
-                  className="text-sm text-primary hover:underline uppercase"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {cadastroDisplayUpper(emp.player?.name ?? "Atleta")}
-                </Link>
-              ) : (
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  className="h-auto p-0 text-xs uppercase"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLinkPlayer(emp);
-                  }}
-                >
-                  Vincular
-                </Button>
-              )}
-            </TableCell>
+            {showFootballColumn ? (
+              <TableCell className="hidden lg:table-cell">
+                {isFootballLinkRelevant(emp.type) ? (
+                  emp.playerId ? (
+                    <Link
+                      href={`/dashboard/cadastros/jogadores/${emp.playerId}/edit`}
+                      className="text-sm text-primary hover:underline uppercase"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {cadastroDisplayUpper(emp.player?.name ?? "Atleta")}
+                    </Link>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs uppercase"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onLinkPlayer(emp);
+                      }}
+                    >
+                      Vincular
+                    </Button>
+                  )
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </TableCell>
+            ) : null}
             <TableCell className="hidden md:table-cell">{employeeCpfDisplay(emp.cpf)}</TableCell>
             <TableCell className="hidden md:table-cell">{emp.email ?? "—"}</TableCell>
             <TableCell className="hidden sm:table-cell">{employeePhoneDisplay(emp.phone)}</TableCell>
             <TableRowActions align="left">
               <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Vincular Futebol"
-                  title="Vínculo com Futebol"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLinkPlayer(emp);
-                  }}
-                >
-                  <Link2 className="h-4 w-4" />
-                </Button>
+                {isFootballLinkRelevant(emp.type) ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Vincular Futebol"
+                    title="Vínculo com Futebol (cadastro de atleta)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLinkPlayer(emp);
+                    }}
+                  >
+                    <Link2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
                 <Button
                   variant="ghost"
                   size="icon"

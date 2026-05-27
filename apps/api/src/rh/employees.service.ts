@@ -13,6 +13,7 @@ import {
   unlinkPlayerFromEmployee,
 } from './employee-player-link';
 import { employeeDocumentationCreate, employeeDocumentationPatch } from './employee-documentation.util';
+import { employeeVisibleInRhListFilter } from './rh-employee-visibility.util';
 
 const employeeInclude = {
   tenant: { select: { id: true, name: true, slug: true, logoUrl: true } },
@@ -25,7 +26,9 @@ export class EmployeesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(tenantId?: string, type?: string, search?: string) {
-    const where: Record<string, unknown> = {};
+    const where: Prisma.EmployeeWhereInput = {
+      ...employeeVisibleInRhListFilter,
+    };
     if (tenantId) where.tenantId = tenantId;
     if (type?.trim()) where.type = type.trim();
     if (search?.trim()) {

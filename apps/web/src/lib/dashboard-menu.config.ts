@@ -52,6 +52,8 @@ import {
   GraduationCap,
   Archive,
   Monitor,
+  Sliders,
+  Link2,
   Truck,
 } from "lucide-react";
 import { DASHBOARD_LABELS } from "./dashboard-labels";
@@ -615,10 +617,10 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     moduleSlug: "configuracoes",
     children: [
       {
-        slug: "config_geral",
-        label: "Geral",
-        href: "/dashboard/configuracoes",
-        icon: Settings,
+        slug: "config_acessos",
+        label: "Acessos",
+        href: "/dashboard/configuracoes/modulos",
+        icon: Sliders,
         moduleSlug: "configuracoes",
       },
       {
@@ -640,6 +642,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         label: "Requisições",
         href: "/dashboard/configuracoes/compras",
         icon: ClipboardList,
+        moduleSlug: "configuracoes",
+      },
+      {
+        slug: "config_integracoes",
+        label: "Integrações",
+        href: "/dashboard/configuracoes/integracoes",
+        icon: Link2,
         moduleSlug: "configuracoes",
       },
     ],

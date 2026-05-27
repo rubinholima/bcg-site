@@ -186,9 +186,6 @@ function resolveLinkActive(
   if (!href) return false;
   if (isRelatorioLinkActive(href, pathname, currentHub)) return true;
   if (relatorioHub(href)) return false;
-  if (href === "/dashboard/configuracoes") {
-    return pathname === "/dashboard/configuracoes";
-  }
   if (href === "/dashboard/requisicoes") {
     return pathname === "/dashboard/requisicoes";
   }

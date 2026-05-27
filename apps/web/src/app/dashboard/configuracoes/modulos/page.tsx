@@ -610,7 +610,7 @@ export default function ModulosPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-4">
-        <Link href="/dashboard/configuracoes">
+        <Link href="/dashboard">
           <Button variant="ghost" size="icon" className="shrink-0">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -647,7 +647,7 @@ export default function ModulosPage() {
                 {saving ? "Salvando…" : "Salvar alterações"}
               </Button>
             )}
-            <Link href="/dashboard/configuracoes">
+            <Link href="/dashboard">
               <Button type="button" variant="outline" disabled={saving}>
                 Voltar
               </Button>

@@ -110,7 +110,7 @@ export function PurchaseRequisitionWorkflowPanel({
       if (mode === "financeiro") url = "/compras/workflow/approvals/pending?role=financeiro";
       if (mode === "diretoria") url = "/compras/workflow/approvals/pending?role=diretoria";
       if (tenantFilter && mode !== "requester") params.set("tenantId", tenantFilter);
-      if (requestType) params.set("requestType", requestType);
+      if (requestType && mode !== "requester") params.set("requestType", requestType);
       const qs = params.toString();
       const { data } = await api.get<PurchaseRequisitionWorkflowRow[]>(qs ? `${url}${url.includes("?") ? "&" : "?"}${qs}` : url);
       setRows(Array.isArray(data) ? data : []);

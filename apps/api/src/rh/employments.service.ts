@@ -4,13 +4,16 @@ import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEmploymentDto } from './dto/create-employment.dto';
 import { UpdateEmploymentDto } from './dto/update-employment.dto';
+import { employeeVisibleInRhListFilter } from './rh-employee-visibility.util';
 
 @Injectable()
 export class EmploymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(tenantId?: string, employeeId?: string, status?: string) {
-    const where: Record<string, unknown> = {};
+    const where: Prisma.EmploymentWhereInput = {
+      employee: employeeVisibleInRhListFilter,
+    };
     if (tenantId) where.tenantId = tenantId;
     if (employeeId) where.employeeId = employeeId;
     if (status?.trim()) where.status = status.trim();
