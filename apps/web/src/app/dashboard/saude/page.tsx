@@ -13,6 +13,27 @@ import { SaudeHubInsights } from "@/components/dashboard/hub/SaudeHubInsights";
 
 const LINKS = [
   {
+    title: "Médicos",
+    description: "Cadastro da equipe médica.",
+    href: "/dashboard/medico/equipe",
+    icon: Stethoscope,
+    moduleSlug: "saude",
+  },
+  {
+    title: "Enfermeiros",
+    description: "Cadastro de enfermeiros.",
+    href: "/dashboard/medico/enfermeiros",
+    icon: Heart,
+    moduleSlug: "saude",
+  },
+  {
+    title: "Psicólogos",
+    description: "Cadastro de psicólogos.",
+    href: "/dashboard/psicologia/psicologos",
+    icon: UserCircle,
+    moduleSlug: "saude",
+  },
+  {
     title: "Histórico médico",
     description: "Prontuários e histórico clínico dos atletas.",
     href: "/dashboard/medico",
@@ -53,27 +74,6 @@ const LINKS = [
     href: "/dashboard/adm/nutricao",
     icon: UtensilsCrossed,
     moduleSlug: "adm_nutricao",
-  },
-  {
-    title: "Médicos",
-    description: "Cadastro da equipe médica.",
-    href: "/dashboard/medico/equipe",
-    icon: Stethoscope,
-    moduleSlug: "saude",
-  },
-  {
-    title: "Enfermeiros",
-    description: "Cadastro de enfermeiros.",
-    href: "/dashboard/medico/enfermeiros",
-    icon: Heart,
-    moduleSlug: "saude",
-  },
-  {
-    title: "Psicólogos",
-    description: "Cadastro de psicólogos.",
-    href: "/dashboard/psicologia/psicologos",
-    icon: UserCircle,
-    moduleSlug: "saude",
   },
 ] as const;
 

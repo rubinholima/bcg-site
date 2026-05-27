@@ -82,6 +82,8 @@ function AccessTreeNodeRow({
 }) {
   const access = getNodeAccessState(node, isEnabled);
   const slugs = uniqueSlugs(collectTreeModuleSlugs(node));
+  const isDepartment = depth === 0;
+  const isSubSection = depth === 1 && node.kind === "group";
 
   const handleGroupToggle = () => {
     if (readOnly || slugs.length === 0) return;
@@ -94,7 +96,8 @@ function AccessTreeNodeRow({
     return (
       <label
         className={cn(
-          "flex items-start gap-3 py-2.5 px-3 sm:px-4 cursor-pointer hover:bg-muted/20",
+          "flex items-start gap-3 py-2.5 px-3 sm:px-4 cursor-pointer hover:bg-muted/25",
+          isSubSection && "bg-muted/5",
           readOnly && "cursor-default opacity-90",
         )}
         style={{ paddingLeft: `${12 + depth * 16}px` }}
@@ -122,20 +125,31 @@ function AccessTreeNodeRow({
   const isOpen = searchActive || expanded;
 
   return (
-    <div className={cn(depth === 0 && "rounded-xl border bg-card overflow-hidden")}>
+    <div
+      className={cn(
+        isDepartment &&
+          "rounded-xl border-2 border-border overflow-hidden shadow-sm border-l-[6px] border-l-primary bg-card",
+        isSubSection && "border-l-[3px] border-l-primary/45 bg-muted/10",
+      )}
+    >
       <div
         className={cn(
           "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-3 py-3 sm:px-4",
-          depth > 0 && "border-t border-border/50",
+          isDepartment && "border-b-2 border-primary/35 bg-muted/45 py-3.5 sm:py-4",
+          isSubSection && "border-b border-border/70 bg-muted/20",
+          depth > 1 && !isSubSection && "border-t border-border/50",
         )}
-        style={{ paddingLeft: depth > 0 ? `${12 + (depth - 1) * 16}px` : undefined }}
+        style={{ paddingLeft: depth > 0 && !isDepartment ? `${12 + (depth - 1) * 16}px` : undefined }}
       >
         <div className="flex min-w-0 items-center gap-2">
           {hasChildren ? (
             <button
               type="button"
               onClick={onToggleExpand}
-              className="shrink-0 rounded-md p-1 hover:bg-muted/50 text-muted-foreground"
+              className={cn(
+                "shrink-0 rounded-md p-1 hover:bg-muted/50 text-muted-foreground",
+                isDepartment && "text-foreground",
+              )}
               aria-expanded={isOpen}
               aria-label={isOpen ? "Recolher" : "Expandir"}
             >
@@ -145,10 +159,17 @@ function AccessTreeNodeRow({
             <span className="w-6 shrink-0" />
           )}
           <div className="min-w-0">
+            {isDepartment ? (
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-primary/90 mb-0.5">
+                Departamento
+              </p>
+            ) : null}
             <h3
               className={cn(
                 "font-semibold text-foreground",
-                depth === 0 ? "text-base" : "text-sm",
+                isDepartment && "text-base sm:text-lg tracking-tight",
+                isSubSection && "text-sm text-foreground/95",
+                !isDepartment && !isSubSection && depth > 0 && "text-sm",
               )}
             >
               {node.label}
@@ -186,7 +207,12 @@ function AccessTreeNodeRow({
         ) : null}
       </div>
       {hasChildren && isOpen ? (
-        <div className={cn(depth === 0 && "border-t border-border/60 divide-y divide-border/40")}>
+        <div
+          className={cn(
+            isDepartment && "divide-y divide-border/50",
+            isSubSection && "border-t border-border/40 divide-y divide-border/30",
+          )}
+        >
           {node.children.map((child) => (
             <AccessTreeNode
               key={child.id}
@@ -271,7 +297,7 @@ export function AccessPermissionTree({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       {filtered.map((node) => (
         <AccessTreeNode
           key={node.id}

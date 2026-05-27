@@ -14,17 +14,24 @@ import { AdmHubInsights } from "@/components/dashboard/hub/AdmHubInsights";
 
 const LINKS = [
   {
-    title: "Financeiro",
-    description: "Contas, pagamentos e integração contábil.",
-    href: "/dashboard/adm/financeiro",
-    icon: DollarSign,
-    moduleSlug: "adm_financeiro",
-  },
-  {
     title: "Clientes",
     description: "Cadastro para contas a receber.",
     href: "/dashboard/adm/clientes",
     icon: Users,
+    moduleSlug: "adm_financeiro",
+  },
+  {
+    title: "Fornecedores",
+    description: "Cadastro para contas a pagar e compras.",
+    href: "/dashboard/adm/fornecedores",
+    icon: Truck,
+    moduleSlug: "adm_financeiro",
+  },
+  {
+    title: "Financeiro",
+    description: "Contas, pagamentos e integração contábil.",
+    href: "/dashboard/adm/financeiro",
+    icon: DollarSign,
     moduleSlug: "adm_financeiro",
   },
   {
@@ -33,13 +40,6 @@ const LINKS = [
     href: "/dashboard/adm/compras",
     icon: ShoppingCart,
     moduleSlug: "adm_compras",
-  },
-  {
-    title: "Fornecedores",
-    description: "Cadastro para contas a pagar e compras.",
-    href: "/dashboard/adm/fornecedores",
-    icon: Truck,
-    moduleSlug: "adm_financeiro",
   },
   {
     title: "Estoque",

@@ -1005,7 +1005,8 @@ export default function ModulosPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Acesso por menu</CardTitle>
             <p className="text-sm text-muted-foreground font-normal mt-1">
-              Seções e subseções iguais ao menu lateral — novos itens entram aqui automaticamente.
+              Mesma estrutura do menu lateral — cada bloco com linha destacada é um departamento;
+              Cadastros e demais subseções aparecem na ordem do menu.
             </p>
           </CardHeader>
           <CardContent>
