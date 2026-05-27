@@ -27,10 +27,13 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
 import {
+  getMenuAccessTree,
+  buildModuleCatalog,
   getMenuDepartmentGroups,
   getUniqueModuleSlugs,
   type MenuDepartmentGroup,
 } from "@/lib/dashboard-menu.config";
+import { AccessPermissionTree } from "@/components/dashboard/access/AccessPermissionTree";
 import {
   applyAdditivePreset,
   buildMatrixExportPayload,
@@ -86,6 +89,24 @@ interface AuditEntry {
   changeCount: number;
   changes?: AuditChangeRow[];
 }
+
+interface UserListItem {
+  id: string | null;
+  email: string;
+  name: string | null;
+  role: string;
+}
+
+interface UserModulePermissionsResponse {
+  userId: string;
+  email: string;
+  name: string | null;
+  role: string;
+  customModuleAccess: boolean;
+  permissions: Record<string, boolean>;
+}
+
+type AccessMode = "role" | "user";
 
 /** Papéis armazenados na API por módulo (auditoria e presets). */
 const AUDIT_ROLE_LABELS: Record<string, { short: string }> = {
@@ -206,6 +227,13 @@ export default function ModulosPage() {
   const [dirty, setDirty] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedRole, setSelectedRole] = useState<ManagedRoleKey>("administrativo");
+  const [accessMode, setAccessMode] = useState<AccessMode>("role");
+  const [users, setUsers] = useState<UserListItem[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [userPermissions, setUserPermissions] = useState<Record<string, boolean>>({});
+  const [userCustomAccess, setUserCustomAccess] = useState(false);
+  const [selectedUserRole, setSelectedUserRole] = useState<string>("");
+  const [userDirty, setUserDirty] = useState(false);
   const [auditLoading, setAuditLoading] = useState(true);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [presetId, setPresetId] = useState<string>("");
@@ -232,8 +260,17 @@ export default function ModulosPage() {
   useEffect(() => {
     if (!isSuperAdmin) return;
     let cancelled = false;
-    fetch("/api/settings/modules", { credentials: "include" })
-      .then((res) => {
+    const catalog = buildModuleCatalog(MODULE_DISPLAY_NAMES);
+    Promise.all([
+      fetch("/api/settings/modules/sync", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ catalog }),
+      }),
+      fetch("/api/settings/modules", { credentials: "include" }),
+    ])
+      .then(([, res]) => {
         if (!res.ok) throw new Error("Erro ao carregar módulos");
         return res.json();
       })
@@ -254,6 +291,52 @@ export default function ModulosPage() {
   useEffect(() => {
     if (!isSuperAdmin) return;
     let cancelled = false;
+    fetch("/api/users", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: UserListItem[]) => {
+        if (!cancelled) {
+          const list = Array.isArray(data) ? data.filter((u) => u.id) : [];
+          setUsers(list);
+          if (list.length > 0) {
+            setSelectedUserId((prev) => prev || list[0].id!);
+          }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setUsers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isSuperAdmin]);
+
+  const loadUserPermissions = useCallback(async (userId: string) => {
+    const res = await fetch(`/api/settings/modules/users/${encodeURIComponent(userId)}`, {
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Erro ao carregar acessos do usuário");
+    const data = (await res.json()) as UserModulePermissionsResponse;
+    setUserPermissions(data.permissions ?? {});
+    setUserCustomAccess(data.customModuleAccess);
+    setSelectedUserRole(data.role);
+    setUserDirty(false);
+    return data;
+  }, []);
+
+  useEffect(() => {
+    if (!isSuperAdmin || accessMode !== "user" || !selectedUserId) return;
+    let cancelled = false;
+    loadUserPermissions(selectedUserId).catch((err) => {
+      if (!cancelled) setError(err instanceof Error ? err.message : "Erro");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isSuperAdmin, accessMode, selectedUserId, loadUserPermissions]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+    let cancelled = false;
     refreshAudit().finally(() => {
       if (!cancelled) setAuditLoading(false);
     });
@@ -261,6 +344,8 @@ export default function ModulosPage() {
       cancelled = true;
     };
   }, [isSuperAdmin, refreshAudit]);
+
+  const menuTree = useMemo(() => getMenuAccessTree(), []);
 
   const menuDepartments = useMemo(() => getMenuDepartmentGroups(), []);
 
@@ -496,6 +581,150 @@ export default function ModulosPage() {
     setSaveBanner(null);
   };
 
+  const rolePermissionsMap = useMemo(() => {
+    const map = new Map<string, boolean>();
+    for (const m of mergedModuleState) {
+      map.set(m.slug, roleChecked(m, selectedRole));
+    }
+    return map;
+  }, [mergedModuleState, selectedRole]);
+
+  const isModuleEnabled = useCallback(
+    (slug: string) => {
+      if (accessMode === "role") {
+        return rolePermissionsMap.get(slug) ?? false;
+      }
+      if (userCustomAccess) {
+        return userPermissions[slug] ?? false;
+      }
+      const userRole = selectedUserRole as ManagedRoleKey;
+      const mod = mergedModuleState.find((m) => m.slug === slug);
+      return mod ? roleChecked(mod, userRole) : false;
+    },
+    [accessMode, rolePermissionsMap, userCustomAccess, userPermissions, selectedUserRole, mergedModuleState],
+  );
+
+  const applySlugsToRole = useCallback(
+    (slugs: string[], role: ManagedRoleKey, value: boolean) => {
+      setModules((prev) => {
+        const bySlug = new Map(prev.map((m) => [m.slug, { ...m }]));
+        for (const slug of slugs) {
+          const d = displayModules.find((x) => x.slug === slug);
+          const raw = bySlug.get(slug);
+          const existing: ModulePermission = {
+            slug,
+            name: MODULE_DISPLAY_NAMES[slug] ?? d?.name ?? slug,
+            sortOrder: d?.sortOrder ?? raw?.sortOrder ?? 0,
+            functionalArea: d?.functionalArea ?? raw?.functionalArea ?? "outros",
+            company_admin: raw?.company_admin ?? d?.company_admin ?? false,
+            editor: raw?.editor ?? d?.editor ?? false,
+            gerente: raw?.gerente ?? d?.gerente ?? false,
+            administrativo: raw?.administrativo ?? d?.administrativo ?? false,
+            analista: raw?.analista ?? d?.analista ?? false,
+            diretoria: raw?.diretoria ?? d?.diretoria ?? false,
+            medico: raw?.medico ?? d?.medico ?? false,
+            psicologo: raw?.psicologo ?? d?.psicologo ?? false,
+            comissao: raw?.comissao ?? d?.comissao ?? false,
+          };
+          bySlug.set(slug, applyRoleToRow(existing, role, value));
+        }
+        return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
+      });
+      setDirty(true);
+      setSaveBanner(null);
+    },
+    [displayModules],
+  );
+
+  const handleTreeToggleModule = (slug: string, value: boolean) => {
+    if (accessMode === "role") {
+      handleModuleToggle(slug, selectedRole, value);
+      return;
+    }
+    setUserPermissions((prev) => ({ ...prev, [slug]: value }));
+    setUserCustomAccess(true);
+    setUserDirty(true);
+    setSaveBanner(null);
+  };
+
+  const handleTreeToggleModules = (slugs: string[], value: boolean) => {
+    if (accessMode === "role") {
+      applySlugsToRole(slugs, selectedRole, value);
+      return;
+    }
+    setUserPermissions((prev) => {
+      const next = { ...prev };
+      for (const slug of slugs) next[slug] = value;
+      return next;
+    });
+    setUserCustomAccess(true);
+    setUserDirty(true);
+    setSaveBanner(null);
+  };
+
+  const handlePersonalizeUser = async () => {
+    if (!selectedUserId) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/settings/modules/users/${encodeURIComponent(selectedUserId)}/copy-from-role`,
+        { method: "POST", credentials: "include" },
+      );
+      if (!res.ok) throw new Error("Erro ao personalizar acessos");
+      const data = (await res.json()) as UserModulePermissionsResponse;
+      setUserPermissions(data.permissions ?? {});
+      setUserCustomAccess(true);
+      setUserDirty(false);
+      setSaveBanner("Acessos copiados do perfil — agora você pode ajustar individualmente.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInheritFromRole = () => {
+    setUserCustomAccess(false);
+    setUserDirty(true);
+    setSaveBanner(null);
+  };
+
+  const handleSaveUser = async () => {
+    if (!selectedUserId) return;
+    setSaving(true);
+    setError(null);
+    setSaveBanner(null);
+    try {
+      const body = userCustomAccess
+        ? {
+            permissions: Object.fromEntries(
+              displayModules.map((d) => [d.slug, userPermissions[d.slug] ?? false]),
+            ),
+            customModuleAccess: true,
+          }
+        : { customModuleAccess: false };
+      const res = await fetch(`/api/settings/modules/users/${encodeURIComponent(selectedUserId)}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(await res.text().catch(() => "Erro ao salvar usuário"));
+      setUserDirty(false);
+      setSaveBanner(
+        userCustomAccess
+          ? "Acessos personalizados gravados para o usuário."
+          : "Usuário voltou a herdar o perfil.",
+      );
+      await loadUserPermissions(selectedUserId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleExportSnapshot = useCallback(() => {
     const payload = buildMatrixExportPayload(mergedModuleState as ModulePermissionRow[]);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
@@ -589,6 +818,16 @@ export default function ModulosPage() {
     }
   };
 
+  const handleSaveAll = async () => {
+    if (accessMode === "user" && userDirty) {
+      await handleSaveUser();
+      return;
+    }
+    if (dirty) {
+      await handleSave();
+    }
+  };
+
   useEffect(() => {
     if (!saveBanner) return;
     const t = setTimeout(() => setSaveBanner(null), 8000);
@@ -642,11 +881,11 @@ export default function ModulosPage() {
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            {dirty && (
-              <Button type="button" onClick={handleSave} disabled={saving}>
+            {dirty || userDirty ? (
+              <Button type="button" onClick={() => void handleSaveAll()} disabled={saving}>
                 {saving ? "Salvando…" : "Salvar alterações"}
               </Button>
-            )}
+            ) : null}
             <Link href="/dashboard">
               <Button type="button" variant="outline" disabled={saving}>
                 Voltar
@@ -666,120 +905,121 @@ export default function ModulosPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Perfil</CardTitle>
+            <CardTitle className="text-lg">Quem configurar</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-              {MANAGED_ROLES.map((role) => (
-                <Button
-                  key={role}
-                  type="button"
-                  size="sm"
-                  variant={selectedRole === role ? "default" : "outline"}
-                  className="shrink-0"
-                  onClick={() => setSelectedRole(role)}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={accessMode === "role" ? "default" : "outline"}
+                onClick={() => setAccessMode("role")}
+              >
+                Por perfil (grupo)
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={accessMode === "user" ? "default" : "outline"}
+                onClick={() => setAccessMode("user")}
+              >
+                Por usuário
+              </Button>
+            </div>
+
+            {accessMode === "role" ? (
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {MANAGED_ROLES.map((role) => (
+                  <Button
+                    key={role}
+                    type="button"
+                    size="sm"
+                    variant={selectedRole === role ? "default" : "outline"}
+                    className="shrink-0"
+                    onClick={() => setSelectedRole(role)}
+                  >
+                    {MANAGED_ROLE_LABELS[role]}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Select
+                  value={selectedUserId || "__unset"}
+                  onValueChange={(v) => setSelectedUserId(v === "__unset" ? "" : v)}
                 >
-                  {MANAGED_ROLE_LABELS[role]}
-                </Button>
-              ))}
-            </div>
-            <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-2">
-              <p className="text-sm font-medium text-foreground">
-                {MANAGED_ROLE_LABELS[selectedRole]} — {roleSummary.moduleCount} módulo
-                {roleSummary.moduleCount === 1 ? "" : "s"} em {roleSummary.sectionCount} seção
-                {roleSummary.sectionCount === 1 ? "" : "ões"}
-              </p>
-              {roleSummary.enabledModules.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {roleSummary.enabledModules.map((name) => (
-                    <span
-                      key={name}
-                      className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-foreground border border-primary/20"
-                    >
-                      {name}
-                    </span>
-                  ))}
+                  <SelectTrigger className="w-full sm:max-w-lg text-foreground">
+                    <SelectValue placeholder="Selecione o usuário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((u) => (
+                      <SelectItem key={u.id!} value={u.id!}>
+                        {u.name?.trim() ? `${u.name} — ${u.email}` : u.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-wrap gap-2">
+                  {!userCustomAccess ? (
+                    <>
+                      <p className="text-sm text-muted-foreground w-full">
+                        Herda o perfil{" "}
+                        <strong className="text-foreground">
+                          {MANAGED_ROLE_LABELS[selectedUserRole as ManagedRoleKey] ?? selectedUserRole}
+                        </strong>
+                        . Personalize para definir acessos só deste usuário.
+                      </p>
+                      <Button type="button" size="sm" variant="outline" onClick={() => void handlePersonalizeUser()} disabled={saving || !selectedUserId}>
+                        Personalizar acessos
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground w-full">
+                        Acessos <strong className="text-foreground">personalizados</strong> — independentes do perfil.
+                      </p>
+                      <Button type="button" size="sm" variant="outline" onClick={handleInheritFromRole} disabled={saving}>
+                        Voltar a herdar do perfil
+                      </Button>
+                    </>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">Nenhum módulo liberado para este perfil.</p>
-              )}
-            </div>
+              </div>
+            )}
+
+            {accessMode === "role" ? (
+              <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-2">
+                <p className="text-sm font-medium text-foreground">
+                  {MANAGED_ROLE_LABELS[selectedRole]} — {roleSummary.moduleCount} módulo
+                  {roleSummary.moduleCount === 1 ? "" : "s"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Perfis servem como modelo para grupos; use &quot;Por usuário&quot; para exceções individuais.
+                </p>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Acesso por menu</CardTitle>
+            <p className="text-sm text-muted-foreground font-normal mt-1">
+              Seções e subseções iguais ao menu lateral — novos itens entram aqui automaticamente.
+            </p>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent>
             {loading ? (
               <p className="text-muted-foreground py-8 text-center">Carregando…</p>
-            ) : departmentsWithModules.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center">Nenhum menu com o termo pesquisado.</p>
             ) : (
-              departmentsWithModules.map(({ id, label, rows }) => {
-                const access = getSectionAccessState(rows, selectedRole);
-                const enabledInSection = rows.filter((r) => r[selectedRole]).length;
-                return (
-                  <div
-                    key={id}
-                    className="rounded-xl border bg-card px-4 py-4 sm:px-5 space-y-3"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-foreground">{label}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {enabledInSection}/{rows.length} módulos liberados
-                          {access === "partial" ? " · parcial" : ""}
-                        </p>
-                      </div>
-                      <label className="flex items-center gap-3 cursor-pointer shrink-0 self-start sm:self-center">
-                        <span className="text-sm text-muted-foreground">
-                          {access === "all" ? "Tudo liberado" : access === "partial" ? "Parcial" : "Bloqueado"}
-                        </span>
-                        <input
-                          type="checkbox"
-                          checked={access === "all"}
-                          ref={(el) => {
-                            if (el) el.indeterminate = access === "partial";
-                          }}
-                          onChange={() => handleDepartmentToggle(selectedRole, rows)}
-                          className="h-5 w-5 rounded-md border-input accent-primary cursor-pointer"
-                          aria-label={`Liberar menu ${label}`}
-                        />
-                      </label>
-                    </div>
-                    <div className="divide-y divide-border/60 rounded-lg border border-border/60 overflow-hidden">
-                      {rows.map((m) => {
-                        const on = m[selectedRole];
-                        const moduleName = MODULE_DISPLAY_NAMES[m.slug] ?? m.name;
-                        return (
-                          <label
-                            key={m.slug}
-                            className="flex items-start gap-3 px-3 py-3 sm:px-4 cursor-pointer hover:bg-muted/20"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              onChange={(e) => handleModuleToggle(m.slug, selectedRole, e.target.checked)}
-                              className="h-5 w-5 mt-0.5 rounded-md border-input accent-primary cursor-pointer shrink-0"
-                              aria-label={`${moduleName} — ${MANAGED_ROLE_LABELS[selectedRole]}`}
-                            />
-                            <span className="min-w-0 flex-1">
-                              <span className="text-sm font-medium text-foreground block">{moduleName}</span>
-                              {m.menuLabels.length > 0 ? (
-                                <span className="text-xs text-muted-foreground block mt-0.5">
-                                  Menu: {m.menuLabels.join(", ")}
-                                </span>
-                              ) : null}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })
+              <AccessPermissionTree
+                tree={menuTree}
+                isEnabled={isModuleEnabled}
+                onToggleModule={handleTreeToggleModule}
+                onToggleModules={handleTreeToggleModules}
+                search={search}
+                readOnly={accessMode === "user" && !userCustomAccess}
+              />
             )}
           </CardContent>
         </Card>

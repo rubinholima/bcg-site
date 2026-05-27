@@ -14,10 +14,13 @@ model User {
   name         String?
   passwordHash String?  // login próprio (bcrypt); null = só Cognito
   role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
+  /// Quando true, módulos vêm de UserModuleAccess (não da matriz do perfil).
+  customModuleAccess Boolean @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   /** Escopo de empresas/clubes: vazio = sem restrição (vê todas, exceto super_admin que ignora tabela). Com linhas = só esses tenants. */
   userTenants  UserTenant[]
+  moduleAccess UserModuleAccess[]
 }
 
 model UserTenant {
@@ -343,7 +346,21 @@ model Module {
   /// Agrupamento lógico na UI de permissões (Configurações → Módulos). Chave estável: estrategico, empresa_usuarios, etc.
   functionalArea  String   @default("outros")
   roles           ModuleRole[]
+  userAccess      UserModuleAccess[]
   @@index([functionalArea])
+}
+
+/// Permissões individuais por usuário (quando User.customModuleAccess = true).
+model UserModuleAccess {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleId  String
+  module    Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  canAccess Boolean @default(true)
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
 }
 
 /// Auditoria de alterações na matriz de permissões (super admin). Não altera o modelo de autorização em runtime.

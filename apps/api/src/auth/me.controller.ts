@@ -59,7 +59,9 @@ export class MeController {
       if (r) role = r as MeRole;
     }
 
-    const user = await this.meService.findUserById(sub);
+    const user =
+      (await this.meService.findUserByCognitoSub(sub)) ??
+      (await this.meService.findUserById(sub));
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
@@ -83,7 +85,12 @@ export class MeController {
   async modules(@Req() req: Request & { user: CognitoJwtPayload }): Promise<{ modules: string[] }> {
     const role =
       req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
-    const modules = await this.modulesService.getSlugsForRole(role);
+    const user =
+      (await this.meService.findUserByCognitoSub(req.user.sub)) ??
+      (await this.meService.findUserById(req.user.sub));
+    const modules = user
+      ? await this.modulesService.getSlugsForUser(user.id, role)
+      : await this.modulesService.getSlugsForRole(role);
     return { modules };
   }
 }

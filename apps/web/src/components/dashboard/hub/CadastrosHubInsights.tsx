@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Briefcase,
   Brain,
   Loader2,
   Stethoscope,
@@ -32,32 +31,19 @@ interface PlayerRow {
   category?: string | null;
 }
 
-interface EmployeeRow {
-  type?: string;
-}
-
-const EMPLOYEE_TYPE_LABELS: Record<string, string> = {
-  staff: "Funcionário",
-  dirigente: "Dirigente",
-  athlete: "Atleta",
-};
-
 const CATEGORY_COLORS = ["#34d399", "#60a5fa", "#fbbf24", "#a78bfa", "#f472b6", "#94a3b8"];
 
 export function CadastrosHubInsights() {
   const { canAccessModule } = useAuth();
   const [loading, setLoading] = useState(true);
   const [playersCount, setPlayersCount] = useState(0);
-  const [employeesCount, setEmployeesCount] = useState(0);
   const [championshipsCount, setChampionshipsCount] = useState(0);
   const [medicalCount, setMedicalCount] = useState(0);
   const [psychCount, setPsychCount] = useState(0);
   const [plansCount, setPlansCount] = useState(0);
   const [players, setPlayers] = useState<PlayerRow[]>([]);
-  const [employees, setEmployees] = useState<EmployeeRow[]>([]);
 
   const canPlayers = canAccessModule("tipos");
-  const canRh = canAccessModule("adm_rh");
   const canSaude = canAccessModule("saude");
   const canSocio = canAccessModule("socio_torcedor");
 
@@ -91,25 +77,6 @@ export function CadastrosHubInsights() {
           })
           .catch(() => {
             if (!cancelled) setChampionshipsCount(0);
-          }),
-      );
-    }
-
-    if (canRh) {
-      tasks.push(
-        api
-          .get<EmployeeRow[]>("/rh/employees")
-          .then(({ data }) => {
-            if (cancelled) return;
-            const rows = Array.isArray(data) ? data : [];
-            setEmployees(rows);
-            setEmployeesCount(rows.length);
-          })
-          .catch(() => {
-            if (!cancelled) {
-              setEmployees([]);
-              setEmployeesCount(0);
-            }
           }),
       );
     }
@@ -157,7 +124,7 @@ export function CadastrosHubInsights() {
     return () => {
       cancelled = true;
     };
-  }, [canPlayers, canRh, canSaude, canSocio]);
+  }, [canPlayers, canSaude, canSocio]);
 
   const chartCategories = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -175,20 +142,6 @@ export function CadastrosHubInsights() {
       .slice(0, 8);
   }, [players]);
 
-  const chartEmployeeTypes = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const e of employees) {
-      const key = e.type ?? "staff";
-      counts[key] = (counts[key] ?? 0) + 1;
-    }
-    return Object.entries(counts).map(([type, total], index) => ({
-      type,
-      label: EMPLOYEE_TYPE_LABELS[type] ?? type,
-      total,
-      fill: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-    }));
-  }, [employees]);
-
   if (loading) {
     return (
       <div className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-border">
@@ -199,13 +152,12 @@ export function CadastrosHubInsights() {
 
   const hasAny =
     playersCount > 0 ||
-    employeesCount > 0 ||
     championshipsCount > 0 ||
     medicalCount > 0 ||
     psychCount > 0 ||
     plansCount > 0;
 
-  if (!hasAny && !canPlayers && !canRh && !canSaude && !canSocio) {
+  if (!hasAny && !canPlayers && !canSaude && !canSocio) {
     return null;
   }
 
@@ -214,17 +166,6 @@ export function CadastrosHubInsights() {
       <div>
         <h2 className="mb-4 text-lg font-semibold text-foreground">Indicadores</h2>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {canRh ? (
-            <HubStatCard
-              label="Funcionários"
-              value={employeesCount}
-              hint="Cadastro mestre de colaboradores"
-              icon={Briefcase}
-              href="/dashboard/cadastros/funcionarios"
-              accent="from-violet-500/10 to-violet-600/5 border-violet-500/20"
-              iconClass="text-violet-600 dark:text-violet-400"
-            />
-          ) : null}
           {canPlayers ? (
             <>
               <HubStatCard
@@ -315,41 +256,6 @@ export function CadastrosHubInsights() {
                   <Bar dataKey="total" name="Atletas" radius={[6, 6, 0, 0]}>
                     {chartCategories.map((entry) => (
                       <Cell key={entry.label} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {canRh && chartEmployeeTypes.length > 0 ? (
-          <Card className="min-w-0 rounded-xl shadow-md">
-            <CardHeader>
-              <CardTitle className="text-base">Funcionários por tipo</CardTitle>
-              <CardDescription>Visão do cadastro mestre de pessoas</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[280px] min-w-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartEmployeeTypes} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis
-                    dataKey="label"
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                  />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                      fontSize: "12px",
-                    }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Bar dataKey="total" name="Pessoas" radius={[6, 6, 0, 0]}>
-                    {chartEmployeeTypes.map((entry) => (
-                      <Cell key={entry.type} fill={entry.fill} />
                     ))}
                   </Bar>
                 </BarChart>

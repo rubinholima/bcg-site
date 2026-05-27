@@ -498,7 +498,7 @@ export function FinanceiroLancamentosPanel({ tenantId }: FinanceiroLancamentosPa
               <p className="text-xs text-muted-foreground">
                 Cadastre em{" "}
                 <a
-                  href={modo === "pagar" ? "/dashboard/cadastros/fornecedores" : "/dashboard/cadastros/clientes"}
+                  href={modo === "pagar" ? "/dashboard/adm/fornecedores" : "/dashboard/adm/clientes"}
                   className="text-primary underline-offset-4 hover:underline"
                 >
                   {modo === "pagar" ? "Cadastros → Fornecedores" : "Cadastros → Clientes"}

@@ -7,6 +7,12 @@ import {
   Star,
   Users,
   Heart,
+  UserCircle,
+  Trophy,
+  MapPin,
+  Shirt,
+  Layers,
+  Archive,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { FutebolHubInsights } from "@/components/dashboard/hub/FutebolHubInsights";
@@ -54,6 +60,48 @@ const LINKS = [
     href: "/dashboard/futebol/fisiologia",
     icon: Heart,
     moduleSlug: "futebol_fisiologia",
+  },
+  {
+    title: DASHBOARD_LABELS.atletas,
+    description: "Cadastro de atletas por clube.",
+    href: "/dashboard/cadastros/jogadores",
+    icon: UserCircle,
+    moduleSlug: "tipos",
+  },
+  {
+    title: "Campeonatos",
+    description: "Competições cadastradas.",
+    href: "/dashboard/cadastros/campeonatos",
+    icon: Trophy,
+    moduleSlug: "tipos",
+  },
+  {
+    title: DASHBOARD_LABELS.estadios,
+    description: "Locais e estádios.",
+    href: "/dashboard/cadastros/estadios",
+    icon: MapPin,
+    moduleSlug: "tipos",
+  },
+  {
+    title: DASHBOARD_LABELS.timesAdversarios,
+    description: "Times adversários.",
+    href: "/dashboard/cadastros/times",
+    icon: Shirt,
+    moduleSlug: "tipos",
+  },
+  {
+    title: "Categorias",
+    description: "Categorias de base e profissional.",
+    href: "/dashboard/cadastros/categorias",
+    icon: Layers,
+    moduleSlug: "tipos",
+  },
+  {
+    title: "Atletas desligados",
+    description: "Arquivo de atletas desligados.",
+    href: "/dashboard/cadastros/jogadores/arquivo",
+    icon: Archive,
+    moduleSlug: "tipos",
   },
 ] as const;
 

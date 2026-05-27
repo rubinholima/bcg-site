@@ -17,6 +17,12 @@ export class MeService {
     });
   }
 
+  async findUserByCognitoSub(cognitoSub: string) {
+    return this.prisma.user.findFirst({
+      where: { OR: [{ cognitoSub }, { id: cognitoSub }] },
+    });
+  }
+
   async upsertUser(input: UpsertUserInput) {
     const existing = await this.prisma.user.findUnique({
       where: { cognitoSub: input.cognitoSub },

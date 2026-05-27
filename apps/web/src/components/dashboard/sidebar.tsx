@@ -58,24 +58,22 @@ function isGrupoMasterPath(pathname: string | null, relHub: string | null): bool
   );
 }
 
+function isFutebolCadastroPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/dashboard/cadastros/jogadores") ||
+    pathname.startsWith("/dashboard/cadastros/campeonatos") ||
+    pathname.startsWith("/dashboard/cadastros/estadios") ||
+    pathname.startsWith("/dashboard/cadastros/times") ||
+    pathname.startsWith("/dashboard/cadastros/categorias")
+  );
+}
+
 function isMedicoCadastroPath(pathname: string | null): boolean {
   if (!pathname) return false;
   return (
     pathname.startsWith("/dashboard/medico/equipe") ||
     pathname.startsWith("/dashboard/medico/enfermeiros")
-  );
-}
-
-function isCadastrosPath(pathname: string | null, relHub: string | null): boolean {
-  if (relHub === "cadastros") return true;
-  if (!pathname) return false;
-  return (
-    pathname.startsWith("/dashboard/cadastros") ||
-    isMedicoCadastroPath(pathname) ||
-    pathname.startsWith("/dashboard/psicologia/psicologos") ||
-    pathname.startsWith("/dashboard/socio-torcedor/planos") ||
-    pathname.startsWith("/dashboard/cadastros/fornecedores") ||
-    pathname.startsWith("/dashboard/cadastros/clientes")
   );
 }
 
@@ -88,7 +86,9 @@ function isFutebolOperacaoPath(pathname: string | null, relHub: string | null): 
     pathname.startsWith("/dashboard/futebol/analise") ||
     pathname.startsWith("/dashboard/futebol/avaliacoes") ||
     pathname.startsWith("/dashboard/futebol/agenda") ||
-    pathname.startsWith("/dashboard/futebol/comissao")
+    pathname.startsWith("/dashboard/futebol/comissao") ||
+    pathname.startsWith("/dashboard/futebol/fisiologia") ||
+    isFutebolCadastroPath(pathname)
   );
 }
 
@@ -111,7 +111,9 @@ function isSaudePath(pathname: string | null, relHub: string | null): boolean {
     (pathname.startsWith("/dashboard/psicologia") && !pathname.startsWith("/dashboard/psicologia/psicologos")) ||
     pathname.startsWith("/dashboard/futebol/fisiologia") ||
     pathname.startsWith("/dashboard/saude") ||
-    pathname.startsWith("/dashboard/adm/nutricao")
+    pathname.startsWith("/dashboard/adm/nutricao") ||
+    isMedicoCadastroPath(pathname) ||
+    pathname.startsWith("/dashboard/psicologia/psicologos")
   );
 }
 
@@ -138,10 +140,7 @@ function isMarketingPath(pathname: string | null, relHub: string | null): boolea
 
 function isSocioPath(pathname: string | null, relHub: string | null): boolean {
   if (relHub === "socio_torcedor") return true;
-  return (
-    !!pathname?.startsWith("/dashboard/socio-torcedor") &&
-    !pathname.startsWith("/dashboard/socio-torcedor/planos")
-  );
+  return !!pathname?.startsWith("/dashboard/socio-torcedor");
 }
 
 function isFerramentasPath(pathname: string | null): boolean {
@@ -158,12 +157,35 @@ function isConfigPath(pathname: string | null): boolean {
   return pathname.startsWith("/dashboard/configuracoes");
 }
 
+/** Seção de topo aberta conforme a rota atual (accordion — só uma). */
+function getActiveGroupSlug(pathname: string | null, relHub: string | null): string | null {
+  if (isGrupoMasterPath(pathname, relHub)) return "grupo_master";
+  if (isAdmPath(pathname, relHub)) return "adm";
+  if (isRequisicoesPath(pathname)) return "requisicoes";
+  if (isSaudePath(pathname, relHub)) return "saude";
+  if (isFutebolOperacaoPath(pathname, relHub)) return "futebol";
+  if (isJuridicoPath(pathname, relHub)) return "juridico";
+  if (isEventosPath(pathname, relHub)) return "eventos";
+  if (isMarketingPath(pathname, relHub)) return "marketing";
+  if (isSocioPath(pathname, relHub)) return "socio_torcedor";
+  if (isAcademiasPath(pathname)) return "academias";
+  if (isFerramentasPath(pathname)) return "ferramentas";
+  if (
+    pathname?.startsWith("/dashboard/configuracoes") ||
+    pathname?.startsWith("/dashboard/usuarios") ||
+    pathname?.startsWith("/dashboard/empresas") ||
+    pathname?.startsWith("/dashboard/tenants")
+  ) {
+    return "configuracoes";
+  }
+  return null;
+}
+
 /** Hub ativo pela rota atual (inclui ?hub= em relatórios). */
 function getPathnameHub(pathname: string | null, relHub: string | null): string | null {
   if (relHub) return relHub;
   if (!pathname || pathname === "/dashboard") return null;
   if (isGrupoMasterPath(pathname, null)) return "grupo_master";
-  if (isCadastrosPath(pathname, null)) return "cadastros";
   if (isAdmPath(pathname, null)) return "adm";
   if (isRequisicoesPath(pathname)) return "requisicoes";
   if (isSaudePath(pathname, null)) return "saude";
@@ -296,7 +318,6 @@ function SidebarNav() {
     pathname === href || (href !== "/dashboard" && pathname?.startsWith(href + "/"));
 
   const [grupoMasterOpen, setGrupoMasterOpen] = useState(() => isGrupoMasterPath(pathname, relHub));
-  const [cadastrosOpen, setCadastrosOpen] = useState(() => isCadastrosPath(pathname, relHub));
   const [saudeOpen, setSaudeOpen] = useState(() => isSaudePath(pathname, relHub));
   const [futebolOpen, setFutebolOpen] = useState(() => isFutebolOperacaoPath(pathname, relHub));
   const [juridicoOpen, setJuridicoOpen] = useState(() => isJuridicoPath(pathname, relHub));
@@ -333,6 +354,51 @@ function SidebarNav() {
   );
   const [nestedOpen, setNestedOpen] = useState<Record<string, boolean>>({});
 
+  const applyOpenGroup = (slug: string | null) => {
+    setGrupoMasterOpen(slug === "grupo_master");
+    setSaudeOpen(slug === "saude");
+    setFutebolOpen(slug === "futebol");
+    setJuridicoOpen(slug === "juridico");
+    setEventosOpen(slug === "eventos");
+    setAdmOpen(slug === "adm");
+    setRequisicoesOpen(slug === "requisicoes");
+    setFerramentasOpen(slug === "ferramentas");
+    setConfigOpen(slug === "configuracoes");
+    setSocioOpen(slug === "socio_torcedor");
+    setAcademiasOpen(slug === "academias");
+    setMarketingOpen(slug === "marketing");
+  };
+
+  const closeAllNested = () => {
+    setAnaliseOpen(false);
+    setPsicologiaOpen(false);
+    setMedicoOpen(false);
+    setNestedOpen({});
+  };
+
+  const syncNestedFromPath = () => {
+    closeAllNested();
+    if (
+      pathname?.startsWith("/dashboard/futebol/analise") ||
+      pathname?.startsWith("/dashboard/futebol/avaliacoes")
+    ) {
+      setAnaliseOpen(true);
+    } else if (
+      pathname?.startsWith("/dashboard/consultas") ||
+      (pathname?.startsWith("/dashboard/psicologia") &&
+        !pathname.startsWith("/dashboard/psicologia/psicologos"))
+    ) {
+      setPsicologiaOpen(true);
+    } else if (pathname?.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)) {
+      setMedicoOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    applyOpenGroup(getActiveGroupSlug(pathname, relHub));
+    syncNestedFromPath();
+  }, [pathname, relHub]);
+
   useEffect(() => {
     let cancelled = false;
     fetch("/api/group", { credentials: "include" })
@@ -347,10 +413,13 @@ function SidebarNav() {
   }, []);
 
   const toggleNested = (child: MenuItemConfig) => {
-    setNestedOpen((prev) => ({
-      ...prev,
-      [child.slug]: !(prev[child.slug] ?? nestedDefaultOpen(child, pathname, inPath)),
-    }));
+    const expanded = nestedOpen[child.slug] ?? nestedDefaultOpen(child, pathname, inPath);
+    if (expanded) {
+      setNestedOpen((prev) => ({ ...prev, [child.slug]: false }));
+      return;
+    }
+    closeAllNested();
+    setNestedOpen({ [child.slug]: true });
   };
 
   const isNestedExpanded = (child: MenuItemConfig): boolean => {
@@ -362,10 +431,19 @@ function SidebarNav() {
   };
 
   const toggleNestedChild = (child: MenuItemConfig) => {
-    if (child.slug === "analise") setAnaliseOpen((o) => !o);
-    else if (child.slug === "psicologia") setPsicologiaOpen((o) => !o);
-    else if (child.slug === "medico") setMedicoOpen((o) => !o);
-    else toggleNested(child);
+    const expanded = isNestedExpanded(child);
+    if (expanded) {
+      if (child.slug === "analise") setAnaliseOpen(false);
+      else if (child.slug === "psicologia") setPsicologiaOpen(false);
+      else if (child.slug === "medico") setMedicoOpen(false);
+      else setNestedOpen((prev) => ({ ...prev, [child.slug]: false }));
+      return;
+    }
+    closeAllNested();
+    if (child.slug === "analise") setAnaliseOpen(true);
+    else if (child.slug === "psicologia") setPsicologiaOpen(true);
+    else if (child.slug === "medico") setMedicoOpen(true);
+    else setNestedOpen({ [child.slug]: true });
   };
 
   const name = group?.name ?? "Grupo Master";
@@ -494,9 +572,7 @@ function SidebarNav() {
                   canAccessModule("tipos") ||
                   canAccessModule("usuarios") ||
                   canAccessModule("relatorios")
-                : item.slug === "cadastros"
-                  ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
-                  : item.slug === "adm"
+                : item.slug === "adm"
                     ? hasAccessToAnyChild(item.children ?? [], canAccessModule, canAccessDashboard)
                       : item.slug === "saude"
                       ? canAccessModule("saude") ||
@@ -504,7 +580,10 @@ function SidebarNav() {
                         canAccessModule("adm_nutricao") ||
                         canAccessModule("relatorios")
                       : item.slug === "futebol"
-                        ? canAccessModule("diretoria") ||
+                        ? canAccessModule("tipos") ||
+                          canAccessModule("futebol_comissao") ||
+                          canAccessModule("futebol_fisiologia") ||
+                          canAccessModule("diretoria") ||
                           canAccessModule("futebol_analise") ||
                           canAccessModule("futebol_logistica") ||
                           canAccessModule("relatorios")
@@ -534,9 +613,7 @@ function SidebarNav() {
             const isOpen =
               item.slug === "grupo_master"
                 ? grupoMasterOpen
-                : item.slug === "cadastros"
-                  ? cadastrosOpen
-                  : item.slug === "adm"
+                : item.slug === "adm"
                     ? admOpen
                     : item.slug === "requisicoes"
                       ? requisicoesOpen
@@ -559,34 +636,6 @@ function SidebarNav() {
                                 : item.slug === "marketing"
                                 ? marketingOpen
                                 : false;
-            const setOpen =
-              item.slug === "grupo_master"
-                ? setGrupoMasterOpen
-                : item.slug === "cadastros"
-                  ? setCadastrosOpen
-                  : item.slug === "adm"
-                    ? setAdmOpen
-                    : item.slug === "requisicoes"
-                      ? setRequisicoesOpen
-                    : item.slug === "saude"
-                      ? setSaudeOpen
-                      : item.slug === "futebol"
-                        ? setFutebolOpen
-                        : item.slug === "juridico"
-                          ? setJuridicoOpen
-                          : item.slug === "eventos"
-                            ? setEventosOpen
-                            : item.slug === "ferramentas"
-                        ? setFerramentasOpen
-                        : item.slug === "configuracoes"
-                          ? setConfigOpen
-                          : item.slug === "socio_torcedor"
-                              ? setSocioOpen
-                              : item.slug === "academias"
-                                ? setAcademiasOpen
-                                : item.slug === "marketing"
-                                ? setMarketingOpen
-                                : () => {};
 
             const visibleHubChildren = item.children.filter((c) =>
               c.children?.length
@@ -603,8 +652,12 @@ function SidebarNav() {
                   onClick={() => {
                     if (collapsed) {
                       setFlyoutSlug((s) => (s === item.slug ? null : item.slug));
+                    } else if (isOpen) {
+                      applyOpenGroup(null);
+                      closeAllNested();
                     } else {
-                      setOpen((o) => !o);
+                      applyOpenGroup(item.slug);
+                      closeAllNested();
                     }
                   }}
                   className={cn(

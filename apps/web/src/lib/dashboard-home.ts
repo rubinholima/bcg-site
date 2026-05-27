@@ -48,7 +48,7 @@ const HUB_HOME_RULES: HubHomeRule[] = [
   { route: "/dashboard/juridico", modules: ["juridico"] },
   { route: "/dashboard/eventos", modules: ["eventos"] },
   { route: "/dashboard/socio-torcedor", modules: ["socio_torcedor"] },
-  { route: "/dashboard/cadastros", modules: ["tipos", "adm_rh"] },
+  { route: "/dashboard/futebol", modules: ["tipos"] },
   { route: "/dashboard/grupo", modules: ["grupo_master", "empresas"] },
 ];
 

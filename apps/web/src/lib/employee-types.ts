@@ -1,6 +1,7 @@
 /** Tipos de colaborador no cadastro mestre (RH / funcionários). */
 export const EMPLOYEE_TYPES = {
   staff: "Funcionário",
+  comissao_tecnica: "Comissão técnica",
   dirigente: "Dirigente",
   athlete: "Atleta",
   temporario: "Temporário",

@@ -282,7 +282,7 @@ function TeamBlock({
   );
 }
 
-const TYPE_ORDER = ["staff", "athlete", "dirigente"] as const;
+const TYPE_ORDER = ["staff", "comissao_tecnica", "athlete", "dirigente"] as const;
 
 function groupByType(employees: EmployeeRow[]) {
   const map = new Map<string, EmployeeRow[]>();

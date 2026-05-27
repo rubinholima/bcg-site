@@ -423,11 +423,11 @@ export function EmployeeFormDialog({
                     value={type}
                     onChange={(e) => setType(e.target.value)}
                   >
-                    <option value="staff">{EMPLOYEE_TYPES.staff}</option>
-                    <option value="dirigente">{EMPLOYEE_TYPES.dirigente}</option>
-                    <option value="athlete">{EMPLOYEE_TYPES.athlete}</option>
-                    <option value="temporario">{EMPLOYEE_TYPES.temporario}</option>
-                    <option value="estagio">{EMPLOYEE_TYPES.estagio}</option>
+                    {Object.entries(EMPLOYEE_TYPES).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="grid min-w-0 gap-2">

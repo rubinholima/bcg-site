@@ -3,8 +3,11 @@
  * Menus, submenus e abas dos jogadores — ao adicionar itens aqui,
  * eles aparecem automaticamente na sidebar e em Configurações → Módulos.
  *
- * MDM (dados mestre): grupo "Cadastros" — cadastros únicos reutilizados pelos módulos.
  * Operação: demais grupos — movimentações e telas do dia a dia (URLs inalteradas).
+ * Cadastros MDM ficam dentro de cada departamento (Futebol, Saúde, Sócio Torcedor, etc.).
+ *
+ * REGRA Acessos: todo item com href aqui (e PLAYER_TABS) deve aparecer em Configurações → Acessos
+ * via getMenuAccessTree() + sync automático ao abrir a tela (buildModuleCatalog).
  */
 
 import type { LucideIcon } from "lucide-react";
@@ -48,7 +51,6 @@ import {
   Calendar,
   Tv,
   Database,
-  Briefcase,
   GraduationCap,
   Archive,
   Monitor,
@@ -159,138 +161,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       hubRelatorio("grupo_master"),
     ],
   },
-  // MDM — dados mestre (hub único; mesmas URLs de antes)
-  {
-    slug: "cadastros",
-    label: "Cadastros",
-    icon: Database,
-    moduleSlug: "tipos",
-    children: [
-      {
-        slug: "cad_visao",
-        label: "Visão geral",
-        href: "/dashboard/cadastros",
-        icon: LayoutDashboard,
-        moduleSlug: "tipos",
-      },
-      {
-        slug: "cad_funcionarios",
-        label: "Funcionários",
-        href: "/dashboard/cadastros/funcionarios",
-        icon: Briefcase,
-        moduleSlug: "adm_rh",
-      },
-      {
-        slug: "cad_fornecedores",
-        label: "Fornecedores",
-        href: "/dashboard/cadastros/fornecedores",
-        icon: Truck,
-        moduleSlug: "adm_financeiro",
-      },
-      {
-        slug: "cad_clientes",
-        label: "Clientes",
-        href: "/dashboard/cadastros/clientes",
-        icon: Users,
-        moduleSlug: "adm_financeiro",
-      },
-      {
-        slug: "cad_futebol",
-        label: "Futebol",
-        icon: Shirt,
-        moduleSlug: "tipos",
-        children: [
-          {
-            slug: "cad_jogadores",
-            label: DASHBOARD_LABELS.atletas,
-            href: "/dashboard/cadastros/jogadores",
-            icon: UserCircle,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_jogadores_desligados",
-            label: "Atletas desligados",
-            href: "/dashboard/cadastros/jogadores/arquivo",
-            icon: Archive,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_campeonatos",
-            label: "Campeonatos",
-            href: "/dashboard/cadastros/campeonatos",
-            icon: Trophy,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_estadios",
-            label: DASHBOARD_LABELS.estadios,
-            href: "/dashboard/cadastros/estadios",
-            icon: MapPin,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_times",
-            label: DASHBOARD_LABELS.timesAdversarios,
-            href: "/dashboard/cadastros/times",
-            icon: Shirt,
-            moduleSlug: "tipos",
-          },
-          {
-            slug: "cad_categorias",
-            label: "Categoria",
-            href: "/dashboard/cadastros/categorias",
-            icon: Layers,
-            moduleSlug: "tipos",
-          },
-        ],
-      },
-      {
-        slug: "cad_saude",
-        label: "Saúde",
-        icon: Stethoscope,
-        moduleSlug: "saude",
-        children: [
-          {
-            slug: "cad_medicos",
-            label: "Médicos",
-            href: "/dashboard/medico/equipe",
-            icon: Stethoscope,
-            moduleSlug: "saude",
-          },
-          {
-            slug: "cad_enfermeiros",
-            label: "Enfermeiros",
-            href: "/dashboard/medico/enfermeiros",
-            icon: Heart,
-            moduleSlug: "saude",
-          },
-          {
-            slug: "cad_psicologos",
-            label: "Psicólogos",
-            href: "/dashboard/psicologia/psicologos",
-            icon: UserCircle,
-            moduleSlug: "saude",
-          },
-        ],
-      },
-      {
-        slug: "cad_programas",
-        label: "Programas",
-        icon: Ticket,
-        moduleSlug: "socio_torcedor",
-        children: [
-          {
-            slug: "cad_socio_planos",
-            label: "Planos sócio-torcedor",
-            href: "/dashboard/socio-torcedor/planos",
-            icon: Heart,
-            moduleSlug: "socio_torcedor",
-          },
-        ],
-      },
-      hubRelatorio("cadastros"),
-    ],
-  },
   {
     slug: "requisicoes",
     label: "Requisições",
@@ -327,8 +197,10 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "adm_financeiro",
       },
       { slug: "adm_financeiro", label: "Financeiro", href: "/dashboard/adm/financeiro", icon: DollarSign, moduleSlug: "adm_financeiro", compactGroup: "omie" },
+      { slug: "adm_clientes", label: "Clientes", href: "/dashboard/adm/clientes", icon: Users, moduleSlug: "adm_financeiro", compactGroup: "omie" },
       { slug: "adm_financeiro_aprovacoes", label: "Aprovações compras", href: "/dashboard/adm/financeiro/aprovacoes", icon: CheckCircle, moduleSlug: "adm_financeiro" },
       { slug: "adm_compras", label: "Compras", href: "/dashboard/adm/compras", icon: ShoppingCart, moduleSlug: "adm_compras", compactGroup: "omie" },
+      { slug: "adm_fornecedores", label: "Fornecedores", href: "/dashboard/adm/fornecedores", icon: Truck, moduleSlug: "adm_financeiro", compactGroup: "omie" },
       { slug: "adm_ti", label: "TI — Atendimento", href: "/dashboard/adm/ti", icon: Monitor, moduleSlug: "adm_ti" },
       { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque", compactGroup: "omie" },
       { slug: "adm_rh", label: "RH", href: "/dashboard/adm/rh", icon: Users, moduleSlug: "adm_rh" },
@@ -400,6 +272,35 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: UtensilsCrossed,
         moduleSlug: "adm_nutricao",
       },
+      {
+        slug: "saude_cadastros",
+        label: "Cadastros",
+        icon: Database,
+        moduleSlug: "saude",
+        children: [
+          {
+            slug: "cad_medicos",
+            label: "Médicos",
+            href: "/dashboard/medico/equipe",
+            icon: Stethoscope,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "cad_enfermeiros",
+            label: "Enfermeiros",
+            href: "/dashboard/medico/enfermeiros",
+            icon: Heart,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "cad_psicologos",
+            label: "Psicólogos",
+            href: "/dashboard/psicologia/psicologos",
+            icon: UserCircle,
+            moduleSlug: "saude",
+          },
+        ],
+      },
       hubRelatorio("saude"),
     ],
   },
@@ -457,6 +358,70 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             href: "/dashboard/futebol/analise",
             icon: BarChart3,
             moduleSlug: "futebol_analise",
+          },
+        ],
+      },
+      {
+        slug: "futebol_comissao",
+        label: "Comissão técnica",
+        href: "/dashboard/futebol/comissao",
+        icon: Users,
+        moduleSlug: "futebol_comissao",
+      },
+      {
+        slug: "futebol_fisiologia",
+        label: "Fisiologia",
+        href: "/dashboard/futebol/fisiologia",
+        icon: Heart,
+        moduleSlug: "futebol_fisiologia",
+      },
+      {
+        slug: "futebol_cadastros",
+        label: "Cadastros",
+        icon: Database,
+        moduleSlug: "tipos",
+        children: [
+          {
+            slug: "cad_jogadores",
+            label: DASHBOARD_LABELS.atletas,
+            href: "/dashboard/cadastros/jogadores",
+            icon: UserCircle,
+            moduleSlug: "tipos",
+          },
+          {
+            slug: "cad_jogadores_desligados",
+            label: "Atletas desligados",
+            href: "/dashboard/cadastros/jogadores/arquivo",
+            icon: Archive,
+            moduleSlug: "tipos",
+          },
+          {
+            slug: "cad_campeonatos",
+            label: "Campeonatos",
+            href: "/dashboard/cadastros/campeonatos",
+            icon: Trophy,
+            moduleSlug: "tipos",
+          },
+          {
+            slug: "cad_estadios",
+            label: DASHBOARD_LABELS.estadios,
+            href: "/dashboard/cadastros/estadios",
+            icon: MapPin,
+            moduleSlug: "tipos",
+          },
+          {
+            slug: "cad_times",
+            label: DASHBOARD_LABELS.timesAdversarios,
+            href: "/dashboard/cadastros/times",
+            icon: Shirt,
+            moduleSlug: "tipos",
+          },
+          {
+            slug: "cad_categorias",
+            label: "Categoria",
+            href: "/dashboard/cadastros/categorias",
+            icon: Layers,
+            moduleSlug: "tipos",
           },
         ],
       },
@@ -585,6 +550,21 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     children: [
       { slug: "socio_dashboard", label: "Visão geral", href: "/dashboard/socio-torcedor", icon: LayoutDashboard, moduleSlug: "socio_torcedor" },
       { slug: "socio_socios", label: "Sócios", href: "/dashboard/socio-torcedor/socios", icon: Users, moduleSlug: "socio_torcedor" },
+      {
+        slug: "socio_cadastros",
+        label: "Cadastros",
+        icon: Database,
+        moduleSlug: "socio_torcedor",
+        children: [
+          {
+            slug: "cad_socio_planos",
+            label: "Planos sócio-torcedor",
+            href: "/dashboard/socio-torcedor/planos",
+            icon: Heart,
+            moduleSlug: "socio_torcedor",
+          },
+        ],
+      },
       hubRelatorio("socio_torcedor"),
     ],
   },
@@ -701,6 +681,123 @@ export interface MenuDepartmentGroup {
   id: string;
   label: string;
   modules: MenuDepartmentModule[];
+}
+
+/** Nó da árvore de acessos — espelha seções e subseções do menu lateral. */
+export interface MenuAccessTreeNode {
+  id: string;
+  label: string;
+  kind: "group" | "leaf";
+  moduleSlug?: string;
+  menuSlug?: string;
+  href?: string;
+  children: MenuAccessTreeNode[];
+}
+
+/** Coleta todos os moduleSlug das folhas de um nó. */
+export function collectTreeModuleSlugs(node: MenuAccessTreeNode): string[] {
+  if (node.kind === "leaf" && node.moduleSlug) return [node.moduleSlug];
+  return node.children.flatMap(collectTreeModuleSlugs);
+}
+
+function walkMenuAccessItems(items: MenuItemConfig[], pathPrefix: string): MenuAccessTreeNode[] {
+  const nodes: MenuAccessTreeNode[] = [];
+  for (const item of items) {
+    const id = `${pathPrefix}/${item.slug}`;
+    if (item.children?.length) {
+      const children = walkMenuAccessItems(item.children, id);
+      if (children.length > 0) {
+        nodes.push({
+          id,
+          label: item.label,
+          kind: "group",
+          menuSlug: item.slug,
+          children,
+        });
+      }
+    } else if (item.href && !item.external) {
+      nodes.push({
+        id,
+        label: item.label,
+        kind: "leaf",
+        moduleSlug: item.moduleSlug,
+        menuSlug: item.slug,
+        href: item.href,
+        children: [],
+      });
+    }
+  }
+  return nodes;
+}
+
+/**
+ * Árvore completa para Configurações → Acessos.
+ * Obrigatório: qualquer item novo em DASHBOARD_MENU / PLAYER_TABS aparece aqui automaticamente.
+ */
+export function getMenuAccessTree(): MenuAccessTreeNode[] {
+  const roots: MenuAccessTreeNode[] = [];
+
+  for (const top of DASHBOARD_MENU) {
+    if (top.children?.length) {
+      const children = walkMenuAccessItems(top.children, top.slug);
+      if (children.length > 0) {
+        roots.push({
+          id: top.slug,
+          label: top.label,
+          kind: "group",
+          menuSlug: top.slug,
+          children,
+        });
+      }
+    } else if (top.href && !top.external) {
+      roots.push({
+        id: top.slug,
+        label: top.label,
+        kind: "leaf",
+        moduleSlug: top.moduleSlug,
+        menuSlug: top.slug,
+        href: top.href,
+        children: [],
+      });
+    }
+  }
+
+  const playerChildren: MenuAccessTreeNode[] = [];
+  for (const tab of PLAYER_TABS) {
+    if (!tab.moduleSlug) continue;
+    playerChildren.push({
+      id: `player_tabs/${tab.id}`,
+      label: tab.label,
+      kind: "leaf",
+      moduleSlug: tab.moduleSlug,
+      menuSlug: tab.id,
+      children: [],
+    });
+  }
+  if (playerChildren.length > 0) {
+    roots.push({
+      id: "player_tabs",
+      label: `${DASHBOARD_LABELS.atletas} (abas)`,
+      kind: "group",
+      menuSlug: "player_tabs",
+      children: playerChildren,
+    });
+  }
+
+  return roots;
+}
+
+/** Catálogo para sync com a API (nomes amigáveis preenchidos no front). */
+export function buildModuleCatalog(names: Record<string, string>): Array<{
+  slug: string;
+  name: string;
+  sortOrder: number;
+}> {
+  return getUniqueModuleSlugs().map((slug, index) => ({
+    slug,
+    name: names[slug] ?? slug,
+    sortOrder: index,
+  }));
 }
 
 /** Coleta slugs + rótulos de menu por departamento de primeiro nível. */

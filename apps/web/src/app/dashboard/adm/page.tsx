@@ -7,6 +7,7 @@ import {
   Users,
   Warehouse,
   UtensilsCrossed,
+  Truck,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { AdmHubInsights } from "@/components/dashboard/hub/AdmHubInsights";
@@ -20,11 +21,25 @@ const LINKS = [
     moduleSlug: "adm_financeiro",
   },
   {
+    title: "Clientes",
+    description: "Cadastro para contas a receber.",
+    href: "/dashboard/adm/clientes",
+    icon: Users,
+    moduleSlug: "adm_financeiro",
+  },
+  {
     title: "Compras",
-    description: "Requisições, pedidos e fornecedores.",
+    description: "Requisições, pedidos e ordens de compra.",
     href: "/dashboard/adm/compras",
     icon: ShoppingCart,
     moduleSlug: "adm_compras",
+  },
+  {
+    title: "Fornecedores",
+    description: "Cadastro para contas a pagar e compras.",
+    href: "/dashboard/adm/fornecedores",
+    icon: Truck,
+    moduleSlug: "adm_financeiro",
   },
   {
     title: "Estoque",
@@ -60,7 +75,7 @@ export default function AdmHubPage() {
   return (
     <HubDashboardPage
       title="Depto Adm"
-      subtitle="Visão geral administrativa — financeiro, compras, estoque, RH e patrimônio."
+      subtitle="Visão geral administrativa — financeiro, compras, clientes, fornecedores, estoque, RH e patrimônio."
       hubId="adm"
       links={[...LINKS]}
     >

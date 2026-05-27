@@ -205,6 +205,30 @@ export default function ManualPage() {
               <strong>Exemplo:</strong> preencher <em>categorias</em> no cadastro do clube permite filtrar itens
               de estoque “só Sub-17” ou “só Feminino”.
             </p>
+            <h3 id="cadastros-funcionarios" className="text-base font-semibold pt-2">
+              Funcionários (cadastro mestre)
+            </h3>
+            <p>
+              Cadastro único de pessoas do clube/empresa — funcionários, dirigentes, comissão técnica, saúde e
+              demais departamentos. Cada pessoa tem departamento e foto na listagem (como atletas), evitando
+              cadastros duplicados. O vínculo com o módulo <strong>Futebol</strong> (atleta) é opcional e só
+              aparece para tipo Atleta. Convites de cadastro e aprovação pelo RH ficam em{" "}
+              <strong>Depto Adm → RH</strong>.
+            </p>
+            <h3 id="cadastros-fornecedores" className="text-base font-semibold pt-2">
+              Fornecedores
+            </h3>
+            <p>
+              Cadastro mestre usado em contas a pagar, requisições de compra e ordens de compra. Mantenha CNPJ
+              e contato atualizados para o fluxo de Compras.
+            </p>
+            <h3 id="cadastros-clientes" className="text-base font-semibold pt-2">
+              Clientes
+            </h3>
+            <p>
+              Cadastro mestre para contas a receber no Financeiro (empresas, parceiros, pagadores externos ao
+              clube).
+            </p>
           </Section>
 
           <Section id="adm" title="Área administrativa (Adm)">

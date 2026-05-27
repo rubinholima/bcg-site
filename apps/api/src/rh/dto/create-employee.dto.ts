@@ -36,7 +36,7 @@ export class CreateEmployeeDto {
 
   @IsString()
   @MaxLength(32)
-  type: string; // staff | athlete | dirigente | temporario | estagio
+  type: string; // staff | comissao_tecnica | athlete | dirigente | temporario | estagio
 
   @IsOptional()
   @IsArray()

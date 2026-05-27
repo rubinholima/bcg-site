@@ -40,6 +40,7 @@ export type ContractDataFieldKey = (typeof CONTRACT_DATA_FIELD_CATALOG)[number][
 
 const EMPLOYEE_TYPE_LABELS: Record<string, string> = {
   staff: 'FUNCIONÁRIO',
+  comissao_tecnica: 'COMISSÃO TÉCNICA',
   dirigente: 'DIRIGENTE',
   athlete: 'ATLETA',
   temporario: 'TEMPORÁRIO',

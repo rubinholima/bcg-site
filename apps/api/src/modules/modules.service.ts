@@ -39,6 +39,23 @@ export interface MatrixChangeRow {
   to: boolean;
 }
 
+export interface ModuleCatalogEntry {
+  slug: string;
+  name: string;
+  sortOrder?: number;
+  functionalArea?: string;
+}
+
+export interface UserModulePermissions {
+  userId: string;
+  email: string;
+  name: string | null;
+  role: string;
+  customModuleAccess: boolean;
+  /** slug → canAccess (efetivo se custom; senão derivado do perfil) */
+  permissions: Record<string, boolean>;
+}
+
 function getRoleAccess(roles: { role: string; canAccess: boolean }[], role: string): boolean {
   return roles.find((r) => r.role === role)?.canAccess ?? false;
 }
@@ -80,6 +97,187 @@ export class ModulesService {
       orderBy: { module: { sortOrder: 'asc' } },
     });
     return rows.map((r) => r.module.slug);
+  }
+
+  /** Todos os slugs cadastrados. */
+  async getAllModuleSlugs(): Promise<string[]> {
+    const rows = await this.prisma.module.findMany({
+      orderBy: { sortOrder: 'asc' },
+      select: { slug: true },
+    });
+    return rows.map((r) => r.slug);
+  }
+
+  /** Resolve usuário pelo sub do JWT (cognitoSub ou id interno). */
+  async findUserIdByActorSub(actorSub: string): Promise<string | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { OR: [{ cognitoSub: actorSub }, { id: actorSub }] },
+      select: { id: true },
+    });
+    return user?.id ?? null;
+  }
+
+  /** Slugs efetivos: super_admin = tudo; custom = UserModuleAccess; senão matriz do perfil. */
+  async getSlugsForUser(userId: string, role: string): Promise<string[]> {
+    if (role === 'super_admin') {
+      return this.getAllModuleSlugs();
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { customModuleAccess: true },
+    });
+    if (user?.customModuleAccess) {
+      const rows = await this.prisma.userModuleAccess.findMany({
+        where: { userId, canAccess: true },
+        include: { module: true },
+        orderBy: { module: { sortOrder: 'asc' } },
+      });
+      return rows.map((r) => r.module.slug);
+    }
+    return this.getSlugsForRole(role);
+  }
+
+  async getSlugsForActor(actorSub: string, role: string): Promise<string[]> {
+    if (role === 'super_admin') {
+      return this.getAllModuleSlugs();
+    }
+    const userId = await this.findUserIdByActorSub(actorSub);
+    if (!userId) {
+      return this.getSlugsForRole(role);
+    }
+    return this.getSlugsForUser(userId, role);
+  }
+
+  /** Garante que todos os módulos do menu existam no banco (fonte: catálogo enviado pelo front). */
+  async syncModuleCatalog(catalog: ModuleCatalogEntry[]): Promise<{ created: number; updated: number }> {
+    let created = 0;
+    let updated = 0;
+    for (let i = 0; i < catalog.length; i++) {
+      const entry = catalog[i];
+      const sortOrder = entry.sortOrder ?? i;
+      const existing = await this.prisma.module.findUnique({ where: { slug: entry.slug } });
+      if (existing) {
+        await this.prisma.module.update({
+          where: { id: existing.id },
+          data: {
+            name: entry.name,
+            sortOrder,
+            ...(entry.functionalArea ? { functionalArea: entry.functionalArea } : {}),
+          },
+        });
+        updated++;
+      } else {
+        const mod = await this.prisma.module.create({
+          data: {
+            slug: entry.slug,
+            name: entry.name,
+            sortOrder,
+            functionalArea: entry.functionalArea ?? 'outros',
+          },
+        });
+        for (const role of MANAGED_ROLES) {
+          await this.prisma.moduleRole.create({
+            data: { moduleId: mod.id, role, canAccess: false },
+          });
+        }
+        created++;
+      }
+    }
+    return { created, updated };
+  }
+
+  /** Permissões de um usuário (para tela Acessos → Usuário). */
+  async getUserModulePermissions(userId: string): Promise<UserModulePermissions | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, role: true, customModuleAccess: true },
+    });
+    if (!user) return null;
+
+    const modules = await this.prisma.module.findMany({
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        roles: true,
+        userAccess: { where: { userId } },
+      },
+    });
+
+    const role = user.role ?? 'editor';
+    const permissions: Record<string, boolean> = {};
+
+    for (const mod of modules) {
+      if (user.customModuleAccess) {
+        permissions[mod.slug] = mod.userAccess[0]?.canAccess ?? false;
+      } else {
+        permissions[mod.slug] = getRoleAccess(mod.roles, role);
+      }
+    }
+
+    return {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      role,
+      customModuleAccess: user.customModuleAccess,
+      permissions,
+    };
+  }
+
+  /** Atualiza permissões individuais de um usuário. */
+  async updateUserModulePermissions(
+    userId: string,
+    permissions: Record<string, boolean>,
+    options?: { customModuleAccess?: boolean },
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return;
+
+    const custom =
+      options?.customModuleAccess !== undefined
+        ? options.customModuleAccess
+        : true;
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { customModuleAccess: custom },
+    });
+
+    if (!custom) {
+      await this.prisma.userModuleAccess.deleteMany({ where: { userId } });
+      return;
+    }
+
+    for (const [slug, canAccess] of Object.entries(permissions)) {
+      const module = await this.prisma.module.findUnique({ where: { slug } });
+      if (!module) continue;
+      await this.prisma.userModuleAccess.upsert({
+        where: { userId_moduleId: { userId, moduleId: module.id } },
+        create: { userId, moduleId: module.id, canAccess },
+        update: { canAccess },
+      });
+    }
+  }
+
+  /** Copia matriz do perfil do usuário para permissões personalizadas. */
+  async copyRolePermissionsToUser(userId: string): Promise<UserModulePermissions | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (!user) return null;
+    const role = user.role ?? 'editor';
+    const modules = await this.getAllWithPermissions();
+    const permissions: Record<string, boolean> = {};
+    for (const mod of modules) {
+      if (role === 'super_admin') {
+        permissions[mod.slug] = true;
+      } else {
+        const key = role as ManagedRoleKey;
+        permissions[mod.slug] = mod[key] ?? false;
+      }
+    }
+    await this.updateUserModulePermissions(userId, permissions, { customModuleAccess: true });
+    return this.getUserModulePermissions(userId);
   }
 
   private mapRow(m: {

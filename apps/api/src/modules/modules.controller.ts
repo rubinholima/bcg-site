@@ -1,12 +1,14 @@
-import { Body, Controller, Get, Patch, Req, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, Query, UseGuards, Param, NotFoundException } from '@nestjs/common';
 import { Request } from 'express';
 import { CognitoJwtPayload, JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { SuperAdminGuard } from '../auth/super-admin.guard';
 import {
   computeMatrixChanges,
   MatrixChangeRow,
+  ModuleCatalogEntry,
   ModulesService,
   ModuleWithPermissions,
+  UserModulePermissions,
 } from './modules.service';
 
 export type PermissionsBody = Record<
@@ -59,6 +61,49 @@ export class ModulesController {
   @Get()
   async getAll(): Promise<ModuleWithPermissions[]> {
     return this.modulesService.getAllWithPermissions();
+  }
+
+  /** Sincroniza módulos do menu (catálogo enviado pelo front — obrigatório ao abrir Acessos). */
+  @Post('sync')
+  async syncCatalog(
+    @Body() body: { catalog?: ModuleCatalogEntry[] },
+  ): Promise<{ ok: boolean; created: number; updated: number }> {
+    const catalog = body.catalog ?? [];
+    const result = await this.modulesService.syncModuleCatalog(catalog);
+    return { ok: true, ...result };
+  }
+
+  @Get('users/:userId')
+  async getUserPermissions(@Param('userId') userId: string): Promise<UserModulePermissions> {
+    const data = await this.modulesService.getUserModulePermissions(userId);
+    if (!data) throw new NotFoundException('Usuário não encontrado');
+    return data;
+  }
+
+  @Patch('users/:userId')
+  async updateUserPermissions(
+    @Param('userId') userId: string,
+    @Body()
+    body: {
+      permissions?: Record<string, boolean>;
+      customModuleAccess?: boolean;
+    },
+  ): Promise<{ ok: boolean }> {
+    const data = await this.modulesService.getUserModulePermissions(userId);
+    if (!data) throw new NotFoundException('Usuário não encontrado');
+    await this.modulesService.updateUserModulePermissions(
+      userId,
+      body.permissions ?? {},
+      { customModuleAccess: body.customModuleAccess },
+    );
+    return { ok: true };
+  }
+
+  @Post('users/:userId/copy-from-role')
+  async copyUserFromRole(@Param('userId') userId: string): Promise<UserModulePermissions> {
+    const data = await this.modulesService.copyRolePermissionsToUser(userId);
+    if (!data) throw new NotFoundException('Usuário não encontrado');
+    return data;
   }
 
   @Patch()
