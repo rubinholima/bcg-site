@@ -1,4 +1,4 @@
-export { sortBlocks, normalizeBlocks, isBlockHidden, countMiddleModules, countVisibleModules } from "./block-utils";
+export { sortBlocks, normalizeBlocks, sanitizeBlocksForSave, isBlockHidden, countMiddleModules, countVisibleModules } from "./block-utils";
 export { HEADER_PRESET_OPTIONS, HEADER_PRESET_VALUES, applyHeaderPresetOverwrite, type HeaderPreset } from "./header-presets";
 export { usePageBuilder, type PageBuilderState } from "./usePageBuilder";
 export { HeroMainTitlePanel } from "./HeroMainTitlePanel";

@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import type { BlockConfigValue } from "@/types/block-config";
 import type { HomeContentBlock, HeroCarouselEffect, HeroCarouselIntervalSeconds, HeroSlide } from "@/types/home-content";
 import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
+import { resolveHeroImageUrl } from "@/lib/hero-block.util";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { getPublicImageUrl, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
 
 interface HeroModuleEditorProps {
   block: HomeContentBlock;
@@ -31,22 +32,36 @@ function heroSlidesFromBlock(block: HomeContentBlock): HeroSlide[] {
   if (Array.isArray(block.config?.heroImages)) {
     return (block.config.heroImages as string[]).map((url) => ({ url, titlePt: "", titleEn: "" }));
   }
+  const bg = (block.config?.backgroundImage as string)?.trim();
+  if (bg) return [{ url: bg, titlePt: "", titleEn: "" }];
   return [];
 }
 
 function HeroSlidePreview({ url }: { url: string }) {
-  const src = resolveMediaUrlWithProxyFallback(url) || getPublicImageUrl(url) || url.trim();
+  const src = resolveHeroImageUrl(url);
+  const [broken, setBroken] = useState(false);
+
   if (!src) {
     return (
-      <div className="flex h-28 w-full max-w-sm items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 text-xs text-muted-foreground">
-        Sem imagem
+      <div className="flex h-28 w-full max-w-sm items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 px-3 text-center text-xs text-muted-foreground">
+        Nenhuma imagem selecionada
       </div>
     );
   }
+
+  if (broken) {
+    return (
+      <div className="flex h-28 w-full max-w-sm flex-col items-center justify-center gap-1 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 text-center text-xs text-amber-200">
+        <span>Imagem não carregou (pode ter sido apagada do S3).</span>
+        <span className="text-muted-foreground">Escolha outra na lista ou envie de novo.</span>
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-28 w-full max-w-sm overflow-hidden rounded-lg border border-border bg-zinc-900">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt="" className="h-full w-full object-cover" />
+      <img src={src} alt="" className="h-full w-full object-cover" onError={() => setBroken(true)} />
     </div>
   );
 }
@@ -64,9 +79,13 @@ export function HeroModuleEditor({
     updateBlockConfigValue(index, "heroSlides", slides);
   };
 
-  const clearAllTitles = () => {
+  const clearAllHeroText = () => {
     updateBlockConfig(index, "titlePt", undefined);
     updateBlockConfig(index, "titleEn", undefined);
+    updateBlockConfig(index, "subtitlePT", undefined);
+    updateBlockConfig(index, "subtitleEN", undefined);
+    updateBlockConfig(index, "descriptionPT", undefined);
+    updateBlockConfig(index, "descriptionEN", undefined);
     if (heroSlides.length > 0) {
       setSlides(heroSlides.map((s) => ({ ...s, titlePt: "", titleEn: "" })));
     }
@@ -79,11 +98,11 @@ export function HeroModuleEditor({
           <div>
             <p className="text-sm font-semibold text-violet-200">Título do Hero</p>
             <p className="text-xs text-muted-foreground">
-              Deixe vazio para <strong>sem título</strong> no site. Só aparece se você preencher.
+              Deixe vazio para <strong>sem título</strong> no site. Só aparece o que você digitar aqui.
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" className="min-h-[44px]" onClick={clearAllTitles}>
-            Limpar títulos
+          <Button type="button" variant="outline" size="sm" className="min-h-[44px]" onClick={clearAllHeroText}>
+            Limpar todo o texto
           </Button>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -126,7 +145,9 @@ export function HeroModuleEditor({
           </Button>
 
           {heroSlides.length === 0 ? (
-            <p className="text-sm text-amber-600/90">Nenhuma foto — adicione ao menos uma imagem do S3/mídia.</p>
+            <p className="text-sm text-amber-600/90">
+              Nenhuma foto no hero — adicione uma imagem da biblioteca de mídia e clique em <strong>Salvar</strong>.
+            </p>
           ) : null}
 
           {heroSlides.map((slide, i) => (

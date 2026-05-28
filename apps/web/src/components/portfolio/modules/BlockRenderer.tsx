@@ -3,6 +3,7 @@ import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
 import { getPublicImageUrl, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { getHeroDisplaySlides, resolveHeroImageUrl } from "@/lib/hero-block.util";
 import { resolveFontFamily } from "@/lib/page-fonts";
 import { SmartImage } from "@/components/common/SmartImage";
 import { AnimateInView } from "@/components/home/AnimateInView";
@@ -190,26 +191,11 @@ export function BlockRenderer({
   }
 
   if (block.type === "hero") {
-    const heroSlidesRaw = block.config?.heroSlides as Array<{ url?: string; titlePt?: string; titleEn?: string }> | undefined;
-    const heroImagesLegacy = (block.config?.heroImages as string[] | undefined)?.filter((u) => u?.trim()) ?? [];
-    const heroSlidesBase =
-      Array.isArray(heroSlidesRaw) && heroSlidesRaw.length > 0
-        ? heroSlidesRaw.filter((s) => s?.url?.trim()).map((s) => ({ url: s.url!, titlePt: s.titlePt, titleEn: s.titleEn }))
-        : heroImagesLegacy.map((url) => ({ url, titlePt: "", titleEn: "" }));
-    const heroSlides = heroSlidesBase
-      .map((s) => ({
-        url: resolveMediaUrlWithProxyFallback(s.url) || getPublicImageUrl(s.url),
-        titlePt: s.titlePt,
-        titleEn: s.titleEn,
-      }))
-      .filter((s) => s.url?.trim());
+    const heroSlides = getHeroDisplaySlides(block.config as Record<string, unknown>);
     const overlay = blockOverlayOpacity(block);
     const effect = (block.config?.heroCarouselEffect as "fade" | "slide" | "zoom") ?? "fade";
     const intervalSeconds = (block.config?.heroCarouselIntervalSeconds as 5 | 10 | 15) ?? 10;
-    const singleBg =
-      heroSlidesBase.length > 0
-        ? resolveMediaUrlWithProxyFallback(heroSlidesBase[0].url) || getPublicImageUrl(heroSlidesBase[0].url)
-        : getPublicImageUrl(bgImg);
+    const singleBg = heroSlides.length > 0 ? heroSlides[0]!.url : resolveHeroImageUrl(bgImg);
 
     const align = (block.config?.contentAlign as "left" | "center" | "right") || "center";
     const vAlign = (block.config?.verticalAlign as "top" | "center" | "bottom") || "center";
@@ -316,6 +302,7 @@ export function BlockRenderer({
                   fill
                   className="object-cover"
                   sizes="100vw"
+                  unoptimized
                 />
                 <div className="absolute inset-0" style={getHeroOverlayStyle(block)} />
               </div>

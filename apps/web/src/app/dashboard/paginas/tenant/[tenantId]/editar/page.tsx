@@ -72,7 +72,7 @@ import {
 import { BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, ModuleTitleGradientFields } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
@@ -196,15 +196,6 @@ function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
   return [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/** Garante: primeiro bloco = cabeçalho, último = rodapé, meio = módulos reordenáveis. */
-function normalizeBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
-  const sorted = sortBlocks(blocks);
-  const header = sorted.find((b) => b.type === "header") ?? createBlock("header", 0);
-  const footer = sorted.find((b) => b.type === "footer") ?? createBlock("footer", 999);
-  const middle = sorted.filter((b) => b.type !== "header" && b.type !== "footer");
-  const list = [header, ...middle, footer];
-  return list.map((b, i) => ({ ...b, sortOrder: i }));
-}
 
 type HeaderPreset = "classic" | "centered" | "minimal" | "overlay" | "sticky" | "split";
 
@@ -550,36 +541,6 @@ export default function EditarPaginaTenantPage() {
     setBlocks(list);
   };
 
-  /** Normaliza blocos para o payload: heroSlides com url/titlePt/titleEn sempre strings. Em seções, normaliza também os módulos internos. */
-  const normalizeBlocksForSave = (list: HomeContentBlock[]): HomeContentBlock[] => {
-    const normalizeHeroInBlock = (block: HomeContentBlock): HomeContentBlock => {
-      if (block.type === "hero") {
-        const slides = Array.isArray(block.config?.heroSlides) ? block.config.heroSlides : [];
-        const normalizedSlides = slides.map((s: { url?: unknown; titlePt?: unknown; titleEn?: unknown }) => ({
-          url: String(s?.url ?? "").trim(),
-          titlePt: String(s?.titlePt ?? ""),
-          titleEn: String(s?.titleEn ?? ""),
-        }));
-        return { ...block, config: { ...block.config, heroSlides: normalizedSlides } };
-      }
-      if (block.type === "section") {
-        const left = Array.isArray(block.config?.sectionLeftModules) ? block.config.sectionLeftModules : [];
-        const right = Array.isArray(block.config?.sectionRightModules) ? block.config.sectionRightModules : [];
-        const middle = Array.isArray(block.config?.sectionMiddleModules) ? block.config.sectionMiddleModules : [];
-        return {
-          ...block,
-          config: {
-            ...block.config,
-            sectionLeftModules: left.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
-            sectionRightModules: right.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
-            sectionMiddleModules: middle.map((m: HomeContentBlock) => normalizeHeroInBlock(m)),
-          },
-        };
-      }
-      return block;
-    };
-    return list.map(normalizeHeroInBlock);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -588,7 +549,7 @@ export default function EditarPaginaTenantPage() {
     setError(null);
     setSuccess(false);
     try {
-      const payloadBlocks = normalizeBlocksForSave(blocks);
+      const payloadBlocks = sanitizeBlocksForSave(blocks);
       const res = await authFetch(`/api/pages/${page.id}`, {
         method: "PATCH",
         credentials: "include",
@@ -2049,7 +2010,7 @@ export default function EditarPaginaTenantPage() {
                                 <Input
                                   placeholder="Frase de posicionamento"
                                   value={(block.config?.subtitlePT as string) ?? ""}
-                                  onChange={(e) => updateBlockConfig(index, "subtitlePT", e.target.value)}
+                                  onChange={(e) => updateBlockConfig(index, "subtitlePT", e.target.value.trim() || undefined)}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -2057,7 +2018,7 @@ export default function EditarPaginaTenantPage() {
                                 <Input
                                   placeholder="Positioning phrase"
                                   value={(block.config?.subtitleEN as string) ?? ""}
-                                  onChange={(e) => updateBlockConfig(index, "subtitleEN", e.target.value)}
+                                  onChange={(e) => updateBlockConfig(index, "subtitleEN", e.target.value.trim() || undefined)}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -2065,7 +2026,7 @@ export default function EditarPaginaTenantPage() {
                                 <textarea
                                   placeholder="Até 3 linhas"
                                   value={(block.config?.descriptionPT as string) ?? ""}
-                                  onChange={(e) => updateBlockConfig(index, "descriptionPT", e.target.value)}
+                                  onChange={(e) => updateBlockConfig(index, "descriptionPT", e.target.value.trim() || undefined)}
                                   rows={3}
                                   className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 />
@@ -2075,7 +2036,7 @@ export default function EditarPaginaTenantPage() {
                                 <textarea
                                   placeholder="Up to 3 lines"
                                   value={(block.config?.descriptionEN as string) ?? ""}
-                                  onChange={(e) => updateBlockConfig(index, "descriptionEN", e.target.value)}
+                                  onChange={(e) => updateBlockConfig(index, "descriptionEN", e.target.value.trim() || undefined)}
                                   rows={3}
                                   className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                                 />

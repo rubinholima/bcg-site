@@ -65,7 +65,7 @@ import {
 import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
 
@@ -73,15 +73,6 @@ function sortBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
   return [...blocks].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-/** Garante: primeiro bloco = cabeçalho, último = rodapé, meio = módulos reordenáveis. */
-function normalizeBlocks(blocks: HomeContentBlock[]): HomeContentBlock[] {
-  const sorted = sortBlocks(blocks);
-  const header = sorted.find((b) => b.type === "header") ?? createBlock("header", 0);
-  const footer = sorted.find((b) => b.type === "footer") ?? createBlock("footer", 999);
-  const middle = sorted.filter((b) => b.type !== "header" && b.type !== "footer");
-  const list = [header, ...middle, footer];
-  return list.map((b, i) => ({ ...b, sortOrder: i }));
-}
 
 type HeaderPreset = "classic" | "centered" | "minimal" | "overlay" | "sticky" | "split";
 
@@ -348,19 +339,6 @@ export default function EditarGroupHomePage() {
     setBlocks(blocks.filter((_, i) => i !== index));
   };
 
-  /** Normaliza blocos para o payload: heroSlides com url/titlePt/titleEn sempre strings (evita rejeição por tipo ou chaves extras). */
-  const normalizeBlocksForSave = (list: HomeContentBlock[]): HomeContentBlock[] =>
-    list.map((block) => {
-      if (block.type !== "hero") return block;
-      const slides = Array.isArray(block.config?.heroSlides) ? block.config.heroSlides : [];
-      const normalizedSlides = slides.map((s: { url?: unknown; titlePt?: unknown; titleEn?: unknown }) => ({
-        url: String(s?.url ?? "").trim(),
-        titlePt: String(s?.titlePt ?? ""),
-        titleEn: String(s?.titleEn ?? ""),
-      }));
-      return { ...block, config: { ...block.config, heroSlides: normalizedSlides } };
-    });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!page) return;
@@ -368,7 +346,7 @@ export default function EditarGroupHomePage() {
     setError(null);
     setSuccess(false);
     try {
-      const payloadBlocks = normalizeBlocksForSave(blocks);
+      const payloadBlocks = sanitizeBlocksForSave(blocks);
       const res = await authFetch("/api/group", {
         method: "PATCH",
         credentials: "include",

@@ -19,6 +19,7 @@ import { fetchGroup } from "@/lib/home-data";
 import type { Group } from "@/types/group";
 import { getPublicImageUrl, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { getHeroDisplaySlides } from "@/lib/hero-block.util";
 import { SmartImage } from "@/components/common/SmartImage";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
@@ -414,23 +415,8 @@ export default function HomeClient({
 
         {contentBlocks.map((block) => {
           if (block.type === "hero") {
-            const heroSlidesRaw = block.config?.heroSlides as Array<{ url?: string; titlePt?: string; titleEn?: string }> | undefined;
-            const heroImagesLegacy = (block.config?.heroImages as string[] | undefined)?.filter((u) => u?.trim()) ?? [];
-            const heroSlidesBase =
-              Array.isArray(heroSlidesRaw) && heroSlidesRaw.length > 0
-                ? heroSlidesRaw.filter((s) => s?.url?.trim()).map((s) => ({ url: s.url!, titlePt: s.titlePt, titleEn: s.titleEn }))
-                : heroImagesLegacy.map((url) => ({ url, titlePt: "", titleEn: "" }));
-            const heroSlides = heroSlidesBase
-              .map((s) => ({
-                url: resolveMediaUrlWithProxyFallback(s.url) || getPublicImageUrl(s.url),
-                titlePt: s.titlePt,
-                titleEn: s.titleEn,
-              }))
-              .filter((s) => s.url?.trim());
-            const heroBg =
-              heroSlidesBase.length > 0
-                ? resolveMediaUrlWithProxyFallback(heroSlidesBase[0].url) || getPublicImageUrl(heroSlidesBase[0].url)
-                : getPublicImageUrl(blockImage(block, "hero") as string);
+            const heroSlides = getHeroDisplaySlides(block.config as Record<string, unknown>);
+            const heroBg = heroSlides.length > 0 ? heroSlides[0]!.url : getPublicImageUrl(blockImage(block, "hero") as string);
             const overlay = blockOverlayOpacity(block);
             const effect = (block.config?.heroCarouselEffect as "fade" | "slide" | "zoom") ?? "fade";
             const intervalSeconds = (block.config?.heroCarouselIntervalSeconds as 5 | 10 | 15) ?? 10;
