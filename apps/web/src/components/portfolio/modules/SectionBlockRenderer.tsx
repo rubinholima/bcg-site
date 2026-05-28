@@ -2,7 +2,12 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
-import { moduleHasOwnTitle, moduleTitleGradientStyle, shouldShowSectionColumnTitle } from "@/lib/module-title-gradient";
+import {
+  moduleHasOwnTitle,
+  moduleTitleGradientStyle,
+  resolveColumnTitleGradient,
+  shouldShowSectionColumnTitle,
+} from "@/lib/module-title-gradient";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { BlockRenderer, type EventPageMetaForFixtures } from "./BlockRenderer";
@@ -168,6 +173,27 @@ export function SectionBlockRenderer({
     );
   }
 
+  function renderColumnTitle(
+    columnTitle: string | undefined,
+    modules: HomeContentBlock[],
+    column: "left" | "middle" | "right",
+  ) {
+    if (!shouldShowSectionColumnTitle(columnTitle, modules)) return null;
+    const { gradientStart, gradientEnd } = resolveColumnTitleGradient(
+      block.config as Record<string, unknown>,
+      column,
+      modules,
+    );
+    return (
+      <SectionTitle
+        title={columnTitle!}
+        gradientStart={gradientStart}
+        gradientEnd={gradientEnd}
+        align={titleAlign}
+      />
+    );
+  }
+
   function renderNestedModule(m: HomeContentBlock) {
     const fullBleed =
       (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
@@ -220,14 +246,7 @@ export function SectionBlockRenderer({
               <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
             )}
             <div className={`relative ${moduleSpacing}`}>
-              {shouldShowSectionColumnTitle(leftColumnTitle, visibleLeft) && (
-                <SectionTitle
-                  title={leftColumnTitle!}
-                  gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
-                  gradientEnd={(block.config?.sectionLeftColumnTitleGradientEnd as string)?.trim()}
-                  align={titleAlign}
-                />
-              )}
+              {renderColumnTitle(leftColumnTitle, visibleLeft, "left")}
               {allModules.map((m) => renderNestedModule(m))}
             </div>
           </div>
@@ -238,14 +257,7 @@ export function SectionBlockRenderer({
                 <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
               )}
               <div className={`relative ${moduleSpacing}`}>
-                {shouldShowSectionColumnTitle(leftColumnTitle, visibleLeft) && (
-                  <SectionTitle
-                    title={leftColumnTitle!}
-                    gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
-                    gradientEnd={(block.config?.sectionLeftColumnTitleGradientEnd as string)?.trim()}
-                    align={titleAlign}
-                  />
-                )}
+                {renderColumnTitle(leftColumnTitle, visibleLeft, "left")}
                 {visibleLeft.map((m) => renderNestedModule(m))}
               </div>
             </div>
@@ -255,14 +267,7 @@ export function SectionBlockRenderer({
                   <ColumnBg bgColor={middleColBgColor} bgImage={middleColBgImage} overlayOp={middleColOverlay} />
                 )}
                 <div className={`relative ${moduleSpacing}`}>
-                  {shouldShowSectionColumnTitle(middleColumnTitle, visibleMiddle) && (
-                    <SectionTitle
-                      title={middleColumnTitle!}
-                      gradientStart={(block.config?.sectionMiddleColumnTitleGradientStart as string)?.trim()}
-                      gradientEnd={(block.config?.sectionMiddleColumnTitleGradientEnd as string)?.trim()}
-                      align={titleAlign}
-                    />
-                  )}
+                  {renderColumnTitle(middleColumnTitle, visibleMiddle, "middle")}
                   {visibleMiddle.map((m) => renderNestedModule(m))}
                 </div>
               </div>
@@ -272,14 +277,7 @@ export function SectionBlockRenderer({
                 <ColumnBg bgColor={rightColBgColor} bgImage={rightColBgImage} overlayOp={rightColOverlay} />
               )}
               <div className={`relative ${moduleSpacing}`}>
-                {shouldShowSectionColumnTitle(rightColumnTitle, visibleRight) && (
-                  <SectionTitle
-                    title={rightColumnTitle!}
-                    gradientStart={(block.config?.sectionRightColumnTitleGradientStart as string)?.trim()}
-                    gradientEnd={(block.config?.sectionRightColumnTitleGradientEnd as string)?.trim()}
-                    align={titleAlign}
-                  />
-                )}
+                {renderColumnTitle(rightColumnTitle, visibleRight, "right")}
                 {visibleRight.map((m) => renderNestedModule(m))}
               </div>
             </div>

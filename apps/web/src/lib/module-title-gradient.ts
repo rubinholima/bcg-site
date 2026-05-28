@@ -24,3 +24,36 @@ export function shouldShowSectionColumnTitle(
   if (!columnTitle?.trim() || modules.length !== 1) return false;
   return !moduleHasOwnTitle(modules[0]!);
 }
+
+type SectionColumnSide = "left" | "middle" | "right";
+
+const COLUMN_TITLE_GRADIENT_PREFIX: Record<SectionColumnSide, string> = {
+  left: "sectionLeftColumnTitle",
+  middle: "sectionMiddleColumnTitle",
+  right: "sectionRightColumnTitle",
+};
+
+/** Gradiente do SectionTitle da coluna — usa cores do módulo quando o título da coluna substitui o do módulo. */
+export function resolveColumnTitleGradient(
+  blockConfig: Record<string, unknown> | null | undefined,
+  column: SectionColumnSide,
+  modules: { config?: Record<string, unknown> | null }[],
+): { gradientStart?: string; gradientEnd?: string } {
+  const prefix = COLUMN_TITLE_GRADIENT_PREFIX[column];
+  const colStart = (blockConfig?.[`${prefix}GradientStart`] as string | undefined)?.trim();
+  const colEnd = (blockConfig?.[`${prefix}GradientEnd`] as string | undefined)?.trim();
+
+  if (modules.length === 1 && !moduleHasOwnTitle(modules[0]!)) {
+    const mc = modules[0]!.config;
+    const modStart = (mc?.titleGradientStart as string | undefined)?.trim();
+    const modEnd = (mc?.titleGradientEnd as string | undefined)?.trim();
+    if (modStart || modEnd) {
+      return {
+        gradientStart: modStart || colStart,
+        gradientEnd: modEnd || colEnd,
+      };
+    }
+  }
+
+  return { gradientStart: colStart, gradientEnd: colEnd };
+}

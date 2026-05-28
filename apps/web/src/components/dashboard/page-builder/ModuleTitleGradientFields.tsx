@@ -11,6 +11,8 @@ interface ModuleTitleGradientFieldsProps {
   onGradientStart: (value: string) => void;
   onGradientEnd: (value: string) => void;
   compact?: boolean;
+  /** Dentro de seção colunas: cores aplicam ao título da coluna quando o módulo não tem título próprio. */
+  forSectionColumnTitle?: boolean;
 }
 
 /** Cores do gradiente do SectionTitle — global e por módulo dentro de seção colunas. */
@@ -20,12 +22,18 @@ export function ModuleTitleGradientFields({
   onGradientStart,
   onGradientEnd,
   compact = false,
+  forSectionColumnTitle = false,
 }: ModuleTitleGradientFieldsProps) {
   return (
     <div className={`space-y-2 ${compact ? "" : "rounded-lg border border-border/60 bg-muted/10 p-2"}`}>
       {!compact ? (
         <p className="text-[11px] text-muted-foreground">
           Gradiente do título no site. Deixe vazio para o padrão (âmbar/branco).
+        </p>
+      ) : forSectionColumnTitle ? (
+        <p className="text-[11px] text-muted-foreground">
+          Se o módulo não tiver título próprio, estas cores valem para o <strong>título da coluna</strong> acima
+          (ex.: PRÓXIMOS JOGOS).
         </p>
       ) : null}
       <div className="grid gap-2 sm:grid-cols-2">

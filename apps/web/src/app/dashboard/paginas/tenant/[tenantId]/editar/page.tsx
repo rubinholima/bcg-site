@@ -1153,6 +1153,7 @@ export default function EditarPaginaTenantPage() {
                                     </div>
                                     <ModuleTitleGradientFields
                                       compact
+                                      forSectionColumnTitle
                                       gradientStart={(m.config?.titleGradientStart as string) ?? ""}
                                       gradientEnd={(m.config?.titleGradientEnd as string) ?? ""}
                                       onGradientStart={(v) => updateSectionModuleConfig(index, "left", mi, "titleGradientStart", v)}
@@ -1293,6 +1294,7 @@ export default function EditarPaginaTenantPage() {
                                       </div>
                                       <ModuleTitleGradientFields
                                         compact
+                                        forSectionColumnTitle
                                         gradientStart={(m.config?.titleGradientStart as string) ?? ""}
                                         gradientEnd={(m.config?.titleGradientEnd as string) ?? ""}
                                         onGradientStart={(v) => updateSectionModuleConfig(index, "middle", mi, "titleGradientStart", v)}
@@ -1380,6 +1382,7 @@ export default function EditarPaginaTenantPage() {
                                       </div>
                                       <ModuleTitleGradientFields
                                         compact
+                                        forSectionColumnTitle
                                         gradientStart={(m.config?.titleGradientStart as string) ?? ""}
                                         gradientEnd={(m.config?.titleGradientEnd as string) ?? ""}
                                         onGradientStart={(v) => updateSectionModuleConfig(index, "right", mi, "titleGradientStart", v)}
