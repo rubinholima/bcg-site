@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import { Upload } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   MEDIA_PLACEHOLDER_SIZES,
   type MediaItem,
@@ -18,9 +24,9 @@ interface MediaPickerProps {
   onChange: (url: string) => void;
   /** Tamanho do placeholder para filtrar a lista (hero, card, section_bg, etc.). */
   sizeKey: MediaPlaceholderSizeKey;
-  /** Se true, lista imagens de todas as pastas (não só sizeKey). Assim o que foi enviado em qualquer pasta aparece. */
+  /** Se true, lista imagens de todas as pastas (não só sizeKey). */
   allowAllFolders?: boolean;
-  /** Quando o link "Subir para mídia" é exibido, redireciona para esta pasta (ex: backgrounds). */
+  /** @deprecated Não exibe mais link externo — mantido só por compatibilidade de props. */
   uploadFolderHint?: MediaPlaceholderSizeKey;
   /** Quando sizeKey é galeria_clubes, slug do clube para subpasta (media/galeria_clubes/{slug}/). */
   galeriaSlug?: string | null;
@@ -29,18 +35,15 @@ interface MediaPickerProps {
   placeholder?: string;
   label?: string;
   className?: string;
-  /** Quando muda, recarrega a lista (ex: incrementar após upload para o novo aparecer no dropdown). */
   refreshTrigger?: unknown;
-  /** Oculta o link "Subir para mídia" quando a pasta está vazia. Use em cadastros que têm botão "Enviar nova foto" — o upload é direto. */
   hideEmptyFolderHint?: boolean;
-  /** Botão de envio direto do computador (Construção Web e cadastros). */
   allowUpload?: boolean;
+  /** Exibe botão para remover a imagem selecionada. Padrão: true. */
+  allowClear?: boolean;
 }
 
-const NATIVE_SELECT_CLASS =
-  "flex h-10 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const NONE_VALUE = "__none__";
 
 function filenameFromUrl(url: string): string {
   try {
@@ -75,9 +78,9 @@ function selectedValueLabel(value: string, matched?: MediaItem): string {
   const key = mediaKeyFromStoredUrl(value);
   if (key) {
     const file = key.split("/").pop() ?? key;
-    return `${file} (selecionado)`;
+    return `${file} (atual)`;
   }
-  return `${filenameFromUrl(value)} (selecionado)`;
+  return `${filenameFromUrl(value)} (atual)`;
 }
 
 export function MediaPicker({
@@ -89,11 +92,10 @@ export function MediaPicker({
   placeholder = "Escolher da mídia…",
   label,
   className,
-  uploadFolderHint,
   galeriaSlug,
   refreshTrigger,
-  hideEmptyFolderHint = false,
   allowUpload = folder !== "logos",
+  allowClear = true,
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,12 +143,10 @@ export function MediaPicker({
   const validItems = items.filter((item) => item.url?.trim());
   const matchedItem = validItems.find((item) => itemMatchesValue(item, value));
   const valueInList = Boolean(matchedItem);
-  const nativeValue = matchedItem?.url ?? (value?.trim() || "__none__");
+  const orphanValue = value?.trim() && !valueInList ? value.trim() : null;
+  const selectValue = matchedItem?.url ?? orphanValue ?? NONE_VALUE;
   const showFolderInLabels = allowAllFolders || folder === "logos";
-
-  const handleNativeChange = (v: string) => {
-    onChange(v === "__none__" ? "" : v);
-  };
+  const hasSelection = Boolean(value?.trim());
 
   const handleUpload = async (file: File) => {
     setUploadError(null);
@@ -189,39 +189,60 @@ export function MediaPicker({
 
   return (
     <div className={className}>
-      {label && (
+      {label ? (
         <Label className="text-muted-foreground">
           {label}
-          {dimensions !== "—" && folder !== "logos" && (
-            <span className="ml-1 font-normal text-muted-foreground">
-              ({dimensions})
-            </span>
-          )}
+          {dimensions !== "—" && folder !== "logos" ? (
+            <span className="ml-1 font-normal text-muted-foreground">({dimensions})</span>
+          ) : null}
         </Label>
-      )}
-      <div className="flex flex-col gap-2 mt-1">
-        {uploadError ? (
-          <p className="text-xs text-destructive">{uploadError}</p>
-        ) : null}
+      ) : null}
+      <div className="mt-1 flex flex-col gap-2">
+        {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <select
-            className={NATIVE_SELECT_CLASS}
-            aria-label={label || placeholder}
+          <Select
+            value={selectValue}
+            onOpenChange={(open) => {
+              if (open) setOpenNonce((n) => n + 1);
+            }}
+            onValueChange={(v) => onChange(v === NONE_VALUE ? "" : v)}
             disabled={loading || uploading}
-            value={nativeValue}
-            onFocus={() => setOpenNonce((n) => n + 1)}
-            onChange={(e) => handleNativeChange(e.target.value)}
           >
-            <option value="__none__">{loading ? "Carregando…" : placeholder}</option>
-            {value?.trim() && !valueInList && (
-              <option value={value.trim()}>{selectedValueLabel(value)}</option>
-            )}
-            {validItems.map((item) => (
-              <option key={item.key} value={item.url}>
-                {itemOptionLabel(item, showFolderInLabels)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="min-h-[44px] min-w-0 flex-1 text-foreground">
+              <SelectValue placeholder={loading ? "Carregando…" : placeholder} />
+            </SelectTrigger>
+            <SelectContent className="z-[200] max-h-[min(24rem,70vh)]">
+              <SelectItem value={NONE_VALUE}>Nenhuma (sem imagem)</SelectItem>
+              {orphanValue ? (
+                <SelectItem value={orphanValue}>
+                  <span className="block max-w-[min(100vw-4rem,320px)] truncate" title={orphanValue}>
+                    {selectedValueLabel(orphanValue)}
+                  </span>
+                </SelectItem>
+              ) : null}
+              {validItems.map((item) => (
+                <SelectItem key={item.key} value={item.url}>
+                  <span className="block max-w-[min(100vw-4rem,320px)] truncate" title={item.url}>
+                    {itemOptionLabel(item, showFolderInLabels)}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {allowClear && hasSelection ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-[44px] shrink-0"
+              disabled={loading || uploading}
+              title="Remover imagem"
+              onClick={() => onChange("")}
+            >
+              <X className="mr-1 h-4 w-4" />
+              Limpar
+            </Button>
+          ) : null}
           {allowUpload ? (
             <>
               <input
@@ -253,18 +274,11 @@ export function MediaPicker({
             PNG, JPG ou WebP — até 10 MB. O sistema otimiza automaticamente (WebP, tamanho máximo por pasta).
           </p>
         ) : null}
-        {folder !== "logos" && !hideEmptyFolderHint && uploadFolderHint ? (
-          <Link
-            href={`/dashboard/midia?folder=${encodeURIComponent(uploadFolderHint)}${galeriaSlug?.trim() ? `&slug=${encodeURIComponent(galeriaSlug.trim())}` : ""}`}
-            className="text-sm text-muted-foreground hover:text-foreground underline"
-          >
-            Abrir pasta {MEDIA_PLACEHOLDER_SIZES[uploadFolderHint]?.label ?? uploadFolderHint} na Mídia →
-          </Link>
-        ) : null}
-        {!loading && validItems.length === 0 && folder !== "logos" && !hideEmptyFolderHint && !uploadFolderHint ? (
-          <Link href="/dashboard/midia" className="text-sm text-muted-foreground hover:text-foreground underline">
-            Ver biblioteca de mídia →
-          </Link>
+        {!loading && validItems.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Nenhuma imagem nesta pasta ainda — use <strong>Enviar foto</strong> ou escolha{" "}
+            <strong>Nenhuma (sem imagem)</strong> para remover o fundo.
+          </p>
         ) : null}
       </div>
     </div>

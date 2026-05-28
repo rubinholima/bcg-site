@@ -152,7 +152,7 @@ export function PageThemePanel({
                 value={(theme.backgroundImage as string) ?? ""}
                 onChange={(url) => updateTheme("backgroundImage", url || undefined)}
                 sizeKey="backgrounds"
-                uploadFolderHint="backgrounds"
+                allowUpload
               />
             </div>
           </div>

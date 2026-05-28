@@ -169,7 +169,6 @@ export function HeroModuleEditor({
                 label="Escolher da pasta hero"
                 sizeKey="hero"
                 allowUpload
-                uploadFolderHint="hero"
                 value={slide.url}
                 onChange={(url) => {
                   const arr = [...heroSlides];

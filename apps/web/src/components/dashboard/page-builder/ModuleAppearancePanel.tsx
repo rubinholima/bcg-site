@@ -189,8 +189,9 @@ export function ModuleAppearancePanel({
                 label="Imagem de fundo"
                 sizeKey="section_bg"
                 allowAllFolders
+                allowUpload
                 value={(block.config?.backgroundImage as string) ?? ""}
-                onChange={(url) => updateBlockConfig(index, "backgroundImage", url)}
+                onChange={(url) => updateBlockConfig(index, "backgroundImage", url || undefined)}
                 placeholder="Escolher da mídia"
               />
               <Input
