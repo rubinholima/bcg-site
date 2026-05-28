@@ -166,9 +166,8 @@ export function HeroModuleEditor({
               </div>
               <HeroSlidePreview url={slide.url} />
               <MediaPicker
-                label="Escolher da mídia"
+                label="Escolher da pasta hero"
                 sizeKey="hero"
-                allowAllFolders
                 allowUpload
                 uploadFolderHint="hero"
                 value={slide.url}
@@ -177,7 +176,7 @@ export function HeroModuleEditor({
                   arr[i] = { ...arr[i], url, titlePt: "", titleEn: "" };
                   setSlides(arr);
                 }}
-                placeholder="Imagens da pasta hero ou mídia"
+                placeholder="Imagens da pasta hero (media/hero/)"
               />
               <Input
                 placeholder="Ou cole a URL (S3 / mídia)"

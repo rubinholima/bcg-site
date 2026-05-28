@@ -2,10 +2,10 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleHasOwnTitle, moduleTitleGradientStyle, shouldShowSectionColumnTitle } from "@/lib/module-title-gradient";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import type { EventPageMetaForFixtures } from "./BlockRenderer";
-import { SectionNestedModule, shouldShowSectionColumnTitle } from "./SectionNestedModule";
+import { BlockRenderer, type EventPageMetaForFixtures } from "./BlockRenderer";
 import type { FixturesFetchContext } from "@/lib/fixtures-shared";
 
 const PADDING_CLASSES = {
@@ -168,6 +168,33 @@ export function SectionBlockRenderer({
     );
   }
 
+  function renderNestedModule(m: HomeContentBlock) {
+    const fullBleed =
+      (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
+      m.config?.fullBleedCarousel === true;
+
+    return (
+      <div
+        key={m.id}
+        className={fullBleed ? "fullbleed-carousel-module" : undefined}
+        style={moduleTitleGradientStyle(m.config as Record<string, unknown>)}
+      >
+        <BlockRenderer
+          block={m}
+          slug={slug}
+          lang={lang}
+          page={page}
+          inSection
+          sectionColumns={columns}
+          showModuleTitle={moduleHasOwnTitle(m)}
+          fixturesContext={fixturesContext}
+          initialUploadToken={initialUploadToken}
+          eventPageMeta={eventPageMeta}
+        />
+      </div>
+    );
+  }
+
   return (
     <section
       key={block.id}
@@ -201,19 +228,7 @@ export function SectionBlockRenderer({
                   align={titleAlign}
                 />
               )}
-              {allModules.map((m) => (
-                <SectionNestedModule
-                  key={m.id}
-                  module={m}
-                  slug={slug}
-                  lang={lang}
-                  page={page}
-                  columns={columns}
-                  fixturesContext={fixturesContext}
-                  initialUploadToken={initialUploadToken}
-                  eventPageMeta={eventPageMeta}
-                />
-              ))}
+              {allModules.map((m) => renderNestedModule(m))}
             </div>
           </div>
         ) : (
@@ -231,19 +246,7 @@ export function SectionBlockRenderer({
                     align={titleAlign}
                   />
                 )}
-                {visibleLeft.map((m) => (
-                  <SectionNestedModule
-                    key={m.id}
-                    module={m}
-                    slug={slug}
-                    lang={lang}
-                    page={page}
-                    columns={columns}
-                    fixturesContext={fixturesContext}
-                    initialUploadToken={initialUploadToken}
-                    eventPageMeta={eventPageMeta}
-                  />
-                ))}
+                {visibleLeft.map((m) => renderNestedModule(m))}
               </div>
             </div>
             {columns === 3 && (
@@ -260,19 +263,7 @@ export function SectionBlockRenderer({
                       align={titleAlign}
                     />
                   )}
-                  {visibleMiddle.map((m) => (
-                    <SectionNestedModule
-                      key={m.id}
-                      module={m}
-                      slug={slug}
-                      lang={lang}
-                      page={page}
-                      columns={columns}
-                      fixturesContext={fixturesContext}
-                      initialUploadToken={initialUploadToken}
-                      eventPageMeta={eventPageMeta}
-                    />
-                  ))}
+                  {visibleMiddle.map((m) => renderNestedModule(m))}
                 </div>
               </div>
             )}
@@ -289,19 +280,7 @@ export function SectionBlockRenderer({
                     align={titleAlign}
                   />
                 )}
-                {visibleRight.map((m) => (
-                  <SectionNestedModule
-                    key={m.id}
-                    module={m}
-                    slug={slug}
-                    lang={lang}
-                    page={page}
-                    columns={columns}
-                    fixturesContext={fixturesContext}
-                    initialUploadToken={initialUploadToken}
-                    eventPageMeta={eventPageMeta}
-                  />
-                ))}
+                {visibleRight.map((m) => renderNestedModule(m))}
               </div>
             </div>
           </div>

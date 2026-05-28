@@ -1,8 +1,9 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+export { moduleHasOwnTitle, moduleTitleGradientStyle } from "@/lib/module-title-gradient";
 
 interface ModuleTitleGradientFieldsProps {
   gradientStart?: string;
@@ -67,18 +68,3 @@ export function ModuleTitleGradientFields({
   );
 }
 
-export function moduleTitleGradientStyle(config?: Record<string, unknown> | null): CSSProperties | undefined {
-  const start = (config?.titleGradientStart as string | undefined)?.trim();
-  const end = (config?.titleGradientEnd as string | undefined)?.trim();
-  if (!start && !end) return undefined;
-  return {
-    ["--module-title-gradient-start" as string]: start || "#fcd34d",
-    ["--module-title-gradient-end" as string]: end || "#ffffff",
-  } as CSSProperties;
-}
-
-export function moduleHasOwnTitle(m: { config?: Record<string, unknown> | null }): boolean {
-  const pt = (m.config?.titlePt as string | undefined)?.trim();
-  const en = (m.config?.titleEn as string | undefined)?.trim();
-  return Boolean(pt || en);
-}

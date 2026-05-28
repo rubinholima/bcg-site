@@ -10,6 +10,8 @@ import {
   type MediaItem,
   type MediaPlaceholderSizeKey,
 } from "@/lib/media-placeholders";
+import { mediaKeyFromStoredUrl } from "@/lib/media-url";
+import { displayNameFromUploadFilename } from "@/lib/upload-display-name";
 
 interface MediaPickerProps {
   value: string;
@@ -47,6 +49,35 @@ function filenameFromUrl(url: string): string {
   } catch {
     return url;
   }
+}
+
+function itemMatchesValue(item: MediaItem, value: string): boolean {
+  const v = value.trim();
+  if (!v) return false;
+  if (item.url === v) return true;
+  const valueKey = mediaKeyFromStoredUrl(v);
+  const itemKey = mediaKeyFromStoredUrl(item.url) ?? item.key;
+  return Boolean(valueKey && itemKey && valueKey === itemKey);
+}
+
+function itemOptionLabel(item: MediaItem, showFolder: boolean): string {
+  if (item.displayName?.trim()) return item.displayName.trim();
+  const parts = item.key.split("/");
+  const file = parts.pop() ?? item.key;
+  const folder = parts.slice(1).join("/") || parts[0] || "";
+  const shortFile = file.length > 28 ? `${file.slice(0, 24)}…` : file;
+  if (showFolder && folder) return `${folder} / ${shortFile}`;
+  return shortFile;
+}
+
+function selectedValueLabel(value: string, matched?: MediaItem): string {
+  if (matched) return itemOptionLabel(matched, false);
+  const key = mediaKeyFromStoredUrl(value);
+  if (key) {
+    const file = key.split("/").pop() ?? key;
+    return `${file} (selecionado)`;
+  }
+  return `${filenameFromUrl(value)} (selecionado)`;
 }
 
 export function MediaPicker({
@@ -108,9 +139,10 @@ export function MediaPicker({
 
   const dimensions = folder === "logos" ? "Logo" : MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";
   const validItems = items.filter((item) => item.url?.trim());
-  const valueInList = validItems.some((item) => item.url === value);
-  const nativeValue =
-    value?.trim() && !valueInList ? value.trim() : value?.trim() || "__none__";
+  const matchedItem = validItems.find((item) => itemMatchesValue(item, value));
+  const valueInList = Boolean(matchedItem);
+  const nativeValue = matchedItem?.url ?? (value?.trim() || "__none__");
+  const showFolderInLabels = allowAllFolders || folder === "logos";
 
   const handleNativeChange = (v: string) => {
     onChange(v === "__none__" ? "" : v);
@@ -135,6 +167,8 @@ export function MediaPicker({
       if (sizeKey === "galeria_clubes" && galeriaSlug?.trim()) {
         formData.append("slug", galeriaSlug.trim());
       }
+      const autoName = displayNameFromUploadFilename(file.name);
+      if (autoName) formData.append("displayName", autoName);
       const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
       const data = (await res.json()) as { url?: string; message?: string; error?: string };
       if (!res.ok) {
@@ -180,13 +214,11 @@ export function MediaPicker({
           >
             <option value="__none__">{loading ? "Carregando…" : placeholder}</option>
             {value?.trim() && !valueInList && (
-              <option value={value.trim()}>
-                {filenameFromUrl(value)} (selecionado)
-              </option>
+              <option value={value.trim()}>{selectedValueLabel(value)}</option>
             )}
             {validItems.map((item) => (
               <option key={item.key} value={item.url}>
-                {item.displayName?.trim() || item.key.split("/").pop() || item.url}
+                {itemOptionLabel(item, showFolderInLabels)}
               </option>
             ))}
           </select>
@@ -221,18 +253,19 @@ export function MediaPicker({
             PNG, JPG ou WebP — até 10 MB. O sistema otimiza automaticamente (WebP, tamanho máximo por pasta).
           </p>
         ) : null}
-        {!loading && validItems.length === 0 && folder !== "logos" && !hideEmptyFolderHint && (
+        {folder !== "logos" && !hideEmptyFolderHint && uploadFolderHint ? (
           <Link
-            href={
-              uploadFolderHint
-                ? `/dashboard/midia?folder=${encodeURIComponent(uploadFolderHint)}${galeriaSlug?.trim() ? `&slug=${encodeURIComponent(galeriaSlug.trim())}` : ""}`
-                : "/dashboard/midia"
-            }
+            href={`/dashboard/midia?folder=${encodeURIComponent(uploadFolderHint)}${galeriaSlug?.trim() ? `&slug=${encodeURIComponent(galeriaSlug.trim())}` : ""}`}
             className="text-sm text-muted-foreground hover:text-foreground underline"
           >
+            Abrir pasta {MEDIA_PLACEHOLDER_SIZES[uploadFolderHint]?.label ?? uploadFolderHint} na Mídia →
+          </Link>
+        ) : null}
+        {!loading && validItems.length === 0 && folder !== "logos" && !hideEmptyFolderHint && !uploadFolderHint ? (
+          <Link href="/dashboard/midia" className="text-sm text-muted-foreground hover:text-foreground underline">
             Ver biblioteca de mídia →
           </Link>
-        )}
+        ) : null}
       </div>
     </div>
   );
