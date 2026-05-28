@@ -40,20 +40,6 @@ export default function NewEstadioPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/cadastros/estadios">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Estádio</h1>
-          <p className="text-muted-foreground">
-            Adicione um novo estádio
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Informações do Estádio</CardTitle>

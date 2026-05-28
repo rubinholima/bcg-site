@@ -77,6 +77,8 @@ export type HomeBlockType =
   | "tabela"
   | "patrocinadores"
   | "galeria"
+  | "hino" // Hino do clube — letra, cifra, partitura + player MP3
+  | "imprensa" // Imprensa / kit de marca — downloads, manual, fotos
   | "galeria_eventos" // Galeria de fotos do evento (Eventos → Futebol)
   // Empresas
   | "sobre"

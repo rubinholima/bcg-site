@@ -160,20 +160,6 @@ export default function NovaEmpresaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/empresas">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nova Empresa</h1>
-          <p className="text-muted-foreground">
-            Cadastre uma nova empresa do grupo
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Logo da empresa</CardTitle>

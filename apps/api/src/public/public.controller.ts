@@ -22,6 +22,7 @@ import { PublicService } from './public.service';
 import { BostonTvService } from '../boston-tv/boston-tv.service';
 import { RegistrationInviteService } from '../registration-invite/registration-invite.service';
 import { BostonCityHallService } from '../boston-city-hall/boston-city-hall.service';
+import { TenantPressService } from '../tenant-press/tenant-press.service';
 import { SubmitEmployeeRegistrationDto } from '../registration-invite/dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from '../registration-invite/dto/submit-player-registration.dto';
 
@@ -39,6 +40,7 @@ export class PublicController {
     private readonly bostonTvService: BostonTvService,
     private readonly registrationInviteService: RegistrationInviteService,
     private readonly bostonCityHallService: BostonCityHallService,
+    private readonly tenantPressService: TenantPressService,
   ) {}
 
   @Get('portfolio')
@@ -79,6 +81,104 @@ export class PublicController {
   @Get('events/gallery/:token')
   async getEventGalleryByToken(@Param('token') token: string) {
     return this.eventsService.getPhotosByToken(token);
+  }
+
+  /** Galeria imprensa do clube — /clube/galeria/[token] */
+  @Get('press/gallery/:token')
+  async getClubPressGalleryByToken(@Param('token') token: string) {
+    return this.tenantPressService.getPhotosByGalleryToken(token);
+  }
+
+  /** Dados do clube para página de upload (valida token). */
+  @Get('press/upload/:token')
+  async getClubByUploadToken(@Param('token') token: string) {
+    return this.tenantPressService.getTenantByUploadToken(token);
+  }
+
+  /** Upload de foto via token — fotógrafos / imprensa. */
+  @Post('press/upload/:token')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 15 * 1024 * 1024 } }))
+  async uploadClubPhotoByToken(
+    @Param('token') token: string,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @Body('caption') caption?: string,
+    @Body('matchLabel') matchLabel?: string,
+  ) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Envie um arquivo (campo "file").');
+    }
+    return this.tenantPressService.uploadPhotoByToken(
+      token,
+      file.buffer,
+      file.mimetype,
+      caption,
+      matchLabel,
+    );
+  }
+
+  /** Fotos públicas do clube — módulo imprensa na página. */
+  @Get('tenants/:slug/press/photos')
+  async getClubPressPhotos(@Param('slug') slug: string) {
+    return this.tenantPressService.getPhotosBySlug(slug);
+  }
+
+  /** Token de upload ativo — botão na página pública. */
+  @Get('tenants/:slug/press/upload-url')
+  async getClubPressUploadUrl(@Param('slug') slug: string) {
+    return this.tenantPressService.getUploadUrlBySlug(slug);
+  }
+
+  /** Se a página de imprensa exige código de acesso. */
+  @Get('tenants/:slug/press/access-config')
+  async getClubPressAccessConfig(@Param('slug') slug: string) {
+    const requiresCode = await this.tenantPressService.pageRequiresAccessCode(slug);
+    return { requiresCode };
+  }
+
+  /** Valida código temporário — retorna sessionToken para cookie. */
+  @Post('tenants/:slug/press/verify-access')
+  async verifyClubPressAccess(@Param('slug') slug: string, @Body() body: { code?: string }) {
+    const code = (body?.code ?? '').trim();
+    if (!code) throw new BadRequestException('Informe o código de acesso.');
+    return this.tenantPressService.verifyPageAccessCode(slug, code);
+  }
+
+  /** Verifica sessão (cookie) de acesso à imprensa. */
+  @Post('tenants/:slug/press/check-access')
+  async checkClubPressAccess(@Param('slug') slug: string, @Body() body: { sessionToken?: string }) {
+    const token = (body?.sessionToken ?? '').trim();
+    if (!token) return { ok: false };
+    const ok = await this.tenantPressService.checkPageAccessSession(slug, token);
+    return { ok };
+  }
+
+  /** Solicitação de credencial de imprensa. */
+  @Post('tenants/:slug/press/credential-request')
+  async submitPressCredentialRequest(
+    @Param('slug') slug: string,
+    @Body()
+    body: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      outlet?: string;
+      document?: string;
+      eventLabel?: string;
+      notes?: string;
+    },
+  ) {
+    const name = body.name?.trim();
+    const email = body.email?.trim();
+    if (!name || !email) throw new BadRequestException('Nome e e-mail são obrigatórios.');
+    return this.tenantPressService.submitCredentialRequest(slug, {
+      name,
+      email,
+      phone: body.phone,
+      outlet: body.outlet,
+      document: body.document,
+      eventLabel: body.eventLabel,
+      notes: body.notes,
+    });
   }
 
   /** Dados do evento para página de upload (valida token). */

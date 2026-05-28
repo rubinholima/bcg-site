@@ -88,22 +88,6 @@ export default function NovoPsicologoPage() {
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-        <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/psicologia/psicologos">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Psicólogo</h1>
-          <p className="text-muted-foreground mt-1">
-            Cadastre um psicólogo para usar na seleção de consultas e avaliações.
-          </p>
-        </div>
-        <Button type="submit" form="form-psicologia-new" disabled={loading || !form.name.trim()}>
-          {loading ? "Cadastrando..." : "Cadastrar"}
-        </Button>
-      </div>
       </div>
 
       <Card>

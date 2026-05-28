@@ -194,20 +194,6 @@ export default function IntegracoesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Integrações</h1>
-          <p className="text-muted-foreground">
-            Configure as planilhas Google Sheets (uma por tipo). O sistema filtra por slug ao buscar.
-          </p>
-        </div>
-      </div>
-
       {error && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
       )}

@@ -22,6 +22,8 @@ export const MEDIA_PLACEHOLDER_SIZES = {
   gallery: { label: "Galeria", dimensions: "1200×800" },
   galeria_clubes: { label: "Galeria fotos clubes", dimensions: "1200×800" },
   custom: { label: "Outro (sem filtro)", dimensions: "—" },
+  hino: { label: "Hino do clube (áudio MP3)", dimensions: "MP3 / WAV" },
+  imprensa_docs: { label: "Imprensa (PDF manual de marca)", dimensions: "PDF" },
 } as const;
 
 export type MediaPlaceholderSizeKey = keyof typeof MEDIA_PLACEHOLDER_SIZES;

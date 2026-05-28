@@ -25,6 +25,26 @@ const ALLOWED_TYPES = [
   'image/svg+xml',
 ] as const;
 
+const ALLOWED_AUDIO_TYPES = [
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/mp4',
+  'audio/x-m4a',
+  'audio/m4a',
+] as const;
+
+const AUDIO_EXT_BY_MIME: Record<string, string> = {
+  'audio/mpeg': 'mp3',
+  'audio/mp3': 'mp3',
+  'audio/wav': 'wav',
+  'audio/x-wav': 'wav',
+  'audio/mp4': 'm4a',
+  'audio/x-m4a': 'm4a',
+  'audio/m4a': 'm4a',
+};
+
 const EXT_BY_MIME: Record<string, string> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
@@ -178,6 +198,41 @@ export class S3Service {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Falha ao enviar mídia para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /** Upload de áudio (MP3/WAV) — pasta media/{sizeKey}/, sem otimização de imagem. */
+  async uploadAudio(
+    buffer: Buffer,
+    contentType: string,
+    sizeKey: string = 'hino',
+  ): Promise<{ key: string; url: string }> {
+    const mime = contentType === 'audio/mp3' ? 'audio/mpeg' : contentType;
+    if (!ALLOWED_AUDIO_TYPES.includes(mime as (typeof ALLOWED_AUDIO_TYPES)[number])) {
+      throw new InternalServerErrorException(
+        `Tipo de áudio não permitido. Use: MP3, WAV ou M4A.`,
+      );
+    }
+    const ext = AUDIO_EXT_BY_MIME[mime] ?? 'mp3';
+    const safeKey = sizeKey.replace(/[^a-z0-9_-]/gi, '_').toLowerCase() || 'hino';
+    const key = `${MEDIA_PREFIX}${safeKey}/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mime,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar áudio para S3: ${message}`,
       );
     }
 

@@ -80,7 +80,8 @@ const LINKS = [
 export default function SaudeHubPage() {
   return (
     <HubDashboardPage
-      title="Depto de Saúde"
+      section="Depto de Saúde"
+      title="Dash"
       subtitle="Dash clínico — médico, psicologia, fisiologia e nutrição."
       hubId="saude"
       links={[...LINKS]}

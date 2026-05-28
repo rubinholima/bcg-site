@@ -2,6 +2,11 @@ import type { HomeContentDto, HomeContentBlock, HomeBlockType, GlobalPresenceCou
 import type { Page } from "@/types/page";
 import { getServerBackendBaseUrl } from "@/lib/apiProxy";
 import { copy, type CopySchema } from "@/lib/home-copy";
+import {
+  buildDefaultImprensaCondutaSections,
+  DEFAULT_IMPRENSA_RELEASE_EN,
+  DEFAULT_IMPRENSA_RELEASE_PT,
+} from "@/lib/imprensa-clube-default";
 
 const DEFAULT_HERO =
   "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1920&q=80";
@@ -119,6 +124,8 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   tabela: { pt: "Tabela / Classificação", en: "Standings" },
   patrocinadores: { pt: "Patrocinadores", en: "Sponsors" },
   galeria: { pt: "Galeria de fotos", en: "Photo gallery" },
+  hino: { pt: "Hino do clube", en: "Club anthem" },
+  imprensa: { pt: "Imprensa / kit de marca", en: "Press / brand kit" },
   galeria_eventos: { pt: "Galeria de fotos do evento", en: "Event photo gallery" },
   // Empresas
   sobre: { pt: "Sobre nós", en: "About us" },
@@ -243,6 +250,8 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: Mod
   { type: "tabela", label: "Tabela / Classificação", category: "futebol" },
   { type: "patrocinadores", label: "Patrocinadores", category: "futebol" },
   { type: "galeria", label: "Galeria de fotos", category: "futebol" },
+  { type: "hino", label: "Hino do clube (letra + player)", category: "futebol" },
+  { type: "imprensa", label: "Imprensa / kit de marca", category: "futebol" },
   // Empresas
   { type: "sobre", label: "Sobre nós", category: "empresas" },
   { type: "servicos", label: "Serviços", category: "empresas" },
@@ -250,6 +259,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: Mod
   { type: "equipe", label: "Nossa equipe", category: "empresas" },
   { type: "clientes", label: "Clientes / Cases", category: "empresas" },
   { type: "contato", label: "Contato", category: "empresas" },
+  { type: "imprensa", label: "Imprensa / kit de marca", category: "empresas" },
   { type: "global_presence", label: "Presença Global / Expansão", category: "empresas" },
   { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)", category: "empresas" },
   // Eventos (páginas de venue, torneios, Boston City Hall, etc.)
@@ -324,6 +334,8 @@ export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
   "ultimosResultadosPaddingTop", "ultimosResultadosPaddingBottom", "ultimosResultadosMaxItems", "resultadosManuais", "resultadosDetalhes",
   "noticiasDataSource", "noticiasRssUrl", "noticiasManualItems", "noticiasMaxItems", "noticiasPaddingTop", "noticiasPaddingBottom",
   "galeriaDataSource", "galeriaRssUrl", "galeriaManualItems", "galeriaMaxItems", "galeriaPaddingTop", "galeriaPaddingBottom",
+  "hinoLetraPt", "hinoLetraEn", "hinoCifraPt", "hinoCifraEn", "hinoPartituraUrl", "hinoAudioUrl", "hinoDefaultTab", "hinoAccentColor", "hinoPlayerLabelPt", "hinoPlayerLabelEn", "hinoPaddingTop", "hinoPaddingBottom",
+  "imprensaReleasePt", "imprensaReleaseEn", "imprensaUltimoJogoTituloPt", "imprensaUltimoJogoTituloEn", "imprensaUltimoJogoReleasePt", "imprensaUltimoJogoReleaseEn", "imprensaUltimoJogoData", "imprensaPressReleases", "imprensaHistoriaTituloPt", "imprensaHistoriaTituloEn", "imprensaHistoriaPt", "imprensaHistoriaEn", "imprensaContatoTextoPt", "imprensaContatoTextoEn", "imprensaCredencialNotifyEmail", "imprensaContatoEmail", "imprensaContatoTelefone", "imprensaContatoWhatsapp", "imprensaLogoUrl", "imprensaManualMarcaUrl", "imprensaHinoAudioUrl", "imprensaCondutaSections", "imprensaAccentColor", "imprensaPaddingTop", "imprensaPaddingBottom", "imprensaDisplayMode", "imprensaShowInMenu", "imprensaMenuLabelPt", "imprensaMenuLabelEn", "imprensaRequireAccessCode",
   "patrocinadoresTitleLogo", "patrocinadoresManualItems", "patrocinadoresPaddingTop", "patrocinadoresPaddingBottom",
   "timesCategoriasCategories", "timesCategoriasSpreadsheetUrl", "timesCategoriasSheetGid", "timesCategoriasPaddingTop", "timesCategoriasPaddingBottom",
   "tabelaDataSource", "tabelaManualRows", "tabelaSpreadsheetUrl", "tabelaSheetGid", "tabelaPaddingTop", "tabelaPaddingBottom",
@@ -513,6 +525,33 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.galeriaMaxItems = 10;
     config.galeriaPaddingTop = "compact";
     config.galeriaPaddingBottom = "compact";
+  }
+  if (type === "hino") {
+    config.titlePt = "Hino do Clube";
+    config.titleEn = "Club Anthem";
+    config.hinoDefaultTab = "letra";
+    config.hinoLetraPt = "";
+    config.hinoLetraEn = "";
+    config.hinoCifraPt = "";
+    config.hinoCifraEn = "";
+    config.hinoPartituraUrl = "";
+    config.hinoAudioUrl = "";
+    config.hinoPlayerLabelPt = "Ouça o hino oficial";
+    config.hinoPlayerLabelEn = "Listen to the official anthem";
+    config.hinoPaddingTop = "compact";
+    config.hinoPaddingBottom = "compact";
+  }
+  if (type === "imprensa") {
+    config.titlePt = "Imprensa";
+    config.titleEn = "Press";
+    config.imprensaDisplayMode = "inline";
+    config.imprensaShowInMenu = true;
+    config.imprensaRequireAccessCode = true;
+    config.imprensaReleasePt = DEFAULT_IMPRENSA_RELEASE_PT;
+    config.imprensaReleaseEn = DEFAULT_IMPRENSA_RELEASE_EN;
+    config.imprensaCondutaSections = buildDefaultImprensaCondutaSections("Clube");
+    config.imprensaPaddingTop = "compact";
+    config.imprensaPaddingBottom = "compact";
   }
   if (type === "galeria_eventos") {
     config.titlePt = "Galeria de fotos";

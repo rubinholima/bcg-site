@@ -95,23 +95,6 @@ export default function RequisicaoTiPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Monitor className="h-8 w-8" />
-            Atendimento e suporte — TI
-          </h1>
-          <p className="text-muted-foreground">
-            Atendimento e suporte — abra chamados para a equipe de TI.
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-2">
           <CardTitle className="text-lg">Chamados de suporte</CardTitle>

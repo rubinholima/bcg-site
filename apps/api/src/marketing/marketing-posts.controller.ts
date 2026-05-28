@@ -20,8 +20,7 @@ import { SuperAdminGuard } from '../auth/super-admin.guard';
 import { MetaOAuthService } from '../integrations/meta/meta-oauth.service';
 
 @Controller('marketing/posts')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard)
-@UseGuards(ModuleAccessGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('marketing')
 export class MarketingPostsController {
   constructor(

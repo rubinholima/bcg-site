@@ -121,6 +121,11 @@ model Tenant {
   travelLogistics       TravelLogistics[]
   footballAgendaEntries FootballAgendaEntry[]
   events                Event[]
+  pressPhotos           TenantPressPhoto[]
+  pressGalleryLinks     TenantPressGalleryLink[]
+  pressUploadTokens     TenantPressUploadToken[]
+  pressPageAccessCodes  TenantPressPageAccessCode[]
+  pressCredentialRequests TenantPressCredentialRequest[]
   userTenants           UserTenant[]
   financeiroLancamentos FinanceiroLancamento[]
   customers             Customer[]
@@ -303,6 +308,73 @@ model EventUploadToken {
   createdAt DateTime  @default(now())
   @@index([eventId])
   @@index([token])
+}
+
+// --- Imprensa do clube (assessoria, fotos de jogos, links para jornalistas) ---
+
+model TenantPressPhoto {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  s3Key      String   // media/imprensa/{tenantId}/{uuid}.{ext}
+  caption    String?
+  matchLabel String?  // ex.: Villa Nova x América — 15/03/2025
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  @@index([tenantId])
+}
+
+model TenantPressGalleryLink {
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  token     String    @unique // /clube/galeria/{token}
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  @@index([tenantId])
+  @@index([token])
+}
+
+model TenantPressUploadToken {
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  token     String    @unique // /clube/upload/{token}
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+  @@index([tenantId])
+  @@index([token])
+}
+
+/// Código temporário para acessar a página de imprensa (modo menu)
+model TenantPressPageAccessCode {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code      String   // ex.: K7M2P9 — legível, maiúsculas
+  label     String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([expiresAt])
+}
+
+model TenantPressCredentialRequest {
+  id         String   @id @default(cuid())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name       String
+  email      String
+  phone      String?
+  outlet     String?
+  document   String?
+  eventLabel String?
+  notes      String?  @db.Text
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  @@index([tenantId])
+  @@index([status])
 }
 
 // Página específica de uma empresa (conteúdo modular: blocos hero, destaque, texto, etc.)

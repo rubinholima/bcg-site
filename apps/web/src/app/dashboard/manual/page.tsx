@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
+import { BookOpen } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const NAV = [
@@ -62,22 +62,13 @@ export default function ManualPage() {
 
   return (
     <div className="w-full min-w-0 max-w-5xl mx-auto space-y-8 pb-16">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="icon" className="shrink-0 mt-0.5">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <div className="flex items-center gap-2 text-primary mb-1">
-              <BookOpen className="h-5 w-5" />
-              <span className="text-xs font-semibold uppercase tracking-wider">Documentação</span>
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Manual da plataforma</h1>
-          </div>
-        </div>
-      </div>
+      <DashboardDeptHeader
+        section="Documentação"
+        sectionIcon={BookOpen}
+        title="Manual da plataforma"
+        description="Guia de uso do dashboard, módulos e fluxos do dia a dia."
+        backHref="/dashboard"
+      />
 
       <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">
         <nav

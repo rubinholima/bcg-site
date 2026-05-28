@@ -98,13 +98,6 @@ export default async function JogadoresPage({
           <span>Operação realizada com sucesso!</span>
         </div>
       )}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{DASHBOARD_LABELS.atletas}</h1>
-          <p className="text-muted-foreground">
-            Gerencie os atletas por clube e categoria — clique na linha para abrir o cadastro
-          </p>
-        </div>
         <div className="flex flex-wrap items-center gap-2">
           <SyncPlayersButton />
           <Link href="/dashboard/cadastros/jogadores/new">
@@ -114,8 +107,6 @@ export default async function JogadoresPage({
             </Button>
           </Link>
         </div>
-      </div>
-
       <JogadoresFilters />
 
       <Card>

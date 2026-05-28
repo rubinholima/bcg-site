@@ -13,6 +13,7 @@ import { MediaModule } from '../media/media.module';
 import { BostonTvModule } from '../boston-tv/boston-tv.module';
 import { RegistrationInviteModule } from '../registration-invite/registration-invite.module';
 import { BostonCityHallModule } from '../boston-city-hall/boston-city-hall.module';
+import { TenantPressModule } from '../tenant-press/tenant-press.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { BostonCityHallModule } from '../boston-city-hall/boston-city-hall.modul
     BostonTvModule,
     RegistrationInviteModule,
     BostonCityHallModule,
+    TenantPressModule,
   ],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService],

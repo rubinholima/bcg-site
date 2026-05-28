@@ -102,20 +102,6 @@ export default function JuridicoListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Jurídico</h1>
-          <p className="text-muted-foreground">
-            Contratos de colaboradores (RH) e atletas. Filtre por clube ou veja todos, conforme seu acesso.
-          </p>
-        </div>
-      </div>
-
       <JuridicoFilters
         persons={persons}
         selectedPersonId={selectedPersonId}

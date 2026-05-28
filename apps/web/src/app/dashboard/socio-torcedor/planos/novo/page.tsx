@@ -83,21 +83,6 @@ export default function SocioPlanosNovoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href={`/dashboard/socio-torcedor/planos?tenantId=${encodeURIComponent(tenantId)}`}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Heart className="h-8 w-8 text-primary" />
-            Novo plano
-          </h1>
-          <p className="text-muted-foreground">Crie um plano com benefícios exclusivos para os sócios</p>
-        </div>
-      </div>
-
       {!tenantId ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">

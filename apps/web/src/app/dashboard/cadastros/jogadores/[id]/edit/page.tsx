@@ -13,7 +13,9 @@ import {
   Eye,
   EyeOff,
   Image as ImageIcon,
+  Shirt,
 } from "lucide-react";
+import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -376,43 +378,35 @@ export default function EditJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-          <Link href="/dashboard/cadastros/jogadores">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0 border-2 border-border">
-            {(pendingPreviewUrl || player.photoUrl) ? (
-              <img
-                src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
-                alt={player.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-                <User className="h-7 w-7" />
-              </div>
-            )}
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              {player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}
-              {player.name}
-            </h1>
-            <p className="text-muted-foreground">
-              {player.tenant?.name} {player.category ? `• ${player.category}` : ""}
-            </p>
-          </div>
+      <DashboardDeptHeader
+        section="Depto Futebol"
+        sectionIcon={Shirt}
+        title={`${player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}${player.name}`}
+        description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
+        backHref="/dashboard/cadastros/jogadores"
+        aside={
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Salvando..." : "Salvar"}
+          </Button>
+        }
+      />
+      <div className="flex items-center gap-4">
+        <div className="h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0 border-2 border-border">
+          {(pendingPreviewUrl || player.photoUrl) ? (
+            <img
+              src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
+              alt={player.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+              <User className="h-7 w-7" />
+            </div>
+          )}
         </div>
-        <Button onClick={handleSave} disabled={loading}>
-          {loading ? "Salvando..." : "Salvar"}
-        </Button>
       </div>
 
-        {error && (
+      {error && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
           {error}
         </div>
@@ -439,7 +433,6 @@ export default function EditJogadorPage() {
             </button>
           );
         })}
-        </div>
       </div>
 
       {/* Tab: Dados base */}

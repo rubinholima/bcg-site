@@ -87,21 +87,6 @@ export default function SocioSociosNovoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link href={`/dashboard/socio-torcedor/socios?tenantId=${encodeURIComponent(tenantId)}`}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Users className="h-8 w-8 text-primary" />
-            Novo sócio
-          </h1>
-          <p className="text-muted-foreground">Cadastre um novo sócio-torcedor</p>
-        </div>
-      </div>
-
       {!tenantId ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">

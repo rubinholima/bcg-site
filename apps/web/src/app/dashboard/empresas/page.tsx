@@ -88,25 +88,16 @@ export default async function EmpresasPage({
           <span>Operação realizada com sucesso!</span>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
-          <p className="text-muted-foreground">
-            {canManageCompanies
-              ? "Gerencie as empresas do grupo"
-              : "Listagem de empresas (somente visualização)"}
-          </p>
-        </div>
-        {canManageCompanies ? (
+      {canManageCompanies ? (
+        <div className="flex justify-end">
           <Link href="/dashboard/empresas/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               Nova Empresa
             </Button>
           </Link>
-        ) : null}
-      </div>
-
+        </div>
+      ) : null}
       {kinds.length > 0 && (
         <EmpresasFilters kinds={kinds} currentTipo={tipo} currentQ={q} />
       )}

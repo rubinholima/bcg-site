@@ -74,7 +74,8 @@ const LINKS = [
 export default function AdmHubPage() {
   return (
     <HubDashboardPage
-      title="Depto Adm"
+      section="Depto Adm"
+      title="Dash"
       subtitle="Dash administrativo — financeiro, compras, clientes, fornecedores, estoque, RH e patrimônio."
       hubId="adm"
       links={[...LINKS]}

@@ -56,12 +56,6 @@ export default async function JogadoresEmprestadosPage({
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Atletas emprestados</h1>
-            <p className="text-muted-foreground">
-              {DASHBOARD_LABELS.atletas} em situação <strong>Emprestado</strong> — fora da lista por categoria do clube.
-            </p>
-          </div>
         </div>
         <Link href="/dashboard/cadastros/jogadores">
           <Button variant="outline">Voltar aos atletas</Button>

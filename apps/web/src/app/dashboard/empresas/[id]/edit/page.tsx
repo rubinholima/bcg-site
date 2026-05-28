@@ -197,25 +197,11 @@ export default function EditEmpresaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-        <Link href="/dashboard/empresas">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar Empresa</h1>
-          <p className="text-muted-foreground">
-            Atualize as informações da empresa
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Button type="submit" form="form-empresa" disabled={loading}>
           {loading ? "Salvando..." : "Salvar"}
         </Button>
-        </div>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Logo da empresa</CardTitle>

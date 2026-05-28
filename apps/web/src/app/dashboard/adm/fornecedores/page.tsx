@@ -99,25 +99,6 @@ export default function FornecedoresAdmPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/adm">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Truck className="h-8 w-8 shrink-0" />
-            Fornecedores
-          </h1>
-          <Button variant="ghost" size="icon" asChild title="Manual — cadastro de fornecedores">
-            <Link href="/dashboard/manual#cadastros-fornecedores" aria-label="Abrir manual de fornecedores">
-              <CircleHelp className="h-5 w-5" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-2">
           <CardTitle className="text-lg">Lista</CardTitle>

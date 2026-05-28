@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Loader2 } from "lucide-react";
+import { User, Loader2, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { MedicalHistoryBlock, type MedicalStaffOption } from "@/components/dashboard/MedicalHistoryBlock";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -133,15 +134,28 @@ export default function MedicoPlayerPage() {
     );
   }
 
+  const playerSubtitle = [player.tenant?.name, player.category].filter(Boolean).join(" • ");
+  const emergencyLine = player.emergencyContactName
+    ? `Contato emergência: ${player.emergencyContactName}${player.emergencyContactEmail ? ` • ${player.emergencyContactEmail}` : ""}${player.emergencyContactPhone ? ` • ${formatPhoneForDisplay(player.emergencyContactPhone)}` : ""}`
+    : player.emergencyContactEmail || player.emergencyContactPhone
+      ? `Contato emergência:${player.emergencyContactEmail ? ` ${player.emergencyContactEmail}` : ""}${player.emergencyContactPhone ? ` ${formatPhoneForDisplay(player.emergencyContactPhone)}` : ""}`
+      : undefined;
+
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-col gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-        <div className="flex items-center gap-4">
-        <Link href="/dashboard/medico">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
+      <DashboardDeptHeader
+        section="Depto de Saúde"
+        sectionIcon={Stethoscope}
+        title={`${player.jerseyNumber ? `${player.jerseyNumber} – ` : ""}${player.name}`}
+        description={[playerSubtitle, emergencyLine].filter(Boolean).join(" — ")}
+        backHref="/dashboard/medico"
+        aside={
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
           </Button>
-        </Link>
+        }
+      />
+      <div className="flex items-center gap-4">
         <div className="h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0 border-2 border-border">
           {player.photoUrl ? (
             <img
@@ -155,43 +169,13 @@ export default function MedicoPlayerPage() {
             </div>
           )}
         </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {player.jerseyNumber ? `${player.jerseyNumber} – ` : ""}
-            {player.name}
-          </h1>
-          <p className="text-muted-foreground">
-            {player.tenant?.name} {player.category ? `• ${player.category}` : ""}
-          </p>
-          {player.emergencyContactName && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Contato emergência: <span className="text-foreground">{player.emergencyContactName}</span>
-              {player.emergencyContactEmail && <span className="text-foreground"> • {player.emergencyContactEmail}</span>}
-              {player.emergencyContactPhone && <span className="text-foreground"> • {formatPhoneForDisplay(player.emergencyContactPhone)}</span>}
-            </p>
-          )}
-          {!player.emergencyContactName && (player.emergencyContactEmail || player.emergencyContactPhone) && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Contato emergência:
-              {player.emergencyContactEmail && <span className="text-foreground"> {player.emergencyContactEmail}</span>}
-              {player.emergencyContactPhone && <span className="text-foreground"> {formatPhoneForDisplay(player.emergencyContactPhone)}</span>}
-            </p>
-          )}
-        </div>
-        <div className="ml-auto">
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Salvando..." : "Salvar"}
-          </Button>
-        </div>
-        </div>
+      </div>
 
-        {error && (
+      {error && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
           {error}
         </div>
-        )}
-
-      </div>
+      )}
 
       {successBanner && (
         <div className="rounded-md bg-emerald-500/20 border border-emerald-500/40 p-3 text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">

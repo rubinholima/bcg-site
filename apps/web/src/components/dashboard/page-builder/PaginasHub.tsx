@@ -14,10 +14,14 @@ import {
   Loader2,
   Pencil,
   Plus,
-  Search,
   Sparkles,
   Trophy,
 } from "lucide-react";
+import {
+  DashboardDeptHeader,
+  DashboardDeptSearch,
+  DashboardDeptTabs,
+} from "@/components/dashboard/DashboardDeptHeader";
 import { BCH_PUBLIC_PATH, BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -423,70 +427,29 @@ export function PaginasHub({
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-950/40 via-background to-background p-6 sm:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-violet-400">
-              <Sparkles className="h-3.5 w-3.5" />
-              Construção Web
-            </p>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Suas páginas</h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Monte sites profissionais com módulos arrastáveis, fontes, cores e conteúdo PT/EN.
-              Copie layouts entre clubes ou empresas do mesmo tipo.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            <div className="rounded-xl border border-border/60 bg-card/50 px-3 py-2 text-center">
-              <p className="text-lg font-bold">{stats.withPage}</p>
-              <p className="text-[10px] uppercase text-muted-foreground">Páginas</p>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-card/50 px-3 py-2 text-center">
-              <p className="text-lg font-bold">{stats.pending}</p>
-              <p className="text-[10px] uppercase text-muted-foreground">Pendentes</p>
-            </div>
-            <div className="rounded-xl border border-border/60 bg-card/50 px-3 py-2 text-center">
-              <p className="text-lg font-bold">{stats.totalTenants}</p>
-              <p className="text-[10px] uppercase text-muted-foreground">Tenants</p>
-            </div>
-            {canAccessEventos ? (
-              <div className="rounded-xl border border-border/60 bg-card/50 px-3 py-2 text-center">
-                <p className="text-lg font-bold">{stats.eventWithContent}</p>
-                <p className="text-[10px] uppercase text-muted-foreground">Eventos</p>
-              </div>
-            ) : null}
-          </div>
-        </div>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Buscar clube, empresa ou evento…"
-              className="min-h-[44px] pl-9"
+    <>
+      <DashboardDeptHeader
+        section="Construção Web"
+        sectionIcon={Sparkles}
+        title="Suas páginas"
+        description="Monte sites profissionais com módulos arrastáveis, fontes, cores e conteúdo PT/EN. Copie layouts entre clubes ou empresas do mesmo tipo."
+        stats={[
+          { value: stats.withPage, label: "Páginas" },
+          { value: stats.pending, label: "Pendentes" },
+          { value: stats.totalTenants, label: "Tenants" },
+          ...(canAccessEventos ? [{ value: stats.eventWithContent, label: "Eventos" }] : []),
+        ]}
+        toolbar={
+          <>
+            <DashboardDeptSearch
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={setSearch}
+              placeholder="Buscar clube, empresa ou evento…"
             />
-          </div>
-          <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/30 p-1">
-            {tabs.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={`inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors ${
-                  tab === id
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-background/60"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+            <DashboardDeptTabs tabs={tabs} active={tab} onChange={setTab} />
+          </>
+        }
+      />
 
       {error ? (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -633,6 +596,6 @@ export function PaginasHub({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

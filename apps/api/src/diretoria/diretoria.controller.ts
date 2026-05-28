@@ -8,8 +8,7 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 
 @Controller('diretoria')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard)
-@UseGuards(ModuleAccessGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('diretoria')
 export class DiretoriaController {
   constructor(

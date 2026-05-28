@@ -159,22 +159,6 @@ export default function SocioSociosPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard/socio-torcedor">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Users className="h-8 w-8 text-primary" />
-              Sócios
-            </h1>
-            <p className="text-muted-foreground">
-              Cadastro de sócios-torcedores — planos, status e fidelidade por clube
-            </p>
-          </div>
-        </div>
       </div>
 
       <SocioFilters basePath="/dashboard/socio-torcedor/socios" tenantId={tenantId} />

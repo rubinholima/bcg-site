@@ -126,20 +126,6 @@ export default function FisiologiaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Depto Fisiologia</h1>
-          <p className="text-muted-foreground">
-            Selecione um atleta nos filtros para ver e editar a avaliação física
-          </p>
-        </div>
-      </div>
-
       <FisiologiaFilters
         players={players}
         selectedPlayerId={selectedPlayerId}

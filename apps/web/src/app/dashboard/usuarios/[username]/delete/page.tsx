@@ -85,20 +85,6 @@ export default function DeleteUsuarioPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/usuarios">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Excluir Usuário</h1>
-          <p className="text-muted-foreground">
-            Remover usuário do Cognito (e do banco local)
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">

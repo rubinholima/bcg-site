@@ -72,7 +72,7 @@ const GENERIC_BLOCK_TYPES = [
   "calendario",
   "tabela",
   "tabela_eventos",
-  "patrocinadores", "galeria", "galeria_eventos", "sobre", "servicos", "produtos", "equipe", "clientes", "contato",
+  "patrocinadores", "galeria", "hino", "imprensa", "galeria_eventos", "sobre", "servicos", "produtos", "equipe", "clientes", "contato",
   "hero", "highlights", "what", "founder", "how", "cta", "logo_carousel", "clubs", "companies", "eventos",
 ];
 

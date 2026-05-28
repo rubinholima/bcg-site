@@ -69,22 +69,6 @@ export default function SocioTorcedorPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Ticket className="h-8 w-8 text-primary" />
-              Sócio Torcedor
-            </h1>
-            <p className="text-muted-foreground">
-              Excelência na conexão do clube com o torcedor — métricas, planos e perks
-            </p>
-          </div>
-        </div>
       </div>
 
       <SocioFilters basePath="/dashboard/socio-torcedor" tenantId={tenantId} />

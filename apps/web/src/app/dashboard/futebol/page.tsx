@@ -108,7 +108,8 @@ const LINKS = [
 export default function FutebolHubPage() {
   return (
     <HubDashboardPage
-      title="Depto Futebol"
+      section="Depto Futebol"
+      title="Dash"
       subtitle={`Dash operacional — ${DASHBOARD_LABELS.atletas}, logística, comissão e análise.`}
       hubId="futebol"
       links={[...LINKS]}

@@ -34,6 +34,8 @@ import { NoticiasSection } from "@/components/portfolio/modules/NoticiasSection"
 import { GaleriaSection } from "@/components/portfolio/modules/GaleriaSection";
 import { GaleriaEventosSection } from "@/components/portfolio/modules/GaleriaEventosSection";
 import { PatrocinadoresSection } from "@/components/portfolio/modules/PatrocinadoresSection";
+import { HinoClubeSection } from "@/components/portfolio/modules/HinoClubeSection";
+import { ImprensaClubeSection } from "@/components/portfolio/modules/ImprensaClubeSection";
 import { TimesCategoriasSection } from "@/components/portfolio/modules/TimesCategoriasSection";
 import { TabelaClassificacaoSection } from "@/components/portfolio/modules/TabelaClassificacaoSection";
 import { SectionBlockRenderer } from "@/components/portfolio/modules/SectionBlockRenderer";
@@ -391,6 +393,37 @@ export function BlockRenderer({
 
   if (String(block.type).toLowerCase() === "patrocinadores") {
     return <PatrocinadoresSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
+  }
+
+  if (block.type === "hino") {
+    return (
+      <HinoClubeSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
+  }
+
+  if (block.type === "imprensa") {
+    return (
+      <ImprensaClubeSection
+        key={block.id}
+        block={block}
+        slug={slug}
+        lang={lang}
+        page={page}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
   }
 
   if (block.type === "times_categorias") {

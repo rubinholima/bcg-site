@@ -47,13 +47,7 @@ export default async function TimesPage({
           <span>Operação realizada com sucesso!</span>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Times adversários</h1>
-          <p className="text-muted-foreground">
-            Gerencie os times adversários para os jogos (nome e logo)
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Link href="/dashboard/cadastros/times/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
@@ -61,7 +55,6 @@ export default async function TimesPage({
           </Button>
         </Link>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Lista de Times</CardTitle>

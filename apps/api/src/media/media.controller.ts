@@ -94,7 +94,7 @@ export class MediaController {
    */
   @Post()
   @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+    FileInterceptor('file', { limits: { fileSize: 20 * 1024 * 1024 } }),
   )
   async upload(
     @UploadedFile()
@@ -113,10 +113,27 @@ export class MediaController {
     const isExternalLogos = sizeLower === 'external_logos';
     const isCompetitions = sizeLower === 'competitions' || sizeLower === 'competitions_logos';
     const isRhDocumentos = sizeLower === 'rh_documentos';
+    const isImprensaDocs = sizeLower === 'imprensa_docs';
+    const isHinoAudio = sizeLower === 'hino';
+    const audioMime = file.mimetype === 'audio/mp3' ? 'audio/mpeg' : file.mimetype;
+    const isAudioFile =
+      audioMime === 'audio/mpeg' ||
+      audioMime === 'audio/wav' ||
+      audioMime === 'audio/x-wav' ||
+      audioMime === 'audio/mp4' ||
+      audioMime === 'audio/x-m4a' ||
+      audioMime === 'audio/m4a';
     const subfolder = typeof slug === 'string' && slug.trim() ? slug.trim() : undefined;
     let key: string;
     let url: string;
-    if (isExternalLogos) {
+    if (isHinoAudio || (isAudioFile && sizeLower === 'hino')) {
+      if (!isAudioFile) {
+        throw new BadRequestException('Para pasta hino, envie MP3, WAV ou M4A.');
+      }
+      const result = await this.s3.uploadAudio(file.buffer, file.mimetype, 'hino');
+      key = result.key;
+      url = result.url;
+    } else if (isExternalLogos) {
       const result = await this.s3.uploadLogoExternal(file.buffer, file.mimetype);
       key = result.key;
       url = result.url;
@@ -124,7 +141,7 @@ export class MediaController {
       const result = await this.s3.uploadLogoCompetition(file.buffer, file.mimetype);
       key = result.key;
       url = result.url;
-    } else if (isRhDocumentos) {
+    } else if (isRhDocumentos || isImprensaDocs) {
       const result = await this.s3.uploadRhDocument(
         file.buffer,
         file.originalname || 'documento.pdf',

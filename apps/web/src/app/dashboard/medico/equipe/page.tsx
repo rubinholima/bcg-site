@@ -67,13 +67,7 @@ export default function MedicoEquipePage() {
         </div>
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Médicos</h1>
-          <p className="text-muted-foreground mt-1">
-            Cadastro de médicos do departamento de saúde (em migração para o cadastro único de funcionários).
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Link href="/dashboard/medico/equipe/new" className="shrink-0">
           <Button>
             <Plus className="mr-2 h-4 w-4" />

@@ -64,12 +64,6 @@ export default async function JogadoresArquivoPage({
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Atletas desligados</h1>
-            <p className="text-muted-foreground">
-              Cadastro preservado — atletas com situação <strong>Desligado</strong>, fora da lista principal.
-            </p>
-          </div>
         </div>
         <Link href="/dashboard/cadastros/jogadores">
           <Button variant="outline">Voltar aos atletas</Button>

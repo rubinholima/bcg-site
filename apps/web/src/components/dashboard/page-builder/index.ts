@@ -3,6 +3,8 @@ export { HEADER_PRESET_OPTIONS, HEADER_PRESET_VALUES, applyHeaderPresetOverwrite
 export { usePageBuilder, type PageBuilderState } from "./usePageBuilder";
 export { HeroMainTitlePanel } from "./HeroMainTitlePanel";
 export { HeroModuleEditor } from "./HeroModuleEditor";
+export { HinoModuleEditor } from "./HinoModuleEditor";
+export { ImprensaModuleEditor, ImprensaDisplayModeFields } from "./ImprensaModuleEditor";
 export { ModuleTitleGradientFields, moduleTitleGradientStyle, moduleHasOwnTitle } from "./ModuleTitleGradientFields";
 export { FontFamilyField } from "./FontFamilyField";
 export { PageBuilderChrome, type PageBuilderLogo } from "./PageBuilderChrome";

@@ -72,7 +72,7 @@ import {
 import { BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
@@ -817,6 +817,16 @@ export default function EditarPaginaTenantPage() {
                   </div>
                   {!collapsedBlockIds.has(block.id) && (
                   <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
+                    {block.type === "imprensa" && (
+                      <ImprensaDisplayModeFields
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                        clubSlug={page?.tenant?.slug}
+                        tenantId={tenantId}
+                      />
+                    )}
                     <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                       <summary className="cursor-pointer px-3 py-2 font-medium">Aparência do Módulo</summary>
                       <div className="border-t border-border px-3 py-3 grid gap-3 sm:grid-cols-2">
@@ -2194,6 +2204,25 @@ export default function EditarPaginaTenantPage() {
                           </details>
                         </>
                     )}
+                    {block.type === "hino" && (
+                      <HinoModuleEditor
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                      />
+                    )}
+                    {block.type === "imprensa" && (
+                      <ImprensaModuleEditor
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                        tenantId={tenantId}
+                        clubSlug={page?.tenant?.slug}
+                        clubName={page?.tenant?.name}
+                      />
+                    )}
                     {block.type === "header" && (() => {
                       const preset = (block.config?.headerPreset as HeaderPreset) || "classic";
                       const applyPreset = (newPreset: HeaderPreset) => {
@@ -3094,7 +3123,7 @@ export default function EditarPaginaTenantPage() {
                         </details>
                       </div>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "hero" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "hero" && block.type !== "hino" && block.type !== "imprensa" && (
                       <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (textos e ícones)</summary>
                         <div className="border-t border-border px-3 py-3 space-y-4">

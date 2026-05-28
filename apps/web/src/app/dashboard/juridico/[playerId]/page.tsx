@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Loader2 } from "lucide-react";
+import { User, Loader2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { LegalDocumentsTab } from "@/components/dashboard/LegalDocumentsTab";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { useAuth } from "@/context/AuthContext";
@@ -78,12 +79,14 @@ export default function JuridicoPlayerPage() {
 
   return (
     <div className="space-y-6">
+      <DashboardDeptHeader
+        section="Depto Jurídico"
+        sectionIcon={Scale}
+        title={`${player.jerseyNumber ? `${player.jerseyNumber} – ` : ""}${player.name}`}
+        description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
+        backHref="/dashboard/juridico"
+      />
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/juridico">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
         <div className="h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0 border-2 border-border">
           {player.photoUrl ? (
             <img
@@ -96,15 +99,6 @@ export default function JuridicoPlayerPage() {
               <User className="h-7 w-7" />
             </div>
           )}
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {player.jerseyNumber ? `${player.jerseyNumber} – ` : ""}
-            {player.name}
-          </h1>
-          <p className="text-muted-foreground">
-            {player.tenant?.name} {player.category ? `• ${player.category}` : ""}
-          </p>
         </div>
       </div>
 

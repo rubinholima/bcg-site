@@ -18,9 +18,14 @@ export interface PublicPortfolioHeaderProps {
   lang?: "pt" | "en";
   /** Base path para links (ex: /portfolio ou /eventos). Default: /portfolio */
   basePath?: string;
+  /** Links extras (ex.: Imprensa em página separada) mesclados ao menu do header */
+  extraNavLinks?: Array<{ label: string; href: string }>;
 }
 
-function getHeaderConfig(headerBlock: HomeContentBlock | undefined) {
+function getHeaderConfig(
+  headerBlock: HomeContentBlock | undefined,
+  extraNavLinks?: Array<{ label: string; href: string }>,
+) {
   const config = headerBlock?.config ?? {};
   const preset = (config.headerPreset as HeaderPreset) ?? "classic";
   const backgroundMode = (config.backgroundMode as string) || "solid";
@@ -35,6 +40,13 @@ function getHeaderConfig(headerBlock: HomeContentBlock | undefined) {
   const linkStyle = (config.linkStyle as "text" | "pill" | "button") || "text";
   const headerLinks = (Array.isArray(config.headerLinks) ? config.headerLinks : []) as Array<{ label?: string; href?: string }>;
   const filteredLinks = headerLinks.filter((l) => (l?.label ?? "").trim() && (l?.href ?? "").trim());
+  for (const extra of extraNavLinks ?? []) {
+    const href = (extra.href ?? "").trim();
+    const label = (extra.label ?? "").trim();
+    if (!href || !label) continue;
+    if (filteredLinks.some((l) => (l.href ?? "").trim() === href)) continue;
+    filteredLinks.push({ label, href });
+  }
 
   return {
     preset,
@@ -118,8 +130,9 @@ export function PublicPortfolioHeader({
   headerBlock,
   lang = "pt",
   basePath = "/portfolio",
+  extraNavLinks,
 }: PublicPortfolioHeaderProps) {
-  const c = getHeaderConfig(headerBlock);
+  const c = getHeaderConfig(headerBlock, extraNavLinks);
   const style: React.CSSProperties = {
     color: c.textColor,
   };

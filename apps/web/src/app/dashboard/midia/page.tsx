@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Upload, Copy, Check, ImageOff, Pencil, Loader2, Trash2 } from "lucide-react";
+import { Upload, Copy, Check, ImageOff, Pencil, Loader2, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  DashboardDeptHeader,
+} from "@/components/dashboard/DashboardDeptHeader";
 import {
   Card,
   CardContent,
@@ -371,20 +374,17 @@ export default function MidiaPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-semibold">Mídia</h1>
-          <p className="text-sm text-muted-foreground">
-            Todas as imagens do site ficam no bucket <strong>bcg-platform-assets</strong> (pasta media/). Fotos, tamanho e URL. Copie a URL para usar em Conteúdo ou Páginas.
-          </p>
-        </div>
-      </div>
+    <>
+      <DashboardDeptHeader
+        section="Marketing"
+        sectionIcon={Sparkles}
+        title="Mídia"
+        description="Todas as imagens do site ficam no bucket bcg-platform-assets (pasta media/). Fotos, tamanho e URL. Copie a URL para usar em Conteúdo ou Páginas."
+        stats={[
+          { value: items.length, label: "Arquivos" },
+          { value: Object.keys(dimensions).length, label: "Medidas" },
+        ]}
+      />
 
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -1042,6 +1042,6 @@ export default function MidiaPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

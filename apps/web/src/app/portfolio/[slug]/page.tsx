@@ -9,6 +9,7 @@ import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHea
 import { BlockRenderer } from "@/components/portfolio/modules/BlockRenderer";
 import { PublicFooter } from "@/components/portfolio/PublicFooter";
 import { buildBackendUrl } from "@/lib/apiProxy";
+import { getImprensaMenuLinks, isImprensaPageOnlyBlock } from "@/lib/imprensa-display";
 
 async function getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
   try {
@@ -69,6 +70,8 @@ const GENERIC_BLOCK_TYPES = [
   "tabela",
   "patrocinadores",
   "galeria",
+  "hino",
+  "imprensa",
   "sobre",
   "servicos",
   "produtos",
@@ -142,10 +145,12 @@ export default async function PortfolioSlugPage({
     if (t === "header" || t === "footer") return false;
     const v = b.config?.visible as boolean | string | undefined;
     if (v === false || v === "false") return false;
+    if (isImprensaPageOnlyBlock(b)) return false;
     return GENERIC_BLOCK_TYPES.some((k) => String(k).toLowerCase() === t);
   });
   const headerBlock = blocks.find((b) => b.type === "header");
   const footerBlock = blocks.find((b) => b.type === "footer");
+  const extraNavLinks = getImprensaMenuLinks(blocks, slug, lang);
 
   const bgColor = (theme.backgroundColor as string)?.trim() || "#0f0f12";
   const bgImage = (theme.backgroundImage as string)?.trim();
@@ -191,6 +196,7 @@ export default async function PortfolioSlugPage({
         logoUrl={tenant?.logoUrl}
         headerBlock={headerBlock}
         lang={lang}
+        extraNavLinks={extraNavLinks}
       />
 
       {/* Módulos no meio */}

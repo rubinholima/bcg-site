@@ -12,13 +12,6 @@ import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 export default function CategoriasPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Categorias de Jogos</h1>
-        <p className="text-muted-foreground">
-          Categorias usadas no módulo Próximos Jogos (Sub-9 até Sub-20, Principal, Feminino)
-        </p>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Lista de Categorias</CardTitle>

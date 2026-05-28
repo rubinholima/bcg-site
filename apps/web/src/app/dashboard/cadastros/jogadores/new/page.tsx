@@ -93,22 +93,6 @@ export default function NewJogadorPage() {
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-        <div className="flex items-center gap-4">
-        <Link href="/dashboard/cadastros/jogadores">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Atleta</h1>
-          <p className="text-muted-foreground">
-            Cadastre um atleta. Após criar, edite para preencher histórico médico, avaliações e desempenho.
-          </p>
-        </div>
-        <Button type="submit" form="form-jogador-new" disabled={loading || !tenantId.trim() || !name.trim()}>
-          {loading ? "Cadastrando..." : "Cadastrar"}
-        </Button>
-      </div>
       </div>
 
       <Card>

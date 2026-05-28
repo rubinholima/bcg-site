@@ -105,20 +105,6 @@ export default function DeleteJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/cadastros/jogadores">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Excluir Atleta</h1>
-          <p className="text-muted-foreground">
-            Confirme a exclusão do atleta
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Confirmar exclusão</CardTitle>

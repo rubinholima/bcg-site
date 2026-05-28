@@ -462,20 +462,6 @@ export default function ConsultasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Depto Psicologia</h1>
-          <p className="text-muted-foreground">
-            Agende no Meet, filtre por clube/atleta/categoria e veja o histórico de cada atleta.
-          </p>
-        </div>
-      </div>
-
       {/* Layout: coluna esquerda = Filtros + Agendar Meet (como nas fotos); coluna direita = Calendário */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Coluna esquerda: Filtros + Agendar consulta no Meet */}

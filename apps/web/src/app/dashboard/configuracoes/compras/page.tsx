@@ -43,25 +43,6 @@ export default function ConfiguracoesRequisicoesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <ClipboardList className="h-8 w-8 shrink-0" />
-            Requisições
-          </h1>
-          <Button variant="ghost" size="icon" asChild title="Manual — fluxo e alertas">
-            <Link href="/dashboard/manual#requisicoes" aria-label="Abrir manual de requisições">
-              <CircleHelp className="h-5 w-5" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-
       {!canEdit && (
         <p className="text-sm text-amber-600 dark:text-amber-400">Somente visualização.</p>
       )}

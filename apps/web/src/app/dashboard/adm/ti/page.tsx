@@ -108,23 +108,6 @@ export default function TiAtendimentoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/adm">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Monitor className="h-8 w-8" />
-            TI — Atendimento
-          </h1>
-          <p className="text-muted-foreground">
-            Chamados de suporte — atendimento da equipe de TI.
-          </p>
-        </div>
-      </div>
-
       <WorkflowInboxBanner variant="ti" />
 
       <Card>

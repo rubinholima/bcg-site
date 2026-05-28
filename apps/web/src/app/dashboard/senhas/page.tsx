@@ -267,23 +267,6 @@ export default function SenhasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Senhas / Vault</h1>
-          <p className="text-muted-foreground">
-            Armazenamento seguro de senhas do grupo. Revele e copie apenas se tiver permissão.
-          </p>
-        </div>
-        {canManage && (
-          <Link href="/dashboard/senhas/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo item
-            </Button>
-          </Link>
-        )}
-      </div>
-
       <div className="flex flex-wrap items-end gap-4 rounded-lg border bg-muted/30 p-4">
         <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <Filter className="h-4 w-4" />

@@ -35,23 +35,6 @@ export default function RequisicoesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <ClipboardList className="h-8 w-8" />
-            Requisição de compra
-          </h1>
-          <p className="text-muted-foreground">
-            Solicite materiais, equipamentos ou itens de TI em uma única requisição. Acompanhe cotações, aprovações e assine o recebimento.
-          </p>
-        </div>
-      </div>
-
       <PurchaseRequisitionWorkflowPanel
         mode="requester"
         tenants={tenants}

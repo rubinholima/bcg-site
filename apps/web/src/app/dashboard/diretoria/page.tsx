@@ -239,22 +239,6 @@ export default function DiretoriaPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              Dashboard gerencial
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Visão por tipo: clubes (futebol) e empresas — indicadores pertinentes a cada perfil
-            </p>
-          </div>
-        </div>
       </div>
 
       {/* KPIs — Resumo geral */}

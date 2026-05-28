@@ -148,20 +148,6 @@ export default function GrupoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Grupo Master</h1>
-          <p className="text-muted-foreground">
-            Dados do grupo ou holding e logo
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Logo do grupo</CardTitle>

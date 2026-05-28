@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Calendar, FileText, Loader2, Pencil, Plus } from "lucide-react";
+import { Calendar, FileText, Loader2, Pencil, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DashboardDeptHeader,
+  DashboardDeptToolbarAside,
+} from "@/components/dashboard/DashboardDeptHeader";
 import {
   Table,
   TableBody,
@@ -65,21 +69,30 @@ export default function EventosPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Eventos</h1>
-          <p className="text-muted-foreground">
-            Campeonatos, copas, torneios. Cadastre e edite os dados de cada evento.
-          </p>
-        </div>
-        <Link href="/dashboard/eventos/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Cadastrar evento
-          </Button>
-        </Link>
-      </div>
+    <>
+      <DashboardDeptHeader
+        section="Eventos"
+        sectionIcon={Sparkles}
+        title="Campeonatos e torneios"
+        description="Cadastre e edite os dados de cada evento."
+        stats={[
+          { value: events.length, label: "Eventos" },
+          { value: events.filter((e) => e.status === "published").length, label: "Publicados" },
+        ]}
+        toolbar={
+          <>
+            <div className="flex-1" />
+            <DashboardDeptToolbarAside>
+              <Link href="/dashboard/eventos/new">
+                <Button className="min-h-[44px]">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Cadastrar evento
+                </Button>
+              </Link>
+            </DashboardDeptToolbarAside>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -178,6 +191,6 @@ export default function EventosPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

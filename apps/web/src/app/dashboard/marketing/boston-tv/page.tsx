@@ -182,18 +182,6 @@ export default function BostonTvDashboardPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Tv className="h-8 w-8" />
-            Boston TV
-          </h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl">
-            Sinalização digital: crie playlists (imagens, vídeos, YouTube), associe a uma tela e abra o link
-            no navegador da Smart TV. Fora da agenda configurada, o player entra em blecaute (tela escura). A TV
-            não precisa estar na mesma rede do servidor — só precisa de internet e acessar o mesmo endereço do
-            ambiente (produção ou o IP/túnel do seu dev).
-          </p>
-        </div>
       </div>
 
       <div className="flex flex-wrap items-end gap-4">

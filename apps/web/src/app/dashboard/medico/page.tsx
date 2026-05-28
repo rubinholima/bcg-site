@@ -140,20 +140,6 @@ export default function MedicoListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Depto Médico</h1>
-          <p className="text-muted-foreground">
-            Selecione um atleta nos filtros para ver e editar o histórico médico
-          </p>
-        </div>
-      </div>
-
       {/* Filtros em cima apenas */}
       <MedicoFilters
         players={players}

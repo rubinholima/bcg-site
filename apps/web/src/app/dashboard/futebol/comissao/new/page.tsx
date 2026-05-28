@@ -136,22 +136,6 @@ export default function NewComissaoPage() {
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-        <div className="flex items-center gap-4">
-        <Link href="/dashboard/futebol/comissao">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo membro da comissão</h1>
-          <p className="text-muted-foreground">
-            Cadastre técnico, auxiliar, preparador físico, médico ou outro membro da comissão técnica.
-          </p>
-        </div>
-        <Button type="submit" form="form-comissao-new" disabled={loading}>
-          {loading ? "Criando..." : "Criar e editar"}
-        </Button>
-      </div>
       </div>
 
       <form id="form-comissao-new" onSubmit={handleSubmit} className="space-y-6">

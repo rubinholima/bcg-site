@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Newspaper, Pencil, Building2, Home, ExternalLink, Loader2, Rss } from "lucide-react";
+import { Newspaper, Pencil, Building2, Home, ExternalLink, Loader2, Rss, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DashboardDeptHeader,
+} from "@/components/dashboard/DashboardDeptHeader";
 import { getPublicImageUrl } from "@/lib/media-url";
 import type { Page } from "@/types/page";
 import type { Tenant } from "@/types/tenant";
@@ -62,6 +65,9 @@ export default function NoticiasPage() {
     return `/portfolio/${slug}`;
   };
 
+  const withNoticias = pages.filter((p) => p.hasNoticias).length;
+  const withRss = pages.filter((p) => p.rssUrl).length;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -71,13 +77,18 @@ export default function NoticiasPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Notícias</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configure o feed de notícias em cada página. Use RSS (Google News, Instagram via RSS.app) ou lista manual.
-        </p>
-      </div>
+    <>
+      <DashboardDeptHeader
+        section="Construção Web"
+        sectionIcon={Sparkles}
+        title="Notícias"
+        description="Configure o feed de notícias em cada página. Use RSS (Google News, Instagram via RSS.app) ou lista manual."
+        stats={[
+          { value: pages.length, label: "Páginas" },
+          { value: withNoticias, label: "Com módulo" },
+          { value: withRss, label: "Com RSS" },
+        ]}
+      />
 
       <Card>
         <CardHeader>
@@ -168,6 +179,6 @@ export default function NoticiasPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+    </>
   );
 }

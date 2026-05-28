@@ -45,13 +45,7 @@ export default async function CampeonatosPage({
           <span>Operação realizada com sucesso!</span>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Campeonatos</h1>
-          <p className="text-muted-foreground">
-            Gerencie os campeonatos disponíveis para os jogos
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Link href="/dashboard/cadastros/campeonatos/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
@@ -59,7 +53,6 @@ export default async function CampeonatosPage({
           </Button>
         </Link>
       </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Lista de Campeonatos</CardTitle>

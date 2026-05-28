@@ -70,7 +70,7 @@ import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { authFetch } from "@/lib/authFetch";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -646,6 +646,14 @@ export default function EditarEventoPage() {
                   </div>
                   {!collapsedBlockIds.has(block.id) && (
                   <div className="grid gap-3 border-t pt-3 sm:grid-cols-2">
+                    {block.type === "imprensa" && (
+                      <ImprensaDisplayModeFields
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                      />
+                    )}
                     <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                       <summary className="cursor-pointer px-3 py-2 font-medium">Aparência do Módulo</summary>
                       <div className="border-t border-border px-3 py-3 grid gap-3 sm:grid-cols-2">
@@ -1026,6 +1034,22 @@ export default function EditarEventoPage() {
                             </div>
                           </details>
                         </>
+                    )}
+                    {block.type === "hino" && (
+                      <HinoModuleEditor
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                      />
+                    )}
+                    {block.type === "imprensa" && (
+                      <ImprensaModuleEditor
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                      />
                     )}
                     {block.type === "header" && (() => {
                       const preset = (block.config?.headerPreset as HeaderPreset) || "classic";
@@ -1956,7 +1980,7 @@ export default function EditarEventoPage() {
                       </div>
                       );
                     })()}
-                    {block.type !== "header" && block.type !== "footer" && block.type !== "hero" && (
+                    {block.type !== "header" && block.type !== "footer" && block.type !== "hero" && block.type !== "hino" && block.type !== "imprensa" && (
                       <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
                         <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (textos e ícones)</summary>
                         <div className="border-t border-border px-3 py-3 space-y-4">

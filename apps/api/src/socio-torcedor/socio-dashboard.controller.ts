@@ -6,8 +6,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 
 @Controller('socio/dashboard')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard)
-@UseGuards(ModuleAccessGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('socio_torcedor')
 export class SocioDashboardController {
   constructor(private readonly service: SocioDashboardService) {}

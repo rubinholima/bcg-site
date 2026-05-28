@@ -173,18 +173,6 @@ export default function EditarSenhaPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/senhas">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Editar item do Vault</h1>
-          <p className="text-muted-foreground">Altere os campos. Deixe a senha em branco para não alterar.</p>
-        </div>
-      </div>
-
       <Card className="max-w-2xl">
         <CardHeader>
           <CardTitle>Dados do item</CardTitle>

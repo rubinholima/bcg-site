@@ -1,10 +1,15 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRight, BarChart3 } from "lucide-react";
+import { ArrowRight, BarChart3, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
+import {
+  DashboardDeptHeader,
+  DashboardDeptSearch,
+} from "@/components/dashboard/DashboardDeptHeader";
 
 export interface HubDashboardLink {
   title: string;
@@ -15,16 +20,32 @@ export interface HubDashboardLink {
 }
 
 interface HubDashboardPageProps {
+  /** Rótulo roxo (ex.: Depto Adm) */
+  section: string;
+  sectionIcon?: LucideIcon;
+  /** Título principal (ex.: Dash) */
   title: string;
   subtitle: string;
   hubId: string;
   links: HubDashboardLink[];
-  /** Bloco visual opcional (KPIs, gráficos, agenda) entre o hero e os atalhos */
+  stats?: Array<{ value: React.ReactNode; label: string }>;
+  searchPlaceholder?: string;
   children?: React.ReactNode;
 }
 
-export function HubDashboardPage({ title, subtitle, hubId, links, children }: HubDashboardPageProps) {
+export function HubDashboardPage({
+  section,
+  sectionIcon = Sparkles,
+  title,
+  subtitle,
+  hubId,
+  links,
+  stats,
+  searchPlaceholder = "Buscar atalho…",
+  children,
+}: HubDashboardPageProps) {
   const { canAccessModule, canAccessDashboard } = useAuth();
+  const [search, setSearch] = useState("");
 
   const visibleLinks = links.filter((link) => {
     if (!link.moduleSlug) return true;
@@ -32,24 +53,45 @@ export function HubDashboardPage({ title, subtitle, hubId, links, children }: Hu
     return canAccessModule(link.moduleSlug);
   });
 
+  const filteredLinks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return visibleLinks;
+    return visibleLinks.filter(
+      (l) => l.title.toLowerCase().includes(q) || l.description.toLowerCase().includes(q),
+    );
+  }, [visibleLinks, search]);
+
+  const headerStats = stats ?? [
+    { value: filteredLinks.length, label: "Atalhos" },
+    { value: visibleLinks.length, label: "Módulos" },
+  ];
+
   return (
-    <div className="w-full min-w-0 max-w-full space-y-8">
-      <div className="dashboard-hero-gradient rounded-2xl border border-border/80 p-6 md:p-8 shadow-lg">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground md:text-base">{subtitle}</p>
-      </div>
+    <>
+      <DashboardDeptHeader
+        section={section}
+        sectionIcon={sectionIcon}
+        title={title}
+        description={subtitle}
+        stats={headerStats}
+        toolbar={
+          <DashboardDeptSearch value={search} onChange={setSearch} placeholder={searchPlaceholder} />
+        }
+      />
 
       {children}
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Atalhos</h2>
-        {visibleLinks.length === 0 ? (
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">Atalhos</h2>
+        {filteredLinks.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nenhum módulo liberado neste departamento para o seu perfil.
+            {visibleLinks.length === 0
+              ? "Nenhum módulo liberado neste departamento para o seu perfil."
+              : "Nenhum atalho encontrado para esta busca."}
           </p>
         ) : (
           <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {visibleLinks.map(({ title: linkTitle, description, href, icon: Icon }) => (
+            {filteredLinks.map(({ title: linkTitle, description, href, icon: Icon }) => (
               <Link key={href} href={href} className="group block min-w-0">
                 <Card className="h-full min-w-0 overflow-hidden rounded-xl border shadow-md transition-shadow hover:shadow-lg">
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
@@ -93,6 +135,6 @@ export function HubDashboardPage({ title, subtitle, hubId, links, children }: Hu
           </CardContent>
         </Card>
       )}
-    </div>
+    </>
   );
 }

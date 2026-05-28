@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
-  ArrowLeft,
   Megaphone,
   Plus,
   ChevronLeft,
@@ -38,6 +37,10 @@ import {
   resolvePublicMediaUrlForDisplay,
 } from "@/lib/media-url";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import {
+  DashboardDeptHeader,
+  DashboardDeptToolbarAside,
+} from "@/components/dashboard/DashboardDeptHeader";
 
 function plannerMediaThumbSrc(raw: string): string {
   return (
@@ -344,49 +347,46 @@ export default function MarketingPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+    <>
+      <DashboardDeptHeader
+        section="Marketing"
+        sectionIcon={Megaphone}
+        title="Planner de conteúdo"
+        description="Calendário de postagens inspirado no Meta Business Suite — planeje e agende para Facebook, Instagram e LinkedIn."
+        stats={[
+          { value: posts.length, label: "Postagens" },
+          { value: tenants.length, label: "Empresas" },
+        ]}
+        toolbar={
+          <>
+            <div className="flex-1" />
+            <DashboardDeptToolbarAside>
+              <select
+              className={SELECT_NATIVE_CLASS + " w-[min(220px,calc(100vw-120px))] min-h-[44px] shrink-0"}
+              aria-label="Filtrar por empresa"
+              value={tenantParam ? tenantParam : "all"}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "all") router.replace(pathname);
+                else router.replace(`${pathname}?tenantId=${encodeURIComponent(v)}`);
+              }}
+            >
+              <option value="all">Todos</option>
+              <option value="group">Grupo (BCG)</option>
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <Button className="min-h-[44px]" onClick={() => openNewPost()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova postagem
             </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <Megaphone className="h-8 w-8 text-primary" />
-              Planner de conteúdo
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Calendário de postagens inspirado no Meta Business Suite — planeje e agende para Facebook, Instagram e LinkedIn.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            className={SELECT_NATIVE_CLASS + " w-[min(220px,calc(100vw-120px))] min-h-10 shrink-0"}
-            aria-label="Filtrar por empresa"
-            value={tenantParam ? tenantParam : "all"}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "all") router.replace(pathname);
-              else router.replace(`${pathname}?tenantId=${encodeURIComponent(v)}`);
-            }}
-          >
-            <option value="all">Todos</option>
-            <option value="group">Grupo (BCG)</option>
-            {tenants.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-          <Button onClick={() => openNewPost()}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova postagem
-          </Button>
-        </div>
-      </div>
+            </DashboardDeptToolbarAside>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendário */}
@@ -725,6 +725,6 @@ export default function MarketingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

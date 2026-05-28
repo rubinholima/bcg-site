@@ -635,6 +635,22 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     ],
   },
   {
+    slug: "assessoria_imprensa",
+    label: "Imprensa",
+    icon: Newspaper,
+    moduleSlug: "assessoria_imprensa",
+    children: [
+      {
+        slug: "assessoria_imprensa_painel",
+        label: DEPT_HUB_MENU_LABEL,
+        href: "/dashboard/assessoria-imprensa",
+        icon: LayoutDashboard,
+        moduleSlug: "paginas",
+        accessSlug: "assessoria_imprensa",
+      },
+    ],
+  },
+  {
     slug: "academias",
     label: "Academias",
     icon: GraduationCap,

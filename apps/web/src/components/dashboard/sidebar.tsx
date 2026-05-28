@@ -158,6 +158,12 @@ function isMarketingPath(pathname: string | null, relHub: string | null): boolea
   );
 }
 
+function isAssessoriaImprensaPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "assessoria_imprensa") return true;
+  if (!pathname) return false;
+  return pathname.startsWith("/dashboard/assessoria-imprensa");
+}
+
 function isSocioPath(pathname: string | null, relHub: string | null): boolean {
   if (relHub === "socio_torcedor") return true;
   return !!pathname?.startsWith("/dashboard/socio-torcedor");
@@ -187,6 +193,7 @@ function getActiveGroupSlug(pathname: string | null, relHub: string | null): str
   if (isJuridicoPath(pathname, relHub)) return "juridico";
   if (isEventosPath(pathname, relHub)) return "eventos";
   if (isMarketingPath(pathname, relHub)) return "marketing";
+  if (isAssessoriaImprensaPath(pathname, relHub)) return "assessoria_imprensa";
   if (isSocioPath(pathname, relHub)) return "socio_torcedor";
   if (isAcademiasPath(pathname)) return "academias";
   if (isFerramentasPath(pathname)) return "ferramentas";
@@ -213,6 +220,7 @@ function getPathnameHub(pathname: string | null, relHub: string | null): string 
   if (isJuridicoPath(pathname, null)) return "juridico";
   if (isEventosPath(pathname, null)) return "eventos";
   if (isMarketingPath(pathname, null)) return "marketing";
+  if (isAssessoriaImprensaPath(pathname, null)) return "assessoria_imprensa";
   if (isSocioPath(pathname, null)) return "socio_torcedor";
   if (isAcademiasPath(pathname)) return "academias";
   if (isFerramentasPath(pathname)) return "ferramentas";
@@ -378,6 +386,9 @@ function SidebarNav() {
   );
   const [socioOpen, setSocioOpen] = useState(() => isSocioPath(pathname, relHub));
   const [academiasOpen, setAcademiasOpen] = useState(() => isAcademiasPath(pathname));
+  const [assessoriaImprensaOpen, setAssessoriaImprensaOpen] = useState(() =>
+    isAssessoriaImprensaPath(pathname, relHub),
+  );
   const [marketingOpen, setMarketingOpen] = useState(() => isMarketingPath(pathname, relHub));
   const [analiseOpen, setAnaliseOpen] = useState(
     () =>
@@ -398,6 +409,7 @@ function SidebarNav() {
     setConfigOpen(slug === "configuracoes");
     setSocioOpen(slug === "socio_torcedor");
     setAcademiasOpen(slug === "academias");
+    setAssessoriaImprensaOpen(slug === "assessoria_imprensa");
     setMarketingOpen(slug === "marketing");
   };
 
@@ -631,6 +643,8 @@ function SidebarNav() {
                               ? socioOpen
                               : item.slug === "academias"
                                 ? academiasOpen
+                                : item.slug === "assessoria_imprensa"
+                                  ? assessoriaImprensaOpen
                                 : item.slug === "marketing"
                                 ? marketingOpen
                                 : false;

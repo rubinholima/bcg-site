@@ -34,6 +34,7 @@ import { LogisticaModule } from './logistica/logistica.module';
 import { FutebolAgendaModule } from './futebol-agenda/futebol-agenda.module';
 import { EventsModule } from './events/events.module';
 import { BostonCityHallModule } from './boston-city-hall/boston-city-hall.module';
+import { TenantPressModule } from './tenant-press/tenant-press.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
 import { BostonTvModule } from './boston-tv/boston-tv.module';
 import { RegistrationInviteModule } from './registration-invite/registration-invite.module';
@@ -73,6 +74,7 @@ import { RegistrationInviteModule } from './registration-invite/registration-inv
     FutebolAgendaModule,
     EventsModule,
     BostonCityHallModule,
+    TenantPressModule,
     FinanceiroModule,
     BostonTvModule,
     RegistrationInviteModule,

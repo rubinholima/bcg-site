@@ -85,13 +85,7 @@ export default async function ComissaoPage(props: ComissaoPageProps) {
           <span>Operação realizada com sucesso!</span>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Comissão técnica</h1>
-          <p className="text-muted-foreground">
-            Gerencie técnicos, auxiliares, preparadores físicos, médicos e demais membros da comissão por clube e categoria
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Link href="/dashboard/futebol/comissao/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
@@ -99,7 +93,6 @@ export default async function ComissaoPage(props: ComissaoPageProps) {
           </Button>
         </Link>
       </div>
-
       <ComissaoFilters />
 
       <Card>

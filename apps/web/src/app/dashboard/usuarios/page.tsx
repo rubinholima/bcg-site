@@ -3,10 +3,13 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, UserCircle, Pencil, Trash2, Filter } from "lucide-react";
+import { Plus, UserCircle, Pencil, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  DashboardDeptHeader,
+  DashboardDeptSearch,
+  DashboardDeptToolbarAside,
+} from "@/components/dashboard/DashboardDeptHeader";
 import {
   Table,
   TableBody,
@@ -176,74 +179,61 @@ export default function UsuariosPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <>
       {showSuccess && (
         <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 flex items-center gap-2 text-green-500">
           <span>Usuário cadastrado com sucesso!</span>
         </div>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Usuários</h1>
-          <p className="text-muted-foreground">
-            Gerencie usuários e permissões (roles) no Cognito
-          </p>
-        </div>
-        <Link href="/dashboard/usuarios/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Usuário
-          </Button>
-        </Link>
-      </div>
 
-      <div className="flex flex-wrap items-end gap-4 rounded-lg border bg-muted/30 p-4">
-        <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Filter className="h-4 w-4" />
-          Filtros
-        </span>
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="filtro-role" className="text-xs">
-              Role
-            </Label>
-            <Select
-              value={filterRole ?? "all"}
-              onValueChange={(v) => {
-                const r = v === "all" ? null : v;
-                setFilterRole(r);
-                applyFiltersToUrl(r, filterQ.trim() || null);
-              }}
-            >
-              <SelectTrigger id="filtro-role" className="w-[160px]">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                {(Object.keys(ROLE_LABELS) as UserRole[]).map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {ROLE_LABELS[r]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="filtro-usuarios-busca" className="text-xs">
-              Buscar (email, nome ou empresa)
-            </Label>
-            <Input
-              id="filtro-usuarios-busca"
-              type="search"
-              placeholder="Email, nome ou empresa..."
-              className="w-[200px]"
+      <DashboardDeptHeader
+        section="Grupo Master"
+        sectionIcon={Users}
+        title="Usuários"
+        description="Gerencie usuários e permissões (roles) no Cognito."
+        stats={[
+          { value: users.length, label: "Total" },
+          { value: filteredUsers.length, label: "Exibidos" },
+        ]}
+        toolbar={
+          <>
+            <DashboardDeptSearch
               value={filterQ}
-              onChange={(e) => setFilterQ(e.target.value)}
+              onChange={setFilterQ}
+              placeholder="Email, nome ou empresa…"
               onBlur={() => applyFiltersToUrl(filterRole, filterQ.trim() || null)}
             />
-          </div>
-        </div>
-      </div>
+            <DashboardDeptToolbarAside>
+              <Select
+                value={filterRole ?? "all"}
+                onValueChange={(v) => {
+                  const r = v === "all" ? null : v;
+                  setFilterRole(r);
+                  applyFiltersToUrl(r, filterQ.trim() || null);
+                }}
+              >
+                <SelectTrigger className="min-h-[44px] w-[min(160px,40vw)]">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os roles</SelectItem>
+                  {(Object.keys(ROLE_LABELS) as UserRole[]).map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {ROLE_LABELS[r]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Link href="/dashboard/usuarios/new">
+                <Button className="min-h-[44px]">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo
+                </Button>
+              </Link>
+            </DashboardDeptToolbarAside>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -379,6 +369,6 @@ export default function UsuariosPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

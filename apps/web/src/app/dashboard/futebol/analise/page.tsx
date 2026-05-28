@@ -156,20 +156,6 @@ export default function AnalisePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Análise</h1>
-          <p className="text-muted-foreground">
-            Selecione um atleta para ver e editar status, avaliações, métricas e relatório
-          </p>
-        </div>
-      </div>
-
       <AnaliseFilters
         players={players}
         selectedPlayerId={selectedPlayerId}

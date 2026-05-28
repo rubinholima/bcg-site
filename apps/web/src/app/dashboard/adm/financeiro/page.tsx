@@ -77,17 +77,6 @@ export default function AdmFinanceiroPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Financeiro</h1>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <div className="flex items-start gap-2">

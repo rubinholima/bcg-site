@@ -123,20 +123,6 @@ export default function NovoUsuarioPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/usuarios">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Novo Usuário</h1>
-          <p className="text-muted-foreground">
-            Defina e-mail, senha temporária, perfil e, se aplicável, quais empresas pode ver
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Dados do Usuário</CardTitle>

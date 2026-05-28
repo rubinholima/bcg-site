@@ -434,12 +434,6 @@ export default function EmailsPage() {
           </Button>
         </div>
       )}
-
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Emails</h1>
-        <p className="text-muted-foreground">Gerencie emails corporativos por organização WorkMail</p>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Organização WorkMail</CardTitle>

@@ -5,11 +5,13 @@ import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { DashboardShellProvider, useDashboardShell } from "@/context/DashboardShellContext";
+import { DashboardPageFrame } from "@/components/dashboard/DashboardPageFrame";
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
   const isSessaoPage = pathname.includes("/consultas/sessao");
   const isAcademiasEmbed = pathname.startsWith("/dashboard/academias/");
+  const usePageFrame = !isSessaoPage && !isAcademiasEmbed;
   const { sidebarOpen, closeSidebar, sidebarDesktopMode } = useDashboardShell();
 
   const desktopHidden = sidebarDesktopMode === "hidden";
@@ -68,7 +70,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               )}
               data-dashboard-content
             >
-              {children}
+              {usePageFrame ? <DashboardPageFrame>{children}</DashboardPageFrame> : children}
             </div>
           </div>
         </main>

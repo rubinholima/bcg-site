@@ -63,13 +63,7 @@ export default function PsicologosPage() {
         </div>
       )}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Psicólogos</h1>
-          <p className="text-muted-foreground mt-1">
-            Cadastro de psicólogos, agenda de atendimentos e ficha de performance. Este cadastro popula a seleção em consultas.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <Link href="/dashboard/psicologia/psicologos/new" className="shrink-0">
           <Button>
             <Plus className="mr-2 h-4 w-4" />

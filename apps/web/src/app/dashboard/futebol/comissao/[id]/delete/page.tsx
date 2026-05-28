@@ -56,20 +56,6 @@ export default function DeleteComissaoPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/dashboard/futebol/comissao">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Excluir membro da comissão</h1>
-          <p className="text-muted-foreground">
-            Confirme a exclusão do membro da comissão técnica
-          </p>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Confirmar exclusão</CardTitle>

@@ -18,8 +18,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 
 @Controller('socio/plans')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard)
-@UseGuards(ModuleAccessGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('socio_torcedor')
 export class SocioPlansController {
   constructor(private readonly service: SocioPlansService) {}
