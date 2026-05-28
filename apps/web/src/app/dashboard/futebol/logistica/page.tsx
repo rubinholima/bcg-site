@@ -14,7 +14,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { api } from "@/lib/api";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { LogisticaFilters } from "./LogisticaFilters";
-import { FutebolLogisticaNav } from "@/components/dashboard/futebol/FutebolLogisticaNav";
 
 interface TravelLogisticsItem {
   id: string;
@@ -127,8 +126,6 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
           </Button>
         </Link>
       </div>
-
-      <FutebolLogisticaNav />
 
       <LogisticaFilters />
 

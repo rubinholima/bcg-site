@@ -28,6 +28,8 @@ import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { GlobalPresenceSection } from "@/components/home/GlobalPresenceSection";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { LogoCarouselSection } from "@/components/portfolio/modules/LogoCarouselSection";
+import { PublicFooter } from "@/components/portfolio/PublicFooter";
+import { resolveFontFamily } from "@/lib/page-fonts";
 import { LanguageSelector } from "@/components/home/LanguageSelector";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -101,7 +103,7 @@ export default function HomeClient({
     initialEvents !== undefined &&
     initialGroup !== undefined;
 
-  const theme = initialGroupHome?.content?.theme as { defaultLang?: "pt" | "en" } | undefined;
+  const theme = initialGroupHome?.content?.theme as Page["content"]["theme"] | undefined;
   const defaultLang: Lang = theme?.defaultLang === "en" || theme?.defaultLang === "pt" ? theme.defaultLang : "pt";
   const [lang, setLang] = useState<Lang>(defaultLang);
   const [portfolio, setPortfolio] = useState<PortfolioItem[] | null>(
@@ -130,9 +132,11 @@ export default function HomeClient({
   const blocks = getOrderedBlocks(groupHome?.content ?? null);
   const t = buildTFromBlocks(blocks, lang === "pt" ? copy.pt : copy.en, lang);
   const images = getImagesFromBlocks(blocks);
-  const contentBlocks = blocks.filter(
-    (b) => b.type !== "header" && b.type !== "footer",
-  );
+  const contentBlocks = blocks.filter((b) => {
+    if (b.type === "header" || b.type === "footer") return false;
+    const v = b.config?.visible as boolean | string | undefined;
+    return v !== false && v !== "false";
+  });
   const headerBlock = blocks.find((b) => b.type === "header");
   const footerBlock = blocks.find((b) => b.type === "footer");
 
@@ -295,9 +299,17 @@ export default function HomeClient({
     );
   }
 
+  const pageFontFamily = resolveFontFamily(undefined, theme ?? null);
+
   // groupHome pode ser null (não configurado no banco): mostramos a home com blocos padrão
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div
+      className="min-h-screen bg-zinc-950 text-zinc-100"
+      style={{
+        fontFamily: pageFontFamily || undefined,
+        color: theme?.textColor?.trim() || undefined,
+      }}
+    >
       {/* 1. Cabeçalho fixo: cor de fundo e texto vêm do bloco header (se existir) */}
       <header
         className="fixed left-0 right-0 top-0 z-50 border-b border-white/5 backdrop-blur-xl"
@@ -1276,31 +1288,17 @@ export default function HomeClient({
           return null;
         })}
 
-        <footer
-          className="border-t border-white/5 px-4 py-8 sm:px-6"
-          style={{
-            backgroundColor: (footerBlock?.config?.backgroundColor as string)?.trim() || undefined,
-            color: (footerBlock?.config?.footerTextColor as string)?.trim() || undefined,
-          }}
-        >
-          <div className="container mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row lg:px-8">
-            <span className="text-sm opacity-90">{group?.name ?? "Boston City Group"}</span>
-            <nav className="flex gap-6 text-sm opacity-90">
-              <a href={`#${CLUBS_ID}`} className="hover:opacity-100">
-                {t.nav.clubs}
-              </a>
-              <a href={`#${COMPANIES_ID}`} className="hover:opacity-100">
-                {t.nav.companies}
-              </a>
-              <a href={`#${CONTACT_ID}`} className="hover:opacity-100">
-                {t.nav.contact}
-              </a>
-              <Link href="/dashboard" className="hover:opacity-100">
-                {t.nav.dashboard}
-              </Link>
-            </nav>
-          </div>
-        </footer>
+        <PublicFooter
+          block={footerBlock}
+          theme={theme ?? null}
+          defaultText={group?.name ?? "Boston City Group"}
+          defaultLinks={[
+            { label: t.nav.clubs, href: `#${CLUBS_ID}` },
+            { label: t.nav.companies, href: `#${COMPANIES_ID}` },
+            { label: t.nav.contact, href: `#${CONTACT_ID}` },
+            { label: t.nav.dashboard, href: "/dashboard" },
+          ]}
+        />
       </main>
     </div>
   );

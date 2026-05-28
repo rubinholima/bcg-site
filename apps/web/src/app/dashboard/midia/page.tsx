@@ -92,6 +92,27 @@ export default function MidiaPage() {
   /** Quantos arquivos ainda estão em logos/external/ — card some quando for 0. */
   const [legacyExternalCount, setLegacyExternalCount] = useState<number | null>(null);
 
+  type StorageAudit = {
+    scannedAt: string;
+    totalObjects: number;
+    totalBytes: number;
+    orphanCount: number;
+    orphanBytes: number;
+    duplicateGroupCount: number;
+    duplicateWastedBytes: number;
+    orphans: Array<{ key: string; size: number; lastModified: string }>;
+    duplicateGroups: Array<{
+      keepKey: string;
+      keys: string[];
+      totalWastedBytes: number;
+      referenceCounts: Record<string, number>;
+    }>;
+  };
+  const [storageAudit, setStorageAudit] = useState<StorageAudit | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditActionLoading, setAuditActionLoading] = useState<string | null>(null);
+  const [auditActionResult, setAuditActionResult] = useState<string | null>(null);
+
   const refreshLegacyExternalCount = useCallback(() => {
     if (!isSuperAdmin) return;
     fetch("/api/media?all=1", { credentials: "include", cache: "no-store" })
@@ -441,6 +462,217 @@ export default function MidiaPage() {
               ) : null}
               Migrar logos (external → clubes-adv)
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isSuperAdmin && (
+        <Card className="border-sky-500/30 bg-sky-500/5">
+          <CardHeader>
+            <CardTitle className="text-base">Organização do S3 — órfãos e duplicatas</CardTitle>
+            <CardDescription>
+              Compara o bucket com referências no banco (páginas, logos, fotos, galerias). Arquivos{" "}
+              <strong>órfãos</strong> não são usados em lugar nenhum. <strong>Duplicatas</strong> são a mesma
+              imagem (mesmo hash) em pastas diferentes — dá para unificar e apagar cópias extras.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={auditLoading}
+                onClick={() => {
+                  void (async () => {
+                    setAuditLoading(true);
+                    setAuditActionResult(null);
+                    setError(null);
+                    try {
+                      const res = await fetch("/api/media/storage-audit", {
+                        credentials: "include",
+                        cache: "no-store",
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.message ?? data.error ?? "Falha na análise");
+                      setStorageAudit(data);
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Erro na análise do S3");
+                    } finally {
+                      setAuditLoading(false);
+                    }
+                  })();
+                }}
+              >
+                {auditLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Analisar armazenamento
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={!!auditActionLoading}
+                onClick={() => {
+                  void (async () => {
+                    setAuditActionLoading("consolidate-dry");
+                    setAuditActionResult(null);
+                    try {
+                      const res = await fetch("/api/media/consolidate-duplicates?dryRun=1&maxGroups=30", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.message ?? "Falha");
+                      setAuditActionResult(
+                        `Simulação duplicatas: ${data.groupsProcessed} grupo(s), ${data.keysDeleted?.length ?? 0} arquivo(s) seriam removidos (~${formatBytes(data.bytesFreed ?? 0)}).`,
+                      );
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Erro");
+                    } finally {
+                      setAuditActionLoading(null);
+                    }
+                  })();
+                }}
+              >
+                Simular unificar duplicatas
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                disabled={!!auditActionLoading}
+                onClick={() => {
+                  if (!confirm("Unificar duplicatas idênticas? O banco passará a apontar para uma cópia e as extras serão apagadas.")) return;
+                  void (async () => {
+                    setAuditActionLoading("consolidate");
+                    setAuditActionResult(null);
+                    try {
+                      const res = await fetch("/api/media/consolidate-duplicates?dryRun=0&maxGroups=20", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.message ?? "Falha");
+                      setAuditActionResult(
+                        `Duplicatas: ${data.keysDeleted?.length ?? 0} removido(s), ${data.dbRowsUpdated ?? 0} referência(s) atualizadas, ~${formatBytes(data.bytesFreed ?? 0)} liberados.`,
+                      );
+                      fetchList(filterSizeKey, filterSizeKey === "galeria_clubes" ? galeriaSlug : undefined, { silent: true });
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Erro");
+                    } finally {
+                      setAuditActionLoading(null);
+                    }
+                  })();
+                }}
+              >
+                Unificar duplicatas
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={!!auditActionLoading}
+                onClick={() => {
+                  void (async () => {
+                    setAuditActionLoading("purge-dry");
+                    try {
+                      const res = await fetch("/api/media/purge-orphans?dryRun=1&maxDelete=100", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.message ?? "Falha");
+                      setAuditActionResult(
+                        `Simulação órfãos: ${data.deleted?.length ?? 0} arquivo(s), ~${formatBytes(data.bytesFreed ?? 0)}.`,
+                      );
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Erro");
+                    } finally {
+                      setAuditActionLoading(null);
+                    }
+                  })();
+                }}
+              >
+                Simular limpar órfãos
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={!!auditActionLoading}
+                onClick={() => {
+                  if (!confirm("Apagar até 50 arquivos órfãos (sem uso no site)? Isso não pode ser desfeito.")) return;
+                  void (async () => {
+                    setAuditActionLoading("purge");
+                    try {
+                      const res = await fetch("/api/media/purge-orphans?dryRun=0&maxDelete=50", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.message ?? "Falha");
+                      setAuditActionResult(
+                        `Órfãos removidos: ${data.deleted?.length ?? 0}, ~${formatBytes(data.bytesFreed ?? 0)} liberados.`,
+                      );
+                      fetchList(filterSizeKey, filterSizeKey === "galeria_clubes" ? galeriaSlug : undefined, { silent: true });
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Erro");
+                    } finally {
+                      setAuditActionLoading(null);
+                    }
+                  })();
+                }}
+              >
+                Limpar órfãos (máx. 50)
+              </Button>
+            </div>
+            {auditActionResult ? (
+              <p className="text-sm text-muted-foreground">{auditActionResult}</p>
+            ) : null}
+            {storageAudit ? (
+              <div className="space-y-3 text-sm">
+                <p>
+                  <strong>{storageAudit.totalObjects}</strong> arquivos ({formatBytes(storageAudit.totalBytes)}) ·{" "}
+                  <strong>{storageAudit.orphanCount}</strong> órfãos ({formatBytes(storageAudit.orphanBytes)}) ·{" "}
+                  <strong>{storageAudit.duplicateGroupCount}</strong> grupos duplicados (~
+                  {formatBytes(storageAudit.duplicateWastedBytes)} repetidos)
+                </p>
+                {storageAudit.duplicateGroups.length > 0 ? (
+                  <details className="rounded-lg border border-border bg-muted/20">
+                    <summary className="cursor-pointer px-3 py-2 font-medium">
+                      Duplicatas ({storageAudit.duplicateGroups.length} grupos)
+                    </summary>
+                    <ul className="max-h-48 overflow-y-auto border-t border-border px-3 py-2 space-y-2 text-xs font-mono">
+                      {storageAudit.duplicateGroups.slice(0, 15).map((g) => (
+                        <li key={g.keepKey}>
+                          Manter: {g.keepKey}
+                          <br />
+                          Copias: {g.keys.filter((k) => k !== g.keepKey).join(", ")}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+                {storageAudit.orphans.length > 0 ? (
+                  <details className="rounded-lg border border-border bg-muted/20">
+                    <summary className="cursor-pointer px-3 py-2 font-medium">
+                      Maiores órfãos ({Math.min(storageAudit.orphans.length, 200)})
+                    </summary>
+                    <ul className="max-h-48 overflow-y-auto border-t border-border px-3 py-2 space-y-1 text-xs font-mono">
+                      {storageAudit.orphans.slice(0, 20).map((o) => (
+                        <li key={o.key}>
+                          {o.key} — {formatBytes(o.size)}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+                <p className="text-xs text-muted-foreground">
+                  Lifecycle S3 (Intelligent-Tiering): rode no servidor{" "}
+                  <code className="rounded bg-muted px-1">pnpm --filter api run s3:lifecycle</code>
+                </p>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       )}

@@ -7,6 +7,7 @@ import { SmartImage } from "@/components/common/SmartImage";
 import { PortfolioFavicon } from "@/components/portfolio/PortfolioFavicon";
 import { PublicPortfolioHeader } from "@/components/portfolio/PublicPortfolioHeader";
 import { BlockRenderer } from "@/components/portfolio/modules/BlockRenderer";
+import { PublicFooter } from "@/components/portfolio/PublicFooter";
 import { buildBackendUrl } from "@/lib/apiProxy";
 
 async function getTenantBySlug(slug: string): Promise<{ id: string; name: string; slug: string; logoUrl: string | null } | null> {
@@ -139,6 +140,8 @@ export default async function PortfolioSlugPage({
   const contentBlocks = blocks.filter((b) => {
     const t = String(b.type ?? "").toLowerCase();
     if (t === "header" || t === "footer") return false;
+    const v = b.config?.visible as boolean | string | undefined;
+    if (v === false || v === "false") return false;
     return GENERIC_BLOCK_TYPES.some((k) => String(k).toLowerCase() === t);
   });
   const headerBlock = blocks.find((b) => b.type === "header");
@@ -196,25 +199,13 @@ export default async function PortfolioSlugPage({
           <BlockRenderer key={block.id} block={block} slug={slug} lang={lang} page={page} />
         ))}
 
-        {/* Rodapé fixo: cor de fundo e texto do bloco footer */}
-        <footer
-          className="border-t border-white/5 px-4 py-6"
-          style={{
-            backgroundColor: (footerBlock?.config?.backgroundColor as string)?.trim() || undefined,
-            color: (footerBlock?.config?.footerTextColor as string)?.trim() || undefined,
-          }}
-        >
-          <div className="container mx-auto flex flex-col items-center gap-2 text-center text-sm">
-            <span>{tenant?.name ?? slug}</span>
-            <Link
-              href="/"
-              className="hover:opacity-90"
-              style={{ color: accentColor }}
-            >
-              Boston City Group
-            </Link>
-          </div>
-        </footer>
+        <PublicFooter
+          block={footerBlock}
+          theme={theme}
+          defaultText={tenant?.name ?? slug}
+          defaultLinks={[{ label: "Boston City Group", href: "/" }]}
+          accentColor={accentColor}
+        />
       </main>
     </div>
   );

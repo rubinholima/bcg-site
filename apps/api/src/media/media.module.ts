@@ -5,11 +5,18 @@ import { S3Module } from '../s3/s3.module';
 import { MediaController } from './media.controller';
 import { MediaMetaService } from './media-meta.service';
 import { ExternalLogosMigrationService } from './external-logos-migration.service';
+import { MediaUrlReplaceService } from './media-url-replace.service';
+import { MediaStorageAuditService } from './media-storage-audit.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, S3Module],
   controllers: [MediaController],
-  providers: [MediaMetaService, ExternalLogosMigrationService],
+  providers: [
+    MediaMetaService,
+    ExternalLogosMigrationService,
+    MediaUrlReplaceService,
+    MediaStorageAuditService,
+  ],
   exports: [MediaMetaService],
 })
 export class MediaModule {}

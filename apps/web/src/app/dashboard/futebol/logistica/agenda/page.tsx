@@ -4,7 +4,6 @@ import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { FutebolLogisticaNav } from "@/components/dashboard/futebol/FutebolLogisticaNav";
 import { FutebolAgendaOperacional } from "@/components/dashboard/futebol/FutebolAgendaOperacional";
 import { useAuth } from "@/context/AuthContext";
 
@@ -46,7 +45,6 @@ export default function FutebolLogisticaAgendaPage() {
           Calendário unificado: viagens, treinos, jogos, reuniões e compromissos de todos os clubes.
         </p>
       </div>
-      <FutebolLogisticaNav />
       <Suspense
         fallback={
           <div className="flex justify-center py-16">

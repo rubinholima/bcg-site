@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { resolveFontFamily } from "@/lib/page-fonts";
 import { SmartImage } from "@/components/common/SmartImage";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
@@ -102,6 +103,15 @@ function getHeroOverlayStyle(block: HomeContentBlock): CSSProperties {
     return { background: `linear-gradient(to right, transparent 0%, ${color} ${100 - op * 100}%)`, opacity: 1 };
   }
   return { backgroundColor: color, opacity: op };
+}
+
+function blockSectionStyle(block: HomeContentBlock, page: Page): CSSProperties {
+  const bg = blockBgColor(block);
+  const ff = resolveFontFamily(block.config as Record<string, unknown>, page.content?.theme);
+  return {
+    ...(bg ? { backgroundColor: bg } : {}),
+    ...(ff ? { fontFamily: ff } : {}),
+  };
 }
 
 function getEffectiveFullWidth(
@@ -279,7 +289,7 @@ export function BlockRenderer({
       <section
         key={block.id}
         className={`relative overflow-hidden border-b border-white/5 ${heightClass}`}
-        style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}
+        style={blockSectionStyle(block, page)}
       >
         {heroSlides.length > 0 ? (
           <HeroCarousel
@@ -328,7 +338,10 @@ export function BlockRenderer({
       <AnimateInView key={block.id}>
         <section
           className={`border-b border-white/5 py-14 sm:py-20`}
-          style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(39 39 42 / 0.3)" }}
+          style={{
+            ...blockSectionStyle(block, page),
+            backgroundColor: blockBgColor(block) || "rgb(39 39 42 / 0.3)",
+          }}
         >
           <div className={containerClass}>
             <ul className="grid gap-6 sm:grid-cols-3">
@@ -585,7 +598,7 @@ export function BlockRenderer({
         <section
           id={block.id}
           className="relative overflow-hidden border-b border-white/5 py-20 sm:py-24"
-          style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}
+          style={blockSectionStyle(block, page)}
         >
           {bgImg && (
             <div className="absolute inset-0">
@@ -685,7 +698,7 @@ export function BlockRenderer({
       <section
         id={block.id}
         className="relative overflow-hidden border-b border-white/5 py-16 sm:py-20"
-        style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}
+        style={blockSectionStyle(block, page)}
       >
         {bgImg && (
           <div className="absolute inset-0">

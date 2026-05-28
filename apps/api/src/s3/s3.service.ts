@@ -9,6 +9,12 @@ import {
 } from '@aws-sdk/client-s3';
 import type { Readable } from 'stream';
 import { getAwsClientConfig } from '../common/aws-credentials';
+import {
+  extensionForContentType,
+  optimizeDocumentImage,
+  optimizeLogoImage,
+  optimizeUploadImage,
+} from '../common/optimize-upload-image';
 import { randomUUID } from 'crypto';
 
 const ALLOWED_TYPES = [
@@ -62,6 +68,26 @@ export class S3Service {
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
   }
 
+  private async normalizeImageUpload(
+    buffer: Buffer,
+    contentType: string,
+    kind: 'logo' | 'media' | 'document',
+    sizeKey?: string,
+  ): Promise<{ buffer: Buffer; contentType: string; ext: string }> {
+    let optimized: { buffer: Buffer; contentType: string };
+    if (kind === 'logo') {
+      optimized = await optimizeLogoImage(buffer, contentType);
+    } else if (kind === 'document') {
+      optimized = await optimizeDocumentImage(buffer, contentType);
+    } else {
+      optimized = await optimizeUploadImage(buffer, contentType, sizeKey);
+    }
+    return {
+      ...optimized,
+      ext: extensionForContentType(optimized.contentType),
+    };
+  }
+
   /**
    * Upload de logo para S3.
    * - scope 'group' → logos/group/logo.{ext} (logo BCG)
@@ -78,7 +104,10 @@ export class S3Service {
         `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}`,
       );
     }
-    const ext = EXT_BY_MIME[contentType] ?? 'png';
+    const optimized = await this.normalizeImageUpload(buffer, contentType, 'logo');
+    buffer = optimized.buffer;
+    contentType = optimized.contentType;
+    const ext = optimized.ext;
     const key =
       scope === 'group'
         ? `logos/group/logo.${ext}`
@@ -120,7 +149,10 @@ export class S3Service {
         `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}`,
       );
     }
-    const ext = EXT_BY_MIME[contentType] ?? 'png';
+    const optimized = await this.normalizeImageUpload(buffer, contentType, 'media', sizeKey);
+    buffer = optimized.buffer;
+    contentType = optimized.contentType;
+    const ext = optimized.ext;
     const safeKey = sizeKey.replace(/[^a-z0-9_-]/gi, '_').toLowerCase() || 'custom';
     const safeSub = subfolder?.trim()
       ? subfolder.replace(/[^a-z0-9_-]/gi, '_').toLowerCase()
@@ -165,7 +197,10 @@ export class S3Service {
         `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}`,
       );
     }
-    const ext = EXT_BY_MIME[contentType] ?? 'png';
+    const optimized = await this.normalizeImageUpload(buffer, contentType, 'logo');
+    buffer = optimized.buffer;
+    contentType = optimized.contentType;
+    const ext = optimized.ext;
     const key = `logos/competitions/${randomUUID()}.${ext}`;
 
     try {
@@ -201,7 +236,10 @@ export class S3Service {
         `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}`,
       );
     }
-    const ext = EXT_BY_MIME[contentType] ?? 'png';
+    const optimized = await this.normalizeImageUpload(buffer, contentType, 'logo');
+    buffer = optimized.buffer;
+    contentType = optimized.contentType;
+    const ext = optimized.ext;
     const safeId = eventId.replace(/[^a-z0-9_-]/gi, '_').slice(0, 64) || randomUUID();
     const key = `logos/eventos/${safeId}.${ext}`;
 
@@ -237,7 +275,10 @@ export class S3Service {
         `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}`,
       );
     }
-    const ext = EXT_BY_MIME[contentType] ?? 'png';
+    const optimized = await this.normalizeImageUpload(buffer, contentType, 'logo');
+    buffer = optimized.buffer;
+    contentType = optimized.contentType;
+    const ext = optimized.ext;
     const key = `${LOGOS_CLUBES_ADV_PREFIX}${randomUUID()}.${ext}`;
 
     try {
@@ -264,8 +305,8 @@ export class S3Service {
    */
   private async listAllObjectsUnderPrefix(
     prefix: string,
-  ): Promise<Array<{ Key?: string; Size?: number; LastModified?: Date }>> {
-    const out: Array<{ Key?: string; Size?: number; LastModified?: Date }> = [];
+  ): Promise<Array<{ Key?: string; Size?: number; LastModified?: Date; ETag?: string }>> {
+    const out: Array<{ Key?: string; Size?: number; LastModified?: Date; ETag?: string }> = [];
     let continuationToken: string | undefined;
     do {
       const response = await this.client.send(
@@ -316,6 +357,51 @@ export class S3Service {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Falha ao listar mídia no S3: ${message}`,
+      );
+    }
+  }
+
+  /**
+   * Lista logos/ + media/ com ETag (para detectar duplicatas).
+   */
+  async listAllAssetsWithMeta(): Promise<
+    Array<{
+      key: string;
+      url: string;
+      size: number;
+      lastModified: string;
+      folder: string;
+      etag: string;
+    }>
+  > {
+    try {
+      const [logosRaw, mediaRaw] = await Promise.all([
+        this.listAllObjectsUnderPrefix(LOGOS_PREFIX),
+        this.listAllObjectsUnderPrefix(MEDIA_PREFIX),
+      ]);
+
+      const toItem = (
+        o: { Key?: string; Size?: number; LastModified?: Date; ETag?: string },
+        folder: string,
+      ) => ({
+        key: o.Key!,
+        url: this.getPublicUrl(o.Key!),
+        size: o.Size ?? 0,
+        lastModified: o.LastModified?.toISOString() ?? '',
+        folder,
+        etag: (o.ETag ?? '').replace(/"/g, ''),
+      });
+
+      const logos = logosRaw.map((o) => toItem(o, 'logos'));
+      const media = mediaRaw.map((o) => toItem(o, 'media'));
+
+      return [...logos, ...media].sort(
+        (a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime(),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao listar assets no S3: ${message}`,
       );
     }
   }
@@ -546,6 +632,13 @@ export class S3Service {
       contentType = mimeType;
     }
 
+    if (contentType.startsWith('image/')) {
+      const optimized = await this.normalizeImageUpload(buffer, contentType, 'document');
+      buffer = optimized.buffer;
+      contentType = optimized.contentType;
+      ext = optimized.ext;
+    }
+
     const key = `media/jogadores-documentos/${playerId}/${randomUUID()}.${ext}`;
 
     try {
@@ -597,6 +690,13 @@ export class S3Service {
       contentType = mimeType;
     }
 
+    if (contentType.startsWith('image/')) {
+      const optimized = await this.normalizeImageUpload(buffer, contentType, 'document');
+      buffer = optimized.buffer;
+      contentType = optimized.contentType;
+      ext = optimized.ext;
+    }
+
     const key = `media/cadastro-convite/${inviteId}/${randomUUID()}.${ext}`;
 
     try {
@@ -645,6 +745,13 @@ export class S3Service {
     } else if (mimeType?.startsWith('image/')) {
       ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
       contentType = mimeType;
+    }
+
+    if (contentType.startsWith('image/')) {
+      const optimized = await this.normalizeImageUpload(buffer, contentType, 'document');
+      buffer = optimized.buffer;
+      contentType = optimized.contentType;
+      ext = optimized.ext;
     }
 
     const key = `${MEDIA_PREFIX}rh_documentos/${randomUUID()}.${ext}`;

@@ -32,6 +32,60 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 28 DE MAIO DE 2026 — SESSÃO (mídia/S3, acessos, logo BCH, DX Cursor)
+
+## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
+
+- **Preferência do usuário:** **NÃO subir/reiniciar a API** (`pnpm --filter api start:dev`, porta 3001). O usuário sempre sobe a API manualmente. Web, docker/db, build, migrate, seed etc. podem rodar normalmente. Regra em `.cursor/rules/nao-subir-api.mdc`.
+- **PENDENTE COMMIT + DEPLOY:** grande parte desta sessão está **só local** (ver lista de arquivos abaixo). Últimos commits no remoto: `d35c4f0` (logo BCH), `4ffbb52` (acessos Omie). Antes de deploy: `pnpm build` na raiz (último build **ok**).
+- **Mídia / S3 — o que foi implementado (local):**
+  - **Otimização de upload** com `sharp` → WebP no `S3Service`: logos (512px), fotos de mídia (por pasta), imagens de documentos (1600px). PDFs não são convertidos. Arquivos: `optimize-upload-image.ts`, alterações em `s3.service.ts`.
+  - **MediaPicker:** botão **“Enviar foto”** com upload direto (`POST /api/media`) — corrige Construção Web onde só havia dropdown.
+  - **Auditoria S3:** `MediaStorageAuditService` — órfãos (arquivo no bucket sem referência no banco) e **duplicatas** (mesmo ETag + tamanho). Endpoints API (só `super_admin`): `GET /media/storage-audit`, `POST /media/purge-orphans?dryRun=1`, `POST /media/consolidate-duplicates?dryRun=1`. Proxies web em `/api/media/*`. UI no card **“Organização do S3”** em `dashboard/midia/page.tsx`.
+  - **Unificar duplicatas:** `MediaUrlReplaceService` troca referências no banco e apaga cópias extras (simular antes com `dryRun=1`).
+  - **Utilitários:** `media-key.util.ts` (`mediaKeyFromStoredUrl`, `collectMediaKeysFromJson`).
+  - **Lifecycle S3 (script, não executado na AWS):** `pnpm --filter api run s3:lifecycle` → `scripts/apply-s3-lifecycle.ts` (abort multipart 7d + Intelligent-Tiering em `media/` e `logos/`).
+- **Após deploy:** super_admin → **Mídia** → **Analisar armazenamento** → simular/executar unificar duplicatas e limpar órfãos. Lifecycle na AWS: rodar `s3:lifecycle` uma vez com credenciais (`s3:PutLifecycleConfiguration`).
+- **Acessos (já deployado `4ffbb52`):** Financeiro, Compras e Estoque **sem grupo Omie** — independentes em Configurações → Acessos. Sync migra `group_omie` → slugs individuais.
+- **Logo Boston City Hall (já deployado `d35c4f0`):** estática em `apps/web/public/boston-city-hall-logo.png` (`BCH_LOGO_STATIC`); componente `BostonCityHallLogo.tsx`; sidebar com `object-contain`.
+- **DX / Cursor:** `apps/api/package.json` simplificado (scripts sem aspas escapadas; Jest em `jest.config.js`; `prestart:dev` → `scripts/clear-tsbuildinfo.js`) para corrigir erro “Npm task detection: failed to parse package.json”. `.vscode/settings.json` → `npm.packageManager: pnpm`; `.vscode/tasks.json` com tasks pnpm.
+- **Arquivos locais não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` — **não commitar**.
+- **Opcional futuro:** refatorar `visiting-team-logo-merge.util.ts` para reutilizar `media-key.util.ts`.
+
+## **O QUE FOI FEITO**
+
+1. **Acessos (deployado)**  
+   - Removido `accessGroup: "omie"` de Financeiro/Compras/Estoque; sync de permissões sem `group_omie`.
+
+2. **Logo BCH (deployado)**  
+   - Logo fora do CDN `/logos/*`; header/sidebar Boston City Hall.
+
+3. **Mídia / S3 (local — aguardando commit/deploy)**  
+   - Otimização centralizada no `S3Service` (logos, mídia, docs imagem).  
+   - Auditoria órfãos + duplicatas; purge e consolidate com dry-run.  
+   - UI super_admin em Mídia; rotas proxy web.  
+   - Script lifecycle S3; dependência `sharp` em `apps/api`.
+
+4. **Upload Construção Web (local)**  
+   - `MediaPicker`: botão enviar foto.
+
+5. **Tooling (local)**  
+   - Fix parse `package.json` API; regra não subir API; tasks VS Code.
+
+## **ARQUIVOS PRINCIPAIS (pendentes no git)**
+
+- API: `s3.service.ts`, `optimize-upload-image.ts`, `media-storage-audit.service.ts`, `media-url-replace.service.ts`, `media-key.util.ts`, `media.controller.ts`, `media.module.ts`, `scripts/apply-s3-lifecycle.ts`, `jest.config.js`, `scripts/clear-tsbuildinfo.js`, `package.json`
+- Web: `midia/page.tsx`, `MediaPicker.tsx`, `app/api/media/storage-audit|purge-orphans|consolidate-duplicates/`
+- Config: `.vscode/settings.json`, `.vscode/tasks.json`, `.cursor/rules/nao-subir-api.mdc`, `pnpm-lock.yaml`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit remoto desta linha de trabalho:** `d35c4f0` (logo BCH)
+- **Mídia/S3:** ainda **sem commit** — usuário pode pedir **deploy** no próximo chat
+
+---
+
 # 📅 25 DE MAIO DE 2026 — ENCERRAMENTO (RH colaboradores, cadastro de atletas, hubs dashboard, permissões)
 
 ## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**

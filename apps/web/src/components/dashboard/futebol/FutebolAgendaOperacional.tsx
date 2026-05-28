@@ -51,10 +51,52 @@ interface Tenant {
   kind?: { name: string };
 }
 
+type ViewMode = "day" | "week" | "month";
+
+const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
+
 function monthRange(year: number, month: number) {
   const from = new Date(year, month, 1);
   const to = new Date(year, month + 1, 0, 23, 59, 59);
   return { from: from.toISOString(), to: to.toISOString() };
+}
+
+function dateKeyFromDate(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function todayKey(): string {
+  return dateKeyFromDate(new Date());
+}
+
+function startOfWeek(d: Date): Date {
+  const copy = new Date(d);
+  copy.setHours(12, 0, 0, 0);
+  copy.setDate(copy.getDate() - copy.getDay());
+  return copy;
+}
+
+function viewRange(focusDate: Date, mode: ViewMode) {
+  if (mode === "day") {
+    const from = new Date(focusDate);
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(focusDate);
+    to.setHours(23, 59, 59, 999);
+    return { from: from.toISOString(), to: to.toISOString() };
+  }
+  if (mode === "week") {
+    const start = startOfWeek(focusDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { from: start.toISOString(), to: end.toISOString() };
+  }
+  return monthRange(focusDate.getFullYear(), focusDate.getMonth());
+}
+
+function sortByStart(items: FootballAgendaCalendarItem[]) {
+  return [...items].sort((a, b) => a.startAt.localeCompare(b.startAt));
 }
 
 function formatTime(iso: string, allDay: boolean): string {
@@ -66,6 +108,28 @@ function formatDateLong(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function periodLabel(focusDate: Date, mode: ViewMode): string {
+  if (mode === "day") {
+    return formatDateLong(`${dateKeyFromDate(focusDate)}T12:00:00`);
+  }
+  if (mode === "week") {
+    const start = startOfWeek(focusDate);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    const fmt = (d: Date) =>
+      d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    const year =
+      start.getFullYear() === end.getFullYear()
+        ? String(start.getFullYear())
+        : `${start.getFullYear()} – ${end.getFullYear()}`;
+    return `${fmt(start)} – ${fmt(end)} · ${year}`;
+  }
+  return new Date(focusDate.getFullYear(), focusDate.getMonth(), 1).toLocaleDateString("pt-BR", {
     month: "long",
     year: "numeric",
   });
@@ -113,19 +177,39 @@ function combineDateTime(date: string, time: string, allDay: boolean): string {
   return new Date(`${date}T${time}:00`).toISOString();
 }
 
+/** Select nativo — Radix Select (Portal) não funciona dentro de `<dialog showModal>`. */
+const modalSelectClassName =
+  "flex min-h-[44px] w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
+function TypeLegend() {
+  return (
+    <div className="mt-4 flex flex-wrap gap-2">
+      {Object.entries(FOOTBALL_AGENDA_TYPE_LABEL).map(([key, label]) => (
+        <span
+          key={key}
+          className={cn(
+            "rounded-full border px-2 py-0.5 text-[11px] font-medium",
+            FOOTBALL_AGENDA_TYPE_COLOR[key],
+          )}
+        >
+          {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function FutebolAgendaOperacional() {
   const searchParams = useSearchParams();
-  const [cursor, setCursor] = useState(() => {
-    const n = new Date();
-    return { year: n.getFullYear(), month: n.getMonth() };
-  });
+  const [focusDate, setFocusDate] = useState(() => new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantFilter, setTenantFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [items, setItems] = useState<FootballAgendaCalendarItem[]>([]);
   const [overview, setOverview] = useState<FootballAgendaOverview | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(() => todayKey());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<EntryForm>(emptyForm);
@@ -144,7 +228,7 @@ export function FutebolAgendaOperacional() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { from, to } = monthRange(cursor.year, cursor.month);
+    const { from, to } = viewRange(focusDate, viewMode);
     const params = new URLSearchParams({ from, to });
     if (tenantFilter) params.set("tenantId", tenantFilter);
     if (typeFilter !== "all") params.set("types", typeFilter);
@@ -152,7 +236,7 @@ export function FutebolAgendaOperacional() {
       const [calRes, ovRes] = await Promise.all([
         api.get<FootballAgendaCalendarItem[]>(`/futebol-agenda/calendar?${params}`),
         api.get<FootballAgendaOverview>(
-          `/futebol-agenda/overview?year=${cursor.year}&month=${cursor.month}${tenantFilter ? `&tenantId=${tenantFilter}` : ""}`,
+          `/futebol-agenda/overview?year=${focusDate.getFullYear()}&month=${focusDate.getMonth()}${tenantFilter ? `&tenantId=${tenantFilter}` : ""}`,
         ),
       ]);
       setItems(Array.isArray(calRes.data) ? calRes.data : []);
@@ -163,11 +247,17 @@ export function FutebolAgendaOperacional() {
     } finally {
       setLoading(false);
     }
-  }, [cursor.year, cursor.month, tenantFilter, typeFilter]);
+  }, [focusDate, viewMode, tenantFilter, typeFilter]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (viewMode === "day") {
+      setSelectedDay(dateKeyFromDate(focusDate));
+    }
+  }, [viewMode, focusDate]);
 
   const entryIdFromUrl = searchParams.get("entry");
 
@@ -193,19 +283,93 @@ export function FutebolAgendaOperacional() {
     return map;
   }, [items]);
 
-  const monthLabel = new Date(cursor.year, cursor.month, 1).toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric",
-  });
+  const monthLabel = periodLabel(focusDate, viewMode);
+  const today = todayKey();
 
-  const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate();
-  const startWeekday = new Date(cursor.year, cursor.month, 1).getDay();
-  const todayKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
+  const daysInMonth = new Date(focusDate.getFullYear(), focusDate.getMonth() + 1, 0).getDate();
+  const startWeekday = new Date(focusDate.getFullYear(), focusDate.getMonth(), 1).getDay();
 
-  const selectedItems = selectedDay ? byDay.get(selectedDay) ?? [] : [];
+  const weekDays = useMemo(() => {
+    const start = startOfWeek(focusDate);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  }, [focusDate]);
+
+  const focusDayKey = dateKeyFromDate(focusDate);
+  const selectedItems = sortByStart(
+    viewMode === "day"
+      ? byDay.get(focusDayKey) ?? []
+      : selectedDay
+        ? byDay.get(selectedDay) ?? []
+        : [],
+  );
+
+  const navigatePrev = () => {
+    setFocusDate((d) => {
+      const n = new Date(d);
+      if (viewMode === "day") n.setDate(n.getDate() - 1);
+      else if (viewMode === "week") n.setDate(n.getDate() - 7);
+      else n.setMonth(n.getMonth() - 1);
+      return n;
+    });
+  };
+
+  const navigateNext = () => {
+    setFocusDate((d) => {
+      const n = new Date(d);
+      if (viewMode === "day") n.setDate(n.getDate() + 1);
+      else if (viewMode === "week") n.setDate(n.getDate() + 7);
+      else n.setMonth(n.getMonth() + 1);
+      return n;
+    });
+  };
+
+  const goToToday = () => {
+    const now = new Date();
+    setFocusDate(now);
+    setSelectedDay(todayKey());
+  };
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    if (mode === "day") {
+      setSelectedDay(dateKeyFromDate(focusDate));
+    }
+  };
+
+  const handleDayClick = (dateKey: string) => {
+    setSelectedDay(dateKey);
+    if (viewMode === "day") {
+      const [y, m, d] = dateKey.split("-").map(Number);
+      setFocusDate(new Date(y, m - 1, d));
+    }
+  };
+
+  const dayCellClass = (dateKey: string, isSelected: boolean) =>
+    cn(
+      "min-h-[92px] rounded-lg border p-1.5 text-left transition-colors sm:min-h-[100px]",
+      isSelected
+        ? "border-primary ring-2 ring-primary/40 bg-primary/10"
+        : dateKey === today
+          ? "border-amber-400/80 bg-amber-500/20 ring-2 ring-amber-400/45 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.25)]"
+          : "border-border/60 bg-card hover:bg-muted/30",
+    );
+
+  const dayNumberClass = (dateKey: string, isSelected: boolean) =>
+    cn(
+      "inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1 text-xs font-bold",
+      dateKey === today
+        ? "bg-amber-500 text-amber-950"
+        : isSelected
+          ? "text-primary"
+          : "text-foreground",
+    );
 
   const openNewEntry = (dateKey?: string) => {
-    const base = dateKey ?? todayKey;
+    const base = dateKey ?? today;
     setEditingId(null);
     setForm({
       ...emptyForm(),
@@ -240,6 +404,65 @@ export function FutebolAgendaOperacional() {
     setError(null);
     setDialogOpen(true);
   };
+
+  const renderAgendaItem = (item: FootballAgendaCalendarItem) => (
+    <div
+      key={item.id}
+      className={cn(
+        "rounded-lg border p-3",
+        FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? "",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase opacity-80">
+            {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
+            {item.tenantName ? ` · ${item.tenantName}` : ""}
+          </p>
+          <p className="mt-0.5 font-semibold leading-tight">{item.title}</p>
+          <p className="mt-1 text-xs opacity-90">
+            {formatTime(item.startAt, item.allDay)}
+            {item.endAt && !item.allDay ? ` — ${formatTime(item.endAt, false)}` : ""}
+          </p>
+          {item.location ? (
+            <p className="mt-1 flex items-center gap-1 text-xs opacity-80">
+              <MapPin className="h-3 w-3 shrink-0" />
+              {item.location}
+            </p>
+          ) : null}
+          {item.source === "travel" ? (
+            <p className="mt-1 text-xs opacity-75">
+              {TRAVEL_STATUS_LABEL[item.status] ?? item.status}
+              {item.championshipName ? ` · ${item.championshipName}` : ""}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {item.source === "travel" ? (
+          <Link
+            href={item.href}
+            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+          >
+            Abrir viagem
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+            onClick={() => {
+              const id = item.id.replace(/^entry-/, "");
+              api.get<FootballAgendaEntry>(`/futebol-agenda/entries/${id}`).then(({ data }) => {
+                if (data) openEditEntry(data);
+              });
+            }}
+          >
+            Editar
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   const handleSave = async () => {
     if (!form.tenantId || !form.title.trim() || !form.startAt) {
@@ -313,7 +536,7 @@ export function FutebolAgendaOperacional() {
         </Card>
         <Card>
           <CardContent className="flex min-h-[72px] items-center justify-center pt-4">
-            <Button onClick={() => openNewEntry(selectedDay ?? undefined)} className="min-h-[44px] w-full sm:w-auto">
+            <Button onClick={() => openNewEntry(viewMode === "day" ? focusDayKey : selectedDay ?? undefined)} className="min-h-[44px] w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Novo compromisso
             </Button>
@@ -322,8 +545,48 @@ export function FutebolAgendaOperacional() {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <CardTitle className="text-lg capitalize">{monthLabel}</CardTitle>
+        <CardHeader className="flex flex-col gap-3 pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <CardTitle className="text-lg capitalize">{monthLabel}</CardTitle>
+              <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/30 p-1">
+                {(
+                  [
+                    { id: "day" as const, label: "Dia" },
+                    { id: "week" as const, label: "Semana" },
+                    { id: "month" as const, label: "Mês" },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleViewModeChange(tab.id)}
+                    className={cn(
+                      "inline-flex min-h-[44px] shrink-0 items-center rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                      viewMode === tab.id
+                        ? "bg-background text-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" onClick={goToToday} className="min-h-[44px] shrink-0">
+                Hoje
+              </Button>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-10 w-10" onClick={navigatePrev}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-10 w-10" onClick={navigateNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <Select value={tenantFilter || "all"} onValueChange={(v) => setTenantFilter(v === "all" ? "" : v)}>
               <SelectTrigger className="min-h-[44px] w-full sm:w-[200px]">
@@ -352,32 +615,6 @@ export function FutebolAgendaOperacional() {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-10 w-10"
-                onClick={() =>
-                  setCursor((c) =>
-                    c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 },
-                  )
-                }
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-10 w-10"
-                onClick={() =>
-                  setCursor((c) =>
-                    c.month === 11 ? { year: c.year + 1, month: 0 } : { year: c.year, month: c.month + 1 },
-                  )
-                }
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -385,160 +622,172 @@ export function FutebolAgendaOperacional() {
             <div className="flex justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-[1fr_minmax(260px,320px)]">
-              <div>
-                <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted-foreground">
-                  {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
-                    <div key={d} className="py-1">
-                      {d}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-1">
-                  {Array.from({ length: startWeekday }).map((_, i) => (
-                    <div key={`e-${i}`} className="min-h-[92px] rounded-lg bg-muted/15 sm:min-h-[100px]" />
-                  ))}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const day = i + 1;
-                    const dateKey = `${cursor.year}-${String(cursor.month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                    const dayItems = byDay.get(dateKey) ?? [];
-                    const isToday = dateKey === todayKey;
-                    const isSelected = dateKey === selectedDay;
-                    return (
-                      <button
-                        key={dateKey}
-                        type="button"
-                        onClick={() => setSelectedDay(dateKey)}
-                        className={cn(
-                          "min-h-[92px] rounded-lg border p-1.5 text-left transition-colors sm:min-h-[100px]",
-                          isSelected
-                            ? "border-primary ring-2 ring-primary/40 bg-primary/10"
-                            : isToday
-                              ? "border-primary/40 bg-primary/5"
-                              : "border-border/60 bg-card hover:bg-muted/30",
-                        )}
-                      >
-                        <span className="text-xs font-bold text-foreground">{day}</span>
-                        <div className="mt-1 space-y-0.5">
-                          {dayItems.slice(0, 4).map((item) => (
-                            <div
-                              key={item.id}
-                              className={cn(
-                                "truncate rounded border px-1 py-0.5 text-[10px] leading-tight sm:text-[11px]",
-                                FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
-                              )}
-                              title={item.title}
-                            >
-                              {item.title}
-                            </div>
-                          ))}
-                          {dayItems.length > 4 ? (
-                            <p className="text-[10px] text-muted-foreground">+{dayItems.length - 4}</p>
-                          ) : null}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {Object.entries(FOOTBALL_AGENDA_TYPE_LABEL).map(([key, label]) => (
-                    <span
-                      key={key}
-                      className={cn(
-                        "rounded-full border px-2 py-0.5 text-[11px] font-medium",
-                        FOOTBALL_AGENDA_TYPE_COLOR[key],
-                      )}
-                    >
-                      {label}
+          ) : viewMode === "day" ? (
+            <div className="space-y-4">
+              <div
+                className={cn(
+                  "rounded-xl border p-4",
+                  focusDayKey === today
+                    ? "border-amber-400/80 bg-amber-500/10 ring-2 ring-amber-400/40"
+                    : "border-border/60 bg-card",
+                )}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-semibold capitalize">{monthLabel}</h3>
+                  {focusDayKey === today ? (
+                    <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-amber-950">
+                      Hoje
                     </span>
-                  ))}
+                  ) : null}
                 </div>
               </div>
-
-              <Card className="border-dashed lg:border-solid">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">
-                    {selectedDay ? formatDateLong(`${selectedDay}T12:00:00`) : "Selecione um dia"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 max-h-[420px] overflow-y-auto">
-                  {!selectedDay ? (
-                    <p className="text-sm text-muted-foreground">
-                      Toque em um dia do calendário para ver viagens e compromissos.
-                    </p>
-                  ) : selectedItems.length === 0 ? (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
-                      <Button variant="outline" size="sm" onClick={() => openNewEntry(selectedDay)}>
-                        <Plus className="mr-1 h-3.5 w-3.5" />
-                        Adicionar
-                      </Button>
+              {selectedItems.length === 0 ? (
+                <div className="space-y-3 rounded-xl border border-dashed p-6 text-center">
+                  <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
+                  <Button variant="outline" onClick={() => openNewEntry(focusDayKey)}>
+                    <Plus className="mr-1 h-3.5 w-3.5" />
+                    Adicionar compromisso
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">{selectedItems.map(renderAgendaItem)}</div>
+              )}
+              <TypeLegend />
+            </div>
+          ) : (
+            <div
+              className={cn(
+                "grid gap-4",
+                viewMode === "month" && "lg:grid-cols-[1fr_minmax(260px,320px)]",
+              )}
+            >
+              <div className={viewMode === "week" ? "overflow-x-auto pb-1" : undefined}>
+                {viewMode === "month" ? (
+                  <>
+                    <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted-foreground">
+                      {WEEKDAY_LABELS.map((d) => (
+                        <div key={d} className="py-1">
+                          {d}
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    selectedItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className={cn(
-                          "rounded-lg border p-3",
-                          FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? "",
-                        )}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium uppercase opacity-80">
-                              {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
-                              {item.tenantName ? ` · ${item.tenantName}` : ""}
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: startWeekday }).map((_, i) => (
+                        <div key={`e-${i}`} className="min-h-[92px] rounded-lg bg-muted/15 sm:min-h-[100px]" />
+                      ))}
+                      {Array.from({ length: daysInMonth }).map((_, i) => {
+                        const day = i + 1;
+                        const dateKey = `${focusDate.getFullYear()}-${String(focusDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                        const dayItems = byDay.get(dateKey) ?? [];
+                        const isSelected = dateKey === selectedDay;
+                        return (
+                          <button
+                            key={dateKey}
+                            type="button"
+                            onClick={() => handleDayClick(dateKey)}
+                            className={dayCellClass(dateKey, isSelected)}
+                          >
+                            <span className={dayNumberClass(dateKey, isSelected)}>{day}</span>
+                            <div className="mt-1 space-y-0.5">
+                              {dayItems.slice(0, 4).map((item) => (
+                                <div
+                                  key={item.id}
+                                  className={cn(
+                                    "truncate rounded border px-1 py-0.5 text-[10px] leading-tight sm:text-[11px]",
+                                    FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
+                                  )}
+                                  title={item.title}
+                                >
+                                  {item.title}
+                                </div>
+                              ))}
+                              {dayItems.length > 4 ? (
+                                <p className="text-[10px] text-muted-foreground">+{dayItems.length - 4}</p>
+                              ) : null}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid min-w-[640px] grid-cols-7 gap-1 sm:min-w-0">
+                    {weekDays.map((d) => {
+                      const dateKey = dateKeyFromDate(d);
+                      const dayItems = byDay.get(dateKey) ?? [];
+                      const isSelected = dateKey === selectedDay;
+                      return (
+                        <div key={dateKey} className="min-w-[88px]">
+                          <button
+                            type="button"
+                            onClick={() => handleDayClick(dateKey)}
+                            className={cn(
+                              "mb-2 w-full rounded-lg border px-2 py-2 text-center transition-colors",
+                              isSelected
+                                ? "border-primary ring-2 ring-primary/40 bg-primary/10"
+                                : dateKey === today
+                                  ? "border-amber-400/80 bg-amber-500/20 ring-2 ring-amber-400/45"
+                                  : "border-border/60 bg-muted/20 hover:bg-muted/40",
+                            )}
+                          >
+                            <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+                              {WEEKDAY_LABELS[d.getDay()]}
                             </p>
-                            <p className="mt-0.5 font-semibold leading-tight">{item.title}</p>
-                            <p className="mt-1 text-xs opacity-90">
-                              {formatTime(item.startAt, item.allDay)}
-                              {item.endAt && !item.allDay
-                                ? ` — ${formatTime(item.endAt, false)}`
-                                : ""}
-                            </p>
-                            {item.location ? (
-                              <p className="mt-1 flex items-center gap-1 text-xs opacity-80">
-                                <MapPin className="h-3 w-3 shrink-0" />
-                                {item.location}
-                              </p>
-                            ) : null}
-                            {item.source === "travel" ? (
-                              <p className="mt-1 text-xs opacity-75">
-                                {TRAVEL_STATUS_LABEL[item.status] ?? item.status}
-                                {item.championshipName ? ` · ${item.championshipName}` : ""}
-                              </p>
-                            ) : null}
+                            <p className={dayNumberClass(dateKey, isSelected)}>{d.getDate()}</p>
+                          </button>
+                          <div className="space-y-1">
+                            {sortByStart(dayItems).map((item) => (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleDayClick(dateKey)}
+                                className={cn(
+                                  "w-full truncate rounded border px-1.5 py-1 text-left text-[10px] leading-tight sm:text-[11px]",
+                                  FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
+                                )}
+                                title={item.title}
+                              >
+                                {!item.allDay ? (
+                                  <span className="mr-1 opacity-75">{formatTime(item.startAt, false)}</span>
+                                ) : null}
+                                {item.title}
+                              </button>
+                            ))}
                           </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {item.source === "travel" ? (
-                            <Link
-                              href={item.href}
-                              className="text-xs font-medium text-primary underline-offset-2 hover:underline"
-                            >
-                              Abrir viagem
-                            </Link>
-                          ) : (
-                            <button
-                              type="button"
-                              className="text-xs font-medium text-primary underline-offset-2 hover:underline"
-                              onClick={() => {
-                                const id = item.id.replace(/^entry-/, "");
-                                api.get<FootballAgendaEntry>(`/futebol-agenda/entries/${id}`).then(({ data }) => {
-                                  if (data) openEditEntry(data);
-                                });
-                              }}
-                            >
-                              Editar
-                            </button>
-                          )}
-                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <TypeLegend />
+              </div>
+
+              {viewMode === "month" ? (
+                <Card className="border-dashed lg:border-solid">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">
+                      {selectedDay ? formatDateLong(`${selectedDay}T12:00:00`) : "Selecione um dia"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="max-h-[420px] space-y-2 overflow-y-auto">
+                    {!selectedDay ? (
+                      <p className="text-sm text-muted-foreground">
+                        Toque em um dia do calendário para ver viagens e compromissos.
+                      </p>
+                    ) : selectedItems.length === 0 ? (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
+                        <Button variant="outline" size="sm" onClick={() => openNewEntry(selectedDay)}>
+                          <Plus className="mr-1 h-3.5 w-3.5" />
+                          Adicionar
+                        </Button>
                       </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
+                    ) : (
+                      selectedItems.map(renderAgendaItem)
+                    )}
+                  </CardContent>
+                </Card>
+              ) : null}
             </div>
           )}
           <p className="mt-4 text-xs text-muted-foreground">
@@ -558,54 +807,54 @@ export function FutebolAgendaOperacional() {
           </DialogHeader>
           <div className="grid gap-3 py-2">
             <div className="grid gap-1.5">
-              <Label>Clube *</Label>
-              <Select value={form.tenantId} onValueChange={(v) => setForm((f) => ({ ...f, tenantId: v }))}>
-                <SelectTrigger className="min-h-[44px]">
-                  <SelectValue placeholder="Selecione o clube" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tenants.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="agenda-tenant">Clube *</Label>
+              <select
+                id="agenda-tenant"
+                className={modalSelectClassName}
+                value={form.tenantId}
+                onChange={(e) => setForm((f) => ({ ...f, tenantId: e.target.value }))}
+              >
+                <option value="" disabled>
+                  Selecione o clube
+                </option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <Label>Tipo</Label>
-                <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
-                  <SelectTrigger className="min-h-[44px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FOOTBALL_AGENDA_ENTRY_TYPES.map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {FOOTBALL_AGENDA_TYPE_LABEL[t]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="agenda-type">Tipo</Label>
+                <select
+                  id="agenda-type"
+                  className={modalSelectClassName}
+                  value={form.type}
+                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+                >
+                  {FOOTBALL_AGENDA_ENTRY_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {FOOTBALL_AGENDA_TYPE_LABEL[t]}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid gap-1.5">
-                <Label>Categoria</Label>
-                <Select
-                  value={form.category || "__none__"}
-                  onValueChange={(v) => setForm((f) => ({ ...f, category: v === "__none__" ? "" : v }))}
+                <Label htmlFor="agenda-category">Categoria</Label>
+                <select
+                  id="agenda-category"
+                  className={modalSelectClassName}
+                  value={form.category || ""}
+                  onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                 >
-                  <SelectTrigger className="min-h-[44px]">
-                    <SelectValue placeholder="Opcional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">—</SelectItem>
-                    {FIXTURE_CATEGORIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        {getCategoryLabel(c.value, "pt")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="">—</option>
+                  {FIXTURE_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {getCategoryLabel(c.value, "pt")}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             <div className="grid gap-1.5">

@@ -10,21 +10,22 @@
     "prisma:generate": "prisma generate",
     "seed:group-home": "ts-node -r tsconfig-paths/register scripts/seed-group-home.ts",
     "seed:boston-city-hall": "ts-node -r tsconfig-paths/register scripts/seed-boston-city-hall.ts",
+    "s3:lifecycle": "ts-node -r tsconfig-paths/register scripts/apply-s3-lifecycle.ts",
     "seed:local-user": "ts-node -r tsconfig-paths/register scripts/seed-local-user.ts",
     "fix:encoding": "ts-node -r tsconfig-paths/register scripts/fix-encoding.ts",
     "check:encoding": "ts-node -r tsconfig-paths/register scripts/check-encoding.ts",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier --write src test",
     "start": "nest start",
-    "prestart:dev": "node -e \"try{require('fs').unlinkSync('tsconfig.build.tsbuildinfo')}catch(e){}\"",
+    "prestart:dev": "node scripts/clear-tsbuildinfo.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main.js",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "eslint src test --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register ./node_modules/jest/bin/jest.js --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
@@ -49,7 +50,8 @@
     "pdf-lib": "^1.17.1",
     "prisma": "6.8.2",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -78,22 +80,5 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
   }
 }

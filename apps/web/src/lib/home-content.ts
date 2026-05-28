@@ -305,6 +305,7 @@ export function getBlockLabel(id: string, type: HomeBlockType, lang: "pt" | "en"
 /** Chaves de config que têm UI dedicada no editor. Usado em Campos adicionais para não duplicar. */
 export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
   "titlePt", "titleEn", "bodyPt", "bodyEn", "visible",
+  "fontFamily", "contentWidth", "titleAlign", "sectionSize",
   "backgroundColor", "backgroundOverlayOpacity", "backgroundImage",
   "titleGradientStart", "titleGradientEnd",
   "imageUrl", "heroSlides", "heroCarouselEffect", "heroCarouselIntervalSeconds",

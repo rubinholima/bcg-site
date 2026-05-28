@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 import { getAppBaseUrl } from "@/lib/apiProxy";
+import { buildPageFontsGoogleStylesheetUrl } from "@/lib/page-fonts";
 
 /** Nome e logo vêm da API do Grupo Master. Usa /api/public/group (fallback quando backend indisponível). */
 async function getGroupMetadata(): Promise<{ name?: string; logoUrl?: string }> {
@@ -57,6 +58,7 @@ export default function RootLayout({
     <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
+        <link rel="stylesheet" href={buildPageFontsGoogleStylesheetUrl()} />
       </head>
       <body className={`${inter.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <AuthProvider>

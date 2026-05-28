@@ -20,8 +20,18 @@ import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ExternalLogosMigrationService } from './external-logos-migration.service';
 import { MediaMetaService } from './media-meta.service';
+import { MediaStorageAuditService } from './media-storage-audit.service';
 import { S3Service } from '../s3/s3.service';
 import { displayNameFromUploadFilename } from '../common/upload-display-name';
+
+function assertSuperAdmin(req: Request): void {
+  const user = (req as Request & { user?: CognitoJwtPayload }).user;
+  const role = user?.role;
+  const groups = user?.['cognito:groups'] ?? [];
+  if (role !== 'super_admin' && !groups.includes('super_admin')) {
+    throw new ForbiddenException('Apenas super admin pode executar esta operação.');
+  }
+}
 
 @Controller('media')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -30,6 +40,7 @@ export class MediaController {
     private readonly s3: S3Service,
     private readonly mediaMeta: MediaMetaService,
     private readonly externalLogosMigration: ExternalLogosMigrationService,
+    private readonly storageAuditService: MediaStorageAuditService,
   ) {}
 
   /**
@@ -168,12 +179,44 @@ export class MediaController {
    */
   @Post('migrate-external-logos')
   async migrateExternalLogos(@Req() req: Request) {
-    const user = (req as Request & { user?: CognitoJwtPayload }).user;
-    const role = user?.role;
-    const groups = user?.['cognito:groups'] ?? [];
-    if (role !== 'super_admin' && !groups.includes('super_admin')) {
-      throw new ForbiddenException('Apenas super admin pode executar a migração.');
-    }
+    assertSuperAdmin(req);
     return this.externalLogosMigration.run();
+  }
+
+  /** GET /media/storage-audit — órfãos e duplicatas no bucket (super_admin). */
+  @Get('storage-audit')
+  async storageAudit(@Req() req: Request) {
+    assertSuperAdmin(req);
+    return this.storageAuditService.runAudit();
+  }
+
+  /** POST /media/purge-orphans?dryRun=1 — remove arquivos sem referência no banco. */
+  @Post('purge-orphans')
+  async purgeOrphans(
+    @Req() req: Request,
+    @Query('dryRun') dryRun?: string,
+    @Query('maxDelete') maxDelete?: string,
+  ) {
+    assertSuperAdmin(req);
+    const isDry = dryRun !== '0' && dryRun !== 'false';
+    const max = maxDelete ? parseInt(maxDelete, 10) : 50;
+    return this.storageAuditService.purgeOrphans(isDry, {
+      maxDelete: Number.isFinite(max) ? max : 50,
+    });
+  }
+
+  /** POST /media/consolidate-duplicates?dryRun=1 — unifica cópias idênticas (mesmo ETag). */
+  @Post('consolidate-duplicates')
+  async consolidateDuplicates(
+    @Req() req: Request,
+    @Query('dryRun') dryRun?: string,
+    @Query('maxGroups') maxGroups?: string,
+  ) {
+    assertSuperAdmin(req);
+    const isDry = dryRun !== '0' && dryRun !== 'false';
+    const max = maxGroups ? parseInt(maxGroups, 10) : 20;
+    return this.storageAuditService.consolidateDuplicates(isDry, {
+      maxGroups: Number.isFinite(max) ? max : 20,
+    });
   }
 }

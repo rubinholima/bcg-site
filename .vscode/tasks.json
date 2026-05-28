@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "web: dev",
+      "type": "shell",
+      "command": "pnpm --filter web dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "api: start:dev",
+      "type": "shell",
+      "command": "pnpm --filter api start:dev",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "build (monorepo)",
+      "type": "shell",
+      "command": "pnpm build",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "api: prisma generate",
+      "type": "shell",
+      "command": "pnpm --filter api run prisma:generate",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "api: s3 lifecycle",
+      "type": "shell",
+      "command": "pnpm --filter api run s3:lifecycle",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -69,9 +69,10 @@ import {
   BLOCK_TYPES_WITH_BODY,
   mergeGlobalPresenceCounters,
 } from "@/lib/home-content";
-import { BCH_SLUG } from "@/lib/boston-city-hall";
+import { BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
@@ -632,48 +633,27 @@ export default function EditarPaginaTenantPage() {
   }
 
   const tenantName = page.tenant?.name ?? "Empresa";
+  const subjectLogoSrc = page.tenant
+    ? page.tenant.slug === BCH_SLUG
+      ? bchLogoSrc(page.tenant.logoUrl)
+      : page.tenant.logoUrl
+        ? getPublicImageUrl(page.tenant.logoUrl) || ""
+        : ""
+    : "";
 
   return (
     <div className="flex flex-col gap-4 min-h-0">
-      {/* Barra fixa: voltar, título e salvar — sempre visível ao rolar */}
-      <div className="sticky top-0 z-30 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border bg-background px-4 py-2 shadow-sm">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/paginas">
-            <Button variant="ghost" size="icon" type="button">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-xl font-semibold">Editar página — {tenantName}</h1>
-            <p className="text-xs text-muted-foreground">
-              Módulos: Hero, Destaques, textos (PT/EN), aparência.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {error && (
-            <span className="max-w-[320px] truncate text-sm text-destructive" title={error}>
-              {error}
-            </span>
-          )}
-          {success && (
-            <span className="text-sm text-green-600 dark:text-green-400">Salvo.</span>
-          )}
-          <Link href="/dashboard/paginas">
-            <Button type="button" variant="outline" disabled={saving}>
-              Voltar
-            </Button>
-          </Link>
-          <Button type="submit" form="editor-tenant-page-form" disabled={saving}>
-            {saving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            {saving ? "Salvando…" : "Salvar"}
-          </Button>
-        </div>
-      </div>
+      <PageBuilderChrome
+        title={tenantName}
+        subtitle="Módulos, aparência global e textos PT/EN."
+        previewHref={page?.tenant?.slug ? `/portfolio/${page.tenant.slug}` : undefined}
+        previewLabel="Ver página"
+        saving={saving}
+        success={success}
+        error={error}
+        formId="editor-tenant-page-form"
+        subjectLogo={subjectLogoSrc ? { src: subjectLogoSrc, alt: tenantName } : null}
+      />
 
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -687,205 +667,14 @@ export default function EditarPaginaTenantPage() {
       )}
 
       <form id="editor-tenant-page-form" onSubmit={handleSubmit} className="space-y-6">
-        {/* Aparência geral da página — fundo, cores, fontes. Módulos podem sobrescrever. */}
-        <Card className="border-violet-500/30 bg-violet-950/20">
-          <CardHeader
-            className="cursor-pointer select-none border-b border-transparent hover:border-violet-500/30 transition-colors"
-            onClick={() => setGlobalAppearanceOpen((o) => !o)}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <CardTitle className="flex items-center gap-2">
-                  <span className="rounded bg-violet-500/20 px-1.5 py-0.5 text-sm">Global</span>
-                  Aparência geral da página
-                </CardTitle>
-                <CardDescription>
-                  Fundo, cores, largura (box/full) e fontes aplicados a toda a página. Cada módulo pode sobrescrever em Aparência.
-                </CardDescription>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1.5 border-violet-500/40"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setGlobalAppearanceOpen((o) => !o);
-                }}
-                aria-expanded={globalAppearanceOpen}
-                aria-label={globalAppearanceOpen ? "Recolher" : "Expandir"}
-              >
-                {globalAppearanceOpen ? (
-                  <>
-                    <ChevronUp className="h-4 w-4" />
-                    Recolher
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-4 w-4" />
-                    Expandir
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardHeader>
-          {globalAppearanceOpen && (
-          <CardContent className="space-y-4">
-            <div className="space-y-3 rounded-lg border border-violet-500/30 bg-violet-500/10 p-3">
-              <Label className="text-sm font-medium">Padrões (todos os módulos)</Label>
-              <p className="text-xs text-muted-foreground">
-                Defina aqui para não precisar configurar em cada módulo. Cada módulo pode sobrescrever em Aparência.
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Largura do conteúdo</Label>
-                  <Select
-                    value={(theme.contentWidth as string) ?? "box"}
-                    onValueChange={(v) => updateTheme("contentWidth", v as "box" | "full")}
-                  >
-                    <SelectTrigger className="max-w-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="box">Box (centralizado)</SelectItem>
-                      <SelectItem value="full">Full width</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Alinhamento dos títulos</Label>
-                  <Select
-                    value={(theme.titleAlign as string) ?? "left"}
-                    onValueChange={(v) => updateTheme("titleAlign", v as "left" | "center" | "right")}
-                  >
-                    <SelectTrigger className="max-w-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="left">Esquerda</SelectItem>
-                      <SelectItem value="center">Centro</SelectItem>
-                      <SelectItem value="right">Direita</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Língua principal</Label>
-                  <Select
-                    value={(theme.defaultLang as string) ?? "pt"}
-                    onValueChange={(v) => updateTheme("defaultLang", v as "pt" | "en")}
-                  >
-                    <SelectTrigger className="max-w-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pt">Português</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground">
-                    Idioma ao carregar o site (sem ?lang= nem preferência salva)
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Cor de fundo do corpo (hex)</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="color"
-                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
-                    value={(theme.backgroundColor as string)?.trim() || "#0f0f12"}
-                    onChange={(e) => updateTheme("backgroundColor", e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    placeholder="#0f0f12"
-                    className="flex-1 min-w-[120px]"
-                    value={(theme.backgroundColor as string) ?? ""}
-                    onChange={(e) => updateTheme("backgroundColor", e.target.value.trim() || undefined)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Imagem de fundo do corpo</Label>
-                <MediaPicker
-                  value={(theme.backgroundImage as string) ?? ""}
-                  onChange={(url) => updateTheme("backgroundImage", url || undefined)}
-                  sizeKey="backgrounds"
-                  uploadFolderHint="backgrounds"
-                />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Opacidade do overlay sobre a imagem (0–1)</Label>
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="0.75"
-                  value={overlayOpacityDraft ?? String(theme.backgroundOverlayOpacity ?? "")}
-                  onChange={(e) => setOverlayOpacityDraft(e.target.value)}
-                  onBlur={() => {
-                    const v = (overlayOpacityDraft ?? "").trim();
-                    const n = v === "" ? undefined : parseFloat(v);
-                    const valid = typeof n === "number" && !Number.isNaN(n) && n >= 0 && n <= 1;
-                    updateTheme("backgroundOverlayOpacity", valid ? n : undefined);
-                    setOverlayOpacityDraft(null);
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Cor do texto principal (hex)</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="color"
-                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
-                    value={(theme.textColor as string)?.trim() || "#fafafa"}
-                    onChange={(e) => updateTheme("textColor", e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    placeholder="#fafafa"
-                    className="flex-1 min-w-[120px]"
-                    value={(theme.textColor as string) ?? ""}
-                    onChange={(e) => updateTheme("textColor", e.target.value.trim() || undefined)}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Cor de destaque / links (hex)</Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="color"
-                    className="h-10 w-12 cursor-pointer rounded border border-input bg-background"
-                    value={(theme.accentColor as string)?.trim() || "#fbbf24"}
-                    onChange={(e) => updateTheme("accentColor", e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    placeholder="#fbbf24"
-                    className="flex-1 min-w-[120px]"
-                    value={(theme.accentColor as string) ?? ""}
-                    onChange={(e) => updateTheme("accentColor", e.target.value.trim() || undefined)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Família de fontes</Label>
-                <Input
-                  type="text"
-                  placeholder="Inter, system-ui"
-                  value={(theme.fontFamily as string) ?? ""}
-                  onChange={(e) => updateTheme("fontFamily", e.target.value.trim() || undefined)}
-                />
-              </div>
-            </div>
-          </CardContent>
-          )}
-        </Card>
+        <PageThemePanel
+          theme={theme}
+          open={globalAppearanceOpen}
+          onOpenChange={setGlobalAppearanceOpen}
+          updateTheme={updateTheme}
+          overlayOpacityDraft={overlayOpacityDraft}
+          setOverlayOpacityDraft={setOverlayOpacityDraft}
+        />
 
         <Card>
           <CardHeader>
@@ -902,6 +691,7 @@ export default function EditarPaginaTenantPage() {
                 const middleBlocks = blocks.slice(1, -1).map((block, i) => ({ block, index: i + 1 }));
                 const visibleMiddle = middleBlocks.filter(({ block }) => block.config?.visible !== false);
                 const hiddenMiddle = middleBlocks.filter(({ block }) => block.config?.visible === false);
+                const footerHidden = footer && footer.config?.visible === false;
                 const rows: Array<
                   | { type: "block"; block: HomeContentBlock; index: number; hidden: boolean }
                   | { type: "add" }
@@ -910,7 +700,8 @@ export default function EditarPaginaTenantPage() {
                   ...visibleMiddle.map(({ block, index }) => ({ type: "block" as const, block, index, hidden: false })),
                   { type: "add" },
                   ...hiddenMiddle.map(({ block, index }) => ({ type: "block" as const, block, index, hidden: true })),
-                  ...(footer ? [{ type: "block" as const, block: footer, index: blocks.length - 1, hidden: false }] : []),
+                  ...(footer && !footerHidden ? [{ type: "block" as const, block: footer, index: blocks.length - 1, hidden: false }] : []),
+                  ...(footerHidden ? [{ type: "block" as const, block: footer, index: blocks.length - 1, hidden: true }] : []),
                 ];
                 return rows.map((row) => {
                   if (row.type === "add") {
@@ -952,16 +743,18 @@ export default function EditarPaginaTenantPage() {
                   const { block, index, hidden } = row;
                   const isHeader = index === 0;
                   const isFooter = index === blocks.length - 1;
-                  const isFixed = isHeader || isFooter;
+                  const isPositionLocked = isHeader || isFooter;
                   const sectionLabel = isHeader
                     ? "Cabeçalho"
                     : isFooter
                       ? "Rodapé"
                       : `Módulo — ${getBlockLabel(block.id, block.type as HomeBlockType, "pt")}`;
                   const isExpanded = !collapsedBlockIds.has(block.id);
-                  const cardClassName = isHeader || isFooter
+                  const cardClassName = isHeader
                     ? `module-card flex flex-col gap-3 rounded-lg border-2 border-emerald-500/50 bg-emerald-950/30 p-3 overflow-hidden ${isExpanded ? "ring-2 ring-white/90" : ""}`
-                    : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 overflow-hidden ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
+                    : isFooter
+                      ? `module-card flex flex-col gap-3 rounded-lg border-2 border-sky-500/40 bg-sky-950/20 p-3 overflow-hidden ${isExpanded ? "ring-2 ring-white/90" : ""}`
+                      : `module-card flex flex-col gap-3 rounded-lg bg-muted/30 p-3 overflow-hidden ${isExpanded ? "border-2 border-white/90 ring-2 ring-white/70" : "border border-border"}`;
                   return (
                     <Fragment key={block.id}>
                       <div
@@ -974,12 +767,12 @@ export default function EditarPaginaTenantPage() {
                         )}
                         <div
                           className={cardClassName}
-                  onDragEnter={!isFixed ? (e) => e.preventDefault() : undefined}
-                  onDragOver={!isFixed ? (e) => {
+                  onDragEnter={!isPositionLocked ? (e) => e.preventDefault() : undefined}
+                  onDragOver={!isPositionLocked ? (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
                   } : undefined}
-                  onDrop={!isFixed ? (e) => {
+                  onDrop={!isPositionLocked ? (e) => {
                     e.preventDefault();
                     const from = parseInt(e.dataTransfer.getData("text/plain"), 10);
                     if (Number.isNaN(from) || from === index) return;
@@ -987,7 +780,7 @@ export default function EditarPaginaTenantPage() {
                   } : undefined}
                 >
                   <div className="flex items-center gap-2">
-                    {!isFixed && (
+                    {!isPositionLocked && (
                       <div
                         draggable
                         className="flex shrink-0 cursor-grab items-center active:cursor-grabbing"
@@ -1010,9 +803,13 @@ export default function EditarPaginaTenantPage() {
                       className="flex min-h-[44px] flex-1 items-center gap-2 rounded-md px-1 text-left transition-colors hover:bg-muted/40"
                       onClick={() => toggleBlockCollapsed(block.id)}
                     >
-                      {isFixed ? (
+                      {isHeader ? (
                         <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                           Fixo
+                        </span>
+                      ) : isFooter ? (
+                        <span className="text-xs font-medium uppercase tracking-wide text-sky-400/90">
+                          Editável
                         </span>
                       ) : null}
                       <span className="font-medium">{sectionLabel}</span>
@@ -1023,7 +820,7 @@ export default function EditarPaginaTenantPage() {
                       )}
                     </button>
                     <div className="flex shrink-0 items-center gap-1">
-                      {!isFixed && (
+                      {!isHeader && (
                         <Button
                           type="button"
                           variant="ghost"
@@ -1046,7 +843,7 @@ export default function EditarPaginaTenantPage() {
                         size="icon"
                         className="h-8 w-8 text-destructive"
                         onClick={() => removeBlock(index)}
-                        disabled={isFixed}
+                        disabled={isPositionLocked}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -1062,7 +859,16 @@ export default function EditarPaginaTenantPage() {
                           Deixe cor e imagem de fundo vazios para o fundo da página aparecer continuado (sem bloco separado).
                         </p>
                       )}
-                    {(block.type !== "header" && block.type !== "footer") && (
+                    {block.type !== "header" && (
+                      <FontFamilyField
+                        className="sm:col-span-2"
+                        value={(block.config?.fontFamily as string) ?? ""}
+                        onChange={(v) => updateBlockConfig(index, "fontFamily", v)}
+                        allowInherit
+                        inheritLabel={`Padrão da página (${(theme.fontFamily as string)?.trim() || "Geist Sans"})`}
+                      />
+                    )}
+                    {(block.type !== "header") && (
                       <>
                       <div className="space-y-2">
                         <Label>Largura do conteúdo (box ou full width)</Label>
@@ -1143,7 +949,7 @@ export default function EditarPaginaTenantPage() {
                       </div>
                       </>
                     )}
-                    {block.type !== "header" && block.type !== "footer" && (
+                    {block.type !== "header" && block.type !== "global_presence" && block.type !== "logo_carousel" && (
                       <>
                         <div className="space-y-2">
                           <Label>Opacidade overlay (0-1)</Label>

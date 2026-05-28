@@ -1,0 +1,11 @@
+---
+description: Não subir a API — usuário cuida
+alwaysApply: true
+---
+
+# Não subir a API — usuário cuida
+
+- **Não** executar `pnpm --filter api start:dev`, `nest start`, nem matar/reiniciar processo na porta **3001**.
+- O usuário **sempre** sobe a API manualmente.
+- Pode subir **web**, **docker/db**, **build**, **migrate**, **seed**, etc. normalmente.
+- Se precisar de `prisma generate`, avisar que a API precisa estar **parada** (EPERM no `.dll` do Prisma no Windows) — mas **não** parar a API por conta própria.
