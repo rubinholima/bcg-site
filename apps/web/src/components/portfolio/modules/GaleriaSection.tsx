@@ -6,6 +6,7 @@ import type { NoticiasItem, GaleriaItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { isBcgS3Asset } from "@/lib/isBcgS3Asset";
 import { SmartImage } from "@/components/common/SmartImage";
 import { ImageIcon, Loader2, X } from "lucide-react";
@@ -298,7 +299,7 @@ export function GaleriaSection({
     <AnimateInView>
       <section
         id={block.id}
-        className={`relative overflow-hidden border-b border-white/5 ${paddingTop} ${paddingBottom}`}
+        className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${paddingTop} ${paddingBottom}`}
         style={bgColor ? { backgroundColor: bgColor } : undefined}
       >
         {bgImage && (

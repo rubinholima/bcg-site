@@ -378,7 +378,6 @@ body.dashboard-active {
   left: 0;
   width: 100%;
   height: 3px;
-  /* usa as mesmas cores do título (variáveis definidas no componente) ou fallback âmbar→transparente */
   background: linear-gradient(
     90deg,
     var(--title-line-start, rgb(251 191 36 / 0.9)),

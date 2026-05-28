@@ -72,7 +72,7 @@ import {
 import { BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, ModuleTitleGradientFields } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
@@ -377,7 +377,7 @@ export default function EditarPaginaTenantPage() {
               blocks: normalized,
             },
           });
-          setCollapsedBlockIds(new Set(normalized.map((b) => b.id)));
+          setCollapsedBlockIds(new Set(normalized.filter((b) => b.type !== "hero").map((b) => b.id)));
           if (data.tenant?.slug === BCH_SLUG) {
             setModuleTypeFilter(MODULE_TYPE_FILTER_EVENTOS);
           }
@@ -481,7 +481,12 @@ export default function EditarPaginaTenantPage() {
     const newBlock = createBlock(type, blocks.length - 1);
     const beforeFooter = blocks.slice(0, -1);
     setBlocks([...beforeFooter, newBlock, blocks[blocks.length - 1]!]);
-    setCollapsedBlockIds((prev) => new Set(prev).add(newBlock.id));
+    setCollapsedBlockIds((prev) => {
+      const next = new Set(prev);
+      if (type === "hero") next.delete(newBlock.id);
+      else next.add(newBlock.id);
+      return next;
+    });
   };
 
   const removeBlock = (index: number) => {
@@ -903,6 +908,31 @@ export default function EditarPaginaTenantPage() {
                           </SelectContent>
                         </Select>
                       </div>
+                      {block.type !== "footer" ? (
+                        <div className="space-y-2 sm:col-span-2">
+                          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-input"
+                              checked={
+                                block.config?.showModuleBorder === true ||
+                                block.config?.showModuleBorder === "true"
+                              }
+                              onChange={(e) =>
+                                updateBlockConfig(
+                                  index,
+                                  "showModuleBorder",
+                                  e.target.checked ? "true" : undefined,
+                                )
+                              }
+                            />
+                            Linha separadora abaixo do módulo
+                          </label>
+                          <p className="text-xs text-muted-foreground">
+                            Borda fina cinza entre este módulo e o próximo. Desligado por padrão.
+                          </p>
+                        </div>
+                      ) : null}
                       <div className="space-y-2">
                         <Label>Cor de fundo (hex)</Label>
                         <p className="text-xs text-muted-foreground">
@@ -1160,6 +1190,13 @@ export default function EditarPaginaTenantPage() {
                                       <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "left", mi, "backgroundColor", e.target.value)} />
                                       <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "left", mi, "backgroundColor", "")}>Limpar</Button>
                                     </div>
+                                    <ModuleTitleGradientFields
+                                      compact
+                                      gradientStart={(m.config?.titleGradientStart as string) ?? ""}
+                                      gradientEnd={(m.config?.titleGradientEnd as string) ?? ""}
+                                      onGradientStart={(v) => updateSectionModuleConfig(index, "left", mi, "titleGradientStart", v)}
+                                      onGradientEnd={(v) => updateSectionModuleConfig(index, "left", mi, "titleGradientEnd", v)}
+                                    />
                                     {m.type === "ultimos_resultados" && (
                                       <details className="rounded-lg border border-amber-500/40 bg-amber-500/10 mt-3">
                                         <summary className="cursor-pointer px-3 py-2 font-medium text-sm">Placares manuais</summary>
@@ -1293,6 +1330,13 @@ export default function EditarPaginaTenantPage() {
                                         <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "middle", mi, "backgroundColor", e.target.value)} />
                                         <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "middle", mi, "backgroundColor", "")}>Limpar</Button>
                                       </div>
+                                      <ModuleTitleGradientFields
+                                        compact
+                                        gradientStart={(m.config?.titleGradientStart as string) ?? ""}
+                                        gradientEnd={(m.config?.titleGradientEnd as string) ?? ""}
+                                        onGradientStart={(v) => updateSectionModuleConfig(index, "middle", mi, "titleGradientStart", v)}
+                                        onGradientEnd={(v) => updateSectionModuleConfig(index, "middle", mi, "titleGradientEnd", v)}
+                                      />
                                     </div>
                                   </details>
                                 ))}
@@ -1373,6 +1417,13 @@ export default function EditarPaginaTenantPage() {
                                         <Input placeholder="Vazio = transparente" className="h-8 flex-1 min-w-0" value={(m.config?.backgroundColor as string) ?? ""} onChange={(e) => updateSectionModuleConfig(index, "right", mi, "backgroundColor", e.target.value)} />
                                         <Button type="button" variant="outline" size="sm" className="h-8" onClick={() => updateSectionModuleConfig(index, "right", mi, "backgroundColor", "")}>Limpar</Button>
                                       </div>
+                                      <ModuleTitleGradientFields
+                                        compact
+                                        gradientStart={(m.config?.titleGradientStart as string) ?? ""}
+                                        gradientEnd={(m.config?.titleGradientEnd as string) ?? ""}
+                                        onGradientStart={(v) => updateSectionModuleConfig(index, "right", mi, "titleGradientStart", v)}
+                                        onGradientEnd={(v) => updateSectionModuleConfig(index, "right", mi, "titleGradientEnd", v)}
+                                      />
                                       {m.type === "ultimos_resultados" && (
                                         <details className="rounded-lg border border-amber-500/40 bg-amber-500/10 mt-3">
                                           <summary className="cursor-pointer px-3 py-2 font-medium text-sm">Placares manuais</summary>
@@ -1982,139 +2033,16 @@ export default function EditarPaginaTenantPage() {
                         </details>
                       </div>
                     )}
-                    {block.type === "hero" && (() => {
-                      const heroSlides: HeroSlide[] = Array.isArray(block.config?.heroSlides)
-                        ? block.config.heroSlides
-                        : (Array.isArray(block.config?.heroImages)
-                          ? (block.config.heroImages as string[]).map((url) => ({ url, titlePt: "", titleEn: "" }))
-                          : []);
-                      const interval = (block.config?.heroCarouselIntervalSeconds as HeroCarouselIntervalSeconds) ?? 10;
-                      return (
-                        <>
+                    {block.type === "hero" && (
+                      <>
+                        <HeroModuleEditor
+                          block={block}
+                          index={index}
+                          updateBlockConfig={updateBlockConfig}
+                          updateBlockConfigValue={updateBlockConfigValue}
+                        />
                           <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
-                            <summary className="cursor-pointer px-3 py-2.5 font-medium">
-                              Slides do carrossel (URL + título por foto)
-                            </summary>
-                            <div className="border-t border-border px-3 py-3 space-y-4">
-                              <p className="text-sm text-muted-foreground">
-                                Recomendado: <strong>{HERO_RECOMMENDED_DIMENSIONS} px</strong>
-                              </p>
-                              <div className="space-y-2 sm:col-span-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    const arr = [...heroSlides, { url: "", titlePt: "", titleEn: "" }];
-                                    updateBlockConfigValue(index, "heroSlides", arr);
-                                  }}
-                                >
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  Adicionar imagem
-                                </Button>
-                              </div>
-                              <div className="space-y-2 sm:col-span-2">
-                                <Label>Tempo em cada foto (temporizador)</Label>
-                                <Select
-                                  value={String(interval)}
-                                  onValueChange={(v) =>
-                                    updateBlockConfigValue(index, "heroCarouselIntervalSeconds", Number(v) as HeroCarouselIntervalSeconds)
-                                  }
-                                >
-                                  <SelectTrigger className="w-full max-w-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="5">5 segundos</SelectItem>
-                                    <SelectItem value="10">10 segundos</SelectItem>
-                                    <SelectItem value="15">15 segundos</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2 sm:col-span-2">
-                                <Label>Efeito do carrossel</Label>
-                                <Select
-                                  value={(block.config?.heroCarouselEffect as HeroCarouselEffect) ?? "fade"}
-                                  onValueChange={(v) =>
-                                    updateBlockConfigValue(index, "heroCarouselEffect", v as HeroCarouselEffect)
-                                  }
-                                >
-                                  <SelectTrigger className="w-full max-w-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="fade">Fade</SelectItem>
-                                    <SelectItem value="slide">Slide</SelectItem>
-                                    <SelectItem value="zoom">Zoom</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2 sm:col-span-2">
-                                <Label>Slides do carrossel (URL + título por foto)</Label>
-                                {heroSlides.map((slide, i) => (
-                                  <div key={i} className="rounded-lg border border-border p-3 space-y-2">
-                                    <MediaPicker
-                                      label={`Imagem ${i + 1}`}
-                                      sizeKey="hero"
-                                      allowAllFolders
-                                      value={slide.url}
-                                      onChange={(url) => {
-                                        const arr = [...heroSlides];
-                                        arr[i] = { ...arr[i], url };
-                                        updateBlockConfigValue(index, "heroSlides", arr);
-                                      }}
-                                      placeholder="Escolher da mídia (hero)"
-                                    />
-                                    <div className="flex gap-2">
-                                      <Input
-                                        placeholder="Ou cole a URL manualmente"
-                                        value={slide.url}
-                                        onChange={(e) => {
-                                          const arr = [...heroSlides];
-                                          arr[i] = { ...arr[i], url: e.target.value };
-                                          updateBlockConfigValue(index, "heroSlides", arr);
-                                        }}
-                                      />
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="shrink-0 text-destructive"
-                                        onClick={() => {
-                                          const arr = heroSlides.filter((_, j) => j !== i);
-                                          updateBlockConfigValue(index, "heroSlides", arr);
-                                        }}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                    <div className="grid gap-2 sm:grid-cols-2">
-                                      <Input
-                                        placeholder="Título da foto (PT)"
-                                        value={slide.titlePt ?? ""}
-                                        onChange={(e) => {
-                                          const arr = [...heroSlides];
-                                          arr[i] = { ...arr[i], titlePt: e.target.value };
-                                          updateBlockConfigValue(index, "heroSlides", arr);
-                                        }}
-                                      />
-                                      <Input
-                                        placeholder="Title (EN)"
-                                        value={slide.titleEn ?? ""}
-                                        onChange={(e) => {
-                                          const arr = [...heroSlides];
-                                          arr[i] = { ...arr[i], titleEn: e.target.value };
-                                          updateBlockConfigValue(index, "heroSlides", arr);
-                                        }}
-                                      />
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </details>
-                          <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
-                            <summary className="cursor-pointer px-3 py-2 font-medium">Conteúdo (título já acima)</summary>
+                            <summary className="cursor-pointer px-3 py-2 font-medium">Subtítulo e descrição</summary>
                             <div className="border-t border-border px-3 py-3 space-y-3">
                               <div className="space-y-2">
                                 <Label>Subtítulo (PT)</Label>
@@ -2301,8 +2229,7 @@ export default function EditarPaginaTenantPage() {
                             </div>
                           </details>
                         </>
-                      );
-                    })()}
+                    )}
                     {block.type === "header" && (() => {
                       const preset = (block.config?.headerPreset as HeaderPreset) || "classic";
                       const applyPreset = (newPreset: HeaderPreset) => {

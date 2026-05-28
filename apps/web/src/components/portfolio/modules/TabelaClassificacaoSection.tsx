@@ -7,6 +7,7 @@ import type { Page } from "@/types/page";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { SmartImage } from "@/components/common/SmartImage";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import {
   Select,
   SelectContent,
@@ -193,7 +194,7 @@ export function TabelaClassificacaoSection({
 
   return (
     <section
-      className={`relative overflow-hidden ${inSection ? "" : "border-b border-white/5"}`}
+      className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)}`}
       style={inSection ? undefined : (bgColor ? { backgroundColor: bgColor } : undefined)}
     >
       {!inSection && bgImage && (

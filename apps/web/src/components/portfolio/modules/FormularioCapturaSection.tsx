@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ export function FormularioCapturaSection({
     <AnimateInView>
       <section
         id={block.id}
-        className="relative overflow-hidden border-b border-white/5 py-14 sm:py-20"
+        className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} py-14 sm:py-20`}
         style={
           (block.config?.backgroundColor as string)?.trim()
             ? { backgroundColor: (block.config?.backgroundColor as string).trim() }

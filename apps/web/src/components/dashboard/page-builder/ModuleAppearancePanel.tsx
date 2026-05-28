@@ -112,6 +112,28 @@ export function ModuleAppearancePanel({
           </div>
         ) : null}
 
+        {block.type !== "footer" ? (
+          <div className="space-y-2 sm:col-span-2">
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-input"
+                checked={
+                  block.config?.showModuleBorder === true ||
+                  block.config?.showModuleBorder === "true"
+                }
+                onChange={(e) =>
+                  updateBlockConfig(index, "showModuleBorder", e.target.checked ? "true" : undefined)
+                }
+              />
+              Linha separadora abaixo do módulo
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Borda fina cinza entre este módulo e o próximo. Desligado por padrão.
+            </p>
+          </div>
+        ) : null}
+
         {!NO_BG_TYPES.has(block.type) ? (
           <div className="space-y-2 sm:col-span-2">
             <Label>Cor de fundo</Label>

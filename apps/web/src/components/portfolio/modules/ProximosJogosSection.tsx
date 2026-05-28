@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import Image from "next/image";
 import { getPublicImageUrl, isSvgUrl, resolvePublicMediaUrlForDisplay } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2 } from "lucide-react";
@@ -424,7 +425,7 @@ export function ProximosJogosSection({
 
   return (
     <section
-      className={`relative overflow-hidden ${fullWidth ? "" : "border-b border-white/5"} ${paddingTopClass} ${paddingBottomClass}`}
+      className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${paddingTopClass} ${paddingBottomClass}`}
       style={bgColor ? { backgroundColor: bgColor } : undefined}
     >
       {bgImage && (

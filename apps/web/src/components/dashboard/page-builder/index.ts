@@ -1,6 +1,9 @@
 export { sortBlocks, normalizeBlocks, isBlockHidden, countMiddleModules, countVisibleModules } from "./block-utils";
 export { HEADER_PRESET_OPTIONS, HEADER_PRESET_VALUES, applyHeaderPresetOverwrite, type HeaderPreset } from "./header-presets";
 export { usePageBuilder, type PageBuilderState } from "./usePageBuilder";
+export { HeroMainTitlePanel } from "./HeroMainTitlePanel";
+export { HeroModuleEditor } from "./HeroModuleEditor";
+export { ModuleTitleGradientFields, moduleTitleGradientStyle, moduleHasOwnTitle } from "./ModuleTitleGradientFields";
 export { FontFamilyField } from "./FontFamilyField";
 export { PageBuilderChrome, type PageBuilderLogo } from "./PageBuilderChrome";
 export { PageThemePanel } from "./PageThemePanel";

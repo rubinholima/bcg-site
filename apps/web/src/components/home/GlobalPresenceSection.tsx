@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useRef, useEffect, useState } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import type { GlobalPresenceLocation, GlobalPresenceCounter } from "@/types/home-content";
@@ -161,7 +162,7 @@ export function GlobalPresenceSection({
   return (
     <section
       ref={sectionRef}
-      className={`relative overflow-hidden border-b border-white/5 ${heightClass}`}
+      className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${heightClass}`}
       style={{ backgroundColor: bgColor }}
     >
       {bgImage && (

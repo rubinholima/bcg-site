@@ -6,6 +6,7 @@ import { Calendar } from "lucide-react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { fetchPublicEvents, type PublicEventItem } from "@/lib/public-events";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 
@@ -93,7 +94,7 @@ export function EventosSection({
   return (
     <section
       id="eventos"
-      className={`relative overflow-hidden border-b border-white/5 py-16 sm:py-20 scroll-mt-24`}
+      className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} py-16 sm:py-20 scroll-mt-24`}
       style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(39 39 42 / 0.3)" }}
     >
       {block.config?.backgroundImage && (

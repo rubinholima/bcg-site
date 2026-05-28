@@ -5,6 +5,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { FixtureItem } from "@/lib/fixtures-shared";
 import { fetchFixtures, type FixturesFetchContext } from "@/lib/fixtures-shared";
 import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { FixtureTeamLogo, isOurTeam } from "@/components/portfolio/FixtureTeamLogo";
@@ -513,7 +514,7 @@ export function UltimosResultadosSection({
 
   return (
     <section
-      className={`relative overflow-hidden ${fullWidth ? "" : "border-b border-white/5"} ${paddingTopClass} ${paddingBottomClass}`}
+      className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${paddingTopClass} ${paddingBottomClass}`}
       style={bgColor ? { backgroundColor: bgColor } : undefined}
     >
       {bgImage && (

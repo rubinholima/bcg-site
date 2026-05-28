@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { resolveFontFamily } from "@/lib/page-fonts";
 import { SmartImage } from "@/components/common/SmartImage";
 import { AnimateInView } from "@/components/home/AnimateInView";
@@ -195,17 +196,19 @@ export function BlockRenderer({
       Array.isArray(heroSlidesRaw) && heroSlidesRaw.length > 0
         ? heroSlidesRaw.filter((s) => s?.url?.trim()).map((s) => ({ url: s.url!, titlePt: s.titlePt, titleEn: s.titleEn }))
         : heroImagesLegacy.map((url) => ({ url, titlePt: "", titleEn: "" }));
-    const heroSlides = heroSlidesBase.map((s) => ({
-      url: getPublicImageUrl(s.url),
-      titlePt: s.titlePt,
-      titleEn: s.titleEn,
-    }));
+    const heroSlides = heroSlidesBase
+      .map((s) => ({
+        url: resolveMediaUrlWithProxyFallback(s.url) || getPublicImageUrl(s.url),
+        titlePt: s.titlePt,
+        titleEn: s.titleEn,
+      }))
+      .filter((s) => s.url?.trim());
     const overlay = blockOverlayOpacity(block);
     const effect = (block.config?.heroCarouselEffect as "fade" | "slide" | "zoom") ?? "fade";
     const intervalSeconds = (block.config?.heroCarouselIntervalSeconds as 5 | 10 | 15) ?? 10;
     const singleBg =
       heroSlidesBase.length > 0
-        ? getPublicImageUrl(heroSlidesBase[0].url)
+        ? resolveMediaUrlWithProxyFallback(heroSlidesBase[0].url) || getPublicImageUrl(heroSlidesBase[0].url)
         : getPublicImageUrl(bgImg);
 
     const align = (block.config?.contentAlign as "left" | "center" | "right") || "center";
@@ -288,7 +291,7 @@ export function BlockRenderer({
     return (
       <section
         key={block.id}
-        className={`relative overflow-hidden border-b border-white/5 ${heightClass}`}
+        className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${heightClass}`}
         style={blockSectionStyle(block, page)}
       >
         {heroSlides.length > 0 ? (
@@ -337,7 +340,7 @@ export function BlockRenderer({
     return (
       <AnimateInView key={block.id}>
         <section
-          className={`border-b border-white/5 py-14 sm:py-20`}
+          className={`${moduleBottomBorderClass(block.config)} py-14 sm:py-20`}
           style={{
             ...blockSectionStyle(block, page),
             backgroundColor: blockBgColor(block) || "rgb(39 39 42 / 0.3)",
@@ -385,7 +388,7 @@ export function BlockRenderer({
     );
   }
 
-  const shouldShowTitle = showModuleTitle || !inSection;
+  const shouldShowTitle = showModuleTitle !== undefined ? showModuleTitle : !inSection;
 
   if (block.type === "noticias") {
     return <NoticiasSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
@@ -597,7 +600,7 @@ export function BlockRenderer({
       <AnimateInView key={block.id}>
         <section
           id={block.id}
-          className="relative overflow-hidden border-b border-white/5 py-20 sm:py-24"
+          className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} py-20 sm:py-24`}
           style={blockSectionStyle(block, page)}
         >
           {bgImg && (
@@ -697,7 +700,7 @@ export function BlockRenderer({
     <AnimateInView key={block.id}>
       <section
         id={block.id}
-        className="relative overflow-hidden border-b border-white/5 py-16 sm:py-20"
+        className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} py-16 sm:py-20`}
         style={blockSectionStyle(block, page)}
       >
         {bgImg && (

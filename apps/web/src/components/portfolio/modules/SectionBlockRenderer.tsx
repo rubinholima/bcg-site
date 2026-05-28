@@ -1,9 +1,11 @@
 import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
-import { BlockRenderer, type EventPageMetaForFixtures } from "./BlockRenderer";
+import type { EventPageMetaForFixtures } from "./BlockRenderer";
+import { SectionNestedModule, shouldShowSectionColumnTitle } from "./SectionNestedModule";
 import type { FixturesFetchContext } from "@/lib/fixtures-shared";
 
 const PADDING_CLASSES = {
@@ -169,7 +171,7 @@ export function SectionBlockRenderer({
   return (
     <section
       key={block.id}
-      className={`relative overflow-hidden border-b border-white/5 ${paddingTop} ${paddingBottom}`}
+      className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${paddingTop} ${paddingBottom}`}
       style={bgColor ? { backgroundColor: bgColor } : undefined}
     >
       {bgImage && (
@@ -191,36 +193,27 @@ export function SectionBlockRenderer({
               <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
             )}
             <div className={`relative ${moduleSpacing}`}>
-              {leftColumnTitle?.trim() && visibleLeft.length <= 1 && (
+              {shouldShowSectionColumnTitle(leftColumnTitle, visibleLeft) && (
                 <SectionTitle
-                  title={leftColumnTitle}
+                  title={leftColumnTitle!}
                   gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
                   gradientEnd={(block.config?.sectionLeftColumnTitleGradientEnd as string)?.trim()}
                   align={titleAlign}
                 />
               )}
-              {allModules.map((m) => {
-                const fullBleed =
-                  (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
-                  m.config?.fullBleedCarousel === true;
-                const showModuleTitle = visibleLeft.length > 1;
-                return (
-                  <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                    <BlockRenderer
-                      block={m}
-                      slug={slug}
-                      lang={lang}
-                      page={page}
-                      inSection
-                      sectionColumns={columns}
-                      showModuleTitle={showModuleTitle}
-                      fixturesContext={fixturesContext}
-                      initialUploadToken={initialUploadToken}
-                      eventPageMeta={eventPageMeta}
-                    />
-                  </div>
-                );
-              })}
+              {allModules.map((m) => (
+                <SectionNestedModule
+                  key={m.id}
+                  module={m}
+                  slug={slug}
+                  lang={lang}
+                  page={page}
+                  columns={columns}
+                  fixturesContext={fixturesContext}
+                  initialUploadToken={initialUploadToken}
+                  eventPageMeta={eventPageMeta}
+                />
+              ))}
             </div>
           </div>
         ) : (
@@ -230,36 +223,27 @@ export function SectionBlockRenderer({
                 <ColumnBg bgColor={leftColBgColor} bgImage={leftColBgImage} overlayOp={leftColOverlay} />
               )}
               <div className={`relative ${moduleSpacing}`}>
-                {leftColumnTitle?.trim() && visibleLeft.length <= 1 && (
+                {shouldShowSectionColumnTitle(leftColumnTitle, visibleLeft) && (
                   <SectionTitle
-                    title={leftColumnTitle}
+                    title={leftColumnTitle!}
                     gradientStart={(block.config?.sectionLeftColumnTitleGradientStart as string)?.trim()}
                     gradientEnd={(block.config?.sectionLeftColumnTitleGradientEnd as string)?.trim()}
                     align={titleAlign}
                   />
                 )}
-                {visibleLeft.map((m) => {
-                  const fullBleed =
-                    (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
-                    m.config?.fullBleedCarousel === true;
-                  const showModuleTitle = visibleLeft.length > 1;
-                  return (
-                    <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer
-                        block={m}
-                        slug={slug}
-                        lang={lang}
-                        page={page}
-                        inSection
-                        sectionColumns={columns}
-                        showModuleTitle={showModuleTitle}
-                        fixturesContext={fixturesContext}
-                        initialUploadToken={initialUploadToken}
-                        eventPageMeta={eventPageMeta}
-                      />
-                    </div>
-                  );
-                })}
+                {visibleLeft.map((m) => (
+                  <SectionNestedModule
+                    key={m.id}
+                    module={m}
+                    slug={slug}
+                    lang={lang}
+                    page={page}
+                    columns={columns}
+                    fixturesContext={fixturesContext}
+                    initialUploadToken={initialUploadToken}
+                    eventPageMeta={eventPageMeta}
+                  />
+                ))}
               </div>
             </div>
             {columns === 3 && (
@@ -268,36 +252,27 @@ export function SectionBlockRenderer({
                   <ColumnBg bgColor={middleColBgColor} bgImage={middleColBgImage} overlayOp={middleColOverlay} />
                 )}
                 <div className={`relative ${moduleSpacing}`}>
-                  {middleColumnTitle?.trim() && visibleMiddle.length <= 1 && (
+                  {shouldShowSectionColumnTitle(middleColumnTitle, visibleMiddle) && (
                     <SectionTitle
-                      title={middleColumnTitle}
+                      title={middleColumnTitle!}
                       gradientStart={(block.config?.sectionMiddleColumnTitleGradientStart as string)?.trim()}
                       gradientEnd={(block.config?.sectionMiddleColumnTitleGradientEnd as string)?.trim()}
                       align={titleAlign}
                     />
                   )}
-                  {visibleMiddle.map((m) => {
-                    const fullBleed =
-                      (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
-                      m.config?.fullBleedCarousel === true;
-                    const showModuleTitle = visibleMiddle.length > 1;
-                    return (
-                      <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                        <BlockRenderer
-                          block={m}
-                          slug={slug}
-                          lang={lang}
-                          page={page}
-                          inSection
-                          sectionColumns={columns}
-                          showModuleTitle={showModuleTitle}
-                          fixturesContext={fixturesContext}
-                          initialUploadToken={initialUploadToken}
-                          eventPageMeta={eventPageMeta}
-                        />
-                      </div>
-                    );
-                  })}
+                  {visibleMiddle.map((m) => (
+                    <SectionNestedModule
+                      key={m.id}
+                      module={m}
+                      slug={slug}
+                      lang={lang}
+                      page={page}
+                      columns={columns}
+                      fixturesContext={fixturesContext}
+                      initialUploadToken={initialUploadToken}
+                      eventPageMeta={eventPageMeta}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -306,36 +281,27 @@ export function SectionBlockRenderer({
                 <ColumnBg bgColor={rightColBgColor} bgImage={rightColBgImage} overlayOp={rightColOverlay} />
               )}
               <div className={`relative ${moduleSpacing}`}>
-                {rightColumnTitle?.trim() && visibleRight.length <= 1 && (
+                {shouldShowSectionColumnTitle(rightColumnTitle, visibleRight) && (
                   <SectionTitle
-                    title={rightColumnTitle}
+                    title={rightColumnTitle!}
                     gradientStart={(block.config?.sectionRightColumnTitleGradientStart as string)?.trim()}
                     gradientEnd={(block.config?.sectionRightColumnTitleGradientEnd as string)?.trim()}
                     align={titleAlign}
                   />
                 )}
-                {visibleRight.map((m) => {
-                  const fullBleed =
-                    (m.type === "proximos_jogos" || m.type === "proximos_eventos") &&
-                    m.config?.fullBleedCarousel === true;
-                  const showModuleTitle = visibleRight.length > 1;
-                  return (
-                    <div key={m.id} className={fullBleed ? "fullbleed-carousel-module" : undefined}>
-                      <BlockRenderer
-                        block={m}
-                        slug={slug}
-                        lang={lang}
-                        page={page}
-                        inSection
-                        sectionColumns={columns}
-                        showModuleTitle={showModuleTitle}
-                        fixturesContext={fixturesContext}
-                        initialUploadToken={initialUploadToken}
-                        eventPageMeta={eventPageMeta}
-                      />
-                    </div>
-                  );
-                })}
+                {visibleRight.map((m) => (
+                  <SectionNestedModule
+                    key={m.id}
+                    module={m}
+                    slug={slug}
+                    lang={lang}
+                    page={page}
+                    columns={columns}
+                    fixturesContext={fixturesContext}
+                    initialUploadToken={initialUploadToken}
+                    eventPageMeta={eventPageMeta}
+                  />
+                ))}
               </div>
             </div>
           </div>

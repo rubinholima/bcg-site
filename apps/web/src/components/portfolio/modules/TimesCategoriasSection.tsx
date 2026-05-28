@@ -6,6 +6,7 @@ import type { PlayerItem, TeamCategory, PlayerSeasonHistory, PlayerSocialMedia }
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
@@ -685,7 +686,7 @@ export function TimesCategoriasSection({
     <AnimateInView>
       <section
         id={block.id}
-        className={`relative overflow-hidden border-b border-white/5 ${paddingTop} ${paddingBottom}`}
+        className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${paddingTop} ${paddingBottom}`}
         style={bgColor ? { backgroundColor: bgColor } : undefined}
       >
         {bgImage && (

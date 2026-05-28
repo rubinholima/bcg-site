@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
 import { SmartImage } from "@/components/common/SmartImage";
 import { fetchPublicTenants, type PublicTenantCarouselItem } from "@/lib/public-tenants";
@@ -242,7 +243,7 @@ export function LogoCarouselSection({
 
   return (
     <section
-      className="relative w-full overflow-hidden border-b border-white/5"
+      className={`relative w-full overflow-hidden ${moduleBottomBorderClass(block.config)}`}
       style={{
         ...(bgColor ? { backgroundColor: bgColor } : {}),
         paddingTop: `${paddingTop}px`,

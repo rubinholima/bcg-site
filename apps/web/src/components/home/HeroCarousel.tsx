@@ -87,6 +87,7 @@ export function HeroCarousel({
             className="object-cover"
             priority
             sizes="100vw"
+            unoptimized
           />
           <div className="absolute inset-0" style={overlayStyle(overlayOpacity, overlayMode, overlayColor)} />
         </div>
@@ -119,6 +120,7 @@ export function HeroCarousel({
             className="object-cover"
             priority={i === 0}
             sizes="100vw"
+            unoptimized
           />
         </div>
       ))}
@@ -127,15 +129,6 @@ export function HeroCarousel({
         style={{ ...overlayStyle(overlayOpacity, overlayMode, overlayColor), zIndex: 1 }}
       />
       <div className="absolute inset-0 z-10 flex flex-col">
-        {currentSlide && (currentSlide.titlePt || currentSlide.titleEn) && (
-          <div className="container relative mx-auto mt-8 px-4 text-center">
-            <p className="text-lg font-medium text-white drop-shadow-lg sm:text-xl">
-              {lang === "pt"
-                ? (currentSlide.titlePt || currentSlide.titleEn || "")
-                : (currentSlide.titleEn || currentSlide.titlePt || "")}
-            </p>
-          </div>
-        )}
         <div className="flex-1 flex flex-col justify-center">
           {children}
         </div>

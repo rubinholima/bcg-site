@@ -5,6 +5,7 @@ import type { PatrocinadorItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 
 const PADDING_CLASSES = {
@@ -118,7 +119,7 @@ export function PatrocinadoresSection({
     <AnimateInView>
       <section
         id={block.id}
-        className={`relative overflow-hidden border-b border-white/5 ${paddingTop} ${paddingBottom}`}
+        className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} ${paddingTop} ${paddingBottom}`}
         style={bgColor ? { backgroundColor: bgColor } : undefined}
       >
         {bgImage && (

@@ -4,6 +4,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 import { MapPin, ExternalLink } from "lucide-react";
 
@@ -41,7 +42,7 @@ export function ImoveisDestaqueSection({
     <AnimateInView>
       <section
         id={block.id}
-        className="relative overflow-hidden border-b border-white/5 py-12 sm:py-16"
+        className={`relative overflow-hidden ${moduleBottomBorderClass(block.config)} py-12 sm:py-16`}
         style={
           (block.config?.backgroundColor as string)?.trim()
             ? { backgroundColor: (block.config?.backgroundColor as string).trim() }

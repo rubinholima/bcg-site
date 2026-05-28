@@ -17,7 +17,8 @@ import {
 } from "@/lib/home-content";
 import { fetchGroup } from "@/lib/home-data";
 import type { Group } from "@/types/group";
-import { getPublicImageUrl } from "@/lib/media-url";
+import { getPublicImageUrl, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
+import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
@@ -419,14 +420,16 @@ export default function HomeClient({
               Array.isArray(heroSlidesRaw) && heroSlidesRaw.length > 0
                 ? heroSlidesRaw.filter((s) => s?.url?.trim()).map((s) => ({ url: s.url!, titlePt: s.titlePt, titleEn: s.titleEn }))
                 : heroImagesLegacy.map((url) => ({ url, titlePt: "", titleEn: "" }));
-            const heroSlides = heroSlidesBase.map((s) => ({
-              url: getPublicImageUrl(s.url),
-              titlePt: s.titlePt,
-              titleEn: s.titleEn,
-            }));
+            const heroSlides = heroSlidesBase
+              .map((s) => ({
+                url: resolveMediaUrlWithProxyFallback(s.url) || getPublicImageUrl(s.url),
+                titlePt: s.titlePt,
+                titleEn: s.titleEn,
+              }))
+              .filter((s) => s.url?.trim());
             const heroBg =
               heroSlidesBase.length > 0
-                ? getPublicImageUrl(heroSlidesBase[0].url)
+                ? resolveMediaUrlWithProxyFallback(heroSlidesBase[0].url) || getPublicImageUrl(heroSlidesBase[0].url)
                 : getPublicImageUrl(blockImage(block, "hero") as string);
             const overlay = blockOverlayOpacity(block);
             const effect = (block.config?.heroCarouselEffect as "fade" | "slide" | "zoom") ?? "fade";
@@ -445,11 +448,9 @@ export default function HomeClient({
                     ? "min-h-[50vh]"
                     : "min-h-[60vh]";
             const heroTitle =
-              (lang === "pt" ? (block.config?.titlePt as string) : (block.config?.titleEn as string))?.trim() ||
-              (lang === "pt" ? t.hero.headline : t.hero.headline);
+              (lang === "pt" ? (block.config?.titlePt as string) : (block.config?.titleEn as string))?.trim() || "";
             const heroSubtitle =
-              (lang === "pt" ? (block.config?.subtitlePT as string) : (block.config?.subtitleEN as string))?.trim() ||
-              (lang === "pt" ? t.hero.subheadline : t.hero.subheadline);
+              (lang === "pt" ? (block.config?.subtitlePT as string) : (block.config?.subtitleEN as string))?.trim() || "";
             const heroDesc = (lang === "pt" ? (block.config?.descriptionPT as string) : (block.config?.descriptionEN as string))?.trim() || "";
             const primary = (block.config?.primaryCTA as { labelPT?: string; labelEN?: string; href?: string }) || {};
             const secondary = (block.config?.secondaryCTA as { labelPT?: string; labelEN?: string; href?: string; variant?: string }) || {};
@@ -618,7 +619,7 @@ export default function HomeClient({
         <AnimateInView key={block.id}>
           <section
             id={ABOUT_ID}
-            className={`relative scroll-mt-24 border-b border-white/5 overflow-hidden ${sectionPaddingClass(block)}`}
+            className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
             style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(9 9 11)" }}
           >
             {block.config?.backgroundImage && (
@@ -676,7 +677,7 @@ export default function HomeClient({
         <AnimateInView key={block.id}>
           <section
             id={CLUBS_ID}
-            className={`relative scroll-mt-24 border-b border-white/5 overflow-hidden ${sectionPaddingClass(block)}`}
+            className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
             style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(39 39 42 / 0.3)" }}
           >
             {block.config?.backgroundImage && (
@@ -736,7 +737,7 @@ export default function HomeClient({
         <AnimateInView key={block.id}>
           <section
             id={COMPANIES_ID}
-            className={`relative scroll-mt-24 border-b border-white/5 overflow-hidden ${sectionPaddingClass(block)}`}
+            className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
             style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(9 9 11)" }}
           >
             {block.config?.backgroundImage && (
@@ -798,7 +799,7 @@ export default function HomeClient({
         <AnimateInView key={block.id}>
           <section
             id={EVENTOS_ID}
-            className={`relative scroll-mt-24 border-b border-white/5 overflow-hidden ${sectionPaddingClass(block)}`}
+            className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
             style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(39 39 42 / 0.3)" }}
           >
             {block.config?.backgroundImage && (
@@ -869,7 +870,7 @@ export default function HomeClient({
         <AnimateInView key={block.id}>
           <section
             id={FOUNDER_ID}
-            className={`relative scroll-mt-24 border-b border-white/5 overflow-hidden ${sectionPaddingClass(block)}`}
+            className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
             style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(39 39 42 / 0.3)" }}
           >
             {block.config?.backgroundImage && (
@@ -980,7 +981,7 @@ export default function HomeClient({
         <AnimateInView key={block.id}>
           <section
             id={HOW_ID}
-            className={`relative scroll-mt-24 border-b border-white/5 overflow-hidden ${sectionPaddingClass(block)}`}
+            className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
             style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : { backgroundColor: "rgb(9 9 11)" }}
           >
             {block.config?.backgroundImage && (
@@ -1156,7 +1157,7 @@ export default function HomeClient({
               <AnimateInView key={block.id}>
                 <section
                   id={block.id}
-                  className={`relative scroll-mt-24 overflow-hidden border-b border-white/5 ${sectionPaddingClass(block)}`}
+                  className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
                   style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}
                 >
                   {customBg && (
@@ -1204,7 +1205,7 @@ export default function HomeClient({
               <AnimateInView key={block.id}>
                 <section
                   id={block.id}
-                  className={`relative scroll-mt-24 overflow-hidden border-b border-white/5 ${sectionPaddingClass(block)}`}
+                  className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
                   style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}
                 >
                   {block.config?.backgroundImage && (
@@ -1245,7 +1246,7 @@ export default function HomeClient({
               <AnimateInView key={block.id}>
                 <section
                   id={block.id}
-                  className={`relative scroll-mt-24 overflow-hidden border-b border-white/5 ${sectionPaddingClass(block)}`}
+                  className={`relative scroll-mt-24 overflow-hidden ${moduleBottomBorderClass(block.config)} ${sectionPaddingClass(block)}`}
                   style={blockBgColor(block) ? { backgroundColor: blockBgColor(block) } : undefined}
                 >
                   {block.config?.backgroundImage && (
