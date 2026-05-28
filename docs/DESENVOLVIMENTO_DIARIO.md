@@ -32,6 +32,56 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 28 DE MAIO DE 2026 — ENCERRAMENTO
+
+## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
+
+- **Deploy feito:** commit `79d7974` em `develop`, push para `origin/develop` (build `pnpm build` ok antes do commit).
+- **No servidor:** rodar `pnpm exec prisma migrate deploy` (3 migrations Imprensa: `20260528140000_tenant_press_imprensa`, `20260528180000_tenant_press_page_access_code`, `20260528190000_tenant_press_credential_request`) e reiniciar API.
+- **Preferência do usuário:** **NÃO subir/reiniciar a API** localmente — regra `.cursor/rules/nao-subir-api.mdc`.
+- **Dashboard — header padrão:** layout injeta `DashboardPageFrame` + header violeta (`DashboardDeptHeader`) em todo o dashboard via `dashboard-page-meta.ts`. Páginas com header dinâmico (Mídia, hubs, edit de atleta, etc.) estão na lista de exclusão em `DASHBOARD_AUTO_HEADER_EXCLUDE`.
+- **Imprensa:** módulo completo — API `tenant-press`, página pública `/portfolio/[slug]/imprensa`, dashboard `/dashboard/assessoria-imprensa`, press releases por data, credenciais, galeria/upload por token.
+- **Hino:** tipo de módulo no page builder (`HinoModuleEditor`, `HinoClubeSection`, `AudioMediaPicker`, upload MP3 pasta hino no S3).
+- **Auth fix:** controllers `diretoria`, `marketing-posts`, `socio-*` — guards unificados `JwtAuthGuard + DashboardRolesGuard + ModuleAccessGuard` (corrige "Not authenticated" na Diretoria).
+- **Mídia/S3 (incluído no repo):** otimização WebP no upload, auditoria órfãos/duplicatas, UI em Mídia para super_admin, script `s3:lifecycle`.
+- **Arquivos locais não versionados:** `backup_clean.sql`, `temp_legal_orig.txt` — **não commitar**.
+
+## **O QUE FOI FEITO**
+
+1. **Imprensa (API + web + público)**  
+   - Módulo Nest `tenant-press`; migrations Prisma; rotas públicas press (fotos, upload, credencial, access-code).  
+   - Dashboard editorial: releases, jornalistas, códigos de acesso, links fotógrafos.  
+   - Página pública do clube com hub de imprensa.
+
+2. **Padronização visual do dashboard**  
+   - `DashboardDeptHeader`, `DashboardDeptSection`, `DashboardPageFrame`, `dashboard-page-meta.ts`.  
+   - Migração em massa das páginas do dashboard (remoção de headers `text-3xl` antigos).  
+   - Hubs e páginas especiais mantêm header explícito.
+
+3. **Módulo Hino**  
+   - Editor no page builder; seção pública com player de áudio; picker de mídia MP3.
+
+4. **Correções e mídia**  
+   - Guards de autenticação em Diretoria/Marketing/Sócio torcedor.  
+   - Melhorias S3/mídia (sharp, auditoria, consolidate/purge órfãos).
+
+5. **Deploy**  
+   - Build monorepo ok; commit + push `develop`.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- API: `tenant-press/*`, `diretoria.controller.ts`, `marketing-posts.controller.ts`, `socio-*.controller.ts`, `media/*`, `s3.service.ts`, migrations Imprensa
+- Web: `DashboardDeptHeader.tsx`, `DashboardPageFrame.tsx`, `dashboard-page-meta.ts`, `assessoria-imprensa/`, `components/press/*`, `HinoClubeSection.tsx`, `HinoModuleEditor.tsx`, ~75 `dashboard/**/page.tsx`
+- Scripts: `strip-dashboard-old-headers.mjs`, `fix-empresas-edit-header.mjs`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `79d7974` — feat: imprensa, header padrao do dashboard e correcoes de auth
+- **Push:** enviado para `origin/develop`
+
+---
+
 # 📅 28 DE MAIO DE 2026 — SESSÃO (mídia/S3, acessos, logo BCH, DX Cursor)
 
 ## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
