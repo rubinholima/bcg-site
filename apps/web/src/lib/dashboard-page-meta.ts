@@ -61,6 +61,11 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
   "/dashboard/emails": {
     description: "Gerencie emails corporativos por organização WorkMail",
   },
+  "/dashboard/ferramentas/fmf-scraper": {
+    title: "Importação FMF",
+    description:
+      "Próximos jogos, últimos resultados e tabela de classificação das categorias de base (FMF). Atualização automática a cada 2 horas.",
+  },
   "/dashboard/marketing/boston-tv": {
     title: "Boston TV",
     description:
@@ -183,6 +188,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/clube$/,
   /^\/dashboard\/relatorios$/,
   /^\/dashboard\/manual$/,
+  /^\/dashboard\/ferramentas\/fmf-scraper$/,
   /^\/dashboard\/cadastros\/jogadores\/[^/]+\/edit$/,
   /^\/dashboard\/medico\/[^/]+$/,
   /^\/dashboard\/juridico\/[^/]+$/,

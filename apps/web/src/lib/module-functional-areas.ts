@@ -53,7 +53,7 @@ export const MODULE_AREA_META: Record<
   },
   ferramentas: {
     title: "Ferramentas",
-    description: "E-mail corporativo e cofre de senhas (níveis de operação).",
+    description: "E-mail corporativo, cofre de senhas e importação FMF.",
   },
   relatorios_socio: {
     title: "Relatórios e sócio-torcedor",

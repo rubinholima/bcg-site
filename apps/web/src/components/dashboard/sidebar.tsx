@@ -171,7 +171,7 @@ function isSocioPath(pathname: string | null, relHub: string | null): boolean {
 
 function isFerramentasPath(pathname: string | null): boolean {
   if (!pathname) return false;
-  return pathname.startsWith("/dashboard/emails") || pathname.startsWith("/dashboard/senhas");
+  return pathname.startsWith("/dashboard/emails") || pathname.startsWith("/dashboard/senhas") || pathname.startsWith("/dashboard/ferramentas/fmf-scraper");
 }
 
 function isAcademiasPath(pathname: string | null): boolean {

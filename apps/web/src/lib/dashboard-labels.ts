@@ -60,4 +60,5 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   socio_torcedor: "S\u00F3cio torcedor",
   eventos: "Eventos",
   integracoes: "Integra\u00E7\u00F5es",
+  fmf_scraper: "Importação FMF",
 };

@@ -38,6 +38,7 @@ import { TenantPressModule } from './tenant-press/tenant-press.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
 import { BostonTvModule } from './boston-tv/boston-tv.module';
 import { RegistrationInviteModule } from './registration-invite/registration-invite.module';
+import { FmfScraperModule } from './fmf-scraper/fmf-scraper.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { RegistrationInviteModule } from './registration-invite/registration-inv
     FinanceiroModule,
     BostonTvModule,
     RegistrationInviteModule,
+    FmfScraperModule,
   ],
   controllers: [AppController],
   providers: [AppService],

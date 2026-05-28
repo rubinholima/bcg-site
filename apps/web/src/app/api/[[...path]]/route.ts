@@ -9,7 +9,7 @@ import { forwardRequest } from "@/lib/apiProxy";
  * Cookie é convertido em Authorization: Bearer quando presente (forwardRequest).
  */
 function getBackendPath(pathname: string): string {
-  if (pathname.startsWith("/api/workmail") || pathname.startsWith("/api/vault")) {
+  if (pathname.startsWith("/api/workmail") || pathname.startsWith("/api/vault") || pathname.startsWith("/api/fmf-scraper")) {
     return pathname;
   }
   const withoutApi = pathname.replace(/^\/api/, "") || "/";

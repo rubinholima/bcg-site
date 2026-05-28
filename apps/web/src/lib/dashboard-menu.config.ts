@@ -718,6 +718,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: KeyRound,
         moduleSlug: "vault",
       },
+      {
+        slug: "fmf_scraper",
+        label: "Importação FMF",
+        href: "/dashboard/ferramentas/fmf-scraper",
+        icon: Database,
+        moduleSlug: "fmf_scraper",
+      },
     ],
   },
   {
