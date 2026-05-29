@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,15 +56,39 @@ export function JogadoresFilters({
       )
     : FIXTURE_CATEGORIES;
 
-  const applyFilters = () => {
-    const params = new URLSearchParams();
-    if (tenantId) params.set("tenantId", tenantId);
-    if (category) params.set("category", category);
-    if (position) params.set("position", position);
-    if (search.trim()) params.set("search", search.trim());
-    if (!archivedMode && !loanedMode && situation) params.set("situation", situation);
-    router.push(`${basePath}?${params.toString()}`);
-  };
+  const pushFilters = useCallback(
+    (values: {
+      tenantId: string;
+      category: string;
+      position: string;
+      search: string;
+      situation: string;
+    }) => {
+      const params = new URLSearchParams();
+      if (values.tenantId) params.set("tenantId", values.tenantId);
+      if (values.category) params.set("category", values.category);
+      if (values.position) params.set("position", values.position);
+      if (values.search.trim()) params.set("search", values.search.trim());
+      if (!archivedMode && !loanedMode && values.situation) {
+        params.set("situation", values.situation);
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${basePath}?${qs}` : basePath);
+    },
+    [archivedMode, basePath, loanedMode, router],
+  );
+
+  const filterValues = { tenantId, category, position, search, situation };
+
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") ?? "";
+    if (search.trim() === urlSearch.trim()) return;
+    const timer = window.setTimeout(() => {
+      pushFilters(filterValues);
+    }, 400);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce só no texto de busca
+  }, [search]);
 
   const clearFilters = () => {
     setTenantId("");
@@ -72,7 +96,7 @@ export function JogadoresFilters({
     setPosition("");
     setSearch("");
     setSituation("");
-    router.push(basePath);
+    router.replace(basePath);
   };
 
   return (
@@ -82,8 +106,16 @@ export function JogadoresFilters({
         <Select
           value={tenantId || "all"}
           onValueChange={(v) => {
-            setTenantId(v === "all" ? "" : v);
+            const nextTenantId = v === "all" ? "" : v;
+            setTenantId(nextTenantId);
             setCategory("");
+            pushFilters({
+              tenantId: nextTenantId,
+              category: "",
+              position,
+              search,
+              situation,
+            });
           }}
         >
           <SelectTrigger>
@@ -102,7 +134,14 @@ export function JogadoresFilters({
       {!archivedMode && !loanedMode ? (
         <div className="min-w-[140px]">
           <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
-          <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
+          <Select
+            value={category || "all"}
+            onValueChange={(v) => {
+              const nextCategory = v === "all" ? "" : v;
+              setCategory(nextCategory);
+              pushFilters({ tenantId, category: nextCategory, position, search, situation });
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
@@ -120,7 +159,14 @@ export function JogadoresFilters({
       {!archivedMode && !loanedMode ? (
         <div className="min-w-[160px]">
           <label className="text-xs text-muted-foreground mb-1 block">Posição</label>
-          <Select value={position || "all"} onValueChange={(v) => setPosition(v === "all" ? "" : v)}>
+          <Select
+            value={position || "all"}
+            onValueChange={(v) => {
+              const nextPosition = v === "all" ? "" : v;
+              setPosition(nextPosition);
+              pushFilters({ tenantId, category, position: nextPosition, search, situation });
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
@@ -138,7 +184,14 @@ export function JogadoresFilters({
       {archivedMode ? (
         <div className="min-w-[140px]">
           <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
-          <Select value={category || "all"} onValueChange={(v) => setCategory(v === "all" ? "" : v)}>
+          <Select
+            value={category || "all"}
+            onValueChange={(v) => {
+              const nextCategory = v === "all" ? "" : v;
+              setCategory(nextCategory);
+              pushFilters({ tenantId, category: nextCategory, position, search, situation });
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
@@ -156,7 +209,14 @@ export function JogadoresFilters({
       {archivedMode ? (
         <div className="min-w-[160px]">
           <label className="text-xs text-muted-foreground mb-1 block">Posição</label>
-          <Select value={position || "all"} onValueChange={(v) => setPosition(v === "all" ? "" : v)}>
+          <Select
+            value={position || "all"}
+            onValueChange={(v) => {
+              const nextPosition = v === "all" ? "" : v;
+              setPosition(nextPosition);
+              pushFilters({ tenantId, category, position: nextPosition, search, situation });
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Todas" />
             </SelectTrigger>
@@ -174,7 +234,14 @@ export function JogadoresFilters({
       {!archivedMode && !loanedMode ? (
         <div className="min-w-[150px]">
           <label className="text-xs text-muted-foreground mb-1 block">Situação</label>
-          <Select value={situation || "all"} onValueChange={(v) => setSituation(v === "all" ? "" : v)}>
+          <Select
+            value={situation || "all"}
+            onValueChange={(v) => {
+              const nextSituation = v === "all" ? "" : v;
+              setSituation(nextSituation);
+              pushFilters({ tenantId, category, position, search, situation: nextSituation });
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Ativos" />
             </SelectTrigger>
@@ -199,12 +266,8 @@ export function JogadoresFilters({
           placeholder="Nome, CPF ou registro CBF"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && applyFilters()}
         />
       </div>
-      <Button variant="secondary" onClick={applyFilters}>
-        Filtrar
-      </Button>
       <Button variant="ghost" onClick={clearFilters}>
         Limpar
       </Button>

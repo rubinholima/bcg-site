@@ -7,7 +7,6 @@ import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 import { JogadoresFilters } from "./JogadoresFilters";
 import { JogadoresGroupedList } from "./JogadoresGroupedList";
 import { JogadoresLoanedSection } from "./JogadoresLoanedSection";
-import { SyncPlayersButton } from "./SyncPlayersButton";
 
 interface Player {
   id: string;
@@ -99,7 +98,6 @@ export default async function JogadoresPage({
         </div>
       )}
         <div className="flex flex-wrap items-center gap-2">
-          <SyncPlayersButton />
           <Link href="/dashboard/cadastros/jogadores/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
