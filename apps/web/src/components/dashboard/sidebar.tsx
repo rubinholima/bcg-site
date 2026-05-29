@@ -492,20 +492,24 @@ function SidebarNav() {
     <div className="relative flex h-full flex-col border-r border-border bg-card shadow-sm">
       <div
         className={cn(
-          "flex h-16 shrink-0 items-center border-b border-border",
-          collapsed ? "justify-center px-2" : "px-6",
+          "flex h-[4.5rem] shrink-0 items-center justify-center border-b border-border",
+          collapsed ? "px-2" : "px-4",
         )}
       >
         <Link
           href={homeRoute}
-          className={cn("flex min-w-0 items-center gap-2", collapsed && "justify-center")}
+          className={cn(
+            "flex min-w-0 flex-col items-center justify-center gap-2 text-center",
+            collapsed ? "w-full" : "w-full",
+          )}
           onClick={onNavClick}
           title={collapsed ? PLATFORM_APP_NAME : undefined}
         >
           <Cup360BrandMark
-            logoClassName="h-8 w-8"
+            logoClassName={collapsed ? "h-10 w-10" : "h-11 w-11"}
             showName={!collapsed}
-            nameClassName="text-lg font-bold tracking-tight"
+            nameClassName="text-xl font-bold tracking-tight"
+            className={cn(!collapsed && "flex-col gap-2")}
           />
         </Link>
       </div>

@@ -40,7 +40,7 @@ export function DashboardDeptHeader({
     <div
       data-dashboard-dept-header
       className={cn(
-        "rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-950/40 via-background to-background p-6 sm:p-8",
+        "rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-950/40 via-background to-background p-7 sm:p-9",
         className,
       )}
     >
@@ -55,14 +55,16 @@ export function DashboardDeptHeader({
         </div>
       ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-violet-400">
-            <SectionIcon className="h-3.5 w-3.5" />
+        <div className="mx-auto w-full max-w-3xl space-y-4 text-center sm:mx-0 sm:text-left">
+          <p className="flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-violet-400 sm:justify-start">
+            <SectionIcon className="h-4 w-4 shrink-0" />
             {section}
           </p>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
           {description ? (
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
+            <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:mx-0">
+              {description}
+            </p>
           ) : null}
         </div>
         {stats && stats.length > 0 ? (
@@ -82,7 +84,7 @@ export function DashboardDeptHeader({
         ) : null}
       </div>
       {toolbar ? (
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">{toolbar}</div>
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">{toolbar}</div>
       ) : null}
     </div>
   );

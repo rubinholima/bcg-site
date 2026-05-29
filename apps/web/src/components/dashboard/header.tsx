@@ -1,13 +1,18 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CircleHelp, Home, Menu, PanelLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
+import { resolveDashboardPageMeta } from "@/lib/dashboard-page-meta";
 
 export function Header() {
+  const pathname = usePathname() ?? "";
+  const pageMeta = resolveDashboardPageMeta(pathname);
+  const pageTitle = pageMeta?.title ?? "Dashboard";
   const { user } = useAuth();
   const { sidebarOpen, toggleSidebar, sidebarDesktopMode, cycleSidebarDesktopMode } = useDashboardShell();
 
@@ -41,10 +46,12 @@ export function Header() {
             <Menu className="h-5 w-5" />
           )}
         </Button>
-        <Cup360BrandMark
-          logoClassName="h-7 w-7 sm:h-8 sm:w-8"
-          nameClassName="text-sm font-bold tracking-tight sm:text-base"
-        />
+        <Cup360BrandMark logoClassName="h-7 w-7 sm:h-8 sm:w-8" showName={false} />
+        <span className="min-w-0 truncate text-xs font-semibold tracking-tight sm:text-sm">
+          <span className="font-medium text-muted-foreground">Dashboard</span>
+          <span className="mx-1 text-foreground">·</span>
+          <span className="text-foreground">{pageTitle}</span>
+        </span>
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <Button
