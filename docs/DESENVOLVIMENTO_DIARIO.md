@@ -32,6 +32,52 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 29 DE MAIO DE 2026 — ENCERRAMENTO (FINAL)
+
+## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
+
+- **Deploy em `develop`:** último commit **`3f8cb6b`** — atalhos personalizados na barra superior + ajustes UI dashboard (push enviado).
+- **No servidor:** `./deploy.sh` — migration nova **`20260528120000_user_dashboard_shortcuts`** (`User.dashboardShortcuts` JSON, 5 slots).
+- **Atalhos:** barra superior do dashboard (`DashboardHeaderShortcuts`); picker só mostra páginas com acesso; persistência `GET/PATCH /me/dashboard-shortcuts`.
+- **UI:** login centralizado; CUP360 sidebar/header; breadcrumb com nome real do hub; Dashboard Master com `DashboardDeptHeader` padrão; menu — Depto Futebol logo após Requisições.
+- **Beatscode produção:** import via S3 + CLI no servidor (`beatscode:import:file`) para `boston-city-fc-brasil` — ok.
+- **Arquivos locais não versionados:** `backup_clean.sql`, `temp_*`, `scripts/extract-*.mjs`, `apps/api/apps/` — **não commitar**.
+
+## **O QUE FOI FEITO**
+
+1. **Atalhos personalizados (5 slots)**  
+   - Migration + API Nest; proxy Next `/api/me/dashboard-shortcuts`.  
+   - Botões na **barra superior** com ícone + nome abreviado; clique direito para trocar/remover.
+
+2. **UI dashboard / login / CUP360**  
+   - Rebranding CUP360 (sidebar, header, login, favicon).  
+   - Login centralizado; logo/texto sidebar maiores; texto do hub na barra superior.  
+   - Header roxo padrão no Dashboard Master (`MasterDashboardHeader` client component).  
+   - Stats do dept header — texto centralizado nas caixas (layout original).
+
+3. **Menu**  
+   - Ordem: Requisições → Depto de Futebol (só essa mudança; resto igual).
+
+4. **FMF / classificação (manhã)**  
+   - Parser tabela oficial FMF; sync substitui legado Google Sheets; filtros campeonato no editor.
+
+5. **Beatscode + deploy**  
+   - Import completo por tenant; `deploy.sh` com `CI=true` + devDependencies para `nest build`.  
+   - Import produção Boston City FC Brasil via S3 + script no servidor.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- API: `me.controller.ts`, `me.service.ts`, migration `20260528120000_user_dashboard_shortcuts`
+- Web: `DashboardUserShortcuts.tsx`, `dashboard-shortcuts.ts`, `header.tsx`, `MasterDashboardHeader.tsx`, `dashboard/page.tsx`, `login/page.tsx`, `dashboard-menu.config.ts`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `3f8cb6b` — feat(web): atalhos personalizados na barra e ajustes de UI do dashboard
+- **Push:** enviado para `origin/develop`
+
+---
+
 # 📅 29 DE MAIO DE 2026 — ENCERRAMENTO
 
 ## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
