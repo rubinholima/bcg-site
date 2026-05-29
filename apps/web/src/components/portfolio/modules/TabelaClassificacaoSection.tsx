@@ -17,8 +17,75 @@ import {
 } from "@/components/ui/select";
 import { Filter, RotateCcw } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
+import { isOurTeam } from "@/components/portfolio/FixtureTeamLogo";
 
 const FILTER_ALL = "__all__";
+
+function computeDefaultFilters(
+  rows: TabelaStandingsRow[],
+  ourTeamName: string | null | undefined,
+  preferredCompeticao?: string,
+): { competicao: string; categoria: string; temporada: string } {
+  const empty = { competicao: "", categoria: FILTER_ALL, temporada: FILTER_ALL };
+  if (!rows.length) return empty;
+
+  const competicoes = [
+    ...new Set(
+      rows
+        .map((r) => (r.competicao ?? r.categoria)?.trim())
+        .filter(Boolean) as string[],
+    ),
+  ].sort();
+
+  const clubRows = rows.filter(
+    (r) =>
+      isOurTeam(r.time ?? "", ourTeamName) ||
+      OUR_CLUB_PLACEHOLDERS.includes((r.time ?? "").trim().toLowerCase()),
+  );
+
+  const pickFrom = (candidates: TabelaStandingsRow[]) => {
+    if (preferredCompeticao) {
+      const inComp = candidates.filter(
+        (r) => (r.competicao ?? r.categoria)?.trim() === preferredCompeticao,
+      );
+      if (inComp.length) return inComp[0]!;
+    }
+    return candidates[0];
+  };
+
+  const anchor = pickFrom(clubRows.length ? clubRows : rows);
+  const competicao =
+    preferredCompeticao && competicoes.includes(preferredCompeticao)
+      ? preferredCompeticao
+      : (anchor.competicao ?? anchor.categoria)?.trim() ?? competicoes[0] ?? "";
+
+  const compRows = rows.filter((r) => (r.competicao ?? r.categoria)?.trim() === competicao);
+  const anchorInComp =
+    clubRows.find((r) => (r.competicao ?? r.categoria)?.trim() === competicao) ??
+    compRows[0] ??
+    anchor;
+
+  const categoriasInComp = [
+    ...new Set(compRows.map((r) => r.categoria?.trim()).filter(Boolean) as string[]),
+  ];
+  const temporadasInComp = [
+    ...new Set(compRows.map((r) => r.temporada?.trim()).filter(Boolean) as string[]),
+  ].sort((a, b) => b.localeCompare(a));
+
+  const categoria =
+    anchorInComp.categoria?.trim() && categoriasInComp.includes(anchorInComp.categoria.trim())
+      ? anchorInComp.categoria.trim()
+      : categoriasInComp.length === 1
+        ? categoriasInComp[0]!
+        : FILTER_ALL;
+
+  const temporada =
+    anchorInComp.temporada?.trim() && temporadasInComp.includes(anchorInComp.temporada.trim())
+      ? anchorInComp.temporada.trim()
+      : temporadasInComp[0] ?? FILTER_ALL;
+
+  return { competicao, categoria, temporada };
+}
 
 const DEFAULT_STANDINGS_FORMULA = "pontos:desc,saldo_gols:desc,gols_marcados:desc,vitorias:desc";
 
@@ -129,24 +196,50 @@ export function TabelaClassificacaoSection({
     return Array.from(set).sort();
   }, [rows]);
 
-  const categorias = useMemo(() => FIXTURE_CATEGORIES.map((c) => c.value), []);
+  const defaultFilters = useMemo(
+    () => computeDefaultFilters(rows, ourTeamName),
+    [rows, ourTeamName],
+  );
+
+  const [competicaoSel, setCompeticaoSel] = useState<string>(() => defaultFilters.competicao);
+  const [categoriaSel, setCategoriaSel] = useState<string>(() => defaultFilters.categoria);
+  const [temporadaSel, setTemporadaSel] = useState<string>(() => defaultFilters.temporada);
+  const [championships, setChampionships] = useState<ChampionshipInfo[]>([]);
+
+  const categorias = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => {
+      if (competicaoSel && (r.competicao ?? r.categoria)?.trim() !== competicaoSel) return;
+      const c = r.categoria?.trim();
+      if (c) set.add(c);
+    });
+    return FIXTURE_CATEGORIES.filter((c) => set.has(c.value)).map((c) => c.value);
+  }, [rows, competicaoSel]);
 
   const temporadas = useMemo(() => {
     const set = new Set<string>();
-    rows.forEach((r) => r.temporada?.trim() && set.add(r.temporada.trim()));
+    rows.forEach((r) => {
+      if (competicaoSel && (r.competicao ?? r.categoria)?.trim() !== competicaoSel) return;
+      if (categoriaSel !== FILTER_ALL && r.categoria?.trim() !== categoriaSel) return;
+      const t = r.temporada?.trim();
+      if (t) set.add(t);
+    });
     return Array.from(set).sort((a, b) => b.localeCompare(a));
-  }, [rows]);
-
-  const [competicaoSel, setCompeticaoSel] = useState<string>(FILTER_ALL);
-  const [categoriaSel, setCategoriaSel] = useState<string>(FILTER_ALL);
-  const [temporadaSel, setTemporadaSel] = useState<string>(FILTER_ALL);
-  const [championships, setChampionships] = useState<ChampionshipInfo[]>([]);
+  }, [rows, competicaoSel, categoriaSel]);
 
   useEffect(() => {
-    setCompeticaoSel(FILTER_ALL);
-    setCategoriaSel(FILTER_ALL);
-    setTemporadaSel(FILTER_ALL);
-  }, [rows.length, block.id]);
+    const d = computeDefaultFilters(rows, ourTeamName);
+    setCompeticaoSel(d.competicao);
+    setCategoriaSel(d.categoria);
+    setTemporadaSel(d.temporada);
+  }, [rows, ourTeamName, block.id]);
+
+  const handleCompeticaoChange = (value: string) => {
+    setCompeticaoSel(value);
+    const d = computeDefaultFilters(rows, ourTeamName, value);
+    setCategoriaSel(d.categoria);
+    setTemporadaSel(d.temporada);
+  };
 
   useEffect(() => {
     fetch("/api/public/cadastros/championships")
@@ -167,7 +260,7 @@ export function TabelaClassificacaoSection({
   const filteredAndSortedRows = useMemo(() => {
     const filtered = rows.filter((r) => {
       const compOk =
-        competicaoSel === FILTER_ALL ||
+        !competicaoSel ||
         (r.competicao ?? r.categoria)?.trim() === competicaoSel;
       const catOk =
         categoriaSel === FILTER_ALL || r.categoria?.trim() === categoriaSel;
@@ -175,19 +268,18 @@ export function TabelaClassificacaoSection({
         temporadaSel === FILTER_ALL || r.temporada?.trim() === temporadaSel;
       return compOk && catOk && tempOk;
     });
-    const champ =
-      competicaoSel !== FILTER_ALL
-        ? championshipByCompeticao.get(competicaoSel)
-        : undefined;
+    const champ = competicaoSel
+      ? championshipByCompeticao.get(competicaoSel)
+      : undefined;
     const formula = champ?.standingsFormula ?? DEFAULT_STANDINGS_FORMULA;
     const sorted = sortByFormula(filtered, formula);
     return sorted.map((r, i) => ({ ...r, posicao: i + 1, variacao: "same" as const }));
   }, [rows, competicaoSel, categoriaSel, temporadaSel, championshipByCompeticao]);
 
   const handleReset = () => {
-    setCompeticaoSel(FILTER_ALL);
-    setCategoriaSel(FILTER_ALL);
-    setTemporadaSel(FILTER_ALL);
+    setCompeticaoSel(defaultFilters.competicao);
+    setCategoriaSel(defaultFilters.categoria);
+    setTemporadaSel(defaultFilters.temporada);
   };
 
   const title = lang === "pt"
@@ -283,21 +375,18 @@ export function TabelaClassificacaoSection({
                     {lang === "pt" ? "Filtro" : "Filter"}
                   </span>
                 </div>
-                {competicoes.length > 0 && (
+                {competicoes.length > 0 && competicaoSel && (
                   <div className="flex min-w-0 shrink items-center gap-0.5">
                     {!is3Col && (
                       <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
                         {lang === "pt" ? "Competições" : "Competitions"}
                       </label>
                     )}
-                    <Select value={competicaoSel} onValueChange={setCompeticaoSel}>
+                    <Select value={competicaoSel} onValueChange={handleCompeticaoChange}>
                       <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[72px] min-w-0 text-[9px]" : "h-7 w-[100px] px-2 text-xs sm:w-[110px]"}`}>
-                        <SelectValue placeholder={lang === "pt" ? "Todas" : "All"} />
+                        <SelectValue placeholder={lang === "pt" ? "Campeonato" : "Competition"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={FILTER_ALL}>
-                          {lang === "pt" ? "Todas" : "All"}
-                        </SelectItem>
                         {competicoes.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
