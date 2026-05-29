@@ -1,36 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { authFetch } from "@/lib/authFetch";
-import type { Group } from "@/types/group";
+import { useEffect } from "react";
+import { PLATFORM_APP_NAME, PLATFORM_LOGO_SRC } from "@/lib/platform-branding";
 
 /**
- * Atualiza título da página e favicon com os dados do grupo (nome + logo).
- * Usado dentro do dashboard.
+ * Título e favicon da plataforma no dashboard (CUP360).
  */
 export function DashboardHead() {
-  const [group, setGroup] = useState<Group | null>(null);
-
   useEffect(() => {
-    let cancelled = false;
-    authFetch("/api/group")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: Group | null) => {
-        if (!cancelled && data) setGroup(data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    const name = group?.name ?? "Boston City Group";
-    const title = `Dashboard · ${name}`;
+    const title = `Dashboard · ${PLATFORM_APP_NAME}`;
     if (document.title !== title) {
       document.title = title;
     }
-  }, [group?.name]);
+  }, []);
 
   useEffect(() => {
     let link = document.querySelector<HTMLLinkElement>('link[rel="icon"][data-dashboard-favicon]');
@@ -40,7 +22,7 @@ export function DashboardHead() {
       link.setAttribute("data-dashboard-favicon", "true");
       document.head.appendChild(link);
     }
-    link.href = "/bcg-logo.png";
+    link.href = PLATFORM_LOGO_SRC;
     return () => {
       const el = document.querySelector('link[rel="icon"][data-dashboard-favicon]');
       if (el) el.remove();

@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CircleHelp, Home, Menu, PanelLeft, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import type { Group } from "@/types/group";
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardShell } from "@/context/DashboardShellContext";
+import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
 
 export function Header() {
-  const [group, setGroup] = useState<Group | null>(null);
   const { user } = useAuth();
   const { sidebarOpen, toggleSidebar, sidebarDesktopMode, cycleSidebarDesktopMode } = useDashboardShell();
 
@@ -23,20 +21,6 @@ export function Header() {
   const SidebarModeIcon =
     sidebarDesktopMode === "hidden" ? PanelLeft : sidebarDesktopMode === "icons" ? PanelLeftOpen : PanelLeft;
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/group", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: Group | null) => {
-        if (!cancelled && data) setGroup(data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const name = group?.name ?? "Grupo Master";
   const displayUser = user?.name?.trim() || user?.email || "Usuário";
 
   return (
@@ -57,20 +41,10 @@ export function Header() {
             <Menu className="h-5 w-5" />
           )}
         </Button>
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20 sm:h-9 sm:w-9">
-          <img
-            src="/bcg-logo.png"
-            alt=""
-            width={28}
-            height={28}
-            className="h-6 w-6 object-contain sm:h-7 sm:w-7"
-          />
-        </div>
-        <span className="min-w-0 truncate text-xs font-semibold tracking-tight sm:text-sm">
-          <span className="font-medium text-muted-foreground">Dashboard</span>
-          <span className="mx-1 text-foreground">·</span>
-          <span className="text-foreground">{name}</span>
-        </span>
+        <Cup360BrandMark
+          logoClassName="h-7 w-7 sm:h-8 sm:w-8"
+          nameClassName="text-sm font-bold tracking-tight sm:text-base"
+        />
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <Button

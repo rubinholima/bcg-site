@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import type { Group } from "@/types/group";
 import type { MenuItemConfig } from "@/lib/dashboard-menu.config";
 import {
   DASHBOARD_MENU,
@@ -18,6 +17,8 @@ import {
 } from "@/lib/dashboard-menu.config";
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 import { useDashboardShell } from "@/context/DashboardShellContext";
+import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
+import { PLATFORM_APP_NAME } from "@/lib/platform-branding";
 
 function SidebarMenuIcon({ item, className = "h-4 w-4 shrink-0" }: { item: MenuItemConfig; className?: string }) {
   if (item.menuLogoSrc) {
@@ -352,7 +353,6 @@ function SidebarNav() {
   const { onNavClick, sidebarDesktopMode, setSidebarDesktopMode } = useDashboardShell();
   const collapsed = sidebarDesktopMode === "icons";
   const [flyoutSlug, setFlyoutSlug] = useState<string | null>(null);
-  const [group, setGroup] = useState<Group | null>(null);
 
   const inPath = (href: string) =>
     pathname === href || (href !== "/dashboard" && pathname?.startsWith(href + "/"));
@@ -443,19 +443,6 @@ function SidebarNav() {
     syncNestedFromPath();
   }, [pathname, relHub]);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/group", { credentials: "include" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: Group | null) => {
-        if (!cancelled && data) setGroup(data);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const toggleNested = (child: MenuItemConfig) => {
     const expanded = nestedOpen[child.slug] ?? nestedDefaultOpen(child, pathname, inPath);
     if (expanded) {
@@ -490,7 +477,6 @@ function SidebarNav() {
     else setNestedOpen({ [child.slug]: true });
   };
 
-  const name = group?.name ?? "Grupo Master";
   const homeRoute = getHomeDashboardRoute(role, modules);
   const homeMenu = getDashboardHomeMenuItem(role, modules);
 
@@ -514,20 +500,13 @@ function SidebarNav() {
           href={homeRoute}
           className={cn("flex min-w-0 items-center gap-2", collapsed && "justify-center")}
           onClick={onNavClick}
-          title={collapsed ? `Dashboard ${name}` : undefined}
+          title={collapsed ? PLATFORM_APP_NAME : undefined}
         >
-          <img
-            src="/bcg-logo.png"
-            alt=""
-            width={32}
-            height={32}
-            className="h-8 w-8 flex-shrink-0 rounded object-contain"
+          <Cup360BrandMark
+            logoClassName="h-8 w-8"
+            showName={!collapsed}
+            nameClassName="text-lg font-bold tracking-tight"
           />
-          {!collapsed && (
-            <span className="truncate text-lg font-semibold">
-              <span className="text-muted-foreground">Dashboard</span> {name}
-            </span>
-          )}
         </Link>
       </div>
 

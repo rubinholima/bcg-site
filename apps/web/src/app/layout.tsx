@@ -42,9 +42,12 @@ export async function generateMetadata(): Promise<Metadata> {
     title: siteName,
     description: `Portal ${siteName} — empresas, usuários, emails e configurações.`,
     icons: {
-      icon: [{ url: "/bcg-logo.png", type: "image/png", sizes: "32x32" }, { url: "/bcg-logo.png", type: "image/png", sizes: "192x192" }],
-      shortcut: "/bcg-logo.png",
-      apple: "/bcg-logo.png",
+      icon: [
+        { url: "/cup360-logo.png", type: "image/png", sizes: "32x32" },
+        { url: "/cup360-logo.png", type: "image/png", sizes: "192x192" },
+      ],
+      shortcut: "/cup360-logo.png",
+      apple: "/cup360-logo.png",
     },
   };
 }

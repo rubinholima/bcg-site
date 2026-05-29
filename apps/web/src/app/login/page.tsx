@@ -12,7 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LogIn, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { PLATFORM_LOGO_SRC, PLATFORM_TAGLINE } from "@/lib/platform-branding";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -71,15 +72,24 @@ function LoginForm() {
       <div className="w-full max-w-[420px] relative">
         <Card className="border-zinc-800/80 shadow-2xl shadow-black/30 bg-zinc-900/95 backdrop-blur-sm">
           <CardHeader className="space-y-4 pb-4 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30">
-              <LogIn className="h-7 w-7" />
+            <div className="mx-auto flex flex-col items-center gap-3">
+              <img
+                src={PLATFORM_LOGO_SRC}
+                alt="CUP360"
+                width={88}
+                height={88}
+                className="h-[88px] w-[88px] rounded-2xl object-contain shadow-lg shadow-black/40 ring-1 ring-amber-500/25"
+              />
+              <p className="text-sm font-medium tracking-[0.2em] text-amber-400/90 uppercase">
+                {PLATFORM_TAGLINE}
+              </p>
             </div>
             <div>
               <CardTitle className="text-2xl font-semibold tracking-tight text-zinc-100">
                 Entrar
               </CardTitle>
               <CardDescription className="mt-1.5 text-zinc-400">
-                Área restrita · Boston City Group
+                Área restrita da plataforma
               </CardDescription>
             </div>
           </CardHeader>
