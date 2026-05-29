@@ -5,9 +5,20 @@ import { useRouter } from "next/navigation";
 import { Database, FileUp, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { authFetch } from "@/lib/authFetch";
+import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+
+type ClubOption = { id: string; name: string; slug: string };
 
 type BeatscodeStatus = {
   credentialsConfigured: boolean;
@@ -17,6 +28,7 @@ type BeatscodeStatus = {
   lastImport: {
     importedAt?: string;
     source?: string;
+    tenantSlug?: string;
     created?: number;
     updated?: number;
     skipped?: number;
@@ -30,6 +42,8 @@ export default function BeatscodeImportPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const { canAccessModule, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<BeatscodeStatus | null>(null);
+  const [clubs, setClubs] = useState<ClubOption[]>([]);
+  const [targetTenantSlug, setTargetTenantSlug] = useState("boston-city-fc-brasil");
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState<"file" | "api" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,8 +54,16 @@ export default function BeatscodeImportPage() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await authFetch("/api/beatscode-import/status");
-      if (res.ok) setStatus(await res.json());
+      const [statusRes, clubsRes] = await Promise.all([
+        authFetch("/api/beatscode-import/status"),
+        api.get<ClubOption[]>("/tenants?clubsOnly=1"),
+      ]);
+      if (statusRes.ok) {
+        const st = (await statusRes.json()) as BeatscodeStatus;
+        setStatus(st);
+        if (st.tenantSlug) setTargetTenantSlug(st.tenantSlug);
+      }
+      setClubs(Array.isArray(clubsRes.data) ? clubsRes.data : []);
     } catch {
       setError("Erro ao carregar status Beatscode.");
     } finally {
@@ -67,7 +89,7 @@ export default function BeatscodeImportPage() {
       const res = await authFetch("/api/beatscode-import/import-export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ export: exportData }),
+        body: JSON.stringify({ export: exportData, tenantSlug: targetTenantSlug }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -98,6 +120,7 @@ export default function BeatscodeImportPage() {
         body: JSON.stringify({
           categoryKeys: ["sub20", "sub17", "sub15", "sub14"],
           downloadPhotos: true,
+          tenantSlug: targetTenantSlug,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -149,6 +172,33 @@ export default function BeatscodeImportPage() {
           {message}
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Clube destino</CardTitle>
+          <CardDescription>
+            Os atletas do Beatscode (base Sub-14…20) vão para o clube selecionado. Padrão:{" "}
+            <strong>Boston City FC Brasil</strong> — não USA.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-md space-y-2">
+            <Label htmlFor="targetTenant">Importar para</Label>
+            <Select value={targetTenantSlug} onValueChange={setTargetTenantSlug} disabled={!!running}>
+              <SelectTrigger id="targetTenant" className="min-h-[44px]">
+                <SelectValue placeholder="Selecione o clube" />
+              </SelectTrigger>
+              <SelectContent>
+                {clubs.map((c) => (
+                  <SelectItem key={c.id} value={c.slug}>
+                    {c.name} ({c.slug})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -222,8 +272,9 @@ export default function BeatscodeImportPage() {
             <CardTitle className="text-base">Última importação</CardTitle>
             <CardDescription>
               {new Date(last.importedAt).toLocaleString("pt-BR")}
-              {last.source ? ` · ${last.source}` : ""} — {last.created ?? 0} criados, {last.updated ?? 0}{" "}
-              atualizados
+              {last.source ? ` · ${last.source}` : ""}
+              {(last.tenantSlug ? ` · ${last.tenantSlug}` : "")}{" "}
+              — {last.created ?? 0} criados, {last.updated ?? 0} atualizados
             </CardDescription>
           </CardHeader>
           {last.categoriesProcessed && last.categoriesProcessed.length > 0 && (

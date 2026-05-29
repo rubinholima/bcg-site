@@ -5,7 +5,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import { isBeatscodeExportFile } from './beatscode-export.types';
-import { BeatscodeImportService } from './beatscode-import.service';
+import { BeatscodeImportService, resolveBeatscodeTenantSlug } from './beatscode-import.service';
 
 @Controller('api/beatscode-import')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -24,7 +24,7 @@ export class BeatscodeImportController {
     return {
       credentialsConfigured: this.beatscodeImport.hasBeatscodeCredentials(),
       apiUrl: process.env.BEATSCODE_API_URL?.trim() || 'https://bostoncityfc-api.beatscode.com',
-      tenantSlug: process.env.BEATSCODE_TENANT_SLUG?.trim() || 'boston-city-fc-usa',
+      tenantSlug: resolveBeatscodeTenantSlug(),
       lastImport: row?.config ?? null,
       /** Fluxo recomendado: export local → JSON → import na produção (sem credenciais). */
       recommendedFlow: 'export_local_json_then_import_production',

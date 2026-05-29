@@ -16,6 +16,12 @@ import {
   computeBestSharedMetricsFromSources,
 } from './body-metrics.util';
 import { syncLinkedIdentityByPlayerId } from '../rh/employee-player-link';
+import {
+  normalizeSportsSituation,
+  isArchivedSportsSituation,
+  isLoanedSportsSituation,
+  normalizeRegistrationProfileSituation,
+} from '../common/sports-situation.util';
 
 @Injectable()
 export class PlayersService {
@@ -94,18 +100,17 @@ export class PlayersService {
 
   private getPlayerSituation(registrationProfile: unknown): string {
     const profile = this.parseRegistrationProfile(registrationProfile);
-    const raw = profile.sports?.situation;
-    if (!raw || raw === 'elenco') return 'ativo';
-    if (raw === 'inativo') return 'desligado';
-    return raw;
+    return normalizeSportsSituation(profile.sports?.situation);
   }
 
   private isArchivedPlayer(registrationProfile: unknown): boolean {
-    return this.getPlayerSituation(registrationProfile) === 'desligado';
+    const profile = this.parseRegistrationProfile(registrationProfile);
+    return isArchivedSportsSituation(profile.sports?.situation);
   }
 
   private isLoanedPlayer(registrationProfile: unknown): boolean {
-    return this.getPlayerSituation(registrationProfile) === 'emprestado';
+    const profile = this.parseRegistrationProfile(registrationProfile);
+    return isLoanedSportsSituation(profile.sports?.situation);
   }
 
   private async findPlayerIdsByCpfDigits(
@@ -865,7 +870,7 @@ export class PlayersService {
       analysisMetrics: j(d.analysisMetrics),
       images: j(d.images),
       publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
-      registrationProfile: j(d.registrationProfile),
+      registrationProfile: j(normalizeRegistrationProfileSituation(d.registrationProfile)),
     };
   }
 
@@ -938,7 +943,7 @@ export class PlayersService {
         publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
       }),
       ...(d.registrationProfile !== undefined && {
-        registrationProfile: jsonOrNull(d.registrationProfile),
+        registrationProfile: jsonOrNull(normalizeRegistrationProfileSituation(d.registrationProfile)),
       }),
     };
   }

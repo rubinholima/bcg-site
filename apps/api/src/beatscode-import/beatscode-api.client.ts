@@ -139,29 +139,53 @@ export class BeatscodeApiClient {
   }
 
   /**
-   * Mapa employeeId → dados pessoais.
-   * getPersonDetail(id) na API Beatscode ignora o id e devolve o usuário logado;
-   * o join em massa employee + person é o caminho correto.
+   * Mapas employeeId → pessoa e employeeId → employee (cadastro RH).
    */
-  async loadPersonByEmployeeId(): Promise<Map<number, Record<string, unknown>>> {
-    const [employees, persons] = await Promise.all([
-      this.listEmployees(),
-      this.listPersons(),
-    ]);
+  async loadEmployeeAndPersonMaps(): Promise<{
+    personByEmployeeId: Map<number, Record<string, unknown>>;
+    employeeByEmployeeId: Map<number, Record<string, unknown>>;
+  }> {
+    const [employees, persons] = await Promise.all([this.listEmployees(), this.listPersons()]);
     const personById = new Map<number, Record<string, unknown>>();
     for (const person of persons) {
       const id = Number(person.id);
       if (Number.isFinite(id)) personById.set(id, person);
     }
-    const byEmployee = new Map<number, Record<string, unknown>>();
+    const personByEmployeeId = new Map<number, Record<string, unknown>>();
+    const employeeByEmployeeId = new Map<number, Record<string, unknown>>();
     for (const emp of employees) {
       const employeeId = Number(emp.id);
       const personId = Number(emp.personId);
-      if (!Number.isFinite(employeeId) || !Number.isFinite(personId)) continue;
-      const person = personById.get(personId);
-      if (person) byEmployee.set(employeeId, person);
+      if (!Number.isFinite(employeeId)) continue;
+      employeeByEmployeeId.set(employeeId, emp);
+      const person = Number.isFinite(personId) ? personById.get(personId) : undefined;
+      if (person) personByEmployeeId.set(employeeId, person);
     }
-    return byEmployee;
+    return { personByEmployeeId, employeeByEmployeeId };
+  }
+
+  /** @deprecated use loadEmployeeAndPersonMaps */
+  async loadPersonByEmployeeId(): Promise<Map<number, Record<string, unknown>>> {
+    const { personByEmployeeId } = await this.loadEmployeeAndPersonMaps();
+    return personByEmployeeId;
+  }
+
+  /** Lista posições cadastradas no Beatscode (route /settings/position). */
+  async listPositions(): Promise<Record<string, unknown>[]> {
+    const data = await this.request<unknown>('GET', '/position', { route: '/settings/position' });
+    return this.normalizeList(data);
+  }
+
+  /** Lista opções de pé dominante no Beatscode. */
+  async listDominantFeet(): Promise<Record<string, unknown>[]> {
+    const data = await this.request<unknown>('GET', '/dominant-foot', { route: '/settings/position' });
+    return this.normalizeList(data);
+  }
+
+  /** Lista genérica (GET) — retorna array completo, não só o primeiro item. */
+  async listByPath(path: string, route = '/person/athlete'): Promise<Record<string, unknown>[]> {
+    const data = await this.request<unknown>('GET', path, { route });
+    return this.normalizeList(data);
   }
 
   /** Detalhe do atleta (quando a listagem não traz todos os campos). */

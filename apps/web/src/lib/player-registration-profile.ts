@@ -297,10 +297,29 @@ export const SPORTS_SITUATION_OPTIONS = [
   { value: "desligado", label: "Desligado" },
 ] as const;
 
+/** Valores Beatscode/legado em inglês → pt-BR canônico */
+const SPORTS_SITUATION_ALIASES: Record<string, string> = {
+  ativo: "ativo",
+  emprestado: "emprestado",
+  teste: "teste",
+  desligado: "desligado",
+  inativo: "desligado",
+  elenco: "ativo",
+  definitive: "ativo",
+  active: "ativo",
+  inative: "desligado",
+  inactive: "desligado",
+  loaned: "emprestado",
+  loan: "emprestado",
+  trial: "teste",
+  test: "teste",
+};
+
 export function normalizeSportsSituation(value?: string | null): string {
-  if (!value || value === "elenco") return "ativo";
-  if (value === "inativo") return "desligado";
-  return value;
+  const raw = value?.trim();
+  if (!raw) return "ativo";
+  const key = raw.toLowerCase();
+  return SPORTS_SITUATION_ALIASES[key] ?? key;
 }
 
 export function getSportsSituationLabel(value?: string | null): string {

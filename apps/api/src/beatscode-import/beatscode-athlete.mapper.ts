@@ -1,60 +1,73 @@
-/** Mapeia categoria Beatscode → chave BCG (sub20, sub17, sub15, sub14, principal). */
-export function mapBeatscodeCategoryName(name: string): string | null {
-  const n = name
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .toLowerCase()
-    .replace(/\s+/g, '');
+import { normalizeSportsSituation } from '../common/sports-situation.util';
+import {
+  type BeatscodeLookupContext,
+  defaultBeatscodeLookupContext,
+  normalizeBeatscodeJerseyNumber,
+  resolveBeatscodeCityId,
+  resolveBeatscodeContacts,
+  resolveBeatscodeCountryId,
+  resolveBeatscodeDominantFootId,
+  resolveBeatscodePositionId,
+} from './beatscode-lookups.util';
+import {
+  buildAddressBlock,
+  normalizeDate,
+  normalizeBeatscodeRow,
+  pickNumber,
+  pickString,
+  stripEmpty,
+} from './beatscode-row.util';
+import {
+  mapBeatscodePixKeyType,
+  normalizeBeatscodeHeight,
+  normalizeBeatscodeWeight,
+  resolveBeatscodePlayerStatus,
+} from './beatscode-value-maps.util';
 
-  if (/sub\s*20|sub20|u20|sub-20/.test(n)) return 'sub20';
-  if (/sub\s*17|sub17|u17|sub-17/.test(n)) return 'sub17';
-  if (/sub\s*15|sub15|u15|sub-15/.test(n)) return 'sub15';
-  if (/sub\s*14|sub14|u14|sub-14/.test(n)) return 'sub14';
-  if (/sub\s*13|sub13|u13/.test(n)) return 'sub13';
-  if (/sub\s*11|sub11|u11/.test(n)) return 'sub11';
-  if (/feminino|women|feminine/.test(n)) return 'feminino';
-  if (/principal|profissional|adulto|1equipe|1ªequipe|1equipe/.test(n)) return 'principal';
-  return null;
-}
+import { BEATSCODE_NATIONALITY_FALLBACK } from './beatscode-category.util';
 
-function pickString(row: Record<string, unknown>, keys: string[]): string | undefined {
-  for (const k of keys) {
-    const v = row[k];
-    if (v == null) continue;
-    const s = String(v).trim();
-    if (s) return s;
+export { mapBeatscodeCategoryName, resolveBeatscodeCategoryKey } from './beatscode-category.util';
+
+function inferCpf(normalized: Record<string, unknown>): string | undefined {
+  const direct = pickString(normalized, ['cpf', 'CPF']);
+  if (direct) return direct;
+  const pix = normalized.pix;
+  if (pix && typeof pix === 'object' && pix !== null) {
+    const p = pix as Record<string, unknown>;
+    if (String(p.keyType ?? '').toLowerCase() === 'cpf' && p.key) return String(p.key).trim();
+  }
+  if (String(normalized.pixKeyType ?? '').toLowerCase() === 'cpf' && normalized.pixKey) {
+    return String(normalized.pixKey).trim();
   }
   return undefined;
 }
 
-function pickNumber(row: Record<string, unknown>, keys: string[]): number | undefined {
-  for (const k of keys) {
-    const v = row[k];
-    if (v == null || v === '') continue;
-    const n = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'));
-    if (Number.isFinite(n)) return n;
-  }
-  return undefined;
+function mapBeatscodeDocuments(
+  normalized: Record<string, unknown>,
+): Array<Record<string, unknown>> | undefined {
+  const attachmentIds = normalized.attachmentId;
+  if (!Array.isArray(attachmentIds) || attachmentIds.length === 0) return undefined;
+  const now = new Date().toISOString();
+  return attachmentIds.map((rawId) => {
+    const id = String(rawId);
+    return {
+      id: `beatscode-att-${id}`,
+      name: `Anexo Beatscode #${id}`,
+      documentType: 'outro',
+      fileUrl: '',
+      uploadedAt: now,
+      beatscodeAttachmentId: Number(rawId),
+    };
+  });
 }
 
-function normalizeDate(raw: string | undefined): string | undefined {
-  if (!raw?.trim()) return undefined;
-  const s = raw.trim();
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-  const d = new Date(s);
-  return Number.isNaN(d.getTime()) ? undefined : d.toISOString().slice(0, 10);
-}
-
-function normalizeFoot(raw: string | undefined): string | undefined {
-  if (!raw) return undefined;
-  const s = raw.toLowerCase();
-  if (s.includes('esq') || s.includes('left')) return 'left';
-  if (s.includes('dir') || s.includes('right')) return 'right';
-  if (s.includes('amb') || s.includes('both')) return 'both';
-  return raw.trim().toLowerCase();
-}
+export type BeatscodeMapperContext = {
+  lookups: BeatscodeLookupContext;
+  characteristicsById?: Map<
+    number,
+    { technical?: string; tactical?: string; physical?: string; additional?: string }
+  >;
+};
 
 export type MappedBeatscodePlayer = {
   beatscodeId: string;
@@ -68,6 +81,7 @@ export type MappedBeatscodePlayer = {
   preferredFoot?: string;
   jerseyNumber?: number;
   position?: string;
+  status?: string;
   contactEmail?: string;
   contactPhone?: string;
   emergencyContactName?: string;
@@ -76,33 +90,39 @@ export type MappedBeatscodePlayer = {
   raw: Record<string, unknown>;
 };
 
-function normalizeBeatscodeRow(row: Record<string, unknown>): Record<string, unknown> {
-  const next: Record<string, unknown> = { ...row };
+function normalizeFoot(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const s = raw.toLowerCase();
+  if (s.includes('esq') || s.includes('left')) return 'left';
+  if (s.includes('dir') || s.includes('right')) return 'right';
+  if (s.includes('amb') || s.includes('both')) return 'both';
+  return raw.trim().toLowerCase();
+}
 
-  const photo = row.photo;
-  if (photo && typeof photo === 'object' && photo !== null && 'link' in photo) {
-    const link = (photo as { link?: unknown }).link;
-    if (link != null) next.photo = String(link);
-  }
-
-  const address = row.address;
-  if (address && typeof address === 'object' && address !== null) {
-    const addr = address as Record<string, unknown>;
-    next.addressStreet = addr.address;
-    next.addressComplement = addr.complement;
-    next.addressDistrict = addr.district;
-    next.addressCep = addr.cep;
-    next.addressCityId = addr.cityId;
-  }
-
-  return next;
+function buildCharacteristics(
+  characteristicsId: unknown,
+  ctx: BeatscodeMapperContext,
+): Record<string, string> | undefined {
+  const id = Number(characteristicsId);
+  if (!Number.isFinite(id) || !ctx.characteristicsById) return undefined;
+  const row = ctx.characteristicsById.get(id);
+  if (!row) return undefined;
+  return stripEmpty({
+    technical: row.technical,
+    tactical: row.tactical,
+    physical: row.physical,
+    additional: row.additional,
+  }) as Record<string, string>;
 }
 
 export function mapBeatscodeAthleteRow(
-  row: Record<string, unknown>,
+  rowInput: Record<string, unknown>,
   category: string,
+  ctx: BeatscodeMapperContext = { lookups: defaultBeatscodeLookupContext() },
 ): MappedBeatscodePlayer | null {
-  const normalized = normalizeBeatscodeRow(row);
+  const normalized = normalizeBeatscodeRow(rowInput);
+  const lookups = ctx.lookups;
+
   const beatscodeId = pickString(normalized, [
     'employeeId',
     'idEmployee',
@@ -117,27 +137,62 @@ export function mapBeatscodeAthleteRow(
   const nickname = pickString(normalized, ['nickname', 'apelido', 'shortName']);
   const photoPath = pickString(normalized, ['photo', 'image', 'photoLink', 'avatar', 'picture']);
 
-  const registrationProfile: Record<string, unknown> = {
+  const birthPlace =
+    resolveBeatscodeCityId(normalized.citizenshipId, lookups) ??
+    resolveBeatscodeCityId(normalized.cityId, lookups) ??
+    pickString(normalized, ['originCity', 'birthPlace', 'naturalidade']);
+
+  const nationality =
+    resolveBeatscodeCountryId(normalized.nationalityId, lookups) ??
+    BEATSCODE_NATIONALITY_FALLBACK[Number(normalized.nationalityId)] ??
+    pickString(normalized, ['nationality', 'citizenship', 'nacionalidade', 'country']);
+
+  const contacts = resolveBeatscodeContacts(normalized.contactId, lookups);
+  const mainCity = resolveBeatscodeCityId(normalized.addressCityId ?? normalized.cityId, lookups);
+  const localCity = resolveBeatscodeCityId(normalized.localAddressCityId ?? normalized.localCityId, lookups);
+
+  const mainAddress = buildAddressBlock(normalized, '', mainCity);
+  const localAddress = buildAddressBlock(normalized, 'local', localCity);
+
+  const bankName = normalized.pixBankId
+    ? lookups.bankById.get(Number(normalized.pixBankId))
+    : undefined;
+
+  const employeeNotes = [
+    pickString(normalized, ['observation']),
+    pickString(normalized, ['observationBusinessman']),
+    normalized.responsible ? `Responsável: ${String(normalized.responsible)}` : undefined,
+    normalized.registerDate ? `Cadastro RH: ${String(normalized.registerDate)}` : undefined,
+    normalized.waitingFederation === true ? 'Aguardando federação' : undefined,
+    normalized.workVisa ? `Visto: ${String(normalized.workVisa)}` : undefined,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const registrationProfile = stripEmpty({
     personal: {
       nickname,
-      cpf: pickString(normalized, ['cpf', 'CPF']),
+      cpf: inferCpf(normalized),
       rg: pickString(normalized, ['rg', 'RG']),
       rgIssuer: pickString(normalized, ['rgIssuer', 'rg_issuer', 'orgaoExpedidor']),
-      maritalStatus: pickString(normalized, ['maritalStatus', 'marital_status', 'estadoCivil']),
-      gender: pickString(normalized, ['gender', 'sexo', 'genero']),
-      birthPlace: pickString(normalized, ['birthPlace', 'naturalidade', 'nationality', 'citizenship']),
-      otherNationalities: pickString(normalized, ['otherNationalities', 'other_nationalities']),
+      maritalStatus: normalized.maritalStatusId
+        ? lookups.maritalById.get(Number(normalized.maritalStatusId))
+        : pickString(normalized, ['maritalStatus', 'marital_status', 'estadoCivil']),
+      gender: normalized.genderId
+        ? lookups.genderById.get(Number(normalized.genderId))
+        : pickString(normalized, ['gender', 'sexo', 'genero']),
+      birthPlace,
+      otherNationalities: nationality,
       rhEnrollment: pickString(normalized, ['rhEnrollment', 'enrollment', 'matricula']),
       clubArrivalDate: normalizeDate(
         pickString(normalized, ['clubArrivalDate', 'arrivalDate', 'dataChegada', 'arrivalTeamDate']),
       ),
-      addressStreet: pickString(normalized, ['addressStreet']),
-      addressDistrict: pickString(normalized, ['addressDistrict']),
-      addressCep: pickString(normalized, ['addressCep']),
     },
     sports: {
       jerseyName: pickString(normalized, ['jerseyName', 'nomeCamisa', 'shirtName']),
-      situation: pickString(normalized, ['situation', 'status', 'situacao']) ?? 'ativo',
+      situation: normalizeSportsSituation(
+        pickString(normalized, ['situation', 'status', 'situacao']),
+      ),
       cbf: pickString(normalized, ['cbf', 'CBF', 'cbfRegistration']),
       localFedRegistration: pickString(normalized, [
         'localFedRegistration',
@@ -147,21 +202,54 @@ export function mapBeatscodeAthleteRow(
       comet: pickString(normalized, ['comet', 'COMET']),
       cbfs: pickString(normalized, ['cbfs', 'CBFS']),
       previousClub: pickString(normalized, ['previousClub', 'lastClub', 'clubeAnterior']),
-      previousClubCity: pickString(normalized, ['previousClubCity', 'lastClubCity']),
+      previousClubCity:
+        pickString(normalized, ['previousClubCity', 'lastClubCity']) ??
+        resolveBeatscodeCityId(normalized.previousClubCity, lookups),
       footballSchool: pickString(normalized, ['footballSchool', 'escolinha', 'schoolOrClub']),
       footballSchoolCity: pickString(normalized, ['footballSchoolCity', 'escolinhaCidade']),
+      internationalized: normalized.internationalized === true ? true : undefined,
     },
-    complement: {
-      skinColor: pickString(normalized, ['skinColor', 'corPele']),
-      rhFactor: pickString(normalized, ['rhFactor', 'fatorRh']),
-      physicalBiotype: pickString(normalized, ['physicalBiotype', 'biotipo']),
-      observation: pickString(normalized, ['observation', 'observacao', 'notes']),
-    },
+    address: stripEmpty({
+      main: mainAddress,
+      local: localAddress,
+    }),
+    complement: stripEmpty({
+      skinColor: normalized.breedId
+        ? pickString(normalized, ['skinColor', 'corPele'])
+        : pickString(normalized, ['skinColor', 'corPele']),
+      rhFactor: normalized.bloodTypeId
+        ? lookups.bloodTypeById.get(Number(normalized.bloodTypeId))
+        : undefined,
+      physicalBiotype: pickString(normalized, ['physicalBiotype', 'biotipo', 'biotype']),
+      costCenter: pickString(normalized, ['costCenter', 'costCenterId']),
+      observation: employeeNotes || pickString(normalized, ['observation', 'observacao', 'notes']),
+    }),
+    extras: stripEmpty({
+      pixKeyType: mapBeatscodePixKeyType(pickString(normalized, ['pixKeyType'])),
+      pixKey: pickString(normalized, ['pixKey']),
+      pixBank: bankName,
+      educationLevel: normalized.schoolingId
+        ? String(normalized.schoolingId)
+        : undefined,
+      observation: pickString(normalized, ['observationBusinessman']),
+    }),
+    characteristics: buildCharacteristics(normalized.characteristicsId, ctx),
+    agent: stripEmpty({
+      hasAgent: normalized.businessmanId != null || normalized.agencyLegalRepresentativeId != null,
+      observation: pickString(normalized, ['observationBusinessman']),
+    }),
+    documents: mapBeatscodeDocuments(normalized),
     beatscode: {
       importedAt: new Date().toISOString(),
+      employeeId: beatscodeId,
+      athleteRecordId: pickString(normalized, ['id']),
       snapshot: normalized,
+      contacts: {
+        emails: contacts.emails,
+        phones: contacts.phones,
+      },
     },
-  };
+  });
 
   return {
     beatscodeId,
@@ -171,14 +259,21 @@ export function mapBeatscodeAthleteRow(
     birthDate: normalizeDate(
       pickString(normalized, ['birthDate', 'birth_date', 'dataNascimento', 'dateBirth', 'birthdate']),
     ),
-    nationality: pickString(normalized, ['nationality', 'citizenship', 'nacionalidade', 'country']),
-    height: pickNumber(normalized, ['height', 'altura', 'heightCm']),
-    weight: pickNumber(normalized, ['weight', 'peso', 'weightKg']),
-    preferredFoot: normalizeFoot(pickString(normalized, ['preferredFoot', 'dominantFoot', 'peDominante'])),
-    jerseyNumber: pickNumber(normalized, ['jerseyNumber', 'shirtNumber', 'numeroCamisa', 'number']),
-    position: pickString(normalized, ['position', 'posicao', 'positionName', 'function']),
-    contactEmail: pickString(normalized, ['email', 'contactEmail', 'mail']),
-    contactPhone: pickString(normalized, ['phone', 'contactPhone', 'telefone', 'cellphone']),
+    nationality,
+    height: normalizeBeatscodeHeight(pickNumber(normalized, ['height', 'altura', 'heightCm'])),
+    weight: normalizeBeatscodeWeight(pickNumber(normalized, ['weight', 'peso', 'weightKg'])),
+    preferredFoot:
+      normalizeFoot(pickString(normalized, ['preferredFoot', 'dominantFoot', 'peDominante'])) ??
+      resolveBeatscodeDominantFootId(normalized.dominantFootId, lookups),
+    jerseyNumber: normalizeBeatscodeJerseyNumber(
+      pickNumber(normalized, ['jerseyNumber', 'shirtNumber', 'numeroCamisa', 'number']),
+    ),
+    position:
+      pickString(normalized, ['position', 'posicao', 'positionName', 'function']) ??
+      resolveBeatscodePositionId(normalized.positionId, lookups),
+    status: resolveBeatscodePlayerStatus(normalized),
+    contactEmail: contacts.primaryEmail ?? pickString(normalized, ['email', 'contactEmail', 'mail']),
+    contactPhone: contacts.primaryPhone ?? pickString(normalized, ['phone', 'contactPhone', 'telefone', 'cellphone']),
     emergencyContactName: pickString(normalized, [
       'emergencyContactName',
       'emergencyName',

@@ -3,14 +3,29 @@ import { Prisma } from '@prisma/client';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
+import { mediaKeyFromStoredUrl } from '../common/media-key.util';
+import { getPlayerPhotoDisplayName } from '../common/photo-display-name';
+import { MediaMetaService } from '../media/media-meta.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { BeatscodeApiClient } from './beatscode-api.client';
 import {
   mapBeatscodeAthleteRow,
-  mapBeatscodeCategoryName,
   type MappedBeatscodePlayer,
 } from './beatscode-athlete.mapper';
+import { resolveBeatscodeCategoryKey } from './beatscode-category.util';
+import {
+  defaultBeatscodeLookupContext,
+  normalizeBeatscodeJerseyNumber,
+  resolveBeatscodeDominantFootId,
+  resolveBeatscodePositionId,
+} from './beatscode-lookups.util';
+import { loadBeatscodeReferences } from './beatscode-reference.loader';
+import { mergeBeatscodeSources } from './beatscode-row.util';
+import {
+  deserializeBeatscodeReferences,
+  serializeBeatscodeReferences,
+} from './beatscode-references.serialize';
 import {
   type BeatscodeExportAthlete,
   type BeatscodeExportFile,
@@ -30,6 +45,18 @@ export type BeatscodeImportResult = {
 };
 
 export const DEFAULT_BEATSCODE_EXPORT_PATH = 'data/beatscode-athletes-export.json';
+/** Clube BCG Brasil (base Sub-14…20). Beatscode é a academia BR — não confundir com USA. */
+export const DEFAULT_BEATSCODE_TENANT_SLUG = 'boston-city-fc-brasil';
+
+export function resolveBeatscodeTenantSlug(explicit?: string | null): string {
+  const raw =
+    explicit?.trim() ||
+    process.env.BEATSCODE_TENANT_SLUG?.trim() ||
+    DEFAULT_BEATSCODE_TENANT_SLUG;
+  /** Exports antigos gravavam USA por engano — Beatscode é a base BR. */
+  if (raw === 'boston-city-fc-usa') return DEFAULT_BEATSCODE_TENANT_SLUG;
+  return raw;
+}
 
 @Injectable()
 export class BeatscodeImportService {
@@ -38,6 +65,7 @@ export class BeatscodeImportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3: S3Service,
+    private readonly mediaMeta: MediaMetaService,
   ) {}
 
   createClient(): BeatscodeApiClient {
@@ -62,7 +90,7 @@ export class BeatscodeImportService {
   /** Busca no Beatscode e grava JSON (uso local — credenciais só aqui). */
   async exportToFile(options?: {
     tenantSlug?: string;
-    categoryKeys?: string[];
+    categoryKeys?: string[] | 'all';
     downloadPhotos?: boolean;
     outputPath?: string;
   }): Promise<{ filePath: string; export: BeatscodeExportFile }> {
@@ -89,7 +117,7 @@ export class BeatscodeImportService {
     exportFile: BeatscodeExportFile,
     options?: { tenantSlug?: string },
   ): Promise<BeatscodeImportResult> {
-    const tenantSlug = (options?.tenantSlug ?? exportFile.tenantSlug).trim();
+    const tenantSlug = resolveBeatscodeTenantSlug(options?.tenantSlug ?? exportFile.tenantSlug);
     const tenant = await this.prisma.tenant.findFirst({
       where: { slug: { equals: tenantSlug, mode: 'insensitive' } },
       select: { id: true, slug: true },
@@ -112,7 +140,8 @@ export class BeatscodeImportService {
 
     for (const athlete of exportFile.athletes) {
       try {
-        const action = await this.upsertFromMapped(tenant.id, athlete, athlete.photoUrl);
+        const mapped = this.remapExportAthlete(athlete, exportFile);
+        const action = await this.upsertFromMapped(tenant.id, mapped, athlete.photoUrl);
         if (action === 'created') result.created++;
         else result.updated++;
         result.athletes.push({
@@ -143,7 +172,7 @@ export class BeatscodeImportService {
   /** Atalho local: API → banco direto (exige credenciais no .env). */
   async runImport(options?: {
     tenantSlug?: string;
-    categoryKeys?: string[];
+    categoryKeys?: string[] | 'all';
     downloadPhotos?: boolean;
   }): Promise<BeatscodeImportResult> {
     const exportData = await this.fetchExportData(options);
@@ -155,35 +184,47 @@ export class BeatscodeImportService {
 
   private async fetchExportData(options?: {
     tenantSlug?: string;
-    categoryKeys?: string[];
+    categoryKeys?: string[] | 'all';
     downloadPhotos?: boolean;
   }): Promise<BeatscodeExportFile> {
-    const tenantSlug = (options?.tenantSlug ?? process.env.BEATSCODE_TENANT_SLUG ?? 'boston-city-fc-usa').trim();
-    const wantedCategories = options?.categoryKeys ?? ['sub20', 'sub17', 'sub15', 'sub14'];
+    const tenantSlug = resolveBeatscodeTenantSlug(options?.tenantSlug);
+    const allCategories =
+      options?.categoryKeys === 'all' ||
+      process.env.BEATSCODE_ALL_CATEGORIES === '1' ||
+      !options?.categoryKeys;
+    const wantedCategories = allCategories
+      ? null
+      : (options?.categoryKeys as string[]);
     const downloadPhotos = options?.downloadPhotos !== false;
 
     const client = this.createClient();
     await client.login();
 
     const initial = await client.fetchInitialData();
-    const personByEmployeeId = await client.loadPersonByEmployeeId();
+    const refs = await loadBeatscodeReferences(client);
+    this.log.log(
+      `Beatscode refs: ${refs.lookups.contactById.size} contatos, ${refs.lookups.cityById.size} cidades, ${refs.characteristicsById.size} características, ${refs.documentTypes.length} tipos doc`,
+    );
+    const { personByEmployeeId, employeeByEmployeeId } = await client.loadEmployeeAndPersonMaps();
     this.log.log(`Beatscode: ${personByEmployeeId.size} pessoa(s) indexada(s) por employeeId`);
+
     const categoryTargets = initial.categories
-      .map((c) => ({ ...c, mapped: mapBeatscodeCategoryName(c.name) }))
-      .filter((c) => c.mapped && wantedCategories.includes(c.mapped));
+      .map((c) => ({ ...c, mapped: resolveBeatscodeCategoryKey(c.name) }))
+      .filter((c) => !wantedCategories || wantedCategories.includes(c.mapped));
 
     if (categoryTargets.length === 0) {
       throw new Error(
-        `Nenhuma categoria Beatscode compatível (${wantedCategories.join(', ')}). Disponíveis: ${initial.categories.map((c) => c.name).join(', ')}`,
+        `Nenhuma categoria Beatscode compatível. Disponíveis: ${initial.categories.map((c) => c.name).join(', ')}`,
       );
     }
 
-    const athletes: BeatscodeExportAthlete[] = [];
+    const athleteByKey = new Map<string, BeatscodeExportAthlete>();
     const errors: string[] = [];
     const categoriesProcessed: string[] = [];
+    let processedRows = 0;
 
     for (const cat of categoryTargets) {
-      const categoryKey = cat.mapped!;
+      const categoryKey = cat.mapped;
       categoriesProcessed.push(`${cat.name} → ${categoryKey}`);
 
       try {
@@ -195,6 +236,11 @@ export class BeatscodeImportService {
         this.log.log(`Beatscode ${cat.name}: ${categoryRows.length} atleta(s)`);
 
         for (const baseRow of categoryRows) {
+          processedRows++;
+          if (processedRows % 50 === 0) {
+            this.log.log(`Beatscode export: ${processedRows} linha(s) processada(s)...`);
+          }
+
           try {
             const idRaw =
               baseRow.employeeId ??
@@ -205,23 +251,59 @@ export class BeatscodeImportService {
             const employeeId = Number(idRaw);
             const person =
               Number.isFinite(employeeId) ? personByEmployeeId.get(employeeId) : undefined;
-            const row = person ? { ...person, ...baseRow } : { ...baseRow };
+            const employee =
+              Number.isFinite(employeeId) ? employeeByEmployeeId.get(employeeId) : undefined;
+            const row = mergeBeatscodeSources(
+              baseRow as Record<string, unknown>,
+              person,
+              employee,
+            );
 
-            const mapped = mapBeatscodeAthleteRow(row, categoryKey);
+            const mapped = mapBeatscodeAthleteRow(row, categoryKey, {
+              lookups: refs.lookups,
+              characteristicsById: refs.characteristicsById,
+            });
             if (!mapped) continue;
 
             let photoUrl: string | undefined;
             if (mapped.photoPath) {
               if (downloadPhotos) {
                 photoUrl =
-                  (await this.mirrorPhoto(client, mapped.photoPath, mapped.beatscodeId)) ??
-                  undefined;
+                  (await this.mirrorPhoto(
+                    client,
+                    mapped.photoPath,
+                    mapped.name,
+                    mapped.category,
+                  )) ?? undefined;
               } else {
                 photoUrl = client.resolveFileUrl(mapped.photoPath);
               }
             }
 
-            athletes.push({ ...mapped, photoUrl });
+            const key = mapped.beatscodeId;
+            const existing = athleteByKey.get(key);
+            if (existing) {
+              const categories = new Set([
+                ...(existing.beatscodeCategories ?? [existing.category]),
+                categoryKey,
+              ]);
+              athleteByKey.set(key, {
+                ...existing,
+                ...mapped,
+                photoUrl: photoUrl ?? existing.photoUrl,
+                beatscodeCategories: [...categories],
+                registrationProfile: {
+                  ...(mapped.registrationProfile as object),
+                  categoryHistory: buildCategoryHistory(existing, mapped, categoryKey, cat.name),
+                },
+              });
+            } else {
+              athleteByKey.set(key, {
+                ...mapped,
+                photoUrl,
+                beatscodeCategories: [categoryKey],
+              });
+            }
           } catch (e) {
             errors.push(
               `${cat.name}: ${String(baseRow.id ?? '?')} — ${e instanceof Error ? e.message : String(e)}`,
@@ -233,14 +315,76 @@ export class BeatscodeImportService {
       }
     }
 
+    const athletes = [...athleteByKey.values()];
+    this.log.log(`Beatscode export: ${athletes.length} atleta(s) único(s) de ${processedRows} linha(s)`);
+
     return {
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       apiUrl: client.getBaseUrl(),
       tenantSlug,
       categoriesProcessed,
       athletes,
       errors,
+      references: serializeBeatscodeReferences(refs),
+    };
+  }
+
+  private remapExportAthlete(
+    athlete: BeatscodeExportAthlete,
+    exportFile?: BeatscodeExportFile,
+  ): MappedBeatscodePlayer {
+    const profile = athlete.registrationProfile;
+    const hasFullProfile =
+      profile &&
+      typeof profile === 'object' &&
+      !Array.isArray(profile) &&
+      (profile as { beatscode?: unknown }).beatscode != null;
+
+    if (hasFullProfile) {
+      return {
+        ...athlete,
+        jerseyNumber: normalizeBeatscodeJerseyNumber(athlete.jerseyNumber),
+      };
+    }
+
+    const refs = exportFile?.references
+      ? deserializeBeatscodeReferences(exportFile.references)
+      : null;
+    const ctx = refs
+      ? { lookups: refs.lookups, characteristicsById: refs.characteristicsById }
+      : { lookups: defaultBeatscodeLookupContext() };
+
+    const raw = athlete.raw;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const remapped = mapBeatscodeAthleteRow(raw as Record<string, unknown>, athlete.category, ctx);
+      if (remapped) {
+        return {
+          ...remapped,
+          beatscodeId: athlete.beatscodeId,
+          name: athlete.name || remapped.name,
+          photoPath: athlete.photoPath ?? remapped.photoPath,
+        };
+      }
+    }
+
+    return {
+      ...athlete,
+      jerseyNumber: normalizeBeatscodeJerseyNumber(athlete.jerseyNumber),
+      position:
+        athlete.position ??
+        resolveBeatscodePositionId(
+          (profile as { beatscode?: { snapshot?: { positionId?: unknown } } } | undefined)?.beatscode
+            ?.snapshot?.positionId,
+          ctx.lookups,
+        ),
+      preferredFoot:
+        athlete.preferredFoot ??
+        resolveBeatscodeDominantFootId(
+          (profile as { beatscode?: { snapshot?: { dominantFootId?: unknown } } } | undefined)?.beatscode
+            ?.snapshot?.dominantFootId,
+          ctx.lookups,
+        ),
     };
   }
 
@@ -251,6 +395,10 @@ export class BeatscodeImportService {
   ): Promise<'created' | 'updated'> {
     const externalId = `beatscode-${mapped.beatscodeId}`;
     const name = cadastroUpperRequired(mapped.name);
+
+    if (photoUrl?.trim()) {
+      await this.applyPhotoDisplayName(photoUrl, name, mapped.category);
+    }
 
     const data: Prisma.PlayerUncheckedCreateInput = {
       tenantId,
@@ -269,6 +417,7 @@ export class BeatscodeImportService {
       contactPhone: mapped.contactPhone ?? null,
       emergencyContactName: mapped.emergencyContactName ?? null,
       emergencyContactPhone: mapped.emergencyContactPhone ?? null,
+      status: mapped.status ?? null,
       registrationProfile: mapped.registrationProfile as Prisma.InputJsonValue,
     };
 
@@ -294,7 +443,8 @@ export class BeatscodeImportService {
   private async mirrorPhoto(
     client: BeatscodeApiClient,
     path: string,
-    beatscodeId: string,
+    playerName: string,
+    category: string,
   ): Promise<string | null> {
     try {
       const buf = await client.downloadFile(path);
@@ -309,14 +459,28 @@ export class BeatscodeImportService {
       const uploaded = await this.s3.uploadMedia(
         buf,
         ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg',
-        'players_beatscode',
-        beatscodeId,
+        'jogadores',
       );
+      await this.applyPhotoDisplayName(uploaded.url, playerName, category);
       return uploaded.url;
     } catch (e) {
-      this.log.warn(`Foto Beatscode ${beatscodeId}: ${e instanceof Error ? e.message : String(e)}`);
+      this.log.warn(
+        `Foto Beatscode ${playerName}: ${e instanceof Error ? e.message : String(e)}`,
+      );
       return client.resolveFileUrl(path) ?? null;
     }
+  }
+
+  /** Nome exibido na mídia: "NOME COMPLETO sub14" ou "NOME COMPLETO Jogadores". */
+  private async applyPhotoDisplayName(
+    photoUrl: string,
+    playerName: string,
+    category: string,
+  ): Promise<void> {
+    const key = mediaKeyFromStoredUrl(photoUrl);
+    if (!key) return;
+    const displayName = getPlayerPhotoDisplayName(playerName, category);
+    await this.mediaMeta.setDisplayName(key, displayName);
   }
 
   private async saveLastImport(result: BeatscodeImportResult): Promise<void> {
@@ -338,4 +502,24 @@ function sleep(ms: number): Promise<void> {
 function rowMatchesCategory(categoryId: unknown, categoryIdWanted: number): boolean {
   if (Array.isArray(categoryId)) return categoryId.includes(categoryIdWanted);
   return Number(categoryId) === categoryIdWanted;
+}
+
+function buildCategoryHistory(
+  existing: BeatscodeExportAthlete,
+  mapped: MappedBeatscodePlayer,
+  categoryKey: string,
+  categoryLabel: string,
+): unknown[] {
+  const prevProfile = existing.registrationProfile as { categoryHistory?: unknown[] } | undefined;
+  const prev = Array.isArray(prevProfile?.categoryHistory) ? prevProfile!.categoryHistory! : [];
+  const entry = {
+    id: `beatscode-${mapped.beatscodeId}-${categoryKey}`,
+    category: categoryKey,
+    categoryLabel,
+    importedAt: new Date().toISOString(),
+  };
+  const withoutDup = prev.filter(
+    (h) => (h as { category?: string })?.category !== categoryKey,
+  );
+  return [...withoutDup, entry];
 }
