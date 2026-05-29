@@ -16,8 +16,9 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
 fi
 git pull origin develop
 
-echo "[deploy] pnpm install..."
-pnpm install
+echo "[deploy] pnpm install (com devDependencies para nest build)..."
+export CI=true
+NODE_ENV=development pnpm install
 
 echo "[deploy] API: prisma migrate + generate + build..."
 cd apps/api
