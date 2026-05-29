@@ -20,16 +20,24 @@ const tenantListInclude = {
 
 type TenantWithKind = Prisma.TenantGetPayload<{ include: typeof tenantListInclude }>;
 
+/** Slugs de categoria (sub14, principal…) — enum técnico; não aplicar MAIÚSCULAS de cadastro. */
+function normalizeTenantCategorySlugs(value: unknown): string[] | null {
+  if (value == null) return null;
+  if (!Array.isArray(value)) return null;
+  const out = value
+    .filter((x): x is string => typeof x === 'string')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return out.length ? out : null;
+}
+
+function categoriesToJsonbParam(value: string[] | null | undefined): string | null {
+  const normalized = normalizeTenantCategorySlugs(value ?? null);
+  return normalized ? JSON.stringify(normalized) : null;
+}
+
 function mapTenant(row: TenantWithKind): TenantResponseDto {
-  let categories: string[] | null;
-  const c = row.categories;
-  if (Array.isArray(c)) {
-    categories = c as string[];
-  } else if (c != null && typeof c === 'object') {
-    categories = JSON.parse(JSON.stringify(c)) as string[];
-  } else {
-    categories = null;
-  }
+  const categories = normalizeTenantCategorySlugs(row.categories);
   return {
     id: row.id,
     name: row.name,
@@ -130,14 +138,7 @@ export class TenantsService {
     try {
       const id = crypto.randomUUID();
       const now = new Date();
-      const categoriesJson =
-        dto.categories && Array.isArray(dto.categories) && dto.categories.length > 0
-          ? JSON.stringify(
-              dto.categories.map((c) =>
-                typeof c === 'string' ? cadastroUpperRequired(c) : cadastroUpperRequired(String(c)),
-              ),
-            )
-          : null;
+      const categoriesJson = categoriesToJsonbParam(dto.categories ?? null);
       await this.prisma.$executeRaw`
         INSERT INTO "Tenant" (id, name, slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "sofascoreTeamId", categories, "createdAt", "updatedAt")
         VALUES (${id}, ${cadastroUpperRequired(dto.name)}, ${dto.slug}, ${dto.kindId}, ${cadastroUpper(dto.address)}, ${cadastroUpper(dto.contactName)}, ${cadastroUpper(dto.contactPhone)}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${cadastroUpper(dto.city)}, ${cadastroUpper(dto.country)}, ${dto.websiteUrl?.trim() || null}, ${(dto.sofascoreTeamId ?? "").trim() || null}, ${categoriesJson}::jsonb, ${now}, ${now})
@@ -229,15 +230,7 @@ export class TenantsService {
       }
       if (dto.categories !== undefined) {
         updates.push(`categories = $${++idx}::jsonb`);
-        values.push(
-          dto.categories === null || (Array.isArray(dto.categories) && dto.categories.length === 0)
-            ? null
-            : JSON.stringify(
-                (Array.isArray(dto.categories) ? dto.categories : []).map((c) =>
-                  typeof c === 'string' ? cadastroUpperRequired(c) : cadastroUpperRequired(String(c)),
-                ),
-              ),
-        );
+        values.push(categoriesToJsonbParam(dto.categories));
       }
 
       const hasOmieChange =

@@ -126,6 +126,44 @@ export class BeatscodeApiClient {
     return this.normalizeList(data);
   }
 
+  /** Lista funcionários (employeeId → personId). */
+  async listEmployees(route = '/person/employee'): Promise<Record<string, unknown>[]> {
+    const data = await this.request<unknown>('GET', '/employee', { route });
+    return this.normalizeList(data);
+  }
+
+  /** Lista pessoas (nome, nascimento, endereço) — usar com listEmployees. */
+  async listPersons(route = '/person'): Promise<Record<string, unknown>[]> {
+    const data = await this.request<unknown>('GET', '/person', { route });
+    return this.normalizeList(data);
+  }
+
+  /**
+   * Mapa employeeId → dados pessoais.
+   * getPersonDetail(id) na API Beatscode ignora o id e devolve o usuário logado;
+   * o join em massa employee + person é o caminho correto.
+   */
+  async loadPersonByEmployeeId(): Promise<Map<number, Record<string, unknown>>> {
+    const [employees, persons] = await Promise.all([
+      this.listEmployees(),
+      this.listPersons(),
+    ]);
+    const personById = new Map<number, Record<string, unknown>>();
+    for (const person of persons) {
+      const id = Number(person.id);
+      if (Number.isFinite(id)) personById.set(id, person);
+    }
+    const byEmployee = new Map<number, Record<string, unknown>>();
+    for (const emp of employees) {
+      const employeeId = Number(emp.id);
+      const personId = Number(emp.personId);
+      if (!Number.isFinite(employeeId) || !Number.isFinite(personId)) continue;
+      const person = personById.get(personId);
+      if (person) byEmployee.set(employeeId, person);
+    }
+    return byEmployee;
+  }
+
   /** Detalhe do atleta (quando a listagem não traz todos os campos). */
   async getAthleteDetail(athleteId: number | string): Promise<Record<string, unknown>> {
     const data = await this.request<unknown>('GET', '/athlete', {
@@ -142,9 +180,23 @@ export class BeatscodeApiClient {
 
   /** Dados pessoais (nome, nascimento, endereço) — complementa a listagem. */
   async getPersonDetail(athleteId: number | string): Promise<Record<string, unknown>> {
-    const data = await this.request<unknown>('GET', '/person', {
-      route: `/person/athlete/id/${athleteId}`,
-    });
+    return this.getByRoute('/person', `/person/athlete/id/${athleteId}`);
+  }
+
+  /** Busca genérica por route (descoberta de endpoints Beatscode). */
+  async getByRoute(
+    path: string,
+    route: string,
+  ): Promise<Record<string, unknown>> {
+    return this.getByRouteWithParams(path, route);
+  }
+
+  async getByRouteWithParams(
+    path: string,
+    route: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<Record<string, unknown>> {
+    const data = await this.request<unknown>('GET', path, { route, params });
     if (Array.isArray(data)) return (data[0] as Record<string, unknown>) ?? {};
     if (data && typeof data === 'object') return data as Record<string, unknown>;
     return {};

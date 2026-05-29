@@ -104,12 +104,12 @@ export function mapBeatscodeAthleteRow(
 ): MappedBeatscodePlayer | null {
   const normalized = normalizeBeatscodeRow(row);
   const beatscodeId = pickString(normalized, [
-    'id',
-    'athleteId',
     'employeeId',
-    'idPerson',
     'idEmployee',
+    'athleteId',
+    'idPerson',
     'personId',
+    'id',
   ]);
   const name = pickString(normalized, ['name', 'fullName', 'athleteName', 'personName']);
   if (!beatscodeId || !name) return null;

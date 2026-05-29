@@ -166,6 +166,8 @@ export class BeatscodeImportService {
     await client.login();
 
     const initial = await client.fetchInitialData();
+    const personByEmployeeId = await client.loadPersonByEmployeeId();
+    this.log.log(`Beatscode: ${personByEmployeeId.size} pessoa(s) indexada(s) por employeeId`);
     const categoryTargets = initial.categories
       .map((c) => ({ ...c, mapped: mapBeatscodeCategoryName(c.name) }))
       .filter((c) => c.mapped && wantedCategories.includes(c.mapped));
@@ -194,14 +196,16 @@ export class BeatscodeImportService {
 
         for (const baseRow of categoryRows) {
           try {
-            const idRaw = baseRow.id ?? baseRow.athleteId ?? baseRow.employeeId ?? baseRow.idPerson;
-            let row = { ...baseRow };
-            if (idRaw != null && (typeof idRaw === 'string' || typeof idRaw === 'number')) {
-              const person = await client.getPersonDetail(idRaw);
-              if (person && Object.keys(person).length > 0) {
-                row = { ...row, ...person };
-              }
-            }
+            const idRaw =
+              baseRow.employeeId ??
+              baseRow.idEmployee ??
+              baseRow.athleteId ??
+              baseRow.idPerson ??
+              baseRow.id;
+            const employeeId = Number(idRaw);
+            const person =
+              Number.isFinite(employeeId) ? personByEmployeeId.get(employeeId) : undefined;
+            const row = person ? { ...person, ...baseRow } : { ...baseRow };
 
             const mapped = mapBeatscodeAthleteRow(row, categoryKey);
             if (!mapped) continue;
@@ -269,13 +273,7 @@ export class BeatscodeImportService {
     };
 
     const existing = await this.prisma.player.findFirst({
-      where: {
-        tenantId,
-        OR: [
-          { externalId },
-          { name: { equals: name, mode: 'insensitive' }, category: mapped.category },
-        ],
-      },
+      where: { tenantId, externalId },
     });
 
     if (existing) {

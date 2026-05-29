@@ -97,9 +97,32 @@ export function AudioMediaPicker({
       const autoName = displayNameFromUploadFilename(file.name);
       if (autoName) formData.append("displayName", autoName);
       const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
-      const data = (await res.json()) as { url?: string; message?: string; error?: string };
+      const contentType = res.headers.get("content-type") ?? "";
+      let data: { url?: string; message?: string; error?: string } = {};
+      if (contentType.includes("application/json")) {
+        try {
+          data = (await res.json()) as typeof data;
+        } catch {
+          setUploadError(`Resposta inválida da API (HTTP ${res.status}).`);
+          return;
+        }
+      } else {
+        const text = (await res.text()).trim().slice(0, 200);
+        if (res.status === 413) {
+          setUploadError(
+            "Arquivo grande demais para o servidor (limite do Nginx). Peça para aumentar client_max_body_size para 20m.",
+          );
+          return;
+        }
+        setUploadError(
+          text
+            ? `Erro HTTP ${res.status}: ${text}`
+            : `Erro HTTP ${res.status}. Verifique se a API está no ar e se o deploy inclui upload de áudio (hino).`,
+        );
+        return;
+      }
       if (!res.ok) {
-        setUploadError(data?.message ?? data?.error ?? "Erro ao enviar áudio.");
+        setUploadError(data?.message ?? data?.error ?? `Erro ao enviar áudio (HTTP ${res.status}).`);
         return;
       }
       if (data?.url) {

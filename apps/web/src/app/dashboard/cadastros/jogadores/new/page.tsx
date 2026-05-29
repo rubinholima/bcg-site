@@ -47,7 +47,9 @@ export default function NewJogadorPage() {
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const categoriesForDropdown = selectedTenant?.categories?.length
     ? FIXTURE_CATEGORIES.filter((c) =>
-        selectedTenant.categories!.includes(c.value)
+        selectedTenant.categories!.some(
+          (saved) => saved.trim().toLowerCase() === c.value,
+        ),
       )
     : [];
 
@@ -92,7 +94,13 @@ export default function NewJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
+      <div className="flex items-center gap-4">
+        <Link href="/dashboard/cadastros/jogadores">
+          <Button type="button" variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
+          </Button>
+        </Link>
       </div>
 
       <Card>
@@ -149,6 +157,15 @@ export default function NewJogadorPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                {tenantId && categoriesForDropdown.length === 0 ? (
+                  <p className="text-xs text-amber-400">
+                    Nenhuma categoria liberada para este clube. Vá em{" "}
+                    <Link href={`/dashboard/empresas/${tenantId}/edit`} className="underline hover:text-amber-300">
+                      Empresas → {selectedTenant?.name ?? "clube"} → Editar
+                    </Link>
+                    , marque em &quot;Categorias que o clube joga&quot; (Sub-14, Sub-15, etc.) e salve.
+                  </p>
+                ) : null}
               </div>
             </div>
 
