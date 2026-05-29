@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { buildBackendUrl, getAppBaseUrl } from "@/lib/apiProxy";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { MasterDashboardGate } from "@/components/dashboard/MasterDashboardGate";
+import { MasterDashboardHeader } from "@/components/dashboard/MasterDashboardHeader";
 
 interface LastActivity {
   name: string;
@@ -197,12 +198,15 @@ export default async function DashboardPage() {
   return (
     <MasterDashboardGate>
     <div className="w-full min-w-0 max-w-full space-y-8">
-      {/* Welcome */}
-      <div className="dashboard-hero-gradient rounded-2xl border border-border/80 p-6 md:p-8 shadow-lg animate-fade-in-up">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-          Dashboard Master — {groupName}
-        </h1>
-      </div>
+      <MasterDashboardHeader
+        groupName={groupName}
+        stats={[
+          { value: tenantsCount, label: "Empresas" },
+          { value: stats?.usersCount ?? "—", label: "Usuários" },
+          { value: stats?.pagesCount ?? "—", label: "Páginas" },
+          { value: stats?.tenantKindsCount ?? "—", label: "Tipos" },
+        ]}
+      />
 
       {/* Stats */}
       <div>

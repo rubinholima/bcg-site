@@ -129,7 +129,6 @@ function humanizeSegment(segment: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/** Resolve metadados do header a partir da rota atual. */
 export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | null {
   const cleanPath = pathname.split("?")[0]!;
   const override = PAGE_META_OVERRIDES[cleanPath];
@@ -203,4 +202,21 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
 export function shouldShowAutoDashboardHeader(pathname: string): boolean {
   const clean = pathname.split("?")[0]!;
   return !DASHBOARD_AUTO_HEADER_EXCLUDE.some((re) => re.test(clean));
+}
+
+/** Breadcrumb da barra superior: nome do hub/depto + página atual. */
+export function resolveDashboardHeaderBreadcrumb(pathname: string): {
+  hub: string;
+  page?: string;
+} {
+  const meta = resolveDashboardPageMeta(pathname);
+  if (!meta) {
+    return { hub: "Dashboard Master" };
+  }
+  const hub = meta.section;
+  const page = meta.title?.trim();
+  if (!page || page === hub) {
+    return { hub };
+  }
+  return { hub, page };
 }

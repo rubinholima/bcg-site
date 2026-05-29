@@ -25,7 +25,7 @@ export function LayoutWithNav({ children }: { children: React.ReactNode }) {
     <>
       {showPortalNav && (
         <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur">
-          <div className="container flex h-14 items-center justify-between px-4">
+          <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6 lg:px-10 xl:px-16">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <img
                 src="/bcg-logo.png"

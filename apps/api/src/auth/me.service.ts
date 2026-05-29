@@ -62,4 +62,38 @@ export class MeService {
       },
     });
   }
+
+  private static readonly SHORTCUT_SLOTS = 5;
+
+  normalizeDashboardShortcuts(raw: unknown): (string | null)[] {
+    const empty = Array.from({ length: MeService.SHORTCUT_SLOTS }, () => null as string | null);
+    if (!Array.isArray(raw)) return empty;
+    return empty.map((_, i) => {
+      const v = raw[i];
+      if (typeof v !== 'string' || !v.trim()) return null;
+      const href = v.trim();
+      if (!href.startsWith('/dashboard')) return null;
+      return href;
+    });
+  }
+
+  async getDashboardShortcuts(userId: string): Promise<{ slots: (string | null)[] }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { dashboardShortcuts: true },
+    });
+    return { slots: this.normalizeDashboardShortcuts(user?.dashboardShortcuts) };
+  }
+
+  async updateDashboardShortcuts(
+    userId: string,
+    slots: unknown,
+  ): Promise<{ slots: (string | null)[] }> {
+    const normalized = this.normalizeDashboardShortcuts(slots);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { dashboardShortcuts: normalized },
+    });
+    return { slots: normalized };
+  }
 }

@@ -68,14 +68,14 @@ export function DashboardDeptHeader({
           ) : null}
         </div>
         {stats && stats.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          <div className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-xl border border-border/60 bg-card/50 px-3 py-2 text-center"
+                className="flex flex-col items-center justify-center rounded-xl border border-border/60 bg-card/50 px-3 py-2 text-center"
               >
-                <p className="text-lg font-bold tabular-nums">{stat.value}</p>
-                <p className="text-[10px] uppercase text-muted-foreground">{stat.label}</p>
+                <p className="text-lg font-bold tabular-nums leading-none">{stat.value}</p>
+                <p className="mt-1 text-[10px] uppercase leading-tight text-muted-foreground">{stat.label}</p>
               </div>
             ))}
           </div>

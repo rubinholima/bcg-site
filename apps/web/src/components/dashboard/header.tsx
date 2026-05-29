@@ -7,12 +7,12 @@ import { CircleHelp, Home, Menu, PanelLeft, PanelLeftClose, PanelLeftOpen } from
 import { useAuth } from "@/context/AuthContext";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
-import { resolveDashboardPageMeta } from "@/lib/dashboard-page-meta";
+import { DashboardHeaderShortcuts } from "@/components/dashboard/DashboardUserShortcuts";
+import { resolveDashboardHeaderBreadcrumb } from "@/lib/dashboard-page-meta";
 
 export function Header() {
   const pathname = usePathname() ?? "";
-  const pageMeta = resolveDashboardPageMeta(pathname);
-  const pageTitle = pageMeta?.title ?? "Dashboard";
+  const { hub, page } = resolveDashboardHeaderBreadcrumb(pathname);
   const { user } = useAuth();
   const { sidebarOpen, toggleSidebar, sidebarDesktopMode, cycleSidebarDesktopMode } = useDashboardShell();
 
@@ -29,7 +29,7 @@ export function Header() {
   const displayUser = user?.name?.trim() || user?.email || "Usuário";
 
   return (
-    <header className="flex h-14 min-w-0 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 backdrop-blur-sm shadow-sm sm:h-16 sm:gap-4 sm:px-6">
+    <header className="flex h-14 min-w-0 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 backdrop-blur-sm shadow-sm sm:h-16 sm:gap-3 sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-3">
         <Button
           type="button"
@@ -46,12 +46,18 @@ export function Header() {
             <Menu className="h-5 w-5" />
           )}
         </Button>
-        <Cup360BrandMark logoClassName="h-7 w-7 sm:h-8 sm:w-8" showName={false} />
-        <span className="min-w-0 truncate text-xs font-semibold tracking-tight sm:text-sm">
-          <span className="font-medium text-muted-foreground">Dashboard</span>
-          <span className="mx-1 text-foreground">·</span>
-          <span className="text-foreground">{pageTitle}</span>
+        <Cup360BrandMark logoClassName="h-7 w-7 shrink-0 sm:h-8 sm:w-8" showName={false} />
+        <span className="hidden min-w-0 max-w-[9rem] truncate text-sm font-semibold tracking-tight sm:inline md:max-w-[12rem] md:text-base lg:max-w-xs lg:text-lg">
+          <span className="font-medium text-muted-foreground">{hub}</span>
+          {page ? (
+            <>
+              <span className="mx-1 text-foreground">·</span>
+              <span className="text-foreground">{page}</span>
+            </>
+          ) : null}
         </span>
+        <span className="hidden h-5 w-px shrink-0 bg-border sm:block" aria-hidden />
+        <DashboardHeaderShortcuts />
       </div>
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <Button

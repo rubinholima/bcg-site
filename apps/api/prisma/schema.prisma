@@ -16,6 +16,8 @@ model User {
   role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
   /// Quando true, módulos vêm de UserModuleAccess (não da matriz do perfil).
   customModuleAccess Boolean @default(false)
+  /// Atalhos personalizados do dashboard (array JSON de 5 hrefs ou null).
+  dashboardShortcuts Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   /** Escopo de empresas/clubes: vazio = sem restrição (vê todas, exceto super_admin que ignora tabela). Com linhas = só esses tenants. */

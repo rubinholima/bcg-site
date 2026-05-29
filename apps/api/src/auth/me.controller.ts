@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Req, UseGuards, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from './jwt-auth.guard';
 import { DashboardRolesGuard } from './roles.guard';
@@ -92,5 +92,31 @@ export class MeController {
       ? await this.modulesService.getSlugsForUser(user.id, role)
       : await this.modulesService.getSlugsForRole(role);
     return { modules };
+  }
+
+  @Get('dashboard-shortcuts')
+  @UseGuards(DashboardRolesGuard)
+  async dashboardShortcuts(@Req() req: Request & { user: CognitoJwtPayload }) {
+    const user =
+      (await this.meService.findUserByCognitoSub(req.user.sub)) ??
+      (await this.meService.findUserById(req.user.sub));
+    if (!user) throw new UnauthorizedException('User not found');
+    return this.meService.getDashboardShortcuts(user.id);
+  }
+
+  @Patch('dashboard-shortcuts')
+  @UseGuards(DashboardRolesGuard)
+  async updateDashboardShortcuts(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() body: { slots?: unknown },
+  ) {
+    const user =
+      (await this.meService.findUserByCognitoSub(req.user.sub)) ??
+      (await this.meService.findUserById(req.user.sub));
+    if (!user) throw new UnauthorizedException('User not found');
+    if (!Array.isArray(body?.slots)) {
+      throw new BadRequestException('slots must be an array');
+    }
+    return this.meService.updateDashboardShortcuts(user.id, body.slots);
   }
 }

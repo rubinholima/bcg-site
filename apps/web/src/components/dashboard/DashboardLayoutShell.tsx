@@ -53,7 +53,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         <Header />
         <main
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col overflow-clip bg-background pt-0 dashboard-main-bg",
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-clip bg-background pt-6 sm:pt-8 dashboard-main-bg",
             isAcademiasEmbed ? "px-1 pb-1 sm:px-4 sm:pb-4" : "px-3 pb-4 sm:px-6 sm:pb-6",
           )}
         >

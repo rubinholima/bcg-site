@@ -67,10 +67,10 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,80,40,0.15),transparent)]" />
-      <div className="w-full max-w-[420px] relative">
-        <Card className="border-zinc-800/80 shadow-2xl shadow-black/30 bg-zinc-900/95 backdrop-blur-sm">
+    <div className="relative flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4 py-8 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,80,40,0.15),transparent)] pointer-events-none" />
+      <div className="relative w-full max-w-[420px] rounded-2xl border-[3px] border-amber-400/90 p-[2px] shadow-2xl shadow-black/40">
+        <Card className="rounded-[calc(1rem-2px)] border border-white/90 shadow-none bg-zinc-900/95 backdrop-blur-sm">
           <CardHeader className="space-y-4 pb-4 text-center">
             <div className="mx-auto flex flex-col items-center gap-3">
               <img
@@ -166,7 +166,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
+        <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4 bg-zinc-950">
           <div className="text-zinc-500">Carregando…</div>
         </div>
       }
