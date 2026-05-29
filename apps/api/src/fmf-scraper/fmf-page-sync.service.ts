@@ -17,6 +17,12 @@ import {
 import { FmfScraperService, type FmfScraperStore, type FmfStandingsRow } from './fmf-scraper.service';
 import type { FmfParsedMatch } from './fmf-proxjogos.parser';
 import { isFmfTeamMatch } from './fmf-team-match.util';
+import {
+  FMF_SYNC_TENANT_DEFAULTS,
+  FMF_SYNC_TENANT_SLUGS,
+  isFmfSyncTenantSlug,
+  parseTenantCategoryKeys,
+} from './fmf-sync-tenants.config';
 
 const SYNC_CONFIG_KEY = 'fmf_scraper_sync';
 const FMF_FIXTURE_CATEGORIES = new Set(
@@ -138,8 +144,8 @@ export class FmfPageSyncService {
 
     return clubs.map((t) => {
       const cfg = syncConfig.tenants?.find((c) => c.tenantId === t.id);
-      const aliases = cfg?.fmfTeamNames ?? [];
-      const presetKeys = this.resolvePresetKeys(cfg, store);
+      const aliases = this.resolveAliases(t.slug, t.name, cfg);
+      const presetKeys = this.resolvePresetKeys(cfg, store, t.categoryKeys);
       const { matches, missingLogos } = this.collectTenantData(
         store,
         presetKeys,
@@ -160,7 +166,7 @@ export class FmfPageSyncService {
         tenantName: t.name,
         tenantSlug: t.slug,
         hasPage: !!t.pageId,
-        fmfTeamNames: aliases.length > 0 ? aliases : [t.name],
+        fmfTeamNames: aliases,
         matchCountByPreset,
         totalMatches: matches.length,
         missingLogosPreview: [...missingLogos].sort((a, b) => a.localeCompare(b, 'pt-BR')),
@@ -186,7 +192,9 @@ export class FmfPageSyncService {
     if (options.tenantId) {
       targets = clubs.filter((t) => t.id === options.tenantId);
       if (targets.length === 0) {
-        throw new Error('Clube não encontrado ou não é um tenant de futebol.');
+        throw new Error(
+          'Clube não encontrado ou não participa do sync FMF (apenas Boston City FC Brasil e Villa Nova).',
+        );
       }
     } else if (!options.all) {
       throw new Error('Informe tenantId ou all=true.');
@@ -212,10 +220,12 @@ export class FmfPageSyncService {
         continue;
       }
 
-      const aliases =
-        options.tenantId && options.fmfTeamNames?.length
-          ? options.fmfTeamNames
-          : (cfg?.fmfTeamNames ?? []);
+      const aliases = this.resolveAliases(
+        tenant.slug,
+        tenant.name,
+        cfg,
+        options.tenantId ? options.fmfTeamNames : undefined,
+      );
 
       if (!tenant.pageId) {
         results.push({
@@ -233,7 +243,7 @@ export class FmfPageSyncService {
         continue;
       }
 
-      const presetKeys = this.resolvePresetKeys(cfg, store);
+      const presetKeys = this.resolvePresetKeys(cfg, store, tenant.categoryKeys);
       const collected = this.collectTenantData(
         store,
         presetKeys,
@@ -243,7 +253,7 @@ export class FmfPageSyncService {
         logoMap,
       );
 
-      if (collected.matches.length === 0) {
+      if (collected.matches.length === 0 && collected.tabelaRows.length === 0) {
         results.push({
           tenantId: tenant.id,
           tenantName: tenant.name,
@@ -267,7 +277,12 @@ export class FmfPageSyncService {
         const fixtures = collected.matches.map((m) => m.fixture);
         const resultadosManuais = collected.resultadosManuais;
         const tabelaRows = collected.tabelaRows;
-        const categoriesSynced = [...new Set(fixtures.map((f) => f.category))];
+        const categoriesSynced = [
+          ...new Set([
+            ...fixtures.map((f) => f.category),
+            ...tabelaRows.map((r) => r.categoria).filter(Boolean) as string[],
+          ]),
+        ];
 
         const hasProximos = blocks.some((b) => b.type === 'proximos_jogos');
         const hasUltimos = blocks.some((b) => b.type === 'ultimos_resultados');
@@ -409,10 +424,13 @@ export class FmfPageSyncService {
       slug: string;
       logoUrl: string | null;
       pageId: string | null;
+      categoryKeys: string[];
     }>
   > {
     const rows = await this.prisma.tenant.findMany({
-      where: { slug: { not: 'bcg' } },
+      where: {
+        slug: { in: [...FMF_SYNC_TENANT_SLUGS] },
+      },
       include: {
         kind: { select: { name: true } },
         pages: { select: { id: true }, take: 1 },
@@ -428,17 +446,39 @@ export class FmfPageSyncService {
         slug: t.slug,
         logoUrl: t.logoUrl,
         pageId: t.pages[0]?.id ?? null,
+        categoryKeys: parseTenantCategoryKeys(t.categories),
       }));
+  }
+
+  private resolveAliases(
+    tenantSlug: string,
+    tenantName: string,
+    cfg: FmfScraperSyncTenantConfig | undefined,
+    override?: string[],
+  ): string[] {
+    if (override?.length) return override;
+    if (cfg?.fmfTeamNames?.length) return cfg.fmfTeamNames;
+    if (isFmfSyncTenantSlug(tenantSlug)) {
+      return FMF_SYNC_TENANT_DEFAULTS[tenantSlug].fmfTeamNames;
+    }
+    return [tenantName];
   }
 
   private resolvePresetKeys(
     cfg: FmfScraperSyncTenantConfig | undefined,
     store: FmfScraperStore,
+    tenantCategoryKeys: string[],
   ): FmfScraperPresetKey[] {
     if (cfg?.presetKeys?.length) {
       return cfg.presetKeys.filter((k) => store.categories[k]);
     }
-    return FMF_SCRAPER_PRESET_KEYS.filter((k) => store.categories[k]);
+    const available = FMF_SCRAPER_PRESET_KEYS.filter((k) => store.categories[k]);
+    if (tenantCategoryKeys.length === 0) return available;
+    const wanted = new Set(tenantCategoryKeys);
+    const matched = available.filter((k) =>
+      wanted.has(FMF_SCRAPER_PRESETS[k].fixtureCategory),
+    );
+    return matched.length > 0 ? matched : available;
   }
 
   private collectTenantData(
@@ -471,8 +511,6 @@ export class FmfPageSyncService {
           isFmfTeamMatch(m.homeName, tenantName, aliases) ||
           isFmfTeamMatch(m.awayName, tenantName, aliases),
       );
-
-      if (ourMatches.length === 0) continue;
 
       for (const m of ourMatches) {
         const extId = buildExternalId(presetKey, m);

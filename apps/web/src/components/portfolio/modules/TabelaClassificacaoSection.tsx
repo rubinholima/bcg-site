@@ -16,7 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Filter, RotateCcw } from "lucide-react";
-import { getCategoryLabel } from "@/lib/fixture-categories";
+import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
+
+const FILTER_ALL = "__all__";
 
 const DEFAULT_STANDINGS_FORMULA = "pontos:desc,saldo_gols:desc,gols_marcados:desc,vitorias:desc";
 
@@ -127,11 +129,7 @@ export function TabelaClassificacaoSection({
     return Array.from(set).sort();
   }, [rows]);
 
-  const categorias = useMemo(() => {
-    const set = new Set<string>();
-    rows.forEach((r) => r.categoria?.trim() && set.add(r.categoria.trim()));
-    return Array.from(set).sort();
-  }, [rows]);
+  const categorias = useMemo(() => FIXTURE_CATEGORIES.map((c) => c.value), []);
 
   const temporadas = useMemo(() => {
     const set = new Set<string>();
@@ -139,10 +137,16 @@ export function TabelaClassificacaoSection({
     return Array.from(set).sort((a, b) => b.localeCompare(a));
   }, [rows]);
 
-  const [competicaoSel, setCompeticaoSel] = useState<string>(competicoes[0] ?? "");
-  const [categoriaSel, setCategoriaSel] = useState<string>(categorias[0] ?? "");
-  const [temporadaSel, setTemporadaSel] = useState<string>(temporadas[0] ?? "");
+  const [competicaoSel, setCompeticaoSel] = useState<string>(FILTER_ALL);
+  const [categoriaSel, setCategoriaSel] = useState<string>(FILTER_ALL);
+  const [temporadaSel, setTemporadaSel] = useState<string>(FILTER_ALL);
   const [championships, setChampionships] = useState<ChampionshipInfo[]>([]);
+
+  useEffect(() => {
+    setCompeticaoSel(FILTER_ALL);
+    setCategoriaSel(FILTER_ALL);
+    setTemporadaSel(FILTER_ALL);
+  }, [rows.length, block.id]);
 
   useEffect(() => {
     fetch("/api/public/cadastros/championships")
@@ -162,21 +166,28 @@ export function TabelaClassificacaoSection({
 
   const filteredAndSortedRows = useMemo(() => {
     const filtered = rows.filter((r) => {
-      const compOk = !competicaoSel || (r.competicao ?? r.categoria)?.trim() === competicaoSel;
-      const catOk = !categoriaSel || r.categoria?.trim() === categoriaSel;
-      const tempOk = !temporadaSel || r.temporada?.trim() === temporadaSel;
+      const compOk =
+        competicaoSel === FILTER_ALL ||
+        (r.competicao ?? r.categoria)?.trim() === competicaoSel;
+      const catOk =
+        categoriaSel === FILTER_ALL || r.categoria?.trim() === categoriaSel;
+      const tempOk =
+        temporadaSel === FILTER_ALL || r.temporada?.trim() === temporadaSel;
       return compOk && catOk && tempOk;
     });
-    const champ = championshipByCompeticao.get(competicaoSel);
+    const champ =
+      competicaoSel !== FILTER_ALL
+        ? championshipByCompeticao.get(competicaoSel)
+        : undefined;
     const formula = champ?.standingsFormula ?? DEFAULT_STANDINGS_FORMULA;
     const sorted = sortByFormula(filtered, formula);
     return sorted.map((r, i) => ({ ...r, posicao: i + 1, variacao: "same" as const }));
   }, [rows, competicaoSel, categoriaSel, temporadaSel, championshipByCompeticao]);
 
   const handleReset = () => {
-    setCompeticaoSel(competicoes[0] ?? "");
-    setCategoriaSel(categorias[0] ?? "");
-    setTemporadaSel(temporadas[0] ?? "");
+    setCompeticaoSel(FILTER_ALL);
+    setCategoriaSel(FILTER_ALL);
+    setTemporadaSel(FILTER_ALL);
   };
 
   const title = lang === "pt"
@@ -281,9 +292,12 @@ export function TabelaClassificacaoSection({
                     )}
                     <Select value={competicaoSel} onValueChange={setCompeticaoSel}>
                       <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[72px] min-w-0 text-[9px]" : "h-7 w-[100px] px-2 text-xs sm:w-[110px]"}`}>
-                        <SelectValue />
+                        <SelectValue placeholder={lang === "pt" ? "Todas" : "All"} />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value={FILTER_ALL}>
+                          {lang === "pt" ? "Todas" : "All"}
+                        </SelectItem>
                         {competicoes.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
@@ -302,9 +316,12 @@ export function TabelaClassificacaoSection({
                     )}
                     <Select value={categoriaSel} onValueChange={setCategoriaSel}>
                       <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[64px] min-w-0 text-[9px]" : "h-7 w-[90px] px-2 text-xs sm:w-[100px]"}`}>
-                        <SelectValue />
+                        <SelectValue placeholder={lang === "pt" ? "Todas" : "All"} />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value={FILTER_ALL}>
+                          {lang === "pt" ? "Todas" : "All"}
+                        </SelectItem>
                         {categorias.map((c) => (
                           <SelectItem key={c} value={c}>
                             {getCategoryLabel(c, lang)}
@@ -323,9 +340,12 @@ export function TabelaClassificacaoSection({
                     )}
                     <Select value={temporadaSel} onValueChange={setTemporadaSel}>
                       <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[52px] min-w-0 text-[9px]" : "h-7 w-[70px] px-2 text-xs sm:w-[80px]"}`}>
-                        <SelectValue />
+                        <SelectValue placeholder={lang === "pt" ? "Todas" : "All"} />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value={FILTER_ALL}>
+                          {lang === "pt" ? "Todas" : "All"}
+                        </SelectItem>
                         {temporadas.map((t) => (
                           <SelectItem key={t} value={t}>
                             {t}

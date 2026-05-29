@@ -237,7 +237,7 @@ export default function FmfScraperPage() {
         section="Ferramentas"
         sectionIcon={Database}
         title="Importação FMF"
-        description="Próximos jogos, últimos resultados e tabela calculada a partir do site oficial da FMF. Atualização automática a cada 2 horas e opção de aplicar nos sites dos clubes."
+        description="Próximos jogos, últimos resultados e tabela por categoria (Sub-14/15/17/20, Módulo II) via FMF. Sync automático só para Boston City FC Brasil e Villa Nova; demais clubes usam outras ligas."
         aside={
           <div className="flex flex-wrap gap-2">
             <Button
