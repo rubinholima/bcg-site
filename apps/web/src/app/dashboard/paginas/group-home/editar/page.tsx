@@ -66,6 +66,7 @@ import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
 
@@ -188,7 +189,6 @@ export default function EditarGroupHomePage() {
   const [headerAdvanced, setHeaderAdvanced] = useState(false);
   const [headerDebug, setHeaderDebug] = useState(false);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
-  const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
   const [globalAppearanceOpen, setGlobalAppearanceOpen] = useState(false);
   const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
   const [tenantKinds, setTenantKinds] = useState<TenantKind[]>([]);
@@ -2241,54 +2241,7 @@ export default function EditarGroupHomePage() {
                               </div>
                             );
                           })()}
-                          {block.type === "tabela" && (
-                            <div className="space-y-4 rounded-lg border border-border p-3 bg-muted/10">
-                              <p className="text-sm font-medium text-muted-foreground">Tabela Classificação — importe de Google Sheets</p>
-                              <p className="text-xs text-muted-foreground">
-                                Planilha configurada em <strong>Configurações → Integrações</strong>. Use o botão abaixo para importar.
-                              </p>
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                disabled={syncingTabelaBlockIndex === index}
-                                onClick={async () => {
-                                  setSyncingTabelaBlockIndex(index);
-                                  try {
-                                    const res = await authFetch("/api/integrations/sync", {
-                                      method: "POST",
-                                      credentials: "include",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify({
-                                        type: "tabela_classificacao",
-                                      }),
-                                    });
-                                    const data = await res.json();
-                                    if (res.ok && Array.isArray(data.rows)) {
-                                      updateBlockConfigValue(index, "tabelaManualRows", data.rows);
-                                      updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
-                                    } else if (data.error) {
-                                      alert(data.error);
-                                    }
-                                  } catch {
-                                    alert("Erro ao importar. Verifique Configurações → Integrações.");
-                                  } finally {
-                                    setSyncingTabelaBlockIndex(null);
-                                  }
-                                }}
-                              >
-                                {syncingTabelaBlockIndex === index ? (
-                                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                                ) : null}
-                                Atualizar com Google Sheets
-                              </Button>
-                              {((block.config?.tabelaManualRows as object[]) ?? []).length > 0 && (
-                                <p className="text-xs text-muted-foreground">
-                                  {((block.config?.tabelaManualRows as object[]) ?? []).length} linhas importadas.
-                                </p>
-                              )}
-                            </div>
-                          )}
+                          {block.type === "tabela" && <TabelaClassificacaoModuleEditor block={block} />}
                           {block.type !== "global_presence" && (
                           <>
                           <div className="space-y-2">

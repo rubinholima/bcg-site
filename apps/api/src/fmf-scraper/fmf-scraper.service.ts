@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseFmfOfficialStandingsHtml } from './fmf-classificacao.parser';
 import { parseFmfProxJogosHtml, type FmfParsedMatch } from './fmf-proxjogos.parser';
 import {
   FMF_SCRAPER_PRESET_KEYS,
@@ -139,6 +140,62 @@ export function computeStandingsFromMatches(
   return rows;
 }
 
+function hasFinishedMatches(matches: FmfParsedMatch[]): boolean {
+  return matches.some(
+    (m) => m.status === 'finished' && m.homeGoals != null && m.awayGoals != null,
+  );
+}
+
+function resolveStandings(
+  matches: FmfParsedMatch[],
+  html: string,
+  meta: { competicao: string; categoria: string; temporada: string },
+): FmfStandingsRow[] {
+  const fmfOfficial = parseFmfOfficialStandingsHtml(html, meta);
+  const computed = computeStandingsFromMatches(matches, meta);
+
+  if (!hasFinishedMatches(matches)) {
+    return fmfOfficial.length > 0 ? fmfOfficial : computed;
+  }
+
+  if (fmfOfficial.length === 0) return computed;
+
+  const computedByKey = new Map(
+    computed.map((r) => [r.time.trim().toUpperCase(), r]),
+  );
+
+  const merged: FmfStandingsRow[] = fmfOfficial.map((fmf) => {
+    const key = fmf.time.trim().toUpperCase();
+    const c = computedByKey.get(key);
+    if (c) return { ...c, time: fmf.time };
+    return {
+      ...fmf,
+      pontos: 0,
+      jogos: 0,
+      vitorias: 0,
+      empates: 0,
+      derrotas: 0,
+      golsMarcados: 0,
+      golsSofridos: 0,
+      saldoGols: 0,
+    };
+  });
+
+  for (const c of computed) {
+    const key = c.time.trim().toUpperCase();
+    if (!merged.some((r) => r.time.trim().toUpperCase() === key)) merged.push(c);
+  }
+
+  merged.sort((a, b) => {
+    if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+    if (b.saldoGols !== a.saldoGols) return b.saldoGols - a.saldoGols;
+    if (b.golsMarcados !== a.golsMarcados) return b.golsMarcados - a.golsMarcados;
+    return a.time.localeCompare(b.time, 'pt-BR');
+  });
+
+  return merged;
+}
+
 function matchStartMs(m: FmfParsedMatch): number {
   if (!m.matchDate) return 0;
   const t = m.kickoffTime?.slice(0, 5) ?? '00:00';
@@ -248,7 +305,7 @@ export class FmfScraperService {
       .filter((m) => m.status === 'finished')
       .sort((a, b) => matchStartMs(b) - matchStartMs(a));
 
-    const standings = computeStandingsFromMatches(matches, {
+    const standings = resolveStandings(matches, html, {
       competicao: preset.name,
       categoria: preset.fixtureCategory,
       temporada: season,

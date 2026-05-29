@@ -75,6 +75,7 @@ import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
+import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
 import { SelectWithCreate } from "@/components/dashboard/SelectWithCreate";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -318,7 +319,6 @@ export default function EditarPaginaTenantPage() {
   const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
   const [pastFixturesByBlock, setPastFixturesByBlock] = useState<Record<string, FixtureItem[]>>({});
   const [loadingPastFixtures, setLoadingPastFixtures] = useState<string | null>(null);
-  const [syncingTabelaBlockIndex, setSyncingTabelaBlockIndex] = useState<number | null>(null);
   const [moduleTypeFilter, setModuleTypeFilter] = useState<"geral" | string>("geral");
   const dateInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const proximosJogosUrlRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -1953,60 +1953,7 @@ export default function EditarPaginaTenantPage() {
                         fixturesFetchContext="tenant"
                       />
                     )}
-                    {block.type === "tabela" && (
-                      <div className="space-y-3 sm:col-span-2">
-                        <details className="rounded-lg border border-border bg-muted/20">
-                          <summary className="cursor-pointer px-3 py-2 font-medium">Tabela Classificação</summary>
-                          <div className="border-t border-border px-3 py-3 space-y-3">
-                            <p className="text-xs text-muted-foreground">
-                              Planilha configurada em <strong>Configurações → Integrações</strong>. Use o botão abaixo para importar.
-                            </p>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              disabled={syncingTabelaBlockIndex === index}
-                              onClick={async () => {
-                                if (!page?.tenant?.id) return;
-                                updateBlockConfigValue(index, "tabelaDataSource", "google_sheets");
-                                setSyncingTabelaBlockIndex(index);
-                                try {
-                                  const res = await authFetch("/api/integrations/sync", {
-                                    method: "POST",
-                                    credentials: "include",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({
-                                      type: "tabela_classificacao",
-                                      slug: page.tenant.slug ?? undefined,
-                                    }),
-                                  });
-                                  const data = await res.json();
-                                  if (res.ok && Array.isArray(data.rows)) {
-                                    updateBlockConfigValue(index, "tabelaManualRows", data.rows);
-                                  } else if (data.error) {
-                                    alert(data.error);
-                                  }
-                                } catch (err) {
-                                  alert("Erro ao importar. Verifique Configurações → Integrações.");
-                                } finally {
-                                  setSyncingTabelaBlockIndex(null);
-                                }
-                              }}
-                            >
-                              {syncingTabelaBlockIndex === index ? (
-                                <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                              ) : null}
-                              Atualizar com Google Sheets
-                            </Button>
-                            {((block.config?.tabelaManualRows as object[]) ?? []).length > 0 && (
-                              <p className="text-xs text-muted-foreground">
-                                {((block.config?.tabelaManualRows as object[]) ?? []).length} linhas importadas. Filtros por categoria e temporada aparecem na barra abaixo da tabela.
-                              </p>
-                            )}
-                          </div>
-                        </details>
-                      </div>
-                    )}
+                    {block.type === "tabela" && <TabelaClassificacaoModuleEditor block={block} />}
                     {block.type === "hero" && (
                       <>
                         <HeroModuleEditor
