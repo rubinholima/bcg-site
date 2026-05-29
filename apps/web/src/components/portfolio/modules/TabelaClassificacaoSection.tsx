@@ -43,6 +43,14 @@ function computeDefaultFilters(
       OUR_CLUB_PLACEHOLDERS.includes((r.time ?? "").trim().toLowerCase()),
   );
 
+  const clubCompeticoes = [
+    ...new Set(
+      clubRows
+        .map((r) => (r.competicao ?? r.categoria)?.trim())
+        .filter(Boolean) as string[],
+    ),
+  ];
+
   const pickFrom = (candidates: TabelaStandingsRow[]) => {
     if (preferredCompeticao) {
       const inComp = candidates.filter(
@@ -53,11 +61,19 @@ function computeDefaultFilters(
     return candidates[0];
   };
 
-  const anchor = pickFrom(clubRows.length ? clubRows : rows);
   const competicao =
     preferredCompeticao && competicoes.includes(preferredCompeticao)
       ? preferredCompeticao
-      : (anchor.competicao ?? anchor.categoria)?.trim() ?? competicoes[0] ?? "";
+      : clubCompeticoes[0] ??
+        competicoes.find((c) => /mineiro|módulo|modulo|fmf/i.test(c)) ??
+        competicoes[0] ??
+        "";
+
+  const anchor =
+    clubRows.find((r) => (r.competicao ?? r.categoria)?.trim() === competicao) ??
+    pickFrom(clubRows.length ? clubRows : rows.filter((r) => (r.competicao ?? r.categoria)?.trim() === competicao));
+
+  if (!anchor || !competicao) return empty;
 
   const compRows = rows.filter((r) => (r.competicao ?? r.categoria)?.trim() === competicao);
   const anchorInComp =
@@ -340,8 +356,8 @@ export function TabelaClassificacaoSection({
           {rows.length === 0 ? (
             <div className="mt-8 rounded-xl border border-white/10 bg-zinc-900/50 px-6 py-12 text-center text-zinc-500">
               {lang === "pt"
-                ? "Nenhum dado de classificação. Configure a planilha ou adicione linhas manualmente no editor."
-                : "No standings data. Configure the spreadsheet or add rows manually in the editor."}
+                ? "Nenhum dado de classificação. Use Ferramentas → Importação FMF → Aplicar no site."
+                : "No standings data. Use Tools → FMF import → Apply to site."}
             </div>
           ) : (
             <>

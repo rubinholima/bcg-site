@@ -344,15 +344,13 @@ export class FmfPageSyncService {
           }
           if (b.type === 'tabela' && hasTabela) {
             const prev = (b.config ?? {}) as Record<string, unknown>;
-            const existing = ((prev.tabelaManualRows as TabelaRow[]) ?? []).filter(
-              (r) => !FMF_FIXTURE_CATEGORIES.has(String(r.categoria ?? '')),
-            );
             return {
               ...b,
               config: {
                 ...prev,
                 tabelaDataSource: 'manual',
-                tabelaManualRows: [...existing, ...tabelaRows],
+                /** Substitui planilha legada — só dados FMF no clube. */
+                tabelaManualRows: tabelaRows,
               },
             };
           }
