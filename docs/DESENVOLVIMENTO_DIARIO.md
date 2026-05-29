@@ -32,6 +32,46 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 29 DE MAIO DE 2026 — ENCERRAMENTO
+
+## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
+
+- **Deploys em `develop` (push ok):** `7e626ff` (classificação FMF calculada + parser tabela oficial), `a289a9b` (filtro padrão no campeonato do clube, sem “Todas” em competições), `7dc7140` (sync FMF **substitui** linhas legadas da planilha Google — não faz merge).
+- **No servidor:** `./deploy.sh` + **Importação FMF → Importar → Aplicar no site** em **Boston City FC Brasil** e **Villa Nova** (limpa dados antigos tipo “Mineirão” / Apollo-RJ da planilha).
+- **Classificação:** fonte = FMF (`fmf-classificacao.parser.ts`, `resolveStandings`); sem jogos finalizados = ordem oficial FMF; com jogos = cálculo 3 pts / 1 empate. Editor de página: `TabelaClassificacaoModuleEditor` (sem Google Sheets).
+- **API local:** se der `Cannot find module './dashboard.controller'`, apagar `apps/api/dist` e `pnpm run build` na API; usuário reinicia `start:dev` manualmente (regra `nao-subir-api.mdc`).
+- **Arquivos locais não versionados:** `backup_clean.sql`, `temp_*.js`, `scripts/extract-*.mjs`, `apps/api/apps/` — **não commitar**.
+
+## **O QUE FOI FEITO**
+
+1. **FMF — classificação**  
+   - Parser HTML da tabela oficial (antes de “PG: Pontos Ganhos”).  
+   - `resolveStandings`: FMF se zero jogos; calculado + merge se há jogos finalizados.  
+   - Sync restrito a `boston-city-fc-brasil` e `villa-nova-saf`; tabela por categoria (Sub-14/15/17/20, Módulo II).
+
+2. **Editor / UI**  
+   - Removido botão “Atualizar com Google Sheets” (tenant, group-home, evento).  
+   - `TabelaClassificacaoSection`: filtro padrão no campeonato do clube; sem opção “Todas” em competições; categorias/temporadas filtradas por campeonato.
+
+3. **Correção dados legados**  
+   - `fmf-page-sync`: ao aplicar no site, `tabelaManualRows` = só FMF (remove planilha Mineirão/Carioca misturada).
+
+4. **Deploys**  
+   - Três pushes em `develop`; build `pnpm build` ok antes de cada deploy.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- API: `fmf-classificacao.parser.ts`, `fmf-scraper.service.ts`, `fmf-page-sync.service.ts`, `fmf-sync-tenants.config.ts`
+- Web: `TabelaClassificacaoSection.tsx`, `TabelaClassificacaoModuleEditor.tsx`, editores de página (tenant/group-home/evento)
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `7dc7140` — fix: sync FMF substitui tabela legada da planilha Google
+- **Push:** enviado para `origin/develop`
+
+---
+
 # 📅 28 DE MAIO DE 2026 — ENCERRAMENTO
 
 ## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
