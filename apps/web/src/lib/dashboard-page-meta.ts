@@ -66,6 +66,11 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
     description:
       "Próximos jogos, últimos resultados e tabela de classificação das categorias de base (FMF). Atualização automática a cada 2 horas.",
   },
+  "/dashboard/ferramentas/beatscode-import": {
+    title: "Importação Beatscode — Atletas",
+    description:
+      "Importa cadastros de atletas (Sub-20, Sub-17, Sub-15, Sub-14) do Beatscode para o banco de jogadores.",
+  },
   "/dashboard/marketing/boston-tv": {
     title: "Boston TV",
     description:
@@ -189,6 +194,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/relatorios$/,
   /^\/dashboard\/manual$/,
   /^\/dashboard\/ferramentas\/fmf-scraper$/,
+  /^\/dashboard\/ferramentas\/beatscode-import$/,
   /^\/dashboard\/cadastros\/jogadores\/[^/]+\/edit$/,
   /^\/dashboard\/medico\/[^/]+$/,
   /^\/dashboard\/juridico\/[^/]+$/,

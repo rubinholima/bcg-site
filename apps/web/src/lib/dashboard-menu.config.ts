@@ -725,6 +725,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Database,
         moduleSlug: "fmf_scraper",
       },
+      {
+        slug: "beatscode_import",
+        label: "Importação Beatscode",
+        href: "/dashboard/ferramentas/beatscode-import",
+        icon: Users,
+        moduleSlug: "fmf_scraper",
+      },
     ],
   },
   {
