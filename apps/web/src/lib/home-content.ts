@@ -330,7 +330,7 @@ export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
   "sectionLeftColumnBackgroundColor", "sectionLeftColumnBackgroundImage", "sectionLeftColumnBackgroundOverlayOpacity",
   "sectionRightColumnBackgroundColor", "sectionRightColumnBackgroundImage", "sectionRightColumnBackgroundOverlayOpacity",
   "sectionMiddleColumnBackgroundColor", "sectionMiddleColumnBackgroundImage", "sectionMiddleColumnBackgroundOverlayOpacity",
-  "proximosJogosDataSource", "proximosJogosManualFixtures", "proximosJogosOverrides", "proximosJogosPaddingTop", "proximosJogosPaddingBottom", "proximosJogosSpreadsheetUrl", "proximosJogosSheetGid", "fullBleedCarousel",
+  "proximosJogosDataSource", "proximosJogosManualFixtures", "proximosJogosOverrides", "proximosJogosPaddingTop", "proximosJogosPaddingBottom", "proximosJogosSpreadsheetUrl", "proximosJogosSheetGid", "fullBleedCarousel", "fixturesCarouselMarqueeSpeed",
   "ultimosResultadosPaddingTop", "ultimosResultadosPaddingBottom", "ultimosResultadosMaxItems", "resultadosManuais", "resultadosDetalhes",
   "noticiasDataSource", "noticiasRssUrl", "noticiasManualItems", "noticiasMaxItems", "noticiasPaddingTop", "noticiasPaddingBottom",
   "galeriaDataSource", "galeriaRssUrl", "galeriaManualItems", "galeriaMaxItems", "galeriaPaddingTop", "galeriaPaddingBottom",

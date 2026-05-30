@@ -21,6 +21,7 @@ import {
   fetchFixtures as fetchFixturesShared,
   type FixturesFetchContext,
 } from "@/lib/fixtures-shared";
+import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
 
 export interface FixtureItem {
   externalId: string;
@@ -98,6 +99,26 @@ function isOurTeam(teamName: string, ourTeamName: string | null | undefined): bo
   const b = ourTeamName.trim().toLowerCase();
   if (a === b) return true;
   return a.includes(b) || b.includes(a);
+}
+
+function resolveDisplayTeamName(
+  teamName: string,
+  ourTeamName: string | null | undefined,
+): string {
+  return isOurTeam(teamName, ourTeamName) && ourTeamName?.trim()
+    ? ourTeamName.trim()
+    : teamName;
+}
+
+/** Fonte menor conforme o tamanho do nome — evita cortar com reticências. */
+function teamNameTextClass(name: string): string {
+  const len = name.length;
+  const size =
+    len <= 18 ? "text-xs" :
+    len <= 26 ? "text-[11px]" :
+    len <= 34 ? "text-[10px]" :
+    "text-[9px]";
+  return `${size} font-semibold text-white leading-snug break-words min-w-0 flex-1`;
 }
 
 const EXTERNAL_LOGO_EXTENSIONS = [".png", ".webp", ".svg"] as const;
@@ -419,6 +440,10 @@ export function ProximosJogosSection({
   const cardClassName =
     `min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:min-w-[300px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
 
+  const marqueeDurationSec = fixturesMarqueeDurationSeconds(
+    block.config?.fixturesCarouselMarqueeSpeed as string | undefined,
+  );
+
   const eventCardLogoRaw =
     fixturesContext === "event" ? (eventPageLogoUrl?.trim() || "") : "";
   const eventCardLogoSrc = eventCardLogoRaw ? getPublicImageUrl(eventCardLogoRaw) : "";
@@ -522,7 +547,7 @@ export function ProximosJogosSection({
               width: "max-content",
               ...(cardCount > 1
                 ? {
-                    animation: "proximos-jogos-marquee 50s linear infinite",
+                    animation: `proximos-jogos-marquee ${marqueeDurationSec}s linear infinite`,
                     animationPlayState: carouselHover ? "paused" : "running",
                   }
                 : {}),
@@ -603,36 +628,58 @@ export function ProximosJogosSection({
                     <div className="mb-3 text-2xl font-bold text-white">
                       {formatBigDate(f.startISO, lang)}
                     </div>
-                    {/* Times — logosOnly em 3 col: só logo (40px); 2 col: logo + nome */}
-                    <div className="mb-4 flex flex-nowrap items-center gap-1.5 min-w-0">
-                      <div className={`flex items-center min-w-0 shrink ${logosOnly ? "justify-center" : "gap-1.5"}`} title={logosOnly ? (isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName) : undefined}>
+                    {/* Times — logosOnly em 3 col: só logos; senão logo + nome em coluna (nome completo) */}
+                    {logosOnly ? (
+                      <div className="mb-4 flex flex-nowrap items-center justify-center gap-1.5">
                         <TeamLogo
                           teamName={f.homeTeamName}
                           ourTeamName={displayOurTeamName}
                           ourTeamLogoUrl={displayOurTeamLogoUrl}
                           logoUrlOverride={f.homeTeamLogoUrl}
                         />
-                        {!logosOnly && (
-                          <span className="font-semibold text-white text-xs truncate" title={isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}>
-                            {isOurTeam(f.homeTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.homeTeamName}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-zinc-500 shrink-0 text-xs">×</span>
-                      <div className={`flex items-center min-w-0 shrink ${logosOnly ? "justify-center" : "gap-1.5"}`} title={logosOnly ? (isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName) : undefined}>
+                        <span className="text-zinc-500 shrink-0 text-xs">×</span>
                         <TeamLogo
                           teamName={f.awayTeamName}
                           ourTeamName={displayOurTeamName}
                           ourTeamLogoUrl={displayOurTeamLogoUrl}
                           logoUrlOverride={f.awayTeamLogoUrl}
                         />
-                        {!logosOnly && (
-                          <span className="font-semibold text-white text-xs truncate" title={isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}>
-                            {isOurTeam(f.awayTeamName, displayOurTeamName) && displayOurTeamName ? displayOurTeamName : f.awayTeamName}
-                          </span>
-                        )}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="mb-4 flex flex-col gap-1.5">
+                        <div className="flex items-start gap-2 min-w-0">
+                          <TeamLogo
+                            teamName={f.homeTeamName}
+                            ourTeamName={displayOurTeamName}
+                            ourTeamLogoUrl={displayOurTeamLogoUrl}
+                            logoUrlOverride={f.homeTeamLogoUrl}
+                          />
+                          <span
+                            className={teamNameTextClass(
+                              resolveDisplayTeamName(f.homeTeamName, displayOurTeamName),
+                            )}
+                          >
+                            {resolveDisplayTeamName(f.homeTeamName, displayOurTeamName)}
+                          </span>
+                        </div>
+                        <span className="text-center text-[10px] text-zinc-500 leading-none">×</span>
+                        <div className="flex items-start gap-2 min-w-0">
+                          <TeamLogo
+                            teamName={f.awayTeamName}
+                            ourTeamName={displayOurTeamName}
+                            ourTeamLogoUrl={displayOurTeamLogoUrl}
+                            logoUrlOverride={f.awayTeamLogoUrl}
+                          />
+                          <span
+                            className={teamNameTextClass(
+                              resolveDisplayTeamName(f.awayTeamName, displayOurTeamName),
+                            )}
+                          >
+                            {resolveDisplayTeamName(f.awayTeamName, displayOurTeamName)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     {/* CTA + local: ambos botões quando ambas URLs existirem */}
                     <div className="flex flex-col gap-2">
                       {f.status === "LIVE" && f.watchUrl && (

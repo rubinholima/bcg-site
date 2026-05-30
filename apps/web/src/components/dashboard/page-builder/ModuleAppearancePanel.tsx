@@ -204,6 +204,30 @@ export function ModuleAppearancePanel({
           </>
         ) : null}
 
+        {(block.type === "proximos_jogos" ||
+          block.type === "proximos_eventos" ||
+          block.type === "ultimos_resultados") && (
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Velocidade do carrossel (crawl)</Label>
+            <Select
+              value={(block.config?.fixturesCarouselMarqueeSpeed as string) ?? "normal"}
+              onValueChange={(v) => updateBlockConfig(index, "fixturesCarouselMarqueeSpeed", v)}
+            >
+              <SelectTrigger className="min-h-[44px] max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="slow">Lenta</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="fast">Rápida</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Quando há mais de um jogo, o carrossel rola continuamente. Passe o mouse para pausar.
+            </p>
+          </div>
+        )}
+
         {!NO_SIZE_TYPES.has(block.type) ? (
           <div className="space-y-2 sm:col-span-2">
             <Label>Altura / espaço da seção</Label>

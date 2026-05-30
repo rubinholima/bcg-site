@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { FixtureItem } from "@/lib/fixtures-shared";
 import { fetchFixtures, type FixturesFetchContext } from "@/lib/fixtures-shared";
+import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
 import { getPublicImageUrl, isSvgUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { SmartImage } from "@/components/common/SmartImage";
@@ -508,6 +509,10 @@ export function UltimosResultadosSection({
   const cardClassName =
     `w-[340px] min-w-[340px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:w-[400px] sm:min-w-[400px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
 
+  const marqueeDurationSec = fixturesMarqueeDurationSeconds(
+    block.config?.fixturesCarouselMarqueeSpeed as string | undefined,
+  );
+
   const eventCardLogoRaw =
     fixturesContext === "event" ? (eventPageLogoUrl?.trim() || "") : "";
   const eventCardLogoSrc = eventCardLogoRaw ? getPublicImageUrl(eventCardLogoRaw) : "";
@@ -613,7 +618,7 @@ export function UltimosResultadosSection({
                 ref={carouselRef}
                 className={`flex gap-4 py-2 ${useMarquee ? "" : "overflow-x-auto overflow-y-hidden pb-2 pl-12 pr-12 sm:pl-14 sm:pr-14 scroll-smooth scrollbar-thin"}`}
                 style={{
-                  ...(useMarquee ? { width: "max-content", animation: "proximos-jogos-marquee 50s linear infinite", animationPlayState: carouselHover ? "paused" : "running" } : { scrollSnapType: "x mandatory", scrollbarWidth: "thin" }),
+                  ...(useMarquee ? { width: "max-content", animation: `proximos-jogos-marquee ${marqueeDurationSec}s linear infinite`, animationPlayState: carouselHover ? "paused" : "running" } : { scrollSnapType: "x mandatory", scrollbarWidth: "thin" }),
                 }}
                 onScroll={useMarquee ? undefined : () => {
                   const el = carouselRef.current;

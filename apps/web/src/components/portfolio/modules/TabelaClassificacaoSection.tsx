@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 import { isOurTeam } from "@/components/portfolio/FixtureTeamLogo";
 
@@ -350,6 +350,15 @@ export function TabelaClassificacaoSection({
               gradientStart={(block.config?.titleGradientStart as string)?.trim()}
               gradientEnd={(block.config?.titleGradientEnd as string)?.trim()}
               align={titleAlign ?? "left"}
+              className={
+                inSection
+                  ? is3Col
+                    ? "!mb-1.5"
+                    : density === "large"
+                      ? "!mb-4"
+                      : "!mb-2 sm:!mb-3"
+                  : "!mb-4 sm:!mb-5"
+              }
             />
           )}
 
@@ -361,45 +370,35 @@ export function TabelaClassificacaoSection({
             </div>
           ) : (
             <>
-              {/* Barra de filtros — em 3 col: fontes menores, min-w-0 para evitar overflow */}
+              {/* Barra de filtros — sem rótulo "Filtro"; selects distribuídos na largura */}
               <div
-                className={`flex min-w-0 flex-nowrap items-center justify-between gap-1 overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 ${
+                className={`flex min-w-0 flex-wrap items-center gap-2 overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 ${
                   is3Col
-                    ? "mt-2 gap-0.5 px-1.5 py-1 sm:px-2"
+                    ? "mt-1 gap-1 px-1.5 py-1 sm:px-2"
                     : inSection && (density === "minimal" || density === "compact")
                       ? density === "minimal"
-                        ? "mt-1 gap-1 px-1.5 py-1 sm:rounded-md sm:px-2"
-                        : "mt-2 gap-2 px-2 py-1.5 sm:rounded-lg sm:px-3"
+                        ? "mt-1 px-2 py-1 sm:rounded-md"
+                        : "mt-1.5 px-2.5 py-1.5 sm:rounded-lg"
                     : inSection && density === "large"
-                      ? "mt-8 gap-6 px-5 py-3.5 sm:rounded-2xl sm:px-6"
-                      : "mt-6 gap-4 px-4 py-2.5 sm:rounded-2xl sm:px-6"
+                      ? "mt-3 gap-3 px-4 py-2.5 sm:rounded-2xl sm:px-5"
+                      : inSection
+                        ? "mt-2 gap-2.5 px-3 py-2 sm:rounded-xl sm:px-4"
+                        : "mt-3 gap-3 px-4 py-2.5 sm:rounded-2xl sm:px-5"
                 }`}
               >
-                <div
-                  className={`flex shrink-0 items-center rounded-l-lg bg-zinc-800/80 ${
-                    is3Col
-                      ? "gap-0.5 px-1 py-0.5"
-                      : inSection && (density === "minimal" || density === "compact")
-                        ? density === "minimal"
-                          ? "gap-0.5 px-1 py-0.5 sm:rounded-l-sm"
-                          : "gap-1 px-1.5 py-1 sm:rounded-l-md"
-                        : "gap-1.5 px-2 py-1.5 sm:rounded-l-xl"
-                  }`}
-                >
-                  <Filter className={is3Col ? "h-3 w-3 text-white" : "h-3.5 w-3.5 text-white"} />
-                  <span className={is3Col ? "text-[8px] font-semibold uppercase tracking-wider text-white" : "text-[10px] font-semibold uppercase tracking-wider text-white sm:text-xs"}>
-                    {lang === "pt" ? "Filtro" : "Filter"}
-                  </span>
-                </div>
                 {competicoes.length > 0 && competicaoSel && (
-                  <div className="flex min-w-0 shrink items-center gap-0.5">
+                  <div className="flex min-w-[88px] flex-1 items-center gap-1.5">
                     {!is3Col && (
-                      <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
+                      <label className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
                         {lang === "pt" ? "Competições" : "Competitions"}
                       </label>
                     )}
                     <Select value={competicaoSel} onValueChange={handleCompeticaoChange}>
-                      <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[72px] min-w-0 text-[9px]" : "h-7 w-[100px] px-2 text-xs sm:w-[110px]"}`}>
+                      <SelectTrigger
+                        className={`min-w-0 flex-1 border-white/10 bg-zinc-800/60 text-white focus:ring-amber-500/30 ${
+                          is3Col ? "h-5 px-1.5 text-[9px]" : "h-7 px-2 text-xs"
+                        }`}
+                      >
                         <SelectValue placeholder={lang === "pt" ? "Campeonato" : "Competition"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -413,14 +412,18 @@ export function TabelaClassificacaoSection({
                   </div>
                 )}
                 {categorias.length > 0 && (
-                  <div className="flex min-w-0 shrink items-center gap-0.5">
+                  <div className="flex min-w-[72px] flex-1 items-center gap-1.5">
                     {!is3Col && (
-                      <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
+                      <label className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
                         {lang === "pt" ? "Categoria" : "Category"}
                       </label>
                     )}
                     <Select value={categoriaSel} onValueChange={setCategoriaSel}>
-                      <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[64px] min-w-0 text-[9px]" : "h-7 w-[90px] px-2 text-xs sm:w-[100px]"}`}>
+                      <SelectTrigger
+                        className={`min-w-0 flex-1 border-white/10 bg-zinc-800/60 text-white focus:ring-amber-500/30 ${
+                          is3Col ? "h-5 px-1.5 text-[9px]" : "h-7 px-2 text-xs"
+                        }`}
+                      >
                         <SelectValue placeholder={lang === "pt" ? "Todas" : "All"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -437,14 +440,18 @@ export function TabelaClassificacaoSection({
                   </div>
                 )}
                 {temporadas.length > 0 && (
-                  <div className="flex min-w-0 shrink items-center gap-0.5">
+                  <div className="flex min-w-[64px] flex-1 items-center gap-1.5">
                     {!is3Col && (
-                      <label className="hidden text-[10px] font-medium uppercase tracking-wider text-zinc-400 sm:inline">
+                      <label className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-zinc-400">
                         {lang === "pt" ? "Temporada" : "Season"}
                       </label>
                     )}
                     <Select value={temporadaSel} onValueChange={setTemporadaSel}>
-                      <SelectTrigger className={`border-white/10 bg-zinc-800/60 px-1.5 text-white focus:ring-amber-500/30 ${is3Col ? "h-5 w-[52px] min-w-0 text-[9px]" : "h-7 w-[70px] px-2 text-xs sm:w-[80px]"}`}>
+                      <SelectTrigger
+                        className={`min-w-0 flex-1 border-white/10 bg-zinc-800/60 text-white focus:ring-amber-500/30 ${
+                          is3Col ? "h-5 px-1.5 text-[9px]" : "h-7 px-2 text-xs"
+                        }`}
+                      >
                         <SelectValue placeholder={lang === "pt" ? "Todas" : "All"} />
                       </SelectTrigger>
                       <SelectContent>
@@ -463,14 +470,8 @@ export function TabelaClassificacaoSection({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className={`flex shrink-0 items-center rounded-r-lg bg-zinc-800/80 text-amber-400 transition-colors hover:bg-zinc-700/80 hover:text-amber-300 ${
-                    is3Col
-                      ? "gap-0.5 px-1 py-0.5"
-                      : inSection && (density === "minimal" || density === "compact")
-                        ? density === "minimal"
-                          ? "gap-0.5 px-1 py-0.5 sm:rounded-r-sm"
-                          : "gap-1 px-1.5 py-1 sm:rounded-r-md"
-                        : "gap-1.5 px-2 py-1.5 sm:rounded-r-xl"
+                  className={`flex shrink-0 items-center rounded-lg bg-zinc-800/80 text-amber-400 transition-colors hover:bg-zinc-700/80 hover:text-amber-300 ${
+                    is3Col ? "gap-0.5 px-1.5 py-0.5" : "gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5"
                   }`}
                   aria-label={lang === "pt" ? "Resetar filtros" : "Reset filters"}
                 >
@@ -485,16 +486,16 @@ export function TabelaClassificacaoSection({
               <div
                 className={`w-full rounded-xl border border-white/10 bg-zinc-900/60 ${
                   is3Col
-                    ? "mt-2 max-h-[260px] overflow-y-auto overflow-x-hidden rounded-lg"
+                    ? "mt-1.5 max-h-[300px] overflow-y-auto overflow-x-hidden rounded-lg"
                     : inSection
                       ? density === "minimal"
-                        ? "mt-1 max-h-[180px] overflow-auto rounded-lg"
+                        ? "mt-1 max-h-[250px] overflow-auto rounded-lg"
                         : density === "compact"
-                          ? "mt-2 max-h-[200px] overflow-auto rounded-lg"
+                          ? "mt-1.5 max-h-[270px] overflow-auto rounded-lg"
                           : density === "large"
-                            ? "mt-8 max-h-[260px] overflow-auto"
-                            : "mt-6 max-h-[220px] overflow-auto"
-                      : "mt-6 overflow-x-auto"
+                            ? "mt-3 max-h-[300px] overflow-auto"
+                            : "mt-2 max-h-[290px] overflow-auto"
+                      : "mt-3 overflow-x-auto"
                 }`}
               >
                 <table className={`w-full text-left ${is3Col ? "min-w-0 table-fixed text-xs" : inSection ? "min-w-0 table-fixed" : "min-w-[800px]"} ${!is3Col && (inSection && (density === "minimal" || density === "compact") ? "text-xs" : "text-sm")}`}>

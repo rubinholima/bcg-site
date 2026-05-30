@@ -384,6 +384,8 @@ export interface HomeBlockConfig {
   proximosJogosPaddingBottom?: "compact" | "normal" | "large";
   /** Próximos Jogos: carrossel full-bleed (encosta nas bordas do box azul, sem padding lateral) */
   fullBleedCarousel?: boolean;
+  /** Próximos Jogos / Últimos Resultados: velocidade do crawl do carrossel (marquee) */
+  fixturesCarouselMarqueeSpeed?: "slow" | "normal" | "fast";
   /** Próximos Jogos: fonte dos dados (manual = lista editada; sofascore = auto pelo tenant.sofascoreTeamId) */
   proximosJogosDataSource?: "manual" | "sofascore";
   /** Próximos Jogos: lista manual (quando dataSource=manual) */
