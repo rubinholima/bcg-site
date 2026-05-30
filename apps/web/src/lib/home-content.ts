@@ -334,7 +334,7 @@ export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
   "ultimosResultadosPaddingTop", "ultimosResultadosPaddingBottom", "ultimosResultadosMaxItems", "resultadosManuais", "resultadosDetalhes",
   "noticiasDataSource", "noticiasRssUrl", "noticiasManualItems", "noticiasMaxItems", "noticiasPaddingTop", "noticiasPaddingBottom",
   "galeriaDataSource", "galeriaRssUrl", "galeriaManualItems", "galeriaMaxItems", "galeriaPaddingTop", "galeriaPaddingBottom",
-  "hinoLetraPt", "hinoLetraEn", "hinoCifraPt", "hinoCifraEn", "hinoPartituraUrl", "hinoAudioUrl", "hinoDefaultTab", "hinoAccentColor", "hinoPlayerLabelPt", "hinoPlayerLabelEn", "hinoPaddingTop", "hinoPaddingBottom",
+  "hinoLetraPt", "hinoLetraEn", "hinoCompositorPt", "hinoCompositorEn", "hinoCifraPt", "hinoCifraEn", "hinoPartituraUrl", "hinoChordsEmbedUrl", "hinoEmbedDarkFilter", "hinoAudioUrl", "hinoDefaultTab", "hinoAccentColor", "hinoPlayerLabelPt", "hinoPlayerLabelEn", "hinoPaddingTop", "hinoPaddingBottom",
   "imprensaReleasePt", "imprensaReleaseEn", "imprensaUltimoJogoTituloPt", "imprensaUltimoJogoTituloEn", "imprensaUltimoJogoReleasePt", "imprensaUltimoJogoReleaseEn", "imprensaUltimoJogoData", "imprensaPressReleases", "imprensaHistoriaTituloPt", "imprensaHistoriaTituloEn", "imprensaHistoriaPt", "imprensaHistoriaEn", "imprensaContatoTextoPt", "imprensaContatoTextoEn", "imprensaCredencialNotifyEmail", "imprensaContatoEmail", "imprensaContatoTelefone", "imprensaContatoWhatsapp", "imprensaLogoUrl", "imprensaManualMarcaUrl", "imprensaHinoAudioUrl", "imprensaCondutaSections", "imprensaAccentColor", "imprensaPaddingTop", "imprensaPaddingBottom", "imprensaDisplayMode", "imprensaShowInMenu", "imprensaMenuLabelPt", "imprensaMenuLabelEn", "imprensaRequireAccessCode",
   "patrocinadoresTitleLogo", "patrocinadoresManualItems", "patrocinadoresPaddingTop", "patrocinadoresPaddingBottom",
   "timesCategoriasCategories", "timesCategoriasSpreadsheetUrl", "timesCategoriasSheetGid", "timesCategoriasPaddingTop", "timesCategoriasPaddingBottom",
@@ -532,9 +532,13 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.hinoDefaultTab = "letra";
     config.hinoLetraPt = "";
     config.hinoLetraEn = "";
+    config.hinoCompositorPt = "";
+    config.hinoCompositorEn = "";
     config.hinoCifraPt = "";
     config.hinoCifraEn = "";
     config.hinoPartituraUrl = "";
+    config.hinoChordsEmbedUrl = "";
+    config.hinoEmbedDarkFilter = "true";
     config.hinoAudioUrl = "";
     config.hinoPlayerLabelPt = "Ouça o hino oficial";
     config.hinoPlayerLabelEn = "Listen to the official anthem";

@@ -19,7 +19,7 @@ import {
   VolumeX,
 } from "lucide-react";
 
-type HinoTab = "letra" | "cifra" | "partitura";
+type HinoTab = "letra" | "cifra" | "cifraEmbed" | "partitura";
 
 function resolveAudioUrl(raw: string | undefined): string {
   if (!raw?.trim()) return "";
@@ -51,6 +51,50 @@ function CifraContent({ text }: { text: string }) {
         </span>
       ))}
     </pre>
+  );
+}
+
+function ChordsEmbedFrame({
+  url,
+  lang,
+  accent,
+  darkFilter,
+}: {
+  url: string;
+  lang: "pt" | "en";
+  accent: string;
+  darkFilter: boolean;
+}) {
+  const embedUrl = url.trim();
+  if (!embedUrl) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
+        <iframe
+          src={embedUrl}
+          title={lang === "pt" ? "Cifra interativa do hino" : "Interactive anthem chord chart"}
+          className="h-[min(520px,65vh)] w-full border-0 bg-zinc-950"
+          style={
+            darkFilter
+              ? { filter: "invert(0.93) hue-rotate(180deg)", backgroundColor: "#09090b" }
+              : { backgroundColor: "#09090b" }
+          }
+          allow="fullscreen"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
+      <a
+        href={embedUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex text-sm font-medium hover:underline"
+        style={{ color: accent }}
+      >
+        {lang === "pt" ? "Abrir cifra em tela cheia →" : "Open chord chart fullscreen →"}
+      </a>
+    </div>
   );
 }
 
@@ -230,8 +274,12 @@ export function HinoClubeSection({
   const [tab, setTab] = useState<HinoTab>(defaultTab);
 
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
+  const compositor = (lang === "pt" ? block.config?.hinoCompositorPt : block.config?.hinoCompositorEn) as string;
   const letra = (lang === "pt" ? block.config?.hinoLetraPt : block.config?.hinoLetraEn) as string;
   const cifra = (lang === "pt" ? block.config?.hinoCifraPt : block.config?.hinoCifraEn) as string;
+  const chordsEmbedUrl = (block.config?.hinoChordsEmbedUrl as string)?.trim();
+  const embedDarkFilter =
+    block.config?.hinoEmbedDarkFilter !== false && block.config?.hinoEmbedDarkFilter !== "false";
   const partituraUrl = (block.config?.hinoPartituraUrl as string)?.trim();
   const audioUrl = resolveAudioUrl(block.config?.hinoAudioUrl as string | undefined);
   const clubName = page.tenant?.name;
@@ -242,8 +290,14 @@ export function HinoClubeSection({
 
   const tabs = useMemo(() => {
     const list: { id: HinoTab; label: string; icon: typeof ScrollText; show: boolean }[] = [
-      { id: "letra", label: lang === "pt" ? "Letra" : "Lyrics", icon: ScrollText, show: Boolean(letra?.trim()) },
+      { id: "letra", label: lang === "pt" ? "Letra" : "Lyrics", icon: ScrollText, show: Boolean(letra?.trim() || compositor?.trim()) },
       { id: "cifra", label: lang === "pt" ? "Cifra" : "Chords", icon: Guitar, show: Boolean(cifra?.trim()) },
+      {
+        id: "cifraEmbed",
+        label: lang === "pt" ? "Cifra interativa" : "Interactive",
+        icon: Guitar,
+        show: Boolean(chordsEmbedUrl),
+      },
       {
         id: "partitura",
         label: lang === "pt" ? "Partitura" : "Sheet music",
@@ -252,7 +306,7 @@ export function HinoClubeSection({
       },
     ];
     return list.filter((t) => t.show);
-  }, [letra, cifra, partituraUrl, lang]);
+  }, [letra, compositor, cifra, chordsEmbedUrl, partituraUrl, lang]);
 
   useEffect(() => {
     if (tabs.length > 0 && !tabs.some((t) => t.id === tab)) {
@@ -368,14 +422,51 @@ export function HinoClubeSection({
                       </button>
                     ))}
                   </div>
-                  <div className="max-h-[min(420px,55vh)] overflow-y-auto p-4 sm:p-6">
-                    {tab === "letra" && letra?.trim() ? (
-                      <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-100 sm:text-lg">{letra.trim()}</p>
+                  <div
+                    className={`overflow-y-auto p-4 sm:p-6 ${
+                      tab === "cifraEmbed" ? "max-h-none" : "max-h-[min(420px,55vh)]"
+                    }`}
+                  >
+                    {tab === "letra" ? (
+                      <div className="space-y-4">
+                        {compositor?.trim() ? (
+                          <p className="text-sm text-zinc-400">
+                            <span className="font-semibold uppercase tracking-wider text-zinc-500">
+                              {lang === "pt" ? "Compositor" : "Composer"}
+                            </span>
+                            <span className="mt-1 block text-base text-zinc-100">{compositor.trim()}</span>
+                          </p>
+                        ) : null}
+                        {letra?.trim() ? (
+                          <div>
+                            {compositor?.trim() ? (
+                              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                                {lang === "pt" ? "Letra" : "Lyrics"}
+                              </p>
+                            ) : null}
+                            <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-100 sm:text-lg">
+                              {letra.trim()}
+                            </p>
+                          </div>
+                        ) : !compositor?.trim() ? (
+                          <p className="text-sm text-zinc-500">
+                            {lang === "pt" ? "Adicione compositor e letra no editor." : "Add composer and lyrics in the editor."}
+                          </p>
+                        ) : null}
+                      </div>
                     ) : null}
                     {tab === "cifra" && cifra?.trim() ? <CifraContent text={cifra.trim()} /> : null}
+                    {tab === "cifraEmbed" && chordsEmbedUrl ? (
+                      <ChordsEmbedFrame
+                        url={chordsEmbedUrl}
+                        lang={lang}
+                        accent={accent}
+                        darkFilter={embedDarkFilter}
+                      />
+                    ) : null}
                     {tab === "partitura" && partituraUrl ? (
                       <div className="space-y-3">
-                        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-white/10 bg-white">
+                        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
                           <SmartImage
                             src={getPublicImageUrl(partituraUrl)}
                             alt={lang === "pt" ? "Partitura do hino" : "Anthem sheet music"}

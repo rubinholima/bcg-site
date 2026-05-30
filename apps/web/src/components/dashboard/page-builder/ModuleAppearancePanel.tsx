@@ -206,7 +206,8 @@ export function ModuleAppearancePanel({
 
         {(block.type === "proximos_jogos" ||
           block.type === "proximos_eventos" ||
-          block.type === "ultimos_resultados") && (
+          block.type === "ultimos_resultados" ||
+          block.type === "times_categorias") && (
           <div className="space-y-2 sm:col-span-2">
             <Label>Velocidade do carrossel (crawl)</Label>
             <Select

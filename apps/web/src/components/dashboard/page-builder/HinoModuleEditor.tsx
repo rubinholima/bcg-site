@@ -74,6 +74,25 @@ export function HinoModuleEditor({
           onGradientEnd={(v) => updateBlockConfig(index, "titleGradientEnd", v || undefined)}
         />
 
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label>Compositor (PT)</Label>
+            <Input
+              placeholder="Nome do compositor"
+              value={(block.config?.hinoCompositorPt as string) ?? ""}
+              onChange={(e) => updateBlockConfig(index, "hinoCompositorPt", e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Composer (EN)</Label>
+            <Input
+              placeholder="Composer name"
+              value={(block.config?.hinoCompositorEn as string) ?? ""}
+              onChange={(e) => updateBlockConfig(index, "hinoCompositorEn", e.target.value)}
+            />
+          </div>
+        </div>
+
         <AudioMediaPicker
           value={(block.config?.hinoAudioUrl as string) ?? ""}
           onChange={(url) => updateBlockConfig(index, "hinoAudioUrl", url || undefined)}
@@ -138,6 +157,35 @@ export function HinoModuleEditor({
           </div>
         </div>
 
+        <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+          <Label className="flex items-center gap-1.5">
+            <Guitar className="h-3.5 w-3.5" />
+            Cifra interativa (embed — ex.: Moises)
+          </Label>
+          <Input
+            placeholder="https://extensions-prod.moises.ai/shared-chords/…"
+            value={(block.config?.hinoChordsEmbedUrl as string) ?? ""}
+            onChange={(e) => updateBlockConfig(index, "hinoChordsEmbedUrl", e.target.value || undefined)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Cole o link compartilhado da cifra. Aparece em uma aba no site; use o fundo escuro abaixo para combinar com o tema do clube.
+          </p>
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-input"
+              checked={
+                block.config?.hinoEmbedDarkFilter !== false &&
+                block.config?.hinoEmbedDarkFilter !== "false"
+              }
+              onChange={(e) =>
+                updateBlockConfigValue(index, "hinoEmbedDarkFilter", e.target.checked ? "true" : "false")
+              }
+            />
+            Fundo escuro no embed (recomendado — evita o branco da página externa)
+          </label>
+        </div>
+
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
             <Music className="h-3.5 w-3.5" />
@@ -170,7 +218,8 @@ export function HinoModuleEditor({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="letra">Letra</SelectItem>
-                <SelectItem value="cifra">Cifra</SelectItem>
+                <SelectItem value="cifra">Cifra (texto)</SelectItem>
+                <SelectItem value="cifraEmbed">Cifra interativa</SelectItem>
                 <SelectItem value="partitura">Partitura</SelectItem>
               </SelectContent>
             </Select>

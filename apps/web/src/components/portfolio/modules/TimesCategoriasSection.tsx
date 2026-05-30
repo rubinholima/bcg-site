@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
 
 // Meses abreviados em português
 const MONTHS_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -88,6 +89,16 @@ function isYouTubeUrl(url: string): boolean {
   return /youtube\.com|youtu\.be/.test(url);
 }
 
+function playerNameTextClass(name: string): string {
+  const len = name.length;
+  const size =
+    len <= 14 ? "text-xs" :
+    len <= 20 ? "text-[11px]" :
+    len <= 28 ? "text-[10px]" :
+    "text-[9px]";
+  return `${size} font-semibold uppercase tracking-wide text-white text-center leading-snug`;
+}
+
 function PlayerCard({
   player,
   onClick,
@@ -97,8 +108,9 @@ function PlayerCard({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="group relative h-full w-full overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-zinc-900/80 to-zinc-950/80 transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/10 hover:scale-[1.02]"
+      className="group relative w-[132px] min-w-[132px] shrink-0 overflow-hidden rounded-xl border border-white/10 bg-zinc-950 transition-all duration-300 hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/10 sm:w-[148px] sm:min-w-[148px]"
     >
       <div className="relative aspect-[3/4] w-full overflow-hidden">
         {player.photoUrl ? (
@@ -107,29 +119,79 @@ function PlayerCard({
             alt={player.name}
             fill
             className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="148px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-zinc-800">
-            <Shirt className="h-16 w-16 text-zinc-600" />
+            <Shirt className="h-12 w-12 text-zinc-600" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-60" />
-        {player.jerseyNumber && (
-          <div className="absolute top-2 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/90 text-lg font-bold text-zinc-950 shadow-lg">
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent opacity-50" />
+        {player.jerseyNumber != null && (
+          <div className="absolute top-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/90 text-sm font-bold text-zinc-950 shadow-lg">
             {player.jerseyNumber}
           </div>
         )}
       </div>
-      <div className="p-4 min-h-[4.5rem]">
-        <h3 className="font-semibold text-white line-clamp-1">{player.name}</h3>
-        {player.position && (
-          <p className="mt-1 text-xs text-amber-400/80 break-words line-clamp-2" title={getPositionLabel(player.position)}>
-            {getPositionLabel(player.position)}
-          </p>
-        )}
+      <div className="flex min-h-[3rem] items-center justify-center bg-black px-2 py-2">
+        <span className={playerNameTextClass(player.name)}>{player.name}</span>
       </div>
     </button>
+  );
+}
+
+function PlayersMarqueeRow({
+  players,
+  durationSec,
+  lang,
+  onPlayerClick,
+}: {
+  players: PlayerItem[];
+  durationSec: number;
+  lang: "pt" | "en";
+  onPlayerClick: (player: PlayerItem) => void;
+}) {
+  const [paused, setPaused] = useState(false);
+  const useMarquee = players.length > 1;
+  const MARQUEE_COPIES = 3;
+  const items = useMarquee
+    ? Array.from({ length: MARQUEE_COPIES }, () => players).flat()
+    : players;
+
+  return (
+    <div
+      className={`w-full ${useMarquee ? "overflow-hidden" : ""}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      title={
+        useMarquee
+          ? lang === "pt"
+            ? "Passar o mouse pausa o carrossel"
+            : "Hover to pause carousel"
+          : undefined
+      }
+    >
+      <div
+        className="flex gap-3 py-1 sm:gap-4"
+        style={{
+          width: useMarquee ? "max-content" : undefined,
+          ...(useMarquee
+            ? {
+                animation: `proximos-jogos-marquee ${durationSec}s linear infinite`,
+                animationPlayState: paused ? "paused" : "running",
+              }
+            : {}),
+        }}
+      >
+        {items.map((player, idx) => (
+          <PlayerCard
+            key={useMarquee ? `${player.id ?? player.name}-${idx}` : player.id ?? idx}
+            player={player}
+            onClick={() => onPlayerClick(player)}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -615,6 +677,9 @@ export function TimesCategoriasSection({
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
   const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
+  const marqueeDurationSec = fixturesMarqueeDurationSeconds(
+    block.config?.fixturesCarouselMarqueeSpeed as string | undefined,
+  );
 
   const [categories, setCategories] = useState<TeamCategory[]>([]);
   const hasTenant = !!(tenantId?.trim() || slug?.trim());
@@ -769,13 +834,14 @@ export function TimesCategoriasSection({
               if (players.length === 0) return null;
 
               return (
-                <div key={category.id} className="space-y-6 w-full">
+                <div key={category.id} className="space-y-4 w-full">
                   <h3 className="w-full text-left text-xl font-bold text-white sm:text-2xl">{category.displayName}</h3>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    {players.map((player, idx) => (
-                      <PlayerCard key={player.id ?? idx} player={player} onClick={() => handlePlayerClick(player)} />
-                    ))}
-                  </div>
+                  <PlayersMarqueeRow
+                    players={players}
+                    durationSec={marqueeDurationSec}
+                    lang={lang}
+                    onPlayerClick={handlePlayerClick}
+                  />
                 </div>
               );
             })}
