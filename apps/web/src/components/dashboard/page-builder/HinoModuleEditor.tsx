@@ -45,7 +45,9 @@ export function HinoModuleEditor({
       </summary>
       <div className="space-y-5 border-t border-border px-3 py-4">
         <p className="text-xs text-muted-foreground">
-          Player com vinil + karaoke (letra linha a linha). À direita: cifra interativa. Para sincronia precisa, use timestamps LRC na letra (ex.: [0:12.50] texto).
+          Player com vinil + karaoke centralizado. Sincronia perfeita: timestamps LRC na letra ([0:12.50] texto).
+          Ferramentas gratuitas: audacity + exportar, ou apps &quot;LRC Generator&quot; / &quot;Quick LRC&quot; no celular.
+          Se a letra estiver atrasada, aumente &quot;Adiantar letra&quot;.
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -104,13 +106,28 @@ export function HinoModuleEditor({
             <Input
               type="number"
               min={0}
-              step={1}
-              placeholder="8"
+              step={0.5}
+              placeholder="3"
               value={(block.config?.hinoKaraokeIntroSec as string) ?? ""}
               onChange={(e) => updateBlockConfig(index, "hinoKaraokeIntroSec", e.target.value || undefined)}
             />
             <p className="text-xs text-muted-foreground">
-              Tempo antes da 1ª linha (sem timestamps LRC). Ajuste se a letra entrar cedo ou tarde.
+              Silêncio/instrumental antes da 1ª linha (sem LRC). Padrão: 3s.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Adiantar letra (segundos)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={10}
+              step={0.5}
+              placeholder="2.5"
+              value={(block.config?.hinoKaraokeLeadSec as string) ?? ""}
+              onChange={(e) => updateBlockConfig(index, "hinoKaraokeLeadSec", e.target.value || undefined)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Letra atrasada? Aumente (ex.: 3 ou 4). Entrou cedo demais? Diminua ou zere.
             </p>
           </div>
         </div>
@@ -123,7 +140,7 @@ export function HinoModuleEditor({
             </Label>
             <textarea
               rows={8}
-              placeholder={"[0:08.00] Salve, tricolor campeão\n[0:15.50] De glórias mil…\n\n(ou letra simples, sem timestamps)"}
+              placeholder={"[0:08.00] Salve, tricolor campeão\n[0:15.50] De glórias mil…\n\nFormato LRC: [min:seg] texto em cada linha"}
               value={(block.config?.hinoLetraPt as string) ?? ""}
               onChange={(e) => updateBlockConfig(index, "hinoLetraPt", e.target.value)}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"

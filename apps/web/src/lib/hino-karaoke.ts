@@ -51,43 +51,46 @@ function singableLines(lines: HinoLyricLine[]): HinoLyricLine[] {
   return lines.filter((l) => !l.isSection);
 }
 
-/** Índice da linha ativa com timestamps LRC. */
-export function activeLineIndexFromLrc(lines: HinoLyricLine[], currentSec: number): number {
+/** Índice da linha ativa com timestamps LRC (+ adiantamento opcional). */
+export function activeLineIndexFromLrc(lines: HinoLyricLine[], syncSec: number): number {
   const timed = lines.filter((l) => !l.isSection && l.startSec != null);
   if (timed.length === 0) return -1;
-  if (currentSec < (timed[0]!.startSec ?? 0)) return -1;
+  if (syncSec < (timed[0]!.startSec ?? 0)) return -1;
 
   let active = -1;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!;
     if (line.isSection || line.startSec == null) continue;
-    if (currentSec >= line.startSec) active = i;
+    if (syncSec >= line.startSec) active = i;
     else break;
   }
   return active;
 }
 
-/** Índice estimado por peso de caracteres + intro instrumental. */
+/** Índice estimado por peso de palavras + intro + adiantamento. */
 export function activeLineIndexEstimated(
   lines: HinoLyricLine[],
-  currentSec: number,
+  syncSec: number,
   durationSec: number,
   introSec: number,
 ): number {
-  if (durationSec <= 0 || currentSec < introSec) return -1;
+  if (durationSec <= 0 || syncSec < introSec) return -1;
 
   const singable = singableLines(lines);
   if (singable.length === 0) return -1;
 
-  const usable = Math.max(0.5, durationSec - introSec);
-  const t = Math.min(usable, currentSec - introSec);
-  const weights = singable.map((l) => Math.max(l.text.replace(/\s/g, "").length, 6));
+  const outroReserve = Math.min(durationSec * 0.08, 6);
+  const usable = Math.max(0.5, durationSec - introSec - outroReserve);
+  const t = Math.min(usable, syncSec - introSec);
+  const weights = singable.map((l) => {
+    const words = l.text.split(/\s+/).filter(Boolean).length;
+    return Math.max(words, 2);
+  });
   const totalWeight = weights.reduce((a, b) => a + b, 0);
 
   let elapsed = 0;
   for (let i = 0; i < singable.length; i++) {
-    const slice = (weights[i]! / totalWeight) * usable;
-    elapsed += slice;
+    elapsed += (weights[i]! / totalWeight) * usable;
     if (t < elapsed) {
       return lines.indexOf(singable[i]!);
     }
@@ -101,8 +104,32 @@ export function resolveActiveLineIndex(
   durationSec: number,
   hasTimestamps: boolean,
   introSec: number,
+  leadSec = 0,
 ): number {
   if (lines.length === 0) return -1;
-  if (hasTimestamps) return activeLineIndexFromLrc(lines, currentSec);
-  return activeLineIndexEstimated(lines, currentSec, durationSec, introSec);
+  const syncSec = Math.max(0, currentSec + leadSec);
+  if (hasTimestamps) return activeLineIndexFromLrc(lines, syncSec);
+  return activeLineIndexEstimated(lines, syncSec, durationSec, introSec);
+}
+
+/** Defaults quando o editor não define valores. */
+export const HINO_KARAOKE_DEFAULT_INTRO_SEC = 3;
+export const HINO_KARAOKE_DEFAULT_LEAD_SEC = 2.5;
+
+export function parseHinoKaraokeIntroSec(raw: unknown): number {
+  if (typeof raw === "number" && raw >= 0) return raw;
+  if (typeof raw === "string") {
+    const n = Number(raw);
+    if (!Number.isNaN(n) && n >= 0) return n;
+  }
+  return HINO_KARAOKE_DEFAULT_INTRO_SEC;
+}
+
+export function parseHinoKaraokeLeadSec(raw: unknown): number {
+  if (typeof raw === "number") return Math.max(0, Math.min(10, raw));
+  if (typeof raw === "string") {
+    const n = Number(raw);
+    if (!Number.isNaN(n)) return Math.max(0, Math.min(10, n));
+  }
+  return HINO_KARAOKE_DEFAULT_LEAD_SEC;
 }

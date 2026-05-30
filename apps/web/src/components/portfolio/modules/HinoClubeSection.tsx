@@ -8,9 +8,17 @@ import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import {
   parseHinoLyrics,
+  parseHinoKaraokeIntroSec,
+  parseHinoKaraokeLeadSec,
   resolveActiveLineIndex,
   type HinoLyricLine,
 } from "@/lib/hino-karaoke";
+import {
+  HinoIntroPlaying,
+  HinoIntroPulse,
+  HinoMusicalStage,
+  hinoLyricFont,
+} from "@/components/portfolio/modules/HinoMusicalStage";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { SmartImage } from "@/components/common/SmartImage";
@@ -161,46 +169,27 @@ function KaraokeLyrics({
   if (lines.length === 0) return null;
 
   if (!playing && activeIndex < 0) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 py-10 text-center">
-        <p className="max-w-xs text-sm leading-relaxed text-zinc-500">
-          {lang === "pt"
-            ? "Toque em play — a letra entra linha a linha, no ritmo da música."
-            : "Press play — lyrics appear line by line, in sync with the music."}
-        </p>
-      </div>
-    );
+    return <HinoIntroPulse accent={accent} lang={lang} />;
   }
 
   if (playing && activeIndex < 0) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 py-10">
-        <div className="flex gap-1.5" aria-hidden>
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="inline-block h-2 w-2 rounded-full bg-amber-400/80 animate-pulse"
-              style={{ animationDelay: `${i * 0.35}s` }}
-            />
-          ))}
-        </div>
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-          {lang === "pt" ? "Introdução…" : "Intro…"}
-        </p>
-      </div>
-    );
+    return <HinoIntroPlaying accent={accent} lang={lang} />;
   }
 
   const maxVisible = playing ? activeIndex : Math.max(0, activeIndex);
+  const spotlightStart = Math.max(0, maxVisible - 2);
 
   return (
     <div
       ref={scrollRef}
-      className="h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-3 py-4 sm:px-4"
+      className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 py-6 sm:px-6"
     >
-      <div className="flex min-h-full flex-col justify-end gap-2.5 py-4 sm:gap-3 sm:py-6">
+      <HinoMusicalStage playing={playing} accent={accent} intense={playing && activeIndex >= 0} />
+      <div
+        className={`relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center gap-3 text-center sm:gap-4 ${hinoLyricFont.className}`}
+      >
         {lines.map((line, idx) => {
-          if (idx > maxVisible) return null;
+          if (idx < spotlightStart || idx > maxVisible) return null;
 
           const isActive = idx === activeIndex && playing;
           const isPast = idx < activeIndex;
@@ -212,18 +201,37 @@ function KaraokeLyrics({
               ref={(el) => {
                 lineRefs.current[idx] = el;
               }}
-              className={`text-center transition-all duration-300 ${
+              className={`w-full transition-all duration-500 ${
                 isSection
-                  ? "pt-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500 sm:text-xs"
+                  ? "text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-500 sm:text-xs"
                   : isActive
-                    ? "scale-[1.02] text-lg font-bold sm:text-xl"
+                    ? "animate-hino-lyric-pop text-2xl font-bold leading-tight sm:text-3xl md:text-[2rem]"
                     : isPast
-                      ? "text-sm text-zinc-500/80"
-                      : "text-sm text-zinc-400"
+                      ? "text-sm leading-relaxed text-zinc-500/75 sm:text-base"
+                      : "text-base leading-relaxed text-zinc-400/90 sm:text-lg"
               }`}
-              style={isActive && !isSection ? { color: accent, textShadow: `0 0 24px ${accent}55` } : undefined}
+              style={
+                isActive && !isSection
+                  ? {
+                      color: accent,
+                      textShadow: `0 0 40px ${accent}88, 0 2px 24px rgba(0,0,0,0.4)`,
+                    }
+                  : undefined
+              }
             >
-              {line.text}
+              {isActive && !isSection ? (
+                <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  <span className="text-lg opacity-80 sm:text-xl" aria-hidden>
+                    ♪
+                  </span>
+                  <span>{line.text}</span>
+                  <span className="text-lg opacity-80 sm:text-xl" aria-hidden>
+                    ♪
+                  </span>
+                </span>
+              ) : (
+                line.text
+              )}
             </p>
           );
         })}
@@ -241,6 +249,7 @@ function HinoPlayerColumn({
   compositor,
   lang,
   introSec,
+  leadSec,
 }: {
   src: string;
   clubName?: string;
@@ -250,6 +259,7 @@ function HinoPlayerColumn({
   compositor: string;
   lang: "pt" | "en";
   introSec: number;
+  leadSec: number;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const karaokeScrollRef = useRef<HTMLDivElement>(null);
@@ -264,8 +274,8 @@ function HinoPlayerColumn({
   const hasKaraoke = lyricLines.some((l) => !l.isSection);
 
   const activeLineIndex = useMemo(
-    () => resolveActiveLineIndex(lyricLines, current, duration, hasTimestamps, introSec),
-    [current, duration, hasTimestamps, introSec, lyricLines],
+    () => resolveActiveLineIndex(lyricLines, current, duration, hasTimestamps, introSec, leadSec),
+    [current, duration, hasTimestamps, introSec, leadSec, lyricLines],
   );
 
   useEffect(() => {
@@ -305,17 +315,6 @@ function HinoPlayerColumn({
     setDuration(0);
     setReady(false);
   }, [src]);
-
-  useEffect(() => {
-    if (!playing || activeLineIndex < 0) return;
-    const line = lineRefs.current[activeLineIndex];
-    const container = karaokeScrollRef.current;
-    if (!line || !container) return;
-    const lineTop = line.offsetTop;
-    const lineHeight = line.offsetHeight;
-    const target = lineTop - container.clientHeight * 0.65 + lineHeight;
-    container.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
-  }, [activeLineIndex, playing]);
 
   const togglePlay = useCallback(async () => {
     const el = audioRef.current;
@@ -427,7 +426,8 @@ function HinoPlayerColumn({
       </div>
 
       {hasKaraoke ? (
-        <KaraokeLyrics
+        <div className="relative min-h-0 flex-1">
+          <KaraokeLyrics
           lines={lyricLines}
           activeIndex={activeLineIndex}
           accent={accent}
@@ -436,6 +436,7 @@ function HinoPlayerColumn({
           playing={playing}
           lang={lang}
         />
+        </div>
       ) : null}
     </div>
   );
@@ -476,15 +477,8 @@ export function HinoClubeSection({
     (page.content?.theme?.accentColor as string)?.trim() ||
     "#fbbf24";
 
-  const introSec = (() => {
-    const v = block.config?.hinoKaraokeIntroSec;
-    if (typeof v === "number" && v >= 0) return v;
-    if (typeof v === "string") {
-      const n = Number(v);
-      if (!Number.isNaN(n) && n >= 0) return n;
-    }
-    return 8;
-  })();
+  const introSec = parseHinoKaraokeIntroSec(block.config?.hinoKaraokeIntroSec);
+  const leadSec = parseHinoKaraokeLeadSec(block.config?.hinoKaraokeLeadSec);
 
   const karaokeOnLeft = Boolean(audioUrl && letra?.trim());
 
@@ -627,6 +621,7 @@ export function HinoClubeSection({
                 compositor={compositor?.trim() ?? ""}
                 lang={lang}
                 introSec={introSec}
+                leadSec={leadSec}
               />
             ) : (
               <div

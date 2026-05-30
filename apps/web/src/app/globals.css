@@ -567,3 +567,95 @@ dialog.bcg-modal[open] {
 dialog.bcg-modal::backdrop {
   background: rgba(0, 0, 0, 0.6);
 }
+
+/* Hino do clube — notas flutuantes e karaoke */
+@keyframes hino-note-rise {
+  0% {
+    transform: translateY(10vh) translateX(0) rotate(-8deg) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(-95vh) translateX(var(--hino-drift, 0)) rotate(18deg) scale(1.05);
+    opacity: 0;
+  }
+}
+
+@keyframes hino-note-idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-10px) rotate(4deg);
+    opacity: 0.65;
+  }
+}
+
+@keyframes hino-clef-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.15));
+    opacity: 0.88;
+  }
+  50% {
+    filter: drop-shadow(0 0 22px rgba(251, 191, 36, 0.45));
+    opacity: 1;
+  }
+}
+
+@keyframes hino-eq-bar {
+  0%,
+  100% {
+    height: 0.35rem;
+    opacity: 0.45;
+  }
+  50% {
+    height: 1.35rem;
+    opacity: 1;
+  }
+}
+
+@keyframes hino-lyric-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-hino-note-rise {
+  animation: hino-note-rise linear infinite;
+}
+
+.animate-hino-note-idle {
+  animation: hino-note-idle 3.2s ease-in-out infinite;
+}
+
+.animate-hino-clef-glow {
+  animation: hino-clef-glow 2.8s ease-in-out infinite;
+}
+
+.animate-hino-eq-bar {
+  animation: hino-eq-bar 0.85s ease-in-out infinite;
+}
+
+.animate-hino-lyric-pop {
+  animation: hino-lyric-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hino-note-rise,
+  .animate-hino-note-idle,
+  .animate-hino-clef-glow,
+  .animate-hino-eq-bar,
+  .animate-hino-lyric-pop {
+    animation: none !important;
+  }
+}
