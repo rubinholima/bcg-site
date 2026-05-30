@@ -110,15 +110,16 @@ function resolveDisplayTeamName(
     : teamName;
 }
 
-/** Fonte menor conforme o tamanho do nome — evita cortar com reticências. */
-function teamNameTextClass(name: string): string {
-  const len = name.length;
+/** Fonte menor conforme o nome mais longo do confronto — mesma linha, sem logos. */
+function matchupNamesTextClass(homeName: string, awayName: string): string {
+  const len = Math.max(homeName.length, awayName.length);
   const size =
-    len <= 18 ? "text-xs" :
-    len <= 26 ? "text-[11px]" :
-    len <= 34 ? "text-[10px]" :
+    len <= 14 ? "text-sm" :
+    len <= 20 ? "text-xs" :
+    len <= 28 ? "text-[11px]" :
+    len <= 36 ? "text-[10px]" :
     "text-[9px]";
-  return `${size} font-semibold text-white leading-snug break-words min-w-0 flex-1`;
+  return `${size} font-semibold text-white leading-tight break-words min-w-0 flex-1 text-center`;
 }
 
 const EXTERNAL_LOGO_EXTENSIONS = [".png", ".webp", ".svg"] as const;
@@ -313,9 +314,6 @@ export function ProximosJogosSection({
 
   const displayOurTeamName = tenantBySlug?.name ?? ourTeamName ?? undefined;
   const displayOurTeamLogoUrl = tenantBySlug?.logoUrl ?? ourTeamLogoUrl ?? undefined;
-
-  /** Em seção de 3 colunas: só logos, sem nome do time. */
-  const logosOnly = Boolean(inSection && sectionColumns === 3);
 
   const title =
     (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
@@ -628,58 +626,26 @@ export function ProximosJogosSection({
                     <div className="mb-3 text-2xl font-bold text-white">
                       {formatBigDate(f.startISO, lang)}
                     </div>
-                    {/* Times — logosOnly em 3 col: só logos; senão logo + nome em coluna (nome completo) */}
-                    {logosOnly ? (
-                      <div className="mb-4 flex flex-nowrap items-center justify-center gap-1.5">
-                        <TeamLogo
-                          teamName={f.homeTeamName}
-                          ourTeamName={displayOurTeamName}
-                          ourTeamLogoUrl={displayOurTeamLogoUrl}
-                          logoUrlOverride={f.homeTeamLogoUrl}
-                        />
-                        <span className="text-zinc-500 shrink-0 text-xs">×</span>
-                        <TeamLogo
-                          teamName={f.awayTeamName}
-                          ourTeamName={displayOurTeamName}
-                          ourTeamLogoUrl={displayOurTeamLogoUrl}
-                          logoUrlOverride={f.awayTeamLogoUrl}
-                        />
-                      </div>
-                    ) : (
-                      <div className="mb-4 flex flex-col gap-1.5">
-                        <div className="flex items-start gap-2 min-w-0">
-                          <TeamLogo
-                            teamName={f.homeTeamName}
-                            ourTeamName={displayOurTeamName}
-                            ourTeamLogoUrl={displayOurTeamLogoUrl}
-                            logoUrlOverride={f.homeTeamLogoUrl}
-                          />
-                          <span
-                            className={teamNameTextClass(
-                              resolveDisplayTeamName(f.homeTeamName, displayOurTeamName),
-                            )}
-                          >
-                            {resolveDisplayTeamName(f.homeTeamName, displayOurTeamName)}
-                          </span>
-                        </div>
-                        <span className="text-center text-[10px] text-zinc-500 leading-none">×</span>
-                        <div className="flex items-start gap-2 min-w-0">
-                          <TeamLogo
-                            teamName={f.awayTeamName}
-                            ourTeamName={displayOurTeamName}
-                            ourTeamLogoUrl={displayOurTeamLogoUrl}
-                            logoUrlOverride={f.awayTeamLogoUrl}
-                          />
-                          <span
-                            className={teamNameTextClass(
-                              resolveDisplayTeamName(f.awayTeamName, displayOurTeamName),
-                            )}
-                          >
-                            {resolveDisplayTeamName(f.awayTeamName, displayOurTeamName)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    {/* Times — só nomes na mesma linha (sem logos) */}
+                    <div className="mb-4 flex min-w-0 items-center gap-1.5">
+                      <span
+                        className={matchupNamesTextClass(
+                          resolveDisplayTeamName(f.homeTeamName, displayOurTeamName),
+                          resolveDisplayTeamName(f.awayTeamName, displayOurTeamName),
+                        )}
+                      >
+                        {resolveDisplayTeamName(f.homeTeamName, displayOurTeamName)}
+                      </span>
+                      <span className="shrink-0 text-[10px] text-zinc-500">×</span>
+                      <span
+                        className={matchupNamesTextClass(
+                          resolveDisplayTeamName(f.homeTeamName, displayOurTeamName),
+                          resolveDisplayTeamName(f.awayTeamName, displayOurTeamName),
+                        )}
+                      >
+                        {resolveDisplayTeamName(f.awayTeamName, displayOurTeamName)}
+                      </span>
+                    </div>
                     {/* CTA + local: ambos botões quando ambas URLs existirem */}
                     <div className="flex flex-col gap-2">
                       {f.status === "LIVE" && f.watchUrl && (
