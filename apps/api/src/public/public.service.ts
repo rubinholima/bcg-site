@@ -53,12 +53,28 @@ function inferCategoryFromCompetition(competitionName: string): string {
   if (n.includes('sub-20') || n.includes('sub20') || n.includes('u-20') || n.includes('u20')) return 'sub20';
   if (n.includes('sub-17') || n.includes('sub17') || n.includes('u-17') || n.includes('u17')) return 'sub17';
   if (n.includes('sub-15') || n.includes('sub15') || n.includes('u-15') || n.includes('u15')) return 'sub15';
+  if (n.includes('sub-14') || n.includes('sub14') || n.includes('u-14') || n.includes('u14')) return 'sub14';
   if (n.includes('sub-13') || n.includes('sub13') || n.includes('u-13') || n.includes('u13')) return 'sub13';
   if (n.includes('sub-11') || n.includes('sub11') || n.includes('u-11') || n.includes('u11')) return 'sub11';
   if (n.includes('sub-9') || n.includes('sub9') || n.includes('u-9') || n.includes('u9')) return 'sub9';
   if (n.includes('feminin')) return 'feminino';
+  if (n.includes('módulo ii') || n.includes('modulo ii') || n.includes('modulo_ii')) return 'modulo_ii';
   return 'principal';
 }
+
+/** Alinhado a apps/web/src/lib/fixture-categories.ts — categorias de atletas na página pública. */
+const PLAYER_CATEGORIES = [
+  { value: 'principal', labelPT: 'Principal', labelEN: 'First Team' },
+  { value: 'modulo_ii', labelPT: 'Módulo II', labelEN: 'Module II' },
+  { value: 'sub20', labelPT: 'Sub-20', labelEN: 'U-20' },
+  { value: 'sub17', labelPT: 'Sub-17', labelEN: 'U-17' },
+  { value: 'sub15', labelPT: 'Sub-15', labelEN: 'U-15' },
+  { value: 'sub14', labelPT: 'Sub-14', labelEN: 'U-14' },
+  { value: 'sub13', labelPT: 'Sub-13', labelEN: 'U-13' },
+  { value: 'sub11', labelPT: 'Sub-11', labelEN: 'U-11' },
+  { value: 'sub9', labelPT: 'Sub-9', labelEN: 'U-9' },
+  { value: 'feminino', labelPT: 'Feminino', labelEN: "Women's" },
+] as const;
 
 @Injectable()
 export class PublicService {
@@ -259,16 +275,7 @@ export class PublicService {
       return teamPage !== false;
     });
 
-    const FIXTURE_CATEGORIES = [
-      { value: 'principal', labelPT: 'Principal', labelEN: 'First Team' },
-      { value: 'sub20', labelPT: 'Sub-20', labelEN: 'U-20' },
-      { value: 'sub17', labelPT: 'Sub-17', labelEN: 'U-17' },
-      { value: 'sub15', labelPT: 'Sub-15', labelEN: 'U-15' },
-      { value: 'sub13', labelPT: 'Sub-13', labelEN: 'U-13' },
-      { value: 'sub11', labelPT: 'Sub-11', labelEN: 'U-11' },
-      { value: 'sub9', labelPT: 'Sub-9', labelEN: 'U-9' },
-      { value: 'feminino', labelPT: 'Feminino', labelEN: "Women's" },
-    ] as const;
+    const FIXTURE_CATEGORIES = PLAYER_CATEGORIES;
 
     const byCategory = new Map<string, typeof visible>();
     for (const p of visible) {
@@ -278,38 +285,54 @@ export class PublicService {
       byCategory.set(cat, list);
     }
 
-    const categories = FIXTURE_CATEGORIES.map((c) => ({
+    const mapPlayer = (pl: (typeof visible)[number]) => ({
+      id: pl.id,
+      name: pl.name,
+      photoUrl: pl.photoUrl,
+      birthDate: pl.birthDate,
+      nationality: pl.nationality,
+      height: pl.height,
+      weight: pl.weight,
+      preferredFoot: pl.preferredFoot,
+      jerseyNumber: pl.jerseyNumber,
+      position: pl.position,
+      fieldPosition: (pl.fieldPositionX != null || pl.fieldPositionY != null)
+        ? { x: pl.fieldPositionX ?? 50, y: pl.fieldPositionY ?? 50 }
+        : undefined,
+      currentTeam: pl.currentTeam,
+      previousTeams: pl.previousTeams,
+      seasonHistory: pl.seasonHistory,
+      socialMedia: pl.socialMedia,
+      matchesPlayed: pl.matchesPlayed,
+      goals: pl.goals,
+      assists: pl.assists,
+      yellowCards: pl.yellowCards,
+      redCards: pl.redCards,
+      highlights: Array.isArray(pl.highlights) ? (pl.highlights as string[]) : null,
+      bioPT: pl.bioPT,
+      bioEN: pl.bioEN,
+    });
+
+    const knownIds = new Set<string>(FIXTURE_CATEGORIES.map((c) => c.value));
+    const categoriesFromKnown = FIXTURE_CATEGORIES.map((c) => ({
       id: c.value,
       namePT: c.labelPT,
       nameEN: c.labelEN,
-      players: (byCategory.get(c.value) ?? []).map((pl) => ({
-        id: pl.id,
-        name: pl.name,
-        photoUrl: pl.photoUrl,
-        birthDate: pl.birthDate,
-        nationality: pl.nationality,
-        height: pl.height,
-        weight: pl.weight,
-        preferredFoot: pl.preferredFoot,
-        jerseyNumber: pl.jerseyNumber,
-        position: pl.position,
-        fieldPosition: (pl.fieldPositionX != null || pl.fieldPositionY != null)
-          ? { x: pl.fieldPositionX ?? 50, y: pl.fieldPositionY ?? 50 }
-          : undefined,
-        currentTeam: pl.currentTeam,
-        previousTeams: pl.previousTeams,
-        seasonHistory: pl.seasonHistory,
-        socialMedia: pl.socialMedia,
-        matchesPlayed: pl.matchesPlayed,
-        goals: pl.goals,
-        assists: pl.assists,
-        yellowCards: pl.yellowCards,
-        redCards: pl.redCards,
-        highlights: Array.isArray(pl.highlights) ? (pl.highlights as string[]) : null,
-        bioPT: pl.bioPT,
-        bioEN: pl.bioEN,
-      })),
+      players: (byCategory.get(c.value) ?? []).map(mapPlayer),
     }));
+
+    const categoriesFromUnknown = [...byCategory.entries()]
+      .filter(([catId, list]) => !knownIds.has(catId) && list.length > 0)
+      .map(([catId, list]) => ({
+        id: catId,
+        namePT: catId,
+        nameEN: catId,
+        players: list.map(mapPlayer),
+      }));
+
+    const categories = [...categoriesFromKnown, ...categoriesFromUnknown].filter(
+      (c) => c.players.length > 0,
+    );
 
     return { categories };
   }

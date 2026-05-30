@@ -621,7 +621,20 @@ export function TimesCategoriasSection({
   const [loading, setLoading] = useState(hasTenant);
   const [selectedPlayer, setSelectedPlayer] = useState<PlayerItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | "all">("principal");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | "all">("all");
+
+  const applyLoadedCategories = (cats: TeamCategory[]) => {
+    setCategories(cats);
+    if (cats.length === 0) {
+      setSelectedCategoryId("all");
+      return;
+    }
+    if (cats.length === 1) {
+      setSelectedCategoryId(cats[0]?.id ?? "all");
+      return;
+    }
+    setSelectedCategoryId("all");
+  };
 
   // Dados do cadastro — usa tenantId (tenant da página) quando disponível; senão slug
   useEffect(() => {
@@ -631,11 +644,12 @@ export function TimesCategoriasSection({
         .then((res) => (res.ok ? res.json() : { categories: [] }))
         .then((data: { categories?: TeamCategory[] }) => {
           const cats = Array.isArray(data?.categories) ? data.categories : [];
-          setCategories(cats);
-          const hasPrincipal = cats.some((c) => (c as { id?: string }).id === "principal");
-          setSelectedCategoryId(hasPrincipal ? "principal" : (cats[0]?.id ?? "all"));
+          applyLoadedCategories(cats);
         })
-        .catch(() => setCategories([]))
+        .catch(() => {
+          setCategories([]);
+          setSelectedCategoryId("all");
+        })
         .finally(() => setLoading(false));
     } else if (slug?.trim()) {
       setLoading(true);
@@ -643,14 +657,16 @@ export function TimesCategoriasSection({
         .then((res) => (res.ok ? res.json() : { categories: [] }))
         .then((data: { categories?: TeamCategory[] }) => {
           const cats = Array.isArray(data?.categories) ? data.categories : [];
-          setCategories(cats);
-          const hasPrincipal = cats.some((c) => (c as { id?: string }).id === "principal");
-          setSelectedCategoryId(hasPrincipal ? "principal" : (cats[0]?.id ?? "all"));
+          applyLoadedCategories(cats);
         })
-        .catch(() => setCategories([]))
+        .catch(() => {
+          setCategories([]);
+          setSelectedCategoryId("all");
+        })
         .finally(() => setLoading(false));
     } else {
       setCategories([]);
+      setSelectedCategoryId("all");
       setLoading(false);
     }
   }, [tenantId, slug]);
@@ -720,8 +736,8 @@ export function TimesCategoriasSection({
           {!loading && !hasPlayers && (
             <p className="text-sm text-zinc-400 py-8">
               {lang === "pt"
-                ? "Nenhum atleta visível. Cadastre em Futebol → Atletas (filtrando por este clube), use Sync da planilha para importar, e marque cada atleta como visível (ícone do olho)."
-                : "No visible players. Add them in Players (filter by this club), use Sync to import from sheet, and mark each as visible (eye icon)."}
+                ? "Nenhum atleta visível. Cadastre em Futebol → Atletas."
+                : "No visible players. Add them in Football → Players."}
             </p>
           )}
           
