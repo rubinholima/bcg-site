@@ -58,7 +58,7 @@ export function NumerosSection({
   const [inView, setInView] = useState(false);
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const items = (Array.isArray(block.config?.numerosItems) ? block.config.numerosItems : []) as NumeroItem[];
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   return (
     <AnimateInView>

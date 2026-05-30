@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { PageTheme } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
-import { MODULE_SECTION_INNER_CLASS } from "@/lib/module-section-container";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { resolveFontFamily } from "@/lib/page-fonts";
 import { SmartImage } from "@/components/common/SmartImage";
 
@@ -70,7 +70,7 @@ export function PublicFooter({
     fontFamily: fontFamily || undefined,
   };
 
-  const innerClass = `${MODULE_SECTION_INNER_CLASS} flex flex-col items-center justify-between gap-4 sm:flex-row`;
+  const innerClass = `${moduleSectionContainerClass({ fullWidth: contentWidth === "full" })} flex flex-col items-center justify-between gap-4 sm:flex-row`;
 
   return (
     <footer className={`relative border-t border-white/5 px-4 py-8 sm:px-6 ${className ?? ""}`} style={style}>

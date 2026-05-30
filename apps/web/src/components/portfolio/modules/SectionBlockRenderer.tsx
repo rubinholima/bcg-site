@@ -121,8 +121,13 @@ export function SectionBlockRenderer({
     }
     return 0.75;
   })();
+  /** Respeita "Largura do conteúdo (box ou full width)" da seção. */
+  const sectionContentWidth = block.config?.contentWidth as "box" | "full" | undefined;
+  const themeContentWidth = page.content?.theme?.contentWidth as "box" | "full" | undefined;
+  const sectionFullWidth =
+    sectionContentWidth === "full" || (sectionContentWidth !== "box" && themeContentWidth === "full");
 
-  const sectionWrapperClass = moduleSectionContainerClass();
+  const sectionWrapperClass = moduleSectionContainerClass({ fullWidth: sectionFullWidth });
 
   const gridColsClass =
     columns === 2

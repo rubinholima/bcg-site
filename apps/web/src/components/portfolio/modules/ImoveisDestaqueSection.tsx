@@ -37,7 +37,7 @@ export function ImoveisDestaqueSection({
   const items = (Array.isArray(block.config?.imoveisDestaqueItems)
     ? block.config.imoveisDestaqueItems
     : []) as ImovelItem[];
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   return (
     <AnimateInView>

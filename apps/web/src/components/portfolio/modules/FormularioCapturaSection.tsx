@@ -28,7 +28,7 @@ export function FormularioCapturaSection({
     ? (block.config?.formularioCapturaTitlePt as string)
     : (block.config?.formularioCapturaTitleEn as string)) || (lang === "pt" ? "Entre em contato" : "Get in touch");
   const endpoint = (block.config?.formularioCapturaEndpoint as string)?.trim() || "/api/public/lead";
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

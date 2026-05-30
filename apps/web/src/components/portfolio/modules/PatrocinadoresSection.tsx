@@ -110,7 +110,7 @@ export function PatrocinadoresSection({
 
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   const displayItems = items.filter((i) => i.logoUrl?.trim());
 

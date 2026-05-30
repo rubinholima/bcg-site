@@ -677,7 +677,7 @@ export function TimesCategoriasSection({
 
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
   const marqueeDurationSec = fixturesMarqueeDurationSeconds(
     block.config?.fixturesCarouselMarqueeSpeed as string | undefined,
   );

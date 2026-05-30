@@ -57,7 +57,7 @@ export function ComoFuncionaSection({
   const body = (lang === "pt" ? block.config?.bodyPt : block.config?.bodyEn) as string;
   const bullets = (lang === "pt" ? block.config?.comoFuncionaBulletsPt : block.config?.comoFuncionaBulletsEn) ?? [];
   const icons = (Array.isArray(block.config?.comoFuncionaIcons) ? block.config.comoFuncionaIcons : []) as string[];
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   const bulletsList = Array.isArray(bullets) ? bullets.filter((b) => (b ?? "").trim()) : [];
 

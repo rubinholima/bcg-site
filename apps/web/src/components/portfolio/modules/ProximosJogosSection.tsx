@@ -464,7 +464,7 @@ export function ProximosJogosSection({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <div className={moduleSectionContainerClass()}>
+      <div className={moduleSectionContainerClass({ fullWidth })}>
         {showTitle && title && (
           <SectionTitle
             title={title}

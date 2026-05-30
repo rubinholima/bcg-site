@@ -83,7 +83,7 @@ export function GaleriaEventosSection({
           className="relative py-12 md:py-16"
           style={{ backgroundColor: bgColor }}
         >
-          <div className={moduleSectionContainerClass()}>
+          <div className={moduleSectionContainerClass({ fullWidth })}>
             <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin" />
               <span>Carregando galeria…</span>
@@ -117,7 +117,7 @@ export function GaleriaEventosSection({
             />
           </>
         )}
-        <div className={moduleSectionContainerClass({ inSection })}>
+        <div className={moduleSectionContainerClass({ inSection, fullWidth })}>
           {showTitle && title && (
             <div className="mb-8">
               <SectionTitle

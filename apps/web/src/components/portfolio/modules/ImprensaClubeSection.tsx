@@ -68,7 +68,7 @@ export function ImprensaClubeSection({
           </>
         ) : null}
         <div
-          className={moduleSectionContainerClass({ inSection })}
+          className={moduleSectionContainerClass({ inSection, fullWidth })}
         >
           {showTitle && title?.trim() ? (
             <SectionTitle

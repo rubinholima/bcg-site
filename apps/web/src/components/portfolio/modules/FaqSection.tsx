@@ -33,7 +33,7 @@ export function FaqSection({
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const items = (Array.isArray(block.config?.faqItems) ? block.config.faqItems : []) as FaqItem[];
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   const filtered = items.filter((i) => (i?.questionPt ?? i?.questionEn ?? "").trim());
 

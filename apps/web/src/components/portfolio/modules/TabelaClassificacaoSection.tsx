@@ -303,7 +303,7 @@ export function TabelaClassificacaoSection({
     ? ((block.config?.titlePt as string)?.trim() || "Classificação")
     : ((block.config?.titleEn as string)?.trim() || "Standings");
 
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   /** sectionSize (minimal/compact/normal/large) — só afeta quando inSection. Minimal = máximo compacto. */
   const sectionSize = (block.config?.sectionSize as "minimal" | "compact" | "normal" | "large") || "normal";

@@ -90,7 +90,7 @@ export function EventosSection({
   const title = blockTitle(block, DEFAULT_TITLE[lang], lang);
   const subtext = blockBody(block, DEFAULT_SUBTEXT[lang], lang);
   const viewLabel = VIEW_LABEL[lang];
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   return (
     <section

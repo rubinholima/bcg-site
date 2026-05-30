@@ -61,7 +61,7 @@ export function DiferenciaisSection({
   const items = (Array.isArray(block.config?.diferenciaisItems)
     ? block.config.diferenciaisItems
     : []) as DiferencialItem[];
-  const containerClass = moduleSectionContainerClass();
+  const containerClass = moduleSectionContainerClass({ fullWidth });
 
   return (
     <AnimateInView>

@@ -45,7 +45,7 @@ export function HinoModuleEditor({
       </summary>
       <div className="space-y-5 border-t border-border px-3 py-4">
         <p className="text-xs text-muted-foreground">
-          Player com vinil animado + abas para letra, cifra (acordes entre colchetes, ex.: [Am] [G]) e partitura em imagem.
+          Player com vinil + karaoke (letra linha a linha). À direita: cifra interativa. Para sincronia precisa, use timestamps LRC na letra (ex.: [0:12.50] texto).
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -100,13 +100,30 @@ export function HinoModuleEditor({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
+            <Label>Intro instrumental (segundos)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              placeholder="8"
+              value={(block.config?.hinoKaraokeIntroSec as string) ?? ""}
+              onChange={(e) => updateBlockConfig(index, "hinoKaraokeIntroSec", e.target.value || undefined)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Tempo antes da 1ª linha (sem timestamps LRC). Ajuste se a letra entrar cedo ou tarde.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
             <Label className="flex items-center gap-1.5">
               <ScrollText className="h-3.5 w-3.5" />
               Letra (PT)
             </Label>
             <textarea
               rows={8}
-              placeholder={"Salve, tricolor campeão\nDe glórias mil…"}
+              placeholder={"[0:08.00] Salve, tricolor campeão\n[0:15.50] De glórias mil…\n\n(ou letra simples, sem timestamps)"}
               value={(block.config?.hinoLetraPt as string) ?? ""}
               onChange={(e) => updateBlockConfig(index, "hinoLetraPt", e.target.value)}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
