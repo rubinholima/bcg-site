@@ -10,13 +10,14 @@ import {
   parseHinoLyrics,
   parseHinoKaraokeIntroSec,
   parseHinoKaraokeLeadSec,
+  parseHinoKaraokeRestartSec,
   resolveActiveLineIndex,
   type HinoLyricLine,
 } from "@/lib/hino-karaoke";
 import {
   HinoIntroPlaying,
   HinoIntroPulse,
-  HinoMusicalStage,
+  HinoLyricsBackdrop,
   hinoLyricFont,
 } from "@/components/portfolio/modules/HinoMusicalStage";
 import { AnimateInView } from "@/components/home/AnimateInView";
@@ -28,6 +29,8 @@ import {
   Mic2,
   Pause,
   Play,
+  RotateCcw,
+  RotateCw,
   ScrollText,
   Volume2,
   VolumeX,
@@ -177,23 +180,23 @@ function KaraokeLyrics({
   }
 
   const maxVisible = playing ? activeIndex : Math.max(0, activeIndex);
-  const spotlightStart = Math.max(0, maxVisible - 2);
+  const prevIndex = maxVisible > 0 ? maxVisible - 1 : -1;
 
   return (
     <div
       ref={scrollRef}
-      className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 py-6 sm:px-6"
+      className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-transparent px-4 py-6 sm:px-6"
     >
-      <HinoMusicalStage playing={playing} accent={accent} intense={playing && activeIndex >= 0} />
+      <HinoLyricsBackdrop accent={accent} />
       <div
-        className={`relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center gap-3 text-center sm:gap-4 ${hinoLyricFont.className}`}
+        className={`relative z-10 mx-auto flex w-full max-w-lg flex-col items-center justify-center gap-4 text-center ${hinoLyricFont.className}`}
       >
         {lines.map((line, idx) => {
-          if (idx < spotlightStart || idx > maxVisible) return null;
+          if (line.isSection) return null;
+          if (idx !== maxVisible && idx !== prevIndex) return null;
 
-          const isActive = idx === activeIndex && playing;
+          const isActive = idx === activeIndex;
           const isPast = idx < activeIndex;
-          const isSection = line.isSection;
 
           return (
             <p
@@ -202,39 +205,170 @@ function KaraokeLyrics({
                 lineRefs.current[idx] = el;
               }}
               className={`w-full transition-all duration-500 ${
-                isSection
-                  ? "text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-500 sm:text-xs"
-                  : isActive
-                    ? "animate-hino-lyric-pop text-2xl font-bold leading-tight sm:text-3xl md:text-[2rem]"
-                    : isPast
-                      ? "text-sm leading-relaxed text-zinc-500/75 sm:text-base"
-                      : "text-base leading-relaxed text-zinc-400/90 sm:text-lg"
+                isActive
+                  ? "animate-hino-lyric-pop text-2xl font-bold leading-snug sm:text-3xl"
+                  : isPast
+                    ? "text-sm leading-relaxed text-zinc-600/80 sm:text-base"
+                    : "text-base text-zinc-500/70 sm:text-lg"
               }`}
               style={
-                isActive && !isSection
+                isActive
                   ? {
                       color: accent,
-                      textShadow: `0 0 40px ${accent}88, 0 2px 24px rgba(0,0,0,0.4)`,
+                      textShadow: `0 0 36px ${accent}77`,
                     }
                   : undefined
               }
             >
-              {isActive && !isSection ? (
-                <span className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-                  <span className="text-lg opacity-80 sm:text-xl" aria-hidden>
-                    ♪
-                  </span>
-                  <span>{line.text}</span>
-                  <span className="text-lg opacity-80 sm:text-xl" aria-hidden>
-                    ♪
-                  </span>
-                </span>
-              ) : (
-                line.text
-              )}
+              {line.text}
             </p>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+const SKIP_SECONDS = 10;
+
+function HinoTransportBar({
+  playing,
+  muted,
+  current,
+  duration,
+  ready,
+  progress,
+  accent,
+  lang,
+  onTogglePlay,
+  onToggleMute,
+  onSeekRatio,
+  onSkip,
+}: {
+  playing: boolean;
+  muted: boolean;
+  current: number;
+  duration: number;
+  ready: boolean;
+  progress: number;
+  accent: string;
+  lang: "pt" | "en";
+  onTogglePlay: () => void;
+  onToggleMute: () => void;
+  onSeekRatio: (ratio: number) => void;
+  onSkip: (deltaSec: number) => void;
+}) {
+  const barRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+
+  const seekFromClientX = useCallback(
+    (clientX: number) => {
+      const bar = barRef.current;
+      if (!bar || !duration) return;
+      const rect = bar.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+      onSeekRatio(ratio);
+    },
+    [duration, onSeekRatio],
+  );
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e: PointerEvent) => seekFromClientX(e.clientX);
+    const onUp = () => setDragging(false);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [dragging, seekFromClientX]);
+
+  return (
+    <div className="relative z-20 shrink-0 border-t border-white/10 bg-zinc-950/90 px-4 py-3 backdrop-blur-md sm:px-5 sm:py-4">
+      <div className="mb-3 flex items-center justify-between text-[11px] tabular-nums text-zinc-400 sm:text-xs">
+        <span>{formatTime(current)}</span>
+        <span className="hidden sm:inline">
+          {lang === "pt" ? "Arraste a barra para avançar ou voltar" : "Drag the bar to seek"}
+        </span>
+        <span>{ready ? formatTime(duration) : "—"}</span>
+      </div>
+
+      <div
+        ref={barRef}
+        role="slider"
+        tabIndex={0}
+        aria-label={lang === "pt" ? "Posição na música" : "Track position"}
+        aria-valuemin={0}
+        aria-valuemax={duration}
+        aria-valuenow={current}
+        className="relative mb-4 flex min-h-[44px] cursor-pointer touch-none items-center py-3"
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          setDragging(true);
+          seekFromClientX(e.clientX);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") onSkip(SKIP_SECONDS);
+          if (e.key === "ArrowLeft") onSkip(-SKIP_SECONDS);
+        }}
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-white/15" />
+        <div
+          className="pointer-events-none absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full transition-[width] duration-75"
+          style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${accent}, #ffffff)` }}
+        />
+        <div
+          className={`pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-lg transition-transform ${
+            dragging ? "scale-110" : "group-hover:scale-105"
+          }`}
+          style={{
+            left: `${progress}%`,
+            backgroundColor: accent,
+            boxShadow: `0 0 12px ${accent}88`,
+          }}
+        />
+      </div>
+
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          onClick={() => onSkip(-SKIP_SECONDS)}
+          disabled={!ready}
+          className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/15 bg-white/5 text-zinc-200 transition hover:bg-white/10 disabled:opacity-40"
+          aria-label={lang === "pt" ? "Voltar 10 segundos" : "Back 10 seconds"}
+        >
+          <RotateCcw className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={onTogglePlay}
+          className="flex h-14 w-14 min-w-[56px] items-center justify-center rounded-full text-black shadow-lg transition-transform hover:scale-105 active:scale-95"
+          style={{ background: `linear-gradient(135deg, ${accent}, #fcd34d)` }}
+          aria-label={playing ? (lang === "pt" ? "Pausar" : "Pause") : lang === "pt" ? "Tocar hino" : "Play anthem"}
+        >
+          {playing ? <Pause className="h-7 w-7 fill-current" /> : <Play className="h-7 w-7 fill-current pl-0.5" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => onSkip(SKIP_SECONDS)}
+          disabled={!ready}
+          className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/15 bg-white/5 text-zinc-200 transition hover:bg-white/10 disabled:opacity-40"
+          aria-label={lang === "pt" ? "Avançar 10 segundos" : "Forward 10 seconds"}
+        >
+          <RotateCw className="h-5 w-5" />
+        </button>
+        <button
+          type="button"
+          onClick={onToggleMute}
+          className="ml-1 flex h-11 w-11 min-w-[44px] items-center justify-center rounded-full border border-white/15 bg-white/5 text-zinc-300 hover:bg-white/10 sm:ml-2"
+          aria-label={muted ? (lang === "pt" ? "Ativar som" : "Unmute") : lang === "pt" ? "Silenciar" : "Mute"}
+        >
+          {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        </button>
       </div>
     </div>
   );
@@ -250,6 +384,7 @@ function HinoPlayerColumn({
   lang,
   introSec,
   leadSec,
+  restartAtSec,
 }: {
   src: string;
   clubName?: string;
@@ -260,6 +395,7 @@ function HinoPlayerColumn({
   lang: "pt" | "en";
   introSec: number;
   leadSec: number;
+  restartAtSec: number | null;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const karaokeScrollRef = useRef<HTMLDivElement>(null);
@@ -271,11 +407,20 @@ function HinoPlayerColumn({
   const [ready, setReady] = useState(false);
 
   const { lines: lyricLines, hasTimestamps } = useMemo(() => parseHinoLyrics(letra), [letra]);
-  const hasKaraoke = lyricLines.some((l) => !l.isSection);
+  const hasKaraoke = lyricLines.some((l) => !l.isSection && l.text.trim());
 
   const activeLineIndex = useMemo(
-    () => resolveActiveLineIndex(lyricLines, current, duration, hasTimestamps, introSec, leadSec),
-    [current, duration, hasTimestamps, introSec, leadSec, lyricLines],
+    () =>
+      resolveActiveLineIndex(
+        lyricLines,
+        current,
+        duration,
+        hasTimestamps,
+        introSec,
+        leadSec,
+        restartAtSec,
+      ),
+    [current, duration, hasTimestamps, introSec, leadSec, restartAtSec, lyricLines],
   );
 
   useEffect(() => {
@@ -287,13 +432,19 @@ function HinoPlayerColumn({
       setReady(true);
     };
     const onEnd = () => setPlaying(false);
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
     el.addEventListener("timeupdate", onTime);
     el.addEventListener("loadedmetadata", onMeta);
     el.addEventListener("ended", onEnd);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
     return () => {
       el.removeEventListener("timeupdate", onTime);
       el.removeEventListener("loadedmetadata", onMeta);
       el.removeEventListener("ended", onEnd);
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onPause);
     };
   }, [src]);
 
@@ -332,16 +483,27 @@ function HinoPlayerColumn({
     }
   }, [playing]);
 
-  const progress = duration > 0 ? (current / duration) * 100 : 0;
+  const seekToRatio = useCallback(
+    (ratio: number) => {
+      const el = audioRef.current;
+      if (!el || !duration) return;
+      el.currentTime = ratio * duration;
+      setCurrent(el.currentTime);
+    },
+    [duration],
+  );
 
-  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = audioRef.current;
-    if (!el || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
-    el.currentTime = ratio * duration;
-    setCurrent(el.currentTime);
-  };
+  const skip = useCallback(
+    (deltaSec: number) => {
+      const el = audioRef.current;
+      if (!el || !duration) return;
+      el.currentTime = Math.min(duration, Math.max(0, el.currentTime + deltaSec));
+      setCurrent(el.currentTime);
+    },
+    [duration],
+  );
+
+  const progress = duration > 0 ? (current / duration) * 100 : 0;
 
   return (
     <div
@@ -357,70 +519,19 @@ function HinoPlayerColumn({
       <div className={`relative shrink-0 ${hasKaraoke ? "border-b border-white/10 p-4 sm:p-5" : "p-5 sm:p-6"}`}>
         <div className={`flex ${hasKaraoke ? "flex-row items-center gap-4" : "flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6"}`}>
           <VinylDisc spinning={playing} compact={hasKaraoke} />
-          <div className="min-w-0 flex-1 space-y-3 text-center sm:text-left">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/90 sm:text-xs">{subtitle}</p>
-              {clubName ? (
-                <p className={`mt-0.5 font-bold text-white ${hasKaraoke ? "truncate text-base sm:text-lg" : "truncate text-lg sm:text-xl"}`}>
-                  {clubName}
-                </p>
-              ) : null}
-              {compositor?.trim() && hasKaraoke ? (
-                <p className="mt-1 truncate text-xs text-zinc-500">
-                  {lang === "pt" ? "Compositor:" : "Composer:"}{" "}
-                  <span className="text-zinc-300">{compositor.trim()}</span>
-                </p>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <div
-                role="slider"
-                tabIndex={0}
-                aria-valuemin={0}
-                aria-valuemax={duration}
-                aria-valuenow={current}
-                className="group relative h-2 cursor-pointer rounded-full bg-white/10"
-                onClick={seek}
-                onKeyDown={(e) => {
-                  const el = audioRef.current;
-                  if (!el) return;
-                  if (e.key === "ArrowRight") el.currentTime = Math.min(duration, el.currentTime + 5);
-                  if (e.key === "ArrowLeft") el.currentTime = Math.max(0, el.currentTime - 5);
-                }}
-              >
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full transition-all"
-                  style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${accent}, #ffffff)` }}
-                />
-              </div>
-              <div className="flex justify-between text-[11px] tabular-nums text-zinc-500">
-                <span>{formatTime(current)}</span>
-                <span>{ready ? formatTime(duration) : "—"}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-center gap-3 sm:justify-start">
-              <button
-                type="button"
-                onClick={() => void togglePlay()}
-                className={`flex items-center justify-center rounded-full text-black shadow-lg transition-transform hover:scale-105 active:scale-95 ${hasKaraoke ? "h-12 w-12" : "h-14 w-14"}`}
-                style={{ background: `linear-gradient(135deg, ${accent}, #fcd34d)` }}
-                aria-label={playing ? "Pausar" : "Tocar hino"}
-              >
-                {playing ? (
-                  <Pause className={`fill-current ${hasKaraoke ? "h-6 w-6" : "h-7 w-7"}`} />
-                ) : (
-                  <Play className={`fill-current pl-0.5 ${hasKaraoke ? "h-6 w-6" : "h-7 w-7"}`} />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setMuted((m) => !m)}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-zinc-300 hover:bg-white/10"
-                aria-label={muted ? "Ativar som" : "Silenciar"}
-              >
-                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-              </button>
-            </div>
+          <div className="min-w-0 flex-1 space-y-1 text-center sm:text-left">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/90 sm:text-xs">{subtitle}</p>
+            {clubName ? (
+              <p className={`font-bold text-white ${hasKaraoke ? "truncate text-base sm:text-lg" : "truncate text-lg sm:text-xl"}`}>
+                {clubName}
+              </p>
+            ) : null}
+            {compositor?.trim() && hasKaraoke ? (
+              <p className="truncate text-xs text-zinc-500">
+                {lang === "pt" ? "Compositor:" : "Composer:"}{" "}
+                <span className="text-zinc-300">{compositor.trim()}</span>
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -428,16 +539,33 @@ function HinoPlayerColumn({
       {hasKaraoke ? (
         <div className="relative min-h-0 flex-1">
           <KaraokeLyrics
-          lines={lyricLines}
-          activeIndex={activeLineIndex}
-          accent={accent}
-          scrollRef={karaokeScrollRef}
-          lineRefs={lineRefs}
-          playing={playing}
-          lang={lang}
-        />
+            lines={lyricLines}
+            activeIndex={activeLineIndex}
+            accent={accent}
+            scrollRef={karaokeScrollRef}
+            lineRefs={lineRefs}
+            playing={playing}
+            lang={lang}
+          />
         </div>
-      ) : null}
+      ) : (
+        <div className="min-h-0 flex-1" />
+      )}
+
+      <HinoTransportBar
+        playing={playing}
+        muted={muted}
+        current={current}
+        duration={duration}
+        ready={ready}
+        progress={progress}
+        accent={accent}
+        lang={lang}
+        onTogglePlay={() => void togglePlay()}
+        onToggleMute={() => setMuted((m) => !m)}
+        onSeekRatio={seekToRatio}
+        onSkip={skip}
+      />
     </div>
   );
 }
@@ -478,7 +606,15 @@ export function HinoClubeSection({
     "#fbbf24";
 
   const introSec = parseHinoKaraokeIntroSec(block.config?.hinoKaraokeIntroSec);
-  const leadSec = parseHinoKaraokeLeadSec(block.config?.hinoKaraokeLeadSec);
+  const parsedLyrics = useMemo(
+    () => parseHinoLyrics((lang === "pt" ? block.config?.hinoLetraPt : block.config?.hinoLetraEn) as string ?? ""),
+    [block.config?.hinoLetraPt, block.config?.hinoLetraEn, lang],
+  );
+  const leadSec = parseHinoKaraokeLeadSec(block.config?.hinoKaraokeLeadSec, parsedLyrics.hasTimestamps);
+  const restartAtSec = parseHinoKaraokeRestartSec(
+    parsedLyrics.restartAtSec,
+    block.config?.hinoKaraokeRestartSec,
+  );
 
   const karaokeOnLeft = Boolean(audioUrl && letra?.trim());
 
@@ -622,6 +758,7 @@ export function HinoClubeSection({
                 lang={lang}
                 introSec={introSec}
                 leadSec={leadSec}
+                restartAtSec={restartAtSec}
               />
             ) : (
               <div

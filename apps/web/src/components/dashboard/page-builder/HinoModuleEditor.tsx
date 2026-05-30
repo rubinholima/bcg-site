@@ -45,9 +45,8 @@ export function HinoModuleEditor({
       </summary>
       <div className="space-y-5 border-t border-border px-3 py-4">
         <p className="text-xs text-muted-foreground">
-          Player com vinil + karaoke centralizado. Sincronia perfeita: timestamps LRC na letra ([0:12.50] texto).
-          Ferramentas gratuitas: audacity + exportar, ou apps &quot;LRC Generator&quot; / &quot;Quick LRC&quot; no celular.
-          Se a letra estiver atrasada, aumente &quot;Adiantar letra&quot;.
+          Timestamps LRC: <strong>[00:00:17]</strong> ou <strong>[0:17]</strong> antes de cada linha. Segunda intro no MP3? Linha{" "}
+          <strong>[restart:1:32]</strong> (letra recomeça sem reescrever) ou campo abaixo.
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -122,12 +121,23 @@ export function HinoModuleEditor({
               min={0}
               max={10}
               step={0.5}
-              placeholder="2.5"
+              placeholder="0 com LRC"
               value={(block.config?.hinoKaraokeLeadSec as string) ?? ""}
               onChange={(e) => updateBlockConfig(index, "hinoKaraokeLeadSec", e.target.value || undefined)}
             />
             <p className="text-xs text-muted-foreground">
-              Letra atrasada? Aumente (ex.: 3 ou 4). Entrou cedo demais? Diminua ou zere.
+              Com timestamps LRC deixe vazio (0). Só ajuste fino se precisar.
+            </p>
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Reinício da letra no áudio (segunda intro)</Label>
+            <Input
+              placeholder="1:32 ou 92 — ou use [restart:1:32] na letra"
+              value={(block.config?.hinoKaraokeRestartSec as string) ?? ""}
+              onChange={(e) => updateBlockConfig(index, "hinoKaraokeRestartSec", e.target.value || undefined)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Quando o hino recomeça no MP3, a letra volta do início automaticamente — sem duplicar timestamps.
             </p>
           </div>
         </div>
@@ -140,7 +150,7 @@ export function HinoModuleEditor({
             </Label>
             <textarea
               rows={8}
-              placeholder={"[0:08.00] Salve, tricolor campeão\n[0:15.50] De glórias mil…\n\nFormato LRC: [min:seg] texto em cada linha"}
+              placeholder={"[00:00:17] Aquele clube que existe em Nova Lima\n[00:00:21] Amado por todos e por mim\n\n[restart:1:32]  ← opcional: segunda intro\n[00:00:17] mesma letra recomeça…"}
               value={(block.config?.hinoLetraPt as string) ?? ""}
               onChange={(e) => updateBlockConfig(index, "hinoLetraPt", e.target.value)}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
