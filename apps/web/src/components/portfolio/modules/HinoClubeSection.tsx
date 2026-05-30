@@ -11,7 +11,10 @@ import {
   parseHinoKaraokeIntroSec,
   parseHinoKaraokeLeadSec,
   parseHinoKaraokeRestartSec,
+  parseHinoKaraokeRestartIntroSec,
   resolveActiveLineIndex,
+  resolveHinoKaraokeDisplayPhase,
+  type HinoKaraokeDisplayPhase,
   type HinoLyricLine,
 } from "@/lib/hino-karaoke";
 import {
@@ -155,31 +158,51 @@ function VinylDisc({ spinning, compact }: { spinning: boolean; compact?: boolean
 function KaraokeLyrics({
   lines,
   activeIndex,
+  displayPhase,
   accent,
   scrollRef,
   lineRefs,
-  playing,
   lang,
 }: {
   lines: HinoLyricLine[];
   activeIndex: number;
+  displayPhase: HinoKaraokeDisplayPhase;
   accent: string;
   scrollRef: React.RefObject<HTMLDivElement | null>;
   lineRefs: React.MutableRefObject<(HTMLParagraphElement | null)[]>;
-  playing: boolean;
   lang: "pt" | "en";
 }) {
   if (lines.length === 0) return null;
 
-  if (!playing && activeIndex < 0) {
+  if (displayPhase === "idle") {
     return <HinoIntroPulse accent={accent} lang={lang} />;
   }
 
-  if (playing && activeIndex < 0) {
+  if (displayPhase === "intro") {
     return <HinoIntroPlaying accent={accent} lang={lang} />;
   }
 
-  const maxVisible = playing ? activeIndex : Math.max(0, activeIndex);
+  if (displayPhase === "interlude") {
+    return (
+      <HinoIntroPlaying
+        accent={accent}
+        lang={lang}
+        label={lang === "pt" ? "Interlúdio…" : "Interlude…"}
+      />
+    );
+  }
+
+  if (displayPhase === "reprise") {
+    return (
+      <HinoIntroPlaying
+        accent={accent}
+        lang={lang}
+        label={lang === "pt" ? "Reprise…" : "Reprise…"}
+      />
+    );
+  }
+
+  const maxVisible = activeIndex;
   const prevIndex = maxVisible > 0 ? maxVisible - 1 : -1;
 
   return (
@@ -260,6 +283,9 @@ function HinoTransportBar({
 }) {
   const barRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
+  const [dragProgress, setDragProgress] = useState<number | null>(null);
+
+  const displayProgress = dragProgress ?? progress;
 
   const seekFromClientX = useCallback(
     (clientX: number) => {
@@ -268,6 +294,7 @@ function HinoTransportBar({
       const rect = bar.getBoundingClientRect();
       if (rect.width <= 0) return;
       const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+      setDragProgress(ratio * 100);
       onSeekRatio(ratio);
     },
     [duration, onSeekRatio],
@@ -276,7 +303,10 @@ function HinoTransportBar({
   useEffect(() => {
     if (!dragging) return;
     const onMove = (e: PointerEvent) => seekFromClientX(e.clientX);
-    const onUp = () => setDragging(false);
+    const onUp = () => {
+      setDragging(false);
+      setDragProgress(null);
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
@@ -316,17 +346,21 @@ function HinoTransportBar({
           if (e.key === "ArrowLeft") onSkip(-SKIP_SECONDS);
         }}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-white/15" />
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/15">
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${displayProgress}%`,
+              background: `linear-gradient(90deg, ${accent}, #ffffff)`,
+            }}
+          />
+        </div>
         <div
-          className="pointer-events-none absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full transition-[width] duration-75"
-          style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${accent}, #ffffff)` }}
-        />
-        <div
-          className={`pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-lg transition-transform ${
-            dragging ? "scale-110" : "group-hover:scale-105"
+          className={`pointer-events-none absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-lg ${
+            dragging ? "scale-110" : ""
           }`}
           style={{
-            left: `${progress}%`,
+            left: `${displayProgress}%`,
             backgroundColor: accent,
             boxShadow: `0 0 12px ${accent}88`,
           }}
@@ -385,6 +419,7 @@ function HinoPlayerColumn({
   introSec,
   leadSec,
   restartAtSec,
+  restartIntroSec,
 }: {
   src: string;
   clubName?: string;
@@ -396,6 +431,7 @@ function HinoPlayerColumn({
   introSec: number;
   leadSec: number;
   restartAtSec: number | null;
+  restartIntroSec: number;
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const karaokeScrollRef = useRef<HTMLDivElement>(null);
@@ -419,8 +455,24 @@ function HinoPlayerColumn({
         introSec,
         leadSec,
         restartAtSec,
+        restartIntroSec,
       ),
-    [current, duration, hasTimestamps, introSec, leadSec, restartAtSec, lyricLines],
+    [current, duration, hasTimestamps, introSec, leadSec, restartAtSec, restartIntroSec, lyricLines],
+  );
+
+  const displayPhase = useMemo(
+    () =>
+      resolveHinoKaraokeDisplayPhase(
+        playing,
+        current,
+        lyricLines,
+        hasTimestamps,
+        restartAtSec,
+        restartIntroSec,
+        activeLineIndex,
+        duration,
+      ),
+    [playing, current, lyricLines, hasTimestamps, restartAtSec, restartIntroSec, activeLineIndex, duration],
   );
 
   useEffect(() => {
@@ -431,7 +483,11 @@ function HinoPlayerColumn({
       setDuration(el.duration || 0);
       setReady(true);
     };
-    const onEnd = () => setPlaying(false);
+    const onEnd = () => {
+      el.currentTime = 0;
+      setCurrent(0);
+      setPlaying(false);
+    };
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     el.addEventListener("timeupdate", onTime);
@@ -541,10 +597,10 @@ function HinoPlayerColumn({
           <KaraokeLyrics
             lines={lyricLines}
             activeIndex={activeLineIndex}
+            displayPhase={displayPhase}
             accent={accent}
             scrollRef={karaokeScrollRef}
             lineRefs={lineRefs}
-            playing={playing}
             lang={lang}
           />
         </div>
@@ -614,6 +670,11 @@ export function HinoClubeSection({
   const restartAtSec = parseHinoKaraokeRestartSec(
     parsedLyrics.restartAtSec,
     block.config?.hinoKaraokeRestartSec,
+  );
+  const restartIntroSec = parseHinoKaraokeRestartIntroSec(
+    parsedLyrics.restartIntroSec,
+    block.config?.hinoKaraokeRestartIntroSec,
+    parsedLyrics.lines,
   );
 
   const karaokeOnLeft = Boolean(audioUrl && letra?.trim());
@@ -759,6 +820,7 @@ export function HinoClubeSection({
                 introSec={introSec}
                 leadSec={leadSec}
                 restartAtSec={restartAtSec}
+                restartIntroSec={restartIntroSec}
               />
             ) : (
               <div

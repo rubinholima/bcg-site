@@ -9,9 +9,13 @@ export interface HinoLyricLine {
 export interface ParsedHinoLyrics {
   lines: HinoLyricLine[];
   hasTimestamps: boolean;
-  /** Segundo no áudio em que a letra recomeça (segunda intro). Linha `[restart:1:32]` ou editor. */
+  /** Segundo no áudio em que a reprise instrumental começa. Linha `[restart:1:32]` ou editor. */
   restartAtSec: number | null;
+  /** Duração da intro da reprise antes da letra voltar (seg). `[restart:1:32+15]` ou editor. */
+  restartIntroSec: number | null;
 }
+
+export type HinoKaraokeDisplayPhase = "idle" | "intro" | "interlude" | "reprise" | "lyrics";
 
 /** Interpreta "00:00:17", "0:17", "1:23.5" → segundos. */
 export function parseLrcTimeValue(raw: string): number | null {
@@ -36,22 +40,28 @@ export function parseLrcTimeValue(raw: string): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-function parseRestartFromTag(inner: string): number | null {
+function parseRestartFromTag(inner: string): { at: number | null; introSec: number | null } {
   const m = inner.match(/^restart(?::(.+))?$/i);
-  if (!m) return null;
+  if (!m) return { at: null, introSec: null };
   const spec = m[1]?.trim();
-  if (!spec) return null;
-  return parseLrcTimeValue(spec);
+  if (!spec) return { at: null, introSec: null };
+
+  const parts = spec.split(/[+]/).map((p) => p.trim());
+  const at = parseLrcTimeValue(parts[0] ?? "");
+  const introSec = parts[1] ? parseLrcTimeValue(parts[1]) : null;
+  return { at, introSec };
 }
 
 /** Extrai tags [tempo] do início da linha. Suporta [00:00:17] e [0:17]. */
 function extractLeadingTimeTags(line: string): {
   times: number[];
   restartAt: number | null;
+  restartIntroSec: number | null;
   text: string;
 } {
   const times: number[] = [];
   let restartAt: number | null = null;
+  let restartIntroSec: number | null = null;
   let remaining = line.trim();
 
   while (remaining.startsWith("[")) {
@@ -61,8 +71,9 @@ function extractLeadingTimeTags(line: string): {
     remaining = remaining.slice(close + 1).trimStart();
 
     const restart = parseRestartFromTag(inner);
-    if (restart != null) {
-      restartAt = restart;
+    if (restart.at != null) {
+      restartAt = restart.at;
+      if (restart.introSec != null) restartIntroSec = restart.introSec;
       continue;
     }
     const sec = parseLrcTimeValue(inner);
@@ -70,7 +81,7 @@ function extractLeadingTimeTags(line: string): {
     else break;
   }
 
-  return { times, restartAt, text: remaining.trim() };
+  return { times, restartAt, restartIntroSec, text: remaining.trim() };
 }
 
 /** Interpreta letra com timestamps LRC ([hh:mm:ss] ou [mm:ss]). */
@@ -79,13 +90,15 @@ export function parseHinoLyrics(raw: string): ParsedHinoLyrics {
   const lines: HinoLyricLine[] = [];
   let hasTimestamps = false;
   let restartAtSec: number | null = null;
+  let restartIntroSec: number | null = null;
 
   for (const row of rows) {
     const trimmed = row.trim();
     if (!trimmed) continue;
 
-    const { times, restartAt, text } = extractLeadingTimeTags(trimmed);
+    const { times, restartAt, restartIntroSec: rowIntro, text } = extractLeadingTimeTags(trimmed);
     if (restartAt != null) restartAtSec = restartAt;
+    if (rowIntro != null) restartIntroSec = rowIntro;
 
     if (times.length > 0) {
       hasTimestamps = true;
@@ -106,14 +119,14 @@ export function parseHinoLyrics(raw: string): ParsedHinoLyrics {
     });
   }
 
-  return { lines, hasTimestamps, restartAtSec };
+  return { lines, hasTimestamps, restartAtSec, restartIntroSec };
 }
 
 function singableLines(lines: HinoLyricLine[]): HinoLyricLine[] {
   return lines.filter((l) => !l.isSection && l.startSecs.length > 0);
 }
 
-function firstVocalTime(lines: HinoLyricLine[]): number {
+export function firstVocalTime(lines: HinoLyricLine[]): number {
   let min = Infinity;
   for (const line of lines) {
     if (line.isSection) continue;
@@ -124,16 +137,63 @@ function firstVocalTime(lines: HinoLyricLine[]): number {
   return Number.isFinite(min) ? min : 0;
 }
 
+export function lastVocalTime(lines: HinoLyricLine[]): number {
+  let max = 0;
+  for (const line of lines) {
+    if (line.isSection) continue;
+    for (const t of line.startSecs) {
+      if (t > max) max = t;
+    }
+  }
+  return max;
+}
+
+/** Quando começa o interlúdio (após última linha, antes da reprise). */
+function interludeStartSec(lines: HinoLyricLine[], restartAtSec: number): number {
+  const lastV = lastVocalTime(lines);
+  const gap = restartAtSec - lastV;
+  if (gap <= 0) return restartAtSec;
+  const holdLastLine = Math.min(5, Math.max(2, gap * 0.35));
+  return lastV + holdLastLine;
+}
+
+function isInPreRestartInterlude(
+  currentSec: number,
+  lines: HinoLyricLine[],
+  restartAtSec: number | null,
+): boolean {
+  if (restartAtSec == null) return false;
+  return currentSec >= interludeStartSec(lines, restartAtSec) && currentSec < restartAtSec;
+}
+
+function isInRepriseIntro(currentSec: number, restartAtSec: number | null, restartIntroSec: number): boolean {
+  if (restartAtSec == null) return false;
+  return currentSec >= restartAtSec && currentSec < restartAtSec + restartIntroSec;
+}
+
+function isInInstrumentalGap(
+  currentSec: number,
+  lines: HinoLyricLine[],
+  restartAtSec: number | null,
+  restartIntroSec: number,
+): boolean {
+  return (
+    isInPreRestartInterlude(currentSec, lines, restartAtSec) ||
+    isInRepriseIntro(currentSec, restartAtSec, restartIntroSec)
+  );
+}
+
 /** Tempo efetivo para LRC (inclui reinício da letra na segunda intro). */
 export function effectiveLrcSyncSec(
   currentSec: number,
   lines: HinoLyricLine[],
   restartAtSec: number | null,
+  restartIntroSec: number,
   leadSec: number,
 ): number {
   let sync = currentSec;
-  if (restartAtSec != null && currentSec >= restartAtSec) {
-    sync = currentSec - restartAtSec + firstVocalTime(lines);
+  if (restartAtSec != null && currentSec >= restartAtSec + restartIntroSec) {
+    sync = currentSec - (restartAtSec + restartIntroSec) + firstVocalTime(lines);
   }
   return Math.max(0, sync + leadSec);
 }
@@ -196,14 +256,46 @@ export function resolveActiveLineIndex(
   introSec: number,
   leadSec = 0,
   restartAtSec: number | null = null,
+  restartIntroSec = 0,
 ): number {
   if (lines.length === 0) return -1;
+  if (hasTimestamps && isInInstrumentalGap(currentSec, lines, restartAtSec, restartIntroSec)) {
+    return -1;
+  }
   if (hasTimestamps) {
-    const syncSec = effectiveLrcSyncSec(currentSec, lines, restartAtSec, leadSec);
+    const syncSec = effectiveLrcSyncSec(currentSec, lines, restartAtSec, restartIntroSec, leadSec);
     return activeLineIndexFromLrc(lines, syncSec);
   }
   const syncSec = Math.max(0, currentSec + leadSec);
   return activeLineIndexEstimated(lines, syncSec, durationSec, introSec);
+}
+
+export function resolveHinoKaraokeDisplayPhase(
+  playing: boolean,
+  currentSec: number,
+  lines: HinoLyricLine[],
+  hasTimestamps: boolean,
+  restartAtSec: number | null,
+  restartIntroSec: number,
+  activeLineIndex: number,
+  durationSec = 0,
+): HinoKaraokeDisplayPhase {
+  const atEnd = durationSec > 0 && currentSec >= durationSec - 0.35;
+
+  if (!playing) {
+    if (atEnd || activeLineIndex < 0) return "idle";
+    return "lyrics";
+  }
+  if (!hasTimestamps) {
+    if (activeLineIndex < 0) return playing ? "intro" : "idle";
+    return "lyrics";
+  }
+  if (restartAtSec != null && playing) {
+    if (isInPreRestartInterlude(currentSec, lines, restartAtSec)) return "interlude";
+    if (isInRepriseIntro(currentSec, restartAtSec, restartIntroSec)) return "reprise";
+  }
+  if (playing && activeLineIndex < 0) return "intro";
+  return activeLineIndex >= 0 ? "lyrics" : "idle";
 }
 
 export const HINO_KARAOKE_DEFAULT_INTRO_SEC = 3;
@@ -241,4 +333,23 @@ export function parseHinoKaraokeRestartSec(
     if (parsed != null) return parsed;
   }
   return fromLyrics;
+}
+
+export function parseHinoKaraokeRestartIntroSec(
+  fromLyrics: number | null,
+  configRaw: unknown,
+  lines: HinoLyricLine[],
+): number {
+  const unset = configRaw === undefined || configRaw === null || configRaw === "";
+  if (!unset) {
+    if (typeof configRaw === "number" && configRaw >= 0) return configRaw;
+    if (typeof configRaw === "string") {
+      const n = Number(configRaw);
+      if (!Number.isNaN(n) && n >= 0) return n;
+      const parsed = parseLrcTimeValue(configRaw);
+      if (parsed != null) return parsed;
+    }
+  }
+  if (fromLyrics != null && fromLyrics >= 0) return fromLyrics;
+  return firstVocalTime(lines);
 }

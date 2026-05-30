@@ -37,8 +37,18 @@ export function HinoIntroPulse({ accent, lang }: { accent: string; lang: "pt" | 
   );
 }
 
-/** Intro instrumental (antes da 1ª linha LRC). */
-export function HinoIntroPlaying({ accent, lang }: { accent: string; lang: "pt" | "en" }) {
+/** Intro instrumental (antes da 1ª linha LRC ou reprise). */
+export function HinoIntroPlaying({
+  accent,
+  lang,
+  label,
+}: {
+  accent: string;
+  lang: "pt" | "en";
+  label?: string;
+}) {
+  const defaultLabel =
+    lang === "pt" ? "Introdução…" : "Intro…";
   return (
     <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 py-10">
       <HinoClefHero accent={accent} size="md" />
@@ -52,7 +62,7 @@ export function HinoIntroPlaying({ accent, lang }: { accent: string; lang: "pt" 
         ))}
       </div>
       <p className="text-xs uppercase tracking-[0.35em] text-zinc-500">
-        {lang === "pt" ? "Introdução…" : "Intro…"}
+        {label ?? defaultLabel}
       </p>
     </div>
   );
