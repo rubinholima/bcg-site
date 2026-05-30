@@ -7,6 +7,7 @@ import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { SmartImage } from "@/components/common/SmartImage";
 import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 
@@ -133,7 +134,7 @@ export function NoticiasSection({
 
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
-  const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass();
 
   useEffect(() => {
     if (dataSource === "manual") {

@@ -6,6 +6,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { SmartImage } from "@/components/common/SmartImage";
 import { Button } from "@/components/ui/button";
 import { Loader2, Newspaper, Upload } from "lucide-react";
@@ -82,7 +83,7 @@ export function GaleriaEventosSection({
           className="relative py-12 md:py-16"
           style={{ backgroundColor: bgColor }}
         >
-          <div className="container mx-auto px-4">
+          <div className={moduleSectionContainerClass()}>
             <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin" />
               <span>Carregando galeria…</span>
@@ -116,7 +117,7 @@ export function GaleriaEventosSection({
             />
           </>
         )}
-        <div className={`relative ${fullWidth ? "" : "container mx-auto"} px-4`}>
+        <div className={moduleSectionContainerClass({ inSection })}>
           {showTitle && title && (
             <div className="mb-8">
               <SectionTitle

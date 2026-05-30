@@ -5,6 +5,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { SmartImage } from "@/components/common/SmartImage";
@@ -21,6 +22,8 @@ import {
 
 type HinoTab = "letra" | "cifra" | "cifraEmbed" | "partitura";
 
+const HINO_PANEL_HEIGHT = "min(520px,65vh)";
+
 function resolveAudioUrl(raw: string | undefined): string {
   if (!raw?.trim()) return "";
   return getPublicImageUrl(raw.trim()) || raw.trim();
@@ -31,6 +34,13 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function parseLyricLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 function CifraContent({ text }: { text: string }) {
@@ -54,81 +64,176 @@ function CifraContent({ text }: { text: string }) {
   );
 }
 
+/** Barra superior do embed Moises (logo + Copy Link) — recortada via overflow. */
+const MOISES_EMBED_HEADER_CLIP_PX = 56;
+
 function ChordsEmbedFrame({
   url,
   lang,
   accent,
   darkFilter,
+  fillHeight,
 }: {
   url: string;
   lang: "pt" | "en";
   accent: string;
   darkFilter: boolean;
+  fillHeight?: boolean;
 }) {
   const embedUrl = url.trim();
   if (!embedUrl) return null;
 
+  const isMoises = /moises\.ai/i.test(embedUrl);
+  const iframeFilter = darkFilter ? "invert(0.93) hue-rotate(180deg)" : undefined;
+  const frameHeight = fillHeight ? "100%" : `min(${HINO_PANEL_HEIGHT})`;
+
   return (
-    <div className="space-y-3">
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950">
-        <iframe
-          src={embedUrl}
-          title={lang === "pt" ? "Cifra interativa do hino" : "Interactive anthem chord chart"}
-          className="h-[min(520px,65vh)] w-full border-0 bg-zinc-950"
-          style={
-            darkFilter
-              ? { filter: "invert(0.93) hue-rotate(180deg)", backgroundColor: "#09090b" }
-              : { backgroundColor: "#09090b" }
-          }
-          allow="fullscreen"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
+    <div className={`flex flex-col gap-2 ${fillHeight ? "h-full min-h-0" : ""}`}>
+      <div className={`overflow-hidden rounded-xl border border-white/10 bg-zinc-950 ${fillHeight ? "min-h-0 flex-1" : ""}`}>
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ height: fillHeight ? "100%" : frameHeight, minHeight: fillHeight ? 280 : undefined }}
+        >
+          <iframe
+            src={embedUrl}
+            title={lang === "pt" ? "Cifra interativa do hino" : "Interactive anthem chord chart"}
+            className="absolute left-0 w-full border-0 bg-zinc-950"
+            style={{
+              height: isMoises ? `calc(100% + ${MOISES_EMBED_HEADER_CLIP_PX}px)` : "100%",
+              top: isMoises ? `-${MOISES_EMBED_HEADER_CLIP_PX}px` : 0,
+              filter: iframeFilter,
+              backgroundColor: "#09090b",
+            }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
       </div>
-      <a
-        href={embedUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex text-sm font-medium hover:underline"
-        style={{ color: accent }}
-      >
-        {lang === "pt" ? "Abrir cifra em tela cheia →" : "Open chord chart fullscreen →"}
-      </a>
+      {isMoises ? (
+        <p className="shrink-0 text-center text-xs text-zinc-500">
+          {lang === "pt" ? "Cifra interativa via " : "Interactive chords via "}
+          <a
+            href="https://moises.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium hover:underline"
+            style={{ color: accent }}
+          >
+            Moises
+          </a>
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function VinylDisc({ spinning }: { spinning: boolean }) {
+function VinylDisc({ spinning, compact }: { spinning: boolean; compact?: boolean }) {
+  const size = compact ? "h-20 w-20 sm:h-24 sm:w-24" : "h-36 w-36 sm:h-40 sm:w-40";
   return (
     <div
-      className={`relative mx-auto h-36 w-36 shrink-0 sm:h-40 sm:w-40 ${spinning ? "animate-[spin_4s_linear_infinite]" : ""}`}
+      className={`relative mx-auto shrink-0 ${size} ${spinning ? "animate-[spin_4s_linear_infinite]" : ""}`}
       aria-hidden
     >
       <div className="absolute inset-0 rounded-full bg-gradient-to-br from-zinc-800 via-zinc-950 to-black shadow-[0_0_40px_rgba(0,0,0,0.6),inset_0_0_20px_rgba(255,255,255,0.06)] ring-2 ring-white/10" />
       <div className="absolute inset-[18%] rounded-full border border-white/5 bg-zinc-900/80" />
       <div className="absolute inset-[32%] rounded-full bg-gradient-to-br from-amber-500/30 to-red-600/40 ring-2 ring-amber-500/40" />
-      <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-950 ring-1 ring-white/20" />
+      <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-zinc-950 ring-1 ring-white/20" />
     </div>
   );
 }
 
-function HinoAudioPlayer({
+function KaraokeLyrics({
+  lines,
+  activeIndex,
+  accent,
+  scrollRef,
+  lineRefs,
+}: {
+  lines: string[];
+  activeIndex: number;
+  accent: string;
+  scrollRef: React.RefObject<HTMLDivElement | null>;
+  lineRefs: React.MutableRefObject<(HTMLParagraphElement | null)[]>;
+}) {
+  if (lines.length === 0) return null;
+
+  return (
+    <div
+      ref={scrollRef}
+      className="h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-1 py-4 scrollbar-thin"
+    >
+      <div className="flex min-h-full flex-col justify-center gap-3 py-6">
+        {lines.map((line, idx) => {
+          const isActive = idx === activeIndex;
+          const isSection = /^\[.+\]$/.test(line);
+          return (
+            <p
+              key={`${idx}-${line}`}
+              ref={(el) => {
+                lineRefs.current[idx] = el;
+              }}
+              className={`text-center transition-all duration-500 ${
+                isSection
+                  ? "text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500"
+                  : isActive
+                    ? "text-lg font-bold sm:text-xl"
+                    : idx === activeIndex - 1 || idx === activeIndex + 1
+                      ? "text-sm text-zinc-400"
+                      : "text-sm text-zinc-600"
+              }`}
+              style={isActive && !isSection ? { color: accent } : undefined}
+            >
+              {line}
+            </p>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HinoPlayerColumn({
   src,
   clubName,
   subtitle,
   accent,
+  letra,
+  compositor,
+  lang,
 }: {
   src: string;
   clubName?: string;
   subtitle: string;
   accent: string;
+  letra: string;
+  compositor: string;
+  lang: "pt" | "en";
 }) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const karaokeScrollRef = useRef<HTMLDivElement>(null);
+  const lineRefs = useRef<(HTMLParagraphElement | null)[]>([]);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [duration, setDuration] = useState(0);
   const [current, setCurrent] = useState(0);
   const [ready, setReady] = useState(false);
+
+  const lyricLines = useMemo(() => parseLyricLines(letra), [letra]);
+  const hasKaraoke = lyricLines.length > 0;
+
+  const activeLineIndex = useMemo(() => {
+    if (!hasKaraoke || duration <= 0) return 0;
+    const singableLines = lyricLines.filter((l) => !/^\[.+\]$/.test(l));
+    if (singableLines.length === 0) return 0;
+    const progress = Math.min(1, Math.max(0, current / duration));
+    const singableIdx = Math.min(singableLines.length - 1, Math.floor(progress * singableLines.length));
+    let count = -1;
+    for (let i = 0; i < lyricLines.length; i++) {
+      if (!/^\[.+\]$/.test(lyricLines[i]!)) count++;
+      if (count === singableIdx) return i;
+    }
+    return 0;
+  }, [current, duration, hasKaraoke, lyricLines]);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -155,6 +260,17 @@ function HinoAudioPlayer({
     setDuration(0);
     setReady(false);
   }, [src]);
+
+  useEffect(() => {
+    if (!playing) return;
+    const line = lineRefs.current[activeLineIndex];
+    const container = karaokeScrollRef.current;
+    if (!line || !container) return;
+    const lineTop = line.offsetTop;
+    const lineHeight = line.offsetHeight;
+    const target = lineTop - container.clientHeight / 2 + lineHeight / 2;
+    container.scrollTo({ top: Math.max(0, target), behavior: "smooth" });
+  }, [activeLineIndex, playing]);
 
   const togglePlay = useCallback(async () => {
     const el = audioRef.current;
@@ -185,70 +301,95 @@ function HinoAudioPlayer({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/95 via-zinc-950 to-black p-5 shadow-2xl sm:p-6"
-      style={{ boxShadow: `0 24px 60px -20px ${accent}33` }}
+      className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/95 via-zinc-950 to-black shadow-2xl"
+      style={{ boxShadow: `0 24px 60px -20px ${accent}33`, minHeight: `min(${HINO_PANEL_HEIGHT})` }}
     >
       <div
         className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl opacity-40"
         style={{ backgroundColor: accent }}
       />
       <audio ref={audioRef} src={src} preload="metadata" muted={muted} />
-      <div className="relative flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6">
-        <VinylDisc spinning={playing} />
-        <div className="min-w-0 flex-1 space-y-4 text-center sm:text-left">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400/90">{subtitle}</p>
-            {clubName ? (
-              <p className="mt-1 truncate text-lg font-bold text-white sm:text-xl">{clubName}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <div
-              role="slider"
-              tabIndex={0}
-              aria-valuemin={0}
-              aria-valuemax={duration}
-              aria-valuenow={current}
-              className="group relative h-2 cursor-pointer rounded-full bg-white/10"
-              onClick={seek}
-              onKeyDown={(e) => {
-                const el = audioRef.current;
-                if (!el) return;
-                if (e.key === "ArrowRight") el.currentTime = Math.min(duration, el.currentTime + 5);
-                if (e.key === "ArrowLeft") el.currentTime = Math.max(0, el.currentTime - 5);
-              }}
-            >
+
+      <div className={`relative shrink-0 ${hasKaraoke ? "border-b border-white/10 p-4 sm:p-5" : "p-5 sm:p-6"}`}>
+        <div className={`flex ${hasKaraoke ? "flex-row items-center gap-4" : "flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6"}`}>
+          <VinylDisc spinning={playing} compact={hasKaraoke} />
+          <div className="min-w-0 flex-1 space-y-3 text-center sm:text-left">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-400/90 sm:text-xs">{subtitle}</p>
+              {clubName ? (
+                <p className={`mt-0.5 font-bold text-white ${hasKaraoke ? "truncate text-base sm:text-lg" : "truncate text-lg sm:text-xl"}`}>
+                  {clubName}
+                </p>
+              ) : null}
+              {compositor?.trim() && hasKaraoke ? (
+                <p className="mt-1 truncate text-xs text-zinc-500">
+                  {lang === "pt" ? "Compositor:" : "Composer:"}{" "}
+                  <span className="text-zinc-300">{compositor.trim()}</span>
+                </p>
+              ) : null}
+            </div>
+            <div className="space-y-1.5">
               <div
-                className="absolute inset-y-0 left-0 rounded-full transition-all"
-                style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${accent}, #ffffff)` }}
-              />
+                role="slider"
+                tabIndex={0}
+                aria-valuemin={0}
+                aria-valuemax={duration}
+                aria-valuenow={current}
+                className="group relative h-2 cursor-pointer rounded-full bg-white/10"
+                onClick={seek}
+                onKeyDown={(e) => {
+                  const el = audioRef.current;
+                  if (!el) return;
+                  if (e.key === "ArrowRight") el.currentTime = Math.min(duration, el.currentTime + 5);
+                  if (e.key === "ArrowLeft") el.currentTime = Math.max(0, el.currentTime - 5);
+                }}
+              >
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full transition-all"
+                  style={{ width: `${progress}%`, background: `linear-gradient(90deg, ${accent}, #ffffff)` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] tabular-nums text-zinc-500">
+                <span>{formatTime(current)}</span>
+                <span>{ready ? formatTime(duration) : "—"}</span>
+              </div>
             </div>
-            <div className="flex justify-between text-[11px] tabular-nums text-zinc-500">
-              <span>{formatTime(current)}</span>
-              <span>{ready ? formatTime(duration) : "—"}</span>
+            <div className="flex items-center justify-center gap-3 sm:justify-start">
+              <button
+                type="button"
+                onClick={() => void togglePlay()}
+                className={`flex items-center justify-center rounded-full text-black shadow-lg transition-transform hover:scale-105 active:scale-95 ${hasKaraoke ? "h-12 w-12" : "h-14 w-14"}`}
+                style={{ background: `linear-gradient(135deg, ${accent}, #fcd34d)` }}
+                aria-label={playing ? "Pausar" : "Tocar hino"}
+              >
+                {playing ? (
+                  <Pause className={`fill-current ${hasKaraoke ? "h-6 w-6" : "h-7 w-7"}`} />
+                ) : (
+                  <Play className={`fill-current pl-0.5 ${hasKaraoke ? "h-6 w-6" : "h-7 w-7"}`} />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMuted((m) => !m)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-zinc-300 hover:bg-white/10"
+                aria-label={muted ? "Ativar som" : "Silenciar"}
+              >
+                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </button>
             </div>
-          </div>
-          <div className="flex items-center justify-center gap-3 sm:justify-start">
-            <button
-              type="button"
-              onClick={() => void togglePlay()}
-              className="flex h-14 w-14 items-center justify-center rounded-full text-black shadow-lg transition-transform hover:scale-105 active:scale-95"
-              style={{ background: `linear-gradient(135deg, ${accent}, #fcd34d)` }}
-              aria-label={playing ? "Pausar" : "Tocar hino"}
-            >
-              {playing ? <Pause className="h-7 w-7 fill-current" /> : <Play className="h-7 w-7 fill-current pl-0.5" />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMuted((m) => !m)}
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-zinc-300 hover:bg-white/10"
-              aria-label={muted ? "Ativar som" : "Silenciar"}
-            >
-              {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-            </button>
           </div>
         </div>
       </div>
+
+      {hasKaraoke ? (
+        <KaraokeLyrics
+          lines={lyricLines}
+          activeIndex={activeLineIndex}
+          accent={accent}
+          scrollRef={karaokeScrollRef}
+          lineRefs={lineRefs}
+        />
+      ) : null}
     </div>
   );
 }
@@ -290,7 +431,12 @@ export function HinoClubeSection({
 
   const tabs = useMemo(() => {
     const list: { id: HinoTab; label: string; icon: typeof ScrollText; show: boolean }[] = [
-      { id: "letra", label: lang === "pt" ? "Letra" : "Lyrics", icon: ScrollText, show: Boolean(letra?.trim() || compositor?.trim()) },
+      {
+        id: "letra",
+        label: lang === "pt" ? "Letra" : "Lyrics",
+        icon: ScrollText,
+        show: Boolean(letra?.trim() || compositor?.trim()),
+      },
       { id: "cifra", label: lang === "pt" ? "Cifra" : "Chords", icon: Guitar, show: Boolean(cifra?.trim()) },
       {
         id: "cifraEmbed",
@@ -327,9 +473,7 @@ export function HinoClubeSection({
         ? "pb-20 sm:pb-28"
         : "pb-14 sm:pb-20";
 
-  const containerClass = fullWidth || inSection
-    ? "w-full px-4 sm:px-6 lg:px-8"
-    : "container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass({ inSection });
 
   const bgColor = (block.config?.backgroundColor as string)?.trim();
   const bgImage = (block.config?.backgroundImage as string)?.trim();
@@ -391,20 +535,37 @@ export function HinoClubeSection({
             </div>
           )}
 
-          <div className="grid gap-8 lg:grid-cols-[minmax(280px,360px)_1fr] lg:gap-10 lg:items-start">
+          <div
+            className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch lg:gap-8"
+            style={{ minHeight: `min(${HINO_PANEL_HEIGHT})` }}
+          >
             {audioUrl ? (
-              <HinoAudioPlayer src={audioUrl} clubName={clubName} subtitle={playerSubtitle} accent={accent} />
+              <HinoPlayerColumn
+                src={audioUrl}
+                clubName={clubName}
+                subtitle={playerSubtitle}
+                accent={accent}
+                letra={letra?.trim() ?? ""}
+                compositor={compositor?.trim() ?? ""}
+                lang={lang}
+              />
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-zinc-900/40 px-6 py-12 text-center text-sm text-zinc-500">
+              <div
+                className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-zinc-900/40 px-6 py-12 text-center text-sm text-zinc-500"
+                style={{ minHeight: `min(${HINO_PANEL_HEIGHT})` }}
+              >
                 <Mic2 className="h-12 w-12 opacity-40" />
                 <p className="mt-3">{lang === "pt" ? "Envie o MP3 do hino no editor." : "Upload the anthem MP3 in the editor."}</p>
               </div>
             )}
 
-            <div className="min-w-0 rounded-2xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm">
+            <div
+              className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/50 backdrop-blur-sm"
+              style={{ minHeight: `min(${HINO_PANEL_HEIGHT})` }}
+            >
               {tabs.length > 0 ? (
                 <>
-                  <div className="flex flex-wrap gap-1 border-b border-white/10 p-2 sm:p-3">
+                  <div className="flex shrink-0 flex-wrap gap-1 border-b border-white/10 p-2 sm:p-3">
                     {tabs.map(({ id, label, icon: Icon }) => (
                       <button
                         key={id}
@@ -422,11 +583,7 @@ export function HinoClubeSection({
                       </button>
                     ))}
                   </div>
-                  <div
-                    className={`overflow-y-auto p-4 sm:p-6 ${
-                      tab === "cifraEmbed" ? "max-h-none" : "max-h-[min(420px,55vh)]"
-                    }`}
-                  >
+                  <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
                     {tab === "letra" ? (
                       <div className="space-y-4">
                         {compositor?.trim() ? (
@@ -439,6 +596,13 @@ export function HinoClubeSection({
                         ) : null}
                         {letra?.trim() ? (
                           <div>
+                            {audioUrl ? (
+                              <p className="mb-3 text-xs text-zinc-500">
+                                {lang === "pt"
+                                  ? "Durante a reprodução, a letra acompanha o áudio no painel ao lado (modo karaoke)."
+                                  : "While playing, lyrics scroll with the audio in the player panel (karaoke mode)."}
+                              </p>
+                            ) : null}
                             {compositor?.trim() ? (
                               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                                 {lang === "pt" ? "Letra" : "Lyrics"}
@@ -462,34 +626,24 @@ export function HinoClubeSection({
                         lang={lang}
                         accent={accent}
                         darkFilter={embedDarkFilter}
+                        fillHeight
                       />
                     ) : null}
                     {tab === "partitura" && partituraUrl ? (
-                      <div className="space-y-3">
-                        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
-                          <SmartImage
-                            src={getPublicImageUrl(partituraUrl)}
-                            alt={lang === "pt" ? "Partitura do hino" : "Anthem sheet music"}
-                            fill
-                            className="object-contain p-2"
-                            sizes="(max-width: 768px) 100vw, 560px"
-                          />
-                        </div>
-                        <a
-                          href={getPublicImageUrl(partituraUrl)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex text-sm font-medium hover:underline"
-                          style={{ color: accent }}
-                        >
-                          {lang === "pt" ? "Abrir partitura em tela cheia →" : "Open full sheet →"}
-                        </a>
+                      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
+                        <SmartImage
+                          src={getPublicImageUrl(partituraUrl)}
+                          alt={lang === "pt" ? "Partitura do hino" : "Anthem sheet music"}
+                          fill
+                          className="object-contain p-2"
+                          sizes="(max-width: 768px) 100vw, 560px"
+                        />
                       </div>
                     ) : null}
                   </div>
                 </>
               ) : (
-                <div className="p-8 text-center text-sm text-zinc-500">
+                <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-zinc-500">
                   {lang === "pt"
                     ? "Adicione letra, cifra ou partitura no editor."
                     : "Add lyrics, chords or sheet music in the editor."}

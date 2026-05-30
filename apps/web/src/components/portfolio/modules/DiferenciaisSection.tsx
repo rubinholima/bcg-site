@@ -2,6 +2,7 @@
 
 import type { HomeContentBlock } from "@/types/home-content";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import {
@@ -60,7 +61,7 @@ export function DiferenciaisSection({
   const items = (Array.isArray(block.config?.diferenciaisItems)
     ? block.config.diferenciaisItems
     : []) as DiferencialItem[];
-  const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass();
 
   return (
     <AnimateInView>

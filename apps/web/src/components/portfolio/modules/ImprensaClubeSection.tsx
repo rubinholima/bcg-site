@@ -4,6 +4,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { SmartImage } from "@/components/common/SmartImage";
@@ -67,7 +68,7 @@ export function ImprensaClubeSection({
           </>
         ) : null}
         <div
-          className={`relative ${fullWidth || inSection ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8"}`}
+          className={moduleSectionContainerClass({ inSection })}
         >
           {showTitle && title?.trim() ? (
             <SectionTitle

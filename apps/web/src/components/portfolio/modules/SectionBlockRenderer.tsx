@@ -2,6 +2,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import {
   moduleHasOwnTitle,
   moduleTitleGradientStyle,
@@ -121,15 +122,7 @@ export function SectionBlockRenderer({
     return 0.75;
   })();
 
-  /** Respeita "Largura do conteúdo (box ou full width)" da seção — igual aos outros módulos. */
-  const sectionContentWidth = block.config?.contentWidth as "box" | "full" | undefined;
-  const themeContentWidth = page.content?.theme?.contentWidth as "box" | "full" | undefined;
-  const sectionFullWidth =
-    sectionContentWidth === "full" || (sectionContentWidth !== "box" && themeContentWidth === "full");
-
-  const sectionWrapperClass = sectionFullWidth
-    ? "relative w-full px-4 sm:px-6 lg:px-8"
-    : `relative w-full px-4 sm:px-6 lg:px-8 mx-auto ${columns === 1 ? "max-w-6xl" : "max-w-7xl"}`;
+  const sectionWrapperClass = moduleSectionContainerClass();
 
   const gridColsClass =
     columns === 2

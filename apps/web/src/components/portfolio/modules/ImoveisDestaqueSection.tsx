@@ -5,6 +5,7 @@ import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { SmartImage } from "@/components/common/SmartImage";
 import { MapPin, ExternalLink } from "lucide-react";
 
@@ -36,7 +37,7 @@ export function ImoveisDestaqueSection({
   const items = (Array.isArray(block.config?.imoveisDestaqueItems)
     ? block.config.imoveisDestaqueItems
     : []) as ImovelItem[];
-  const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass();
 
   return (
     <AnimateInView>

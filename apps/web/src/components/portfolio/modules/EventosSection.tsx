@@ -7,6 +7,7 @@ import type { HomeContentBlock } from "@/types/home-content";
 import type { Page } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { fetchPublicEvents, type PublicEventItem } from "@/lib/public-events";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 
@@ -89,7 +90,7 @@ export function EventosSection({
   const title = blockTitle(block, DEFAULT_TITLE[lang], lang);
   const subtext = blockBody(block, DEFAULT_SUBTEXT[lang], lang);
   const viewLabel = VIEW_LABEL[lang];
-  const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass();
 
   return (
     <section

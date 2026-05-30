@@ -3,6 +3,7 @@ import type { Page } from "@/types/page";
 import type { HomeContentBlock } from "@/types/home-content";
 import { getPublicImageUrl, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { getHeroDisplaySlides, resolveHeroImageUrl } from "@/lib/hero-block.util";
 import { resolveFontFamily } from "@/lib/page-fonts";
 import { SmartImage } from "@/components/common/SmartImage";
@@ -325,7 +326,7 @@ export function BlockRenderer({
     ];
     const iconNames = (Array.isArray(block.config?.highlightsIcons) ? block.config.highlightsIcons : ["Trophy", "Globe", "Layers"]) as string[];
     const defaultIcons = [Trophy, Globe, Layers] as const;
-    const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-5xl px-4 sm:px-6 lg:px-8";
+    const containerClass = moduleSectionContainerClass();
     return (
       <AnimateInView key={block.id}>
         <section
@@ -635,7 +636,7 @@ export function BlockRenderer({
               <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
             </div>
           )}
-          <div className={`relative px-4 sm:px-6 lg:px-8 ${fullWidth ? "w-full" : "container mx-auto max-w-6xl"}`}>
+          <div className={moduleSectionContainerClass()}>
             <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-14 lg:items-center">
               <div className="order-2 space-y-5 lg:order-1 lg:col-span-7 lg:min-h-0">
                 <div>
@@ -735,7 +736,7 @@ export function BlockRenderer({
             <div className="absolute inset-0 bg-zinc-950" style={{ opacity: blockOverlayOpacity(block) }} />
           </div>
         )}
-        <div className={`relative px-4 sm:px-6 lg:px-8 ${fullWidth ? "w-full" : "container mx-auto max-w-4xl"} ${bgImg ? "text-center" : ""}`}>
+        <div className={`${moduleSectionContainerClass()} ${bgImg ? "text-center" : ""}`}>
           {title && (
             <SectionTitle
               title={title}

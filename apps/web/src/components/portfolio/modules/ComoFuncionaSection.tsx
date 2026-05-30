@@ -2,6 +2,7 @@
 
 import type { HomeContentBlock } from "@/types/home-content";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import {
@@ -56,7 +57,7 @@ export function ComoFuncionaSection({
   const body = (lang === "pt" ? block.config?.bodyPt : block.config?.bodyEn) as string;
   const bullets = (lang === "pt" ? block.config?.comoFuncionaBulletsPt : block.config?.comoFuncionaBulletsEn) ?? [];
   const icons = (Array.isArray(block.config?.comoFuncionaIcons) ? block.config.comoFuncionaIcons : []) as string[];
-  const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass();
 
   const bulletsList = Array.isArray(bullets) ? bullets.filter((b) => (b ?? "").trim()) : [];
 

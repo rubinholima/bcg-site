@@ -168,7 +168,7 @@ export function HinoModuleEditor({
             onChange={(e) => updateBlockConfig(index, "hinoChordsEmbedUrl", e.target.value || undefined)}
           />
           <p className="text-xs text-muted-foreground">
-            Cole o link compartilhado da cifra. Aparece em uma aba no site; use o fundo escuro abaixo para combinar com o tema do clube.
+            Cole o link compartilhado da cifra. A barra superior da Moises (Copy Link) fica oculta no site; o crédito Moises aparece abaixo do embed.
           </p>
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
             <input

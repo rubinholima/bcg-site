@@ -13,6 +13,7 @@ import {
 import Image from "next/image";
 import { getPublicImageUrl, isSvgUrl, resolvePublicMediaUrlForDisplay } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { SmartImage } from "@/components/common/SmartImage";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { Calendar, MapPin, Tv, Ticket, Home, Plane, Building2 } from "lucide-react";
@@ -463,7 +464,7 @@ export function ProximosJogosSection({
           <div className="absolute inset-0 bg-zinc-950" style={{ opacity: overlayOpacity }} />
         </div>
       )}
-      <div className={`relative w-full ${fullWidth ? "" : "container mx-auto max-w-5xl px-0 sm:px-6 lg:px-8"}`}>
+      <div className={moduleSectionContainerClass()}>
         {showTitle && title && (
           <SectionTitle
             title={title}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { AnimateInView } from "@/components/home/AnimateInView";
 import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { ChevronDown } from "lucide-react";
@@ -32,7 +33,7 @@ export function FaqSection({
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const items = (Array.isArray(block.config?.faqItems) ? block.config.faqItems : []) as FaqItem[];
-  const containerClass = fullWidth ? "w-full px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-3xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass();
 
   const filtered = items.filter((i) => (i?.questionPt ?? i?.questionEn ?? "").trim());
 

@@ -8,6 +8,7 @@ import { SectionTitle } from "@/components/portfolio/SectionTitle";
 import { SmartImage } from "@/components/common/SmartImage";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
+import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import {
   Select,
   SelectContent,
@@ -302,7 +303,7 @@ export function TabelaClassificacaoSection({
     ? ((block.config?.titlePt as string)?.trim() || "Classificação")
     : ((block.config?.titleEn as string)?.trim() || "Standings");
 
-  const containerClass = fullWidth ? "w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" : "container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8";
+  const containerClass = moduleSectionContainerClass();
 
   /** sectionSize (minimal/compact/normal/large) — só afeta quando inSection. Minimal = máximo compacto. */
   const sectionSize = (block.config?.sectionSize as "minimal" | "compact" | "normal" | "large") || "normal";

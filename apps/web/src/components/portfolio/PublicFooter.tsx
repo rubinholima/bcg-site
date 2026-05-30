@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { PageTheme } from "@/types/page";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { MODULE_SECTION_INNER_CLASS } from "@/lib/module-section-container";
 import { resolveFontFamily } from "@/lib/page-fonts";
 import { SmartImage } from "@/components/common/SmartImage";
 
@@ -69,10 +70,7 @@ export function PublicFooter({
     fontFamily: fontFamily || undefined,
   };
 
-  const innerClass =
-    contentWidth === "full"
-      ? "mx-auto flex w-full max-w-none flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6"
-      : "container mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6 lg:px-8";
+  const innerClass = `${MODULE_SECTION_INNER_CLASS} flex flex-col items-center justify-between gap-4 sm:flex-row`;
 
   return (
     <footer className={`relative border-t border-white/5 px-4 py-8 sm:px-6 ${className ?? ""}`} style={style}>
