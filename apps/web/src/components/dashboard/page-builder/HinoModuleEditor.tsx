@@ -45,8 +45,8 @@ export function HinoModuleEditor({
       </summary>
       <div className="space-y-5 border-t border-border px-3 py-4">
         <p className="text-xs text-muted-foreground">
-          Timestamps LRC: <strong>[00:00:17]</strong> ou <strong>[0:17]</strong> antes de cada linha. Segunda intro no MP3? Linha{" "}
-          <strong>[restart:1:32]</strong> ou <strong>[restart:1:32+15]</strong> (+15s de intro antes da letra voltar).
+          Timestamps LRC: <strong>[00:00:17]</strong> ou <strong>[0:17]</strong> antes de cada linha. Segunda intro no MP3? Uma linha{" "}
+          <strong>[restart:1:32]</strong> — a letra recomeça sozinha com o mesmo timing da 1ª passagem (não precisa duplicar a letra).
         </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -137,18 +137,7 @@ export function HinoModuleEditor({
               onChange={(e) => updateBlockConfig(index, "hinoKaraokeRestartSec", e.target.value || undefined)}
             />
             <p className="text-xs text-muted-foreground">
-              Momento em que a música recomeça. Entre o fim da letra e aqui aparece &quot;Interlúdio…&quot;.
-            </p>
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Duração da reprise (segundos)</Label>
-            <Input
-              placeholder="15 ou 0:15 — padrão = tempo até 1ª linha LRC"
-              value={(block.config?.hinoKaraokeRestartIntroSec as string) ?? ""}
-              onChange={(e) => updateBlockConfig(index, "hinoKaraokeRestartIntroSec", e.target.value || undefined)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Clave + &quot;Reprise…&quot; enquanto a intro toca de novo. Use <strong>[restart:1:32+15]</strong> na letra ou este campo.
+              Momento em que a música recomeça no MP3. A 2ª passagem repete os mesmos timestamps (ex.: [0:21] em restart+21s).
             </p>
           </div>
         </div>
@@ -161,7 +150,7 @@ export function HinoModuleEditor({
             </Label>
             <textarea
               rows={8}
-              placeholder={"[00:00:17] Aquele clube que existe em Nova Lima\n...\n[restart:1:32+15]  ← reprise 15s, letra recomeça sozinha"}
+              placeholder={"[00:00:17] Aquele clube que existe em Nova Lima\n...\n[restart:1:32]  ← quando a música recomeça"}
               value={(block.config?.hinoLetraPt as string) ?? ""}
               onChange={(e) => updateBlockConfig(index, "hinoLetraPt", e.target.value)}
               className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"

@@ -192,6 +192,16 @@ function KaraokeLyrics({
     );
   }
 
+  if (displayPhase === "reprise") {
+    return (
+      <HinoIntroPlaying
+        accent={accent}
+        lang={lang}
+        label={lang === "pt" ? "Reprise…" : "Reprise…"}
+      />
+    );
+  }
+
   const maxVisible = activeIndex;
   const prevIndex = maxVisible > 0 ? maxVisible - 1 : -1;
 
