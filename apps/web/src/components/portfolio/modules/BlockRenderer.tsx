@@ -449,6 +449,7 @@ export function BlockRenderer({
         key={block.id}
         block={block}
         page={page}
+        slug={slug}
         lang={lang}
         ourTeamName={tenant?.name}
         ourTeamLogoUrl={tenant?.logoUrl}
@@ -457,6 +458,7 @@ export function BlockRenderer({
         inSection={inSection}
         sectionColumns={sectionColumns}
         showTitle={shouldShowTitle}
+        fixturesContext={fixturesContext}
       />
     );
   }

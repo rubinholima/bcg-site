@@ -19,6 +19,11 @@ import {
 import { RotateCcw } from "lucide-react";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 import { isOurTeam } from "@/components/portfolio/FixtureTeamLogo";
+import { fetchFixtures, type FixturesFetchContext } from "@/lib/fixtures-shared";
+import {
+  enrichStandingsRowsFromFixtures,
+  mergeFixturesFromPageBlocks,
+} from "@/lib/standings-fixtures-enrich";
 
 const FILTER_ALL = "__all__";
 
@@ -175,6 +180,7 @@ const OUR_CLUB_PLACEHOLDERS = ["nosso clube", "our club"];
 export function TabelaClassificacaoSection({
   block,
   page,
+  slug,
   lang,
   ourTeamName,
   ourTeamLogoUrl,
@@ -183,9 +189,11 @@ export function TabelaClassificacaoSection({
   inSection,
   sectionColumns,
   showTitle = true,
+  fixturesContext = "tenant",
 }: {
   block: HomeContentBlock;
   page?: Page;
+  slug?: string;
   lang: "pt" | "en";
   ourTeamName?: string | null;
   ourTeamLogoUrl?: string | null;
@@ -194,6 +202,7 @@ export function TabelaClassificacaoSection({
   inSection?: boolean;
   sectionColumns?: 1 | 2 | 3;
   showTitle?: boolean;
+  fixturesContext?: FixturesFetchContext;
 }) {
   const ownRows = (block.config?.tabelaManualRows as TabelaStandingsRow[] | undefined) ?? [];
   const fallbackRows = useMemo(() => (ownRows.length === 0 ? findTabelaRowsFromPage(page, block.id) : []), [page, block.id, ownRows.length]);
@@ -222,6 +231,23 @@ export function TabelaClassificacaoSection({
   const [categoriaSel, setCategoriaSel] = useState<string>(() => defaultFilters.categoria);
   const [temporadaSel, setTemporadaSel] = useState<string>(() => defaultFilters.temporada);
   const [championships, setChampionships] = useState<ChampionshipInfo[]>([]);
+  const [fixtures, setFixtures] = useState<Awaited<ReturnType<typeof fetchFixtures>>>([]);
+
+  useEffect(() => {
+    if (!slug?.trim()) return;
+    let cancelled = false;
+    fetchFixtures(slug.trim(), fixturesContext).then((list) => {
+      if (!cancelled) setFixtures(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, fixturesContext]);
+
+  const allFixtures = useMemo(
+    () => mergeFixturesFromPageBlocks(fixtures, page?.content?.blocks),
+    [fixtures, page?.content?.blocks],
+  );
 
   const categorias = useMemo(() => {
     const set = new Set<string>();
@@ -290,8 +316,13 @@ export function TabelaClassificacaoSection({
       : undefined;
     const formula = champ?.standingsFormula ?? DEFAULT_STANDINGS_FORMULA;
     const sorted = sortByFormula(filtered, formula);
-    return sorted.map((r, i) => ({ ...r, posicao: i + 1, variacao: "same" as const }));
-  }, [rows, competicaoSel, categoriaSel, temporadaSel, championshipByCompeticao]);
+    const withPos = sorted.map((r, i) => ({ ...r, posicao: i + 1, variacao: "same" as const }));
+    return enrichStandingsRowsFromFixtures(withPos, allFixtures, {
+      competicao: competicaoSel,
+      categoria: categoriaSel,
+      ourTeamName,
+    });
+  }, [rows, competicaoSel, categoriaSel, temporadaSel, championshipByCompeticao, allFixtures, ourTeamName]);
 
   const handleReset = () => {
     setCompeticaoSel(defaultFilters.competicao);
@@ -668,30 +699,34 @@ function TabelaRow({
         </span>
       </td>
       <td className={cellClass}>
-        <div className="flex shrink-0 gap-0.5">
-          {formItems.map((f, i) => {
-            const { letter, bg } = formCell(f);
-            return (
-              <span
-                key={i}
-                className={`flex items-center justify-center rounded font-bold text-white ${bg} ${
-                  is3Col
-                    ? "h-3.5 w-3.5 text-[7px] sm:h-4 sm:w-4 sm:text-[8px]"
-                    : inSection && (density === "minimal" || density === "compact")
-                      ? density === "minimal"
-                        ? "h-3.5 w-3.5 text-[7px] sm:h-4 sm:w-4 sm:text-[8px]"
-                        : "h-4 w-4 text-[8px] sm:h-5 sm:w-5 sm:text-[9px]"
-                      : inSection
-                        ? "h-5 w-5 text-[9px] sm:h-6 sm:w-6 sm:text-[10px]"
-                        : "h-6 w-6 text-[10px]"
-                }`}
-                title={letter}
-              >
-                {letter}
-              </span>
-            );
-          })}
-        </div>
+        {formItems.length > 0 ? (
+          <div className="flex shrink-0 gap-0.5">
+            {formItems.map((f, i) => {
+              const { letter, bg } = formCell(f);
+              return (
+                <span
+                  key={i}
+                  className={`flex items-center justify-center rounded font-bold text-white ${bg} ${
+                    is3Col
+                      ? "h-3.5 w-3.5 text-[7px] sm:h-4 sm:w-4 sm:text-[8px]"
+                      : inSection && (density === "minimal" || density === "compact")
+                        ? density === "minimal"
+                          ? "h-3.5 w-3.5 text-[7px] sm:h-4 sm:w-4 sm:text-[8px]"
+                          : "h-4 w-4 text-[8px] sm:h-5 sm:w-5 sm:text-[9px]"
+                        : inSection
+                          ? "h-5 w-5 text-[9px] sm:h-6 sm:w-6 sm:text-[10px]"
+                          : "h-6 w-6 text-[10px]"
+                  }`}
+                  title={letter}
+                >
+                  {letter}
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <span className="text-zinc-600">–</span>
+        )}
       </td>
       <td className={cellClass}>
         {row.proximoJogo || logoProximo ? (
