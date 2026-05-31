@@ -173,27 +173,19 @@ export function effectiveLrcSyncSec(
   restartAtSec: number | null,
   restartIntroSec: number,
   leadSec: number,
-  durationSec = 0,
+  _durationSec = 0,
 ): number {
   let sync = currentSec;
 
   if (restartAtSec != null && currentSec >= restartAtSec) {
-    let introDur = Math.max(0, restartIntroSec);
-    const remaining =
-      durationSec > restartAtSec ? durationSec - restartAtSec : null;
-
-    /** Intro configurada maior que o trecho restante do MP3 — letra acompanha o áudio. */
-    if (remaining != null && remaining > 0 && introDur > remaining) {
-      introDur = 0;
-    } else if (remaining != null && introDur > 0) {
-      introDur = Math.min(introDur, remaining);
-    }
-
+    const introDur = Math.max(0, restartIntroSec);
     const lyricsResumeAt = restartAtSec + introDur;
 
     if (introDur > 0 && currentSec < lyricsResumeAt) {
+      /** Instrumental da reprise — mesma 1ª linha do início. */
       sync = firstVocalTime(lines);
     } else {
+      /** 2ª passagem: relógio LRC idêntico à 1ª (1s de áudio = 1s na letra). */
       sync = currentSec - lyricsResumeAt + firstVocalTime(lines);
     }
   }
@@ -362,5 +354,6 @@ export function parseHinoKaraokeRestartIntroSec(
     }
   }
   if (fromLyrics != null && fromLyrics >= 0) return fromLyrics;
-  return HINO_KARAOKE_DEFAULT_RESTART_INTRO_SEC;
+  const first = firstVocalTime(lines);
+  return first > 0 ? first : HINO_KARAOKE_DEFAULT_RESTART_INTRO_SEC;
 }
