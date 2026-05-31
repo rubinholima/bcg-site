@@ -173,19 +173,31 @@ export function effectiveLrcSyncSec(
   restartAtSec: number | null,
   restartIntroSec: number,
   leadSec: number,
+  durationSec = 0,
 ): number {
   let sync = currentSec;
-  if (
-    restartAtSec != null &&
-    restartIntroSec > 0 &&
-    currentSec >= restartAtSec &&
-    currentSec < restartAtSec + restartIntroSec
-  ) {
-    /** Instrumental da reprise: letra visível desde o início (2ª passagem). */
-    sync = firstVocalTime(lines);
-  } else if (restartAtSec != null && currentSec >= restartAtSec + restartIntroSec) {
-    sync = currentSec - (restartAtSec + restartIntroSec) + firstVocalTime(lines);
+
+  if (restartAtSec != null && currentSec >= restartAtSec) {
+    let introDur = Math.max(0, restartIntroSec);
+    const remaining =
+      durationSec > restartAtSec ? durationSec - restartAtSec : null;
+
+    /** Intro configurada maior que o trecho restante do MP3 — letra acompanha o áudio. */
+    if (remaining != null && remaining > 0 && introDur > remaining) {
+      introDur = 0;
+    } else if (remaining != null && introDur > 0) {
+      introDur = Math.min(introDur, remaining);
+    }
+
+    const lyricsResumeAt = restartAtSec + introDur;
+
+    if (introDur > 0 && currentSec < lyricsResumeAt) {
+      sync = firstVocalTime(lines);
+    } else {
+      sync = currentSec - lyricsResumeAt + firstVocalTime(lines);
+    }
   }
+
   return Math.max(0, sync + leadSec);
 }
 
@@ -254,7 +266,14 @@ export function resolveActiveLineIndex(
     return -1;
   }
   if (hasTimestamps) {
-    const syncSec = effectiveLrcSyncSec(currentSec, lines, restartAtSec, restartIntroSec, leadSec);
+    const syncSec = effectiveLrcSyncSec(
+      currentSec,
+      lines,
+      restartAtSec,
+      restartIntroSec,
+      leadSec,
+      durationSec,
+    );
     return activeLineIndexFromLrc(lines, syncSec);
   }
   const syncSec = Math.max(0, currentSec + leadSec);
@@ -290,6 +309,8 @@ export function resolveHinoKaraokeDisplayPhase(
 
 export const HINO_KARAOKE_DEFAULT_INTRO_SEC = 3;
 export const HINO_KARAOKE_DEFAULT_LEAD_SEC = 2.5;
+/** Intro instrumental da reprise quando `[restart:…]` sem `+segundos`. */
+export const HINO_KARAOKE_DEFAULT_RESTART_INTRO_SEC = 15;
 
 export function parseHinoKaraokeIntroSec(raw: unknown): number {
   if (typeof raw === "number" && raw >= 0) return raw;
@@ -341,5 +362,5 @@ export function parseHinoKaraokeRestartIntroSec(
     }
   }
   if (fromLyrics != null && fromLyrics >= 0) return fromLyrics;
-  return firstVocalTime(lines);
+  return HINO_KARAOKE_DEFAULT_RESTART_INTRO_SEC;
 }

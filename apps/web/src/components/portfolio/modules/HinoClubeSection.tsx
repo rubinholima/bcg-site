@@ -468,11 +468,17 @@ function HinoPlayerColumn({
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
-    const onTime = () => setCurrent(el.currentTime);
-    const onMeta = () => {
-      setDuration(el.duration || 0);
-      setReady(true);
+
+    const syncDuration = () => {
+      const d = el.duration;
+      if (Number.isFinite(d) && d > 0) {
+        setDuration(d);
+        setReady(true);
+      }
     };
+
+    const onTime = () => setCurrent(el.currentTime);
+    const onMeta = () => syncDuration();
     const onEnd = () => {
       el.currentTime = 0;
       setCurrent(0);
@@ -480,14 +486,25 @@ function HinoPlayerColumn({
     };
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
+
     el.addEventListener("timeupdate", onTime);
     el.addEventListener("loadedmetadata", onMeta);
+    el.addEventListener("durationchange", onMeta);
+    el.addEventListener("canplay", onMeta);
+    el.addEventListener("loadeddata", onMeta);
     el.addEventListener("ended", onEnd);
     el.addEventListener("play", onPlay);
     el.addEventListener("pause", onPause);
+
+    syncDuration();
+    if (el.readyState >= 1) syncDuration();
+
     return () => {
       el.removeEventListener("timeupdate", onTime);
       el.removeEventListener("loadedmetadata", onMeta);
+      el.removeEventListener("durationchange", onMeta);
+      el.removeEventListener("canplay", onMeta);
+      el.removeEventListener("loadeddata", onMeta);
       el.removeEventListener("ended", onEnd);
       el.removeEventListener("play", onPlay);
       el.removeEventListener("pause", onPause);
@@ -499,7 +516,14 @@ function HinoPlayerColumn({
     let raf = 0;
     const tick = () => {
       const el = audioRef.current;
-      if (el) setCurrent(el.currentTime);
+      if (el) {
+        setCurrent(el.currentTime);
+        const d = el.duration;
+        if (Number.isFinite(d) && d > 0) {
+          setDuration((prev) => (prev !== d ? d : prev));
+          setReady(true);
+        }
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -560,7 +584,7 @@ function HinoPlayerColumn({
         className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full blur-3xl opacity-40"
         style={{ backgroundColor: accent }}
       />
-      <audio ref={audioRef} src={src} preload="metadata" muted={muted} />
+      <audio ref={audioRef} src={src} preload="auto" muted={muted} />
 
       <div className={`relative shrink-0 ${hasKaraoke ? "border-b border-white/10 p-4 sm:p-5" : "p-5 sm:p-6"}`}>
         <div className={`flex ${hasKaraoke ? "flex-row items-center gap-4" : "flex-col items-center gap-5 sm:flex-row sm:items-center sm:gap-6"}`}>
