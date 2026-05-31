@@ -268,7 +268,13 @@ export class PublicController {
    * Próximos jogos do tenant (clube). Usado pelo módulo "Próximos Jogos" na página pública.
    */
   @Get('tenants/:slug/fixtures')
-  async getTenantFixtures(@Param('slug') slug: string) {
+  async getTenantFixtures(
+    @Param('slug') slug: string,
+    @Query('forStandings') forStandings?: string,
+  ) {
+    if (forStandings === '1' || forStandings === 'true') {
+      return this.publicService.getFixturesForStandingsSlug(slug);
+    }
     return this.publicService.getFixturesForTenantSlug(slug);
   }
 

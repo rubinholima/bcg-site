@@ -23,19 +23,27 @@ import { buildBackendUrl } from "@/lib/apiProxy";
 
 export type FixturesFetchContext = "tenant" | "event";
 
+export type FetchFixturesOptions = {
+  /** Só para tabela de classificação — inclui jogos de todos os times da competição. */
+  forStandings?: boolean;
+};
+
 export async function fetchFixtures(
   slug: string,
-  context: FixturesFetchContext = "tenant"
+  context: FixturesFetchContext = "tenant",
+  options?: FetchFixturesOptions,
 ): Promise<FixtureItem[]> {
   const isClient = typeof window !== "undefined";
+  const standingsQs =
+    options?.forStandings && context === "tenant" ? "?forStandings=1" : "";
   const path =
     context === "event"
       ? `/public/events/${encodeURIComponent(slug)}/fixtures`
-      : `/public/tenants/${encodeURIComponent(slug)}/fixtures`;
+      : `/public/tenants/${encodeURIComponent(slug)}/fixtures${standingsQs}`;
   const url = isClient
     ? context === "event"
       ? `/api/public/events/${encodeURIComponent(slug)}/fixtures`
-      : `/api/public/tenants/${encodeURIComponent(slug)}/fixtures`
+      : `/api/public/tenants/${encodeURIComponent(slug)}/fixtures${standingsQs}`
     : buildBackendUrl(path);
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];

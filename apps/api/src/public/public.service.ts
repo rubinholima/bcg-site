@@ -402,16 +402,7 @@ export class PublicService {
    */
   async getFixturesForTenantId(tenantId: string): Promise<FixtureDto[]> {
     const page = await this.pagesService.findByTenantId(tenantId);
-    const tenant = await this.prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { slug: true, categories: true },
-    });
-    return this.buildFixturesWithLeagueExtras(
-      page,
-      tenantId,
-      tenant?.slug ?? '',
-      tenant?.categories,
-    );
+    return this.buildFixturesFromPage(page, tenantId);
   }
 
   /**
@@ -421,6 +412,24 @@ export class PublicService {
    * Mescla placares de resultadosManuais (bloco ultimos_resultados) para jogos passados.
    */
   async getFixturesForTenantSlug(slug: string): Promise<FixtureDto[]> {
+    const page = await this.pagesService.findByTenantSlug(slug);
+    const tenant = page?.tenantId
+      ? await this.prisma.tenant.findUnique({
+          where: { id: page.tenantId },
+          select: { id: true },
+        })
+      : await this.prisma.tenant.findFirst({
+          where: { slug: { equals: slug.trim(), mode: 'insensitive' } },
+          select: { id: true },
+        });
+    return this.buildFixturesFromPage(page, tenant?.id ?? '');
+  }
+
+  /**
+   * Jogos para enriquecer Últ./Próx. na classificação (todos os times da competição).
+   * Não usar em Próximos Jogos / Últimos Resultados — só jogos do clube.
+   */
+  async getFixturesForStandingsSlug(slug: string): Promise<FixtureDto[]> {
     const page = await this.pagesService.findByTenantSlug(slug);
     const tenant = page?.tenantId
       ? await this.prisma.tenant.findUnique({
