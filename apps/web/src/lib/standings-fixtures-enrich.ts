@@ -1,6 +1,7 @@
 import type { HomeContentBlock } from "@/types/home-content";
 import type { ProximosJogosFixtureItem, TabelaStandingsRow } from "@/types/home-content";
 import type { FixtureItem } from "@/lib/fixtures-shared";
+import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import {
   competitionMatchForStandings,
   namesMatch,
@@ -20,6 +21,18 @@ function resolveTeamForMatch(time: string, ourTeamName?: string | null): string 
   return t;
 }
 
+function resolveOpponentDisplayName(name: string, ourTeamName?: string | null): string {
+  const t = (name ?? "").trim();
+  if (!t) return "";
+  if (OUR_CLUB_PLACEHOLDERS.includes(t.toLowerCase()) && ourTeamName?.trim()) {
+    return ourTeamName.trim();
+  }
+  if (ourTeamName?.trim() && teamsMatchForStandings(t, ourTeamName)) {
+    return ourTeamName.trim();
+  }
+  return t;
+}
+
 function teamSideInFixture(
   fixture: FixtureItem,
   teamName: string,
@@ -29,8 +42,10 @@ function teamSideInFixture(
   if (!resolved) return null;
   const home = (fixture.homeTeamName ?? "").trim();
   const away = (fixture.awayTeamName ?? "").trim();
+
   if (teamsMatchForStandings(resolved, home)) return "home";
   if (teamsMatchForStandings(resolved, away)) return "away";
+
   if (ourTeamName?.trim()) {
     if (
       OUR_CLUB_PLACEHOLDERS.includes(home.toLowerCase()) &&
@@ -48,16 +63,36 @@ function teamSideInFixture(
   return null;
 }
 
+/** Tabela usa label ("Módulo II"); jogos usam value ("modulo_ii"). */
+function categoryMatchForStandings(
+  tableCategory: string | undefined,
+  fixtureCategory: string | undefined,
+): boolean {
+  if (!tableCategory?.trim() || tableCategory === "__all__") return true;
+  const fc = (fixtureCategory ?? "").trim() || "principal";
+  const tc = tableCategory.trim();
+  if (namesMatch(fc, tc)) return true;
+
+  const tableCat = FIXTURE_CATEGORIES.find(
+    (c) => namesMatch(c.labelPT, tc) || namesMatch(c.labelEN, tc) || namesMatch(c.value, tc),
+  );
+  const fixtureCat = FIXTURE_CATEGORIES.find(
+    (c) => namesMatch(c.value, fc) || namesMatch(c.labelPT, fc) || namesMatch(c.labelEN, fc),
+  );
+
+  if (tableCat && fixtureCat) return tableCat.value === fixtureCat.value;
+  if (tableCat) return namesMatch(fc, tableCat.value);
+  if (fixtureCat) return namesMatch(tc, fixtureCat.labelPT) || namesMatch(tc, fixtureCat.value);
+  return namesMatch(fc, tc);
+}
+
 function fixtureMatchesFilters(
   fixture: FixtureItem,
   competicao?: string,
   categoria?: string,
 ): boolean {
   if (!competitionMatchForStandings(competicao, fixture.competitionName)) return false;
-  if (categoria && categoria !== "__all__") {
-    const cat = (fixture.category ?? "").trim();
-    if (cat && !namesMatch(cat, categoria)) return false;
-  }
+  if (!categoryMatchForStandings(categoria, fixture.category)) return false;
   return true;
 }
 
@@ -98,8 +133,9 @@ function collectAllBlocks(blocks: HomeContentBlock[] | undefined): HomeContentBl
     out.push(b);
     if (b.type === "section") {
       const left = (b.config?.sectionLeftModules as HomeContentBlock[] | undefined) ?? [];
+      const middle = (b.config?.sectionMiddleModules as HomeContentBlock[] | undefined) ?? [];
       const right = (b.config?.sectionRightModules as HomeContentBlock[] | undefined) ?? [];
-      out.push(...collectAllBlocks(left), ...collectAllBlocks(right));
+      out.push(...collectAllBlocks(left), ...collectAllBlocks(middle), ...collectAllBlocks(right));
     }
   }
   return out;
@@ -117,13 +153,28 @@ function collectResultadosManuais(blocks: HomeContentBlock[] | undefined): Manua
   return out;
 }
 
+function isFinishedFixture(f: FixtureItem, now: number): boolean {
+  if (f.status === "FINAL" || f.status === "LIVE") return true;
+  const hasScore = typeof f.homeScore === "number" && typeof f.awayScore === "number";
+  if (!hasScore) return false;
+  return new Date(f.startISO).getTime() < now - 2 * 60 * 60 * 1000;
+}
+
+function isUpcomingFixture(f: FixtureItem, now: number): boolean {
+  if (f.status === "FINAL") return false;
+  const hasScore = typeof f.homeScore === "number" && typeof f.awayScore === "number";
+  const isPast = new Date(f.startISO).getTime() < now - 60 * 60 * 1000;
+  if (hasScore && isPast) return false;
+  if (f.status === "LIVE") return true;
+  return new Date(f.startISO).getTime() >= now - 60 * 60 * 1000;
+}
+
 /** Mesma lógica do Últimos Resultados: placares manuais + status FINAL para jogos passados. */
 export function prepareFixturesForStandings(
   apiFixtures: FixtureItem[],
   blocks: HomeContentBlock[] | undefined,
 ): FixtureItem[] {
-  /** API já traz proximosJogosManualFixtures; aqui só aplicamos placares de Últimos Resultados. */
-  const merged = [...apiFixtures];
+  const merged = mergeFixturesFromPageBlocks(apiFixtures, blocks);
   const resultadosManuais = collectResultadosManuais(blocks);
   const now = Date.now();
 
@@ -179,8 +230,9 @@ function buildFormString(
   teamName: string,
   ourTeamName?: string | null,
 ): string {
+  const now = Date.now();
   const finished = fixtures
-    .filter((f) => f.status === "FINAL" || f.status === "LIVE")
+    .filter((f) => isFinishedFixture(f, now))
     .sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime());
 
   const letters: string[] = [];
@@ -201,11 +253,7 @@ function buildNextMatch(
 ): { proximoJogo?: string; logoProximo?: string } {
   const now = Date.now();
   const upcoming = fixtures
-    .filter((f) => {
-      if (f.status === "FINAL") return false;
-      if (f.status === "LIVE") return true;
-      return new Date(f.startISO).getTime() >= now - 60 * 60 * 1000;
-    })
+    .filter((f) => isUpcomingFixture(f, now))
     .filter((f) => teamSideInFixture(f, teamName, ourTeamName) != null)
     .sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
 
@@ -215,8 +263,9 @@ function buildNextMatch(
   const side = teamSideInFixture(next, teamName, ourTeamName);
   if (!side) return {};
 
-  const opponent =
+  const rawOpponent =
     side === "home" ? (next.awayTeamName ?? "").trim() : (next.homeTeamName ?? "").trim();
+  const opponent = resolveOpponentDisplayName(rawOpponent, ourTeamName);
   const logo =
     side === "home" ? next.awayTeamLogoUrl?.trim() : next.homeTeamLogoUrl?.trim();
 
@@ -227,8 +276,7 @@ function buildNextMatch(
 }
 
 /**
- * Preenche Últ. e Próx. somente a partir dos jogos FMF (fixtures + placares de Últimos Resultados).
- * Ignora colunas ultimos_jogos / proximo_jogo da planilha e não infere nada da tabela (V/E/D/P).
+ * Preenche Últ. e Próx. a partir dos mesmos jogos FMF usados em Próximos Jogos / Últimos Resultados.
  */
 export function enrichStandingsRowsFromFixtures(
   rows: TabelaStandingsRow[],
@@ -252,15 +300,15 @@ export function enrichStandingsRowsFromFixtures(
     return rows.map(clearLegacy);
   }
 
-  const byFilter = fixtures.filter((f) =>
+  const pool = fixtures.filter((f) =>
     fixtureMatchesFilters(f, options.competicao, options.categoria),
   );
-  const pool = byFilter.length > 0 ? byFilter : fixtures;
+  const effectivePool = pool.length > 0 ? pool : fixtures;
 
   return rows.map((row) => {
     const team = row.time ?? "";
-    const ultimosJogos = buildFormString(pool, team, options.ourTeamName) || undefined;
-    const next = buildNextMatch(pool, team, options.ourTeamName);
+    const ultimosJogos = buildFormString(effectivePool, team, options.ourTeamName) || undefined;
+    const next = buildNextMatch(effectivePool, team, options.ourTeamName);
 
     return {
       ...row,
