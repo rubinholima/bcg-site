@@ -15,7 +15,7 @@ export interface ParsedHinoLyrics {
   restartIntroSec: number | null;
 }
 
-export type HinoKaraokeDisplayPhase = "idle" | "intro" | "interlude" | "reprise" | "lyrics";
+export type HinoKaraokeDisplayPhase = "idle" | "intro" | "interlude" | "lyrics";
 
 /** Interpreta "00:00:17", "0:17", "1:23.5" → segundos. */
 export function parseLrcTimeValue(raw: string): number | null {
@@ -166,23 +166,6 @@ function isInPreRestartInterlude(
   return currentSec >= interludeStartSec(lines, restartAtSec) && currentSec < restartAtSec;
 }
 
-function isInRepriseIntro(currentSec: number, restartAtSec: number | null, restartIntroSec: number): boolean {
-  if (restartAtSec == null) return false;
-  return currentSec >= restartAtSec && currentSec < restartAtSec + restartIntroSec;
-}
-
-function isInInstrumentalGap(
-  currentSec: number,
-  lines: HinoLyricLine[],
-  restartAtSec: number | null,
-  restartIntroSec: number,
-): boolean {
-  return (
-    isInPreRestartInterlude(currentSec, lines, restartAtSec) ||
-    isInRepriseIntro(currentSec, restartAtSec, restartIntroSec)
-  );
-}
-
 /** Tempo efetivo para LRC (inclui reinício da letra na segunda intro). */
 export function effectiveLrcSyncSec(
   currentSec: number,
@@ -192,7 +175,15 @@ export function effectiveLrcSyncSec(
   leadSec: number,
 ): number {
   let sync = currentSec;
-  if (restartAtSec != null && currentSec >= restartAtSec + restartIntroSec) {
+  if (
+    restartAtSec != null &&
+    restartIntroSec > 0 &&
+    currentSec >= restartAtSec &&
+    currentSec < restartAtSec + restartIntroSec
+  ) {
+    /** Instrumental da reprise: letra visível desde o início (2ª passagem). */
+    sync = firstVocalTime(lines);
+  } else if (restartAtSec != null && currentSec >= restartAtSec + restartIntroSec) {
     sync = currentSec - (restartAtSec + restartIntroSec) + firstVocalTime(lines);
   }
   return Math.max(0, sync + leadSec);
@@ -259,7 +250,7 @@ export function resolveActiveLineIndex(
   restartIntroSec = 0,
 ): number {
   if (lines.length === 0) return -1;
-  if (hasTimestamps && isInInstrumentalGap(currentSec, lines, restartAtSec, restartIntroSec)) {
+  if (hasTimestamps && isInPreRestartInterlude(currentSec, lines, restartAtSec)) {
     return -1;
   }
   if (hasTimestamps) {
@@ -290,9 +281,8 @@ export function resolveHinoKaraokeDisplayPhase(
     if (activeLineIndex < 0) return playing ? "intro" : "idle";
     return "lyrics";
   }
-  if (restartAtSec != null && playing) {
-    if (isInPreRestartInterlude(currentSec, lines, restartAtSec)) return "interlude";
-    if (isInRepriseIntro(currentSec, restartAtSec, restartIntroSec)) return "reprise";
+  if (restartAtSec != null && playing && isInPreRestartInterlude(currentSec, lines, restartAtSec)) {
+    return "interlude";
   }
   if (playing && activeLineIndex < 0) return "intro";
   return activeLineIndex >= 0 ? "lyrics" : "idle";
