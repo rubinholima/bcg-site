@@ -23,6 +23,10 @@ import {
   type FixturesFetchContext,
 } from "@/lib/fixtures-shared";
 import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
+import {
+  ProximosJogosMobileCarousel,
+  ProximosJogosVenuePills,
+} from "@/components/portfolio/modules/ProximosJogosMobile";
 
 export interface FixtureItem {
   externalId: string;
@@ -310,6 +314,7 @@ export function ProximosJogosSection({
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedVenue, setSelectedVenue] = useState<"home" | "away" | null>(null);
   const [carouselHover, setCarouselHover] = useState(false);
   const [tenantBySlug, setTenantBySlug] = useState<{ name: string; logoUrl: string | null } | null>(null);
 
@@ -409,6 +414,11 @@ export function ProximosJogosSection({
       ? resolvedEventCategory
       : selectedCategory;
 
+  const isHomeFixture = (f: FixtureItem) =>
+    f.isOurTeamHome !== undefined ? f.isOurTeamHome : isOurTeam(f.homeTeamName, displayOurTeamName);
+
+  const showVenueFilter = fixturesContext !== "event" && Boolean(displayOurTeamName?.trim());
+
   const filteredFixtures = useMemo(() => {
     let list = upcomingFixtures;
     if (selectedDate) {
@@ -419,8 +429,13 @@ export function ProximosJogosSection({
         (f) => (f.category ?? "principal") === categoryFilterActive,
       );
     }
+    if (showVenueFilter && selectedVenue === "home") {
+      list = list.filter((f) => isHomeFixture(f));
+    } else if (showVenueFilter && selectedVenue === "away") {
+      list = list.filter((f) => !isHomeFixture(f));
+    }
     return list;
-  }, [upcomingFixtures, selectedDate, categoryFilterActive]);
+  }, [upcomingFixtures, selectedDate, categoryFilterActive, showVenueFilter, selectedVenue, displayOurTeamName]);
 
   const cardCount = filteredFixtures.length;
   /** Marquee contínuo como o carrossel de logos: 3 cópias para loop fluido sem parar. */
@@ -429,8 +444,7 @@ export function ProximosJogosSection({
     ? Array.from({ length: MARQUEE_COPIES }, () => filteredFixtures).flat()
     : filteredFixtures;
 
-  const isHome = (f: FixtureItem) =>
-    f.isOurTeamHome !== undefined ? f.isOurTeamHome : isOurTeam(f.homeTeamName, displayOurTeamName);
+  const isHome = isHomeFixture;
   const homeAwayLabel = (f: FixtureItem) =>
     isHome(f)
       ? (lang === "pt" ? "Casa" : "Home")
@@ -488,7 +502,9 @@ export function ProximosJogosSection({
             </p>
           </div>
         ) : (
-          <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
+          <>
+            {/* Desktop — filtros completos */}
+            <div className="mb-6 hidden flex-wrap items-center justify-center gap-4 md:flex">
             <div className="flex items-center gap-2">
               <span className="text-sm text-zinc-500">{lang === "pt" ? "Data:" : "Date:"}</span>
               <Select value={selectedDate ?? "all"} onValueChange={(v) => setSelectedDate(v === "all" ? null : v)}>
@@ -528,17 +544,76 @@ export function ProximosJogosSection({
                 </Select>
               )}
             </div>
-          </div>
+            {showVenueFilter && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-500">{lang === "pt" ? "Local:" : "Venue:"}</span>
+                <Select
+                  value={selectedVenue ?? "all"}
+                  onValueChange={(v) =>
+                    setSelectedVenue(v === "all" ? null : (v as "home" | "away"))
+                  }
+                >
+                  <SelectTrigger className="h-9 w-[120px] border-white/20 bg-zinc-900/60 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{lang === "pt" ? "Todos" : "All"}</SelectItem>
+                    <SelectItem value="home">{lang === "pt" ? "Casa" : "Home"}</SelectItem>
+                    <SelectItem value="away">{lang === "pt" ? "Fora" : "Away"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            </div>
+
+            {/* Mobile — só Casa / Fora / Todos */}
+            <div className="md:hidden">
+              <ProximosJogosVenuePills
+                lang={lang}
+                show={showVenueFilter}
+                value={selectedVenue ?? "all"}
+                onChange={(v) => setSelectedVenue(v === "all" ? null : v)}
+              />
+            </div>
+          </>
         )}
       </div>
 
-      {/* Marquee quando 2+ cards; um único card exibe sem animação para não cortar */}
-      {!loading && upcomingFixtures.length > 0 && (
+      {!loading && upcomingFixtures.length > 0 && filteredFixtures.length === 0 && (
+        <div className={`mx-auto max-w-lg px-4 py-8 text-center text-sm text-zinc-500 ${moduleSectionContainerClass({ fullWidth })}`}>
+          {lang === "pt" ? "Nenhum jogo com esses filtros." : "No fixtures match these filters."}
+        </div>
+      )}
+
+      {/* Mobile — cards estilo ingresso, swipe manual */}
+      {!loading && filteredFixtures.length > 0 && (
+        <div className={`md:hidden ${moduleSectionContainerClass({ fullWidth })}`}>
+          <ProximosJogosMobileCarousel
+            fixtures={filteredFixtures}
+            lang={lang}
+            resolveDisplayTeamName={(name) => resolveDisplayTeamName(name, displayOurTeamName)}
+            isHome={isHome}
+            homeAwayLabel={homeAwayLabel}
+            fixturesContext={fixturesContext}
+            competitionDisplayFallback={competitionDisplayFallback}
+            fullWidth={fullWidth}
+          />
+        </div>
+      )}
+
+      {/* Desktop — marquee automático */}
+      {!loading && filteredFixtures.length > 0 && (
         <div
-          className={`mt-6 w-full ${cardCount > 1 ? "overflow-hidden" : ""}`}
+          className={`hidden md:block ${cardCount > 1 ? "overflow-hidden" : ""} mt-6 w-full`}
           onMouseEnter={() => setCarouselHover(true)}
           onMouseLeave={() => setCarouselHover(false)}
-          title={cardCount > 1 ? (lang === "pt" ? "Passar o mouse pausa o carrossel" : "Hover to pause carousel") : undefined}
+          aria-label={
+            cardCount > 1
+              ? lang === "pt"
+                ? "Carrossel de jogos — passe o mouse para pausar"
+                : "Fixtures carousel — hover to pause"
+              : undefined
+          }
         >
           <div
             className="flex gap-4 py-2"

@@ -23,7 +23,9 @@ import { fetchFixtures, type FixturesFetchContext } from "@/lib/fixtures-shared"
 import {
   enrichStandingsRowsFromFixtures,
   mergeFixturesFromPageBlocks,
+  prepareFixturesForStandings,
 } from "@/lib/standings-fixtures-enrich";
+import { TabelaClassificacaoMobile } from "@/components/portfolio/modules/TabelaClassificacaoMobile";
 
 const FILTER_ALL = "__all__";
 
@@ -245,7 +247,7 @@ export function TabelaClassificacaoSection({
   }, [slug, fixturesContext]);
 
   const allFixtures = useMemo(
-    () => mergeFixturesFromPageBlocks(fixtures, page?.content?.blocks),
+    () => prepareFixturesForStandings(fixtures, page?.content?.blocks),
     [fixtures, page?.content?.blocks],
   );
 
@@ -402,6 +404,25 @@ export function TabelaClassificacaoSection({
             </div>
           ) : (
             <>
+              {/* Mobile — cards compactos + filtros essenciais */}
+              <TabelaClassificacaoMobile
+                rows={filteredAndSortedRows}
+                lang={lang}
+                ourTeamName={ourTeamName}
+                ourTeamLogoUrl={ourTeamLogoUrl}
+                competicoes={competicoes}
+                competicaoSel={competicaoSel}
+                onCompeticaoChange={handleCompeticaoChange}
+                categorias={categorias}
+                categoriaSel={categoriaSel}
+                onCategoriaChange={setCategoriaSel}
+                temporadas={temporadas}
+                temporadaSel={temporadaSel}
+                onTemporadaChange={setTemporadaSel}
+              />
+
+              {/* Desktop — tabela completa */}
+              <div className="hidden md:block">
               {/* Barra de filtros — sem rótulo "Filtro"; selects distribuídos na largura */}
               <div
                 className={`flex min-w-0 flex-wrap items-center gap-2 overflow-hidden rounded-xl border border-white/10 bg-zinc-900/80 ${
@@ -527,11 +548,11 @@ export function TabelaClassificacaoSection({
                           : density === "large"
                             ? "mt-3 max-h-[300px] overflow-auto"
                             : "mt-2 max-h-[290px] overflow-auto"
-                      : "mt-3 overflow-x-auto"
+                      : "mt-3 max-h-[min(70vh,520px)] overflow-auto"
                 }`}
               >
                 <table className={`w-full text-left ${is3Col ? "min-w-0 table-fixed text-xs" : inSection ? "min-w-0 table-fixed" : "min-w-[800px]"} ${!is3Col && (inSection && (density === "minimal" || density === "compact") ? "text-xs" : "text-sm")}`}>
-                  <thead>
+                  <thead className="sticky top-0 z-10 bg-zinc-900/95 shadow-[0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-sm">
                     <tr className={`border-b border-white/10 text-zinc-400 ${is3Col ? "text-xs" : ""}`}>
                       <th className={is3Col ? "w-[4%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Pos" : "Pos"}</th>
                       <th className={is3Col ? "w-[22%] min-w-0 px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[22%] min-w-0 px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[22%] min-w-0 px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[22%] min-w-0 px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Time" : "Team"}</th>
@@ -563,6 +584,7 @@ export function TabelaClassificacaoSection({
                     ))}
                   </tbody>
                 </table>
+              </div>
               </div>
             </>
           )}

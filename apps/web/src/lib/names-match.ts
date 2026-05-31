@@ -18,3 +18,35 @@ export function namesMatch(a: string | undefined, b: string | undefined): boolea
   if (normalizeNameKey(a) === normalizeNameKey(b)) return true;
   return normalizeTeamNameKeyForMerge(a) === normalizeTeamNameKeyForMerge(b);
 }
+
+/** Match flexível para tabela × jogos (Mamoré ↔ EC Mamoré, Villa Nova ↔ Villa Nova SAF). */
+export function teamsMatchForStandings(
+  standingsName: string | undefined,
+  fixtureName: string | undefined,
+): boolean {
+  if (!standingsName?.trim() || !fixtureName?.trim()) return false;
+  if (namesMatch(standingsName, fixtureName)) return true;
+  const a = normalizeTeamNameKeyForMerge(standingsName);
+  const b = normalizeTeamNameKeyForMerge(fixtureName);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const minLen = 4;
+  if (a.length >= minLen && b.length >= minLen && (a.includes(b) || b.includes(a))) {
+    return true;
+  }
+  return false;
+}
+
+/** Campeonato da tabela × nome do jogo (Mineirão ↔ MINEIRO MÓDULO II 2026). */
+export function competitionMatchForStandings(
+  tableCompetition: string | undefined,
+  fixtureCompetition: string | undefined,
+): boolean {
+  if (!tableCompetition?.trim()) return true;
+  if (!fixtureCompetition?.trim()) return true;
+  if (namesMatch(tableCompetition, fixtureCompetition)) return true;
+  const a = normalizeTeamNameKeyForMerge(tableCompetition);
+  const b = normalizeTeamNameKeyForMerge(fixtureCompetition);
+  if (!a || !b) return true;
+  return a.includes(b) || b.includes(a);
+}

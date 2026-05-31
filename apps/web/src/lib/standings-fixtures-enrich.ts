@@ -1,9 +1,14 @@
 import type { HomeContentBlock } from "@/types/home-content";
 import type { ProximosJogosFixtureItem, TabelaStandingsRow } from "@/types/home-content";
 import type { FixtureItem } from "@/lib/fixtures-shared";
-import { namesMatch } from "@/lib/names-match";
+import {
+  competitionMatchForStandings,
+  namesMatch,
+} from "@/lib/names-match";
 
 const OUR_CLUB_PLACEHOLDERS = ["nosso clube", "our club"];
+
+type ManualScores = Record<string, { homeScore?: number; awayScore?: number }>;
 
 function resolveTeamForMatch(time: string, ourTeamName?: string | null): string {
   const t = (time ?? "").trim();
@@ -23,8 +28,8 @@ function teamSideInFixture(
   if (!resolved) return null;
   const home = (fixture.homeTeamName ?? "").trim();
   const away = (fixture.awayTeamName ?? "").trim();
-  if (namesMatch(home, resolved)) return "home";
-  if (namesMatch(away, resolved)) return "away";
+  if (namesMatch(resolved, home)) return "home";
+  if (namesMatch(resolved, away)) return "away";
   if (ourTeamName?.trim()) {
     if (OUR_CLUB_PLACEHOLDERS.includes(home.toLowerCase()) && namesMatch(resolved, ourTeamName)) {
       return "home";
@@ -41,10 +46,7 @@ function fixtureMatchesFilters(
   competicao?: string,
   categoria?: string,
 ): boolean {
-  if (competicao?.trim()) {
-    const cn = (fixture.competitionName ?? "").trim();
-    if (cn && !namesMatch(cn, competicao)) return false;
-  }
+  if (!competitionMatchForStandings(competicao, fixture.competitionName)) return false;
   if (categoria && categoria !== "__all__") {
     const cat = (fixture.category ?? "").trim();
     if (cat && !namesMatch(cat, categoria)) return false;
@@ -96,12 +98,57 @@ function collectAllBlocks(blocks: HomeContentBlock[] | undefined): HomeContentBl
   return out;
 }
 
+function collectResultadosManuais(blocks: HomeContentBlock[] | undefined): ManualScores {
+  const out: ManualScores = {};
+  for (const b of collectAllBlocks(blocks)) {
+    if (b.type !== "ultimos_resultados" && b.type !== "ultimos_eventos") continue;
+    const manual = b.config?.resultadosManuais as ManualScores | undefined;
+    if (manual && typeof manual === "object") {
+      Object.assign(out, manual);
+    }
+  }
+  return out;
+}
+
+/** Mesma lógica do Últimos Resultados: placares manuais + status FINAL para jogos passados. */
+export function prepareFixturesForStandings(
+  apiFixtures: FixtureItem[],
+  blocks: HomeContentBlock[] | undefined,
+): FixtureItem[] {
+  const merged = mergeFixturesFromPageBlocks(apiFixtures, blocks);
+  const resultadosManuais = collectResultadosManuais(blocks);
+  const now = Date.now();
+
+  return merged.map((f) => {
+    const manual = resultadosManuais[f.externalId];
+    const homeScore =
+      typeof manual?.homeScore === "number" ? manual.homeScore : f.homeScore;
+    const awayScore =
+      typeof manual?.awayScore === "number" ? manual.awayScore : f.awayScore;
+    const hasScore = typeof homeScore === "number" && typeof awayScore === "number";
+    const isPast = new Date(f.startISO).getTime() < now - 2 * 60 * 60 * 1000;
+
+    let status = f.status;
+    if (hasScore && isPast) status = "FINAL";
+    else if (hasScore && status === "SCHEDULED") status = "FINAL";
+
+    return {
+      ...f,
+      homeScore,
+      awayScore,
+      status,
+    };
+  });
+}
+
 export function mergeFixturesFromPageBlocks(
   apiFixtures: FixtureItem[],
   blocks: HomeContentBlock[] | undefined,
 ): FixtureItem[] {
   const merged = [...apiFixtures];
-  const seen = new Set(apiFixtures.map((f) => f.externalId || `${f.startISO}|${f.homeTeamName}|${f.awayTeamName}`));
+  const seen = new Set(
+    apiFixtures.map((f) => f.externalId || `${f.startISO}|${f.homeTeamName}|${f.awayTeamName}`),
+  );
 
   let idx = 0;
   for (const b of collectAllBlocks(blocks)) {
@@ -125,7 +172,7 @@ function buildFormString(
   ourTeamName?: string | null,
 ): string {
   const finished = fixtures
-    .filter((f) => f.status === "FINAL")
+    .filter((f) => f.status === "FINAL" || f.status === "LIVE")
     .sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime());
 
   const letters: string[] = [];
@@ -146,15 +193,15 @@ function buildNextMatch(
 ): { proximoJogo?: string; logoProximo?: string } {
   const now = Date.now();
   const upcoming = fixtures
-    .filter((f) => f.status === "SCHEDULED" || f.status === "LIVE")
-    .filter((f) => teamSideInFixture(f, teamName, ourTeamName))
+    .filter((f) => {
+      if (f.status === "FINAL") return false;
+      if (f.status === "LIVE") return true;
+      return new Date(f.startISO).getTime() >= now - 60 * 60 * 1000;
+    })
+    .filter((f) => teamSideInFixture(f, teamName, ourTeamName) != null)
     .sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
 
-  const next =
-    upcoming.find((f) => f.status === "LIVE") ??
-    upcoming.find((f) => new Date(f.startISO).getTime() >= now - 5 * 60 * 60 * 1000) ??
-    upcoming[0];
-
+  const next = upcoming[0];
   if (!next) return {};
 
   const side = teamSideInFixture(next, teamName, ourTeamName);
@@ -171,7 +218,10 @@ function buildNextMatch(
   };
 }
 
-/** Preenche Últ. e Próx. a partir dos jogos quando a planilha não trouxe esses campos. */
+/**
+ * Preenche Últ. e Próx. somente a partir dos jogos FMF (fixtures + placares de Últimos Resultados).
+ * Ignora colunas ultimos_jogos / proximo_jogo da planilha e não infere nada da tabela (V/E/D/P).
+ */
 export function enrichStandingsRowsFromFixtures(
   rows: TabelaStandingsRow[],
   fixtures: FixtureItem[],
@@ -181,28 +231,34 @@ export function enrichStandingsRowsFromFixtures(
     ourTeamName?: string | null;
   } = {},
 ): TabelaStandingsRow[] {
-  if (!fixtures.length || !rows.length) return rows;
+  if (!rows.length) return rows;
 
-  const filtered = fixtures.filter((f) =>
+  const clearLegacy = (row: TabelaStandingsRow): TabelaStandingsRow => ({
+    ...row,
+    ultimosJogos: undefined,
+    proximoJogo: undefined,
+    logoProximo: undefined,
+  });
+
+  if (!fixtures.length) {
+    return rows.map(clearLegacy);
+  }
+
+  const byFilter = fixtures.filter((f) =>
     fixtureMatchesFilters(f, options.competicao, options.categoria),
   );
-  if (!filtered.length) return rows;
+  const pool = byFilter.length > 0 ? byFilter : fixtures;
 
   return rows.map((row) => {
     const team = row.time ?? "";
-    const form =
-      row.ultimosJogos?.trim() ||
-      buildFormString(filtered, team, options.ourTeamName);
-    const next =
-      row.proximoJogo?.trim() || row.logoProximo?.trim()
-        ? { proximoJogo: row.proximoJogo, logoProximo: row.logoProximo }
-        : buildNextMatch(filtered, team, options.ourTeamName);
+    const ultimosJogos = buildFormString(pool, team, options.ourTeamName) || undefined;
+    const next = buildNextMatch(pool, team, options.ourTeamName);
 
     return {
       ...row,
-      ultimosJogos: form || row.ultimosJogos,
-      proximoJogo: next.proximoJogo ?? row.proximoJogo,
-      logoProximo: next.logoProximo ?? row.logoProximo,
+      ultimosJogos,
+      proximoJogo: next.proximoJogo,
+      logoProximo: next.logoProximo,
     };
   });
 }
