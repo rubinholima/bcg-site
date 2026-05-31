@@ -4,6 +4,7 @@ import type { FixtureItem } from "@/lib/fixtures-shared";
 import {
   competitionMatchForStandings,
   namesMatch,
+  teamsMatchForStandings,
 } from "@/lib/names-match";
 
 const OUR_CLUB_PLACEHOLDERS = ["nosso clube", "our club"];
@@ -28,13 +29,19 @@ function teamSideInFixture(
   if (!resolved) return null;
   const home = (fixture.homeTeamName ?? "").trim();
   const away = (fixture.awayTeamName ?? "").trim();
-  if (namesMatch(resolved, home)) return "home";
-  if (namesMatch(resolved, away)) return "away";
+  if (teamsMatchForStandings(resolved, home)) return "home";
+  if (teamsMatchForStandings(resolved, away)) return "away";
   if (ourTeamName?.trim()) {
-    if (OUR_CLUB_PLACEHOLDERS.includes(home.toLowerCase()) && namesMatch(resolved, ourTeamName)) {
+    if (
+      OUR_CLUB_PLACEHOLDERS.includes(home.toLowerCase()) &&
+      teamsMatchForStandings(resolved, ourTeamName)
+    ) {
       return "home";
     }
-    if (OUR_CLUB_PLACEHOLDERS.includes(away.toLowerCase()) && namesMatch(resolved, ourTeamName)) {
+    if (
+      OUR_CLUB_PLACEHOLDERS.includes(away.toLowerCase()) &&
+      teamsMatchForStandings(resolved, ourTeamName)
+    ) {
       return "away";
     }
   }
@@ -115,7 +122,8 @@ export function prepareFixturesForStandings(
   apiFixtures: FixtureItem[],
   blocks: HomeContentBlock[] | undefined,
 ): FixtureItem[] {
-  const merged = mergeFixturesFromPageBlocks(apiFixtures, blocks);
+  /** API já traz proximosJogosManualFixtures; aqui só aplicamos placares de Últimos Resultados. */
+  const merged = [...apiFixtures];
   const resultadosManuais = collectResultadosManuais(blocks);
   const now = Date.now();
 

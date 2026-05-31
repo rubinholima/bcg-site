@@ -22,7 +22,6 @@ import { isOurTeam } from "@/components/portfolio/FixtureTeamLogo";
 import { fetchFixtures, type FixturesFetchContext } from "@/lib/fixtures-shared";
 import {
   enrichStandingsRowsFromFixtures,
-  mergeFixturesFromPageBlocks,
   prepareFixturesForStandings,
 } from "@/lib/standings-fixtures-enrich";
 import { TabelaClassificacaoMobile } from "@/components/portfolio/modules/TabelaClassificacaoMobile";
@@ -552,8 +551,8 @@ export function TabelaClassificacaoSection({
                 }`}
               >
                 <table className={`w-full text-left ${is3Col ? "min-w-0 table-fixed text-xs" : inSection ? "min-w-0 table-fixed" : "min-w-[800px]"} ${!is3Col && (inSection && (density === "minimal" || density === "compact") ? "text-xs" : "text-sm")}`}>
-                  <thead className="sticky top-0 z-10 bg-zinc-900/95 shadow-[0_1px_0_0_rgba(255,255,255,0.08)] backdrop-blur-sm">
-                    <tr className={`border-b border-white/10 text-zinc-400 ${is3Col ? "text-xs" : ""}`}>
+                  <thead className="sticky top-0 z-20 bg-zinc-900">
+                    <tr className={`text-zinc-400 [&_th]:border-b [&_th]:border-white/10 [&_th]:bg-zinc-900 ${is3Col ? "text-xs" : ""}`}>
                       <th className={is3Col ? "w-[4%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Pos" : "Pos"}</th>
                       <th className={is3Col ? "w-[22%] min-w-0 px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[22%] min-w-0 px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[22%] min-w-0 px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[22%] min-w-0 px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "Time" : "Team"}</th>
                       <th className={is3Col ? "w-[4%] px-1 py-1.5 font-medium sm:px-1.5 sm:py-2" : inSection ? (density === "minimal" || density === "compact" ? "w-[4%] px-0.5 py-1 font-medium sm:py-1" : density === "large" ? "w-[4%] px-2 py-2.5 font-medium sm:px-3 sm:py-3" : "w-[4%] px-1 py-2 font-medium sm:px-2 sm:py-3") : "px-4 py-3 font-medium"}>{lang === "pt" ? "P" : "P"}</th>
@@ -739,7 +738,6 @@ function TabelaRow({
                           ? "h-5 w-5 text-[9px] sm:h-6 sm:w-6 sm:text-[10px]"
                           : "h-6 w-6 text-[10px]"
                   }`}
-                  title={letter}
                 >
                   {letter}
                 </span>

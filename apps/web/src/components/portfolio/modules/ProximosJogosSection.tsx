@@ -69,7 +69,7 @@ function dateKey(iso: string): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Data em destaque no card: "14 SAT" (dia + dia da semana abreviado). */
+/** Data em destaque no card: "14 SÁB · 15:30" (dia + dia da semana + horário). */
 function formatBigDate(iso: string, lang: "pt" | "en"): string {
   const d = new Date(iso);
   const day = d.getDate();
@@ -79,7 +79,11 @@ function formatBigDate(iso: string, lang: "pt" | "en"): string {
     .replace(/\./g, "")
     .toUpperCase()
     .slice(0, 3);
-  return `${day} ${weekday}`;
+  const time = d.toLocaleTimeString(lang === "pt" ? "pt-BR" : "en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${day} ${weekday} · ${time}`;
 }
 
 /** Slug para pasta de logos externos: minúsculo, hífens, sem acentos. */
@@ -650,15 +654,12 @@ export function ProximosJogosSection({
                             {getCategoryLabel(f.category ?? "principal", lang)}
                           </span>
                         </div>
-                        <span className="text-xs text-zinc-500">
-                          {formatDate(f.startISO, lang)}
-                        </span>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         {eventCardLogoSrc ? (
                           <div
                             className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-zinc-800/80"
-                            title={competitionDisplayFallback ?? competitionLabel ?? ""}
+                            aria-label={competitionDisplayFallback ?? competitionLabel ?? undefined}
                           >
                             {isSvgUrl(eventCardLogoRaw) ? (
                               // eslint-disable-next-line @next/next/no-img-element -- SVG externo
