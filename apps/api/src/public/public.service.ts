@@ -16,6 +16,15 @@ import {
   buildVisitingTeamLogoUrlByMergeKey,
   normalizeTeamNameKeyForMerge,
 } from './visiting-team-logo-merge.util';
+import { FmfScraperService } from '../fmf-scraper/fmf-scraper.service';
+import {
+  buildLeagueFixturesFromFmfStore,
+  resolveFmfPresetKeys,
+} from '../fmf-scraper/fmf-fixture.util';
+import {
+  isFmfSyncTenantSlug,
+  parseTenantCategoryKeys,
+} from '../fmf-scraper/fmf-sync-tenants.config';
 
 export function isClubKind(kindName: string | null): boolean {
   if (!kindName) return false;
@@ -84,6 +93,7 @@ export class PublicService {
     private readonly sofaScore: SofaScoreService,
     private readonly s3: S3Service,
     private readonly mediaMeta: MediaMetaService,
+    private readonly fmfScraper: FmfScraperService,
   ) {}
 
   /** Logos de adversários (S3 clubes-adv + cadastro) para preencher cards públicos quando o JSON não tem URL. */
@@ -392,7 +402,16 @@ export class PublicService {
    */
   async getFixturesForTenantId(tenantId: string): Promise<FixtureDto[]> {
     const page = await this.pagesService.findByTenantId(tenantId);
-    return this.buildFixturesFromPage(page, tenantId);
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { slug: true, categories: true },
+    });
+    return this.buildFixturesWithLeagueExtras(
+      page,
+      tenantId,
+      tenant?.slug ?? '',
+      tenant?.categories,
+    );
   }
 
   /**
@@ -406,13 +425,18 @@ export class PublicService {
     const tenant = page?.tenantId
       ? await this.prisma.tenant.findUnique({
           where: { id: page.tenantId },
-          select: { id: true },
+          select: { id: true, categories: true },
         })
       : await this.prisma.tenant.findFirst({
           where: { slug: { equals: slug.trim(), mode: 'insensitive' } },
-          select: { id: true },
+          select: { id: true, categories: true },
         });
-    return this.buildFixturesFromPage(page, tenant?.id ?? '');
+    return this.buildFixturesWithLeagueExtras(
+      page,
+      tenant?.id ?? '',
+      slug.trim(),
+      tenant?.categories,
+    );
   }
 
   /**
@@ -453,6 +477,111 @@ export class PublicService {
       );
     }
     return mapped;
+  }
+
+  private async buildFixturesWithLeagueExtras(
+    page: PageResponseDto | null,
+    tenantIdForSofascore: string,
+    tenantSlug: string,
+    tenantCategories?: unknown,
+  ): Promise<FixtureDto[]> {
+    let list = await this.buildFixturesFromPage(page, tenantIdForSofascore);
+    const blocks = page?.content?.blocks;
+    list = this.mergeExtraFixtures(
+      list,
+      this.leagueFixturesFromPageBlocks(Array.isArray(blocks) ? blocks : []),
+    );
+    list = await this.mergeFmfStoreLeagueFixtures(
+      tenantSlug,
+      tenantCategories,
+      list,
+    );
+    return this.enrichFixturesWithVisitingLogosAsync(list);
+  }
+
+  private fixtureMergeKey(f: {
+    externalId?: string;
+    startISO?: string;
+    homeTeamName?: string;
+    awayTeamName?: string;
+  }): string {
+    return (
+      f.externalId?.trim() ||
+      `${f.startISO}|${f.homeTeamName ?? ''}|${f.awayTeamName ?? ''}`
+    );
+  }
+
+  private mergeExtraFixtures(
+    base: FixtureDto[],
+    extra: FixtureDto[],
+  ): FixtureDto[] {
+    if (extra.length === 0) return base;
+    const seen = new Set(base.map((f) => this.fixtureMergeKey(f)));
+    const merged = [...base];
+    for (const f of extra) {
+      if (!f?.startISO) continue;
+      const key = this.fixtureMergeKey(f);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(f);
+    }
+    return merged.sort(
+      (a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime(),
+    );
+  }
+
+  private collectAllPageBlocks(
+    blocks: unknown[],
+  ): Array<{ type?: string; config?: Record<string, unknown> }> {
+    const out: Array<{ type?: string; config?: Record<string, unknown> }> = [];
+    for (const raw of blocks) {
+      const b = raw as { type?: string; config?: Record<string, unknown> };
+      out.push(b);
+      if (b.type === 'section' && b.config) {
+        const left = (b.config.sectionLeftModules as unknown[]) ?? [];
+        const middle = (b.config.sectionMiddleModules as unknown[]) ?? [];
+        const right = (b.config.sectionRightModules as unknown[]) ?? [];
+        if (left.length) out.push(...this.collectAllPageBlocks(left));
+        if (middle.length) out.push(...this.collectAllPageBlocks(middle));
+        if (right.length) out.push(...this.collectAllPageBlocks(right));
+      }
+    }
+    return out;
+  }
+
+  private leagueFixturesFromPageBlocks(blocks: unknown[]): FixtureDto[] {
+    const out: FixtureDto[] = [];
+    for (const b of this.collectAllPageBlocks(blocks)) {
+      if (b.type !== 'tabela') continue;
+      const manual = (b.config?.tabelaLeagueFixtures as FixtureDto[]) ?? [];
+      if (!Array.isArray(manual)) continue;
+      for (const f of manual) {
+        if (f?.startISO && f.homeTeamName && f.awayTeamName) out.push(f);
+      }
+    }
+    return out;
+  }
+
+  private async mergeFmfStoreLeagueFixtures(
+    tenantSlug: string,
+    tenantCategories: unknown,
+    list: FixtureDto[],
+  ): Promise<FixtureDto[]> {
+    if (!tenantSlug.trim() || !isFmfSyncTenantSlug(tenantSlug.trim())) {
+      return list;
+    }
+    try {
+      const status = await this.fmfScraper.getStatus();
+      const { busy: _busy, ...store } = status;
+      const presetKeys = resolveFmfPresetKeys(
+        store,
+        parseTenantCategoryKeys(tenantCategories),
+      );
+      const league = buildLeagueFixturesFromFmfStore(store, presetKeys);
+      return this.mergeExtraFixtures(list, league);
+    } catch {
+      return list;
+    }
   }
 
   private async buildFixturesFromPage(

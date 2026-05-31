@@ -18,12 +18,28 @@ import { ChevronDown } from "lucide-react";
 const OUR_CLUB_PLACEHOLDERS = ["nosso clube", "our club"];
 const FILTER_ALL = "__all__";
 
-function formDot(f: string): { letter: string; bg: string } {
+function formDot(f: string, lang: "pt" | "en"): { letter: string; bg: string } {
   const u = f.toUpperCase();
-  const isW = u === "W" || u === "V";
-  const isL = u === "L";
-  const letter = u === "V" ? "W" : u === "E" ? "D" : u.charAt(0);
-  const bg = isW ? "bg-emerald-500" : isL ? "bg-red-500" : "bg-zinc-500";
+  const isWin = u === "W" || u === "V";
+  const isLoss = u === "L";
+  const isDraw = u === "E" || u === "D";
+  const letter =
+    lang === "pt"
+      ? isWin
+        ? "V"
+        : isLoss
+          ? "D"
+          : isDraw
+            ? "E"
+            : u.charAt(0)
+      : isWin
+        ? "W"
+        : isLoss
+          ? "L"
+          : isDraw
+            ? "D"
+            : u.charAt(0);
+  const bg = isWin ? "bg-emerald-500" : isLoss ? "bg-red-500" : "bg-zinc-500";
   return { letter, bg };
 }
 
@@ -131,7 +147,7 @@ function MobileStandingCard({
               <div className="mt-1 flex justify-center gap-0.5">
                 {formItems.length > 0 ? (
                   formItems.map((f, i) => {
-                    const { letter, bg } = formDot(f);
+                    const { letter, bg } = formDot(f, lang);
                     return (
                       <span
                         key={i}

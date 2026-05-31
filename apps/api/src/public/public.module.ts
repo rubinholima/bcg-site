@@ -14,6 +14,7 @@ import { BostonTvModule } from '../boston-tv/boston-tv.module';
 import { RegistrationInviteModule } from '../registration-invite/registration-invite.module';
 import { BostonCityHallModule } from '../boston-city-hall/boston-city-hall.module';
 import { TenantPressModule } from '../tenant-press/tenant-press.module';
+import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { TenantPressModule } from '../tenant-press/tenant-press.module';
     RegistrationInviteModule,
     BostonCityHallModule,
     TenantPressModule,
+    FmfScraperModule,
   ],
   controllers: [PublicController],
   providers: [PublicService, SofaScoreService],

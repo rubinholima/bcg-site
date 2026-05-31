@@ -15,7 +15,10 @@ import {
   type FmfScraperPresetKey,
 } from './fmf-scraper.presets';
 import { FmfScraperService, type FmfScraperStore, type FmfStandingsRow } from './fmf-scraper.service';
-import type { FmfParsedMatch } from './fmf-proxjogos.parser';
+import {
+  buildFmfExternalId,
+  fmfMatchToStartISO,
+} from './fmf-fixture.util';
 import { isFmfTeamMatch } from './fmf-team-match.util';
 import {
   FMF_SYNC_TENANT_DEFAULTS,
@@ -87,6 +90,8 @@ type ManualFixture = {
   isOurTeamHome?: boolean;
   homeTeamLogoUrl?: string;
   awayTeamLogoUrl?: string;
+  homeScore?: number;
+  awayScore?: number;
 };
 
 type TabelaRow = {
@@ -277,6 +282,7 @@ export class FmfPageSyncService {
         const fixtures = collected.matches.map((m) => m.fixture);
         const resultadosManuais = collected.resultadosManuais;
         const tabelaRows = collected.tabelaRows;
+        const leagueFixtures = collected.leagueFixtures;
         const categoriesSynced = [
           ...new Set([
             ...fixtures.map((f) => f.category),
@@ -351,6 +357,8 @@ export class FmfPageSyncService {
                 tabelaDataSource: 'manual',
                 /** Substitui planilha legada — só dados FMF no clube. */
                 tabelaManualRows: tabelaRows,
+                /** Todos os jogos da competição — alimenta Últ./Próx. de cada time na classificação. */
+                tabelaLeagueFixtures: leagueFixtures,
               },
             };
           }
@@ -490,12 +498,15 @@ export class FmfPageSyncService {
     matches: Array<{ presetKey: FmfScraperPresetKey; fixture: ManualFixture }>;
     resultadosManuais: Record<string, { homeScore: number; awayScore: number }>;
     tabelaRows: TabelaRow[];
+    leagueFixtures: ManualFixture[];
     missingLogos: Set<string>;
   } {
     const missingLogos = new Set<string>();
     const matches: Array<{ presetKey: FmfScraperPresetKey; fixture: ManualFixture }> = [];
     const resultadosManuais: Record<string, { homeScore: number; awayScore: number }> = {};
     const tabelaRows: TabelaRow[] = [];
+    const leagueFixtures: ManualFixture[] = [];
+    const leagueFixtureIds = new Set<string>();
     const tabelaKeys = new Set<string>();
 
     const ourLogo = this.resolveLogo(tenantName, tenantName, aliases, tenantLogoUrl, logoMap, missingLogos, true);
@@ -511,7 +522,7 @@ export class FmfPageSyncService {
       );
 
       for (const m of ourMatches) {
-        const extId = buildExternalId(presetKey, m);
+        const extId = buildFmfExternalId(presetKey, m);
         const isHome = isFmfTeamMatch(m.homeName, tenantName, aliases);
         const homeLogo = isHome
           ? ourLogo
@@ -520,10 +531,13 @@ export class FmfPageSyncService {
           ? this.resolveLogo(m.awayName, tenantName, aliases, null, logoMap, missingLogos, false)
           : ourLogo;
 
+        const finished =
+          m.status === 'finished' && m.homeGoals != null && m.awayGoals != null;
+
         const fixture: ManualFixture = {
           externalId: extId,
-          startISO: matchToStartISO(m),
-          status: m.status === 'finished' ? 'FINAL' : 'SCHEDULED',
+          startISO: fmfMatchToStartISO(m),
+          status: finished ? 'FINAL' : 'SCHEDULED',
           competitionName: snap.name,
           venueName: m.venueText ?? undefined,
           homeTeamName: m.homeName,
@@ -532,22 +546,56 @@ export class FmfPageSyncService {
           isOurTeamHome: isHome,
           homeTeamLogoUrl: homeLogo,
           awayTeamLogoUrl: awayLogo,
+          homeScore: finished ? (m.homeGoals ?? undefined) : undefined,
+          awayScore: finished ? (m.awayGoals ?? undefined) : undefined,
         };
 
         if (fixture.startISO) {
           matches.push({ presetKey, fixture });
         }
 
-        if (
-          m.status === 'finished' &&
-          m.homeGoals != null &&
-          m.awayGoals != null &&
-          fixture.startISO
-        ) {
+        if (finished && fixture.startISO) {
           resultadosManuais[extId] = {
-            homeScore: m.homeGoals,
-            awayScore: m.awayGoals,
+            homeScore: m.homeGoals!,
+            awayScore: m.awayGoals!,
           };
+        }
+      }
+
+      for (const m of snap.matches) {
+        const extId = buildFmfExternalId(presetKey, m);
+        if (leagueFixtureIds.has(extId)) continue;
+
+        const isHome = isFmfTeamMatch(m.homeName, tenantName, aliases);
+        const homeLogo = isHome
+          ? ourLogo
+          : this.resolveLogo(m.homeName, tenantName, aliases, null, logoMap, missingLogos, false);
+        const awayLogo = isHome
+          ? this.resolveLogo(m.awayName, tenantName, aliases, null, logoMap, missingLogos, false)
+          : ourLogo;
+
+        const finished =
+          m.status === 'finished' && m.homeGoals != null && m.awayGoals != null;
+
+        const fixture: ManualFixture = {
+          externalId: extId,
+          startISO: fmfMatchToStartISO(m),
+          status: finished ? 'FINAL' : 'SCHEDULED',
+          competitionName: snap.name,
+          venueName: m.venueText ?? undefined,
+          homeTeamName: m.homeName,
+          awayTeamName: m.awayName,
+          category: snap.fixtureCategory,
+          isOurTeamHome: isHome,
+          homeTeamLogoUrl: homeLogo,
+          awayTeamLogoUrl: awayLogo,
+          homeScore: finished ? (m.homeGoals ?? undefined) : undefined,
+          awayScore: finished ? (m.awayGoals ?? undefined) : undefined,
+        };
+
+        if (fixture.startISO) {
+          leagueFixtureIds.add(extId);
+          leagueFixtures.push(fixture);
         }
       }
 
@@ -565,7 +613,7 @@ export class FmfPageSyncService {
       }
     }
 
-    return { matches, resultadosManuais, tabelaRows, missingLogos };
+    return { matches, resultadosManuais, tabelaRows, leagueFixtures, missingLogos };
   }
 
   private resolveLogo(
@@ -619,21 +667,6 @@ export class FmfPageSyncService {
       })),
     );
   }
-}
-
-function buildExternalId(presetKey: string, m: FmfParsedMatch): string {
-  if (m.fmfJogoNumber != null) return `fmf-${presetKey}-j${m.fmfJogoNumber}`;
-  const h = normalizeTeamNameKeyForMerge(m.homeName);
-  const a = normalizeTeamNameKeyForMerge(m.awayName);
-  return `fmf-${presetKey}-${m.matchDate ?? 'nodate'}-${h}-${a}`;
-}
-
-function matchToStartISO(m: FmfParsedMatch): string {
-  if (!m.matchDate) return '';
-  const t = (m.kickoffTime ?? '12:00:00').slice(0, 5);
-  const combined = `${m.matchDate}T${t}:00`;
-  const date = new Date(combined);
-  return Number.isNaN(date.getTime()) ? '' : date.toISOString();
 }
 
 function standingToTabelaRow(row: FmfStandingsRow, logoTime?: string): TabelaRow {

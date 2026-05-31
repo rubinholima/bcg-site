@@ -636,11 +636,26 @@ function TabelaRow({
 
   const formCell = (f: string) => {
     const u = f.toUpperCase();
-    const isW = u === "W" || u === "V";
-    const isL = u === "L";
-    const isD = u === "D" || u === "E";
-    const letter = u === "V" ? "W" : u === "E" ? "D" : u.charAt(0);
-    const bg = isW ? "bg-emerald-500/80" : isL ? "bg-red-500/80" : "bg-zinc-500/60";
+    const isWin = u === "W" || u === "V";
+    const isLoss = u === "L";
+    const isDraw = u === "E" || u === "D";
+    const letter =
+      lang === "pt"
+        ? isWin
+          ? "V"
+          : isLoss
+            ? "D"
+            : isDraw
+              ? "E"
+              : u.charAt(0)
+        : isWin
+          ? "W"
+          : isLoss
+            ? "L"
+            : isDraw
+              ? "D"
+              : u.charAt(0);
+    const bg = isWin ? "bg-emerald-500/80" : isLoss ? "bg-red-500/80" : "bg-zinc-500/60";
     return { letter, bg };
   };
 
@@ -780,6 +795,14 @@ function TabelaRow({
                       : "text-xs"
                 }`}
                 title={inSection ? row.proximoJogo : undefined}
+              >
+                {row.proximoJogo}
+              </span>
+            )}
+            {is3Col && row.proximoJogo && (
+              <span
+                className="min-w-0 truncate text-[8px] text-zinc-300 sm:text-[9px]"
+                title={row.proximoJogo}
               >
                 {row.proximoJogo}
               </span>

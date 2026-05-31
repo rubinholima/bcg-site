@@ -123,6 +123,8 @@ function manualToFixture(item: ProximosJogosFixtureItem, idx: number): FixtureIt
     category: item.category,
     homeTeamLogoUrl: (item as { homeTeamLogoUrl?: string }).homeTeamLogoUrl,
     awayTeamLogoUrl: (item as { awayTeamLogoUrl?: string }).awayTeamLogoUrl,
+    homeScore: (item as { homeScore?: number }).homeScore,
+    awayScore: (item as { awayScore?: number }).awayScore,
   };
 }
 
@@ -211,15 +213,30 @@ export function mergeFixturesFromPageBlocks(
 
   let idx = 0;
   for (const b of collectAllBlocks(blocks)) {
-    if (b.type !== "proximos_jogos" && b.type !== "proximos_eventos") continue;
-    const manual = (b.config?.proximosJogosManualFixtures as ProximosJogosFixtureItem[] | undefined) ?? [];
-    for (const item of manual) {
-      if (!item.startISO || !item.homeTeamName || !item.awayTeamName) continue;
-      const fx = manualToFixture(item, idx++);
-      const key = fx.externalId || `${fx.startISO}|${fx.homeTeamName}|${fx.awayTeamName}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      merged.push(fx);
+    if (b.type === "proximos_jogos" || b.type === "proximos_eventos") {
+      const manual =
+        (b.config?.proximosJogosManualFixtures as ProximosJogosFixtureItem[] | undefined) ?? [];
+      for (const item of manual) {
+        if (!item.startISO || !item.homeTeamName || !item.awayTeamName) continue;
+        const fx = manualToFixture(item, idx++);
+        const key = fx.externalId || `${fx.startISO}|${fx.homeTeamName}|${fx.awayTeamName}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(fx);
+      }
+    }
+
+    if (b.type === "tabela") {
+      const league =
+        (b.config?.tabelaLeagueFixtures as ProximosJogosFixtureItem[] | undefined) ?? [];
+      for (const item of league) {
+        if (!item.startISO || !item.homeTeamName || !item.awayTeamName) continue;
+        const fx = manualToFixture(item, idx++);
+        const key = fx.externalId || `${fx.startISO}|${fx.homeTeamName}|${fx.awayTeamName}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(fx);
+      }
     }
   }
   return merged;
@@ -289,15 +306,8 @@ export function enrichStandingsRowsFromFixtures(
 ): TabelaStandingsRow[] {
   if (!rows.length) return rows;
 
-  const clearLegacy = (row: TabelaStandingsRow): TabelaStandingsRow => ({
-    ...row,
-    ultimosJogos: undefined,
-    proximoJogo: undefined,
-    logoProximo: undefined,
-  });
-
   if (!fixtures.length) {
-    return rows.map(clearLegacy);
+    return rows;
   }
 
   const pool = fixtures.filter((f) =>
@@ -307,14 +317,17 @@ export function enrichStandingsRowsFromFixtures(
 
   return rows.map((row) => {
     const team = row.time ?? "";
-    const ultimosJogos = buildFormString(effectivePool, team, options.ourTeamName) || undefined;
+    const ultimosJogos =
+      buildFormString(effectivePool, team, options.ourTeamName) ||
+      row.ultimosJogos?.trim() ||
+      undefined;
     const next = buildNextMatch(effectivePool, team, options.ourTeamName);
 
     return {
       ...row,
       ultimosJogos,
-      proximoJogo: next.proximoJogo,
-      logoProximo: next.logoProximo,
+      proximoJogo: next.proximoJogo ?? row.proximoJogo?.trim() ?? undefined,
+      logoProximo: next.logoProximo ?? row.logoProximo?.trim() ?? undefined,
     };
   });
 }

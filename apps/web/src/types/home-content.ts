@@ -400,6 +400,8 @@ export interface HomeBlockConfig {
   tabelaSheetGid?: string;
   /** Tabela: linhas manuais (quando dataSource=manual) */
   tabelaManualRows?: TabelaStandingsRow[];
+  /** Tabela: todos os jogos da competição (FMF sync) para Últ./Próx. */
+  tabelaLeagueFixtures?: ProximosJogosFixtureItem[];
   /** Tabela: padding topo */
   tabelaPaddingTop?: "minimal" | "compact" | "normal" | "large";
   /** Tabela: padding base */
