@@ -166,19 +166,21 @@ function isInPreRestartInterlude(
   return currentSec >= interludeStartSec(lines, restartAtSec) && currentSec < restartAtSec;
 }
 
+/**
+ * Relógio LRC efetivo.
+ * 1ª passagem: `currentSec`.
+ * 2ª passagem: `currentSec - restartAtSec` — mesmos timestamps (linha [0:21] em restart+21s).
+ */
 export function effectiveLrcSyncSec(
   currentSec: number,
-  lines: HinoLyricLine[],
+  _lines: HinoLyricLine[],
   restartAtSec: number | null,
   _restartIntroSec: number,
   leadSec: number,
 ): number {
   let sync = currentSec;
   if (restartAtSec != null && currentSec >= restartAtSec) {
-    const repriseElapsed = currentSec - restartAtSec;
-    const t0 = firstVocalTime(lines);
-    /** Instrumental da reprise: 1ª linha visível (letra), mesmo timing depois. */
-    sync = repriseElapsed < t0 ? t0 : repriseElapsed;
+    sync = currentSec - restartAtSec;
   }
   return Math.max(0, sync + leadSec);
 }
@@ -249,6 +251,15 @@ export function resolveActiveLineIndex(
   }
   if (hasTimestamps) {
     const syncSec = effectiveLrcSyncSec(currentSec, lines, restartAtSec, restartIntroSec, leadSec);
+    /** Reprise instrumental: mostra 1ª linha, mas o relógio LRC segue (sem congelar em t0). */
+    if (
+      restartAtSec != null &&
+      currentSec >= restartAtSec &&
+      syncSec < firstVocalTime(lines)
+    ) {
+      const firstIdx = lines.findIndex((l) => !l.isSection && l.startSecs.length > 0);
+      if (firstIdx >= 0) return firstIdx;
+    }
     return activeLineIndexFromLrc(lines, syncSec);
   }
   const syncSec = Math.max(0, currentSec + leadSec);

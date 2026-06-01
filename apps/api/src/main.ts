@@ -21,8 +21,8 @@ if (
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { NextFunction, Response } from 'express';
-import { json, urlencoded } from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/http-exception.filter';
 
@@ -30,12 +30,12 @@ import { AllExceptionsFilter } from './common/http-exception.filter';
 const JSON_BODY_LIMIT = '15mb';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn'], // sem banner/log de startup no console
     bodyParser: false,
   });
-  app.use(json({ limit: JSON_BODY_LIMIT }));
-  app.use(urlencoded({ extended: true, limit: JSON_BODY_LIMIT }));
+  app.useBodyParser('json', { limit: JSON_BODY_LIMIT });
+  app.useBodyParser('urlencoded', { limit: JSON_BODY_LIMIT, extended: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({ origin: true }); // permite localhost:3000 (Next) e outros em dev
