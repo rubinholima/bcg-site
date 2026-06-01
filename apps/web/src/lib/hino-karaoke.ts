@@ -15,7 +15,7 @@ export interface ParsedHinoLyrics {
   restartIntroSec: number | null;
 }
 
-export type HinoKaraokeDisplayPhase = "idle" | "intro" | "interlude" | "reprise" | "lyrics";
+export type HinoKaraokeDisplayPhase = "idle" | "intro" | "interlude" | "lyrics";
 
 /** Interpreta "00:00:17", "0:17", "1:23.5" → segundos. */
 export function parseLrcTimeValue(raw: string): number | null {
@@ -166,22 +166,19 @@ function isInPreRestartInterlude(
   return currentSec >= interludeStartSec(lines, restartAtSec) && currentSec < restartAtSec;
 }
 
-/**
- * Tempo efetivo para LRC.
- * 1ª passagem: relógio = posição no áudio (`currentSec`).
- * 2ª passagem: relógio = `currentSec - restartAtSec` — mesmos timestamps da 1ª parte
- * (ex.: linha [0:21] aparece em restart+21s, igual à 1ª vez em 0:21).
- */
 export function effectiveLrcSyncSec(
   currentSec: number,
-  _lines: HinoLyricLine[],
+  lines: HinoLyricLine[],
   restartAtSec: number | null,
   _restartIntroSec: number,
   leadSec: number,
 ): number {
   let sync = currentSec;
   if (restartAtSec != null && currentSec >= restartAtSec) {
-    sync = currentSec - restartAtSec;
+    const repriseElapsed = currentSec - restartAtSec;
+    const t0 = firstVocalTime(lines);
+    /** Instrumental da reprise: 1ª linha visível (letra), mesmo timing depois. */
+    sync = repriseElapsed < t0 ? t0 : repriseElapsed;
   }
   return Math.max(0, sync + leadSec);
 }
@@ -280,10 +277,6 @@ export function resolveHinoKaraokeDisplayPhase(
   }
   if (restartAtSec != null && playing && isInPreRestartInterlude(currentSec, lines, restartAtSec)) {
     return "interlude";
-  }
-  if (restartAtSec != null && playing && currentSec >= restartAtSec) {
-    const repriseElapsed = currentSec - restartAtSec;
-    if (repriseElapsed < firstVocalTime(lines)) return "reprise";
   }
   if (playing && activeLineIndex < 0) return "intro";
   return activeLineIndex >= 0 ? "lyrics" : "idle";
