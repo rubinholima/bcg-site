@@ -40,13 +40,20 @@ async function fetchImage(decoded: string): Promise<{ body: ArrayBuffer; content
   try {
     const parsed = new URL(decoded);
     const origin = `${parsed.protocol}//${parsed.host}`;
+    const isInstagram = /cdninstagram|fbcdn\.net|instagram\.com/i.test(decoded);
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      Accept: "image/webp,image/avif,image/apng,image/*,*/*;q=0.8",
+    };
+    if (process.env.NOTICIAS_IMAGE_USE_REFERER === "1") {
+      headers.Referer = origin;
+    } else if (isInstagram) {
+      headers.Referer = "https://www.instagram.com/";
+    }
     const res = await fetch(decoded, {
       signal: controller.signal,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        Accept: "image/webp,image/avif,image/apng,image/*,*/*;q=0.8",
-        ...(process.env.NOTICIAS_IMAGE_USE_REFERER === "1" ? { Referer: origin } : {}),
-      },
+      headers,
       redirect: "follow",
     });
     clearTimeout(timeoutId);
@@ -108,7 +115,12 @@ export async function GET(request: NextRequest) {
     fetchPromise = (async () => {
       const isInstagram = /cdninstagram|fbcdn\.net/i.test(decoded);
       if (isInstagram) await waitForQueue();
-      let r = await fetchImage(decoded);
+      /** scontent quase sempre bloqueia o IP do servidor — Lambda primeiro quando disponível */
+      let r =
+        isScontentCdn && process.env.NOTICIAS_IMAGE_PROXY_URL?.trim()
+          ? await fetchViaLambda(decoded)
+          : null;
+      if (!r) r = await fetchImage(decoded);
       if (!r && isScontentCdn) r = await fetchViaLambda(decoded);
       pendingFetches.delete(decoded);
       return r;

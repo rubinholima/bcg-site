@@ -26,6 +26,14 @@ import {
   parseTenantCategoryKeys,
 } from '../fmf-scraper/fmf-sync-tenants.config';
 
+function extractPlayerNickname(registrationProfile: unknown): string | null {
+  if (!registrationProfile || typeof registrationProfile !== 'object') return null;
+  const personal = (registrationProfile as Record<string, unknown>).personal;
+  if (!personal || typeof personal !== 'object') return null;
+  const nickname = (personal as Record<string, unknown>).nickname;
+  return typeof nickname === 'string' && nickname.trim() ? nickname.trim() : null;
+}
+
 export function isClubKind(kindName: string | null): boolean {
   if (!kindName) return false;
   const k = kindName.toLowerCase();
@@ -183,6 +191,7 @@ export class PublicService {
       players: Array<{
         id: string;
         name: string;
+        nickname?: string | null;
         photoUrl?: string | null;
         birthDate?: string | null;
         nationality?: string | null;
@@ -223,6 +232,7 @@ export class PublicService {
       players: Array<{
         id: string;
         name: string;
+        nickname?: string | null;
         photoUrl?: string | null;
         birthDate?: string | null;
         nationality?: string | null;
@@ -274,6 +284,7 @@ export class PublicService {
         bioEN: true,
         category: true,
         publicFields: true,
+        registrationProfile: true,
       },
     });
 
@@ -298,6 +309,7 @@ export class PublicService {
     const mapPlayer = (pl: (typeof visible)[number]) => ({
       id: pl.id,
       name: pl.name,
+      nickname: extractPlayerNickname(pl.registrationProfile),
       photoUrl: pl.photoUrl,
       birthDate: pl.birthDate,
       nationality: pl.nationality,

@@ -107,7 +107,9 @@ type RssItemForImage = Record<string, unknown>;
 function collectImageUrls(item: RssItemForImage): string[] {
   const urls: string[] = [];
   const add = (u: string | undefined) => {
-    if (u && u.startsWith("http") && !urls.includes(u)) urls.push(u);
+    if (!u) return;
+    const normalized = normalizeImageUrl(u);
+    if (normalized.startsWith("http") && !urls.includes(normalized)) urls.push(normalized);
   };
   const enclosure = item.enclosure as { url?: string; type?: string } | undefined;
   if (enclosure?.url) {
@@ -149,16 +151,20 @@ function extractImageUrl(item: RssItemForImage): string | undefined {
 
 
 const isInstagramCdn = (u: string) => /cdninstagram|fbcdn\.net/i.test(u);
-const isScontentBlocked = (u: string) => /scontent\.cdninstagram\.com/i.test(u);
 
-/** Proxy para imagens. scontent bloqueia Lambda também — usar sempre proxy interno. fbcdn pode usar Lambda. */
+function normalizeImageUrl(url: string): string {
+  return url.replace(/&amp;/g, "&").trim();
+}
+
+/** Proxy para imagens Instagram (incl. scontent) — Lambda quando configurado, senão proxy Next. */
 function toProxyImageUrl(url: string): string {
+  const normalized = normalizeImageUrl(url);
   const proxyUrl = process.env.NOTICIAS_IMAGE_PROXY_URL?.trim();
-  if (proxyUrl && isInstagramCdn(url) && !isScontentBlocked(url)) {
+  if (proxyUrl && isInstagramCdn(normalized)) {
     const base = proxyUrl.replace(/\/$/, "");
-    return `${base}?url=${encodeURIComponent(url)}`;
+    return `${base}?url=${encodeURIComponent(normalized)}`;
   }
-  return `/api/public/noticias-image?url=${encodeURIComponent(url)}`;
+  return `/api/public/noticias-image?url=${encodeURIComponent(normalized)}`;
 }
 
 
@@ -198,7 +204,7 @@ export async function GET(request: NextRequest) {
 
 
   const nocache = searchParams.get("nocache") === "1";
-  const cacheKey = `${rssUrl}:${max}:v2`;
+  const cacheKey = `${rssUrl}:${max}:v3`;
 
   const cached = !nocache && cache.get(cacheKey);
 

@@ -516,6 +516,8 @@ export interface PlayerItem {
   id?: string;
   /** Nome completo do jogador */
   name: string;
+  /** Apelido (cadastro — exibido nos cards do site) */
+  nickname?: string;
   /** Foto do jogador */
   photoUrl?: string;
   /** Data de nascimento (ISO: YYYY-MM-DD) */

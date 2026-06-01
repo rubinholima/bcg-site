@@ -90,6 +90,11 @@ function isYouTubeUrl(url: string): boolean {
   return /youtube\.com|youtu\.be/.test(url);
 }
 
+function playerCardDisplayName(player: PlayerItem): string {
+  const nick = player.nickname?.trim();
+  return nick || player.name;
+}
+
 function playerNameTextClass(name: string): string {
   const len = name.length;
   const size =
@@ -107,6 +112,7 @@ function PlayerCard({
   player: PlayerItem;
   onClick: () => void;
 }) {
+  const displayName = playerCardDisplayName(player);
   return (
     <button
       type="button"
@@ -117,7 +123,7 @@ function PlayerCard({
         {player.photoUrl ? (
           <SmartImage
             src={getPublicImageUrl(player.photoUrl)}
-            alt={player.name}
+            alt={displayName}
             fill
             className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
             sizes="148px"
@@ -135,7 +141,7 @@ function PlayerCard({
         )}
       </div>
       <div className="flex min-h-[3rem] items-center justify-center bg-black px-2 py-2">
-        <span className={playerNameTextClass(player.name)}>{player.name}</span>
+        <span className={playerNameTextClass(displayName)}>{displayName}</span>
       </div>
     </button>
   );
