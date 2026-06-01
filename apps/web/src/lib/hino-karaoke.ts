@@ -160,27 +160,58 @@ function interludeStartSec(lines: HinoLyricLine[], restartAtSec: number): number
 function isInPreRestartInterlude(
   currentSec: number,
   lines: HinoLyricLine[],
-  restartAtSec: number | null,
+  musicRepriseStartSec: number | null,
 ): boolean {
-  if (restartAtSec == null) return false;
-  return currentSec >= interludeStartSec(lines, restartAtSec) && currentSec < restartAtSec;
+  if (musicRepriseStartSec == null) return false;
+  return (
+    currentSec >= interludeStartSec(lines, musicRepriseStartSec) &&
+    currentSec < musicRepriseStartSec
+  );
+}
+
+/** Intro instrumental da reprise (música já voltou, letra ainda não). */
+function isInPostRestartIntro(
+  currentSec: number,
+  musicRepriseStartSec: number | null,
+  repriseIntroSec: number,
+): boolean {
+  if (musicRepriseStartSec == null || repriseIntroSec <= 0) return false;
+  const elapsed = currentSec - musicRepriseStartSec;
+  return elapsed >= 0 && elapsed < repriseIntroSec;
+}
+
+/** Última linha cantada na 1ª passagem (para segurar na intro da reprise). */
+export function lastSungLineIndex(lines: HinoLyricLine[]): number {
+  let lastIdx = -1;
+  let maxTime = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (line.isSection) continue;
+    for (const t of line.startSecs) {
+      if (t >= maxTime) {
+        maxTime = t;
+        lastIdx = i;
+      }
+    }
+  }
+  return lastIdx;
 }
 
 /**
  * Relógio LRC efetivo.
  * 1ª passagem: `currentSec`.
- * 2ª passagem: `currentSec - restartAtSec` — mesmos timestamps (linha [0:21] em restart+21s).
+ * 2ª passagem: `currentSec - musicRepriseStartSec` — mesmos timestamps (linha [0:21] em base+21s).
  */
 export function effectiveLrcSyncSec(
   currentSec: number,
   _lines: HinoLyricLine[],
-  restartAtSec: number | null,
+  musicRepriseStartSec: number | null,
   _restartIntroSec: number,
   leadSec: number,
 ): number {
   let sync = currentSec;
-  if (restartAtSec != null && currentSec >= restartAtSec) {
-    sync = currentSec - restartAtSec;
+  if (musicRepriseStartSec != null && currentSec >= musicRepriseStartSec) {
+    sync = currentSec - musicRepriseStartSec;
   }
   return Math.max(0, sync + leadSec);
 }
@@ -242,24 +273,28 @@ export function resolveActiveLineIndex(
   hasTimestamps: boolean,
   introSec: number,
   leadSec = 0,
-  restartAtSec: number | null = null,
+  musicRepriseStartSec: number | null = null,
   restartIntroSec = 0,
 ): number {
   if (lines.length === 0) return -1;
-  if (hasTimestamps && isInPreRestartInterlude(currentSec, lines, restartAtSec)) {
+  if (hasTimestamps && isInPreRestartInterlude(currentSec, lines, musicRepriseStartSec)) {
     return -1;
   }
   if (hasTimestamps) {
-    const syncSec = effectiveLrcSyncSec(currentSec, lines, restartAtSec, restartIntroSec, leadSec);
-    /** Reprise instrumental: mostra 1ª linha, mas o relógio LRC segue (sem congelar em t0). */
-    if (
-      restartAtSec != null &&
-      currentSec >= restartAtSec &&
-      syncSec < firstVocalTime(lines)
-    ) {
-      const firstIdx = lines.findIndex((l) => !l.isSection && l.startSecs.length > 0);
-      if (firstIdx >= 0) return firstIdx;
+    const introDuration =
+      restartIntroSec > 0 ? restartIntroSec : firstVocalTime(lines);
+    if (isInPostRestartIntro(currentSec, musicRepriseStartSec, introDuration)) {
+      const held = lastSungLineIndex(lines);
+      if (held >= 0) return held;
+      return -1;
     }
+    const syncSec = effectiveLrcSyncSec(
+      currentSec,
+      lines,
+      musicRepriseStartSec,
+      restartIntroSec,
+      leadSec,
+    );
     return activeLineIndexFromLrc(lines, syncSec);
   }
   const syncSec = Math.max(0, currentSec + leadSec);
@@ -271,7 +306,7 @@ export function resolveHinoKaraokeDisplayPhase(
   currentSec: number,
   lines: HinoLyricLine[],
   hasTimestamps: boolean,
-  restartAtSec: number | null,
+  musicRepriseStartSec: number | null,
   restartIntroSec: number,
   activeLineIndex: number,
   durationSec = 0,
@@ -286,7 +321,11 @@ export function resolveHinoKaraokeDisplayPhase(
     if (activeLineIndex < 0) return playing ? "intro" : "idle";
     return "lyrics";
   }
-  if (restartAtSec != null && playing && isInPreRestartInterlude(currentSec, lines, restartAtSec)) {
+  if (
+    musicRepriseStartSec != null &&
+    playing &&
+    isInPreRestartInterlude(currentSec, lines, musicRepriseStartSec)
+  ) {
     return "interlude";
   }
   if (playing && activeLineIndex < 0) return "intro";
@@ -315,17 +354,43 @@ export function parseHinoKaraokeLeadSec(raw: unknown, hasLrc?: boolean): number 
   return HINO_KARAOKE_DEFAULT_LEAD_SEC;
 }
 
+function parseRestartTimeRaw(raw: unknown): number | null {
+  if (typeof raw === "number" && raw >= 0) return raw;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const n = Number(trimmed);
+    if (!Number.isNaN(n) && n >= 0) return n;
+    return parseLrcTimeValue(trimmed);
+  }
+  return null;
+}
+
+/**
+ * Início da reprise no MP3 (relógio LRC = 0).
+ * - Campo do editor: momento em que a **primeira linha** volta → subtrai o 1º timestamp LRC.
+ * - Tag `[restart:1:32]` na letra: início da **música** da reprise (compatível).
+ */
+export function resolveMusicRepriseStartSec(
+  restartFromLyricsTag: number | null,
+  configRaw: unknown,
+  lines: HinoLyricLine[],
+): number | null {
+  const configVal = parseRestartTimeRaw(configRaw);
+  if (configVal != null) {
+    const firstVocal = firstVocalTime(lines);
+    return Math.max(0, configVal - firstVocal);
+  }
+  return restartFromLyricsTag;
+}
+
+/** @deprecated Use resolveMusicRepriseStartSec */
 export function parseHinoKaraokeRestartSec(
   fromLyrics: number | null,
   configRaw: unknown,
 ): number | null {
-  if (typeof configRaw === "number" && configRaw >= 0) return configRaw;
-  if (typeof configRaw === "string") {
-    const n = Number(configRaw);
-    if (!Number.isNaN(n) && n >= 0) return n;
-    const parsed = parseLrcTimeValue(configRaw);
-    if (parsed != null) return parsed;
-  }
+  const configVal = parseRestartTimeRaw(configRaw);
+  if (configVal != null) return configVal;
   return fromLyrics;
 }
 

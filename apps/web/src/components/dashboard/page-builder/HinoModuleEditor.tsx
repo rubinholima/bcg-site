@@ -137,7 +137,9 @@ export function HinoModuleEditor({
               onChange={(e) => updateBlockConfig(index, "hinoKaraokeRestartSec", e.target.value || undefined)}
             />
             <p className="text-xs text-muted-foreground">
-              Momento em que a música recomeça no MP3. A 2ª passagem repete os mesmos timestamps (ex.: [0:21] em restart+21s).
+              Segundo em que a <strong>primeira linha</strong> volta na 2ª passagem (ex.: 1:42). O player
+              calcula o início da música automaticamente pelo 1º timestamp LRC (ex.: [0:17] → música ~17s antes).
+              Ou use <strong>[restart:1:32]</strong> na letra para marcar o início da música diretamente.
             </p>
           </div>
         </div>

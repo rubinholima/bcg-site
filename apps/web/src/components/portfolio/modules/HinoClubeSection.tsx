@@ -10,8 +10,8 @@ import {
   parseHinoLyrics,
   parseHinoKaraokeIntroSec,
   parseHinoKaraokeLeadSec,
-  parseHinoKaraokeRestartSec,
   parseHinoKaraokeRestartIntroSec,
+  resolveMusicRepriseStartSec,
   resolveActiveLineIndex,
   resolveHinoKaraokeDisplayPhase,
   type HinoKaraokeDisplayPhase,
@@ -420,6 +420,7 @@ function HinoPlayerColumn({
   lang: "pt" | "en";
   introSec: number;
   leadSec: number;
+  /** Início da reprise no MP3 (base LRC = 0 na 2ª passagem). */
   restartAtSec: number | null;
   restartIntroSec: number;
 }) {
@@ -681,9 +682,10 @@ export function HinoClubeSection({
     [block.config?.hinoLetraPt, block.config?.hinoLetraEn, lang],
   );
   const leadSec = parseHinoKaraokeLeadSec(block.config?.hinoKaraokeLeadSec, parsedLyrics.hasTimestamps);
-  const restartAtSec = parseHinoKaraokeRestartSec(
+  const restartAtSec = resolveMusicRepriseStartSec(
     parsedLyrics.restartAtSec,
     block.config?.hinoKaraokeRestartSec,
+    parsedLyrics.lines,
   );
   const restartIntroSec = parseHinoKaraokeRestartIntroSec(
     parsedLyrics.restartIntroSec,
