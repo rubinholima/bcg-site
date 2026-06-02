@@ -180,6 +180,23 @@ function isInPostRestartIntro(
   return elapsed >= 0 && elapsed < repriseIntroSec;
 }
 
+/** Interlúdio completo: após última linha da 1ª passagem até a letra voltar na reprise. */
+function isInRepriseInterlude(
+  currentSec: number,
+  lines: HinoLyricLine[],
+  musicRepriseStartSec: number | null,
+  restartIntroSec: number,
+): boolean {
+  if (musicRepriseStartSec == null) return false;
+  const introDuration =
+    restartIntroSec > 0 ? restartIntroSec : firstVocalTime(lines);
+  if (currentSec >= musicRepriseStartSec + introDuration) return false;
+  if (isInPostRestartIntro(currentSec, musicRepriseStartSec, introDuration)) {
+    return true;
+  }
+  return isInPreRestartInterlude(currentSec, lines, musicRepriseStartSec);
+}
+
 /** Última linha cantada na 1ª passagem (para segurar na intro da reprise). */
 export function lastSungLineIndex(lines: HinoLyricLine[]): number {
   let lastIdx = -1;
@@ -277,17 +294,13 @@ export function resolveActiveLineIndex(
   restartIntroSec = 0,
 ): number {
   if (lines.length === 0) return -1;
-  if (hasTimestamps && isInPreRestartInterlude(currentSec, lines, musicRepriseStartSec)) {
+  if (
+    hasTimestamps &&
+    isInRepriseInterlude(currentSec, lines, musicRepriseStartSec, restartIntroSec)
+  ) {
     return -1;
   }
   if (hasTimestamps) {
-    const introDuration =
-      restartIntroSec > 0 ? restartIntroSec : firstVocalTime(lines);
-    if (isInPostRestartIntro(currentSec, musicRepriseStartSec, introDuration)) {
-      const held = lastSungLineIndex(lines);
-      if (held >= 0) return held;
-      return -1;
-    }
     const syncSec = effectiveLrcSyncSec(
       currentSec,
       lines,
@@ -324,7 +337,7 @@ export function resolveHinoKaraokeDisplayPhase(
   if (
     musicRepriseStartSec != null &&
     playing &&
-    isInPreRestartInterlude(currentSec, lines, musicRepriseStartSec)
+    isInRepriseInterlude(currentSec, lines, musicRepriseStartSec, restartIntroSec)
   ) {
     return "interlude";
   }
