@@ -32,6 +32,49 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 01 DE JUNHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+1. **API produção (crash PM2)**  
+   - `main.ts`: limite JSON 15mb via `useBodyParser` do Nest (sem import direto de `express`, que derrubava `bcg-api`).  
+   - Commit `bcf9502`.
+
+2. **Hino do clube — karaoke LRC (Villa Nova SAF)**  
+   - Campo **Reinício da letra** interpretado como momento em que a **primeira linha** volta na 2ª passagem (ex.: 1:42); o player calcula o início da música pelo 1º timestamp LRC.  
+   - Removido congelamento na 1ª frase na reprise; sincronia LRC alinhada na 2ª passagem.  
+   - **Interlúdio…** restaurado (clave + animação) do fim da 1ª passagem até a letra voltar — sem perder o timing.  
+   - Commits `18a787f`, `1a0804e`. Arquivos: `hino-karaoke.ts`, `HinoClubeSection.tsx`, `HinoModuleEditor.tsx`.
+
+3. **Feed RSS / cards (sessão anterior no dia)**  
+   - Limite body 15mb na API; proxy Instagram em `noticias-feed` / `noticias-image`; apelido nos cards de atletas. Commit `f4941a3`.  
+   - Nginx produção: `client_max_body_size 20m` (usuário aplicou).
+
+4. **Deploys**  
+   - Vários pushes para `develop`; usuário roda `./deploy.sh` no servidor.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/api/src/main.ts`
+- `apps/web/src/lib/hino-karaoke.ts`
+- `apps/web/src/components/portfolio/modules/HinoClubeSection.tsx`
+- `apps/web/src/components/dashboard/page-builder/HinoModuleEditor.tsx`
+- `apps/api/src/public/public.service.ts`, `TimesCategoriasSection.tsx` (apelido / RSS — `f4941a3`)
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `1a0804e` — fix(web): restaura interludio do hino na reprise
+- **Push:** enviado para `origin/develop`
+
+## **PENDÊNCIAS / PRÓXIMO**
+
+- Validar hino na produção após `./deploy.sh` + hard refresh.  
+- Feed notícias Villa Nova: salvar RSS no editor; fotos Instagram podem precisar `NOTICIAS_IMAGE_PROXY_URL` no env do web.  
+- Arquivos locais **não versionados:** `backup_clean.sql`, `temp_*`, `scripts/extract-*.mjs`, `apps/api/apps/` — não commitar.
+
+---
+
 # 📅 29 DE MAIO DE 2026 — ENCERRAMENTO (FINAL)
 
 ## **PARA O PRÓXIMO AGENTE (LEIA PRIMEIRO)**
