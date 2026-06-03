@@ -31,3 +31,45 @@ export function isBeatscodeExportFile(v: unknown): v is BeatscodeExportFile {
     typeof o.tenantSlug === 'string'
   );
 }
+
+/** Une export parcial (ex.: sub13) no arquivo principal sem perder atletas já exportados. */
+export function mergeBeatscodeExportFiles(
+  base: BeatscodeExportFile,
+  patch: BeatscodeExportFile,
+): BeatscodeExportFile {
+  const byId = new Map<string, BeatscodeExportAthlete>();
+  for (const a of base.athletes) byId.set(a.beatscodeId, a);
+  for (const a of patch.athletes) {
+    const prev = byId.get(a.beatscodeId);
+    if (!prev) {
+      byId.set(a.beatscodeId, a);
+      continue;
+    }
+    const categories = new Set([
+      ...(prev.beatscodeCategories ?? [prev.category]),
+      ...(a.beatscodeCategories ?? [a.category]),
+    ]);
+    byId.set(a.beatscodeId, {
+      ...prev,
+      ...a,
+      photoUrl: a.photoUrl ?? prev.photoUrl,
+      beatscodeCategories: [...categories],
+      registrationProfile: a.registrationProfile ?? prev.registrationProfile,
+    });
+  }
+
+  const categoriesProcessed = [
+    ...new Set([...base.categoriesProcessed, ...patch.categoriesProcessed]),
+  ];
+
+  return {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    apiUrl: patch.apiUrl || base.apiUrl,
+    tenantSlug: patch.tenantSlug || base.tenantSlug,
+    categoriesProcessed,
+    athletes: [...byId.values()],
+    errors: [...new Set([...base.errors, ...patch.errors])],
+    references: patch.references ?? base.references,
+  };
+}

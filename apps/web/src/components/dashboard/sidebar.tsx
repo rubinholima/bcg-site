@@ -462,7 +462,10 @@ function SidebarNav() {
     if (child.slug === "analise") return analiseOpen;
     if (child.slug === "psicologia") return psicologiaOpen;
     if (child.slug === "medico") return medicoOpen;
-    if (nestedOpen[child.slug] !== undefined) return nestedOpen[child.slug];
+    /** Se o usuário abriu um hub manualmente, não manter outro aberto só pela rota (ex.: Atletas + Logística). */
+    const anyManualNestedOpen = Object.values(nestedOpen).some((v) => v === true);
+    if (anyManualNestedOpen) return nestedOpen[child.slug] === true;
+    if (nestedOpen[child.slug] === false) return false;
     return nestedDefaultOpen(child, pathname, inPath);
   };
 
@@ -876,9 +879,7 @@ function SidebarNav() {
                                           );
                                           if (!hasCcAccess) return null;
                                           const CcIcon = cc.icon;
-                                          const isCcOpen =
-                                            nestedOpen[cc.slug] ??
-                                            nestedDefaultOpen(cc, pathname, inPath);
+                                          const isCcOpen = isNestedExpanded(cc);
                                           return (
                                             <div key={cc.slug} className="space-y-0.5">
                                               <button
