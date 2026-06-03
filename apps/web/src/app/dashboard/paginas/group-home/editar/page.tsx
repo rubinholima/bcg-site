@@ -65,7 +65,7 @@ import {
 import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, NoticiasModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -2373,6 +2373,12 @@ export default function EditarGroupHomePage() {
                                 </div>
                               </details>
                             </div>
+                          )}
+                          {block.type === "noticias" && (
+                            <NoticiasModuleEditor
+                              block={block}
+                              updateBlockConfigValue={(key, value) => updateBlockConfigValue(index, key, value)}
+                            />
                           )}
                         </div>
                       </details>

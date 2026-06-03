@@ -351,6 +351,8 @@ export interface HomeBlockConfig {
   noticiasManualItems?: NoticiasItem[];
   /** Notícias: máx. itens a exibir (default 10) */
   noticiasMaxItems?: number;
+  /** Colunas do grid de cards (1, 2 ou 3). */
+  noticiasColumns?: 1 | 2 | 3;
   /** Notícias: padding topo da seção */
   noticiasPaddingTop?: "minimal" | "compact" | "normal" | "large";
   /** Notícias: padding base */

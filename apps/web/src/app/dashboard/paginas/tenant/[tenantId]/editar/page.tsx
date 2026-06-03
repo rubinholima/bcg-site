@@ -72,7 +72,7 @@ import {
 import { BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, NoticiasModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
@@ -1840,97 +1840,10 @@ export default function EditarPaginaTenantPage() {
                       </div>
                     )}
                     {block.type === "noticias" && (
-                      <div className="space-y-3 sm:col-span-2">
-                        <details className="rounded-lg border border-border bg-muted/20">
-                          <summary className="cursor-pointer px-3 py-2 font-medium">Feed de notícias</summary>
-                          <div className="border-t border-border px-3 py-3 space-y-3">
-                            <p className="text-xs text-muted-foreground">
-                              Use RSS para Google News, Instagram (via RSS.app) ou site do clube. Cole a URL do feed em RSS.
-                            </p>
-                            <div className="space-y-2">
-                              <Label>Fonte</Label>
-                              <Select
-                                value={(block.config?.noticiasDataSource as string) ?? "rss"}
-                                onValueChange={(v) => updateBlockConfigValue(index, "noticiasDataSource", v)}
-                              >
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="rss">RSS (feed externo — Google News, Instagram, site)</SelectItem>
-                                  <SelectItem value="manual">Manual (lista editada)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            {(block.config?.noticiasDataSource as string) !== "manual" && (
-                              <>
-                                <div className="space-y-2">
-                                  <Label>URL do feed RSS</Label>
-                                  <Input
-                                    placeholder="https://rss.app/feed/... ou https://..."
-                                    value={(block.config?.noticiasRssUrl as string) ?? ""}
-                                    onChange={(e) => updateBlockConfig(index, "noticiasRssUrl", e.target.value)}
-                                  />
-                                  <p className="text-xs text-muted-foreground">
-                                    Crie em <a href="https://rss.app" target="_blank" rel="noopener noreferrer" className="underline text-primary">rss.app</a> — Google News ou Instagram.
-                                  </p>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Máx. itens</Label>
-                                  <Input
-                                    type="number"
-                                    min={1}
-                                    max={20}
-                                    value={(block.config?.noticiasMaxItems as number) ?? 10}
-                                    onChange={(e) => {
-                                      const v = parseInt(e.target.value, 10);
-                                      updateBlockConfigValue(index, "noticiasMaxItems", Number.isNaN(v) ? 10 : Math.min(20, Math.max(1, v)));
-                                    }}
-                                  />
-                                </div>
-                              </>
-                            )}
-                            {(block.config?.noticiasDataSource as string) === "manual" && (
-                              <div className="space-y-2">
-                                <Label>Itens manuais</Label>
-                                <p className="text-xs text-muted-foreground">
-                                  Adicione notícias manualmente (título, link, resumo). Em breve.
-                                </p>
-                              </div>
-                            )}
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              <div className="space-y-2">
-                                <Label>Espaço no topo</Label>
-                                <Select
-                                  value={(block.config?.noticiasPaddingTop as string) ?? "compact"}
-                                  onValueChange={(v) => updateBlockConfigValue(index, "noticiasPaddingTop", v)}
-                                >
-                                  <SelectTrigger><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="minimal">Mínimo</SelectItem>
-                                    <SelectItem value="compact">Compacto</SelectItem>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="large">Grande</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Espaço embaixo</Label>
-                                <Select
-                                  value={(block.config?.noticiasPaddingBottom as string) ?? "compact"}
-                                  onValueChange={(v) => updateBlockConfigValue(index, "noticiasPaddingBottom", v)}
-                                >
-                                  <SelectTrigger><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="minimal">Mínimo</SelectItem>
-                                    <SelectItem value="compact">Compacto</SelectItem>
-                                    <SelectItem value="normal">Normal</SelectItem>
-                                    <SelectItem value="large">Grande</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          </div>
-                        </details>
-                      </div>
+                      <NoticiasModuleEditor
+                        block={block}
+                        updateBlockConfigValue={(key, value) => updateBlockConfigValue(index, key, value)}
+                      />
                     )}
                     {block.type === "proximos_jogos" && (
                       <ProximosJogosModuleEditor

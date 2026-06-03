@@ -5,6 +5,7 @@ export { HeroMainTitlePanel } from "./HeroMainTitlePanel";
 export { HeroModuleEditor } from "./HeroModuleEditor";
 export { HinoModuleEditor } from "./HinoModuleEditor";
 export { HeaderLinksEditor } from "./HeaderLinksEditor";
+export { NoticiasModuleEditor } from "./NoticiasModuleEditor";
 export { ImprensaModuleEditor, ImprensaDisplayModeFields } from "./ImprensaModuleEditor";
 export { ModuleTitleGradientFields, moduleTitleGradientStyle, moduleHasOwnTitle } from "./ModuleTitleGradientFields";
 export { FontFamilyField } from "./FontFamilyField";

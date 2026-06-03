@@ -9,6 +9,11 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { moduleBottomBorderClass } from "@/lib/module-section-border";
 import { moduleSectionContainerClass } from "@/lib/module-section-container";
 import { SmartImage } from "@/components/common/SmartImage";
+import {
+  normalizeNoticiasColumns,
+  normalizeNoticiasMaxItems,
+  noticiasGridClass,
+} from "@/lib/noticias-grid";
 import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 
 function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string }) {
@@ -114,7 +119,9 @@ export function NoticiasSection({
   const dataSource = (block.config?.noticiasDataSource as "rss" | "manual") ?? "rss";
   const rssUrl = (block.config?.noticiasRssUrl as string)?.trim() ?? "";
   const manualItems = (block.config?.noticiasManualItems as NoticiasItem[] | undefined) ?? [];
-  const maxItems = 6; // Somente as 6 últimas notícias
+  const maxItems = normalizeNoticiasMaxItems(block.config?.noticiasMaxItems);
+  const columns = normalizeNoticiasColumns(block.config?.noticiasColumns);
+  const gridClass = noticiasGridClass(columns);
   const padTop = (block.config?.noticiasPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.noticiasPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
   const blockBg = (block.config?.backgroundColor as string)?.trim();
@@ -169,7 +176,7 @@ export function NoticiasSection({
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [dataSource, rssUrl, maxItems, manualItems, lang]);
+  }, [dataSource, rssUrl, maxItems, manualItems, lang, columns]);
 
   const displayItems = dataSource === "manual" ? manualItems.slice(0, maxItems) : items;
   const hasContent = displayItems.length > 0;
@@ -214,7 +221,7 @@ export function NoticiasSection({
             </div>
           )}
           {hasContent && !loading && (
-            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
+            <div className={`mt-8 grid gap-6 items-stretch ${gridClass}`}>
               {displayItems.map((item, idx) => (
                 <a
                   key={item.id ?? item.link ?? idx}

@@ -332,7 +332,7 @@ export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
   "sectionMiddleColumnBackgroundColor", "sectionMiddleColumnBackgroundImage", "sectionMiddleColumnBackgroundOverlayOpacity",
   "proximosJogosDataSource", "proximosJogosManualFixtures", "proximosJogosOverrides", "proximosJogosPaddingTop", "proximosJogosPaddingBottom", "proximosJogosSpreadsheetUrl", "proximosJogosSheetGid", "fullBleedCarousel", "fixturesCarouselMarqueeSpeed",
   "ultimosResultadosPaddingTop", "ultimosResultadosPaddingBottom", "ultimosResultadosMaxItems", "resultadosManuais", "resultadosDetalhes",
-  "noticiasDataSource", "noticiasRssUrl", "noticiasManualItems", "noticiasMaxItems", "noticiasPaddingTop", "noticiasPaddingBottom",
+  "noticiasDataSource", "noticiasRssUrl", "noticiasManualItems", "noticiasMaxItems", "noticiasColumns", "noticiasPaddingTop", "noticiasPaddingBottom",
   "galeriaDataSource", "galeriaRssUrl", "galeriaManualItems", "galeriaMaxItems", "galeriaPaddingTop", "galeriaPaddingBottom",
   "hinoLetraPt", "hinoLetraEn", "hinoCompositorPt", "hinoCompositorEn", "hinoCifraPt", "hinoCifraEn", "hinoPartituraUrl", "hinoChordsEmbedUrl", "hinoEmbedDarkFilter", "hinoAudioUrl", "hinoDefaultTab", "hinoAccentColor", "hinoPlayerLabelPt", "hinoPlayerLabelEn", "hinoPaddingTop", "hinoPaddingBottom",
   "imprensaReleasePt", "imprensaReleaseEn", "imprensaUltimoJogoTituloPt", "imprensaUltimoJogoTituloEn", "imprensaUltimoJogoReleasePt", "imprensaUltimoJogoReleaseEn", "imprensaUltimoJogoData", "imprensaPressReleases", "imprensaHistoriaTituloPt", "imprensaHistoriaTituloEn", "imprensaHistoriaPt", "imprensaHistoriaEn", "imprensaContatoTextoPt", "imprensaContatoTextoEn", "imprensaCredencialNotifyEmail", "imprensaContatoEmail", "imprensaContatoTelefone", "imprensaContatoWhatsapp", "imprensaLogoUrl", "imprensaManualMarcaUrl", "imprensaHinoAudioUrl", "imprensaCondutaSections", "imprensaAccentColor", "imprensaPaddingTop", "imprensaPaddingBottom", "imprensaDisplayMode", "imprensaShowInMenu", "imprensaMenuLabelPt", "imprensaMenuLabelEn", "imprensaRequireAccessCode",
@@ -515,7 +515,8 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.noticiasDataSource = "rss";
     config.noticiasRssUrl = "";
     config.noticiasManualItems = [];
-    config.noticiasMaxItems = 10;
+    config.noticiasMaxItems = 9;
+    config.noticiasColumns = 3;
     config.noticiasPaddingTop = "compact";
     config.noticiasPaddingBottom = "compact";
   }
