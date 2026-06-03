@@ -22,6 +22,10 @@ import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 import { isFootballKind } from "@/lib/home-data";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { RoomAssignmentTable, type RoomAssignment } from "../components/RoomAssignmentTable";
+import {
+  TravelCategoriesField,
+  travelCategoriesPayload,
+} from "@/components/dashboard/futebol/TravelCategoriesField";
 
 interface Tenant {
   id: string;
@@ -94,6 +98,8 @@ export default function NewLogisticaPage() {
   const [tenantId, setTenantId] = useState("");
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [category, setCategory] = useState("");
+  const [multiCategoryMode, setMultiCategoryMode] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [matchDate, setMatchDate] = useState("");
   const [opponentName, setOpponentName] = useState("");
   const [stadiumName, setStadiumName] = useState("");
@@ -261,7 +267,7 @@ export default function NewLogisticaPage() {
     try {
       const { data } = await api.post<{ id: string }>("/logistica", {
         tenantId,
-        category: category.trim() || undefined,
+        ...travelCategoriesPayload(multiCategoryMode, category, selectedCategories),
         matchDate: matchDate.trim(),
         opponentName: opponentName.trim() || undefined,
         stadiumName: stadiumName.trim() || undefined,
@@ -476,24 +482,15 @@ export default function NewLogisticaPage() {
                 </Select>
               </div>
             </div>
-            {dataSource === "manual" && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Categoria</Label>
-                  <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Ex.: Principal, Sub-17" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">—</SelectItem>
-                      {categoriesForDropdown.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>{c.labelPT}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+            <TravelCategoriesField
+              categoriesForDropdown={categoriesForDropdown}
+              multiMode={multiCategoryMode}
+              onMultiModeChange={setMultiCategoryMode}
+              singleCategory={category}
+              onSingleCategoryChange={setCategory}
+              selectedCategories={selectedCategories}
+              onSelectedCategoriesChange={setSelectedCategories}
+            />
             {stadiumName && (city || country) && (
               <p className="text-sm text-muted-foreground">
                 Local: {[city, country].filter(Boolean).join(", ")}

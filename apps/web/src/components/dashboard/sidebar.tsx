@@ -86,7 +86,8 @@ function isFutebolCadastroPath(pathname: string | null): boolean {
     pathname.startsWith("/dashboard/cadastros/campeonatos") ||
     pathname.startsWith("/dashboard/cadastros/estadios") ||
     pathname.startsWith("/dashboard/cadastros/times") ||
-    pathname.startsWith("/dashboard/cadastros/categorias")
+    pathname.startsWith("/dashboard/cadastros/categorias") ||
+    pathname.startsWith("/dashboard/cadastros/espacos")
   );
 }
 
@@ -254,11 +255,15 @@ function resolveLinkActive(
   if (href === "/dashboard/futebol/logistica") {
     return (
       !!pathname?.startsWith("/dashboard/futebol/logistica") &&
-      !pathname.startsWith("/dashboard/futebol/logistica/agenda")
+      !pathname.startsWith("/dashboard/futebol/logistica/agenda") &&
+      !pathname.startsWith("/dashboard/cadastros/espacos")
     );
   }
   if (href === "/dashboard/futebol/logistica/agenda") {
-    return pathname === "/dashboard/futebol/logistica/agenda";
+    return (
+      pathname === "/dashboard/futebol/logistica/agenda" ||
+      !!pathname?.startsWith("/dashboard/cadastros/espacos")
+    );
   }
   if (href === "/dashboard/cadastros") return pathname === "/dashboard/cadastros";
   if (href === "/dashboard/cadastros/tipos") return !!pathname?.startsWith("/dashboard/cadastros/tipos");

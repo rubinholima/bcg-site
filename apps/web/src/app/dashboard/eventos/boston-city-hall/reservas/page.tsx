@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { BostonCityHallShell } from "@/components/dashboard/boston-city-hall/BostonCityHallShell";
@@ -27,9 +27,17 @@ export default function BostonCityHallReservasPage() {
   return (
     <BostonCityHallShell
       title="Reservas"
-      description="Gerencie reservas, pré-reservas e bloqueios operacionais por espaço."
+      description="Gerencie reservas, pré-reservas e bloqueios operacionais por espaço do palco."
     >
-      <BostonCityHallReservas />
+      <Suspense
+        fallback={
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        }
+      >
+        <BostonCityHallReservas />
+      </Suspense>
     </BostonCityHallShell>
   );
 }

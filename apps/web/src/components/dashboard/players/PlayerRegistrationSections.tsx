@@ -39,6 +39,7 @@ import { PlayerContractsSection } from "./PlayerContractsSection";
 import { PlayerCategoryHistorySection } from "./PlayerCategoryHistorySection";
 import { PlayerLoanSection } from "./PlayerLoanSection";
 import { PlayerTravelTab } from "./PlayerTravelTab";
+import { PlayerAgendaTab } from "./PlayerAgendaTab";
 
 interface CategoryOption {
   value: string;
@@ -1040,6 +1041,8 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           </div>
         </div>
       </ExpandableSection>
+
+      <PlayerAgendaTab playerId={playerId} canAccessLogistica={canAccessLogistica} />
 
       <PlayerTravelTab
         playerId={playerId}

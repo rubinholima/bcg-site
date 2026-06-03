@@ -71,6 +71,11 @@ export class PlayersController {
     return this.service.findTravelHistory(id);
   }
 
+  @Get(':id/agenda')
+  findAgenda(@Param('id') id: string, @Query('from') from?: string, @Query('to') to?: string) {
+    return this.service.findAgendaTimeline(id, from, to);
+  }
+
   @Get(':id/contracts-overview')
   findContractsOverview(@Param('id') id: string) {
     return this.service.findContractsOverview(id);

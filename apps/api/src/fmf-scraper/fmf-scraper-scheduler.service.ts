@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { FmfAgendaSyncService } from '../futebol-agenda/fmf-agenda-sync.service';
 import { FmfPageSyncService } from './fmf-page-sync.service';
 import { FmfScraperService } from './fmf-scraper.service';
 
@@ -11,6 +12,7 @@ export class FmfScraperSchedulerService {
   constructor(
     private readonly fmfScraper: FmfScraperService,
     private readonly fmfPageSync: FmfPageSyncService,
+    private readonly fmfAgendaSync: FmfAgendaSyncService,
   ) {}
 
   @Cron('0 */2 * * *')
@@ -25,6 +27,15 @@ export class FmfScraperSchedulerService {
     } catch (e) {
       this.log.warn(
         `FMF sync páginas: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+    if (process.env.FMF_SYNC_AGENDA_DISABLED?.trim() === '1') return;
+    try {
+      await this.fmfAgendaSync.syncAll();
+      this.log.log('FMF sync agenda concluído.');
+    } catch (e) {
+      this.log.warn(
+        `FMF sync agenda: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   }

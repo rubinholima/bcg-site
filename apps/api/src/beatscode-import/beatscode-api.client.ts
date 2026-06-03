@@ -183,8 +183,12 @@ export class BeatscodeApiClient {
   }
 
   /** Lista genérica (GET) — retorna array completo, não só o primeiro item. */
-  async listByPath(path: string, route = '/person/athlete'): Promise<Record<string, unknown>[]> {
-    const data = await this.request<unknown>('GET', path, { route });
+  async listByPath(
+    path: string,
+    route = '/person/athlete',
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<Record<string, unknown>[]> {
+    const data = await this.request<unknown>('GET', path, { route, params });
     return this.normalizeList(data);
   }
 

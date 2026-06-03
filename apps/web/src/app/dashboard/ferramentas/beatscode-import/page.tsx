@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Database, FileUp, Loader2, Users } from "lucide-react";
+import { Database, FileUp, Loader2, Users, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -40,12 +40,14 @@ type BeatscodeStatus = {
 export default function BeatscodeImportPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const agendaFileRef = useRef<HTMLInputElement>(null);
   const { canAccessModule, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<BeatscodeStatus | null>(null);
   const [clubs, setClubs] = useState<ClubOption[]>([]);
   const [targetTenantSlug, setTargetTenantSlug] = useState("boston-city-fc-brasil");
   const [loading, setLoading] = useState(true);
-  const [running, setRunning] = useState<"file" | "api" | null>(null);
+  const [running, setRunning] = useState<"file" | "api" | "agenda-file" | "agenda-api" | null>(null);
+  const [agendaMessage, setAgendaMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -118,7 +120,7 @@ export default function BeatscodeImportPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          categoryKeys: ["sub20", "sub17", "sub15", "sub14"],
+          categoryKeys: ["sub20", "sub17", "sub15", "sub14", "sub13"],
           downloadPhotos: true,
           tenantSlug: targetTenantSlug,
         }),
@@ -134,6 +136,60 @@ export default function BeatscodeImportPage() {
       await load();
     } catch {
       setError("Erro ao importar do Beatscode.");
+    } finally {
+      setRunning(null);
+    }
+  };
+
+  const handleImportAgendaFromFile = async (file: File) => {
+    setRunning("agenda-file");
+    setError(null);
+    setAgendaMessage(null);
+    try {
+      const text = await file.text();
+      const exportData = JSON.parse(text) as unknown;
+      const res = await authFetch("/api/beatscode-import/import-agenda-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ export: exportData, tenantSlug: targetTenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha ao importar agenda.");
+        return;
+      }
+      setAgendaMessage(
+        `Agenda: ${data.entriesCreated ?? 0} criado(s), ${data.entriesUpdated ?? 0} atualizado(s), ${data.entriesSkipped ?? 0} ignorado(s). ` +
+          `Viagens: ${data.travelsCreated ?? 0} criada(s), ${data.travelsSkipped ?? 0} ignorada(s).`,
+      );
+    } catch {
+      setError("JSON de agenda inválido ou erro na importação.");
+    } finally {
+      setRunning(null);
+      if (agendaFileRef.current) agendaFileRef.current.value = "";
+    }
+  };
+
+  const handleImportAgendaApi = async () => {
+    setRunning("agenda-api");
+    setError(null);
+    setAgendaMessage(null);
+    try {
+      const res = await authFetch("/api/beatscode-import/run-agenda", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug: targetTenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha na importação da agenda.");
+        return;
+      }
+      setAgendaMessage(
+        `Agenda: ${data.entriesCreated ?? 0} criado(s), ${data.entriesUpdated ?? 0} atualizado(s), ${data.entriesSkipped ?? 0} ignorado(s).`,
+      );
+    } catch {
+      setError("Erro ao importar agenda do Beatscode.");
     } finally {
       setRunning(null);
     }
@@ -170,6 +226,12 @@ export default function BeatscodeImportPage() {
       {message && (
         <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
           {message}
+        </div>
+      )}
+
+      {agendaMessage && (
+        <div className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
+          {agendaMessage}
         </div>
       )}
 
@@ -238,6 +300,59 @@ export default function BeatscodeImportPage() {
               <FileUp className="mr-2 h-4 w-4" />
             )}
             Importar JSON exportado
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarDays className="h-4 w-4" />
+            Agenda / Logística (Beatscode)
+          </CardTitle>
+          <CardDescription>
+            Treinos, compromissos e jogos da agenda Beatscode →{" "}
+            <strong>Futebol → Logística → Agenda</strong>. Todas as categorias disponíveis na API
+            (Sub-14…20; Sub-13 quando existir no Beatscode). Itens já importados são ignorados.
+            <br />
+            Local: <code className="text-xs">pnpm --filter api beatscode:export-agenda</code> →{" "}
+            <code className="text-xs">data/beatscode-agenda-export.json</code>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <input
+            ref={agendaFileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleImportAgendaFromFile(f);
+            }}
+          />
+          <Button
+            variant="default"
+            disabled={!!running}
+            onClick={() => agendaFileRef.current?.click()}
+          >
+            {running === "agenda-file" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileUp className="mr-2 h-4 w-4" />
+            )}
+            Importar JSON da agenda
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!!running || !status?.credentialsConfigured}
+            onClick={handleImportAgendaApi}
+          >
+            {running === "agenda-api" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <CalendarDays className="mr-2 h-4 w-4" />
+            )}
+            Importar agenda direto (local)
           </Button>
         </CardContent>
       </Card>

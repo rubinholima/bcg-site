@@ -42,7 +42,11 @@ export default function FutebolLogisticaAgendaPage() {
         </Link>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Logística — Agenda operacional</h1>
         <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-          Calendário unificado: viagens, treinos, jogos, reuniões e compromissos de todos os clubes.
+          Calendário unificado: viagens, treinos, jogos, reuniões, compromissos dos clubes e eventos do{" "}
+          <Link href="/dashboard/eventos/boston-city-hall/reservas" className="text-primary underline-offset-2 hover:underline">
+            Boston City Hall (palco)
+          </Link>
+          . Jogos FMF atualizam automaticamente a cada 2 horas.
         </p>
       </div>
       <Suspense

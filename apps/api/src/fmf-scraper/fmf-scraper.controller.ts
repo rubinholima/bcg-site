@@ -3,6 +3,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
+import { FmfAgendaSyncService, type FmfAgendaSyncResult } from '../futebol-agenda/fmf-agenda-sync.service';
 import {
   FmfPageSyncService,
   type FmfScraperSyncConfig,
@@ -16,6 +17,7 @@ export class FmfScraperController {
   constructor(
     private readonly fmfScraper: FmfScraperService,
     private readonly fmfSync: FmfPageSyncService,
+    private readonly fmfAgendaSync: FmfAgendaSyncService,
   ) {}
 
   @Get('presets')
@@ -34,7 +36,13 @@ export class FmfScraperController {
       preset: body?.preset,
       all: body?.all === true,
     });
-    return { ok: true, store };
+    let agendaSync: FmfAgendaSyncResult | null = null;
+    try {
+      agendaSync = await this.fmfAgendaSync.syncAll();
+    } catch {
+      /* agenda sync opcional após import */
+    }
+    return { ok: true, store, agendaSync };
   }
 
   @Get('sync/candidates')
@@ -66,6 +74,14 @@ export class FmfScraperController {
       all: body?.all === true,
       fmfTeamNames: body?.fmfTeamNames,
     });
+    return { ok: true, ...result };
+  }
+
+  @Post('sync/agenda')
+  async syncAgenda(@Body() body: { tenantId?: string; all?: boolean }) {
+    const result = await this.fmfAgendaSync.syncAll(
+      body?.tenantId ? { tenantId: body.tenantId } : body?.all ? {} : {},
+    );
     return { ok: true, ...result };
   }
 }

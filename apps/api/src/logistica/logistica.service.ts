@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from '../tenants/tenants.service';
+import { normalizeTravelCategoriesInput } from '../futebol-agenda/travel-categories.util';
 import { CreateTravelLogisticsDto } from './dto/create-travel-logistics.dto';
 import { UpdateTravelLogisticsDto } from './dto/update-travel-logistics.dto';
 
@@ -65,12 +66,14 @@ export class LogisticaService {
 
   async create(dto: CreateTravelLogisticsDto) {
     await this.ensureClubTenant(dto.tenantId);
+    const catNorm = normalizeTravelCategoriesInput(dto.categories, dto.category);
     const data: Parameters<typeof this.prisma.travelLogistics.create>[0]['data'] =
       {
         tenantId: dto.tenantId,
         matchDate: new Date(dto.matchDate),
         status: dto.status ?? 'rascunho',
-        category: dto.category ?? null,
+        category: catNorm.category,
+        categories: catNorm.categories ?? undefined,
         opponentName: dto.opponentName ?? null,
         stadiumName: dto.stadiumName ?? null,
         city: dto.city ?? null,
@@ -115,7 +118,13 @@ export class LogisticaService {
       data.estimatedArrival = new Date(dto.estimatedArrival);
     if (dto.nutritionApprovedAt != null)
       data.nutritionApprovedAt = new Date(dto.nutritionApprovedAt);
-    if (dto.category !== undefined) data.category = dto.category ?? null;
+    if (dto.categories !== undefined || dto.category !== undefined) {
+      const catNorm = normalizeTravelCategoriesInput(dto.categories, dto.category);
+      data.category = catNorm.category;
+      data.categories = catNorm.categories ?? undefined;
+    } else if (dto.category !== undefined) {
+      data.category = dto.category ?? null;
+    }
     if (dto.opponentName !== undefined)
       data.opponentName = dto.opponentName ?? null;
     if (dto.stadiumName !== undefined)

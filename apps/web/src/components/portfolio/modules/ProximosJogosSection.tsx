@@ -22,11 +22,11 @@ import {
   fetchFixtures as fetchFixturesShared,
   type FixturesFetchContext,
 } from "@/lib/fixtures-shared";
-import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
 import {
   ProximosJogosMobileCarousel,
   ProximosJogosVenuePills,
 } from "@/components/portfolio/modules/ProximosJogosMobile";
+import { HorizontalScrollCarousel } from "@/components/portfolio/HorizontalScrollCarousel";
 
 export interface FixtureItem {
   externalId: string;
@@ -319,7 +319,6 @@ export function ProximosJogosSection({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedVenue, setSelectedVenue] = useState<"home" | "away" | null>(null);
-  const [carouselHover, setCarouselHover] = useState(false);
   const [tenantBySlug, setTenantBySlug] = useState<{ name: string; logoUrl: string | null } | null>(null);
 
   const displayOurTeamName = tenantBySlug?.name ?? ourTeamName ?? undefined;
@@ -441,13 +440,6 @@ export function ProximosJogosSection({
     return list;
   }, [upcomingFixtures, selectedDate, categoryFilterActive, showVenueFilter, selectedVenue, displayOurTeamName]);
 
-  const cardCount = filteredFixtures.length;
-  /** Marquee contínuo como o carrossel de logos: 3 cópias para loop fluido sem parar. */
-  const MARQUEE_COPIES = 3;
-  const carouselItems = cardCount > 1
-    ? Array.from({ length: MARQUEE_COPIES }, () => filteredFixtures).flat()
-    : filteredFixtures;
-
   const isHome = isHomeFixture;
   const homeAwayLabel = (f: FixtureItem) =>
     isHome(f)
@@ -456,10 +448,6 @@ export function ProximosJogosSection({
 
   const cardClassName =
     `min-w-[280px] max-w-[320px] shrink-0 snap-start rounded-xl bg-zinc-900/60 p-4 transition sm:min-w-[300px] ${fullWidth ? "" : "border border-white/10 hover:border-white/20"}`;
-
-  const marqueeDurationSec = fixturesMarqueeDurationSeconds(
-    block.config?.fixturesCarouselMarqueeSpeed as string | undefined,
-  );
 
   const eventCardLogoRaw =
     fixturesContext === "event" ? (eventPageLogoUrl?.trim() || "") : "";
@@ -605,33 +593,11 @@ export function ProximosJogosSection({
         </div>
       )}
 
-      {/* Desktop — marquee automático */}
+      {/* Desktop — scroll horizontal com setas e arrastar */}
       {!loading && filteredFixtures.length > 0 && (
-        <div
-          className={`hidden md:block ${cardCount > 1 ? "overflow-hidden" : ""} mt-6 w-full`}
-          onMouseEnter={() => setCarouselHover(true)}
-          onMouseLeave={() => setCarouselHover(false)}
-          aria-label={
-            cardCount > 1
-              ? lang === "pt"
-                ? "Carrossel de jogos — passe o mouse para pausar"
-                : "Fixtures carousel — hover to pause"
-              : undefined
-          }
-        >
-          <div
-            className="flex gap-4 py-2"
-            style={{
-              width: "max-content",
-              ...(cardCount > 1
-                ? {
-                    animation: `proximos-jogos-marquee ${marqueeDurationSec}s linear infinite`,
-                    animationPlayState: carouselHover ? "paused" : "running",
-                  }
-                : {}),
-            }}
-          >
-                {carouselItems.map((f, index) => {
+        <div className="mt-6 hidden w-full md:block">
+          <HorizontalScrollCarousel lang={lang} gap={16}>
+                {filteredFixtures.map((f, index) => {
                   const competitionLabel =
                     (f.competitionName && String(f.competitionName).trim()) ||
                     (competitionDisplayFallback && String(competitionDisplayFallback).trim()) ||
@@ -792,7 +758,7 @@ export function ProximosJogosSection({
                   </div>
                 );
                 })}
-          </div>
+          </HorizontalScrollCarousel>
         </div>
       )}
     </section>

@@ -16,6 +16,9 @@ import {
   computeBestSharedMetricsFromSources,
 } from './body-metrics.util';
 import { syncLinkedIdentityByPlayerId } from '../rh/employee-player-link';
+import { parseTravelCategories, travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
+import { FootballAgendaBirthdaysService } from '../futebol-agenda/football-agenda-birthdays.service';
+import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
 import {
   normalizeSportsSituation,
   isArchivedSportsSituation,
@@ -30,6 +33,8 @@ export class PlayersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly s3: S3Service,
+    private readonly agendaBirthdays: FootballAgendaBirthdaysService,
+    private readonly agenda: FutebolAgendaService,
   ) {}
 
   async findAll(filters?: {
@@ -151,7 +156,7 @@ export class PlayersService {
     return travels.filter(
       (t) =>
         this.playerInAccommodationRooms(t.accommodationRooms, playerId) ||
-        this.travelMatchesPlayerCategory(t.category, player.category),
+        this.travelMatchesPlayerCategory(t.category, t.categories, player.category),
     );
   }
 
@@ -174,11 +179,20 @@ export class PlayersService {
 
   private travelMatchesPlayerCategory(
     travelCategory: string | null | undefined,
+    travelCategories: unknown,
     playerCategory: string | null | undefined,
   ): boolean {
     if (!playerCategory) return false;
-    if (!travelCategory) return true;
-    return travelCategory === playerCategory;
+    const list = parseTravelCategories(travelCategories);
+    if (list.length > 0) return list.includes(playerCategory);
+    return travelMatchesCategoryFilter(
+      { category: travelCategory ?? null, categories: travelCategories },
+      playerCategory,
+    );
+  }
+
+  async findAgendaTimeline(playerId: string, from?: string, to?: string) {
+    return this.agenda.findPlayerAgenda(playerId, from, to);
   }
 
   /** Contratos do atleta — Jurídico (LegalDocument) + RH (Employment por CPF). */
@@ -423,10 +437,14 @@ export class PlayersService {
     if (!tenant) throw new NotFoundException(`Empresa/clube "${dto.tenantId}" não encontrado`);
 
     const data = this.toCreateData(dto);
-    return this.prisma.player.create({
+    const player = await this.prisma.player.create({
       data,
       include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
+    if (player.birthDate) {
+      await this.agendaBirthdays.syncPlayerBirthdays(player.id).catch(() => undefined);
+    }
+    return player;
   }
 
   async update(id: string, dto: UpdatePlayerDto) {
@@ -491,6 +509,14 @@ export class PlayersService {
       dto.registrationProfile !== undefined;
     if (identityTouched) {
       await syncLinkedIdentityByPlayerId(this.prisma, id);
+    }
+
+    if (
+      dto.birthDate !== undefined ||
+      dto.category !== undefined ||
+      dto.name !== undefined
+    ) {
+      await this.agendaBirthdays.syncPlayerBirthdays(id).catch(() => undefined);
     }
 
     await this.syncBodyMetricsFromSources(id);

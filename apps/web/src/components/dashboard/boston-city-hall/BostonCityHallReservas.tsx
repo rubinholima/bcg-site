@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,9 @@ function formatRange(start: string, end: string): string {
 }
 
 export function BostonCityHallReservas() {
+  const searchParams = useSearchParams();
+  const editFromUrl = searchParams.get("edit");
+  const openedEditRef = useRef<string | null>(null);
   const [spaces, setSpaces] = useState<VenueSpace[]>([]);
   const [bookings, setBookings] = useState<VenueBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +98,16 @@ export function BostonCityHallReservas() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!editFromUrl || bookings.length === 0) return;
+    if (openedEditRef.current === editFromUrl) return;
+    const booking = bookings.find((b) => b.id === editFromUrl);
+    if (booking) {
+      openedEditRef.current = editFromUrl;
+      openEdit(booking);
+    }
+  }, [editFromUrl, bookings]);
 
   const openCreate = () => {
     setForm(emptyForm());

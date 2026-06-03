@@ -6,6 +6,8 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import { isBeatscodeExportFile } from './beatscode-export.types';
 import { BeatscodeImportService, resolveBeatscodeTenantSlug } from './beatscode-import.service';
+import { BeatscodeAgendaImportService } from './beatscode-agenda-import.service';
+import { isBeatscodeAgendaExportFile } from './beatscode-agenda-export.types';
 
 @Controller('api/beatscode-import')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -13,6 +15,7 @@ import { BeatscodeImportService, resolveBeatscodeTenantSlug } from './beatscode-
 export class BeatscodeImportController {
   constructor(
     private readonly beatscodeImport: BeatscodeImportService,
+    private readonly beatscodeAgendaImport: BeatscodeAgendaImportService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -65,6 +68,46 @@ export class BeatscodeImportController {
     }
     const result = await this.beatscodeImport.importFromExport(body.export, {
       tenantSlug: body.tenantSlug,
+    });
+    return { ok: true, ...result };
+  }
+
+  @Get('agenda/status')
+  async agendaStatus() {
+    const row = await this.prisma.integrationConfig.findUnique({
+      where: { key: 'beatscode_agenda_import_last' },
+    });
+    return {
+      tenantSlug: resolveBeatscodeTenantSlug(),
+      lastImport: row?.config ?? null,
+    };
+  }
+
+  /** Importa agenda/logística a partir do JSON exportado. */
+  @Post('import-agenda-export')
+  async importAgendaExport(
+    @Body()
+    body: {
+      export?: unknown;
+      tenantSlug?: string;
+    },
+  ) {
+    if (!body?.export || !isBeatscodeAgendaExportFile(body.export)) {
+      throw new BadRequestException(
+        'Envie um JSON de export válido (version: 1, scheduleItems[], tenantSlug).',
+      );
+    }
+    const result = await this.beatscodeAgendaImport.importFromExport(body.export, {
+      tenantSlug: body.tenantSlug,
+    });
+    return { ok: true, ...result };
+  }
+
+  /** Agenda direto da API (local, exige credenciais). */
+  @Post('run-agenda')
+  async runAgenda(@Body() body: { tenantSlug?: string }) {
+    const result = await this.beatscodeAgendaImport.runImport({
+      tenantSlug: body?.tenantSlug,
     });
     return { ok: true, ...result };
   }

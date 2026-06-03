@@ -30,7 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
+import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
+import { useFixtureCategories } from "@/hooks/useFixtureCategories";
+import { formatTravelCategoriesDisplay } from "@/components/dashboard/futebol/TravelCategoriesField";
+import { BOOKING_STATUS_LABEL } from "@/types/boston-city-hall";
 import { isFootballKind } from "@/lib/home-data";
 import type {
   FootballAgendaCalendarItem,
@@ -49,6 +52,7 @@ interface Tenant {
   id: string;
   name: string;
   kind?: { name: string };
+  categories?: string[] | null;
 }
 
 type ViewMode = "day" | "week" | "month";
@@ -145,10 +149,13 @@ type EntryForm = {
   endAt: string;
   endTime: string;
   allDay: boolean;
+  spaceId: string;
   location: string;
   description: string;
   status: string;
 };
+
+type ActivitySpace = { id: string; name: string };
 
 const emptyForm = (): EntryForm => ({
   tenantId: "",
@@ -160,6 +167,7 @@ const emptyForm = (): EntryForm => ({
   endAt: "",
   endTime: "10:00",
   allDay: false,
+  spaceId: "",
   location: "",
   description: "",
   status: "confirmado",
@@ -181,20 +189,45 @@ function combineDateTime(date: string, time: string, allDay: boolean): string {
 const modalSelectClassName =
   "flex min-h-[44px] w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
 
-function TypeLegend() {
+function TypeLegend({
+  typeFilter,
+  onTypeFilterChange,
+}: {
+  typeFilter: string;
+  onTypeFilterChange: (value: string) => void;
+}) {
   return (
     <div className="mt-4 flex flex-wrap gap-2">
-      {Object.entries(FOOTBALL_AGENDA_TYPE_LABEL).map(([key, label]) => (
-        <span
-          key={key}
-          className={cn(
-            "rounded-full border px-2 py-0.5 text-[11px] font-medium",
-            FOOTBALL_AGENDA_TYPE_COLOR[key],
-          )}
-        >
-          {label}
-        </span>
-      ))}
+      <button
+        type="button"
+        onClick={() => onTypeFilterChange("all")}
+        className={cn(
+          "min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all",
+          typeFilter === "all"
+            ? "border-primary bg-primary/15 text-foreground ring-2 ring-primary/40"
+            : "border-border/60 bg-muted/30 text-muted-foreground hover:bg-muted/50",
+        )}
+      >
+        Todos
+      </button>
+      {Object.entries(FOOTBALL_AGENDA_TYPE_LABEL).map(([key, label]) => {
+        const active = typeFilter === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onTypeFilterChange(active ? "all" : key)}
+            className={cn(
+              "min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all",
+              FOOTBALL_AGENDA_TYPE_COLOR[key],
+              active && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+              typeFilter !== "all" && !active && "opacity-45 hover:opacity-70",
+            )}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -206,6 +239,7 @@ export function FutebolAgendaOperacional() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantFilter, setTenantFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [items, setItems] = useState<FootballAgendaCalendarItem[]>([]);
   const [overview, setOverview] = useState<FootballAgendaOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -213,6 +247,7 @@ export function FutebolAgendaOperacional() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<EntryForm>(emptyForm);
+  const [spaces, setSpaces] = useState<ActivitySpace[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -226,18 +261,55 @@ export function FutebolAgendaOperacional() {
     });
   }, [form.tenantId]);
 
+  const { categories: allFixtureCategories } = useFixtureCategories();
+
+  const selectedTenant = tenants.find((t) => t.id === tenantFilter);
+  const categoriesForDropdown = filterCategoriesForTenant(
+    allFixtureCategories,
+    selectedTenant?.categories,
+  );
+
+  const formTenant = tenants.find((t) => t.id === form.tenantId);
+  const formCategories = filterCategoriesForTenant(
+    allFixtureCategories,
+    formTenant?.categories,
+  );
+
+  useEffect(() => {
+    if (categoryFilter === "all") return;
+    if (!categoriesForDropdown.some((c) => c.value === categoryFilter)) {
+      setCategoryFilter("all");
+    }
+  }, [categoryFilter, categoriesForDropdown]);
+
+  useEffect(() => {
+    if (!form.tenantId) {
+      setSpaces([]);
+      return;
+    }
+    api
+      .get<ActivitySpace[]>(`/football-activity-spaces?tenantId=${encodeURIComponent(form.tenantId)}`)
+      .then(({ data }) => setSpaces(Array.isArray(data) ? data : []))
+      .catch(() => setSpaces([]));
+  }, [form.tenantId]);
+
   const load = useCallback(async () => {
     setLoading(true);
     const { from, to } = viewRange(focusDate, viewMode);
     const params = new URLSearchParams({ from, to });
     if (tenantFilter) params.set("tenantId", tenantFilter);
     if (typeFilter !== "all") params.set("types", typeFilter);
+    if (categoryFilter !== "all") params.set("category", categoryFilter);
+    const overviewParams = new URLSearchParams({
+      year: String(focusDate.getFullYear()),
+      month: String(focusDate.getMonth()),
+    });
+    if (tenantFilter) overviewParams.set("tenantId", tenantFilter);
+    if (categoryFilter !== "all") overviewParams.set("category", categoryFilter);
     try {
       const [calRes, ovRes] = await Promise.all([
         api.get<FootballAgendaCalendarItem[]>(`/futebol-agenda/calendar?${params}`),
-        api.get<FootballAgendaOverview>(
-          `/futebol-agenda/overview?year=${focusDate.getFullYear()}&month=${focusDate.getMonth()}${tenantFilter ? `&tenantId=${tenantFilter}` : ""}`,
-        ),
+        api.get<FootballAgendaOverview>(`/futebol-agenda/overview?${overviewParams}`),
       ]);
       setItems(Array.isArray(calRes.data) ? calRes.data : []);
       setOverview(ovRes.data ?? null);
@@ -247,7 +319,7 @@ export function FutebolAgendaOperacional() {
     } finally {
       setLoading(false);
     }
-  }, [focusDate, viewMode, tenantFilter, typeFilter]);
+  }, [focusDate, viewMode, tenantFilter, typeFilter, categoryFilter]);
 
   useEffect(() => {
     load();
@@ -368,18 +440,39 @@ export function FutebolAgendaOperacional() {
           : "text-foreground",
     );
 
-  const openNewEntry = (dateKey?: string) => {
+  const openNewEntry = async (dateKey?: string) => {
     const base = dateKey ?? today;
+    const tid = tenantFilter || tenants[0]?.id || "";
     setEditingId(null);
     setForm({
       ...emptyForm(),
-      tenantId: tenantFilter || tenants[0]?.id || "",
+      tenantId: tid,
+      category: categoryFilter !== "all" ? categoryFilter : "",
       startAt: base,
       endAt: base,
     });
     setError(null);
     setDialogOpen(true);
+    if (tid) {
+      try {
+        const { data } = await api.post<ActivitySpace[]>("/futebol-agenda/ensure-spaces", {
+          tenantId: tid,
+        });
+        if (Array.isArray(data)) setSpaces(data);
+      } catch {
+        /* mantém load via useEffect */
+      }
+    }
   };
+
+  const categoryLine = (item: FootballAgendaCalendarItem) =>
+    formatTravelCategoriesDisplay(item.category, item.categories ?? null, "pt");
+
+  const isFmfGame = (item: FootballAgendaCalendarItem) =>
+    item.source === "entry" &&
+    item.type === "jogo" &&
+    typeof item.externalId === "string" &&
+    item.externalId.startsWith("fmf-");
 
   const openEditEntry = (entry: FootballAgendaEntry) => {
     const start = new Date(entry.startAt);
@@ -397,6 +490,7 @@ export function FutebolAgendaOperacional() {
         ? `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`
         : "10:00",
       allDay: entry.allDay,
+      spaceId: entry.spaceId ?? "",
       location: entry.location ?? "",
       description: entry.description ?? "",
       status: entry.status,
@@ -405,7 +499,9 @@ export function FutebolAgendaOperacional() {
     setDialogOpen(true);
   };
 
-  const renderAgendaItem = (item: FootballAgendaCalendarItem) => (
+  const renderAgendaItem = (item: FootballAgendaCalendarItem) => {
+    const cats = categoryLine(item);
+    return (
     <div
       key={item.id}
       className={cn(
@@ -417,8 +513,21 @@ export function FutebolAgendaOperacional() {
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase opacity-80">
             {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
+            {cats !== "—" ? ` · ${cats}` : ""}
             {item.tenantName ? ` · ${item.tenantName}` : ""}
           </p>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {isFmfGame(item) ? (
+              <span className="rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                FMF
+              </span>
+            ) : null}
+            {item.agendaLocked ? (
+              <span className="rounded bg-zinc-600/40 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                Editado
+              </span>
+            ) : null}
+          </div>
           <p className="mt-0.5 font-semibold leading-tight">{item.title}</p>
           <p className="mt-1 text-xs opacity-90">
             {formatTime(item.startAt, item.allDay)}
@@ -436,6 +545,12 @@ export function FutebolAgendaOperacional() {
               {item.championshipName ? ` · ${item.championshipName}` : ""}
             </p>
           ) : null}
+          {item.source === "bch_booking" ? (
+            <p className="mt-1 text-xs opacity-75">
+              {BOOKING_STATUS_LABEL[item.status] ?? item.status}
+              {item.spaceName ? ` · ${item.spaceName}` : ""}
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -445,6 +560,13 @@ export function FutebolAgendaOperacional() {
             className="text-xs font-medium text-primary underline-offset-2 hover:underline"
           >
             Abrir viagem
+          </Link>
+        ) : item.source === "bch_booking" ? (
+          <Link
+            href={item.href}
+            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+          >
+            Editar no Boston City Hall
           </Link>
         ) : (
           <button
@@ -462,7 +584,8 @@ export function FutebolAgendaOperacional() {
         )}
       </div>
     </div>
-  );
+    );
+  };
 
   const handleSave = async () => {
     if (!form.tenantId || !form.title.trim() || !form.startAt) {
@@ -481,6 +604,7 @@ export function FutebolAgendaOperacional() {
         ? combineDateTime(form.endAt, form.endTime, form.allDay)
         : undefined,
       allDay: form.allDay,
+      spaceId: form.spaceId || undefined,
       location: form.location.trim() || undefined,
       description: form.description.trim() || undefined,
       status: form.status,
@@ -494,8 +618,14 @@ export function FutebolAgendaOperacional() {
       setDialogOpen(false);
       await load();
       if (form.startAt) setSelectedDay(form.startAt);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro ao salvar");
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "response" in e
+          ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
+          : null;
+      if (Array.isArray(msg)) setError(msg.join(", "));
+      else if (typeof msg === "string") setError(msg);
+      else setError(e instanceof Error ? e.message : "Erro ao salvar");
     } finally {
       setSaving(false);
     }
@@ -574,7 +704,7 @@ export function FutebolAgendaOperacional() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" onClick={goToToday} className="min-h-[44px] shrink-0">
+            <Button variant="outline" onClick={goToToday} className="min-h-[44px] shrink-0">
                 Hoje
               </Button>
               <div className="flex items-center gap-1">
@@ -601,6 +731,19 @@ export function FutebolAgendaOperacional() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="min-h-[44px] w-full sm:w-[180px]">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categoriesForDropdown.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {getCategoryLabel(c.value, "pt", allFixtureCategories)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="min-h-[44px] w-full sm:w-[180px]">
                 <SelectValue placeholder="Tipo" />
@@ -608,6 +751,7 @@ export function FutebolAgendaOperacional() {
               <SelectContent>
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="viagem">Viagens</SelectItem>
+                <SelectItem value="palco">Boston City Hall</SelectItem>
                 {FOOTBALL_AGENDA_ENTRY_TYPES.map((t) => (
                   <SelectItem key={t} value={t}>
                     {FOOTBALL_AGENDA_TYPE_LABEL[t]}
@@ -652,7 +796,7 @@ export function FutebolAgendaOperacional() {
               ) : (
                 <div className="space-y-2">{selectedItems.map(renderAgendaItem)}</div>
               )}
-              <TypeLegend />
+              <TypeLegend typeFilter={typeFilter} onTypeFilterChange={setTypeFilter} />
             </div>
           ) : (
             <div
@@ -696,7 +840,11 @@ export function FutebolAgendaOperacional() {
                                     "truncate rounded border px-1 py-0.5 text-[10px] leading-tight sm:text-[11px]",
                                     FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
                                   )}
-                                  title={item.title}
+                                  title={
+                                    item.category
+                                      ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
+                                      : item.title
+                                  }
                                 >
                                   {item.title}
                                 </div>
@@ -745,7 +893,11 @@ export function FutebolAgendaOperacional() {
                                   "w-full truncate rounded border px-1.5 py-1 text-left text-[10px] leading-tight sm:text-[11px]",
                                   FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
                                 )}
-                                title={item.title}
+                                title={
+                                  item.category
+                                    ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
+                                    : item.title
+                                }
                               >
                                 {!item.allDay ? (
                                   <span className="mr-1 opacity-75">{formatTime(item.startAt, false)}</span>
@@ -759,7 +911,7 @@ export function FutebolAgendaOperacional() {
                     })}
                   </div>
                 )}
-                <TypeLegend />
+                <TypeLegend typeFilter={typeFilter} onTypeFilterChange={setTypeFilter} />
               </div>
 
               {viewMode === "month" ? (
@@ -849,9 +1001,9 @@ export function FutebolAgendaOperacional() {
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                 >
                   <option value="">—</option>
-                  {FIXTURE_CATEGORIES.map((c) => (
+                  {formCategories.map((c) => (
                     <option key={c.value} value={c.value}>
-                      {getCategoryLabel(c.value, "pt")}
+                      {getCategoryLabel(c.value, "pt", allFixtureCategories)}
                     </option>
                   ))}
                 </select>
@@ -915,8 +1067,33 @@ export function FutebolAgendaOperacional() {
               ) : null}
             </div>
             <div className="grid gap-1.5">
-              <Label>Local</Label>
-              <Input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label htmlFor="agenda-space">Espaço / local</Label>
+                <Link href="/dashboard/cadastros/espacos" className="text-xs text-primary hover:underline">
+                  Cadastrar espaços
+                </Link>
+              </div>
+              <select
+                id="agenda-space"
+                className={modalSelectClassName}
+                value={form.spaceId}
+                onChange={(e) => setForm((f) => ({ ...f, spaceId: e.target.value }))}
+              >
+                <option value="">— Texto livre abaixo —</option>
+                {spaces.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <Input
+                value={form.location}
+                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                placeholder="Complemento ou local avulso"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Espaços cadastrados bloqueiam horário duplicado entre categorias diferentes.
+              </p>
             </div>
             <div className="grid gap-1.5">
               <Label>Observações</Label>

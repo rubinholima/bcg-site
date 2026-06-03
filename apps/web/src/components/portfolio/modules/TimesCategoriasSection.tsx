@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
+import { HorizontalScrollCarousel } from "@/components/portfolio/HorizontalScrollCarousel";
 
 // Meses abreviados em português
 const MONTHS_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -149,7 +150,7 @@ function PlayerCard({
 
 function PlayersMarqueeRow({
   players,
-  durationSec,
+  durationSec: _durationSec,
   lang,
   onPlayerClick,
 }: {
@@ -158,47 +159,18 @@ function PlayersMarqueeRow({
   lang: "pt" | "en";
   onPlayerClick: (player: PlayerItem) => void;
 }) {
-  const [paused, setPaused] = useState(false);
-  const useMarquee = players.length > 1;
-  const MARQUEE_COPIES = 3;
-  const items = useMarquee
-    ? Array.from({ length: MARQUEE_COPIES }, () => players).flat()
-    : players;
+  if (players.length === 0) return null;
 
   return (
-    <div
-      className={`w-full ${useMarquee ? "overflow-hidden" : ""}`}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      title={
-        useMarquee
-          ? lang === "pt"
-            ? "Passar o mouse pausa o carrossel"
-            : "Hover to pause carousel"
-          : undefined
-      }
-    >
-      <div
-        className="flex gap-3 py-1 sm:gap-4"
-        style={{
-          width: useMarquee ? "max-content" : undefined,
-          ...(useMarquee
-            ? {
-                animation: `proximos-jogos-marquee ${durationSec}s linear infinite`,
-                animationPlayState: paused ? "paused" : "running",
-              }
-            : {}),
-        }}
-      >
-        {items.map((player, idx) => (
-          <PlayerCard
-            key={useMarquee ? `${player.id ?? player.name}-${idx}` : player.id ?? idx}
-            player={player}
-            onClick={() => onPlayerClick(player)}
-          />
-        ))}
-      </div>
-    </div>
+    <HorizontalScrollCarousel lang={lang} gap={12} trackClassName="sm:gap-4">
+      {players.map((player, idx) => (
+        <PlayerCard
+          key={player.id ?? `${player.name}-${idx}`}
+          player={player}
+          onClick={() => onPlayerClick(player)}
+        />
+      ))}
+    </HorizontalScrollCarousel>
   );
 }
 

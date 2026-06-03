@@ -25,6 +25,7 @@ import {
   isFmfSyncTenantSlug,
   parseTenantCategoryKeys,
 } from '../fmf-scraper/fmf-sync-tenants.config';
+import { FixtureCategoriesService } from '../cadastros/fixture-categories.service';
 
 function extractPlayerNickname(registrationProfile: unknown): string | null {
   if (!registrationProfile || typeof registrationProfile !== 'object') return null;
@@ -79,8 +80,8 @@ function inferCategoryFromCompetition(competitionName: string): string {
   return 'principal';
 }
 
-/** Alinhado a apps/web/src/lib/fixture-categories.ts — categorias de atletas na página pública. */
-const PLAYER_CATEGORIES = [
+/** Fallback se o cadastro ainda não foi migrado */
+const PLAYER_CATEGORIES_FALLBACK = [
   { value: 'principal', labelPT: 'Principal', labelEN: 'First Team' },
   { value: 'modulo_ii', labelPT: 'Módulo II', labelEN: 'Module II' },
   { value: 'sub20', labelPT: 'Sub-20', labelEN: 'U-20' },
@@ -98,11 +99,34 @@ export class PublicService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pagesService: PagesService,
+    private readonly fixtureCategories: FixtureCategoriesService,
     private readonly sofaScore: SofaScoreService,
     private readonly s3: S3Service,
     private readonly mediaMeta: MediaMetaService,
     private readonly fmfScraper: FmfScraperService,
   ) {}
+
+  /** Cadastro central + liberação por clube (Tenant.categories). */
+  private async resolveFixtureCategoriesForTenant(
+    tenantId: string,
+  ): Promise<Array<{ value: string; labelPT: string; labelEN: string }>> {
+    let catalog: Array<{ value: string; labelPT: string; labelEN: string }>;
+    try {
+      catalog = await this.fixtureCategories.findAll({ activeOnly: true });
+    } catch {
+      catalog = [...PLAYER_CATEGORIES_FALLBACK];
+    }
+    if (catalog.length === 0) catalog = [...PLAYER_CATEGORIES_FALLBACK];
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { categories: true },
+    });
+    const enabled = parseTenantCategoryKeys(tenant?.categories);
+    if (enabled.length === 0) return catalog;
+    const enabledSet = new Set(enabled);
+    return catalog.filter((c) => enabledSet.has(c.value));
+  }
 
   /** Logos de adversários (S3 clubes-adv + cadastro) para preencher cards públicos quando o JSON não tem URL. */
   private async buildVisitingTeamLogoMergeMap(): Promise<Map<string, string>> {
@@ -296,7 +320,7 @@ export class PublicService {
       return teamPage !== false;
     });
 
-    const FIXTURE_CATEGORIES = PLAYER_CATEGORIES;
+    const FIXTURE_CATEGORIES = await this.resolveFixtureCategoriesForTenant(tenantId);
 
     const byCategory = new Map<string, typeof visible>();
     for (const p of visible) {

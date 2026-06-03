@@ -15,6 +15,9 @@ export class UpdateTravelLogisticsDto {
   @MaxLength(64)
   category?: string;
 
+  @IsOptional()
+  categories?: string[];
+
   @IsDateString()
   @IsOptional()
   matchDate?: string;

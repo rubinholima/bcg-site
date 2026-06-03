@@ -122,6 +122,7 @@ model Tenant {
   bostonTvScreens       BostonTvScreen[]
   travelLogistics       TravelLogistics[]
   footballAgendaEntries FootballAgendaEntry[]
+  footballActivitySpaces FootballActivitySpace[]
   events                Event[]
   pressPhotos           TenantPressPhoto[]
   pressGalleryLinks     TenantPressGalleryLink[]
@@ -190,6 +191,8 @@ model TravelLogistics {
   tenantId              String
   tenant                Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   category              String?   // principal, sub20, sub17, etc. — null = viagem multi-categoria
+  /** Categorias quando a viagem é compartilhada (ex.: sub15 + sub17). Se preenchido, prevalece sobre category. */
+  categories            Json?
   matchDate             DateTime  // data do jogo
   opponentName          String?   // adversário
   stadiumName           String?
@@ -217,11 +220,15 @@ model TravelLogistics {
   status                String    @default("rascunho") // rascunho | planejamento | aprovado | em_andamento | concluido | cancelado
   weatherForecast       String?   @db.Text // previsão do tempo no local
   notes                 String?   @db.Text
+  /// beatscode-match-* — reimport idempotente
+  externalId            String?
+  beatscodeMeta         Json?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   @@index([tenantId])
   @@index([tenantId, matchDate])
   @@index([status])
+  @@unique([tenantId, externalId])
   footballAgendaEntries FootballAgendaEntry[]
 }
 
@@ -241,10 +248,49 @@ model FootballAgendaEntry {
   status            String            @default("confirmado") // confirmado | provisorio | cancelado
   travelLogisticsId String?
   travelLogistics   TravelLogistics?  @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
+  spaceId           String?
+  space             FootballActivitySpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+  participants      FootballAgendaEntryParticipant[]
+  /// beatscode-schedule-* ou beatscode-match-* — reimport idempotente
+  externalId        String?
+  beatscodeMeta     Json?
+  /** true = edição manual; sync FMF não sobrescreve */
+  agendaLocked      Boolean           @default(false)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   @@index([tenantId, startAt])
   @@index([travelLogisticsId])
+  @@index([spaceId])
+  @@index([tenantId, spaceId, startAt])
+  @@unique([tenantId, externalId])
+}
+
+/** Locais de treino / reunião / atendimento por clube (Campo 1, sala, etc.) */
+model FootballActivitySpace {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  slug      String?
+  address   String?  @db.Text
+  notes     String?  @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  agendaEntries FootballAgendaEntry[]
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model FootballAgendaEntryParticipant {
+  id        String              @id @default(cuid())
+  entryId   String
+  entry     FootballAgendaEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    Player              @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now())
+  @@unique([entryId, playerId])
+  @@index([playerId])
 }
 
 // Evento (copa, torneio, etc.) — promovido pelo grupo ou tenant; landing page modular
@@ -531,6 +577,18 @@ model VisitingTeam {
   updatedAt DateTime @updatedAt
 }
 
+/** Categorias de futebol (Sub-17, Principal, etc.) — cadastro central do app */
+model FixtureCategory {
+  id        String   @id @default(cuid())
+  value     String   @unique // slug interno: sub17, principal
+  labelPT   String
+  labelEN   String
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Jogadores (CRUD completo — dados base + médico, avaliações, status, desempenho)
 model Player {
   id              String   @id @default(cuid())
@@ -604,6 +662,7 @@ model Player {
   supplementGuides     SupplementGuide[]  // guias de suplementação específicos do jogador
   rhEmployee           Employee?
   registrationInvites  RegistrationInvite[]
+  agendaParticipations FootballAgendaEntryParticipant[]
   @@index([tenantId])
   @@index([tenantId, category])
 }

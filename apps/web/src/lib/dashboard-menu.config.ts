@@ -309,6 +309,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: Layers,
             moduleSlug: "tipos",
           },
+          {
+            slug: "cad_espacos",
+            label: "Espaços",
+            href: "/dashboard/cadastros/espacos",
+            icon: MapPin,
+            moduleSlug: "futebol_logistica",
+          },
         ],
       },
       {

@@ -18,7 +18,10 @@ import { AuthModule } from '../auth/auth.module';
 import { ModulesModule } from '../modules/modules.module';
 import { TechnicalStaffController } from './technical-staff.controller';
 import { TechnicalStaffService } from './technical-staff.service';
+import { FixtureCategoriesController } from './fixture-categories.controller';
+import { FixtureCategoriesService } from './fixture-categories.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
+import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
 
 @Module({
   controllers: [
@@ -30,6 +33,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
     AllLegalDocumentsController,
     ContractTemplatesController,
     TechnicalStaffController,
+    FixtureCategoriesController,
   ],
   providers: [
     ChampionshipsService,
@@ -38,9 +42,10 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
     PlayersService,
     LegalDocumentsService,
     TechnicalStaffService,
+    FixtureCategoriesService,
     ModuleAccessGuard,
   ],
-  imports: [AuthModule, ModulesModule, S3Module, HelloSignModule, ContractsModule],
-  exports: [ChampionshipsService, StadiumsService, VisitingTeamsService, PlayersService, TechnicalStaffService],
+  imports: [AuthModule, ModulesModule, S3Module, HelloSignModule, ContractsModule, FutebolAgendaModule],
+  exports: [ChampionshipsService, StadiumsService, VisitingTeamsService, PlayersService, TechnicalStaffService, FixtureCategoriesService],
 })
 export class CadastrosModule {}

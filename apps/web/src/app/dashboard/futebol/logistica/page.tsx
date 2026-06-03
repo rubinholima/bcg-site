@@ -12,7 +12,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { getCategoryLabel } from "@/lib/fixture-categories";
+import { formatTravelCategoriesDisplay } from "@/components/dashboard/futebol/TravelCategoriesField";
 import { LogisticaFilters } from "./LogisticaFilters";
 
 interface TravelLogisticsItem {
@@ -20,6 +20,7 @@ interface TravelLogisticsItem {
   tenantId: string;
   tenant?: { id: string; name: string; slug: string };
   category?: string | null;
+  categories?: string[] | null;
   matchDate: string;
   opponentName?: string | null;
   stadiumName?: string | null;
@@ -171,7 +172,7 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
                       <TableCell>{formatDate(item.matchDate)}</TableCell>
                       <TableCell>{item.tenant?.name ?? item.tenantId}</TableCell>
                       <TableCell>
-                        {item.category ? getCategoryLabel(item.category, "pt") : "—"}
+                        {formatTravelCategoriesDisplay(item.category, item.categories, "pt")}
                       </TableCell>
                       <TableCell>
                         <div>

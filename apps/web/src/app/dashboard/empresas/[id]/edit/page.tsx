@@ -19,9 +19,9 @@ import { api } from "@/lib/api";
 import { LogoUploadWithName } from "@/components/dashboard/LogoUploadWithName";
 import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { isFootballKind } from "@/lib/home-data";
 import { useAuth } from "@/context/AuthContext";
+import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 
 interface FormData {
   name: string;
@@ -45,6 +45,7 @@ interface FormData {
 export default function EditEmpresaPage() {
   const router = useRouter();
   const { isSuperAdmin, loading: authLoading } = useAuth();
+  const { categories: fixtureCategories } = useFixtureCategories();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -493,10 +494,14 @@ export default function EditEmpresaPage() {
                 <div className="space-y-2">
                   <Label>Categorias que o clube joga</Label>
                   <p className="text-xs text-muted-foreground">
-                    Marque as categorias em que o clube participa (ex.: Sub-15, Sub-17, Principal).
+                    Libere aqui as categorias deste clube (cadastro central em{" "}
+                    <Link href="/dashboard/cadastros/categorias" className="text-primary underline-offset-2 hover:underline">
+                      Cadastros → Categoria
+                    </Link>
+                    ).
                   </p>
                   <div className="flex flex-wrap gap-3 pt-1">
-                    {FIXTURE_CATEGORIES.map((cat) => (
+                    {fixtureCategories.map((cat) => (
                       <label
                         key={cat.value}
                         className="flex items-center gap-2 cursor-pointer text-sm"

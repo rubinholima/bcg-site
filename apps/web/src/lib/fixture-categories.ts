@@ -1,5 +1,17 @@
-/** Categorias de jogos (Sub-9 até Sub-20, Principal, Feminino) */
-export const FIXTURE_CATEGORIES = [
+import { api } from "@/lib/api";
+
+/** Item de categoria — cadastro central (API) ou fallback estático */
+export type FixtureCategoryItem = {
+  id?: string;
+  value: string;
+  labelPT: string;
+  labelEN: string;
+  sortOrder?: number;
+  active?: boolean;
+};
+
+/** Fallback offline / antes da migration */
+export const FIXTURE_CATEGORIES_FALLBACK: readonly FixtureCategoryItem[] = [
   { value: "principal", labelPT: "Principal", labelEN: "First Team" },
   { value: "modulo_ii", labelPT: "Módulo II", labelEN: "Module II" },
   { value: "sub20", labelPT: "Sub-20", labelEN: "U-20" },
@@ -12,9 +24,61 @@ export const FIXTURE_CATEGORIES = [
   { value: "feminino", labelPT: "Feminino", labelEN: "Women's" },
 ] as const;
 
-export type FixtureCategoryValue = (typeof FIXTURE_CATEGORIES)[number]["value"];
+/** @deprecated Use fetchFixtureCategories() ou useFixtureCategories() — mantido para compatibilidade */
+export const FIXTURE_CATEGORIES = FIXTURE_CATEGORIES_FALLBACK;
 
-export function getCategoryLabel(value: string, lang: "pt" | "en"): string {
-  const cat = FIXTURE_CATEGORIES.find((c) => c.value === value);
+export type FixtureCategoryValue = (typeof FIXTURE_CATEGORIES_FALLBACK)[number]["value"];
+
+export function mapApiFixtureCategory(row: {
+  id?: string;
+  value: string;
+  labelPT: string;
+  labelEN: string;
+  sortOrder?: number;
+  active?: boolean;
+}): FixtureCategoryItem {
+  return {
+    id: row.id,
+    value: row.value,
+    labelPT: row.labelPT,
+    labelEN: row.labelEN,
+    sortOrder: row.sortOrder,
+    active: row.active,
+  };
+}
+
+export function getCategoryLabel(
+  value: string,
+  lang: "pt" | "en",
+  list?: readonly FixtureCategoryItem[],
+): string {
+  const source = list ?? FIXTURE_CATEGORIES_FALLBACK;
+  const cat = source.find((c) => c.value === value);
   return cat ? (lang === "pt" ? cat.labelPT : cat.labelEN) : value;
+}
+
+/** Categorias ativas do cadastro central (server components). */
+export async function fetchFixtureCategories(options?: {
+  activeOnly?: boolean;
+}): Promise<FixtureCategoryItem[]> {
+  try {
+    const q = options?.activeOnly === false ? "" : "?active=1";
+    const { data } = await api.get<
+      Array<{ id: string; value: string; labelPT: string; labelEN: string; sortOrder?: number; active?: boolean }>
+    >(`/fixture-categories${q}`);
+    const list = Array.isArray(data) ? data.map(mapApiFixtureCategory) : [];
+    return list.length > 0 ? list : [...FIXTURE_CATEGORIES_FALLBACK];
+  } catch {
+    return [...FIXTURE_CATEGORIES_FALLBACK];
+  }
+}
+
+/** Filtra pelo que o clube liberou em Empresas (Tenant.categories). */
+export function filterCategoriesForTenant(
+  all: readonly FixtureCategoryItem[],
+  tenantCategories: string[] | null | undefined,
+): FixtureCategoryItem[] {
+  if (!tenantCategories?.length) return [...all];
+  const set = new Set(tenantCategories);
+  return all.filter((c) => set.has(c.value));
 }

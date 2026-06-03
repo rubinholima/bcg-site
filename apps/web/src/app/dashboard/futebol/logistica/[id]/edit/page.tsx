@@ -22,6 +22,11 @@ import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 import { isFootballKind } from "@/lib/home-data";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { RoomAssignmentTable, type RoomAssignment } from "../../components/RoomAssignmentTable";
+import {
+  TravelCategoriesField,
+  parseTravelCategoriesFromApi,
+  travelCategoriesPayload,
+} from "@/components/dashboard/futebol/TravelCategoriesField";
 
 interface Championship {
   id: string;
@@ -52,6 +57,7 @@ interface TravelLogisticsItem {
   id: string;
   tenantId: string;
   category?: string | null;
+  categories?: string[] | null;
   matchDate: string;
   opponentName?: string | null;
   stadiumName?: string | null;
@@ -125,6 +131,8 @@ export default function EditLogisticaPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [category, setCategory] = useState("");
+  const [multiCategoryMode, setMultiCategoryMode] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [matchDate, setMatchDate] = useState("");
   const [opponentName, setOpponentName] = useState("");
   const [stadiumName, setStadiumName] = useState("");
@@ -150,7 +158,10 @@ export default function EditLogisticaPage() {
     api.get<TravelLogisticsItem>(`/logistica/${id}`).then(({ data }) => {
       setItem(data ?? null);
       if (data) {
-        setCategory(data.category ?? "");
+        const parsed = parseTravelCategoriesFromApi(data.category, data.categories);
+        setMultiCategoryMode(parsed.multiMode);
+        setCategory(parsed.single);
+        setSelectedCategories(parsed.list);
         setMatchDate(toDateInput(data.matchDate));
         setOpponentName(data.opponentName ?? "");
         setStadiumName(data.stadiumName ?? "");
@@ -271,6 +282,11 @@ export default function EditLogisticaPage() {
       ? ""
       : championships.find((c) => namesMatch(c.name, championshipName))?.name ?? championshipName;
 
+  const selectedTenant = tenants.find((t) => t.id === item?.tenantId);
+  const categoriesForDropdown = selectedTenant?.categories?.length
+    ? FIXTURE_CATEGORIES.filter((c) => selectedTenant.categories!.includes(c.value))
+    : FIXTURE_CATEGORIES;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
@@ -279,7 +295,7 @@ export default function EditLogisticaPage() {
 
     try {
       await api.patch(`/logistica/${id}`, {
-        category: category.trim() || undefined,
+        ...travelCategoriesPayload(multiCategoryMode, category, selectedCategories),
         matchDate: matchDate.trim(),
         opponentName: opponentName.trim() || undefined,
         stadiumName: stadiumName.trim() || undefined,
@@ -339,21 +355,16 @@ export default function EditLogisticaPage() {
             <CardDescription>Clube: {tenants.find((t) => t.id === item.tenantId)?.name ?? item.tenantId}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <TravelCategoriesField
+              categoriesForDropdown={categoriesForDropdown}
+              multiMode={multiCategoryMode}
+              onMultiModeChange={setMultiCategoryMode}
+              singleCategory={category}
+              onSingleCategoryChange={setCategory}
+              selectedCategories={selectedCategories}
+              onSelectedCategoriesChange={setSelectedCategories}
+            />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    {FIXTURE_CATEGORIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.labelPT}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="matchDate">Data do jogo *</Label>
                 <Input
