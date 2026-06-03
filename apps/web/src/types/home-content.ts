@@ -184,8 +184,12 @@ export interface HomeBlockConfig {
   heroHeight?: "screen" | "large" | "medium" | "compact";
   /** Header: URL do logo. */
   headerLogoUrl?: string;
-  /** Header: links de navegação (label, href). */
-  headerLinks?: Array<{ label: string; href: string }>;
+  /** Header: links de navegação — link simples ou menu com subitens (dropdown). */
+  headerLinks?: Array<{
+    label?: string;
+    href?: string;
+    children?: Array<{ label?: string; href?: string }>;
+  }>;
   /** Header: cor do texto/links (hex). */
   headerTextColor?: string;
   /** Header: cor de fundo do idioma selecionado (PT/EN) — hex ou rgba. */

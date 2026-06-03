@@ -33,6 +33,7 @@ import { LogoCarouselSection } from "@/components/portfolio/modules/LogoCarousel
 import { PublicFooter } from "@/components/portfolio/PublicFooter";
 import { resolveFontFamily } from "@/lib/page-fonts";
 import { LanguageSelector } from "@/components/home/LanguageSelector";
+import { HeaderNavMenu } from "@/components/home/HeaderNavMenu";
 import type { LucideIcon } from "lucide-react";
 import {
   Award,
@@ -348,45 +349,23 @@ export default function HomeClient({
               selectedBg={headerLanguageSelectedBg}
               selectedTextColor={headerLanguageSelectedText}
             />
-            {(
-              (Array.isArray(headerBlock?.config?.headerLinks) && headerBlock.config.headerLinks.length > 0
-                ? headerBlock.config.headerLinks
-                : [
-                    { label: t.nav.clubs, href: `#${CLUBS_ID}` },
-                    { label: t.nav.companies, href: `#${COMPANIES_ID}` },
-                    { label: t.nav.contact, href: `#${CONTACT_ID}` },
-                  ]) as Array<{ label?: string; href?: string }>
-            )
-              .filter((l) => (l?.label ?? "").trim() && (l?.href ?? "").trim())
-              .map((link, i) => {
-                const href = (link.href ?? "").trim();
-                const label = (link.label ?? "").trim();
-                const isExternal = /^https?:\/\//i.test(href);
-                if (isExternal) {
-                  return (
-                    <a
-                      key={i}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"
-                      style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}
-                    >
-                      {label}
-                    </a>
-                  );
-                }
-                return (
-                  <Link
-                    key={i}
-                    href={href}
-                    className="hidden rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block"
-                    style={{ color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined }}
-                  >
-                    {label}
-                  </Link>
-                );
-              })}
+            <HeaderNavMenu
+              links={
+                Array.isArray(headerBlock?.config?.headerLinks) &&
+                headerBlock.config.headerLinks.length > 0
+                  ? headerBlock.config.headerLinks
+                  : [
+                      { label: t.nav.clubs, href: `#${CLUBS_ID}` },
+                      { label: t.nav.companies, href: `#${COMPANIES_ID}` },
+                      { label: t.nav.contact, href: `#${CONTACT_ID}` },
+                    ]
+              }
+              itemWrapperClassName="hidden sm:inline-block"
+              linkClassName="rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white"
+              style={{
+                color: (headerBlock?.config?.headerTextColor as string)?.trim() || undefined,
+              }}
+            />
             <Button
               asChild
               variant="outline"

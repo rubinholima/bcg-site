@@ -5,8 +5,12 @@ import { LayoutDashboard } from "lucide-react";
 import type { HomeContentBlock } from "@/types/home-content";
 import { Button } from "@/components/ui/button";
 import { getPublicImageUrl } from "@/lib/media-url";
-
-const isExternal = (href: string) => /^https?:\/\//i.test(href.trim());
+import {
+  filterVisibleHeaderNavLinks,
+  parseHeaderNavLinks,
+  type HeaderNavLink,
+} from "@/lib/header-nav";
+import { HeaderNavMenu } from "@/components/home/HeaderNavMenu";
 
 type HeaderPreset = "classic" | "centered" | "minimal" | "overlay" | "sticky" | "split";
 
@@ -18,7 +22,7 @@ export interface PublicPortfolioHeaderProps {
   lang?: "pt" | "en";
   /** Base path para links (ex: /portfolio ou /eventos). Default: /portfolio */
   basePath?: string;
-  /** Links extras (ex.: Imprensa em página separada) mesclados ao menu do header */
+  /** Links extras (ex.: Imprensa) mesclados ao menu do header */
   extraNavLinks?: Array<{ label: string; href: string }>;
 }
 
@@ -38,13 +42,21 @@ function getHeaderConfig(
   const showHomeLink = config.showHomeLink !== false;
   const logoSize = (config.logoSize as "sm" | "md" | "lg") || "md";
   const linkStyle = (config.linkStyle as "text" | "pill" | "button") || "text";
-  const headerLinks = (Array.isArray(config.headerLinks) ? config.headerLinks : []) as Array<{ label?: string; href?: string }>;
-  const filteredLinks = headerLinks.filter((l) => (l?.label ?? "").trim() && (l?.href ?? "").trim());
+  const headerLinks = parseHeaderNavLinks(config.headerLinks);
+  const filteredLinks: HeaderNavLink[] = filterVisibleHeaderNavLinks(headerLinks);
   for (const extra of extraNavLinks ?? []) {
     const href = (extra.href ?? "").trim();
     const label = (extra.label ?? "").trim();
     if (!href || !label) continue;
-    if (filteredLinks.some((l) => (l.href ?? "").trim() === href)) continue;
+    if (
+      filteredLinks.some(
+        (l) =>
+          (l.href ?? "").trim() === href ||
+          (l.children ?? []).some((c) => (c.href ?? "").trim() === href),
+      )
+    ) {
+      continue;
+    }
     filteredLinks.push({ label, href });
   }
 
@@ -170,24 +182,9 @@ export function PublicPortfolioHeader({
   const navLinkClass =
     "rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-white/5 hover:text-white sm:inline-block";
 
-  const renderLink = (link: { label?: string; href?: string }, i: number) => {
-    const href = (link.href ?? "").trim();
-    const label = (link.label ?? "").trim();
-    if (isExternal(href)) {
-      return (
-        <a key={i} href={href} target="_blank" rel="noopener noreferrer" className={navLinkClass} style={style}>
-          {label}
-        </a>
-      );
-    }
-    return (
-      <Link key={i} href={href} className={navLinkClass} style={style}>
-        {label}
-      </Link>
-    );
-  };
-
-  const navLinks = <>{c.filteredLinks.map((link, i) => renderLink(link, i))}</>;
+  const navLinks = (
+    <HeaderNavMenu links={c.filteredLinks} linkClassName={navLinkClass} style={style} />
+  );
 
   const pageUrl = `${basePath}/${slug}`;
   const actionsCompact = (

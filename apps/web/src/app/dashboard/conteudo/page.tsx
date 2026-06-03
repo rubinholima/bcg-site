@@ -34,6 +34,7 @@ import type {
 import type { BlockConfigValue } from "@/types/block-config";
 import { HERO_RECOMMENDED_DIMENSIONS } from "@/types/home-content";
 import { copy } from "@/lib/home-copy";
+import { HeaderLinksEditor } from "@/components/dashboard/page-builder/HeaderLinksEditor";
 import {
   DEFAULT_BLOCK_IDS,
   getOrderedBlocks,
@@ -532,60 +533,12 @@ export default function ConteudoPage() {
                             O logo exibido é sempre o do grupo. Configure apenas os links.
                           </p>
                         </div>
-                        <div className="space-y-2 sm:col-span-2">
-                          <Label>Links do cabeçalho (label, href)</Label>
-                          {(Array.isArray(block.config?.headerLinks)
-                            ? block.config.headerLinks
-                            : []
-                          ).map((link: { label?: string; href?: string }, i: number) => (
-                            <div key={i} className="flex flex-wrap gap-2">
-                              <Input
-                                placeholder="Texto do link"
-                                className="flex-1 min-w-[120px]"
-                                value={link?.label ?? ""}
-                                onChange={(e) => {
-                                  const arr = [...(block.config?.headerLinks ?? [])];
-                                  arr[i] = { ...arr[i], label: e.target.value };
-                                  updateBlockConfigValue(index, "headerLinks", arr);
-                                }}
-                              />
-                              <Input
-                                placeholder="#seção ou /url"
-                                className="flex-1 min-w-[120px]"
-                                value={link?.href ?? ""}
-                                onChange={(e) => {
-                                  const arr = [...(block.config?.headerLinks ?? [])];
-                                  arr[i] = { ...arr[i], href: e.target.value };
-                                  updateBlockConfigValue(index, "headerLinks", arr);
-                                }}
-                              />
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="shrink-0 text-destructive"
-                                onClick={() => {
-                                  const arr = (block.config?.headerLinks ?? []).filter((_, j) => j !== i);
-                                  updateBlockConfigValue(index, "headerLinks", arr);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const arr = [...(block.config?.headerLinks ?? []), { label: "", href: "" }];
-                                updateBlockConfigValue(index, "headerLinks", arr);
-                              }}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Adicionar link
-                            </Button>
+                        <div className="sm:col-span-2">
+                          <HeaderLinksEditor
+                            links={block.config?.headerLinks}
+                            onChange={(arr) => updateBlockConfigValue(index, "headerLinks", arr)}
+                          />
+                          <div className="mt-2 flex flex-wrap gap-2">
                             <Button
                               type="button"
                               variant="outline"

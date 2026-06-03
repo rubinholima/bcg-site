@@ -65,7 +65,7 @@ import {
 import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, EmailServersModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, HeaderLinksEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -1019,15 +1019,6 @@ export default function EditarGroupHomePage() {
                         updateBlockConfigValue={updateBlockConfigValue}
                       />
                     )}
-                    {block.type === "email_servers" && (
-                      <EmailServersModuleEditor
-                        block={block}
-                        index={index}
-                        updateBlockConfig={updateBlockConfig}
-                        updateBlockConfigValue={updateBlockConfigValue}
-                        isGroupHome
-                      />
-                    )}
                     {block.type === "imprensa" && (
                       <ImprensaModuleEditor
                         block={block}
@@ -1385,117 +1376,21 @@ export default function EditarGroupHomePage() {
                               </details>
                               <details className="rounded-lg border border-border bg-muted/20">
                                 <summary className="cursor-pointer px-3 py-2 font-medium">Links</summary>
-                                <div className="border-t border-border px-3 py-3 space-y-2">
-                                  <Label>Links do cabeçalho (label, href)</Label>
-                                  {(Array.isArray(block.config?.headerLinks)
-                                    ? block.config.headerLinks
-                                    : []
-                                  ).map((link: { label?: string; href?: string }, i: number) => (
-                                    <div key={i} className="flex flex-wrap gap-2">
-                                      <Input
-                                        placeholder="Texto do link"
-                                        className="flex-1 min-w-[120px]"
-                                        value={link?.label ?? ""}
-                                        onChange={(e) => {
-                                          const arr = [...(block.config?.headerLinks ?? [])];
-                                          arr[i] = { ...arr[i], label: e.target.value };
-                                          updateBlockConfigValue(index, "headerLinks", arr);
-                                        }}
-                                      />
-                                      <Input
-                                        placeholder="#seção ou /url ou https://"
-                                        className="flex-1 min-w-[120px]"
-                                        value={link?.href ?? ""}
-                                        onChange={(e) => {
-                                          const arr = [...(block.config?.headerLinks ?? [])];
-                                          arr[i] = { ...arr[i], href: e.target.value };
-                                          updateBlockConfigValue(index, "headerLinks", arr);
-                                        }}
-                                      />
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        className="shrink-0 text-destructive"
-                                        onClick={() => {
-                                          const arr = (block.config?.headerLinks ?? []).filter((_: unknown, j: number) => j !== i);
-                                          updateBlockConfigValue(index, "headerLinks", arr);
-                                        }}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      const arr = [...(block.config?.headerLinks ?? []), { label: "", href: "" }];
-                                      updateBlockConfigValue(index, "headerLinks", arr);
-                                    }}
-                                  >
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Adicionar link
-                                  </Button>
+                                <div className="border-t border-border px-3 py-3">
+                                  <HeaderLinksEditor
+                                    links={block.config?.headerLinks}
+                                    onChange={(arr) => updateBlockConfigValue(index, "headerLinks", arr)}
+                                  />
                                 </div>
                               </details>
                             </div>
                           )}
                           {!headerAdvanced && (
-                            <div className="space-y-2 sm:col-span-2">
-                              <Label>Links do cabeçalho (label, href)</Label>
-                              {(Array.isArray(block.config?.headerLinks)
-                                ? block.config.headerLinks
-                                : []
-                              ).map((link: { label?: string; href?: string }, i: number) => (
-                                <div key={i} className="flex flex-wrap gap-2">
-                                  <Input
-                                    placeholder="Texto do link"
-                                    className="flex-1 min-w-[120px]"
-                                    value={link?.label ?? ""}
-                                    onChange={(e) => {
-                                      const arr = [...(block.config?.headerLinks ?? [])];
-                                      arr[i] = { ...arr[i], label: e.target.value };
-                                      updateBlockConfigValue(index, "headerLinks", arr);
-                                    }}
-                                  />
-                                  <Input
-                                    placeholder="#seção ou /url"
-                                    className="flex-1 min-w-[120px]"
-                                    value={link?.href ?? ""}
-                                    onChange={(e) => {
-                                      const arr = [...(block.config?.headerLinks ?? [])];
-                                      arr[i] = { ...arr[i], href: e.target.value };
-                                      updateBlockConfigValue(index, "headerLinks", arr);
-                                    }}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="shrink-0 text-destructive"
-                                    onClick={() => {
-                                      const arr = (block.config?.headerLinks ?? []).filter((_: unknown, j: number) => j !== i);
-                                      updateBlockConfigValue(index, "headerLinks", arr);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              ))}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const arr = [...(block.config?.headerLinks ?? []), { label: "", href: "" }];
-                                  updateBlockConfigValue(index, "headerLinks", arr);
-                                }}
-                              >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Adicionar link
-                              </Button>
+                            <div className="sm:col-span-2">
+                              <HeaderLinksEditor
+                                links={block.config?.headerLinks}
+                                onChange={(arr) => updateBlockConfigValue(index, "headerLinks", arr)}
+                              />
                             </div>
                           )}
                         </>
