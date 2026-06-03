@@ -241,7 +241,6 @@ export function EmploymentFormDialog({
             <ExpandableSection
               title="Empresa e colaborador"
               description="Clube/empresa e pessoa vinculada"
-              defaultOpen
             >
               <FormGrid cols={2}>
                 <div className="grid min-w-0 gap-2 sm:col-span-2">
@@ -292,7 +291,6 @@ export function EmploymentFormDialog({
             <ExpandableSection
               title="Cargo e departamento"
               description="Herdado do cadastro do colaborador"
-              defaultOpen
             >
               {!employeeId && !edit ? (
                 <p className="text-sm text-muted-foreground">
@@ -329,7 +327,6 @@ export function EmploymentFormDialog({
             <ExpandableSection
               title="Contrato"
               description="Dados do vínculo, salário e geração do PDF para assinatura"
-              defaultOpen
             >
               <FormGrid cols={2}>
                 <div className="grid min-w-0 gap-2">

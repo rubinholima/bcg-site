@@ -8,11 +8,10 @@ import type { JogadorListItem } from "./JogadoresGroupedList";
 
 interface JogadoresLoanedSectionProps {
   players: JogadorListItem[];
-  defaultOpen?: boolean;
 }
 
-export function JogadoresLoanedSection({ players, defaultOpen = false }: JogadoresLoanedSectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
+export function JogadoresLoanedSection({ players }: JogadoresLoanedSectionProps) {
+  const [open, setOpen] = useState(false);
   const total = players.length;
 
   return (

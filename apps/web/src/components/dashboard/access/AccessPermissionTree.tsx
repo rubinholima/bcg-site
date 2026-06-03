@@ -225,7 +225,7 @@ function AccessTreeNode({
   readOnly?: boolean;
   searchActive: boolean;
 }) {
-  const [expanded, setExpanded] = useState(depth < 2);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (searchActive) setExpanded(true);

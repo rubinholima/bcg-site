@@ -127,7 +127,7 @@ export function HeroModuleEditor({
         </div>
       </div>
 
-      <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
+      <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
         <summary className="cursor-pointer px-3 py-2.5 font-medium">Fotos do banner (carrossel)</summary>
         <div className="space-y-4 border-t border-border px-3 py-3">
           <p className="text-sm text-muted-foreground">

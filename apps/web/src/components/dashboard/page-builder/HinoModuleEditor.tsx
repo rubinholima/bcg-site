@@ -38,7 +38,7 @@ export function HinoModuleEditor({
   const defaultTab = (block.config?.hinoDefaultTab as string) ?? "letra";
 
   return (
-    <details open className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent sm:col-span-2">
+    <details className="rounded-lg border border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-transparent sm:col-span-2">
       <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 font-medium">
         <Mic2 className="h-4 w-4 text-amber-400" />
         Hino do clube — letra, cifra, partitura e áudio

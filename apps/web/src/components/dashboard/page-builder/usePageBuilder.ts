@@ -12,7 +12,7 @@ export function usePageBuilder(initialBlocks: HomeContentBlock[] = [], initialTh
   const [theme, setTheme] = useState<PageTheme>(initialTheme);
   const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(new Set());
   const [overlayOpacityDraft, setOverlayOpacityDraft] = useState<string | null>(null);
-  const [globalAppearanceOpen, setGlobalAppearanceOpen] = useState(true);
+  const [globalAppearanceOpen, setGlobalAppearanceOpen] = useState(false);
 
   const resetFromServer = useCallback((nextBlocks: HomeContentBlock[], nextTheme?: PageTheme) => {
     setBlocks(normalizeBlocks(nextBlocks));

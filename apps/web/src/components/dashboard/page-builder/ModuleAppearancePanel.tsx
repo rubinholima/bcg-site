@@ -53,7 +53,7 @@ export function ModuleAppearancePanel({
     theme.titleAlign === "center" ? "centro" : theme.titleAlign === "right" ? "direita" : "esquerda";
 
   return (
-    <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2" open>
+    <details className="rounded-lg border border-border bg-muted/20 sm:col-span-2">
       <summary className="cursor-pointer px-3 py-2.5 text-sm font-medium">
         Aparência do módulo
       </summary>

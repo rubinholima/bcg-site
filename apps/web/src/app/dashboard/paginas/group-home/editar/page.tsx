@@ -245,7 +245,7 @@ export default function EditarGroupHomePage() {
               blocks: normalized,
             },
           });
-          setCollapsedBlockIds(new Set(normalized.filter((b) => b.type !== "hero").map((b) => b.id)));
+          setCollapsedBlockIds(new Set(normalized.map((b) => b.id)));
         } else if (!cancelled) {
           setPage(data);
         }
@@ -328,8 +328,7 @@ export default function EditarGroupHomePage() {
     setBlocks([...beforeFooter, newBlock, blocks[blocks.length - 1]!]);
     setCollapsedBlockIds((prev) => {
       const next = new Set(prev);
-      if (type === "hero") next.delete(newBlock.id);
-      else next.add(newBlock.id);
+      next.add(newBlock.id);
       return next;
     });
   };
@@ -1718,7 +1717,7 @@ export default function EditarGroupHomePage() {
                       return (
                       <div className="space-y-3 sm:col-span-2">
                         <p className="text-xs text-muted-foreground">Os dados do fundador, da biografia e do hero estão no banco; chaves antigas (imageUrl, bodyPt, quotePt) são lidas automaticamente.</p>
-                        <details className="rounded-lg border border-border bg-muted/20" open>
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium flex items-center gap-2">
                             <User className="h-4 w-4" /> Perfil do Fundador
                           </summary>
@@ -1774,7 +1773,7 @@ export default function EditarGroupHomePage() {
                             </div>
                           </div>
                         </details>
-                        <details className="rounded-lg border border-border bg-muted/20" open>
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Biografia</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <div className="space-y-2">
@@ -1799,7 +1798,7 @@ export default function EditarGroupHomePage() {
                             </div>
                           </div>
                         </details>
-                        <details className="rounded-lg border border-border bg-muted/20" open>
+                        <details className="rounded-lg border border-border bg-muted/20">
                           <summary className="cursor-pointer px-3 py-2 font-medium">Destaque (citação)</summary>
                           <div className="border-t border-border px-3 py-3 space-y-3">
                             <div className="space-y-2">

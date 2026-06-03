@@ -171,7 +171,6 @@ export function ImprensaPressReleasesEditor({ tenantId }: { tenantId: string }) 
           title="Apresentação"
           description="Texto de boas-vindas no topo da página — PT e EN lado a lado."
           icon={Megaphone}
-          defaultOpen
           borderClassName="border-amber-500/15"
         >
           <div className="grid gap-5 xl:grid-cols-2">
@@ -198,7 +197,6 @@ export function ImprensaPressReleasesEditor({ tenantId }: { tenantId: string }) 
           title="Press release — história do clube"
           description="Bloco expansível na página pública, logo após a apresentação."
           icon={History}
-          defaultOpen
           borderClassName="border-violet-500/15"
         >
           <div className="grid gap-5 xl:grid-cols-2">
@@ -246,7 +244,6 @@ export function ImprensaPressReleasesEditor({ tenantId }: { tenantId: string }) 
           description="Jogos e eventos — o mais recente fica em destaque; os demais no histórico expansível."
           icon={Sparkles}
           badge={`${sorted.length}`}
-          defaultOpen
           borderClassName="border-emerald-500/15"
         >
           <p className="rounded-lg bg-muted/50 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
@@ -267,7 +264,6 @@ export function ImprensaPressReleasesEditor({ tenantId }: { tenantId: string }) 
                 return (
                   <details
                     key={rel.id}
-                    open={isLatest || undefined}
                     className="group/rel overflow-hidden rounded-xl border border-border/80 bg-muted/20"
                   >
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">

@@ -393,7 +393,6 @@ export function EmployeeFormDialog({
             <ExpandableSection
               title="Empresa e tipo"
               description="Clube/empresa, tipo e matrícula"
-              defaultOpen
             >
               <FormGrid cols={2}>
                 <div className="grid min-w-0 gap-2 sm:col-span-2">
@@ -452,7 +451,6 @@ export function EmployeeFormDialog({
             <ExpandableSection
               title="Contato e convite"
               description="Nome, e-mail ou telefone — envie o link de cadastro"
-              defaultOpen
             >
               <div className="space-y-4">
                 <FormGrid cols={2}>
@@ -526,7 +524,6 @@ export function EmployeeFormDialog({
             <ExpandableSection
               title="Dados pessoais"
               description="Endereço, departamento e foto"
-              defaultOpen={!!edit}
             >
               {loadingDetails ? (
                 <p className="mb-4 text-sm text-muted-foreground">Carregando dados…</p>

@@ -74,7 +74,7 @@ export default async function JogadoresEmprestadosPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <JogadoresLoanedSection players={players} defaultOpen />
+          <JogadoresLoanedSection players={players} />
         </CardContent>
       </Card>
     </div>

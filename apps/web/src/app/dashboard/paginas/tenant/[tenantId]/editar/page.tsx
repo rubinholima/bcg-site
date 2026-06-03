@@ -368,7 +368,7 @@ export default function EditarPaginaTenantPage() {
               blocks: normalized,
             },
           });
-          setCollapsedBlockIds(new Set(normalized.filter((b) => b.type !== "hero").map((b) => b.id)));
+          setCollapsedBlockIds(new Set(normalized.map((b) => b.id)));
           if (data.tenant?.slug === BCH_SLUG) {
             setModuleTypeFilter(MODULE_TYPE_FILTER_EVENTOS);
           }
@@ -474,8 +474,7 @@ export default function EditarPaginaTenantPage() {
     setBlocks([...beforeFooter, newBlock, blocks[blocks.length - 1]!]);
     setCollapsedBlockIds((prev) => {
       const next = new Set(prev);
-      if (type === "hero") next.delete(newBlock.id);
-      else next.add(newBlock.id);
+      next.add(newBlock.id);
       return next;
     });
   };

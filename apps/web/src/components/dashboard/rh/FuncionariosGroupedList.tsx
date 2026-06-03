@@ -171,19 +171,17 @@ function EmployeeTable({
 function TypeBlock({
   typeKey,
   employees,
-  defaultOpen,
   onEdit,
   onDelete,
   onLinkPlayer,
 }: {
   typeKey: string;
   employees: EmployeeRow[];
-  defaultOpen?: boolean;
   onEdit: (employee: EmployeeRow) => void;
   onDelete: (id: string) => void;
   onLinkPlayer: (employee: EmployeeRow) => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
+  const [open, setOpen] = useState(false);
   const label = getEmployeeTypeLabel(typeKey);
 
   return (
@@ -218,7 +216,6 @@ function TeamBlock({
   teamName,
   teamLogoUrl,
   types,
-  defaultOpen,
   onEdit,
   onDelete,
   onLinkPlayer,
@@ -226,12 +223,11 @@ function TeamBlock({
   teamName: string;
   teamLogoUrl?: string | null;
   types: Array<{ key: string; employees: EmployeeRow[] }>;
-  defaultOpen?: boolean;
   onEdit: (employee: EmployeeRow) => void;
   onDelete: (id: string) => void;
   onLinkPlayer: (employee: EmployeeRow) => void;
 }) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
+  const [open, setOpen] = useState(false);
   const total = types.reduce((acc, t) => acc + t.employees.length, 0);
 
   return (
@@ -265,12 +261,11 @@ function TeamBlock({
       </button>
       {open ? (
         <div className="space-y-3 border-t border-border/60 px-3 py-4 sm:px-4">
-          {types.map((typeGroup, index) => (
+          {types.map((typeGroup) => (
             <TypeBlock
               key={typeGroup.key}
               typeKey={typeGroup.key}
               employees={typeGroup.employees}
-              defaultOpen={index === 0}
               onEdit={onEdit}
               onDelete={onDelete}
               onLinkPlayer={onLinkPlayer}
@@ -340,13 +335,12 @@ export function FuncionariosGroupedList({
 
   return (
     <div className="space-y-4">
-      {teams.map((team, index) => (
+      {teams.map((team) => (
         <TeamBlock
           key={team.teamName}
           teamName={team.teamName}
           teamLogoUrl={team.teamLogoUrl}
           types={team.types}
-          defaultOpen={teams.length === 1 || index === 0}
           onEdit={onEdit}
           onDelete={onDelete}
           onLinkPlayer={onLinkPlayer}

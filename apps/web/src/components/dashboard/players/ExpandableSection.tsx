@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 interface ExpandableSectionProps {
   title: string;
   description?: string;
-  defaultOpen?: boolean;
   badge?: string | number;
   children: ReactNode;
   className?: string;
@@ -16,12 +15,11 @@ interface ExpandableSectionProps {
 export function ExpandableSection({
   title,
   description,
-  defaultOpen = false,
   badge,
   children,
   className,
 }: ExpandableSectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(false);
 
   return (
     <div className={cn("overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm", className)}>

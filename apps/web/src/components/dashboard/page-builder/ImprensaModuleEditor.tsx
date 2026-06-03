@@ -201,7 +201,7 @@ export function ImprensaModuleEditor({
   };
 
   return (
-    <details open className="rounded-lg border border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-transparent sm:col-span-2">
+    <details className="rounded-lg border border-violet-500/30 bg-gradient-to-br from-violet-500/5 to-transparent sm:col-span-2">
       <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 font-medium">
         <Newspaper className="h-4 w-4 text-violet-400" />
         Imprensa / kit de marca

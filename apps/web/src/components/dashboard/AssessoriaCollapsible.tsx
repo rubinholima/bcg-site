@@ -10,7 +10,6 @@ export function AssessoriaCollapsible({
   icon: Icon,
   badge,
   borderClassName,
-  defaultOpen = false,
   contentClassName,
   children,
 }: {
@@ -19,13 +18,11 @@ export function AssessoriaCollapsible({
   icon?: LucideIcon;
   badge?: string;
   borderClassName?: string;
-  defaultOpen?: boolean;
   contentClassName?: string;
   children: React.ReactNode;
 }) {
   return (
     <details
-      open={defaultOpen || undefined}
       className={cn(
         "group rounded-xl border bg-card shadow-sm",
         borderClassName ?? "border-border",

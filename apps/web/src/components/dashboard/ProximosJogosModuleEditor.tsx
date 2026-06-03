@@ -675,7 +675,6 @@ export function ProximosJogosModuleEditor({
                     };
                 const list = [...manualList, row];
                 updateBlockConfigValue("proximosJogosManualFixtures", list);
-                setOpenFixtureIndex(list.length - 1);
               }}
             >
               <Plus className="h-4 w-4 mr-1" /> Adicionar jogo

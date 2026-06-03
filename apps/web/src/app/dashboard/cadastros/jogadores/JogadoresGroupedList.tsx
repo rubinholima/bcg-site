@@ -94,13 +94,11 @@ function PlayerTable({ rows }: { rows: JogadorListItem[] }) {
 function CategoryBlock({
   categoryKey,
   players,
-  defaultOpen,
 }: {
   categoryKey: string;
   players: JogadorListItem[];
-  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
+  const [open, setOpen] = useState(false);
   const label = categoryKey === "__sem_categoria__" ? "Sem categoria" : getCategoryLabel(categoryKey, "pt");
 
   return (
@@ -129,14 +127,12 @@ function TeamBlock({
   teamName,
   teamLogoUrl,
   categories,
-  defaultOpen,
 }: {
   teamName: string;
   teamLogoUrl?: string | null;
   categories: Array<{ key: string; players: JogadorListItem[] }>;
-  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
+  const [open, setOpen] = useState(false);
   const total = categories.reduce((acc, c) => acc + c.players.length, 0);
 
   return (
@@ -170,8 +166,8 @@ function TeamBlock({
       </button>
       {open ? (
         <div className="space-y-3 border-t border-border/60 px-3 py-4 sm:px-4">
-          {categories.map((cat, index) => (
-            <CategoryBlock key={cat.key} categoryKey={cat.key} players={cat.players} defaultOpen={index === 0} />
+          {categories.map((cat) => (
+            <CategoryBlock key={cat.key} categoryKey={cat.key} players={cat.players} />
           ))}
         </div>
       ) : null}
@@ -229,13 +225,12 @@ export function JogadoresGroupedList({ players, groupByTeam }: JogadoresGroupedL
   if (groupByTeam && grouped.teams) {
     return (
       <div className="space-y-4">
-        {grouped.teams.map((team, index) => (
+        {grouped.teams.map((team) => (
           <TeamBlock
             key={team.teamName}
             teamName={team.teamName}
             teamLogoUrl={team.teamLogoUrl}
             categories={team.categories}
-            defaultOpen={index === 0}
           />
         ))}
       </div>
@@ -244,8 +239,8 @@ export function JogadoresGroupedList({ players, groupByTeam }: JogadoresGroupedL
 
   return (
     <div className="space-y-3">
-      {grouped.categories?.map((cat, index) => (
-        <CategoryBlock key={cat.key} categoryKey={cat.key} players={cat.players} defaultOpen={index === 0} />
+      {grouped.categories?.map((cat) => (
+        <CategoryBlock key={cat.key} categoryKey={cat.key} players={cat.players} />
       ))}
     </div>
   );

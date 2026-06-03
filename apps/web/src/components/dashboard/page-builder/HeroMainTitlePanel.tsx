@@ -13,7 +13,7 @@ interface HeroMainTitlePanelProps {
 /** Título grande do banner Hero (`config.titlePt` / `titleEn`) — distinto do título por slide. */
 export function HeroMainTitlePanel({ block, index, updateBlockConfig }: HeroMainTitlePanelProps) {
   return (
-    <details className="rounded-lg border border-violet-500/30 bg-violet-500/5 sm:col-span-2" open>
+    <details className="rounded-lg border border-violet-500/30 bg-violet-500/5 sm:col-span-2">
       <summary className="cursor-pointer px-3 py-2.5 font-medium text-violet-200">
         Título principal do Hero
       </summary>

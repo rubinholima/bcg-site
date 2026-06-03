@@ -103,7 +103,7 @@ export function TenantPressCard({
         </div>
       ) : null}
 
-      <AssessoriaCollapsible title="Upload pelo dashboard" description="Envie fotos oficiais com rótulo do jogo" defaultOpen>
+      <AssessoriaCollapsible title="Upload pelo dashboard" description="Envie fotos oficiais com rótulo do jogo">
         <Input
           placeholder="Jogo / partida (opcional) — ex.: Villa Nova x América — 15/03/2025"
           value={matchLabel}
