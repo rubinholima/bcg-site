@@ -136,6 +136,7 @@ const BLOCK_LABELS: Record<string, { pt: string; en: string }> = {
   contato: { pt: "Contato", en: "Contact" },
   global_presence: { pt: "Presença Global / Expansão", en: "Global Presence" },
   logo_carousel: { pt: "Carrossel — Logos (Clubes & Empresas)", en: "Logo Carousel (Clubs & Companies)" },
+  email_servers: { pt: "Servidores de e-mail", en: "Email servers" },
   // Imobiliária
   imoveis_destaque: { pt: "Imóveis em destaque", en: "Featured properties" },
   formulario_captura: { pt: "Formulário de captura (leads)", en: "Lead capture form" },
@@ -262,6 +263,7 @@ export const MODULE_OPTIONS: { type: HomeBlockType; label: string; category: Mod
   { type: "imprensa", label: "Imprensa / kit de marca", category: "empresas" },
   { type: "global_presence", label: "Presença Global / Expansão", category: "empresas" },
   { type: "logo_carousel", label: "Carrossel — Logos (Clubes & Empresas)", category: "empresas" },
+  { type: "email_servers", label: "Servidores de e-mail (hub grupo)", category: "geral" },
   // Eventos (páginas de venue, torneios, Boston City Hall, etc.)
   { type: "eventos", label: "Nossos Eventos", category: "eventos" },
   { type: "galeria_eventos", label: "Galeria de fotos do evento", category: "eventos" },
@@ -337,6 +339,7 @@ export const BLOCK_CONFIG_RESERVED_KEYS = new Set([
   "hinoLetraPt", "hinoLetraEn", "hinoCompositorPt", "hinoCompositorEn", "hinoCifraPt", "hinoCifraEn", "hinoPartituraUrl", "hinoChordsEmbedUrl", "hinoEmbedDarkFilter", "hinoAudioUrl", "hinoDefaultTab", "hinoAccentColor", "hinoPlayerLabelPt", "hinoPlayerLabelEn", "hinoPaddingTop", "hinoPaddingBottom",
   "imprensaReleasePt", "imprensaReleaseEn", "imprensaUltimoJogoTituloPt", "imprensaUltimoJogoTituloEn", "imprensaUltimoJogoReleasePt", "imprensaUltimoJogoReleaseEn", "imprensaUltimoJogoData", "imprensaPressReleases", "imprensaHistoriaTituloPt", "imprensaHistoriaTituloEn", "imprensaHistoriaPt", "imprensaHistoriaEn", "imprensaContatoTextoPt", "imprensaContatoTextoEn", "imprensaCredencialNotifyEmail", "imprensaContatoEmail", "imprensaContatoTelefone", "imprensaContatoWhatsapp", "imprensaLogoUrl", "imprensaManualMarcaUrl", "imprensaHinoAudioUrl", "imprensaCondutaSections", "imprensaAccentColor", "imprensaPaddingTop", "imprensaPaddingBottom", "imprensaDisplayMode", "imprensaShowInMenu", "imprensaMenuLabelPt", "imprensaMenuLabelEn", "imprensaRequireAccessCode",
   "patrocinadoresTitleLogo", "patrocinadoresManualItems", "patrocinadoresPaddingTop", "patrocinadoresPaddingBottom",
+  "emailServersItems", "emailServersPaddingTop", "emailServersPaddingBottom",
   "timesCategoriasCategories", "timesCategoriasSpreadsheetUrl", "timesCategoriasSheetGid", "timesCategoriasPaddingTop", "timesCategoriasPaddingBottom",
   "tabelaDataSource", "tabelaManualRows", "tabelaSpreadsheetUrl", "tabelaSheetGid", "tabelaPaddingTop", "tabelaPaddingBottom",
   "logoCarouselSectionPadding", "logoCarouselCardStyle", "logoCarouselCardHeight", "logoCarouselCardRadius", "logoCarouselCardBackground", "logoCarouselShowShadow", "logoCarouselGapBetweenCards", "logoCarouselAnimationSpeed", "logoCarouselPauseOnHover", "logoCarouselDirection", "logoCarouselOpenInNewTab",
@@ -365,6 +368,7 @@ export const BLOCK_TYPES_WITH_BODY: HomeBlockType[] = [
   "calendario",
   "tabela",
   "patrocinadores",
+  "email_servers",
   "galeria",
   "sobre",
   "servicos",
@@ -565,6 +569,16 @@ export function createBlock(type: HomeBlockType, sortOrder: number): HomeContent
     config.patrocinadoresManualItems = [];
     config.patrocinadoresPaddingTop = "compact";
     config.patrocinadoresPaddingBottom = "compact";
+  }
+  if (type === "email_servers") {
+    config.titlePt = "Servidores de e-mail";
+    config.titleEn = "Email servers";
+    config.bodyPt = "Escolha a organização para acessar o webmail.";
+    config.bodyEn = "Choose an organization to open webmail.";
+    config.backgroundColor = "#0f0f12";
+    config.emailServersItems = [];
+    config.emailServersPaddingTop = "compact";
+    config.emailServersPaddingBottom = "compact";
   }
   if (type === "times_categorias") {
     config.timesCategoriasCategories = [];

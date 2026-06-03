@@ -4,6 +4,7 @@ export { usePageBuilder, type PageBuilderState } from "./usePageBuilder";
 export { HeroMainTitlePanel } from "./HeroMainTitlePanel";
 export { HeroModuleEditor } from "./HeroModuleEditor";
 export { HinoModuleEditor } from "./HinoModuleEditor";
+export { EmailServersModuleEditor } from "./EmailServersModuleEditor";
 export { ImprensaModuleEditor, ImprensaDisplayModeFields } from "./ImprensaModuleEditor";
 export { ModuleTitleGradientFields, moduleTitleGradientStyle, moduleHasOwnTitle } from "./ModuleTitleGradientFields";
 export { FontFamilyField } from "./FontFamilyField";

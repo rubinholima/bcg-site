@@ -89,6 +89,8 @@ export type HomeBlockType =
   | "contato"
   | "global_presence"
   | "logo_carousel"
+  /** Hub de servidores de e-mail (group home → /email-server) */
+  | "email_servers"
   // Imobiliária
   | "imoveis_destaque"
   | "formulario_captura"
@@ -361,6 +363,11 @@ export interface HomeBlockConfig {
   galeriaPaddingTop?: "minimal" | "compact" | "normal" | "large";
   /** Galeria: padding base */
   galeriaPaddingBottom?: "minimal" | "compact" | "normal" | "large";
+  /** Email servers: lista de servidores (hub /email-server no group home) */
+  emailServersItems?: EmailServerItem[];
+  emailServersPaddingTop?: "minimal" | "compact" | "normal" | "large";
+  emailServersPaddingBottom?: "minimal" | "compact" | "normal" | "large";
+
   /** Patrocinadores: lista manual (logo, nome, link) */
   patrocinadoresManualItems?: PatrocinadorItem[];
   /** Patrocinadores: logo do título (substitui o texto do título se preenchido) */
@@ -466,6 +473,16 @@ export interface PatrocinadorItem {
   name?: string;
   logoUrl: string;
   link?: string;
+}
+
+/** Servidor de e-mail no hub do grupo (nome + URL de login WorkMail, etc.) */
+export interface EmailServerItem {
+  id?: string;
+  namePt?: string;
+  nameEn?: string;
+  /** URL completa do webmail / login */
+  url: string;
+  logoUrl?: string;
 }
 
 /** Histórico de temporada do jogador */

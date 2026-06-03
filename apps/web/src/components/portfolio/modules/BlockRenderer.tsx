@@ -35,6 +35,7 @@ import { NoticiasSection } from "@/components/portfolio/modules/NoticiasSection"
 import { GaleriaSection } from "@/components/portfolio/modules/GaleriaSection";
 import { GaleriaEventosSection } from "@/components/portfolio/modules/GaleriaEventosSection";
 import { PatrocinadoresSection } from "@/components/portfolio/modules/PatrocinadoresSection";
+import { EmailServersSection } from "@/components/portfolio/modules/EmailServersSection";
 import { HinoClubeSection } from "@/components/portfolio/modules/HinoClubeSection";
 import { ImprensaClubeSection } from "@/components/portfolio/modules/ImprensaClubeSection";
 import { TimesCategoriasSection } from "@/components/portfolio/modules/TimesCategoriasSection";
@@ -394,6 +395,20 @@ export function BlockRenderer({
 
   if (String(block.type).toLowerCase() === "patrocinadores") {
     return <PatrocinadoresSection key={block.id} block={block} lang={lang} fullWidth={fullWidth} titleAlign={titleAlign} inSection={inSection} showTitle={shouldShowTitle} />;
+  }
+
+  if (block.type === "email_servers") {
+    return (
+      <EmailServersSection
+        key={block.id}
+        block={block}
+        lang={lang}
+        fullWidth={fullWidth}
+        titleAlign={titleAlign}
+        inSection={inSection}
+        showTitle={shouldShowTitle}
+      />
+    );
   }
 
   if (block.type === "hino") {

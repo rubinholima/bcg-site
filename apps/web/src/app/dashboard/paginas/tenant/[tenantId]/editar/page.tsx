@@ -72,7 +72,7 @@ import {
 import { BCH_SLUG, bchLogoSrc } from "@/lib/boston-city-hall";
 import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, EmailServersModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, ModuleTitleGradientFields, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { ProximosJogosModuleEditor } from "@/components/dashboard/ProximosJogosModuleEditor";
 import { UltimosResultadosModuleEditor } from "@/components/dashboard/UltimosResultadosModuleEditor";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
@@ -2153,6 +2153,14 @@ export default function EditarPaginaTenantPage() {
                     )}
                     {block.type === "hino" && (
                       <HinoModuleEditor
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                      />
+                    )}
+                    {block.type === "email_servers" && (
+                      <EmailServersModuleEditor
                         block={block}
                         index={index}
                         updateBlockConfig={updateBlockConfig}

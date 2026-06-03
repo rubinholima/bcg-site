@@ -65,7 +65,7 @@ import {
 import { api } from "@/lib/api";
 import { TenantKind } from "@/types/tenant-kind";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
+import { FontFamilyField, PageBuilderChrome, PageThemePanel, HeroModuleEditor, HinoModuleEditor, EmailServersModuleEditor, ImprensaDisplayModeFields, ImprensaModuleEditor, normalizeBlocks, sanitizeBlocksForSave } from "@/components/dashboard/page-builder";
 import { TabelaClassificacaoModuleEditor } from "@/components/dashboard/TabelaClassificacaoModuleEditor";
 import { authFetch } from "@/lib/authFetch";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -1017,6 +1017,15 @@ export default function EditarGroupHomePage() {
                         index={index}
                         updateBlockConfig={updateBlockConfig}
                         updateBlockConfigValue={updateBlockConfigValue}
+                      />
+                    )}
+                    {block.type === "email_servers" && (
+                      <EmailServersModuleEditor
+                        block={block}
+                        index={index}
+                        updateBlockConfig={updateBlockConfig}
+                        updateBlockConfigValue={updateBlockConfigValue}
+                        isGroupHome
                       />
                     )}
                     {block.type === "imprensa" && (
