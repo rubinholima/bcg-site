@@ -461,7 +461,13 @@ export interface NoticiasItem {
   imageUrl?: string;
   /** URL original da imagem (para carregar no cliente com no-referrer e evitar 403 do proxy). */
   imageUrlOriginal?: string;
+  /** Rótulo completo para exibição (ex.: Instagram · @conta, Globo Esporte · ge.globo.com) */
   source?: string;
+  sourceKind?: "social" | "site";
+  sourcePlatform?: string;
+  sourceAuthor?: string;
+  sourceSite?: string;
+  sourceHost?: string;
 }
 
 /** Item da galeria (manual ou retorno do RSS — Instagram, etc.) */

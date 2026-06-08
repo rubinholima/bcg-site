@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Parser from "rss-parser";
 
 import type { NoticiasItem } from "@/types/home-content";
-import { sourceFromNewsLink, sourceFromNewsTitle } from "@/lib/noticias-source";
+import { resolveNoticiaSource } from "@/lib/noticias-source";
 
 
 
@@ -170,28 +170,40 @@ function toProxyImageUrl(url: string): string {
 
 
 
-function resolveItemSource(item: RssItemForImage, feedTitle?: string): string | undefined {
+function resolveItemSource(
+  item: RssItemForImage,
+  feedTitle?: string,
+): Pick<
+  NoticiasItem,
+  "source" | "sourceKind" | "sourcePlatform" | "sourceAuthor" | "sourceSite" | "sourceHost"
+> {
   const creatorRaw = item.creator ?? item["dc:creator"];
   const creator =
     typeof creatorRaw === "string"
       ? creatorRaw.trim()
       : Array.isArray(creatorRaw) && typeof creatorRaw[0] === "string"
         ? creatorRaw[0].trim()
-        : "";
-  if (creator) return creator;
-
-  const author = item.author;
-  if (typeof author === "string" && author.trim()) return author.trim();
-
+        : undefined;
+  const author = typeof item.author === "string" ? item.author.trim() : undefined;
   const title = typeof item.title === "string" ? item.title.trim() : "";
-  const fromTitle = sourceFromNewsTitle(title);
-  if (fromTitle) return fromTitle;
-
   const link = typeof item.link === "string" ? item.link.trim() : "";
-  const fromLink = sourceFromNewsLink(link);
-  if (fromLink) return fromLink;
 
-  return feedTitle?.trim() || undefined;
+  const resolved = resolveNoticiaSource({
+    link,
+    title,
+    creator,
+    author,
+    feedTitle,
+  });
+
+  return {
+    source: resolved.display,
+    sourceKind: resolved.kind,
+    sourcePlatform: resolved.platform,
+    sourceAuthor: resolved.author,
+    sourceSite: resolved.siteName,
+    sourceHost: resolved.siteHost,
+  };
 }
 
 /**
@@ -227,7 +239,7 @@ export async function GET(request: NextRequest) {
 
 
   const nocache = searchParams.get("nocache") === "1";
-  const cacheKey = `${rssUrl}:${max}:v4`;
+  const cacheKey = `${rssUrl}:${max}:v5`;
 
   const cached = !nocache && cache.get(cacheKey);
 
@@ -275,8 +287,9 @@ export async function GET(request: NextRequest) {
 
       .slice(0, max)
 
-      .map((item, idx) => ({
-
+      .map((item, idx) => {
+        const sourceMeta = resolveItemSource(item, feed.title?.trim());
+        return {
         id: item.guid || item.link || `item-${idx}`,
 
         title: item.title?.trim() ?? "",
@@ -307,9 +320,10 @@ export async function GET(request: NextRequest) {
 
         })(),
 
-        source: resolveItemSource(item, feed.title?.trim()),
+        ...sourceMeta,
 
-      }));
+      };
+      });
 
 
 

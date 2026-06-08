@@ -27,7 +27,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
+import { noticiaSourceKindLabel } from "@/lib/noticias-source";
+import { Newspaper, ExternalLink, Loader2, Globe, Share2 } from "lucide-react";
 
 function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string }) {
   const [failed, setFailed] = useState(false);
@@ -106,6 +107,79 @@ function formatDate(iso: string | undefined, lang: "pt" | "en"): string {
   });
 }
 
+function NoticiaSourceDisplay({
+  item,
+  lang,
+  variant = "card",
+}: {
+  item: NoticiasItem;
+  lang: "pt" | "en";
+  variant?: "card" | "modal";
+}) {
+  if (!item.source && !item.sourcePlatform && !item.sourceSite) return null;
+
+  const kind = item.sourceKind ?? "site";
+  const kindLabel = noticiaSourceKindLabel(kind, lang);
+
+  if (variant === "card") {
+    return (
+      <div className="mb-2 space-y-0.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-amber-400/95 line-clamp-2">
+          {item.source}
+        </p>
+        {kind === "social" && item.sourcePlatform && item.source !== item.sourcePlatform ? (
+          <p className="text-[11px] text-zinc-500">{kindLabel}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">
+      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        {kind === "social" ? (
+          <Share2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        ) : (
+          <Globe className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        )}
+        {kindLabel}
+      </div>
+      <dl className="space-y-1.5 text-sm">
+        {item.sourcePlatform ? (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-zinc-500">{lang === "pt" ? "Plataforma:" : "Platform:"}</dt>
+            <dd className="font-medium text-amber-200">{item.sourcePlatform}</dd>
+          </div>
+        ) : null}
+        {item.sourceAuthor ? (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-zinc-500">{lang === "pt" ? "Publicado por:" : "Posted by:"}</dt>
+            <dd className="font-medium text-white">{item.sourceAuthor}</dd>
+          </div>
+        ) : null}
+        {item.sourceSite ? (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-zinc-500">{lang === "pt" ? "Veículo:" : "Publication:"}</dt>
+            <dd className="font-medium text-white">{item.sourceSite}</dd>
+          </div>
+        ) : null}
+        {item.sourceHost ? (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-zinc-500">{lang === "pt" ? "Site:" : "Website:"}</dt>
+            <dd className="font-medium text-zinc-200">{item.sourceHost}</dd>
+          </div>
+        ) : null}
+        {!item.sourcePlatform && !item.sourceAuthor && !item.sourceSite && item.source ? (
+          <div className="flex flex-wrap gap-x-2">
+            <dt className="text-zinc-500">{lang === "pt" ? "Fonte:" : "Source:"}</dt>
+            <dd className="font-medium text-amber-200">{item.source}</dd>
+          </div>
+        ) : null}
+      </dl>
+    </div>
+  );
+}
+
 function NoticiasArticleDialog({
   item,
   lang,
@@ -137,14 +211,10 @@ function NoticiasArticleDialog({
           <DialogTitle className="text-xl leading-snug text-white sm:text-2xl">
             {item.title}
           </DialogTitle>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-400">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-zinc-400">
             {item.dateISO ? <span>{formatDate(item.dateISO, lang)}</span> : null}
-            {item.source ? (
-              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-200">
-                {item.source}
-              </span>
-            ) : null}
           </div>
+          <NoticiaSourceDisplay item={item} lang={lang} variant="modal" />
           {item.excerpt ? (
             <DialogDescription className="text-left text-sm leading-relaxed text-zinc-300">
               {item.excerpt}
@@ -160,8 +230,12 @@ function NoticiasArticleDialog({
             >
               <a href={item.link} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="mr-2 h-4 w-4" />
-                {lang === "pt" ? "Ler na fonte original" : "Read at original source"}
-                {item.source ? ` (${item.source})` : ""}
+                {lang === "pt" ? "Abrir na fonte original" : "Open original source"}
+                {item.sourceSite || item.sourcePlatform
+                  ? ` (${item.sourceSite ?? item.sourcePlatform})`
+                  : item.source
+                    ? ` (${item.source})`
+                    : ""}
               </a>
             </Button>
           </div>
@@ -329,11 +403,7 @@ export function NoticiasSection({
                     </div>
                   )}
                   <div className="flex flex-1 flex-col min-h-[120px] p-4">
-                    {item.source ? (
-                      <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-amber-400/90 line-clamp-1">
-                        {item.source}
-                      </p>
-                    ) : null}
+                    <NoticiaSourceDisplay item={item} lang={lang} variant="card" />
                     <h3 className="line-clamp-2 font-semibold text-white group-hover:text-amber-400">
                       {item.title}
                     </h3>
