@@ -32,6 +32,55 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 07 DE JUNHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+1. **Menu Futebol (sidebar)**  
+   - Ao abrir Logística em Atletas, Cadastros não fica mais aberto junto — só um hub nested por vez.  
+   - Commit `34249cf` — `sidebar.tsx`.
+
+2. **Header mobile — sites de clube (portfolio)**  
+   - Logo + hamburger no mobile; nav horizontal no desktop; painel com links, PT/EN, Home e Dashboard.  
+   - Commit `c3dc793` — `PublicPortfolioHeader.tsx`.
+
+3. **Módulo Notícias**  
+   - Popup (Dialog) ao clicar no card; fonte exibida no card e no modal (Instagram, autor, veículo, domínio).  
+   - Ordem padrão **destaque + aleatório** (mais recente 1º, resto embaralhado).  
+   - Commits `d6f992a`, `17d4093` — `NoticiasSection.tsx`, `noticias-order.ts`, `noticias-source.ts`, `noticias-feed/route.ts`, `NoticiasModuleEditor.tsx`.
+
+4. **Carrosséis Próximos Jogos + Atletas**  
+   - Restaurado marquee automático (passa sozinho), pausa no hover com setas ← →, **sem barra de rolagem**.  
+   - Novo componente `AutoScrollMarquee.tsx` (`scrollTo`, nunca `scrollIntoView`).  
+   - Commit `f238693` — `ProximosJogosSection.tsx`, `TimesCategoriasSection.tsx`.
+
+5. **Deploys**  
+   - Builds ok; pushes para `develop`; usuário roda `./deploy.sh` no servidor.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/web/src/components/dashboard/sidebar.tsx`
+- `apps/web/src/components/portfolio/PublicPortfolioHeader.tsx`
+- `apps/web/src/components/portfolio/modules/NoticiasSection.tsx`
+- `apps/web/src/lib/noticias-order.ts`, `noticias-source.ts`
+- `apps/web/src/app/api/public/noticias-feed/route.ts`
+- `apps/web/src/components/portfolio/AutoScrollMarquee.tsx`
+- `apps/web/src/components/portfolio/modules/ProximosJogosSection.tsx`
+- `apps/web/src/components/portfolio/modules/TimesCategoriasSection.tsx`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `f238693` — feat(web): restaura marquee automático em jogos e atletas
+- **Push:** enviado para `origin/develop`
+
+## **PENDÊNCIAS / PRÓXIMO**
+
+- Validar carrosséis e notícias na produção após `./deploy.sh` + hard refresh (Villa Nova / Boston City).  
+- Arquivos locais **não versionados:** `backup_clean.sql`, `temp_*`, `scripts/extract-*.mjs`, `apps/api/scripts/discover-beatscode-*.ts`, `apps/api/apps/` — não commitar.
+
+---
+
 # 📅 01 DE JUNHO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO**
