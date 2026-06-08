@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { HomeContentBlock } from "@/types/home-content";
 import type { NoticiasItem } from "@/types/home-content";
 import { AnimateInView } from "@/components/home/AnimateInView";
@@ -14,13 +14,24 @@ import {
   normalizeNoticiasMaxItems,
   noticiasGridClass,
 } from "@/lib/noticias-grid";
+import {
+  normalizeNoticiasOrderMode,
+  noticiasFeedFetchMax,
+  orderNoticiasForDisplay,
+} from "@/lib/noticias-order";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Newspaper, ExternalLink, Loader2 } from "lucide-react";
 
 function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string }) {
   const [failed, setFailed] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
-  // Priorizar PROXY: Instagram/CDN enviam CORP same-origin → browser bloqueia URL direta (ERR_BLOCKED_BY_RESPONSE.NotSameOrigin).
-  // O proxy busca no servidor e serve do nosso domínio → mesmo origin → funciona.
   const baseSrc =
     typeof window !== "undefined" && src.startsWith("/") ? `${window.location.origin}${src}` : src;
   const proxyFallbackUrl = (() => {
@@ -33,7 +44,6 @@ function NewsCardImage({ src, srcOriginal }: { src: string; srcOriginal?: string
       return null;
     }
   })();
-  // Instagram/CDN: URL direta nunca funciona (CORP). Só proxy; fallback causaria 403.
   const isBlockedCdn = (url?: string) =>
     url && /cdninstagram|fbcdn\.net|instagram\.com/i.test(url);
   const imgSrc =
@@ -96,6 +106,71 @@ function formatDate(iso: string | undefined, lang: "pt" | "en"): string {
   });
 }
 
+function NoticiasArticleDialog({
+  item,
+  lang,
+  open,
+  onOpenChange,
+}: {
+  item: NoticiasItem | null;
+  lang: "pt" | "en";
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!item) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="bcg-modal w-[min(42rem,calc(100vw-1.25rem))] max-h-[calc(100vh-1.25rem)] border border-white/10 bg-zinc-950 text-zinc-100"
+        showCloseButton
+      >
+        <DialogHeader className="space-y-3 text-left">
+          {(item.imageUrl || item.imageUrlOriginal) && (
+            <div className="overflow-hidden rounded-lg border border-white/10">
+              <NewsCardImage
+                src={item.imageUrl ?? item.imageUrlOriginal ?? ""}
+                srcOriginal={item.imageUrlOriginal}
+              />
+            </div>
+          )}
+          <DialogTitle className="text-xl leading-snug text-white sm:text-2xl">
+            {item.title}
+          </DialogTitle>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-400">
+            {item.dateISO ? <span>{formatDate(item.dateISO, lang)}</span> : null}
+            {item.source ? (
+              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-200">
+                {item.source}
+              </span>
+            ) : null}
+          </div>
+          {item.excerpt ? (
+            <DialogDescription className="text-left text-sm leading-relaxed text-zinc-300">
+              {item.excerpt}
+            </DialogDescription>
+          ) : null}
+        </DialogHeader>
+        {item.link ? (
+          <div className="pt-2">
+            <Button
+              asChild
+              variant="outline"
+              className="w-full border-white/15 bg-white/5 text-white hover:bg-white/10 sm:w-auto"
+            >
+              <a href={item.link} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                {lang === "pt" ? "Ler na fonte original" : "Read at original source"}
+                {item.source ? ` (${item.source})` : ""}
+              </a>
+            </Button>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function NoticiasSection({
   block,
   lang,
@@ -111,9 +186,11 @@ export function NoticiasSection({
   inSection?: boolean;
   showTitle?: boolean;
 }) {
-  const [items, setItems] = useState<NoticiasItem[]>([]);
+  const [rawItems, setRawItems] = useState<NoticiasItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<NoticiasItem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const title = (lang === "pt" ? block.config?.titlePt : block.config?.titleEn) as string;
   const dataSource = (block.config?.noticiasDataSource as "rss" | "manual") ?? "rss";
@@ -121,12 +198,12 @@ export function NoticiasSection({
   const manualItems = (block.config?.noticiasManualItems as NoticiasItem[] | undefined) ?? [];
   const maxItems = normalizeNoticiasMaxItems(block.config?.noticiasMaxItems);
   const columns = normalizeNoticiasColumns(block.config?.noticiasColumns);
+  const orderMode = normalizeNoticiasOrderMode(block.config?.noticiasOrderMode);
   const gridClass = noticiasGridClass(columns);
   const padTop = (block.config?.noticiasPaddingTop as keyof typeof PADDING_CLASSES) ?? "compact";
   const padBottom = (block.config?.noticiasPaddingBottom as keyof typeof PADDING_CLASSES) ?? "compact";
   const blockBg = (block.config?.backgroundColor as string)?.trim();
   const blockBgImg = (block.config?.backgroundImage as string)?.trim();
-  // Só usa fundo do bloco: NUNCA herda do tema — a página já tem fundo único; seção transparente = continuidade
   const bgColor = blockBg || undefined;
   const bgImage = blockBgImg || undefined;
   const overlayOpacity = (() => {
@@ -142,16 +219,17 @@ export function NoticiasSection({
   const paddingTop = PADDING_CLASSES[padTop]?.top ?? PADDING_CLASSES.compact.top;
   const paddingBottom = PADDING_CLASSES[padBottom]?.bottom ?? PADDING_CLASSES.compact.bottom;
   const containerClass = moduleSectionContainerClass({ fullWidth });
+  const fetchMax = noticiasFeedFetchMax(maxItems);
 
   useEffect(() => {
     if (dataSource === "manual") {
-      setItems([]);
+      setRawItems([]);
       setLoading(false);
       setError(null);
       return;
     }
     if (!rssUrl) {
-      setItems([]);
+      setRawItems([]);
       setLoading(false);
       setError(null);
       return;
@@ -159,27 +237,38 @@ export function NoticiasSection({
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchRssFeed(rssUrl, maxItems)
+    fetchRssFeed(rssUrl, fetchMax)
       .then((data) => {
         if (!cancelled) {
-          setItems(data);
+          setRawItems(data);
           setError(data.length === 0 ? (lang === "pt" ? "Nenhuma notícia encontrada." : "No news found.") : null);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setItems([]);
+          setRawItems([]);
           setError(lang === "pt" ? "Erro ao carregar notícias." : "Error loading news.");
         }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
-  }, [dataSource, rssUrl, maxItems, manualItems, lang, columns]);
+    return () => {
+      cancelled = true;
+    };
+  }, [dataSource, rssUrl, fetchMax, lang]);
 
-  const displayItems = dataSource === "manual" ? manualItems.slice(0, maxItems) : items;
+  const displayItems = useMemo(() => {
+    const pool = dataSource === "manual" ? manualItems : rawItems;
+    return orderNoticiasForDisplay(pool, maxItems, orderMode);
+  }, [dataSource, manualItems, rawItems, maxItems, orderMode]);
+
   const hasContent = displayItems.length > 0;
+
+  const openArticle = (item: NoticiasItem) => {
+    setSelectedItem(item);
+    setDialogOpen(true);
+  };
 
   return (
     <AnimateInView>
@@ -223,12 +312,11 @@ export function NoticiasSection({
           {hasContent && !loading && (
             <div className={`mt-8 grid gap-6 items-stretch ${gridClass}`}>
               {displayItems.map((item, idx) => (
-                <a
+                <button
                   key={item.id ?? item.link ?? idx}
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 transition-all hover:border-amber-500/20 hover:shadow-lg hover:shadow-amber-500/5 h-full"
+                  type="button"
+                  onClick={() => openArticle(item)}
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 text-left transition-all hover:border-amber-500/20 hover:shadow-lg hover:shadow-amber-500/5 h-full cursor-pointer"
                 >
                   {item.imageUrl || item.imageUrlOriginal ? (
                     <NewsCardImage
@@ -241,6 +329,11 @@ export function NoticiasSection({
                     </div>
                   )}
                   <div className="flex flex-1 flex-col min-h-[120px] p-4">
+                    {item.source ? (
+                      <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-amber-400/90 line-clamp-1">
+                        {item.source}
+                      </p>
+                    ) : null}
                     <h3 className="line-clamp-2 font-semibold text-white group-hover:text-amber-400">
                       {item.title}
                     </h3>
@@ -250,18 +343,28 @@ export function NoticiasSection({
                       </p>
                     )}
                     <div className="mt-auto flex items-center justify-between pt-3 text-xs text-zinc-500 shrink-0">
-                      {item.dateISO && (
-                        <span>{formatDate(item.dateISO, lang)}</span>
-                      )}
-                      <ExternalLink className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                      {item.dateISO ? <span>{formatDate(item.dateISO, lang)}</span> : <span />}
+                      <span className="text-zinc-500 opacity-0 transition-opacity group-hover:opacity-100">
+                        {lang === "pt" ? "Ler →" : "Read →"}
+                      </span>
                     </div>
                   </div>
-                </a>
+                </button>
               ))}
             </div>
           )}
         </div>
       </section>
+
+      <NoticiasArticleDialog
+        item={selectedItem}
+        lang={lang}
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setSelectedItem(null);
+        }}
+      />
     </AnimateInView>
   );
 }

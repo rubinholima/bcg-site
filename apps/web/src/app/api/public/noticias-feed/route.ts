@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Parser from "rss-parser";
 
 import type { NoticiasItem } from "@/types/home-content";
+import { sourceFromNewsLink, sourceFromNewsTitle } from "@/lib/noticias-source";
 
 
 
@@ -169,9 +170,31 @@ function toProxyImageUrl(url: string): string {
 
 
 
-/**
+function resolveItemSource(item: RssItemForImage, feedTitle?: string): string | undefined {
+  const creatorRaw = item.creator ?? item["dc:creator"];
+  const creator =
+    typeof creatorRaw === "string"
+      ? creatorRaw.trim()
+      : Array.isArray(creatorRaw) && typeof creatorRaw[0] === "string"
+        ? creatorRaw[0].trim()
+        : "";
+  if (creator) return creator;
 
- * GET /api/public/noticias-feed?rssUrl=...&max=10
+  const author = item.author;
+  if (typeof author === "string" && author.trim()) return author.trim();
+
+  const title = typeof item.title === "string" ? item.title.trim() : "";
+  const fromTitle = sourceFromNewsTitle(title);
+  if (fromTitle) return fromTitle;
+
+  const link = typeof item.link === "string" ? item.link.trim() : "";
+  const fromLink = sourceFromNewsLink(link);
+  if (fromLink) return fromLink;
+
+  return feedTitle?.trim() || undefined;
+}
+
+/**
 
  * Busca e parseia um feed RSS, retorna itens de notícia.
 
@@ -204,7 +227,7 @@ export async function GET(request: NextRequest) {
 
 
   const nocache = searchParams.get("nocache") === "1";
-  const cacheKey = `${rssUrl}:${max}:v3`;
+  const cacheKey = `${rssUrl}:${max}:v4`;
 
   const cached = !nocache && cache.get(cacheKey);
 
@@ -262,9 +285,9 @@ export async function GET(request: NextRequest) {
 
         excerpt:
 
-          item.contentSnippet?.trim()?.slice(0, 200) ||
+          item.contentSnippet?.trim()?.slice(0, 400) ||
 
-          item.content?.toString().replace(/<[^>]+>/g, "").slice(0, 200),
+          item.content?.toString().replace(/<[^>]+>/g, "").slice(0, 400),
 
         dateISO: item.isoDate || item.pubDate,
 
@@ -284,7 +307,7 @@ export async function GET(request: NextRequest) {
 
         })(),
 
-        source: feed.title?.trim(),
+        source: resolveItemSource(item, feed.title?.trim()),
 
       }));
 

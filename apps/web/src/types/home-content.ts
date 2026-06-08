@@ -357,6 +357,8 @@ export interface HomeBlockConfig {
   noticiasPaddingTop?: "minimal" | "compact" | "normal" | "large";
   /** Notícias: padding base */
   noticiasPaddingBottom?: "minimal" | "compact" | "normal" | "large";
+  /** feed = ordem do RSS; destaque_aleatorio = mais recente primeiro + resto aleatório */
+  noticiasOrderMode?: "feed" | "destaque_aleatorio";
   /** Galeria: fonte (rss = feed Instagram/RSS.app; manual = lista editada) */
   galeriaDataSource?: "rss" | "manual";
   /** Galeria: URL do feed RSS (Instagram via rss.app, etc.) */

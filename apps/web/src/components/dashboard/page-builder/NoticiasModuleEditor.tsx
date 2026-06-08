@@ -18,6 +18,7 @@ import {
   normalizeNoticiasMaxItems,
   noticiasGridRows,
 } from "@/lib/noticias-grid";
+import { normalizeNoticiasOrderMode } from "@/lib/noticias-order";
 
 interface NoticiasModuleEditorProps {
   block: HomeContentBlock;
@@ -31,6 +32,7 @@ export function NoticiasModuleEditor({
   const dataSource = (block.config?.noticiasDataSource as string) ?? "rss";
   const maxItems = normalizeNoticiasMaxItems(block.config?.noticiasMaxItems);
   const columns = normalizeNoticiasColumns(block.config?.noticiasColumns);
+  const orderMode = normalizeNoticiasOrderMode(block.config?.noticiasOrderMode);
   const rows = noticiasGridRows(maxItems, columns);
 
   return (
@@ -127,6 +129,26 @@ export function NoticiasModuleEditor({
                   cards
                 </strong>
               </p>
+              <div className="space-y-2">
+                <Label>Ordem dos cards</Label>
+                <Select
+                  value={orderMode}
+                  onValueChange={(v) => updateBlockConfigValue("noticiasOrderMode", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="destaque_aleatorio">
+                      Notícia do dia primeiro + restante aleatório
+                    </SelectItem>
+                    <SelectItem value="feed">Ordem do feed RSS</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Com aleatório, a notícia mais recente fica em 1º; os demais cards mudam a cada visita.
+                </p>
+              </div>
             </>
           )}
           {dataSource === "manual" && (
