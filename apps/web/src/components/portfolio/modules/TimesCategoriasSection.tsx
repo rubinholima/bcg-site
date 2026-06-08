@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
-import { HorizontalScrollCarousel } from "@/components/portfolio/HorizontalScrollCarousel";
+import { AutoScrollMarquee } from "@/components/portfolio/AutoScrollMarquee";
 
 // Meses abreviados em português
 const MONTHS_ABBR = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
@@ -150,7 +150,7 @@ function PlayerCard({
 
 function PlayersMarqueeRow({
   players,
-  durationSec: _durationSec,
+  durationSec,
   lang,
   onPlayerClick,
 }: {
@@ -161,16 +161,28 @@ function PlayersMarqueeRow({
 }) {
   if (players.length === 0) return null;
 
+  const MARQUEE_COPIES = 3;
+  const items =
+    players.length > 1
+      ? Array.from({ length: MARQUEE_COPIES }, () => players).flat()
+      : players;
+
   return (
-    <HorizontalScrollCarousel lang={lang} gap={12} trackClassName="sm:gap-4">
-      {players.map((player, idx) => (
+    <AutoScrollMarquee
+      lang={lang}
+      gap={12}
+      itemCount={players.length}
+      durationSec={durationSec}
+      trackClassName="sm:gap-4"
+    >
+      {items.map((player, idx) => (
         <PlayerCard
-          key={player.id ?? `${player.name}-${idx}`}
+          key={players.length > 1 ? `${player.id ?? player.name}-${idx}` : player.id ?? idx}
           player={player}
           onClick={() => onPlayerClick(player)}
         />
       ))}
-    </HorizontalScrollCarousel>
+    </AutoScrollMarquee>
   );
 }
 

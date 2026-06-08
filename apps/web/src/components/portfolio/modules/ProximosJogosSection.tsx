@@ -26,7 +26,8 @@ import {
   ProximosJogosMobileCarousel,
   ProximosJogosVenuePills,
 } from "@/components/portfolio/modules/ProximosJogosMobile";
-import { HorizontalScrollCarousel } from "@/components/portfolio/HorizontalScrollCarousel";
+import { AutoScrollMarquee } from "@/components/portfolio/AutoScrollMarquee";
+import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
 
 export interface FixtureItem {
   externalId: string;
@@ -440,6 +441,16 @@ export function ProximosJogosSection({
     return list;
   }, [upcomingFixtures, selectedDate, categoryFilterActive, showVenueFilter, selectedVenue, displayOurTeamName]);
 
+  const cardCount = filteredFixtures.length;
+  const MARQUEE_COPIES = 3;
+  const carouselItems =
+    cardCount > 1
+      ? Array.from({ length: MARQUEE_COPIES }, () => filteredFixtures).flat()
+      : filteredFixtures;
+  const marqueeDurationSec = fixturesMarqueeDurationSeconds(
+    block.config?.fixturesCarouselMarqueeSpeed as string | undefined,
+  );
+
   const isHome = isHomeFixture;
   const homeAwayLabel = (f: FixtureItem) =>
     isHome(f)
@@ -593,11 +604,16 @@ export function ProximosJogosSection({
         </div>
       )}
 
-      {/* Desktop — scroll horizontal com setas e arrastar */}
+      {/* Desktop — marquee automático; hover pausa + setas */}
       {!loading && filteredFixtures.length > 0 && (
         <div className="mt-6 hidden w-full md:block">
-          <HorizontalScrollCarousel lang={lang} gap={16}>
-                {filteredFixtures.map((f, index) => {
+          <AutoScrollMarquee
+            lang={lang}
+            gap={16}
+            itemCount={cardCount}
+            durationSec={marqueeDurationSec}
+          >
+                {carouselItems.map((f, index) => {
                   const competitionLabel =
                     (f.competitionName && String(f.competitionName).trim()) ||
                     (competitionDisplayFallback && String(competitionDisplayFallback).trim()) ||
@@ -758,7 +774,7 @@ export function ProximosJogosSection({
                   </div>
                 );
                 })}
-          </HorizontalScrollCarousel>
+          </AutoScrollMarquee>
         </div>
       )}
     </section>
