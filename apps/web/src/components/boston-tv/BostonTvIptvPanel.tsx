@@ -29,9 +29,11 @@ type IptvChannel = {
 
 interface BostonTvIptvPanelProps {
   tenantId: string;
+  /** Conteúdo sem Card externo (para seção recolhível no dashboard) */
+  embedded?: boolean;
 }
 
-export function BostonTvIptvPanel({ tenantId }: BostonTvIptvPanelProps) {
+export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPanelProps) {
   const [source, setSource] = useState<IptvSource | null>(null);
   const [enabledCount, setEnabledCount] = useState(0);
   const [playlistUrl, setPlaylistUrl] = useState("https://tinyurl.com/5xzmnjkn");
@@ -166,18 +168,8 @@ export function BostonTvIptvPanel({ tenantId }: BostonTvIptvPanelProps) {
           ? `Erro: ${source.syncError ?? "falha na sync"}`
           : "Lista ainda não sincronizada";
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Radio className="h-5 w-5" />
-          IPTV (lista M3U)
-        </CardTitle>
-        <CardDescription>
-          Sincronize a lista M3U, busque canais e clique em <strong>Liberar</strong>. Só os liberados aparecem ao criar/editar uma tela.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+  const inner = (
+    <div className="space-y-4">
         <div className="space-y-2">
             <Label htmlFor="iptv-url">URL da playlist M3U</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -318,7 +310,23 @@ export function BostonTvIptvPanel({ tenantId }: BostonTvIptvPanelProps) {
             </div>
           </>
         ) : null}
-      </CardContent>
+    </div>
+  );
+
+  if (embedded) return inner;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Radio className="h-5 w-5" />
+          IPTV (lista M3U)
+        </CardTitle>
+        <CardDescription>
+          Sincronize a lista M3U, busque canais e clique em <strong>Liberar</strong>. Só os liberados aparecem ao criar/editar uma tela.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>{inner}</CardContent>
     </Card>
   );
 }

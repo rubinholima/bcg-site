@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Clipboard, ExternalLink, Plus, RefreshCw, Trash2, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +25,8 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
+import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
+import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 
 interface Tenant {
   id: string;
@@ -78,10 +79,14 @@ export default function BostonTvDashboardPage() {
   const [editScreen, setEditScreen] = useState<ScreenRow | null>(null);
   const [screenName, setScreenName] = useState("");
   const [screenLocation, setScreenLocation] = useState("");
-  const [screenContentMode, setScreenContentMode] = useState<ScreenContentMode>("iptv");
+  const [screenContentMode, setScreenContentMode] = useState<ScreenContentMode>("playlist");
   const [screenPlaylistId, setScreenPlaylistId] = useState("");
   const [screenIptvChannelId, setScreenIptvChannelId] = useState("");
   const [screenScheduleJson, setScreenScheduleJson] = useState(DEFAULT_SCHEDULE);
+
+  const [playlistsOpen, setPlaylistsOpen] = useState(true);
+  const [screensOpen, setScreensOpen] = useState(true);
+  const [iptvOpen, setIptvOpen] = useState(true);
 
   const effectiveTenant = tenantFilter;
 
@@ -144,8 +149,8 @@ export default function BostonTvDashboardPage() {
   }, [playlists, editScreen, effectiveTenant]);
 
   const playlistSelectValue = useMemo(() => {
-    if (!screenPlaylistId) return "_none";
-    return playlistOptions.some((p) => p.id === screenPlaylistId) ? screenPlaylistId : "_none";
+    if (!screenPlaylistId) return "";
+    return playlistOptions.some((p) => p.id === screenPlaylistId) ? screenPlaylistId : "";
   }, [screenPlaylistId, playlistOptions]);
 
   useEffect(() => {
@@ -155,7 +160,7 @@ export default function BostonTvDashboardPage() {
   const resetScreenForm = () => {
     setScreenName("");
     setScreenLocation("");
-    setScreenContentMode("iptv");
+    setScreenContentMode("playlist");
     setScreenPlaylistId("");
     setScreenIptvChannelId("");
     setScreenScheduleJson(DEFAULT_SCHEDULE);
@@ -164,6 +169,10 @@ export default function BostonTvDashboardPage() {
 
   const openNewScreen = () => {
     resetScreenForm();
+    setScreenContentMode("playlist");
+    if (playlists.length > 0) {
+      setScreenPlaylistId(playlists[0].id);
+    }
     setNewScreenOpen(true);
   };
 
@@ -215,8 +224,8 @@ export default function BostonTvDashboardPage() {
       };
     }
     if (screenContentMode === "playlist") {
-      if (!screenPlaylistId || screenPlaylistId === "_none") {
-        alert("Escolha uma playlist de marketing.");
+      if (!screenPlaylistId) {
+        alert("Escolha a playlist da TV.");
         return null;
       }
       return {
@@ -333,128 +342,133 @@ export default function BostonTvDashboardPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>Telas (TVs)</CardTitle>
-            <CardDescription>
-              Crie a tela, escolha canal IPTV ou playlist marketing, copie o link e abra na TV em tela cheia.
-            </CardDescription>
-          </div>
-          <Button size="sm" onClick={openNewScreen} disabled={!effectiveTenant}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova tela
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando…</p>
-          ) : screens.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhuma tela ainda. Clique <strong>Nova tela</strong> e escolha o canal ou a playlist.
-            </p>
-          ) : (
-            <ul className="space-y-3">
-              {screens.map((s) => {
-                const base = typeof window !== "undefined" ? window.location.origin : "";
-                const url = `${base}/tv/play/${s.playerToken}`;
-                return (
-                  <li
-                    key={s.id}
-                    className="rounded-lg border border-border p-3 text-sm flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium">{s.name}</p>
-                      {s.locationHint ? (
-                        <p className="text-xs text-muted-foreground">{s.locationHint}</p>
-                      ) : null}
-                      <p className="text-xs mt-2 font-medium text-foreground">
-                        {s.displayMode === "iptv" && s.iptvChannel
-                          ? `Canal: ${s.iptvChannel.name}`
-                          : s.playlist
-                            ? `Marketing: ${s.playlist.name}`
-                            : "Sem conteúdo — clique Editar"}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1 break-all">{url}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 shrink-0">
-                      <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s.playerToken)}>
-                        <ExternalLink className="mr-1 h-4 w-4" />
-                        Abrir na TV
-                      </Button>
-                      <Button type="button" variant="outline" size="sm" onClick={() => copyPlayUrl(s.playerToken)}>
-                        <Clipboard className="mr-1 h-4 w-4" />
-                        Copiar link
-                      </Button>
-                      <Button type="button" variant="outline" size="sm" onClick={() => openEditScreen(s)}>
-                        <Tv className="mr-1 h-4 w-4" />
-                        Editar
-                      </Button>
-                      <Button type="button" variant="outline" size="sm" onClick={() => regenerate(s.id)}>
-                        <RefreshCw className="mr-1 h-4 w-4" />
-                        Novo token
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive"
-                        onClick={() => deleteScreen(s.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {effectiveTenant ? <BostonTvIptvPanel tenantId={effectiveTenant} /> : null}
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>Playlists (marketing)</CardTitle>
-            <CardDescription>Imagens e vídeos comerciais em loop.</CardDescription>
-          </div>
+      <BostonTvCollapsibleSection
+        title="Playlists (marketing)"
+        description="Imagens, vídeos, YouTube e trechos de live em loop. Crie a playlist antes de associar numa tela."
+        open={playlistsOpen}
+        onOpenChange={setPlaylistsOpen}
+        actions={
           <Button size="sm" onClick={() => setNewPlOpen(true)} disabled={!effectiveTenant}>
             <Plus className="mr-2 h-4 w-4" />
             Nova playlist
           </Button>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando…</p>
-          ) : playlists.length === 0 ? (
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Nenhuma playlist. Crie uma e adicione imagens/vídeos.</p>
-              <Button size="sm" variant="outline" onClick={() => setNewPlOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Criar primeira playlist
-              </Button>
-            </div>
-          ) : (
-            <ul className="divide-y divide-border rounded-md border">
-              {playlists.map((p) => (
-                <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {p._count?.items ?? 0} item(ns)
-                  </span>
-                  <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
-                    <Button variant="outline" size="sm">
-                      Editar itens
+        }
+      >
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Carregando…</p>
+        ) : playlists.length === 0 ? (
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>Nenhuma playlist. Crie uma e adicione imagens/vídeos.</p>
+            <Button size="sm" variant="outline" onClick={() => setNewPlOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar primeira playlist
+            </Button>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border rounded-md border">
+            {playlists.map((p) => (
+              <li key={p.id} className="flex flex-col gap-2 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <span className="font-medium">{p.name}</span>
+                <span className="text-muted-foreground text-xs">
+                  {p._count?.items ?? 0} item(ns)
+                </span>
+                <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    Editar itens
+                  </Button>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </BostonTvCollapsibleSection>
+
+      <BostonTvCollapsibleSection
+        title="Telas (TVs)"
+        description="Associe canal IPTV ou playlist, copie o link e abra na TV em tela cheia."
+        open={screensOpen}
+        onOpenChange={setScreensOpen}
+        actions={
+          <Button size="sm" onClick={openNewScreen} disabled={!effectiveTenant}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova tela
+          </Button>
+        }
+      >
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Carregando…</p>
+        ) : screens.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma tela ainda. Clique <strong>Nova tela</strong> e escolha o canal ou a playlist.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {screens.map((s) => {
+              const base = typeof window !== "undefined" ? window.location.origin : "";
+              const url = `${base}/tv/play/${s.playerToken}`;
+              return (
+                <li
+                  key={s.id}
+                  className="rounded-lg border border-border p-3 text-sm flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{s.name}</p>
+                    {s.locationHint ? (
+                      <p className="text-xs text-muted-foreground">{s.locationHint}</p>
+                    ) : null}
+                    <p className="text-xs mt-2 font-medium text-foreground">
+                      {s.displayMode === "iptv" && s.iptvChannel
+                        ? `Canal: ${s.iptvChannel.name}`
+                        : s.playlist
+                          ? `Marketing: ${s.playlist.name}`
+                          : "Sem conteúdo — clique Editar"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 break-all">{url}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s.playerToken)}>
+                      <ExternalLink className="mr-1 h-4 w-4" />
+                      Abrir na TV
                     </Button>
-                  </Link>
+                    <Button type="button" variant="outline" size="sm" onClick={() => copyPlayUrl(s.playerToken)}>
+                      <Clipboard className="mr-1 h-4 w-4" />
+                      Copiar link
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => openEditScreen(s)}>
+                      <Tv className="mr-1 h-4 w-4" />
+                      Editar
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => regenerate(s.id)}>
+                      <RefreshCw className="mr-1 h-4 w-4" />
+                      Novo token
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => deleteScreen(s.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+              );
+            })}
+          </ul>
+        )}
+      </BostonTvCollapsibleSection>
+
+      {effectiveTenant ? (
+        <BostonTvCollapsibleSection
+          title="IPTV (lista M3U)"
+          description="Sincronize a lista M3U, busque canais e clique em Liberar. Só os liberados aparecem ao criar/editar uma tela."
+          open={iptvOpen}
+          onOpenChange={setIptvOpen}
+        >
+          <BostonTvIptvPanel tenantId={effectiveTenant} embedded />
+        </BostonTvCollapsibleSection>
+      ) : null}
 
       <Dialog open={newPlOpen} onOpenChange={setNewPlOpen}>
         <DialogContent>
@@ -514,60 +528,67 @@ export default function BostonTvDashboardPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>O que esta TV exibe? *</Label>
-              <Select
+              <Label htmlFor="sc-content-mode">O que esta TV exibe? *</Label>
+              <ModalNativeSelect
+                id="sc-content-mode"
                 value={screenContentMode}
-                onValueChange={(v) => setScreenContentMode(v as ScreenContentMode)}
-              >
-                <SelectTrigger className="text-foreground">
-                  <SelectValue placeholder="Escolha o tipo de exibição" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="iptv">Canal IPTV (ao vivo, sem som)</SelectItem>
-                  <SelectItem value="playlist">Marketing (playlist de imagens/vídeos)</SelectItem>
-                  <SelectItem value="empty">Nada por enquanto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {screenContentMode === "iptv" && effectiveTenant ? (
-              <BostonTvEnabledChannelSelect
-                tenantId={effectiveTenant}
-                value={screenIptvChannelId}
-                onChange={setScreenIptvChannelId}
-                fallbackChannel={editScreen?.iptvChannel ?? undefined}
+                onChange={(v) => setScreenContentMode(v as ScreenContentMode)}
+                placeholder="Escolha o tipo"
+                options={[
+                  {
+                    value: "playlist",
+                    label: "Playlist da TV (imagens, vídeos, YouTube, live em loop)",
+                  },
+                  {
+                    value: "iptv",
+                    label: "Canal IPTV fixo (1 canal ao vivo o dia todo)",
+                  },
+                  { value: "empty", label: "Nada por enquanto" },
+                ]}
               />
-            ) : null}
+            </div>
 
             {screenContentMode === "playlist" ? (
               <div className="space-y-2">
-                <Label>Playlist de marketing *</Label>
+                <Label htmlFor="sc-playlist">Playlist da TV *</Label>
                 {playlists.length === 0 ? (
                   <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground space-y-2">
-                    <p>Nenhuma playlist criada.</p>
+                    <p>Crie uma playlist acima antes de associar à tela.</p>
                     <Button type="button" size="sm" variant="secondary" onClick={() => setNewPlOpen(true)}>
                       Criar playlist
                     </Button>
                   </div>
                 ) : (
-                  <Select
+                  <ModalNativeSelect
+                    id="sc-playlist"
                     value={playlistSelectValue}
-                    onValueChange={(v) => setScreenPlaylistId(v === "_none" ? "" : v)}
-                  >
-                    <SelectTrigger className="text-foreground">
-                      <SelectValue placeholder="Escolha a playlist" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="_none">Selecione…</SelectItem>
-                      {playlistOptions.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} ({p._count?.items ?? 0} itens)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={setScreenPlaylistId}
+                    placeholder="Escolha a playlist"
+                    options={playlistOptions.map((p) => ({
+                      value: p.id,
+                      label: `${p.name} (${p._count?.items ?? 0} itens)`,
+                    }))}
+                  />
                 )}
+                <p className="text-xs text-muted-foreground">
+                  A TV roda os itens da playlist em loop. Edite os itens em Playlists → Editar itens.
+                </p>
               </div>
+            ) : null}
+
+            {screenContentMode === "iptv" && effectiveTenant ? (
+              <>
+                <BostonTvEnabledChannelSelect
+                  tenantId={effectiveTenant}
+                  value={screenIptvChannelId}
+                  onChange={setScreenIptvChannelId}
+                  fallbackChannel={editScreen?.iptvChannel ?? undefined}
+                  id="sc-iptv-channel"
+                />
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Um canal só, sem alternar. Para mix de conteúdos, use <strong>Playlist da TV</strong>.
+                </p>
+              </>
             ) : null}
 
             <div className="space-y-2">

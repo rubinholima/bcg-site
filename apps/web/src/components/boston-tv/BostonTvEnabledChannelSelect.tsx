@@ -3,13 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import { api } from "@/lib/api";
 
 export type IptvChannelOption = {
@@ -72,7 +66,7 @@ export function BostonTvEnabledChannelSelect({
     return list;
   }, [channels, fallbackChannel, value]);
 
-  const selectValue = value && options.some((c) => c.id === value) ? value : "_none";
+  const selectValue = value && options.some((c) => c.id === value) ? value : "";
 
   if (loading && options.length === 0) {
     return (
@@ -95,19 +89,16 @@ export function BostonTvEnabledChannelSelect({
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>Canal IPTV *</Label>
-      <Select value={selectValue} onValueChange={(v) => onChange(v === "_none" ? "" : v)}>
-        <SelectTrigger id={id} className="text-foreground">
-          <SelectValue placeholder="Escolha o canal" />
-        </SelectTrigger>
-        <SelectContent className="max-h-72">
-          <SelectItem value="_none">Selecione…</SelectItem>
-          {options.map((ch) => (
-            <SelectItem key={ch.id} value={ch.id}>
-              {formatIptvChannelLabel(ch)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <ModalNativeSelect
+        id={id}
+        value={selectValue}
+        onChange={onChange}
+        placeholder="Escolha o canal"
+        options={options.map((ch) => ({
+          value: ch.id,
+          label: formatIptvChannelLabel(ch),
+        }))}
+      />
     </div>
   );
 }

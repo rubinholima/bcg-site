@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,6 +29,7 @@ import {
   formatIptvChannelLabel,
   type IptvChannelOption,
 } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
+import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 
 type Item = {
   id: string;
@@ -96,6 +96,9 @@ export default function EditBostonTvPlaylistPage() {
   const [durIn, setDurIn] = useState("15");
   const [iptvChannelId, setIptvChannelId] = useState("");
   const [iptvByStream, setIptvByStream] = useState<Map<string, string>>(new Map());
+  const [helpOpen, setHelpOpen] = useState(true);
+  const [addOpen, setAddOpen] = useState(true);
+  const [itemsOpen, setItemsOpen] = useState(true);
 
   const loadIptvLabels = useCallback(async (tenantId: string) => {
     try {
@@ -228,27 +231,28 @@ export default function EditBostonTvPlaylistPage() {
         </div>
       </div>
 
-      <Card className="border-primary/20 bg-primary/5">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Como funciona</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
+      <BostonTvCollapsibleSection
+        title="Como funciona"
+        description="Tipos de conteúdo e quando usar playlist vs canal fixo na tela."
+        open={helpOpen}
+        onOpenChange={setHelpOpen}
+        className="border-primary/20 bg-primary/5"
+      >
+        <div className="text-sm text-muted-foreground space-y-2">
           <p><strong>Imagem</strong> — URL da foto + segundos na tela (ex.: banner 15s).</p>
           <p><strong>Vídeo (URL)</strong> — link direto do .mp4; quando termina, vai pro próximo.</p>
           <p><strong>YouTube</strong> — link do vídeo (não da playlist); tempo máximo antes do próximo (padrão 8 min).</p>
           <p><strong>Canal IPTV (live)</strong> — canal liberado; fica X segundos e passa pro próximo item (padrão 1 h).</p>
           <p className="text-xs pt-1">Canal fixo 24h sem alternar? Use <strong>Tela → Canal IPTV</strong> na página Boston TV, não a playlist.</p>
-        </CardContent>
-      </Card>
+        </div>
+      </BostonTvCollapsibleSection>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Adicionar item</CardTitle>
-          <CardDescription>
-            Escolha o tipo, preencha URL ou canal, e inclua na ordem desejada.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+      <BostonTvCollapsibleSection
+        title="Adicionar item"
+        description="Escolha o tipo, preencha URL ou canal, e inclua na ordem desejada."
+        open={addOpen}
+        onOpenChange={setAddOpen}
+      >
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="space-y-2 min-w-[200px]">
             <Label>Tipo</Label>
@@ -312,14 +316,14 @@ export default function EditBostonTvPlaylistPage() {
             Incluir
           </Button>
           </div>
-        </CardContent>
-      </Card>
+      </BostonTvCollapsibleSection>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Itens ({items.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <BostonTvCollapsibleSection
+        title={`Itens (${items.length})`}
+        description="Ordem em que a TV exibe cada conteúdo, em loop."
+        open={itemsOpen}
+        onOpenChange={setItemsOpen}
+      >
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum item ainda.</p>
           ) : (
@@ -358,8 +362,7 @@ export default function EditBostonTvPlaylistPage() {
               </TableBody>
             </Table>
           )}
-        </CardContent>
-      </Card>
+      </BostonTvCollapsibleSection>
     </div>
   );
 }
