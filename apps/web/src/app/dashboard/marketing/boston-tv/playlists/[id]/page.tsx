@@ -30,6 +30,7 @@ import {
   type IptvChannelOption,
 } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
+import { setStoredBostonTvTenantId } from "@/lib/boston-tv-tenant-storage";
 
 type Item = {
   id: string;
@@ -137,6 +138,10 @@ export default function EditBostonTvPlaylistPage() {
   useEffect(() => {
     if (playlist?.tenantId) void loadIptvLabels(playlist.tenantId);
   }, [playlist?.tenantId, loadIptvLabels]);
+
+  useEffect(() => {
+    if (playlist?.tenantId) setStoredBostonTvTenantId(playlist.tenantId);
+  }, [playlist?.tenantId]);
 
   const addItem = async () => {
     if (!playlist) return;

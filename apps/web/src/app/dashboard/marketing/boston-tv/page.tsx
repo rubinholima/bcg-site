@@ -27,6 +27,11 @@ import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
+import {
+  getStoredBostonTvTenantId,
+  pickBostonTvTenantId,
+  setStoredBostonTvTenantId,
+} from "@/lib/boston-tv-tenant-storage";
 
 interface Tenant {
   id: string;
@@ -66,7 +71,7 @@ export default function BostonTvDashboardPage() {
   const { tenantIds, canAccessModule, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantsLoading, setTenantsLoading] = useState(true);
-  const [tenantFilter, setTenantFilter] = useState("");
+  const [tenantFilter, setTenantFilter] = useState(() => getStoredBostonTvTenantId() ?? "");
 
   const [playlists, setPlaylists] = useState<PlaylistRow[]>([]);
   const [screens, setScreens] = useState<ScreenRow[]>([]);
@@ -120,11 +125,7 @@ export default function BostonTvDashboardPage() {
         const { data } = await api.get<Tenant[]>("/tenants");
         const list = Array.isArray(data) ? data : [];
         setTenants(list);
-        setTenantFilter((cur) => {
-          if (cur && list.some((t) => t.id === cur)) return cur;
-          if (tenantIds?.length === 1 && list.some((t) => t.id === tenantIds[0])) return tenantIds[0];
-          return list[0]?.id ?? "";
-        });
+        setTenantFilter((cur) => pickBostonTvTenantId(list, cur, tenantIds));
       } catch {
         setTenants([]);
       } finally {
@@ -132,6 +133,10 @@ export default function BostonTvDashboardPage() {
       }
     })();
   }, [tenantIds]);
+
+  useEffect(() => {
+    if (tenantFilter) setStoredBostonTvTenantId(tenantFilter);
+  }, [tenantFilter]);
 
   const tenantSelectValue = useMemo(() => {
     if (tenantsLoading) return "_loading";
@@ -315,6 +320,7 @@ export default function BostonTvDashboardPage() {
             onValueChange={(v) => {
               if (v === "_loading" || v === "_none") return;
               setTenantFilter(v);
+              setStoredBostonTvTenantId(v);
             }}
             disabled={tenantsLoading || tenants.length === 0}
           >

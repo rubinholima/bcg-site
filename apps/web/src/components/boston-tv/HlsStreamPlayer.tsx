@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 
 type HlsInstance = { destroy: () => void };
+type MpegTsPlayer = {
+  destroy: () => void;
+  attachMediaElement: (el: HTMLVideoElement) => void;
+  load: () => void;
+  play: () => Promise<void>;
+};
 
 interface HlsStreamPlayerProps {
   url: string;
@@ -20,13 +26,9 @@ function candidateUrls(url: string): string[] {
   return [...new Set(out)];
 }
 
-function preferNativeVideo(url: string): boolean {
+function preferMpegTs(url: string): boolean {
   const u = url.toLowerCase();
-  return (
-    u.includes(".ts") ||
-    u.includes("/stream?") ||
-    (!u.includes(".m3u8") && /^https?:\/\//.test(u))
-  );
+  return u.includes(".ts") || u.includes("/stream?") || !u.includes(".m3u8");
 }
 
 export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerProps) {
@@ -39,6 +41,7 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
     if (!video || !url.trim()) return;
 
     let hlsInstance: HlsInstance | null = null;
+    let mpegtsInstance: MpegTsPlayer | null = null;
     let cancelled = false;
 
     const destroyHls = () => {
@@ -46,17 +49,50 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
       hlsInstance = null;
     };
 
-    const tryNativeVideo = async (streamUrl: string): Promise<boolean> => {
-      if (cancelled) return false;
+    const destroyMpegTs = () => {
+      try {
+        mpegtsInstance?.destroy();
+      } catch {
+        /* ignore */
+      }
+      mpegtsInstance = null;
+    };
+
+    const resetVideo = () => {
       destroyHls();
+      destroyMpegTs();
       video.removeAttribute("src");
       video.load();
+    };
+
+    const tryMpegTs = async (streamUrl: string): Promise<boolean> => {
+      if (cancelled) return false;
+      resetVideo();
       video.muted = true;
       video.playsInline = true;
-      video.autoplay = true;
-      video.src = streamUrl;
+
+      const mod = await import("mpegts.js");
+      const mpegts = mod.default;
+      if (!mpegts.isSupported()) return false;
+
+      const player = mpegts.createPlayer(
+        {
+          type: "mpegts",
+          isLive: true,
+          url: streamUrl,
+        },
+        {
+          enableStashBuffer: false,
+          stashInitialSize: 128,
+          liveBufferLatencyChasing: true,
+        },
+      ) as MpegTsPlayer;
+
+      mpegtsInstance = player;
+      player.attachMediaElement(video);
+      player.load();
       try {
-        await video.play();
+        await player.play();
         return !video.error;
       } catch {
         return false;
@@ -65,13 +101,13 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
 
     const tryHlsJs = async (streamUrl: string): Promise<boolean> => {
       if (cancelled) return false;
+      resetVideo();
       video.muted = true;
       video.playsInline = true;
       video.autoplay = true;
 
       const HlsMod = (await import("hls.js")).default;
       if (HlsMod.isSupported()) {
-        destroyHls();
         const instance = new HlsMod({
           enableWorker: true,
           lowLatencyMode: true,
@@ -108,9 +144,9 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
       for (const candidate of candidateUrls(url)) {
         if (cancelled) break;
 
-        if (preferNativeVideo(candidate)) {
-          const okNative = await tryNativeVideo(candidate);
-          if (okNative) {
+        if (preferMpegTs(candidate)) {
+          const okMpeg = await tryMpegTs(candidate);
+          if (okMpeg) {
             setError(null);
             return;
           }
@@ -121,25 +157,13 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
           setError(null);
           return;
         }
-
-        if (!preferNativeVideo(candidate)) {
-          const okNative = await tryNativeVideo(candidate);
-          if (okNative) {
-            setError(null);
-            return;
-          }
-        }
-
-        destroyHls();
-        video.removeAttribute("src");
-        video.load();
       }
 
       if (!cancelled) {
         setError(
           label
-            ? `${label} — este canal da lista não abre no navegador. Escolha outro canal (ex.: Globo/ESPN com stream .ts) no dashboard.`
-            : "Este canal da lista não abre no navegador. Escolha outro canal no dashboard Boston TV.",
+            ? `${label} — não foi possível abrir este canal. Tente outro canal liberado ou confira se o stream está online.`
+            : "Não foi possível abrir este canal IPTV. Escolha outro canal liberado no dashboard Boston TV.",
         );
       }
     })();
@@ -147,6 +171,7 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
     return () => {
       cancelled = true;
       destroyHls();
+      destroyMpegTs();
     };
   }, [url, label]);
 
@@ -160,7 +185,7 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
 
   return (
     <div className={`relative h-full w-full bg-black ${className}`}>
-      <video ref={videoRef} className="h-full w-full object-contain" muted playsInline />
+      <video ref={videoRef} className="h-full w-full object-contain" muted playsInline autoPlay />
       {label ? (
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3">
           <p className="text-sm text-white/90 truncate">{label}</p>

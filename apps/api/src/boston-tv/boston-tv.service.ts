@@ -8,7 +8,6 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { isPlayableIptvStreamUrl } from './m3u-parser';
 import {
-  isHlsManifestUrl,
   resolvePublicMediaUrl,
 } from '../common/public-media-url.util';
 
@@ -80,11 +79,7 @@ export class BostonTvService {
       return resolvePublicMediaUrl(item.url) || item.url;
     }
     if (item.contentType === 'iptv_stream') {
-      const upstream = item.url.trim();
-      // TS / fluxo contínuo: URL direta no <video> (sem CORS). Proxy só para manifest HLS.
-      if (!isHlsManifestUrl(upstream)) {
-        return upstream;
-      }
+      // Sempre proxy: evita mixed content (HTTP em página HTTPS) e URLs expostas na TV.
       return `/api/public/boston-tv/play/${encodeURIComponent(playerToken)}/stream?i=${index}`;
     }
     return item.url;
@@ -150,6 +145,23 @@ export class BostonTvService {
     }
 
     const playlistItems = screen.playlist?.items ?? [];
+    const iptvUrls = playlistItems
+      .filter((it) => it.contentType === 'iptv_stream')
+      .map((it) => it.url.trim());
+    const channelByUrl = new Map<string, string>();
+    if (iptvUrls.length > 0) {
+      const channels = await this.prisma.bostonTvIptvChannel.findMany({
+        where: {
+          streamUrl: { in: iptvUrls },
+          source: { tenantId: screen.tenant.id },
+        },
+        select: { streamUrl: true, name: true },
+      });
+      for (const ch of channels) {
+        channelByUrl.set(ch.streamUrl, ch.name);
+      }
+    }
+
     return {
       meta: {
         ...meta,
@@ -163,7 +175,10 @@ export class BostonTvService {
         url: it.url,
         durationSeconds: it.durationSeconds,
         sortOrder: it.sortOrder,
-        channelName: undefined as string | undefined,
+        channelName:
+          it.contentType === 'iptv_stream'
+            ? channelByUrl.get(it.url.trim())
+            : undefined,
       })),
     };
   }
@@ -274,6 +289,13 @@ export class BostonTvService {
       dto.contentType.trim(),
       dto.durationSeconds,
     );
+
+    const contentType = dto.contentType.trim();
+    if (contentType === 'iptv_stream' && !isPlayableIptvStreamUrl(dto.url)) {
+      throw new BadRequestException(
+        'Canal não é transmissão IPTV válida (ex.: link de site). Escolha um canal liberado com stream .ts ou .m3u8.',
+      );
+    }
 
     let sortOrder = dto.sortOrder;
     if (sortOrder === undefined) {

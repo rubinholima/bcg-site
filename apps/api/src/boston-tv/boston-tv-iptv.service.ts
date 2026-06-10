@@ -211,6 +211,13 @@ export class BostonTvIptvService {
       this.prisma.bostonTvIptvChannel.count({ where }),
     ]);
 
+    const mapped = items
+      .map((ch) => ({
+        ...ch,
+        playable: isPlayableIptvStreamUrl(ch.streamUrl),
+      }))
+      .filter((ch) => (input.enabledOnly ? ch.playable : true));
+
     return {
       source: {
         id: source.id,
@@ -223,11 +230,8 @@ export class BostonTvIptvService {
         syncError: source.syncError,
         lastSyncedAt: source.lastSyncedAt,
       },
-      items: items.map((ch) => ({
-        ...ch,
-        playable: isPlayableIptvStreamUrl(ch.streamUrl),
-      })),
-      total,
+      items: mapped,
+      total: input.enabledOnly ? mapped.length : total,
       page,
       limit,
     };

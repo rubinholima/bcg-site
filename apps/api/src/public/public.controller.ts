@@ -11,8 +11,9 @@ import {
   UploadedFile,
   Res,
   BadGatewayException,
+  Req,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { Readable } from 'stream';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GroupService } from '../group/group.service';
@@ -350,22 +351,34 @@ export class PublicController {
   async bostonTvStream(
     @Param('token') token: string,
     @Query('i') itemIndex: string,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
     const index = Math.max(0, parseInt(itemIndex ?? '0', 10) || 0);
     const upstream = await this.bostonTvService.resolveIptvStreamUpstream(token, index);
+    const headers: Record<string, string> = { 'User-Agent': 'BCG-BostonTV/1.0' };
+    const range = req.headers.range;
+    if (typeof range === 'string') headers.Range = range;
+
     const upstreamRes = await fetch(upstream, {
       redirect: 'follow',
-      headers: { 'User-Agent': 'BCG-BostonTV/1.0' },
+      headers,
     });
-    if (!upstreamRes.ok || !upstreamRes.body) {
+    if (!upstreamRes.ok && upstreamRes.status !== 206) {
       throw new BadGatewayException('Não foi possível conectar ao servidor do canal.');
+    }
+    if (!upstreamRes.body) {
+      throw new BadGatewayException('Canal sem resposta de vídeo.');
     }
     const contentType =
       upstreamRes.headers.get('content-type') ??
       (upstream.includes('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t');
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Accept-Ranges', 'bytes');
+    const contentRange = upstreamRes.headers.get('content-range');
+    if (contentRange) res.setHeader('Content-Range', contentRange);
+    if (upstreamRes.status === 206) res.status(206);
     Readable.fromWeb(upstreamRes.body as import('stream/web').ReadableStream).pipe(res);
   }
 

@@ -214,9 +214,9 @@ export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPa
               <div className="space-y-2 border-t border-border pt-4">
                 <Label>Canais liberados ({enabledCount})</Label>
                 <p className="text-xs text-muted-foreground">
-                  Só estes aparecem na hora de escolher canal para cada TV.
+                  Só estes aparecem ao montar playlist ou escolher canal fixo na TV.
                 </p>
-                <ul className="max-h-48 overflow-y-auto divide-y divide-border rounded-md border">
+                <ul className="max-h-64 overflow-y-auto divide-y divide-border rounded-md border">
                   {enabledChannels.map((ch) => (
                     <li
                       key={ch.id}
@@ -241,9 +241,18 @@ export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPa
                   ))}
                 </ul>
               </div>
-            ) : null}
+            ) : (
+              <p className="text-sm text-muted-foreground border-t border-border pt-4">
+                Nenhum canal liberado ainda. Use a busca abaixo para encontrar e liberar canais.
+              </p>
+            )}
 
-            <div className="space-y-3 border-t border-border pt-4">
+            <details className="border-t border-border pt-4 group">
+              <summary className="cursor-pointer text-sm font-medium text-foreground list-none flex items-center gap-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                Buscar na lista M3U para liberar mais canais
+              </summary>
+            <div className="space-y-3 pt-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <div className="flex-1 space-y-2">
                   <Label htmlFor="iptv-q">Buscar na lista completa</Label>
@@ -311,6 +320,7 @@ export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPa
                 </>
               )}
             </div>
+            </details>
           </>
         ) : null}
     </div>
