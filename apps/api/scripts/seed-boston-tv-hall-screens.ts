@@ -1,6 +1,7 @@
 /**
  * Seed: 20 Smart TVs + telão — tenant Boston City FC Brasil (espaço multiuso / Hall).
- * Idempotente: não duplica telas com o mesmo nome no tenant.
+ * Cria playlist "Hall — loop geral" e associa às telas.
+ * Idempotente: não duplica telas/playlist com o mesmo nome no tenant.
  *
  * Rodar (monorepo):
  *   pnpm --filter api run seed:boston-tv-hall-screens
@@ -20,6 +21,7 @@ const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/cli
 const prisma = new PrismaClient();
 
 const TENANT_SLUG = 'boston-city-fc-brasil';
+const HALL_PLAYLIST_NAME = 'Hall — loop geral';
 
 function newPlayerToken(): string {
   return randomBytes(24).toString('hex');
@@ -53,10 +55,63 @@ const HALL_SCREENS: Array<{ name: string; locationHint: string }> = [
   },
 ];
 
+const HALL_SCREEN_NAMES = HALL_SCREENS.map((s) => s.name);
+
+async function ensureHallPlaylist(tenantId: string, tenantLogoUrl: string | null) {
+  let playlist = await prisma.bostonTvPlaylist.findFirst({
+    where: { tenantId, name: HALL_PLAYLIST_NAME },
+    select: { id: true, name: true },
+  });
+
+  if (!playlist) {
+    playlist = await prisma.bostonTvPlaylist.create({
+      data: { tenantId, name: HALL_PLAYLIST_NAME },
+      select: { id: true, name: true },
+    });
+    console.log(`  + playlist: ${playlist.name}`);
+  } else {
+    console.log(`  · playlist já existe: ${playlist.name}`);
+  }
+
+  const itemCount = await prisma.bostonTvPlaylistItem.count({
+    where: { playlistId: playlist.id },
+  });
+
+  if (itemCount === 0 && tenantLogoUrl?.trim()) {
+    await prisma.bostonTvPlaylistItem.create({
+      data: {
+        playlistId: playlist.id,
+        sortOrder: 0,
+        contentType: 'image_url',
+        url: tenantLogoUrl.trim(),
+        durationSeconds: 15,
+      },
+    });
+    console.log('  + item inicial: logo do clube (15s)');
+  } else if (itemCount === 0) {
+    console.log('  · playlist vazia (sem logo no tenant — adicione itens no dashboard)');
+  }
+
+  const linked = await prisma.bostonTvScreen.updateMany({
+    where: {
+      tenantId,
+      name: { in: HALL_SCREEN_NAMES },
+    },
+    data: {
+      displayMode: 'playlist',
+      playlistId: playlist.id,
+      iptvChannelId: null,
+    },
+  });
+
+  console.log(`  → ${linked.count} telas vinculadas à playlist "${HALL_PLAYLIST_NAME}"`);
+  return playlist;
+}
+
 async function main() {
   const tenant = await prisma.tenant.findFirst({
     where: { slug: TENANT_SLUG },
-    select: { id: true, name: true },
+    select: { id: true, name: true, logoUrl: true },
   });
   if (!tenant) {
     throw new Error(
@@ -74,7 +129,7 @@ async function main() {
     });
     if (existing) {
       skipped += 1;
-      console.log(`  · já existe: ${row.name}`);
+      console.log(`  · tela já existe: ${row.name}`);
       continue;
     }
 
@@ -90,13 +145,17 @@ async function main() {
       select: { id: true, name: true, playerToken: true },
     });
     created += 1;
-    console.log(`  + criada: ${screen.name} → token ${screen.playerToken.slice(0, 12)}…`);
+    console.log(`  + tela: ${screen.name} → token ${screen.playerToken.slice(0, 12)}…`);
   }
 
   console.log('');
+  console.log('Playlist Hall:');
+  await ensureHallPlaylist(tenant.id, tenant.logoUrl);
+
+  console.log('');
   console.log(`Boston TV — ${tenant.name}`);
-  console.log(`  Criadas: ${created} | Já existiam: ${skipped} | Total na planilha: ${HALL_SCREENS.length}`);
-  console.log('  Configure playlist ou canal IPTV em Marketing → Boston TV → Editar cada tela.');
+  console.log(`  Telas criadas: ${created} | Já existiam: ${skipped} | Total: ${HALL_SCREENS.length}`);
+  console.log(`  Edite "${HALL_PLAYLIST_NAME}" em Marketing → Boston TV → Playlists para adicionar conteúdo.`);
 }
 
 main()
