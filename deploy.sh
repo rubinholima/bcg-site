@@ -24,6 +24,8 @@ echo "[deploy] API: prisma migrate + generate + build..."
 cd apps/api
 pnpm exec prisma migrate deploy
 pnpm exec prisma generate
+echo "[deploy] Boston TV — telas Hall (idempotente)..."
+pnpm run seed:boston-tv-hall-screens || echo "[deploy] aviso: seed boston-tv-hall-screens falhou (continuando)"
 rm -rf dist .nest tsconfig.build.tsbuildinfo tsconfig.prod.tsbuildinfo 2>/dev/null || true
 pnpm run build
 if [ ! -f dist/main.js ] && [ ! -f dist/src/main.js ]; then
