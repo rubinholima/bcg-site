@@ -112,6 +112,13 @@ export function BostonTvPlayerView({ token }: { token: string }) {
       return () => window.clearTimeout(t);
     }
     if (current.contentType === "iptv_stream") {
+      if (items.length > 1 && current.durationSeconds) {
+        const sec = Math.max(60, current.durationSeconds);
+        const t = window.setTimeout(() => {
+          setIdx((i) => (i + 1) % items.length);
+        }, sec * 1000);
+        return () => window.clearTimeout(t);
+      }
       return undefined;
     }
     return undefined;

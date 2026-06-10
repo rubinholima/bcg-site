@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import {
+  BostonTvEnabledChannelSelect,
+  formatIptvChannelLabel,
+  type IptvChannelOption,
+} from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 
 type Item = {
   id: string;
@@ -48,6 +53,36 @@ const TYPE_LABEL: Record<string, string> = {
   iptv_stream: "Canal IPTV (ao vivo)",
 };
 
+function extractYoutubeId(url: string): string | null {
+  const v = /[?&]v=([^&]+)/.exec(url);
+  if (v?.[1]) return v[1];
+  const be = /youtu\.be\/([^?]+)/.exec(url);
+  if (be?.[1]) return be[1];
+  return null;
+}
+
+function formatItemContent(item: Item, iptvByStream: Map<string, string>): string {
+  if (item.contentType === "iptv_stream") {
+    return iptvByStream.get(item.url) ?? "Canal IPTV ao vivo";
+  }
+  if (item.contentType === "youtube_video") {
+    const yid = extractYoutubeId(item.url);
+    return yid ? `YouTube — ${yid}` : "YouTube";
+  }
+  if (item.contentType === "image_url" || item.contentType === "video_url") {
+    try {
+      const name = decodeURIComponent(new URL(item.url).pathname.split("/").pop() || "");
+      if (name) {
+        return item.contentType === "image_url" ? `Imagem — ${name}` : `Vídeo — ${name}`;
+      }
+    } catch {
+      /* ignore */
+    }
+    return item.contentType === "image_url" ? "Imagem" : "Vídeo MP4";
+  }
+  return item.url;
+}
+
 export default function EditBostonTvPlaylistPage() {
   const params = useParams();
   const { canAccessModule, loading: authLoading } = useAuth();
@@ -59,6 +94,25 @@ export default function EditBostonTvPlaylistPage() {
   const [ty, setTy] = useState<string>("image_url");
   const [urlIn, setUrlIn] = useState("");
   const [durIn, setDurIn] = useState("15");
+  const [iptvChannelId, setIptvChannelId] = useState("");
+  const [iptvByStream, setIptvByStream] = useState<Map<string, string>>(new Map());
+
+  const loadIptvLabels = useCallback(async (tenantId: string) => {
+    try {
+      const { data } = await api.get<{
+        items: (IptvChannelOption & { streamUrl: string })[];
+      }>(
+        `/boston-tv/iptv/channels?tenantId=${encodeURIComponent(tenantId)}&enabledOnly=1&limit=500`,
+      );
+      const map = new Map<string, string>();
+      for (const ch of data?.items ?? []) {
+        if (ch.streamUrl) map.set(ch.streamUrl, formatIptvChannelLabel(ch));
+      }
+      setIptvByStream(map);
+    } catch {
+      setIptvByStream(new Map());
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,20 +132,43 @@ export default function EditBostonTvPlaylistPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (playlist?.tenantId) void loadIptvLabels(playlist.tenantId);
+  }, [playlist?.tenantId, loadIptvLabels]);
+
   const addItem = async () => {
-    if (!urlIn.trim()) return;
+    if (!playlist) return;
+    let url = urlIn.trim();
     let durationSeconds: number | undefined;
-    if (ty === "image_url") {
-      durationSeconds = Math.max(5, parseInt(durIn, 10) || 15);
-    } else if (ty === "youtube_video" && durIn.trim()) {
-      durationSeconds = Math.max(30, parseInt(durIn, 10) || 480);
+
+    if (ty === "iptv_stream") {
+      if (!iptvChannelId) return;
+      const { data: list } = await api.get<{ items: { id: string; streamUrl: string }[] }>(
+        `/boston-tv/iptv/channels?tenantId=${encodeURIComponent(playlist.tenantId)}&enabledOnly=1&limit=200`,
+      );
+      const found = list?.items?.find((c) => c.id === iptvChannelId);
+      if (!found) {
+        alert("Canal não encontrado ou não liberado.");
+        return;
+      }
+      url = found.streamUrl;
+      durationSeconds = Math.max(60, parseInt(durIn, 10) || 3600);
+    } else {
+      if (!url) return;
+      if (ty === "image_url") {
+        durationSeconds = Math.max(5, parseInt(durIn, 10) || 15);
+      } else if (ty === "youtube_video" && durIn.trim()) {
+        durationSeconds = Math.max(30, parseInt(durIn, 10) || 480);
+      }
     }
+
     await api.post(`/boston-tv/playlists/${id}/items`, {
       contentType: ty,
-      url: urlIn.trim(),
+      url,
       durationSeconds,
     });
     setUrlIn("");
+    setIptvChannelId("");
     await load();
   };
 
@@ -146,66 +223,95 @@ export default function EditBostonTvPlaylistPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{playlist.name}</h1>
           <p className="text-sm text-muted-foreground">
-            Itens são exibidos em ordem, em loop na tela associada.
+            A TV roda estes itens em ordem, em loop. Associe esta playlist numa tela (modo Marketing).
           </p>
         </div>
       </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Como funciona</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground space-y-2">
+          <p><strong>Imagem</strong> — URL da foto + segundos na tela (ex.: banner 15s).</p>
+          <p><strong>Vídeo (URL)</strong> — link direto do .mp4; quando termina, vai pro próximo.</p>
+          <p><strong>YouTube</strong> — link do vídeo (não da playlist); tempo máximo antes do próximo (padrão 8 min).</p>
+          <p><strong>Canal IPTV (live)</strong> — canal liberado; fica X segundos e passa pro próximo item (padrão 1 h).</p>
+          <p className="text-xs pt-1">Canal fixo 24h sem alternar? Use <strong>Tela → Canal IPTV</strong> na página Boston TV, não a playlist.</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Adicionar item</CardTitle>
           <CardDescription>
-            Imagem precisa de duração (segundos). YouTube cole o link do vídeo (não só da playlist). Opcionalmente
-            defina &quot;duração&quot; no backend no futuro; por enquanto o player avança o YouTube em ~8 min se
-            não informar tempo.
+            Escolha o tipo, preencha URL ou canal, e inclua na ordem desejada.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="space-y-2 min-w-[200px]">
             <Label>Tipo</Label>
-            <Select value={ty} onValueChange={setTy}>
-              <SelectTrigger>
-                <SelectValue />
+            <Select value={ty} onValueChange={(v) => { setTy(v); if (v === "iptv_stream") setDurIn("3600"); if (v === "image_url") setDurIn("15"); }}>
+              <SelectTrigger className="text-foreground">
+                <SelectValue placeholder="Tipo de conteúdo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="image_url">{TYPE_LABEL.image_url}</SelectItem>
                 <SelectItem value="video_url">{TYPE_LABEL.video_url}</SelectItem>
                 <SelectItem value="youtube_video">{TYPE_LABEL.youtube_video}</SelectItem>
+                <SelectItem value="iptv_stream">{TYPE_LABEL.iptv_stream}</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          {ty === "image_url" || ty === "youtube_video" ? (
-            <div className="space-y-2 w-36">
+          {ty === "image_url" || ty === "youtube_video" || ty === "iptv_stream" ? (
+            <div className="space-y-2 w-40">
               <Label>
-                {ty === "image_url" ? "Segundos na tela" : "Tempo até próximo (s)"}
+                {ty === "image_url"
+                  ? "Segundos na tela"
+                  : ty === "iptv_stream"
+                    ? "Segundos no ar"
+                    : "Tempo até próximo (s)"}
               </Label>
               <Input
                 type="number"
-                min={ty === "image_url" ? 5 : 30}
+                min={ty === "image_url" ? 5 : ty === "iptv_stream" ? 60 : 30}
                 value={durIn}
                 onChange={(e) => setDurIn(e.target.value)}
                 className="text-foreground"
               />
-              {ty === "youtube_video" ? (
-                <p className="text-xs text-muted-foreground">
-                  Opcional; padrão 480 s se vazio no envio inicial.
-                </p>
-              ) : null}
             </div>
           ) : null}
+          {ty === "iptv_stream" ? (
+            <div className="w-full sm:flex-1 min-w-[240px]">
+              <BostonTvEnabledChannelSelect
+                tenantId={playlist.tenantId}
+                value={iptvChannelId}
+                onChange={setIptvChannelId}
+              />
+            </div>
+          ) : ty !== "iptv_stream" ? (
           <div className="space-y-2 flex-1 min-w-[240px]">
             <Label>URL</Label>
             <Input
               value={urlIn}
               onChange={(e) => setUrlIn(e.target.value)}
-              placeholder="https://..."
+              placeholder={
+                ty === "youtube_video"
+                  ? "https://www.youtube.com/watch?v=..."
+                  : ty === "video_url"
+                    ? "https://.../video.mp4"
+                    : "https://.../imagem.jpg"
+              }
               className="text-foreground"
             />
           </div>
-          <Button type="button" onClick={() => void addItem()}>
+          ) : null}
+          <Button type="button" onClick={() => void addItem()} className="shrink-0">
             <Plus className="mr-2 h-4 w-4" />
             Incluir
           </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -221,7 +327,7 @@ export default function EditBostonTvPlaylistPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>URL</TableHead>
+                  <TableHead>Conteúdo</TableHead>
                   <TableHead>Duração</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
@@ -230,8 +336,8 @@ export default function EditBostonTvPlaylistPage() {
                 {items.map((it) => (
                   <TableRow key={it.id}>
                     <TableCell className="text-sm">{TYPE_LABEL[it.contentType] ?? it.contentType}</TableCell>
-                    <TableCell className="max-w-[360px] truncate text-xs text-muted-foreground">
-                      {it.url}
+                    <TableCell className="max-w-[360px] truncate text-sm text-foreground">
+                      {formatItemContent(it, iptvByStream)}
                     </TableCell>
                     <TableCell className="text-sm">
                       {it.durationSeconds != null ? `${it.durationSeconds}s` : "—"}

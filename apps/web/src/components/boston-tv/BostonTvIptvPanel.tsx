@@ -29,18 +29,9 @@ type IptvChannel = {
 
 interface BostonTvIptvPanelProps {
   tenantId: string;
-  /** Modo escolha de canal para uma tela — só lista canais liberados */
-  assignMode?: boolean;
-  onAssignChannel?: (channel: IptvChannel) => void;
-  assignLabel?: string;
 }
 
-export function BostonTvIptvPanel({
-  tenantId,
-  assignMode = false,
-  onAssignChannel,
-  assignLabel = "Usar na tela",
-}: BostonTvIptvPanelProps) {
+export function BostonTvIptvPanel({ tenantId }: BostonTvIptvPanelProps) {
   const [source, setSource] = useState<IptvSource | null>(null);
   const [enabledCount, setEnabledCount] = useState(0);
   const [playlistUrl, setPlaylistUrl] = useState("https://tinyurl.com/5xzmnjkn");
@@ -93,7 +84,6 @@ export function BostonTvIptvPanel({
         limit: "50",
       });
       if (searchQ) params.set("q", searchQ);
-      if (assignMode) params.set("enabledOnly", "1");
 
       const { data } = await api.get<{
         source: { syncStatus: string; channelCount: number; enabledCount?: number } | null;
@@ -109,7 +99,7 @@ export function BostonTvIptvPanel({
     } finally {
       setLoading(false);
     }
-  }, [tenantId, searchQ, assignMode]);
+  }, [tenantId, searchQ]);
 
   useEffect(() => {
     void loadSource();
@@ -130,10 +120,10 @@ export function BostonTvIptvPanel({
   }, [source?.syncStatus, source?.channelCount, loadEnabledChannels]);
 
   useEffect(() => {
-    if (source?.syncStatus === "done" && (searchQ || assignMode)) {
+    if (source?.syncStatus === "done" && searchQ) {
       void searchChannels();
     }
-  }, [source?.syncStatus, searchQ, assignMode, searchChannels]);
+  }, [source?.syncStatus, searchQ, searchChannels]);
 
   const saveSource = async () => {
     if (!tenantId || !playlistUrl.trim()) return;
@@ -164,7 +154,7 @@ export function BostonTvIptvPanel({
   const toggleEnabled = async (channel: IptvChannel, enabled: boolean) => {
     await api.patch(`/boston-tv/iptv/channels/${channel.id}/enabled`, { enabled });
     await loadEnabledChannels();
-    if (searchQ || assignMode) await searchChannels();
+    if (searchQ) await searchChannels();
   };
 
   const statusLabel =
@@ -184,14 +174,11 @@ export function BostonTvIptvPanel({
           IPTV (lista M3U)
         </CardTitle>
         <CardDescription>
-          {assignMode
-            ? "Escolha um canal liberado para esta tela. A TV só exibe o canal — a escolha é feita aqui no dashboard."
-            : "Sincronize a lista, libere os canais permitidos e depois associe cada um a uma tela. Sem som nas TVs."}
+          Sincronize a lista M3U, busque canais e clique em <strong>Liberar</strong>. Só os liberados aparecem ao criar/editar uma tela.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!assignMode ? (
-          <div className="space-y-2">
+        <div className="space-y-2">
             <Label htmlFor="iptv-url">URL da playlist M3U</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
@@ -227,13 +214,10 @@ export function BostonTvIptvPanel({
               Usuário e senha já vêm dentro da lista M3U — não precisa cadastrar separado.
             </p>
           </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">{statusLabel}</p>
-        )}
 
         {source?.syncStatus === "done" && source.channelCount > 0 ? (
           <>
-            {!assignMode && enabledChannels.length > 0 ? (
+            {enabledChannels.length > 0 ? (
               <div className="space-y-2 border-t border-border pt-4">
                 <Label>Canais liberados ({enabledCount})</Label>
                 <p className="text-xs text-muted-foreground">
@@ -269,9 +253,7 @@ export function BostonTvIptvPanel({
             <div className="space-y-3 border-t border-border pt-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="iptv-q">
-                    {assignMode ? "Buscar entre canais liberados" : "Buscar na lista completa"}
-                  </Label>
+                  <Label htmlFor="iptv-q">Buscar na lista completa</Label>
                   <Input
                     id="iptv-q"
                     value={q}
@@ -293,13 +275,7 @@ export function BostonTvIptvPanel({
                 <p className="text-sm text-muted-foreground">Buscando…</p>
               ) : channels.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  {searchQ
-                    ? assignMode
-                      ? "Nenhum canal liberado com esse nome."
-                      : "Nenhum canal encontrado."
-                    : assignMode
-                      ? "Busque ou veja a lista de liberados acima."
-                      : "Digite um nome e clique em Buscar para liberar canais."}
+                  {searchQ ? "Nenhum canal encontrado." : "Digite um nome e clique em Buscar para liberar canais."}
                 </p>
               ) : (
                 <>
@@ -320,7 +296,7 @@ export function BostonTvIptvPanel({
                           ) : null}
                         </div>
                         <div className="flex flex-wrap gap-2 shrink-0">
-                          {!assignMode && !ch.enabledForSelection ? (
+                          {!ch.enabledForSelection ? (
                             <Button
                               type="button"
                               size="sm"
@@ -330,20 +306,9 @@ export function BostonTvIptvPanel({
                               <Check className="mr-1 h-4 w-4" />
                               Liberar
                             </Button>
-                          ) : null}
-                          {!assignMode && ch.enabledForSelection ? (
+                          ) : (
                             <span className="text-xs text-emerald-500 self-center px-2">Liberado</span>
-                          ) : null}
-                          {onAssignChannel && (assignMode || ch.enabledForSelection) ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => onAssignChannel(ch)}
-                            >
-                              {assignLabel}
-                            </Button>
-                          ) : null}
+                          )}
                         </div>
                       </li>
                     ))}

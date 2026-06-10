@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Clipboard, Plus, RefreshCw, Trash2, Tv } from "lucide-react";
+import { Clipboard, ExternalLink, Plus, RefreshCw, Trash2, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,6 +25,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
+import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 
 interface Tenant {
   id: string;
@@ -50,9 +51,20 @@ interface ScreenRow {
   iptvChannel: { id: string; name: string; groupTitle: string | null } | null;
 }
 
+type ScreenContentMode = "iptv" | "playlist" | "empty";
+
+const DEFAULT_SCHEDULE = '[\n  { "weekdays": [1,2,3,4,5], "start": "08:00", "end": "22:00" }\n]';
+
+function contentModeFromScreen(s: ScreenRow): ScreenContentMode {
+  if (s.displayMode === "iptv" && s.iptvChannel) return "iptv";
+  if (s.playlist) return "playlist";
+  return "empty";
+}
+
 export default function BostonTvDashboardPage() {
   const { tenantIds, canAccessModule, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenantsLoading, setTenantsLoading] = useState(true);
   const [tenantFilter, setTenantFilter] = useState("");
 
   const [playlists, setPlaylists] = useState<PlaylistRow[]>([]);
@@ -61,14 +73,15 @@ export default function BostonTvDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [newPlOpen, setNewPlOpen] = useState(false);
   const [newPlName, setNewPlName] = useState("");
+
   const [newScreenOpen, setNewScreenOpen] = useState(false);
-  const [newScreenName, setNewScreenName] = useState("");
-  const [newScreenLocation, setNewScreenLocation] = useState("");
-  const [newScreenPlaylistId, setNewScreenPlaylistId] = useState<string>("");
-  const [newScreenScheduleJson, setNewScreenScheduleJson] = useState(
-    '[\n  { "weekdays": [1,2,3,4,5], "start": "08:00", "end": "22:00" }\n]',
-  );
-  const [assignScreenId, setAssignScreenId] = useState<string | null>(null);
+  const [editScreen, setEditScreen] = useState<ScreenRow | null>(null);
+  const [screenName, setScreenName] = useState("");
+  const [screenLocation, setScreenLocation] = useState("");
+  const [screenContentMode, setScreenContentMode] = useState<ScreenContentMode>("iptv");
+  const [screenPlaylistId, setScreenPlaylistId] = useState("");
+  const [screenIptvChannelId, setScreenIptvChannelId] = useState("");
+  const [screenScheduleJson, setScreenScheduleJson] = useState(DEFAULT_SCHEDULE);
 
   const effectiveTenant = tenantFilter;
 
@@ -97,24 +110,75 @@ export default function BostonTvDashboardPage() {
 
   useEffect(() => {
     void (async () => {
+      setTenantsLoading(true);
       try {
         const { data } = await api.get<Tenant[]>("/tenants");
         const list = Array.isArray(data) ? data : [];
         setTenants(list);
         setTenantFilter((cur) => {
-          if (cur) return cur;
-          if (tenantIds?.length === 1) return tenantIds[0];
+          if (cur && list.some((t) => t.id === cur)) return cur;
+          if (tenantIds?.length === 1 && list.some((t) => t.id === tenantIds[0])) return tenantIds[0];
           return list[0]?.id ?? "";
         });
       } catch {
         setTenants([]);
+      } finally {
+        setTenantsLoading(false);
       }
     })();
   }, [tenantIds]);
 
+  const tenantSelectValue = useMemo(() => {
+    if (tenantsLoading) return "_loading";
+    if (effectiveTenant && tenants.some((t) => t.id === effectiveTenant)) return effectiveTenant;
+    return "_none";
+  }, [tenantsLoading, effectiveTenant, tenants]);
+
+  const playlistOptions = useMemo(() => {
+    const list = [...playlists];
+    const saved = editScreen?.playlist;
+    if (saved && !list.some((p) => p.id === saved.id)) {
+      list.unshift({ id: saved.id, name: saved.name, tenantId: effectiveTenant });
+    }
+    return list;
+  }, [playlists, editScreen, effectiveTenant]);
+
+  const playlistSelectValue = useMemo(() => {
+    if (!screenPlaylistId) return "_none";
+    return playlistOptions.some((p) => p.id === screenPlaylistId) ? screenPlaylistId : "_none";
+  }, [screenPlaylistId, playlistOptions]);
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  const resetScreenForm = () => {
+    setScreenName("");
+    setScreenLocation("");
+    setScreenContentMode("iptv");
+    setScreenPlaylistId("");
+    setScreenIptvChannelId("");
+    setScreenScheduleJson(DEFAULT_SCHEDULE);
+    setEditScreen(null);
+  };
+
+  const openNewScreen = () => {
+    resetScreenForm();
+    setNewScreenOpen(true);
+  };
+
+  const openEditScreen = (s: ScreenRow) => {
+    setEditScreen(s);
+    setScreenName(s.name);
+    setScreenLocation(s.locationHint ?? "");
+    setScreenContentMode(contentModeFromScreen(s));
+    setScreenPlaylistId(s.playlist?.id ?? "");
+    setScreenIptvChannelId(s.iptvChannel?.id ?? "");
+    setScreenScheduleJson(
+      s.weeklySchedule ? JSON.stringify(s.weeklySchedule, null, 2) : "",
+    );
+    setNewScreenOpen(true);
+  };
 
   const createPlaylist = async () => {
     if (!effectiveTenant || !newPlName.trim()) return;
@@ -127,29 +191,73 @@ export default function BostonTvDashboardPage() {
     await refresh();
   };
 
-  const createScreen = async () => {
-    if (!effectiveTenant || !newScreenName.trim()) return;
-    let weekly: unknown = undefined;
-    const raw = newScreenScheduleJson.trim();
-    if (raw) {
-      try {
-        weekly = JSON.parse(raw) as unknown;
-      } catch {
-        alert("JSON da agenda inválido. Use o exemplo como base ou deixe vazio para 24h.");
-        return;
-      }
+  const parseSchedule = (): unknown | undefined | null => {
+    const raw = screenScheduleJson.trim();
+    if (!raw) return undefined;
+    try {
+      return JSON.parse(raw) as unknown;
+    } catch {
+      alert("JSON da agenda inválido. Deixe vazio para 24h ou use o exemplo.");
+      return null;
     }
-    await api.post("/boston-tv/screens", {
-      tenantId: effectiveTenant,
-      name: newScreenName.trim(),
-      locationHint: newScreenLocation.trim() || undefined,
-      playlistId: newScreenPlaylistId && newScreenPlaylistId !== "_none" ? newScreenPlaylistId : undefined,
-      weeklySchedule: weekly,
-    });
+  };
+
+  const buildScreenPayload = () => {
+    if (screenContentMode === "iptv") {
+      if (!screenIptvChannelId) {
+        alert("Escolha um canal IPTV liberado.");
+        return null;
+      }
+      return {
+        displayMode: "iptv" as const,
+        iptvChannelId: screenIptvChannelId,
+        playlistId: null,
+      };
+    }
+    if (screenContentMode === "playlist") {
+      if (!screenPlaylistId || screenPlaylistId === "_none") {
+        alert("Escolha uma playlist de marketing.");
+        return null;
+      }
+      return {
+        displayMode: "playlist" as const,
+        playlistId: screenPlaylistId,
+        iptvChannelId: null,
+      };
+    }
+    return {
+      displayMode: "playlist" as const,
+      playlistId: null,
+      iptvChannelId: null,
+    };
+  };
+
+  const saveScreen = async () => {
+    if (!effectiveTenant || !screenName.trim()) return;
+    const weekly = parseSchedule();
+    if (weekly === null) return;
+    const content = buildScreenPayload();
+    if (!content) return;
+
+    if (editScreen) {
+      await api.patch(`/boston-tv/screens/${editScreen.id}`, {
+        name: screenName.trim(),
+        locationHint: screenLocation.trim() || null,
+        ...content,
+        weeklySchedule: weekly,
+      });
+    } else {
+      await api.post("/boston-tv/screens", {
+        tenantId: effectiveTenant,
+        name: screenName.trim(),
+        locationHint: screenLocation.trim() || undefined,
+        ...content,
+        weeklySchedule: weekly,
+      });
+    }
+
     setNewScreenOpen(false);
-    setNewScreenName("");
-    setNewScreenLocation("");
-    setNewScreenPlaylistId("");
+    resetScreenForm();
     await refresh();
   };
 
@@ -158,30 +266,16 @@ export default function BostonTvDashboardPage() {
     void navigator.clipboard.writeText(`${base}/tv/play/${token}`);
   };
 
+  const openPlayUrl = (token: string) => {
+    const base = typeof window !== "undefined" ? window.location.origin : "";
+    window.open(`${base}/tv/play/${token}`, "_blank", "noopener,noreferrer");
+  };
+
   const deleteScreen = async (id: string) => {
     if (!confirm("Remover esta tela? O link do player deixará de funcionar.")) return;
     await api.delete(`/boston-tv/screens/${id}`);
     await refresh();
   };
-
-  const assignIptvChannel = async (screenId: string, channelId: string) => {
-    await api.patch(`/boston-tv/screens/${screenId}`, {
-      displayMode: "iptv",
-      iptvChannelId: channelId,
-    });
-    setAssignScreenId(null);
-    await refresh();
-  };
-
-  const clearScreenIptv = async (screenId: string) => {
-    await api.patch(`/boston-tv/screens/${screenId}`, {
-      displayMode: "playlist",
-      iptvChannelId: null,
-    });
-    await refresh();
-  };
-
-  const assignScreen = screens.find((s) => s.id === assignScreenId);
 
   const regenerate = async (id: string) => {
     if (!confirm("Gerar novo token? O link antigo na TV deixará de funcionar.")) return;
@@ -204,23 +298,29 @@ export default function BostonTvDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-      </div>
-
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-2">
           <Label>Empresa / clube</Label>
           <Select
-            value={effectiveTenant || "_"}
-            onValueChange={(v) => setTenantFilter(v === "_" ? "" : v)}
-            disabled={tenants.length === 0}
+            value={tenantSelectValue}
+            onValueChange={(v) => {
+              if (v === "_loading" || v === "_none") return;
+              setTenantFilter(v);
+            }}
+            disabled={tenantsLoading || tenants.length === 0}
           >
-            <SelectTrigger className="w-[280px]">
-              <SelectValue placeholder="Selecione" />
+            <SelectTrigger className="w-[280px] text-foreground">
+              <SelectValue placeholder="Selecione a empresa" />
             </SelectTrigger>
             <SelectContent>
-              {tenants.length === 0 ? (
-                <SelectItem value="_">Carregando…</SelectItem>
+              {tenantsLoading ? (
+                <SelectItem value="_loading" disabled>
+                  Carregando empresas…
+                </SelectItem>
+              ) : tenants.length === 0 ? (
+                <SelectItem value="_none" disabled>
+                  Nenhuma empresa disponível
+                </SelectItem>
               ) : (
                 tenants.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
@@ -233,64 +333,15 @@ export default function BostonTvDashboardPage() {
         </div>
       </div>
 
-      {effectiveTenant ? (
-        <BostonTvIptvPanel
-          tenantId={effectiveTenant}
-          assignMode={Boolean(assignScreenId)}
-          onAssignChannel={
-            assignScreenId
-              ? (ch) => void assignIptvChannel(assignScreenId, ch.id)
-              : undefined
-          }
-          assignLabel={assignScreen ? `Canal em “${assignScreen.name}”` : "Usar na tela"}
-        />
-      ) : null}
-
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <div>
-            <CardTitle>Playlists</CardTitle>
-            <CardDescription>Sequência de conteúdos exibidos em loop na tela</CardDescription>
-          </div>
-          <Button size="sm" onClick={() => setNewPlOpen(true)} disabled={!effectiveTenant}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova playlist
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Carregando…</p>
-          ) : playlists.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma playlist nesta empresa.</p>
-          ) : (
-            <ul className="divide-y divide-border rounded-md border">
-              {playlists.map((p) => (
-                <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {p._count?.items ?? 0} item(ns)
-                  </span>
-                  <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
-                    <Button variant="outline" size="sm">
-                      Editar itens
-                    </Button>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <CardTitle>Telas</CardTitle>
+            <CardTitle>Telas (TVs)</CardTitle>
             <CardDescription>
-              Cada tela tem um link único para abrir na TV. Use o mesmo ambiente (URL) que o dashboard.
+              Crie a tela, escolha canal IPTV ou playlist marketing, copie o link e abra na TV em tela cheia.
             </CardDescription>
           </div>
-          <Button size="sm" onClick={() => setNewScreenOpen(true)} disabled={!effectiveTenant}>
+          <Button size="sm" onClick={openNewScreen} disabled={!effectiveTenant}>
             <Plus className="mr-2 h-4 w-4" />
             Nova tela
           </Button>
@@ -299,7 +350,9 @@ export default function BostonTvDashboardPage() {
           {loading ? (
             <p className="text-sm text-muted-foreground">Carregando…</p>
           ) : screens.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma tela cadastrada.</p>
+            <p className="text-sm text-muted-foreground">
+              Nenhuma tela ainda. Clique <strong>Nova tela</strong> e escolha o canal ou a playlist.
+            </p>
           ) : (
             <ul className="space-y-3">
               {screens.map((s) => {
@@ -308,40 +361,35 @@ export default function BostonTvDashboardPage() {
                 return (
                   <li
                     key={s.id}
-                    className="rounded-lg border border-border p-3 text-sm flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+                    className="rounded-lg border border-border p-3 text-sm flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="font-medium">{s.name}</p>
                       {s.locationHint ? (
                         <p className="text-xs text-muted-foreground">{s.locationHint}</p>
                       ) : null}
-                      <p className="text-xs text-muted-foreground mt-1 break-all">{url}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs mt-2 font-medium text-foreground">
                         {s.displayMode === "iptv" && s.iptvChannel
-                          ? `Canal IPTV: ${s.iptvChannel.name}`
-                          : `Playlist: ${s.playlist?.name ?? "—"}`}{" "}
-                        · Fuso: {s.scheduleTimezone}
+                          ? `Canal: ${s.iptvChannel.name}`
+                          : s.playlist
+                            ? `Marketing: ${s.playlist.name}`
+                            : "Sem conteúdo — clique Editar"}
                       </p>
+                      <p className="text-xs text-muted-foreground mt-1 break-all">{url}</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s.playerToken)}>
+                        <ExternalLink className="mr-1 h-4 w-4" />
+                        Abrir na TV
+                      </Button>
                       <Button type="button" variant="outline" size="sm" onClick={() => copyPlayUrl(s.playerToken)}>
                         <Clipboard className="mr-1 h-4 w-4" />
                         Copiar link
                       </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setAssignScreenId(s.id)}
-                      >
+                      <Button type="button" variant="outline" size="sm" onClick={() => openEditScreen(s)}>
                         <Tv className="mr-1 h-4 w-4" />
-                        {s.displayMode === "iptv" ? "Trocar canal" : "Canal IPTV"}
+                        Editar
                       </Button>
-                      {s.displayMode === "iptv" ? (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => void clearScreenIptv(s.id)}>
-                          Usar playlist
-                        </Button>
-                      ) : null}
                       <Button type="button" variant="outline" size="sm" onClick={() => regenerate(s.id)}>
                         <RefreshCw className="mr-1 h-4 w-4" />
                         Novo token
@@ -364,15 +412,49 @@ export default function BostonTvDashboardPage() {
         </CardContent>
       </Card>
 
-      {assignScreenId && assignScreen ? (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
-          Escolhendo canal IPTV para <strong>{assignScreen.name}</strong>. Busque abaixo e clique em{" "}
-          <strong>{`Canal em “${assignScreen.name}”`}</strong>.
-          <Button type="button" variant="link" className="ml-2 h-auto p-0" onClick={() => setAssignScreenId(null)}>
-            Cancelar
+      {effectiveTenant ? <BostonTvIptvPanel tenantId={effectiveTenant} /> : null}
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle>Playlists (marketing)</CardTitle>
+            <CardDescription>Imagens e vídeos comerciais em loop.</CardDescription>
+          </div>
+          <Button size="sm" onClick={() => setNewPlOpen(true)} disabled={!effectiveTenant}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova playlist
           </Button>
-        </div>
-      ) : null}
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Carregando…</p>
+          ) : playlists.length === 0 ? (
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>Nenhuma playlist. Crie uma e adicione imagens/vídeos.</p>
+              <Button size="sm" variant="outline" onClick={() => setNewPlOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Criar primeira playlist
+              </Button>
+            </div>
+          ) : (
+            <ul className="divide-y divide-border rounded-md border">
+              {playlists.map((p) => (
+                <li key={p.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {p._count?.items ?? 0} item(ns)
+                  </span>
+                  <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
+                    <Button variant="outline" size="sm">
+                      Editar itens
+                    </Button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={newPlOpen} onOpenChange={setNewPlOpen}>
         <DialogContent>
@@ -385,7 +467,8 @@ export default function BostonTvDashboardPage() {
               id="pl-name"
               value={newPlName}
               onChange={(e) => setNewPlName(e.target.value)}
-              placeholder="Ex.: Recepção — loop principal"
+              placeholder="Ex.: Vídeos comerciais Hall"
+              className="text-foreground"
             />
           </div>
           <DialogFooter>
@@ -397,58 +480,108 @@ export default function BostonTvDashboardPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={newScreenOpen} onOpenChange={setNewScreenOpen}>
-        <DialogContent className="max-w-lg">
+      <Dialog
+        open={newScreenOpen}
+        onOpenChange={(open) => {
+          setNewScreenOpen(open);
+          if (!open) resetScreenForm();
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova tela (TV)</DialogTitle>
+            <DialogTitle>{editScreen ? "Editar tela" : "Nova tela (TV)"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="sc-name">Nome *</Label>
+              <Label htmlFor="sc-name">Nome da TV *</Label>
               <Input
                 id="sc-name"
-                value={newScreenName}
-                onChange={(e) => setNewScreenName(e.target.value)}
-                placeholder="Ex.: TV recepção"
+                value={screenName}
+                onChange={(e) => setScreenName(e.target.value)}
+                placeholder="Ex.: 1 - BRASIL"
+                className="text-foreground"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="sc-loc">Local (opcional)</Label>
               <Input
                 id="sc-loc"
-                value={newScreenLocation}
-                onChange={(e) => setNewScreenLocation(e.target.value)}
-                placeholder="Ex.: CT — auditório"
+                value={screenLocation}
+                onChange={(e) => setScreenLocation(e.target.value)}
+                placeholder="Ex.: Canto inferior"
+                className="text-foreground"
               />
             </div>
+
             <div className="space-y-2">
-              <Label>Playlist inicial</Label>
-              <Select value={newScreenPlaylistId || "_none"} onValueChange={setNewScreenPlaylistId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Nenhuma (configure depois)" />
+              <Label>O que esta TV exibe? *</Label>
+              <Select
+                value={screenContentMode}
+                onValueChange={(v) => setScreenContentMode(v as ScreenContentMode)}
+              >
+                <SelectTrigger className="text-foreground">
+                  <SelectValue placeholder="Escolha o tipo de exibição" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">Nenhuma</SelectItem>
-                  {playlists.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="iptv">Canal IPTV (ao vivo, sem som)</SelectItem>
+                  <SelectItem value="playlist">Marketing (playlist de imagens/vídeos)</SelectItem>
+                  <SelectItem value="empty">Nada por enquanto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {screenContentMode === "iptv" && effectiveTenant ? (
+              <BostonTvEnabledChannelSelect
+                tenantId={effectiveTenant}
+                value={screenIptvChannelId}
+                onChange={setScreenIptvChannelId}
+                fallbackChannel={editScreen?.iptvChannel ?? undefined}
+              />
+            ) : null}
+
+            {screenContentMode === "playlist" ? (
+              <div className="space-y-2">
+                <Label>Playlist de marketing *</Label>
+                {playlists.length === 0 ? (
+                  <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground space-y-2">
+                    <p>Nenhuma playlist criada.</p>
+                    <Button type="button" size="sm" variant="secondary" onClick={() => setNewPlOpen(true)}>
+                      Criar playlist
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    value={playlistSelectValue}
+                    onValueChange={(v) => setScreenPlaylistId(v === "_none" ? "" : v)}
+                  >
+                    <SelectTrigger className="text-foreground">
+                      <SelectValue placeholder="Escolha a playlist" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Selecione…</SelectItem>
+                      {playlistOptions.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} ({p._count?.items ?? 0} itens)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            ) : null}
+
             <div className="space-y-2">
-              <Label htmlFor="sc-sch">Agenda semanal (JSON, opcional)</Label>
+              <Label htmlFor="sc-sch">Horário (JSON, opcional)</Label>
               <Textarea
                 id="sc-sch"
-                rows={6}
-                className="font-mono text-xs"
-                value={newScreenScheduleJson}
-                onChange={(e) => setNewScreenScheduleJson(e.target.value)}
+                rows={4}
+                className="font-mono text-xs text-foreground"
+                value={screenScheduleJson}
+                onChange={(e) => setScreenScheduleJson(e.target.value)}
+                placeholder="Vazio = 24h"
               />
               <p className="text-xs text-muted-foreground">
-                Vazio = conteúdo 24h. Com janelas = fora do horário a tela fica em blecaute. Dias: 1=seg …
-                7=dom.
+                Deixe vazio para 24h. Fora do horário = tela preta (blecaute).
               </p>
             </div>
           </div>
@@ -456,7 +589,9 @@ export default function BostonTvDashboardPage() {
             <Button variant="outline" onClick={() => setNewScreenOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={() => void createScreen()}>Criar tela</Button>
+            <Button onClick={() => void saveScreen()}>
+              {editScreen ? "Salvar" : "Criar tela"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
