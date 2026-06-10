@@ -1,5 +1,5 @@
 /**
- * Seed: 20 Smart TVs + telão Brasil — Boston City Hall (espaço multiuso).
+ * Seed: 20 Smart TVs + telão — tenant Boston City FC Brasil (espaço multiuso / Hall).
  * Idempotente: não duplica telas com o mesmo nome no tenant.
  *
  * Rodar (monorepo):
@@ -19,13 +19,13 @@ if (!process.env.DATABASE_URL) {
 const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
 const prisma = new PrismaClient();
 
-const TENANT_SLUG = 'boston-city-hall';
+const TENANT_SLUG = 'boston-city-fc-brasil';
 
 function newPlayerToken(): string {
   return randomBytes(24).toString('hex');
 }
 
-/** Planilha TVs — espaço multiuso Boston City Hall */
+/** Planilha TVs — espaço multiuso (Boston City FC Brasil) */
 const HALL_SCREENS: Array<{ name: string; locationHint: string }> = [
   { name: 'USA', locationHint: 'Canto bar direita · Samsung 65S62' },
   { name: 'Colômbia', locationHint: 'Diagonal bar direita · Samsung 55S62' },
@@ -60,7 +60,7 @@ async function main() {
   });
   if (!tenant) {
     throw new Error(
-      `Tenant "${TENANT_SLUG}" não encontrado. Rode pnpm --filter api run seed:boston-city-hall primeiro.`,
+      `Tenant "${TENANT_SLUG}" não encontrado. Verifique o slug do clube no banco.`,
     );
   }
 
