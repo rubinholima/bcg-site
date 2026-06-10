@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -17,12 +18,14 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { BostonTvService } from './boston-tv.service';
+import { BostonTvIptvService } from './boston-tv-iptv.service';
 import { CreateBostonTvPlaylistDto } from './dto/create-boston-tv-playlist.dto';
 import { PatchBostonTvPlaylistDto } from './dto/patch-boston-tv-playlist.dto';
 import { CreateBostonTvPlaylistItemDto } from './dto/create-boston-tv-item.dto';
 import { PatchBostonTvPlaylistItemDto } from './dto/patch-boston-tv-item.dto';
 import { CreateBostonTvScreenDto } from './dto/create-boston-tv-screen.dto';
 import { PatchBostonTvScreenDto } from './dto/patch-boston-tv-screen.dto';
+import { UpsertBostonTvIptvSourceDto } from './dto/upsert-boston-tv-iptv-source.dto';
 
 @Controller('boston-tv')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -30,6 +33,7 @@ import { PatchBostonTvScreenDto } from './dto/patch-boston-tv-screen.dto';
 export class BostonTvController {
   constructor(
     private readonly bostonTv: BostonTvService,
+    private readonly bostonTvIptv: BostonTvIptvService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -150,10 +154,83 @@ export class BostonTvController {
       name: dto.name,
       locationHint: dto.locationHint,
       playlistId: dto.playlistId,
+      displayMode: dto.displayMode,
+      iptvChannelId: dto.iptvChannelId,
       scheduleTimezone: dto.scheduleTimezone,
       weeklySchedule: dto.weeklySchedule,
       allowedTenantIds: allowed,
     });
+  }
+
+  @Get('iptv/source')
+  async getIptvSource(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    const allowed = await this.allowedIds(req);
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    return this.bostonTvIptv.getSourceForTenantScoped(tenantId.trim(), allowed);
+  }
+
+  @Post('iptv/source')
+  async upsertIptvSource(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: UpsertBostonTvIptvSourceDto,
+  ) {
+    const allowed = await this.allowedIds(req);
+    return this.bostonTvIptv.upsertSource({
+      tenantId: dto.tenantId,
+      playlistUrl: dto.playlistUrl,
+      name: dto.name,
+      allowedTenantIds: allowed,
+    });
+  }
+
+  @Post('iptv/sync')
+  async syncIptv(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    const allowed = await this.allowedIds(req);
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    return this.bostonTvIptv.startSyncForTenant(tenantId.trim(), allowed);
+  }
+
+  @Get('iptv/channels')
+  async searchIptvChannels(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+    @Query('q') q?: string,
+    @Query('group') group?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('enabledOnly') enabledOnly?: string,
+  ) {
+    const allowed = await this.allowedIds(req);
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    return this.bostonTvIptv.searchChannels({
+      tenantId: tenantId.trim(),
+      q,
+      group,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 40,
+      enabledOnly: enabledOnly === '1' || enabledOnly === 'true',
+      allowedTenantIds: allowed,
+    });
+  }
+
+  @Patch('iptv/channels/:channelId/enabled')
+  async setIptvChannelEnabled(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('channelId') channelId: string,
+    @Body() body: { enabled: boolean },
+  ) {
+    const allowed = await this.allowedIds(req);
+    return this.bostonTvIptv.setChannelEnabled(
+      channelId,
+      Boolean(body.enabled),
+      allowed,
+    );
   }
 
   @Patch('screens/:id')
@@ -169,6 +246,8 @@ export class BostonTvController {
         name: dto.name,
         locationHint: dto.locationHint,
         playlistId: dto.playlistId,
+        displayMode: dto.displayMode,
+        iptvChannelId: dto.iptvChannelId,
         scheduleTimezone: dto.scheduleTimezone,
         weeklySchedule: dto.weeklySchedule,
       },

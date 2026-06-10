@@ -4,11 +4,12 @@ import { ModulesModule } from '../modules/modules.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { BostonTvController } from './boston-tv.controller';
 import { BostonTvService } from './boston-tv.service';
+import { BostonTvIptvService } from './boston-tv-iptv.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, ModulesModule],
   controllers: [BostonTvController],
-  providers: [BostonTvService],
-  exports: [BostonTvService],
+  providers: [BostonTvService, BostonTvIptvService],
+  exports: [BostonTvService, BostonTvIptvService],
 })
 export class BostonTvModule {}

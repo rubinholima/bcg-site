@@ -14,6 +14,15 @@ export class PatchBostonTvScreenDto {
   @IsString()
   playlistId?: string | null;
 
+  /** playlist | iptv */
+  @IsOptional()
+  @IsString()
+  displayMode?: string;
+
+  @IsOptional()
+  @IsString()
+  iptvChannelId?: string | null;
+
   @IsOptional()
   @IsString()
   scheduleTimezone?: string;

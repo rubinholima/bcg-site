@@ -45,6 +45,7 @@ const TYPE_LABEL: Record<string, string> = {
   image_url: "Imagem (URL)",
   video_url: "Vídeo (arquivo URL)",
   youtube_video: "YouTube (URL do vídeo)",
+  iptv_stream: "Canal IPTV (ao vivo)",
 };
 
 export default function EditBostonTvPlaylistPage() {

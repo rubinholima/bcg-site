@@ -120,6 +120,7 @@ model Tenant {
   marketingPosts        MarketingPost[]
   bostonTvPlaylists     BostonTvPlaylist[]
   bostonTvScreens       BostonTvScreen[]
+  bostonTvIptvSources   BostonTvIptvSource[]
   travelLogistics       TravelLogistics[]
   footballAgendaEntries FootballAgendaEntry[]
   footballActivitySpaces FootballActivitySpace[]
@@ -1450,7 +1451,7 @@ model BostonTvPlaylistItem {
   playlistId      String
   playlist        BostonTvPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   sortOrder       Int      @default(0)
-  /** image_url | video_url | youtube_video */
+  /** image_url | video_url | youtube_video | iptv_stream */
   contentType     String
   url             String   @db.Text
   /** Imagem/slide: obrigatório (segundos na tela). Vídeo: opcional. */
@@ -1461,6 +1462,46 @@ model BostonTvPlaylistItem {
   @@index([playlistId])
 }
 
+model BostonTvIptvSource {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String   @default("IPTV")
+  playlistUrl  String   @db.Text
+  lastSyncedAt DateTime?
+  channelCount Int      @default(0)
+  /** idle | syncing | done | error */
+  syncStatus   String   @default("idle")
+  syncError    String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  channels     BostonTvIptvChannel[]
+
+  @@index([tenantId])
+}
+
+model BostonTvIptvChannel {
+  id            String   @id @default(cuid())
+  sourceId      String
+  source        BostonTvIptvSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  name          String
+  groupTitle    String?
+  logoUrl       String?  @db.Text
+  streamUrl     String   @db.Text
+  streamUrlHash String
+  tvgId         String?
+  sortOrder     Int      @default(0)
+  /** Liberado para escolha nas telas Boston TV */
+  enabledForSelection Boolean @default(false)
+  createdAt     DateTime @default(now())
+  screens       BostonTvScreen[]
+
+  @@unique([sourceId, streamUrlHash])
+  @@index([sourceId])
+  @@index([sourceId, name])
+  @@index([sourceId, enabledForSelection])
+}
+
 model BostonTvScreen {
   id               String   @id @default(cuid())
   tenantId         String
@@ -1469,6 +1510,10 @@ model BostonTvScreen {
   locationHint     String?
   /** Token secreto na URL pública do player */
   playerToken      String   @unique
+  /** playlist = loop da playlist | iptv = canal fixo */
+  displayMode      String   @default("playlist")
+  iptvChannelId    String?
+  iptvChannel      BostonTvIptvChannel? @relation(fields: [iptvChannelId], references: [id], onDelete: SetNull)
   playlistId       String?
   playlist         BostonTvPlaylist? @relation(fields: [playlistId], references: [id], onDelete: SetNull)
   scheduleTimezone String   @default("America/Sao_Paulo")

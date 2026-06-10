@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isWithinContentWindow } from "@/lib/boston-tv-schedule";
+import { HlsStreamPlayer } from "@/components/boston-tv/HlsStreamPlayer";
 
 export type BostonTvPlayerItem = {
   id: string;
@@ -9,6 +10,7 @@ export type BostonTvPlayerItem = {
   url: string;
   durationSeconds: number | null;
   sortOrder: number;
+  channelName?: string;
 };
 
 export type BostonTvPlayerPayload = {
@@ -17,6 +19,7 @@ export type BostonTvPlayerPayload = {
   scheduleTimezone: string;
   weeklySchedule: unknown;
   playlistName: string | null;
+  displayMode?: string;
   items: BostonTvPlayerItem[];
 };
 
@@ -108,6 +111,9 @@ export function BostonTvPlayerView({ token }: { token: string }) {
       }, sec * 1000);
       return () => window.clearTimeout(t);
     }
+    if (current.contentType === "iptv_stream") {
+      return undefined;
+    }
     return undefined;
   }, [current, items.length, idx]);
 
@@ -175,6 +181,16 @@ export function BostonTvPlayerView({ token }: { token: string }) {
           onEnded={() => setIdx((i) => (i + 1) % items.length)}
         />
       </div>
+    );
+  }
+
+  if (current.contentType === "iptv_stream") {
+    return (
+      <HlsStreamPlayer
+        url={current.url}
+        className="h-screen w-screen"
+        label={current.channelName}
+      />
     );
   }
 

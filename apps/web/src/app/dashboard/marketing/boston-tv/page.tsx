@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 
 interface Tenant {
   id: string;
@@ -42,9 +43,11 @@ interface ScreenRow {
   name: string;
   locationHint: string | null;
   playerToken: string;
+  displayMode: string;
   scheduleTimezone: string;
   weeklySchedule: unknown;
   playlist: { id: string; name: string } | null;
+  iptvChannel: { id: string; name: string; groupTitle: string | null } | null;
 }
 
 export default function BostonTvDashboardPage() {
@@ -65,6 +68,7 @@ export default function BostonTvDashboardPage() {
   const [newScreenScheduleJson, setNewScreenScheduleJson] = useState(
     '[\n  { "weekdays": [1,2,3,4,5], "start": "08:00", "end": "22:00" }\n]',
   );
+  const [assignScreenId, setAssignScreenId] = useState<string | null>(null);
 
   const effectiveTenant = tenantFilter;
 
@@ -160,6 +164,25 @@ export default function BostonTvDashboardPage() {
     await refresh();
   };
 
+  const assignIptvChannel = async (screenId: string, channelId: string) => {
+    await api.patch(`/boston-tv/screens/${screenId}`, {
+      displayMode: "iptv",
+      iptvChannelId: channelId,
+    });
+    setAssignScreenId(null);
+    await refresh();
+  };
+
+  const clearScreenIptv = async (screenId: string) => {
+    await api.patch(`/boston-tv/screens/${screenId}`, {
+      displayMode: "playlist",
+      iptvChannelId: null,
+    });
+    await refresh();
+  };
+
+  const assignScreen = screens.find((s) => s.id === assignScreenId);
+
   const regenerate = async (id: string) => {
     if (!confirm("Gerar novo token? O link antigo na TV deixará de funcionar.")) return;
     await api.post(`/boston-tv/screens/${id}/regenerate-token`, {});
@@ -209,6 +232,19 @@ export default function BostonTvDashboardPage() {
           </Select>
         </div>
       </div>
+
+      {effectiveTenant ? (
+        <BostonTvIptvPanel
+          tenantId={effectiveTenant}
+          assignMode={Boolean(assignScreenId)}
+          onAssignChannel={
+            assignScreenId
+              ? (ch) => void assignIptvChannel(assignScreenId, ch.id)
+              : undefined
+          }
+          assignLabel={assignScreen ? `Canal em “${assignScreen.name}”` : "Usar na tela"}
+        />
+      ) : null}
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -281,7 +317,10 @@ export default function BostonTvDashboardPage() {
                       ) : null}
                       <p className="text-xs text-muted-foreground mt-1 break-all">{url}</p>
                       <p className="text-xs text-muted-foreground">
-                        Playlist: {s.playlist?.name ?? "—"} · Fuso: {s.scheduleTimezone}
+                        {s.displayMode === "iptv" && s.iptvChannel
+                          ? `Canal IPTV: ${s.iptvChannel.name}`
+                          : `Playlist: ${s.playlist?.name ?? "—"}`}{" "}
+                        · Fuso: {s.scheduleTimezone}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -289,6 +328,20 @@ export default function BostonTvDashboardPage() {
                         <Clipboard className="mr-1 h-4 w-4" />
                         Copiar link
                       </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAssignScreenId(s.id)}
+                      >
+                        <Tv className="mr-1 h-4 w-4" />
+                        {s.displayMode === "iptv" ? "Trocar canal" : "Canal IPTV"}
+                      </Button>
+                      {s.displayMode === "iptv" ? (
+                        <Button type="button" variant="ghost" size="sm" onClick={() => void clearScreenIptv(s.id)}>
+                          Usar playlist
+                        </Button>
+                      ) : null}
                       <Button type="button" variant="outline" size="sm" onClick={() => regenerate(s.id)}>
                         <RefreshCw className="mr-1 h-4 w-4" />
                         Novo token
@@ -310,6 +363,16 @@ export default function BostonTvDashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      {assignScreenId && assignScreen ? (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+          Escolhendo canal IPTV para <strong>{assignScreen.name}</strong>. Busque abaixo e clique em{" "}
+          <strong>{`Canal em “${assignScreen.name}”`}</strong>.
+          <Button type="button" variant="link" className="ml-2 h-auto p-0" onClick={() => setAssignScreenId(null)}>
+            Cancelar
+          </Button>
+        </div>
+      ) : null}
 
       <Dialog open={newPlOpen} onOpenChange={setNewPlOpen}>
         <DialogContent>

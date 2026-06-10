@@ -7,7 +7,7 @@ import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
-const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video'] as const;
+const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream'] as const;
 
 @Injectable()
 export class BostonTvService {
@@ -40,6 +40,10 @@ export class BostonTvService {
         );
       }
     }
+    if (contentType === 'iptv_stream') {
+      // Canal ao vivo — sem duração fixa
+      return;
+    }
   }
 
   private parseWeekly(raw: unknown): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue {
@@ -56,6 +60,7 @@ export class BostonTvService {
       where: { playerToken },
       include: {
         tenant: { select: { id: true, name: true } },
+        iptvChannel: true,
         playlist: {
           include: {
             items: { orderBy: { sortOrder: 'asc' } },
@@ -66,6 +71,31 @@ export class BostonTvService {
     if (!screen) {
       throw new NotFoundException('Tela não encontrada ou token inválido.');
     }
+
+    if (screen.displayMode === 'iptv' && screen.iptvChannel) {
+      const ch = screen.iptvChannel;
+      return {
+        screenId: screen.id,
+        screenName: screen.name,
+        tenantName: screen.tenant.name,
+        scheduleTimezone: screen.scheduleTimezone,
+        weeklySchedule: screen.weeklySchedule ?? null,
+        playlistId: null,
+        playlistName: null,
+        displayMode: 'iptv',
+        items: [
+          {
+            id: ch.id,
+            contentType: 'iptv_stream',
+            url: ch.streamUrl,
+            durationSeconds: null,
+            sortOrder: 0,
+            channelName: ch.name,
+          },
+        ],
+      };
+    }
+
     const items = screen.playlist?.items ?? [];
     return {
       screenId: screen.id,
@@ -75,6 +105,7 @@ export class BostonTvService {
       weeklySchedule: screen.weeklySchedule ?? null,
       playlistId: screen.playlist?.id ?? null,
       playlistName: screen.playlist?.name ?? null,
+      displayMode: 'playlist',
       items: items.map((it) => ({
         id: it.id,
         contentType: it.contentType,
@@ -128,6 +159,7 @@ export class BostonTvService {
       orderBy: { createdAt: 'desc' },
       include: {
         playlist: { select: { id: true, name: true } },
+        iptvChannel: { select: { id: true, name: true, groupTitle: true } },
       },
     });
   }
@@ -264,14 +296,19 @@ export class BostonTvService {
     name: string;
     locationHint?: string;
     playlistId?: string | null;
+    displayMode?: string;
+    iptvChannelId?: string | null;
     scheduleTimezone?: string;
     weeklySchedule?: unknown;
     allowedTenantIds: string[] | null,
   }) {
     this.assertTenant(input.allowedTenantIds, input.tenantId);
 
+    const displayMode =
+      input.displayMode?.trim() === 'iptv' ? 'iptv' : 'playlist';
+
     let playlistId: string | undefined;
-    if (input.playlistId) {
+    if (displayMode === 'playlist' && input.playlistId) {
       const pl = await this.prisma.bostonTvPlaylist.findFirst({
         where: {
           id: input.playlistId,
@@ -284,13 +321,35 @@ export class BostonTvService {
       playlistId = input.playlistId;
     }
 
+    let iptvChannelId: string | undefined;
+    if (displayMode === 'iptv') {
+      if (!input.iptvChannelId) {
+        throw new BadRequestException('Selecione um canal IPTV para esta tela.');
+      }
+      const ch = await this.prisma.bostonTvIptvChannel.findFirst({
+        where: {
+          id: input.iptvChannelId,
+          source: { tenantId: input.tenantId },
+          enabledForSelection: true,
+        },
+      });
+      if (!ch) {
+        throw new BadRequestException(
+          'Canal não liberado. Libere o canal na lista IPTV antes de usar na tela.',
+        );
+      }
+      iptvChannelId = ch.id;
+    }
+
     return this.prisma.bostonTvScreen.create({
       data: {
         tenantId: input.tenantId,
         name: input.name.trim(),
         locationHint: input.locationHint?.trim() ?? null,
         playerToken: this.newPlayerToken(),
+        displayMode,
         ...(playlistId ? { playlistId } : {}),
+        ...(iptvChannelId ? { iptvChannelId } : {}),
         scheduleTimezone:
           input.scheduleTimezone?.trim() || 'America/Sao_Paulo',
         ...(input.weeklySchedule !== undefined
@@ -311,6 +370,8 @@ export class BostonTvService {
       name?: string;
       locationHint?: string | null;
       playlistId?: string | null;
+      displayMode?: string;
+      iptvChannelId?: string | null;
       scheduleTimezone?: string;
       weeklySchedule?: unknown;
     },
@@ -334,6 +395,17 @@ export class BostonTvService {
       data.weeklySchedule = this.parseWeekly(input.weeklySchedule);
     }
 
+    if (input.displayMode !== undefined) {
+      const mode = input.displayMode.trim() === 'iptv' ? 'iptv' : 'playlist';
+      data.displayMode = mode;
+      if (mode === 'playlist') {
+        data.iptvChannel = { disconnect: true };
+      }
+      if (mode === 'iptv') {
+        data.playlist = { disconnect: true };
+      }
+    }
+
     if (input.playlistId !== undefined) {
       if (input.playlistId === null) {
         data.playlist = { disconnect: true };
@@ -346,6 +418,30 @@ export class BostonTvService {
         });
         if (!pl) throw new BadRequestException('Playlist inválida.');
         data.playlist = { connect: { id: pl.id } };
+        data.displayMode = 'playlist';
+        data.iptvChannel = { disconnect: true };
+      }
+    }
+
+    if (input.iptvChannelId !== undefined) {
+      if (input.iptvChannelId === null) {
+        data.iptvChannel = { disconnect: true };
+      } else {
+        const ch = await this.prisma.bostonTvIptvChannel.findFirst({
+          where: {
+            id: input.iptvChannelId,
+            source: { tenantId: scr.tenantId },
+            enabledForSelection: true,
+          },
+        });
+        if (!ch) {
+          throw new BadRequestException(
+            'Canal não liberado. Libere o canal na lista IPTV antes de usar na tela.',
+          );
+        }
+        data.iptvChannel = { connect: { id: ch.id } };
+        data.displayMode = 'iptv';
+        data.playlist = { disconnect: true };
       }
     }
 

@@ -1,0 +1,132 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+type HlsInstance = { destroy: () => void };
+
+interface HlsStreamPlayerProps {
+  url: string;
+  className?: string;
+  label?: string;
+}
+
+function candidateUrls(url: string): string[] {
+  const u = url.trim();
+  const out = [u];
+  if (!u.includes(".m3u8")) {
+    out.push(`${u}.m3u8`, `${u}/index.m3u8`);
+  }
+  return [...new Set(out)];
+}
+
+export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [activeUrl, setActiveUrl] = useState(url);
+
+  useEffect(() => {
+    setError(null);
+    setActiveUrl(url);
+    const video = videoRef.current;
+    if (!video || !url.trim()) return;
+
+    let hlsInstance: HlsInstance | null = null;
+    let cancelled = false;
+
+    const destroyHls = () => {
+      hlsInstance?.destroy();
+      hlsInstance = null;
+    };
+
+    const tryPlay = async (streamUrl: string) => {
+      if (cancelled) return false;
+      video.muted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+
+      const HlsMod = (await import("hls.js")).default;
+      if (HlsMod.isSupported()) {
+        destroyHls();
+        const instance = new HlsMod({
+          enableWorker: true,
+          lowLatencyMode: true,
+          maxBufferLength: 30,
+        });
+        hlsInstance = instance;
+        return new Promise<boolean>((resolve) => {
+          instance.loadSource(streamUrl);
+          instance.attachMedia(video);
+          instance.on(HlsMod.Events.MANIFEST_PARSED, () => {
+            void video.play().then(() => resolve(true)).catch(() => resolve(false));
+          });
+          instance.on(HlsMod.Events.ERROR, (_e, data) => {
+            if (data.fatal) resolve(false);
+          });
+          window.setTimeout(() => resolve(false), 8000);
+        });
+      }
+
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = streamUrl;
+        try {
+          await video.play();
+          return true;
+        } catch {
+          return false;
+        }
+      }
+
+      video.src = streamUrl;
+      try {
+        await video.play();
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    void (async () => {
+      for (const candidate of candidateUrls(url)) {
+        if (cancelled) break;
+        const ok = await tryPlay(candidate);
+        if (ok) {
+          setActiveUrl(candidate);
+          setError(null);
+          return;
+        }
+        destroyHls();
+        video.removeAttribute("src");
+        video.load();
+      }
+      if (!cancelled) {
+        setError("Não foi possível reproduzir este canal no navegador.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      destroyHls();
+    };
+  }, [url]);
+
+  if (error) {
+    return (
+      <div className={`flex h-full w-full flex-col items-center justify-center bg-black text-zinc-400 ${className}`}>
+        <p className="text-sm px-4 text-center">{error}</p>
+        {label ? <p className="mt-2 text-xs text-zinc-600">{label}</p> : null}
+        <p className="mt-4 max-w-lg truncate text-[10px] text-zinc-700 px-4">{activeUrl}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative h-full w-full bg-black ${className}`}>
+      <video ref={videoRef} className="h-full w-full object-contain" muted playsInline />
+      {label ? (
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3">
+          <p className="text-sm text-white/90 truncate">{label}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
