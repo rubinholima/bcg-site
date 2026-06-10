@@ -25,6 +25,7 @@ type IptvChannel = {
   logoUrl: string | null;
   streamUrl: string;
   enabledForSelection?: boolean;
+  playable?: boolean;
 };
 
 interface BostonTvIptvPanelProps {
@@ -288,7 +289,9 @@ export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPa
                           ) : null}
                         </div>
                         <div className="flex flex-wrap gap-2 shrink-0">
-                          {!ch.enabledForSelection ? (
+                          {ch.playable === false ? (
+                            <span className="text-xs text-amber-500 self-center px-2">Não é stream TV</span>
+                          ) : !ch.enabledForSelection ? (
                             <Button
                               type="button"
                               size="sm"

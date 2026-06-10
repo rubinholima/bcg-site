@@ -73,8 +73,10 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
   },
   "/dashboard/marketing/boston-tv": {
     title: "Boston TV",
-    description:
-      "Sinalização digital: playlists, telas Smart TV e blecaute fora da agenda configurada.",
+  },
+  "/dashboard/marketing/boston-tv/playlists": {
+    title: "Editar playlist",
+    backHref: "/dashboard/marketing/boston-tv",
   },
   "/dashboard/cadastros/jogadores/arquivo": {
     title: "Atletas desligados",
@@ -129,9 +131,25 @@ function humanizeSegment(segment: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** IDs Prisma/cuid ou UUID — não usar como título de página. */
+function isLikelyDbId(segment: string): boolean {
+  return /^c[a-z0-9]{20,}$/i.test(segment) || /^[0-9a-f-]{20,}$/i.test(segment);
+}
+
+function titleForDynamicSegment(pathname: string, lastSegment: string): string | null {
+  if (!isLikelyDbId(lastSegment)) return null;
+  if (pathname.includes("/boston-tv/playlists/")) return "Editar playlist";
+  if (pathname.includes("/playlists/")) return "Editar playlist";
+  return null;
+}
+
 export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | null {
   const cleanPath = pathname.split("?")[0]!;
-  const override = PAGE_META_OVERRIDES[cleanPath];
+  const overrideExact = PAGE_META_OVERRIDES[cleanPath];
+  const overridePrefix = Object.entries(PAGE_META_OVERRIDES).find(
+    ([key]) => key !== cleanPath && cleanPath.startsWith(`${key}/`),
+  )?.[1];
+  const override = overrideExact ?? overridePrefix;
   const match = findBestMenuMatch(cleanPath);
 
   if (!match && !override) {
@@ -154,15 +172,19 @@ export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | 
   let title = subTitle ?? baseTitle;
   if (isSubpath && !subTitle) {
     const last = cleanPath.split("/").pop()!;
-    if (/^\[.*\]$/.test(last) || last === "edit" || last === "editar" || last === "delete") {
+    const dynamicTitle = titleForDynamicSegment(cleanPath, last);
+    if (dynamicTitle) {
+      title = dynamicTitle;
+    } else if (/^\[.*\]$/.test(last) || last === "edit" || last === "editar" || last === "delete") {
       title = baseTitle;
-    } else if (!SUBPATH_TITLE[last]) {
+    } else if (!SUBPATH_TITLE[last] && !isLikelyDbId(last)) {
       title = humanizeSegment(last);
     }
   }
 
   const backHref =
-    match && isSubpath && match.href !== cleanPath ? match.href : undefined;
+    override?.backHref ??
+    (match && isSubpath && match.href !== cleanPath ? match.href : undefined);
 
   return {
     section: dept?.label ?? "Dashboard",
@@ -194,6 +216,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/manual$/,
   /^\/dashboard\/ferramentas\/fmf-scraper$/,
   /^\/dashboard\/ferramentas\/beatscode-import$/,
+  /^\/dashboard\/marketing\/boston-tv\/playlists\//,
   /^\/dashboard\/cadastros\/jogadores\/[^/]+\/edit$/,
   /^\/dashboard\/medico\/[^/]+$/,
   /^\/dashboard\/juridico\/[^/]+$/,

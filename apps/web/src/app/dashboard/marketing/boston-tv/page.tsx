@@ -344,7 +344,6 @@ export default function BostonTvDashboardPage() {
 
       <BostonTvCollapsibleSection
         title="Playlists (marketing)"
-        description="Imagens, vídeos, YouTube e trechos de live em loop. Crie a playlist antes de associar numa tela."
         open={playlistsOpen}
         onOpenChange={setPlaylistsOpen}
         actions={
@@ -385,7 +384,6 @@ export default function BostonTvDashboardPage() {
 
       <BostonTvCollapsibleSection
         title="Telas (TVs)"
-        description="Associe canal IPTV ou playlist, copie o link e abra na TV em tela cheia."
         open={screensOpen}
         onOpenChange={setScreensOpen}
         actions={
@@ -462,7 +460,6 @@ export default function BostonTvDashboardPage() {
       {effectiveTenant ? (
         <BostonTvCollapsibleSection
           title="IPTV (lista M3U)"
-          description="Sincronize a lista M3U, busque canais e clique em Liberar. Só os liberados aparecem ao criar/editar uma tela."
           open={iptvOpen}
           onOpenChange={setIptvOpen}
         >
@@ -570,25 +567,17 @@ export default function BostonTvDashboardPage() {
                     }))}
                   />
                 )}
-                <p className="text-xs text-muted-foreground">
-                  A TV roda os itens da playlist em loop. Edite os itens em Playlists → Editar itens.
-                </p>
               </div>
             ) : null}
 
             {screenContentMode === "iptv" && effectiveTenant ? (
-              <>
-                <BostonTvEnabledChannelSelect
-                  tenantId={effectiveTenant}
-                  value={screenIptvChannelId}
-                  onChange={setScreenIptvChannelId}
-                  fallbackChannel={editScreen?.iptvChannel ?? undefined}
-                  id="sc-iptv-channel"
-                />
-                <p className="text-xs text-muted-foreground -mt-2">
-                  Um canal só, sem alternar. Para mix de conteúdos, use <strong>Playlist da TV</strong>.
-                </p>
-              </>
+              <BostonTvEnabledChannelSelect
+                tenantId={effectiveTenant}
+                value={screenIptvChannelId}
+                onChange={setScreenIptvChannelId}
+                fallbackChannel={editScreen?.iptvChannel ?? undefined}
+                id="sc-iptv-channel"
+              />
             ) : null}
 
             <div className="space-y-2">

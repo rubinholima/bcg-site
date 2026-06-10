@@ -9,7 +9,11 @@ import {
   StreamableFile,
   UseInterceptors,
   UploadedFile,
+  Res,
+  BadGatewayException,
 } from '@nestjs/common';
+import type { Response } from 'express';
+import { Readable } from 'stream';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GroupService } from '../group/group.service';
 import { HomeContentService } from '../home-content/home-content.service';
@@ -339,6 +343,30 @@ export class PublicController {
   @Post('boston-tv/play/:token/ping')
   bostonTvPing(@Param('token') token: string) {
     return this.bostonTvService.touchPlayer(token);
+  }
+
+  /** Proxy do stream IPTV — evita CORS e esconde URL upstream na TV. */
+  @Get('boston-tv/play/:token/stream')
+  async bostonTvStream(
+    @Param('token') token: string,
+    @Query('i') itemIndex: string,
+    @Res() res: Response,
+  ) {
+    const index = Math.max(0, parseInt(itemIndex ?? '0', 10) || 0);
+    const upstream = await this.bostonTvService.resolveIptvStreamUpstream(token, index);
+    const upstreamRes = await fetch(upstream, {
+      redirect: 'follow',
+      headers: { 'User-Agent': 'BCG-BostonTV/1.0' },
+    });
+    if (!upstreamRes.ok || !upstreamRes.body) {
+      throw new BadGatewayException('Não foi possível conectar ao servidor do canal.');
+    }
+    const contentType =
+      upstreamRes.headers.get('content-type') ??
+      (upstream.includes('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t');
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'no-store');
+    Readable.fromWeb(upstreamRes.body as import('stream/web').ReadableStream).pipe(res);
   }
 
   /** Cadastro por convite — formulário público (atleta ou colaborador) */

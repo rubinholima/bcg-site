@@ -6,6 +6,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { isPlayableIptvStreamUrl } from './m3u-parser';
 
 const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream'] as const;
 
@@ -56,6 +57,32 @@ export class BostonTvService {
 
   /** Payload público do player na TV — sem auth. */
   async getPublicPlayerPayload(playerToken: string) {
+    const ctx = await this.buildPlayerContext(playerToken);
+    return {
+      ...ctx.meta,
+      items: ctx.items.map((it, index) => ({
+        ...it,
+        url:
+          it.contentType === 'iptv_stream'
+            ? `/api/public/boston-tv/play/${encodeURIComponent(playerToken)}/stream?i=${index}`
+            : it.url,
+      })),
+    };
+  }
+
+  async resolveIptvStreamUpstream(playerToken: string, itemIndex: number): Promise<string> {
+    const ctx = await this.buildPlayerContext(playerToken);
+    const item = ctx.items[itemIndex];
+    if (!item || item.contentType !== 'iptv_stream') {
+      throw new NotFoundException('Stream não encontrado para este item.');
+    }
+    if (!isPlayableIptvStreamUrl(item.url)) {
+      throw new BadRequestException('Canal não é transmissão compatível com o player.');
+    }
+    return item.url;
+  }
+
+  private async buildPlayerContext(playerToken: string) {
     const screen = await this.prisma.bostonTvScreen.findUnique({
       where: { playerToken },
       include: {
@@ -72,17 +99,23 @@ export class BostonTvService {
       throw new NotFoundException('Tela não encontrada ou token inválido.');
     }
 
+    const meta = {
+      screenId: screen.id,
+      screenName: screen.name,
+      tenantName: screen.tenant.name,
+      scheduleTimezone: screen.scheduleTimezone,
+      weeklySchedule: screen.weeklySchedule ?? null,
+    };
+
     if (screen.displayMode === 'iptv' && screen.iptvChannel) {
       const ch = screen.iptvChannel;
       return {
-        screenId: screen.id,
-        screenName: screen.name,
-        tenantName: screen.tenant.name,
-        scheduleTimezone: screen.scheduleTimezone,
-        weeklySchedule: screen.weeklySchedule ?? null,
-        playlistId: null,
-        playlistName: null,
-        displayMode: 'iptv',
+        meta: {
+          ...meta,
+          playlistId: null,
+          playlistName: null,
+          displayMode: 'iptv',
+        },
         items: [
           {
             id: ch.id,
@@ -96,22 +129,21 @@ export class BostonTvService {
       };
     }
 
-    const items = screen.playlist?.items ?? [];
+    const playlistItems = screen.playlist?.items ?? [];
     return {
-      screenId: screen.id,
-      screenName: screen.name,
-      tenantName: screen.tenant.name,
-      scheduleTimezone: screen.scheduleTimezone,
-      weeklySchedule: screen.weeklySchedule ?? null,
-      playlistId: screen.playlist?.id ?? null,
-      playlistName: screen.playlist?.name ?? null,
-      displayMode: 'playlist',
-      items: items.map((it) => ({
+      meta: {
+        ...meta,
+        playlistId: screen.playlist?.id ?? null,
+        playlistName: screen.playlist?.name ?? null,
+        displayMode: 'playlist',
+      },
+      items: playlistItems.map((it) => ({
         id: it.id,
         contentType: it.contentType,
         url: it.url,
         durationSeconds: it.durationSeconds,
         sortOrder: it.sortOrder,
+        channelName: undefined as string | undefined,
       })),
     };
   }

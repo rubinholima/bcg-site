@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { parseM3uFromResponse } from './m3u-parser';
+import { parseM3uFromResponse, isPlayableIptvStreamUrl } from './m3u-parser';
 import type { Prisma } from '@prisma/client';
 
 const BATCH_SIZE = 800;
@@ -223,7 +223,10 @@ export class BostonTvIptvService {
         syncError: source.syncError,
         lastSyncedAt: source.lastSyncedAt,
       },
-      items,
+      items: items.map((ch) => ({
+        ...ch,
+        playable: isPlayableIptvStreamUrl(ch.streamUrl),
+      })),
       total,
       page,
       limit,
@@ -241,6 +244,11 @@ export class BostonTvIptvService {
     });
     if (!ch) throw new NotFoundException('Canal não encontrado');
     this.assertTenant(allowedTenantIds, ch.source.tenantId);
+    if (enabled && !isPlayableIptvStreamUrl(ch.streamUrl)) {
+      throw new BadRequestException(
+        'Este canal aponta para um site (ex.: Prime Video), não para transmissão IPTV. Busque outro canal da lista (ex.: Globo, ESPN com link .ts ou .m3u8).',
+      );
+    }
     return this.prisma.bostonTvIptvChannel.update({
       where: { id: channelId },
       data: { enabledForSelection: enabled },

@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "seed:group-home": "ts-node -r tsconfig-paths/register scripts/seed-group-home.ts",
     "seed:boston-city-hall": "ts-node -r tsconfig-paths/register scripts/seed-boston-city-hall.ts",
+    "seed:boston-tv-hall-screens": "ts-node -r tsconfig-paths/register scripts/seed-boston-tv-hall-screens.ts",
     "s3:lifecycle": "ts-node -r tsconfig-paths/register scripts/apply-s3-lifecycle.ts",
     "beatscode:import": "ts-node -r tsconfig-paths/register scripts/run-beatscode-import.ts",
     "beatscode:export": "ts-node -r tsconfig-paths/register scripts/run-beatscode-export.ts",

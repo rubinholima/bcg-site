@@ -96,7 +96,6 @@ export default function EditBostonTvPlaylistPage() {
   const [durIn, setDurIn] = useState("15");
   const [iptvChannelId, setIptvChannelId] = useState("");
   const [iptvByStream, setIptvByStream] = useState<Map<string, string>>(new Map());
-  const [helpOpen, setHelpOpen] = useState(true);
   const [addOpen, setAddOpen] = useState(true);
   const [itemsOpen, setItemsOpen] = useState(true);
 
@@ -225,31 +224,11 @@ export default function EditBostonTvPlaylistPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{playlist.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            A TV roda estes itens em ordem, em loop. Associe esta playlist numa tela (modo Marketing).
-          </p>
         </div>
       </div>
 
       <BostonTvCollapsibleSection
-        title="Como funciona"
-        description="Tipos de conteúdo e quando usar playlist vs canal fixo na tela."
-        open={helpOpen}
-        onOpenChange={setHelpOpen}
-        className="border-primary/20 bg-primary/5"
-      >
-        <div className="text-sm text-muted-foreground space-y-2">
-          <p><strong>Imagem</strong> — URL da foto + segundos na tela (ex.: banner 15s).</p>
-          <p><strong>Vídeo (URL)</strong> — link direto do .mp4; quando termina, vai pro próximo.</p>
-          <p><strong>YouTube</strong> — link do vídeo (não da playlist); tempo máximo antes do próximo (padrão 8 min).</p>
-          <p><strong>Canal IPTV (live)</strong> — canal liberado; fica X segundos e passa pro próximo item (padrão 1 h).</p>
-          <p className="text-xs pt-1">Canal fixo 24h sem alternar? Use <strong>Tela → Canal IPTV</strong> na página Boston TV, não a playlist.</p>
-        </div>
-      </BostonTvCollapsibleSection>
-
-      <BostonTvCollapsibleSection
         title="Adicionar item"
-        description="Escolha o tipo, preencha URL ou canal, e inclua na ordem desejada."
         open={addOpen}
         onOpenChange={setAddOpen}
       >
@@ -320,7 +299,6 @@ export default function EditBostonTvPlaylistPage() {
 
       <BostonTvCollapsibleSection
         title={`Itens (${items.length})`}
-        description="Ordem em que a TV exibe cada conteúdo, em loop."
         open={itemsOpen}
         onOpenChange={setItemsOpen}
       >

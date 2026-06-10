@@ -99,7 +99,11 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
         video.load();
       }
       if (!cancelled) {
-        setError("Não foi possível reproduzir este canal no navegador.");
+        setError(
+          label
+            ? `${label} — este canal da lista não abre no navegador. Escolha outro canal (ex.: Globo/ESPN com stream .ts) no dashboard.`
+            : 'Este canal da lista não abre no navegador. Escolha outro canal no dashboard Boston TV.',
+        );
       }
     })();
 
@@ -112,9 +116,7 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
   if (error) {
     return (
       <div className={`flex h-full w-full flex-col items-center justify-center bg-black text-zinc-400 ${className}`}>
-        <p className="text-sm px-4 text-center">{error}</p>
-        {label ? <p className="mt-2 text-xs text-zinc-600">{label}</p> : null}
-        <p className="mt-4 max-w-lg truncate text-[10px] text-zinc-700 px-4">{activeUrl}</p>
+        <p className="text-sm px-6 text-center max-w-xl leading-relaxed">{error}</p>
       </div>
     );
   }

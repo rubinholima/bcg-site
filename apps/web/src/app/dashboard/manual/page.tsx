@@ -20,6 +20,7 @@ const NAV = [
   { id: "futebol", label: "Depto Futebol" },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
+  { id: "boston-tv", label: "Boston TV" },
   { id: "ferramentas", label: "Ferramentas" },
   { id: "config", label: "Configurações" },
   { id: "exemplos", label: "Exemplos práticos" },
@@ -312,7 +313,53 @@ export default function ManualPage() {
           <Section id="marketing" title="Marketing">
             <p>
               <strong>Planner:</strong> calendário de conteúdo. <strong>Boston TV</strong> (se habilitado):
-              playlists e telas.
+              playlists e telas — veja a seção{" "}
+              <a href="#boston-tv" className="text-primary underline-offset-2 hover:underline">
+                Boston TV
+              </a>{" "}
+              abaixo.
+            </p>
+          </Section>
+
+          <Section id="boston-tv" title="Boston TV">
+            <p>
+              Telas físicas abrem o link <code className="text-foreground">/tv/play/…</code> em tela cheia, sem
+              som e sem menu de canais. Configure em <strong>Marketing → Boston TV</strong>.
+            </p>
+            <p>
+              <strong>Ordem recomendada:</strong> (1) criar playlist e itens; (2) liberar canais IPTV se
+              precisar; (3) criar tela e escolher playlist ou canal; (4) copiar link e abrir na TV.
+            </p>
+            <p>
+              <strong>Playlist da TV</strong> — loop de conteúdos em marketing. Tipos de item:
+            </p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>
+                <strong>Imagem (URL):</strong> link da foto + segundos na tela (ex.: banner 15 s).
+              </li>
+              <li>
+                <strong>Vídeo (URL):</strong> link direto do .mp4; ao terminar, passa ao próximo.
+              </li>
+              <li>
+                <strong>YouTube:</strong> link de um vídeo (não da playlist do YouTube); tempo máximo antes do
+                próximo (padrão 8 min).
+              </li>
+              <li>
+                <strong>Canal IPTV (live):</strong> canal liberado na lista M3U; fica X segundos e passa ao
+                próximo (padrão 1 h).
+              </li>
+            </ul>
+            <p>
+              <strong>Canal IPTV fixo na tela</strong> — um canal ao vivo 24 h, sem alternar. Use{" "}
+              <em>Nova tela → Canal IPTV fixo</em>, não a playlist.
+            </p>
+            <p>
+              <strong>IPTV (lista M3U):</strong> sincronize a URL M3U, busque canais e clique em{" "}
+              <strong>Liberar</strong>. Só os liberados aparecem ao montar playlist ou tela com canal fixo.
+            </p>
+            <p>
+              <strong>Exemplo:</strong> playlist “Hall comercial” com banner 15 s + vídeo institucional MP4 →
+              tela “TV Hall” com <em>Playlist da TV</em> → abrir link na smart TV.
             </p>
           </Section>
 

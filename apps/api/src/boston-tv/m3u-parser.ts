@@ -13,6 +13,35 @@ function hashStreamUrl(url: string): string {
   return createHash('sha256').update(url.trim()).digest('hex');
 }
 
+/** Links de site/VOD na M3U — não são transmissão HLS/TS para o player. */
+export function isPlayableIptvStreamUrl(url: string): boolean {
+  const u = url.trim().toLowerCase();
+  if (!/^https?:\/\//.test(u)) return false;
+
+  const blockedHosts = [
+    'primevideo.',
+    'amazon.com/gp/video',
+    'netflix.com',
+    'youtube.com',
+    'youtu.be',
+    'facebook.com',
+    'instagram.com',
+    'disneyplus.',
+    'disney.',
+    'hbomax.',
+    'max.com/watch',
+    'globoplay.globo.com',
+    'starplus.',
+  ];
+  if (blockedHosts.some((h) => u.includes(h))) return false;
+
+  if (/\/watch\/|\/title\/|\/video\/|\/movies\//.test(u) && !u.includes('.m3u8')) {
+    return false;
+  }
+
+  return true;
+}
+
 function parseExtinfAttrs(line: string): Record<string, string> {
   const attrs: Record<string, string> = {};
   const re = /([\w-]+)="([^"]*)"/g;
@@ -74,6 +103,10 @@ export async function* parseM3uFromResponse(
 
         if (pending && isStreamLine(line)) {
           const streamUrl = line.trim();
+          if (!isPlayableIptvStreamUrl(streamUrl)) {
+            pending = null;
+            continue;
+          }
           yield {
             ...pending,
             streamUrl,
@@ -88,11 +121,13 @@ export async function* parseM3uFromResponse(
       const line = buffer.trim();
       if (pending && isStreamLine(line)) {
         const streamUrl = line.trim();
-        yield {
-          ...pending,
-          streamUrl,
-          streamUrlHash: hashStreamUrl(streamUrl),
-        };
+        if (isPlayableIptvStreamUrl(streamUrl)) {
+          yield {
+            ...pending,
+            streamUrl,
+            streamUrlHash: hashStreamUrl(streamUrl),
+          };
+        }
       }
     }
   } finally {
