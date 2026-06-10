@@ -7,6 +7,10 @@ import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { isPlayableIptvStreamUrl } from './m3u-parser';
+import {
+  isHlsManifestUrl,
+  resolvePublicMediaUrl,
+} from '../common/public-media-url.util';
 
 const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream'] as const;
 
@@ -62,12 +66,28 @@ export class BostonTvService {
       ...ctx.meta,
       items: ctx.items.map((it, index) => ({
         ...it,
-        url:
-          it.contentType === 'iptv_stream'
-            ? `/api/public/boston-tv/play/${encodeURIComponent(playerToken)}/stream?i=${index}`
-            : it.url,
+        url: this.resolvePlayerItemUrl(it, playerToken, index),
       })),
     };
+  }
+
+  private resolvePlayerItemUrl(
+    item: { contentType: string; url: string },
+    playerToken: string,
+    index: number,
+  ): string {
+    if (item.contentType === 'image_url' || item.contentType === 'video_url') {
+      return resolvePublicMediaUrl(item.url) || item.url;
+    }
+    if (item.contentType === 'iptv_stream') {
+      const upstream = item.url.trim();
+      // TS / fluxo contínuo: URL direta no <video> (sem CORS). Proxy só para manifest HLS.
+      if (!isHlsManifestUrl(upstream)) {
+        return upstream;
+      }
+      return `/api/public/boston-tv/play/${encodeURIComponent(playerToken)}/stream?i=${index}`;
+    }
+    return item.url;
   }
 
   async resolveIptvStreamUpstream(playerToken: string, itemIndex: number): Promise<string> {

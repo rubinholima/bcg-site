@@ -13,20 +13,28 @@ interface HlsStreamPlayerProps {
 function candidateUrls(url: string): string[] {
   const u = url.trim();
   const out = [u];
-  if (!u.includes(".m3u8")) {
+  const lower = u.toLowerCase();
+  if (!lower.includes(".m3u8") && !lower.includes("/stream?")) {
     out.push(`${u}.m3u8`, `${u}/index.m3u8`);
   }
   return [...new Set(out)];
 }
 
+function preferNativeVideo(url: string): boolean {
+  const u = url.toLowerCase();
+  return (
+    u.includes(".ts") ||
+    u.includes("/stream?") ||
+    (!u.includes(".m3u8") && /^https?:\/\//.test(u))
+  );
+}
+
 export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeUrl, setActiveUrl] = useState(url);
 
   useEffect(() => {
     setError(null);
-    setActiveUrl(url);
     const video = videoRef.current;
     if (!video || !url.trim()) return;
 
@@ -38,7 +46,24 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
       hlsInstance = null;
     };
 
-    const tryPlay = async (streamUrl: string) => {
+    const tryNativeVideo = async (streamUrl: string): Promise<boolean> => {
+      if (cancelled) return false;
+      destroyHls();
+      video.removeAttribute("src");
+      video.load();
+      video.muted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      video.src = streamUrl;
+      try {
+        await video.play();
+        return !video.error;
+      } catch {
+        return false;
+      }
+    };
+
+    const tryHlsJs = async (streamUrl: string): Promise<boolean> => {
       if (cancelled) return false;
       video.muted = true;
       video.playsInline = true;
@@ -76,33 +101,45 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
         }
       }
 
-      video.src = streamUrl;
-      try {
-        await video.play();
-        return true;
-      } catch {
-        return false;
-      }
+      return false;
     };
 
     void (async () => {
       for (const candidate of candidateUrls(url)) {
         if (cancelled) break;
-        const ok = await tryPlay(candidate);
-        if (ok) {
-          setActiveUrl(candidate);
+
+        if (preferNativeVideo(candidate)) {
+          const okNative = await tryNativeVideo(candidate);
+          if (okNative) {
+            setError(null);
+            return;
+          }
+        }
+
+        const okHls = await tryHlsJs(candidate);
+        if (okHls) {
           setError(null);
           return;
         }
+
+        if (!preferNativeVideo(candidate)) {
+          const okNative = await tryNativeVideo(candidate);
+          if (okNative) {
+            setError(null);
+            return;
+          }
+        }
+
         destroyHls();
         video.removeAttribute("src");
         video.load();
       }
+
       if (!cancelled) {
         setError(
           label
             ? `${label} — este canal da lista não abre no navegador. Escolha outro canal (ex.: Globo/ESPN com stream .ts) no dashboard.`
-            : 'Este canal da lista não abre no navegador. Escolha outro canal no dashboard Boston TV.',
+            : "Este canal da lista não abre no navegador. Escolha outro canal no dashboard Boston TV.",
         );
       }
     })();
@@ -111,7 +148,7 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
       cancelled = true;
       destroyHls();
     };
-  }, [url]);
+  }, [url, label]);
 
   if (error) {
     return (

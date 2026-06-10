@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isWithinContentWindow } from "@/lib/boston-tv-schedule";
 import { HlsStreamPlayer } from "@/components/boston-tv/HlsStreamPlayer";
+import { getPublicImageUrl } from "@/lib/media-url";
 
 export type BostonTvPlayerItem = {
   id: string;
@@ -163,11 +164,12 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   }
 
   if (current.contentType === "image_url") {
+    const src = getPublicImageUrl(current.url) || current.url;
     return (
       <div className="relative h-screen w-screen bg-black">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={current.url}
+          src={src}
           alt=""
           className="h-full w-full object-contain"
         />
@@ -176,11 +178,12 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   }
 
   if (current.contentType === "video_url") {
+    const src = getPublicImageUrl(current.url) || current.url;
     return (
       <div className="relative h-screen w-screen bg-black">
         <video
           key={current.id}
-          src={current.url}
+          src={src}
           className="h-full w-full object-contain"
           autoPlay
           muted

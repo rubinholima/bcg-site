@@ -18,6 +18,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
+const { resolvePublicMediaUrl } = require('../src/common/public-media-url.util') as typeof import('../src/common/public-media-url.util');
 const prisma = new PrismaClient();
 
 const TENANT_SLUG = 'boston-city-fc-brasil';
@@ -78,16 +79,31 @@ async function ensureHallPlaylist(tenantId: string, tenantLogoUrl: string | null
   });
 
   if (itemCount === 0 && tenantLogoUrl?.trim()) {
+    const logoUrl = resolvePublicMediaUrl(tenantLogoUrl) || tenantLogoUrl.trim();
     await prisma.bostonTvPlaylistItem.create({
       data: {
         playlistId: playlist.id,
         sortOrder: 0,
         contentType: 'image_url',
-        url: tenantLogoUrl.trim(),
+        url: logoUrl,
         durationSeconds: 15,
       },
     });
     console.log('  + item inicial: logo do clube (15s)');
+  } else if (itemCount > 0 && tenantLogoUrl?.trim()) {
+    const logoItem = await prisma.bostonTvPlaylistItem.findFirst({
+      where: { playlistId: playlist.id, contentType: 'image_url' },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, url: true },
+    });
+    const fixed = resolvePublicMediaUrl(tenantLogoUrl) || tenantLogoUrl.trim();
+    if (logoItem && /amazonaws\.com/i.test(logoItem.url) && fixed !== logoItem.url) {
+      await prisma.bostonTvPlaylistItem.update({
+        where: { id: logoItem.id },
+        data: { url: fixed },
+      });
+      console.log('  ↻ logo atualizada para URL pública (CDN)');
+    }
   } else if (itemCount === 0) {
     console.log('  · playlist vazia (sem logo no tenant — adicione itens no dashboard)');
   }
