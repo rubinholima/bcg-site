@@ -61,17 +61,21 @@ function applyAudio(video: HTMLVideoElement, withAudio: boolean) {
   }
 }
 
-async function playWithOptionalAudio(video: HTMLVideoElement, withAudio: boolean): Promise<void> {
+async function playWithOptionalAudio(
+  video: HTMLVideoElement,
+  withAudio: boolean,
+): Promise<boolean> {
   applyAudio(video, withAudio);
   try {
     await video.play();
+    return !withAudio || !video.muted;
   } catch {
     if (withAudio) {
       video.muted = true;
       await video.play();
-    } else {
-      throw new Error("play failed");
+      return false;
     }
+    throw new Error("play failed");
   }
 }
 
@@ -107,10 +111,25 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true }
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
+  const [audioBlocked, setAudioBlocked] = useState(false);
+
+  const enableAudio = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.volume = 1;
+    try {
+      await video.play();
+      setAudioBlocked(false);
+    } catch {
+      /* mantém overlay se ainda bloquear */
+    }
+  };
 
   useEffect(() => {
     setError(null);
     setBuffering(true);
+    setAudioBlocked(false);
     const video = videoRef.current;
     if (!video || !url.trim()) return;
 
@@ -197,12 +216,14 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true }
             if (withAudio) {
               video.muted = true;
               await player.play();
+              if (!cancelled) setAudioBlocked(true);
             }
           })
           .then(() => waitForVideoPicture(video, 20000))
           .then((hasPicture) => {
             if (hasPicture) {
               player.off(mpegts.Events.ERROR, onError);
+              if (withAudio && video.muted && !cancelled) setAudioBlocked(true);
             }
             finish(hasPicture);
           })
@@ -232,7 +253,10 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true }
           instance.attachMedia(video);
           instance.on(HlsMod.Events.MANIFEST_PARSED, () => {
             void playWithOptionalAudio(video, withAudio)
-              .then(() => resolve(true))
+              .then((audioOk) => {
+                if (withAudio && !audioOk) setAudioBlocked(true);
+                resolve(true);
+              })
               .catch(() => resolve(false));
           });
           instance.on(HlsMod.Events.ERROR, (_e, data) => {
@@ -245,7 +269,8 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true }
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = streamUrl;
         try {
-          await playWithOptionalAudio(video, withAudio);
+          const audioOk = await playWithOptionalAudio(video, withAudio);
+          if (withAudio && !audioOk) setAudioBlocked(true);
           return true;
         } catch {
           return false;
@@ -306,10 +331,41 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true }
   }
 
   return (
-    <div className={`relative h-full w-full bg-black ${className}`}>
+    <div
+      className={`relative h-full w-full bg-black ${className}`}
+      onClick={() => {
+        if (audioBlocked) void enableAudio();
+      }}
+      onKeyDown={(e) => {
+        if (audioBlocked && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          void enableAudio();
+        }
+      }}
+      role={audioBlocked ? "button" : undefined}
+      tabIndex={audioBlocked ? 0 : undefined}
+    >
       {buffering ? (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-zinc-500 text-sm">
           Conectando ao canal…
+        </div>
+      ) : null}
+      {audioBlocked && withAudio ? (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 px-6 text-center">
+          <p className="text-lg font-medium text-white">Som desligado pelo navegador</p>
+          <p className="mt-2 max-w-md text-sm text-zinc-300">
+            Toque na tela ou pressione OK no controle para ativar o áudio deste canal.
+          </p>
+          <button
+            type="button"
+            className="mt-6 min-h-[44px] rounded-lg bg-white px-8 py-3 text-base font-semibold text-black"
+            onClick={(e) => {
+              e.stopPropagation();
+              void enableAudio();
+            }}
+          >
+            Ativar som
+          </button>
         </div>
       ) : null}
       <video ref={videoRef} className="h-full w-full object-contain" playsInline autoPlay />
