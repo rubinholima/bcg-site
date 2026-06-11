@@ -45,6 +45,18 @@ const AUDIO_EXT_BY_MIME: Record<string, string> = {
   'audio/m4a': 'm4a',
 };
 
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+] as const;
+
+const VIDEO_EXT_BY_MIME: Record<string, string> = {
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+};
+
 const EXT_BY_MIME: Record<string, string> = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
@@ -233,6 +245,41 @@ export class S3Service {
       const message = err instanceof Error ? err.message : String(err);
       throw new InternalServerErrorException(
         `Falha ao enviar áudio para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /** Upload de vídeo (MP4/WebM/MOV) — pasta media/{sizeKey}/, sem otimização. */
+  async uploadVideo(
+    buffer: Buffer,
+    contentType: string,
+    sizeKey: string = 'bcg_tv',
+  ): Promise<{ key: string; url: string }> {
+    const mime = contentType.toLowerCase();
+    if (!ALLOWED_VIDEO_TYPES.includes(mime as (typeof ALLOWED_VIDEO_TYPES)[number])) {
+      throw new InternalServerErrorException(
+        'Tipo de vídeo não permitido. Use MP4, WebM ou MOV.',
+      );
+    }
+    const ext = VIDEO_EXT_BY_MIME[mime] ?? 'mp4';
+    const safeKey = sizeKey.replace(/[^a-z0-9_-]/gi, '_').toLowerCase() || 'bcg_tv';
+    const key = `${MEDIA_PREFIX}${safeKey}/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: mime,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar vídeo para S3: ${message}`,
       );
     }
 

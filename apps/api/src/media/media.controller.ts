@@ -94,7 +94,7 @@ export class MediaController {
    */
   @Post()
   @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 20 * 1024 * 1024 } }),
+    FileInterceptor('file', { limits: { fileSize: 100 * 1024 * 1024 } }),
   )
   async upload(
     @UploadedFile()
@@ -115,7 +115,9 @@ export class MediaController {
     const isRhDocumentos = sizeLower === 'rh_documentos';
     const isImprensaDocs = sizeLower === 'imprensa_docs';
     const isHinoAudio = sizeLower === 'hino';
+    const isBcgTv = sizeLower === 'bcg_tv';
     const audioMime = file.mimetype === 'audio/mp3' ? 'audio/mpeg' : file.mimetype;
+    const videoMime = file.mimetype.toLowerCase();
     const isAudioFile =
       audioMime === 'audio/mpeg' ||
       audioMime === 'audio/wav' ||
@@ -123,6 +125,11 @@ export class MediaController {
       audioMime === 'audio/mp4' ||
       audioMime === 'audio/x-m4a' ||
       audioMime === 'audio/m4a';
+    const isVideoFile =
+      videoMime === 'video/mp4' ||
+      videoMime === 'video/webm' ||
+      videoMime === 'video/quicktime' ||
+      /\.(mp4|webm|mov)$/i.test(file.originalname || '');
     const subfolder = typeof slug === 'string' && slug.trim() ? slug.trim() : undefined;
     let key: string;
     let url: string;
@@ -131,6 +138,10 @@ export class MediaController {
         throw new BadRequestException('Para pasta hino, envie MP3, WAV ou M4A.');
       }
       const result = await this.s3.uploadAudio(file.buffer, file.mimetype, 'hino');
+      key = result.key;
+      url = result.url;
+    } else if (isBcgTv && isVideoFile) {
+      const result = await this.s3.uploadVideo(file.buffer, videoMime, 'bcg_tv');
       key = result.key;
       url = result.url;
     } else if (isExternalLogos) {

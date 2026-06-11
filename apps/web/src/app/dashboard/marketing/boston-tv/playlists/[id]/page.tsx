@@ -48,6 +48,7 @@ import {
 } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 import { setStoredBostonTvTenantId } from "@/lib/boston-tv-tenant-storage";
+import { BcgTvS3FilePicker } from "@/components/boston-tv/BcgTvS3FilePicker";
 
 type Item = {
   id: string;
@@ -65,10 +66,10 @@ type Playlist = {
 };
 
 const TYPE_LABEL: Record<string, string> = {
-  image_url: "Imagem (URL)",
-  video_url: "Vídeo (arquivo URL)",
-  youtube_video: "YouTube (URL do vídeo)",
-  iptv_stream: "Canal IPTV (ao vivo)",
+  image_url: "Imagem",
+  video_url: "Vídeo (arquivo)",
+  youtube_video: "YouTube (URL)",
+  iptv_stream: "Canal (ao vivo)",
 };
 
 function extractYoutubeId(url: string): string | null {
@@ -333,10 +334,11 @@ export default function EditBostonTvPlaylistPage() {
         open={addOpen}
         onOpenChange={setAddOpen}
       >
+          <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="space-y-2 min-w-[200px]">
             <Label>Tipo</Label>
-            <Select value={ty} onValueChange={(v) => { setTy(v); if (v === "iptv_stream") setDurIn("3600"); if (v === "image_url") setDurIn("15"); }}>
+            <Select value={ty} onValueChange={(v) => { setTy(v); setUrlIn(""); if (v === "iptv_stream") setDurIn("3600"); if (v === "image_url") setDurIn("15"); }}>
               <SelectTrigger className="text-foreground">
                 <SelectValue placeholder="Tipo de conteúdo" />
               </SelectTrigger>
@@ -374,27 +376,30 @@ export default function EditBostonTvPlaylistPage() {
                 onChange={setIptvChannelId}
               />
             </div>
-          ) : ty !== "iptv_stream" ? (
+          ) : ty === "image_url" ? (
+            <div className="w-full min-w-[280px] flex-1">
+              <BcgTvS3FilePicker kind="image" value={urlIn} onChange={setUrlIn} />
+            </div>
+          ) : ty === "video_url" ? (
+            <div className="w-full min-w-[280px] flex-1">
+              <BcgTvS3FilePicker kind="video" value={urlIn} onChange={setUrlIn} />
+            </div>
+          ) : (
           <div className="space-y-2 flex-1 min-w-[240px]">
-            <Label>URL</Label>
+            <Label>URL do YouTube</Label>
             <Input
               value={urlIn}
               onChange={(e) => setUrlIn(e.target.value)}
-              placeholder={
-                ty === "youtube_video"
-                  ? "https://www.youtube.com/watch?v=..."
-                  : ty === "video_url"
-                    ? "https://.../video.mp4"
-                    : "https://.../imagem.jpg"
-              }
+              placeholder="https://www.youtube.com/watch?v=..."
               className="text-foreground"
             />
           </div>
-          ) : null}
-          <Button type="button" onClick={() => void addItem()} className="shrink-0">
+          )}
+          <Button type="button" onClick={() => void addItem()} className="shrink-0 w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Incluir
           </Button>
+          </div>
           </div>
       </BostonTvCollapsibleSection>
 
@@ -526,9 +531,13 @@ export default function EditBostonTvPlaylistPage() {
                 value={editIptvChannelId}
                 onChange={setEditIptvChannelId}
               />
+            ) : editTy === "image_url" ? (
+              <BcgTvS3FilePicker kind="image" value={editUrlIn} onChange={setEditUrlIn} />
+            ) : editTy === "video_url" ? (
+              <BcgTvS3FilePicker kind="video" value={editUrlIn} onChange={setEditUrlIn} />
             ) : (
               <div className="space-y-2">
-                <Label>URL</Label>
+                <Label>URL do YouTube</Label>
                 <Input
                   value={editUrlIn}
                   onChange={(e) => setEditUrlIn(e.target.value)}
