@@ -1532,6 +1532,8 @@ model BostonTvScreen {
   playerToken      String   @unique
   /** playlist = loop da playlist | iptv = canal fixo */
   displayMode      String   @default("playlist")
+  /** follow_hall = sincronizado no Canal Hall | independent = playlist só desta TV */
+  hallSyncMode     String   @default("follow_hall")
   iptvChannelId    String?
   iptvChannel      BostonTvIptvChannel? @relation(fields: [iptvChannelId], references: [id], onDelete: SetNull)
   playlistId       String?

@@ -37,7 +37,7 @@ import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 import { BostonTvHallChannelPanel } from "@/components/boston-tv/BostonTvHallChannelPanel";
-import { parseHallScreenNum } from "@/lib/boston-tv-hall";
+import { parseHallScreenNum, hallSyncModeLabel, normalizeHallSyncMode, BOSTON_TV_HALL_SYNC_FOLLOW, BOSTON_TV_HALL_SYNC_INDEPENDENT, type HallSyncMode } from "@/lib/boston-tv-hall";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
   getStoredBostonTvTenantId,
@@ -63,6 +63,7 @@ interface ScreenRow {
   locationHint: string | null;
   playerToken: string;
   displayMode: string;
+  hallSyncMode: string;
   scheduleTimezone: string;
   weeklySchedule: unknown;
   playlist: { id: string; name: string } | null;
@@ -113,6 +114,7 @@ export default function BostonTvDashboardPage() {
   const [screenName, setScreenName] = useState("");
   const [screenLocation, setScreenLocation] = useState("");
   const [screenContentMode, setScreenContentMode] = useState<ScreenContentMode>("playlist");
+  const [screenHallSyncMode, setScreenHallSyncMode] = useState<HallSyncMode>(BOSTON_TV_HALL_SYNC_FOLLOW);
   const [screenPlaylistId, setScreenPlaylistId] = useState("");
   const [screenIptvChannelId, setScreenIptvChannelId] = useState("");
   const [screenScheduleJson, setScreenScheduleJson] = useState(DEFAULT_SCHEDULE);
@@ -203,6 +205,7 @@ export default function BostonTvDashboardPage() {
     setScreenName("");
     setScreenLocation("");
     setScreenContentMode("playlist");
+    setScreenHallSyncMode(BOSTON_TV_HALL_SYNC_FOLLOW);
     setScreenPlaylistId("");
     setScreenIptvChannelId("");
     setScreenScheduleJson(DEFAULT_SCHEDULE);
@@ -212,6 +215,7 @@ export default function BostonTvDashboardPage() {
   const openNewScreen = () => {
     resetScreenForm();
     setScreenContentMode("playlist");
+    setScreenHallSyncMode(BOSTON_TV_HALL_SYNC_FOLLOW);
     if (playlists.length > 0) {
       setScreenPlaylistId(playlists[0].id);
     }
@@ -223,6 +227,7 @@ export default function BostonTvDashboardPage() {
     setScreenName(s.name);
     setScreenLocation(s.locationHint ?? "");
     setScreenContentMode(contentModeFromScreen(s));
+    setScreenHallSyncMode(normalizeHallSyncMode(s.hallSyncMode));
     setScreenPlaylistId(s.playlist?.id ?? "");
     setScreenIptvChannelId(s.iptvChannel?.id ?? "");
     setScreenScheduleJson(
@@ -296,14 +301,18 @@ export default function BostonTvDashboardPage() {
       };
     }
     if (screenContentMode === "playlist") {
-      if (!screenPlaylistId) {
-        alert("Escolha a playlist da TV.");
+      if (
+        screenHallSyncMode === BOSTON_TV_HALL_SYNC_INDEPENDENT &&
+        !screenPlaylistId
+      ) {
+        alert("Modo individual exige uma playlist na tela.");
         return null;
       }
       return {
         displayMode: "playlist" as const,
-        playlistId: screenPlaylistId,
+        playlistId: screenPlaylistId || null,
         iptvChannelId: null,
+        hallSyncMode: screenHallSyncMode,
       };
     }
     return {
@@ -427,7 +436,9 @@ export default function BostonTvDashboardPage() {
         </div>
       </div>
 
-      {effectiveTenant ? <BostonTvHallChannelPanel tenantId={effectiveTenant} /> : null}
+      {effectiveTenant ? (
+        <BostonTvHallChannelPanel tenantId={effectiveTenant} onScreensReset={refresh} />
+      ) : null}
 
       <BostonTvCollapsibleSection
         title="Playlists BCG TV"
@@ -529,7 +540,20 @@ export default function BostonTvDashboardPage() {
                   className="rounded-lg border border-border p-3 text-sm flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium">{s.name}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{s.name}</p>
+                      {s.displayMode === "playlist" ? (
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                            normalizeHallSyncMode(s.hallSyncMode) === BOSTON_TV_HALL_SYNC_INDEPENDENT
+                              ? "bg-violet-500/20 text-violet-200"
+                              : "bg-emerald-500/20 text-emerald-200"
+                          }`}
+                        >
+                          {hallSyncModeLabel(s.hallSyncMode)}
+                        </span>
+                      ) : null}
+                    </div>
                     {s.locationHint ? (
                       <p className="text-xs text-muted-foreground">{s.locationHint}</p>
                     ) : null}
@@ -725,28 +749,57 @@ export default function BostonTvDashboardPage() {
             </div>
 
             {screenContentMode === "playlist" ? (
-              <div className="space-y-2">
-                <Label htmlFor="sc-playlist">Playlist da TV *</Label>
-                {playlists.length === 0 ? (
-                  <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground space-y-2">
-                    <p>Crie uma playlist acima antes de associar à tela.</p>
-                    <Button type="button" size="sm" variant="secondary" onClick={() => setNewPlOpen(true)}>
-                      Criar playlist
-                    </Button>
-                  </div>
-                ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="sc-hall-sync">Sincronização com o Hall</Label>
                   <ModalNativeSelect
-                    id="sc-playlist"
-                    value={playlistSelectValue}
-                    onChange={setScreenPlaylistId}
-                    placeholder="Escolha a playlist"
-                    options={playlistOptions.map((p) => ({
-                      value: p.id,
-                      label: `${p.name} (${p._count?.items ?? 0} itens)`,
-                    }))}
+                    id="sc-hall-sync"
+                    value={screenHallSyncMode}
+                    onChange={(v) => setScreenHallSyncMode(v as HallSyncMode)}
+                    options={[
+                      {
+                        value: BOSTON_TV_HALL_SYNC_FOLLOW,
+                        label: "Seguir Canal Hall (sincronizada com as demais)",
+                      },
+                      {
+                        value: BOSTON_TV_HALL_SYNC_INDEPENDENT,
+                        label: "Individual (playlist própria, ex.: tutorial Argentina)",
+                      },
+                    ]}
                   />
-                )}
-              </div>
+                  {screenHallSyncMode === BOSTON_TV_HALL_SYNC_FOLLOW ? (
+                    <p className="text-xs text-muted-foreground">
+                      Usa a playlist ativa do Canal Hall. Pausar/Próximo no painel acima
+                      afetam esta tela.
+                    </p>
+                  ) : null}
+                </div>
+
+                {screenHallSyncMode === BOSTON_TV_HALL_SYNC_INDEPENDENT ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="sc-playlist">Playlist da TV *</Label>
+                    {playlists.length === 0 ? (
+                      <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground space-y-2">
+                        <p>Crie uma playlist acima antes de associar à tela.</p>
+                        <Button type="button" size="sm" variant="secondary" onClick={() => setNewPlOpen(true)}>
+                          Criar playlist
+                        </Button>
+                      </div>
+                    ) : (
+                      <ModalNativeSelect
+                        id="sc-playlist"
+                        value={playlistSelectValue}
+                        onChange={setScreenPlaylistId}
+                        placeholder="Escolha a playlist"
+                        options={playlistOptions.map((p) => ({
+                          value: p.id,
+                          label: `${p.name} (${p._count?.items ?? 0} itens)`,
+                        }))}
+                      />
+                    )}
+                  </div>
+                ) : null}
+              </>
             ) : null}
 
             {screenContentMode === "iptv" && effectiveTenant ? (

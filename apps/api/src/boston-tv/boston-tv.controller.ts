@@ -156,6 +156,7 @@ export class BostonTvController {
       playlistId: dto.playlistId,
       displayMode: dto.displayMode,
       iptvChannelId: dto.iptvChannelId,
+      hallSyncMode: dto.hallSyncMode,
       scheduleTimezone: dto.scheduleTimezone,
       weeklySchedule: dto.weeklySchedule,
       allowedTenantIds: allowed,
@@ -248,6 +249,7 @@ export class BostonTvController {
         playlistId: dto.playlistId,
         displayMode: dto.displayMode,
         iptvChannelId: dto.iptvChannelId,
+        hallSyncMode: dto.hallSyncMode,
         scheduleTimezone: dto.scheduleTimezone,
         weeklySchedule: dto.weeklySchedule,
       },
@@ -336,5 +338,15 @@ export class BostonTvController {
     }
     const allowed = await this.allowedIds(req);
     return this.bostonTv.bindHallChannel(tenantId, playlistId, allowed);
+  }
+
+  @Post('hall-channel/reset-screens')
+  async resetHallScreens(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    const allowed = await this.allowedIds(req);
+    return this.bostonTv.resetAllScreensToHall(tenantId.trim(), allowed);
   }
 }

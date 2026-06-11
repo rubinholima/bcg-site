@@ -40,3 +40,22 @@ export async function fetchHallPlayerToken(num: number): Promise<string | null> 
 export function isHallScreenNum(value: string): value is `${number}` {
   return /^\d+$/.test(value) && parseInt(value, 10) >= 1;
 }
+
+export const BOSTON_TV_HALL_SYNC_FOLLOW = "follow_hall";
+export const BOSTON_TV_HALL_SYNC_INDEPENDENT = "independent";
+
+export type HallSyncMode =
+  | typeof BOSTON_TV_HALL_SYNC_FOLLOW
+  | typeof BOSTON_TV_HALL_SYNC_INDEPENDENT;
+
+export function normalizeHallSyncMode(mode: string | undefined | null): HallSyncMode {
+  return mode === BOSTON_TV_HALL_SYNC_INDEPENDENT
+    ? BOSTON_TV_HALL_SYNC_INDEPENDENT
+    : BOSTON_TV_HALL_SYNC_FOLLOW;
+}
+
+export function hallSyncModeLabel(mode: string | undefined | null): string {
+  return normalizeHallSyncMode(mode) === BOSTON_TV_HALL_SYNC_INDEPENDENT
+    ? "Individual"
+    : "Canal Hall";
+}

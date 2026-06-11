@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Link2, Pause, Play, RotateCcw, SkipForward } from "lucide-react";
+import { Link2, Pause, Play, RotateCcw, SkipForward, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
@@ -37,6 +37,7 @@ type PlaylistOption = { id: string; name: string };
 
 interface BostonTvHallChannelPanelProps {
   tenantId: string;
+  onScreensReset?: () => void | Promise<void>;
 }
 
 function formatOffset(ms: number): string {
@@ -46,7 +47,7 @@ function formatOffset(ms: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelProps) {
+export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvHallChannelPanelProps) {
   const [open, setOpen] = useState(true);
   const [data, setData] = useState<HallChannelResponse | null>(null);
   const [playlists, setPlaylists] = useState<PlaylistOption[]>([]);
@@ -115,6 +116,26 @@ export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelP
     }
   };
 
+  const resetScreensToHall = async () => {
+    if (!tenantId) return;
+    if (
+      !window.confirm(
+        "Todas as telas em modo playlist voltam a seguir o Canal Hall com a playlist ativa. Telas individuais também serão resetadas. Continuar?",
+      )
+    ) {
+      return;
+    }
+    setActing(true);
+    try {
+      await api.post(
+        `/boston-tv/hall-channel/reset-screens?tenantId=${encodeURIComponent(tenantId)}`,
+      );
+      await onScreensReset?.();
+    } finally {
+      setActing(false);
+    }
+  };
+
   const sync = data?.configured ? data.hallSync : null;
 
   return (
@@ -125,9 +146,11 @@ export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelP
     >
       <div className="space-y-4 text-sm">
         <p className="text-muted-foreground">
-          Você escolhe <strong className="text-foreground">uma playlist</strong> — todas as
-          telas que usam essa mesma playlist tocam juntas, no mesmo segundo. O browser da TV
-          fica aberto; pausar só congela o conteúdo.
+          Você escolhe <strong className="text-foreground">uma playlist</strong> — telas em{" "}
+          <strong className="text-foreground">Seguir Canal Hall</strong> tocam juntas, no mesmo
+          segundo. Telas em modo <strong className="text-foreground">Individual</strong> usam
+          playlist própria (ex.: tutorial). O browser da TV fica aberto; pausar só congela o
+          conteúdo.
         </p>
 
         {loading && !data ? (
@@ -177,8 +200,8 @@ export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelP
                 {data.itemCount} {data.itemCount === 1 ? "item" : "itens"}
               </p>
               <p className="text-xs text-muted-foreground">
-                Telas com esta playlist = sincronizadas. Edite os itens em &quot;Editar
-                itens&quot; na lista de playlists.
+                Telas com badge <strong>Canal Hall</strong> = sincronizadas.{" "}
+                <strong>Individual</strong> = playlist própria, fora do sync.
               </p>
               {sync ? (
                 <>
@@ -241,6 +264,16 @@ export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelP
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reiniciar do início
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={acting}
+                onClick={() => void resetScreensToHall()}
+                className="min-h-[44px]"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Voltar todas ao Canal Hall
               </Button>
             </div>
           </>

@@ -11,6 +11,8 @@ import {
   resolvePublicMediaUrl,
 } from '../common/public-media-url.util';
 import {
+  BOSTON_TV_HALL_SYNC_FOLLOW,
+  BOSTON_TV_HALL_SYNC_INDEPENDENT,
   BOSTON_TV_HALL_TENANT_SLUG,
 } from './boston-tv-hall.constants';
 import {
@@ -83,7 +85,7 @@ export class BostonTvService {
       url: this.resolvePlayerItemUrl(it, playerToken, index),
     }));
     const hallSync =
-      ctx.meta.playlistId && ctx.tenantId
+      ctx.syncWithHall && ctx.meta.playlistId && ctx.tenantId
         ? await this.buildHallSyncPayload(ctx.tenantId, ctx.meta.playlistId, ctx.items)
         : null;
     return {
@@ -91,6 +93,23 @@ export class BostonTvService {
       items,
       ...(hallSync ? { hallSync } : {}),
     };
+  }
+
+  private normalizeHallSyncMode(mode: string | undefined | null): string {
+    return mode === BOSTON_TV_HALL_SYNC_INDEPENDENT
+      ? BOSTON_TV_HALL_SYNC_INDEPENDENT
+      : BOSTON_TV_HALL_SYNC_FOLLOW;
+  }
+
+  private async hallChannelPlaylist(tenantId: string) {
+    return this.prisma.bostonTvHallChannel.findUnique({
+      where: { tenantId },
+      include: {
+        playlist: {
+          include: { items: { orderBy: { sortOrder: 'asc' } } },
+        },
+      },
+    });
   }
 
   private resolvePlayerItemUrl(
@@ -169,7 +188,27 @@ export class BostonTvService {
     }
 
     const playlistItems = screen.playlist?.items ?? [];
-    const iptvUrls = playlistItems
+    const hallSyncMode = this.normalizeHallSyncMode(screen.hallSyncMode);
+    const followHall =
+      hallSyncMode === BOSTON_TV_HALL_SYNC_FOLLOW &&
+      screen.displayMode === 'playlist';
+
+    let activePlaylistId = screen.playlist?.id ?? null;
+    let activePlaylistName = screen.playlist?.name ?? null;
+    let activeItems = playlistItems;
+
+    let hallChannel: Awaited<ReturnType<typeof this.hallChannelPlaylist>> | null =
+      null;
+    if (followHall) {
+      hallChannel = await this.hallChannelPlaylist(screen.tenant.id);
+      if (hallChannel?.playlist) {
+        activePlaylistId = hallChannel.playlistId;
+        activePlaylistName = hallChannel.playlist.name;
+        activeItems = hallChannel.playlist.items;
+      }
+    }
+
+    const iptvUrls = activeItems
       .filter((it) => it.contentType === 'iptv_stream')
       .map((it) => it.url.trim());
     const channelByUrl = new Map<string, string>();
@@ -189,12 +228,17 @@ export class BostonTvService {
     return {
       meta: {
         ...meta,
-        playlistId: screen.playlist?.id ?? null,
-        playlistName: screen.playlist?.name ?? null,
+        playlistId: activePlaylistId,
+        playlistName: activePlaylistName,
         displayMode: 'playlist',
+        hallSyncMode,
       },
       tenantId: screen.tenant.id,
-      items: playlistItems.map((it) => ({
+      syncWithHall:
+        followHall &&
+        activePlaylistId != null &&
+        hallChannel?.playlistId === activePlaylistId,
+      items: activeItems.map((it) => ({
         id: it.id,
         contentType: it.contentType,
         url: it.url,
@@ -465,6 +509,7 @@ export class BostonTvService {
     playlistId?: string | null;
     displayMode?: string;
     iptvChannelId?: string | null;
+    hallSyncMode?: string;
     scheduleTimezone?: string;
     weeklySchedule?: unknown;
     allowedTenantIds: string[] | null,
@@ -474,18 +519,25 @@ export class BostonTvService {
     const displayMode =
       input.displayMode?.trim() === 'iptv' ? 'iptv' : 'playlist';
 
+    const hallSyncMode =
+      displayMode === 'playlist'
+        ? this.normalizeHallSyncMode(input.hallSyncMode)
+        : BOSTON_TV_HALL_SYNC_FOLLOW;
+
     let playlistId: string | undefined;
-    if (displayMode === 'playlist' && input.playlistId) {
-      const pl = await this.prisma.bostonTvPlaylist.findFirst({
-        where: {
-          id: input.playlistId,
-          tenantId: input.tenantId,
-        },
-      });
-      if (!pl) {
-        throw new BadRequestException('Playlist não encontrada para esta empresa.');
+    if (displayMode === 'playlist') {
+      const resolved = await this.resolveScreenPlaylistBinding(
+        input.tenantId,
+        hallSyncMode,
+        input.playlistId,
+      );
+      if (resolved.playlistId) {
+        playlistId = resolved.playlistId;
+      } else if (hallSyncMode === BOSTON_TV_HALL_SYNC_INDEPENDENT) {
+        throw new BadRequestException(
+          'Modo individual exige uma playlist na tela.',
+        );
       }
-      playlistId = input.playlistId;
     }
 
     let iptvChannelId: string | undefined;
@@ -515,6 +567,7 @@ export class BostonTvService {
         locationHint: input.locationHint?.trim() ?? null,
         playerToken: this.newPlayerToken(),
         displayMode,
+        hallSyncMode,
         ...(playlistId ? { playlistId } : {}),
         ...(iptvChannelId ? { iptvChannelId } : {}),
         scheduleTimezone:
@@ -539,6 +592,7 @@ export class BostonTvService {
       playlistId?: string | null;
       displayMode?: string;
       iptvChannelId?: string | null;
+      hallSyncMode?: string;
       scheduleTimezone?: string;
       weeklySchedule?: unknown;
     },
@@ -547,6 +601,8 @@ export class BostonTvService {
     const scr = await this.ensureScreenScope(id, allowedTenantIds);
 
     const data: Prisma.BostonTvScreenUpdateInput = {};
+    let nextDisplayMode = scr.displayMode;
+    let nextHallSyncMode = this.normalizeHallSyncMode(scr.hallSyncMode);
 
     if (input.name != null) data.name = input.name.trim();
     if (input.locationHint !== undefined) {
@@ -565,12 +621,18 @@ export class BostonTvService {
     if (input.displayMode !== undefined) {
       const mode = input.displayMode.trim() === 'iptv' ? 'iptv' : 'playlist';
       data.displayMode = mode;
+      nextDisplayMode = mode;
       if (mode === 'playlist') {
         data.iptvChannel = { disconnect: true };
       }
       if (mode === 'iptv') {
         data.playlist = { disconnect: true };
       }
+    }
+
+    if (input.hallSyncMode !== undefined && nextDisplayMode === 'playlist') {
+      nextHallSyncMode = this.normalizeHallSyncMode(input.hallSyncMode);
+      data.hallSyncMode = nextHallSyncMode;
     }
 
     if (input.playlistId !== undefined) {
@@ -586,8 +648,27 @@ export class BostonTvService {
         if (!pl) throw new BadRequestException('Playlist inválida.');
         data.playlist = { connect: { id: pl.id } };
         data.displayMode = 'playlist';
+        nextDisplayMode = 'playlist';
         data.iptvChannel = { disconnect: true };
       }
+    }
+
+    if (nextDisplayMode === 'playlist') {
+      const resolved = await this.resolveScreenPlaylistBinding(
+        scr.tenantId,
+        nextHallSyncMode,
+        input.playlistId !== undefined
+          ? input.playlistId
+          : scr.playlistId,
+      );
+      if (resolved.playlistId) {
+        data.playlist = { connect: { id: resolved.playlistId } };
+      } else if (nextHallSyncMode === BOSTON_TV_HALL_SYNC_INDEPENDENT) {
+        throw new BadRequestException(
+          'Modo individual exige uma playlist na tela.',
+        );
+      }
+      data.hallSyncMode = nextHallSyncMode;
     }
 
     if (input.iptvChannelId !== undefined) {
@@ -660,6 +741,55 @@ export class BostonTvService {
     if (!row) throw new NotFoundException('Tela não encontrada');
     this.assertTenant(allowed, row.tenantId);
     return row;
+  }
+
+  async resetAllScreensToHall(
+    tenantId: string,
+    allowedTenantIds: string[] | null,
+  ) {
+    this.assertTenant(allowedTenantIds, tenantId);
+    const channel = await this.requireHallChannelWithItems(tenantId);
+
+    const result = await this.prisma.bostonTvScreen.updateMany({
+      where: {
+        tenantId,
+        displayMode: 'playlist',
+      },
+      data: {
+        hallSyncMode: BOSTON_TV_HALL_SYNC_FOLLOW,
+        playlistId: channel.playlistId,
+      },
+    });
+
+    return {
+      updated: result.count,
+      playlistId: channel.playlistId,
+      playlistName: channel.playlist.name,
+    };
+  }
+
+  private async resolveScreenPlaylistBinding(
+    tenantId: string,
+    hallSyncMode: string,
+    requestedPlaylistId: string | null | undefined,
+  ): Promise<{ playlistId?: string }> {
+    const mode = this.normalizeHallSyncMode(hallSyncMode);
+    if (mode === BOSTON_TV_HALL_SYNC_FOLLOW) {
+      const channel = await this.hallChannelPlaylist(tenantId);
+      if (channel?.playlistId) {
+        await this.ensurePlaylistExistsForTenant(tenantId, channel.playlistId);
+        return { playlistId: channel.playlistId };
+      }
+      if (requestedPlaylistId) {
+        await this.ensurePlaylistExistsForTenant(tenantId, requestedPlaylistId);
+        return { playlistId: requestedPlaylistId };
+      }
+      return {};
+    }
+
+    if (!requestedPlaylistId) return {};
+    await this.ensurePlaylistExistsForTenant(tenantId, requestedPlaylistId);
+    return { playlistId: requestedPlaylistId };
   }
 
   // ─── Canal Hall sincronizado ─────────────────────────────────────────────

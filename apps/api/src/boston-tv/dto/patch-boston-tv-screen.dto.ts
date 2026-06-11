@@ -23,6 +23,11 @@ export class PatchBostonTvScreenDto {
   @IsString()
   iptvChannelId?: string | null;
 
+  /** follow_hall | independent */
+  @IsOptional()
+  @IsString()
+  hallSyncMode?: string;
+
   @IsOptional()
   @IsString()
   scheduleTimezone?: string;
