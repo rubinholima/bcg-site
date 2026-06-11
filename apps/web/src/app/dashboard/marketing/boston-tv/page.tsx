@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Clipboard, ExternalLink, Plus, RefreshCw, Trash2, Tv } from "lucide-react";
+import { Clipboard, ExternalLink, Pencil, Plus, RefreshCw, Trash2, Tv } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -124,6 +124,11 @@ export default function BostonTvDashboardPage() {
   const [regenerateScreenId, setRegenerateScreenId] = useState<string | null>(null);
   const [screenActionLoading, setScreenActionLoading] = useState(false);
 
+  const [editPl, setEditPl] = useState<PlaylistRow | null>(null);
+  const [editPlName, setEditPlName] = useState("");
+  const [deletePlaylistId, setDeletePlaylistId] = useState<string | null>(null);
+  const [playlistActionLoading, setPlaylistActionLoading] = useState(false);
+
   const effectiveTenant = tenantFilter;
 
   const refresh = useCallback(async () => {
@@ -234,6 +239,36 @@ export default function BostonTvDashboardPage() {
     setNewPlOpen(false);
     setNewPlName("");
     await refresh();
+  };
+
+  const openEditPlaylist = (p: PlaylistRow) => {
+    setEditPl(p);
+    setEditPlName(p.name);
+  };
+
+  const savePlaylistName = async () => {
+    if (!editPl || !editPlName.trim()) return;
+    setPlaylistActionLoading(true);
+    try {
+      await api.patch(`/boston-tv/playlists/${editPl.id}`, { name: editPlName.trim() });
+      setEditPl(null);
+      setEditPlName("");
+      await refresh();
+    } finally {
+      setPlaylistActionLoading(false);
+    }
+  };
+
+  const deletePlaylist = async () => {
+    if (!deletePlaylistId) return;
+    setPlaylistActionLoading(true);
+    try {
+      await api.delete(`/boston-tv/playlists/${deletePlaylistId}`);
+      setDeletePlaylistId(null);
+      await refresh();
+    } finally {
+      setPlaylistActionLoading(false);
+    }
   };
 
   const parseSchedule = (): unknown | undefined | null => {
@@ -392,7 +427,7 @@ export default function BostonTvDashboardPage() {
       </div>
 
       <BostonTvCollapsibleSection
-        title="Playlists (marketing)"
+        title="Playlists BCG TV"
         open={playlistsOpen}
         onOpenChange={setPlaylistsOpen}
         actions={
@@ -415,16 +450,42 @@ export default function BostonTvDashboardPage() {
         ) : (
           <ul className="divide-y divide-border rounded-md border">
             {playlists.map((p) => (
-              <li key={p.id} className="flex flex-col gap-2 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <span className="font-medium">{p.name}</span>
-                <span className="text-muted-foreground text-xs">
-                  {p._count?.items ?? 0} item(ns)
-                </span>
-                <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                    Editar itens
+              <li
+                key={p.id}
+                className="flex flex-col gap-3 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{p.name}</p>
+                  <p className="text-muted-foreground text-xs mt-0.5">
+                    {p._count?.items ?? 0} item(ns)
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                  <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                      Editar itens
+                    </Button>
+                  </Link>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditPlaylist(p)}
+                    aria-label={`Renomear playlist ${p.name}`}
+                  >
+                    <Pencil className="h-4 w-4" />
                   </Button>
-                </Link>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                    onClick={() => setDeletePlaylistId(p.id)}
+                    aria-label={`Apagar playlist ${p.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -432,7 +493,7 @@ export default function BostonTvDashboardPage() {
       </BostonTvCollapsibleSection>
 
       <BostonTvCollapsibleSection
-        title="Telas (TVs)"
+        title="Telas"
         open={screensOpen}
         onOpenChange={setScreensOpen}
         actions={
@@ -509,7 +570,7 @@ export default function BostonTvDashboardPage() {
 
       {effectiveTenant ? (
         <BostonTvCollapsibleSection
-          title="IPTV (lista M3U)"
+          title="Canais"
           open={iptvOpen}
           onOpenChange={setIptvOpen}
         >
@@ -540,6 +601,71 @@ export default function BostonTvDashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog
+        open={!!editPl}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditPl(null);
+            setEditPlName("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Renomear playlist</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="edit-pl-name">Nome</Label>
+            <Input
+              id="edit-pl-name"
+              value={editPlName}
+              onChange={(e) => setEditPlName(e.target.value)}
+              className="text-foreground"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPl(null)} disabled={playlistActionLoading}>
+              Cancelar
+            </Button>
+            <Button onClick={() => void savePlaylistName()} disabled={playlistActionLoading || !editPlName.trim()}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deletePlaylistId} onOpenChange={(open) => !open && setDeletePlaylistId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apagar esta playlist?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todos os itens da playlist serão removidos.
+              {deletePlaylistId &&
+              screens.some((s) => s.playlist?.id === deletePlaylistId) ? (
+                <>
+                  {" "}
+                  Telas que usam esta playlist ficarão <strong>sem conteúdo</strong> até você escolher outra.
+                </>
+              ) : null}{" "}
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={playlistActionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={playlistActionLoading}
+              onClick={(e) => {
+                e.preventDefault();
+                void deletePlaylist();
+              }}
+            >
+              Apagar playlist
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={newScreenOpen}

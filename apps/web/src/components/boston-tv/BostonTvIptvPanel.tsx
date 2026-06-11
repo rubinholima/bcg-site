@@ -333,7 +333,7 @@ export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPa
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Radio className="h-5 w-5" />
-          IPTV (lista M3U)
+          Canais
         </CardTitle>
         <CardDescription>
           Sincronize a lista M3U, busque canais e clique em <strong>Liberar</strong>. Só os liberados aparecem ao criar/editar uma tela.
