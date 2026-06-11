@@ -6,8 +6,8 @@
 set -e
 cd "$(dirname "$0")"
 
-# Evita OOM no build (Lightsail ~2GB RAM: heap moderado + SWC no nest build)
-export NODE_OPTIONS="--max-old-space-size=1536"
+# Build Nest + Next — Lightsail 16GB (bcg-api-prod-16gb)
+export NODE_OPTIONS="--max-old-space-size=8192"
 
 echo "[deploy] git pull..."
 if ! git diff --quiet || ! git diff --cached --quiet; then
