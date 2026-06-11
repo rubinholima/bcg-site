@@ -193,11 +193,19 @@ export async function forwardRequest(
     const contentType = res.headers.get("content-type") ?? "";
     const isBinary =
       contentType.includes("application/pdf") ||
-      contentType.includes("application/octet-stream");
+      contentType.includes("application/octet-stream") ||
+      contentType.includes("video/") ||
+      contentType.includes("application/vnd.apple.mpegurl");
 
     // Prepara headers da resposta
     const nextResponseHeaders: Record<string, string> = { ...responseHeaders };
-    const headersToCopy = ["content-type", "cache-control", "content-disposition"];
+    const headersToCopy = [
+      "content-type",
+      "cache-control",
+      "content-disposition",
+      "content-range",
+      "accept-ranges",
+    ];
     headersToCopy.forEach((headerName) => {
       const value = res.headers.get(headerName);
       if (value) {
@@ -205,7 +213,15 @@ export async function forwardRequest(
       }
     });
 
-    // Respostas binárias (PDF, etc): repassa o buffer
+    // Streams de vídeo/HLS: repassa body sem buffer (IPTV ao vivo)
+    if (isBinary && res.body && (contentType.includes("video/") || contentType.includes("mpegurl"))) {
+      return new NextResponse(res.body, {
+        status: res.status,
+        headers: nextResponseHeaders,
+      });
+    }
+
+    // Respostas binárias curtas (PDF, etc): repassa o buffer
     if (isBinary) {
       const buffer = await res.arrayBuffer();
       return new NextResponse(buffer, {

@@ -356,7 +356,11 @@ export class PublicController {
   ) {
     const index = Math.max(0, parseInt(itemIndex ?? '0', 10) || 0);
     const upstream = await this.bostonTvService.resolveIptvStreamUpstream(token, index);
-    const headers: Record<string, string> = { 'User-Agent': 'BCG-BostonTV/1.0' };
+    const headers: Record<string, string> = {
+      'User-Agent': 'VLC/3.0.20 LibVLC/3.0.20',
+      Accept: '*/*',
+      Connection: 'keep-alive',
+    };
     const range = req.headers.range;
     if (typeof range === 'string') headers.Range = range;
 

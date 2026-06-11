@@ -8,6 +8,7 @@ type MpegTsPlayer = {
   attachMediaElement: (el: HTMLVideoElement) => void;
   load: () => void;
   play: () => Promise<void>;
+  on: (event: string, cb: () => void) => void;
 };
 
 interface HlsStreamPlayerProps {
@@ -31,12 +32,50 @@ function preferMpegTs(url: string): boolean {
   return u.includes(".ts") || u.includes("/stream?") || !u.includes(".m3u8");
 }
 
+function toAbsoluteStreamUrl(url: string): string {
+  const u = url.trim();
+  if (!u) return u;
+  if (/^https?:\/\//i.test(u)) return u;
+  if (typeof window === "undefined") return u;
+  return `${window.location.origin}${u.startsWith("/") ? u : `/${u}`}`;
+}
+
+function waitForVideoPicture(video: HTMLVideoElement, ms: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (video.videoWidth > 0 && video.videoHeight > 0) {
+      resolve(true);
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      resolve(video.videoWidth > 0 && video.videoHeight > 0);
+    }, ms);
+    const onReady = () => {
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        cleanup();
+        resolve(true);
+      }
+    };
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      video.removeEventListener("loadeddata", onReady);
+      video.removeEventListener("playing", onReady);
+      video.removeEventListener("resize", onReady);
+    };
+    video.addEventListener("loadeddata", onReady);
+    video.addEventListener("playing", onReady);
+    video.addEventListener("resize", onReady);
+  });
+}
+
 export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [buffering, setBuffering] = useState(true);
 
   useEffect(() => {
     setError(null);
+    setBuffering(true);
     const video = videoRef.current;
     if (!video || !url.trim()) return;
 
@@ -71,32 +110,42 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
       video.muted = true;
       video.playsInline = true;
 
+      const absoluteUrl = toAbsoluteStreamUrl(streamUrl);
       const mod = await import("mpegts.js");
       const mpegts = mod.default;
       if (!mpegts.isSupported()) return false;
 
-      const player = mpegts.createPlayer(
-        {
-          type: "mpegts",
-          isLive: true,
-          url: streamUrl,
-        },
-        {
-          enableStashBuffer: false,
-          stashInitialSize: 128,
-          liveBufferLatencyChasing: true,
-        },
-      ) as MpegTsPlayer;
+      return new Promise<boolean>((resolve) => {
+        let settled = false;
+        const finish = (ok: boolean) => {
+          if (settled || cancelled) return;
+          settled = true;
+          resolve(ok);
+        };
 
-      mpegtsInstance = player;
-      player.attachMediaElement(video);
-      player.load();
-      try {
-        await player.play();
-        return !video.error;
-      } catch {
-        return false;
-      }
+        const player = mpegts.createPlayer(
+          {
+            type: "mpegts",
+            isLive: true,
+            url: absoluteUrl,
+          },
+          {
+            enableStashBuffer: false,
+            stashInitialSize: 128,
+            liveBufferLatencyChasing: true,
+          },
+        ) as MpegTsPlayer;
+
+        mpegtsInstance = player;
+        player.on(mpegts.Events.ERROR, () => finish(false));
+        player.attachMediaElement(video);
+        player.load();
+        void player
+          .play()
+          .then(() => waitForVideoPicture(video, 15000))
+          .then((hasPicture) => finish(hasPicture))
+          .catch(() => finish(false));
+      });
     };
 
     const tryHlsJs = async (streamUrl: string): Promise<boolean> => {
@@ -141,13 +190,15 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
     };
 
     void (async () => {
-      for (const candidate of candidateUrls(url)) {
+      const baseUrl = toAbsoluteStreamUrl(url);
+      for (const candidate of candidateUrls(baseUrl)) {
         if (cancelled) break;
 
         if (preferMpegTs(candidate)) {
           const okMpeg = await tryMpegTs(candidate);
           if (okMpeg) {
             setError(null);
+            setBuffering(false);
             return;
           }
         }
@@ -155,11 +206,13 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
         const okHls = await tryHlsJs(candidate);
         if (okHls) {
           setError(null);
+          setBuffering(false);
           return;
         }
       }
 
       if (!cancelled) {
+        setBuffering(false);
         setError(
           label
             ? `${label} — não foi possível abrir este canal. Tente outro canal liberado ou confira se o stream está online.`
@@ -185,6 +238,11 @@ export function HlsStreamPlayer({ url, className = "", label }: HlsStreamPlayerP
 
   return (
     <div className={`relative h-full w-full bg-black ${className}`}>
+      {buffering ? (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-zinc-500 text-sm">
+          Conectando ao canal…
+        </div>
+      ) : null}
       <video ref={videoRef} className="h-full w-full object-contain" muted playsInline autoPlay />
       {label ? (
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3">
