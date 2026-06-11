@@ -78,6 +78,22 @@ function contentModeFromScreen(s: ScreenRow): ScreenContentMode {
   return "empty";
 }
 
+function screenContentLabel(s: ScreenRow): string {
+  if (s.displayMode === "iptv" && s.iptvChannel) {
+    return `Canal: ${s.iptvChannel.name}`;
+  }
+  if (s.playlist) {
+    return `Playlist: ${s.playlist.name}`;
+  }
+  return "Sem conteúdo — clique Editar";
+}
+
+function screenPublicUrl(s: ScreenRow, base: string): string {
+  const hallNum = parseHallScreenNum(s.name);
+  if (hallNum != null) return `${base}/tv/${hallNum}`;
+  return `${base}/tv/play/${s.playerToken}`;
+}
+
 export default function BostonTvDashboardPage() {
   const { tenantIds, canAccessModule, loading: authLoading } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -290,14 +306,14 @@ export default function BostonTvDashboardPage() {
     await refresh();
   };
 
-  const copyPlayUrl = (token: string) => {
+  const copyPlayUrl = (screen: ScreenRow) => {
     const base = typeof window !== "undefined" ? window.location.origin : "";
-    void navigator.clipboard.writeText(`${base}/tv/play/${token}`);
+    void navigator.clipboard.writeText(screenPublicUrl(screen, base));
   };
 
-  const openPlayUrl = (token: string) => {
+  const openPlayUrl = (screen: ScreenRow) => {
     const base = typeof window !== "undefined" ? window.location.origin : "";
-    window.open(`${base}/tv/play/${token}`, "_blank", "noopener,noreferrer");
+    window.open(screenPublicUrl(screen, base), "_blank", "noopener,noreferrer");
   };
 
   const deleteScreen = async () => {
@@ -443,12 +459,7 @@ export default function BostonTvDashboardPage() {
               <span className="font-mono">/tv/1</span> … <span className="font-mono">/tv/21</span>.
             </p>
             <ul className="space-y-3">
-            {screens.map((s) => {
-              const base = typeof window !== "undefined" ? window.location.origin : "";
-              const hallNum = parseHallScreenNum(s.name);
-              const shortUrl = hallNum != null ? `${base}/tv/${hallNum}` : null;
-              const url = `${base}/tv/play/${s.playerToken}`;
-              return (
+            {screens.map((s) => (
                 <li
                   key={s.id}
                   className="rounded-lg border border-border p-3 text-sm flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
@@ -458,30 +469,16 @@ export default function BostonTvDashboardPage() {
                     {s.locationHint ? (
                       <p className="text-xs text-muted-foreground">{s.locationHint}</p>
                     ) : null}
-                    <p className="text-xs mt-2 font-medium text-foreground">
-                      {s.displayMode === "iptv" && s.iptvChannel
-                        ? `Canal: ${s.iptvChannel.name}`
-                        : s.playlist
-                          ? `Marketing: ${s.playlist.name}`
-                          : "Sem conteúdo — clique Editar"}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1 break-all">
-                      {shortUrl ? (
-                        <>
-                          <span className="text-foreground font-medium">{shortUrl}</span>
-                          <span className="block mt-0.5 opacity-70">{url}</span>
-                        </>
-                      ) : (
-                        url
-                      )}
+                    <p className="text-xs mt-2 font-medium text-foreground truncate" title={screenContentLabel(s)}>
+                      {screenContentLabel(s)}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 shrink-0">
-                    <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s.playerToken)}>
+                    <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s)}>
                       <ExternalLink className="mr-1 h-4 w-4" />
                       Abrir na TV
                     </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => copyPlayUrl(s.playerToken)}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => copyPlayUrl(s)}>
                       <Clipboard className="mr-1 h-4 w-4" />
                       Copiar link
                     </Button>
@@ -504,8 +501,7 @@ export default function BostonTvDashboardPage() {
                     </Button>
                   </div>
                 </li>
-              );
-            })}
+            ))}
           </ul>
           </>
         )}
