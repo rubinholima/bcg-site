@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isWithinContentWindow } from "@/lib/boston-tv-schedule";
 import { HlsStreamPlayer } from "@/components/boston-tv/HlsStreamPlayer";
 import { YoutubeTvPlayer } from "@/components/boston-tv/YoutubeTvPlayer";
@@ -15,6 +15,16 @@ export type BostonTvPlayerItem = {
   channelName?: string;
 };
 
+export type BostonTvHallSync = {
+  serverNow: string;
+  paused: boolean;
+  playlistVersion: number;
+  itemIndex: number;
+  offsetMs: number;
+  itemDurationMs: number;
+  loopDurationMs: number;
+};
+
 export type BostonTvPlayerPayload = {
   screenName: string;
   tenantName: string;
@@ -23,6 +33,7 @@ export type BostonTvPlayerPayload = {
   playlistName: string | null;
   displayMode?: string;
   items: BostonTvPlayerItem[];
+  hallSync?: BostonTvHallSync;
 };
 
 function extractYoutubeId(url: string): string | null {
@@ -34,6 +45,63 @@ function extractYoutubeId(url: string): string | null {
   const emb = /youtube\.com\/embed\/([^?]+)/.exec(u);
   if (emb?.[1]) return emb[1];
   return null;
+}
+
+function SyncedVideo({
+  src,
+  itemKey,
+  startSeconds,
+  paused,
+  onEndedLocal,
+  synced,
+}: {
+  src: string;
+  itemKey: string;
+  startSeconds: number;
+  paused: boolean;
+  onEndedLocal: () => void;
+  synced: boolean;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const apply = () => {
+      if (startSeconds > 0.5 && Number.isFinite(el.duration)) {
+        const target = Math.min(startSeconds, Math.max(0, el.duration - 0.5));
+        if (Math.abs(el.currentTime - target) > 1.5) {
+          el.currentTime = target;
+        }
+      }
+    };
+    el.addEventListener("loadedmetadata", apply);
+    if (el.readyState >= 1) apply();
+    return () => el.removeEventListener("loadedmetadata", apply);
+  }, [itemKey, startSeconds]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (paused) {
+      el.pause();
+    } else {
+      void el.play().catch(() => {});
+    }
+  }, [paused, itemKey]);
+
+  return (
+    <video
+      ref={ref}
+      key={itemKey}
+      src={src}
+      className="h-full w-full object-contain"
+      autoPlay
+      muted
+      playsInline
+      onEnded={synced ? undefined : onEndedLocal}
+    />
+  );
 }
 
 export function BostonTvPlayerView({ token }: { token: string }) {
@@ -59,11 +127,14 @@ export function BostonTvPlayerView({ token }: { token: string }) {
     }
   }, [token]);
 
+  const synced = Boolean(payload?.hallSync && (payload?.items.length ?? 0) > 0);
+
   useEffect(() => {
     void load();
-    const i = window.setInterval(() => void load(), 60_000);
+    const ms = synced ? 10_000 : 60_000;
+    const i = window.setInterval(() => void load(), ms);
     return () => window.clearInterval(i);
-  }, [load]);
+  }, [load, synced]);
 
   useEffect(() => {
     const ping = () => {
@@ -92,9 +163,16 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   }, []);
 
   const items = payload?.items ?? [];
-  const current = items[idx % Math.max(items.length, 1)];
+  const hallSync = payload?.hallSync;
+  const displayIdx = synced && hallSync
+    ? hallSync.itemIndex % Math.max(items.length, 1)
+    : idx % Math.max(items.length, 1);
+  const current = items[displayIdx];
+  const syncOffsetMs = synced && hallSync ? hallSync.offsetMs : 0;
+  const hallPaused = synced && hallSync ? hallSync.paused : false;
 
   useEffect(() => {
+    if (synced) return;
     if (!current || items.length === 0) return;
     if (current.contentType === "image_url") {
       const sec = Math.max(5, current.durationSeconds ?? 10);
@@ -124,7 +202,13 @@ export function BostonTvPlayerView({ token }: { token: string }) {
       return undefined;
     }
     return undefined;
-  }, [current, items.length, idx]);
+  }, [current, items.length, idx, synced]);
+
+  const pauseOverlay = hallPaused ? (
+    <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center pb-8">
+      <span className="rounded-full bg-black/70 px-4 py-2 text-sm text-zinc-300">Pausado</span>
+    </div>
+  ) : null;
 
   if (error) {
     return (
@@ -164,16 +248,22 @@ export function BostonTvPlayerView({ token }: { token: string }) {
     );
   }
 
+  const mediaKey = synced && hallSync
+    ? `${current.id}-v${hallSync.playlistVersion}-i${hallSync.itemIndex}`
+    : current.id;
+
   if (current.contentType === "image_url") {
     const src = getPublicImageUrl(current.url) || current.url;
     return (
       <div className="relative h-screen w-screen bg-black">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          key={mediaKey}
           src={src}
           alt=""
           className="h-full w-full object-contain"
         />
+        {pauseOverlay}
       </div>
     );
   }
@@ -182,27 +272,32 @@ export function BostonTvPlayerView({ token }: { token: string }) {
     const src = getPublicImageUrl(current.url) || current.url;
     return (
       <div className="relative h-screen w-screen bg-black">
-        <video
-          key={current.id}
+        <SyncedVideo
           src={src}
-          className="h-full w-full object-contain"
-          autoPlay
-          muted
-          playsInline
-          onEnded={() => setIdx((i) => (i + 1) % items.length)}
+          itemKey={mediaKey}
+          startSeconds={syncOffsetMs / 1000}
+          paused={hallPaused}
+          synced={synced}
+          onEndedLocal={() => setIdx((i) => (i + 1) % items.length)}
         />
+        {pauseOverlay}
       </div>
     );
   }
 
   if (current.contentType === "iptv_stream") {
     return (
-      <HlsStreamPlayer
-        url={current.url}
-        className="h-screen w-screen"
-        label={current.channelName}
-        withAudio
-      />
+      <div className="relative h-screen w-screen bg-black">
+        <HlsStreamPlayer
+          key={mediaKey}
+          url={current.url}
+          className="h-screen w-screen"
+          label={current.channelName}
+          withAudio
+          paused={hallPaused}
+        />
+        {pauseOverlay}
+      </div>
     );
   }
 
@@ -216,7 +311,14 @@ export function BostonTvPlayerView({ token }: { token: string }) {
       );
     }
     return (
-      <YoutubeTvPlayer videoId={yid} itemKey={current.id} />
+      <div className="relative h-screen w-screen bg-black">
+        <YoutubeTvPlayer
+          videoId={yid}
+          itemKey={mediaKey}
+          startSeconds={Math.floor(syncOffsetMs / 1000)}
+        />
+        {pauseOverlay}
+      </div>
     );
   }
 

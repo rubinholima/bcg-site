@@ -10,7 +10,18 @@ import { isPlayableIptvStreamUrl } from './m3u-parser';
 import {
   resolvePublicMediaUrl,
 } from '../common/public-media-url.util';
-import { BOSTON_TV_HALL_TENANT_SLUG } from './boston-tv-hall.constants';
+import {
+  BOSTON_TV_HALL_PLAYLIST_NAME,
+  BOSTON_TV_HALL_TENANT_SLUG,
+} from './boston-tv-hall.constants';
+import {
+  effectiveItemDurationMs,
+  hallElapsedMs,
+  hallLoopDurationMs,
+  hallNextItemElapsedMs,
+  hallPositionInLoop,
+  type HallSyncItem,
+} from './boston-tv-hall-sync.util';
 
 const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream'] as const;
 
@@ -68,12 +79,18 @@ export class BostonTvService {
   /** Payload público do player na TV — sem auth. */
   async getPublicPlayerPayload(playerToken: string) {
     const ctx = await this.buildPlayerContext(playerToken);
+    const items = ctx.items.map((it, index) => ({
+      ...it,
+      url: this.resolvePlayerItemUrl(it, playerToken, index),
+    }));
+    const hallSync =
+      ctx.meta.playlistId && ctx.tenantId
+        ? await this.buildHallSyncPayload(ctx.tenantId, ctx.meta.playlistId, ctx.items)
+        : null;
     return {
       ...ctx.meta,
-      items: ctx.items.map((it, index) => ({
-        ...it,
-        url: this.resolvePlayerItemUrl(it, playerToken, index),
-      })),
+      items,
+      ...(hallSync ? { hallSync } : {}),
     };
   }
 
@@ -138,6 +155,7 @@ export class BostonTvService {
           playlistName: null,
           displayMode: 'iptv',
         },
+        tenantId: screen.tenant.id,
         items: [
           {
             id: ch.id,
@@ -176,6 +194,7 @@ export class BostonTvService {
         playlistName: screen.playlist?.name ?? null,
         displayMode: 'playlist',
       },
+      tenantId: screen.tenant.id,
       items: playlistItems.map((it) => ({
         id: it.id,
         contentType: it.contentType,
@@ -383,6 +402,9 @@ export class BostonTvService {
           dto.durationSeconds !== undefined ? dto.durationSeconds : null,
         sortOrder,
       },
+    }).then(async (row) => {
+      await this.bumpHallPlaylistChange(playlistId);
+      return row;
     });
   }
 
@@ -417,6 +439,9 @@ export class BostonTvService {
         ...(dto.durationSeconds !== undefined ? { durationSeconds: dto.durationSeconds } : {}),
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
       },
+    }).then(async (row) => {
+      await this.bumpHallPlaylistChange(playlistId);
+      return row;
     });
   }
 
@@ -431,6 +456,7 @@ export class BostonTvService {
     });
     if (!item) throw new NotFoundException('Item não encontrado');
     await this.prisma.bostonTvPlaylistItem.delete({ where: { id: itemId } });
+    await this.bumpHallPlaylistChange(playlistId);
   }
 
   async createScreen(input: {
@@ -635,5 +661,272 @@ export class BostonTvService {
     if (!row) throw new NotFoundException('Tela não encontrada');
     this.assertTenant(allowed, row.tenantId);
     return row;
+  }
+
+  // ─── Canal Hall sincronizado ─────────────────────────────────────────────
+
+  async ensureHallChannel(tenantId: string, playlistId: string) {
+    await this.ensurePlaylistExistsForTenant(tenantId, playlistId);
+    return this.prisma.bostonTvHallChannel.upsert({
+      where: { tenantId },
+      create: { tenantId, playlistId },
+      update: { playlistId },
+    });
+  }
+
+  async getHallChannelState(
+    tenantId: string,
+    allowedTenantIds: string[] | null,
+  ) {
+    this.assertTenant(allowedTenantIds, tenantId);
+
+    let channel = await this.prisma.bostonTvHallChannel.findUnique({
+      where: { tenantId },
+      include: {
+        playlist: {
+          select: { id: true, name: true, items: { orderBy: { sortOrder: 'asc' } } },
+        },
+      },
+    });
+
+    if (!channel) {
+      const hallPl = await this.prisma.bostonTvPlaylist.findFirst({
+        where: { tenantId, name: BOSTON_TV_HALL_PLAYLIST_NAME },
+        include: { items: { orderBy: { sortOrder: 'asc' } } },
+      });
+      if (hallPl) {
+        await this.ensureHallChannel(tenantId, hallPl.id);
+        channel = await this.prisma.bostonTvHallChannel.findUnique({
+          where: { tenantId },
+          include: {
+            playlist: {
+              select: { id: true, name: true, items: { orderBy: { sortOrder: 'asc' } } },
+            },
+          },
+        });
+      }
+    }
+
+    if (!channel) {
+      return {
+        configured: false as const,
+        tenantId,
+        message:
+          'Canal Hall não configurado. Crie a playlist "Hall — loop geral" ou vincule uma playlist ao canal.',
+      };
+    }
+
+    const syncItems = channel.playlist.items.map((it) => ({
+      contentType: it.contentType,
+      durationSeconds: it.durationSeconds,
+    }));
+
+    return {
+      configured: true as const,
+      tenantId,
+      playlistId: channel.playlistId,
+      playlistName: channel.playlist.name,
+      itemCount: channel.playlist.items.length,
+      hallSync: this.computeHallSync(channel, syncItems),
+    };
+  }
+
+  async hallChannelPlay(tenantId: string, allowedTenantIds: string[] | null) {
+    this.assertTenant(allowedTenantIds, tenantId);
+    const channel = await this.requireHallChannel(tenantId);
+    if (!channel.isPaused) return this.getHallChannelState(tenantId, allowedTenantIds);
+
+    const now = new Date();
+    await this.prisma.bostonTvHallChannel.update({
+      where: { tenantId },
+      data: {
+        isPaused: false,
+        epochAt: new Date(now.getTime() - channel.pausedElapsedMs),
+        pausedElapsedMs: 0,
+      },
+    });
+    return this.getHallChannelState(tenantId, allowedTenantIds);
+  }
+
+  async hallChannelPause(tenantId: string, allowedTenantIds: string[] | null) {
+    this.assertTenant(allowedTenantIds, tenantId);
+    const channel = await this.requireHallChannelWithItems(tenantId);
+    if (channel.isPaused) return this.getHallChannelState(tenantId, allowedTenantIds);
+
+    const syncItems = channel.playlist.items.map((it) => ({
+      contentType: it.contentType,
+      durationSeconds: it.durationSeconds,
+    }));
+    const elapsed = hallElapsedMs(
+      channel.epochAt,
+      false,
+      0,
+    );
+
+    await this.prisma.bostonTvHallChannel.update({
+      where: { tenantId },
+      data: {
+        isPaused: true,
+        pausedElapsedMs: elapsed,
+      },
+    });
+    return this.getHallChannelState(tenantId, allowedTenantIds);
+  }
+
+  async hallChannelNext(tenantId: string, allowedTenantIds: string[] | null) {
+    this.assertTenant(allowedTenantIds, tenantId);
+    const channel = await this.requireHallChannelWithItems(tenantId);
+    const syncItems = channel.playlist.items.map((it) => ({
+      contentType: it.contentType,
+      durationSeconds: it.durationSeconds,
+    }));
+    if (syncItems.length === 0) {
+      throw new BadRequestException('Playlist do Canal Hall está vazia.');
+    }
+
+    const currentElapsed = hallElapsedMs(
+      channel.epochAt,
+      channel.isPaused,
+      channel.pausedElapsedMs,
+    );
+    const nextElapsed = hallNextItemElapsedMs(syncItems, currentElapsed);
+    const now = Date.now();
+
+    if (channel.isPaused) {
+      await this.prisma.bostonTvHallChannel.update({
+        where: { tenantId },
+        data: { pausedElapsedMs: nextElapsed },
+      });
+    } else {
+      await this.prisma.bostonTvHallChannel.update({
+        where: { tenantId },
+        data: {
+          epochAt: new Date(now - nextElapsed),
+          pausedElapsedMs: 0,
+        },
+      });
+    }
+    return this.getHallChannelState(tenantId, allowedTenantIds);
+  }
+
+  async hallChannelRestart(tenantId: string, allowedTenantIds: string[] | null) {
+    this.assertTenant(allowedTenantIds, tenantId);
+    await this.requireHallChannel(tenantId);
+    await this.prisma.bostonTvHallChannel.update({
+      where: { tenantId },
+      data: {
+        epochAt: new Date(),
+        isPaused: false,
+        pausedElapsedMs: 0,
+      },
+    });
+    return this.getHallChannelState(tenantId, allowedTenantIds);
+  }
+
+  private async buildHallSyncPayload(
+    tenantId: string,
+    playlistId: string,
+    items: HallSyncItem[],
+  ) {
+    if (items.length === 0) return null;
+
+    let channel = await this.prisma.bostonTvHallChannel.findFirst({
+      where: { tenantId, playlistId },
+    });
+
+    if (!channel) {
+      const pl = await this.prisma.bostonTvPlaylist.findFirst({
+        where: { id: playlistId, tenantId, name: BOSTON_TV_HALL_PLAYLIST_NAME },
+        select: { id: true },
+      });
+      if (!pl) return null;
+      channel = await this.ensureHallChannel(tenantId, playlistId);
+    }
+
+    return this.computeHallSync(channel, items);
+  }
+
+  private computeHallSync(
+    channel: {
+      epochAt: Date;
+      isPaused: boolean;
+      pausedElapsedMs: number;
+      playlistVersion: number;
+    },
+    items: HallSyncItem[],
+  ) {
+    const now = Date.now();
+    const elapsed = hallElapsedMs(
+      channel.epochAt,
+      channel.isPaused,
+      channel.pausedElapsedMs,
+      now,
+    );
+    const { itemIndex, offsetMs } = hallPositionInLoop(items, elapsed);
+    const current = items[itemIndex] ?? items[0];
+    return {
+      serverNow: new Date(now).toISOString(),
+      paused: channel.isPaused,
+      playlistVersion: channel.playlistVersion,
+      itemIndex,
+      offsetMs,
+      itemDurationMs: current
+        ? effectiveItemDurationMs(current)
+        : 0,
+      loopDurationMs: hallLoopDurationMs(items),
+    };
+  }
+
+  private async bumpHallPlaylistChange(playlistId: string) {
+    const channel = await this.prisma.bostonTvHallChannel.findFirst({
+      where: { playlistId },
+    });
+    if (!channel) return;
+    await this.prisma.bostonTvHallChannel.update({
+      where: { id: channel.id },
+      data: {
+        playlistVersion: { increment: 1 },
+        epochAt: new Date(),
+        isPaused: false,
+        pausedElapsedMs: 0,
+      },
+    });
+  }
+
+  private async requireHallChannel(tenantId: string) {
+    const channel = await this.prisma.bostonTvHallChannel.findUnique({
+      where: { tenantId },
+    });
+    if (!channel) {
+      throw new NotFoundException(
+        'Canal Hall não configurado para esta empresa.',
+      );
+    }
+    return channel;
+  }
+
+  private async requireHallChannelWithItems(tenantId: string) {
+    const channel = await this.prisma.bostonTvHallChannel.findUnique({
+      where: { tenantId },
+      include: {
+        playlist: { include: { items: { orderBy: { sortOrder: 'asc' } } } },
+      },
+    });
+    if (!channel) {
+      throw new NotFoundException(
+        'Canal Hall não configurado para esta empresa.',
+      );
+    }
+    return channel;
+  }
+
+  private async ensurePlaylistExistsForTenant(
+    tenantId: string,
+    playlistId: string,
+  ) {
+    const pl = await this.prisma.bostonTvPlaylist.findFirst({
+      where: { id: playlistId, tenantId },
+    });
+    if (!pl) throw new BadRequestException('Playlist inválida para esta empresa.');
   }
 }

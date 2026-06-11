@@ -18,6 +18,8 @@ interface HlsStreamPlayerProps {
   label?: string;
   /** TV signage: tenta reproduzir com áudio (HDMI). Fallback mudo se o browser bloquear autoplay. */
   withAudio?: boolean;
+  /** Canal Hall pausado — congela stream ao vivo. */
+  paused?: boolean;
 }
 
 const MPEGTS_CONFIG = {
@@ -107,7 +109,7 @@ function waitForVideoPicture(video: HTMLVideoElement, ms: number): Promise<boole
   });
 }
 
-export function HlsStreamPlayer({ url, className = "", label, withAudio = true }: HlsStreamPlayerProps) {
+export function HlsStreamPlayer({ url, className = "", label, withAudio = true, paused = false }: HlsStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
@@ -321,6 +323,13 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true }
       destroyMpegTs();
     };
   }, [url, label, withAudio]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (paused) video.pause();
+    else void video.play().catch(() => {});
+  }, [paused]);
 
   if (error) {
     return (

@@ -36,6 +36,7 @@ import { api } from "@/lib/api";
 import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
+import { BostonTvHallChannelPanel } from "@/components/boston-tv/BostonTvHallChannelPanel";
 import { parseHallScreenNum } from "@/lib/boston-tv-hall";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
@@ -425,6 +426,8 @@ export default function BostonTvDashboardPage() {
           </Select>
         </div>
       </div>
+
+      {effectiveTenant ? <BostonTvHallChannelPanel tenantId={effectiveTenant} /> : null}
 
       <BostonTvCollapsibleSection
         title="Playlists BCG TV"

@@ -142,6 +142,14 @@ async function ensureHallPlaylist(tenantId: string, tenantLogoUrl: string | null
   });
 
   console.log(`  → ${linked.count} telas vinculadas à playlist "${HALL_PLAYLIST_NAME}"`);
+
+  await prisma.bostonTvHallChannel.upsert({
+    where: { tenantId },
+    create: { tenantId, playlistId: playlist.id },
+    update: { playlistId: playlist.id },
+  });
+  console.log('  + Canal Hall sincronizado (relógio mestre)');
+
   return playlist;
 }
 

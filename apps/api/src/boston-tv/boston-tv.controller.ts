@@ -273,4 +273,54 @@ export class BostonTvController {
     await this.bostonTv.deleteScreen(id, allowed);
     return { ok: true };
   }
+
+  @Get('hall-channel')
+  async getHallChannel(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    const allowed = await this.allowedIds(req);
+    return this.bostonTv.getHallChannelState(tenantId.trim(), allowed);
+  }
+
+  @Post('hall-channel/play')
+  async hallChannelPlay(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    const allowed = await this.allowedIds(req);
+    return this.bostonTv.hallChannelPlay(tenantId.trim(), allowed);
+  }
+
+  @Post('hall-channel/pause')
+  async hallChannelPause(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    const allowed = await this.allowedIds(req);
+    return this.bostonTv.hallChannelPause(tenantId.trim(), allowed);
+  }
+
+  @Post('hall-channel/next')
+  async hallChannelNext(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    const allowed = await this.allowedIds(req);
+    return this.bostonTv.hallChannelNext(tenantId.trim(), allowed);
+  }
+
+  @Post('hall-channel/restart')
+  async hallChannelRestart(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    const allowed = await this.allowedIds(req);
+    return this.bostonTv.hallChannelRestart(tenantId.trim(), allowed);
+  }
 }

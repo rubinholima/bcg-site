@@ -6,6 +6,8 @@ interface YoutubeTvPlayerProps {
   videoId: string;
   /** Muda quando troca o item — dispara nova tentativa de tela cheia. */
   itemKey: string;
+  /** Segundo inicial (Canal Hall sincronizado). */
+  startSeconds?: number;
 }
 
 function requestPageFullscreen(): void {
@@ -19,7 +21,7 @@ function requestPageFullscreen(): void {
   el.webkitRequestFullscreen?.();
 }
 
-export function YoutubeTvPlayer({ videoId, itemKey }: YoutubeTvPlayerProps) {
+export function YoutubeTvPlayer({ videoId, itemKey, startSeconds = 0 }: YoutubeTvPlayerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,6 +40,9 @@ export function YoutubeTvPlayer({ videoId, itemKey }: YoutubeTvPlayerProps) {
     iv_load_policy: "3",
     disablekb: "1",
   });
+  if (startSeconds > 0) {
+    params.set("start", String(startSeconds));
+  }
 
   return (
     <div ref={rootRef} className="relative h-screen w-screen overflow-hidden bg-black">

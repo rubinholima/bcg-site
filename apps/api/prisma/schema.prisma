@@ -121,6 +121,7 @@ model Tenant {
   bostonTvPlaylists     BostonTvPlaylist[]
   bostonTvScreens       BostonTvScreen[]
   bostonTvIptvSources   BostonTvIptvSource[]
+  bostonTvHallChannel   BostonTvHallChannel?
   travelLogistics       TravelLogistics[]
   footballAgendaEntries FootballAgendaEntry[]
   footballActivitySpaces FootballActivitySpace[]
@@ -1442,8 +1443,27 @@ model BostonTvPlaylist {
   updatedAt   DateTime @updatedAt
   items       BostonTvPlaylistItem[]
   screens     BostonTvScreen[]
+  hallChannel BostonTvHallChannel?
 
   @@index([tenantId])
+}
+
+/// Relógio mestre — telas com a mesma playlist seguem a mesma posição no loop.
+model BostonTvHallChannel {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playlistId       String   @unique
+  playlist         BostonTvPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  /** Âncora UTC — elapsed = now - epochAt (quando não pausado). */
+  epochAt          DateTime @default(now())
+  isPaused         Boolean  @default(false)
+  pausedElapsedMs  Int      @default(0)
+  playlistVersion  Int      @default(1)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([playlistId])
 }
 
 model BostonTvPlaylistItem {
