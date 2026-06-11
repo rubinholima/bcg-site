@@ -13,6 +13,12 @@ import {
 
 const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream'] as const;
 
+/** Ordena telas "1 - USA", "2 - …", "10 - …" numericamente. */
+function bostonTvScreenSortNum(name: string): number {
+  const m = /^(\d+)\s*-/.exec(name.trim());
+  return m ? parseInt(m[1], 10) : 9999;
+}
+
 @Injectable()
 export class BostonTvService {
   constructor(private readonly prisma: PrismaService) {}
@@ -221,14 +227,19 @@ export class BostonTvService {
         : tenantIds?.length
           ? { tenantId: { in: tenantIds } }
           : {};
-    return this.prisma.bostonTvScreen.findMany({
+    const rows = await this.prisma.bostonTvScreen.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { name: 'asc' },
       include: {
         playlist: { select: { id: true, name: true } },
         iptvChannel: { select: { id: true, name: true, groupTitle: true } },
       },
     });
+    return rows.sort(
+      (a, b) =>
+        bostonTvScreenSortNum(a.name) - bostonTvScreenSortNum(b.name) ||
+        a.name.localeCompare(b.name, 'pt-BR'),
+    );
   }
 
   async createPlaylist(input: {

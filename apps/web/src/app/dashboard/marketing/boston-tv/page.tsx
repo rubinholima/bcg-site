@@ -541,7 +541,7 @@ export default function BostonTvDashboardPage() {
                 id="sc-name"
                 value={screenName}
                 onChange={(e) => setScreenName(e.target.value)}
-                placeholder="Ex.: 1 - BRASIL"
+                placeholder="Ex.: 1 - USA"
                 className="text-foreground"
               />
             </div>

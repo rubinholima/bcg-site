@@ -1,7 +1,7 @@
 /**
  * Seed: 20 Smart TVs + telão — tenant Boston City FC Brasil (espaço multiuso / Hall).
- * Cria playlist "Hall — loop geral" e associa às telas.
- * Idempotente: não duplica telas/playlist com o mesmo nome no tenant.
+ * Nomes no formato da planilha: "1 - USA", "2 - Colômbia", … "21 - Telão Brasil".
+ * Idempotente: renomeia telas antigas (sem número) e não duplica.
  *
  * Rodar (monorepo):
  *   pnpm --filter api run seed:boston-tv-hall-screens
@@ -28,35 +28,57 @@ function newPlayerToken(): string {
   return randomBytes(24).toString('hex');
 }
 
+function screenDisplayName(num: number, label: string): string {
+  return `${num} - ${label}`;
+}
+
 /** Planilha TVs — espaço multiuso (Boston City FC Brasil) */
-const HALL_SCREENS: Array<{ name: string; locationHint: string }> = [
-  { name: 'USA', locationHint: 'Canto bar direita · Samsung 65S62' },
-  { name: 'Colômbia', locationHint: 'Diagonal bar direita · Samsung 55S62' },
-  { name: 'Paraguai', locationHint: 'Direita palco · Samsung 65S62' },
-  { name: 'Uruguai', locationHint: 'Direita tela palco · Samsung 65S62' },
-  { name: 'Equador', locationHint: 'Esquerda tela palco · Samsung 65S62' },
-  { name: 'Canadá', locationHint: 'Esquerda palco · Samsung 55S62' },
-  { name: 'Alemanha', locationHint: 'Diagonal bar esquerda · Samsung 65S62' },
-  { name: 'Áustria', locationHint: 'Canto bar esquerda · Samsung 55S62' },
-  { name: 'Bélgica', locationHint: 'Meio bar esquerda · Samsung 65S62' },
-  { name: 'Inglaterra', locationHint: 'Canto upper deck bar esquerda · Samsung UN65DU7700' },
-  { name: 'Noruega', locationHint: 'Meio upper deck bar esquerda · Samsung 55S62' },
-  { name: 'Portugal', locationHint: 'Banheiro upper deck bar esquerda · Samsung 55S62' },
-  { name: 'Croácia', locationHint: 'Upper deck centro TV1 · Philips 7300' },
-  { name: 'Escócia', locationHint: 'Upper deck centro TV2 · Philips 7300' },
-  { name: 'Espanha', locationHint: 'Upper deck centro TV3 · Philips 7300' },
-  { name: 'França', locationHint: 'Upper deck centro TV4 · Philips 7300' },
-  { name: 'Holanda', locationHint: 'Centro upper deck · Samsung 55S62' },
-  { name: 'Argentina', locationHint: 'Banheiro upper deck bar direita · Samsung 55S62' },
-  { name: 'Suécia', locationHint: 'Meio upper deck bar direita · Samsung 55S62' },
-  { name: 'Suíça', locationHint: 'Canto upper deck bar direita · Samsung 65S62' },
+const HALL_SCREENS: Array<{ num: number; label: string; legacyNames: string[]; locationHint: string }> = [
+  { num: 1, label: 'USA', legacyNames: ['USA'], locationHint: 'Canto bar direita · Samsung 65S62' },
+  { num: 2, label: 'Colômbia', legacyNames: ['Colômbia'], locationHint: 'Diagonal bar direita · Samsung 55S62' },
+  { num: 3, label: 'Paraguai', legacyNames: ['Paraguai'], locationHint: 'Direita palco · Samsung 65S62' },
+  { num: 4, label: 'Uruguai', legacyNames: ['Uruguai'], locationHint: 'Direita tela palco · Samsung 65S62' },
+  { num: 5, label: 'Equador', legacyNames: ['Equador'], locationHint: 'Esquerda tela palco · Samsung 65S62' },
+  { num: 6, label: 'Canadá', legacyNames: ['Canadá'], locationHint: 'Esquerda palco · Samsung 55S62' },
+  { num: 7, label: 'Alemanha', legacyNames: ['Alemanha'], locationHint: 'Diagonal bar esquerda · Samsung 65S62' },
+  { num: 8, label: 'Áustria', legacyNames: ['Áustria'], locationHint: 'Canto bar esquerda · Samsung 55S62' },
+  { num: 9, label: 'Bélgica', legacyNames: ['Bélgica'], locationHint: 'Meio bar esquerda · Samsung 65S62' },
+  { num: 10, label: 'Inglaterra', legacyNames: ['Inglaterra'], locationHint: 'Canto upper deck bar esquerda · Samsung UN65DU7700' },
+  { num: 11, label: 'Noruega', legacyNames: ['Noruega'], locationHint: 'Meio upper deck bar esquerda · Samsung 55S62' },
+  { num: 12, label: 'Portugal', legacyNames: ['Portugal'], locationHint: 'Banheiro upper deck bar esquerda · Samsung 55S62' },
+  { num: 13, label: 'Croácia', legacyNames: ['Croácia'], locationHint: 'Upper deck centro TV1 · Philips 7300' },
+  { num: 14, label: 'Escócia', legacyNames: ['Escócia'], locationHint: 'Upper deck centro TV2 · Philips 7300' },
+  { num: 15, label: 'Espanha', legacyNames: ['Espanha'], locationHint: 'Upper deck centro TV3 · Philips 7300' },
+  { num: 16, label: 'França', legacyNames: ['França'], locationHint: 'Upper deck centro TV4 · Philips 7300' },
+  { num: 17, label: 'Holanda', legacyNames: ['Holanda'], locationHint: 'Centro upper deck · Samsung 55S62' },
+  { num: 18, label: 'Argentina', legacyNames: ['Argentina'], locationHint: 'Banheiro upper deck bar direita · Samsung 55S62' },
+  { num: 19, label: 'Suécia', legacyNames: ['Suécia'], locationHint: 'Meio upper deck bar direita · Samsung 55S62' },
+  { num: 20, label: 'Suíça', legacyNames: ['Suíça'], locationHint: 'Canto upper deck bar direita · Samsung 65S62' },
   {
-    name: 'Telão Brasil',
+    num: 21,
+    label: 'Telão Brasil',
+    legacyNames: ['Telão Brasil', 'Brasil'],
     locationHint: 'Telão espaço multiuso · conectar stick/PC na entrada HDMI do processador de vídeo',
   },
 ];
 
-const HALL_SCREEN_NAMES = HALL_SCREENS.map((s) => s.name);
+const HALL_SCREEN_NAMES = HALL_SCREENS.map((s) => screenDisplayName(s.num, s.label));
+
+async function findScreenByLegacyNames(
+  tenantId: string,
+  row: (typeof HALL_SCREENS)[number],
+) {
+  const displayName = screenDisplayName(row.num, row.label);
+  const namesToTry = [displayName, ...row.legacyNames];
+  for (const name of namesToTry) {
+    const found = await prisma.bostonTvScreen.findFirst({
+      where: { tenantId, name },
+      select: { id: true, name: true, playerToken: true },
+    });
+    if (found) return found;
+  }
+  return null;
+}
 
 async function ensureHallPlaylist(tenantId: string, tenantLogoUrl: string | null) {
   let playlist = await prisma.bostonTvPlaylist.findFirst({
@@ -116,7 +138,6 @@ async function ensureHallPlaylist(tenantId: string, tenantLogoUrl: string | null
     data: {
       displayMode: 'playlist',
       playlistId: playlist.id,
-      iptvChannelId: null,
     },
   });
 
@@ -136,23 +157,35 @@ async function main() {
   }
 
   let created = 0;
+  let renamed = 0;
   let skipped = 0;
 
   for (const row of HALL_SCREENS) {
-    const existing = await prisma.bostonTvScreen.findFirst({
-      where: { tenantId: tenant.id, name: row.name },
-      select: { id: true, playerToken: true },
-    });
+    const displayName = screenDisplayName(row.num, row.label);
+    const existing = await findScreenByLegacyNames(tenant.id, row);
+
     if (existing) {
-      skipped += 1;
-      console.log(`  · tela já existe: ${row.name}`);
+      if (existing.name !== displayName) {
+        await prisma.bostonTvScreen.update({
+          where: { id: existing.id },
+          data: {
+            name: displayName,
+            locationHint: row.locationHint,
+          },
+        });
+        renamed += 1;
+        console.log(`  ↻ renomeada: ${existing.name} → ${displayName}`);
+      } else {
+        skipped += 1;
+        console.log(`  · tela já existe: ${displayName}`);
+      }
       continue;
     }
 
     const screen = await prisma.bostonTvScreen.create({
       data: {
         tenantId: tenant.id,
-        name: row.name,
+        name: displayName,
         locationHint: row.locationHint,
         playerToken: newPlayerToken(),
         displayMode: 'playlist',
@@ -170,8 +203,9 @@ async function main() {
 
   console.log('');
   console.log(`Boston TV — ${tenant.name}`);
-  console.log(`  Telas criadas: ${created} | Já existiam: ${skipped} | Total: ${HALL_SCREENS.length}`);
-  console.log(`  Edite "${HALL_PLAYLIST_NAME}" em Marketing → Boston TV → Playlists para adicionar conteúdo.`);
+  console.log(
+    `  Criadas: ${created} | Renomeadas: ${renamed} | Já ok: ${skipped} | Total: ${HALL_SCREENS.length}`,
+  );
 }
 
 main()
