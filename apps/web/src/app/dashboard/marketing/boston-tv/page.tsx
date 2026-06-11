@@ -378,7 +378,7 @@ export default function BostonTvDashboardPage() {
   if (!canAccessModule("boston_tv") && !authLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-        <p>Você não tem acesso ao módulo Boston TV.</p>
+        <p>Você não tem acesso ao módulo BCG TV.</p>
         <Link href="/dashboard">
           <Button variant="link" className="mt-2">
             Voltar ao dashboard

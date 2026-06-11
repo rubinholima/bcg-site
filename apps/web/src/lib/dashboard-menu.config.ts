@@ -612,7 +612,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       { slug: "marketing_planner", label: "Planner", href: "/dashboard/marketing", icon: Calendar, moduleSlug: "marketing" },
       {
         slug: "marketing_boston_tv",
-        label: "Boston TV",
+        label: "BCG TV",
         href: "/dashboard/marketing/boston-tv",
         icon: Tv,
         moduleSlug: "boston_tv",

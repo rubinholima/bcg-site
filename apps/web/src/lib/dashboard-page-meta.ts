@@ -72,7 +72,7 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
       "Importa cadastros de atletas (Sub-20, Sub-17, Sub-15, Sub-14) do Beatscode para o banco de jogadores.",
   },
   "/dashboard/marketing/boston-tv": {
-    title: "Boston TV",
+    title: "BCG TV",
   },
   "/dashboard/marketing/boston-tv/playlists": {
     title: "Editar playlist",

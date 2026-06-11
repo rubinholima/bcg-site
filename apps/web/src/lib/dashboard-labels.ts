@@ -43,7 +43,7 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   juridico: "Controle Jurídico",
   futebol_logistica: "Log\u00EDstica",
   marketing: "Marketing (Planner)",
-  boston_tv: "Boston TV",
+  boston_tv: "BCG TV",
   academias: "Academias (gest\u00E3o e portal do aluno)",
   adm_financeiro: "Financeiro",
   adm_compras: "Compras",
