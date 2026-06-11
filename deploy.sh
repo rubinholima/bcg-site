@@ -24,8 +24,6 @@ echo "[deploy] API: prisma migrate + generate + build..."
 cd apps/api
 pnpm exec prisma migrate deploy
 pnpm exec prisma generate
-echo "[deploy] Boston TV — telas Hall (idempotente)..."
-pnpm run seed:boston-tv-hall-screens || echo "[deploy] aviso: seed boston-tv-hall-screens falhou (continuando)"
 if command -v pm2 >/dev/null 2>&1; then
   pm2 stop bcg-api bcg-web 2>/dev/null || true
 fi
