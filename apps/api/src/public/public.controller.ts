@@ -335,6 +335,20 @@ export class PublicController {
     });
   }
 
+  /** Boston TV — telas numeradas do Hall (instalação, sem tokens). */
+  @Get('boston-tv/hall/screens')
+  listBostonTvHallScreens() {
+    return this.bostonTvService.listHallInstallerScreens();
+  }
+
+  /** Boston TV — token do player pelo número da tela no Hall (ex.: 1 → USA). */
+  @Get('boston-tv/hall/:num/player-token')
+  async resolveBostonTvHallPlayerToken(@Param('num') numStr: string) {
+    const num = parseInt(numStr, 10);
+    const playerToken = await this.bostonTvService.resolveHallScreenPlayerToken(num);
+    return { num, playerToken };
+  }
+
   /** Boston TV — configuração para o player web (Smart TV via URL com token secreto). */
   @Get('boston-tv/play/:token')
   getBostonTvPlayer(@Param('token') token: string) {

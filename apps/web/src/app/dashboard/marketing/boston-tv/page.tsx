@@ -36,6 +36,7 @@ import { api } from "@/lib/api";
 import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
+import { parseHallScreenNum } from "@/lib/boston-tv-hall";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
   getStoredBostonTvTenantId,
@@ -432,9 +433,20 @@ export default function BostonTvDashboardPage() {
             Nenhuma tela ainda. Clique <strong>Nova tela</strong> e escolha o canal ou a playlist.
           </p>
         ) : (
-          <ul className="space-y-3">
+          <>
+            <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+              Instalação no Hall: abra{" "}
+              <a href="/tv" target="_blank" rel="noopener noreferrer" className="font-mono underline">
+                /tv
+              </a>{" "}
+              na Smart TV (dropdown + Abrir). Favorito curto por tela:{" "}
+              <span className="font-mono">/tv/1</span> … <span className="font-mono">/tv/21</span>.
+            </p>
+            <ul className="space-y-3">
             {screens.map((s) => {
               const base = typeof window !== "undefined" ? window.location.origin : "";
+              const hallNum = parseHallScreenNum(s.name);
+              const shortUrl = hallNum != null ? `${base}/tv/${hallNum}` : null;
               const url = `${base}/tv/play/${s.playerToken}`;
               return (
                 <li
@@ -453,7 +465,16 @@ export default function BostonTvDashboardPage() {
                           ? `Marketing: ${s.playlist.name}`
                           : "Sem conteúdo — clique Editar"}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1 break-all">{url}</p>
+                    <p className="text-xs text-muted-foreground mt-1 break-all">
+                      {shortUrl ? (
+                        <>
+                          <span className="text-foreground font-medium">{shortUrl}</span>
+                          <span className="block mt-0.5 opacity-70">{url}</span>
+                        </>
+                      ) : (
+                        url
+                      )}
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2 shrink-0">
                     <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s.playerToken)}>
@@ -486,6 +507,7 @@ export default function BostonTvDashboardPage() {
               );
             })}
           </ul>
+          </>
         )}
       </BostonTvCollapsibleSection>
 

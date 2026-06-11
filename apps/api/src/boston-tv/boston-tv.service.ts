@@ -10,6 +10,7 @@ import { isPlayableIptvStreamUrl } from './m3u-parser';
 import {
   resolvePublicMediaUrl,
 } from '../common/public-media-url.util';
+import { BOSTON_TV_HALL_TENANT_SLUG } from './boston-tv-hall.constants';
 
 const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream'] as const;
 
@@ -187,6 +188,62 @@ export class BostonTvService {
             : undefined,
       })),
     };
+  }
+
+  /** Lista telas numeradas do Hall para a página de instalação (sem tokens). */
+  async listHallInstallerScreens() {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug: BOSTON_TV_HALL_TENANT_SLUG },
+      select: { id: true },
+    });
+    if (!tenant) return [];
+
+    const rows = await this.prisma.bostonTvScreen.findMany({
+      where: { tenantId: tenant.id },
+      select: { name: true, locationHint: true },
+    });
+
+    const screens = rows
+      .map((row) => {
+        const num = bostonTvScreenSortNum(row.name);
+        if (num === 9999) return null;
+        return {
+          num,
+          name: row.name,
+          locationHint: row.locationHint,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+
+    return screens.sort((a, b) => a.num - b.num || a.name.localeCompare(b.name, 'pt-BR'));
+  }
+
+  /** Resolve token do player pela numeração da planilha (ex.: 1 → "1 - USA"). */
+  async resolveHallScreenPlayerToken(num: number): Promise<string> {
+    if (!Number.isInteger(num) || num < 1 || num > 999) {
+      throw new BadRequestException('Número de tela inválido.');
+    }
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug: BOSTON_TV_HALL_TENANT_SLUG },
+      select: { id: true },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Hall não configurado.');
+    }
+
+    const screen = await this.prisma.bostonTvScreen.findFirst({
+      where: {
+        tenantId: tenant.id,
+        name: { startsWith: `${num} - ` },
+      },
+      select: { playerToken: true, name: true },
+    });
+    if (!screen) {
+      throw new NotFoundException(`Tela ${num} não encontrada.`);
+    }
+
+    return screen.playerToken;
   }
 
   async touchPlayer(playerToken: string) {
