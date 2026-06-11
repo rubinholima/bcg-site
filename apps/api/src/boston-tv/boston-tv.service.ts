@@ -11,7 +11,6 @@ import {
   resolvePublicMediaUrl,
 } from '../common/public-media-url.util';
 import {
-  BOSTON_TV_HALL_PLAYLIST_NAME,
   BOSTON_TV_HALL_TENANT_SLUG,
 } from './boston-tv-hall.constants';
 import {
@@ -665,6 +664,27 @@ export class BostonTvService {
 
   // ─── Canal Hall sincronizado ─────────────────────────────────────────────
 
+  async bindHallChannel(
+    tenantId: string,
+    playlistId: string,
+    allowedTenantIds: string[] | null,
+  ) {
+    this.assertTenant(allowedTenantIds, tenantId);
+    await this.ensurePlaylistExistsForTenant(tenantId, playlistId);
+    await this.prisma.bostonTvHallChannel.upsert({
+      where: { tenantId },
+      create: { tenantId, playlistId },
+      update: {
+        playlistId,
+        epochAt: new Date(),
+        isPaused: false,
+        pausedElapsedMs: 0,
+        playlistVersion: { increment: 1 },
+      },
+    });
+    return this.getHallChannelState(tenantId, allowedTenantIds);
+  }
+
   async ensureHallChannel(tenantId: string, playlistId: string) {
     await this.ensurePlaylistExistsForTenant(tenantId, playlistId);
     return this.prisma.bostonTvHallChannel.upsert({
@@ -690,29 +710,11 @@ export class BostonTvService {
     });
 
     if (!channel) {
-      const hallPl = await this.prisma.bostonTvPlaylist.findFirst({
-        where: { tenantId, name: BOSTON_TV_HALL_PLAYLIST_NAME },
-        include: { items: { orderBy: { sortOrder: 'asc' } } },
-      });
-      if (hallPl) {
-        await this.ensureHallChannel(tenantId, hallPl.id);
-        channel = await this.prisma.bostonTvHallChannel.findUnique({
-          where: { tenantId },
-          include: {
-            playlist: {
-              select: { id: true, name: true, items: { orderBy: { sortOrder: 'asc' } } },
-            },
-          },
-        });
-      }
-    }
-
-    if (!channel) {
       return {
         configured: false as const,
         tenantId,
         message:
-          'Canal Hall não configurado. Crie a playlist "Hall — loop geral" ou vincule uma playlist ao canal.',
+          'Escolha abaixo qual playlist vai tocar sincronizada em todas as telas do Hall.',
       };
     }
 
@@ -830,18 +832,10 @@ export class BostonTvService {
   ) {
     if (items.length === 0) return null;
 
-    let channel = await this.prisma.bostonTvHallChannel.findFirst({
+    const channel = await this.prisma.bostonTvHallChannel.findFirst({
       where: { tenantId, playlistId },
     });
-
-    if (!channel) {
-      const pl = await this.prisma.bostonTvPlaylist.findFirst({
-        where: { id: playlistId, tenantId, name: BOSTON_TV_HALL_PLAYLIST_NAME },
-        select: { id: true },
-      });
-      if (!pl) return null;
-      channel = await this.ensureHallChannel(tenantId, playlistId);
-    }
+    if (!channel) return null;
 
     return this.computeHallSync(channel, items);
   }

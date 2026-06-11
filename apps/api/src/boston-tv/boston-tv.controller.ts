@@ -323,4 +323,18 @@ export class BostonTvController {
     const allowed = await this.allowedIds(req);
     return this.bostonTv.hallChannelRestart(tenantId.trim(), allowed);
   }
+
+  @Post('hall-channel/bind')
+  async bindHallChannel(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() body: { tenantId?: string; playlistId?: string },
+  ) {
+    const tenantId = body.tenantId?.trim();
+    const playlistId = body.playlistId?.trim();
+    if (!tenantId || !playlistId) {
+      throw new BadRequestException('tenantId e playlistId são obrigatórios');
+    }
+    const allowed = await this.allowedIds(req);
+    return this.bostonTv.bindHallChannel(tenantId, playlistId, allowed);
+  }
 }

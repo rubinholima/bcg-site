@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Pause, Play, RotateCcw, SkipForward } from "lucide-react";
+import { Link2, Pause, Play, RotateCcw, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import { api } from "@/lib/api";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 
@@ -31,6 +33,8 @@ type HallChannelResponse =
       hallSync: HallSyncState;
     };
 
+type PlaylistOption = { id: string; name: string };
+
 interface BostonTvHallChannelPanelProps {
   tenantId: string;
 }
@@ -45,21 +49,32 @@ function formatOffset(ms: number): string {
 export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelProps) {
   const [open, setOpen] = useState(true);
   const [data, setData] = useState<HallChannelResponse | null>(null);
+  const [playlists, setPlaylists] = useState<PlaylistOption[]>([]);
+  const [pickPlaylistId, setPickPlaylistId] = useState("");
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
 
   const load = useCallback(async () => {
     if (!tenantId) {
       setData(null);
+      setPlaylists([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const { data: res } = await api.get<HallChannelResponse>(
-        `/boston-tv/hall-channel?tenantId=${encodeURIComponent(tenantId)}`,
-      );
-      setData(res);
+      const [channelRes, plRes] = await Promise.all([
+        api.get<HallChannelResponse>(
+          `/boston-tv/hall-channel?tenantId=${encodeURIComponent(tenantId)}`,
+        ),
+        api.get<PlaylistOption[]>(
+          `/boston-tv/playlists?tenantId=${encodeURIComponent(tenantId)}`,
+        ),
+      ]);
+      setData(channelRes.data);
+      const pls = plRes.data ?? [];
+      setPlaylists(pls);
+      setPickPlaylistId((prev) => prev || pls[0]?.id || "");
     } catch {
       setData(null);
     } finally {
@@ -86,6 +101,20 @@ export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelP
     }
   };
 
+  const bindPlaylist = async () => {
+    if (!tenantId || !pickPlaylistId) return;
+    setActing(true);
+    try {
+      const { data: res } = await api.post<HallChannelResponse>(
+        `/boston-tv/hall-channel/bind`,
+        { tenantId, playlistId: pickPlaylistId },
+      );
+      setData(res);
+    } finally {
+      setActing(false);
+    }
+  };
+
   const sync = data?.configured ? data.hallSync : null;
 
   return (
@@ -96,8 +125,9 @@ export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelP
     >
       <div className="space-y-4 text-sm">
         <p className="text-muted-foreground">
-          Todas as telas com a playlist do Canal Hall tocam o mesmo conteúdo no mesmo instante.
-          Recarregar uma TV não reinicia do zero.
+          Você escolhe <strong className="text-foreground">uma playlist</strong> — todas as
+          telas que usam essa mesma playlist tocam juntas, no mesmo segundo. O browser da TV
+          fica aberto; pausar só congela o conteúdo.
         </p>
 
         {loading && !data ? (
@@ -105,19 +135,50 @@ export function BostonTvHallChannelPanel({ tenantId }: BostonTvHallChannelPanelP
         ) : null}
 
         {data && !data.configured ? (
-          <p className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-amber-200/90">
-            {data.message}
-          </p>
+          <div className="space-y-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+            <p className="text-amber-100/90">{data.message}</p>
+            {playlists.length === 0 ? (
+              <p className="text-muted-foreground">
+                Crie uma playlist abaixo (ex.: &quot;BC HALL - PL GERAL&quot;) e volte aqui.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="min-w-[200px] flex-1 space-y-2">
+                  <Label htmlFor="hall-channel-playlist">Playlist do Canal Hall</Label>
+                  <ModalNativeSelect
+                    id="hall-channel-playlist"
+                    value={pickPlaylistId}
+                    onChange={setPickPlaylistId}
+                    placeholder="Escolher playlist…"
+                    options={playlists.map((p) => ({ value: p.id, label: p.name }))}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  disabled={acting || !pickPlaylistId}
+                  onClick={() => void bindPlaylist()}
+                  className="min-h-[44px] shrink-0"
+                >
+                  <Link2 className="mr-2 h-4 w-4" />
+                  Ativar Canal Hall
+                </Button>
+              </div>
+            )}
+          </div>
         ) : null}
 
         {data?.configured ? (
           <>
             <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 space-y-1">
               <p>
-                <span className="text-muted-foreground">Playlist:</span>{" "}
+                <span className="text-muted-foreground">Playlist ativa:</span>{" "}
                 <strong className="text-foreground">{data.playlistName}</strong>
                 {" · "}
                 {data.itemCount} {data.itemCount === 1 ? "item" : "itens"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Telas com esta playlist = sincronizadas. Edite os itens em &quot;Editar
+                itens&quot; na lista de playlists.
               </p>
               {sync ? (
                 <>
