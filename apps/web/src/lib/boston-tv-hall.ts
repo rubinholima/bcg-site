@@ -59,3 +59,16 @@ export function hallSyncModeLabel(mode: string | undefined | null): string {
     ? "Individual"
     : "Canal Hall";
 }
+
+/** "14 - Argentina" → "Argentina" */
+export function hallScreenShortLabel(name: string): string {
+  const m = /^\d+\s*-\s*(.+)$/.exec(name.trim());
+  return m ? m[1].trim() : name.trim();
+}
+
+export function formatHallOffsetMs(ms: number): string {
+  const sec = Math.floor(ms / 1000);
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}

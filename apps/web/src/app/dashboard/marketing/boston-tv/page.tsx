@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Clipboard, ExternalLink, Pencil, Plus, RefreshCw, Trash2, Tv } from "lucide-react";
+import { Clipboard, ExternalLink, Pencil, Plus, RefreshCw, Trash2, Tv, TabletSmartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -434,6 +434,12 @@ export default function BostonTvDashboardPage() {
             </SelectContent>
           </Select>
         </div>
+        <Link href="/dashboard/marketing/boston-tv/controle-hall">
+          <Button type="button" variant="default" className="min-h-[44px] w-full sm:w-auto">
+            <TabletSmartphone className="mr-2 h-4 w-4" />
+            Controle Hall (iPad)
+          </Button>
+        </Link>
       </div>
 
       {effectiveTenant ? (

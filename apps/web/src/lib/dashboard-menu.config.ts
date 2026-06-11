@@ -60,6 +60,7 @@ import {
   Kanban,
   Link2,
   Truck,
+  TabletSmartphone,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -615,6 +616,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         label: "BCG TV",
         href: "/dashboard/marketing/boston-tv",
         icon: Tv,
+        moduleSlug: "boston_tv",
+      },
+      {
+        slug: "marketing_boston_tv_controle",
+        label: "Controle Hall",
+        href: "/dashboard/marketing/boston-tv/controle-hall",
+        icon: TabletSmartphone,
         moduleSlug: "boston_tv",
       },
       {
