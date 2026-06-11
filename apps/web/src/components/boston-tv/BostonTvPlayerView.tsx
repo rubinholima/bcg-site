@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isWithinContentWindow } from "@/lib/boston-tv-schedule";
 import { HlsStreamPlayer } from "@/components/boston-tv/HlsStreamPlayer";
+import { YoutubeTvPlayer } from "@/components/boston-tv/YoutubeTvPlayer";
 import { getPublicImageUrl } from "@/lib/media-url";
 
 export type BostonTvPlayerItem = {
@@ -215,16 +216,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
       );
     }
     return (
-      <div className="relative h-screen w-screen bg-black">
-        <iframe
-          key={current.id}
-          title="Boston TV"
-          className="h-full w-full"
-          src={`https://www.youtube.com/embed/${yid}?autoplay=1&mute=1&playsinline=1&rel=0`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
+      <YoutubeTvPlayer videoId={yid} itemKey={current.id} />
     );
   }
 

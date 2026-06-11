@@ -1,5 +1,6 @@
 "use client";
 
+import type { FocusEventHandler } from "react";
 import { cn } from "@/lib/utils";
 
 export const modalNativeSelectClassName =
@@ -19,6 +20,7 @@ interface ModalNativeSelectProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  onFocus?: FocusEventHandler<HTMLSelectElement>;
 }
 
 /** Select nativo — Radix Select (Portal) não abre dentro de `<dialog showModal>`. */
@@ -30,12 +32,14 @@ export function ModalNativeSelect({
   placeholder = "Selecione…",
   disabled,
   className,
+  onFocus,
 }: ModalNativeSelectProps) {
   return (
     <select
       id={id}
       value={value}
       disabled={disabled}
+      onFocus={onFocus}
       onChange={(e) => onChange(e.target.value)}
       className={cn(modalNativeSelectClassName, className)}
     >

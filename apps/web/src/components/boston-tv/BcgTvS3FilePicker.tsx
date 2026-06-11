@@ -1,16 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Film, ImageIcon, Upload, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
   MEDIA_PLACEHOLDER_KEYS,
   MEDIA_PLACEHOLDER_SIZES,
@@ -120,7 +114,28 @@ export function BcgTvS3FilePicker({ kind, value, onChange, className }: BcgTvS3F
   const selectValue = matchedItem?.url ?? orphanValue ?? NONE_VALUE;
 
   const kindLabel = kind === "image" ? "Imagem" : "Vídeo";
-  const KindIcon = kind === "image" ? ImageIcon : Film;
+
+  const fileOptions = useMemo(() => {
+    const opts: Array<{ value: string; label: string }> = [
+      { value: NONE_VALUE, label: "Nenhum" },
+    ];
+    if (orphanValue) {
+      opts.push({
+        value: orphanValue,
+        label: `${fileLabel({ key: orphanValue, url: orphanValue, size: 0, lastModified: "" })} (atual)`,
+      });
+    }
+    for (const item of items) {
+      opts.push({
+        value: item.url,
+        label:
+          folder === ALL_FOLDERS
+            ? `${mediaFolderFromKey(item.key)} / ${fileLabel(item)}`
+            : fileLabel(item),
+      });
+    }
+    return opts;
+  }, [items, orphanValue, folder]);
 
   const handleUpload = async (file: File) => {
     setUploadError(null);
@@ -196,65 +211,31 @@ export function BcgTvS3FilePicker({ kind, value, onChange, className }: BcgTvS3F
 
       <div className="space-y-2">
         <Label>Pasta no arquivo</Label>
-        <Select
+        <ModalNativeSelect
           value={folder}
-          onValueChange={setFolder}
+          onChange={setFolder}
           disabled={loading || uploading}
-        >
-          <SelectTrigger className="min-h-[44px] text-foreground">
-            <SelectValue placeholder="Escolher pasta…" />
-          </SelectTrigger>
-          <SelectContent className="z-[200] max-h-[min(16rem,50vh)]">
-            {folderOptions().map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder="Escolher pasta…"
+          options={folderOptions()}
+        />
       </div>
 
       <div className="space-y-2">
         <Label>{kindLabel}</Label>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Select
+          <ModalNativeSelect
             value={selectValue}
-            onOpenChange={(open) => {
-              if (open) setOpenNonce((n) => n + 1);
-            }}
-            onValueChange={(v) => onChange(v === NONE_VALUE ? "" : v)}
+            onFocus={() => setOpenNonce((n) => n + 1)}
+            onChange={(v) => onChange(v === NONE_VALUE ? "" : v)}
             disabled={loading || uploading}
-          >
-            <SelectTrigger className="min-h-[44px] min-w-0 flex-1 text-foreground">
-              <SelectValue
-                placeholder={
-                  loading
-                    ? "Carregando arquivos…"
-                    : `Escolher ${kind === "image" ? "imagem" : "vídeo"}…`
-                }
-              />
-            </SelectTrigger>
-            <SelectContent className="z-[200] max-h-[min(20rem,60vh)]">
-              <SelectItem value={NONE_VALUE}>Nenhum</SelectItem>
-              {orphanValue ? (
-                <SelectItem value={orphanValue}>
-                  <span className="truncate">{fileLabel({ key: orphanValue, url: orphanValue, size: 0, lastModified: "" })} (atual)</span>
-                </SelectItem>
-              ) : null}
-              {items.map((item) => (
-                <SelectItem key={item.key} value={item.url}>
-                  <span className="flex items-center gap-2 truncate">
-                    <KindIcon className="h-3.5 w-3.5 shrink-0 opacity-60" />
-                    {folder === ALL_FOLDERS ? (
-                      <span>{mediaFolderFromKey(item.key)} / {fileLabel(item)}</span>
-                    ) : (
-                      fileLabel(item)
-                    )}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder={
+              loading
+                ? "Carregando arquivos…"
+                : `Escolher ${kind === "image" ? "imagem" : "vídeo"}…`
+            }
+            options={fileOptions}
+            className="min-w-0 flex-1"
+          />
           {value.trim() ? (
             <Button
               type="button"

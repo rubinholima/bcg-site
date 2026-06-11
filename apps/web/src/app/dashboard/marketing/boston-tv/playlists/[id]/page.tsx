@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,13 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
   Table,
   TableBody,
@@ -71,6 +65,13 @@ const TYPE_LABEL: Record<string, string> = {
   youtube_video: "YouTube (URL)",
   iptv_stream: "Canal (ao vivo)",
 };
+
+const TYPE_OPTIONS = [
+  { value: "image_url", label: TYPE_LABEL.image_url },
+  { value: "video_url", label: TYPE_LABEL.video_url },
+  { value: "youtube_video", label: TYPE_LABEL.youtube_video },
+  { value: "iptv_stream", label: TYPE_LABEL.iptv_stream },
+];
 
 function extractYoutubeId(url: string): string | null {
   const v = /[?&]v=([^&]+)/.exec(url);
@@ -126,6 +127,7 @@ export default function EditBostonTvPlaylistPage() {
   const [editDurIn, setEditDurIn] = useState("15");
   const [editIptvChannelId, setEditIptvChannelId] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   const loadIptvLabels = useCallback(async (tenantId: string) => {
     try {
@@ -282,6 +284,41 @@ export default function EditBostonTvPlaylistPage() {
     }
   };
 
+  const sortedItems = useMemo(
+    () =>
+      [...(playlist?.items ?? [])].sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.id.localeCompare(b.id),
+      ),
+    [playlist?.items],
+  );
+
+  const moveItem = useCallback(
+    async (itemId: string, direction: "up" | "down") => {
+      const index = sortedItems.findIndex((i) => i.id === itemId);
+      if (index < 0) return;
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= sortedItems.length) return;
+
+      const current = sortedItems[index];
+      const target = sortedItems[targetIndex];
+      setReordering(true);
+      try {
+        await Promise.all([
+          api.patch(`/boston-tv/playlists/${id}/items/${current.id}`, {
+            sortOrder: target.sortOrder,
+          }),
+          api.patch(`/boston-tv/playlists/${id}/items/${target.id}`, {
+            sortOrder: current.sortOrder,
+          }),
+        ]);
+        await load();
+      } finally {
+        setReordering(false);
+      }
+    },
+    [sortedItems, id, load],
+  );
+
   if (!canAccessModule("boston_tv") && !authLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -314,7 +351,7 @@ export default function EditBostonTvPlaylistPage() {
     );
   }
 
-  const items = playlist.items ?? [];
+  const items = sortedItems;
 
   return (
     <div className="space-y-6">
@@ -338,17 +375,17 @@ export default function EditBostonTvPlaylistPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <div className="space-y-2 min-w-[200px]">
             <Label>Tipo</Label>
-            <Select value={ty} onValueChange={(v) => { setTy(v); setUrlIn(""); if (v === "iptv_stream") setDurIn("3600"); if (v === "image_url") setDurIn("15"); }}>
-              <SelectTrigger className="text-foreground">
-                <SelectValue placeholder="Tipo de conteúdo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="image_url">{TYPE_LABEL.image_url}</SelectItem>
-                <SelectItem value="video_url">{TYPE_LABEL.video_url}</SelectItem>
-                <SelectItem value="youtube_video">{TYPE_LABEL.youtube_video}</SelectItem>
-                <SelectItem value="iptv_stream">{TYPE_LABEL.iptv_stream}</SelectItem>
-              </SelectContent>
-            </Select>
+            <ModalNativeSelect
+              value={ty}
+              onChange={(v) => {
+                setTy(v);
+                setUrlIn("");
+                if (v === "iptv_stream") setDurIn("3600");
+                if (v === "image_url") setDurIn("15");
+              }}
+              placeholder="Tipo de conteúdo"
+              options={TYPE_OPTIONS}
+            />
           </div>
           {ty === "image_url" || ty === "youtube_video" || ty === "iptv_stream" ? (
             <div className="space-y-2 w-40">
@@ -414,15 +451,42 @@ export default function EditBostonTvPlaylistPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-16">Ordem</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Conteúdo</TableHead>
                   <TableHead>Duração</TableHead>
-                  <TableHead className="w-24" />
+                  <TableHead className="w-36" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((it) => (
+                {items.map((it, index) => (
                   <TableRow key={it.id}>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={reordering || index === 0}
+                          onClick={() => void moveItem(it.id, "up")}
+                          aria-label="Subir"
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={reordering || index === items.length - 1}
+                          onClick={() => void moveItem(it.id, "down")}
+                          aria-label="Descer"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm">{TYPE_LABEL[it.contentType] ?? it.contentType}</TableCell>
                     <TableCell className="max-w-[360px] truncate text-sm text-foreground">
                       {formatItemContent(it, iptvByStream)}
@@ -488,24 +552,16 @@ export default function EditBostonTvPlaylistPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Tipo</Label>
-              <Select
+              <ModalNativeSelect
                 value={editTy}
-                onValueChange={(v) => {
+                onChange={(v) => {
                   setEditTy(v);
                   if (v === "iptv_stream") setEditDurIn("3600");
                   if (v === "image_url") setEditDurIn("15");
                 }}
-              >
-                <SelectTrigger className="text-foreground">
-                  <SelectValue placeholder="Tipo de conteúdo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="image_url">{TYPE_LABEL.image_url}</SelectItem>
-                  <SelectItem value="video_url">{TYPE_LABEL.video_url}</SelectItem>
-                  <SelectItem value="youtube_video">{TYPE_LABEL.youtube_video}</SelectItem>
-                  <SelectItem value="iptv_stream">{TYPE_LABEL.iptv_stream}</SelectItem>
-                </SelectContent>
-              </Select>
+                placeholder="Tipo de conteúdo"
+                options={TYPE_OPTIONS}
+              />
             </div>
             {editTy === "image_url" || editTy === "youtube_video" || editTy === "iptv_stream" ? (
               <div className="space-y-2">
