@@ -3,8 +3,25 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -99,6 +116,15 @@ export default function EditBostonTvPlaylistPage() {
   const [iptvByStream, setIptvByStream] = useState<Map<string, string>>(new Map());
   const [addOpen, setAddOpen] = useState(true);
   const [itemsOpen, setItemsOpen] = useState(true);
+  const [removeItemId, setRemoveItemId] = useState<string | null>(null);
+  const [removingItem, setRemovingItem] = useState(false);
+
+  const [editItem, setEditItem] = useState<Item | null>(null);
+  const [editTy, setEditTy] = useState("image_url");
+  const [editUrlIn, setEditUrlIn] = useState("");
+  const [editDurIn, setEditDurIn] = useState("15");
+  const [editIptvChannelId, setEditIptvChannelId] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const loadIptvLabels = useCallback(async (tenantId: string) => {
     try {
@@ -179,10 +205,80 @@ export default function EditBostonTvPlaylistPage() {
     await load();
   };
 
-  const removeItem = async (itemId: string) => {
-    if (!confirm("Remover este item?")) return;
-    await api.delete(`/boston-tv/playlists/${id}/items/${itemId}`);
-    await load();
+  const removeItem = async () => {
+    if (!removeItemId) return;
+    setRemovingItem(true);
+    try {
+      await api.delete(`/boston-tv/playlists/${id}/items/${removeItemId}`);
+      setRemoveItemId(null);
+      await load();
+    } finally {
+      setRemovingItem(false);
+    }
+  };
+
+  const openEditItem = async (item: Item) => {
+    setEditItem(item);
+    setEditTy(item.contentType);
+    setEditDurIn(String(item.durationSeconds ?? (item.contentType === "image_url" ? 15 : 3600)));
+    setEditUrlIn(item.contentType === "iptv_stream" ? "" : item.url);
+    setEditIptvChannelId("");
+
+    if (item.contentType === "iptv_stream" && playlist?.tenantId) {
+      try {
+        const { data: list } = await api.get<{ items: { id: string; streamUrl: string }[] }>(
+          `/boston-tv/iptv/channels?tenantId=${encodeURIComponent(playlist.tenantId)}&enabledOnly=1&limit=500`,
+        );
+        const found = list?.items?.find((c) => c.streamUrl === item.url);
+        if (found) setEditIptvChannelId(found.id);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
+  const saveEditItem = async () => {
+    if (!editItem || !playlist) return;
+    setSavingEdit(true);
+    try {
+      let url = editUrlIn.trim();
+      let durationSeconds: number | null | undefined;
+
+      if (editTy === "iptv_stream") {
+        if (!editIptvChannelId) return;
+        const { data: list } = await api.get<{ items: { id: string; streamUrl: string }[] }>(
+          `/boston-tv/iptv/channels?tenantId=${encodeURIComponent(playlist.tenantId)}&enabledOnly=1&limit=200`,
+        );
+        const found = list?.items?.find((c) => c.id === editIptvChannelId);
+        if (!found) {
+          alert("Canal não encontrado ou não liberado.");
+          return;
+        }
+        url = found.streamUrl;
+        durationSeconds = Math.max(60, parseInt(editDurIn, 10) || 3600);
+      } else {
+        if (!url) return;
+        if (editTy === "image_url") {
+          durationSeconds = Math.max(5, parseInt(editDurIn, 10) || 15);
+        } else if (editTy === "youtube_video") {
+          durationSeconds = editDurIn.trim()
+            ? Math.max(30, parseInt(editDurIn, 10) || 480)
+            : null;
+        } else {
+          durationSeconds = null;
+        }
+      }
+
+      await api.patch(`/boston-tv/playlists/${id}/items/${editItem.id}`, {
+        contentType: editTy,
+        url,
+        durationSeconds,
+      });
+      setEditItem(null);
+      await load();
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   if (!canAccessModule("boston_tv") && !authLoading) {
@@ -316,7 +412,7 @@ export default function EditBostonTvPlaylistPage() {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Conteúdo</TableHead>
                   <TableHead>Duração</TableHead>
-                  <TableHead className="w-12" />
+                  <TableHead className="w-24" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -330,15 +426,26 @@ export default function EditBostonTvPlaylistPage() {
                       {it.durationSeconds != null ? `${it.durationSeconds}s` : "—"}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => void removeItem(it.id)}
-                        aria-label="Remover"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => void openEditItem(it)}
+                          aria-label="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setRemoveItemId(it.id)}
+                          aria-label="Remover"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -346,6 +453,100 @@ export default function EditBostonTvPlaylistPage() {
             </Table>
           )}
       </BostonTvCollapsibleSection>
+
+      <AlertDialog open={!!removeItemId} onOpenChange={(open) => !open && setRemoveItemId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover este item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O item sai da playlist. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removingItem}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={removingItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void removeItem()}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar item da playlist</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Tipo</Label>
+              <Select
+                value={editTy}
+                onValueChange={(v) => {
+                  setEditTy(v);
+                  if (v === "iptv_stream") setEditDurIn("3600");
+                  if (v === "image_url") setEditDurIn("15");
+                }}
+              >
+                <SelectTrigger className="text-foreground">
+                  <SelectValue placeholder="Tipo de conteúdo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="image_url">{TYPE_LABEL.image_url}</SelectItem>
+                  <SelectItem value="video_url">{TYPE_LABEL.video_url}</SelectItem>
+                  <SelectItem value="youtube_video">{TYPE_LABEL.youtube_video}</SelectItem>
+                  <SelectItem value="iptv_stream">{TYPE_LABEL.iptv_stream}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {editTy === "image_url" || editTy === "youtube_video" || editTy === "iptv_stream" ? (
+              <div className="space-y-2">
+                <Label>
+                  {editTy === "image_url"
+                    ? "Segundos na tela"
+                    : editTy === "iptv_stream"
+                      ? "Segundos no ar"
+                      : "Tempo até próximo (s)"}
+                </Label>
+                <Input
+                  type="number"
+                  min={editTy === "image_url" ? 5 : editTy === "iptv_stream" ? 60 : 30}
+                  value={editDurIn}
+                  onChange={(e) => setEditDurIn(e.target.value)}
+                  className="text-foreground"
+                />
+              </div>
+            ) : null}
+            {editTy === "iptv_stream" ? (
+              <BostonTvEnabledChannelSelect
+                tenantId={playlist.tenantId}
+                value={editIptvChannelId}
+                onChange={setEditIptvChannelId}
+              />
+            ) : (
+              <div className="space-y-2">
+                <Label>URL</Label>
+                <Input
+                  value={editUrlIn}
+                  onChange={(e) => setEditUrlIn(e.target.value)}
+                  className="text-foreground"
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditItem(null)} disabled={savingEdit}>
+              Cancelar
+            </Button>
+            <Button onClick={() => void saveEditItem()} disabled={savingEdit}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

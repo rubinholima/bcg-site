@@ -200,6 +200,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
         url={current.url}
         className="h-screen w-screen"
         label={current.channelName}
+        withAudio
       />
     );
   }

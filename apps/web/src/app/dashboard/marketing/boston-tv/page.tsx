@@ -11,6 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -92,6 +102,10 @@ export default function BostonTvDashboardPage() {
   const [playlistsOpen, setPlaylistsOpen] = useState(true);
   const [screensOpen, setScreensOpen] = useState(true);
   const [iptvOpen, setIptvOpen] = useState(true);
+
+  const [deleteScreenId, setDeleteScreenId] = useState<string | null>(null);
+  const [regenerateScreenId, setRegenerateScreenId] = useState<string | null>(null);
+  const [screenActionLoading, setScreenActionLoading] = useState(false);
 
   const effectiveTenant = tenantFilter;
 
@@ -285,16 +299,28 @@ export default function BostonTvDashboardPage() {
     window.open(`${base}/tv/play/${token}`, "_blank", "noopener,noreferrer");
   };
 
-  const deleteScreen = async (id: string) => {
-    if (!confirm("Remover esta tela? O link do player deixará de funcionar.")) return;
-    await api.delete(`/boston-tv/screens/${id}`);
-    await refresh();
+  const deleteScreen = async () => {
+    if (!deleteScreenId) return;
+    setScreenActionLoading(true);
+    try {
+      await api.delete(`/boston-tv/screens/${deleteScreenId}`);
+      setDeleteScreenId(null);
+      await refresh();
+    } finally {
+      setScreenActionLoading(false);
+    }
   };
 
-  const regenerate = async (id: string) => {
-    if (!confirm("Gerar novo token? O link antigo na TV deixará de funcionar.")) return;
-    await api.post(`/boston-tv/screens/${id}/regenerate-token`, {});
-    await refresh();
+  const regenerate = async () => {
+    if (!regenerateScreenId) return;
+    setScreenActionLoading(true);
+    try {
+      await api.post(`/boston-tv/screens/${regenerateScreenId}/regenerate-token`, {});
+      setRegenerateScreenId(null);
+      await refresh();
+    } finally {
+      setScreenActionLoading(false);
+    }
   };
 
   if (!canAccessModule("boston_tv") && !authLoading) {
@@ -442,7 +468,7 @@ export default function BostonTvDashboardPage() {
                       <Tv className="mr-1 h-4 w-4" />
                       Editar
                     </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => regenerate(s.id)}>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setRegenerateScreenId(s.id)}>
                       <RefreshCw className="mr-1 h-4 w-4" />
                       Novo token
                     </Button>
@@ -451,7 +477,7 @@ export default function BostonTvDashboardPage() {
                       variant="ghost"
                       size="sm"
                       className="text-destructive"
-                      onClick={() => deleteScreen(s.id)}
+                      onClick={() => setDeleteScreenId(s.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -611,6 +637,44 @@ export default function BostonTvDashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteScreenId} onOpenChange={(open) => !open && setDeleteScreenId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover esta tela?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O link do player deixará de funcionar nesta TV. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={screenActionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={screenActionLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void deleteScreen()}
+            >
+              Remover tela
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!regenerateScreenId} onOpenChange={(open) => !open && setRegenerateScreenId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Gerar novo token?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O link atual na TV deixará de funcionar. Será necessário abrir ou copiar o novo link em cada aparelho.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={screenActionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={screenActionLoading} onClick={() => void regenerate()}>
+              Gerar novo token
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
