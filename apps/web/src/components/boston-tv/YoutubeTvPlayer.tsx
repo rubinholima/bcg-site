@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 interface YoutubeTvPlayerProps {
   videoId: string;
-  /** Muda quando troca o item — dispara nova tentativa de tela cheia. */
   itemKey: string;
-  /** Segundo inicial (Canal Hall sincronizado). */
+  /** Segundo inicial ao abrir o item. */
   startSeconds?: number;
+  /** Segundo alvo do Hall — corrige drift sem recarregar iframe. */
+  syncTargetSeconds?: number;
+  paused?: boolean;
 }
 
 function requestPageFullscreen(): void {
@@ -21,14 +23,7 @@ function requestPageFullscreen(): void {
   el.webkitRequestFullscreen?.();
 }
 
-export function YoutubeTvPlayer({ videoId, itemKey, startSeconds = 0 }: YoutubeTvPlayerProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const t = window.setTimeout(requestPageFullscreen, 400);
-    return () => window.clearTimeout(t);
-  }, [itemKey]);
-
+function buildEmbedSrc(videoId: string, startSeconds: number): string {
   const params = new URLSearchParams({
     autoplay: "1",
     mute: "1",
@@ -36,21 +31,79 @@ export function YoutubeTvPlayer({ videoId, itemKey, startSeconds = 0 }: YoutubeT
     fs: "1",
     controls: "0",
     modestbranding: "1",
-    playsinline: "0",
+    playsinline: "1",
     iv_load_policy: "3",
     disablekb: "1",
+    enablejsapi: "1",
+    origin: typeof window !== "undefined" ? window.location.origin : "",
   });
   if (startSeconds > 0) {
     params.set("start", String(startSeconds));
   }
+  return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`;
+}
+
+function ytCommand(iframe: HTMLIFrameElement, func: string, args: unknown[] = []) {
+  iframe.contentWindow?.postMessage(
+    JSON.stringify({ event: "command", func, args }),
+    "*",
+  );
+}
+
+export function YoutubeTvPlayer({
+  videoId,
+  itemKey,
+  startSeconds = 0,
+  syncTargetSeconds,
+  paused = false,
+}: YoutubeTvPlayerProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const startAtRef = useRef(startSeconds);
+  const lastItemKeyRef = useRef(itemKey);
+  const lastSeekRef = useRef(-1);
+
+  if (lastItemKeyRef.current !== itemKey) {
+    lastItemKeyRef.current = itemKey;
+    startAtRef.current = startSeconds;
+    lastSeekRef.current = -1;
+  }
+
+  const embedSrc = useMemo(
+    () => buildEmbedSrc(videoId, startAtRef.current),
+    [videoId, itemKey],
+  );
+
+  useEffect(() => {
+    const t = window.setTimeout(requestPageFullscreen, 400);
+    return () => window.clearTimeout(t);
+  }, [itemKey]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    ytCommand(iframe, paused ? "pauseVideo" : "playVideo");
+  }, [paused, itemKey]);
+
+  useEffect(() => {
+    if (paused || syncTargetSeconds == null) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const target = Math.max(0, Math.floor(syncTargetSeconds));
+    if (Math.abs(target - lastSeekRef.current) < 3) return;
+
+    lastSeekRef.current = target;
+    ytCommand(iframe, "seekTo", [target, true]);
+  }, [syncTargetSeconds, paused, itemKey]);
 
   return (
-    <div ref={rootRef} className="relative h-screen w-screen overflow-hidden bg-black">
+    <div className="relative h-screen w-screen overflow-hidden bg-black">
       <iframe
+        ref={iframeRef}
         key={itemKey}
         title="BCG TV — YouTube"
         className="absolute inset-0 h-full w-full border-0"
-        src={`https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`}
+        src={embedSrc}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
       />

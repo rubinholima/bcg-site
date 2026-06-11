@@ -5,6 +5,10 @@ import { isWithinContentWindow } from "@/lib/boston-tv-schedule";
 import { HlsStreamPlayer } from "@/components/boston-tv/HlsStreamPlayer";
 import { YoutubeTvPlayer } from "@/components/boston-tv/YoutubeTvPlayer";
 import { getPublicImageUrl } from "@/lib/media-url";
+import {
+  extrapolateHallPosition,
+  type HallSyncSnapshot,
+} from "@/lib/boston-tv-hall-sync";
 
 export type BostonTvPlayerItem = {
   id: string;
@@ -70,7 +74,7 @@ function SyncedVideo({
     const apply = () => {
       if (startSeconds > 0.5 && Number.isFinite(el.duration)) {
         const target = Math.min(startSeconds, Math.max(0, el.duration - 0.5));
-        if (Math.abs(el.currentTime - target) > 1.5) {
+        if (Math.abs(el.currentTime - target) > 0.75) {
           el.currentTime = target;
         }
       }
@@ -79,6 +83,21 @@ function SyncedVideo({
     if (el.readyState >= 1) apply();
     return () => el.removeEventListener("loadedmetadata", apply);
   }, [itemKey, startSeconds]);
+
+  useEffect(() => {
+    if (!synced) return;
+    const el = ref.current;
+    if (!el) return;
+    const apply = () => {
+      if (!Number.isFinite(el.duration)) return;
+      const target = Math.min(startSeconds, Math.max(0, el.duration - 0.5));
+      if (Math.abs(el.currentTime - target) > 0.75) {
+        el.currentTime = target;
+      }
+    };
+    const id = window.setInterval(apply, 2000);
+    return () => window.clearInterval(id);
+  }, [synced, startSeconds, itemKey]);
 
   useEffect(() => {
     const el = ref.current;
@@ -109,6 +128,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   const [error, setError] = useState<string | null>(null);
   const [idx, setIdx] = useState(0);
   const [tick, setTick] = useState(0);
+  const [hallNowMs, setHallNowMs] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     try {
@@ -131,10 +151,16 @@ export function BostonTvPlayerView({ token }: { token: string }) {
 
   useEffect(() => {
     void load();
-    const ms = synced ? 10_000 : 60_000;
+    const ms = synced ? 5_000 : 60_000;
     const i = window.setInterval(() => void load(), ms);
     return () => window.clearInterval(i);
   }, [load, synced]);
+
+  useEffect(() => {
+    if (!synced) return;
+    const t = window.setInterval(() => setHallNowMs(Date.now()), 400);
+    return () => window.clearInterval(t);
+  }, [synced]);
 
   useEffect(() => {
     const ping = () => {
@@ -164,11 +190,23 @@ export function BostonTvPlayerView({ token }: { token: string }) {
 
   const items = payload?.items ?? [];
   const hallSync = payload?.hallSync;
-  const displayIdx = synced && hallSync
-    ? hallSync.itemIndex % Math.max(items.length, 1)
-    : idx % Math.max(items.length, 1);
+
+  const hallPosition = useMemo(() => {
+    if (!synced || !hallSync || items.length === 0) return null;
+    return extrapolateHallPosition(
+      hallSync as HallSyncSnapshot,
+      items,
+      hallNowMs,
+    );
+  }, [synced, hallSync, items, hallNowMs]);
+
+  const displayIdx =
+    hallPosition?.itemIndex ??
+    (synced && hallSync
+      ? hallSync.itemIndex % Math.max(items.length, 1)
+      : idx % Math.max(items.length, 1));
   const current = items[displayIdx];
-  const syncOffsetMs = synced && hallSync ? hallSync.offsetMs : 0;
+  const syncOffsetMs = hallPosition?.offsetMs ?? (synced && hallSync ? hallSync.offsetMs : 0);
   const hallPaused = synced && hallSync ? hallSync.paused : false;
 
   useEffect(() => {
@@ -249,7 +287,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   }
 
   const mediaKey = synced && hallSync
-    ? `${current.id}-v${hallSync.playlistVersion}-i${hallSync.itemIndex}`
+    ? `${current.id}-v${hallSync.playlistVersion}-i${displayIdx}`
     : current.id;
 
   if (current.contentType === "image_url") {
@@ -316,6 +354,8 @@ export function BostonTvPlayerView({ token }: { token: string }) {
           videoId={yid}
           itemKey={mediaKey}
           startSeconds={Math.floor(syncOffsetMs / 1000)}
+          syncTargetSeconds={synced ? Math.floor(syncOffsetMs / 1000) : undefined}
+          paused={hallPaused}
         />
         {pauseOverlay}
       </div>

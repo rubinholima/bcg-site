@@ -743,15 +743,30 @@ export default function BostonTvDashboardPage() {
                 options={[
                   {
                     value: "playlist",
-                    label: "Playlist da TV (imagens, vídeos, YouTube, live em loop)",
+                    label: "Playlist (Hall ou individual — imagens, vídeos, YouTube, IPTV no loop)",
                   },
                   {
                     value: "iptv",
-                    label: "Canal IPTV fixo (1 canal ao vivo o dia todo)",
+                    label: "Canal IPTV fixo (1 canal ao vivo o dia todo, sem playlist)",
                   },
                   { value: "empty", label: "Nada por enquanto" },
                 ]}
               />
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {screenContentMode === "playlist" ? (
+                  <>
+                    <strong className="text-foreground">Imagens, vídeos e YouTube</strong> não ficam
+                    aqui — monte na playlist em{" "}
+                    <strong className="text-foreground">Editar itens</strong> (lista de playlists
+                    acima). Abaixo você escolhe se esta TV segue o Canal Hall ou uma playlist só
+                    dela.
+                  </>
+                ) : screenContentMode === "iptv" ? (
+                  <>Canal ao vivo direto nesta TV, sem loop de playlist.</>
+                ) : (
+                  <>Tela cadastrada, sem conteúdo até você configurar.</>
+                )}
+              </p>
             </div>
 
             {screenContentMode === "playlist" ? (
@@ -776,7 +791,10 @@ export default function BostonTvDashboardPage() {
                   {screenHallSyncMode === BOSTON_TV_HALL_SYNC_FOLLOW ? (
                     <p className="text-xs text-muted-foreground">
                       Usa a playlist ativa do Canal Hall. Pausar/Próximo no painel acima
-                      afetam esta tela.
+                      afetam esta tela. Para incluir{" "}
+                      <strong className="text-foreground">imagens ou vídeos</strong>, edite os
+                      itens dessa playlist em{" "}
+                      <strong className="text-foreground">Editar itens</strong> na lista acima.
                     </p>
                   ) : null}
                 </div>

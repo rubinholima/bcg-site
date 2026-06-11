@@ -46,12 +46,29 @@ function preferMpegTs(url: string): boolean {
   return u.includes(".ts") || u.includes("/stream?") || !u.includes(".m3u8");
 }
 
+/** Stream IPTV: bypass CloudFront (corta ~60s) → origin direto ao Lightsail. */
 function toAbsoluteStreamUrl(url: string): string {
   const u = url.trim();
   if (!u) return u;
   if (/^https?:\/\//i.test(u)) return u;
   if (typeof window === "undefined") return u;
-  return `${window.location.origin}${u.startsWith("/") ? u : `/${u}`}`;
+  const path = u.startsWith("/") ? u : `/${u}`;
+  const isBostonTvProxy =
+    path.includes("/boston-tv/play/") && path.includes("/stream");
+  if (isBostonTvProxy) {
+    const configured = process.env.NEXT_PUBLIC_BOSTON_TV_STREAM_ORIGIN?.replace(
+      /\/$/,
+      "",
+    );
+    const host = window.location.hostname;
+    const origin =
+      configured ||
+      (host === "www.bostoncitygroup.biz" || host === "bostoncitygroup.biz"
+        ? "https://origin.bostoncitygroup.biz"
+        : null);
+    if (origin) return `${origin}${path}`;
+  }
+  return `${window.location.origin}${path}`;
 }
 
 function applyAudio(video: HTMLVideoElement, withAudio: boolean) {
@@ -114,6 +131,8 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true, 
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [reconnectToken, setReconnectToken] = useState(0);
+  const lastProgressRef = useRef(Date.now());
 
   const enableAudio = async () => {
     const video = videoRef.current;
@@ -322,7 +341,37 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true, 
       destroyHls();
       destroyMpegTs();
     };
-  }, [url, label, withAudio]);
+  }, [url, label, withAudio, reconnectToken]);
+
+  useEffect(() => {
+    lastProgressRef.current = Date.now();
+  }, [url, reconnectToken]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || paused || error) return;
+
+    const markProgress = () => {
+      lastProgressRef.current = Date.now();
+    };
+
+    video.addEventListener("timeupdate", markProgress);
+    video.addEventListener("playing", markProgress);
+
+    const watchdog = window.setInterval(() => {
+      if (paused || error) return;
+      if (Date.now() - lastProgressRef.current > 18_000) {
+        lastProgressRef.current = Date.now();
+        setReconnectToken((t) => t + 1);
+      }
+    }, 6000);
+
+    return () => {
+      video.removeEventListener("timeupdate", markProgress);
+      video.removeEventListener("playing", markProgress);
+      window.clearInterval(watchdog);
+    };
+  }, [paused, error, url, reconnectToken]);
 
   useEffect(() => {
     const video = videoRef.current;
