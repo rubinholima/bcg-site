@@ -6,8 +6,8 @@
 set -e
 cd "$(dirname "$0")"
 
-# Evita OOM no build (2GB RAM + 2GB swap: heap 2560MB)
-export NODE_OPTIONS="--max-old-space-size=2560"
+# Evita OOM no build (Lightsail ~2GB RAM: heap moderado + SWC no nest build)
+export NODE_OPTIONS="--max-old-space-size=1536"
 
 echo "[deploy] git pull..."
 if ! git diff --quiet || ! git diff --cached --quiet; then
@@ -26,6 +26,9 @@ pnpm exec prisma migrate deploy
 pnpm exec prisma generate
 echo "[deploy] Boston TV — telas Hall (idempotente)..."
 pnpm run seed:boston-tv-hall-screens || echo "[deploy] aviso: seed boston-tv-hall-screens falhou (continuando)"
+if command -v pm2 >/dev/null 2>&1; then
+  pm2 stop bcg-api bcg-web 2>/dev/null || true
+fi
 rm -rf dist .nest tsconfig.build.tsbuildinfo tsconfig.prod.tsbuildinfo 2>/dev/null || true
 pnpm run build
 if [ ! -f dist/main.js ] && [ ! -f dist/src/main.js ]; then
@@ -38,6 +41,9 @@ fi
 cd ../..
 
 echo "[deploy] Web: build..."
+if command -v pm2 >/dev/null 2>&1; then
+  pm2 stop bcg-web 2>/dev/null || true
+fi
 cd apps/web
 pnpm run build
 cd ../..
