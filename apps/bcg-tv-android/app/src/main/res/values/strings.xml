@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BCG TV</string>
+    <string name="setup_title">Configurar TV</string>
+    <string name="setup_subtitle">Escolha qual tela do Hall (1–21) esta TV representa.</string>
+    <string name="setup_confirm">Iniciar player</string>
+    <string name="setup_change">Trocar tela</string>
+    <string name="loading">Carregando Boston TV…</string>
+    <string name="error_load">Erro ao carregar. Tentando de novo…</string>
+</resources>

@@ -39,7 +39,8 @@ export function BostonTvInstallerView({ screens }: BostonTvInstallerViewProps) {
         </p>
         <h1 className="mt-2 text-center text-2xl font-semibold sm:text-3xl">Instalação nas TVs</h1>
         <p className="mt-3 text-center text-sm text-zinc-400">
-          Escolha a TV, abra o player e salve nos favoritos do navegador.
+          Recomendado: app <strong className="font-medium text-zinc-200">BCG TV</strong> (APK Android).
+          Navegador só para Samsung Tizen (#10 Inglaterra) ou telão via stick/PC.
         </p>
 
         <label htmlFor="hall-screen" className="mt-8 block text-sm font-medium text-zinc-300">
@@ -69,12 +70,12 @@ export function BostonTvInstallerView({ screens }: BostonTvInstallerViewProps) {
           disabled={!selected}
           className="mt-6 flex min-h-[52px] w-full items-center justify-center rounded-lg bg-amber-500 text-base font-semibold text-zinc-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Abrir Boston TV
+          Abrir no navegador (teste)
         </button>
 
         {selected ? (
           <p className="mt-6 text-center text-xs text-zinc-500">
-            Salve nos favoritos:{" "}
+            URL do navegador:{" "}
             <span className="font-mono text-zinc-300">/tv/{selected}</span>
             <span className="block mt-1 text-zinc-600">
               (ex.: www.bostoncitygroup.biz/tv/{selected})
@@ -82,10 +83,17 @@ export function BostonTvInstallerView({ screens }: BostonTvInstallerViewProps) {
           </p>
         ) : null}
 
-        <p className="mt-4 text-center text-xs text-zinc-600">
-          Endereço desta página: digite apenas{" "}
-          <span className="font-mono text-zinc-400">/tv</span> no navegador da TV.
-        </p>
+        <div className="mt-8 rounded-lg border border-zinc-800 bg-zinc-950/60 p-4 text-xs text-zinc-400 leading-relaxed">
+          <p className="font-semibold text-zinc-300">App BCG TV (APK)</p>
+          <p className="mt-2">
+            Semp e Philips (Android): instale o APK, escolha o número da tela (1–21) e deixe aberto.
+            Reinicia sozinho após ligar a TV. Menu no controle = trocar tela.
+          </p>
+          <p className="mt-2 text-zinc-500">
+            Build: pasta <span className="font-mono text-zinc-400">apps/bcg-tv-android</span> no Android
+            Studio → Generate Signed APK.
+          </p>
+        </div>
       </div>
     </div>
   );

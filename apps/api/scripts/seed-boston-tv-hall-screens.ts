@@ -32,33 +32,38 @@ function screenDisplayName(num: number, label: string): string {
   return `${num} - ${label}`;
 }
 
-/** Planilha TVs — espaço multiuso (Boston City FC Brasil) */
+/** Planilha TVs — espaço multiuso (Boston City FC Brasil). Marcas conforme planilha oficial. */
 const HALL_SCREENS: Array<{ num: number; label: string; legacyNames: string[]; locationHint: string }> = [
-  { num: 1, label: 'USA', legacyNames: ['USA'], locationHint: 'Canto bar direita · Samsung 65S62' },
-  { num: 2, label: 'Colômbia', legacyNames: ['Colômbia'], locationHint: 'Diagonal bar direita · Samsung 55S62' },
-  { num: 3, label: 'Paraguai', legacyNames: ['Paraguai'], locationHint: 'Direita palco · Samsung 65S62' },
-  { num: 4, label: 'Uruguai', legacyNames: ['Uruguai'], locationHint: 'Direita tela palco · Samsung 65S62' },
-  { num: 5, label: 'Equador', legacyNames: ['Equador'], locationHint: 'Esquerda tela palco · Samsung 65S62' },
-  { num: 6, label: 'Canadá', legacyNames: ['Canadá'], locationHint: 'Esquerda palco · Samsung 55S62' },
-  { num: 7, label: 'Alemanha', legacyNames: ['Alemanha'], locationHint: 'Diagonal bar esquerda · Samsung 65S62' },
-  { num: 8, label: 'Áustria', legacyNames: ['Áustria'], locationHint: 'Canto bar esquerda · Samsung 55S62' },
-  { num: 9, label: 'Bélgica', legacyNames: ['Bélgica'], locationHint: 'Meio bar esquerda · Samsung 65S62' },
-  { num: 10, label: 'Inglaterra', legacyNames: ['Inglaterra'], locationHint: 'Canto upper deck bar esquerda · Samsung UN65DU7700' },
-  { num: 11, label: 'Noruega', legacyNames: ['Noruega'], locationHint: 'Meio upper deck bar esquerda · Samsung 55S62' },
-  { num: 12, label: 'Portugal', legacyNames: ['Portugal'], locationHint: 'Banheiro upper deck bar esquerda · Samsung 55S62' },
+  { num: 1, label: 'USA', legacyNames: ['USA'], locationHint: 'Canto bar direita · Semp 65S62' },
+  { num: 2, label: 'Colômbia', legacyNames: ['Colômbia'], locationHint: 'Diagonal bar direita · Semp 55S62' },
+  { num: 3, label: 'Paraguai', legacyNames: ['Paraguai'], locationHint: 'Direita palco · Semp 65S62' },
+  { num: 4, label: 'Uruguai', legacyNames: ['Uruguai'], locationHint: 'Direita tela palco · Semp 65S62' },
+  { num: 5, label: 'Equador', legacyNames: ['Equador'], locationHint: 'Esquerda tela palco · Semp 65S62' },
+  { num: 6, label: 'Canadá', legacyNames: ['Canadá'], locationHint: 'Esquerda palco · Semp 55S62' },
+  { num: 7, label: 'Alemanha', legacyNames: ['Alemanha'], locationHint: 'Diagonal bar esquerda · Semp 65S62' },
+  { num: 8, label: 'Áustria', legacyNames: ['Áustria'], locationHint: 'Canto bar esquerda · Semp 55S62' },
+  { num: 9, label: 'Bélgica', legacyNames: ['Bélgica'], locationHint: 'Meio bar esquerda · Semp 65S62' },
+  {
+    num: 10,
+    label: 'Inglaterra',
+    legacyNames: ['Inglaterra'],
+    locationHint: 'Canto upper deck bar esquerda · Samsung UN65DU7700GXZD (Tizen — usar navegador)',
+  },
+  { num: 11, label: 'Noruega', legacyNames: ['Noruega'], locationHint: 'Meio upper deck bar esquerda · Semp 55S62' },
+  { num: 12, label: 'Portugal', legacyNames: ['Portugal'], locationHint: 'Banheiro upper deck bar esquerda · Semp 55S62' },
   { num: 13, label: 'Croácia', legacyNames: ['Croácia'], locationHint: 'Upper deck centro TV1 · Philips 7300' },
   { num: 14, label: 'Escócia', legacyNames: ['Escócia'], locationHint: 'Upper deck centro TV2 · Philips 7300' },
   { num: 15, label: 'Espanha', legacyNames: ['Espanha'], locationHint: 'Upper deck centro TV3 · Philips 7300' },
   { num: 16, label: 'França', legacyNames: ['França'], locationHint: 'Upper deck centro TV4 · Philips 7300' },
-  { num: 17, label: 'Holanda', legacyNames: ['Holanda'], locationHint: 'Centro upper deck · Samsung 55S62' },
-  { num: 18, label: 'Argentina', legacyNames: ['Argentina'], locationHint: 'Banheiro upper deck bar direita · Samsung 55S62' },
-  { num: 19, label: 'Suécia', legacyNames: ['Suécia'], locationHint: 'Meio upper deck bar direita · Samsung 55S62' },
-  { num: 20, label: 'Suíça', legacyNames: ['Suíça'], locationHint: 'Canto upper deck bar direita · Samsung 65S62' },
+  { num: 17, label: 'Holanda', legacyNames: ['Holanda'], locationHint: 'Centro upper deck · Semp 55S62' },
+  { num: 18, label: 'Argentina', legacyNames: ['Argentina'], locationHint: 'Banheiro upper deck bar direita · Semp 55S62' },
+  { num: 19, label: 'Suécia', legacyNames: ['Suécia'], locationHint: 'Meio upper deck bar direita · Semp 55S62' },
+  { num: 20, label: 'Suíça', legacyNames: ['Suíça'], locationHint: 'Canto upper deck bar direita · Semp 65S62' },
   {
     num: 21,
     label: 'Telão Brasil',
     legacyNames: ['Telão Brasil', 'Brasil'],
-    locationHint: 'Telão espaço multiuso · conectar stick/PC na entrada HDMI do processador de vídeo',
+    locationHint: 'Telão espaço multiuso · HDMI no processador de vídeo (sem Smart TV)',
   },
 ];
 
@@ -173,20 +178,21 @@ async function main() {
     const existing = await findScreenByLegacyNames(tenant.id, row);
 
     if (existing) {
+      const data: { name?: string; locationHint: string } = {
+        locationHint: row.locationHint,
+      };
       if (existing.name !== displayName) {
-        await prisma.bostonTvScreen.update({
-          where: { id: existing.id },
-          data: {
-            name: displayName,
-            locationHint: row.locationHint,
-          },
-        });
+        data.name = displayName;
         renamed += 1;
         console.log(`  ↻ renomeada: ${existing.name} → ${displayName}`);
       } else {
         skipped += 1;
-        console.log(`  · tela já existe: ${displayName}`);
+        console.log(`  ↻ local/modelo: ${displayName}`);
       }
+      await prisma.bostonTvScreen.update({
+        where: { id: existing.id },
+        data,
+      });
       continue;
     }
 

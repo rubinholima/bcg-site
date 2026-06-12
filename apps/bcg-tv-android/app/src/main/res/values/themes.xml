@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.BcgTv" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="colorPrimary">#F59E0B</item>
+        <item name="colorOnPrimary">#18181B</item>
+    </style>
+
+    <style name="Theme.BcgTv.Fullscreen" parent="Theme.BcgTv">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+</resources>
