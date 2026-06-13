@@ -9,8 +9,7 @@ class BootReceiver : BroadcastReceiver() {
         if (intent?.action != Intent.ACTION_BOOT_COMPLETED) return
         val num = Prefs.getScreenNum(context)
         if (num !in 1..21) return
-        val launch = Intent(context, PlayerActivity::class.java).apply {
-            putExtra(PlayerActivity.EXTRA_SCREEN_NUM, num)
+        val launch = Intent(context, SetupActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(launch)

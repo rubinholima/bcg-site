@@ -19,6 +19,7 @@ import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { BostonTvService } from './boston-tv.service';
 import { BostonTvIptvService } from './boston-tv-iptv.service';
+import { BostonTvVmixService } from './boston-tv-vmix.service';
 import { CreateBostonTvPlaylistDto } from './dto/create-boston-tv-playlist.dto';
 import { PatchBostonTvPlaylistDto } from './dto/patch-boston-tv-playlist.dto';
 import { CreateBostonTvPlaylistItemDto } from './dto/create-boston-tv-item.dto';
@@ -26,6 +27,7 @@ import { PatchBostonTvPlaylistItemDto } from './dto/patch-boston-tv-item.dto';
 import { CreateBostonTvScreenDto } from './dto/create-boston-tv-screen.dto';
 import { PatchBostonTvScreenDto } from './dto/patch-boston-tv-screen.dto';
 import { UpsertBostonTvIptvSourceDto } from './dto/upsert-boston-tv-iptv-source.dto';
+import { UpsertBostonTvVmixChannelDto } from './dto/upsert-boston-tv-vmix-channel.dto';
 
 @Controller('boston-tv')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -34,6 +36,7 @@ export class BostonTvController {
   constructor(
     private readonly bostonTv: BostonTvService,
     private readonly bostonTvIptv: BostonTvIptvService,
+    private readonly bostonTvVmix: BostonTvVmixService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -232,6 +235,71 @@ export class BostonTvController {
       Boolean(body.enabled),
       allowed,
     );
+  }
+
+  @Get('vmix/channels')
+  async listVmixChannels(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+    @Query('enabledOnly') enabledOnly?: string,
+  ) {
+    const allowed = await this.allowedIds(req);
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId obrigatório');
+    return this.bostonTvVmix.listChannels(
+      tenantId.trim(),
+      allowed,
+      enabledOnly === '1' || enabledOnly === 'true',
+    );
+  }
+
+  @Post('vmix/channels')
+  async createVmixChannel(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: UpsertBostonTvVmixChannelDto,
+  ) {
+    const allowed = await this.allowedIds(req);
+    return this.bostonTvVmix.createChannel(
+      {
+        tenantId: dto.tenantId,
+        name: dto.name,
+        deliveryType: dto.deliveryType,
+        streamUrl: dto.streamUrl,
+        ndiSourceName: dto.ndiSourceName,
+        sortOrder: dto.sortOrder,
+        enabled: dto.enabled,
+      },
+      allowed,
+    );
+  }
+
+  @Patch('vmix/channels/:channelId')
+  async updateVmixChannel(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('channelId') channelId: string,
+    @Body() dto: Partial<UpsertBostonTvVmixChannelDto>,
+  ) {
+    const allowed = await this.allowedIds(req);
+    return this.bostonTvVmix.updateChannel(
+      channelId,
+      {
+        name: dto.name,
+        deliveryType: dto.deliveryType,
+        streamUrl: dto.streamUrl,
+        ndiSourceName: dto.ndiSourceName,
+        sortOrder: dto.sortOrder,
+        enabled: dto.enabled,
+      },
+      allowed,
+    );
+  }
+
+  @Delete('vmix/channels/:channelId')
+  async deleteVmixChannel(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('channelId') channelId: string,
+  ) {
+    const allowed = await this.allowedIds(req);
+    return this.bostonTvVmix.deleteChannel(channelId, allowed);
   }
 
   @Patch('screens/:id')

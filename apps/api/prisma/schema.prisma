@@ -121,6 +121,7 @@ model Tenant {
   bostonTvPlaylists     BostonTvPlaylist[]
   bostonTvScreens       BostonTvScreen[]
   bostonTvIptvSources   BostonTvIptvSource[]
+  bostonTvVmixChannels  BostonTvVmixChannel[]
   bostonTvHallChannel   BostonTvHallChannel?
   travelLogistics       TravelLogistics[]
   footballAgendaEntries FootballAgendaEntry[]
@@ -1471,7 +1472,7 @@ model BostonTvPlaylistItem {
   playlistId      String
   playlist        BostonTvPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   sortOrder       Int      @default(0)
-  /** image_url | video_url | youtube_video | iptv_stream */
+  /** image_url | video_url | youtube_video | iptv_stream | vmix_stream */
   contentType     String
   url             String   @db.Text
   /** Imagem/slide: obrigatório (segundos na tela). Vídeo: opcional. */
@@ -1520,6 +1521,25 @@ model BostonTvIptvChannel {
   @@index([sourceId])
   @@index([sourceId, name])
   @@index([sourceId, enabledForSelection])
+}
+
+model BostonTvVmixChannel {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  /** URL HLS (.m3u8) ou MPEG-TS publicada pelo vMix (Output → stream). */
+  /** stream = URL HLS/TS | ndi = nome da fonte NDI na LAN (app nativo) */
+  deliveryType   String   @default("stream")
+  /** Ex.: "DESKTOP-ABC (vMix - Output 1)" — usado quando deliveryType = ndi */
+  ndiSourceName  String?
+  streamUrl String   @db.Text
+  sortOrder Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
 }
 
 model BostonTvScreen {

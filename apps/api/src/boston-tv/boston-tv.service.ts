@@ -24,7 +24,10 @@ import {
   type HallSyncItem,
 } from './boston-tv-hall-sync.util';
 
-const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream'] as const;
+const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream', 'vmix_stream', 'ndi_stream'] as const;
+
+const LIVE_STREAM_TYPES = new Set<string>(['iptv_stream', 'vmix_stream']);
+const NDI_ITEM_TYPES = new Set<string>(['ndi_stream']);
 
 /** Ordena telas "1 - USA", "2 - …", "10 - …" numericamente. */
 function bostonTvScreenSortNum(name: string): number {
@@ -63,7 +66,7 @@ export class BostonTvService {
         );
       }
     }
-    if (contentType === 'iptv_stream') {
+    if (contentType === 'iptv_stream' || contentType === 'vmix_stream' || contentType === 'ndi_stream') {
       // Canal ao vivo — sem duração fixa
       return;
     }
@@ -120,7 +123,7 @@ export class BostonTvService {
     if (item.contentType === 'image_url' || item.contentType === 'video_url') {
       return resolvePublicMediaUrl(item.url) || item.url;
     }
-    if (item.contentType === 'iptv_stream') {
+    if (item.contentType === 'iptv_stream' || item.contentType === 'vmix_stream') {
       // Sempre proxy: evita mixed content (HTTP em página HTTPS) e URLs expostas na TV.
       return `/api/public/boston-tv/play/${encodeURIComponent(playerToken)}/stream?i=${index}`;
     }
@@ -130,8 +133,11 @@ export class BostonTvService {
   async resolveIptvStreamUpstream(playerToken: string, itemIndex: number): Promise<string> {
     const ctx = await this.buildPlayerContext(playerToken);
     const item = ctx.items[itemIndex];
-    if (!item || item.contentType !== 'iptv_stream') {
+    if (!item || (!LIVE_STREAM_TYPES.has(item.contentType) && !NDI_ITEM_TYPES.has(item.contentType))) {
       throw new NotFoundException('Stream não encontrado para este item.');
+    }
+    if (NDI_ITEM_TYPES.has(item.contentType)) {
+      throw new BadRequestException('Item NDI é reproduzido pelo app nativo na TV, não via proxy HTTP.');
     }
     if (!isPlayableIptvStreamUrl(item.url)) {
       throw new BadRequestException('Canal não é transmissão compatível com o player.');
@@ -208,20 +214,51 @@ export class BostonTvService {
       }
     }
 
-    const iptvUrls = activeItems
-      .filter((it) => it.contentType === 'iptv_stream')
+    const liveStreamUrls = activeItems
+      .filter((it) => LIVE_STREAM_TYPES.has(it.contentType))
+      .map((it) => it.url.trim());
+    const ndiSourceKeys = activeItems
+      .filter((it) => NDI_ITEM_TYPES.has(it.contentType))
       .map((it) => it.url.trim());
     const channelByUrl = new Map<string, string>();
-    if (iptvUrls.length > 0) {
-      const channels = await this.prisma.bostonTvIptvChannel.findMany({
-        where: {
-          streamUrl: { in: iptvUrls },
-          source: { tenantId: screen.tenant.id },
-        },
-        select: { streamUrl: true, name: true },
-      });
-      for (const ch of channels) {
+    if (liveStreamUrls.length > 0 || ndiSourceKeys.length > 0) {
+      const [iptvChannels, vmixStreamChannels, vmixNdiChannels] = await Promise.all([
+        liveStreamUrls.length > 0
+          ? this.prisma.bostonTvIptvChannel.findMany({
+              where: {
+                streamUrl: { in: liveStreamUrls },
+                source: { tenantId: screen.tenant.id },
+              },
+              select: { streamUrl: true, name: true },
+            })
+          : Promise.resolve([]),
+        liveStreamUrls.length > 0
+          ? this.prisma.bostonTvVmixChannel.findMany({
+              where: {
+                tenantId: screen.tenant.id,
+                streamUrl: { in: liveStreamUrls },
+              },
+              select: { streamUrl: true, name: true },
+            })
+          : Promise.resolve([]),
+        ndiSourceKeys.length > 0
+          ? this.prisma.bostonTvVmixChannel.findMany({
+              where: {
+                tenantId: screen.tenant.id,
+                ndiSourceName: { in: ndiSourceKeys },
+              },
+              select: { ndiSourceName: true, name: true },
+            })
+          : Promise.resolve([]),
+      ]);
+      for (const ch of iptvChannels) {
         channelByUrl.set(ch.streamUrl, ch.name);
+      }
+      for (const ch of vmixStreamChannels) {
+        channelByUrl.set(ch.streamUrl, ch.name);
+      }
+      for (const ch of vmixNdiChannels) {
+        if (ch.ndiSourceName) channelByUrl.set(ch.ndiSourceName, ch.name);
       }
     }
 
@@ -245,7 +282,7 @@ export class BostonTvService {
         durationSeconds: it.durationSeconds,
         sortOrder: it.sortOrder,
         channelName:
-          it.contentType === 'iptv_stream'
+          LIVE_STREAM_TYPES.has(it.contentType) || NDI_ITEM_TYPES.has(it.contentType)
             ? channelByUrl.get(it.url.trim())
             : undefined,
       })),
@@ -421,9 +458,13 @@ export class BostonTvService {
     );
 
     const contentType = dto.contentType.trim();
-    if (contentType === 'iptv_stream' && !isPlayableIptvStreamUrl(dto.url)) {
+    if (NDI_ITEM_TYPES.has(contentType)) {
+      if (!dto.url.trim()) {
+        throw new BadRequestException('Informe o nome da fonte NDI (vMix Output).');
+      }
+    } else if (LIVE_STREAM_TYPES.has(contentType) && !isPlayableIptvStreamUrl(dto.url)) {
       throw new BadRequestException(
-        'Canal não é transmissão IPTV válida (ex.: link de site). Escolha um canal liberado com stream .ts ou .m3u8.',
+        'Canal não é transmissão válida (ex.: link de site). Use stream .m3u8 ou .ts do vMix/IPTV.',
       );
     }
 
@@ -473,6 +514,17 @@ export class BostonTvService {
     const nextDur =
       dto.durationSeconds !== undefined ? dto.durationSeconds : item.durationSeconds;
     this.validateItemDuration(nextType, nextDur);
+
+    const nextUrl = dto.url !== undefined ? dto.url.trim() : item.url;
+    if (NDI_ITEM_TYPES.has(nextType)) {
+      if (!nextUrl) {
+        throw new BadRequestException('Informe o nome da fonte NDI.');
+      }
+    } else if (LIVE_STREAM_TYPES.has(nextType) && !isPlayableIptvStreamUrl(nextUrl)) {
+      throw new BadRequestException(
+        'Canal não é transmissão válida. Use stream .m3u8 ou .ts.',
+      );
+    }
 
     return this.prisma.bostonTvPlaylistItem.update({
       where: { id: itemId },

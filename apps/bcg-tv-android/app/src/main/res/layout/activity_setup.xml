@@ -24,8 +24,16 @@
         android:textColor="#A1A1AA"
         android:textSize="16sp" />
 
-    <Spinner
-        android:id="@+id/screenSpinner"
+        <Spinner
+            android:id="@+id/engineSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:background="#27272A"
+            android:padding="12dp" />
+
+        <Spinner
+            android:id="@+id/screenSpinner"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="32dp"

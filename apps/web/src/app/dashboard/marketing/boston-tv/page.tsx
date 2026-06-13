@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
+import { BostonTvVmixPanel } from "@/components/boston-tv/BostonTvVmixPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 import { BostonTvHallChannelPanel } from "@/components/boston-tv/BostonTvHallChannelPanel";
@@ -122,6 +123,7 @@ export default function BostonTvDashboardPage() {
   const [playlistsOpen, setPlaylistsOpen] = useState(true);
   const [screensOpen, setScreensOpen] = useState(true);
   const [iptvOpen, setIptvOpen] = useState(true);
+  const [vmixOpen, setVmixOpen] = useState(true);
 
   const [deleteScreenId, setDeleteScreenId] = useState<string | null>(null);
   const [regenerateScreenId, setRegenerateScreenId] = useState<string | null>(null);
@@ -603,7 +605,17 @@ export default function BostonTvDashboardPage() {
 
       {effectiveTenant ? (
         <BostonTvCollapsibleSection
-          title="Canais"
+          title="Fontes vMix"
+          open={vmixOpen}
+          onOpenChange={setVmixOpen}
+        >
+          <BostonTvVmixPanel tenantId={effectiveTenant} embedded />
+        </BostonTvCollapsibleSection>
+      ) : null}
+
+      {effectiveTenant ? (
+        <BostonTvCollapsibleSection
+          title="Canais IPTV"
           open={iptvOpen}
           onOpenChange={setIptvOpen}
         >
@@ -743,7 +755,7 @@ export default function BostonTvDashboardPage() {
                 options={[
                   {
                     value: "playlist",
-                    label: "Playlist (Hall ou individual — imagens, vídeos, YouTube, IPTV no loop)",
+                    label: "Playlist (Hall ou individual — imagens, vídeos, YouTube, vMix, IPTV no loop)",
                   },
                   {
                     value: "iptv",

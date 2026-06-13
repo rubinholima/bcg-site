@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">BCG TV</string>
     <string name="setup_title">Configurar TV</string>
-    <string name="setup_subtitle">Escolha qual tela do Hall (1–21) esta TV representa.</string>
+    <string name="setup_subtitle">Escolha a tela (1–21) e o modo do player.</string>
+    <string name="setup_engine">Modo do player</string>
     <string name="setup_confirm">Iniciar player</string>
     <string name="setup_change">Trocar tela</string>
     <string name="loading">Carregando Boston TV…</string>

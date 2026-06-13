@@ -2,7 +2,7 @@ import { IsIn, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateBostonTvPlaylistItemDto {
   @IsString()
-  @IsIn(['image_url', 'video_url', 'youtube_video', 'iptv_stream'])
+  @IsIn(['image_url', 'video_url', 'youtube_video', 'iptv_stream', 'vmix_stream', 'ndi_stream'])
   contentType!: string;
 
   @IsString()

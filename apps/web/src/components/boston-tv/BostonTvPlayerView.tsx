@@ -229,7 +229,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
       }, sec * 1000);
       return () => window.clearTimeout(t);
     }
-    if (current.contentType === "iptv_stream") {
+    if (current.contentType === "iptv_stream" || current.contentType === "vmix_stream") {
       if (items.length > 1 && current.durationSeconds) {
         const sec = Math.max(60, current.durationSeconds);
         const t = window.setTimeout(() => {
@@ -323,7 +323,20 @@ export function BostonTvPlayerView({ token }: { token: string }) {
     );
   }
 
-  if (current.contentType === "iptv_stream") {
+  if (current.contentType === "ndi_stream") {
+    return (
+      <div className="relative flex h-screen w-screen flex-col items-center justify-center bg-black px-8 text-center text-zinc-300">
+        <p className="text-xl font-medium text-white">Fonte NDI — {current.channelName ?? current.url}</p>
+        <p className="mt-4 max-w-lg text-sm leading-relaxed">
+          Use o app <strong className="text-white">BCG TV</strong> na TV em modo{" "}
+          <strong className="text-white">NDI</strong> (ou Birddog no HDMI). O navegador não recebe NDI.
+        </p>
+        {pauseOverlay}
+      </div>
+    );
+  }
+
+  if (current.contentType === "iptv_stream" || current.contentType === "vmix_stream") {
     return (
       <div className="relative h-screen w-screen bg-black">
         <HlsStreamPlayer

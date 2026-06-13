@@ -13,6 +13,8 @@ export function effectiveItemDurationMs(item: HallSyncItem): number {
     case 'video_url':
       return Math.max(30, item.durationSeconds ?? 120) * 1000;
     case 'iptv_stream':
+    case 'vmix_stream':
+    case 'ndi_stream':
       // Canal ao vivo: duração curta no item (ex. 60s) não deve girar o Hall a cada minuto
       if (item.durationSeconds != null && item.durationSeconds < 3600) {
         return 3600 * 1000;

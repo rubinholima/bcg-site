@@ -35,6 +35,14 @@
         </activity>
 
         <activity
+            android:name=".NativePlayerActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.BcgTv.Fullscreen" />
+
+        <activity
             android:name=".PlayerActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false"
