@@ -74,10 +74,13 @@ const TYPE_OPTIONS = [
   { value: "image_url", label: TYPE_LABEL.image_url },
   { value: "video_url", label: TYPE_LABEL.video_url },
   { value: "youtube_video", label: TYPE_LABEL.youtube_video },
-  { value: "vmix_stream", label: TYPE_LABEL.vmix_stream },
-  { value: "ndi_stream", label: TYPE_LABEL.ndi_stream },
+  { value: "vmix_stream", label: "Fonte vMix" },
   { value: "iptv_stream", label: TYPE_LABEL.iptv_stream },
 ];
+
+function isVmixPlaylistType(ty: string): boolean {
+  return ty === "vmix_stream" || ty === "ndi_stream";
+}
 
 function extractYoutubeId(url: string): string | null {
   const v = /[?&]v=([^&]+)/.exec(url);
@@ -162,6 +165,8 @@ export default function EditBostonTvPlaylistPage() {
       }
       for (const ch of vmixRes.data?.items ?? []) {
         if (ch.streamUrl) map.set(ch.streamUrl, formatVmixChannelLabel(ch));
+        const ndi = (ch as { ndiSourceName?: string | null }).ndiSourceName;
+        if (ndi) map.set(ndi, formatVmixChannelLabel(ch));
       }
       setLiveByStream(map);
     } catch {
@@ -212,7 +217,7 @@ export default function EditBostonTvPlaylistPage() {
       }
       url = found.streamUrl;
       durationSeconds = Math.max(60, parseInt(durIn, 10) || 3600);
-    } else if (ty === "vmix_stream") {
+    } else if (isVmixPlaylistType(ty)) {
       if (!vmixChannelId) return;
       const { data: list } = await api.get<{
         items: { id: string; streamUrl: string; deliveryType?: string; ndiSourceName?: string | null }[];
@@ -271,7 +276,9 @@ export default function EditBostonTvPlaylistPage() {
     setEditItem(item);
     setEditTy(item.contentType);
     setEditDurIn(String(item.durationSeconds ?? (item.contentType === "image_url" ? 15 : 3600)));
-    setEditUrlIn(item.contentType === "iptv_stream" || item.contentType === "vmix_stream" ? "" : item.url);
+    setEditUrlIn(
+      item.contentType === "iptv_stream" || isVmixPlaylistType(item.contentType) ? "" : item.url,
+    );
     setEditIptvChannelId("");
     setEditVmixChannelId("");
 
@@ -287,12 +294,18 @@ export default function EditBostonTvPlaylistPage() {
       }
     }
 
-    if (item.contentType === "vmix_stream" && playlist?.tenantId) {
+    if (isVmixPlaylistType(item.contentType) && playlist?.tenantId) {
       try {
-        const { data: list } = await api.get<{ items: { id: string; streamUrl: string }[] }>(
+        const { data: list } = await api.get<{
+          items: { id: string; streamUrl: string; ndiSourceName?: string | null }[];
+        }>(
           `/boston-tv/vmix/channels?tenantId=${encodeURIComponent(playlist.tenantId)}&enabledOnly=1`,
         );
-        const found = list?.items?.find((c) => c.streamUrl === item.url);
+        const found = list?.items?.find(
+          (c) =>
+            c.streamUrl === item.url ||
+            (item.contentType === "ndi_stream" && c.ndiSourceName === item.url),
+        );
         if (found) setEditVmixChannelId(found.id);
       } catch {
         /* ignore */
@@ -319,14 +332,26 @@ export default function EditBostonTvPlaylistPage() {
         }
         url = found.streamUrl;
         durationSeconds = Math.max(60, parseInt(editDurIn, 10) || 3600);
-      } else if (editTy === "vmix_stream") {
+      } else if (isVmixPlaylistType(editTy)) {
         if (!editVmixChannelId) return;
-        const { data: list } = await api.get<{ items: { id: string; streamUrl: string }[] }>(
+        const { data: list } = await api.get<{
+          items: { id: string; streamUrl: string; deliveryType?: string; ndiSourceName?: string | null }[];
+        }>(
           `/boston-tv/vmix/channels?tenantId=${encodeURIComponent(playlist.tenantId)}&enabledOnly=1`,
         );
         const found = list?.items?.find((c) => c.id === editVmixChannelId);
         if (!found) {
           alert("Fonte vMix não encontrada.");
+          return;
+        }
+        if (found.deliveryType === "ndi" && found.ndiSourceName) {
+          await api.patch(`/boston-tv/playlists/${id}/items/${editItem.id}`, {
+            contentType: "ndi_stream",
+            url: found.ndiSourceName,
+            durationSeconds: Math.max(60, parseInt(editDurIn, 10) || 3600),
+          });
+          setEditItem(null);
+          await load();
           return;
         }
         url = found.streamUrl;
@@ -452,25 +477,25 @@ export default function EditBostonTvPlaylistPage() {
               onChange={(v) => {
                 setTy(v);
                 setUrlIn("");
-                if (v === "iptv_stream" || v === "vmix_stream") setDurIn("3600");
+                if (v === "iptv_stream" || isVmixPlaylistType(v)) setDurIn("3600");
                 if (v === "image_url") setDurIn("15");
               }}
               placeholder="Tipo de conteúdo"
               options={TYPE_OPTIONS}
             />
           </div>
-          {ty === "image_url" || ty === "youtube_video" || ty === "iptv_stream" || ty === "vmix_stream" ? (
+          {ty === "image_url" || ty === "youtube_video" || ty === "iptv_stream" || isVmixPlaylistType(ty) ? (
             <div className="space-y-2 w-40">
               <Label>
                 {ty === "image_url"
                   ? "Segundos na tela"
-                  : ty === "iptv_stream" || ty === "vmix_stream"
+                  : ty === "iptv_stream" || isVmixPlaylistType(ty)
                     ? "Segundos no ar"
                     : "Tempo até próximo (s)"}
               </Label>
               <Input
                 type="number"
-                min={ty === "image_url" ? 5 : ty === "iptv_stream" || ty === "vmix_stream" ? 60 : 30}
+                min={ty === "image_url" ? 5 : ty === "iptv_stream" || isVmixPlaylistType(ty) ? 60 : 30}
                 value={durIn}
                 onChange={(e) => setDurIn(e.target.value)}
                 className="text-foreground"
@@ -485,7 +510,7 @@ export default function EditBostonTvPlaylistPage() {
                 onChange={setIptvChannelId}
               />
             </div>
-          ) : ty === "vmix_stream" ? (
+          ) : isVmixPlaylistType(ty) ? (
             <div className="w-full sm:flex-1 min-w-[240px]">
               <BostonTvVmixChannelSelect
                 tenantId={playlist.tenantId}
@@ -636,25 +661,25 @@ export default function EditBostonTvPlaylistPage() {
                 value={editTy}
                 onChange={(v) => {
                   setEditTy(v);
-                  if (v === "iptv_stream") setEditDurIn("3600");
+                  if (v === "iptv_stream" || isVmixPlaylistType(v)) setEditDurIn("3600");
                   if (v === "image_url") setEditDurIn("15");
                 }}
                 placeholder="Tipo de conteúdo"
                 options={TYPE_OPTIONS}
               />
             </div>
-            {editTy === "image_url" || editTy === "youtube_video" || editTy === "iptv_stream" || editTy === "vmix_stream" ? (
+            {editTy === "image_url" || editTy === "youtube_video" || editTy === "iptv_stream" || isVmixPlaylistType(editTy) ? (
               <div className="space-y-2">
                 <Label>
                   {editTy === "image_url"
                     ? "Segundos na tela"
-                    : editTy === "iptv_stream" || editTy === "vmix_stream"
+                    : editTy === "iptv_stream" || isVmixPlaylistType(editTy)
                       ? "Segundos no ar"
                       : "Tempo até próximo (s)"}
                 </Label>
                 <Input
                   type="number"
-                  min={editTy === "image_url" ? 5 : editTy === "iptv_stream" || editTy === "vmix_stream" ? 60 : 30}
+                  min={editTy === "image_url" ? 5 : editTy === "iptv_stream" || isVmixPlaylistType(editTy) ? 60 : 30}
                   value={editDurIn}
                   onChange={(e) => setEditDurIn(e.target.value)}
                   className="text-foreground"
@@ -667,7 +692,7 @@ export default function EditBostonTvPlaylistPage() {
                 value={editIptvChannelId}
                 onChange={setEditIptvChannelId}
               />
-            ) : editTy === "vmix_stream" ? (
+            ) : isVmixPlaylistType(editTy) ? (
               <BostonTvVmixChannelSelect
                 tenantId={playlist.tenantId}
                 value={editVmixChannelId}
