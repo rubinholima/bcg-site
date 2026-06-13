@@ -11,11 +11,19 @@ android {
         applicationId = "com.bostoncitygroup.bcgtv"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
         buildConfigField("String", "PLAYER_BASE_URL", "\"https://www.bostoncitygroup.biz/tv/\"")
         buildConfigField("String", "API_BASE_URL", "\"https://www.bostoncitygroup.biz/api/public/boston-tv/\"")
         buildConfigField("String", "STREAM_ORIGIN", "\"https://origin.bostoncitygroup.biz\"")
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+            }
+        }
     }
 
     buildTypes {
@@ -40,6 +48,12 @@ android {
     buildFeatures {
         buildConfig = true
         viewBinding = true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+        }
     }
 }
 

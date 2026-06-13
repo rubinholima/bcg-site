@@ -10,8 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 
 class SetupActivity : AppCompatActivity() {
     private val engineOptions = listOf(
-        Prefs.ENGINE_NATIVE to "Nativo — baixa latência (recomendado)",
-        Prefs.ENGINE_NDI to "NDI — estilo Birddog (SDK fase 2)",
+        Prefs.ENGINE_NDI to "NDI — ao vivo baixa latência (recomendado Hall)",
+        Prefs.ENGINE_NATIVE to "Nativo — playlists e stream HTTP",
         Prefs.ENGINE_WEB to "Web — compatibilidade máxima",
     )
 

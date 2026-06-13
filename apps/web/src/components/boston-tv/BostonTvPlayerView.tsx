@@ -329,7 +329,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
         <p className="text-xl font-medium text-white">Fonte NDI — {current.channelName ?? current.url}</p>
         <p className="mt-4 max-w-lg text-sm leading-relaxed">
           Use o app <strong className="text-white">BCG TV</strong> na TV em modo{" "}
-          <strong className="text-white">NDI</strong> (ou Birddog no HDMI). O navegador não recebe NDI.
+          <strong className="text-white">NDI</strong>. O navegador não recebe NDI.
         </p>
         {pauseOverlay}
       </div>

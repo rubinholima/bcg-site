@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
+import android.view.SurfaceView
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
@@ -26,6 +27,7 @@ import java.util.concurrent.Executors
 class NativePlayerActivity : AppCompatActivity() {
     private lateinit var playerView: PlayerView
     private lateinit var imageView: ImageView
+    private lateinit var ndiSurfaceView: SurfaceView
     private lateinit var ndiPlaceholder: TextView
     private lateinit var statusText: TextView
 
@@ -37,6 +39,8 @@ class NativePlayerActivity : AppCompatActivity() {
     private var playerToken: String? = null
     private var payload: PlayerPayload? = null
     private var currentKey: String? = null
+    private var currentNdiSource: String? = null
+    private var ndiSurfaceReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,8 +56,15 @@ class NativePlayerActivity : AppCompatActivity() {
 
         playerView = findViewById(R.id.exoPlayerView)
         imageView = findViewById(R.id.imageView)
+        ndiSurfaceView = findViewById(R.id.ndiSurfaceView)
         ndiPlaceholder = findViewById(R.id.ndiPlaceholder)
         statusText = findViewById(R.id.statusText)
+
+        NdiAndroidBootstrap.ensure(this)
+        NdiReceiverBridge.attachSurface(ndiSurfaceView) {
+            ndiSurfaceReady = true
+            currentNdiSource?.let { tryConnectNdi(it) }
+        }
 
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(500, 2000, 500, 500)
@@ -167,18 +178,55 @@ class NativePlayerActivity : AppCompatActivity() {
     }
 
     private fun showNdi(item: PlayerItem) {
-        val engine = Prefs.getPlayerEngine(this)
-        if (engine == Prefs.ENGINE_NDI && NdiReceiverBridge.connect(item.url)) {
-            ndiPlaceholder.text = "NDI: ${item.channelName ?: item.url}"
+        val sourceName = item.url.trim()
+        if (sourceName.isEmpty()) {
+            ndiPlaceholder.text = "Fonte NDI sem nome configurado."
             ndiPlaceholder.visibility = View.VISIBLE
             return
         }
-        ndiPlaceholder.text =
-            "Fonte NDI\n${item.channelName ?: item.url}\n\n" +
-                "Ative modo NDI no app e integre o SDK, ou use Birddog no HDMI.\n" +
-                "vMix → NDI → esta fonte na rede."
-        ndiPlaceholder.visibility = View.VISIBLE
+
+        ndiSurfaceView.visibility = View.VISIBLE
+        ndiPlaceholder.visibility = View.GONE
+        currentNdiSource = sourceName
+
+        if (ndiSurfaceReady) {
+            tryConnectNdi(sourceName)
+        } else {
+            ndiPlaceholder.text = "Iniciando receptor NDI…"
+            ndiPlaceholder.visibility = View.VISIBLE
+        }
+
+        handler.postDelayed(ndiStatusRunnable, 1500)
     }
+
+    private fun tryConnectNdi(sourceName: String) {
+        io.execute {
+            val ok = NdiReceiverBridge.connect(sourceName)
+            handler.post {
+                if (ok) {
+                    ndiPlaceholder.visibility = View.GONE
+                    statusText.text = "NDI · ${itemLabel(sourceName)}"
+                } else {
+                    ndiPlaceholder.text =
+                        "NDI: ${NdiReceiverBridge.status()}\n\n" +
+                            "Fonte: $sourceName\n\n" +
+                            "Confira: vMix NDI ligado, mesma rede, libndi.so no APK (setup-ndi-sdk.ps1)."
+                    ndiPlaceholder.visibility = View.VISIBLE
+                }
+            }
+        }
+    }
+
+    private val ndiStatusRunnable = object : Runnable {
+        override fun run() {
+            if (currentNdiSource != null && ndiSurfaceView.visibility == View.VISIBLE) {
+                statusText.text = NdiReceiverBridge.status()
+                handler.postDelayed(this, 3000)
+            }
+        }
+    }
+
+    private fun itemLabel(sourceName: String) = sourceName
 
     private fun playStream(url: String, offsetMs: Long, paused: Boolean) {
         playerView.visibility = View.VISIBLE
@@ -207,8 +255,14 @@ class NativePlayerActivity : AppCompatActivity() {
     }
 
     private fun hideAll() {
+        handler.removeCallbacks(ndiStatusRunnable)
+        if (currentNdiSource != null) {
+            NdiReceiverBridge.disconnect()
+            currentNdiSource = null
+        }
         playerView.visibility = View.GONE
         imageView.visibility = View.GONE
+        ndiSurfaceView.visibility = View.GONE
         ndiPlaceholder.visibility = View.GONE
         exoPlayer?.stop()
     }
@@ -216,7 +270,7 @@ class NativePlayerActivity : AppCompatActivity() {
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
         io.shutdownNow()
-        NdiReceiverBridge.disconnect()
+        NdiReceiverBridge.shutdown()
         exoPlayer?.release()
         exoPlayer = null
         super.onDestroy()
