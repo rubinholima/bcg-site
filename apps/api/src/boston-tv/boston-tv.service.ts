@@ -80,10 +80,56 @@ export class BostonTvService {
     return raw as Prisma.InputJsonValue;
   }
 
+  /**
+   * Navegador (/tv) não recebe NDI — se o item for ndi_stream, usa streamUrl
+   * da fonte vMix quando existir (mesmo comportamento de antes do APK).
+   */
+  private async mapItemsForWebPlayer(
+    tenantId: string,
+    items: Array<{
+      id: string;
+      contentType: string;
+      url: string;
+      durationSeconds: number | null;
+      sortOrder: number;
+      channelName?: string;
+    }>,
+  ) {
+    const ndiKeys = items
+      .filter((it) => it.contentType === 'ndi_stream')
+      .map((it) => it.url.trim())
+      .filter(Boolean);
+    if (ndiKeys.length === 0) return items;
+
+    const vmixChannels = await this.prisma.bostonTvVmixChannel.findMany({
+      where: { tenantId, ndiSourceName: { in: ndiKeys } },
+      select: { name: true, ndiSourceName: true, streamUrl: true },
+    });
+    const byNdi = new Map(
+      vmixChannels
+        .filter((ch) => ch.ndiSourceName?.trim())
+        .map((ch) => [ch.ndiSourceName!.trim(), ch]),
+    );
+
+    return items.map((it) => {
+      if (it.contentType !== 'ndi_stream') return it;
+      const ch = byNdi.get(it.url.trim());
+      const streamUrl = ch?.streamUrl?.trim() ?? '';
+      if (!streamUrl || !isPlayableIptvStreamUrl(streamUrl)) return it;
+      return {
+        ...it,
+        contentType: 'vmix_stream',
+        url: streamUrl,
+        channelName: ch!.name,
+      };
+    });
+  }
+
   /** Payload público do player na TV — sem auth. */
   async getPublicPlayerPayload(playerToken: string) {
     const ctx = await this.buildPlayerContext(playerToken);
-    const items = ctx.items.map((it, index) => ({
+    const webItems = await this.mapItemsForWebPlayer(ctx.tenantId, ctx.items);
+    const items = webItems.map((it, index) => ({
       ...it,
       url: this.resolvePlayerItemUrl(it, playerToken, index),
     }));
@@ -132,12 +178,13 @@ export class BostonTvService {
 
   async resolveIptvStreamUpstream(playerToken: string, itemIndex: number): Promise<string> {
     const ctx = await this.buildPlayerContext(playerToken);
-    const item = ctx.items[itemIndex];
+    const webItems = await this.mapItemsForWebPlayer(ctx.tenantId, ctx.items);
+    const item = webItems[itemIndex];
     if (!item || (!LIVE_STREAM_TYPES.has(item.contentType) && !NDI_ITEM_TYPES.has(item.contentType))) {
       throw new NotFoundException('Stream não encontrado para este item.');
     }
     if (NDI_ITEM_TYPES.has(item.contentType)) {
-      throw new BadRequestException('Item NDI é reproduzido pelo app nativo na TV, não via proxy HTTP.');
+      throw new BadRequestException('Stream ao vivo indisponível para o navegador neste item.');
     }
     if (!isPlayableIptvStreamUrl(item.url)) {
       throw new BadRequestException('Canal não é transmissão compatível com o player.');

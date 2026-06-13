@@ -328,10 +328,10 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   if (current.contentType === "ndi_stream") {
     return (
       <div className="relative flex h-screen w-screen flex-col items-center justify-center bg-black px-8 text-center text-zinc-300">
-        <p className="text-xl font-medium text-white">Fonte NDI — {current.channelName ?? current.url}</p>
-        <p className="mt-4 max-w-lg text-sm leading-relaxed">
-          Use o app <strong className="text-white">BCG TV</strong> na TV em modo{" "}
-          <strong className="text-white">NDI</strong>. O navegador não recebe NDI.
+        <p className="text-xl font-medium text-white">Transmissão ao vivo</p>
+        <p className="mt-4 max-w-lg text-sm leading-relaxed text-zinc-400">
+          Configure a URL de stream (HLS) da fonte vMix no dashboard para reproduzir no
+          navegador.
         </p>
         {pauseOverlay}
       </div>
