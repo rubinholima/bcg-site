@@ -341,6 +341,26 @@ export class PublicController {
     return this.bostonTvService.listHallInstallerScreens();
   }
 
+  /** Boston TV — playlists do Hall + Canal Hall (escolha na TV). */
+  @Get('boston-tv/hall/playlists')
+  listBostonTvHallPlaylists() {
+    return this.bostonTvService.listHallPublicPlaylistsForInstall();
+  }
+
+  /** Boston TV — vincula Canal Hall ou playlist individual na tela. */
+  @Post('boston-tv/hall/:num/playlist')
+  bindBostonTvHallScreenPlaylist(
+    @Param('num') numStr: string,
+    @Body() body: { hallSyncMode: string; playlistId?: string },
+  ) {
+    const num = parseInt(numStr, 10);
+    return this.bostonTvService.bindHallScreenPlaylistForInstall(
+      num,
+      body.hallSyncMode,
+      body.playlistId,
+    );
+  }
+
   /** Boston TV — token do player pelo número da tela no Hall (ex.: 1 → USA). */
   @Get('boston-tv/hall/:num/player-token')
   async resolveBostonTvHallPlayerToken(@Param('num') numStr: string) {

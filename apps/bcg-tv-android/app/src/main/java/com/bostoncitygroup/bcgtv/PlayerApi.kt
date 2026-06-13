@@ -2,8 +2,10 @@ package com.bostoncitygroup.bcgtv
 
 import android.util.Log
 import com.bostoncitygroup.bcgtv.BuildConfig
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -28,6 +30,26 @@ data class PlayerPayload(
     val hallSync: HallSync?,
 )
 
+data class HallChannelInfo(
+    val configured: Boolean,
+    val playlistId: String?,
+    val playlistName: String?,
+    val itemCount: Int,
+)
+
+data class PlaylistOption(
+    val id: String,
+    val name: String,
+    val itemCount: Int,
+) {
+    fun display(): String = "$name ($itemCount itens)"
+}
+
+data class HallPlaylistsResponse(
+    val hallChannel: HallChannelInfo,
+    val playlists: List<PlaylistOption>,
+)
+
 object PlayerApi {
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -35,6 +57,7 @@ object PlayerApi {
         .build()
 
     private val base = BuildConfig.API_BASE_URL.trimEnd('/')
+    private val jsonType = "application/json; charset=utf-8".toMediaType()
 
     fun fetchPlayerToken(screenNum: Int): String? {
         val url = "$base/hall/$screenNum/player-token"
@@ -46,6 +69,42 @@ object PlayerApi {
         } catch (e: Exception) {
             Log.e("PlayerApi", "token", e)
             null
+        }
+    }
+
+    fun fetchHallPlaylists(): HallPlaylistsResponse? {
+        val url = "$base/hall/playlists"
+        return try {
+            val res = client.newCall(Request.Builder().url(url).get().build()).execute()
+            if (!res.isSuccessful) return null
+            parseHallPlaylists(JSONObject(res.body?.string() ?: return null))
+        } catch (e: Exception) {
+            Log.e("PlayerApi", "playlists", e)
+            null
+        }
+    }
+
+    fun bindScreenPlaylist(
+        screenNum: Int,
+        hallSyncMode: String,
+        playlistId: String?,
+    ): Boolean {
+        val url = "$base/hall/$screenNum/playlist"
+        val body = JSONObject().apply {
+            put("hallSyncMode", hallSyncMode)
+            if (!playlistId.isNullOrBlank()) put("playlistId", playlistId)
+        }
+        return try {
+            val res = client.newCall(
+                Request.Builder()
+                    .url(url)
+                    .post(body.toString().toRequestBody(jsonType))
+                    .build(),
+            ).execute()
+            res.isSuccessful
+        } catch (e: Exception) {
+            Log.e("PlayerApi", "bind", e)
+            false
         }
     }
 
@@ -61,6 +120,35 @@ object PlayerApi {
             Log.e("PlayerApi", "payload", e)
             null
         }
+    }
+
+    private fun parseHallPlaylists(json: JSONObject): HallPlaylistsResponse {
+        val hallObj = json.optJSONObject("hallChannel")
+        val hall = if (hallObj?.optBoolean("configured") == true) {
+            HallChannelInfo(
+                configured = true,
+                playlistId = hallObj.optString("playlistId").ifBlank { null },
+                playlistName = hallObj.optString("playlistName").ifBlank { null },
+                itemCount = hallObj.optInt("itemCount"),
+            )
+        } else {
+            HallChannelInfo(configured = false, null, null, 0)
+        }
+
+        val arr = json.optJSONArray("playlists")
+        val playlists = if (arr == null) {
+            emptyList()
+        } else {
+            (0 until arr.length()).mapNotNull { i ->
+                val o = arr.optJSONObject(i) ?: return@mapNotNull null
+                PlaylistOption(
+                    id = o.optString("id"),
+                    name = o.optString("name"),
+                    itemCount = o.optInt("itemCount"),
+                )
+            }
+        }
+        return HallPlaylistsResponse(hall, playlists)
     }
 
     private fun parsePayload(json: JSONObject): PlayerPayload {

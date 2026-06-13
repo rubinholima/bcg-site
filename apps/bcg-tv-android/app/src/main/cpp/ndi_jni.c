@@ -118,6 +118,27 @@ static char g_status[STATUS_MAX] = "NDI nao iniciado";
 static char g_chosen_name[NAME_MAX];
 static char g_chosen_url[NAME_MAX];
 static NDIlib_source_t g_chosen_source;
+static pthread_mutex_t g_ndi_op_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void append_json_string(char* json, size_t cap, size_t* pos, const char* s) {
+    if (*pos >= cap - 2) return;
+    json[(*pos)++] = '"';
+    json[*pos] = '\0';
+    if (s) {
+        while (*s && *pos < cap - 3) {
+            if (*s == '"' || *s == '\\') {
+                if (*pos >= cap - 3) break;
+                json[(*pos)++] = '\\';
+            }
+            json[(*pos)++] = *s++;
+            json[*pos] = '\0';
+        }
+    }
+    if (*pos < cap - 1) {
+        json[(*pos)++] = '"';
+        json[*pos] = '\0';
+    }
+}
 
 static void set_status(const char* msg) {
     if (!msg) msg = "";
@@ -191,6 +212,9 @@ static void copy_source(const NDIlib_source_t* src, NDIlib_source_t* dst) {
 
 static void render_bgra(ANativeWindow* window, const NDIlib_video_frame_v2_t* frame) {
     if (!window || !frame || !frame->p_data || frame->xres <= 0 || frame->yres <= 0) return;
+    if (frame->FourCC != NDIlib_FourCC_type_BGRA && frame->FourCC != NDIlib_FourCC_type_BGRX) {
+        return;
+    }
     if (ANativeWindow_setBuffersGeometry(window, frame->xres, frame->yres, WINDOW_FORMAT_RGBA_8888) != 0) {
         return;
     }
@@ -225,33 +249,43 @@ static void* recv_loop(void* arg) {
     }
 
     bool have_chosen = false;
-    int attempt;
-    for (attempt = 0; attempt < 120 && g_running; attempt++) {
-        g_ndi.find_wait(finder, 1000);
-        uint32_t count = 0;
-        const NDIlib_source_t* sources = g_ndi.find_get_sources(finder, &count);
+    while (g_running && !have_chosen) {
+        int attempt;
+        for (attempt = 0; attempt < 30 && g_running && !have_chosen; attempt++) {
+            g_ndi.find_wait(finder, 500);
+            if (!g_running) break;
 
-        if (count > 0) {
-            uint32_t i;
-            for (i = 0; i < count; i++) {
-                const char* name = sources[i].p_ndi_name ? sources[i].p_ndi_name : "?";
-                LOGI("NDI source [%u]: %s", i, name);
-                if (!have_chosen && name_matches(name, g_target_name)) {
-                    copy_source(&sources[i], &g_chosen_source);
-                    have_chosen = true;
-                    break;
+            uint32_t count = 0;
+            const NDIlib_source_t* sources = g_ndi.find_get_sources(finder, &count);
+            if (!sources) count = 0;
+
+            if (count > 0) {
+                uint32_t i;
+                for (i = 0; i < count; i++) {
+                    const char* name = sources[i].p_ndi_name ? sources[i].p_ndi_name : "?";
+                    LOGI("NDI source [%u]: %s", i, name);
+                    if (name_matches(name, g_target_name)) {
+                        copy_source(&sources[i], &g_chosen_source);
+                        have_chosen = true;
+                        break;
+                    }
                 }
+                if (!have_chosen) {
+                    snprintf(g_status, sizeof(g_status), "NDI: %u fonte(s), procurando %s", count, g_target_name);
+                }
+            } else {
+                snprintf(g_status, sizeof(g_status), "Procurando NDI: %s", g_target_name);
             }
-            if (have_chosen) break;
-            snprintf(g_status, sizeof(g_status), "NDI: %u fonte(s), procurando %s", count, g_target_name);
-        } else {
-            snprintf(g_status, sizeof(g_status), "Procurando NDI: %s", g_target_name);
+        }
+        if (!have_chosen && g_running) {
+            snprintf(g_status, sizeof(g_status), "NDI nao encontrado — tentando de novo: %s", g_target_name);
+            LOGI("NDI retry search for %s", g_target_name);
         }
     }
 
-    if (!have_chosen) {
-        snprintf(g_status, sizeof(g_status), "Fonte NDI nao encontrada: %s", g_target_name);
+    if (!g_running || !have_chosen) {
         g_ndi.find_destroy(finder);
+        g_thread_active = 0;
         return NULL;
     }
 
@@ -296,24 +330,25 @@ static void* recv_loop(void* arg) {
     }
 
     g_ndi.recv_destroy(recv);
+    g_thread_active = 0;
     return NULL;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_bostoncitygroup_bcgtv_NdiNative_isSdkAvailable(JNIEnv* env, jobject thiz) {
+Java_com_bostoncitygroup_bcgtv_NdiNative_isSdkAvailable0(JNIEnv* env, jobject thiz) {
     (void)env;
     (void)thiz;
     return load_ndi() ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_bostoncitygroup_bcgtv_NdiNative_getStatus(JNIEnv* env, jobject thiz) {
+Java_com_bostoncitygroup_bcgtv_NdiNative_getStatus0(JNIEnv* env, jobject thiz) {
     (void)thiz;
     return (*env)->NewStringUTF(env, g_status);
 }
 
 JNIEXPORT void JNICALL
-Java_com_bostoncitygroup_bcgtv_NdiNative_setSurface(JNIEnv* env, jobject thiz, jobject surface) {
+Java_com_bostoncitygroup_bcgtv_NdiNative_setSurface0(JNIEnv* env, jobject thiz, jobject surface) {
     (void)thiz;
     pthread_mutex_lock(&g_window_mutex);
     if (g_window) {
@@ -327,9 +362,13 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_setSurface(JNIEnv* env, jobject thiz, j
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_bostoncitygroup_bcgtv_NdiNative_startReceive(JNIEnv* env, jobject thiz, jstring sourceName) {
+Java_com_bostoncitygroup_bcgtv_NdiNative_startReceive0(JNIEnv* env, jobject thiz, jstring sourceName) {
     (void)thiz;
-    if (!sourceName) return JNI_FALSE;
+    pthread_mutex_lock(&g_ndi_op_mutex);
+    if (!sourceName) {
+        pthread_mutex_unlock(&g_ndi_op_mutex);
+        return JNI_FALSE;
+    }
     const char* utf = (*env)->GetStringUTFChars(env, sourceName, NULL);
     if (utf) {
         snprintf(g_target_name, sizeof(g_target_name), "%s", utf);
@@ -340,7 +379,10 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_startReceive(JNIEnv* env, jobject thiz,
 
     stop_internal();
 
-    if (!load_ndi()) return JNI_FALSE;
+    if (!load_ndi()) {
+        pthread_mutex_unlock(&g_ndi_op_mutex);
+        return JNI_FALSE;
+    }
 
     snprintf(g_status, sizeof(g_status), "Procurando NDI: %s", g_target_name);
 
@@ -348,25 +390,97 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_startReceive(JNIEnv* env, jobject thiz,
     if (pthread_create(&g_thread, NULL, recv_loop, NULL) != 0) {
         g_running = 0;
         set_status("Thread NDI falhou");
+        pthread_mutex_unlock(&g_ndi_op_mutex);
         return JNI_FALSE;
     }
     g_thread_active = 1;
+    pthread_mutex_unlock(&g_ndi_op_mutex);
     return JNI_TRUE;
 }
 
-JNIEXPORT void JNICALL
-Java_com_bostoncitygroup_bcgtv_NdiNative_stopReceive(JNIEnv* env, jobject thiz) {
-    (void)env;
+JNIEXPORT jstring JNICALL
+Java_com_bostoncitygroup_bcgtv_NdiNative_discoverSources0(JNIEnv* env, jobject thiz, jint waitMs) {
     (void)thiz;
-    stop_internal();
-    set_status("NDI parado");
+    char json[16384];
+    size_t pos = 0;
+    json[0] = '[';
+    pos = 1;
+    json[pos] = '\0';
+
+    pthread_mutex_lock(&g_ndi_op_mutex);
+
+    if (g_running) {
+        pthread_mutex_unlock(&g_ndi_op_mutex);
+        return (*env)->NewStringUTF(env, "[]");
+    }
+
+    if (!load_ndi()) {
+        pthread_mutex_unlock(&g_ndi_op_mutex);
+        return (*env)->NewStringUTF(env, "[]");
+    }
+
+    NDIlib_find_create_t find_create;
+    memset(&find_create, 0, sizeof(find_create));
+    find_create.show_local_sources = true;
+    NDIlib_find_instance_t finder = g_ndi.find_create(&find_create);
+    if (!finder) {
+        pthread_mutex_unlock(&g_ndi_op_mutex);
+        return (*env)->NewStringUTF(env, "[]");
+    }
+
+    int budget = waitMs > 0 ? (int)waitMs : 10000;
+    if (budget > 30000) budget = 30000;
+    int elapsed = 0;
+    uint32_t count = 0;
+    const NDIlib_source_t* sources = NULL;
+
+    while (elapsed < budget) {
+        g_ndi.find_wait(finder, 500);
+        elapsed += 500;
+        count = 0;
+        sources = g_ndi.find_get_sources(finder, &count);
+        if (count > 0) break;
+    }
+
+    uint32_t i;
+    for (i = 0; i < count && pos < sizeof(json) - 4; i++) {
+        if (i > 0) {
+            json[pos++] = ',';
+            json[pos] = '\0';
+        }
+        const char* name = sources[i].p_ndi_name ? sources[i].p_ndi_name : "";
+        append_json_string(json, sizeof(json), &pos, name);
+    }
+
+    if (pos < sizeof(json) - 2) {
+        json[pos++] = ']';
+        json[pos] = '\0';
+    }
+
+    g_ndi.find_destroy(finder);
+    pthread_mutex_unlock(&g_ndi_op_mutex);
+
+    LOGI("NDI discover: %u fonte(s) em %d ms", count, elapsed);
+    return (*env)->NewStringUTF(env, json);
 }
 
 JNIEXPORT void JNICALL
-Java_com_bostoncitygroup_bcgtv_NdiNative_shutdown(JNIEnv* env, jobject thiz) {
+Java_com_bostoncitygroup_bcgtv_NdiNative_stopReceive0(JNIEnv* env, jobject thiz) {
     (void)env;
     (void)thiz;
+    pthread_mutex_lock(&g_ndi_op_mutex);
     stop_internal();
     set_status("NDI parado");
+    pthread_mutex_unlock(&g_ndi_op_mutex);
+}
+
+JNIEXPORT void JNICALL
+Java_com_bostoncitygroup_bcgtv_NdiNative_shutdown0(JNIEnv* env, jobject thiz) {
+    (void)env;
+    (void)thiz;
+    pthread_mutex_lock(&g_ndi_op_mutex);
+    stop_internal();
+    set_status("NDI parado");
+    pthread_mutex_unlock(&g_ndi_op_mutex);
     /* Nao chamar NDIlib_destroy/dlclose aqui — quebra reconexao na mesma sessao. */
 }

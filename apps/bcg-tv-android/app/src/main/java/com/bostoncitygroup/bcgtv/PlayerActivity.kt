@@ -42,6 +42,8 @@ class PlayerActivity : AppCompatActivity() {
         loadingBar = findViewById(R.id.loadingBar)
         errorText = findViewById(R.id.errorText)
 
+        PlayerMenu.wire(this)
+
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -111,19 +113,11 @@ class PlayerActivity : AppCompatActivity() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         when (keyCode) {
             KeyEvent.KEYCODE_BACK -> {
-                if (webView.canGoBack()) {
-                    webView.goBack()
-                    return true
-                }
-                moveTaskToBack(true)
+                PlayerMenu.openSetup(this)
                 return true
             }
             KeyEvent.KEYCODE_MENU -> {
-                startActivity(
-                    Intent(this, SetupActivity::class.java).apply {
-                        putExtra(SetupActivity.EXTRA_FORCE_SETUP, true)
-                    },
-                )
+                PlayerMenu.openSetup(this)
                 return true
             }
         }

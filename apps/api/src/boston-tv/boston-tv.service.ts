@@ -317,6 +317,132 @@ export class BostonTvService {
     return screens.sort((a, b) => a.num - b.num || a.name.localeCompare(b.name, 'pt-BR'));
   }
 
+  /** Playlists do Hall + Canal Hall — instalação na TV (sem auth). */
+  async listHallPublicPlaylistsForInstall() {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug: BOSTON_TV_HALL_TENANT_SLUG },
+      select: { id: true },
+    });
+    if (!tenant) {
+      return {
+        hallChannel: { configured: false as const },
+        playlists: [] as Array<{ id: string; name: string; itemCount: number }>,
+      };
+    }
+
+    const [playlists, channel] = await Promise.all([
+      this.prisma.bostonTvPlaylist.findMany({
+        where: { tenantId: tenant.id },
+        select: {
+          id: true,
+          name: true,
+          _count: { select: { items: true } },
+        },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.bostonTvHallChannel.findUnique({
+        where: { tenantId: tenant.id },
+        include: {
+          playlist: {
+            select: {
+              id: true,
+              name: true,
+              _count: { select: { items: true } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const hallChannel = channel
+      ? {
+          configured: true as const,
+          playlistId: channel.playlistId,
+          playlistName: channel.playlist.name,
+          itemCount: channel.playlist._count.items,
+        }
+      : { configured: false as const };
+
+    return {
+      hallChannel,
+      playlists: playlists.map((p) => ({
+        id: p.id,
+        name: p.name,
+        itemCount: p._count.items,
+      })),
+    };
+  }
+
+  /** Vincula playlist na tela do Hall (APK na instalação — sem auth). */
+  async bindHallScreenPlaylistForInstall(
+    num: number,
+    hallSyncMode: string,
+    playlistId?: string,
+  ) {
+    if (!Number.isInteger(num) || num < 1 || num > 999) {
+      throw new BadRequestException('Número de tela inválido.');
+    }
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { slug: BOSTON_TV_HALL_TENANT_SLUG },
+      select: { id: true },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Hall não configurado.');
+    }
+
+    const screen = await this.prisma.bostonTvScreen.findFirst({
+      where: {
+        tenantId: tenant.id,
+        name: { startsWith: `${num} - ` },
+      },
+    });
+    if (!screen) {
+      throw new NotFoundException(`Tela ${num} não encontrada.`);
+    }
+
+    const mode = this.normalizeHallSyncMode(hallSyncMode);
+    const data: Prisma.BostonTvScreenUpdateInput = {
+      displayMode: 'playlist',
+      hallSyncMode: mode,
+      iptvChannel: { disconnect: true },
+    };
+
+    if (mode === BOSTON_TV_HALL_SYNC_INDEPENDENT) {
+      if (!playlistId?.trim()) {
+        throw new BadRequestException(
+          'Escolha uma playlist para o modo individual.',
+        );
+      }
+      await this.ensurePlaylistExistsForTenant(tenant.id, playlistId.trim());
+      data.playlist = { connect: { id: playlistId.trim() } };
+    } else {
+      const resolved = await this.resolveScreenPlaylistBinding(
+        tenant.id,
+        mode,
+        null,
+      );
+      if (resolved.playlistId) {
+        data.playlist = { connect: { id: resolved.playlistId } };
+      } else {
+        data.playlist = { disconnect: true };
+      }
+    }
+
+    await this.prisma.bostonTvScreen.update({
+      where: { id: screen.id },
+      data,
+    });
+
+    return {
+      ok: true as const,
+      num,
+      hallSyncMode: mode,
+      playlistId:
+        mode === BOSTON_TV_HALL_SYNC_INDEPENDENT ? playlistId?.trim() : null,
+    };
+  }
+
   /** Resolve token do player pela numeração da planilha (ex.: 1 → "1 - USA"). */
   async resolveHallScreenPlayerToken(num: number): Promise<string> {
     if (!Number.isInteger(num) || num < 1 || num > 999) {

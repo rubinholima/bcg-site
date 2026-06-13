@@ -42,6 +42,8 @@ class NativePlayerActivity : AppCompatActivity() {
     private var currentKey: String? = null
     private var currentNdiSource: String? = null
     private var ndiSurfaceReady = false
+    private var ndiConnectInFlight = false
+    private var ndiInitialized = false
     private var nsdManager: NsdManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,12 +64,7 @@ class NativePlayerActivity : AppCompatActivity() {
         ndiPlaceholder = findViewById(R.id.ndiPlaceholder)
         statusText = findViewById(R.id.statusText)
 
-        NdiAndroidBootstrap.ensure(this)
-        nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
-        NdiReceiverBridge.attachSurface(ndiSurfaceView) {
-            ndiSurfaceReady = true
-            currentNdiSource?.let { tryConnectNdi(it) }
-        }
+        PlayerMenu.wire(this)
 
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(500, 2000, 500, 500)
@@ -179,8 +176,28 @@ class NativePlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun resolveNdiSourceName(item: PlayerItem): String {
+        if (Prefs.getNdiSourceMode(this) == Prefs.NDI_SOURCE_MANUAL) {
+            val manual = Prefs.getNdiSourceName(this)?.trim().orEmpty()
+            if (manual.isNotEmpty()) return manual
+        }
+        return item.url.trim()
+    }
+
+    private fun ensureNdiReady() {
+        if (ndiInitialized) return
+        ndiInitialized = true
+        NdiAndroidBootstrap.ensure(this)
+        nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
+        NdiReceiverBridge.attachSurface(ndiSurfaceView) {
+            ndiSurfaceReady = true
+            currentNdiSource?.let { tryConnectNdi(it) }
+        }
+    }
+
     private fun showNdi(item: PlayerItem) {
-        val sourceName = item.url.trim()
+        ensureNdiReady()
+        val sourceName = resolveNdiSourceName(item)
         if (sourceName.isEmpty()) {
             ndiPlaceholder.text = "Fonte NDI sem nome configurado."
             ndiPlaceholder.visibility = View.VISIBLE
@@ -197,10 +214,13 @@ class NativePlayerActivity : AppCompatActivity() {
         }
 
         handler.removeCallbacks(ndiStatusRunnable)
+        handler.removeCallbacks(ndiRetryRunnable)
         handler.postDelayed(ndiStatusRunnable, 500)
+        handler.postDelayed(ndiRetryRunnable, 20_000)
     }
 
     private fun tryConnectNdi(sourceName: String) {
+        if (ndiConnectInFlight || isFinishing) return
         NdiAndroidBootstrap.ensure(this)
         if (!NdiReceiverBridge.isAvailable) {
             ndiPlaceholder.text =
@@ -209,21 +229,25 @@ class NativePlayerActivity : AppCompatActivity() {
             ndiPlaceholder.visibility = View.VISIBLE
             return
         }
-        handler.post {
-            val ok = NdiReceiverBridge.connect(sourceName)
-            if (!ok) {
-                ndiPlaceholder.text =
-                    "NDI: ${NdiReceiverBridge.status()}\n\n" +
-                        "Fonte: $sourceName\n\n" +
-                        "Confira: vMix NDI ligado, mesma rede."
-                ndiPlaceholder.visibility = View.VISIBLE
+        ndiConnectInFlight = true
+        NdiReceiverBridge.connect(sourceName) { ok ->
+            ndiConnectInFlight = false
+            handler.post {
+                if (isFinishing) return@post
+                if (!ok) {
+                    ndiPlaceholder.text =
+                        "NDI: ${NdiReceiverBridge.status()}\n\n" +
+                            "Fonte: $sourceName\n\n" +
+                            "App continua tentando automaticamente."
+                    ndiPlaceholder.visibility = View.VISIBLE
+                }
             }
         }
     }
 
     private val ndiStatusRunnable = object : Runnable {
         override fun run() {
-            if (currentNdiSource == null || ndiSurfaceView.visibility != View.VISIBLE) return
+            if (currentNdiSource == null || ndiSurfaceView.visibility != View.VISIBLE || isFinishing) return
             val st = NdiReceiverBridge.status()
             if (st.startsWith("Conectado")) {
                 ndiPlaceholder.visibility = View.GONE
@@ -234,6 +258,17 @@ class NativePlayerActivity : AppCompatActivity() {
                 ndiPlaceholder.visibility = View.VISIBLE
             }
             handler.postDelayed(this, 1000)
+        }
+    }
+
+    private val ndiRetryRunnable = object : Runnable {
+        override fun run() {
+            if (currentNdiSource == null || ndiSurfaceView.visibility != View.VISIBLE || isFinishing) return
+            val st = NdiReceiverBridge.status()
+            if (!st.startsWith("Conectado") && !ndiConnectInFlight) {
+                tryConnectNdi(currentNdiSource!!)
+            }
+            handler.postDelayed(this, 20_000)
         }
     }
 
@@ -265,6 +300,8 @@ class NativePlayerActivity : AppCompatActivity() {
 
     private fun hideAll() {
         handler.removeCallbacks(ndiStatusRunnable)
+        handler.removeCallbacks(ndiRetryRunnable)
+        ndiConnectInFlight = false
         if (currentNdiSource != null) {
             NdiReceiverBridge.disconnect()
             currentNdiSource = null
@@ -278,22 +315,24 @@ class NativePlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        ndiConnectInFlight = false
+        if (ndiInitialized) {
+            NdiReceiverBridge.disconnectSync()
+            NdiReceiverBridge.shutdown()
+            NdiAndroidBootstrap.release()
+        }
         io.shutdownNow()
-        NdiReceiverBridge.shutdown()
-        NdiAndroidBootstrap.release()
         exoPlayer?.release()
         exoPlayer = null
         super.onDestroy()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_MENU) {
-            startActivity(
-                Intent(this, SetupActivity::class.java).apply {
-                    putExtra(SetupActivity.EXTRA_FORCE_SETUP, true)
-                },
-            )
-            return true
+        when (keyCode) {
+            KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_MENU -> {
+                PlayerMenu.openSetup(this)
+                return true
+            }
         }
         return super.onKeyDown(keyCode, event)
     }
