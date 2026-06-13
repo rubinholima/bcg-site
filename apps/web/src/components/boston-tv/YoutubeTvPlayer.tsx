@@ -34,8 +34,8 @@ function buildEmbedSrc(videoId: string, startSeconds: number): string {
     playsinline: "1",
     iv_load_policy: "3",
     disablekb: "1",
-    enablejsapi: "1",
-    origin: typeof window !== "undefined" ? window.location.origin : "",
+        enablejsapi: "1",
+    origin: "https://www.bostoncitygroup.biz",
   });
   if (startSeconds > 0) {
     params.set("start", String(startSeconds));
@@ -148,6 +148,7 @@ export function YoutubeTvPlayer({
         title="BCG TV — YouTube"
         className="absolute inset-0 h-full w-full border-0"
         src={embedSrc}
+        referrerPolicy="strict-origin-when-cross-origin"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
         onLoad={handleIframeLoad}

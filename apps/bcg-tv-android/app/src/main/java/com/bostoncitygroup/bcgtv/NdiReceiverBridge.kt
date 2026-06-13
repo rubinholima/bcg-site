@@ -48,6 +48,10 @@ object NdiReceiverBridge {
     }
 
     fun connect(sourceName: String): Boolean {
+        if (!isAvailable) {
+            Log.w(TAG, "NDI SDK unavailable: ${status()}")
+            return false
+        }
         return try {
             val ok = NdiNative.startReceive(sourceName.trim())
             if (!ok) Log.w(TAG, "startReceive failed: ${status()}")

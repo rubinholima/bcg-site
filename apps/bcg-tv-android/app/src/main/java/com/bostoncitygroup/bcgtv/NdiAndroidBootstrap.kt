@@ -3,7 +3,6 @@ package com.bostoncitygroup.bcgtv
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.wifi.WifiManager
-import android.os.Build
 import android.util.Log
 
 /**

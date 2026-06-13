@@ -145,6 +145,7 @@ static bool load_ndi(void) {
     g_ndi.fn = (ndi_##fn##_fn)dlsym(g_ndi.lib, sym);                                                   \
     if (!g_ndi.fn) {                                                                                   \
         LOGE("dlsym %s failed", sym);                                                                  \
+        set_status("NDI SDK incompleto (" sym ")");                                                    \
         return false;                                                                                  \
     }
     LOAD("NDIlib_initialize", initialize);
@@ -210,6 +211,8 @@ static void render_bgra(ANativeWindow* window, const NDIlib_video_frame_v2_t* fr
 
 static void* recv_loop(void* arg) {
     (void)arg;
+    snprintf(g_status, sizeof(g_status), "Iniciando NDI: %s", g_target_name);
+
     if (!load_ndi()) return NULL;
 
     NDIlib_find_create_t find_create;
@@ -339,6 +342,8 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_startReceive(JNIEnv* env, jobject thiz,
 
     if (!load_ndi()) return JNI_FALSE;
 
+    snprintf(g_status, sizeof(g_status), "Procurando NDI: %s", g_target_name);
+
     g_running = 1;
     if (pthread_create(&g_thread, NULL, recv_loop, NULL) != 0) {
         g_running = 0;
@@ -362,12 +367,6 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_shutdown(JNIEnv* env, jobject thiz) {
     (void)env;
     (void)thiz;
     stop_internal();
-    if (g_ndi.ok) {
-        g_ndi.destroy();
-        g_ndi.ok = false;
-    }
-    if (g_ndi.lib) {
-        dlclose(g_ndi.lib);
-        g_ndi.lib = NULL;
-    }
+    set_status("NDI parado");
+    /* Nao chamar NDIlib_destroy/dlclose aqui — quebra reconexao na mesma sessao. */
 }
