@@ -11,8 +11,8 @@ android {
         applicationId = "com.bostoncitygroup.bcgtv"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 6
+        versionName = "1.2.3"
         buildConfigField("String", "PLAYER_BASE_URL", "\"https://www.bostoncitygroup.biz/tv/\"")
         buildConfigField("String", "API_BASE_URL", "\"https://www.bostoncitygroup.biz/api/public/boston-tv/\"")
         buildConfigField("String", "STREAM_ORIGIN", "\"https://origin.bostoncitygroup.biz\"")
@@ -21,7 +21,7 @@ android {
         }
         externalNativeBuild {
             cmake {
-                cppFlags += "-std=c++17"
+                arguments += listOf("-DANDROID_STL=none")
             }
         }
     }

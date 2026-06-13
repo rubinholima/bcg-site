@@ -50,7 +50,9 @@ class PlayerActivity : AppCompatActivity() {
             cacheMode = WebSettings.LOAD_DEFAULT
             useWideViewPort = true
             loadWithOverviewMode = true
-            userAgentString = "${userAgentString} BcgTvPlayer/${BuildConfig.VERSION_NAME}"
+            userAgentString =
+                "Mozilla/5.0 (Linux; Android 10; Android TV) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 BcgTvPlayer/${BuildConfig.VERSION_NAME}"
         }
 
         webView.webChromeClient = WebChromeClient()

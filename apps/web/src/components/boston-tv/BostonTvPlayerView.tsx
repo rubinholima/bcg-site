@@ -48,6 +48,8 @@ function extractYoutubeId(url: string): string | null {
   if (be?.[1]) return be[1];
   const emb = /youtube\.com\/embed\/([^?]+)/.exec(u);
   if (emb?.[1]) return emb[1];
+  const shorts = /youtube\.com\/shorts\/([^?]+)/.exec(u);
+  if (shorts?.[1]) return shorts[1];
   return null;
 }
 

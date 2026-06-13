@@ -15,15 +15,23 @@ if (-not (Test-Path $SdkRoot)) {
 
 $abis = @("arm64-v8a", "armeabi-v7a")
 foreach ($abi in $abis) {
-    $srcDir = Join-Path $SdkRoot $abi
-    if (-not (Test-Path $srcDir)) {
-        $srcDir = Join-Path $SdkRoot "lib\$abi"
+    $candidates = @(
+        (Join-Path $SdkRoot $abi),
+        (Join-Path $SdkRoot "lib\$abi"),
+        (Join-Path $SdkRoot "Lib\$abi")
+    )
+    $srcDir = $null
+    foreach ($c in $candidates) {
+        if (Test-Path (Join-Path $c "libndi.so")) {
+            $srcDir = $c
+            break
+        }
     }
-    $lib = Join-Path $srcDir "libndi.so"
-    if (-not (Test-Path $lib)) {
+    if (-not $srcDir) {
         Write-Warning "libndi.so não achado para $abi em $SdkRoot — pule ou ajuste o caminho."
         continue
     }
+    $lib = Join-Path $srcDir "libndi.so"
     $destDir = Join-Path $jniBase $abi
     New-Item -ItemType Directory -Force -Path $destDir | Out-Null
     Copy-Item $lib (Join-Path $destDir "libndi.so") -Force

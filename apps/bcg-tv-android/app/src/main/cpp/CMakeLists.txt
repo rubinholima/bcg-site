@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("bcg_ndi")
 
-add_library(bcg_ndi SHARED ndi_jni.cpp)
+add_library(bcg_ndi SHARED ndi_jni.c)
 find_library(log-lib log)
 find_library(android-lib android)
 find_library(dl-lib dl)

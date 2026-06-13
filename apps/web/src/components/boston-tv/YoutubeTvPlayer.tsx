@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 interface YoutubeTvPlayerProps {
   videoId: string;
@@ -61,11 +61,13 @@ export function YoutubeTvPlayer({
   const startAtRef = useRef(startSeconds);
   const lastItemKeyRef = useRef(itemKey);
   const lastSeekRef = useRef(-1);
+  const readyRef = useRef(false);
 
   if (lastItemKeyRef.current !== itemKey) {
     lastItemKeyRef.current = itemKey;
     startAtRef.current = startSeconds;
     lastSeekRef.current = -1;
+    readyRef.current = false;
   }
 
   const embedSrc = useMemo(
@@ -73,28 +75,70 @@ export function YoutubeTvPlayer({
     [videoId, itemKey],
   );
 
+  const applyPlayback = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !readyRef.current) return;
+    ytCommand(iframe, paused ? "pauseVideo" : "playVideo");
+  }, [paused]);
+
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== "https://www.youtube.com") return;
+      try {
+        const raw = event.data;
+        const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (
+          data?.event === "onReady" ||
+          data?.info?.playerState === 1 ||
+          data?.info?.playerState === 3
+        ) {
+          readyRef.current = true;
+          applyPlayback();
+        }
+      } catch {
+        /* ignore non-JSON messages */
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [applyPlayback]);
+
   useEffect(() => {
     const t = window.setTimeout(requestPageFullscreen, 400);
     return () => window.clearTimeout(t);
   }, [itemKey]);
 
   useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe) return;
-    ytCommand(iframe, paused ? "pauseVideo" : "playVideo");
-  }, [paused, itemKey]);
+    applyPlayback();
+  }, [applyPlayback, itemKey]);
+
+  useEffect(() => {
+    if (paused) return;
+    const retry = window.setInterval(() => {
+      if (!paused && readyRef.current) {
+        applyPlayback();
+      }
+    }, 2500);
+    return () => window.clearInterval(retry);
+  }, [paused, applyPlayback, itemKey]);
 
   useEffect(() => {
     if (paused || syncTargetSeconds == null) return;
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!iframe || !readyRef.current) return;
 
     const target = Math.max(0, Math.floor(syncTargetSeconds));
-    if (Math.abs(target - lastSeekRef.current) < 3) return;
+    if (Math.abs(target - lastSeekRef.current) < 5) return;
 
     lastSeekRef.current = target;
     ytCommand(iframe, "seekTo", [target, true]);
   }, [syncTargetSeconds, paused, itemKey]);
+
+  const handleIframeLoad = () => {
+    readyRef.current = true;
+    window.setTimeout(() => applyPlayback(), 300);
+    window.setTimeout(() => applyPlayback(), 1200);
+  };
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black">
@@ -106,6 +150,7 @@ export function YoutubeTvPlayer({
         src={embedSrc}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         allowFullScreen
+        onLoad={handleIframeLoad}
       />
     </div>
   );

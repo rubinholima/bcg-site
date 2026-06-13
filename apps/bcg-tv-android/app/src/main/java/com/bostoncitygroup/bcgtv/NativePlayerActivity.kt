@@ -1,7 +1,9 @@
 package com.bostoncitygroup.bcgtv
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.net.nsd.NsdManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -9,6 +11,7 @@ import android.view.KeyEvent
 import android.view.SurfaceView
 import android.view.View
 import android.view.WindowManager
+import android.webkit.WebView
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -30,10 +33,13 @@ class NativePlayerActivity : AppCompatActivity() {
     private lateinit var ndiSurfaceView: SurfaceView
     private lateinit var ndiPlaceholder: TextView
     private lateinit var statusText: TextView
+    private lateinit var youtubeWebView: WebView
 
     private var exoPlayer: ExoPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
+    private var youtubePaused = false
+    private var youtubePlayRetryRunnable: Runnable? = null
 
     private var screenNum = 0
     private var playerToken: String? = null
@@ -41,6 +47,8 @@ class NativePlayerActivity : AppCompatActivity() {
     private var currentKey: String? = null
     private var currentNdiSource: String? = null
     private var ndiSurfaceReady = false
+    /** Mantém NsdManager vivo enquanto o player NDI roda (exigência SDK Vizrt). */
+    private var nsdManager: NsdManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,8 +67,11 @@ class NativePlayerActivity : AppCompatActivity() {
         ndiSurfaceView = findViewById(R.id.ndiSurfaceView)
         ndiPlaceholder = findViewById(R.id.ndiPlaceholder)
         statusText = findViewById(R.id.statusText)
+        youtubeWebView = findViewById(R.id.youtubeWebView)
+        YoutubeEmbedHelper.configureWebView(youtubeWebView)
 
         NdiAndroidBootstrap.ensure(this)
+        nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
         NdiReceiverBridge.attachSurface(ndiSurfaceView) {
             ndiSurfaceReady = true
             currentNdiSource?.let { tryConnectNdi(it) }
@@ -145,6 +156,13 @@ class NativePlayerActivity : AppCompatActivity() {
             if (item.contentType == "video_url" && hall != null && !hall.paused) {
                 seekIfNeeded(offsetMs)
             }
+            if (item.contentType == "youtube_video") {
+                val paused = hall?.paused == true
+                if (youtubePaused != paused) {
+                    youtubePaused = paused
+                    applyYoutubePlaybackState()
+                }
+            }
             return
         }
         currentKey = key
@@ -161,20 +179,54 @@ class NativePlayerActivity : AppCompatActivity() {
             "video_url" -> playStream(item.url, offsetMs, paused)
             "iptv_stream", "vmix_stream" -> playStream(resolveStreamUrl(item.url), 0, paused)
             "ndi_stream" -> showNdi(item)
-            "youtube_video" -> {
-                // YouTube: fallback WebView player
-                startActivity(
-                    Intent(this, PlayerActivity::class.java).apply {
-                        putExtra(PlayerActivity.EXTRA_SCREEN_NUM, screenNum)
-                    },
-                )
-                finish()
-            }
+            "youtube_video" -> showYoutube(item, offsetMs, paused)
             else -> {
                 statusText.text = "Tipo não suportado: ${item.contentType}"
                 statusText.visibility = View.VISIBLE
             }
         }
+    }
+
+    private fun showYoutube(item: PlayerItem, offsetMs: Long, paused: Boolean) {
+        val videoId = YoutubeEmbedHelper.extractVideoId(item.url)
+        if (videoId == null) {
+            statusText.text = "URL do YouTube inválida"
+            statusText.visibility = View.VISIBLE
+            return
+        }
+        youtubePaused = paused
+        youtubeWebView.visibility = View.VISIBLE
+        statusText.visibility = View.GONE
+        val startSec = (offsetMs / 1000).toInt()
+        youtubeWebView.loadUrl(YoutubeEmbedHelper.embedUrl(videoId, startSec))
+        applyYoutubePlaybackState()
+    }
+
+    private fun applyYoutubePlaybackState() {
+        youtubePlayRetryRunnable?.let { handler.removeCallbacks(it) }
+        if (youtubeWebView.visibility != View.VISIBLE) return
+
+        if (youtubePaused) {
+            handler.postDelayed({
+                youtubeWebView.evaluateJavascript(YoutubeEmbedHelper.pauseCommandJs(), null)
+            }, 400)
+            return
+        }
+
+        val retry = object : Runnable {
+            private var attempts = 0
+            override fun run() {
+                if (youtubeWebView.visibility != View.VISIBLE || youtubePaused) return
+                youtubeWebView.onResume()
+                youtubeWebView.evaluateJavascript(YoutubeEmbedHelper.playCommandJs(), null)
+                attempts += 1
+                if (attempts < 10) {
+                    handler.postDelayed(this, 1500)
+                }
+            }
+        }
+        youtubePlayRetryRunnable = retry
+        handler.postDelayed(retry, 700)
     }
 
     private fun showNdi(item: PlayerItem) {
@@ -264,13 +316,36 @@ class NativePlayerActivity : AppCompatActivity() {
         imageView.visibility = View.GONE
         ndiSurfaceView.visibility = View.GONE
         ndiPlaceholder.visibility = View.GONE
+        youtubeWebView.visibility = View.GONE
+        youtubePlayRetryRunnable?.let { handler.removeCallbacks(it) }
         exoPlayer?.stop()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (youtubeWebView.visibility == View.VISIBLE) {
+            youtubeWebView.onResume()
+            if (!youtubePaused) applyYoutubePlaybackState()
+        }
+    }
+
+    override fun onPause() {
+        youtubePlayRetryRunnable?.let { handler.removeCallbacks(it) }
+        if (::youtubeWebView.isInitialized) {
+            youtubeWebView.onPause()
+        }
+        super.onPause()
     }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        youtubePlayRetryRunnable = null
+        if (::youtubeWebView.isInitialized) {
+            youtubeWebView.destroy()
+        }
         io.shutdownNow()
         NdiReceiverBridge.shutdown()
+        NdiAndroidBootstrap.release()
         exoPlayer?.release()
         exoPlayer = null
         super.onDestroy()
