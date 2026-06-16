@@ -46,10 +46,7 @@ export function Header() {
             <Menu className="h-5 w-5" />
           )}
         </Button>
-        <Cup360BrandMark
-          logoClassName="h-5 w-auto max-w-[4.5rem] shrink-0 sm:h-6 sm:max-w-[5rem]"
-          showName={false}
-        />
+        <Cup360BrandMark logoClassName="h-7 w-7 shrink-0 sm:h-8 sm:w-8" showName />
         <span className="hidden min-w-0 max-w-[9rem] truncate text-sm font-semibold tracking-tight sm:inline md:max-w-[12rem] md:text-base lg:max-w-xs lg:text-lg">
           <span className="font-medium text-muted-foreground">{hub}</span>
           {page ? (

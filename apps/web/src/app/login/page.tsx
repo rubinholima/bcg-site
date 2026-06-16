@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import { PLATFORM_LOGO_MARK_SRC, PLATFORM_TAGLINE } from "@/lib/platform-branding";
+import { PLATFORM_LOGO_SRC, PLATFORM_TAGLINE } from "@/lib/platform-branding";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -87,11 +87,11 @@ function LoginForm() {
           <CardHeader className="space-y-4 pb-4 text-center">
             <div className="mx-auto flex flex-col items-center gap-3">
               <img
-                src={PLATFORM_LOGO_MARK_SRC}
+                src={PLATFORM_LOGO_SRC}
                 alt="CUP360"
-                width={72}
-                height={72}
-                className="h-[72px] w-auto max-w-[200px] object-contain object-left"
+                width={88}
+                height={88}
+                className="h-[88px] w-[88px] rounded-2xl object-contain shadow-lg shadow-black/40 ring-1 ring-amber-500/25"
               />
               <p className="text-sm font-medium tracking-[0.2em] text-amber-400/90 uppercase">
                 {PLATFORM_TAGLINE}
