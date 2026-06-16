@@ -533,9 +533,10 @@ function SidebarNav() {
           title={collapsed ? PLATFORM_APP_NAME : undefined}
         >
           <Cup360BrandMark
-            logoClassName={collapsed ? "h-10 w-10" : "h-9 w-9"}
+            logoClassName={collapsed ? "h-10 w-10" : "h-11 w-11"}
             showName={!collapsed}
             nameClassName="text-xl font-bold tracking-tight"
+            className={cn(!collapsed && "flex-col gap-2")}
           />
         </Link>
       </div>
