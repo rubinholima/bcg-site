@@ -110,10 +110,27 @@ export default function ManualPage() {
 
           <Section id="acesso" title="Acesso e perfis">
             <p>
-              O login pode ser corporativo (OIDC/Cognito ou fluxo definido no ambiente). Perfis comuns:{" "}
-              <strong>super admin</strong> (tudo), <strong>admin da empresa</strong>, <strong>editor</strong>,{" "}
-              <strong>gerente</strong>, <strong>administrativo</strong>, <strong>diretoria</strong>,{" "}
-              <strong>comissão</strong>, <strong>médico</strong>, <strong>psicólogo</strong>, etc.
+              O login na plataforma usa <strong>usuário</strong> (username) e <strong>senha</strong> — não o
+              e-mail. O username aparece na lista em <strong>Grupo Master → Usuários</strong> (coluna
+              &quot;Usuário&quot;); em geral é o primeiro nome em minúsculas (ex.: <code>isabela</code>,{" "}
+              <code>marcelo</code>).
+            </p>
+            <p>
+              <strong>Novos usuários</strong> recebem senha padrão definida pelo administrador e{" "}
+              <strong>devem trocá-la no primeiro acesso</strong>: após entrar, a plataforma abre a tela de nova
+              senha antes do dashboard. A senha pessoal precisa atender aos requisitos (mínimo 8 caracteres,
+              maiúscula, minúscula, número e caractere especial).
+            </p>
+            <p>
+              Quem cadastra usuários em <strong>Usuários → Novo</strong> informa e-mail, nome e username; a
+              senha inicial é aplicada automaticamente. Para alterar nome, e-mail, username ou empresas de
+              acesso, use editar na lista de usuários.
+            </p>
+            <p>
+              Perfis comuns: <strong>super admin</strong> (tudo), <strong>admin da empresa</strong>,{" "}
+              <strong>editor</strong>, <strong>gerente</strong>, <strong>administrativo</strong>,{" "}
+              <strong>diretoria</strong>, <strong>comissão</strong>, <strong>médico</strong>,{" "}
+              <strong>psicólogo</strong>, etc.
             </p>
             <p>
               <strong>Exemplo:</strong> um coordenador de base pode ter apenas Depto Futebol (jogadores,

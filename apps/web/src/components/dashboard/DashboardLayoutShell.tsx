@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { DashboardShellProvider, useDashboardShell } from "@/context/DashboardShellContext";
 import { DashboardPageFrame } from "@/components/dashboard/DashboardPageFrame";
+import { TenantWorkspaceRail } from "@/components/dashboard/TenantWorkspaceBackdrop";
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
@@ -53,24 +54,32 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         <Header />
         <main
           className={cn(
-            "flex min-h-0 min-w-0 flex-1 flex-col overflow-clip bg-background pt-6 sm:pt-8 dashboard-main-bg",
-            isAcademiasEmbed ? "px-1 pb-1 sm:px-4 sm:pb-4" : "px-3 pb-4 sm:px-6 sm:pb-6",
+            "flex min-h-0 min-w-0 flex-1 overflow-clip bg-background dashboard-main-bg",
+            isAcademiasEmbed ? "flex-col px-1 pb-1 pt-4 sm:px-4 sm:pb-4" : "flex-row",
           )}
         >
+          {!isAcademiasEmbed ? <TenantWorkspaceRail /> : null}
           <div
             className={cn(
-              "dashboard-scroll min-h-0 min-w-0 flex-1 overscroll-none bg-transparent",
-              isAcademiasEmbed ? "flex flex-col overflow-hidden" : "overflow-x-hidden",
+              "flex min-h-0 min-w-0 flex-1 flex-col overflow-clip",
+              isAcademiasEmbed ? "" : "pt-6 sm:pt-8 px-3 pb-4 sm:px-6 sm:pb-6",
             )}
           >
             <div
               className={cn(
-                "min-w-0 max-w-full",
-                isAcademiasEmbed ? "flex min-h-0 flex-1 flex-col pr-0" : "pr-0 sm:pr-6",
+                "dashboard-scroll min-h-0 min-w-0 flex-1 overscroll-none bg-transparent",
+                isAcademiasEmbed ? "flex flex-col overflow-hidden" : "overflow-x-hidden",
               )}
-              data-dashboard-content
             >
-              {usePageFrame ? <DashboardPageFrame>{children}</DashboardPageFrame> : children}
+              <div
+                className={cn(
+                  "min-w-0 max-w-full",
+                  isAcademiasEmbed ? "flex min-h-0 flex-1 flex-col pr-0" : "pr-0 sm:pr-6",
+                )}
+                data-dashboard-content
+              >
+                {usePageFrame ? <DashboardPageFrame>{children}</DashboardPageFrame> : children}
+              </div>
             </div>
           </div>
         </main>

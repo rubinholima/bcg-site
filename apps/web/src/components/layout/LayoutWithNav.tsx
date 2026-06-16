@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { LayoutDashboard, Home } from "lucide-react";
 import { fetchGroup } from "@/lib/home-data";
 
-/** Páginas públicas que usam a navbar do portal (login, 403). */
-const PORTAL_NAV_PATHS = ["/login", "/403"] as const;
+/** Páginas públicas que usam a navbar do portal (403). Login não exibe menu — entrada direta no app. */
+const PORTAL_NAV_PATHS = ["/403"] as const;
 
 export function LayoutWithNav({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
