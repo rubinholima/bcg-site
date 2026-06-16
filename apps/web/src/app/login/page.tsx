@@ -69,12 +69,19 @@ function LoginForm() {
   return (
     <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4 py-8">
       <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 scale-[1.08] bg-cover bg-center bg-no-repeat opacity-[0.22] blur-[2px] saturate-[0.75]"
         style={{ backgroundImage: "url(/login-platform-bg.jpg)" }}
         aria-hidden
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-950/88 via-emerald-950/75 to-zinc-950/90" aria-hidden />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_50%_40%,rgba(245,158,11,0.12),transparent)] pointer-events-none" aria-hidden />
+      <div className="absolute inset-0 bg-zinc-950/82" aria-hidden />
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-zinc-950/95 via-emerald-950/88 to-zinc-950/96"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_65%_50%_at_50%_38%,rgba(16,185,129,0.08),transparent)]"
+        aria-hidden
+      />
       <div className="relative w-full max-w-[420px] rounded-2xl border-[3px] border-amber-400/90 p-[2px] shadow-2xl shadow-black/50">
         <Card className="rounded-[calc(1rem-2px)] border border-white/90 shadow-none bg-zinc-900/95 backdrop-blur-sm">
           <CardHeader className="space-y-4 pb-4 text-center">

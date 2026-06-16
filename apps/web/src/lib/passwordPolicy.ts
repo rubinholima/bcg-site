@@ -45,3 +45,17 @@ export function validateCognitoPassword(password: string): PasswordValidationRes
 export function getPasswordRequirementLabels(): string[] {
   return REQUIREMENTS.map((r) => r.label);
 }
+
+export interface PasswordRequirementCheck {
+  id: string;
+  label: string;
+  met: boolean;
+}
+
+export function getPasswordRequirementChecks(password: string): PasswordRequirementCheck[] {
+  return REQUIREMENTS.map((r, i) => ({
+    id: `req-${i}`,
+    label: r.label,
+    met: r.test(password),
+  }));
+}
