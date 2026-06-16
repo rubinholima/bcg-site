@@ -1,0 +1,13 @@
+export class CreateScoutDto {
+  tenantId!: string;
+  technicalStaffId?: string;
+  name!: string;
+  email?: string;
+  phone?: string;
+  regions?: string[];
+  categories?: string[];
+  specialties?: string[];
+  licenseInfo?: string;
+  active?: boolean;
+  notes?: string;
+}

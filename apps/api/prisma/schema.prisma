@@ -140,6 +140,10 @@ model Tenant {
   financeiroLancamentos FinanceiroLancamento[]
   customers             Customer[]
   registrationInvites   RegistrationInvite[]
+  scouts                Scout[]
+  scoutingProspects     ScoutingProspect[]
+  scoutingReports       ScoutingReport[]
+  scoutLocationPings    ScoutLocationPing[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -670,6 +674,7 @@ model Player {
   rhEmployee           Employee?
   registrationInvites  RegistrationInvite[]
   agendaParticipations FootballAgendaEntryParticipant[]
+  scoutingProspects    ScoutingProspect[]
   @@index([tenantId])
   @@index([tenantId, category])
 }
@@ -756,6 +761,7 @@ model TechnicalStaff {
   notes             String?   @db.Text
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+  scoutProfile      Scout?
   @@index([tenantId])
   @@index([tenantId, role])
 }
@@ -1656,4 +1662,170 @@ model VenuePipelineLead {
 
   @@index([venueSlug, stage])
   @@index([createdAt])
+}
+
+// ─── Captação / Scouting ─────────────────────────────────────────────────────
+
+/** Captador (scout) — cadastro dedicado com histórico e carteira de prospects */
+model Scout {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  technicalStaffId  String?  @unique
+  technicalStaff    TechnicalStaff? @relation(fields: [technicalStaffId], references: [id], onDelete: SetNull)
+  name              String
+  email             String?
+  phone             String?
+  /** Regiões de atuação: estados, países ou zonas livres */
+  regions           Json?
+  /** Categorias que capta: principal, sub20, sub17… */
+  categories        Json?
+  /** Posições de foco: GK, CB, CM… */
+  specialties       Json?
+  licenseInfo       String?
+  active            Boolean  @default(true)
+  notes             String?  @db.Text
+  /** Última posição GPS conhecida */
+  lastLatitude      Float?
+  lastLongitude     Float?
+  lastLocationLabel String?
+  lastLocationAt    DateTime?
+  /** Modo campo — compartilhamento ativo de GPS */
+  isTracking        Boolean  @default(false)
+  trackingStartedAt DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  prospects         ScoutingProspect[]
+  reports           ScoutingReport[]
+  locationPings     ScoutLocationPing[]
+
+  @@index([tenantId])
+  @@index([tenantId, active])
+}
+
+/** Atleta em captação — pipeline do departamento */
+model ScoutingProspect {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId          String?
+  player            Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  scoutId           String?
+  scout             Scout?   @relation(fields: [scoutId], references: [id], onDelete: SetNull)
+  /** identificado | em_observacao | prioridade | tryout | negociacao | aprovado | cadastrado | recusado | arquivado */
+  stage             String   @default("identificado")
+  /** alta | media | baixa */
+  priority          String   @default("media")
+  name              String
+  birthDate         String?
+  nationality       String?
+  position          String?
+  secondaryPositions Json?
+  preferredFoot     String?
+  height            Int?
+  weight            Int?
+  currentClub       String?
+  competition       String?
+  /** profissional | serie_a | serie_b | estadual | base | amador | internacional */
+  competitionLevel  String?
+  contractSituation String?
+  contractEndDate   String?
+  agentName         String?
+  agentPhone        String?
+  agentEmail        String?
+  /** jogo | indicacao | video | plataforma | torneio | rede | outro */
+  source            String?
+  sourceDetails     String?
+  targetCategory    String?
+  discoveredAt      DateTime @default(now())
+  lastObservedAt    DateTime?
+  observationCount  Int      @default(0)
+  overallRating     Float?
+  /** contratar | continuar | descartar */
+  recommendation    String?
+  strengths         String?  @db.Text
+  weaknesses        String?  @db.Text
+  risks             String?  @db.Text
+  profileLinks      Json?
+  notes             String?  @db.Text
+  /** Aprovação do supervisor para virar atleta do clube */
+  supervisorApprovedAt DateTime?
+  supervisorApprovedBy String?
+  supervisorNotes   String?  @db.Text
+  /** pendente | em_andamento | concluido — fluxo jurídico após cadastro */
+  legalStatus       String?  @default("pendente")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  reports           ScoutingReport[]
+
+  @@index([tenantId])
+  @@index([tenantId, stage])
+  @@index([tenantId, priority])
+  @@index([scoutId])
+  @@index([playerId])
+}
+
+/** Relatório de observação — padrão CBF / scout profissional */
+model ScoutingReport {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prospectId        String
+  prospect          ScoutingProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  scoutId           String
+  scout             Scout    @relation(fields: [scoutId], references: [id], onDelete: Restrict)
+  reportDate        DateTime @default(now())
+  matchName         String?
+  matchDate         String?
+  competition       String?
+  minutesObserved   Int?
+  positionPlayed    String?
+  /** ao_vivo | video | dados */
+  observationType   String?
+  opponentStrength  String?
+  /** { area: { rating, notes } } — técnica, tática, física, mental */
+  technical         Json?
+  tactical          Json?
+  physical          Json?
+  mental            Json?
+  overallRating     Float?
+  recommendation    String
+  strengths         String?  @db.Text
+  weaknesses        String?  @db.Text
+  risks             String?  @db.Text
+  scoutNotes        String?  @db.Text
+  /** GPS do local da observação */
+  latitude          Float?
+  longitude         Float?
+  locationLabel     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([prospectId])
+  @@index([scoutId])
+  @@index([reportDate])
+}
+
+/** Ping GPS do captador — histórico e trilha no mapa */
+model ScoutLocationPing {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  scoutId     String
+  scout       Scout    @relation(fields: [scoutId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  accuracy    Float?
+  altitude    Float?
+  heading     Float?
+  speed       Float?
+  label       String?
+  /** tracking | checkin | report */
+  source      String   @default("checkin")
+  reportId    String?
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([scoutId, createdAt])
 }

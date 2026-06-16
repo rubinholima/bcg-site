@@ -40,6 +40,7 @@ import { BostonTvModule } from './boston-tv/boston-tv.module';
 import { RegistrationInviteModule } from './registration-invite/registration-invite.module';
 import { FmfScraperModule } from './fmf-scraper/fmf-scraper.module';
 import { BeatscodeImportModule } from './beatscode-import/beatscode-import.module';
+import { CaptacaoModule } from './captacao/captacao.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { BeatscodeImportModule } from './beatscode-import/beatscode-import.modul
     RegistrationInviteModule,
     FmfScraperModule,
     BeatscodeImportModule,
+    CaptacaoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

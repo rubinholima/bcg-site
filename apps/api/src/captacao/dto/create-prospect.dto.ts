@@ -1,0 +1,31 @@
+export class CreateProspectDto {
+  tenantId!: string;
+  playerId?: string;
+  scoutId?: string;
+  stage?: string;
+  priority?: string;
+  name!: string;
+  birthDate?: string;
+  nationality?: string;
+  position?: string;
+  secondaryPositions?: string[];
+  preferredFoot?: string;
+  height?: number;
+  weight?: number;
+  currentClub?: string;
+  competition?: string;
+  competitionLevel?: string;
+  contractSituation?: string;
+  contractEndDate?: string;
+  agentName?: string;
+  agentPhone?: string;
+  agentEmail?: string;
+  source?: string;
+  sourceDetails?: string;
+  targetCategory?: string;
+  strengths?: string;
+  weaknesses?: string;
+  risks?: string;
+  profileLinks?: Record<string, string>;
+  notes?: string;
+}
