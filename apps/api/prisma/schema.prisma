@@ -11,8 +11,12 @@ model User {
   id           String   @id @default(cuid())
   cognitoSub   String?  @unique
   email        String   @unique
+  /// Login da plataforma (único, minúsculas).
+  username     String   @unique
   name         String?
   passwordHash String?  // login próprio (bcrypt); null = só Cognito
+  /// true = redireciona para troca de senha no primeiro acesso após login.
+  mustChangePassword Boolean @default(false)
   role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
   /// Quando true, módulos vêm de UserModuleAccess (não da matriz do perfil).
   customModuleAccess Boolean @default(false)

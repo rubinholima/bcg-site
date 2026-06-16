@@ -1,4 +1,4 @@
-import { IsArray, IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsIn, IsOptional, IsString, Matches, MinLength } from 'class-validator';
 import { USER_ROLES } from './update-role.dto';
 import type { UserRole as UpdateRoleUserRole } from './update-role.dto';
 
@@ -13,6 +13,14 @@ export class UpdateUserDto {
   @IsEmail()
   @IsOptional()
   email?: string;
+
+  @IsString()
+  @Matches(/^[a-z0-9][a-z0-9._-]{2,31}$/, {
+    message:
+      'Username inválido. Use 3–32 caracteres: letras minúsculas, números, ponto, hífen ou underscore.',
+  })
+  @IsOptional()
+  username?: string;
 
   @IsIn([...USER_ROLES])
   @IsOptional()

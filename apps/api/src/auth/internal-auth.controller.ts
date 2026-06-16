@@ -5,7 +5,7 @@ import { CredentialsAuthService } from './credentials-auth.service';
 
 class LoginDto {
   @IsString()
-  email!: string;
+  username!: string;
 
   @IsString()
   password!: string;
@@ -13,7 +13,7 @@ class LoginDto {
 
 /**
  * POST /internal/auth/login
- * Chamado apenas pelo Next.js (server-side). Valida email/senha e retorna JWT.
+ * Chamado apenas pelo Next.js (server-side). Valida username/senha e retorna JWT.
  */
 @Controller('internal/auth')
 export class InternalAuthController {
@@ -23,11 +23,11 @@ export class InternalAuthController {
   async login(@Req() req: Request, @Body() dto: LoginDto) {
     if (process.env.NODE_ENV !== 'production') {
       console.log('[internal-auth] raw body:', JSON.stringify(req.body));
-      console.log('[internal-auth] dto:', dto ? { email: !!dto.email, passwordType: typeof dto?.password } : 'null');
+      console.log('[internal-auth] dto:', dto ? { username: !!dto.username, passwordType: typeof dto?.password } : 'null');
     }
-    if (!dto?.email || typeof dto.password !== 'string') {
-      throw new UnauthorizedException('Email e senha são obrigatórios');
+    if (!dto?.username || typeof dto.password !== 'string') {
+      throw new UnauthorizedException('Usuário e senha são obrigatórios');
     }
-    return this.credentialsAuth.login(dto.email.trim(), dto.password);
+    return this.credentialsAuth.login(dto.username.trim(), dto.password);
   }
 }

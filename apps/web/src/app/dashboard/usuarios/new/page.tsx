@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +18,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserRole } from "@/types/user";
 import { selectableRolesForActor } from "@/lib/user-roles";
+import { isValidUsername, suggestUsernameFromName } from "@/lib/username";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Admin",
@@ -34,6 +34,8 @@ const ROLE_LABELS: Record<UserRole, string> = {
   user: "Usuário",
 };
 
+const DEFAULT_PASSWORD = "720425";
+
 export default function NovoUsuarioPage() {
   const router = useRouter();
   const { isSuperAdmin, isCompanyAdmin } = useAuth();
@@ -42,11 +44,11 @@ export default function NovoUsuarioPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
+  const [usernameTouched, setUsernameTouched] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
+    username: "",
     name: "",
-    temporaryPassword: "",
-    temporaryPasswordConfirm: "",
     role: "user" as UserRole,
     tenantIds: [] as string[],
   });
@@ -84,12 +86,9 @@ export default function NovoUsuarioPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.temporaryPassword !== formData.temporaryPasswordConfirm) {
-      setError("As senhas temporárias não coincidem. Digite a mesma senha nos dois campos.");
-      return;
-    }
-    if (formData.temporaryPassword.length < 8) {
-      setError("A senha temporária deve ter no mínimo 8 caracteres.");
+    const username = formData.username.trim().toLowerCase();
+    if (!isValidUsername(username)) {
+      setError("Username inválido. Use 3–32 caracteres: letras minúsculas, números, ponto, hífen ou underscore.");
       return;
     }
     setLoading(true);
@@ -97,8 +96,8 @@ export default function NovoUsuarioPage() {
     try {
       const body: Record<string, unknown> = {
         email: formData.email.trim(),
+        username,
         name: formData.name.trim() || undefined,
-        temporaryPassword: formData.temporaryPassword,
         role: formData.role,
       };
       if (canManageTenantScope) {
@@ -127,8 +126,8 @@ export default function NovoUsuarioPage() {
         <CardHeader>
           <CardTitle>Dados do Usuário</CardTitle>
           <CardDescription>
-            O usuário receberá um e-mail para definir a senha definitiva (ou use
-            a senha temporária no primeiro login).
+            Senha padrão <span className="font-mono">{DEFAULT_PASSWORD}</span> — o usuário será
+            obrigado a trocar no primeiro login.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,53 +159,42 @@ export default function NovoUsuarioPage() {
                 id="name"
                 type="text"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, name: e.target.value }))
-                }
+                onChange={(e) => {
+                  const name = e.target.value;
+                  setFormData((prev) => {
+                    const next = { ...prev, name };
+                    if (!usernameTouched) {
+                      next.username = suggestUsernameFromName(name, prev.email);
+                    }
+                    return next;
+                  });
+                }}
                 placeholder="Nome completo"
                 disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="temporaryPassword">Senha temporária *</Label>
+              <Label htmlFor="username">Usuário (login) *</Label>
               <Input
-                id="temporaryPassword"
-                type="password"
+                id="username"
+                type="text"
                 required
-                minLength={8}
-                value={formData.temporaryPassword}
-                onChange={(e) =>
+                value={formData.username}
+                onChange={(e) => {
+                  setUsernameTouched(true);
                   setFormData((prev) => ({
                     ...prev,
-                    temporaryPassword: e.target.value,
-                  }))
-                }
-                placeholder="Mínimo 8 caracteres"
+                    username: e.target.value.toLowerCase(),
+                  }));
+                }}
+                placeholder="primeironome"
                 disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="temporaryPasswordConfirm">Confirmar senha temporária *</Label>
-              <Input
-                id="temporaryPasswordConfirm"
-                type="password"
-                required
-                minLength={8}
-                value={formData.temporaryPasswordConfirm}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    temporaryPasswordConfirm: e.target.value,
-                  }))
-                }
-                placeholder="Repita a senha temporária"
-                disabled={loading}
+                className="font-mono"
+                autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                O usuário usará esta senha no primeiro login. O Cognito pode exigir
-                alteração para uma senha definitiva.
+                Minúsculas, sem espaços. Usado na tela de login.
               </p>
             </div>
 
@@ -237,9 +225,7 @@ export default function NovoUsuarioPage() {
                 <div>
                   <Label>Empresas / clubes que este usuário pode ver</Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    A lista é atualizada ao voltar para esta aba (ex.: depois de cadastrar uma empresa nova).
-                    Nenhuma selecionada = vê todas as empresas. Marque uma ou mais para restringir (ex.: só Villa
-                    Nova).
+                    Nenhuma selecionada = vê todas as empresas. Marque uma ou mais para restringir.
                   </p>
                 </div>
                 <div className="max-h-56 space-y-2 overflow-y-auto pr-1">

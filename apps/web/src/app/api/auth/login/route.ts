@@ -52,38 +52,47 @@ function getCookieOptions(request: NextRequest) {
 
 /**
  * POST /api/auth/login
- * Body: { email, password, next? }
+ * Body: { username, password, next? }
  * Valida com o backend (Nest) e define cookie access_token; redireciona para next ou /dashboard.
  */
 export async function POST(request: NextRequest) {
-  let body: { email?: string; password?: string; next?: string };
+  let body: { username?: string; password?: string; next?: string };
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("application/x-www-form-urlencoded")) {
-    // Ler body como texto e parsear manualmente — evita body vazio quando Nginx/proxy altera o request
     const raw = await request.text();
     const params = new URLSearchParams(raw);
     body = {
-      email: params.get("email")?.trim() ?? undefined,
+      username: params.get("username")?.trim() ?? params.get("email")?.trim() ?? undefined,
       password: params.get("password") ?? "",
       next: params.get("next")?.trim() || undefined,
     };
   } else {
     try {
-      body = (await request.json()) as { email?: string; password?: string; next?: string };
+      const parsed = (await request.json()) as {
+        username?: string;
+        email?: string;
+        password?: string;
+        next?: string;
+      };
+      body = {
+        username: parsed.username?.trim() ?? parsed.email?.trim(),
+        password: parsed.password ?? "",
+        next: parsed.next?.trim() || undefined,
+      };
     } catch {
       return NextResponse.json({ error: "invalid_body" }, { status: 400 });
     }
   }
 
-  const email = body.email?.trim();
+  const username = body.username?.trim();
   const password = body.password ?? "";
   const nextPath = body.next?.startsWith("/") ? body.next : "/dashboard";
 
   if (process.env.NODE_ENV === "development") {
-    console.log("[auth/login] body keys:", Object.keys(body), "email:", !!email, "password:", !!password);
+    console.log("[auth/login] body keys:", Object.keys(body), "username:", !!username, "password:", !!password);
   }
 
-  if (!email || !password) {
+  if (!username || !password) {
     const origin = getRedirectOrigin(request);
     const loginUrl = new URL("/login", origin);
     loginUrl.searchParams.set("error", "missing");
@@ -94,16 +103,17 @@ export async function POST(request: NextRequest) {
     const base = process.env.API_BASE_URL?.trim() || "http://127.0.0.1:3001";
     const url = `${base.replace(/\/$/, "")}/internal/auth/login`;
     if (process.env.NODE_ENV === "development") {
-      console.log("[auth/login] sending to backend:", url, "email:", email?.slice(0, 5) + "...", "passwordLen:", password?.length);
+      console.log("[auth/login] sending to backend:", url, "username:", username?.slice(0, 5) + "...", "passwordLen:", password?.length);
     }
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
       signal: AbortSignal.timeout(15000),
     });
     const data = (await res.json()) as {
       access_token?: string;
+      mustChangePassword?: boolean;
       message?: string;
       statusCode?: number;
     };
@@ -117,7 +127,10 @@ export async function POST(request: NextRequest) {
     }
 
     const origin = getRedirectOrigin(request);
-    const redirect = NextResponse.redirect(new URL(nextPath, origin));
+    const redirectPath = data.mustChangePassword
+      ? `/change-password?next=${encodeURIComponent(nextPath)}`
+      : nextPath;
+    const redirect = NextResponse.redirect(new URL(redirectPath, origin));
     redirect.cookies.set("access_token", data.access_token, getCookieOptions(request));
     redirect.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
     return redirect;

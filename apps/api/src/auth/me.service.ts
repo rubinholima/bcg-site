@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ensureUniqueUsername, slugUsernameFromName } from '../users/user-username.util';
 
 interface UpsertUserInput {
   cognitoSub: string;
@@ -54,10 +55,16 @@ export class MeService {
       });
     }
 
+    const username = await ensureUniqueUsername(
+      this.prisma,
+      slugUsernameFromName(input.name, input.email),
+    );
+
     return this.prisma.user.create({
       data: {
         cognitoSub: input.cognitoSub,
         email: input.email,
+        username,
         name: input.name,
       },
     });

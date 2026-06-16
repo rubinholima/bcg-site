@@ -26,9 +26,9 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam === "invalid"
-      ? hintParam || "Email ou senha incorretos."
+      ? hintParam || "Usuário ou senha incorretos."
       : errorParam === "missing"
-        ? "Preencha email e senha."
+        ? "Preencha usuário e senha."
         : errorParam === "server"
           ? hintParam || "Erro ao conectar. Tente novamente."
           : null
@@ -38,12 +38,12 @@ function LoginForm() {
     e.preventDefault();
     setError(null);
     const form = e.currentTarget;
-    const emailEl = form.elements.namedItem("email") as HTMLInputElement | null;
+    const usernameEl = form.elements.namedItem("username") as HTMLInputElement | null;
     const passwordEl = form.elements.namedItem("password") as HTMLInputElement | null;
-    const email = emailEl?.value?.trim() ?? "";
+    const username = usernameEl?.value?.trim() ?? "";
     const password = passwordEl?.value ?? "";
-    if (!email || !password) {
-      setError("Preencha email e senha.");
+    if (!username || !password) {
+      setError("Preencha usuário e senha.");
       return;
     }
     if (authApiUrl) {
@@ -56,7 +56,7 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, next }),
+        body: JSON.stringify({ username, password, next }),
         credentials: "include",
       });
       window.location.href = res.url;
@@ -111,15 +111,15 @@ function LoginForm() {
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-zinc-300">
-                  Email
+                <Label htmlFor="username" className="text-zinc-300">
+                  Usuário
                 </Label>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="seu@email.com"
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  placeholder="seu.usuario"
                   defaultValue=""
                   className="bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus-visible:ring-amber-500/50"
                   required
@@ -153,7 +153,7 @@ function LoginForm() {
               </Button>
             </form>
             <p className="text-center text-xs text-zinc-500">
-              Altere sua senha no dashboard em Usuários após o primeiro acesso.
+              Novos usuários recebem senha padrão e devem trocá-la no primeiro acesso.
             </p>
           </CardContent>
         </Card>

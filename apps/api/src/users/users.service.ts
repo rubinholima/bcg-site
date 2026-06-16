@@ -3,6 +3,8 @@ import * as bcrypt from 'bcryptjs';
 import { cadastroUpper } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { DEFAULT_NEW_USER_PASSWORD } from './user-credentials.constants';
+import { ensureUniqueUsername, normalizeUsernameInput } from './user-username.util';
 
 export type UserRole =
   | 'super_admin'
@@ -25,6 +27,7 @@ export interface UserListItem {
   name: string | null;
   role: UserRole;
   enabled: boolean;
+  mustChangePassword: boolean;
   /** Empresas/clubes atribuídos (escopo). Vazio = sem linhas em UserTenant (ver todas, exceto super_admin). */
   tenantIds?: string[];
   /** Nomes para exibição na lista (mesmo conjunto que tenantIds). */
@@ -39,54 +42,59 @@ const SALT_ROUNDS = 10;
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<UserListItem[]> {
-    const users = await this.prisma.user.findMany({
-      orderBy: { email: 'asc' },
-      include: {
-        userTenants: {
-          include: { tenant: { select: { id: true, name: true } } },
-        },
-      },
-    });
-    return users.map((u) => ({
+  private mapUser(u: {
+    id: string;
+    cognitoSub: string | null;
+    username: string;
+    email: string;
+    name: string | null;
+    role: string | null;
+    passwordHash: string | null;
+    mustChangePassword: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    userTenants: { tenantId: string; tenant: { id: string; name: string } }[];
+  }): UserListItem {
+    return {
       id: u.id,
       cognitoSub: u.cognitoSub ?? u.id,
-      username: u.email,
+      username: u.username,
       email: u.email,
       name: u.name,
       role: (u.role as UserRole) ?? 'editor',
       enabled: Boolean(u.passwordHash || u.cognitoSub),
+      mustChangePassword: u.mustChangePassword,
       tenantIds: u.userTenants.map((t) => t.tenantId),
       tenants: u.userTenants.map((t) => ({ id: t.tenant.id, name: t.tenant.name })),
       createdAt: u.createdAt?.toISOString(),
       updatedAt: u.updatedAt?.toISOString(),
-    }));
+    };
+  }
+
+  private userInclude() {
+    return {
+      userTenants: {
+        include: { tenant: { select: { id: true, name: true } } },
+      },
+    } as const;
+  }
+
+  async findAll(): Promise<UserListItem[]> {
+    const users = await this.prisma.user.findMany({
+      orderBy: { name: 'asc' },
+      include: this.userInclude(),
+    });
+    return users.map((u) => this.mapUser(u));
   }
 
   async findOne(username: string): Promise<UserListItem | null> {
-    const email = decodeURIComponent(username).trim().toLowerCase();
+    const login = normalizeUsernameInput(decodeURIComponent(username));
     const user = await this.prisma.user.findUnique({
-      where: { email },
-      include: {
-        userTenants: {
-          include: { tenant: { select: { id: true, name: true } } },
-        },
-      },
+      where: { username: login },
+      include: this.userInclude(),
     });
     if (!user) return null;
-    return {
-      id: user.id,
-      cognitoSub: user.cognitoSub ?? user.id,
-      username: user.email,
-      email: user.email,
-      name: user.name,
-      role: (user.role as UserRole) ?? 'editor',
-      enabled: Boolean(user.passwordHash || user.cognitoSub),
-      tenantIds: user.userTenants.map((t) => t.tenantId),
-      tenants: user.userTenants.map((t) => ({ id: t.tenant.id, name: t.tenant.name })),
-      createdAt: user.createdAt?.toISOString(),
-      updatedAt: user.updatedAt?.toISOString(),
-    };
+    return this.mapUser(user);
   }
 
   async create(dto: CreateUserDto): Promise<{ username: string; sub: string }> {
@@ -95,19 +103,26 @@ export class UsersService {
     if (existing) {
       throw new ConflictException('Já existe um usuário com este email');
     }
-    const passwordHash = await bcrypt.hash(dto.temporaryPassword, SALT_ROUNDS);
+    const username = normalizeUsernameInput(dto.username);
+    const usernameTaken = await this.prisma.user.findUnique({ where: { username } });
+    if (usernameTaken) {
+      throw new ConflictException('Já existe um usuário com este username');
+    }
+    const passwordHash = await bcrypt.hash(DEFAULT_NEW_USER_PASSWORD, SALT_ROUNDS);
     const user = await this.prisma.user.create({
       data: {
         email,
+        username,
         name: dto.name != null ? cadastroUpper(dto.name) : null,
         passwordHash,
+        mustChangePassword: true,
         role: (dto.role as UserRole) ?? 'editor',
       },
     });
     if (dto.tenantIds !== undefined) {
       await this.replaceUserTenants(user.id, dto.tenantIds);
     }
-    return { username: user.email, sub: user.id };
+    return { username: user.username, sub: user.id };
   }
 
   async updateRole(username: string, role: UserRole): Promise<void> {
@@ -120,10 +135,25 @@ export class UsersService {
 
   async update(
     username: string,
-    dto: { name?: string | null; email?: string; role?: UserRole; password?: string; tenantIds?: string[] },
+    dto: {
+      name?: string | null;
+      email?: string;
+      username?: string;
+      role?: UserRole;
+      password?: string;
+      tenantIds?: string[];
+    },
   ): Promise<void> {
     const user = await this.findByUsername(username);
-    const data: { name?: string | null; email?: string; role?: string; passwordHash?: string; updatedAt: Date } = {
+    const data: {
+      name?: string | null;
+      email?: string;
+      username?: string;
+      role?: string;
+      passwordHash?: string;
+      mustChangePassword?: boolean;
+      updatedAt: Date;
+    } = {
       updatedAt: new Date(),
     };
     if (dto.name !== undefined) data.name = dto.name != null ? cadastroUpper(dto.name) : null;
@@ -135,9 +165,18 @@ export class UsersService {
         data.email = email;
       }
     }
+    if (dto.username !== undefined) {
+      const nextUsername = normalizeUsernameInput(dto.username);
+      if (nextUsername !== user.username) {
+        const existing = await this.prisma.user.findUnique({ where: { username: nextUsername } });
+        if (existing) throw new ConflictException('Já existe um usuário com este username');
+        data.username = nextUsername;
+      }
+    }
     if (dto.role !== undefined) data.role = dto.role;
     if (dto.password !== undefined && dto.password.length > 0) {
       data.passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
+      data.mustChangePassword = false;
     }
     await this.prisma.user.update({
       where: { id: user.id },
@@ -174,8 +213,11 @@ export class UsersService {
   }
 
   private async findByUsername(username: string) {
-    const email = decodeURIComponent(username).trim().toLowerCase();
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const login = normalizeUsernameInput(decodeURIComponent(username));
+    const user = await this.prisma.user.findUnique({
+      where: { username: login },
+      include: this.userInclude(),
+    });
     if (!user) {
       throw new NotFoundException(`Usuário não encontrado: ${username}`);
     }

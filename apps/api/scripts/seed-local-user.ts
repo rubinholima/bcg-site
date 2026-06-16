@@ -21,7 +21,10 @@ if (!process.env.DATABASE_URL) {
 const { PrismaClient } = require('@prisma/client') as typeof import('@prisma/client');
 const prisma = new PrismaClient();
 
-const EMAIL = 'rl@bostoncitygroup.biz';
+import { RUBINHO_EMAIL, RUBINHO_USERNAME } from '../src/users/user-credentials.constants';
+
+const EMAIL = RUBINHO_EMAIL;
+const USERNAME = RUBINHO_USERNAME;
 const INITIAL_PASSWORD = '2504';
 const ROLE = 'super_admin';
 const SALT_ROUNDS = 10;
@@ -32,18 +35,22 @@ async function main() {
     where: { email: EMAIL },
     create: {
       email: EMAIL,
-      name: 'Boston City Group',
+      username: USERNAME,
+      name: 'Rubinho Lima',
       passwordHash,
+      mustChangePassword: false,
       role: ROLE,
     },
     update: {
+      username: USERNAME,
       passwordHash,
+      mustChangePassword: false,
       role: ROLE,
       updatedAt: new Date(),
     },
   });
-  console.log('Local user seeded:', user.email, '| role:', user.role, '| id:', user.id);
-  console.log('Login com senha inicial 2504 — altere no dashboard (Usuários) após o primeiro acesso.');
+  console.log('Local user seeded:', user.username, user.email, '| role:', user.role, '| id:', user.id);
+  console.log('Login com usuário', USERNAME, 'e senha inicial 2504.');
 }
 
 main()

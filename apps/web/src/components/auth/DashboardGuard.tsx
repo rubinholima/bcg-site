@@ -7,7 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 export function DashboardGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, role, loading, canAccessDashboard } = useAuth();
+  const { user, role, loading, canAccessDashboard, mustChangePassword } = useAuth();
 
   useEffect(() => {
     if (loading) return;
@@ -16,11 +16,15 @@ export function DashboardGuard({ children }: { children: ReactNode }) {
       router.replace(next);
       return;
     }
+    if (mustChangePassword) {
+      router.replace(`/change-password?next=${encodeURIComponent(pathname || "/dashboard")}`);
+      return;
+    }
     if (!canAccessDashboard) {
       router.replace("/");
       return;
     }
-  }, [loading, user, canAccessDashboard, router, pathname]);
+  }, [loading, user, canAccessDashboard, mustChangePassword, router, pathname]);
 
   if (loading) {
     return (
@@ -29,7 +33,7 @@ export function DashboardGuard({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  if (!user || !canAccessDashboard) {
+  if (!user || !canAccessDashboard || mustChangePassword) {
     return null;
   }
   return <>{children}</>;

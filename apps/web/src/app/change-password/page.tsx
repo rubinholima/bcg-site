@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { CognitoUser } from "amazon-cognito-identity-js";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { validateCognitoPassword, getPasswordRequirementLabels } from "@/lib/passwordPolicy";
+import { authFetch } from "@/lib/authFetch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,28 +15,43 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function ChangePasswordPage() {
+function ChangePasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next")?.trim() || "/dashboard";
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [noUser, setNoUser] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && !(window as any)["__cognitoChallengeUser"]) {
-      setNoUser(true);
-    }
-  }, []);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await authFetch("/api/me");
+        if (!res.ok) {
+          if (!cancelled) router.replace(`/login?next=${encodeURIComponent("/change-password")}`);
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled && !data.mustChangePassword) {
+          router.replace(next.startsWith("/") ? next : "/dashboard");
+        }
+      } catch {
+        if (!cancelled) router.replace("/login");
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router, next]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const user = typeof window !== "undefined" ? (window as any)["__cognitoChallengeUser"] : undefined;
-    if (!user) {
-      setError("Sessão expirada. Faça login novamente.");
-      return;
-    }
     if (newPassword !== confirmPassword) {
       setError("As senhas não coincidem.");
       return;
@@ -46,63 +61,33 @@ export default function ChangePasswordPage() {
       setError(
         validation.unmet?.length
           ? `Requisitos não atendidos: ${validation.unmet.join("; ")}.`
-          : validation.message ?? "A senha não atende aos requisitos."
+          : validation.message ?? "A senha não atende aos requisitos.",
       );
       return;
     }
     setLoading(true);
     try {
-      const requiredAttrs = (window as any)["__cognitoChallengeRequiredAttrs"] || {};
-      await new Promise<void>((resolve, reject) => {
-        (user as CognitoUser).completeNewPasswordChallenge(
-          newPassword,
-          requiredAttrs,
-          {
-            onSuccess: () => resolve(),
-            onFailure: (err) => reject(err),
-          }
-        );
+      const res = await authFetch("/api/me/change-password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }),
       });
-      delete (window as any)["__cognitoChallengeUser"];
-      delete (window as any)["__cognitoChallengeRequiredAttrs"];
-      router.replace("/dashboard");
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Erro ao definir senha");
+      }
+      router.replace(next.startsWith("/") ? next : "/dashboard");
     } catch (err: unknown) {
-      const code =
-        err && typeof err === "object" && "code" in err
-          ? String((err as { code: string }).code)
-          : "";
-      const message =
-        err && typeof err === "object" && "message" in err
-          ? String((err as { message: string }).message)
-          : "Erro ao definir senha";
-      if (code === "InvalidPasswordException" || message.includes("Password"))
-        setError("A senha não atende às regras do Cognito. Verifique: mínimo 8 caracteres, 1 maiúscula, 1 minúscula, 1 número e 1 caractere especial.");
-      else setError(message);
+      setError(err instanceof Error ? err.message : "Erro ao definir senha");
     } finally {
       setLoading(false);
     }
   }
 
-  if (noUser) {
+  if (checking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Sem sessão</CardTitle>
-            <CardDescription>
-              Não há solicitação de nova senha. Faça login novamente.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => router.replace("/login")}
-            >
-              Ir para Login
-            </Button>
-          </CardContent>
-        </Card>
+        <p className="text-muted-foreground">Carregando…</p>
       </div>
     );
   }
@@ -113,7 +98,7 @@ export default function ChangePasswordPage() {
         <CardHeader>
           <CardTitle>Definir nova senha</CardTitle>
           <CardDescription className="space-y-1">
-            <span className="block">Primeiro login: defina uma senha permanente.</span>
+            <span className="block">Primeiro acesso: crie sua senha pessoal.</span>
             <span className="block text-xs text-muted-foreground mt-1">
               Requisitos: {getPasswordRequirementLabels().join("; ")}.
             </span>
@@ -136,6 +121,7 @@ export default function ChangePasswordPage() {
                 placeholder="••••••••"
                 required
                 minLength={8}
+                className="text-foreground"
               />
             </div>
             <div className="space-y-2">
@@ -148,14 +134,29 @@ export default function ChangePasswordPage() {
                 placeholder="••••••••"
                 required
                 minLength={8}
+                className="text-foreground"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Salvando…" : "Definir senha e entrar"}
+            <Button type="submit" className="w-full min-h-[44px]" disabled={loading}>
+              {loading ? "Salvando…" : "Definir senha e continuar"}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ChangePasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <p className="text-muted-foreground">Carregando…</p>
+        </div>
+      }
+    >
+      <ChangePasswordForm />
+    </Suspense>
   );
 }

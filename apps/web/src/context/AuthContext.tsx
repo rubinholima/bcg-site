@@ -19,6 +19,7 @@ interface AuthState {
   modules: string[];
   /** null = sem escopo (todas as empresas); lista = só esses tenants */
   tenantIds: string[] | null;
+  mustChangePassword: boolean;
   loading: boolean;
 }
 
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: null,
     modules: [],
     tenantIds: null,
+    mustChangePassword: false,
     loading: true,
   });
 
@@ -48,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authFetch("/api/me");
       if (!res.ok) {
-        setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, loading: false });
+        setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, mustChangePassword: false, loading: false });
         return;
       }
       const data: MeResponse = await res.json();
@@ -112,17 +114,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: data.role,
         modules,
         tenantIds: data.tenantIds ?? null,
+        mustChangePassword: Boolean(data.mustChangePassword),
         loading: false,
       });
     } catch {
-      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, loading: false });
+      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, mustChangePassword: false, loading: false });
     }
   }, []);
 
   useEffect(() => {
     // Na página de login não chama /api/me (evita 401 no console)
     if (pathname === "/login") {
-      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, loading: false });
+      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, mustChangePassword: false, loading: false });
       return;
     }
     fetchMe();

@@ -190,7 +190,7 @@ export default function UsuariosPage() {
         section="Grupo Master"
         sectionIcon={Users}
         title="Usuários"
-        description="Gerencie usuários e permissões (roles) no Cognito."
+        description="Gerencie usuários, logins (username) e permissões (roles)."
         stats={[
           { value: users.length, label: "Total" },
           { value: filteredUsers.length, label: "Exibidos" },
@@ -200,7 +200,7 @@ export default function UsuariosPage() {
             <DashboardDeptSearch
               value={filterQ}
               onChange={setFilterQ}
-              placeholder="Email, nome ou empresa…"
+              placeholder="Usuário, email, nome ou empresa…"
               onBlur={() => applyFiltersToUrl(filterRole, filterQ.trim() || null)}
             />
             <DashboardDeptToolbarAside>
@@ -291,6 +291,7 @@ export default function UsuariosPage() {
               <Table className="min-w-[720px]">
               <TableHeader>
                 <TableRow>
+                  <TableHead>Usuário</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead className="min-w-[12rem]">Empresas (acesso)</TableHead>
@@ -301,10 +302,9 @@ export default function UsuariosPage() {
               <TableBody>
                 {filteredUsers.map((u) => (
                   <TableRow key={u.username}>
-                    <TableCell className="font-medium">{u.email}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {u.name ?? "—"}
-                    </TableCell>
+                    <TableCell className="font-mono text-sm font-medium">{u.username}</TableCell>
+                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
+                    <TableCell>{u.name ?? "—"}</TableCell>
                     <TableCell className="align-top py-3">
                       <EmpresasAcessoCell u={u} />
                     </TableCell>

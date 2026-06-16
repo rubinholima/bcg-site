@@ -110,6 +110,7 @@ export class UsersController {
     await this.usersService.update(decoded, {
       name: dto.name,
       email: dto.email,
+      username: dto.username,
       role: dto.role as UserRole,
       password: dto.password,
       tenantIds: dto.tenantIds,

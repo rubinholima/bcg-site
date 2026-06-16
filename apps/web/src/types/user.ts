@@ -19,6 +19,7 @@ export interface UserListItem {
   name: string | null;
   role: UserRole;
   enabled: boolean;
+  mustChangePassword?: boolean;
   /** Escopo de empresas (vazio = sem restrição / vê todas). */
   tenantIds?: string[];
   /** Empresas com nome (lista de usuários). */
@@ -29,7 +30,7 @@ export interface UserListItem {
 
 export interface CreateUserBody {
   email: string;
+  username: string;
   name?: string | null;
-  temporaryPassword: string;
   role: UserRole;
 }

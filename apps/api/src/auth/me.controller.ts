@@ -5,6 +5,9 @@ import { DashboardRolesGuard } from './roles.guard';
 import { MeService } from './me.service';
 import { ModulesService } from '../modules/modules.service';
 import { TenantAccessService } from './tenant-access.service';
+import { CredentialsAuthService } from './credentials-auth.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { validatePlatformPassword } from './password-policy.util';
 
 export type MeRole =
   | 'super_admin'
@@ -20,9 +23,16 @@ export type MeRole =
   | 'user';
 
 export interface MeResponse {
-  user: { id: string; email: string; name: string | null; cognitoSub: string };
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    name: string | null;
+    cognitoSub: string;
+  };
   groups: string[];
   role: MeRole;
+  mustChangePassword: boolean;
   /** null = sem escopo (todas as empresas). Lista = só esses tenantIds. */
   tenantIds: string[] | null;
 }
@@ -34,6 +44,7 @@ export class MeController {
     private readonly meService: MeService,
     private readonly modulesService: ModulesService,
     private readonly tenantAccess: TenantAccessService,
+    private readonly credentialsAuth: CredentialsAuthService,
   ) {}
 
   @Get()
@@ -70,13 +81,35 @@ export class MeController {
       user: {
         id: user.id,
         email: user.email,
+        username: user.username,
         name: user.name,
         cognitoSub: user.cognitoSub ?? sub,
       },
       groups: groups.length ? groups : [role],
       role,
+      mustChangePassword: user.mustChangePassword,
       tenantIds,
     };
+  }
+
+  @Patch('change-password')
+  async changePassword(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: ChangePasswordDto,
+  ) {
+    const user =
+      (await this.meService.findUserByCognitoSub(req.user.sub)) ??
+      (await this.meService.findUserById(req.user.sub));
+    if (!user) throw new UnauthorizedException('User not found');
+    if (!user.mustChangePassword) {
+      throw new BadRequestException('Troca de senha não é obrigatória para este usuário.');
+    }
+    const policyError = validatePlatformPassword(dto.newPassword);
+    if (policyError) {
+      throw new BadRequestException(policyError);
+    }
+    await this.credentialsAuth.changePassword(user.id, dto.newPassword);
+    return { ok: true };
   }
 
   /** Lista de slugs de módulos que o usuário pode acessar (para montar o menu). */

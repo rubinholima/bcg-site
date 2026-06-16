@@ -1,6 +1,7 @@
 export interface MeUser {
   id: string;
   email: string;
+  username: string;
   name: string | null;
   cognitoSub: string;
 }
@@ -22,6 +23,7 @@ export interface MeResponse {
   user: MeUser;
   groups: string[];
   role: MeRole;
+  mustChangePassword: boolean;
   /** null = sem escopo (todas as empresas). Lista = só esses tenants. */
   tenantIds?: string[] | null;
 }

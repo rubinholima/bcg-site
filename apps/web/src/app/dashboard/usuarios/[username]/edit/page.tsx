@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserListItem, UserRole } from "@/types/user";
 import { selectableRolesForActor } from "@/lib/user-roles";
+import { isValidUsername } from "@/lib/username";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Admin",
@@ -47,6 +48,7 @@ export default function EditUsuarioPage() {
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
   const [formData, setFormData] = useState({
+    username: "",
     email: "",
     name: "",
     role: "user" as UserRole,
@@ -99,6 +101,7 @@ export default function EditUsuarioPage() {
         }
         const data: UserListItem = await res.json();
         setFormData({
+          username: data.username ?? "",
           email: data.email ?? "",
           name: data.name ?? "",
           role: data.role ?? "user",
@@ -122,10 +125,15 @@ export default function EditUsuarioPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cannotEdit) return;
+    if (!isValidUsername(formData.username.trim())) {
+      setError("Username inválido. Use 3–32 caracteres: letras minúsculas, números, ponto, hífen ou underscore.");
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const body: Record<string, unknown> = {
+        username: formData.username.trim().toLowerCase(),
         email: formData.email.trim() || undefined,
         name: formData.name.trim() || undefined,
         role: formData.role,
@@ -166,7 +174,7 @@ export default function EditUsuarioPage() {
         <CardHeader>
           <CardTitle>Dados do Usuário</CardTitle>
           <CardDescription>
-            Username no Cognito: {username}
+            Login: <span className="font-mono">{username}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -176,6 +184,21 @@ export default function EditUsuarioPage() {
                 {error}
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Usuário (login)</Label>
+              <Input
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, username: e.target.value.toLowerCase() }))
+                }
+                placeholder="primeironome"
+                disabled={loading || cannotEdit}
+                className="font-mono"
+              />
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
