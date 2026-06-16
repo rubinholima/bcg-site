@@ -533,10 +533,9 @@ function SidebarNav() {
           title={collapsed ? PLATFORM_APP_NAME : undefined}
         >
           <Cup360BrandMark
-            logoClassName={collapsed ? "h-10 w-10" : "h-11 w-11"}
+            logoClassName={collapsed ? "h-10 w-10" : "h-9 w-9"}
             showName={!collapsed}
             nameClassName="text-xl font-bold tracking-tight"
-            className={cn(!collapsed && "flex-col gap-2")}
           />
         </Link>
       </div>
@@ -550,7 +549,7 @@ function SidebarNav() {
         />
       ) : null}
 
-      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden p-4">
+      <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-4 uppercase tracking-wide">
         {DASHBOARD_MENU.map((item) => {
           const Icon = item.icon!;
 
@@ -581,7 +580,7 @@ function SidebarNav() {
                 )}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span className="truncate">{homeMenu.label}</span>}
+                {!collapsed && <span className="text-left leading-snug">{homeMenu.label}</span>}
               </Link>
             );
           }
@@ -615,7 +614,7 @@ function SidebarNav() {
                 title={collapsed ? item.label : undefined}
               >
                 <Icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
+                {!collapsed && <span className="text-left leading-snug">{item.label}</span>}
               </SidebarMenuLink>
             );
           }
@@ -684,8 +683,8 @@ function SidebarNav() {
                     }
                   }}
                   className={cn(
-                    "flex w-full shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
-                    "font-bold uppercase tracking-wide whitespace-nowrap",
+                    "flex w-full shrink-0 items-start gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-200",
+                    "font-bold leading-snug",
                     collapsed && "justify-center px-2",
                     isOpen || flyoutSlug === item.slug
                       ? "bg-accent/50 text-accent-foreground shadow-sm"
@@ -699,11 +698,11 @@ function SidebarNav() {
                       <ChevronRight className="h-4 w-4 shrink-0 dashboard-chevron-transition" aria-label="Expandir" />
                     ))}
                   <Icon className="h-5 w-5 shrink-0" />
-                  {!collapsed && <span className="min-w-0 truncate">{item.label}</span>}
+                  {!collapsed && <span className="min-w-0 text-left leading-snug">{item.label}</span>}
                 </button>
                 {collapsed && flyoutSlug === item.slug ? (
-                  <div className="fixed left-[4.5rem] top-16 z-50 hidden max-h-[calc(100dvh-4rem)] w-64 overflow-y-auto rounded-r-lg border border-border bg-card p-3 shadow-xl lg:block">
-                    <p className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  <div className="fixed left-[4.5rem] top-16 z-50 hidden max-h-[calc(100dvh-4rem)] w-80 overflow-y-auto rounded-r-lg border border-border bg-card p-3 shadow-xl lg:block">
+                    <p className="mb-2 px-2 text-xs font-bold text-muted-foreground">
                       {item.label}
                     </p>
                     <div className="space-y-0.5 border-l border-border pl-3">
@@ -735,8 +734,8 @@ function SidebarNav() {
                                   type="button"
                                   onClick={() => toggleNestedChild(child)}
                                   className={cn(
-                                    "flex w-full shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 dashboard-link-hover",
-                                    "font-semibold uppercase tracking-wide whitespace-nowrap",
+                                    "flex w-full shrink-0 items-start gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all duration-200 dashboard-link-hover",
+                                    "font-medium leading-snug",
                                     "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                   )}
                                 >
@@ -746,7 +745,7 @@ function SidebarNav() {
                                     <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                   )}
                                   <SidebarMenuIcon item={child} />
-                                  <span className="truncate">{child.label}</span>
+                                  <span className="text-left leading-snug">{child.label}</span>
                                 </button>
                                 {isSubOpen && (
                                   <div className="ml-4 space-y-0.5 border-l border-border pl-2">
@@ -783,14 +782,14 @@ function SidebarNav() {
                                               setFlyoutSlug(null);
                                             }}
                                             className={cn(
-                                              "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                              "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                               isChildActive
                                                 ? "dashboard-sidebar-active"
                                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                             )}
                                           >
                                             {cc.icon && <cc.icon className="h-4 w-4 shrink-0" />}
-                                            <span className="truncate">{cc.label}</span>
+                                            <span className="text-left leading-snug">{cc.label}</span>
                                           </SidebarMenuLink>
                                         );
                                       });
@@ -814,14 +813,14 @@ function SidebarNav() {
                                 setFlyoutSlug(null);
                               }}
                               className={cn(
-                                "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                "flex shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                 isChildActive
                                   ? "dashboard-sidebar-active"
                                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                               )}
                             >
                               <ChildIcon className="h-4 w-4 shrink-0" />
-                              <span className="truncate">{child.label}</span>
+                              <span className="text-left leading-snug">{child.label}</span>
                             </SidebarMenuLink>
                           );
                         })}
@@ -858,8 +857,8 @@ function SidebarNav() {
                                 type="button"
                                 onClick={() => toggleNestedChild(child)}
                                 className={cn(
-                                  "flex w-full shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-all duration-200 dashboard-link-hover",
-                                  "font-semibold uppercase tracking-wide whitespace-nowrap",
+                                  "flex w-full shrink-0 items-start gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-all duration-200 dashboard-link-hover",
+                                  "font-medium leading-snug",
                                   "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                 )}
                               >
@@ -869,7 +868,7 @@ function SidebarNav() {
                                   <ChevronRight className="h-4 w-4 shrink-0" aria-label="Expandir" />
                                 )}
                                 <SidebarMenuIcon item={child} />
-                                <span className="truncate">{child.label}</span>
+                                <span className="text-left leading-snug">{child.label}</span>
                               </button>
                               {isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">
@@ -944,7 +943,7 @@ function SidebarNav() {
                                                           external={ccc.external}
                                                           onNavigate={onNavClick}
                                                           className={cn(
-                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                                             isLeafActive
                                                               ? "dashboard-sidebar-active"
                                                               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -970,7 +969,7 @@ function SidebarNav() {
                                             external={cc.external}
                                             onNavigate={onNavClick}
                                             className={cn(
-                                              "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-all duration-200 dashboard-link-hover",
+                                              "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                                               isChildActive
                                                 ? "dashboard-sidebar-active"
                                                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -999,7 +998,7 @@ function SidebarNav() {
                             external={child.external}
                             onNavigate={onNavClick}
                             className={cn(
-                              "flex items-center gap-2 rounded-lg px-2 text-sm transition-all duration-200 dashboard-link-hover",
+                              "flex items-center gap-2 rounded-lg px-2 text-sm font-medium transition-all duration-200 dashboard-link-hover",
                               compact ? "py-1" : "py-1.5",
                               isChildActive
                                 ? "dashboard-sidebar-active"

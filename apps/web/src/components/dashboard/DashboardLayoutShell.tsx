@@ -40,11 +40,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 shrink-0 transition-[width,transform] duration-200 ease-out lg:static lg:z-auto",
-          "w-[min(100vw-2.5rem,16rem)]",
+          "w-[min(100vw-2.5rem,20rem)]",
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           desktopHidden && "lg:pointer-events-none lg:w-0 lg:overflow-hidden lg:border-0 lg:opacity-0",
           !desktopHidden && desktopIcons && "lg:w-[4.5rem]",
-          !desktopHidden && !desktopIcons && "lg:w-64",
+          !desktopHidden && !desktopIcons && "lg:w-80",
         )}
       >
         <Sidebar />
