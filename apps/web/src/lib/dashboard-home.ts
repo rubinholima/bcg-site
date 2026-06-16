@@ -25,7 +25,7 @@ const HUB_HOME_RULES: HubHomeRule[] = [
   {
     route: "/dashboard/futebol",
     roles: ["comissao", "analista"],
-    modules: ["futebol_comissao", "futebol_logistica", "futebol_analise", "futebol_fisiologia"],
+    modules: ["futebol_comissao", "futebol_logistica", "futebol_analise", "futebol_performance", "futebol_captacao", "futebol_tryouts"],
   },
   { route: "/dashboard/saude", roles: ["medico", "psicologo"], modules: ["saude"] },
   {

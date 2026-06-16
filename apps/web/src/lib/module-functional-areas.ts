@@ -36,7 +36,7 @@ export const MODULE_AREA_META: Record<
   },
   futebol_tecnico: {
     title: "Futebol — operação técnica",
-    description: "Comissão, fisiologia, desempenho e logística.",
+    description: "Comissão, desempenho, captação, try-outs e logística.",
   },
   saude_dados_sensiveis: {
     title: "Saúde e dados sensíveis",

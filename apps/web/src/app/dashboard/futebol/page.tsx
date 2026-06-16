@@ -3,16 +3,16 @@
 import {
   Calendar,
   Map,
-  BarChart3,
-  Star,
   Users,
-  Heart,
   UserCircle,
   Trophy,
   MapPin,
   Shirt,
   Layers,
   Archive,
+  Gauge,
+  UserPlus,
+  ClipboardCheck,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { FutebolHubInsights } from "@/components/dashboard/hub/FutebolHubInsights";
@@ -83,25 +83,25 @@ const LINKS = [
     moduleSlug: "futebol_comissao",
   },
   {
-    title: "Avaliações",
-    description: "Avaliações institucionais dos atletas.",
-    href: "/dashboard/futebol/avaliacoes",
-    icon: Star,
-    moduleSlug: "diretoria",
+    title: "Performance",
+    description: "Avaliações e análise de desempenho esportivo.",
+    href: "/dashboard/futebol/performance",
+    icon: Gauge,
+    moduleSlug: "futebol_performance",
   },
   {
-    title: "Desempenho",
-    description: "Métricas e análise de performance esportiva.",
-    href: "/dashboard/futebol/analise",
-    icon: BarChart3,
-    moduleSlug: "futebol_analise",
+    title: "Captação",
+    description: "Prospecção e acompanhamento de atletas em captação.",
+    href: "/dashboard/futebol/captacao",
+    icon: UserPlus,
+    moduleSlug: "futebol_captacao",
   },
   {
-    title: "Fisiologia",
-    description: "Dados fisiológicos integrados ao departamento.",
-    href: "/dashboard/futebol/fisiologia",
-    icon: Heart,
-    moduleSlug: "futebol_fisiologia",
+    title: "Try-outs",
+    description: "Peneiras, testes e convocações para avaliação.",
+    href: "/dashboard/futebol/try-outs",
+    icon: ClipboardCheck,
+    moduleSlug: "futebol_tryouts",
   },
 ] as const;
 
@@ -110,7 +110,7 @@ export default function FutebolHubPage() {
     <HubDashboardPage
       section="Depto Futebol"
       title="Dash"
-      subtitle={`Dash operacional — ${DASHBOARD_LABELS.atletas}, logística, comissão e análise.`}
+      subtitle={`Dash operacional — ${DASHBOARD_LABELS.atletas}, logística, comissão e performance.`}
       hubId="futebol"
       links={[...LINKS]}
     >

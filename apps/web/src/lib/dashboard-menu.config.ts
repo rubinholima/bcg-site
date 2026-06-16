@@ -60,6 +60,9 @@ import {
   Kanban,
   Link2,
   Truck,
+  ClipboardCheck,
+  Gauge,
+  UserPlus,
   TabletSmartphone,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
@@ -342,11 +345,18 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         ],
       },
       {
-        slug: "analise",
-        label: "Análise",
-        icon: BarChart3,
-        moduleSlug: "diretoria",
+        slug: "futebol_performance",
+        label: "Performance",
+        icon: Gauge,
+        moduleSlug: "futebol_performance",
         children: [
+          {
+            slug: "futebol_performance_dash",
+            label: DEPT_HUB_MENU_LABEL,
+            href: "/dashboard/futebol/performance",
+            icon: LayoutDashboard,
+            moduleSlug: "futebol_performance",
+          },
           {
             slug: "avaliacoes",
             label: "Avaliações",
@@ -364,18 +374,25 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         ],
       },
       {
+        slug: "futebol_captacao",
+        label: "Captação",
+        href: "/dashboard/futebol/captacao",
+        icon: UserPlus,
+        moduleSlug: "futebol_captacao",
+      },
+      {
+        slug: "futebol_tryouts",
+        label: "Try-outs",
+        href: "/dashboard/futebol/try-outs",
+        icon: ClipboardCheck,
+        moduleSlug: "futebol_tryouts",
+      },
+      {
         slug: "futebol_comissao",
         label: "Comissão técnica",
         href: "/dashboard/futebol/comissao",
         icon: Users,
         moduleSlug: "futebol_comissao",
-      },
-      {
-        slug: "futebol_fisiologia",
-        label: "Fisiologia",
-        href: "/dashboard/futebol/fisiologia",
-        icon: Heart,
-        moduleSlug: "futebol_fisiologia",
       },
       hubRelatorio("futebol"),
     ],

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { PLATFORM_APP_NAME, PLATFORM_LOGO_SRC } from "@/lib/platform-branding";
+import { PLATFORM_APP_NAME, PLATFORM_LOGO_MARK_SRC } from "@/lib/platform-branding";
 
 type Cup360BrandMarkProps = {
   /** Tamanho do ícone quadrado */
@@ -19,11 +19,11 @@ export function Cup360BrandMark({
   return (
     <span className={cn("flex min-w-0 items-center gap-2", className)}>
       <img
-        src={PLATFORM_LOGO_SRC}
+        src={PLATFORM_LOGO_MARK_SRC}
         alt={PLATFORM_APP_NAME}
         width={32}
         height={32}
-        className={cn("flex-shrink-0 rounded object-contain", logoClassName)}
+        className={cn("flex-shrink-0 object-contain", logoClassName)}
       />
       {showName ? (
         <span className={cn("truncate", nameClassName)}>

@@ -47,7 +47,7 @@ export function Header() {
           )}
         </Button>
         <Cup360BrandMark
-          logoClassName="h-6 w-6 shrink-0 sm:h-7 sm:w-7"
+          logoClassName="h-5 w-auto max-w-[4.5rem] shrink-0 sm:h-6 sm:max-w-[5rem]"
           showName={false}
         />
         <span className="hidden min-w-0 max-w-[9rem] truncate text-sm font-semibold tracking-tight sm:inline md:max-w-[12rem] md:text-base lg:max-w-xs lg:text-lg">

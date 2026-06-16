@@ -109,7 +109,9 @@ function isFutebolOperacaoPath(pathname: string | null, relHub: string | null): 
     pathname.startsWith("/dashboard/futebol/avaliacoes") ||
     pathname.startsWith("/dashboard/futebol/agenda") ||
     pathname.startsWith("/dashboard/futebol/comissao") ||
-    pathname.startsWith("/dashboard/futebol/fisiologia") ||
+    pathname.startsWith("/dashboard/futebol/performance") ||
+    pathname.startsWith("/dashboard/futebol/captacao") ||
+    pathname.startsWith("/dashboard/futebol/try-outs") ||
     isFutebolCadastroPath(pathname)
   );
 }
@@ -395,8 +397,9 @@ function SidebarNav() {
     isAssessoriaImprensaPath(pathname, relHub),
   );
   const [marketingOpen, setMarketingOpen] = useState(() => isMarketingPath(pathname, relHub));
-  const [analiseOpen, setAnaliseOpen] = useState(
+  const [performanceOpen, setPerformanceOpen] = useState(
     () =>
+      pathname?.startsWith("/dashboard/futebol/performance") ||
       pathname?.startsWith("/dashboard/futebol/analise") ||
       pathname?.startsWith("/dashboard/futebol/avaliacoes")
   );
@@ -419,7 +422,7 @@ function SidebarNav() {
   };
 
   const closeAllNested = () => {
-    setAnaliseOpen(false);
+    setPerformanceOpen(false);
     setPsicologiaOpen(false);
     setMedicoOpen(false);
     setNestedOpen({});
@@ -428,10 +431,11 @@ function SidebarNav() {
   const syncNestedFromPath = () => {
     closeAllNested();
     if (
+      pathname?.startsWith("/dashboard/futebol/performance") ||
       pathname?.startsWith("/dashboard/futebol/analise") ||
       pathname?.startsWith("/dashboard/futebol/avaliacoes")
     ) {
-      setAnaliseOpen(true);
+      setPerformanceOpen(true);
     } else if (
       pathname?.startsWith("/dashboard/consultas") ||
       (pathname?.startsWith("/dashboard/psicologia") &&
@@ -459,7 +463,7 @@ function SidebarNav() {
   };
 
   const isNestedExpanded = (child: MenuItemConfig): boolean => {
-    if (child.slug === "analise") return analiseOpen;
+    if (child.slug === "futebol_performance") return performanceOpen;
     if (child.slug === "psicologia") return psicologiaOpen;
     if (child.slug === "medico") return medicoOpen;
     /** Se o usuário abriu um hub manualmente, não manter outro aberto só pela rota (ex.: Atletas + Logística). */
@@ -472,14 +476,14 @@ function SidebarNav() {
   const toggleNestedChild = (child: MenuItemConfig) => {
     const expanded = isNestedExpanded(child);
     if (expanded) {
-      if (child.slug === "analise") setAnaliseOpen(false);
+      if (child.slug === "futebol_performance") setPerformanceOpen(false);
       else if (child.slug === "psicologia") setPsicologiaOpen(false);
       else if (child.slug === "medico") setMedicoOpen(false);
       else setNestedOpen((prev) => ({ ...prev, [child.slug]: false }));
       return;
     }
     closeAllNested();
-    if (child.slug === "analise") setAnaliseOpen(true);
+    if (child.slug === "futebol_performance") setPerformanceOpen(true);
     else if (child.slug === "psicologia") setPsicologiaOpen(true);
     else if (child.slug === "medico") setMedicoOpen(true);
     else setNestedOpen({ [child.slug]: true });
@@ -511,8 +515,8 @@ function SidebarNav() {
           title={collapsed ? PLATFORM_APP_NAME : undefined}
         >
           <Cup360BrandMark
-            logoClassName={collapsed ? "h-10 w-10" : "h-9 w-9"}
-            showName={!collapsed}
+            logoClassName={collapsed ? "h-7 w-auto max-w-[1.75rem]" : "h-7 w-auto max-w-[5.5rem]"}
+            showName={false}
             nameClassName="text-xl font-bold tracking-tight"
           />
         </Link>
