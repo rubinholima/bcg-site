@@ -14,10 +14,10 @@ interface TenantLogoItem {
 }
 
 function logoSizeClass(count: number): string {
-  if (count <= 1) return "max-h-[min(38vh,260px)] max-w-[min(90%,200px)]";
-  if (count === 2) return "max-h-[min(28vh,190px)] max-w-[min(85%,170px)]";
-  if (count <= 4) return "max-h-[min(20vh,140px)] max-w-[min(80%,140px)]";
-  return "max-h-[min(14vh,100px)] max-w-[min(75%,110px)]";
+  if (count <= 1) return "max-h-[min(26vh,160px)] max-w-[min(14vw,140px)]";
+  if (count === 2) return "max-h-[min(20vh,130px)] max-w-[min(12vw,120px)]";
+  if (count <= 4) return "max-h-[min(16vh,100px)] max-w-[min(10vw,100px)]";
+  return "max-h-[min(12vh,80px)] max-w-[min(9vw,88px)]";
 }
 
 /**
@@ -62,14 +62,14 @@ export function TenantWorkspaceRail() {
   }, [isSuperAdmin, tenants]);
 
   if (loading || !canAccessDashboard || items.length === 0) {
-    return <div className="hidden shrink-0 lg:block lg:w-0" aria-hidden />;
+    return <div className="hidden shrink-0 xl:block xl:w-0" aria-hidden />;
   }
 
   const sizeClass = logoSizeClass(items.length);
 
   return (
     <aside
-      className="pointer-events-none hidden min-h-0 w-[min(24vw,300px)] shrink-0 flex-col items-center justify-center gap-[clamp(0.5rem,2.5vh,1.75rem)] self-stretch border-r border-border/20 px-3 py-8 lg:flex"
+      className="pointer-events-none hidden min-h-0 w-[min(18vw,220px)] shrink-0 flex-col items-center justify-center gap-[clamp(0.5rem,2vh,1.25rem)] self-stretch border-r border-border/15 px-2 py-6 xl:flex"
       aria-label="Empresas com acesso"
     >
       {items.map((t) => {

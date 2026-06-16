@@ -500,7 +500,7 @@ function SidebarNav() {
     <div className="relative flex h-full flex-col border-r border-border bg-card shadow-sm">
       <div
         className={cn(
-          "flex h-[4.5rem] shrink-0 items-center justify-center border-b border-border",
+          "hidden h-[4.5rem] shrink-0 items-center justify-center border-b border-border lg:flex",
           collapsed ? "px-2" : "px-4",
         )}
       >
@@ -511,9 +511,9 @@ function SidebarNav() {
           title={collapsed ? PLATFORM_APP_NAME : undefined}
         >
           <Cup360BrandMark
-            logoClassName={collapsed ? "h-14 w-14" : "h-12 w-12"}
+            logoClassName={collapsed ? "h-10 w-10" : "h-9 w-9"}
             showName={!collapsed}
-            nameClassName="text-2xl font-bold tracking-tight sm:text-3xl"
+            nameClassName="text-xl font-bold tracking-tight"
           />
         </Link>
       </div>
