@@ -13,6 +13,7 @@ import {
   Gauge,
   UserPlus,
   ClipboardCheck,
+  Video,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { FutebolHubInsights } from "@/components/dashboard/hub/FutebolHubInsights";
@@ -83,8 +84,15 @@ const LINKS = [
     moduleSlug: "futebol_comissao",
   },
   {
+    title: "Análise e desempenho",
+    description: "Vídeo e imagens do jogo — mapas de calor, lances e análise tática.",
+    href: "/dashboard/futebol/analise-desempenho",
+    icon: Video,
+    moduleSlug: "futebol_analise_desempenho",
+  },
+  {
     title: "Performance",
-    description: "Avaliações e análise de desempenho esportivo.",
+    description: "Fisiologista, preparação física e nutricionista.",
     href: "/dashboard/futebol/performance",
     icon: Gauge,
     moduleSlug: "futebol_performance",

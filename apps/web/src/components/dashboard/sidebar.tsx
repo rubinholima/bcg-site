@@ -106,12 +106,16 @@ function isFutebolOperacaoPath(pathname: string | null, relHub: string | null): 
     pathname === "/dashboard/futebol" ||
     pathname.startsWith("/dashboard/futebol/logistica") ||
     pathname.startsWith("/dashboard/futebol/analise") ||
+    pathname.startsWith("/dashboard/futebol/analise-desempenho") ||
     pathname.startsWith("/dashboard/futebol/avaliacoes") ||
     pathname.startsWith("/dashboard/futebol/agenda") ||
     pathname.startsWith("/dashboard/futebol/comissao") ||
+    pathname.startsWith("/dashboard/futebol/fisiologia") ||
+    pathname.startsWith("/dashboard/futebol/preparacao-fisica") ||
     pathname.startsWith("/dashboard/futebol/performance") ||
     pathname.startsWith("/dashboard/futebol/captacao") ||
     pathname.startsWith("/dashboard/futebol/try-outs") ||
+    pathname.startsWith("/dashboard/adm/nutricao") ||
     isFutebolCadastroPath(pathname)
   );
 }
@@ -133,9 +137,7 @@ function isSaudePath(pathname: string | null, relHub: string | null): boolean {
     (pathname.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)) ||
     pathname.startsWith("/dashboard/consultas") ||
     (pathname.startsWith("/dashboard/psicologia") && !pathname.startsWith("/dashboard/psicologia/psicologos")) ||
-    pathname.startsWith("/dashboard/futebol/fisiologia") ||
     pathname.startsWith("/dashboard/saude") ||
-    pathname.startsWith("/dashboard/adm/nutricao") ||
     isMedicoCadastroPath(pathname) ||
     pathname.startsWith("/dashboard/psicologia/psicologos")
   );
@@ -400,8 +402,14 @@ function SidebarNav() {
   const [performanceOpen, setPerformanceOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/futebol/performance") ||
-      pathname?.startsWith("/dashboard/futebol/analise") ||
-      pathname?.startsWith("/dashboard/futebol/avaliacoes")
+      pathname?.startsWith("/dashboard/futebol/fisiologia") ||
+      pathname?.startsWith("/dashboard/futebol/preparacao-fisica") ||
+      pathname?.startsWith("/dashboard/adm/nutricao")
+  );
+  const [analiseDesempenhoOpen, setAnaliseDesempenhoOpen] = useState(
+    () =>
+      pathname?.startsWith("/dashboard/futebol/analise-desempenho") ||
+      pathname?.startsWith("/dashboard/futebol/analise")
   );
   const [nestedOpen, setNestedOpen] = useState<Record<string, boolean>>({});
 
@@ -423,6 +431,7 @@ function SidebarNav() {
 
   const closeAllNested = () => {
     setPerformanceOpen(false);
+    setAnaliseDesempenhoOpen(false);
     setPsicologiaOpen(false);
     setMedicoOpen(false);
     setNestedOpen({});
@@ -432,10 +441,16 @@ function SidebarNav() {
     closeAllNested();
     if (
       pathname?.startsWith("/dashboard/futebol/performance") ||
-      pathname?.startsWith("/dashboard/futebol/analise") ||
-      pathname?.startsWith("/dashboard/futebol/avaliacoes")
+      pathname?.startsWith("/dashboard/futebol/fisiologia") ||
+      pathname?.startsWith("/dashboard/futebol/preparacao-fisica") ||
+      pathname?.startsWith("/dashboard/adm/nutricao")
     ) {
       setPerformanceOpen(true);
+    } else if (
+      pathname?.startsWith("/dashboard/futebol/analise-desempenho") ||
+      pathname?.startsWith("/dashboard/futebol/analise")
+    ) {
+      setAnaliseDesempenhoOpen(true);
     } else if (
       pathname?.startsWith("/dashboard/consultas") ||
       (pathname?.startsWith("/dashboard/psicologia") &&
@@ -464,6 +479,7 @@ function SidebarNav() {
 
   const isNestedExpanded = (child: MenuItemConfig): boolean => {
     if (child.slug === "futebol_performance") return performanceOpen;
+    if (child.slug === "futebol_analise_desempenho") return analiseDesempenhoOpen;
     if (child.slug === "psicologia") return psicologiaOpen;
     if (child.slug === "medico") return medicoOpen;
     /** Se o usuário abriu um hub manualmente, não manter outro aberto só pela rota (ex.: Atletas + Logística). */
@@ -477,6 +493,7 @@ function SidebarNav() {
     const expanded = isNestedExpanded(child);
     if (expanded) {
       if (child.slug === "futebol_performance") setPerformanceOpen(false);
+      else if (child.slug === "futebol_analise_desempenho") setAnaliseDesempenhoOpen(false);
       else if (child.slug === "psicologia") setPsicologiaOpen(false);
       else if (child.slug === "medico") setMedicoOpen(false);
       else setNestedOpen((prev) => ({ ...prev, [child.slug]: false }));
@@ -484,6 +501,7 @@ function SidebarNav() {
     }
     closeAllNested();
     if (child.slug === "futebol_performance") setPerformanceOpen(true);
+    else if (child.slug === "futebol_analise_desempenho") setAnaliseDesempenhoOpen(true);
     else if (child.slug === "psicologia") setPsicologiaOpen(true);
     else if (child.slug === "medico") setMedicoOpen(true);
     else setNestedOpen({ [child.slug]: true });

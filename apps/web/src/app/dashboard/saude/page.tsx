@@ -5,7 +5,6 @@ import {
   ClipboardList,
   Heart,
   Activity,
-  UtensilsCrossed,
   UserCircle,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
@@ -55,25 +54,11 @@ const LINKS = [
     moduleSlug: "saude",
   },
   {
-    title: "Fisiologia",
-    description: "Indicadores fisiológicos e testes.",
-    href: "/dashboard/futebol/fisiologia",
-    icon: Heart,
-    moduleSlug: "futebol_fisiologia",
-  },
-  {
     title: "Fisioterapia",
     description: "Tratamentos e evolução fisioterapêutica.",
     href: "/dashboard/saude/fisioterapia",
     icon: Activity,
     moduleSlug: "saude",
-  },
-  {
-    title: "Nutrição",
-    description: "Planos nutricionais e acompanhamento.",
-    href: "/dashboard/adm/nutricao",
-    icon: UtensilsCrossed,
-    moduleSlug: "adm_nutricao",
   },
 ] as const;
 
@@ -82,7 +67,7 @@ export default function SaudeHubPage() {
     <HubDashboardPage
       section="Depto de Saúde"
       title="Dash"
-      subtitle="Dash clínico — médico, psicologia, fisiologia e nutrição."
+      subtitle="Dash clínico — médico, enfermeiros, fisioterapia e psicologia."
       hubId="saude"
       links={[...LINKS]}
     >

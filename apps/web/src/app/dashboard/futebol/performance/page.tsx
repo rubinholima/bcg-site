@@ -1,22 +1,29 @@
 "use client";
 
-import { BarChart3, Gauge, Star } from "lucide-react";
+import { Dumbbell, Gauge, Heart, UtensilsCrossed } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 
 const LINKS = [
   {
-    title: "Avaliações",
-    description: "Avaliações institucionais dos atletas.",
-    href: "/dashboard/futebol/avaliacoes",
-    icon: Star,
-    moduleSlug: "diretoria",
+    title: "Fisiologista",
+    description: "Indicadores fisiológicos, testes e acompanhamento do elenco.",
+    href: "/dashboard/futebol/fisiologia",
+    icon: Heart,
+    moduleSlug: "futebol_fisiologia",
   },
   {
-    title: "Desempenho",
-    description: "Métricas e análise de performance esportiva.",
-    href: "/dashboard/futebol/analise",
-    icon: BarChart3,
-    moduleSlug: "futebol_analise",
+    title: "Preparação física",
+    description: "Treinos físicos, cargas e periodização.",
+    href: "/dashboard/futebol/preparacao-fisica",
+    icon: Dumbbell,
+    moduleSlug: "futebol_preparacao_fisica",
+  },
+  {
+    title: "Nutricionista",
+    description: "Planos nutricionais e avaliações do departamento de performance.",
+    href: "/dashboard/adm/nutricao",
+    icon: UtensilsCrossed,
+    moduleSlug: "adm_nutricao",
   },
 ] as const;
 
@@ -26,7 +33,7 @@ export default function FutebolPerformanceHubPage() {
       section="Depto Futebol"
       sectionIcon={Gauge}
       title="Performance"
-      subtitle="Avaliações, desempenho e indicadores de performance esportiva."
+      subtitle="Fisiologista, preparação física e nutricionista — dentro do departamento de Futebol."
       hubId="futebol"
       links={[...LINKS]}
     />
