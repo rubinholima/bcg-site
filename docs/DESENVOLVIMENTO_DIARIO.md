@@ -32,6 +32,57 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 17 DE JUNHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+1. **Captação (scouting)**  
+   - Hub com pipeline, captadores, relatórios GPS e fluxo de aprovação do supervisor.  
+   - Commit `f889589` — módulo API `captacao`, migration Prisma, páginas web.
+
+2. **Import Beatscode — PDFs e documentos**  
+   - Sync de anexos via Playwright (sem MySQL): login no painel, download PDF, upload S3, atualização de `registrationProfile.documents`.  
+   - Contratos (metadados + import), card na ferramenta Beatscode, UI de documentos do jogador agrupada por categoria.  
+   - Teste batch: 3 jogadores, 8 PDFs no S3; scripts `run-beatscode-sync-documents`, `run-beatscode-browser-test-one`.  
+   - Commit `628fe48`.
+
+3. **Configurações → Acessos (perfis de grupo)**  
+   - Painel do perfil passa a listar **quais** módulos e itens de menu estão liberados (não só a contagem).  
+   - Checkboxes editáveis no resumo e na árvore; fallback de slugs legados (`empresas`, `saude`) vs slugs finos do menu; seções com acesso abrem automaticamente.  
+   - Commits `628fe48` (resumo) + `9b98edc` (edição e fallback).
+
+4. **Sidebar / CUP360 / login (sessão do dia)**  
+   - Restauração da marca CUP360 e labels do menu; login com fundo, rail de logos, troca de senha obrigatória e PATCH.  
+   - Hubs Futebol (performance, captação, try-outs) e Saúde clínico.  
+   - Commits `f2ff851` … `89ec40a` (vários).
+
+5. **Deploys**  
+   - Builds ok; pushes `628fe48`, `9b98edc` para `develop`.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/api/src/beatscode-import/` (browser scraper, documents, contracts)
+- `apps/api/scripts/run-beatscode-sync-documents.ts`, `run-beatscode-browser-test-one.ts`
+- `apps/web/src/app/dashboard/ferramentas/beatscode-import/page.tsx`
+- `apps/web/src/components/dashboard/players/PlayerDocumentsSection.tsx`
+- `apps/web/src/app/dashboard/configuracoes/modulos/page.tsx`
+- `apps/web/src/components/dashboard/access/AccessPermissionTree.tsx`
+- `apps/api/src/captacao/`, `apps/web/src/app/dashboard/futebol/captacao/`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `c7bc497` — chore: encerramento 17/06 — diario e settings VS Code
+- **Push:** enviado para `origin/develop`
+
+## **PENDÊNCIAS / PRÓXIMO**
+
+- Beatscode: rodar sync completo de PDFs (batch overnight); priorizar jogadores com match no painel Sub 20 (alfabéticos iniciais falham no painel).  
+- Validar acessos por perfil em produção após deploy.  
+- **Não commitar:** `apps/api/data/`, `backup_clean.sql`, `temp_*`, probes `discover-beatscode-*` / `probe-beatscode-*`, artefatos `bcg-tv-android/.gradle` e `build/`.
+
+---
+
 # 📅 07 DE JUNHO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO**

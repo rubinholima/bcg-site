@@ -1,5 +1,7 @@
 {
   "npm.packageManager": "pnpm",
+  "npm.autoDetect": "off",
+  "task.autoDetect": "off",
   "files.exclude": {
     "**/.git": true,
     "**/.DS_Store": true,
