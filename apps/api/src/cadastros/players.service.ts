@@ -213,6 +213,8 @@ export class PlayersService {
       ? await this.findRhContractsForCpf(player.tenantId, cpf, tenantName)
       : [];
 
+    const beatscodeRows = this.beatscodeContractRows(profile, tenantName);
+
     const juridicoRows = legalDocs.map((doc) => {
       const start = doc.validFrom ?? doc.createdAt;
       const end = doc.validUntil;
@@ -237,7 +239,7 @@ export class PlayersService {
       };
     });
 
-    const contracts = [...juridicoRows, ...rhRows].sort((a, b) => {
+    const contracts = [...beatscodeRows, ...juridicoRows, ...rhRows].sort((a, b) => {
       const da = a.startDate ? new Date(a.startDate).getTime() : 0;
       const db = b.startDate ? new Date(b.startDate).getTime() : 0;
       return db - da;
@@ -260,13 +262,82 @@ export class PlayersService {
   private parseRegistrationProfile(raw: unknown): {
     personal?: { cpf?: string; clubArrivalDate?: string };
     sports?: { situation?: string };
-    contracts?: { economicRights?: Array<{ id: string; clubName: string; percentage: number }> };
+    contracts?: {
+      economicRights?: Array<{ id: string; clubName: string; percentage: number }>;
+      beatscode?: Array<{
+        externalId: string;
+        beatscodeId: number;
+        menuCategory: string;
+        contractTypeName: string | null;
+        number: string | null;
+        initialDate: string | null;
+        finalDate: string | null;
+        terminationDate: string | null;
+        status: string;
+        statusLabel: string;
+        observation: string | null;
+        contractEndReasonName: string | null;
+        files?: Array<{
+          attachmentId: number;
+          fileUrl: string;
+          legalDocumentId?: string;
+        }>;
+      }>;
+    };
   } {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
     return raw as {
       personal?: { cpf?: string };
-      contracts?: { economicRights?: Array<{ id: string; clubName: string; percentage: number }> };
+      contracts?: {
+        economicRights?: Array<{ id: string; clubName: string; percentage: number }>;
+        beatscode?: Array<{
+          externalId: string;
+          beatscodeId: number;
+          menuCategory: string;
+          contractTypeName: string | null;
+          number: string | null;
+          initialDate: string | null;
+          finalDate: string | null;
+          terminationDate: string | null;
+          status: string;
+          statusLabel: string;
+          observation: string | null;
+          contractEndReasonName: string | null;
+        }>;
+      };
     };
+  }
+
+  private beatscodeContractRows(
+    profile: ReturnType<PlayersService['parseRegistrationProfile']>,
+    tenantName: string,
+  ) {
+    const rows = profile.contracts?.beatscode;
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+
+    return rows.map((c) => {
+      const start = c.initialDate ? new Date(`${c.initialDate}T12:00:00`) : null;
+      const end = c.finalDate ? new Date(`${c.finalDate}T12:00:00`) : null;
+      return {
+        id: c.externalId ?? `beatscode-contract-${c.beatscodeId}`,
+        source: 'beatscode' as const,
+        displayId: c.number ?? String(c.beatscodeId),
+        startDate: start && !Number.isNaN(start.getTime()) ? start.toISOString() : null,
+        endDate: end && !Number.isNaN(end.getTime()) ? end.toISOString() : null,
+        economicRightsClub: tenantName,
+        status: c.statusLabel ?? c.status,
+        contractType: c.contractTypeName ?? 'Contrato',
+        destinationClub: null,
+        executionPercent: this.executionPercent(start, end),
+        beatscodeContractId: c.beatscodeId,
+        menuCategory: c.menuCategory,
+        terminationDate: c.terminationDate,
+        observation: c.observation,
+        endReason: c.contractEndReasonName,
+        fileUrl: c.files?.[0]?.fileUrl ?? null,
+        legalDocumentId: c.files?.[0]?.legalDocumentId ?? null,
+      };
+    });
   }
 
   private resolveEconomicRights(

@@ -151,6 +151,10 @@ export interface PlayerRegistrationDocument {
   fileKey?: string;
   fileUrl: string;
   uploadedAt: string;
+  beatscodeAttachmentId?: number;
+  source?: 'beatscode' | 'manual';
+  pendingDownload?: boolean;
+  documentCategory?: 'pessoal' | 'contrato' | 'medico' | 'outro';
 }
 
 export const PLAYER_DOCUMENT_TYPE_OPTIONS = [
@@ -160,6 +164,7 @@ export const PLAYER_DOCUMENT_TYPE_OPTIONS = [
   { value: "certidao", label: "Certidão" },
   { value: "comprovante_residencia", label: "Comprovante de residência" },
   { value: "documento_esportivo", label: "Documento esportivo" },
+  { value: "contrato", label: "Contrato" },
   { value: "outro", label: "Outros" },
 ] as const;
 

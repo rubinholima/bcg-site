@@ -31,6 +31,7 @@ import {
   buildModuleCatalog,
   getMenuDepartmentGroups,
   getUniqueModuleSlugs,
+  type MenuAccessTreeNode,
   type MenuDepartmentGroup,
 } from "@/lib/dashboard-menu.config";
 import { AccessPermissionTree } from "@/components/dashboard/access/AccessPermissionTree";
@@ -129,6 +130,65 @@ function roleChecked(mod: ModulePermission, role: ManagedRoleKey): boolean {
   return Boolean(mod[role]);
 }
 
+interface RoleAccessSummary {
+  role: ManagedRoleKey;
+  moduleCount: number;
+  sectionCount: number;
+  byDepartment: { label: string; modules: string[] }[];
+  enabledMenuItems: string[];
+}
+
+function buildRoleAccessSummary(
+  role: ManagedRoleKey,
+  moduleState: ModulePermission[],
+  rows: DisplayRow[],
+  departments: MenuDepartmentGroup[],
+  menuTree: MenuAccessTreeNode[],
+): RoleAccessSummary {
+  const enabledRows = rows.filter((d) => roleChecked(d, role));
+  const enabledSlugs = new Set(
+    moduleState.filter((m) => roleChecked(m, role)).map((m) => m.slug),
+  );
+
+  const byDepartment: { label: string; modules: string[] }[] = [];
+  for (const dept of departments) {
+    const mods = enabledRows
+      .filter((r) => r.departmentId === dept.id)
+      .map((r) => MODULE_DISPLAY_NAMES[r.slug] ?? r.name);
+    if (mods.length > 0) {
+      byDepartment.push({ label: dept.label, modules: mods });
+    }
+  }
+  const orphanMods = enabledRows
+    .filter((r) => r.departmentId === "outros")
+    .map((r) => MODULE_DISPLAY_NAMES[r.slug] ?? r.name);
+  if (orphanMods.length > 0) {
+    byDepartment.push({ label: "Outros módulos", modules: orphanMods });
+  }
+
+  const enabledMenuItems: string[] = [];
+  const walkTree = (nodes: MenuAccessTreeNode[]) => {
+    for (const node of nodes) {
+      if (node.kind === "leaf" && node.accessSlug) {
+        if (enabledSlugs.has(node.accessSlug)) {
+          enabledMenuItems.push(node.label);
+        }
+      } else if (node.children.length > 0) {
+        walkTree(node.children);
+      }
+    }
+  };
+  walkTree(menuTree);
+
+  return {
+    role,
+    moduleCount: enabledRows.length,
+    sectionCount: new Set(enabledRows.map((d) => d.departmentId)).size,
+    byDepartment,
+    enabledMenuItems,
+  };
+}
+
 type SectionAccessState = "all" | "none" | "partial";
 
 function getSectionAccessState(rows: DisplayRow[], role: ManagedRoleKey): SectionAccessState {
@@ -214,6 +274,70 @@ function normalizeModuleRows(data: unknown): ModulePermission[] {
       comissao: r.comissao ?? false,
     };
   });
+}
+
+function AccessSummaryPanel({ summary, hint }: { summary: RoleAccessSummary; hint?: string }) {
+  const roleLabel = MANAGED_ROLE_LABELS[summary.role];
+  return (
+    <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-3">
+      <div>
+        <p className="text-sm font-medium text-foreground">
+          {roleLabel} — {summary.moduleCount} módulo{summary.moduleCount === 1 ? "" : "s"}
+          {summary.sectionCount > 0
+            ? ` em ${summary.sectionCount} departamento${summary.sectionCount === 1 ? "" : "s"}`
+            : ""}
+        </p>
+        {hint ? <p className="text-xs text-muted-foreground mt-1">{hint}</p> : null}
+      </div>
+
+      {summary.moduleCount === 0 ? (
+        <p className="text-sm text-muted-foreground">Nenhum módulo liberado para este perfil.</p>
+      ) : (
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+              Módulos com acesso
+            </p>
+            <div className="space-y-2">
+              {summary.byDepartment.map((dept) => (
+                <div key={dept.label}>
+                  <p className="text-xs font-medium text-foreground/90 mb-1">{dept.label}</p>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {dept.modules.map((mod) => (
+                      <li
+                        key={`${dept.label}-${mod}`}
+                        className="inline-flex items-center rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 text-xs font-medium text-foreground"
+                      >
+                        {mod}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {summary.enabledMenuItems.length > 0 ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                Itens do menu liberados ({summary.enabledMenuItems.length})
+              </p>
+              <ul className="grid gap-1 sm:grid-cols-2 text-sm text-foreground/90">
+                {summary.enabledMenuItems.map((item) => (
+                  <li key={item} className="flex items-start gap-2 min-w-0">
+                    <span className="text-primary mt-0.5 shrink-0" aria-hidden>
+                      •
+                    </span>
+                    <span className="min-w-0">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function ModulosPage() {
@@ -438,17 +562,32 @@ export default function ModulosPage() {
     [displayModules],
   );
 
-  const roleSummary = useMemo(() => {
-    const enabled = mergedModuleState.filter((m) => roleChecked(m, selectedRole));
-    const departments = new Set(
-      displayModules.filter((d) => roleChecked(d, selectedRole)).map((d) => d.departmentId),
-    );
-    return {
-      moduleCount: enabled.length,
-      sectionCount: departments.size,
-      enabledModules: enabled.map((m) => MODULE_DISPLAY_NAMES[m.slug] ?? m.name),
-    };
-  }, [mergedModuleState, selectedRole, displayModules]);
+  const roleSummary = useMemo(
+    () =>
+      buildRoleAccessSummary(
+        selectedRole,
+        mergedModuleState,
+        displayModules,
+        menuDepartments,
+        menuTree,
+      ),
+    [selectedRole, mergedModuleState, displayModules, menuDepartments, menuTree],
+  );
+
+  const userEffectiveSummary = useMemo(() => {
+    if (accessMode !== "user" || userCustomAccess) return null;
+    const role = selectedUserRole as ManagedRoleKey;
+    if (!MANAGED_ROLES.includes(role)) return null;
+    return buildRoleAccessSummary(role, mergedModuleState, displayModules, menuDepartments, menuTree);
+  }, [
+    accessMode,
+    userCustomAccess,
+    selectedUserRole,
+    mergedModuleState,
+    displayModules,
+    menuDepartments,
+    menuTree,
+  ]);
 
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -998,15 +1137,15 @@ export default function ModulosPage() {
             )}
 
             {accessMode === "role" ? (
-              <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-2">
-                <p className="text-sm font-medium text-foreground">
-                  {MANAGED_ROLE_LABELS[selectedRole]} — {roleSummary.moduleCount} módulo
-                  {roleSummary.moduleCount === 1 ? "" : "s"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Perfis servem como modelo para grupos; use &quot;Por usuário&quot; para exceções individuais.
-                </p>
-              </div>
+              <AccessSummaryPanel
+                summary={roleSummary}
+                hint='Perfis servem como modelo para grupos; use "Por usuário" para exceções individuais.'
+              />
+            ) : userEffectiveSummary ? (
+              <AccessSummaryPanel
+                summary={userEffectiveSummary}
+                hint="Acessos herdados do perfil — personalize em Por usuário para alterar só este usuário."
+              />
             ) : null}
           </CardContent>
         </Card>

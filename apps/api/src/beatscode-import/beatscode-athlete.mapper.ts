@@ -48,15 +48,19 @@ function mapBeatscodeDocuments(
   const attachmentIds = normalized.attachmentId;
   if (!Array.isArray(attachmentIds) || attachmentIds.length === 0) return undefined;
   const now = new Date().toISOString();
-  return attachmentIds.map((rawId) => {
+  return attachmentIds.map((rawId, index) => {
     const id = String(rawId);
+    const num = Number(rawId);
     return {
       id: `beatscode-att-${id}`,
-      name: `Anexo Beatscode #${id}`,
+      name: `Documento pessoal ${index + 1}`,
       documentType: 'outro',
+      documentCategory: 'pessoal',
       fileUrl: '',
       uploadedAt: now,
-      beatscodeAttachmentId: Number(rawId),
+      beatscodeAttachmentId: num,
+      source: 'beatscode',
+      pendingDownload: true,
     };
   });
 }

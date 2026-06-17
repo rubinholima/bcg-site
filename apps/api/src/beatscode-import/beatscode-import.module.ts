@@ -9,6 +9,10 @@ import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
 import { BeatscodeImportController } from './beatscode-import.controller';
 import { BeatscodeImportService } from './beatscode-import.service';
 import { BeatscodeAgendaImportService } from './beatscode-agenda-import.service';
+import { BeatscodeContractImportService } from './beatscode-contract-import.service';
+import { BeatscodeAttachmentService } from './beatscode-attachment.service';
+import { BeatscodeBrowserScraperService } from './beatscode-browser-scraper.service';
+import { BeatscodeDocumentsImportService } from './beatscode-documents-import.service';
 
 @Module({
   imports: [
@@ -20,7 +24,22 @@ import { BeatscodeAgendaImportService } from './beatscode-agenda-import.service'
     forwardRef(() => FutebolAgendaModule),
   ],
   controllers: [BeatscodeImportController],
-  providers: [BeatscodeImportService, BeatscodeAgendaImportService, ModuleAccessGuard],
-  exports: [BeatscodeImportService, BeatscodeAgendaImportService],
+  providers: [
+    BeatscodeImportService,
+    BeatscodeAgendaImportService,
+    BeatscodeContractImportService,
+    BeatscodeAttachmentService,
+    BeatscodeBrowserScraperService,
+    BeatscodeDocumentsImportService,
+    ModuleAccessGuard,
+  ],
+  exports: [
+    BeatscodeImportService,
+    BeatscodeAgendaImportService,
+    BeatscodeContractImportService,
+    BeatscodeAttachmentService,
+    BeatscodeBrowserScraperService,
+    BeatscodeDocumentsImportService,
+  ],
 })
 export class BeatscodeImportModule {}

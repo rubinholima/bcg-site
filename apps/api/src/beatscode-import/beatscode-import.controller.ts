@@ -7,6 +7,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { isBeatscodeExportFile } from './beatscode-export.types';
 import { BeatscodeImportService, resolveBeatscodeTenantSlug } from './beatscode-import.service';
 import { BeatscodeAgendaImportService } from './beatscode-agenda-import.service';
+import { BeatscodeContractImportService } from './beatscode-contract-import.service';
+import { BeatscodeDocumentsImportService } from './beatscode-documents-import.service';
+import { isBeatscodeContractExportFile } from './beatscode-contract-export.types';
 import { isBeatscodeAgendaExportFile } from './beatscode-agenda-export.types';
 
 @Controller('api/beatscode-import')
@@ -16,6 +19,8 @@ export class BeatscodeImportController {
   constructor(
     private readonly beatscodeImport: BeatscodeImportService,
     private readonly beatscodeAgendaImport: BeatscodeAgendaImportService,
+    private readonly beatscodeContractImport: BeatscodeContractImportService,
+    private readonly beatscodeDocumentsImport: BeatscodeDocumentsImportService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -108,6 +113,73 @@ export class BeatscodeImportController {
   async runAgenda(@Body() body: { tenantSlug?: string }) {
     const result = await this.beatscodeAgendaImport.runImport({
       tenantSlug: body?.tenantSlug,
+    });
+    return { ok: true, ...result };
+  }
+
+  @Get('contracts/status')
+  async contractsStatus() {
+    const row = await this.prisma.integrationConfig.findUnique({
+      where: { key: 'beatscode_contracts_import_last' },
+    });
+    return {
+      credentialsConfigured: this.beatscodeImport.hasBeatscodeCredentials(),
+      tenantSlug: resolveBeatscodeTenantSlug(),
+      lastImport: row?.config ?? null,
+    };
+  }
+
+  @Post('export-contracts')
+  async exportContracts(@Body() body: { tenantSlug?: string }) {
+    const { filePath, export: data } = await this.beatscodeContractImport.exportToFile({
+      tenantSlug: body?.tenantSlug,
+    });
+    return { ok: true, filePath, contracts: data.contracts.length };
+  }
+
+  @Post('import-contracts-export')
+  async importContractsExport(
+    @Body() body: { export?: unknown; tenantSlug?: string },
+  ) {
+    if (!body?.export || !isBeatscodeContractExportFile(body.export)) {
+      throw new BadRequestException(
+        'Envie um JSON de export válido (version: 1, contracts[], tenantSlug).',
+      );
+    }
+    const result = await this.beatscodeContractImport.importFromExport(body.export, {
+      tenantSlug: body.tenantSlug,
+    });
+    return { ok: true, ...result };
+  }
+
+  @Post('run-contracts')
+  async runContracts(@Body() body: { tenantSlug?: string }) {
+    const result = await this.beatscodeContractImport.importFromApi({
+      tenantSlug: body?.tenantSlug,
+    });
+    return { ok: true, ...result };
+  }
+
+  @Get('documents/status')
+  async documentsStatus() {
+    const row = await this.prisma.integrationConfig.findUnique({
+      where: { key: 'beatscode_documents_sync_last' },
+    });
+    return {
+      apiCredentialsConfigured: this.beatscodeImport.hasBeatscodeCredentials(),
+      databaseConfigured: process.env.BEATSCODE_DATABASE_URL?.trim() ? true : false,
+      browserModeDefault: !process.env.BEATSCODE_DATABASE_URL?.trim(),
+      tenantSlug: resolveBeatscodeTenantSlug(),
+      lastSync: row?.config ?? null,
+      note: 'Sem MySQL Beatscode: usa navegador (Playwright) automaticamente. Local: pnpm beatscode:sync-documents',
+    };
+  }
+
+  @Post('sync-documents')
+  async syncDocuments(@Body() body: { tenantSlug?: string; useBrowser?: boolean }) {
+    const result = await this.beatscodeDocumentsImport.syncTenantDocuments({
+      tenantSlug: body?.tenantSlug,
+      useBrowser: body?.useBrowser,
     });
     return { ok: true, ...result };
   }

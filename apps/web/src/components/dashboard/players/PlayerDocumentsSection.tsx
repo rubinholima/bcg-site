@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Eye, Loader2, Search, Trash2, Upload } from "lucide-react";
+import { Eye, FileWarning, Loader2, Search, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,36 @@ function formatDocumentDate(iso: string): string {
   });
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  pessoal: "Documentos pessoais",
+  contrato: "Contratos e anexos",
+  medico: "Documentos médicos",
+  outro: "Outros",
+};
+
+function getCategoryLabel(category?: string): string {
+  if (!category) return CATEGORY_LABELS.outro;
+  return CATEGORY_LABELS[category] ?? CATEGORY_LABELS.outro;
+}
+
+function groupDocumentsByCategory(docs: PlayerRegistrationDocument[]) {
+  const groups = new Map<string, PlayerRegistrationDocument[]>();
+  for (const doc of docs) {
+    const key = doc.documentCategory ?? "outro";
+    const list = groups.get(key) ?? [];
+    list.push(doc);
+    groups.set(key, list);
+  }
+  const order = ["pessoal", "contrato", "medico", "outro"];
+  return order
+    .filter((key) => groups.has(key))
+    .map((key) => ({
+      key,
+      label: getCategoryLabel(key),
+      items: groups.get(key) ?? [],
+    }));
+}
+
 export function PlayerDocumentsSection({
   playerId,
   profile,
@@ -80,6 +110,18 @@ export function PlayerDocumentsSection({
         (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime(),
       ),
     [filtered],
+  );
+
+  const grouped = useMemo(() => groupDocumentsByCategory(sorted), [sorted]);
+
+  const pendingCount = useMemo(
+    () => documents.filter((d) => d.pendingDownload || !d.fileUrl?.trim()).length,
+    [documents],
+  );
+
+  const beatscodeCount = useMemo(
+    () => documents.filter((d) => d.source === "beatscode").length,
+    [documents],
   );
 
   const updateDocuments = (next: PlayerRegistrationDocument[]) => {
@@ -126,6 +168,7 @@ export function PlayerDocumentsSection({
   };
 
   const handleView = (doc: PlayerRegistrationDocument) => {
+    if (!doc.fileUrl?.trim()) return;
     const url = getPublicImageUrl(doc.fileUrl);
     window.open(url, "_blank", "noopener,noreferrer");
   };
@@ -199,7 +242,20 @@ export function PlayerDocumentsSection({
 
         <div className="space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-medium text-foreground">Todos os documentos</p>
+            <div>
+              <p className="text-sm font-medium text-foreground">Todos os documentos</p>
+              {(beatscodeCount > 0 || pendingCount > 0) && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {beatscodeCount > 0 && `${beatscodeCount} do Beatscode`}
+                  {beatscodeCount > 0 && pendingCount > 0 && " · "}
+                  {pendingCount > 0 && (
+                    <span className="text-amber-400">
+                      {pendingCount} aguardando arquivo (rode sync local)
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
             <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -211,59 +267,91 @@ export function PlayerDocumentsSection({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tipo de documento</TableHead>
-                  <TableHead className="w-24 text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sorted.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                      Não há dados
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  sorted.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="whitespace-nowrap">
-                        {formatDocumentDate(doc.uploadedAt)}
-                      </TableCell>
-                      <TableCell>{doc.name}</TableCell>
-                      <TableCell>{getPlayerDocumentTypeLabel(doc.documentType)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-1">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            title="Visualizar"
-                            onClick={() => handleView(doc)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            title="Remover"
-                            onClick={() => handleRemove(doc.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {sorted.length === 0 ? (
+            <div className="rounded-lg border py-8 text-center text-muted-foreground">
+              Não há dados
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {grouped.map((group) => (
+                <div key={group.key} className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {group.label} ({group.items.length})
+                  </p>
+                  <div className="overflow-x-auto rounded-lg border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Origem</TableHead>
+                          <TableHead className="w-24 text-center">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {group.items.map((doc) => {
+                          const canView = Boolean(doc.fileUrl?.trim());
+                          const isPending = doc.pendingDownload || !canView;
+                          return (
+                            <TableRow key={doc.id}>
+                              <TableCell className="whitespace-nowrap">
+                                {formatDocumentDate(doc.uploadedAt)}
+                              </TableCell>
+                              <TableCell>
+                                <span className="line-clamp-2">{doc.name}</span>
+                              </TableCell>
+                              <TableCell>
+                                {getPlayerDocumentTypeLabel(doc.documentType)}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-wrap gap-1">
+                                  {doc.source === "beatscode" && (
+                                    <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-medium text-violet-300">
+                                      Beatscode
+                                    </span>
+                                  )}
+                                  {isPending && (
+                                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
+                                      <FileWarning className="h-3 w-3" />
+                                      Pendente
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    title={canView ? "Visualizar" : "Arquivo ainda não baixado"}
+                                    disabled={!canView}
+                                    onClick={() => handleView(doc)}
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Remover"
+                                    onClick={() => handleRemove(doc.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </ExpandableSection>

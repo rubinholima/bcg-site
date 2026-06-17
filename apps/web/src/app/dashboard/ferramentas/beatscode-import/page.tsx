@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Database, FileUp, Loader2, Users, CalendarDays } from "lucide-react";
+import { Database, FileUp, Loader2, Users, CalendarDays, FileText, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -41,13 +41,25 @@ export default function BeatscodeImportPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const agendaFileRef = useRef<HTMLInputElement>(null);
+  const contractsFileRef = useRef<HTMLInputElement>(null);
   const { canAccessModule, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<BeatscodeStatus | null>(null);
   const [clubs, setClubs] = useState<ClubOption[]>([]);
   const [targetTenantSlug, setTargetTenantSlug] = useState("boston-city-fc-brasil");
   const [loading, setLoading] = useState(true);
-  const [running, setRunning] = useState<"file" | "api" | "agenda-file" | "agenda-api" | null>(null);
+  const [running, setRunning] = useState<
+    | "file"
+    | "api"
+    | "agenda-file"
+    | "agenda-api"
+    | "contracts-file"
+    | "contracts-api"
+    | "documents-sync"
+    | null
+  >(null);
   const [agendaMessage, setAgendaMessage] = useState<string | null>(null);
+  const [contractsMessage, setContractsMessage] = useState<string | null>(null);
+  const [documentsMessage, setDocumentsMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -195,6 +207,87 @@ export default function BeatscodeImportPage() {
     }
   };
 
+  const handleImportContractsFromFile = async (file: File) => {
+    setRunning("contracts-file");
+    setError(null);
+    setContractsMessage(null);
+    try {
+      const text = await file.text();
+      const exportData = JSON.parse(text) as unknown;
+      const res = await authFetch("/api/beatscode-import/import-contracts-export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ export: exportData, tenantSlug: targetTenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha ao importar contratos.");
+        return;
+      }
+      setContractsMessage(
+        `Contratos: ${data.playersUpdated ?? 0} jogador(es) atualizado(s), ${data.contractsLinked ?? 0} contrato(s) vinculado(s).` +
+          (data.skippedNoPlayer ? ` ${data.skippedNoPlayer} sem jogador correspondente.` : ""),
+      );
+    } catch {
+      setError("JSON de contratos inválido ou erro na importação.");
+    } finally {
+      setRunning(null);
+      if (contractsFileRef.current) contractsFileRef.current.value = "";
+    }
+  };
+
+  const handleImportContractsApi = async () => {
+    setRunning("contracts-api");
+    setError(null);
+    setContractsMessage(null);
+    try {
+      const res = await authFetch("/api/beatscode-import/run-contracts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug: targetTenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha na importação de contratos.");
+        return;
+      }
+      setContractsMessage(
+        `Contratos: ${data.playersUpdated ?? 0} jogador(es), ${data.contractsLinked ?? 0} contrato(s) vinculado(s).`,
+      );
+    } catch {
+      setError("Erro ao importar contratos do Beatscode.");
+    } finally {
+      setRunning(null);
+    }
+  };
+
+  const handleSyncDocuments = async () => {
+    setRunning("documents-sync");
+    setError(null);
+    setDocumentsMessage(null);
+    try {
+      const res = await authFetch("/api/beatscode-import/sync-documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug: targetTenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha ao sincronizar documentos.");
+        return;
+      }
+      setDocumentsMessage(
+        `Documentos: ${data.filesDownloaded ?? 0} arquivo(s) no S3, ${data.documentsUpdated ?? 0} atualizado(s), ` +
+          `${data.legalDocumentsCreated ?? 0} contrato(s) jurídico(s).` +
+          (data.skippedNoPath ? ` ${data.skippedNoPath} sem caminho (falta MySQL Beatscode).` : ""),
+      );
+    } catch {
+      setError("Erro ao sincronizar documentos do Beatscode.");
+    } finally {
+      setRunning(null);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -232,6 +325,18 @@ export default function BeatscodeImportPage() {
       {agendaMessage && (
         <div className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-sm text-sky-100">
           {agendaMessage}
+        </div>
+      )}
+
+      {contractsMessage && (
+        <div className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-4 py-3 text-sm text-violet-100">
+          {contractsMessage}
+        </div>
+      )}
+
+      {documentsMessage && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          {documentsMessage}
         </div>
       )}
 
@@ -353,6 +458,98 @@ export default function BeatscodeImportPage() {
               <CalendarDays className="mr-2 h-4 w-4" />
             )}
             Importar agenda direto (local)
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Contratos (Beatscode)
+          </CardTitle>
+          <CardDescription>
+            Atletas, venda futura, comissão técnica e manutenção — vinculados ao jogador pelo{" "}
+            <code className="text-xs">employeeId</code> do Beatscode. Situação ativa em{" "}
+            <strong>Dados esportivos → Situação do contrato</strong>.
+            <br />
+            Local: <code className="text-xs">pnpm --filter api beatscode:export-contracts</code> →{" "}
+            <code className="text-xs">data/beatscode-contracts-export.json</code>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <input
+            ref={contractsFileRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleImportContractsFromFile(f);
+            }}
+          />
+          <Button
+            variant="default"
+            disabled={!!running}
+            onClick={() => contractsFileRef.current?.click()}
+          >
+            {running === "contracts-file" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileUp className="mr-2 h-4 w-4" />
+            )}
+            Importar JSON de contratos
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!!running || !status?.credentialsConfigured}
+            onClick={handleImportContractsApi}
+          >
+            {running === "contracts-api" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileText className="mr-2 h-4 w-4" />
+            )}
+            Importar contratos direto (local)
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Paperclip className="h-4 w-4" />
+            PDFs e anexos (Beatscode → S3)
+          </CardTitle>
+          <CardDescription>
+            Baixa os arquivos reais (RG, contratos, etc.) e grava no <strong>S3</strong> — mesma
+            pasta que a produção usa. Depois vincula ao jogador na aba <strong>Documentos</strong> e
+            em <strong>Jurídico</strong> (contratos).
+            <br />
+            <strong>Sem banco MySQL da Beatscode</strong> usamos <strong>Playwright</strong> (Chrome
+            automatizado): entra no painel, abre cada atleta, clica em &quot;Visualizar Anexo&quot; e
+            sobe o PDF.
+            <br />
+            Local: <code className="text-xs">pnpm --filter api beatscode:sync-documents</code>
+            {` `}
+            (demora — um atleta por vez). Teste:{" "}
+            <code className="text-xs">BEATSCODE_BROWSER_PLAYER_LIMIT=3</code>
+            {` `}
+            Ver o navegador: <code className="text-xs">BEATSCODE_HEADED=1</code>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            disabled={!!running || !status?.credentialsConfigured}
+            onClick={handleSyncDocuments}
+          >
+            {running === "documents-sync" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Paperclip className="mr-2 h-4 w-4" />
+            )}
+            Sincronizar PDFs (local)
           </Button>
         </CardContent>
       </Card>
