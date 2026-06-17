@@ -5,14 +5,10 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   ACCESS_GROUP_LABELS,
-  collectTreeAccessSlugs,
   type MenuAccessTreeNode,
 } from "@/lib/dashboard-menu.config";
 import { MODULE_DISPLAY_NAMES } from "@/lib/dashboard-labels";
 
-function uniqueSlugs(slugs: string[]): string[] {
-  return [...new Set(slugs)];
-}
 
 function nodeMatchesSearch(node: MenuAccessTreeNode, q: string): boolean {
   if (!q) return true;
@@ -37,9 +33,28 @@ function filterTree(nodes: MenuAccessTreeNode[], q: string): MenuAccessTreeNode[
   return out;
 }
 
+function collectTreeLeaves(
+  node: MenuAccessTreeNode,
+): Array<{ accessSlug: string; moduleSlug?: string }> {
+  if (node.kind === "leaf" && node.accessSlug) {
+    return [{ accessSlug: node.accessSlug, moduleSlug: node.moduleSlug }];
+  }
+  return node.children.flatMap(collectTreeLeaves);
+}
+
+function nodeHasEnabledAccess(
+  node: MenuAccessTreeNode,
+  isEnabled: (accessSlug: string, moduleSlug?: string) => boolean,
+): boolean {
+  if (node.kind === "leaf" && node.accessSlug) {
+    return isEnabled(node.accessSlug, node.moduleSlug);
+  }
+  return node.children.some((child) => nodeHasEnabledAccess(child, isEnabled));
+}
+
 interface AccessPermissionTreeProps {
   tree: MenuAccessTreeNode[];
-  isEnabled: (accessSlug: string) => boolean;
+  isEnabled: (accessSlug: string, moduleSlug?: string) => boolean;
   onToggleAccess: (
     accessSlug: string,
     value: boolean,
@@ -47,6 +62,7 @@ interface AccessPermissionTreeProps {
   ) => void;
   search?: string;
   readOnly?: boolean;
+  expandWithAccess?: boolean;
 }
 
 function AccessTreeNodeRow({
@@ -58,12 +74,13 @@ function AccessTreeNodeRow({
   onToggleAccess,
   readOnly,
   searchActive,
+  expandWithAccess,
 }: {
   node: MenuAccessTreeNode;
   depth: number;
   expanded: boolean;
   onToggleExpand: () => void;
-  isEnabled: (accessSlug: string) => boolean;
+  isEnabled: (accessSlug: string, moduleSlug?: string) => boolean;
   onToggleAccess: (
     accessSlug: string,
     value: boolean,
@@ -71,14 +88,15 @@ function AccessTreeNodeRow({
   ) => void;
   readOnly?: boolean;
   searchActive: boolean;
+  expandWithAccess?: boolean;
 }) {
   const isDepartment = depth === 0;
   const isSubSection = depth === 1 && node.kind === "group";
-  const leafSlugs = uniqueSlugs(collectTreeAccessSlugs(node));
-  const enabledCount = leafSlugs.filter((s) => isEnabled(s)).length;
+  const leaves = collectTreeLeaves(node);
+  const enabledCount = leaves.filter((leaf) => isEnabled(leaf.accessSlug, leaf.moduleSlug)).length;
 
   if (node.kind === "leaf" && node.accessSlug) {
-    const on = isEnabled(node.accessSlug);
+    const on = isEnabled(node.accessSlug, node.moduleSlug);
     const modLabel = node.moduleSlug ? (MODULE_DISPLAY_NAMES[node.moduleSlug] ?? node.moduleSlug) : null;
     const groupLabel =
       node.accessGroup && ACCESS_GROUP_LABELS[node.accessGroup]
@@ -174,9 +192,9 @@ function AccessTreeNodeRow({
             >
               {node.label}
             </h3>
-            {leafSlugs.length > 0 ? (
+            {leaves.length > 0 ? (
               <p className="text-xs text-muted-foreground mt-0.5">
-                {enabledCount}/{leafSlugs.length} itens liberados — marque cada linha abaixo
+                {enabledCount}/{leaves.length} itens liberados — marque cada linha abaixo
               </p>
             ) : null}
           </div>
@@ -198,6 +216,7 @@ function AccessTreeNodeRow({
               onToggleAccess={onToggleAccess}
               readOnly={readOnly}
               searchActive={searchActive}
+              expandWithAccess={expandWithAccess}
             />
           ))}
         </div>
@@ -213,10 +232,11 @@ function AccessTreeNode({
   onToggleAccess,
   readOnly,
   searchActive,
+  expandWithAccess,
 }: {
   node: MenuAccessTreeNode;
   depth: number;
-  isEnabled: (accessSlug: string) => boolean;
+  isEnabled: (accessSlug: string, moduleSlug?: string) => boolean;
   onToggleAccess: (
     accessSlug: string,
     value: boolean,
@@ -224,12 +244,21 @@ function AccessTreeNode({
   ) => void;
   readOnly?: boolean;
   searchActive: boolean;
+  expandWithAccess?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(
+    () => expandWithAccess === true && nodeHasEnabledAccess(node, isEnabled),
+  );
 
   useEffect(() => {
     if (searchActive) setExpanded(true);
   }, [searchActive]);
+
+  useEffect(() => {
+    if (expandWithAccess && nodeHasEnabledAccess(node, isEnabled)) {
+      setExpanded(true);
+    }
+  }, [expandWithAccess, node, isEnabled]);
 
   return (
     <AccessTreeNodeRow
@@ -241,6 +270,7 @@ function AccessTreeNode({
       onToggleAccess={onToggleAccess}
       readOnly={readOnly}
       searchActive={searchActive}
+      expandWithAccess={expandWithAccess}
     />
   );
 }
@@ -251,6 +281,7 @@ export function AccessPermissionTree({
   onToggleAccess,
   search = "",
   readOnly = false,
+  expandWithAccess = false,
 }: AccessPermissionTreeProps) {
   const q = search.trim().toLowerCase();
   const filtered = useMemo(() => filterTree(tree, q), [tree, q]);
@@ -275,6 +306,7 @@ export function AccessPermissionTree({
           onToggleAccess={onToggleAccess}
           readOnly={readOnly}
           searchActive={searchActive}
+          expandWithAccess={expandWithAccess}
         />
       ))}
     </div>

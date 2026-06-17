@@ -134,8 +134,18 @@ interface RoleAccessSummary {
   role: ManagedRoleKey;
   moduleCount: number;
   sectionCount: number;
-  byDepartment: { label: string; modules: string[] }[];
+  byDepartment: { label: string; modules: { slug: string; label: string }[] }[];
   enabledMenuItems: string[];
+}
+
+function permissionEnabled(
+  map: Map<string, boolean>,
+  accessSlug: string,
+  moduleSlug?: string,
+): boolean {
+  if (map.get(accessSlug)) return true;
+  if (moduleSlug && moduleSlug !== accessSlug && map.get(moduleSlug)) return true;
+  return false;
 }
 
 function buildRoleAccessSummary(
@@ -146,22 +156,28 @@ function buildRoleAccessSummary(
   menuTree: MenuAccessTreeNode[],
 ): RoleAccessSummary {
   const enabledRows = rows.filter((d) => roleChecked(d, role));
-  const enabledSlugs = new Set(
-    moduleState.filter((m) => roleChecked(m, role)).map((m) => m.slug),
+  const enabledPermMap = new Map(
+    moduleState.filter((m) => roleChecked(m, role)).map((m) => [m.slug, true] as const),
   );
 
-  const byDepartment: { label: string; modules: string[] }[] = [];
+  const byDepartment: { label: string; modules: { slug: string; label: string }[] }[] = [];
   for (const dept of departments) {
     const mods = enabledRows
       .filter((r) => r.departmentId === dept.id)
-      .map((r) => MODULE_DISPLAY_NAMES[r.slug] ?? r.name);
+      .map((r) => ({
+        slug: r.slug,
+        label: MODULE_DISPLAY_NAMES[r.slug] ?? r.name,
+      }));
     if (mods.length > 0) {
       byDepartment.push({ label: dept.label, modules: mods });
     }
   }
   const orphanMods = enabledRows
     .filter((r) => r.departmentId === "outros")
-    .map((r) => MODULE_DISPLAY_NAMES[r.slug] ?? r.name);
+    .map((r) => ({
+      slug: r.slug,
+      label: MODULE_DISPLAY_NAMES[r.slug] ?? r.name,
+    }));
   if (orphanMods.length > 0) {
     byDepartment.push({ label: "Outros módulos", modules: orphanMods });
   }
@@ -170,7 +186,7 @@ function buildRoleAccessSummary(
   const walkTree = (nodes: MenuAccessTreeNode[]) => {
     for (const node of nodes) {
       if (node.kind === "leaf" && node.accessSlug) {
-        if (enabledSlugs.has(node.accessSlug)) {
+        if (permissionEnabled(enabledPermMap, node.accessSlug, node.moduleSlug)) {
           enabledMenuItems.push(node.label);
         }
       } else if (node.children.length > 0) {
@@ -276,7 +292,19 @@ function normalizeModuleRows(data: unknown): ModulePermission[] {
   });
 }
 
-function AccessSummaryPanel({ summary, hint }: { summary: RoleAccessSummary; hint?: string }) {
+function AccessSummaryPanel({
+  summary,
+  hint,
+  editable,
+  isModuleEnabled,
+  onToggleModule,
+}: {
+  summary: RoleAccessSummary;
+  hint?: string;
+  editable?: boolean;
+  isModuleEnabled?: (slug: string) => boolean;
+  onToggleModule?: (slug: string, value: boolean) => void;
+}) {
   const roleLabel = MANAGED_ROLE_LABELS[summary.role];
   return (
     <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-3">
@@ -288,9 +316,15 @@ function AccessSummaryPanel({ summary, hint }: { summary: RoleAccessSummary; hin
             : ""}
         </p>
         {hint ? <p className="text-xs text-muted-foreground mt-1">{hint}</p> : null}
+        {editable ? (
+          <p className="text-xs text-muted-foreground mt-1">
+            Marque ou desmarque abaixo e use a árvore de menu para liberar itens adicionais. Depois
+            clique em <strong className="text-foreground">Salvar alterações</strong>.
+          </p>
+        ) : null}
       </div>
 
-      {summary.moduleCount === 0 ? (
+      {summary.moduleCount === 0 && !editable ? (
         <p className="text-sm text-muted-foreground">Nenhum módulo liberado para este perfil.</p>
       ) : (
         <div className="space-y-3">
@@ -298,23 +332,44 @@ function AccessSummaryPanel({ summary, hint }: { summary: RoleAccessSummary; hin
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
               Módulos com acesso
             </p>
-            <div className="space-y-2">
-              {summary.byDepartment.map((dept) => (
-                <div key={dept.label}>
-                  <p className="text-xs font-medium text-foreground/90 mb-1">{dept.label}</p>
-                  <ul className="flex flex-wrap gap-1.5">
-                    {dept.modules.map((mod) => (
-                      <li
-                        key={`${dept.label}-${mod}`}
-                        className="inline-flex items-center rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 text-xs font-medium text-foreground"
-                      >
-                        {mod}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            {summary.moduleCount === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Nenhum módulo liberado — use a árvore abaixo para marcar permissões.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {summary.byDepartment.map((dept) => (
+                  <div key={dept.label}>
+                    <p className="text-xs font-medium text-foreground/90 mb-1">{dept.label}</p>
+                    <ul className="flex flex-wrap gap-2">
+                      {dept.modules.map((mod) =>
+                        editable && onToggleModule ? (
+                          <li key={`${dept.label}-${mod.slug}`}>
+                            <label className="inline-flex items-center gap-2 rounded-md border border-primary/25 bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-foreground cursor-pointer hover:bg-primary/15">
+                              <input
+                                type="checkbox"
+                                checked={isModuleEnabled?.(mod.slug) ?? true}
+                                onChange={(e) => onToggleModule(mod.slug, e.target.checked)}
+                                className="h-4 w-4 rounded border-input accent-primary shrink-0"
+                                aria-label={mod.label}
+                              />
+                              {mod.label}
+                            </label>
+                          </li>
+                        ) : (
+                          <li
+                            key={`${dept.label}-${mod.slug}`}
+                            className="inline-flex items-center rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 text-xs font-medium text-foreground"
+                          >
+                            {mod.label}
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {summary.enabledMenuItems.length > 0 ? (
@@ -729,19 +784,40 @@ export default function ModulosPage() {
   }, [mergedModuleState, selectedRole]);
 
   const isAccessEnabled = useCallback(
-    (accessSlug: string) => {
+    (accessSlug: string, moduleSlug?: string) => {
       if (accessMode === "role") {
-        return rolePermissionsMap.get(accessSlug) ?? false;
+        return permissionEnabled(rolePermissionsMap, accessSlug, moduleSlug);
       }
       if (userCustomAccess) {
-        return userPermissions[accessSlug] ?? false;
+        return (
+          Boolean(userPermissions[accessSlug]) ||
+          Boolean(moduleSlug && moduleSlug !== accessSlug && userPermissions[moduleSlug])
+        );
       }
       const userRole = selectedUserRole as ManagedRoleKey;
       const mod = mergedModuleState.find((m) => m.slug === accessSlug);
-      return mod ? roleChecked(mod, userRole) : false;
+      const legacyMod =
+        moduleSlug && moduleSlug !== accessSlug
+          ? mergedModuleState.find((m) => m.slug === moduleSlug)
+          : undefined;
+      return (
+        (mod ? roleChecked(mod, userRole) : false) ||
+        (legacyMod ? roleChecked(legacyMod, userRole) : false)
+      );
     },
     [accessMode, rolePermissionsMap, userCustomAccess, userPermissions, selectedUserRole, mergedModuleState],
   );
+
+  const syncModuleSlugPermission = (
+    accessSlug: string,
+    value: boolean,
+    opts?: { moduleSlug?: string; accessGroup?: string },
+  ) => {
+    if (opts?.accessGroup) return;
+    if (opts?.moduleSlug && opts.moduleSlug !== accessSlug) {
+      handleModuleToggle(opts.moduleSlug, selectedRole, value);
+    }
+  };
 
   const handleTreeToggleAccess = (
     accessSlug: string,
@@ -750,27 +826,13 @@ export default function ModulosPage() {
   ) => {
     if (accessMode === "role") {
       handleModuleToggle(accessSlug, selectedRole, value);
-      // Ao desmarcar, desliga também o slug legado compartilhado (ex.: requisicoes)
-      // para não ficar “preso” marcado via permissão antiga fora da árvore.
-      if (
-        !value &&
-        opts?.moduleSlug &&
-        opts.moduleSlug !== accessSlug &&
-        !opts.accessGroup
-      ) {
-        handleModuleToggle(opts.moduleSlug, selectedRole, false);
-      }
+      syncModuleSlugPermission(accessSlug, value, opts);
       return;
     }
     setUserPermissions((prev) => {
       const next = { ...prev, [accessSlug]: value };
-      if (
-        !value &&
-        opts?.moduleSlug &&
-        opts.moduleSlug !== accessSlug &&
-        !opts.accessGroup
-      ) {
-        next[opts.moduleSlug] = false;
+      if (opts?.moduleSlug && opts.moduleSlug !== accessSlug && !opts?.accessGroup) {
+        next[opts.moduleSlug] = value;
       }
       return next;
     });
@@ -1140,6 +1202,9 @@ export default function ModulosPage() {
               <AccessSummaryPanel
                 summary={roleSummary}
                 hint='Perfis servem como modelo para grupos; use "Por usuário" para exceções individuais.'
+                editable
+                isModuleEnabled={(slug) => rolePermissionsMap.get(slug) ?? false}
+                onToggleModule={(slug, value) => handleModuleToggle(slug, selectedRole, value)}
               />
             ) : userEffectiveSummary ? (
               <AccessSummaryPanel
@@ -1168,6 +1233,7 @@ export default function ModulosPage() {
                 onToggleAccess={handleTreeToggleAccess}
                 search={search}
                 readOnly={accessMode === "user" && !userCustomAccess}
+                expandWithAccess={accessMode === "role"}
               />
             )}
           </CardContent>
