@@ -72,7 +72,7 @@
 ## **COMMITS / BRANCH**
 
 - **Branch:** `develop`
-- **Último commit:** `d2a0dc0` — chore: encerramento 17/06 — diario e settings VS Code
+- **Último commit:** `e9e104b` — docs: corrige hash do encerramento 17/06 no diario (`d2a0dc0` encerramento + diário)
 - **Push:** enviado para `origin/develop`
 
 ## **PENDÊNCIAS / PRÓXIMO**
