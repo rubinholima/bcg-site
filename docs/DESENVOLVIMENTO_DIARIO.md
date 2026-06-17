@@ -72,7 +72,7 @@
 ## **COMMITS / BRANCH**
 
 - **Branch:** `develop`
-- **Último commit:** `c7bc497` — chore: encerramento 17/06 — diario e settings VS Code
+- **Último commit:** `d2a0dc0` — chore: encerramento 17/06 — diario e settings VS Code
 - **Push:** enviado para `origin/develop`
 
 ## **PENDÊNCIAS / PRÓXIMO**
