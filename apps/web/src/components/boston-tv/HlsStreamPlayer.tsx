@@ -35,8 +35,11 @@ function candidateUrls(url: string): string[] {
   const u = url.trim();
   const out = [u];
   const lower = u.toLowerCase();
+  if (/\/livelan\/?$/.test(lower)) {
+    out.push(`${u.replace(/\/$/, "")}/stream.m3u8`);
+  }
   if (!lower.includes(".m3u8") && !lower.includes("/stream?")) {
-    out.push(`${u}.m3u8`, `${u}/index.m3u8`);
+    out.push(`${u}.m3u8`, `${u}/index.m3u8`, `${u.replace(/\/$/, "")}/stream.m3u8`);
   }
   return [...new Set(out)];
 }

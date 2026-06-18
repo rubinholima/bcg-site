@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
@@ -148,6 +149,11 @@ export default function EditBostonTvPlaylistPage() {
   const [editVmixChannelId, setEditVmixChannelId] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
+
+  const showFeedback = (message: string, title = "Atenção") => {
+    setFeedback({ title, message });
+  };
 
   const loadLiveLabels = useCallback(async (tenantId: string) => {
     try {
@@ -212,7 +218,7 @@ export default function EditBostonTvPlaylistPage() {
       );
       const found = list?.items?.find((c) => c.id === iptvChannelId);
       if (!found) {
-        alert("Canal não encontrado ou não liberado.");
+        showFeedback("Canal não encontrado ou não liberado.");
         return;
       }
       url = found.streamUrl;
@@ -226,7 +232,7 @@ export default function EditBostonTvPlaylistPage() {
       );
       const found = list?.items?.find((c) => c.id === vmixChannelId);
       if (!found) {
-        alert("Fonte vMix não encontrada.");
+        showFeedback("Fonte vMix não encontrada.");
         return;
       }
       if (found.deliveryType === "ndi" && found.ndiSourceName) {
@@ -327,7 +333,7 @@ export default function EditBostonTvPlaylistPage() {
         );
         const found = list?.items?.find((c) => c.id === editIptvChannelId);
         if (!found) {
-          alert("Canal não encontrado ou não liberado.");
+          showFeedback("Canal não encontrado ou não liberado.");
           return;
         }
         url = found.streamUrl;
@@ -341,7 +347,7 @@ export default function EditBostonTvPlaylistPage() {
         );
         const found = list?.items?.find((c) => c.id === editVmixChannelId);
         if (!found) {
-          alert("Fonte vMix não encontrada.");
+          showFeedback("Fonte vMix não encontrada.");
           return;
         }
         if (found.deliveryType === "ndi" && found.ndiSourceName) {
@@ -723,6 +729,14 @@ export default function EditBostonTvPlaylistPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FeedbackModal
+        open={feedback !== null}
+        onOpenChange={(open) => !open && setFeedback(null)}
+        title={feedback?.title ?? ""}
+        message={feedback?.message ?? ""}
+        variant="warning"
+      />
     </div>
   );
 }

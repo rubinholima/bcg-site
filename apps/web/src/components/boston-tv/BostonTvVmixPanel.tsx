@@ -2,12 +2,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, Radio, Save, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import { api } from "@/lib/api";
+import { normalizeVmixStreamUrl } from "@/lib/vmix-stream-url";
 
 export type VmixChannelOption = {
   id: string;
@@ -25,6 +37,12 @@ interface BostonTvVmixPanelProps {
   embedded?: boolean;
 }
 
+type FeedbackState = {
+  title: string;
+  message: string;
+  variant: "error" | "success" | "warning" | "info";
+};
+
 export function formatVmixChannelLabel(ch: Pick<VmixChannelOption, "name" | "deliveryType">): string {
   const base = ch.name.trim() || "Fonte vMix";
   return ch.deliveryType === "ndi" ? `${base} (NDI)` : base;
@@ -34,12 +52,19 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
   const [channels, setChannels] = useState<VmixChannelOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const [newName, setNewName] = useState("vMix — Canal 1");
   const [newDelivery, setNewDelivery] = useState<"stream" | "ndi">("ndi");
   const [newUrl, setNewUrl] = useState("");
   const [newNdiName, setNewNdiName] = useState("vMix - Output 1");
   const [creating, setCreating] = useState(false);
+
+  const showError = (message: string, title = "Erro") => {
+    setFeedback({ title, message, variant: "error" });
+  };
 
   const load = useCallback(async () => {
     if (!tenantId) return;
@@ -63,16 +88,24 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
   const saveChannel = async (ch: VmixChannelOption, patch: Partial<VmixChannelOption>) => {
     setSavingId(ch.id);
     try {
+      const deliveryType = patch.deliveryType ?? ch.deliveryType ?? "stream";
+      const streamUrl =
+        deliveryType === "stream"
+          ? normalizeVmixStreamUrl(patch.streamUrl ?? ch.streamUrl)
+          : "";
       await api.patch(`/boston-tv/vmix/channels/${ch.id}`, {
         name: patch.name ?? ch.name,
-        deliveryType: patch.deliveryType ?? ch.deliveryType ?? "stream",
-        streamUrl: patch.streamUrl ?? ch.streamUrl,
-        ndiSourceName: patch.ndiSourceName ?? ch.ndiSourceName,
+        deliveryType,
+        streamUrl,
+        ndiSourceName:
+          deliveryType === "ndi"
+            ? (patch.ndiSourceName ?? ch.ndiSourceName ?? "").trim() || null
+            : null,
         enabled: patch.enabled ?? ch.enabled,
       });
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Erro ao salvar fonte vMix");
+      showError(e instanceof Error ? e.message : "Erro ao salvar fonte vMix");
     } finally {
       setSavingId(null);
     }
@@ -88,7 +121,8 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
         tenantId,
         name: newName.trim(),
         deliveryType: newDelivery,
-        streamUrl: newDelivery === "stream" ? newUrl.trim() : "",
+        streamUrl:
+          newDelivery === "stream" ? normalizeVmixStreamUrl(newUrl) : "",
         ndiSourceName: newDelivery === "ndi" ? newNdiName.trim() : undefined,
       });
       setNewUrl("");
@@ -96,25 +130,29 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
       setNewName(`vMix — Canal ${channels.length + 2}`);
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Erro ao criar fonte vMix");
+      showError(e instanceof Error ? e.message : "Erro ao criar fonte vMix");
     } finally {
       setCreating(false);
     }
   };
 
-  const removeChannel = async (id: string) => {
-    if (!confirm("Remover esta fonte vMix? Itens de playlist que a usam deixam de tocar.")) return;
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
     try {
-      await api.delete(`/boston-tv/vmix/channels/${id}`);
+      await api.delete(`/boston-tv/vmix/channels/${deleteId}`);
+      setDeleteId(null);
       await load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Erro ao remover");
+      showError(e instanceof Error ? e.message : "Erro ao remover");
+    } finally {
+      setDeleting(false);
     }
   };
 
   const deliveryOptions = [
     { value: "ndi", label: "NDI — baixa latência (app BCG TV)" },
-    { value: "stream", label: "Stream HTTP — HLS / MPEG-TS" },
+    { value: "stream", label: "Stream HTTP — HLS / MPEG-TS (LiveLAN)" },
   ];
 
   const body = (
@@ -122,9 +160,11 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
       <p className="text-sm text-muted-foreground leading-relaxed">
         Cadastre as saídas do <strong className="text-foreground">vMix</strong>. Para evento ao vivo com
         latência mínima, use <strong className="text-foreground">NDI</strong> (mesmo nome que aparece no
-        NDI Studio Monitor, ex.: <code className="text-foreground">vMix - Output 1</code>). Nas playlists,
-        escolha <strong className="text-foreground">Fonte vMix</strong> — o app BCG TV na TV recebe o NDI
-        direto.
+        NDI Studio Monitor, ex.: <code className="text-foreground">vMix - Output 1</code>). Para{" "}
+        <strong className="text-foreground">navegador na TV</strong> (LG, etc.), use{" "}
+        <strong className="text-foreground">Stream HTTP</strong> com LiveLAN — ex.:{" "}
+        <code className="text-foreground">http://10.0.0.2:8088/livelan</code> (o sistema completa com{" "}
+        <code className="text-foreground">/stream.m3u8</code>).
       </p>
 
       {loading ? (
@@ -134,32 +174,29 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
         </p>
       ) : null}
 
-      {channels.map((ch) => {
-        const isNdi = ch.deliveryType === "ndi";
-        return (
-          <div
-            key={ch.id}
-            className="rounded-lg border border-border bg-card/50 p-4 space-y-3"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-medium text-foreground flex items-center gap-2">
-                <Radio className="h-4 w-4 text-amber-500" />
-                {formatVmixChannelLabel(ch)}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-destructive"
-                onClick={() => void removeChannel(ch.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-            <ChannelEditor ch={ch} saving={savingId === ch.id} onSave={saveChannel} deliveryOptions={deliveryOptions} />
+      {channels.map((ch) => (
+        <div
+          key={ch.id}
+          className="rounded-lg border border-border bg-card/50 p-4 space-y-3"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Radio className="h-4 w-4 text-amber-500" />
+              {formatVmixChannelLabel(ch)}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive"
+              onClick={() => setDeleteId(ch.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-        );
-      })}
+          <ChannelEditor ch={ch} saving={savingId === ch.id} onSave={saveChannel} deliveryOptions={deliveryOptions} />
+        </div>
+      ))}
 
       {channels.length < 8 ? (
         <div className="rounded-lg border border-dashed border-border p-4 space-y-3">
@@ -196,11 +233,11 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
               </div>
             ) : (
               <div className="space-y-1 sm:col-span-2">
-                <Label>URL HLS / TS do vMix</Label>
+                <Label>URL LiveLAN / HLS do vMix</Label>
                 <Input
                   value={newUrl}
                   onChange={(e) => setNewUrl(e.target.value)}
-                  placeholder="http://192.168.x.x:8088/hls/stream.m3u8"
+                  placeholder="http://10.0.0.2:8088/livelan"
                   className="text-foreground font-mono text-sm"
                 />
               </div>
@@ -216,6 +253,38 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
           </Button>
         </div>
       ) : null}
+
+      <FeedbackModal
+        open={feedback !== null}
+        onOpenChange={(open) => !open && setFeedback(null)}
+        title={feedback?.title ?? ""}
+        message={feedback?.message ?? ""}
+        variant={feedback?.variant ?? "error"}
+      />
+
+      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover fonte vMix?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Itens de playlist que usam esta fonte deixam de tocar até você escolher outra.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 
@@ -259,7 +328,7 @@ function ChannelEditor({
     void onSave(ch, {
       name: name.trim(),
       deliveryType: delivery,
-      streamUrl: delivery === "stream" ? streamUrl.trim() : "",
+      streamUrl: delivery === "stream" ? normalizeVmixStreamUrl(streamUrl) : "",
       ndiSourceName: delivery === "ndi" ? ndiName.trim() : null,
     });
   };
@@ -294,15 +363,18 @@ function ChannelEditor({
           </div>
         ) : (
           <div className="space-y-1 sm:col-span-2">
-            <Label>URL do stream (vMix Output)</Label>
+            <Label>URL do stream (vMix LiveLAN / HLS)</Label>
             <Input
               value={streamUrl}
               onChange={(e) => setStreamUrl(e.target.value)}
-              placeholder="http://IP-DO-VMIX:8088/hls/stream.m3u8"
+              placeholder="http://10.0.0.2:8088/livelan"
               className="text-foreground font-mono text-sm"
             />
             {ch.playable === false ? (
-              <p className="text-xs text-amber-500">URL não parece stream HLS/TS válido.</p>
+              <p className="text-xs text-amber-500">
+                URL inválida ou LiveLAN sem stream ativo no vMix. Use o IP do PC do vMix e confira se Stream está
+                vermelho.
+              </p>
             ) : null}
           </div>
         )}

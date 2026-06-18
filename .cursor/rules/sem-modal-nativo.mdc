@@ -1,0 +1,26 @@
+---
+description: Proibir alert/confirm nativos do browser — usar FeedbackModal e AlertDialog
+alwaysApply: true
+---
+
+# Sem modal nativo do Windows/browser
+
+**PROIBIDO** em `apps/web` (e código novo do dashboard):
+
+- `window.alert`
+- `window.confirm`
+- `window.prompt`
+- `alert(...)` / `confirm(...)` / `prompt(...)` para feedback ou confirmação ao usuário
+
+## O que usar
+
+| Situação | Componente |
+|----------|------------|
+| Erro, aviso, sucesso informativo | `FeedbackModal` (`@/components/ui/feedback-modal`) |
+| Confirmação destrutiva (apagar, resetar) | `AlertDialog` (`@/components/ui/alert-dialog`) |
+| Formulário / escolha | `Dialog` do shadcn |
+
+## Ao implementar ou corrigir
+
+- Se encontrar `alert`/`confirm` no arquivo que está editando, **substitua** pelo modal do projeto.
+- Mensagens em **pt-BR**, legíveis no tema escuro.

@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import { api } from "@/lib/api";
@@ -93,6 +94,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
   const [pickMode, setPickMode] = useState<HallSyncMode>(BOSTON_TV_HALL_SYNC_FOLLOW);
   const [pickPlaylistId, setPickPlaylistId] = useState("");
   const [resetAllOpen, setResetAllOpen] = useState(false);
+  const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
 
   const load = useCallback(async () => {
     if (!tenantId) {
@@ -178,7 +180,10 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
       picked.displayMode === "playlist" &&
       !pickPlaylistId
     ) {
-      alert("Escolha a playlist para o modo individual.");
+      setFeedback({
+        title: "Playlist obrigatória",
+        message: "Escolha a playlist para o modo individual.",
+      });
       return;
     }
     setActing(true);
@@ -467,6 +472,14 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FeedbackModal
+        open={feedback !== null}
+        onOpenChange={(open) => !open && setFeedback(null)}
+        title={feedback?.title ?? ""}
+        message={feedback?.message ?? ""}
+        variant="warning"
+      />
     </div>
   );
 }

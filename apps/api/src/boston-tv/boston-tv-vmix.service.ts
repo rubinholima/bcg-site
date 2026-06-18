@@ -29,6 +29,19 @@ export class BostonTvVmixService {
     return v === 'ndi' ? 'ndi' : 'stream';
   }
 
+  private normalizeStreamUrl(url: string | null | undefined): string {
+    const u = (url ?? '').trim();
+    if (!u) return u;
+    if (/\/livelan\/?$/i.test(u)) {
+      return `${u.replace(/\/$/, '')}/stream.m3u8`;
+    }
+    return u;
+  }
+
+  private safeTrim(value: string | null | undefined): string {
+    return (value ?? '').trim();
+  }
+
   async listChannels(
     tenantId: string,
     allowedTenantIds: string[] | null,
@@ -68,7 +81,7 @@ export class BostonTvVmixService {
   ) {
     this.assertTenant(allowedTenantIds, input.tenantId);
     const deliveryType = this.normalizeDeliveryType(input.deliveryType);
-    const streamUrl = (input.streamUrl ?? '').trim();
+    const streamUrl = this.normalizeStreamUrl(input.streamUrl);
     const ndiSourceName = (input.ndiSourceName ?? '').trim();
 
     if (deliveryType === 'ndi') {
@@ -138,11 +151,13 @@ export class BostonTvVmixService {
         : this.normalizeDeliveryType(ch.deliveryType);
 
     const nextStreamUrl =
-      input.streamUrl !== undefined ? input.streamUrl.trim() : ch.streamUrl;
+      input.streamUrl !== undefined
+        ? this.normalizeStreamUrl(input.streamUrl)
+        : ch.streamUrl;
     const nextNdiName =
       input.ndiSourceName !== undefined
-        ? input.ndiSourceName.trim()
-        : (ch.ndiSourceName ?? '');
+        ? this.safeTrim(input.ndiSourceName)
+        : this.safeTrim(ch.ndiSourceName);
 
     if (deliveryType === 'ndi') {
       if (!nextNdiName) {

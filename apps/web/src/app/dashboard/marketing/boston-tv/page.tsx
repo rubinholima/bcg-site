@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -124,6 +125,11 @@ export default function BostonTvDashboardPage() {
   const [screensOpen, setScreensOpen] = useState(true);
   const [iptvOpen, setIptvOpen] = useState(true);
   const [vmixOpen, setVmixOpen] = useState(true);
+  const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
+
+  const showFeedback = (message: string, title = "Atenção") => {
+    setFeedback({ title, message });
+  };
 
   const [deleteScreenId, setDeleteScreenId] = useState<string | null>(null);
   const [regenerateScreenId, setRegenerateScreenId] = useState<string | null>(null);
@@ -285,7 +291,7 @@ export default function BostonTvDashboardPage() {
     try {
       return JSON.parse(raw) as unknown;
     } catch {
-      alert("JSON da agenda inválido. Deixe vazio para 24h ou use o exemplo.");
+      showFeedback("JSON da agenda inválido. Deixe vazio para 24h ou use o exemplo.", "Agenda inválida");
       return null;
     }
   };
@@ -293,7 +299,7 @@ export default function BostonTvDashboardPage() {
   const buildScreenPayload = () => {
     if (screenContentMode === "iptv") {
       if (!screenIptvChannelId) {
-        alert("Escolha um canal IPTV liberado.");
+        showFeedback("Escolha um canal IPTV liberado.");
         return null;
       }
       return {
@@ -307,7 +313,7 @@ export default function BostonTvDashboardPage() {
         screenHallSyncMode === BOSTON_TV_HALL_SYNC_INDEPENDENT &&
         !screenPlaylistId
       ) {
-        alert("Modo individual exige uma playlist na tela.");
+        showFeedback("Modo individual exige uma playlist na tela.");
         return null;
       }
       return {
@@ -911,6 +917,14 @@ export default function BostonTvDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FeedbackModal
+        open={feedback !== null}
+        onOpenChange={(open) => !open && setFeedback(null)}
+        title={feedback?.title ?? ""}
+        message={feedback?.message ?? ""}
+        variant="warning"
+      />
     </div>
   );
 }

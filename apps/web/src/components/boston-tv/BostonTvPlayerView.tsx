@@ -328,10 +328,10 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   if (current.contentType === "ndi_stream") {
     return (
       <div className="relative flex h-screen w-screen flex-col items-center justify-center bg-black px-8 text-center text-zinc-300">
-        <p className="text-xl font-medium text-white">Transmissão ao vivo</p>
+        <p className="text-xl font-medium text-white">Transmissão ao vivo (NDI)</p>
         <p className="mt-4 max-w-lg text-sm leading-relaxed text-zinc-400">
-          Configure a URL de stream (HLS) da fonte vMix no dashboard para reproduzir no
-          navegador.
+          Esta fonte usa NDI — só funciona no app BCG TV. No navegador, cadastre a mesma fonte vMix com
+          URL LiveLAN (HLS) em Marketing → Boston TV → Fontes vMix.
         </p>
         {pauseOverlay}
       </div>
