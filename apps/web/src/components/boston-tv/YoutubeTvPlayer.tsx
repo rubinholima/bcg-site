@@ -10,6 +10,8 @@ interface YoutubeTvPlayerProps {
   /** Segundo alvo do Hall — corrige drift sem recarregar iframe. */
   syncTargetSeconds?: number;
   paused?: boolean;
+  /** Preenche o container pai (modo vertical com rotação). */
+  fillParent?: boolean;
 }
 
 function requestPageFullscreen(): void {
@@ -56,6 +58,7 @@ export function YoutubeTvPlayer({
   startSeconds = 0,
   syncTargetSeconds,
   paused = false,
+  fillParent = false,
 }: YoutubeTvPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const startAtRef = useRef(startSeconds);
@@ -141,7 +144,13 @@ export function YoutubeTvPlayer({
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-black">
+    <div
+      className={
+        fillParent
+          ? "relative h-full w-full overflow-hidden bg-black"
+          : "relative h-screen w-screen overflow-hidden bg-black"
+      }
+    >
       <iframe
         ref={iframeRef}
         key={itemKey}

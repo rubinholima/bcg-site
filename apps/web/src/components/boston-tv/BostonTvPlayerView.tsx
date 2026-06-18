@@ -15,6 +15,7 @@ import {
   bostonTvMediaObjectClass,
   normalizeBostonTvDisplayOrientation,
 } from "@/lib/boston-tv-display-orientation";
+import { BostonTvPlayerShell } from "@/components/boston-tv/BostonTvPlayerShell";
 
 export type BostonTvPlayerItem = {
   id: string;
@@ -302,14 +303,13 @@ export function BostonTvPlayerView({ token }: { token: string }) {
     ? `${current.id}-v${hallSync.playlistVersion}-i${displayIdx}`
     : current.id;
 
-  const mediaClass = bostonTvMediaObjectClass(
-    normalizeBostonTvDisplayOrientation(payload.displayOrientation),
-  );
+  const displayOrientation = normalizeBostonTvDisplayOrientation(payload.displayOrientation);
+  const mediaClass = bostonTvMediaObjectClass(displayOrientation);
 
   if (current.contentType === "image_url") {
     const src = getPublicImageUrl(current.url) || current.url;
     return (
-      <div className="relative h-screen w-screen bg-black">
+      <BostonTvPlayerShell displayOrientation={displayOrientation} pauseOverlay={pauseOverlay}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           key={mediaKey}
@@ -317,15 +317,14 @@ export function BostonTvPlayerView({ token }: { token: string }) {
           alt=""
           className={mediaClass}
         />
-        {pauseOverlay}
-      </div>
+      </BostonTvPlayerShell>
     );
   }
 
   if (current.contentType === "video_url") {
     const src = getPublicImageUrl(current.url) || current.url;
     return (
-      <div className="relative h-screen w-screen bg-black">
+      <BostonTvPlayerShell displayOrientation={displayOrientation} pauseOverlay={pauseOverlay}>
         <SyncedVideo
           src={src}
           itemKey={mediaKey}
@@ -335,21 +334,21 @@ export function BostonTvPlayerView({ token }: { token: string }) {
           mediaClassName={mediaClass}
           onEndedLocal={() => setIdx((i) => (i + 1) % items.length)}
         />
-        {pauseOverlay}
-      </div>
+      </BostonTvPlayerShell>
     );
   }
 
   if (current.contentType === "ndi_stream") {
     return (
-      <div className="relative flex h-screen w-screen flex-col items-center justify-center bg-black px-8 text-center text-zinc-300">
-        <p className="text-xl font-medium text-white">Transmissão ao vivo (NDI)</p>
-        <p className="mt-4 max-w-lg text-sm leading-relaxed text-zinc-400">
-          Esta fonte usa NDI — só funciona no app BCG TV. No navegador, cadastre a mesma fonte vMix com
-          URL LiveLAN (HLS) em Marketing → Boston TV → Fontes vMix.
-        </p>
-        {pauseOverlay}
-      </div>
+      <BostonTvPlayerShell displayOrientation={displayOrientation} pauseOverlay={pauseOverlay}>
+        <div className="flex h-full w-full flex-col items-center justify-center px-8 text-center text-zinc-300">
+          <p className="text-xl font-medium text-white">Transmissão ao vivo (NDI)</p>
+          <p className="mt-4 max-w-lg text-sm leading-relaxed text-zinc-400">
+            Esta fonte usa NDI — só funciona no app BCG TV. No navegador, cadastre a mesma fonte vMix com
+            URL LiveLAN (HLS) em Marketing → Boston TV → Fontes vMix.
+          </p>
+        </div>
+      </BostonTvPlayerShell>
     );
   }
 
@@ -357,25 +356,23 @@ export function BostonTvPlayerView({ token }: { token: string }) {
     const liveLanPage = getVmixLiveLanPageUrl(current.url);
     if (liveLanPage) {
       return (
-        <div className="relative h-screen w-screen bg-black">
+        <BostonTvPlayerShell displayOrientation={displayOrientation} pauseOverlay={pauseOverlay}>
           <BostonTvLiveLanRedirect url={liveLanPage} />
-          {pauseOverlay}
-        </div>
+        </BostonTvPlayerShell>
       );
     }
     return (
-      <div className="relative h-screen w-screen bg-black">
+      <BostonTvPlayerShell displayOrientation={displayOrientation} pauseOverlay={pauseOverlay}>
         <HlsStreamPlayer
           key={mediaKey}
           url={current.url}
-          className="h-screen w-screen"
+          className="h-full w-full"
           mediaClassName={mediaClass}
           label={current.channelName}
           withAudio
           paused={hallPaused}
         />
-        {pauseOverlay}
-      </div>
+      </BostonTvPlayerShell>
     );
   }
 
@@ -389,16 +386,16 @@ export function BostonTvPlayerView({ token }: { token: string }) {
       );
     }
     return (
-      <div className="relative h-screen w-screen bg-black">
+      <BostonTvPlayerShell displayOrientation={displayOrientation} pauseOverlay={pauseOverlay}>
         <YoutubeTvPlayer
           videoId={yid}
           itemKey={mediaKey}
           startSeconds={Math.floor(syncOffsetMs / 1000)}
           syncTargetSeconds={synced ? Math.floor(syncOffsetMs / 1000) : undefined}
           paused={hallPaused}
+          fillParent
         />
-        {pauseOverlay}
-      </div>
+      </BostonTvPlayerShell>
     );
   }
 

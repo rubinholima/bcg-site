@@ -441,9 +441,9 @@ export default function ManualPage() {
               </p>
               <p>
                 <strong>Exibição na TV:</strong> em <strong>Editar itens</strong>, escolha{" "}
-                <strong>Horizontal</strong> (padrão) ou <strong>Vertical</strong> para TVs com menu
-                lateral em pé. Telas que seguem o BC HALL usam a orientação da playlist ativa do
-                hall; telas individuais usam a orientação da playlist da tela.
+                <strong>Horizontal</strong> (padrão) ou <strong>Vertical</strong> para TVs montadas em pé.
+                No modo vertical o player gira a mídia 90° para preencher a tela em pé, sem zoom nem corte.
+                Telas no BC HALL usam a orientação da playlist ativa do hall.
               </p>
               <p>
                 <strong>Importante:</strong> imagens, vídeos e YouTube não se cadastram na tela — ficam nos itens

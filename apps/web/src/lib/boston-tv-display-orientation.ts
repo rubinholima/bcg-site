@@ -15,9 +15,8 @@ export function normalizeBostonTvDisplayOrientation(
 }
 
 export function bostonTvMediaObjectClass(orientation: string | undefined | null): string {
-  return orientation === BOSTON_TV_ORIENTATION_PORTRAIT
-    ? "h-full w-full object-cover"
-    : "h-full w-full object-contain";
+  void orientation;
+  return "h-full w-full object-contain";
 }
 
 export function bostonTvOrientationLabel(orientation: string | undefined | null): string {
