@@ -9,6 +9,16 @@ import {
   Users,
   RefreshCw,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -82,6 +92,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
   const [picked, setPicked] = useState<ControlScreen | null>(null);
   const [pickMode, setPickMode] = useState<HallSyncMode>(BOSTON_TV_HALL_SYNC_FOLLOW);
   const [pickPlaylistId, setPickPlaylistId] = useState("");
+  const [resetAllOpen, setResetAllOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!tenantId) {
@@ -143,13 +154,6 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
 
   const resetAll = async () => {
     if (!tenantId) return;
-    if (
-      !window.confirm(
-        "Todas as telas em modo playlist voltam a seguir o Canal Hall. Continuar?",
-      )
-    ) {
-      return;
-    }
     setActing(true);
     try {
       await api.post(
@@ -296,7 +300,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
               variant="secondary"
               disabled={acting}
               className="min-h-[56px] text-base col-span-2 sm:col-span-1"
-              onClick={() => void resetAll()}
+              onClick={() => setResetAllOpen(true)}
             >
               <Users className="mr-2 h-5 w-5" />
               Tudo ao Hall
@@ -364,6 +368,30 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
           </ul>
         )}
       </div>
+
+      <AlertDialog open={resetAllOpen} onOpenChange={setResetAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Voltar todas ao Canal Hall?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todas as telas em modo playlist voltam a seguir o Canal Hall com a playlist ativa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acting}
+              onClick={(e) => {
+                e.preventDefault();
+                setResetAllOpen(false);
+                void resetAll();
+              }}
+            >
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={!!picked} onOpenChange={(open) => !open && setPicked(null)}>
         <DialogContent className="max-w-md">

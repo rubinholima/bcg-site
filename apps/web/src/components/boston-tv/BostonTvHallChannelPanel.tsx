@@ -2,6 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeftRight, Link2, Pause, Play, RotateCcw, SkipForward, Users } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
@@ -35,6 +45,10 @@ type HallChannelResponse =
 
 type PlaylistOption = { id: string; name: string };
 
+type ConfirmAction =
+  | { type: "swap"; playlistName: string }
+  | { type: "reset" };
+
 interface BostonTvHallChannelPanelProps {
   tenantId: string;
   onScreensReset?: () => void | Promise<void>;
@@ -54,6 +68,7 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
   const [pickPlaylistId, setPickPlaylistId] = useState("");
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   const load = useCallback(async () => {
     if (!tenantId) {
@@ -106,21 +121,8 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
     }
   };
 
-  const bindPlaylist = async (options?: { confirmSwap?: boolean }) => {
+  const bindPlaylist = async () => {
     if (!tenantId || !pickPlaylistId) return;
-    const swapping =
-      data?.configured && pickPlaylistId !== data.playlistId;
-    if (options?.confirmSwap && swapping) {
-      const name =
-        playlists.find((p) => p.id === pickPlaylistId)?.name ?? "esta playlist";
-      if (
-        !window.confirm(
-          `Trocar o Canal Hall para "${name}"? Todas as telas sincronizadas recomeçam do início.`,
-        )
-      ) {
-        return;
-      }
-    }
     setActing(true);
     try {
       const { data: res } = await api.post<HallChannelResponse>(
@@ -138,13 +140,6 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
 
   const resetScreensToHall = async () => {
     if (!tenantId) return;
-    if (
-      !window.confirm(
-        "Todas as telas em modo playlist voltam a seguir o Canal Hall com a playlist ativa. Telas individuais também serão resetadas. Continuar?",
-      )
-    ) {
-      return;
-    }
     setActing(true);
     try {
       await api.post(
@@ -153,6 +148,24 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
       await onScreensReset?.();
     } finally {
       setActing(false);
+    }
+  };
+
+  const requestSwapPlaylist = () => {
+    if (!pickPlaylistId || !data?.configured || pickPlaylistId === data.playlistId) return;
+    const name =
+      playlists.find((p) => p.id === pickPlaylistId)?.name ?? "esta playlist";
+    setConfirmAction({ type: "swap", playlistName: name });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    const action = confirmAction;
+    setConfirmAction(null);
+    if (action.type === "swap") {
+      await bindPlaylist();
+    } else {
+      await resetScreensToHall();
     }
   };
 
@@ -266,7 +279,7 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
                     !pickPlaylistId ||
                     pickPlaylistId === data.playlistId
                   }
-                  onClick={() => void bindPlaylist({ confirmSwap: true })}
+                  onClick={requestSwapPlaylist}
                   className="min-h-[44px] shrink-0"
                 >
                   <ArrowLeftRight className="mr-2 h-4 w-4" />
@@ -322,7 +335,7 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
                 type="button"
                 variant="secondary"
                 disabled={acting}
-                onClick={() => void resetScreensToHall()}
+                onClick={() => setConfirmAction({ type: "reset" })}
                 className="min-h-[44px]"
               >
                 <Users className="mr-2 h-4 w-4" />
@@ -332,6 +345,47 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
           </>
         ) : null}
       </div>
+
+      <AlertDialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => !open && setConfirmAction(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.type === "swap"
+                ? "Trocar playlist do Canal Hall?"
+                : "Voltar todas ao Canal Hall?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === "swap" ? (
+                <>
+                  O Canal Hall passará a usar{" "}
+                  <strong className="text-foreground">{confirmAction.playlistName}</strong>.
+                  Todas as telas sincronizadas recomeçam do início.
+                </>
+              ) : (
+                <>
+                  Todas as telas em modo playlist voltam a seguir o Canal Hall com a playlist
+                  ativa. Telas individuais também serão resetadas.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={acting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={acting}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmAction();
+              }}
+            >
+              {confirmAction?.type === "swap" ? "Trocar playlist" : "Continuar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </BostonTvCollapsibleSection>
   );
 }
