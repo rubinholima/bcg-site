@@ -1,3 +1,0 @@
-E:/DEV/BCG SITE/apps/bcg-tv-android/app/.cxx/Debug/1p6w6k3j/armeabi-v7a/CMakeFiles/bcg_ndi.dir
-E:/DEV/BCG SITE/apps/bcg-tv-android/app/.cxx/Debug/1p6w6k3j/armeabi-v7a/CMakeFiles/edit_cache.dir
-E:/DEV/BCG SITE/apps/bcg-tv-android/app/.cxx/Debug/1p6w6k3j/armeabi-v7a/CMakeFiles/rebuild_cache.dir

@@ -1,1 +1,0 @@
-E:\DEV\BCG SITE\apps\bcg-tv-android\app\src\main\cpp\CMakeLists.txt

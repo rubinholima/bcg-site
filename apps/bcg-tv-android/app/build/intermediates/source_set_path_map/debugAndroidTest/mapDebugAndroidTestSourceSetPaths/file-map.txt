@@ -1,4 +1,0 @@
-com.bostoncitygroup.bcgtv.test.app-androidTest-0 E:\DEV\BCG SITE\apps\bcg-tv-android\app\build\generated\res\resValues\androidTest\debug
-com.bostoncitygroup.bcgtv.test.app-mergeDebugAndroidTestResources-1 E:\DEV\BCG SITE\apps\bcg-tv-android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
-com.bostoncitygroup.bcgtv.test.app-mergeDebugAndroidTestResources-2 E:\DEV\BCG SITE\apps\bcg-tv-android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
-com.bostoncitygroup.bcgtv.test.app-debugAndroidTest-3 E:\DEV\BCG SITE\apps\bcg-tv-android\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
