@@ -11,6 +11,10 @@ import {
   extrapolateHallPosition,
   type HallSyncSnapshot,
 } from "@/lib/boston-tv-hall-sync";
+import {
+  bostonTvMediaObjectClass,
+  normalizeBostonTvDisplayOrientation,
+} from "@/lib/boston-tv-display-orientation";
 
 export type BostonTvPlayerItem = {
   id: string;
@@ -38,6 +42,8 @@ export type BostonTvPlayerPayload = {
   weeklySchedule: unknown;
   playlistName: string | null;
   displayMode?: string;
+  /** landscape = horizontal | portrait = vertical (TV em pé) */
+  displayOrientation?: string;
   items: BostonTvPlayerItem[];
   hallSync?: BostonTvHallSync;
 };
@@ -62,6 +68,7 @@ function SyncedVideo({
   paused,
   onEndedLocal,
   synced,
+  mediaClassName = "h-full w-full object-contain",
 }: {
   src: string;
   itemKey: string;
@@ -69,6 +76,7 @@ function SyncedVideo({
   paused: boolean;
   onEndedLocal: () => void;
   synced: boolean;
+  mediaClassName?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
 
@@ -118,7 +126,7 @@ function SyncedVideo({
       ref={ref}
       key={itemKey}
       src={src}
-      className="h-full w-full object-contain"
+      className={mediaClassName}
       autoPlay
       muted
       playsInline
@@ -294,6 +302,10 @@ export function BostonTvPlayerView({ token }: { token: string }) {
     ? `${current.id}-v${hallSync.playlistVersion}-i${displayIdx}`
     : current.id;
 
+  const mediaClass = bostonTvMediaObjectClass(
+    normalizeBostonTvDisplayOrientation(payload.displayOrientation),
+  );
+
   if (current.contentType === "image_url") {
     const src = getPublicImageUrl(current.url) || current.url;
     return (
@@ -303,7 +315,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
           key={mediaKey}
           src={src}
           alt=""
-          className="h-full w-full object-contain"
+          className={mediaClass}
         />
         {pauseOverlay}
       </div>
@@ -320,6 +332,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
           startSeconds={syncOffsetMs / 1000}
           paused={hallPaused}
           synced={synced}
+          mediaClassName={mediaClass}
           onEndedLocal={() => setIdx((i) => (i + 1) % items.length)}
         />
         {pauseOverlay}
@@ -356,6 +369,7 @@ export function BostonTvPlayerView({ token }: { token: string }) {
           key={mediaKey}
           url={current.url}
           className="h-screen w-screen"
+          mediaClassName={mediaClass}
           label={current.channelName}
           withAudio
           paused={hallPaused}

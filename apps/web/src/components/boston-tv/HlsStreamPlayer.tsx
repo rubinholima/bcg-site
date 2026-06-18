@@ -15,6 +15,7 @@ type MpegTsPlayer = {
 interface HlsStreamPlayerProps {
   url: string;
   className?: string;
+  mediaClassName?: string;
   label?: string;
   /** TV signage: tenta reproduzir com áudio (HDMI). Fallback mudo se o browser bloquear autoplay. */
   withAudio?: boolean;
@@ -129,7 +130,14 @@ function waitForVideoPicture(video: HTMLVideoElement, ms: number): Promise<boole
   });
 }
 
-export function HlsStreamPlayer({ url, className = "", label, withAudio = true, paused = false }: HlsStreamPlayerProps) {
+export function HlsStreamPlayer({
+  url,
+  className = "",
+  mediaClassName = "h-full w-full object-contain",
+  label,
+  withAudio = true,
+  paused = false,
+}: HlsStreamPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [buffering, setBuffering] = useState(true);
@@ -429,7 +437,7 @@ export function HlsStreamPlayer({ url, className = "", label, withAudio = true, 
           </button>
         </div>
       ) : null}
-      <video ref={videoRef} className="h-full w-full object-contain" playsInline autoPlay />
+      <video ref={videoRef} className={mediaClassName} playsInline autoPlay />
       {label ? (
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3">
           <p className="text-sm text-white/90 truncate">{label}</p>

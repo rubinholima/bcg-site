@@ -1450,6 +1450,8 @@ model BostonTvPlaylist {
   tenantId  String
   tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
+  /** landscape = horizontal (padrão) | portrait = vertical (TV em pé) */
+  displayOrientation String @default("landscape")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   items       BostonTvPlaylistItem[]

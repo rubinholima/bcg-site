@@ -46,6 +46,10 @@ import { formatVmixChannelLabel } from "@/components/boston-tv/BostonTvVmixPanel
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 import { setStoredBostonTvTenantId } from "@/lib/boston-tv-tenant-storage";
 import { BcgTvS3FilePicker } from "@/components/boston-tv/BcgTvS3FilePicker";
+import {
+  BOSTON_TV_ORIENTATION_OPTIONS,
+  normalizeBostonTvDisplayOrientation,
+} from "@/lib/boston-tv-display-orientation";
 
 type Item = {
   id: string;
@@ -59,6 +63,7 @@ type Playlist = {
   id: string;
   name: string;
   tenantId: string;
+  displayOrientation?: string;
   items: Item[];
 };
 
@@ -149,6 +154,7 @@ export default function EditBostonTvPlaylistPage() {
   const [editVmixChannelId, setEditVmixChannelId] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [savingOrientation, setSavingOrientation] = useState(false);
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
 
   const showFeedback = (message: string, title = "Atenção") => {
@@ -205,6 +211,25 @@ export default function EditBostonTvPlaylistPage() {
   useEffect(() => {
     if (playlist?.tenantId) setStoredBostonTvTenantId(playlist.tenantId);
   }, [playlist?.tenantId]);
+
+  const saveDisplayOrientation = async (value: string) => {
+    if (!playlist || savingOrientation) return;
+    const orientation = normalizeBostonTvDisplayOrientation(value);
+    setSavingOrientation(true);
+    try {
+      await api.patch(`/boston-tv/playlists/${id}`, { displayOrientation: orientation });
+      setPlaylist((prev) =>
+        prev ? { ...prev, displayOrientation: orientation } : prev,
+      );
+    } catch (e) {
+      showFeedback(
+        e instanceof Error ? e.message : "Não foi possível salvar o modo de exibição.",
+        "Erro",
+      );
+    } finally {
+      setSavingOrientation(false);
+    }
+  };
 
   const addItem = async () => {
     if (!playlist) return;
@@ -464,8 +489,23 @@ export default function EditBostonTvPlaylistPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
+        <div className="flex-1 space-y-4">
           <h1 className="text-2xl font-bold tracking-tight">{playlist.name}</h1>
+          <div className="flex flex-col gap-2 sm:max-w-xs">
+            <Label htmlFor="display-orientation">Exibição na TV</Label>
+            <ModalNativeSelect
+              id="display-orientation"
+              value={normalizeBostonTvDisplayOrientation(playlist.displayOrientation)}
+              onChange={(v) => void saveDisplayOrientation(v)}
+              placeholder="Modo de exibição"
+              options={[...BOSTON_TV_ORIENTATION_OPTIONS]}
+              disabled={savingOrientation}
+            />
+            <p className="text-xs text-muted-foreground">
+              Use <strong>Vertical</strong> em TVs com menu lateral em pé (portrait).{" "}
+              <strong>Horizontal</strong> é o padrão para telas deitadas.
+            </p>
+          </div>
         </div>
       </div>
 

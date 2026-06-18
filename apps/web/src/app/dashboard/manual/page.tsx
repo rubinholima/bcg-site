@@ -440,6 +440,12 @@ export default function ManualPage() {
                 <em>Todas as pastas</em>, novos uploads vão para a pasta BCG TV.
               </p>
               <p>
+                <strong>Exibição na TV:</strong> em <strong>Editar itens</strong>, escolha{" "}
+                <strong>Horizontal</strong> (padrão) ou <strong>Vertical</strong> para TVs com menu
+                lateral em pé. Telas que seguem o BC HALL usam a orientação da playlist ativa do
+                hall; telas individuais usam a orientação da playlist da tela.
+              </p>
+              <p>
                 <strong>Importante:</strong> imagens, vídeos e YouTube não se cadastram na tela — ficam nos itens
                 da playlist. A tela só escolhe se segue o BC HALL ou uma playlist individual.
               </p>

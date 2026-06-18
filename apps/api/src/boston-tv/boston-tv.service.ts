@@ -23,6 +23,7 @@ import {
   hallPositionInLoop,
   type HallSyncItem,
 } from './boston-tv-hall-sync.util';
+import { normalizeBostonTvDisplayOrientation } from './boston-tv-orientation.constants';
 
 const ITEM_TYPES = ['image_url', 'video_url', 'youtube_video', 'iptv_stream', 'vmix_stream', 'ndi_stream'] as const;
 
@@ -258,6 +259,9 @@ export class BostonTvService {
 
     let activePlaylistId = screen.playlist?.id ?? null;
     let activePlaylistName = screen.playlist?.name ?? null;
+    let activeDisplayOrientation = normalizeBostonTvDisplayOrientation(
+      screen.playlist?.displayOrientation,
+    );
     let activeItems = playlistItems;
 
     let hallChannel: Awaited<ReturnType<typeof this.hallChannelPlaylist>> | null =
@@ -267,6 +271,9 @@ export class BostonTvService {
       if (hallChannel?.playlist) {
         activePlaylistId = hallChannel.playlistId;
         activePlaylistName = hallChannel.playlist.name;
+        activeDisplayOrientation = normalizeBostonTvDisplayOrientation(
+          hallChannel.playlist.displayOrientation,
+        );
         activeItems = hallChannel.playlist.items;
       }
     }
@@ -325,6 +332,7 @@ export class BostonTvService {
         playlistId: activePlaylistId,
         playlistName: activePlaylistName,
         displayMode: 'playlist',
+        displayOrientation: activeDisplayOrientation,
         hallSyncMode,
       },
       tenantId: screen.tenant.id,
@@ -597,13 +605,20 @@ export class BostonTvService {
 
   async updatePlaylist(
     id: string,
-    data: { name?: string },
+    data: { name?: string; displayOrientation?: string },
     allowedTenantIds: string[] | null,
   ) {
     await this.ensurePlaylistScope(id, allowedTenantIds);
+    const update: Prisma.BostonTvPlaylistUpdateInput = {};
+    if (data.name != null) update.name = data.name.trim();
+    if (data.displayOrientation != null) {
+      update.displayOrientation = normalizeBostonTvDisplayOrientation(
+        data.displayOrientation,
+      );
+    }
     return this.prisma.bostonTvPlaylist.update({
       where: { id },
-      data: { ...(data.name != null ? { name: data.name.trim() } : {}) },
+      data: update,
     });
   }
 
