@@ -15,7 +15,7 @@
 
 #define STATUS_MAX 512
 #define TARGET_MAX 512
-#define NAME_MAX 512
+#define NDI_NAME_MAX 512
 
 typedef enum {
     NDIlib_FourCC_type_UYVY = 0x59565955,
@@ -49,8 +49,14 @@ typedef enum {
     NDIlib_recv_bandwidth_highest = 100,
 } NDIlib_recv_bandwidth_e;
 
+/*
+ * IMPORTANTE: o layout abaixo precisa bater EXATAMENTE com Processing.NDI.Recv.h.
+ * source_to_connect_to é a struct POR VALOR (16 bytes), NÃO um ponteiro.
+ * Declarar como ponteiro desloca color_format/bandwidth/p_ndi_recv_name e faz
+ * o SDK ler lixo (segfault em NDIlib_recv_create_v3).
+ */
 typedef struct {
-    const NDIlib_source_t* source_to_connect_to;
+    NDIlib_source_t source_to_connect_to;
     NDIlib_recv_color_format_e color_format;
     NDIlib_recv_bandwidth_e bandwidth;
     bool allow_video_fields;
@@ -121,8 +127,8 @@ static pthread_t g_thread;
 static int g_thread_active = 0;
 static char g_target_name[TARGET_MAX];
 static char g_status[STATUS_MAX] = "NDI nao iniciado";
-static char g_chosen_name[NAME_MAX];
-static char g_chosen_url[NAME_MAX];
+static char g_chosen_name[NDI_NAME_MAX];
+static char g_chosen_url[NDI_NAME_MAX];
 static NDIlib_source_t g_chosen_source;
 static pthread_mutex_t g_ndi_op_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -306,10 +312,11 @@ static bool load_ndi(void) {
     LOAD("NDIlib_find_get_current_sources", find_get_sources);
     LOAD("NDIlib_recv_create_v3", recv_create);
     LOAD("NDIlib_recv_destroy", recv_destroy);
-    LOAD("NDIlib_recv_connect", recv_connect);
     LOAD("NDIlib_recv_capture_v3", recv_capture);
     LOAD("NDIlib_recv_free_video_v2", recv_free_video);
 #undef LOAD
+    /* recv_connect é opcional — não existe em todas as versões do SDK (NDI 5 conecta no create). */
+    g_ndi.recv_connect = (ndi_recv_connect_fn)dlsym(g_ndi.lib, "NDIlib_recv_connect");
     if (!g_ndi.initialize()) {
         LOGE("NDIlib_initialize failed");
         set_status("NDIlib_initialize falhou");
@@ -413,7 +420,7 @@ static void* recv_loop(void* arg) {
 
     NDIlib_recv_create_v3_t recv_create;
     memset(&recv_create, 0, sizeof(recv_create));
-    recv_create.source_to_connect_to = &g_chosen_source;
+    recv_create.source_to_connect_to = g_chosen_source; /* cópia por valor — ponteiros p_ndi_name/p_url vivem em buffers globais */
     recv_create.color_format = NDIlib_recv_color_format_BGRX_BGRA;
     recv_create.bandwidth = NDIlib_recv_bandwidth_highest;
     recv_create.allow_video_fields = false;
@@ -427,7 +434,8 @@ static void* recv_loop(void* arg) {
         return NULL;
     }
 
-    g_ndi.recv_connect(recv, &g_chosen_source);
+    /* No NDI 5 a conexão já é feita em recv_create; recv_connect pode não existir. */
+    if (g_ndi.recv_connect) g_ndi.recv_connect(recv, &g_chosen_source);
     snprintf(g_status, sizeof(g_status), "Conectado: %s", g_chosen_source.p_ndi_name);
     LOGI("Connected to %s", g_chosen_source.p_ndi_name);
     g_ndi.find_destroy(finder);
@@ -442,7 +450,7 @@ static void* recv_loop(void* arg) {
             }
             g_ndi.recv_free_video(recv, &video);
         } else if (t == NDIlib_frame_type_status_change) {
-            g_ndi.recv_connect(recv, &g_chosen_source);
+            if (g_ndi.recv_connect) g_ndi.recv_connect(recv, &g_chosen_source);
         }
     }
 

@@ -140,14 +140,14 @@ export class BostonTvService {
   /** Payload público do player na TV — sem auth. */
   async getPublicPlayerPayload(
     playerToken: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options?: { preferNativeNdi?: boolean },
   ) {
     const ctx = await this.buildPlayerContext(playerToken);
-    // Sempre prioriza HLS/LiveLAN quando a fonte vMix tem URL de stream — estável no
-    // navegador E no APK (ExoPlayer). Mantém ndi_stream apenas quando NÃO há URL,
-    // aí o app nativo tenta NDI como último recurso.
-    const mappedItems = await this.mapItemsForWebPlayer(ctx.tenantId, ctx.items);
+    // App nativo (BCG TV) recebe ndi_stream cru → reproduz via NDI (baixa latência,
+    // direto do output do vMix). Navegador recebe HLS/LiveLAN quando há URL de stream.
+    const mappedItems = options?.preferNativeNdi
+      ? ctx.items
+      : await this.mapItemsForWebPlayer(ctx.tenantId, ctx.items);
     const items = mappedItems.map((it, index) => ({
       ...it,
       url: this.resolvePlayerItemUrl(it, playerToken, index),
