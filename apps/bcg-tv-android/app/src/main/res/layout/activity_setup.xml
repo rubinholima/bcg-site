@@ -3,103 +3,208 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_setup_gradient"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="28dp">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="28dp"
+        android:paddingBottom="36dp">
 
-        <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:contentDescription="@null"
-            android:src="@drawable/cup360_logo" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/setup_title"
-            android:textColor="#FCD34D"
-            android:textSize="32sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:gravity="center"
-            android:text="@string/setup_subtitle"
-            android:textColor="#A1A1AA"
-            android:textSize="15sp" />
-
+        <!-- Top bar: marca + tela atual -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/bg_setup_card"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:background="@drawable/bg_topbar"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="22dp"
+            android:paddingVertical="16dp">
+
+            <ImageView
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:contentDescription="@null"
+                android:src="@drawable/cup360_logo" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.18"
+                    android:text="@string/setup_brand_tag"
+                    android:textColor="#A3E635"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/setup_title"
+                    android:textColor="#FAFAFA"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/setup_screen_label"
-                android:textColor="#E4E4E7"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:background="@drawable/bg_accent_pill"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="7dp"
+                android:text="@string/setup_subtitle"
+                android:textColor="#D9F99D"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- STEP 1 — Tela -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_setup_card"
+            android:orientation="vertical"
+            android:padding="22dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_step_badge"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textColor="#FCD34D"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_step1_title"
+                        android:textColor="#FAFAFA"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_step1_desc"
+                        android:textColor="#A1A1AA"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
 
             <Spinner
                 android:id="@+id/screenSpinner"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="54dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/bg_spinner"
-                android:padding="12dp" />
+                android:padding="14dp" />
         </LinearLayout>
 
+        <!-- STEP 2 — Conteúdo -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:background="@drawable/bg_setup_card"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="22dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/setup_playlist_label"
-                android:textColor="#E4E4E7"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_step_badge"
+                    android:gravity="center"
+                    android:text="2"
+                    android:textColor="#FCD34D"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_step2_title"
+                        android:textColor="#FAFAFA"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_step2_desc"
+                        android:textColor="#A1A1AA"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
 
             <RadioGroup
                 android:id="@+id/syncModeGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="14dp">
 
                 <RadioButton
                     android:id="@+id/syncFollowHall"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:buttonTint="#F59E0B"
                     android:checked="true"
-                    android:paddingVertical="6dp"
+                    android:paddingVertical="8dp"
+                    android:paddingStart="6dp"
                     android:text="@string/setup_sync_hall"
-                    android:textColor="#D4D4D8"
+                    android:textColor="#E4E4E7"
                     android:textSize="15sp" />
 
                 <RadioButton
                     android:id="@+id/syncIndependent"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingVertical="6dp"
+                    android:buttonTint="#F59E0B"
+                    android:paddingVertical="8dp"
+                    android:paddingStart="6dp"
                     android:text="@string/setup_sync_independent"
-                    android:textColor="#D4D4D8"
+                    android:textColor="#E4E4E7"
                     android:textSize="15sp" />
             </RadioGroup>
 
@@ -107,136 +212,176 @@
                 android:id="@+id/hallChannelHint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
+                android:drawablePadding="6dp"
                 android:text="@string/setup_loading_playlists"
-                android:textColor="#71717A"
+                android:textColor="#A3E635"
                 android:textSize="13sp" />
 
             <Spinner
                 android:id="@+id/playlistSpinner"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="54dp"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_spinner"
                 android:enabled="false"
-                android:padding="12dp"
+                android:padding="14dp"
                 android:visibility="gone" />
         </LinearLayout>
 
+        <!-- STEP 3 — Modo do player -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:background="@drawable/bg_setup_card"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="22dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/setup_engine"
-                android:textColor="#E4E4E7"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_step_badge"
+                    android:gravity="center"
+                    android:text="3"
+                    android:textColor="#FCD34D"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_step3_title"
+                        android:textColor="#FAFAFA"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/setup_step3_desc"
+                        android:textColor="#A1A1AA"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
 
             <Spinner
                 android:id="@+id/engineSpinner"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="54dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/bg_spinner"
-                android:padding="12dp" />
-        </LinearLayout>
+                android:padding="14dp" />
 
-        <LinearLayout
-            android:id="@+id/ndiSection"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/bg_setup_card"
-            android:orientation="vertical"
-            android:padding="20dp"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_ndi_label"
-                android:textColor="#E4E4E7"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <RadioGroup
-                android:id="@+id/ndiSourceModeGroup"
+            <!-- Sub-bloco NDI -->
+            <LinearLayout
+                android:id="@+id/ndiSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_spinner"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
 
-                <RadioButton
-                    android:id="@+id/ndiFromPlaylist"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_ndi_label"
+                    android:textColor="#E4E4E7"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <RadioGroup
+                    android:id="@+id/ndiSourceModeGroup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:paddingVertical="6dp"
-                    android:text="@string/setup_ndi_from_playlist"
-                    android:textColor="#D4D4D8"
-                    android:textSize="15sp" />
+                    android:layout_marginTop="8dp">
 
-                <RadioButton
-                    android:id="@+id/ndiFromNetwork"
+                    <RadioButton
+                        android:id="@+id/ndiFromPlaylist"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="#F59E0B"
+                        android:checked="true"
+                        android:paddingVertical="6dp"
+                        android:text="@string/setup_ndi_from_playlist"
+                        android:textColor="#D4D4D8"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/ndiFromNetwork"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="#F59E0B"
+                        android:paddingVertical="6dp"
+                        android:text="@string/setup_ndi_from_network"
+                        android:textColor="#D4D4D8"
+                        android:textSize="15sp" />
+                </RadioGroup>
+
+                <Button
+                    android:id="@+id/ndiSearchButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_menu_button"
+                    android:text="@string/setup_ndi_search"
+                    android:textAllCaps="false"
+                    android:textColor="#FCD34D"
+                    android:textSize="15sp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/ndiDiscoveryStatus"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingVertical="6dp"
-                    android:text="@string/setup_ndi_from_network"
-                    android:textColor="#D4D4D8"
-                    android:textSize="15sp" />
-            </RadioGroup>
+                    android:layout_marginTop="8dp"
+                    android:textColor="#A1A1AA"
+                    android:textSize="13sp"
+                    android:visibility="gone" />
 
-            <Button
-                android:id="@+id/ndiSearchButton"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_menu_button"
-                android:text="@string/setup_ndi_search"
-                android:textAllCaps="false"
-                android:textColor="#FCD34D"
-                android:textSize="15sp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/ndiDiscoveryStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="#71717A"
-                android:textSize="13sp"
-                android:visibility="gone" />
-
-            <Spinner
-                android:id="@+id/ndiSourceSpinner"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_spinner"
-                android:padding="12dp"
-                android:visibility="gone" />
+                <Spinner
+                    android:id="@+id/ndiSourceSpinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_setup_card"
+                    android:padding="12dp"
+                    android:visibility="gone" />
+            </LinearLayout>
         </LinearLayout>
 
+        <!-- Status -->
         <TextView
             android:id="@+id/setupStatusText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:gravity="center"
-            android:textColor="#71717A"
+            android:textColor="#FCA5A5"
             android:textSize="13sp"
             android:visibility="gone" />
 
+        <!-- Botão principal -->
         <Button
             android:id="@+id/startButton"
             android:layout_width="match_parent"
-            android:layout_height="58dp"
+            android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:background="@drawable/bg_btn_primary"
             android:text="@string/setup_confirm"
@@ -244,5 +389,16 @@
             android:textColor="#18181B"
             android:textSize="18sp"
             android:textStyle="bold" />
+
+        <!-- Dica de rodapé -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp"
+            android:text="@string/setup_footer_hint"
+            android:textColor="#71717A"
+            android:textSize="12sp" />
     </LinearLayout>
 </ScrollView>

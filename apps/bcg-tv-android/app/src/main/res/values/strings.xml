@@ -27,6 +27,14 @@
     <string name="setup_ndi_pick">Escolha uma fonte NDI na lista.</string>
     <string name="setup_confirm">Iniciar reprodução</string>
     <string name="setup_change">Trocar tela</string>
+    <string name="setup_brand_tag">PAINEL DE TELAS · HALL</string>
+    <string name="setup_step1_title">Qual tela é esta?</string>
+    <string name="setup_step1_desc">Selecione o número e o local correspondente a esta TV.</string>
+    <string name="setup_step2_title">O que vai tocar</string>
+    <string name="setup_step2_desc">Siga o Canal Hall (todas iguais) ou escolha uma playlist só desta tela.</string>
+    <string name="setup_step3_title">Como reproduzir</string>
+    <string name="setup_step3_desc">Nativo é o recomendado. NDI apenas para fonte ao vivo manual na rede.</string>
+    <string name="setup_footer_hint">Dica: para transmissão ao vivo do vMix nas TVs, use uma fonte com URL de stream (HLS/LiveLAN) — funciona em todas as telas sem travar.</string>
     <string name="menu_back">← Menu</string>
     <string name="loading">Carregando Boston TV…</string>
     <string name="error_load">Erro ao carregar. Tentando de novo…</string>

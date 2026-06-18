@@ -39,7 +39,10 @@ typedef struct {
 } NDIlib_find_create_t;
 
 typedef enum {
-    NDIlib_recv_color_format_fastest = 4,
+    NDIlib_recv_color_format_BGRX_BGRA = 0,
+    NDIlib_recv_color_format_UYVY_BGRA = 1,
+    NDIlib_recv_color_format_fastest = 100,
+    NDIlib_recv_color_format_best = 101,
 } NDIlib_recv_color_format_e;
 
 typedef enum {
@@ -411,7 +414,7 @@ static void* recv_loop(void* arg) {
     NDIlib_recv_create_v3_t recv_create;
     memset(&recv_create, 0, sizeof(recv_create));
     recv_create.source_to_connect_to = &g_chosen_source;
-    recv_create.color_format = NDIlib_recv_color_format_fastest;
+    recv_create.color_format = NDIlib_recv_color_format_BGRX_BGRA;
     recv_create.bandwidth = NDIlib_recv_bandwidth_highest;
     recv_create.allow_video_fields = false;
     recv_create.p_ndi_recv_name = "BCG TV Receiver";
