@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { isPlayableIptvStreamUrl } from './m3u-parser';
+import { isPlayableIptvStreamUrl, isVmixLiveLanPageUrl } from './m3u-parser';
 
 const MAX_VMIX_CHANNELS = 8;
 
@@ -30,12 +30,7 @@ export class BostonTvVmixService {
   }
 
   private normalizeStreamUrl(url: string | null | undefined): string {
-    const u = (url ?? '').trim();
-    if (!u) return u;
-    if (/\/livelan\/?$/i.test(u)) {
-      return `${u.replace(/\/$/, '')}/stream.m3u8`;
-    }
-    return u;
+    return (url ?? '').trim();
   }
 
   private safeTrim(value: string | null | undefined): string {
@@ -61,7 +56,8 @@ export class BostonTvVmixService {
         playable:
           ch.deliveryType === 'ndi'
             ? Boolean(ch.ndiSourceName?.trim())
-            : isPlayableIptvStreamUrl(ch.streamUrl),
+            : isPlayableIptvStreamUrl(ch.streamUrl) ||
+              isVmixLiveLanPageUrl(ch.streamUrl),
       })),
       total: items.length,
     };

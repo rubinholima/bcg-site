@@ -18,6 +18,10 @@ export function isPlayableIptvStreamUrl(url: string): boolean {
   const u = url.trim().toLowerCase();
   if (!/^https?:\/\//.test(u)) return false;
 
+  if (/\/livelan\/?$/.test(u) || /\/livelan\/stream\.m3u8/.test(u)) {
+    return true;
+  }
+
   const blockedHosts = [
     'primevideo.',
     'amazon.com/gp/video',
@@ -40,6 +44,27 @@ export function isPlayableIptvStreamUrl(url: string): boolean {
   }
 
   return true;
+}
+
+export function isPrivateNetworkStreamUrl(url: string): boolean {
+  try {
+    const host = new URL(url.trim()).hostname.toLowerCase();
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+    if (host.startsWith('10.')) return true;
+    if (host.startsWith('192.168.')) return true;
+    const m = host.match(/^172\.(\d+)\./);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n >= 16 && n <= 31) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export function isVmixLiveLanPageUrl(url: string): boolean {
+  return /\/livelan\/?$/i.test(url.trim());
 }
 
 function parseExtinfAttrs(line: string): Record<string, string> {

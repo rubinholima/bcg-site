@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import { api } from "@/lib/api";
-import { normalizeVmixStreamUrl } from "@/lib/vmix-stream-url";
 
 export type VmixChannelOption = {
   id: string;
@@ -91,7 +90,7 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
       const deliveryType = patch.deliveryType ?? ch.deliveryType ?? "stream";
       const streamUrl =
         deliveryType === "stream"
-          ? normalizeVmixStreamUrl(patch.streamUrl ?? ch.streamUrl)
+          ? (patch.streamUrl ?? ch.streamUrl).trim()
           : "";
       await api.patch(`/boston-tv/vmix/channels/${ch.id}`, {
         name: patch.name ?? ch.name,
@@ -121,8 +120,7 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
         tenantId,
         name: newName.trim(),
         deliveryType: newDelivery,
-        streamUrl:
-          newDelivery === "stream" ? normalizeVmixStreamUrl(newUrl) : "",
+        streamUrl: newDelivery === "stream" ? newUrl.trim() : "",
         ndiSourceName: newDelivery === "ndi" ? newNdiName.trim() : undefined,
       });
       setNewUrl("");
@@ -158,13 +156,13 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
   const body = (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground leading-relaxed">
-        Cadastre as saídas do <strong className="text-foreground">vMix</strong>. Para evento ao vivo com
-        latência mínima, use <strong className="text-foreground">NDI</strong> (mesmo nome que aparece no
-        NDI Studio Monitor, ex.: <code className="text-foreground">vMix - Output 1</code>). Para{" "}
-        <strong className="text-foreground">navegador na TV</strong> (LG, etc.), use{" "}
-        <strong className="text-foreground">Stream HTTP</strong> com LiveLAN — ex.:{" "}
-        <code className="text-foreground">http://10.0.0.2:8088/livelan</code> (o sistema completa com{" "}
-        <code className="text-foreground">/stream.m3u8</code>).
+        Cadastre as saídas do <strong className="text-foreground">vMix</strong>. Para{" "}
+        <strong className="text-foreground">navegador na TV</strong> (mesma rede do vMix), use{" "}
+        <strong className="text-foreground">Stream HTTP</strong> com a página LiveLAN:{" "}
+        <code className="text-foreground">http://10.0.0.2:8088/livelan</code> — não use o .m3u8 na barra
+        do browser. Para latência mínima no Hall, use <strong className="text-foreground">NDI</strong> no
+        app BCG TV (
+        <code className="text-foreground">vMix - Output 1</code>).
       </p>
 
       {loading ? (
@@ -328,7 +326,7 @@ function ChannelEditor({
     void onSave(ch, {
       name: name.trim(),
       deliveryType: delivery,
-      streamUrl: delivery === "stream" ? normalizeVmixStreamUrl(streamUrl) : "",
+      streamUrl: delivery === "stream" ? streamUrl.trim() : "",
       ndiSourceName: delivery === "ndi" ? ndiName.trim() : null,
     });
   };

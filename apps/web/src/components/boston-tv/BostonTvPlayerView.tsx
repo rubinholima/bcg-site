@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isWithinContentWindow } from "@/lib/boston-tv-schedule";
+import { BostonTvLiveLanRedirect } from "@/components/boston-tv/BostonTvLiveLanRedirect";
 import { HlsStreamPlayer } from "@/components/boston-tv/HlsStreamPlayer";
+import { getVmixLiveLanPageUrl } from "@/lib/vmix-stream-url";
 import { YoutubeTvPlayer } from "@/components/boston-tv/YoutubeTvPlayer";
 import { getPublicImageUrl } from "@/lib/media-url";
 import {
@@ -339,6 +341,15 @@ export function BostonTvPlayerView({ token }: { token: string }) {
   }
 
   if (current.contentType === "iptv_stream" || current.contentType === "vmix_stream") {
+    const liveLanPage = getVmixLiveLanPageUrl(current.url);
+    if (liveLanPage) {
+      return (
+        <div className="relative h-screen w-screen bg-black">
+          <BostonTvLiveLanRedirect url={liveLanPage} />
+          {pauseOverlay}
+        </div>
+      );
+    }
     return (
       <div className="relative h-screen w-screen bg-black">
         <HlsStreamPlayer

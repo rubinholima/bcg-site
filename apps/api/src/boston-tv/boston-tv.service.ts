@@ -6,7 +6,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { isPlayableIptvStreamUrl } from './m3u-parser';
+import { isPlayableIptvStreamUrl, isPrivateNetworkStreamUrl, isVmixLiveLanPageUrl } from './m3u-parser';
 import {
   resolvePublicMediaUrl,
 } from '../common/public-media-url.util';
@@ -170,7 +170,14 @@ export class BostonTvService {
       return resolvePublicMediaUrl(item.url) || item.url;
     }
     if (item.contentType === 'iptv_stream' || item.contentType === 'vmix_stream') {
-      // Sempre proxy: evita mixed content (HTTP em página HTTPS) e URLs expostas na TV.
+      const streamUrl = item.url.trim();
+      if (
+        isPrivateNetworkStreamUrl(streamUrl) ||
+        isVmixLiveLanPageUrl(streamUrl)
+      ) {
+        // Rede local (LiveLAN / vMix): o browser da TV acessa direto — proxy na nuvem não alcança 10.0.0.x
+        return streamUrl;
+      }
       return `/api/public/boston-tv/play/${encodeURIComponent(playerToken)}/stream?i=${index}`;
     }
     return item.url;
@@ -186,7 +193,10 @@ export class BostonTvService {
     if (NDI_ITEM_TYPES.has(item.contentType)) {
       throw new BadRequestException('Stream ao vivo indisponível para o navegador neste item.');
     }
-    if (!isPlayableIptvStreamUrl(item.url)) {
+    if (
+      !isPlayableIptvStreamUrl(item.url) &&
+      !isVmixLiveLanPageUrl(item.url)
+    ) {
       throw new BadRequestException('Canal não é transmissão compatível com o player.');
     }
     return item.url;
