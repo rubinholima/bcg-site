@@ -52,6 +52,8 @@ type ConfirmAction =
 interface BostonTvHallChannelPanelProps {
   tenantId: string;
   onScreensReset?: () => void | Promise<void>;
+  /** Dentro de abas do dashboard — sem card recolhível. */
+  embedded?: boolean;
 }
 
 function formatOffset(ms: number): string {
@@ -61,7 +63,11 @@ function formatOffset(ms: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvHallChannelPanelProps) {
+export function BostonTvHallChannelPanel({
+  tenantId,
+  onScreensReset,
+  embedded = false,
+}: BostonTvHallChannelPanelProps) {
   const [open, setOpen] = useState(true);
   const [data, setData] = useState<HallChannelResponse | null>(null);
   const [playlists, setPlaylists] = useState<PlaylistOption[]>([]);
@@ -171,13 +177,8 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
 
   const sync = data?.configured ? data.hallSync : null;
 
-  return (
-    <BostonTvCollapsibleSection
-      title="Canal Hall — sincronizado"
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <div className="space-y-4 text-sm">
+  const panelBody = (
+    <div className="space-y-4 text-sm">
         <p className="text-muted-foreground">
           Você escolhe <strong className="text-foreground">uma playlist</strong> — telas em{" "}
           <strong className="text-foreground">Seguir Canal Hall</strong> tocam juntas, no mesmo
@@ -344,8 +345,11 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
             </div>
           </>
         ) : null}
-      </div>
+    </div>
+  );
 
+  const dialogs = (
+    <>
       <AlertDialog
         open={confirmAction !== null}
         onOpenChange={(open) => !open && setConfirmAction(null)}
@@ -386,6 +390,28 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </BostonTvCollapsibleSection>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <>
+        {panelBody}
+        {dialogs}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <BostonTvCollapsibleSection
+        title="Canal Hall — sincronizado"
+        open={open}
+        onOpenChange={setOpen}
+      >
+        {panelBody}
+      </BostonTvCollapsibleSection>
+      {dialogs}
+    </>
   );
 }

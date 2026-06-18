@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Clipboard, ExternalLink, Pencil, Plus, RefreshCw, Trash2, Tv, TabletSmartphone } from "lucide-react";
+import { Clipboard, ExternalLink, LayoutList, Pencil, Plus, Radio, RefreshCw, Trash2, Tv, TabletSmartphone, Antenna, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -37,8 +38,8 @@ import { api } from "@/lib/api";
 import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 import { BostonTvVmixPanel } from "@/components/boston-tv/BostonTvVmixPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
-import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 import { BostonTvHallChannelPanel } from "@/components/boston-tv/BostonTvHallChannelPanel";
+import { DashboardDeptTabs } from "@/components/dashboard/DashboardDeptHeader";
 import { parseHallScreenNum, hallSyncModeLabel, normalizeHallSyncMode, BOSTON_TV_HALL_SYNC_FOLLOW, BOSTON_TV_HALL_SYNC_INDEPENDENT, type HallSyncMode } from "@/lib/boston-tv-hall";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
@@ -73,6 +74,8 @@ interface ScreenRow {
 }
 
 type ScreenContentMode = "iptv" | "playlist" | "empty";
+
+type BostonTvTab = "hall" | "playlists" | "screens" | "vmix" | "iptv";
 
 const DEFAULT_SCHEDULE = '[\n  { "weekdays": [1,2,3,4,5], "start": "08:00", "end": "22:00" }\n]';
 
@@ -121,10 +124,7 @@ export default function BostonTvDashboardPage() {
   const [screenIptvChannelId, setScreenIptvChannelId] = useState("");
   const [screenScheduleJson, setScreenScheduleJson] = useState(DEFAULT_SCHEDULE);
 
-  const [playlistsOpen, setPlaylistsOpen] = useState(true);
-  const [screensOpen, setScreensOpen] = useState(true);
-  const [iptvOpen, setIptvOpen] = useState(true);
-  const [vmixOpen, setVmixOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<BostonTvTab>("hall");
   const [feedback, setFeedback] = useState<{ title: string; message: string } | null>(null);
 
   const showFeedback = (message: string, title = "Atenção") => {
@@ -141,6 +141,18 @@ export default function BostonTvDashboardPage() {
   const [playlistActionLoading, setPlaylistActionLoading] = useState(false);
 
   const effectiveTenant = tenantFilter;
+
+  const bostonTvTabs = useMemo(
+    () =>
+      [
+        { id: "hall" as const, label: "Canal Hall", icon: Radio },
+        { id: "playlists" as const, label: "Playlists", icon: LayoutList },
+        { id: "screens" as const, label: "Telas", icon: Tv },
+        { id: "vmix" as const, label: "Fontes vMix", icon: Video },
+        { id: "iptv" as const, label: "IPTV", icon: Antenna },
+      ],
+    [],
+  );
 
   const refresh = useCallback(async () => {
     if (!effectiveTenant) {
@@ -407,227 +419,213 @@ export default function BostonTvDashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="space-y-2">
-          <Label>Empresa / clube</Label>
-          <Select
-            value={tenantSelectValue}
-            onValueChange={(v) => {
-              if (v === "_loading" || v === "_none") return;
-              setTenantFilter(v);
-              setStoredBostonTvTenantId(v);
-            }}
-            disabled={tenantsLoading || tenants.length === 0}
-          >
-            <SelectTrigger className="w-[280px] text-foreground">
-              <SelectValue placeholder="Selecione a empresa" />
-            </SelectTrigger>
-            <SelectContent>
-              {tenantsLoading ? (
-                <SelectItem value="_loading" disabled>
-                  Carregando empresas…
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Empresa / clube</Label>
+        <Select
+          value={tenantSelectValue}
+          onValueChange={(v) => {
+            if (v === "_loading" || v === "_none") return;
+            setTenantFilter(v);
+            setStoredBostonTvTenantId(v);
+          }}
+          disabled={tenantsLoading || tenants.length === 0}
+        >
+          <SelectTrigger className="w-full max-w-[280px] text-foreground">
+            <SelectValue placeholder="Selecione a empresa" />
+          </SelectTrigger>
+          <SelectContent>
+            {tenantsLoading ? (
+              <SelectItem value="_loading" disabled>
+                Carregando empresas…
+              </SelectItem>
+            ) : tenants.length === 0 ? (
+              <SelectItem value="_none" disabled>
+                Nenhuma empresa disponível
+              </SelectItem>
+            ) : (
+              tenants.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.name}
                 </SelectItem>
-              ) : tenants.length === 0 ? (
-                <SelectItem value="_none" disabled>
-                  Nenhuma empresa disponível
-                </SelectItem>
-              ) : (
-                tenants.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-        <Link href="/dashboard/marketing/boston-tv/controle-hall">
-          <Button type="button" variant="default" className="min-h-[44px] w-full sm:w-auto">
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <DashboardDeptTabs tabs={bostonTvTabs} active={activeTab} onChange={setActiveTab} />
+        <Link href="/dashboard/marketing/boston-tv/controle-hall" className="shrink-0">
+          <Button type="button" variant="default" className="min-h-[44px] w-full lg:w-auto">
             <TabletSmartphone className="mr-2 h-4 w-4" />
             Controle Hall (iPad)
           </Button>
         </Link>
       </div>
 
-      {effectiveTenant ? (
-        <BostonTvHallChannelPanel tenantId={effectiveTenant} onScreensReset={refresh} />
-      ) : null}
-
-      <BostonTvCollapsibleSection
-        title="Playlists BCG TV"
-        open={playlistsOpen}
-        onOpenChange={setPlaylistsOpen}
-        actions={
-          <Button size="sm" onClick={() => setNewPlOpen(true)} disabled={!effectiveTenant}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova playlist
-          </Button>
-        }
-      >
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando…</p>
-        ) : playlists.length === 0 ? (
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <p>Nenhuma playlist. Crie uma e adicione imagens/vídeos.</p>
-            <Button size="sm" variant="outline" onClick={() => setNewPlOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Criar primeira playlist
-            </Button>
-          </div>
-        ) : (
-          <ul className="divide-y divide-border rounded-md border">
-            {playlists.map((p) => (
-              <li
-                key={p.id}
-                className="flex flex-col gap-3 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{p.name}</p>
-                  <p className="text-muted-foreground text-xs mt-0.5">
-                    {p._count?.items ?? 0} item(ns)
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 shrink-0">
-                  <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                      Editar itens
-                    </Button>
-                  </Link>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditPlaylist(p)}
-                    aria-label={`Renomear playlist ${p.name}`}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => setDeletePlaylistId(p.id)}
-                    aria-label={`Apagar playlist ${p.name}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
+      <Card>
+        <CardContent className="pt-6">
+          {!effectiveTenant ? (
+            <p className="text-sm text-muted-foreground">Selecione uma empresa para configurar o BCG TV.</p>
+          ) : activeTab === "hall" ? (
+            <BostonTvHallChannelPanel tenantId={effectiveTenant} onScreensReset={refresh} embedded />
+          ) : activeTab === "playlists" ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">Playlists BCG TV</p>
+                <Button size="sm" onClick={() => setNewPlOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova playlist
+                </Button>
+              </div>
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Carregando…</p>
+              ) : playlists.length === 0 ? (
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>Nenhuma playlist. Crie uma e adicione imagens/vídeos.</p>
+                  <Button size="sm" variant="outline" onClick={() => setNewPlOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Criar primeira playlist
                   </Button>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </BostonTvCollapsibleSection>
-
-      <BostonTvCollapsibleSection
-        title="Telas"
-        open={screensOpen}
-        onOpenChange={setScreensOpen}
-        actions={
-          <Button size="sm" onClick={openNewScreen} disabled={!effectiveTenant}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova tela
-          </Button>
-        }
-      >
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando…</p>
-        ) : screens.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Nenhuma tela ainda. Clique <strong>Nova tela</strong> e escolha o canal ou a playlist.
-          </p>
-        ) : (
-          <>
-            <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-              Instalação no Hall: abra{" "}
-              <a href="/tv" target="_blank" rel="noopener noreferrer" className="font-mono underline">
-                /tv
-              </a>{" "}
-              na Smart TV (dropdown + Abrir). Favorito curto por tela:{" "}
-              <span className="font-mono">/tv/1</span> … <span className="font-mono">/tv/21</span>.
-            </p>
-            <ul className="space-y-3">
-            {screens.map((s) => (
-                <li
-                  key={s.id}
-                  className="rounded-lg border border-border p-3 text-sm flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium">{s.name}</p>
-                      {s.displayMode === "playlist" ? (
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-                            normalizeHallSyncMode(s.hallSyncMode) === BOSTON_TV_HALL_SYNC_INDEPENDENT
-                              ? "bg-violet-500/20 text-violet-200"
-                              : "bg-emerald-500/20 text-emerald-200"
-                          }`}
-                        >
-                          {hallSyncModeLabel(s.hallSyncMode)}
-                        </span>
-                      ) : null}
-                    </div>
-                    {s.locationHint ? (
-                      <p className="text-xs text-muted-foreground">{s.locationHint}</p>
-                    ) : null}
-                    <p className="text-xs mt-2 font-medium text-foreground truncate" title={screenContentLabel(s)}>
-                      {screenContentLabel(s)}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 shrink-0">
-                    <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s)}>
-                      <ExternalLink className="mr-1 h-4 w-4" />
-                      Abrir na TV
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => copyPlayUrl(s)}>
-                      <Clipboard className="mr-1 h-4 w-4" />
-                      Copiar link
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => openEditScreen(s)}>
-                      <Tv className="mr-1 h-4 w-4" />
-                      Editar
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => setRegenerateScreenId(s.id)}>
-                      <RefreshCw className="mr-1 h-4 w-4" />
-                      Novo token
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={() => setDeleteScreenId(s.id)}
+              ) : (
+                <ul className="divide-y divide-border rounded-md border">
+                  {playlists.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex flex-col gap-3 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </li>
-            ))}
-          </ul>
-          </>
-        )}
-      </BostonTvCollapsibleSection>
-
-      {effectiveTenant ? (
-        <BostonTvCollapsibleSection
-          title="Fontes vMix"
-          open={vmixOpen}
-          onOpenChange={setVmixOpen}
-        >
-          <BostonTvVmixPanel tenantId={effectiveTenant} embedded />
-        </BostonTvCollapsibleSection>
-      ) : null}
-
-      {effectiveTenant ? (
-        <BostonTvCollapsibleSection
-          title="Canais IPTV"
-          open={iptvOpen}
-          onOpenChange={setIptvOpen}
-        >
-          <BostonTvIptvPanel tenantId={effectiveTenant} embedded />
-        </BostonTvCollapsibleSection>
-      ) : null}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{p.name}</p>
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          {p._count?.items ?? 0} item(ns)
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 shrink-0">
+                        <Link href={`/dashboard/marketing/boston-tv/playlists/${p.id}`}>
+                          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                            Editar itens
+                          </Button>
+                        </Link>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditPlaylist(p)}
+                          aria-label={`Renomear playlist ${p.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          onClick={() => setDeletePlaylistId(p.id)}
+                          aria-label={`Apagar playlist ${p.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : activeTab === "screens" ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-foreground">Telas do Hall</p>
+                <Button size="sm" onClick={openNewScreen}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova tela
+                </Button>
+              </div>
+              {loading ? (
+                <p className="text-sm text-muted-foreground">Carregando…</p>
+              ) : screens.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma tela ainda. Clique <strong>Nova tela</strong> e escolha o canal ou a playlist.
+                </p>
+              ) : (
+                <>
+                  <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+                    Instalação no Hall: abra{" "}
+                    <a href="/tv" target="_blank" rel="noopener noreferrer" className="font-mono underline">
+                      /tv
+                    </a>{" "}
+                    na Smart TV (dropdown + Abrir). Favorito curto por tela:{" "}
+                    <span className="font-mono">/tv/1</span> … <span className="font-mono">/tv/21</span>.
+                  </p>
+                  <ul className="space-y-3">
+                    {screens.map((s) => (
+                      <li
+                        key={s.id}
+                        className="rounded-lg border border-border p-3 text-sm flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-medium">{s.name}</p>
+                            {s.displayMode === "playlist" ? (
+                              <span
+                                className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                                  normalizeHallSyncMode(s.hallSyncMode) === BOSTON_TV_HALL_SYNC_INDEPENDENT
+                                    ? "bg-violet-500/20 text-violet-200"
+                                    : "bg-emerald-500/20 text-emerald-200"
+                                }`}
+                              >
+                                {hallSyncModeLabel(s.hallSyncMode)}
+                              </span>
+                            ) : null}
+                          </div>
+                          {s.locationHint ? (
+                            <p className="text-xs text-muted-foreground">{s.locationHint}</p>
+                          ) : null}
+                          <p className="text-xs mt-2 font-medium text-foreground truncate" title={screenContentLabel(s)}>
+                            {screenContentLabel(s)}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 shrink-0">
+                          <Button type="button" variant="default" size="sm" onClick={() => openPlayUrl(s)}>
+                            <ExternalLink className="mr-1 h-4 w-4" />
+                            Abrir na TV
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" onClick={() => copyPlayUrl(s)}>
+                            <Clipboard className="mr-1 h-4 w-4" />
+                            Copiar link
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" onClick={() => openEditScreen(s)}>
+                            <Tv className="mr-1 h-4 w-4" />
+                            Editar
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" onClick={() => setRegenerateScreenId(s.id)}>
+                            <RefreshCw className="mr-1 h-4 w-4" />
+                            Novo token
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => setDeleteScreenId(s.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          ) : activeTab === "vmix" ? (
+            <BostonTvVmixPanel tenantId={effectiveTenant} embedded />
+          ) : (
+            <BostonTvIptvPanel tenantId={effectiveTenant} embedded />
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={newPlOpen} onOpenChange={setNewPlOpen}>
         <DialogContent>
