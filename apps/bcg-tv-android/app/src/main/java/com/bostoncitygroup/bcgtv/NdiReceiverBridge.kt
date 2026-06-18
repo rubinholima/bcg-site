@@ -1,14 +1,15 @@
 package com.bostoncitygroup.bcgtv
 
 import android.content.Context
+import android.graphics.SurfaceTexture
 import android.util.Log
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.view.TextureView
 import org.json.JSONArray
 import java.util.concurrent.Executors
 
 /**
  * Receptor NDI — requer libndi.so em jniLibs (ver scripts/setup-ndi-sdk.ps1).
+ * Frames renderizados na thread principal via NdiFrameDelivery (TextureView).
  */
 object NdiReceiverBridge {
     private const val TAG = "NdiReceiverBridge"
@@ -40,33 +41,27 @@ object NdiReceiverBridge {
         }
     }
 
-    fun attachSurface(surfaceView: SurfaceView, onReady: () -> Unit) {
-        surfaceView.holder.addCallback(object : SurfaceHolder.Callback {
-            override fun surfaceCreated(holder: SurfaceHolder) {
-                try {
-                    NdiNative.setSurface(holder.surface)
-                    onReady()
-                } catch (e: Exception) {
-                    Log.e(TAG, "surfaceCreated", e)
-                }
+    fun attachTexture(textureView: TextureView, onReady: () -> Unit) {
+        NdiFrameDelivery.attach(textureView)
+        if (textureView.isAvailable) {
+            onReady()
+            return
+        }
+        textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+                onReady()
             }
 
-            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-                try {
-                    NdiNative.setSurface(holder.surface)
-                } catch (e: Exception) {
-                    Log.e(TAG, "surfaceChanged", e)
-                }
+            override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) = Unit
+
+            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
+                disconnectSync()
+                NdiFrameDelivery.detach()
+                return true
             }
 
-            override fun surfaceDestroyed(holder: SurfaceHolder) {
-                try {
-                    NdiNative.setSurface(null)
-                } catch (e: Exception) {
-                    Log.e(TAG, "surfaceDestroyed", e)
-                }
-            }
-        })
+            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) = Unit
+        }
     }
 
     fun connect(sourceName: String, onDone: ((Boolean) -> Unit)? = null) {

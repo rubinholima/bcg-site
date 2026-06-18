@@ -1,14 +1,12 @@
 package com.bostoncitygroup.bcgtv
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.net.nsd.NsdManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
-import android.view.SurfaceView
+import android.view.TextureView
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
@@ -28,7 +26,7 @@ import java.util.concurrent.Executors
 class NativePlayerActivity : AppCompatActivity() {
     private lateinit var playerView: PlayerView
     private lateinit var imageView: ImageView
-    private lateinit var ndiSurfaceView: SurfaceView
+    private lateinit var ndiTextureView: TextureView
     private lateinit var ndiPlaceholder: TextView
     private lateinit var statusText: TextView
 
@@ -44,7 +42,6 @@ class NativePlayerActivity : AppCompatActivity() {
     private var ndiSurfaceReady = false
     private var ndiConnectInFlight = false
     private var ndiInitialized = false
-    private var nsdManager: NsdManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +57,7 @@ class NativePlayerActivity : AppCompatActivity() {
 
         playerView = findViewById(R.id.exoPlayerView)
         imageView = findViewById(R.id.imageView)
-        ndiSurfaceView = findViewById(R.id.ndiSurfaceView)
+        ndiTextureView = findViewById(R.id.ndiTextureView)
         ndiPlaceholder = findViewById(R.id.ndiPlaceholder)
         statusText = findViewById(R.id.statusText)
 
@@ -207,8 +204,7 @@ class NativePlayerActivity : AppCompatActivity() {
         ndiInitialized = true
         try {
             NdiAndroidBootstrap.ensure(this)
-            nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
-            NdiReceiverBridge.attachSurface(ndiSurfaceView) {
+            NdiReceiverBridge.attachTexture(ndiTextureView) {
                 ndiSurfaceReady = true
                 currentNdiSource?.let { tryConnectNdi(it) }
             }
@@ -233,7 +229,7 @@ class NativePlayerActivity : AppCompatActivity() {
             return
         }
 
-        ndiSurfaceView.visibility = View.VISIBLE
+        ndiTextureView.visibility = View.VISIBLE
         ndiPlaceholder.visibility = View.VISIBLE
         ndiPlaceholder.text = "Iniciando NDI: $sourceName…"
         currentNdiSource = sourceName
@@ -276,7 +272,7 @@ class NativePlayerActivity : AppCompatActivity() {
 
     private val ndiStatusRunnable = object : Runnable {
         override fun run() {
-            if (currentNdiSource == null || ndiSurfaceView.visibility != View.VISIBLE || isFinishing) return
+            if (currentNdiSource == null || ndiTextureView.visibility != View.VISIBLE || isFinishing) return
             val st = NdiReceiverBridge.status()
             if (st.startsWith("Conectado")) {
                 ndiPlaceholder.visibility = View.GONE
@@ -292,7 +288,7 @@ class NativePlayerActivity : AppCompatActivity() {
 
     private val ndiRetryRunnable = object : Runnable {
         override fun run() {
-            if (currentNdiSource == null || ndiSurfaceView.visibility != View.VISIBLE || isFinishing) return
+            if (currentNdiSource == null || ndiTextureView.visibility != View.VISIBLE || isFinishing) return
             val st = NdiReceiverBridge.status()
             if (!st.startsWith("Conectado") && !ndiConnectInFlight) {
                 tryConnectNdi(currentNdiSource!!)
@@ -332,12 +328,12 @@ class NativePlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(ndiRetryRunnable)
         ndiConnectInFlight = false
         if (currentNdiSource != null) {
-            NdiReceiverBridge.disconnect()
+            NdiReceiverBridge.disconnectSync()
             currentNdiSource = null
         }
         playerView.visibility = View.GONE
         imageView.visibility = View.GONE
-        ndiSurfaceView.visibility = View.GONE
+        ndiTextureView.visibility = View.GONE
         ndiPlaceholder.visibility = View.GONE
         exoPlayer?.stop()
     }
@@ -348,6 +344,7 @@ class NativePlayerActivity : AppCompatActivity() {
         if (ndiInitialized) {
             NdiReceiverBridge.disconnectSync()
             NdiReceiverBridge.shutdown()
+            NdiFrameDelivery.detach()
             NdiAndroidBootstrap.release()
         }
         io.shutdownNow()
