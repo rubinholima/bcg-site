@@ -212,9 +212,6 @@ static void copy_source(const NDIlib_source_t* src, NDIlib_source_t* dst) {
 
 static void render_bgra(ANativeWindow* window, const NDIlib_video_frame_v2_t* frame) {
     if (!window || !frame || !frame->p_data || frame->xres <= 0 || frame->yres <= 0) return;
-    if (frame->FourCC != NDIlib_FourCC_type_BGRA && frame->FourCC != NDIlib_FourCC_type_BGRX) {
-        return;
-    }
     if (ANativeWindow_setBuffersGeometry(window, frame->xres, frame->yres, WINDOW_FORMAT_RGBA_8888) != 0) {
         return;
     }
@@ -224,12 +221,79 @@ static void render_bgra(ANativeWindow* window, const NDIlib_video_frame_v2_t* fr
     const int copy_width = frame->xres * 4;
     const int copy_height = frame->yres;
     uint8_t* dst = (uint8_t*)buffer.bits;
-    const uint8_t* src = frame->p_data;
-    const int src_stride = frame->line_stride_in_bytes;
-    int y;
-    for (y = 0; y < copy_height && y < buffer.height; y++) {
-        memcpy(dst + y * dst_stride, src + y * src_stride, (size_t)copy_width);
+
+    if (frame->FourCC == NDIlib_FourCC_type_BGRA || frame->FourCC == NDIlib_FourCC_type_BGRX) {
+        const uint8_t* src = frame->p_data;
+        const int src_stride = frame->line_stride_in_bytes;
+        int y;
+        for (y = 0; y < copy_height && y < buffer.height; y++) {
+            memcpy(dst + y * dst_stride, src + y * src_stride, (size_t)copy_width);
+        }
+    } else if (frame->FourCC == NDIlib_FourCC_type_UYVY) {
+        const uint8_t* src = frame->p_data;
+        const int src_stride = frame->line_stride_in_bytes > 0
+            ? frame->line_stride_in_bytes
+            : frame->xres * 2;
+        int y;
+        for (y = 0; y < copy_height && y < buffer.height; y++) {
+            const uint8_t* row = src + y * src_stride;
+            uint8_t* out = dst + y * dst_stride;
+            int x;
+            for (x = 0; x + 1 < frame->xres; x += 2) {
+                const int u = (int)row[0] - 128;
+                const int y0 = (int)row[1] - 16;
+                const int v = (int)row[2] - 128;
+                const int y1 = (int)row[3] - 16;
+                row += 4;
+                const int cy0 = (int)(1.164f * (float)y0);
+                const int cy1 = (int)(1.164f * (float)y1);
+                out[0] = (uint8_t)(cy0 + (int)(1.596f * (float)v) < 0 ? 0
+                    : cy0 + (int)(1.596f * (float)v) > 255 ? 255
+                    : cy0 + (int)(1.596f * (float)v));
+                out[1] = (uint8_t)(cy0 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v) < 0 ? 0
+                    : cy0 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v) > 255 ? 255
+                    : cy0 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v));
+                out[2] = (uint8_t)(cy0 + (int)(2.018f * (float)u) < 0 ? 0
+                    : cy0 + (int)(2.018f * (float)u) > 255 ? 255
+                    : cy0 + (int)(2.018f * (float)u));
+                out[3] = 255;
+                out[4] = (uint8_t)(cy1 + (int)(1.596f * (float)v) < 0 ? 0
+                    : cy1 + (int)(1.596f * (float)v) > 255 ? 255
+                    : cy1 + (int)(1.596f * (float)v));
+                out[5] = (uint8_t)(cy1 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v) < 0 ? 0
+                    : cy1 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v) > 255 ? 255
+                    : cy1 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v));
+                out[6] = (uint8_t)(cy1 + (int)(2.018f * (float)u) < 0 ? 0
+                    : cy1 + (int)(2.018f * (float)u) > 255 ? 255
+                    : cy1 + (int)(2.018f * (float)u));
+                out[7] = 255;
+                out += 8;
+            }
+            if (frame->xres % 2 == 1 && x < frame->xres) {
+                const int u = (int)row[0] - 128;
+                const int y0 = (int)row[1] - 16;
+                const int v = (int)row[2] - 128;
+                const int cy0 = (int)(1.164f * (float)y0);
+                out[0] = (uint8_t)(cy0 + (int)(1.596f * (float)v) < 0 ? 0
+                    : cy0 + (int)(1.596f * (float)v) > 255 ? 255
+                    : cy0 + (int)(1.596f * (float)v));
+                out[1] = (uint8_t)(cy0 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v) < 0 ? 0
+                    : cy0 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v) > 255 ? 255
+                    : cy0 - (int)(0.391f * (float)u) - (int)(0.813f * (float)v));
+                out[2] = (uint8_t)(cy0 + (int)(2.018f * (float)u) < 0 ? 0
+                    : cy0 + (int)(2.018f * (float)u) > 255 ? 255
+                    : cy0 + (int)(2.018f * (float)u));
+                out[3] = 255;
+            }
+        }
+    } else {
+        static int logged_fourcc = 0;
+        if (!logged_fourcc) {
+            LOGE("FourCC nao suportado: 0x%x", frame->FourCC);
+            logged_fourcc = 1;
+        }
     }
+
     ANativeWindow_unlockAndPost(window);
 }
 

@@ -18,8 +18,8 @@ class SetupActivity : AppCompatActivity() {
     private val io = Executors.newSingleThreadExecutor()
 
     private val engineOptions = listOf(
-        Prefs.ENGINE_NATIVE to "Nativo — playlists e stream (recomendado)",
-        Prefs.ENGINE_NDI to "NDI — ao vivo baixa latência",
+        Prefs.ENGINE_NATIVE to "Nativo — playlist + NDI (recomendado)",
+        Prefs.ENGINE_NDI to "NDI — fonte manual na rede",
         Prefs.ENGINE_WEB to "Web — compatibilidade máxima",
     )
 

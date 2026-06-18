@@ -371,8 +371,20 @@ export class PublicController {
 
   /** Boston TV — configuração para o player web (Smart TV via URL com token secreto). */
   @Get('boston-tv/play/:token')
-  getBostonTvPlayer(@Param('token') token: string) {
-    return this.bostonTvService.getPublicPlayerPayload(token);
+  getBostonTvPlayer(
+    @Param('token') token: string,
+    @Req() req: Request,
+    @Query('client') client?: string,
+  ) {
+    const preferNativeNdi =
+      client?.trim().toLowerCase() === 'native' ||
+      this.bostonTvService.isBcgTvNativeClient(
+        req.headers['user-agent'],
+        typeof req.headers['x-bcg-tv-client'] === 'string'
+          ? req.headers['x-bcg-tv-client']
+          : undefined,
+      );
+    return this.bostonTvService.getPublicPlayerPayload(token, { preferNativeNdi });
   }
 
   @Post('boston-tv/play/:token/ping')

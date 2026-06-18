@@ -59,10 +59,28 @@ object PlayerApi {
     private val base = BuildConfig.API_BASE_URL.trimEnd('/')
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
+    /** Identifica o APK nativo — API preserva ndi_stream (sem fallback HLS). */
+    private fun apiGet(url: String): Request =
+        Request.Builder()
+            .url(url)
+            .header("User-Agent", "BcgTvPlayer/${BuildConfig.VERSION_NAME} (Android)")
+            .header("X-BcgTv-Client", "native")
+            .header("Cache-Control", "no-store")
+            .get()
+            .build()
+
+    private fun apiPost(url: String, body: String): Request =
+        Request.Builder()
+            .url(url)
+            .header("User-Agent", "BcgTvPlayer/${BuildConfig.VERSION_NAME} (Android)")
+            .header("X-BcgTv-Client", "native")
+            .post(body.toRequestBody(jsonType))
+            .build()
+
     fun fetchPlayerToken(screenNum: Int): String? {
         val url = "$base/hall/$screenNum/player-token"
         return try {
-            val res = client.newCall(Request.Builder().url(url).get().build()).execute()
+            val res = client.newCall(apiGet(url)).execute()
             if (!res.isSuccessful) return null
             val json = JSONObject(res.body?.string() ?: return null)
             json.optString("playerToken").ifBlank { null }
@@ -75,7 +93,7 @@ object PlayerApi {
     fun fetchHallPlaylists(): HallPlaylistsResponse? {
         val url = "$base/hall/playlists"
         return try {
-            val res = client.newCall(Request.Builder().url(url).get().build()).execute()
+            val res = client.newCall(apiGet(url)).execute()
             if (!res.isSuccessful) return null
             parseHallPlaylists(JSONObject(res.body?.string() ?: return null))
         } catch (e: Exception) {
@@ -95,12 +113,7 @@ object PlayerApi {
             if (!playlistId.isNullOrBlank()) put("playlistId", playlistId)
         }
         return try {
-            val res = client.newCall(
-                Request.Builder()
-                    .url(url)
-                    .post(body.toString().toRequestBody(jsonType))
-                    .build(),
-            ).execute()
+            val res = client.newCall(apiPost(url, body.toString())).execute()
             res.isSuccessful
         } catch (e: Exception) {
             Log.e("PlayerApi", "bind", e)
@@ -111,9 +124,7 @@ object PlayerApi {
     fun fetchPayload(token: String): PlayerPayload? {
         val url = "$base/play/${java.net.URLEncoder.encode(token, "UTF-8")}"
         return try {
-            val res = client.newCall(
-                Request.Builder().url(url).header("Cache-Control", "no-store").get().build(),
-            ).execute()
+            val res = client.newCall(apiGet(url)).execute()
             if (!res.isSuccessful) return null
             parsePayload(JSONObject(res.body?.string() ?: return null))
         } catch (e: Exception) {

@@ -81,6 +81,17 @@ export class BostonTvService {
     return raw as Prisma.InputJsonValue;
   }
 
+  /** APK BCG TV (NativePlayerActivity) — preserva ndi_stream em vez de fallback HLS. */
+  isBcgTvNativeClient(
+    userAgent?: string | null,
+    clientHeader?: string | null,
+  ): boolean {
+    const hdr = (clientHeader ?? '').trim().toLowerCase();
+    if (hdr === 'native' || hdr === 'bcgtv') return true;
+    const ua = (userAgent ?? '').toLowerCase();
+    return ua.includes('bcgtvplayer') || ua.includes('bcg-tv');
+  }
+
   /**
    * Navegador (/tv) não recebe NDI — se o item for ndi_stream, usa streamUrl
    * da fonte vMix quando existir (mesmo comportamento de antes do APK).
@@ -127,10 +138,15 @@ export class BostonTvService {
   }
 
   /** Payload público do player na TV — sem auth. */
-  async getPublicPlayerPayload(playerToken: string) {
+  async getPublicPlayerPayload(
+    playerToken: string,
+    options?: { preferNativeNdi?: boolean },
+  ) {
     const ctx = await this.buildPlayerContext(playerToken);
-    const webItems = await this.mapItemsForWebPlayer(ctx.tenantId, ctx.items);
-    const items = webItems.map((it, index) => ({
+    const mappedItems = options?.preferNativeNdi
+      ? ctx.items
+      : await this.mapItemsForWebPlayer(ctx.tenantId, ctx.items);
+    const items = mappedItems.map((it, index) => ({
       ...it,
       url: this.resolvePlayerItemUrl(it, playerToken, index),
     }));

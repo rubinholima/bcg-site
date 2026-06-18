@@ -11,8 +11,8 @@ android {
         applicationId = "com.bostoncitygroup.bcgtv"
         minSdk = 24
         targetSdk = 35
-        versionCode = 11
-        versionName = "1.3.1"
+        versionCode = 12
+        versionName = "1.3.2"
         buildConfigField("String", "PLAYER_BASE_URL", "\"https://www.bostoncitygroup.biz/tv/\"")
         buildConfigField("String", "API_BASE_URL", "\"https://www.bostoncitygroup.biz/api/public/boston-tv/\"")
         buildConfigField("String", "STREAM_ORIGIN", "\"https://origin.bostoncitygroup.biz\"")
@@ -55,6 +55,23 @@ android {
             path = file("src/main/cpp/CMakeLists.txt")
         }
     }
+}
+
+tasks.register("checkNdiLib") {
+    doLast {
+        listOf("arm64-v8a", "armeabi-v7a").forEach { abi ->
+            val lib = file("src/main/jniLibs/$abi/libndi.so")
+            if (!lib.exists()) {
+                throw GradleException(
+                    "libndi.so ausente em jniLibs/$abi. Rode: .\\scripts\\setup-ndi-sdk.ps1 -SdkRoot \"<pasta NDI Advanced SDK for Android>\"",
+                )
+            }
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("checkNdiLib")
 }
 
 dependencies {
