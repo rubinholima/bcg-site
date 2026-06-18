@@ -6,7 +6,6 @@ import android.util.Log
 class BcgTvApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        NdiAndroidBootstrap.ensure(this)
         val default = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             Log.e(TAG, "Uncaught on ${thread.name}", error)

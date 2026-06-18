@@ -153,13 +153,31 @@ class NativePlayerActivity : AppCompatActivity() {
 
     private fun showItem(item: PlayerItem, offsetMs: Long, paused: Boolean) {
         hideAll()
+
+        if (Prefs.getPlayerEngine(this) == Prefs.ENGINE_NDI &&
+            Prefs.getNdiSourceMode(this) == Prefs.NDI_SOURCE_MANUAL
+        ) {
+            val manual = Prefs.getNdiSourceName(this)?.trim().orEmpty()
+            if (manual.isNotEmpty()) {
+                showNdi(item.copy(contentType = "ndi_stream", url = manual))
+                return
+            }
+        }
+
         when (item.contentType) {
             "image_url" -> {
                 imageView.visibility = View.VISIBLE
                 imageView.load(item.url)
             }
             "video_url" -> playStream(item.url, offsetMs, paused)
-            "iptv_stream", "vmix_stream" -> playStream(resolveStreamUrl(item.url), 0, paused)
+            "iptv_stream", "vmix_stream" -> {
+                val streamUrl = resolveStreamUrl(item.url)
+                if (!streamUrl.startsWith("http://") && !streamUrl.startsWith("https://")) {
+                    showNdi(item.copy(contentType = "ndi_stream", url = streamUrl))
+                } else {
+                    playStream(streamUrl, 0, paused)
+                }
+            }
             "ndi_stream" -> showNdi(item)
             "youtube_video" -> {
                 startActivity(
@@ -187,16 +205,27 @@ class NativePlayerActivity : AppCompatActivity() {
     private fun ensureNdiReady() {
         if (ndiInitialized) return
         ndiInitialized = true
-        NdiAndroidBootstrap.ensure(this)
-        nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
-        NdiReceiverBridge.attachSurface(ndiSurfaceView) {
-            ndiSurfaceReady = true
-            currentNdiSource?.let { tryConnectNdi(it) }
+        try {
+            NdiAndroidBootstrap.ensure(this)
+            nsdManager = getSystemService(Context.NSD_SERVICE) as NsdManager
+            NdiReceiverBridge.attachSurface(ndiSurfaceView) {
+                ndiSurfaceReady = true
+                currentNdiSource?.let { tryConnectNdi(it) }
+            }
+        } catch (e: Exception) {
+            ndiPlaceholder.text = "NDI indisponível: ${e.message ?: "erro ao iniciar"}"
+            ndiPlaceholder.visibility = View.VISIBLE
         }
     }
 
     private fun showNdi(item: PlayerItem) {
-        ensureNdiReady()
+        try {
+            ensureNdiReady()
+        } catch (e: Exception) {
+            statusText.text = "NDI: ${e.message ?: "falha ao iniciar"}"
+            statusText.visibility = View.VISIBLE
+            return
+        }
         val sourceName = resolveNdiSourceName(item)
         if (sourceName.isEmpty()) {
             ndiPlaceholder.text = "Fonte NDI sem nome configurado."

@@ -47,7 +47,7 @@ type HallChannelResponse =
 type PlaylistOption = { id: string; name: string };
 
 type ConfirmAction =
-  | { type: "swap"; playlistName: string }
+  | { type: "swap"; playlistId: string; playlistName: string }
   | { type: "reset" };
 
 interface BostonTvHallChannelPanelProps {
@@ -76,6 +76,7 @@ export function BostonTvHallChannelPanel({
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+  const [bindError, setBindError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!tenantId) {
@@ -98,7 +99,12 @@ export function BostonTvHallChannelPanel({
       const pls = plRes.data ?? [];
       setPlaylists(pls);
       if (channelRes.data?.configured) {
-        setPickPlaylistId(channelRes.data.playlistId);
+        const configured = channelRes.data;
+        setPickPlaylistId((prev) => {
+          const serverId = configured.playlistId;
+          if (prev && prev !== serverId) return prev;
+          return serverId;
+        });
       } else {
         setPickPlaylistId((prev) => prev || pls[0]?.id || "");
       }
@@ -128,18 +134,26 @@ export function BostonTvHallChannelPanel({
     }
   };
 
-  const bindPlaylist = async () => {
-    if (!tenantId || !pickPlaylistId) return;
+  const bindPlaylist = async (targetPlaylistId?: string) => {
+    const playlistId = targetPlaylistId ?? pickPlaylistId;
+    if (!tenantId || !playlistId) return;
     setActing(true);
+    setBindError(null);
     try {
       const { data: res } = await api.post<HallChannelResponse>(
         `/boston-tv/hall-channel/bind`,
-        { tenantId, playlistId: pickPlaylistId },
+        { tenantId, playlistId },
       );
       setData(res);
       if (res?.configured) {
         setPickPlaylistId(res.playlistId);
       }
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? "")
+          : "";
+      setBindError(msg || "Não foi possível trocar a playlist. Tente de novo.");
     } finally {
       setActing(false);
     }
@@ -162,7 +176,7 @@ export function BostonTvHallChannelPanel({
     if (!pickPlaylistId || !data?.configured || pickPlaylistId === data.playlistId) return;
     const name =
       playlists.find((p) => p.id === pickPlaylistId)?.name ?? "esta playlist";
-    setConfirmAction({ type: "swap", playlistName: name });
+    setConfirmAction({ type: "swap", playlistId: pickPlaylistId, playlistName: name });
   };
 
   const handleConfirmAction = async () => {
@@ -170,7 +184,7 @@ export function BostonTvHallChannelPanel({
     const action = confirmAction;
     setConfirmAction(null);
     if (action.type === "swap") {
-      await bindPlaylist();
+      await bindPlaylist(action.playlistId);
     } else {
       await resetScreensToHall();
     }
@@ -244,6 +258,12 @@ export function BostonTvHallChannelPanel({
                 </>
               ) : null}
             </div>
+
+            {bindError ? (
+              <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-red-200">
+                {bindError}
+              </p>
+            ) : null}
 
             {playlists.length === 0 ? (
               <p className="text-muted-foreground">
