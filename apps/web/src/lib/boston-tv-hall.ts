@@ -54,10 +54,20 @@ export function normalizeHallSyncMode(mode: string | undefined | null): HallSync
     : BOSTON_TV_HALL_SYNC_FOLLOW;
 }
 
+/** Nome oficial do canal sincronizado do espaço multiuso. */
+export const BC_HALL_LABEL = "BC HALL";
+
+/** Rótulo do painel iPad para operação no Hall. */
+export const BC_HALL_CONTROLE_LABEL = "Controle BC HALL";
+
+export function hallFollowSyncOptionLabel(): string {
+  return `Seguir ${BC_HALL_LABEL}`;
+}
+
 export function hallSyncModeLabel(mode: string | undefined | null): string {
   return normalizeHallSyncMode(mode) === BOSTON_TV_HALL_SYNC_INDEPENDENT
     ? "Individual"
-    : "Canal Hall";
+    : BC_HALL_LABEL;
 }
 
 /** "14 - Argentina" → "Argentina" */

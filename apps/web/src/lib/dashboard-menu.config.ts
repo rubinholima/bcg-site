@@ -668,7 +668,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
       {
         slug: "marketing_boston_tv_controle",
-        label: "Controle Hall",
+        label: "Controle BC HALL",
         href: "/dashboard/marketing/boston-tv/controle-hall",
         icon: TabletSmartphone,
         moduleSlug: "boston_tv",

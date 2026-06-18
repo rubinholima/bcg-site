@@ -8,7 +8,7 @@ import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader"
 import { BookOpen } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-const NAV = [
+const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "intro", label: "Introdução" },
   { id: "acesso", label: "Acesso e perfis" },
   { id: "permissoes-modulos", label: "Permissões (módulos)" },
@@ -20,11 +20,34 @@ const NAV = [
   { id: "futebol", label: "Depto Futebol" },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
-  { id: "boston-tv", label: "Boston TV" },
+  { id: "boston-tv", label: "BCG TV" },
+  { id: "boston-tv-bc-hall", label: "→ BC HALL", indent: true },
+  { id: "boston-tv-playlists", label: "→ Playlists", indent: true },
+  { id: "boston-tv-telas", label: "→ Telas", indent: true },
+  { id: "boston-tv-vmix", label: "→ Fontes vMix", indent: true },
+  { id: "boston-tv-iptv", label: "→ IPTV", indent: true },
+  { id: "boston-tv-controle", label: "→ Controle iPad", indent: true },
   { id: "ferramentas", label: "Ferramentas" },
   { id: "config", label: "Configurações" },
   { id: "exemplos", label: "Exemplos práticos" },
-] as const;
+];
+
+function SubSection({
+  id,
+  title,
+  children,
+}: {
+  id: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div id={id} className="scroll-mt-24 space-y-3 rounded-xl border border-border/60 bg-muted/20 p-4 sm:p-5">
+      <h3 className="text-base font-semibold tracking-tight text-foreground">{title}</h3>
+      <div className="space-y-3 text-sm text-foreground/90 leading-relaxed">{children}</div>
+    </div>
+  );
+}
 
 function Section({
   id,
@@ -82,7 +105,9 @@ export default function ManualPage() {
               <li key={item.id}>
                 <a
                   href={`#${item.id}`}
-                  className="text-foreground/80 hover:text-primary transition-colors block py-0.5"
+                  className={`text-foreground/80 hover:text-primary transition-colors block py-0.5 ${
+                    item.indent ? "pl-3 text-xs text-muted-foreground hover:text-primary" : ""
+                  }`}
                 >
                   {item.label}
                 </a>
@@ -329,55 +354,154 @@ export default function ManualPage() {
 
           <Section id="marketing" title="Marketing">
             <p>
-              <strong>Planner:</strong> calendário de conteúdo. <strong>Boston TV</strong> (se habilitado):
+              <strong>Planner:</strong> calendário de conteúdo. <strong>BCG TV</strong> (se habilitado):
               playlists e telas — veja a seção{" "}
               <a href="#boston-tv" className="text-primary underline-offset-2 hover:underline">
-                Boston TV
+                BCG TV
               </a>{" "}
               abaixo.
             </p>
           </Section>
 
-          <Section id="boston-tv" title="Boston TV">
+          <Section id="boston-tv" title="BCG TV (Boston TV)">
             <p>
               Telas físicas abrem o link <code className="text-foreground">/tv/play/…</code> em tela cheia, sem
-              som e sem menu de canais. Configure em <strong>Marketing → Boston TV</strong>.
+              som e sem menu de canais. Configure em <strong>Marketing → BCG TV</strong> — use as abas{" "}
+              <strong>BC HALL</strong>, Playlists, Telas, Fontes vMix e IPTV.
             </p>
-            <p>
-              <strong>Ordem recomendada:</strong> (1) criar playlist e itens; (2) liberar canais IPTV se
-              precisar; (3) criar tela e escolher playlist ou canal; (4) copiar link e abrir na TV.
-            </p>
-            <p>
-              <strong>Playlist da TV</strong> — loop de conteúdos em marketing. Tipos de item:
-            </p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>
-                <strong>Imagem (URL):</strong> link da foto + segundos na tela (ex.: banner 15 s).
-              </li>
-              <li>
-                <strong>Vídeo (URL):</strong> link direto do .mp4; ao terminar, passa ao próximo.
-              </li>
-              <li>
-                <strong>YouTube:</strong> link de um vídeo (não da playlist do YouTube); tempo máximo antes do
-                próximo (padrão 8 min).
-              </li>
-              <li>
-                <strong>Canal IPTV (live):</strong> canal liberado na lista M3U; fica X segundos e passa ao
-                próximo (padrão 1 h).
-              </li>
-            </ul>
-            <p>
-              <strong>Canal IPTV fixo na tela</strong> — um canal ao vivo 24 h, sem alternar. Use{" "}
-              <em>Nova tela → Canal IPTV fixo</em>, não a playlist.
-            </p>
-            <p>
-              <strong>IPTV (lista M3U):</strong> sincronize a URL M3U, busque canais e clique em{" "}
-              <strong>Liberar</strong>. Só os liberados aparecem ao montar playlist ou tela com canal fixo.
-            </p>
-            <p>
-              <strong>Exemplo:</strong> playlist “Hall comercial” com banner 15 s + vídeo institucional MP4 →
-              tela “TV Hall” com <em>Playlist da TV</em> → abrir link na smart TV.
-            </p>
+
+            <div className="rounded-lg border border-violet-500/25 bg-violet-950/20 px-4 py-3 text-sm">
+              <p className="font-semibold text-violet-200">Ordem recomendada (primeira vez)</p>
+              <ol className="mt-2 list-decimal pl-5 space-y-1">
+                <li>Criar playlist(s) e adicionar itens (imagens, vídeos, YouTube, vMix ou IPTV no loop).</li>
+                <li>Ativar o <strong>BC HALL</strong> escolhendo a playlist principal.</li>
+                <li>Cadastrar telas e definir <em>Seguir BC HALL</em> ou <em>Individual</em>.</li>
+                <li>Liberar canais IPTV e/ou fontes vMix, se necessário.</li>
+                <li>Abrir o link na Smart TV (<code className="text-foreground">/tv</code> ou favorito curto).</li>
+              </ol>
+            </div>
+
+            <SubSection id="boston-tv-bc-hall" title="BC HALL — canal sincronizado">
+              <p>
+                O <strong>BC HALL</strong> é o canal mestre do espaço multiuso. Você escolhe{" "}
+                <strong>uma playlist</strong> e todas as telas em modo <strong>Seguir BC HALL</strong> tocam
+                juntas, no mesmo segundo (pausar, próximo e reiniciar afetam todas).
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  <strong>Seguir BC HALL:</strong> usa a playlist ativa do BC HALL — ideal para o loop geral do
+                  Hall.
+                </li>
+                <li>
+                  <strong>Individual:</strong> playlist própria só naquela TV (ex.: tutorial em uma tela da
+                  Argentina).
+                </li>
+                <li>
+                  O browser da TV permanece aberto; <strong>Pausar</strong> só congela o conteúdo, não fecha o
+                  player.
+                </li>
+              </ul>
+              <p>
+                Na aba <strong>BC HALL</strong>: escolha a playlist e clique <strong>Ativar BC HALL</strong>. Depois
+                use Pausar, Próximo, Reiniciar, Trocar playlist ou Voltar todas ao BC HALL.
+              </p>
+              <p>
+                Exemplo de nome de playlist: <code className="text-foreground">BC HALL - PL GERAL</code>.
+              </p>
+            </SubSection>
+
+            <SubSection id="boston-tv-playlists" title="Playlists">
+              <p>
+                Loop de conteúdos para as TVs. Crie em <strong>Playlists → Nova playlist</strong> e monte os itens
+                em <strong>Editar itens</strong>.
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  <strong>Imagem (URL):</strong> foto + segundos na tela (ex.: banner 15 s).
+                </li>
+                <li>
+                  <strong>Vídeo (URL):</strong> link direto .mp4; ao terminar, passa ao próximo.
+                </li>
+                <li>
+                  <strong>YouTube:</strong> link de um vídeo (não da playlist do YouTube); tempo máximo antes do
+                  próximo (padrão 8 min).
+                </li>
+                <li>
+                  <strong>Canal IPTV (live):</strong> canal liberado na lista M3U; permanece X segundos e passa ao
+                  próximo (padrão 1 h).
+                </li>
+                <li>
+                  <strong>Fonte vMix:</strong> saída cadastrada em Fontes vMix (NDI ou Stream HTTP).
+                </li>
+              </ul>
+              <p>
+                <strong>Importante:</strong> imagens, vídeos e YouTube não se cadastram na tela — ficam nos itens
+                da playlist. A tela só escolhe se segue o BC HALL ou uma playlist individual.
+              </p>
+            </SubSection>
+
+            <SubSection id="boston-tv-telas" title="Telas">
+              <p>
+                Cada tela tem nome (ex.: <code className="text-foreground">1 - USA</code>), link único e modo de
+                conteúdo.
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  <strong>Playlist (BC HALL ou individual):</strong> loop de mídia; sincronização na criação/edição
+                  da tela.
+                </li>
+                <li>
+                  <strong>Canal IPTV fixo:</strong> um canal ao vivo 24 h, sem playlist — use quando a TV for só um
+                  canal.
+                </li>
+              </ul>
+              <p>
+                <strong>Instalação na Smart TV:</strong> abra{" "}
+                <code className="text-foreground">/tv</code> (dropdown da tela + Abrir) ou favorito curto por
+                número: <code className="text-foreground">/tv/1</code> …{" "}
+                <code className="text-foreground">/tv/21</code>.
+              </p>
+              <p>
+                Badge <strong>BC HALL</strong> na lista = sincronizada. Badge <strong>Individual</strong> = playlist
+                própria.
+              </p>
+            </SubSection>
+
+            <SubSection id="boston-tv-vmix" title="Fontes vMix">
+              <p>Cadastre as saídas do vMix para usar em playlists ou telas.</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  <strong>Stream HTTP (LiveLAN):</strong> para navegador na TV na mesma rede do vMix. URL correta:{" "}
+                  <code className="text-foreground">http://10.0.0.2:8088/livelan</code> — não cole o .m3u8 na barra
+                  do Chrome.
+                </li>
+                <li>
+                  <strong>NDI:</strong> latência mínima no app BCG TV Android. Nome igual ao NDI Studio Monitor (ex.:{" "}
+                  <code className="text-foreground">vMix - Output 1</code>).
+                </li>
+              </ul>
+            </SubSection>
+
+            <SubSection id="boston-tv-iptv" title="Canais IPTV">
+              <p>
+                Informe a URL da lista M3U, salve e clique <strong>Sincronizar canais</strong>. Usuário e senha já
+                vêm dentro da lista — não precisa cadastrar separado.
+              </p>
+              <p>
+                Depois, <strong>libere</strong> os canais que deseja usar. Só os liberados aparecem ao montar
+                playlist ou escolher canal fixo na TV.
+              </p>
+            </SubSection>
+
+            <SubSection id="boston-tv-controle" title="Controle BC HALL (iPad)">
+              <p>
+                Abra <strong>Marketing → Controle BC HALL</strong> no iPad. Pause o Hall inteiro, avance item ou
+                toque em uma tela para alternar entre <strong>BC HALL</strong> e <strong>Individual</strong>.
+              </p>
+              <p>
+                O BC HALL precisa estar ativo na página BCG TV antes de usar o controle remoto.
+              </p>
+            </SubSection>
           </Section>
 
           <Section id="ferramentas" title="Ferramentas">

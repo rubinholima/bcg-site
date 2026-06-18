@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import { api } from "@/lib/api";
+import { BC_HALL_LABEL, BC_HALL_CONTROLE_LABEL } from "@/lib/boston-tv-hall";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 
 export type HallSyncState = {
@@ -179,14 +180,6 @@ export function BostonTvHallChannelPanel({
 
   const panelBody = (
     <div className="space-y-4 text-sm">
-        <p className="text-muted-foreground">
-          Você escolhe <strong className="text-foreground">uma playlist</strong> — telas em{" "}
-          <strong className="text-foreground">Seguir Canal Hall</strong> tocam juntas, no mesmo
-          segundo. Telas em modo <strong className="text-foreground">Individual</strong> usam
-          playlist própria (ex.: tutorial). O browser da TV fica aberto; pausar só congela o
-          conteúdo.
-        </p>
-
         {loading && !data ? (
           <p className="text-muted-foreground">Carregando canal…</p>
         ) : null}
@@ -196,12 +189,12 @@ export function BostonTvHallChannelPanel({
             <p className="text-amber-100/90">{data.message}</p>
             {playlists.length === 0 ? (
               <p className="text-muted-foreground">
-                Crie uma playlist abaixo (ex.: &quot;BC HALL - PL GERAL&quot;) e volte aqui.
+                Crie uma playlist na aba <strong className="text-foreground">Playlists</strong>.
               </p>
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="min-w-[200px] flex-1 space-y-2">
-                  <Label htmlFor="hall-channel-playlist">Playlist do Canal Hall</Label>
+                  <Label htmlFor="hall-channel-playlist">Playlist do {BC_HALL_LABEL}</Label>
                   <ModalNativeSelect
                     id="hall-channel-playlist"
                     value={pickPlaylistId}
@@ -217,7 +210,7 @@ export function BostonTvHallChannelPanel({
                   className="min-h-[44px] shrink-0"
                 >
                   <Link2 className="mr-2 h-4 w-4" />
-                  Ativar Canal Hall
+                  Ativar {BC_HALL_LABEL}
                 </Button>
               </div>
             )}
@@ -232,10 +225,6 @@ export function BostonTvHallChannelPanel({
                 <strong className="text-foreground">{data.playlistName}</strong>
                 {" · "}
                 {data.itemCount} {data.itemCount === 1 ? "item" : "itens"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Telas com badge <strong>Canal Hall</strong> = sincronizadas.{" "}
-                <strong>Individual</strong> = playlist própria, fora do sync.
               </p>
               {sync ? (
                 <>
@@ -258,7 +247,7 @@ export function BostonTvHallChannelPanel({
 
             {playlists.length === 0 ? (
               <p className="text-muted-foreground">
-                Crie outra playlist na seção Playlists abaixo para trocar o Canal Hall.
+                Crie outra playlist na aba Playlists para trocar o {BC_HALL_LABEL}.
               </p>
             ) : (
               <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3 sm:flex-row sm:items-end">
@@ -340,7 +329,7 @@ export function BostonTvHallChannelPanel({
                 className="min-h-[44px]"
               >
                 <Users className="mr-2 h-4 w-4" />
-                Voltar todas ao Canal Hall
+                Voltar todas ao {BC_HALL_LABEL}
               </Button>
             </div>
           </>
@@ -358,19 +347,19 @@ export function BostonTvHallChannelPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>
               {confirmAction?.type === "swap"
-                ? "Trocar playlist do Canal Hall?"
-                : "Voltar todas ao Canal Hall?"}
+                ? `Trocar playlist do ${BC_HALL_LABEL}?`
+                : `Voltar todas ao ${BC_HALL_LABEL}?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmAction?.type === "swap" ? (
                 <>
-                  O Canal Hall passará a usar{" "}
+                  O {BC_HALL_LABEL} passará a usar{" "}
                   <strong className="text-foreground">{confirmAction.playlistName}</strong>.
                   Todas as telas sincronizadas recomeçam do início.
                 </>
               ) : (
                 <>
-                  Todas as telas em modo playlist voltam a seguir o Canal Hall com a playlist
+                  Todas as telas em modo playlist voltam a seguir o {BC_HALL_LABEL} com a playlist
                   ativa. Telas individuais também serão resetadas.
                 </>
               )}
@@ -405,7 +394,7 @@ export function BostonTvHallChannelPanel({
   return (
     <>
       <BostonTvCollapsibleSection
-        title="Canal Hall — sincronizado"
+        title={`${BC_HALL_LABEL} — sincronizado`}
         open={open}
         onOpenChange={setOpen}
       >

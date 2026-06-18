@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Clipboard, ExternalLink, LayoutList, Pencil, Plus, Radio, RefreshCw, Trash2, Tv, TabletSmartphone, Antenna, Video } from "lucide-react";
+import { Clipboard, ExternalLink, HelpCircle, LayoutList, Pencil, Plus, Radio, RefreshCw, Trash2, Tv, TabletSmartphone, Antenna, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -40,7 +40,7 @@ import { BostonTvVmixPanel } from "@/components/boston-tv/BostonTvVmixPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvHallChannelPanel } from "@/components/boston-tv/BostonTvHallChannelPanel";
 import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
-import { parseHallScreenNum, hallSyncModeLabel, normalizeHallSyncMode, BOSTON_TV_HALL_SYNC_FOLLOW, BOSTON_TV_HALL_SYNC_INDEPENDENT, type HallSyncMode } from "@/lib/boston-tv-hall";
+import { parseHallScreenNum, hallSyncModeLabel, normalizeHallSyncMode, BOSTON_TV_HALL_SYNC_FOLLOW, BOSTON_TV_HALL_SYNC_INDEPENDENT, BC_HALL_LABEL, BC_HALL_CONTROLE_LABEL, hallFollowSyncOptionLabel, type HallSyncMode } from "@/lib/boston-tv-hall";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
   getStoredBostonTvTenantId,
@@ -145,7 +145,7 @@ export default function BostonTvDashboardPage() {
   const bostonTvTabs = useMemo(
     () =>
       [
-        { id: "hall" as const, label: "Canal Hall", icon: Radio },
+        { id: "hall" as const, label: BC_HALL_LABEL, icon: Radio },
         { id: "playlists" as const, label: "Playlists", icon: LayoutList },
         { id: "screens" as const, label: "Telas", icon: Tv },
         { id: "vmix" as const, label: "Fontes vMix", icon: Video },
@@ -457,16 +457,24 @@ export default function BostonTvDashboardPage() {
       <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <BostonTvDashboardTabs tabs={bostonTvTabs} active={activeTab} onChange={setActiveTab} />
-          <Link href="/dashboard/marketing/boston-tv/controle-hall" className="shrink-0">
-            <Button
-              type="button"
-              variant="default"
-              className="min-h-[48px] w-full border border-violet-400/30 bg-gradient-to-r from-violet-600 to-violet-500 shadow-[0_4px_20px_-6px_rgba(139,92,246,0.6)] hover:from-violet-500 hover:to-violet-400 lg:w-auto"
-            >
-              <TabletSmartphone className="mr-2 h-4 w-4" />
-              Controle Hall (iPad)
-            </Button>
-          </Link>
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+            <Link href="/dashboard/marketing/boston-tv/controle-hall">
+              <Button
+                type="button"
+                variant="default"
+                className="min-h-[48px] w-full border border-violet-400/30 bg-gradient-to-r from-violet-600 to-violet-500 shadow-[0_4px_20px_-6px_rgba(139,92,246,0.6)] hover:from-violet-500 hover:to-violet-400 sm:w-auto"
+              >
+                <TabletSmartphone className="mr-2 h-4 w-4" />
+                {BC_HALL_CONTROLE_LABEL} (iPad)
+              </Button>
+            </Link>
+            <Link href="/dashboard/manual#boston-tv">
+              <Button type="button" variant="outline" className="min-h-[48px] w-full sm:w-auto">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Ajuda
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -556,13 +564,12 @@ export default function BostonTvDashboardPage() {
                 </p>
               ) : (
                 <>
-                  <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
-                    Instalação no Hall: abra{" "}
-                    <a href="/tv" target="_blank" rel="noopener noreferrer" className="font-mono underline">
-                      /tv
-                    </a>{" "}
-                    na Smart TV (dropdown + Abrir). Favorito curto por tela:{" "}
-                    <span className="font-mono">/tv/1</span> … <span className="font-mono">/tv/21</span>.
+                  <p className="text-xs text-muted-foreground">
+                    Instalação: <span className="font-mono text-foreground">/tv</span> ou{" "}
+                    <span className="font-mono text-foreground">/tv/1</span>… —{" "}
+                    <Link href="/dashboard/manual#boston-tv-telas" className="text-primary underline-offset-2 hover:underline">
+                      ver Manual
+                    </Link>
                   </p>
                   <ul className="space-y-3">
                     {screens.map((s) => (
@@ -765,7 +772,7 @@ export default function BostonTvDashboardPage() {
                 options={[
                   {
                     value: "playlist",
-                    label: "Playlist (Hall ou individual — imagens, vídeos, YouTube, vMix, IPTV no loop)",
+                    label: "Playlist (BC HALL ou individual)",
                   },
                   {
                     value: "iptv",
@@ -774,27 +781,12 @@ export default function BostonTvDashboardPage() {
                   { value: "empty", label: "Nada por enquanto" },
                 ]}
               />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {screenContentMode === "playlist" ? (
-                  <>
-                    <strong className="text-foreground">Imagens, vídeos e YouTube</strong> não ficam
-                    aqui — monte na playlist em{" "}
-                    <strong className="text-foreground">Editar itens</strong> (lista de playlists
-                    acima). Abaixo você escolhe se esta TV segue o Canal Hall ou uma playlist só
-                    dela.
-                  </>
-                ) : screenContentMode === "iptv" ? (
-                  <>Canal ao vivo direto nesta TV, sem loop de playlist.</>
-                ) : (
-                  <>Tela cadastrada, sem conteúdo até você configurar.</>
-                )}
-              </p>
             </div>
 
             {screenContentMode === "playlist" ? (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="sc-hall-sync">Sincronização com o Hall</Label>
+                  <Label htmlFor="sc-hall-sync">Sincronização</Label>
                   <ModalNativeSelect
                     id="sc-hall-sync"
                     value={screenHallSyncMode}
@@ -802,23 +794,14 @@ export default function BostonTvDashboardPage() {
                     options={[
                       {
                         value: BOSTON_TV_HALL_SYNC_FOLLOW,
-                        label: "Seguir Canal Hall (sincronizada com as demais)",
+                        label: `${hallFollowSyncOptionLabel()} (sincronizada)`,
                       },
                       {
                         value: BOSTON_TV_HALL_SYNC_INDEPENDENT,
-                        label: "Individual (playlist própria, ex.: tutorial Argentina)",
+                        label: "Individual (playlist própria)",
                       },
                     ]}
                   />
-                  {screenHallSyncMode === BOSTON_TV_HALL_SYNC_FOLLOW ? (
-                    <p className="text-xs text-muted-foreground">
-                      Usa a playlist ativa do Canal Hall. Pausar/Próximo no painel acima
-                      afetam esta tela. Para incluir{" "}
-                      <strong className="text-foreground">imagens ou vídeos</strong>, edite os
-                      itens dessa playlist em{" "}
-                      <strong className="text-foreground">Editar itens</strong> na lista acima.
-                    </p>
-                  ) : null}
                 </div>
 
                 {screenHallSyncMode === BOSTON_TV_HALL_SYNC_INDEPENDENT ? (

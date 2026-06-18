@@ -203,9 +203,6 @@ export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPa
                 Última sync: {new Date(source.lastSyncedAt).toLocaleString("pt-BR")}
               </p>
             ) : null}
-            <p className="text-xs text-muted-foreground">
-              Usuário e senha já vêm dentro da lista M3U — não precisa cadastrar separado.
-            </p>
           </div>
 
         {source?.syncStatus === "done" && source.channelCount > 0 ? (
@@ -213,9 +210,6 @@ export function BostonTvIptvPanel({ tenantId, embedded = false }: BostonTvIptvPa
             {enabledChannels.length > 0 ? (
               <div className="space-y-2 border-t border-border pt-4">
                 <Label>Canais liberados ({enabledCount})</Label>
-                <p className="text-xs text-muted-foreground">
-                  Só estes aparecem ao montar playlist ou escolher canal fixo na TV.
-                </p>
                 <ul className="max-h-64 overflow-y-auto divide-y divide-border rounded-md border">
                   {enabledChannels.map((ch) => (
                     <li

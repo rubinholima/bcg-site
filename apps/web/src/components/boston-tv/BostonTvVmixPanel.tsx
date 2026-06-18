@@ -155,16 +155,6 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
 
   const body = (
     <div className="space-y-6">
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        Cadastre as saídas do <strong className="text-foreground">vMix</strong>. Para{" "}
-        <strong className="text-foreground">navegador na TV</strong> (mesma rede do vMix), use{" "}
-        <strong className="text-foreground">Stream HTTP</strong> com a página LiveLAN:{" "}
-        <code className="text-foreground">http://10.0.0.2:8088/livelan</code> — não use o .m3u8 na barra
-        do browser. Para latência mínima no Hall, use <strong className="text-foreground">NDI</strong> no
-        app BCG TV (
-        <code className="text-foreground">vMix - Output 1</code>).
-      </p>
-
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -225,9 +215,6 @@ export function BostonTvVmixPanel({ tenantId, embedded = false }: BostonTvVmixPa
                   placeholder="vMix - Output 1"
                   className="text-foreground font-mono text-sm"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Igual ao que aparece no NDI Studio Monitor (ex.: BOSTONCITYFC → vMix - Output 1).
-                </p>
               </div>
             ) : (
               <div className="space-y-1 sm:col-span-2">

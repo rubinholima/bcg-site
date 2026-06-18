@@ -18,7 +18,7 @@ interface HlsStreamPlayerProps {
   label?: string;
   /** TV signage: tenta reproduzir com áudio (HDMI). Fallback mudo se o browser bloquear autoplay. */
   withAudio?: boolean;
-  /** Canal Hall pausado — congela stream ao vivo. */
+  /** BC HALL pausado — congela stream ao vivo. */
   paused?: boolean;
 }
 

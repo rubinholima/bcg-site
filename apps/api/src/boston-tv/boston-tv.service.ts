@@ -1079,7 +1079,7 @@ export class BostonTvService {
         configured: false as const,
         tenantId,
         message:
-          'Escolha abaixo qual playlist vai tocar sincronizada em todas as telas do Hall.',
+          'Escolha uma playlist e ative o BC HALL.',
       };
     }
 
@@ -1148,7 +1148,7 @@ export class BostonTvService {
       durationSeconds: it.durationSeconds,
     }));
     if (syncItems.length === 0) {
-      throw new BadRequestException('Playlist do Canal Hall está vazia.');
+      throw new BadRequestException('Playlist do BC HALL está vazia.');
     }
 
     const currentElapsed = hallElapsedMs(
@@ -1258,7 +1258,7 @@ export class BostonTvService {
     });
     if (!channel) {
       throw new NotFoundException(
-        'Canal Hall não configurado para esta empresa.',
+        'BC HALL não configurado para esta empresa.',
       );
     }
     return channel;
@@ -1273,7 +1273,7 @@ export class BostonTvService {
     });
     if (!channel) {
       throw new NotFoundException(
-        'Canal Hall não configurado para esta empresa.',
+        'BC HALL não configurado para esta empresa.',
       );
     }
     return channel;

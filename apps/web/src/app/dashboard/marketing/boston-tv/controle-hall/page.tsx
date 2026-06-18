@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, TabletSmartphone } from "lucide-react";
+import { ArrowLeft, HelpCircle, TabletSmartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { BostonTvHallControlView } from "@/components/boston-tv/BostonTvHallControlView";
+import { BC_HALL_CONTROLE_LABEL } from "@/lib/boston-tv-hall";
 import {
   getStoredBostonTvTenantId,
   pickBostonTvTenantId,
@@ -82,14 +83,18 @@ export default function BostonTvControleHallPage() {
             <ArrowLeft className="mr-1 h-4 w-4" />
             BCG TV
           </Link>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <TabletSmartphone className="h-7 w-7 text-primary" aria-hidden />
-            Controle Hall
-          </h1>
-          <p className="text-sm text-muted-foreground max-w-xl">
-            Interface para iPad — pause o Hall inteiro ou coloque uma TV em playlist
-            individual com um toque.
-          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+              <TabletSmartphone className="h-7 w-7 text-primary" aria-hidden />
+              {BC_HALL_CONTROLE_LABEL} (iPad)
+            </h1>
+            <Link href="/dashboard/manual#boston-tv-controle">
+              <Button type="button" variant="outline" size="sm" className="min-h-[40px]">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Ajuda
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="space-y-2 w-full sm:w-auto">

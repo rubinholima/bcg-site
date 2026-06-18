@@ -35,7 +35,9 @@ import type { HallSyncState } from "@/components/boston-tv/BostonTvHallChannelPa
 import {
   BOSTON_TV_HALL_SYNC_FOLLOW,
   BOSTON_TV_HALL_SYNC_INDEPENDENT,
+  BC_HALL_LABEL,
   formatHallOffsetMs,
+  hallFollowSyncOptionLabel,
   hallScreenShortLabel,
   hallSyncModeLabel,
   normalizeHallSyncMode,
@@ -221,7 +223,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                Canal Hall
+                {BC_HALL_LABEL}
               </p>
               <p className="text-lg font-semibold text-foreground truncate">
                 {channel.playlistName}
@@ -308,7 +310,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
               onClick={() => setResetAllOpen(true)}
             >
               <Users className="mr-2 h-5 w-5" />
-              Tudo ao Hall
+              Tudo ao {BC_HALL_LABEL}
             </Button>
           </div>
         </div>
@@ -316,16 +318,11 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-4 text-sm text-amber-100/90">
           {channel && !channel.configured
             ? channel.message
-            : "Ative o Canal Hall na página BCG TV antes de usar o controle."}
+            : `Ative o ${BC_HALL_LABEL} na página BCG TV antes de usar o controle.`}
         </div>
       )}
 
       <div>
-        <p className="mb-3 text-sm text-muted-foreground">
-          Toque em uma tela para alternar entre <strong>Canal Hall</strong> e{" "}
-          <strong>Individual</strong>.
-        </p>
-
         {loading && screens.length === 0 ? (
           <p className="text-sm text-muted-foreground">Carregando telas…</p>
         ) : (
@@ -377,9 +374,9 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
       <AlertDialog open={resetAllOpen} onOpenChange={setResetAllOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Voltar todas ao Canal Hall?</AlertDialogTitle>
+            <AlertDialogTitle>Voltar todas ao {BC_HALL_LABEL}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Todas as telas em modo playlist voltam a seguir o Canal Hall com a playlist ativa.
+              Todas as telas em modo playlist voltam a seguir o {BC_HALL_LABEL} com a playlist ativa.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -411,8 +408,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
 
               {picked.displayMode === "iptv" ? (
                 <p className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-100">
-                  Canal IPTV fixo. Toque abaixo para voltar ao Canal Hall (playlist
-                  sincronizada).
+                  Canal IPTV fixo nesta tela.
                 </p>
               ) : null}
 
@@ -425,7 +421,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
                   options={[
                     {
                       value: BOSTON_TV_HALL_SYNC_FOLLOW,
-                      label: "Seguir Canal Hall (igual às outras)",
+                      label: `${hallFollowSyncOptionLabel()} (igual às outras)`,
                     },
                     {
                       value: BOSTON_TV_HALL_SYNC_INDEPENDENT,
