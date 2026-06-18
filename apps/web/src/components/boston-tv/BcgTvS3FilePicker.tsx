@@ -280,12 +280,7 @@ export function BcgTvS3FilePicker({ kind, value, onChange, className }: BcgTvS3F
               <> Novos uploads vão para <strong>{MEDIA_PLACEHOLDER_SIZES[uploadFolder as MediaPlaceholderSizeKey]?.label ?? uploadFolder}</strong>.</>
             ) : null}
           </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            1) Escolha a pasta → 2) Escolha o arquivo já salvo, ou envie um novo
-            {folder === ALL_FOLDERS ? ` (upload em ${MEDIA_PLACEHOLDER_SIZES.bcg_tv.label})` : ""}.
-          </p>
-        )}
+        ) : null}
       </div>
     </div>
   );

@@ -435,6 +435,11 @@ export default function ManualPage() {
                 </li>
               </ul>
               <p>
+                <strong>Imagem ou vídeo (arquivos BCG TV):</strong> escolha a pasta, depois o arquivo já salvo ou use{" "}
+                <strong>Enviar imagem</strong> / <strong>Enviar vídeo</strong> para subir um novo. Em{" "}
+                <em>Todas as pastas</em>, novos uploads vão para a pasta BCG TV.
+              </p>
+              <p>
                 <strong>Importante:</strong> imagens, vídeos e YouTube não se cadastram na tela — ficam nos itens
                 da playlist. A tela só escolhe se segue o BC HALL ou uma playlist individual.
               </p>
