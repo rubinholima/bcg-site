@@ -38,4 +38,6 @@
     <string name="menu_back">← Menu</string>
     <string name="loading">Carregando Boston TV…</string>
     <string name="error_load">Erro ao carregar. Tentando de novo…</string>
+    <string name="player_connecting">Conectando à transmissão ao vivo…</string>
+    <string name="player_live">AO VIVO</string>
 </resources>

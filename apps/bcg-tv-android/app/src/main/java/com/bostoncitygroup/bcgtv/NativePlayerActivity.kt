@@ -29,6 +29,7 @@ class NativePlayerActivity : AppCompatActivity() {
     private lateinit var ndiTextureView: TextureView
     private lateinit var ndiPlaceholder: TextView
     private lateinit var statusText: TextView
+    private var liveBadge: View? = null
 
     private var exoPlayer: ExoPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -60,6 +61,7 @@ class NativePlayerActivity : AppCompatActivity() {
         ndiTextureView = findViewById(R.id.ndiTextureView)
         ndiPlaceholder = findViewById(R.id.ndiPlaceholder)
         statusText = findViewById(R.id.statusText)
+        liveBadge = findViewById(R.id.liveBadge)
 
         PlayerMenu.wire(this)
         NdiActivityGuard.bind(this)
@@ -301,9 +303,11 @@ class NativePlayerActivity : AppCompatActivity() {
                 ndiPlaceholder.visibility = View.GONE
                 statusText.text = "NDI · $currentNdiSource"
                 statusText.visibility = View.VISIBLE
+                liveBadge?.visibility = View.VISIBLE
             } else {
                 ndiPlaceholder.text = st
                 ndiPlaceholder.visibility = View.VISIBLE
+                liveBadge?.visibility = View.GONE
             }
             handler.postDelayed(this, 1000)
         }
@@ -358,6 +362,7 @@ class NativePlayerActivity : AppCompatActivity() {
         imageView.visibility = View.GONE
         ndiTextureView.visibility = View.GONE
         ndiPlaceholder.visibility = View.GONE
+        liveBadge?.visibility = View.GONE
         exoPlayer?.stop()
     }
 

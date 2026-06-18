@@ -4,6 +4,38 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
+    <!--
+      Backdrop de marca (z-bottom). Fica visível enquanto o vídeo não chegou:
+      o TextureView é transparente até o 1º frame e cobre este fundo quando o vídeo entra.
+      Imagem/Exo têm fundo preto e também cobrem. Não precisa de lógica no Kotlin.
+    -->
+    <LinearLayout
+        android:id="@+id/ndiBackdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_setup_gradient"
+        android:focusable="false"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <ImageView
+            android:layout_width="128dp"
+            android:layout_height="128dp"
+            android:alpha="0.96"
+            android:contentDescription="@null"
+            android:src="@drawable/cup360_logo" />
+
+        <ProgressBar
+            android:id="@+id/ndiSpinner"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="28dp"
+            android:indeterminate="true"
+            android:indeterminateTint="#F59E0B" />
+    </LinearLayout>
+
     <TextureView
         android:id="@+id/ndiTextureView"
         android:layout_width="match_parent"
@@ -14,47 +46,83 @@
         android:id="@+id/exoPlayerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@android:color/black"
         android:visibility="gone" />
 
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@android:color/black"
+        android:contentDescription="@null"
         android:scaleType="fitCenter"
-        android:visibility="gone"
-        android:contentDescription="@null" />
+        android:visibility="gone" />
 
+    <!-- Mensagens (status/erros). Aparece abaixo do logo+spinner do backdrop. -->
     <TextView
         android:id="@+id/ndiPlaceholder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center"
-        android:padding="32dp"
+        android:gravity="center_horizontal|bottom"
+        android:lineSpacingExtra="4dp"
+        android:paddingHorizontal="40dp"
+        android:paddingBottom="120dp"
         android:textColor="#E4E4E7"
-        android:textSize="18sp"
+        android:textSize="16sp"
         android:visibility="gone" />
+
+    <!-- Selo AO VIVO (canto superior direito) -->
+    <LinearLayout
+        android:id="@+id/liveBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="18dp"
+        android:background="@drawable/bg_status_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="9dp"
+            android:layout_height="9dp"
+            android:background="@drawable/bg_live_dot" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:letterSpacing="0.12"
+            android:text="@string/player_live"
+            android:textColor="#FECACA"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|start"
-        android:layout_margin="12dp"
-        android:background="#99000000"
-        android:padding="8dp"
-        android:textColor="#A1A1AA"
-        android:textSize="11sp"
+        android:layout_margin="16dp"
+        android:background="@drawable/bg_status_pill"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="8dp"
+        android:textColor="#D4D4D8"
+        android:textSize="12sp"
         android:visibility="gone" />
 
     <Button
         android:id="@+id/menuButton"
         android:layout_width="wrap_content"
-        android:layout_height="44dp"
+        android:layout_height="46dp"
         android:layout_gravity="top|start"
         android:layout_margin="16dp"
         android:background="@drawable/bg_menu_button"
-        android:minWidth="120dp"
-        android:paddingHorizontal="16dp"
+        android:minWidth="128dp"
+        android:paddingHorizontal="18dp"
         android:text="@string/menu_back"
         android:textAllCaps="false"
         android:textColor="#FCD34D"

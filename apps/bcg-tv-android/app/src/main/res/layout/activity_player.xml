@@ -4,6 +4,23 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
+    <!-- Backdrop de marca enquanto a página carrega -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_setup_gradient"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:alpha="0.96"
+            android:contentDescription="@null"
+            android:src="@drawable/cup360_logo" />
+    </LinearLayout>
+
     <WebView
         android:id="@+id/playerWebView"
         android:layout_width="match_parent"
@@ -11,10 +28,12 @@
 
     <ProgressBar
         android:id="@+id/loadingBar"
+        style="?android:attr/progressBarStyle"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center"
-        android:indeterminate="true" />
+        android:indeterminate="true"
+        android:indeterminateTint="#F59E0B" />
 
     <TextView
         android:id="@+id/errorText"
@@ -23,19 +42,19 @@
         android:layout_gravity="center"
         android:padding="24dp"
         android:text="@string/error_load"
-        android:textColor="#A1A1AA"
+        android:textColor="#E4E4E7"
         android:textSize="16sp"
         android:visibility="gone" />
 
     <Button
         android:id="@+id/menuButton"
         android:layout_width="wrap_content"
-        android:layout_height="44dp"
+        android:layout_height="46dp"
         android:layout_gravity="top|start"
         android:layout_margin="16dp"
         android:background="@drawable/bg_menu_button"
-        android:minWidth="120dp"
-        android:paddingHorizontal="16dp"
+        android:minWidth="128dp"
+        android:paddingHorizontal="18dp"
         android:text="@string/menu_back"
         android:textAllCaps="false"
         android:textColor="#FCD34D"
