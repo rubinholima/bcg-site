@@ -1,25 +1,32 @@
 ---
-description: Ao usuário pedir "deploy", fazer commit e push para develop automaticamente
+description: Deploy automático após toda alteração de código — build + commit + push develop
 alwaysApply: true
 ---
 
-# Deploy = commit + push para develop
+# Deploy automático — NÃO esperar o usuário pedir
 
-Quando o usuário escrever **deploy** (ou "commit e sobe", "sobe pro git", "commit git develop", etc.):
+**Regra obrigatória:** Depois de **qualquer alteração de código** que o usuário pediu (fix, feature, UI, API, regra, etc.), o agente **sempre** faz deploy sozinho ao terminar — **sem** esperar o usuário escrever "deploy".
 
-1. **Antes de commitar — build local obrigatório:**
-   - Rodar `pnpm build` na raiz do monorepo (compila api + web).
-   - Se algum build falhar, corrigir os erros (TypeScript, etc.) e só então prosseguir.
-   - Objetivo: garantir que o que sobe para o servidor compila e não quebra o deploy.
+O usuário trabalha em **produção** e já pediu várias vezes: **não perguntar**, **não só avisar** — **executar**.
 
-2. **Depois do build ok — execute você mesmo** (não só sugira):
-   - `git status` para ver o que mudou
-   - `git add` dos arquivos alterados/criados
-   - `git commit` com mensagem clara e concisa
-   - `git push` para `origin/develop`
+## Fluxo ao concluir implementação
 
-3. **Branch:** usar sempre o branch **develop** salvo indicação em contrário.
+1. **`pnpm build`** na raiz — obrigatório. Se falhar, corrigir e repetir.
+2. **`git status`** → **`git add`** só arquivos relevantes (nunca temp, `.gradle`, `backup_clean.sql`, probes locais, etc.).
+3. **`git commit`** — mensagem clara em pt-BR.
+4. **`git push origin develop`**
+5. **Responder** em uma linha: hash do commit + "Push enviado para origin/develop".
 
-4. **Resposta:** confirme em uma linha (commit hash, arquivos, "Push enviado para origin/develop").
+## Quando o usuário escrever "deploy" explicitamente
 
-Não peça confirmação extra — o pedido de "deploy" já é a instrução para subir.
+Mesmo fluxo acima. Não pedir confirmação extra.
+
+## Exceções (não fazer deploy)
+
+- Só pergunta/explicação, sem mudança de código.
+- Usuário disse explicitamente **não subir** / **só local** / **não commitar**.
+- Não há nada para commitar (working tree limpa).
+
+## Branch
+
+Sempre **`develop`**, salvo indicação em contrário.
