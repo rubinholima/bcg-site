@@ -316,7 +316,13 @@ static void render_to_window(const NDIlib_video_frame_v2_t* frame) {
     ANativeWindow* w = g_window;
     if (w) ANativeWindow_acquire(w);
     pthread_mutex_unlock(&g_win_mutex);
-    if (!w) return;
+    if (!w) {
+        static int warned = 0;
+        if (!warned) { LOGE("render_to_window: SEM Surface (g_window=NULL) — video nao desenha"); warned = 1; }
+        return;
+    }
+
+    static int lock_err = 0;
 
     if (g_win_w != frame->xres || g_win_h != frame->yres) {
         if (ANativeWindow_setBuffersGeometry(w, frame->xres, frame->yres, WINDOW_FORMAT_RGBX_8888) == 0) {
@@ -326,9 +332,13 @@ static void render_to_window(const NDIlib_video_frame_v2_t* frame) {
     }
 
     ANativeWindow_Buffer buf;
-    if (ANativeWindow_lock(w, &buf, NULL) == 0) {
+    int lr = ANativeWindow_lock(w, &buf, NULL);
+    if (lr == 0) {
         frame_to_window(frame, &buf);
         ANativeWindow_unlockAndPost(w);
+    } else if (!lock_err) {
+        LOGE("ANativeWindow_lock falhou: %d", lr);
+        lock_err = 1;
     }
     ANativeWindow_release(w);
 }
@@ -508,19 +518,40 @@ static void* recv_loop(void* arg) {
     LOGI("Connected to %s", g_chosen_source.p_ndi_name);
     g_ndi.find_destroy(finder);
 
+    int video_frames = 0;
+    int empty_polls = 0;
     while (g_running) {
         NDIlib_video_frame_v2_t video;
         memset(&video, 0, sizeof(video));
         NDIlib_frame_type_e t = g_ndi.recv_capture(recv, &video, NULL, NULL, 1000);
         if (t == NDIlib_frame_type_video) {
+            empty_polls = 0;
             if (video.p_data && video.xres > 0 && video.yres > 0) {
+                video_frames++;
+                pthread_mutex_lock(&g_win_mutex);
+                void* win = (void*)g_window;
+                pthread_mutex_unlock(&g_win_mutex);
+                if (video_frames == 1 || video_frames % 120 == 0) {
+                    LOGI("VIDEO frame #%d %dx%d fourcc=0x%x stride=%d window=%p",
+                         video_frames, video.xres, video.yres, video.FourCC,
+                         video.line_stride_in_bytes, win);
+                }
                 deliver_frame(env, &video);
+            } else {
+                LOGE("VIDEO frame invalido: p_data=%p %dx%d", (void*)video.p_data, video.xres, video.yres);
             }
             g_ndi.recv_free_video(recv, &video);
         } else if (t == NDIlib_frame_type_status_change) {
+            LOGI("status_change (reconectando)");
             if (g_ndi.recv_connect) g_ndi.recv_connect(recv, &g_chosen_source);
+        } else if (t == NDIlib_frame_type_none) {
+            empty_polls++;
+            if (empty_polls == 3 || empty_polls % 10 == 0) {
+                LOGI("sem frame ha %d s (nenhum video ainda; total video=%d)", empty_polls, video_frames);
+            }
         }
     }
+    LOGI("recv_loop fim: total de video frames=%d", video_frames);
 
     g_ndi.recv_destroy(recv);
     if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
