@@ -3,6 +3,7 @@ package com.bostoncitygroup.bcgtv
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.util.Log
+import android.view.Surface
 import android.view.TextureView
 import org.json.JSONArray
 import java.util.concurrent.Executors
@@ -41,14 +42,39 @@ object NdiReceiverBridge {
         }
     }
 
+    private var renderSurface: Surface? = null
+
+    private fun bindSurface(texture: SurfaceTexture) {
+        try {
+            renderSurface?.release()
+            val s = Surface(texture)
+            renderSurface = s
+            NdiNative.setSurface(s)
+        } catch (e: Exception) {
+            Log.e(TAG, "bindSurface", e)
+        }
+    }
+
+    private fun unbindSurface() {
+        try {
+            NdiNative.setSurface(null)
+            renderSurface?.release()
+            renderSurface = null
+        } catch (e: Exception) {
+            Log.e(TAG, "unbindSurface", e)
+        }
+    }
+
     fun attachTexture(textureView: TextureView, onReady: () -> Unit) {
-        NdiFrameDelivery.attach(textureView)
-        if (textureView.isAvailable) {
+        val existing = textureView.surfaceTexture
+        if (textureView.isAvailable && existing != null) {
+            bindSurface(existing)
             onReady()
             return
         }
         textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
             override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
+                bindSurface(surface)
                 onReady()
             }
 
@@ -56,7 +82,7 @@ object NdiReceiverBridge {
 
             override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
                 disconnectSync()
-                NdiFrameDelivery.detach()
+                unbindSurface()
                 return true
             }
 

@@ -1,4 +1,6 @@
 #include <android/log.h>
+#include <android/native_window.h>
+#include <android/native_window_jni.h>
 #include <dlfcn.h>
 #include <jni.h>
 #include <pthread.h>
@@ -135,6 +137,12 @@ static pthread_mutex_t g_ndi_op_mutex = PTHREAD_MUTEX_INITIALIZER;
 static uint8_t* g_rgba_buf = NULL;
 static size_t g_rgba_cap = 0;
 
+/* Renderização direta no Surface (ANativeWindow) — baixa latência, sem cópia por Java. */
+static ANativeWindow* g_window = NULL;
+static pthread_mutex_t g_win_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int g_win_w = 0;
+static int g_win_h = 0;
+
 static void append_json_string(char* json, size_t cap, size_t* pos, const char* s) {
     if (*pos >= cap - 2) return;
     json[(*pos)++] = '"';
@@ -263,11 +271,71 @@ static bool frame_to_rgba(const NDIlib_video_frame_v2_t* frame, uint8_t* dst, si
     return false;
 }
 
+/* Escreve o frame no buffer do ANativeWindow em RGBX (R,G,B,X), respeitando o stride. */
+static void frame_to_window(const NDIlib_video_frame_v2_t* frame, ANativeWindow_Buffer* buf) {
+    const int w = frame->xres < buf->width ? frame->xres : buf->width;
+    const int h = frame->yres < buf->height ? frame->yres : buf->height;
+    uint8_t* dst_base = (uint8_t*)buf->bits;
+    const int dst_stride = buf->stride * 4;
+
+    if (frame->FourCC == NDIlib_FourCC_type_BGRA || frame->FourCC == NDIlib_FourCC_type_BGRX) {
+        const int src_stride = frame->line_stride_in_bytes > 0 ? frame->line_stride_in_bytes : frame->xres * 4;
+        for (int y = 0; y < h; y++) {
+            const uint8_t* src = frame->p_data + (size_t)y * src_stride;
+            uint8_t* dst = dst_base + (size_t)y * dst_stride;
+            for (int x = 0; x < w; x++) {
+                dst[x * 4 + 0] = src[x * 4 + 2]; /* R */
+                dst[x * 4 + 1] = src[x * 4 + 1]; /* G */
+                dst[x * 4 + 2] = src[x * 4 + 0]; /* B */
+                dst[x * 4 + 3] = 255;            /* X */
+            }
+        }
+        return;
+    }
+
+    if (frame->FourCC == NDIlib_FourCC_type_UYVY) {
+        const int src_stride = frame->line_stride_in_bytes > 0 ? frame->line_stride_in_bytes : frame->xres * 2;
+        for (int y = 0; y < h; y++) {
+            /* uyvy_to_rgba_row já produz R,G,B,A na ordem correta para a janela. */
+            uyvy_to_rgba_row(frame->p_data + (size_t)y * src_stride, dst_base + (size_t)y * dst_stride, w);
+        }
+        return;
+    }
+
+    static int logged_fourcc = 0;
+    if (!logged_fourcc) {
+        LOGE("FourCC nao suportado (window): 0x%x", frame->FourCC);
+        logged_fourcc = 1;
+    }
+}
+
+static void render_to_window(const NDIlib_video_frame_v2_t* frame) {
+    if (!frame || !frame->p_data || frame->xres <= 0 || frame->yres <= 0) return;
+
+    pthread_mutex_lock(&g_win_mutex);
+    ANativeWindow* w = g_window;
+    if (w) ANativeWindow_acquire(w);
+    pthread_mutex_unlock(&g_win_mutex);
+    if (!w) return;
+
+    if (g_win_w != frame->xres || g_win_h != frame->yres) {
+        if (ANativeWindow_setBuffersGeometry(w, frame->xres, frame->yres, WINDOW_FORMAT_RGBX_8888) == 0) {
+            g_win_w = frame->xres;
+            g_win_h = frame->yres;
+        }
+    }
+
+    ANativeWindow_Buffer buf;
+    if (ANativeWindow_lock(w, &buf, NULL) == 0) {
+        frame_to_window(frame, &buf);
+        ANativeWindow_unlockAndPost(w);
+    }
+    ANativeWindow_release(w);
+}
+
 static void deliver_frame(JNIEnv* env, const NDIlib_video_frame_v2_t* frame) {
-    const size_t need = (size_t)frame->xres * (size_t)frame->yres * 4u;
-    if (!ensure_rgba_buf(need)) return;
-    if (!frame_to_rgba(frame, g_rgba_buf, g_rgba_cap)) return;
-    deliver_rgba_to_java(env, frame->xres, frame->yres, g_rgba_buf, need);
+    (void)env;
+    render_to_window(frame);
 }
 
 static bool attach_recv_env(JNIEnv** env, bool* attached) {
@@ -495,9 +563,21 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_getStatus0(JNIEnv* env, jobject thiz) {
 
 JNIEXPORT void JNICALL
 Java_com_bostoncitygroup_bcgtv_NdiNative_setSurface0(JNIEnv* env, jobject thiz, jobject surface) {
-    (void)env;
     (void)thiz;
-    (void)surface;
+    pthread_mutex_lock(&g_win_mutex);
+    if (g_window) {
+        ANativeWindow_release(g_window);
+        g_window = NULL;
+    }
+    g_win_w = 0;
+    g_win_h = 0;
+    if (surface) {
+        g_window = ANativeWindow_fromSurface(env, surface);
+        LOGI("setSurface: window=%p", (void*)g_window);
+    } else {
+        LOGI("setSurface: limpo");
+    }
+    pthread_mutex_unlock(&g_win_mutex);
 }
 
 JNIEXPORT jboolean JNICALL
