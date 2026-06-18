@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import { api } from "@/lib/api";
-import { BC_HALL_LABEL, BC_HALL_CONTROLE_LABEL } from "@/lib/boston-tv-hall";
+import { BC_HALL_LABEL } from "@/lib/boston-tv-hall";
 import { BostonTvCollapsibleSection } from "@/components/boston-tv/BostonTvCollapsibleSection";
 
 export type HallSyncState = {
@@ -319,7 +319,7 @@ export function BostonTvHallChannelPanel({
                 className="min-h-[44px]"
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
-                Reiniciar do início
+                Reiniciar
               </Button>
               <Button
                 type="button"

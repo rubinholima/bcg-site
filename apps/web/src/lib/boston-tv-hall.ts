@@ -57,8 +57,8 @@ export function normalizeHallSyncMode(mode: string | undefined | null): HallSync
 /** Nome oficial do canal sincronizado do espaço multiuso. */
 export const BC_HALL_LABEL = "BC HALL";
 
-/** Rótulo do painel iPad para operação no Hall. */
-export const BC_HALL_CONTROLE_LABEL = "Controle BC HALL";
+/** Rótulo do painel iPad — gerenciamento das telas (menu lateral: Controle Hall). */
+export const BC_HALL_CONTROLE_LABEL = "Controle Hall";
 
 export function hallFollowSyncOptionLabel(): string {
   return `Seguir ${BC_HALL_LABEL}`;

@@ -493,10 +493,11 @@ export default function ManualPage() {
               </p>
             </SubSection>
 
-            <SubSection id="boston-tv-controle" title="Controle BC HALL (iPad)">
+            <SubSection id="boston-tv-controle" title="Controle Hall (iPad)">
               <p>
-                Abra <strong>Marketing → Controle BC HALL</strong> no iPad. Pause o Hall inteiro, avance item ou
-                toque em uma tela para alternar entre <strong>BC HALL</strong> e <strong>Individual</strong>.
+                Abra <strong>Marketing → Controle Hall</strong> no iPad. Interface em formato tablet:
+                aba <strong>Telas</strong> para escolher o que passa em cada TV; aba{" "}
+                <strong>BC HALL</strong> para Pausar, Próximo e Reiniciar o canal sincronizado.
               </p>
               <p>
                 O BC HALL precisa estar ativo na página BCG TV antes de usar o controle remoto.
