@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, Loader2, Plus, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 import {
   formatContractDate,
   type PlayerContractRow,
@@ -127,6 +128,20 @@ export function PlayerContractsSection({
       return "/dashboard/adm/rh";
     }
     return null;
+  };
+
+  const canViewContractPdf = (row: PlayerContractRow) => Boolean(row.fileUrl?.trim());
+
+  const handleViewContract = (row: PlayerContractRow) => {
+    if (!row.fileUrl?.trim()) return;
+    window.open(getPublicImageUrl(row.fileUrl), "_blank", "noopener,noreferrer");
+  };
+
+  const actionSourceLabel = (row: PlayerContractRow) => {
+    if (row.source === "juridico") return "Jurídico";
+    if (row.source === "rh") return "RH";
+    if (row.source === "beatscode") return "Beatscode";
+    return "—";
   };
 
   return (
@@ -306,17 +321,33 @@ export function PlayerContractsSection({
                           <ExecutionRing percent={row.executionPercent} />
                         </TableCell>
                         <TableCell className="text-center">
-                          {href ? (
-                            <Button variant="ghost" size="icon" asChild title="Abrir no departamento">
-                              <Link href={href}>
-                                <ExternalLink className="h-4 w-4" />
-                              </Link>
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              title={
+                                canViewContractPdf(row)
+                                  ? "Visualizar PDF do contrato"
+                                  : "PDF ainda não disponível"
+                              }
+                              disabled={!canViewContractPdf(row)}
+                              onClick={() => handleViewContract(row)}
+                            >
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              {row.source === "juridico" ? "Jurídico" : "RH"}
-                            </span>
-                          )}
+                            {href ? (
+                              <Button variant="ghost" size="icon" asChild title="Abrir no departamento">
+                                <Link href={href}>
+                                  <ExternalLink className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            ) : (
+                              <span className="min-w-[4.5rem] text-xs text-muted-foreground">
+                                {actionSourceLabel(row)}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Link2, Pause, Play, RotateCcw, SkipForward, Users } from "lucide-react";
+import { ArrowLeftRight, Link2, Pause, Play, RotateCcw, SkipForward, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
@@ -75,7 +75,11 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
       setData(channelRes.data);
       const pls = plRes.data ?? [];
       setPlaylists(pls);
-      setPickPlaylistId((prev) => prev || pls[0]?.id || "");
+      if (channelRes.data?.configured) {
+        setPickPlaylistId(channelRes.data.playlistId);
+      } else {
+        setPickPlaylistId((prev) => prev || pls[0]?.id || "");
+      }
     } catch {
       setData(null);
     } finally {
@@ -102,8 +106,21 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
     }
   };
 
-  const bindPlaylist = async () => {
+  const bindPlaylist = async (options?: { confirmSwap?: boolean }) => {
     if (!tenantId || !pickPlaylistId) return;
+    const swapping =
+      data?.configured && pickPlaylistId !== data.playlistId;
+    if (options?.confirmSwap && swapping) {
+      const name =
+        playlists.find((p) => p.id === pickPlaylistId)?.name ?? "esta playlist";
+      if (
+        !window.confirm(
+          `Trocar o Canal Hall para "${name}"? Todas as telas sincronizadas recomeçam do início.`,
+        )
+      ) {
+        return;
+      }
+    }
     setActing(true);
     try {
       const { data: res } = await api.post<HallChannelResponse>(
@@ -111,6 +128,9 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
         { tenantId, playlistId: pickPlaylistId },
       );
       setData(res);
+      if (res?.configured) {
+        setPickPlaylistId(res.playlistId);
+      }
     } finally {
       setActing(false);
     }
@@ -221,6 +241,39 @@ export function BostonTvHallChannelPanel({ tenantId, onScreensReset }: BostonTvH
                 </>
               ) : null}
             </div>
+
+            {playlists.length === 0 ? (
+              <p className="text-muted-foreground">
+                Crie outra playlist na seção Playlists abaixo para trocar o Canal Hall.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 px-4 py-3 sm:flex-row sm:items-end">
+                <div className="min-w-[200px] flex-1 space-y-2">
+                  <Label htmlFor="hall-channel-swap-playlist">Trocar playlist</Label>
+                  <ModalNativeSelect
+                    id="hall-channel-swap-playlist"
+                    value={pickPlaylistId}
+                    onChange={setPickPlaylistId}
+                    placeholder="Escolher playlist…"
+                    options={playlists.map((p) => ({ value: p.id, label: p.name }))}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={
+                    acting ||
+                    !pickPlaylistId ||
+                    pickPlaylistId === data.playlistId
+                  }
+                  onClick={() => void bindPlaylist({ confirmSwap: true })}
+                  className="min-h-[44px] shrink-0"
+                >
+                  <ArrowLeftRight className="mr-2 h-4 w-4" />
+                  Trocar playlist
+                </Button>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2">
               {sync?.paused ? (

@@ -236,6 +236,7 @@ export class PlayersService {
               : null,
         executionPercent: this.executionPercent(start, end),
         juridicoDocumentId: doc.id,
+        fileUrl: doc.fileUrl ?? doc.signedFileUrl ?? null,
       };
     });
 
