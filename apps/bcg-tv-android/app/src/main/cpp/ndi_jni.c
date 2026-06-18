@@ -168,21 +168,17 @@ static bool ensure_rgba_buf(size_t need) {
     return true;
 }
 
-static void deliver_rgba_to_java(int w, int h, const uint8_t* rgba, size_t len) {
-    if (!g_jvm || !g_delivery_class || !g_deliver_method || !rgba || len == 0) return;
-    JNIEnv* env = NULL;
-    if ((*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL) != 0 || !env) return;
+static void deliver_rgba_to_java(JNIEnv* env, int w, int h, const uint8_t* rgba, size_t len) {
+    if (!env || !g_delivery_class || !g_deliver_method || !rgba || len == 0) return;
     jbyteArray arr = (*env)->NewByteArray(env, (jsize)len);
-    if (arr) {
-        (*env)->SetByteArrayRegion(env, arr, 0, (jsize)len, (const jbyte*)rgba);
-        (*env)->CallStaticVoidMethod(env, g_delivery_class, g_deliver_method, w, h, arr);
-        if ((*env)->ExceptionCheck(env)) {
-            (*env)->ExceptionClear(env);
-            LOGE("deliverRgba JNI exception");
-        }
-        (*env)->DeleteLocalRef(env, arr);
+    if (!arr) return;
+    (*env)->SetByteArrayRegion(env, arr, 0, (jsize)len, (const jbyte*)rgba);
+    (*env)->CallStaticVoidMethod(env, g_delivery_class, g_deliver_method, w, h, arr);
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionClear(env);
+        LOGE("deliverRgba JNI exception");
     }
-    (*g_jvm)->DetachCurrentThread(g_jvm);
+    (*env)->DeleteLocalRef(env, arr);
 }
 
 static uint8_t clamp_u8(int v) {
@@ -258,17 +254,35 @@ static bool frame_to_rgba(const NDIlib_video_frame_v2_t* frame, uint8_t* dst, si
     return false;
 }
 
-static void deliver_frame(const NDIlib_video_frame_v2_t* frame) {
+static void deliver_frame(JNIEnv* env, const NDIlib_video_frame_v2_t* frame) {
     const size_t need = (size_t)frame->xres * (size_t)frame->yres * 4u;
     if (!ensure_rgba_buf(need)) return;
     if (!frame_to_rgba(frame, g_rgba_buf, g_rgba_cap)) return;
-    deliver_rgba_to_java(frame->xres, frame->yres, g_rgba_buf, need);
+    deliver_rgba_to_java(env, frame->xres, frame->yres, g_rgba_buf, need);
+}
+
+static bool attach_recv_env(JNIEnv** env, bool* attached) {
+    *env = NULL;
+    *attached = false;
+    if (!g_jvm) return false;
+    jint rs = (*g_jvm)->GetEnv(g_jvm, (void**)env, JNI_VERSION_1_6);
+    if (rs == JNI_OK) return true;
+    if (rs == JNI_EDETACHED) {
+        if ((*g_jvm)->AttachCurrentThread(g_jvm, env, NULL) == 0) {
+            *attached = true;
+            return true;
+        }
+    }
+    return false;
 }
 
 static bool load_ndi(void) {
     if (g_ndi.ok) return true;
     memset(&g_ndi, 0, sizeof(g_ndi));
-    g_ndi.lib = dlopen("libndi.so", RTLD_NOW);
+    g_ndi.lib = dlopen("libndi.so", RTLD_NOW | RTLD_NOLOAD);
+    if (!g_ndi.lib) {
+        g_ndi.lib = dlopen("libndi.so", RTLD_NOW);
+    }
     if (!g_ndi.lib) {
         LOGE("dlopen libndi.so failed: %s", dlerror());
         set_status("libndi.so ausente — rode setup-ndi-sdk.ps1");
@@ -325,9 +339,18 @@ static void copy_source(const NDIlib_source_t* src, NDIlib_source_t* dst) {
 
 static void* recv_loop(void* arg) {
     (void)arg;
+    JNIEnv* env = NULL;
+    bool attached = false;
+    if (!attach_recv_env(&env, &attached)) {
+        set_status("JNI attach falhou");
+        g_thread_active = 0;
+        return NULL;
+    }
+
     snprintf(g_status, sizeof(g_status), "Iniciando NDI: %s", g_target_name);
 
     if (!load_ndi()) {
+        if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
         g_thread_active = 0;
         return NULL;
     }
@@ -338,6 +361,7 @@ static void* recv_loop(void* arg) {
     NDIlib_find_instance_t finder = g_ndi.find_create(&find_create);
     if (!finder) {
         set_status("NDI finder falhou");
+        if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
         g_thread_active = 0;
         return NULL;
     }
@@ -379,6 +403,7 @@ static void* recv_loop(void* arg) {
 
     if (!g_running || !have_chosen) {
         g_ndi.find_destroy(finder);
+        if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
         g_thread_active = 0;
         return NULL;
     }
@@ -394,6 +419,7 @@ static void* recv_loop(void* arg) {
     if (!recv) {
         set_status("NDI receiver falhou");
         g_ndi.find_destroy(finder);
+        if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
         g_thread_active = 0;
         return NULL;
     }
@@ -409,7 +435,7 @@ static void* recv_loop(void* arg) {
         NDIlib_frame_type_e t = g_ndi.recv_capture(recv, &video, NULL, NULL, 1000);
         if (t == NDIlib_frame_type_video) {
             if (video.p_data && video.xres > 0 && video.yres > 0) {
-                deliver_frame(&video);
+                deliver_frame(env, &video);
             }
             g_ndi.recv_free_video(recv, &video);
         } else if (t == NDIlib_frame_type_status_change) {
@@ -418,6 +444,7 @@ static void* recv_loop(void* arg) {
     }
 
     g_ndi.recv_destroy(recv);
+    if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
     g_thread_active = 0;
     return NULL;
 }

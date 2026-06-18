@@ -56,6 +56,8 @@ class SetupActivity : AppCompatActivity() {
         }
 
         setContentView(R.layout.activity_setup)
+        NdiActivityGuard.bind(this)
+        NdiActivityGuard.requestNetworkPermissions(this)
 
         syncModeGroup = findViewById(R.id.syncModeGroup)
         syncFollowHall = findViewById(R.id.syncFollowHall)
@@ -202,6 +204,18 @@ class SetupActivity : AppCompatActivity() {
 
     private fun searchNdiSources() {
         if (ndiSearching) return
+        NdiActivityGuard.bind(this)
+        if (!NdiActivityGuard.hasNetworkPermissions(this)) {
+            ndiDiscoveryStatus.visibility = View.VISIBLE
+            ndiDiscoveryStatus.text = "Permissão de rede necessária para buscar NDI."
+            NdiActivityGuard.requestNetworkPermissions(this)
+            return
+        }
+        if (!NdiNative.ensureInitializedOnMainThread()) {
+            ndiDiscoveryStatus.visibility = View.VISIBLE
+            ndiDiscoveryStatus.text = getString(R.string.setup_ndi_unavailable)
+            return
+        }
         if (!NdiReceiverBridge.isAvailable) {
             ndiDiscoveryStatus.visibility = View.VISIBLE
             ndiDiscoveryStatus.text = getString(R.string.setup_ndi_unavailable)

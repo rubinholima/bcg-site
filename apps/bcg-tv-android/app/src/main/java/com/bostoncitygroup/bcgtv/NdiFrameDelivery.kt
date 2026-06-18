@@ -24,6 +24,7 @@ object NdiFrameDelivery {
     private var cachedBitmap: Bitmap? = null
     private var cachedW = 0
     private var cachedH = 0
+    @Volatile private var drawing = false
 
     fun attach(view: TextureView) {
         textureView = view
@@ -46,8 +47,10 @@ object NdiFrameDelivery {
     }
 
     private fun drawFrame(width: Int, height: Int, rgba: ByteArray) {
+        if (drawing) return
         val view = textureView ?: return
         if (!view.isAvailable) return
+        drawing = true
         try {
             val bitmap = bitmapFor(width, height)
             val buffer = ByteBuffer.wrap(rgba).order(ByteOrder.LITTLE_ENDIAN)
@@ -74,6 +77,8 @@ object NdiFrameDelivery {
             }
         } catch (e: Exception) {
             Log.e(TAG, "drawFrame", e)
+        } finally {
+            drawing = false
         }
     }
 

@@ -62,6 +62,8 @@ class NativePlayerActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
 
         PlayerMenu.wire(this)
+        NdiActivityGuard.bind(this)
+        NdiActivityGuard.requestNetworkPermissions(this)
 
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(500, 2000, 500, 500)
@@ -203,7 +205,18 @@ class NativePlayerActivity : AppCompatActivity() {
         if (ndiInitialized) return
         ndiInitialized = true
         try {
-            NdiAndroidBootstrap.ensure(this)
+            NdiActivityGuard.bind(this)
+            if (!NdiActivityGuard.hasNetworkPermissions(this)) {
+                ndiPlaceholder.text = "Permissão de rede necessária para NDI."
+                ndiPlaceholder.visibility = View.VISIBLE
+                NdiActivityGuard.requestNetworkPermissions(this)
+                return
+            }
+            if (!NdiNative.ensureInitializedOnMainThread()) {
+                ndiPlaceholder.text = "NDI SDK não inicializou. Verifique libndi.so no APK."
+                ndiPlaceholder.visibility = View.VISIBLE
+                return
+            }
             NdiReceiverBridge.attachTexture(ndiTextureView) {
                 ndiSurfaceReady = true
                 currentNdiSource?.let { tryConnectNdi(it) }
@@ -246,7 +259,17 @@ class NativePlayerActivity : AppCompatActivity() {
 
     private fun tryConnectNdi(sourceName: String) {
         if (ndiConnectInFlight || isFinishing) return
-        NdiAndroidBootstrap.ensure(this)
+        if (!NdiActivityGuard.hasNetworkPermissions(this)) {
+            ndiPlaceholder.text = "Permissão de rede necessária para NDI."
+            ndiPlaceholder.visibility = View.VISIBLE
+            NdiActivityGuard.requestNetworkPermissions(this)
+            return
+        }
+        if (!NdiNative.ensureInitializedOnMainThread()) {
+            ndiPlaceholder.text = "NDI SDK não inicializou."
+            ndiPlaceholder.visibility = View.VISIBLE
+            return
+        }
         if (!NdiReceiverBridge.isAvailable) {
             ndiPlaceholder.text =
                 "NDI: ${NdiReceiverBridge.status()}\n\n" +

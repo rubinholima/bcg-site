@@ -1,0 +1,15 @@
+# ninja log v5
+0	126	8030563670775300	CMakeFiles/bcg_ndi.dir/ndi_jni.c.o	96c886bfecac932f
+129	247	8030563672047025	E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/1p6w6k3j/obj/armeabi-v7a/libbcg_ndi.so	4e3e4c0b04791eab
+3	124	8030593851344973	CMakeFiles/bcg_ndi.dir/ndi_jni.c.o	96c886bfecac932f
+125	253	8030593852677630	E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/1p6w6k3j/obj/armeabi-v7a/libbcg_ndi.so	4e3e4c0b04791eab
+2	137	8030603079556341	CMakeFiles/bcg_ndi.dir/ndi_jni.c.o	96c886bfecac932f
+137	297	8030603081242919	E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/1p6w6k3j/obj/armeabi-v7a/libbcg_ndi.so	4e3e4c0b04791eab
+2	122	8030612004358347	CMakeFiles/bcg_ndi.dir/ndi_jni.c.o	96c886bfecac932f
+124	250	8030612005702610	E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/1p6w6k3j/obj/armeabi-v7a/libbcg_ndi.so	4e3e4c0b04791eab
+3	130	8030629707979229	CMakeFiles/bcg_ndi.dir/ndi_jni.c.o	96c886bfecac932f
+131	255	8030629709297208	E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/1p6w6k3j/obj/armeabi-v7a/libbcg_ndi.so	4e3e4c0b04791eab
+4	215	8034993248545001	CMakeFiles/bcg_ndi.dir/ndi_jni.c.o	96c886bfecac932f
+215	491	8034993251378398	E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/1p6w6k3j/obj/armeabi-v7a/libbcg_ndi.so	4e3e4c0b04791eab
+3	196	8035031478448796	CMakeFiles/bcg_ndi.dir/ndi_jni.c.o	96c886bfecac932f
+196	428	8035031480857777	E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/1p6w6k3j/obj/armeabi-v7a/libbcg_ndi.so	4e3e4c0b04791eab

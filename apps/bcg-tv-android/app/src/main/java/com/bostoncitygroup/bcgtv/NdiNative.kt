@@ -1,19 +1,47 @@
 package com.bostoncitygroup.bcgtv
 
+import android.os.Looper
+import android.util.Log
+
 object NdiNative {
     private var loaded = false
     private var loadFailed = false
+    private var ndiPreloaded = false
 
+    /**
+     * libndi.so precisa ser carregada via System.loadLibrary ANTES do dlopen no JNI.
+     * Sem isso o bridge Android do NDI (NsdManager interno) não inicia → crash ao inicializar.
+     */
     private fun ensureLoaded(): Boolean {
         if (loaded) return true
         if (loadFailed) return false
         return try {
+            if (!ndiPreloaded) {
+                System.loadLibrary("ndi")
+                ndiPreloaded = true
+                Log.i("NdiNative", "libndi.so carregada (System.loadLibrary)")
+            }
             System.loadLibrary("bcg_ndi")
             loaded = true
             true
         } catch (e: UnsatisfiedLinkError) {
             loadFailed = true
-            android.util.Log.e("NdiNative", "bcg_ndi load failed", e)
+            Log.e("NdiNative", "falha ao carregar NDI", e)
+            false
+        }
+    }
+
+    /** Deve rodar na main thread — NDIlib_initialize usa JNI Android internamente. */
+    fun ensureInitializedOnMainThread(): Boolean {
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            Log.e("NdiNative", "ensureInitializedOnMainThread fora da main thread")
+            return false
+        }
+        if (!ensureLoaded()) return false
+        return try {
+            isSdkAvailable0()
+        } catch (e: Exception) {
+            Log.e("NdiNative", "ensureInitializedOnMainThread", e)
             false
         }
     }
@@ -23,7 +51,7 @@ object NdiNative {
         return try {
             isSdkAvailable0()
         } catch (e: Exception) {
-            android.util.Log.e("NdiNative", "isSdkAvailable", e)
+            Log.e("NdiNative", "isSdkAvailable", e)
             false
         }
     }
@@ -42,7 +70,7 @@ object NdiNative {
         try {
             setSurface0(surface)
         } catch (e: Exception) {
-            android.util.Log.e("NdiNative", "setSurface", e)
+            Log.e("NdiNative", "setSurface", e)
         }
     }
 
@@ -51,7 +79,7 @@ object NdiNative {
         return try {
             startReceive0(sourceName)
         } catch (e: Exception) {
-            android.util.Log.e("NdiNative", "startReceive", e)
+            Log.e("NdiNative", "startReceive", e)
             false
         }
     }
@@ -61,7 +89,7 @@ object NdiNative {
         try {
             stopReceive0()
         } catch (e: Exception) {
-            android.util.Log.e("NdiNative", "stopReceive", e)
+            Log.e("NdiNative", "stopReceive", e)
         }
     }
 
@@ -70,17 +98,16 @@ object NdiNative {
         try {
             shutdown0()
         } catch (e: Exception) {
-            android.util.Log.e("NdiNative", "shutdown", e)
+            Log.e("NdiNative", "shutdown", e)
         }
     }
 
-    /** Varre a rede por fontes NDI (bloqueia até waitMs). Retorna JSON array de nomes. */
     fun discoverSources(waitMs: Int = 10_000): String {
         if (!ensureLoaded()) return "[]"
         return try {
             discoverSources0(waitMs)
         } catch (e: Exception) {
-            android.util.Log.e("NdiNative", "discoverSources", e)
+            Log.e("NdiNative", "discoverSources", e)
             "[]"
         }
     }

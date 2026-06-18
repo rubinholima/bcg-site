@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/ic_launcher_background" />
+        </shape>
+    </item>
+    <item
+        android:bottom="24dp"
+        android:left="48dp"
+        android:right="48dp"
+        android:top="24dp">
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/cup360_logo" />
+    </item>
+</layer-list>

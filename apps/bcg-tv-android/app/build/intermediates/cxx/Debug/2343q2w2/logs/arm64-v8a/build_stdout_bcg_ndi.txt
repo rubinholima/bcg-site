@@ -1,0 +1,53 @@
+ninja: Entering directory `E:\DEV\BCG SITE\apps\bcg-tv-android\app\.cxx\Debug\2343q2w2\arm64-v8a'
+[1/2] Building CXX object CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o
+[2/2] Linking CXX shared library "E:\DEV\BCG SITE\apps\bcg-tv-android\app\build\intermediates\cxx\Debug\2343q2w2\obj\arm64-v8a\libbcg_ndi.so"
+FAILED: E:/DEV/BCG SITE/apps/bcg-tv-android/app/build/intermediates/cxx/Debug/2343q2w2/obj/arm64-v8a/libbcg_ndi.so 
+cmd.exe /C "cd . && C:\Users\ATRIUM~1\AppData\Local\Android\Sdk\ndk\270~1.120\TOOLCH~1\llvm\prebuilt\WINDOW~1\bin\CLANG_~1.EXE --target=aarch64-none-linux-android24 --sysroot="C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot" -fPIC -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -std=c++17 -fno-limit-debug-info  -static-libstdc++ -Wl,--build-id=sha1 -Wl,--no-rosegment -Wl,--no-undefined-version -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments -shared -Wl,-soname,libbcg_ndi.so -o "E:\DEV\BCG SITE\apps\bcg-tv-android\app\build\intermediates\cxx\Debug\2343q2w2\obj\arm64-v8a\libbcg_ndi.so" CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o  "C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/24/liblog.so"  "C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/24/libandroid.so"  "C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/24/libdl.so"  -latomic -lm && cd ."
+ld.lld: error: undefined symbol: std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>::~basic_string()
+>>> referenced by ndi_jni.cpp:110 (E:/DEV/BCG SITE/apps/bcg-tv-android/app/src/main/cpp/ndi_jni.cpp:110)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(__cxx_global_var_init)
+>>> referenced by ndi_jni.cpp:110 (E:/DEV/BCG SITE/apps/bcg-tv-android/app/src/main/cpp/ndi_jni.cpp:110)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(__cxx_global_var_init)
+>>> referenced by ndi_jni.cpp:111 (E:/DEV/BCG SITE/apps/bcg-tv-android/app/src/main/cpp/ndi_jni.cpp:111)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(__cxx_global_var_init.1)
+>>> referenced 6 more times
+
+ld.lld: error: undefined symbol: std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>::__init(char const*, unsigned long)
+>>> referenced by string:954 (C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/string:954)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>::basic_string[abi:ne180000]<0>(char const*))
+
+ld.lld: error: undefined symbol: std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>::assign(char const*)
+>>> referenced by string:1136 (C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/string:1136)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>::operator=[abi:ne180000](char const*))
+
+ld.lld: error: undefined symbol: std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>> std::__ndk1::operator+<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>(char const*, std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>> const&)
+>>> referenced by ndi_jni.cpp:207 (E:/DEV/BCG SITE/apps/bcg-tv-android/app/src/main/cpp/ndi_jni.cpp:207)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(recv_loop(void*))
+>>> referenced by ndi_jni.cpp:211 (E:/DEV/BCG SITE/apps/bcg-tv-android/app/src/main/cpp/ndi_jni.cpp:211)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(recv_loop(void*))
+
+ld.lld: error: undefined symbol: std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>::append(char const*)
+>>> referenced by string:3984 (C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/string:3984)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>> std::__ndk1::operator+[abi:ne180000]<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>(std::__ndk1::basic_string<char, std::__ndk1::char_traits<char>, std::__ndk1::allocator<char>>&&, char const*))
+
+ld.lld: error: undefined symbol: __cxa_begin_catch
+>>> referenced by ndi_jni.cpp
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(__clang_call_terminate)
+
+ld.lld: error: undefined symbol: std::terminate()
+>>> referenced by ndi_jni.cpp
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(__clang_call_terminate)
+
+ld.lld: error: undefined symbol: operator delete(void*, std::align_val_t)
+>>> referenced by new:280 (C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/new:280)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(void std::__ndk1::__libcpp_operator_delete[abi:ne180000]<void*, std::align_val_t>(void*, std::align_val_t))
+
+ld.lld: error: undefined symbol: operator delete(void*)
+>>> referenced by new:280 (C:/Users/ATRIUM STREAM/AppData/Local/Android/Sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/include/c++/v1/new:280)
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(void std::__ndk1::__libcpp_operator_delete[abi:ne180000]<void*>(void*))
+
+ld.lld: error: undefined symbol: __gxx_personality_v0
+>>> referenced by ndi_jni.cpp
+>>>               CMakeFiles/bcg_ndi.dir/ndi_jni.cpp.o:(DW.ref.__gxx_personality_v0)
+CLANG_~1: error: linker command failed with exit code 1 (use -v to see invocation)
+ninja: build stopped: subcommand failed.
