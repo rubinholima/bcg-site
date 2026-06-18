@@ -143,6 +143,13 @@ static pthread_mutex_t g_win_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int g_win_w = 0;
 static int g_win_h = 0;
 
+/* Telemetria visível na tela (sem logcat). */
+static volatile int g_diag_video_frames = 0;
+static volatile int g_diag_draw_ok = 0;
+static volatile int g_diag_vid_w = 0;
+static volatile int g_diag_vid_h = 0;
+static volatile int g_diag_lock_fail = 0;
+
 static void append_json_string(char* json, size_t cap, size_t* pos, const char* s) {
     if (*pos >= cap - 2) return;
     json[(*pos)++] = '"';
@@ -336,9 +343,15 @@ static void render_to_window(const NDIlib_video_frame_v2_t* frame) {
     if (lr == 0) {
         frame_to_window(frame, &buf);
         ANativeWindow_unlockAndPost(w);
-    } else if (!lock_err) {
-        LOGE("ANativeWindow_lock falhou: %d", lr);
-        lock_err = 1;
+        g_diag_draw_ok = 1;
+        g_diag_vid_w = frame->xres;
+        g_diag_vid_h = frame->yres;
+    } else {
+        g_diag_lock_fail = lr;
+        if (!lock_err) {
+            LOGE("ANativeWindow_lock falhou: %d", lr);
+            lock_err = 1;
+        }
     }
     ANativeWindow_release(w);
 }
@@ -520,6 +533,9 @@ static void* recv_loop(void* arg) {
 
     int video_frames = 0;
     int empty_polls = 0;
+    g_diag_video_frames = 0;
+    g_diag_draw_ok = 0;
+    g_diag_lock_fail = 0;
     while (g_running) {
         NDIlib_video_frame_v2_t video;
         memset(&video, 0, sizeof(video));
@@ -528,6 +544,7 @@ static void* recv_loop(void* arg) {
             empty_polls = 0;
             if (video.p_data && video.xres > 0 && video.yres > 0) {
                 video_frames++;
+                g_diag_video_frames = video_frames;
                 pthread_mutex_lock(&g_win_mutex);
                 void* win = (void*)g_window;
                 pthread_mutex_unlock(&g_win_mutex);
@@ -590,6 +607,19 @@ JNIEXPORT jstring JNICALL
 Java_com_bostoncitygroup_bcgtv_NdiNative_getStatus0(JNIEnv* env, jobject thiz) {
     (void)thiz;
     return (*env)->NewStringUTF(env, g_status);
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_bostoncitygroup_bcgtv_NdiNative_getDiag0(JNIEnv* env, jobject thiz) {
+    (void)thiz;
+    pthread_mutex_lock(&g_win_mutex);
+    int win = g_window ? 1 : 0;
+    pthread_mutex_unlock(&g_win_mutex);
+    char diag[256];
+    snprintf(diag, sizeof(diag), "frames=%d surface=%d draw=%d %dx%d lockfail=%d",
+             g_diag_video_frames, win, g_diag_draw_ok,
+             g_diag_vid_w, g_diag_vid_h, g_diag_lock_fail);
+    return (*env)->NewStringUTF(env, diag);
 }
 
 JNIEXPORT void JNICALL

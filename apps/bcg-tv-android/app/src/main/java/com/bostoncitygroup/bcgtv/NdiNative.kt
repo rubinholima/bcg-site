@@ -65,6 +65,15 @@ object NdiNative {
         }
     }
 
+    fun getDiag(): String {
+        if (!loaded) return ""
+        return try {
+            getDiag0()
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
     fun setSurface(surface: android.view.Surface?) {
         if (!ensureLoaded()) return
         try {
@@ -117,6 +126,9 @@ object NdiNative {
 
     @JvmStatic
     private external fun getStatus0(): String
+
+    @JvmStatic
+    private external fun getDiag0(): String
 
     @JvmStatic
     private external fun setSurface0(surface: android.view.Surface?)

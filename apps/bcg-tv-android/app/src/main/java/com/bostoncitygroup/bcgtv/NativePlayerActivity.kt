@@ -299,13 +299,20 @@ class NativePlayerActivity : AppCompatActivity() {
         override fun run() {
             if (currentNdiSource == null || ndiTextureView.visibility != View.VISIBLE || isFinishing) return
             val st = NdiReceiverBridge.status()
-            if (st.startsWith("Conectado")) {
+            val diag = NdiNative.getDiag()
+            val frames = Regex("frames=(\\d+)").find(diag)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+            if (st.startsWith("Conectado") && frames > 0) {
                 ndiPlaceholder.visibility = View.GONE
-                statusText.text = "NDI · $currentNdiSource"
+                statusText.text = "NDI · $currentNdiSource · $diag"
                 statusText.visibility = View.VISIBLE
                 liveBadge?.visibility = View.VISIBLE
+            } else if (st.startsWith("Conectado")) {
+                ndiPlaceholder.text =
+                    "Conectado ao NDI, aguardando vídeo…\n\n$diag\n\nFonte: $currentNdiSource"
+                ndiPlaceholder.visibility = View.VISIBLE
+                liveBadge?.visibility = View.GONE
             } else {
-                ndiPlaceholder.text = st
+                ndiPlaceholder.text = "$st\n\n$diag"
                 ndiPlaceholder.visibility = View.VISIBLE
                 liveBadge?.visibility = View.GONE
             }
