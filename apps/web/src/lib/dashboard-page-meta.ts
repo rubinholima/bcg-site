@@ -221,6 +221,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/manual$/,
   /^\/dashboard\/ferramentas\/fmf-scraper$/,
   /^\/dashboard\/ferramentas\/beatscode-import$/,
+  /^\/dashboard\/marketing\/boston-tv\/controle-hall$/,
   /^\/dashboard\/marketing\/boston-tv\/playlists\//,
   /^\/dashboard\/cadastros\/jogadores\/[^/]+\/edit$/,
   /^\/dashboard\/medico\/[^/]+$/,

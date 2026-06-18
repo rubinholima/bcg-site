@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { BostonTvHallControlView } from "@/components/boston-tv/BostonTvHallControlView";
@@ -58,11 +59,11 @@ export default function BostonTvControleHallPage() {
 
   if (!canAccessModule("boston_tv") && !authLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-zinc-950 text-zinc-400">
         <p>Você não tem acesso ao módulo BCG TV.</p>
-        <Link href="/dashboard">
-          <Button variant="link" className="mt-2">
-            Voltar ao dashboard
+        <Link href="/dashboard/marketing/boston-tv">
+          <Button variant="link" className="mt-2 text-violet-300">
+            Voltar
           </Button>
         </Link>
       </div>
@@ -70,10 +71,23 @@ export default function BostonTvControleHallPage() {
   }
 
   return (
-    <div className="min-h-[calc(100dvh-5rem)] bg-zinc-950 py-4 sm:py-8">
-      {/* Só o essencial fora do iPad: empresa (se mais de uma) */}
-      {tenants.length > 1 ? (
-        <div className="mx-auto mb-4 flex max-w-[900px] justify-end px-3">
+    <div className="flex h-[100dvh] flex-col bg-zinc-950 text-white">
+      <header
+        className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-800/80 px-3 sm:px-4"
+        style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))", paddingBottom: "0.5rem" }}
+      >
+        <Link href="/dashboard/marketing/boston-tv">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="min-h-[44px] px-2 text-zinc-200 hover:bg-zinc-800 hover:text-white"
+          >
+            <ChevronLeft className="mr-0.5 h-5 w-5" />
+            Voltar
+          </Button>
+        </Link>
+        {tenants.length > 1 ? (
           <Select
             value={tenantSelectValue}
             onValueChange={(v) => {
@@ -82,7 +96,7 @@ export default function BostonTvControleHallPage() {
             }}
             disabled={tenantsLoading}
           >
-            <SelectTrigger className="h-10 w-full max-w-[220px] border-zinc-700 bg-zinc-900 text-foreground sm:w-[220px]">
+            <SelectTrigger className="h-10 max-w-[min(100%,14rem)] border-zinc-700 bg-zinc-900 text-foreground text-sm">
               <SelectValue placeholder="Empresa" />
             </SelectTrigger>
             <SelectContent>
@@ -93,14 +107,18 @@ export default function BostonTvControleHallPage() {
               ))}
             </SelectContent>
           </Select>
-        </div>
-      ) : null}
+        ) : null}
+      </header>
 
-      {tenantFilter ? (
-        <BostonTvHallControlView tenantId={tenantFilter} />
-      ) : (
-        <p className="text-center text-sm text-zinc-500">Selecione a empresa.</p>
-      )}
+      <div className="min-h-0 flex-1">
+        {tenantFilter ? (
+          <BostonTvHallControlView tenantId={tenantFilter} />
+        ) : (
+          <p className="flex h-full items-center justify-center text-sm text-zinc-500">
+            Selecione a empresa.
+          </p>
+        )}
+      </div>
     </div>
   );
 }

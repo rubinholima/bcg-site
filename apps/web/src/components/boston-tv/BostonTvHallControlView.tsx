@@ -232,41 +232,38 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
   const pickedNum = picked ? parseHallScreenNum(picked.name) : null;
 
   return (
-    <div className="mx-auto w-full max-w-[900px] px-2 sm:px-0">
-      {/* Moldura iPad */}
-      <div className="rounded-[2.25rem] border-[12px] border-zinc-600 bg-zinc-700 p-2 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.8)]">
-        <div className="flex min-h-[min(72vh,640px)] flex-col overflow-hidden rounded-[1.5rem] bg-zinc-950">
-          {/* Barra superior mínima */}
-          <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 px-4 py-2.5">
-            {picked ? (
-              <button
-                type="button"
-                className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-zinc-300 touch-manipulation"
-                onClick={() => setPicked(null)}
-              >
-                <ChevronLeft className="h-5 w-5" />
-                Telas
-              </button>
+    <div className="flex h-full min-h-0 flex-col bg-zinc-950">
+      {/* Barra de status mínima */}
+      <div className="flex shrink-0 items-center justify-between border-b border-zinc-800/60 px-4 py-2">
+        {picked ? (
+          <button
+            type="button"
+            className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-zinc-300 touch-manipulation"
+            onClick={() => setPicked(null)}
+          >
+            <ChevronLeft className="h-5 w-5" />
+            Telas
+          </button>
+        ) : (
+          <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+            BCG TV
+          </span>
+        )}
+        <span className="text-xs text-zinc-500 tabular-nums">
+          {hallReady && sync ? (
+            sync.paused ? (
+              <span className="text-amber-400">Pausado</span>
             ) : (
-              <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                BCG TV
-              </span>
-            )}
-            <span className="text-xs text-zinc-500 tabular-nums">
-              {hallReady && sync ? (
-                sync.paused ? (
-                  <span className="text-amber-400">Pausado</span>
-                ) : (
-                  <span className="text-emerald-400">No ar</span>
-                )
-              ) : (
-                "—"
-              )}
-            </span>
-          </div>
+              <span className="text-emerald-400">No ar</span>
+            )
+          ) : (
+            "—"
+          )}
+        </span>
+      </div>
 
-          {/* Área principal */}
-          <div className="flex min-h-0 flex-1 flex-col">
+      {/* Área principal — tela cheia */}
+      <div className="flex min-h-0 flex-1 flex-col">
             {loading && screens.length === 0 ? (
               <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
                 Carregando…
@@ -337,7 +334,7 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
             ) : ipadTab === "telas" ? (
               /* Grade de telas */
               <div className="min-h-0 flex-1 overflow-y-auto p-3">
-                <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                <ul className="grid grid-cols-4 gap-2 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7">
                   {sortedScreens.map((s) => {
                     const num = parseHallScreenNum(s.name);
                     const isIndependent =
@@ -429,11 +426,12 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Tab bar inferior — só na visão principal */}
+          {/* Tab bar inferior */}
           {!picked ? (
-            <nav className="grid shrink-0 grid-cols-2 border-t border-zinc-800 bg-zinc-900/80">
+            <nav
+              className="grid shrink-0 grid-cols-2 border-t border-zinc-800 bg-zinc-900/90"
+              style={{ paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))" }}
+            >
               <button
                 type="button"
                 onClick={() => setIpadTab("telas")}
@@ -456,12 +454,6 @@ export function BostonTvHallControlView({ tenantId }: BostonTvHallControlViewPro
               </button>
             </nav>
           ) : null}
-
-          {/* Home indicator */}
-          <div className="flex shrink-0 justify-center py-2">
-            <div className="h-1 w-28 rounded-full bg-zinc-700" />
-          </div>
-        </div>
       </div>
 
       <AlertDialog open={resetAllOpen} onOpenChange={setResetAllOpen}>

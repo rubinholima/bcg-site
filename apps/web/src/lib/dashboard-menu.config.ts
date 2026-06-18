@@ -63,7 +63,6 @@ import {
   ClipboardCheck,
   Gauge,
   UserPlus,
-  TabletSmartphone,
   Video,
   Dumbbell,
 } from "lucide-react";
@@ -664,13 +663,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         label: "BCG TV",
         href: "/dashboard/marketing/boston-tv",
         icon: Tv,
-        moduleSlug: "boston_tv",
-      },
-      {
-        slug: "marketing_boston_tv_controle",
-        label: "Controle Hall",
-        href: "/dashboard/marketing/boston-tv/controle-hall",
-        icon: TabletSmartphone,
         moduleSlug: "boston_tv",
       },
       {

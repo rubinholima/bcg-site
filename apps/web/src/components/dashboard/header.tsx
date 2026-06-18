@@ -35,7 +35,7 @@ export function Header() {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-9 w-9 shrink-0 lg:hidden"
+          className="h-9 w-9 shrink-0 md:hidden"
           onClick={toggleSidebar}
           aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
           aria-expanded={sidebarOpen}
@@ -64,7 +64,7 @@ export function Header() {
           type="button"
           variant="ghost"
           size="icon"
-          className="hidden h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground lg:inline-flex"
+          className="hidden h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground md:inline-flex"
           title={sidebarModeTitle}
           aria-label={sidebarModeTitle}
           onClick={cycleSidebarDesktopMode}

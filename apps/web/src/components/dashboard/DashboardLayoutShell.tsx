@@ -11,16 +11,17 @@ import { TenantWorkspaceRail } from "@/components/dashboard/TenantWorkspaceBackd
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
   const isSessaoPage = pathname.includes("/consultas/sessao");
+  const isControleHallPage = pathname.includes("/marketing/boston-tv/controle-hall");
   const isAcademiasEmbed = pathname.startsWith("/dashboard/academias/");
-  const usePageFrame = !isSessaoPage && !isAcademiasEmbed;
+  const usePageFrame = !isSessaoPage && !isAcademiasEmbed && !isControleHallPage;
   const { sidebarOpen, closeSidebar, sidebarDesktopMode } = useDashboardShell();
 
   const desktopHidden = sidebarDesktopMode === "hidden";
   const desktopIcons = sidebarDesktopMode === "icons";
 
-  if (isSessaoPage) {
+  if (isSessaoPage || isControleHallPage) {
     return (
-      <div className="h-[100dvh] w-full overflow-auto bg-background">
+      <div className="h-[100dvh] w-full overflow-hidden bg-zinc-950">
         {children}
       </div>
     );
@@ -32,19 +33,19 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         <button
           type="button"
           aria-label="Fechar menu"
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={closeSidebar}
         />
       ) : null}
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 shrink-0 transition-[width,transform] duration-200 ease-out lg:static lg:z-auto",
+          "fixed inset-y-0 left-0 z-50 shrink-0 transition-[width,transform] duration-200 ease-out md:static md:z-auto",
           "w-[min(100vw-2.5rem,20rem)]",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          desktopHidden && "lg:pointer-events-none lg:w-0 lg:overflow-hidden lg:border-0 lg:opacity-0",
-          !desktopHidden && desktopIcons && "lg:w-[4.5rem]",
-          !desktopHidden && !desktopIcons && "lg:w-80",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+          desktopHidden && "md:pointer-events-none md:w-0 md:overflow-hidden md:border-0 md:opacity-0",
+          !desktopHidden && desktopIcons && "md:w-[4.5rem]",
+          !desktopHidden && !desktopIcons && "md:w-80",
         )}
       >
         <Sidebar />
