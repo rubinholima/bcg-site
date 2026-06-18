@@ -39,7 +39,7 @@ import { BostonTvIptvPanel } from "@/components/boston-tv/BostonTvIptvPanel";
 import { BostonTvVmixPanel } from "@/components/boston-tv/BostonTvVmixPanel";
 import { BostonTvEnabledChannelSelect } from "@/components/boston-tv/BostonTvEnabledChannelSelect";
 import { BostonTvHallChannelPanel } from "@/components/boston-tv/BostonTvHallChannelPanel";
-import { DashboardDeptTabs } from "@/components/dashboard/DashboardDeptHeader";
+import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { parseHallScreenNum, hallSyncModeLabel, normalizeHallSyncMode, BOSTON_TV_HALL_SYNC_FOLLOW, BOSTON_TV_HALL_SYNC_INDEPENDENT, type HallSyncMode } from "@/lib/boston-tv-hall";
 import { ModalNativeSelect } from "@/components/ui/modal-native-select";
 import {
@@ -454,14 +454,20 @@ export default function BostonTvDashboardPage() {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <DashboardDeptTabs tabs={bostonTvTabs} active={activeTab} onChange={setActiveTab} />
-        <Link href="/dashboard/marketing/boston-tv/controle-hall" className="shrink-0">
-          <Button type="button" variant="default" className="min-h-[44px] w-full lg:w-auto">
-            <TabletSmartphone className="mr-2 h-4 w-4" />
-            Controle Hall (iPad)
-          </Button>
-        </Link>
+      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <BostonTvDashboardTabs tabs={bostonTvTabs} active={activeTab} onChange={setActiveTab} />
+          <Link href="/dashboard/marketing/boston-tv/controle-hall" className="shrink-0">
+            <Button
+              type="button"
+              variant="default"
+              className="min-h-[48px] w-full border border-violet-400/30 bg-gradient-to-r from-violet-600 to-violet-500 shadow-[0_4px_20px_-6px_rgba(139,92,246,0.6)] hover:from-violet-500 hover:to-violet-400 lg:w-auto"
+            >
+              <TabletSmartphone className="mr-2 h-4 w-4" />
+              Controle Hall (iPad)
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card>
