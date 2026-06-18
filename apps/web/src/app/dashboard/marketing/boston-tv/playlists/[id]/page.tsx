@@ -50,6 +50,11 @@ import {
   BOSTON_TV_ORIENTATION_OPTIONS,
   normalizeBostonTvDisplayOrientation,
 } from "@/lib/boston-tv-display-orientation";
+import type { MediaItem } from "@/lib/media-placeholders";
+import {
+  buildMediaDisplayNameLookup,
+  mediaFileContentLabel,
+} from "@/lib/media-display-label";
 
 type Item = {
   id: string;
@@ -99,6 +104,7 @@ function extractYoutubeId(url: string): string | null {
 function formatItemContent(
   item: Item,
   liveByStream: Map<string, string>,
+  mediaNames: Map<string, string>,
 ): string {
   if (item.contentType === "iptv_stream") {
     return liveByStream.get(item.url) ?? "Canal IPTV ao vivo";
@@ -113,16 +119,11 @@ function formatItemContent(
     const yid = extractYoutubeId(item.url);
     return yid ? `YouTube — ${yid}` : "YouTube";
   }
-  if (item.contentType === "image_url" || item.contentType === "video_url") {
-    try {
-      const name = decodeURIComponent(new URL(item.url).pathname.split("/").pop() || "");
-      if (name) {
-        return item.contentType === "image_url" ? `Imagem — ${name}` : `Vídeo — ${name}`;
-      }
-    } catch {
-      /* ignore */
-    }
-    return item.contentType === "image_url" ? "Imagem" : "Vídeo MP4";
+  if (item.contentType === "image_url") {
+    return mediaFileContentLabel(item.url, mediaNames, "Imagem");
+  }
+  if (item.contentType === "video_url") {
+    return mediaFileContentLabel(item.url, mediaNames, "Vídeo");
   }
   return item.url;
 }
@@ -141,6 +142,7 @@ export default function EditBostonTvPlaylistPage() {
   const [iptvChannelId, setIptvChannelId] = useState("");
   const [vmixChannelId, setVmixChannelId] = useState("");
   const [liveByStream, setLiveByStream] = useState<Map<string, string>>(new Map());
+  const [mediaNames, setMediaNames] = useState<Map<string, string>>(new Map());
   const [addOpen, setAddOpen] = useState(true);
   const [itemsOpen, setItemsOpen] = useState(true);
   const [removeItemId, setRemoveItemId] = useState<string | null>(null);
@@ -186,19 +188,32 @@ export default function EditBostonTvPlaylistPage() {
     }
   }, []);
 
+  const loadMediaNames = useCallback(async () => {
+    try {
+      const res = await fetch("/api/media?all=1", { credentials: "include", cache: "no-store" });
+      const data = res.ok
+        ? ((await res.json()) as { items: MediaItem[] })
+        : { items: [] as MediaItem[] };
+      setMediaNames(buildMediaDisplayNameLookup(data.items ?? []));
+    } catch {
+      setMediaNames(new Map());
+    }
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await api.get<Playlist>(`/boston-tv/playlists/${id}`);
       setPlaylist(data ?? null);
       setErr(null);
+      await loadMediaNames();
     } catch (e) {
       setPlaylist(null);
       setErr(e instanceof Error ? e.message : "Erro ao carregar");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, loadMediaNames]);
 
   useEffect(() => {
     void load();
@@ -636,7 +651,7 @@ export default function EditBostonTvPlaylistPage() {
                     </TableCell>
                     <TableCell className="text-sm">{TYPE_LABEL[it.contentType] ?? it.contentType}</TableCell>
                     <TableCell className="max-w-[360px] truncate text-sm text-foreground">
-                      {formatItemContent(it, liveByStream)}
+                      {formatItemContent(it, liveByStream, mediaNames)}
                     </TableCell>
                     <TableCell className="text-sm">
                       {it.durationSeconds != null ? `${it.durationSeconds}s` : "—"}
