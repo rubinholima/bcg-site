@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Clipboard, ExternalLink, HelpCircle, LayoutList, Pencil, Plus, Radio, RefreshCw, Trash2, Tv, TabletSmartphone, Antenna, Video } from "lucide-react";
+import { Clipboard, ExternalLink, LayoutList, Pencil, Plus, Radio, RefreshCw, Trash2, Tv, TabletSmartphone, Antenna, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -457,24 +457,16 @@ export default function BostonTvDashboardPage() {
       <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <BostonTvDashboardTabs tabs={bostonTvTabs} active={activeTab} onChange={setActiveTab} />
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-            <Link href="/dashboard/marketing/boston-tv/controle-hall">
-              <Button
-                type="button"
-                variant="default"
-                className="min-h-[48px] w-full border border-violet-400/30 bg-gradient-to-r from-violet-600 to-violet-500 shadow-[0_4px_20px_-6px_rgba(139,92,246,0.6)] hover:from-violet-500 hover:to-violet-400 sm:w-auto"
-              >
-                <TabletSmartphone className="mr-2 h-4 w-4" />
-                {BC_HALL_CONTROLE_LABEL} (iPad)
-              </Button>
-            </Link>
-            <Link href="/dashboard/manual#boston-tv">
-              <Button type="button" variant="outline" className="min-h-[48px] w-full sm:w-auto">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                Ajuda
-              </Button>
-            </Link>
-          </div>
+          <Link href="/dashboard/marketing/boston-tv/controle-hall" className="shrink-0">
+            <Button
+              type="button"
+              variant="default"
+              className="min-h-[48px] w-full border border-violet-400/30 bg-gradient-to-r from-violet-600 to-violet-500 shadow-[0_4px_20px_-6px_rgba(139,92,246,0.6)] hover:from-violet-500 hover:to-violet-400 sm:w-auto lg:w-auto"
+            >
+              <TabletSmartphone className="mr-2 h-4 w-4" />
+              {BC_HALL_CONTROLE_LABEL} (iPad)
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -563,15 +555,7 @@ export default function BostonTvDashboardPage() {
                   Nenhuma tela ainda. Clique <strong>Nova tela</strong> e escolha o canal ou a playlist.
                 </p>
               ) : (
-                <>
-                  <p className="text-xs text-muted-foreground">
-                    Instalação: <span className="font-mono text-foreground">/tv</span> ou{" "}
-                    <span className="font-mono text-foreground">/tv/1</span>… —{" "}
-                    <Link href="/dashboard/manual#boston-tv-telas" className="text-primary underline-offset-2 hover:underline">
-                      ver Manual
-                    </Link>
-                  </p>
-                  <ul className="space-y-3">
+                <ul className="space-y-3">
                     {screens.map((s) => (
                       <li
                         key={s.id}
@@ -627,9 +611,8 @@ export default function BostonTvDashboardPage() {
                           </Button>
                         </div>
                       </li>
-                    ))}
-                  </ul>
-                </>
+                  ))}
+                </ul>
               )}
             </div>
           ) : activeTab === "vmix" ? (
