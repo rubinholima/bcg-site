@@ -501,10 +501,6 @@ export default function EditBostonTvPlaylistPage() {
               options={[...BOSTON_TV_ORIENTATION_OPTIONS]}
               disabled={savingOrientation}
             />
-            <p className="text-xs text-muted-foreground">
-              Use <strong>Vertical</strong> em TVs com menu lateral em pé (portrait).{" "}
-              <strong>Horizontal</strong> é o padrão para telas deitadas.
-            </p>
           </div>
         </div>
       </div>
