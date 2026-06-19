@@ -378,7 +378,7 @@ export default function EditJogadorPage() {
   const imagesList = (player.images ?? []) as ImageEntry[];
 
   const playerPhotoLeading = (
-    <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-violet-500/35 bg-muted sm:h-20 sm:w-20">
+    <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-violet-500/35 bg-muted sm:h-32 sm:w-32">
       {(pendingPreviewUrl || player.photoUrl) ? (
         <img
           src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
@@ -387,7 +387,7 @@ export default function EditJogadorPage() {
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-          <User className="h-8 w-8" />
+          <User className="h-10 w-10 sm:h-12 sm:w-12" />
         </div>
       )}
     </div>

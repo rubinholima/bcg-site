@@ -76,12 +76,12 @@ export function DashboardDeptHeader({
               <SectionIcon className="h-3.5 w-3.5 shrink-0" />
               {section}
             </p>
-            <h1 className={cn("mt-1 text-xl font-bold leading-tight tracking-tight sm:text-2xl", titleClassName)}>
+            <h1 className={cn("mt-0.5 text-xl font-bold leading-snug tracking-tight sm:text-2xl", titleClassName)}>
               {title}
             </h1>
-            <div className="mt-1.5 flex items-center justify-between gap-3">
+            <div className="mt-0.5 flex items-center justify-between gap-3">
               {description ? (
-                <p className="min-w-0 truncate text-sm text-muted-foreground">{description}</p>
+                <p className="min-w-0 truncate text-sm leading-none text-muted-foreground">{description}</p>
               ) : (
                 <span className="flex-1" />
               )}
