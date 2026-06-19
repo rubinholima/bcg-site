@@ -7,16 +7,24 @@ export function BostonTvDashboardTabs<T extends string>({
   tabs,
   active,
   onChange,
+  ariaLabel = "Seções",
+  wrap = true,
 }: {
   tabs: Array<{ id: T; label: string; icon?: LucideIcon }>;
   active: T;
   onChange: (id: T) => void;
+  ariaLabel?: string;
+  /** false = uma linha com scroll horizontal (útil para muitas abas) */
+  wrap?: boolean;
 }) {
   return (
     <div
       role="tablist"
-      aria-label="Seções do BCG TV"
-      className="flex gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:gap-2.5"
+      aria-label={ariaLabel}
+      className={cn(
+        "flex gap-2 overflow-x-auto pb-0.5",
+        wrap ? "sm:flex-wrap sm:gap-2.5" : "flex-nowrap gap-2.5",
+      )}
     >
       {tabs.map(({ id, label, icon: Icon }) => {
         const isActive = active === id;

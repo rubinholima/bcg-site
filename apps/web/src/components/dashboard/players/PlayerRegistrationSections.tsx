@@ -1,6 +1,14 @@
 "use client";
 
-import { User } from "lucide-react";
+import { useState } from "react";
+import {
+  User,
+  Contact,
+  Trophy,
+  Scale,
+  Plane,
+} from "lucide-react";
+import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +25,6 @@ import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { formatCpfForDisplay, formatCpfInput } from "@/lib/format-cpf";
 import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import {
   CLOTHING_SIZE_FIELDS,
   CLOTHING_SIZE_OPTIONS,
@@ -165,9 +172,28 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
   const agent = profile.agent ?? {};
   const clothing = profile.clothing ?? {};
 
+  type RegTabId = "identificacao" | "pessoal" | "esportivo" | "juridico" | "logistica";
+  const REG_TABS: Array<{ id: RegTabId; label: string; icon: typeof User }> = [
+    { id: "identificacao", label: "Identificação", icon: User },
+    { id: "pessoal", label: "Pessoal e contato", icon: Contact },
+    { id: "esportivo", label: "Esportivo", icon: Trophy },
+    { id: "juridico", label: "Documentos e contratos", icon: Scale },
+    { id: "logistica", label: "Logística", icon: Plane },
+  ];
+  const [activeRegTab, setActiveRegTab] = useState<RegTabId>("identificacao");
+
   return (
-    <div className="space-y-4">
-      <ExpandableSection title="Identificação e foto" description="Nome, categoria e avatar">
+    <div className="space-y-5">
+      <BostonTvDashboardTabs
+        tabs={REG_TABS}
+        active={activeRegTab}
+        onChange={setActiveRegTab}
+        ariaLabel="Seções do cadastro do atleta"
+      />
+
+      {activeRegTab === "identificacao" && (
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-5">
+      <ExpandableSection title="Identificação e foto" description="Nome, categoria e avatar" defaultOpen>
         <FormGrid cols={4}>
           <div className="space-y-2 sm:col-span-2">
             <Label>
@@ -270,7 +296,13 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         </FormGrid>
       </ExpandableSection>
 
-      <ExpandableSection title="Dados pessoais" description="Documentos, contato e filiação">
+      <PlayerCategoryHistorySection profile={profile} currentCategory={category} />
+        </div>
+      )}
+
+      {activeRegTab === "pessoal" && (
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-5">
+      <ExpandableSection title="Dados pessoais" description="Documentos, contato e filiação" defaultOpen>
         <FormGrid cols={4}>
           <div className="space-y-2">
             <Label>Chegada no clube</Label>
@@ -475,181 +507,7 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         </FormGrid>
       </ExpandableSection>
 
-      <PlayerDocumentsSection
-        playerId={playerId}
-        profile={profile}
-        onProfileChange={onProfileChange}
-      />
-
-      <PlayerContractsSection
-        playerId={playerId}
-        tenantName={tenantName}
-        profile={profile}
-        onProfileChange={onProfileChange}
-        canAccessJuridico={canAccessJuridico}
-        canAccessRh={canAccessRh}
-      />
-
-      <PlayerLoanSection profile={profile} tenantName={tenantName} onProfileChange={onProfileChange} />
-
-      <ExpandableSection title="Dados esportivos" description="Categoria, posição, registros e trajetória">
-        <FormGrid cols={6}>
-          <div className="space-y-2">
-            <Label>
-              Posição
-              <RequiredMark />
-            </Label>
-            <Select value={position ?? ""} onValueChange={(v) => onPlayerField("position", v || null)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {FOOTBALL_POSITIONS.map((pos) => (
-                  <SelectItem key={pos.value} value={pos.value}>
-                    {pos.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Nº camisa</Label>
-            <Input
-              type="number"
-              min={0}
-              max={99}
-              value={jerseyNumber ?? ""}
-              onChange={(e) => onPlayerField("jerseyNumber", e.target.value ? Number(e.target.value) : null)}
-            />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Nome na camisa</Label>
-            <Input
-              value={sports.jerseyName ?? ""}
-              onChange={(e) =>
-                onProfileChange(patchProfile(profile, "sports", { jerseyName: e.target.value || undefined }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>
-              Lateralidade
-              <RequiredMark />
-            </Label>
-            <Select
-              value={preferredFoot ?? ""}
-              onValueChange={(v) => onPlayerField("preferredFoot", v || null)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Esquerdo</SelectItem>
-                <SelectItem value="right">Direito</SelectItem>
-                <SelectItem value="both">Ambidestro</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>
-              CBF
-              <RequiredMark />
-            </Label>
-            <Input
-              value={sports.cbf ?? ""}
-              onChange={(e) => onProfileChange(patchProfile(profile, "sports", { cbf: e.target.value || undefined }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Registro fed. local</Label>
-            <Input
-              value={sports.localFedRegistration ?? ""}
-              onChange={(e) =>
-                onProfileChange(patchProfile(profile, "sports", { localFedRegistration: e.target.value || undefined }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Comet (CONMEBOL)</Label>
-            <Input
-              value={sports.comet ?? ""}
-              onChange={(e) => onProfileChange(patchProfile(profile, "sports", { comet: e.target.value || undefined }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>CBFS</Label>
-            <Input
-              value={sports.cbfs ?? ""}
-              onChange={(e) => onProfileChange(patchProfile(profile, "sports", { cbfs: e.target.value || undefined }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Reg. fed. local (futsal)</Label>
-            <Input
-              value={sports.localFedRegistrationFutsal ?? ""}
-              onChange={(e) =>
-                onProfileChange(
-                  patchProfile(profile, "sports", { localFedRegistrationFutsal: e.target.value || undefined }),
-                )
-              }
-            />
-          </div>
-          <div className="space-y-2 flex flex-col justify-end pb-2">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="internationalized"
-                checked={sports.internationalized ?? false}
-                onCheckedChange={(checked) =>
-                  onProfileChange(patchProfile(profile, "sports", { internationalized: checked === true }))
-                }
-              />
-              <Label htmlFor="internationalized" className="font-normal">
-                Internacionalizado
-              </Label>
-            </div>
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label>Escolinha (futebol)</Label>
-            <Input
-              value={sports.footballSchool ?? ""}
-              onChange={(e) =>
-                onProfileChange(patchProfile(profile, "sports", { footballSchool: e.target.value || undefined }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Cidade da escolinha</Label>
-            <Input
-              value={sports.footballSchoolCity ?? ""}
-              onChange={(e) =>
-                onProfileChange(patchProfile(profile, "sports", { footballSchoolCity: e.target.value || undefined }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Clube anterior</Label>
-            <Input
-              value={sports.previousClub ?? ""}
-              onChange={(e) =>
-                onProfileChange(patchProfile(profile, "sports", { previousClub: e.target.value || undefined }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Cidade do clube anterior</Label>
-            <Input
-              value={sports.previousClubCity ?? ""}
-              onChange={(e) =>
-                onProfileChange(patchProfile(profile, "sports", { previousClubCity: e.target.value || undefined }))
-              }
-            />
-          </div>
-        </FormGrid>
-      </ExpandableSection>
-
-      <PlayerCategoryHistorySection profile={profile} currentCategory={category} />
-
-      <ExpandableSection title="Endereços" description="Residência principal e endereço local">
+      <ExpandableSection title="Endereços" description="Residência principal e endereço local" defaultOpen={false}>
         <div className="mb-4 flex items-center gap-2">
           <Checkbox
             id="useClubAddress"
@@ -986,6 +844,165 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           </div>
         </FormGrid>
       </ExpandableSection>
+        </div>
+      )}
+
+      {activeRegTab === "esportivo" && (
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-5">
+      <ExpandableSection title="Dados esportivos" description="Categoria, posição, registros e trajetória" defaultOpen>
+        <FormGrid cols={6}>
+          <div className="space-y-2">
+            <Label>
+              Posição
+              <RequiredMark />
+            </Label>
+            <Select value={position ?? ""} onValueChange={(v) => onPlayerField("position", v || null)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {FOOTBALL_POSITIONS.map((pos) => (
+                  <SelectItem key={pos.value} value={pos.value}>
+                    {pos.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Nº camisa</Label>
+            <Input
+              type="number"
+              min={0}
+              max={99}
+              value={jerseyNumber ?? ""}
+              onChange={(e) => onPlayerField("jerseyNumber", e.target.value ? Number(e.target.value) : null)}
+            />
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Nome na camisa</Label>
+            <Input
+              value={sports.jerseyName ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "sports", { jerseyName: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>
+              Lateralidade
+              <RequiredMark />
+            </Label>
+            <Select
+              value={preferredFoot ?? ""}
+              onValueChange={(v) => onPlayerField("preferredFoot", v || null)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Esquerdo</SelectItem>
+                <SelectItem value="right">Direito</SelectItem>
+                <SelectItem value="both">Ambidestro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>
+              CBF
+              <RequiredMark />
+            </Label>
+            <Input
+              value={sports.cbf ?? ""}
+              onChange={(e) => onProfileChange(patchProfile(profile, "sports", { cbf: e.target.value || undefined }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Registro fed. local</Label>
+            <Input
+              value={sports.localFedRegistration ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "sports", { localFedRegistration: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Comet (CONMEBOL)</Label>
+            <Input
+              value={sports.comet ?? ""}
+              onChange={(e) => onProfileChange(patchProfile(profile, "sports", { comet: e.target.value || undefined }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>CBFS</Label>
+            <Input
+              value={sports.cbfs ?? ""}
+              onChange={(e) => onProfileChange(patchProfile(profile, "sports", { cbfs: e.target.value || undefined }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Reg. fed. local (futsal)</Label>
+            <Input
+              value={sports.localFedRegistrationFutsal ?? ""}
+              onChange={(e) =>
+                onProfileChange(
+                  patchProfile(profile, "sports", { localFedRegistrationFutsal: e.target.value || undefined }),
+                )
+              }
+            />
+          </div>
+          <div className="space-y-2 flex flex-col justify-end pb-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="internationalized"
+                checked={sports.internationalized ?? false}
+                onCheckedChange={(checked) =>
+                  onProfileChange(patchProfile(profile, "sports", { internationalized: checked === true }))
+                }
+              />
+              <Label htmlFor="internationalized" className="font-normal">
+                Internacionalizado
+              </Label>
+            </div>
+          </div>
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Escolinha (futebol)</Label>
+            <Input
+              value={sports.footballSchool ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "sports", { footballSchool: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Cidade da escolinha</Label>
+            <Input
+              value={sports.footballSchoolCity ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "sports", { footballSchoolCity: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Clube anterior</Label>
+            <Input
+              value={sports.previousClub ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "sports", { previousClub: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Cidade do clube anterior</Label>
+            <Input
+              value={sports.previousClubCity ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "sports", { previousClubCity: e.target.value || undefined }))
+              }
+            />
+          </div>
+        </FormGrid>
+      </ExpandableSection>
 
       <ExpandableSection title="Características" description="Descrições técnicas, táticas e físicas">
         <div className="space-y-4">
@@ -1042,15 +1059,6 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         </div>
       </ExpandableSection>
 
-      <PlayerAgendaTab playerId={playerId} canAccessLogistica={canAccessLogistica} />
-
-      <PlayerTravelTab
-        playerId={playerId}
-        profile={profile}
-        onProfileChange={onProfileChange}
-        canAccessLogistica={canAccessLogistica}
-      />
-
       <ExpandableSection title="Rouparia" description="Tamanhos de uniformes e calçados">
         <FormGrid cols={6}>
           {CLOTHING_SIZE_FIELDS.map(({ key, label }) => (
@@ -1087,6 +1095,42 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           />
         </div>
       </ExpandableSection>
+        </div>
+      )}
+
+      {activeRegTab === "juridico" && (
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-5">
+      <PlayerDocumentsSection
+        playerId={playerId}
+        profile={profile}
+        onProfileChange={onProfileChange}
+      />
+
+      <PlayerContractsSection
+        playerId={playerId}
+        tenantName={tenantName}
+        profile={profile}
+        onProfileChange={onProfileChange}
+        canAccessJuridico={canAccessJuridico}
+        canAccessRh={canAccessRh}
+      />
+
+      <PlayerLoanSection profile={profile} tenantName={tenantName} onProfileChange={onProfileChange} />
+        </div>
+      )}
+
+      {activeRegTab === "logistica" && (
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-5">
+      <PlayerAgendaTab playerId={playerId} canAccessLogistica={canAccessLogistica} />
+
+      <PlayerTravelTab
+        playerId={playerId}
+        profile={profile}
+        onProfileChange={onProfileChange}
+        canAccessLogistica={canAccessLogistica}
+      />
+        </div>
+      )}
 
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs leading-relaxed text-muted-foreground">
         <User className="mb-2 inline h-4 w-4 text-amber-600" /> Este cadastro atende os requisitos da LGPD para

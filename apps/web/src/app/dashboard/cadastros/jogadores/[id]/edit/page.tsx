@@ -34,6 +34,7 @@ import { getPublicImageUrl } from "@/lib/media-url";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
+import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
@@ -412,27 +413,14 @@ export default function EditJogadorPage() {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 p-2 rounded-xl bg-muted/40 border border-border">
-        {PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug)).map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all shadow-sm",
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-md border border-primary"
-                  : "bg-background/80 text-muted-foreground border border-transparent hover:border-border hover:bg-background hover:text-foreground"
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {tab.label}
-            </button>
-          );
-        })}
+      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:p-4">
+        <BostonTvDashboardTabs
+          tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
+          active={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Seções do atleta"
+          wrap={false}
+        />
       </div>
 
       {/* Tab: Dados base */}
@@ -443,7 +431,7 @@ export default function EditJogadorPage() {
               <div>
                 <CardTitle>Cadastro do atleta</CardTitle>
                 <CardDescription>
-                  Dados pessoais, esportivos, documentos, endereços, viagens e informações complementares — seções expansíveis
+                  Organize o cadastro por abas — identificação, pessoal, esportivo, jurídico e logística
                 </CardDescription>
               </div>
               <Button
