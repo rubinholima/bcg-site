@@ -545,7 +545,8 @@ static void* recv_loop(void* arg) {
 
     NDIlib_recv_create_v3_t recv_create;
     memset(&recv_create, 0, sizeof(recv_create));
-    /* fastest + fields=true: vMix envia UYVY/campos — Birddog aceita assim */
+    /* Fonte no create (padrão SDK) + fastest/fields para UYVY do vMix */
+    recv_create.source_to_connect_to = g_chosen_source;
     recv_create.color_format = NDIlib_recv_color_format_fastest;
     recv_create.bandwidth = NDIlib_recv_bandwidth_highest;
     recv_create.allow_video_fields = true;
@@ -559,27 +560,22 @@ static void* recv_loop(void* arg) {
         return NULL;
     }
 
-    if (!g_ndi.recv_connect) {
-        set_status("NDI recv_connect ausente");
-        g_ndi.recv_destroy(recv);
-        g_ndi.find_destroy(finder);
-        if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
-        g_thread_active = 0;
-        return NULL;
+    if (g_ndi.recv_connect) {
+        g_ndi.recv_connect(recv, &g_chosen_source);
     }
-    g_ndi.recv_connect(recv, &g_chosen_source);
     snprintf(g_status, sizeof(g_status), "Conectado: %s", g_chosen_source.p_ndi_name);
     LOGI("Connected to %s url=%s", g_chosen_source.p_ndi_name,
          g_chosen_source.p_url_address ? g_chosen_source.p_url_address : "(null)");
-    g_ndi.find_destroy(finder);
+    /* Android: manter finder vivo durante recepção — mDNS/_ndi depende disso */
 
     /* Aguarda negociação do stream (vMix pode levar alguns segundos). */
-    for (int warm = 0; warm < 8 && g_running; warm++) {
+    for (int warm = 0; warm < 12 && g_running; warm++) {
         usleep(250000);
     }
 
     int video_frames = 0;
     int empty_polls = 0;
+    int format_retry = 0;
     g_diag_video_frames = 0;
     g_diag_draw_ok = 0;
     g_diag_lock_fail = 0;
@@ -621,11 +617,27 @@ static void* recv_loop(void* arg) {
             if (g_ndi.recv_free_metadata) g_ndi.recv_free_metadata(recv, &metadata);
         } else if (t == NDIlib_frame_type_status_change) {
             LOGI("status_change conns=%d", g_diag_conns);
-            g_ndi.recv_connect(recv, &g_chosen_source);
+            if (g_ndi.recv_connect) g_ndi.recv_connect(recv, &g_chosen_source);
         } else if (t == NDIlib_frame_type_none) {
             g_diag_none_count++;
             empty_polls++;
-            if (empty_polls == 3 || empty_polls % 10 == 0) {
+            if (video_frames == 0 && empty_polls == 15 && format_retry == 0 && g_running) {
+                format_retry = 1;
+                LOGI("sem video 15s — tenta UYVY_BGRA progressivo");
+                g_ndi.recv_destroy(recv);
+                memset(&recv_create, 0, sizeof(recv_create));
+                recv_create.source_to_connect_to = g_chosen_source;
+                recv_create.color_format = NDIlib_recv_color_format_UYVY_BGRA;
+                recv_create.bandwidth = NDIlib_recv_bandwidth_highest;
+                recv_create.allow_video_fields = false;
+                recv_create.p_ndi_recv_name = "BCG TV Receiver";
+                recv = g_ndi.recv_create(&recv_create);
+                if (recv && g_ndi.recv_connect) {
+                    g_ndi.recv_connect(recv, &g_chosen_source);
+                    snprintf(g_status, sizeof(g_status), "Reconectado (UYVY): %s", g_chosen_source.p_ndi_name);
+                }
+                empty_polls = 0;
+            } else if (empty_polls == 3 || empty_polls % 10 == 0) {
                 LOGI("sem frame %ds conns=%d video=%d", empty_polls, g_diag_conns, video_frames);
             }
         }
@@ -633,6 +645,7 @@ static void* recv_loop(void* arg) {
     LOGI("recv_loop fim: total de video frames=%d", video_frames);
 
     g_ndi.recv_destroy(recv);
+    g_ndi.find_destroy(finder);
     if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
     g_thread_active = 0;
     return NULL;
