@@ -405,8 +405,8 @@ export default function EditJogadorPage() {
         titleClassName="uppercase"
         compact
         className="sticky top-0 z-40 !p-3.5 sm:!p-4 border border-violet-500/25 !bg-background bg-none shadow-[0_12px_32px_-12px_rgba(0,0,0,0.85)]"
-        descriptionAside={
-          <Button onClick={handleSave} disabled={loading} size="sm" className="h-9 min-w-[96px] shrink-0 px-4">
+        footerAside={
+          <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px] shrink-0">
             {loading ? "Salvando..." : "Salvar"}
           </Button>
         }

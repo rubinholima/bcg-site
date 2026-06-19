@@ -68,7 +68,7 @@ export function DashboardDeptHeader({
           </Button>
         </div>
       ) : null}
-      {leading && descriptionAside && compact ? (
+      {leading && compact ? (
         <div className="flex items-start gap-3 sm:gap-4">
           <div className="shrink-0">{leading}</div>
           <div className="min-w-0 flex-1">
@@ -79,14 +79,16 @@ export function DashboardDeptHeader({
             <h1 className={cn("mt-0.5 text-xl font-bold leading-snug tracking-tight sm:text-2xl", titleClassName)}>
               {title}
             </h1>
-            <div className="mt-0.5 flex items-center justify-between gap-3">
-              {description ? (
-                <p className="min-w-0 truncate text-sm leading-none text-muted-foreground">{description}</p>
-              ) : (
-                <span className="flex-1" />
-              )}
-              <div className="shrink-0">{descriptionAside}</div>
-            </div>
+            {description || descriptionAside ? (
+              <div className="mt-0.5 flex items-center justify-between gap-3">
+                {description ? (
+                  <p className="min-w-0 truncate text-sm leading-none text-muted-foreground">{description}</p>
+                ) : (
+                  <span className="flex-1" />
+                )}
+                {descriptionAside ? <div className="shrink-0">{descriptionAside}</div> : null}
+              </div>
+            ) : null}
           </div>
         </div>
       ) : leading && descriptionAside ? (
@@ -159,7 +161,9 @@ export function DashboardDeptHeader({
       {toolbar ? (
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">{toolbar}</div>
       ) : null}
-      {footerAside ? <div className="mt-6 flex justify-end">{footerAside}</div> : null}
+      {footerAside ? (
+        <div className={cn("flex justify-end", compact ? "mt-2" : "mt-6")}>{footerAside}</div>
+      ) : null}
     </div>
   );
 }
