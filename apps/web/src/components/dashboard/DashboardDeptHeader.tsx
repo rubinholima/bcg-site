@@ -28,6 +28,7 @@ export function DashboardDeptHeader({
   titleClassName,
   descriptionAside,
   footerAside,
+  compact = false,
 }: {
   section: string;
   sectionIcon?: LucideIcon;
@@ -46,6 +47,8 @@ export function DashboardDeptHeader({
   descriptionAside?: React.ReactNode;
   /** Ações no rodapé do card */
   footerAside?: React.ReactNode;
+  /** Cabeçalho baixo — atleta, formulários longos */
+  compact?: boolean;
 }) {
   return (
     <div
@@ -56,8 +59,8 @@ export function DashboardDeptHeader({
       )}
     >
       {backHref ? (
-        <div className="mb-4">
-          <Button variant="ghost" size="sm" className="-ml-2 h-9 gap-1.5 px-2" asChild>
+        <div className={compact ? "mb-2" : "mb-4"}>
+          <Button variant="ghost" size="sm" className="-ml-2 h-8 gap-1.5 px-2" asChild>
             <Link href={backHref}>
               <ArrowLeft className="h-4 w-4" />
               Voltar
@@ -65,7 +68,28 @@ export function DashboardDeptHeader({
           </Button>
         </div>
       ) : null}
-      {leading && descriptionAside ? (
+      {leading && descriptionAside && compact ? (
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="shrink-0">{leading}</div>
+          <div className="min-w-0 flex-1">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-400">
+              <SectionIcon className="h-3.5 w-3.5 shrink-0" />
+              {section}
+            </p>
+            <h1 className={cn("mt-1 text-xl font-bold leading-tight tracking-tight sm:text-2xl", titleClassName)}>
+              {title}
+            </h1>
+            <div className="mt-1.5 flex items-center justify-between gap-3">
+              {description ? (
+                <p className="min-w-0 truncate text-sm text-muted-foreground">{description}</p>
+              ) : (
+                <span className="flex-1" />
+              )}
+              <div className="shrink-0">{descriptionAside}</div>
+            </div>
+          </div>
+        </div>
+      ) : leading && descriptionAside ? (
         <>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
             <div className="mx-auto shrink-0 sm:mx-0">{leading}</div>

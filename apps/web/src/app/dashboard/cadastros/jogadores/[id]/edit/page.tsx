@@ -378,7 +378,7 @@ export default function EditJogadorPage() {
   const imagesList = (player.images ?? []) as ImageEntry[];
 
   const playerPhotoLeading = (
-    <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-violet-500/35 bg-muted sm:h-32 sm:w-32">
+    <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-violet-500/35 bg-muted sm:h-20 sm:w-20">
       {(pendingPreviewUrl || player.photoUrl) ? (
         <img
           src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
@@ -387,14 +387,14 @@ export default function EditJogadorPage() {
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-          <User className="h-10 w-10 sm:h-12 sm:w-12" />
+          <User className="h-8 w-8" />
         </div>
       )}
     </div>
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <DashboardDeptHeader
         section="Depto Futebol"
         sectionIcon={Shirt}
@@ -403,9 +403,10 @@ export default function EditJogadorPage() {
         backHref="/dashboard/cadastros/jogadores"
         leading={playerPhotoLeading}
         titleClassName="uppercase"
-        className="sticky top-0 z-40 border border-violet-500/25 !bg-background bg-none shadow-[0_16px_48px_-16px_rgba(0,0,0,0.9)]"
+        compact
+        className="sticky top-0 z-40 !p-3.5 sm:!p-4 border border-violet-500/25 !bg-background bg-none shadow-[0_12px_32px_-12px_rgba(0,0,0,0.85)]"
         descriptionAside={
-          <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px] shrink-0">
+          <Button onClick={handleSave} disabled={loading} size="sm" className="h-9 min-w-[96px] shrink-0 px-4">
             {loading ? "Salvando..." : "Salvar"}
           </Button>
         }
