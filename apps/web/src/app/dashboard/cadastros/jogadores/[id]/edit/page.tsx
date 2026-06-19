@@ -377,45 +377,41 @@ export default function EditJogadorPage() {
 
   const imagesList = (player.images ?? []) as ImageEntry[];
 
-  return (
-    <div className="space-y-6">
-      <DashboardDeptHeader
-        section="Depto Futebol"
-        sectionIcon={Shirt}
-        title={`${player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}${player.name}`}
-        description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
-        backHref="/dashboard/cadastros/jogadores"
-        aside={
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? "Salvando..." : "Salvar"}
-          </Button>
-        }
-      />
-
-      {error && (
-        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-          {error}
+  const playerPhotoLeading = (
+    <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-violet-500/25 bg-muted shadow-[0_8px_32px_-8px_rgba(139,92,246,0.45)] ring-2 ring-violet-400/20 sm:h-32 sm:w-32">
+      {(pendingPreviewUrl || player.photoUrl) ? (
+        <img
+          src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
+          alt={player.name}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+          <User className="h-10 w-10 sm:h-12 sm:w-12" />
         </div>
       )}
+    </div>
+  );
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:gap-5">
-        <div className="mx-auto shrink-0 sm:mx-0 sm:self-center">
-          <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-violet-500/25 bg-muted shadow-[0_8px_32px_-8px_rgba(139,92,246,0.45)] ring-2 ring-violet-400/20 sm:h-36 sm:w-36">
-            {(pendingPreviewUrl || player.photoUrl) ? (
-              <img
-                src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
-                alt={player.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                <User className="h-12 w-12 sm:h-14 sm:w-14" />
-              </div>
-            )}
-          </div>
-        </div>
+  return (
+    <div className="space-y-6">
+      <div className="sticky top-0 z-30 -mx-3 space-y-4 border-b border-violet-500/20 bg-background/95 px-3 pb-4 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 sm:-mx-0 sm:px-0">
+        <DashboardDeptHeader
+          section="Depto Futebol"
+          sectionIcon={Shirt}
+          title={`${player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}${player.name}`}
+          description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
+          backHref="/dashboard/cadastros/jogadores"
+          leading={playerPhotoLeading}
+          titleClassName="uppercase"
+          aside={
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Salvando..." : "Salvar"}
+            </Button>
+          }
+        />
 
-        <div className="min-w-0 flex-1 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
+        <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
           <BostonTvDashboardTabs
             tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
             active={activeTab}
@@ -427,16 +423,9 @@ export default function EditJogadorPage() {
         </div>
       </div>
 
-      {activeTab === "dados" && (
-        <div className="space-y-4">
-          <RegistrationInviteCard
-            subjectType="player"
-            subjectId={player.id}
-            name={player.name}
-            contactEmail={player.contactEmail}
-            contactPhone={player.contactPhone}
-          />
-          <RhEmployeeLinkCard playerId={player.id} />
+      {error && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+          {error}
         </div>
       )}
 
@@ -1150,6 +1139,19 @@ export default function EditJogadorPage() {
           </Card>
         );
       })()}
+
+      {activeTab === "dados" && (
+        <div className="space-y-4 border-t border-border/60 pt-6">
+          <RegistrationInviteCard
+            subjectType="player"
+            subjectId={player.id}
+            name={player.name}
+            contactEmail={player.contactEmail}
+            contactPhone={player.contactPhone}
+          />
+          <RhEmployeeLinkCard playerId={player.id} />
+        </div>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={handleSave} disabled={loading}>

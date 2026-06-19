@@ -24,6 +24,8 @@ export function DashboardDeptHeader({
   aside,
   backHref,
   className,
+  leading,
+  titleClassName,
 }: {
   section: string;
   sectionIcon?: LucideIcon;
@@ -35,6 +37,9 @@ export function DashboardDeptHeader({
   aside?: React.ReactNode;
   backHref?: string;
   className?: string;
+  /** Avatar ou mídia à esquerda do título (ex.: foto do atleta) */
+  leading?: React.ReactNode;
+  titleClassName?: string;
 }) {
   return (
     <div
@@ -55,17 +60,20 @@ export function DashboardDeptHeader({
         </div>
       ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="mx-auto w-full max-w-3xl space-y-4 text-center sm:mx-0 sm:text-left">
+        <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+          {leading ? <div className="mx-auto shrink-0 sm:mx-0">{leading}</div> : null}
+          <div className="mx-auto w-full max-w-3xl space-y-4 text-center sm:mx-0 sm:flex-1 sm:text-left">
           <p className="flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-violet-400 sm:justify-start">
             <SectionIcon className="h-4 w-4 shrink-0" />
             {section}
           </p>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
+          <h1 className={cn("text-3xl font-bold tracking-tight sm:text-4xl", titleClassName)}>{title}</h1>
           {description ? (
             <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:mx-0">
               {description}
             </p>
           ) : null}
+          </div>
         </div>
         {stats && stats.length > 0 ? (
           <div className="grid shrink-0 grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
