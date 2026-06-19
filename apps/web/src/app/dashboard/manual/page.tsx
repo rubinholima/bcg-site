@@ -18,6 +18,7 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "adm", label: "Administrativo" },
   { id: "requisicoes", label: "Requisições" },
   { id: "futebol", label: "Depto Futebol" },
+  { id: "futebol-cadastro-atletas", label: "→ Cadastro de atletas", indent: true },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
   { id: "boston-tv", label: "BCG TV" },
@@ -339,6 +340,35 @@ export default function ManualPage() {
               <strong>Exemplo:</strong> em <em>Logística</em>, criar viagem com data do jogo, adversário e
               checklist de hotel/transporte.
             </p>
+
+            <SubSection id="futebol-cadastro-atletas" title="Cadastro de atletas">
+              <p>
+                O formulário do atleta está organizado em abas (identificação, pessoal, esportivo, documentos e
+                logística). O cabeçalho com foto e nome permanece fixo ao rolar a página; use <strong>Salvar</strong> no
+                canto inferior da tela.
+              </p>
+              <p>
+                <strong>Foto / avatar:</strong> PNG, JPG, WebP ou SVG — até 10 MB. Recomendado 800×600 px. O sistema
+                otimiza automaticamente (WebP, tamanho máximo por pasta).
+              </p>
+              <p>
+                <strong>Nome da foto:</strong> gerado automaticamente a partir do nome do atleta e da categoria (ex.:{" "}
+                <em>NOME DO ATLETA sub15</em>). Preencha o nome completo antes de enviar a imagem.
+              </p>
+              <p>
+                <strong>Imagens de apoio</strong> (aba Imagens): PNG, JPG ou WebP — até 10 MB, com a mesma otimização
+                automática na pasta de mídia do atleta.
+              </p>
+              <p>
+                <strong>Matrícula RH:</strong> quando o atleta está vinculado a um colaborador em ADM → RH, o campo é
+                preenchido automaticamente e fica somente leitura.
+              </p>
+              <p>
+                <strong>LGPD:</strong> este cadastro trata dados pessoais nos módulos da plataforma (cadastros,
+                contratos, prontuários, logística, nutrição, entre outros), conforme o processo de cadastro e alteração
+                do atleta no clube.
+              </p>
+            </SubSection>
           </Section>
 
           <Section id="socio" title="Sócio Torcedor">

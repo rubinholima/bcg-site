@@ -404,11 +404,6 @@ export default function EditJogadorPage() {
           backHref="/dashboard/cadastros/jogadores"
           leading={playerPhotoLeading}
           titleClassName="uppercase"
-          aside={
-            <Button onClick={handleSave} disabled={loading}>
-              {loading ? "Salvando..." : "Salvar"}
-            </Button>
-          }
         />
 
         <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
@@ -966,6 +961,7 @@ export default function EditJogadorPage() {
                     <MediaPicker
                       sizeKey="jogadores_apoio"
                       uploadFolderHint="jogadores_apoio"
+                      showUploadHint={false}
                       value={entry.url ?? ""}
                       onChange={(url) => {
                         const next = [...imagesList];
@@ -1153,9 +1149,9 @@ export default function EditJogadorPage() {
         </div>
       )}
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={loading}>
-          {loading ? "Salvando..." : "Salvar alterações"}
+      <div className="sticky bottom-0 z-40 -mx-3 flex justify-end border-t border-border/60 bg-background/95 px-3 py-3 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 sm:-mx-0 sm:px-0">
+        <Button onClick={handleSave} disabled={loading} className="min-h-[48px] min-w-[120px] shadow-lg">
+          {loading ? "Salvando..." : "Salvar"}
         </Button>
       </div>
     </div>

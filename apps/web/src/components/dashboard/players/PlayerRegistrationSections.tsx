@@ -292,6 +292,8 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               displayNameAuto={
                 getPhotoDisplayName(name, category || PHOTO_DEPARTMENT_BY_SIZE_KEY.jogadores) || undefined
               }
+              showAutomaticPhotoNameNote={false}
+              showFileFormatHint={false}
             />
           </div>
         </FormGrid>
@@ -1133,11 +1135,6 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         </div>
       )}
 
-      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-xs leading-relaxed text-muted-foreground">
-        <User className="mb-2 inline h-4 w-4 text-amber-600" /> Este cadastro atende os requisitos da LGPD para
-        tratamento de dados pessoais nos módulos da plataforma (cadastros, contratos, prontuários, logística, nutrição,
-        entre outros), conforme informado no cadastro/alteração do atleta.
-      </div>
     </div>
   );
 }

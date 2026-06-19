@@ -38,6 +38,8 @@ interface MediaPickerProps {
   refreshTrigger?: unknown;
   hideEmptyFolderHint?: boolean;
   allowUpload?: boolean;
+  /** Exibe dica de formatos/tamanho de arquivo. Padrão: true — detalhes no Manual → Depto Futebol. */
+  showUploadHint?: boolean;
   /** Exibe botão para remover a imagem selecionada. Padrão: true. */
   allowClear?: boolean;
 }
@@ -96,6 +98,7 @@ export function MediaPicker({
   refreshTrigger,
   allowUpload = folder !== "logos",
   allowClear = true,
+  showUploadHint = true,
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -269,7 +272,7 @@ export function MediaPicker({
             </>
           ) : null}
         </div>
-        {allowUpload ? (
+        {allowUpload && showUploadHint ? (
           <p className="text-xs text-muted-foreground">
             PNG, JPG ou WebP — até 10 MB. O sistema otimiza automaticamente (WebP, tamanho máximo por pasta).
           </p>
