@@ -301,18 +301,22 @@ class NativePlayerActivity : AppCompatActivity() {
             val st = NdiReceiverBridge.status()
             val diag = NdiNative.getDiag()
             val frames = Regex("frames=(\\d+)").find(diag)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-            if (st.startsWith("Conectado") && frames > 0) {
+            val conns = Regex("conns=(-?\\d+)").find(diag)?.groupValues?.get(1)?.toIntOrNull() ?: -1
+            if (frames > 0) {
                 ndiPlaceholder.visibility = View.GONE
                 statusText.text = "NDI · $currentNdiSource · $diag"
                 statusText.visibility = View.VISIBLE
                 liveBadge?.visibility = View.VISIBLE
-            } else if (st.startsWith("Conectado")) {
+            } else if (conns > 0 || st.startsWith("Conectado")) {
                 ndiPlaceholder.text =
                     "Conectado ao NDI, aguardando vídeo…\n\n$diag\n\nFonte: $currentNdiSource"
                 ndiPlaceholder.visibility = View.VISIBLE
                 liveBadge?.visibility = View.GONE
             } else {
-                ndiPlaceholder.text = "$st\n\n$diag"
+                ndiPlaceholder.text =
+                    "Aguardando conexão com o vMix…\n\n$diag\n\n" +
+                        "Fonte: $currentNdiSource\n\n" +
+                        "Confira: NDI ativo no Output do vMix e TV na mesma rede."
                 ndiPlaceholder.visibility = View.VISIBLE
                 liveBadge?.visibility = View.GONE
             }
@@ -323,11 +327,12 @@ class NativePlayerActivity : AppCompatActivity() {
     private val ndiRetryRunnable = object : Runnable {
         override fun run() {
             if (currentNdiSource == null || ndiTextureView.visibility != View.VISIBLE || isFinishing) return
-            val st = NdiReceiverBridge.status()
-            if (!st.startsWith("Conectado") && !ndiConnectInFlight) {
+            val diag = NdiNative.getDiag()
+            val conns = Regex("conns=(-?\\d+)").find(diag)?.groupValues?.get(1)?.toIntOrNull() ?: -1
+            if (conns <= 0 && !ndiConnectInFlight) {
                 tryConnectNdi(currentNdiSource!!)
             }
-            handler.postDelayed(this, 20_000)
+            handler.postDelayed(this, 10_000)
         }
     }
 
