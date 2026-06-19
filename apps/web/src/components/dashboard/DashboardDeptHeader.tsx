@@ -26,6 +26,7 @@ export function DashboardDeptHeader({
   className,
   leading,
   titleClassName,
+  footerAside,
 }: {
   section: string;
   sectionIcon?: LucideIcon;
@@ -40,6 +41,8 @@ export function DashboardDeptHeader({
   /** Avatar ou mídia à esquerda do título (ex.: foto do atleta) */
   leading?: React.ReactNode;
   titleClassName?: string;
+  /** Ações no rodapé do card (ex.: Salvar no canto inferior direito) */
+  footerAside?: React.ReactNode;
 }) {
   return (
     <div
@@ -93,6 +96,9 @@ export function DashboardDeptHeader({
       </div>
       {toolbar ? (
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">{toolbar}</div>
+      ) : null}
+      {footerAside ? (
+        <div className="mt-6 flex justify-end border-t border-violet-500/15 pt-4">{footerAside}</div>
       ) : null}
     </div>
   );

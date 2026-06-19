@@ -395,7 +395,7 @@ export default function EditJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-30 -mx-3 border-b border-violet-500/20 bg-background/95 px-3 pb-3 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 sm:-mx-0 sm:px-0">
+      <div className="sticky top-0 z-30 -mx-3 bg-background/90 px-3 pb-2 pt-1 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:-mx-0 sm:px-0">
         <DashboardDeptHeader
           section="Depto Futebol"
           sectionIcon={Shirt}
@@ -404,7 +404,11 @@ export default function EditJogadorPage() {
           backHref="/dashboard/cadastros/jogadores"
           leading={playerPhotoLeading}
           titleClassName="uppercase"
-          className="border-0 bg-transparent p-5 shadow-none sm:p-6"
+          footerAside={
+            <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px]">
+              {loading ? "Salvando..." : "Salvar"}
+            </Button>
+          }
         />
       </div>
 
@@ -1150,11 +1154,6 @@ export default function EditJogadorPage() {
         </div>
       )}
 
-      <div className="sticky bottom-0 z-40 -mx-3 flex justify-end border-t border-border/60 bg-background/95 px-3 py-3 shadow-[0_-8px_32px_-12px_rgba(0,0,0,0.5)] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 sm:-mx-0 sm:px-0">
-        <Button onClick={handleSave} disabled={loading} className="min-h-[48px] min-w-[120px] shadow-lg">
-          {loading ? "Salvando..." : "Salvar"}
-        </Button>
-      </div>
     </div>
   );
 }
