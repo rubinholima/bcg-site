@@ -394,7 +394,7 @@ export default function EditJogadorPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <DashboardDeptHeader
         section="Depto Futebol"
         sectionIcon={Shirt}
@@ -403,15 +403,15 @@ export default function EditJogadorPage() {
         backHref="/dashboard/cadastros/jogadores"
         leading={playerPhotoLeading}
         titleClassName="uppercase"
-        className="sticky top-0 z-30"
+        className="sticky top-0 z-40 border border-violet-500/25 !bg-background bg-none shadow-[0_16px_48px_-16px_rgba(0,0,0,0.9)]"
         descriptionAside={
-          <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px]">
+          <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px] shrink-0">
             {loading ? "Salvando..." : "Salvar"}
           </Button>
         }
       />
 
-      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
+      <div className="relative z-0 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
         <BostonTvDashboardTabs
           tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
           active={activeTab}

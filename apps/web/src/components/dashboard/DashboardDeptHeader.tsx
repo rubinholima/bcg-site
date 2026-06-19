@@ -65,6 +65,28 @@ export function DashboardDeptHeader({
           </Button>
         </div>
       ) : null}
+      {leading && descriptionAside ? (
+        <>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+            <div className="mx-auto shrink-0 sm:mx-0">{leading}</div>
+            <div className="min-w-0 flex-1 space-y-3 text-center sm:text-left">
+              <p className="flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-violet-400 sm:justify-start">
+                <SectionIcon className="h-4 w-4 shrink-0" />
+                {section}
+              </p>
+              <h1 className={cn("text-3xl font-bold tracking-tight sm:text-4xl", titleClassName)}>{title}</h1>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-row items-center justify-between gap-4 sm:mt-5 sm:pl-[calc(8rem+1.25rem)]">
+            {description ? (
+              <p className="min-w-0 flex-1 text-base leading-relaxed text-muted-foreground">{description}</p>
+            ) : (
+              <span className="flex-1" />
+            )}
+            <div className="shrink-0">{descriptionAside}</div>
+          </div>
+        </>
+      ) : (
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
           {leading ? <div className="mx-auto shrink-0 sm:mx-0">{leading}</div> : null}
@@ -79,15 +101,15 @@ export function DashboardDeptHeader({
               className={cn(
                 "mx-auto w-full sm:mx-0",
                 description && descriptionAside
-                  ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                  ? "flex flex-row items-center justify-between gap-4"
                   : undefined,
               )}
             >
               {description ? (
-                <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
+                <p className="min-w-0 flex-1 text-base leading-relaxed text-muted-foreground">{description}</p>
               ) : null}
               {descriptionAside ? (
-                <div className="flex shrink-0 justify-center sm:justify-end">{descriptionAside}</div>
+                <div className="shrink-0">{descriptionAside}</div>
               ) : null}
             </div>
           ) : null}
@@ -109,6 +131,7 @@ export function DashboardDeptHeader({
           <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">{aside}</div>
         ) : null}
       </div>
+      )}
       {toolbar ? (
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">{toolbar}</div>
       ) : null}
