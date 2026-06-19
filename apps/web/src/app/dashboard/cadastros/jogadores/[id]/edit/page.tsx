@@ -391,21 +391,6 @@ export default function EditJogadorPage() {
           </Button>
         }
       />
-      <div className="flex items-center gap-4">
-        <div className="h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0 border-2 border-border">
-          {(pendingPreviewUrl || player.photoUrl) ? (
-            <img
-              src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
-              alt={player.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-              <User className="h-7 w-7" />
-            </div>
-          )}
-        </div>
-      </div>
 
       {error && (
         <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
@@ -413,15 +398,47 @@ export default function EditJogadorPage() {
         </div>
       )}
 
-      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:p-4">
-        <BostonTvDashboardTabs
-          tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
-          active={activeTab}
-          onChange={setActiveTab}
-          ariaLabel="Seções do atleta"
-          wrap={false}
-        />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:gap-5">
+        <div className="mx-auto shrink-0 sm:mx-0 sm:self-center">
+          <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-violet-500/25 bg-muted shadow-[0_8px_32px_-8px_rgba(139,92,246,0.45)] ring-2 ring-violet-400/20 sm:h-36 sm:w-36">
+            {(pendingPreviewUrl || player.photoUrl) ? (
+              <img
+                src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
+                alt={player.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                <User className="h-12 w-12 sm:h-14 sm:w-14" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
+          <BostonTvDashboardTabs
+            tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
+            active={activeTab}
+            onChange={setActiveTab}
+            ariaLabel="Seções do atleta"
+            wrap={false}
+            uppercase
+          />
+        </div>
       </div>
+
+      {activeTab === "dados" && (
+        <div className="space-y-4">
+          <RegistrationInviteCard
+            subjectType="player"
+            subjectId={player.id}
+            name={player.name}
+            contactEmail={player.contactEmail}
+            contactPhone={player.contactPhone}
+          />
+          <RhEmployeeLinkCard playerId={player.id} />
+        </div>
+      )}
 
       {/* Tab: Dados base */}
       {activeTab === "dados" && (
@@ -454,14 +471,6 @@ export default function EditJogadorPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <RegistrationInviteCard
-              subjectType="player"
-              subjectId={player.id}
-              name={player.name}
-              contactEmail={player.contactEmail}
-              contactPhone={player.contactPhone}
-            />
-            <RhEmployeeLinkCard playerId={player.id} />
             <PlayerRegistrationSections
               playerId={player.id}
               name={player.name}

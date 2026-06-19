@@ -189,6 +189,7 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         active={activeRegTab}
         onChange={setActiveRegTab}
         ariaLabel="Seções do cadastro do atleta"
+        uppercase
       />
 
       {activeRegTab === "identificacao" && (

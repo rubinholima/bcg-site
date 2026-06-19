@@ -9,6 +9,7 @@ export function BostonTvDashboardTabs<T extends string>({
   onChange,
   ariaLabel = "Seções",
   wrap = true,
+  uppercase = false,
 }: {
   tabs: Array<{ id: T; label: string; icon?: LucideIcon }>;
   active: T;
@@ -16,6 +17,8 @@ export function BostonTvDashboardTabs<T extends string>({
   ariaLabel?: string;
   /** false = uma linha com scroll horizontal (útil para muitas abas) */
   wrap?: boolean;
+  /** rótulos em caixa alta */
+  uppercase?: boolean;
 }) {
   return (
     <div
@@ -23,6 +26,8 @@ export function BostonTvDashboardTabs<T extends string>({
       aria-label={ariaLabel}
       className={cn(
         "flex gap-2 overflow-x-auto pb-0.5",
+        "[scrollbar-width:thin] [scrollbar-color:rgba(139,92,246,0.35)_transparent]",
+        "[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-violet-500/35 [&::-webkit-scrollbar-track]:bg-transparent",
         wrap ? "sm:flex-wrap sm:gap-2.5" : "flex-nowrap gap-2.5",
       )}
     >
@@ -54,7 +59,14 @@ export function BostonTvDashboardTabs<T extends string>({
                 <Icon className="h-4 w-4" />
               </span>
             ) : null}
-            <span className="whitespace-nowrap tracking-tight">{label}</span>
+            <span
+              className={cn(
+                "whitespace-nowrap tracking-tight",
+                uppercase && "text-xs font-semibold uppercase tracking-wider sm:text-sm",
+              )}
+            >
+              {label}
+            </span>
             {isActive ? (
               <span
                 aria-hidden
