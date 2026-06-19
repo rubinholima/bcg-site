@@ -11,7 +11,7 @@ android {
         applicationId = "com.bostoncitygroup.bcgtv"
         minSdk = 24
         targetSdk = 35
-        versionCode = 24
+        versionCode = 25
         versionName = "1.4.8"
         buildConfigField("String", "PLAYER_BASE_URL", "\"https://www.bostoncitygroup.biz/tv/\"")
         buildConfigField("String", "API_BASE_URL", "\"https://www.bostoncitygroup.biz/api/public/boston-tv/\"")
@@ -28,6 +28,8 @@ android {
 
     buildTypes {
         release {
+            // Sideload nas TVs do Hall — mesma assinatura debug usada nas versões anteriores (1.4.x).
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
