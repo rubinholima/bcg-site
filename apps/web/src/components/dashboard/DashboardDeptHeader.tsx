@@ -26,6 +26,7 @@ export function DashboardDeptHeader({
   className,
   leading,
   titleClassName,
+  descriptionAside,
   footerAside,
 }: {
   section: string;
@@ -41,7 +42,9 @@ export function DashboardDeptHeader({
   /** Avatar ou mídia à esquerda do título (ex.: foto do atleta) */
   leading?: React.ReactNode;
   titleClassName?: string;
-  /** Ações no rodapé do card (ex.: Salvar no canto inferior direito) */
+  /** Ao lado da descrição, mesma linha (ex.: botão Salvar) */
+  descriptionAside?: React.ReactNode;
+  /** Ações no rodapé do card */
   footerAside?: React.ReactNode;
 }) {
   return (
@@ -71,10 +74,22 @@ export function DashboardDeptHeader({
             {section}
           </p>
           <h1 className={cn("text-3xl font-bold tracking-tight sm:text-4xl", titleClassName)}>{title}</h1>
-          {description ? (
-            <p className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:mx-0">
-              {description}
-            </p>
+          {description || descriptionAside ? (
+            <div
+              className={cn(
+                "mx-auto w-full sm:mx-0",
+                description && descriptionAside
+                  ? "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                  : undefined,
+              )}
+            >
+              {description ? (
+                <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
+              ) : null}
+              {descriptionAside ? (
+                <div className="flex shrink-0 justify-center sm:justify-end">{descriptionAside}</div>
+              ) : null}
+            </div>
           ) : null}
           </div>
         </div>
@@ -97,9 +112,7 @@ export function DashboardDeptHeader({
       {toolbar ? (
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">{toolbar}</div>
       ) : null}
-      {footerAside ? (
-        <div className="mt-6 flex justify-end border-t border-violet-500/15 pt-4">{footerAside}</div>
-      ) : null}
+      {footerAside ? <div className="mt-6 flex justify-end">{footerAside}</div> : null}
     </div>
   );
 }

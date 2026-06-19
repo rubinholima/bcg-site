@@ -378,7 +378,7 @@ export default function EditJogadorPage() {
   const imagesList = (player.images ?? []) as ImageEntry[];
 
   const playerPhotoLeading = (
-    <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-violet-500/25 bg-muted shadow-[0_8px_32px_-8px_rgba(139,92,246,0.45)] ring-2 ring-violet-400/20 sm:h-32 sm:w-32">
+    <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-violet-500/35 bg-muted sm:h-32 sm:w-32">
       {(pendingPreviewUrl || player.photoUrl) ? (
         <img
           src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
@@ -395,22 +395,21 @@ export default function EditJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-30 -mx-3 bg-background/90 px-3 pb-2 pt-1 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:-mx-0 sm:px-0">
-        <DashboardDeptHeader
-          section="Depto Futebol"
-          sectionIcon={Shirt}
-          title={`${player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}${player.name}`}
-          description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
-          backHref="/dashboard/cadastros/jogadores"
-          leading={playerPhotoLeading}
-          titleClassName="uppercase"
-          footerAside={
-            <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px]">
-              {loading ? "Salvando..." : "Salvar"}
-            </Button>
-          }
-        />
-      </div>
+      <DashboardDeptHeader
+        section="Depto Futebol"
+        sectionIcon={Shirt}
+        title={`${player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}${player.name}`}
+        description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
+        backHref="/dashboard/cadastros/jogadores"
+        leading={playerPhotoLeading}
+        titleClassName="uppercase"
+        className="sticky top-0 z-30"
+        descriptionAside={
+          <Button onClick={handleSave} disabled={loading} className="min-h-[44px] min-w-[120px]">
+            {loading ? "Salvando..." : "Salvar"}
+          </Button>
+        }
+      />
 
       <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
         <BostonTvDashboardTabs
@@ -431,15 +430,10 @@ export default function EditJogadorPage() {
 
       {/* Tab: Dados base */}
       {activeTab === "dados" && (
-        <Card>
+        <Card className="rounded-2xl border-border/80">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Cadastro do atleta</CardTitle>
-                <CardDescription>
-                  Organize o cadastro por abas — identificação, pessoal, esportivo, jurídico e logística
-                </CardDescription>
-              </div>
+              <CardTitle>Cadastro do atleta</CardTitle>
               <Button
                 type="button"
                 variant="ghost"
