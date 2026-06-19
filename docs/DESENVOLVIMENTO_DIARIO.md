@@ -32,6 +32,56 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 18 DE JUNHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+1. **Cadastro de atletas (Depto Futebol)**  
+   - Abas principais e sub-abas do cadastro no estilo BCG TV (maiúsculas, scroll horizontal).  
+   - Cabeçalho sticky compacto: foto grande ao lado, nome em maiúsculas, clube/categoria colado abaixo do nome.  
+   - **Salvar** no rodapé do card (canto inferior direito); abas em caixa separada para mais área útil.  
+   - Textos de ajuda (foto, LGPD, dicas) movidos para **Manual → Depto Futebol**.  
+   - Commits `3c3d462` … `68c841b`.
+
+2. **BCG TV / BC HALL (Marketing)**  
+   - Dashboard com abas premium; renomeação BC HALL; Controle Hall fullscreen (iPad), sem item no sidebar.  
+   - LiveLAN vMix: URL `/livelan` na TV (sem proxy m3u8 na nuvem); normalização de stream; `FeedbackModal` (sem `alert` nativo).  
+   - APK Android: NDI nativo, render UYVY/Surface, diagnóstico on-screen, fallback HLS quando há URL de stream.  
+   - Playlist: `displayName`, orientação vertical (rotação 90°), instruções só no Manual.  
+   - Commits `bcd1bac` … `9d3b808`.
+
+3. **Beatscode — sync overnight (PDFs)**  
+   - Iniciado em background: `pnpm beatscode:sync-documents` com `BEATSCODE_BROWSER_PLAYER_LIMIT=500` (sem `BEATSCODE_BROWSER_MAX_SUCCESS`).  
+   - Log: `apps/api/data/beatscode-sync-overnight.log` — processa atletas Beatscode com documentos pendentes → S3 → `registrationProfile.documents`.
+
+4. **Deploys**  
+   - Builds ok; pushes contínuos para `develop` durante o dia.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/web/src/app/dashboard/cadastros/jogadores/[id]/edit/page.tsx`
+- `apps/web/src/components/dashboard/DashboardDeptHeader.tsx`
+- `apps/web/src/components/dashboard/players/PlayerRegistrationSections.tsx`
+- `apps/web/src/components/boston-tv/BostonTvDashboardTabs.tsx`
+- `apps/web/src/app/dashboard/manual/page.tsx`
+- `apps/web/src/app/dashboard/marketing/boston-tv/` (vários)
+- `bcg-tv-android/` (NDI, player, UI)
+- `apps/api/scripts/run-beatscode-sync-documents.ts`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `68c841b` — fix(jogadores): volta Salvar para o rodape do cabecalho
+- **Push:** enviado para `origin/develop`
+
+## **PENDÊNCIAS / PRÓXIMO**
+
+- Acompanhar resultado do sync Beatscode (log overnight); reprocessar falhas / jogadores sem match no painel.  
+- BCG TV: validar NDI ao vivo na TV após APK 1.4.6+ com frames recebidos do vMix.  
+- **Não commitar:** `apps/api/data/`, probes `discover-beatscode-*` / `probe-beatscode-*`, `backup_clean.sql`, `temp_*`, APKs locais.
+
+---
+
 # 📅 17 DE JUNHO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO**
