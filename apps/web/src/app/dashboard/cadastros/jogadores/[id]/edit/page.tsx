@@ -395,7 +395,7 @@ export default function EditJogadorPage() {
 
   return (
     <div className="space-y-6">
-      <div className="sticky top-0 z-30 -mx-3 space-y-4 border-b border-violet-500/20 bg-background/95 px-3 pb-4 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 sm:-mx-0 sm:px-0">
+      <div className="sticky top-0 z-30 -mx-3 border-b border-violet-500/20 bg-background/95 px-3 pb-3 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.65)] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 sm:-mx-0 sm:px-0">
         <DashboardDeptHeader
           section="Depto Futebol"
           sectionIcon={Shirt}
@@ -404,18 +404,19 @@ export default function EditJogadorPage() {
           backHref="/dashboard/cadastros/jogadores"
           leading={playerPhotoLeading}
           titleClassName="uppercase"
+          className="border-0 bg-transparent p-5 shadow-none sm:p-6"
         />
+      </div>
 
-        <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
-          <BostonTvDashboardTabs
-            tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
-            active={activeTab}
-            onChange={setActiveTab}
-            ariaLabel="Seções do atleta"
-            wrap={false}
-            uppercase
-          />
-        </div>
+      <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
+        <BostonTvDashboardTabs
+          tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
+          active={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Seções do atleta"
+          wrap={false}
+          uppercase
+        />
       </div>
 
       {error && (

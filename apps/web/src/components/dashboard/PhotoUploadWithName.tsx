@@ -48,6 +48,8 @@ interface PhotoUploadWithNameProps {
   uploadFolderHint?: MediaPlaceholderSizeKey;
   /** Ocultar preview quadrado (ex: quando header já mostra avatar) */
   hidePreview?: boolean;
+  /** Campo manual de URL da imagem */
+  showUrlInput?: boolean;
 }
 
 export function PhotoUploadWithName({
@@ -69,6 +71,7 @@ export function PhotoUploadWithName({
   allowAllFolders = false,
   uploadFolderHint,
   hidePreview = false,
+  showUrlInput = true,
 }: PhotoUploadWithNameProps) {
   const [photoDisplayName, setPhotoDisplayName] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -294,13 +297,15 @@ export function PhotoUploadWithName({
             </p>
             )}
           </div>
-          <Input
-            placeholder={urlPlaceholder}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={disabled}
-            className="text-foreground"
-          />
+          {showUrlInput ? (
+            <Input
+              placeholder={urlPlaceholder}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              disabled={disabled}
+              className="text-foreground"
+            />
+          ) : null}
         </div>
       </div>
     </div>

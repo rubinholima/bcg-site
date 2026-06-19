@@ -294,6 +294,8 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               }
               showAutomaticPhotoNameNote={false}
               showFileFormatHint={false}
+              showUrlInput={false}
+              hidePreview
             />
           </div>
         </FormGrid>
