@@ -72,7 +72,6 @@ class NativePlayerActivity : AppCompatActivity() {
 
         ndiNsdManager = getSystemService(NsdManager::class.java)
 
-        PlayerMenu.wire(this)
         NdiActivityGuard.bind(this)
         NdiActivityGuard.requestNetworkPermissions(this)
 
@@ -87,8 +86,7 @@ class NativePlayerActivity : AppCompatActivity() {
                 player.playWhenReady = true
             }
 
-        statusText.visibility = View.VISIBLE
-        statusText.text = "BCG TV nativo · tela $screenNum"
+        statusText.visibility = View.GONE
         bootstrap()
     }
 
@@ -136,7 +134,7 @@ class NativePlayerActivity : AppCompatActivity() {
     private fun renderCurrent() {
         val data = payload
         if (data == null || data.items.isEmpty()) {
-            statusText.text = "Aguardando playlist…"
+            statusText.visibility = View.GONE
             return
         }
 
@@ -178,6 +176,7 @@ class NativePlayerActivity : AppCompatActivity() {
             "image_url" -> {
                 imageView.visibility = View.VISIBLE
                 imageView.load(item.url)
+                hidePlaybackChrome()
             }
             "video_url" -> playStream(item.url, offsetMs, paused)
             "iptv_stream", "vmix_stream" -> {
@@ -312,10 +311,8 @@ class NativePlayerActivity : AppCompatActivity() {
             val frames = Regex("frames=(\\d+)").find(diag)?.groupValues?.get(1)?.toIntOrNull() ?: 0
             val conns = Regex("conns=(-?\\d+)").find(diag)?.groupValues?.get(1)?.toIntOrNull() ?: -1
             if (frames > 0) {
+                hidePlaybackChrome()
                 ndiPlaceholder.visibility = View.GONE
-                statusText.visibility = View.GONE
-                liveBadge?.visibility = View.GONE
-                ndiBackdrop?.visibility = View.GONE
             } else if (conns > 0 || st.startsWith("Conectado")) {
                 ndiPlaceholder.text =
                     "Conectado ao NDI, aguardando vídeo…\n\n$diag\n\nFonte: $currentNdiSource"
@@ -345,8 +342,15 @@ class NativePlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun hidePlaybackChrome() {
+        statusText.visibility = View.GONE
+        liveBadge?.visibility = View.GONE
+        ndiBackdrop?.visibility = View.GONE
+    }
+
     private fun playStream(url: String, offsetMs: Long, paused: Boolean) {
         playerView.visibility = View.VISIBLE
+        hidePlaybackChrome()
         val player = exoPlayer ?: return
         player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
         player.prepare()
