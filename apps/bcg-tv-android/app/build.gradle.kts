@@ -11,8 +11,8 @@ android {
         applicationId = "com.bostoncitygroup.bcgtv"
         minSdk = 24
         targetSdk = 35
-        versionCode = 25
-        versionName = "1.4.8"
+        versionCode = 28
+        versionName = "1.5.1"
         buildConfigField("String", "PLAYER_BASE_URL", "\"https://www.bostoncitygroup.biz/tv/\"")
         buildConfigField("String", "API_BASE_URL", "\"https://www.bostoncitygroup.biz/api/public/boston-tv/\"")
         buildConfigField("String", "STREAM_ORIGIN", "\"https://origin.bostoncitygroup.biz\"")

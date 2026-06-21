@@ -6,7 +6,7 @@
  * - BEATSCODE_USERNAME / BEATSCODE_PASSWORD
  * - AWS/S3 (mesmo da produção)
  * - Opcional: BEATSCODE_BROWSER_PLAYER_LIMIT=5 (teste)
- * - Opcional: BEATSCODE_HEADED=1 (ver o Chrome)
+ * - Opcional: BEATSCODE_BROWSER_RETRY_ERRORS=1 (prioriza quem falhou "Não encontrado no painel")
  *
  * Sem MySQL Beatscode usa Playwright automaticamente.
  */

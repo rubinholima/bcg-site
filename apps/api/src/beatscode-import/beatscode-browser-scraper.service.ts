@@ -66,6 +66,8 @@ export class BeatscodeBrowserScraperService {
   async scrapePersonDocuments(options: {
     playerName: string;
     employeeId?: number;
+    athleteRecordId?: string | number;
+    aliasNames?: string[];
     modulePath?: '/person/athlete' | '/person/technical-committee';
     categoryNames?: string[];
   }): Promise<BeatscodeBrowserScrapeResult> {
@@ -82,19 +84,39 @@ export class BeatscodeBrowserScraperService {
       errors: [],
     };
 
+    const searchNames = this.buildSearchNameList(
+      options.playerName,
+      options.aliasNames,
+    );
+
     let opened = false;
-    await page.goto(`${resolveBeatscodeWebUrl()}${modulePath}`, {
-      waitUntil: 'load',
-      timeout: 120_000,
-    });
-    await page.waitForSelector('.card-people', { timeout: 60_000 }).catch(() => undefined);
-    await page.waitForTimeout(2000);
-    if (await this.openPersonCard(page, options.playerName)) {
-      opened = true;
-    } else {
-      const cardCount = await page.locator('.card-people').count();
-      if (cardCount === 0 && (await this.openPersonViaSearch(page, options.playerName))) {
-        opened = true;
+    if (options.employeeId || options.athleteRecordId) {
+      opened = await this.openPersonByDirectUrl(
+        page,
+        modulePath,
+        options.employeeId,
+        options.athleteRecordId,
+      );
+    }
+
+    if (!opened) {
+      await page.goto(`${resolveBeatscodeWebUrl()}${modulePath}`, {
+        waitUntil: 'load',
+        timeout: 120_000,
+      });
+      await page.waitForSelector('.card-people', { timeout: 60_000 }).catch(() => undefined);
+      await page.waitForTimeout(2000);
+
+      for (const name of searchNames) {
+        if (await this.openPersonCard(page, name)) {
+          opened = true;
+          break;
+        }
+        const cardCount = await page.locator('.card-people').count();
+        if (cardCount === 0 && (await this.openPersonViaSearch(page, name))) {
+          opened = true;
+          break;
+        }
       }
     }
 
@@ -108,15 +130,18 @@ export class BeatscodeBrowserScraperService {
           await page.waitForSelector('.card-people', { timeout: 60_000 }).catch(() => undefined);
           await page.waitForTimeout(2000);
           await this.selectCategory(page, category);
-          if (await this.openPersonCard(page, options.playerName)) {
-            opened = true;
-            break;
+          for (const name of searchNames) {
+            if (await this.openPersonCard(page, name)) {
+              opened = true;
+              break;
+            }
+            const cardCount = await page.locator('.card-people').count();
+            if (cardCount === 0 && (await this.openPersonViaSearch(page, name))) {
+              opened = true;
+              break;
+            }
           }
-          const cardCount = await page.locator('.card-people').count();
-          if (cardCount === 0 && (await this.openPersonViaSearch(page, options.playerName))) {
-            opened = true;
-            break;
-          }
+          if (opened) break;
         } catch (e) {
           result.errors.push(
             `${category}: ${e instanceof Error ? e.message : String(e)}`,
@@ -195,6 +220,57 @@ export class BeatscodeBrowserScraperService {
     }
   }
 
+  private buildSearchNameList(primary: string, aliases?: string[]): string[] {
+    const out: string[] = [];
+    const push = (v: string) => {
+      const t = v.trim();
+      if (!t) return;
+      if (!out.some((x) => this.normalizeName(x) === this.normalizeName(t))) out.push(t);
+    };
+    push(primary);
+    for (const a of aliases ?? []) push(a);
+    const tokens = primary.trim().split(/\s+/).filter(Boolean);
+    if (tokens.length >= 2) {
+      push(tokens.slice(-2).join(' '));
+      push(tokens[tokens.length - 1]!);
+      push(`${tokens[0]} ${tokens[tokens.length - 1]}`);
+    }
+    return out;
+  }
+
+  /** URL direta do cadastro — evita depender só do match por nome nos cards. */
+  private async openPersonByDirectUrl(
+    page: Page,
+    modulePath: '/person/athlete' | '/person/technical-committee',
+    employeeId?: number,
+    athleteRecordId?: string | number,
+  ): Promise<boolean> {
+    const ids = [
+      athleteRecordId != null && String(athleteRecordId).trim()
+        ? String(athleteRecordId).trim()
+        : null,
+      employeeId != null && Number.isFinite(employeeId) ? String(employeeId) : null,
+    ].filter((v, i, arr): v is string => Boolean(v) && arr.indexOf(v) === i);
+
+    for (const id of ids) {
+      const url = `${resolveBeatscodeWebUrl()}${modulePath}/id/${id}`;
+      try {
+        await page.goto(url, { waitUntil: 'load', timeout: 90_000 });
+        await page.waitForTimeout(2500);
+        const onPerson =
+          page.url().includes(`${modulePath}/id/`) ||
+          (await page.getByText('Documentos', { exact: true }).first().isVisible().catch(() => false));
+        if (onPerson) {
+          this.log.log(`Abriu por URL direta: ${url}`);
+          return true;
+        }
+      } catch (e) {
+        this.log.warn(`URL direta falhou ${url}: ${e instanceof Error ? e.message : e}`);
+      }
+    }
+    return false;
+  }
+
   private normalizeName(value: string): string {
     return value
       .normalize('NFD')
@@ -206,15 +282,26 @@ export class BeatscodeBrowserScraperService {
 
   private nameMatchesPanel(target: string, panelName: string): boolean {
     const norm = this.normalizeName(panelName);
-    const targetTokens = target.split(' ').filter((t) => t.length > 2);
+    if (!norm || !target) return false;
+    if (norm === target) return true;
+
+    const targetTokens = target.split(' ').filter((t) => t.length > 1);
+    const panelTokens = norm.split(' ').filter((t) => t.length > 1);
     if (!targetTokens.length) return norm.includes(target);
+
     const matched = targetTokens.filter((t) => norm.includes(t)).length;
-    const minMatch = Math.min(2, targetTokens.length);
-    return (
-      norm === target ||
-      matched >= minMatch ||
-      (targetTokens[0] ? norm.startsWith(targetTokens[0]) : false)
-    );
+    const minMatch = Math.max(2, Math.min(targetTokens.length, 3));
+    if (matched >= minMatch) return true;
+
+    const targetLast = targetTokens[targetTokens.length - 1];
+    const targetFirst = targetTokens[0];
+    if (targetLast && panelTokens.includes(targetLast) && targetFirst && norm.includes(targetFirst)) {
+      return true;
+    }
+    if (targetLast && panelTokens.includes(targetLast) && targetTokens.length >= 2) {
+      return panelTokens.filter((t) => targetTokens.includes(t)).length >= 2;
+    }
+    return targetFirst ? norm.startsWith(targetFirst) && matched >= 1 : false;
   }
 
   private async openPersonCard(page: Page, playerName: string): Promise<boolean> {
@@ -243,6 +330,8 @@ export class BeatscodeBrowserScraperService {
 
     const tokens = playerName.trim().split(/\s+/).filter(Boolean);
     const queries = [
+      tokens.slice(-2).join(' '),
+      tokens[tokens.length - 1] ?? '',
       tokens.slice(0, 2).join(' '),
       tokens[0] ?? playerName,
       playerName,
@@ -258,18 +347,25 @@ export class BeatscodeBrowserScraperService {
         continue;
       }
       await input.fill(query);
-      await page.waitForTimeout(2500);
+      await page.waitForTimeout(3000);
 
       const modalRows = page.locator('.ant-modal .ant-table-row, .ant-modal tbody tr');
       const rowCount = await modalRows.count();
       const target = this.normalizeName(playerName);
-      const tokens = playerName.trim().split(/\s+/).filter(Boolean);
 
+      let bestIdx = -1;
+      let bestScore = 0;
       for (let i = 0; i < rowCount; i++) {
         const text = (await modalRows.nth(i).innerText().catch(() => '')) || '';
-        const ok = this.nameMatchesPanel(target, text);
-        if (!ok && rowCount > 1) continue;
-        await modalRows.nth(i).click();
+        if (!this.nameMatchesPanel(target, text)) continue;
+        const score = text.split(/\s+/).filter(Boolean).length;
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = i;
+        }
+      }
+      if (bestIdx >= 0) {
+        await modalRows.nth(bestIdx).click();
         await page.waitForTimeout(3500);
         await page.keyboard.press('Escape').catch(() => undefined);
         return true;

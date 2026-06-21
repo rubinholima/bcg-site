@@ -2,6 +2,7 @@ package com.bostoncitygroup.bcgtv
 
 import android.content.Intent
 import android.net.Uri
+import android.net.nsd.NsdManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -30,6 +31,7 @@ class NativePlayerActivity : AppCompatActivity() {
     private lateinit var ndiPlaceholder: TextView
     private lateinit var statusText: TextView
     private var liveBadge: View? = null
+    private var ndiBackdrop: View? = null
 
     private var exoPlayer: ExoPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -43,6 +45,10 @@ class NativePlayerActivity : AppCompatActivity() {
     private var ndiSurfaceReady = false
     private var ndiConnectInFlight = false
     private var ndiInitialized = false
+
+    /** NsdManager deve viver na Activity (exigência NDI Android / Vizrt). */
+    @Suppress("unused")
+    private lateinit var ndiNsdManager: NsdManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +68,9 @@ class NativePlayerActivity : AppCompatActivity() {
         ndiPlaceholder = findViewById(R.id.ndiPlaceholder)
         statusText = findViewById(R.id.statusText)
         liveBadge = findViewById(R.id.liveBadge)
+        ndiBackdrop = findViewById(R.id.ndiBackdrop)
+
+        ndiNsdManager = getSystemService(NsdManager::class.java)
 
         PlayerMenu.wire(this)
         NdiActivityGuard.bind(this)
@@ -280,7 +289,7 @@ class NativePlayerActivity : AppCompatActivity() {
             return
         }
         ndiConnectInFlight = true
-        NdiReceiverBridge.connect(sourceName) { ok ->
+        NdiReceiverBridge.connect(sourceName, this) { ok ->
             ndiConnectInFlight = false
             handler.post {
                 if (isFinishing) return@post
@@ -304,9 +313,9 @@ class NativePlayerActivity : AppCompatActivity() {
             val conns = Regex("conns=(-?\\d+)").find(diag)?.groupValues?.get(1)?.toIntOrNull() ?: -1
             if (frames > 0) {
                 ndiPlaceholder.visibility = View.GONE
-                statusText.text = "NDI · $currentNdiSource · $diag"
-                statusText.visibility = View.VISIBLE
-                liveBadge?.visibility = View.VISIBLE
+                statusText.visibility = View.GONE
+                liveBadge?.visibility = View.GONE
+                ndiBackdrop?.visibility = View.GONE
             } else if (conns > 0 || st.startsWith("Conectado")) {
                 ndiPlaceholder.text =
                     "Conectado ao NDI, aguardando vídeo…\n\n$diag\n\nFonte: $currentNdiSource"
@@ -375,7 +384,21 @@ class NativePlayerActivity : AppCompatActivity() {
         ndiTextureView.visibility = View.GONE
         ndiPlaceholder.visibility = View.GONE
         liveBadge?.visibility = View.GONE
+        ndiBackdrop?.visibility = View.VISIBLE
         exoPlayer?.stop()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == NdiActivityGuard.REQUEST_NEARBY_WIFI &&
+            NdiActivityGuard.hasNetworkPermissions(this)
+        ) {
+            currentNdiSource?.let { tryConnectNdi(it) }
+        }
     }
 
     override fun onDestroy() {

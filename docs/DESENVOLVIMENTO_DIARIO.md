@@ -32,6 +32,48 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 21 DE JUNHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+1. **BCG TV — NDI nativo (resolvido na TV)**  
+   - Diagnóstico: rede/vMix OK (Birddog + Studio Monitor); bug era no receptor Android (`conns=0`).  
+   - Correções em `ndi_jni.c`: loop só `recv_capture_v3` (sem framesync que bloqueava `status_change`), `fastest` + `allow_video_fields=true`, fonte embutida no `recv_create`, reconexão com timing real (20s/45s/30s), match de nome vMix `HOST (vMix - Output 1)`.  
+   - APK assinado: **1.5.0** — vídeo NDI 1920×1080 confirmado na TV; **1.5.1** remove overlay de diagnóstico (tela limpa).  
+   - Arquivos: `apps/bcg-tv-android/app/src/main/cpp/ndi_jni.c`, `NativePlayerActivity.kt`, `NdiReceiverBridge.kt`, `NdiActivityGuard.kt`.
+
+2. **Beatscode — melhoria de match + retomada do sync**  
+   - Scraper: abre atleta por **URL direta** (`/person/athlete/id/{id}`), aliases do `registrationProfile.beatscode`, busca por sobrenome, match de nome mais rigoroso, modal “Procurar Pessoa” escolhe melhor linha.  
+   - Sync: `BEATSCODE_BROWSER_RETRY_ERRORS=1` prioriza quem falhou com “Não encontrado no painel” na última passagem.  
+   - Script de status: `pnpm --filter api beatscode:sync-status`.  
+   - **Sync retomado em background** ao encerrar o dia (`pnpm beatscode:sync-documents`, log em `apps/api/data/beatscode-sync-overnight.log`).
+
+3. **Deploy**  
+   - `pnpm build` ok; push para `develop`.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/bcg-tv-android/app/src/main/cpp/ndi_jni.c`
+- `apps/bcg-tv-android/app/src/main/java/.../NativePlayerActivity.kt`
+- `apps/api/src/beatscode-import/beatscode-browser-scraper.service.ts`
+- `apps/api/src/beatscode-import/beatscode-documents-import.service.ts`
+- `apps/api/scripts/beatscode-sync-status.ts`
+- `apps/api/scripts/run-beatscode-sync-documents.ts`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** (ver hash abaixo após push)
+- **Push:** `origin/develop`
+
+## **PENDÊNCIAS / PRÓXIMO**
+
+- Acompanhar sync Beatscode overnight (`beatscode:sync-status` / log).  
+- Reprocessar falhas restantes após segunda passagem com match melhorado.  
+- **Não commitar:** `apps/api/data/`, probes locais, `backup_clean.sql`, `temp_*`, APKs na raiz.
+
+---
+
 # 📅 18 DE JUNHO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO**

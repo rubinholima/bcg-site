@@ -253,8 +253,17 @@ export class BeatscodeDocumentsImportService {
       ...(limit > 0 ? { take: limit } : {}),
     });
 
+    const retryOnly = process.env.BEATSCODE_BROWSER_RETRY_ERRORS === '1';
+    const lastErrors = retryOnly ? await this.loadLastSyncNotFoundIds() : new Set<string>();
+    const orderedPlayers = retryOnly
+      ? [
+          ...players.filter((p) => lastErrors.has(p.externalId ?? '')),
+          ...players.filter((p) => !lastErrors.has(p.externalId ?? '')),
+        ]
+      : players;
+
     try {
-      for (const player of players) {
+      for (const player of orderedPlayers) {
         if (maxSuccess > 0 && result.playersProcessed >= maxSuccess) break;
         try {
           const profile = this.parseProfile(player.registrationProfile);
@@ -269,9 +278,12 @@ export class BeatscodeDocumentsImportService {
           if (!hasPending && !hasContractPending) continue;
 
           const employeeId = this.parseBeatscodeEmployeeId(player.externalId ?? '');
+          const beatscodeMeta = this.parseBeatscodeProfileMeta(profile);
           const scraped = await this.browserScraper.scrapePersonDocuments({
             playerName: player.name,
             employeeId,
+            athleteRecordId: beatscodeMeta.athleteRecordId,
+            aliasNames: beatscodeMeta.aliasNames,
           });
           result.errors.push(
             ...scraped.errors.map((e) => `${player.externalId}: ${e}`),
@@ -340,6 +352,45 @@ export class BeatscodeDocumentsImportService {
     const m = externalId.match(/beatscode-(\d+)/i);
     const id = m ? Number(m[1]) : NaN;
     return Number.isFinite(id) ? id : undefined;
+  }
+
+  private parseBeatscodeProfileMeta(profile: Record<string, unknown>): {
+    athleteRecordId?: string;
+    aliasNames: string[];
+  } {
+    const beatscode = profile.beatscode as Record<string, unknown> | undefined;
+    const snapshot = beatscode?.snapshot as Record<string, unknown> | undefined;
+    const aliasNames: string[] = [];
+    const push = (v: unknown) => {
+      if (typeof v === 'string' && v.trim()) aliasNames.push(v.trim());
+    };
+    push(snapshot?.name);
+    push(snapshot?.nickname);
+    push(snapshot?.socialName);
+    push(beatscode?.displayName);
+    const athleteRecordId =
+      typeof beatscode?.athleteRecordId === 'string' || typeof beatscode?.athleteRecordId === 'number'
+        ? String(beatscode.athleteRecordId)
+        : typeof snapshot?.id === 'string' || typeof snapshot?.id === 'number'
+          ? String(snapshot.id)
+          : undefined;
+    return { athleteRecordId, aliasNames };
+  }
+
+  private async loadLastSyncNotFoundIds(): Promise<Set<string>> {
+    const last = await this.prisma.integrationConfig.findUnique({
+      where: { key: 'beatscode_documents_sync_last' },
+    });
+    const cfg = last?.config as { errors?: string[] } | null;
+    const ids = new Set<string>();
+    for (const err of cfg?.errors ?? []) {
+      const m = err.match(/^(beatscode-\d+):.*Não encontrado no painel/i);
+      if (m) ids.add(m[1]!);
+    }
+    if (ids.size) {
+      this.log.log(`Beatscode retry: ${ids.size} atleta(s) com falha de match na última passagem`);
+    }
+    return ids;
   }
 
   private async applyScrapedPersonalDocument(

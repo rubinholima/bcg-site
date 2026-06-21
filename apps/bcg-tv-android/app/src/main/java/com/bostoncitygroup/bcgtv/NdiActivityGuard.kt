@@ -15,7 +15,7 @@ import androidx.core.content.ContextCompat
  */
 object NdiActivityGuard {
     private const val TAG = "NdiActivityGuard"
-    private const val REQ_NEARBY_WIFI = 9101
+    const val REQUEST_NEARBY_WIFI = 9101
 
     @Volatile
     private var nsdManager: NsdManager? = null
@@ -53,7 +53,7 @@ object NdiActivityGuard {
             missing.add(android.Manifest.permission.NEARBY_WIFI_DEVICES)
         }
         if (missing.isNotEmpty()) {
-            ActivityCompat.requestPermissions(activity, missing.toTypedArray(), REQ_NEARBY_WIFI)
+            ActivityCompat.requestPermissions(activity, missing.toTypedArray(), REQUEST_NEARBY_WIFI)
         }
     }
 }

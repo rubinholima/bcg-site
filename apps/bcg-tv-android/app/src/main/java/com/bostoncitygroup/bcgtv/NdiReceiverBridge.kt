@@ -90,14 +90,15 @@ object NdiReceiverBridge {
         }
     }
 
-    fun connect(sourceName: String, onDone: ((Boolean) -> Unit)? = null) {
+    fun connect(sourceName: String, context: Context, onDone: ((Boolean) -> Unit)? = null) {
         io.execute {
-            val ok = connectSync(sourceName)
+            val ok = connectSync(context, sourceName)
             onDone?.invoke(ok)
         }
     }
 
-    fun connectSync(sourceName: String): Boolean {
+    fun connectSync(context: Context, sourceName: String): Boolean {
+        NdiAndroidBootstrap.ensure(context)
         if (!isAvailable) {
             Log.w(TAG, "NDI SDK unavailable: ${status()}")
             return false

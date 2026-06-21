@@ -10,6 +10,7 @@
 #include <string.h>
 #include <strings.h>
 #include <stdint.h>
+#include <time.h>
 #include <unistd.h>
 
 #define LOG_TAG "BcgNdi"
@@ -22,6 +23,7 @@
 
 typedef enum {
     NDIlib_FourCC_type_UYVY = 0x59565955,
+    NDIlib_FourCC_type_UYVA = 0x41565955,
     NDIlib_FourCC_type_BGRA = 0x41524742,
     NDIlib_FourCC_type_BGRX = 0x58524742,
 } NDIlib_FourCC_video_type_e;
@@ -71,7 +73,9 @@ typedef enum {
     NDIlib_frame_type_video = 1,
     NDIlib_frame_type_audio = 2,
     NDIlib_frame_type_metadata = 3,
+    NDIlib_frame_type_error = 4,
     NDIlib_frame_type_status_change = 100,
+    NDIlib_frame_type_source_change = 101,
 } NDIlib_frame_type_e;
 
 typedef struct {
@@ -181,6 +185,13 @@ static volatile int g_diag_last_type = -1;
 static volatile int g_diag_none_count = 0;
 static volatile int g_diag_bad_video = 0;
 static volatile int g_diag_conns = -1;
+static volatile int g_diag_fmt_retry = 0;
+
+static int64_t monotonic_ms(void) {
+    struct timespec ts;
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0) return 0;
+    return (int64_t)ts.tv_sec * 1000 + (int64_t)ts.tv_nsec / 1000000;
+}
 
 static void append_json_string(char* json, size_t cap, size_t* pos, const char* s) {
     if (*pos >= cap - 2) return;
@@ -290,7 +301,7 @@ static bool frame_to_rgba(const NDIlib_video_frame_v2_t* frame, uint8_t* dst, si
         return true;
     }
 
-    if (frame->FourCC == NDIlib_FourCC_type_UYVY) {
+    if (frame->FourCC == NDIlib_FourCC_type_UYVY || frame->FourCC == NDIlib_FourCC_type_UYVA) {
         const int src_stride = frame->line_stride_in_bytes > 0
             ? frame->line_stride_in_bytes
             : frame->xres * 2;
@@ -332,7 +343,7 @@ static void frame_to_window(const NDIlib_video_frame_v2_t* frame, ANativeWindow_
         return;
     }
 
-    if (frame->FourCC == NDIlib_FourCC_type_UYVY) {
+    if (frame->FourCC == NDIlib_FourCC_type_UYVY || frame->FourCC == NDIlib_FourCC_type_UYVA) {
         const int src_stride = frame->line_stride_in_bytes > 0 ? frame->line_stride_in_bytes : frame->xres * 2;
         for (int y = 0; y < h; y++) {
             /* uyvy_to_rgba_row já produz R,G,B,A na ordem correta para a janela. */
@@ -454,8 +465,13 @@ static bool load_ndi(void) {
 static bool name_matches(const char* ndi_name, const char* target) {
     if (!ndi_name || !target || !target[0]) return false;
     if (strcasecmp(ndi_name, target) == 0) return true;
-    if (strstr(ndi_name, target) != NULL) return true;
-    if (strstr(target, ndi_name) != NULL) return true;
+    /* vMix: "HOST (vMix - Output 1)" quando playlist tem "vMix - Output 1" */
+    const char* hit = strstr(ndi_name, target);
+    if (hit) {
+        size_t tlen = strlen(target);
+        if (hit[tlen] == '\0') return true;
+        if (hit > ndi_name && hit[-1] == '(' && hit[tlen] == ')') return true;
+    }
     return false;
 }
 
@@ -492,7 +508,46 @@ static bool refresh_chosen_from_finder(NDIlib_find_instance_t finder) {
 
 static void ndi_reconnect(NDIlib_recv_instance_t recv) {
     if (!g_ndi.recv_connect || !recv) return;
+    g_ndi.recv_connect(recv, NULL);
+    usleep(100000);
     g_ndi.recv_connect(recv, &g_chosen_source);
+}
+
+static NDIlib_recv_instance_t create_recv(
+    const NDIlib_source_t* live_source,
+    NDIlib_recv_color_format_e color_format,
+    bool allow_fields,
+    bool embed_source) {
+    NDIlib_recv_create_v3_t recv_create;
+    memset(&recv_create, 0, sizeof(recv_create));
+    if (embed_source && live_source) {
+        recv_create.source_to_connect_to = *live_source;
+    }
+    recv_create.color_format = color_format;
+    recv_create.bandwidth = NDIlib_recv_bandwidth_highest;
+    recv_create.allow_video_fields = allow_fields;
+    recv_create.p_ndi_recv_name = "BCG TV Receiver";
+    return g_ndi.recv_create(&recv_create);
+}
+
+static bool recreate_recv(
+    NDIlib_recv_instance_t* recv,
+    NDIlib_find_instance_t finder,
+    NDIlib_recv_color_format_e color_format,
+    bool allow_fields,
+    bool embed_source) {
+    if (*recv) {
+        g_ndi.recv_destroy(*recv);
+        *recv = NULL;
+    }
+    if (!refresh_chosen_from_finder(finder)) return false;
+    const NDIlib_source_t live = g_chosen_source;
+    *recv = create_recv(embed_source ? &live : NULL, color_format, allow_fields, embed_source);
+    if (!*recv) return false;
+    if (!embed_source && g_ndi.recv_connect) {
+        g_ndi.recv_connect(*recv, &g_chosen_source);
+    }
+    return true;
 }
 
 static void* recv_loop(void* arg) {
@@ -525,6 +580,7 @@ static void* recv_loop(void* arg) {
     }
 
     bool have_chosen = false;
+    const NDIlib_source_t* matched_live = NULL;
     while (g_running && !have_chosen) {
         int attempt;
         for (attempt = 0; attempt < 60 && g_running && !have_chosen; attempt++) {
@@ -541,7 +597,8 @@ static void* recv_loop(void* arg) {
                     const char* name = sources[i].p_ndi_name ? sources[i].p_ndi_name : "?";
                     LOGI("NDI source [%u]: %s", i, name);
                     if (name_matches(name, g_target_name)) {
-                        copy_source(&sources[i], &g_chosen_source);
+                        matched_live = &sources[i];
+                        copy_source(matched_live, &g_chosen_source);
                         have_chosen = true;
                         break;
                     }
@@ -559,21 +616,16 @@ static void* recv_loop(void* arg) {
         }
     }
 
-    if (!g_running || !have_chosen) {
+    if (!g_running || !have_chosen || !matched_live) {
         g_ndi.find_destroy(finder);
         if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
         g_thread_active = 0;
         return NULL;
     }
 
-    NDIlib_recv_create_v3_t recv_create;
-    memset(&recv_create, 0, sizeof(recv_create));
-    /* Receiver vazio + connect explícito (não duplicar source no create) */
-    recv_create.color_format = NDIlib_recv_color_format_fastest;
-    recv_create.bandwidth = NDIlib_recv_bandwidth_highest;
-    recv_create.allow_video_fields = true;
-    recv_create.p_ndi_recv_name = "BCG TV Receiver";
-    NDIlib_recv_instance_t recv = g_ndi.recv_create(&recv_create);
+    /* SDK 6.x: fastest + allow_video_fields=true; fonte embutida no create (padrão oficial). */
+    NDIlib_recv_instance_t recv = create_recv(
+        matched_live, NDIlib_recv_color_format_fastest, true, true);
     if (!recv) {
         set_status("NDI receiver falhou");
         g_ndi.find_destroy(finder);
@@ -582,25 +634,15 @@ static void* recv_loop(void* arg) {
         return NULL;
     }
 
-    if (!g_ndi.recv_connect) {
-        set_status("NDI recv_connect ausente");
-        g_ndi.recv_destroy(recv);
-        g_ndi.find_destroy(finder);
-        if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
-        g_thread_active = 0;
-        return NULL;
-    }
-    ndi_reconnect(recv);
     snprintf(g_status, sizeof(g_status), "Negociando: %s", g_chosen_source.p_ndi_name);
     LOGI("Connecting to %s url=%s", g_chosen_source.p_ndi_name,
          g_chosen_source.p_url_address ? g_chosen_source.p_url_address : "(null)");
-    /* Android: manter finder vivo durante recepção — mDNS/_ndi depende disso */
 
     int video_frames = 0;
-    int empty_polls = 0;
-    int format_retry = 0;
     int status_changes = 0;
-    int reconnect_polls = 0;
+    int format_retry = 0;
+    const int64_t started_ms = monotonic_ms();
+    int64_t last_reconnect_ms = started_ms;
     g_diag_video_frames = 0;
     g_diag_draw_ok = 0;
     g_diag_lock_fail = 0;
@@ -608,19 +650,16 @@ static void* recv_loop(void* arg) {
     g_diag_none_count = 0;
     g_diag_bad_video = 0;
     g_diag_conns = -1;
+    g_diag_fmt_retry = 0;
+
     while (g_running) {
         NDIlib_video_frame_v2_t video;
-        NDIlib_audio_frame_v3_t audio;
-        NDIlib_metadata_frame_t metadata;
         memset(&video, 0, sizeof(video));
-        memset(&audio, 0, sizeof(audio));
-        memset(&metadata, 0, sizeof(metadata));
-        NDIlib_frame_type_e t = g_ndi.recv_capture(recv, &video, &audio, &metadata, 1000);
+        NDIlib_frame_type_e t = g_ndi.recv_capture(recv, &video, NULL, NULL, 1000);
         g_diag_last_type = (int)t;
         if (g_ndi.get_no_connections) g_diag_conns = g_ndi.get_no_connections(recv);
 
         if (t == NDIlib_frame_type_video) {
-            empty_polls = 0;
             if (video.p_data && video.xres > 0 && video.yres > 0) {
                 video_frames++;
                 g_diag_video_frames = video_frames;
@@ -631,59 +670,77 @@ static void* recv_loop(void* arg) {
                 deliver_frame(env, &video);
             } else {
                 g_diag_bad_video++;
-                LOGE("VIDEO invalido: p_data=%p %dx%d", (void*)video.p_data, video.xres, video.yres);
             }
             g_ndi.recv_free_video(recv, &video);
-        } else if (t == NDIlib_frame_type_audio) {
-            empty_polls = 0;
-            if (g_ndi.recv_free_audio) g_ndi.recv_free_audio(recv, &audio);
-        } else if (t == NDIlib_frame_type_metadata) {
-            empty_polls = 0;
-            if (g_ndi.recv_free_metadata) g_ndi.recv_free_metadata(recv, &metadata);
-        } else if (t == NDIlib_frame_type_status_change) {
-            status_changes++;
-            if (g_ndi.get_no_connections) g_diag_conns = g_ndi.get_no_connections(recv);
-            LOGI("status_change #%d conns=%d", status_changes, g_diag_conns);
-            if (refresh_chosen_from_finder(finder)) {
-                ndi_reconnect(recv);
+            if (g_diag_conns > 0) {
+                snprintf(g_status, sizeof(g_status), "Conectado: %s", g_chosen_source.p_ndi_name);
             }
+            continue;
+        }
+
+        if (t == NDIlib_frame_type_status_change || t == NDIlib_frame_type_source_change) {
+            status_changes++;
+            LOGI("status/source_change #%d type=%d conns=%d", status_changes, (int)t, g_diag_conns);
             if (g_diag_conns > 0) {
                 snprintf(g_status, sizeof(g_status), "Conectado: %s", g_chosen_source.p_ndi_name);
             } else {
                 snprintf(g_status, sizeof(g_status), "Negociando: %s", g_chosen_source.p_ndi_name);
             }
-        } else if (t == NDIlib_frame_type_none) {
+            continue;
+        }
+
+        if (t == NDIlib_frame_type_error) {
+            LOGI("frame_type_error conns=%d — reconecta", g_diag_conns);
+            if (refresh_chosen_from_finder(finder)) ndi_reconnect(recv);
+            continue;
+        }
+
+        if (t == NDIlib_frame_type_audio || t == NDIlib_frame_type_metadata) {
+            continue;
+        }
+
+        if (t == NDIlib_frame_type_none) {
             g_diag_none_count++;
-            empty_polls++;
-            reconnect_polls++;
-            if (g_diag_conns == 0 && reconnect_polls % 5 == 0 && refresh_chosen_from_finder(finder)) {
-                ndi_reconnect(recv);
-                LOGI("reconnect periodico conns=0");
+        }
+
+        const int64_t now_ms = monotonic_ms();
+        const int64_t elapsed_ms = now_ms - started_ms;
+
+        /* Sem reconectar agressivamente — deixa o SDK negociar TCP (15–30s reais). */
+        if (video_frames == 0 && g_diag_conns == 0 && format_retry == 0 && elapsed_ms > 20000) {
+            format_retry = 1;
+            g_diag_fmt_retry = 1;
+            LOGI("20s sem conexao — tenta UYVY_BGRA + connect explicito");
+            if (recreate_recv(
+                    &recv, finder, NDIlib_recv_color_format_UYVY_BGRA, true, false)) {
+                snprintf(g_status, sizeof(g_status), "Reconectando (UYVY): %s", g_chosen_source.p_ndi_name);
+                last_reconnect_ms = now_ms;
             }
-            if (video_frames == 0 && empty_polls == 15 && format_retry == 0 && g_running) {
-                format_retry = 1;
-                LOGI("sem video 15s — tenta UYVY_BGRA progressivo");
-                g_ndi.recv_destroy(recv);
-                memset(&recv_create, 0, sizeof(recv_create));
-                recv_create.color_format = NDIlib_recv_color_format_UYVY_BGRA;
-                recv_create.bandwidth = NDIlib_recv_bandwidth_highest;
-                recv_create.allow_video_fields = false;
-                recv_create.p_ndi_recv_name = "BCG TV Receiver";
-                recv = g_ndi.recv_create(&recv_create);
-                if (recv && g_ndi.recv_connect) {
-                    ndi_reconnect(recv);
-                    snprintf(g_status, sizeof(g_status), "Reconectado (UYVY): %s", g_chosen_source.p_ndi_name);
-                }
-                empty_polls = 0;
-                reconnect_polls = 0;
-            } else if (empty_polls == 3 || empty_polls % 10 == 0) {
-                LOGI("sem frame %ds conns=%d video=%d", empty_polls, g_diag_conns, video_frames);
+        } else if (video_frames == 0 && g_diag_conns == 0 && format_retry == 1 && elapsed_ms > 45000) {
+            format_retry = 2;
+            g_diag_fmt_retry = 2;
+            LOGI("45s sem conexao — tenta fastest + fonte embutida de novo");
+            if (recreate_recv(
+                    &recv, finder, NDIlib_recv_color_format_fastest, true, true)) {
+                snprintf(g_status, sizeof(g_status), "Reconectando: %s", g_chosen_source.p_ndi_name);
+                last_reconnect_ms = now_ms;
             }
+        } else if (
+            g_diag_conns == 0 && video_frames == 0 && (now_ms - last_reconnect_ms) > 30000 &&
+            refresh_chosen_from_finder(finder) && g_ndi.recv_connect) {
+            ndi_reconnect(recv);
+            last_reconnect_ms = now_ms;
+            LOGI("reconnect periodico (30s) conns=0");
+        }
+
+        if (elapsed_ms > 3000 && ((int)(elapsed_ms / 1000) % 10 == 0) && video_frames == 0) {
+            LOGI("aguardando %llds conns=%d type=%d video=%d",
+                 (long long)(elapsed_ms / 1000), g_diag_conns, (int)t, video_frames);
         }
     }
     LOGI("recv_loop fim: total de video frames=%d", video_frames);
 
-    g_ndi.recv_destroy(recv);
+    if (recv) g_ndi.recv_destroy(recv);
     g_ndi.find_destroy(finder);
     if (attached && g_jvm) (*g_jvm)->DetachCurrentThread(g_jvm);
     g_thread_active = 0;
@@ -731,10 +788,11 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_getDiag0(JNIEnv* env, jobject thiz) {
     pthread_mutex_unlock(&g_win_mutex);
     char diag[320];
     snprintf(diag, sizeof(diag),
-             "frames=%d surface=%d draw=%d %dx%d lockfail=%d type=%d none=%d bad=%d conns=%d url=%s",
+             "frames=%d surface=%d draw=%d %dx%d lockfail=%d type=%d none=%d bad=%d conns=%d fmt=%d name=%s url=%s",
              g_diag_video_frames, win, g_diag_draw_ok,
              g_diag_vid_w, g_diag_vid_h, g_diag_lock_fail,
-             g_diag_last_type, g_diag_none_count, g_diag_bad_video, g_diag_conns,
+             g_diag_last_type, g_diag_none_count, g_diag_bad_video, g_diag_conns, g_diag_fmt_retry,
+             g_chosen_name[0] ? g_chosen_name : "-",
              g_chosen_url[0] ? g_chosen_url : "-");
     return (*env)->NewStringUTF(env, diag);
 }
@@ -777,6 +835,11 @@ Java_com_bostoncitygroup_bcgtv_NdiNative_startReceive0(JNIEnv* env, jobject thiz
     stop_internal();
 
     if (!load_ndi()) {
+        pthread_mutex_unlock(&g_ndi_op_mutex);
+        return JNI_FALSE;
+    }
+    if (!g_ndi.ok) {
+        set_status("NDI: inicialize na main thread antes de receber");
         pthread_mutex_unlock(&g_ndi_op_mutex);
         return JNI_FALSE;
     }
