@@ -63,8 +63,8 @@
 ## **COMMITS / BRANCH**
 
 - **Branch:** `develop`
-- **Último commit:** (ver hash abaixo após push)
-- **Push:** `origin/develop`
+- **Último commit:** `cc2f3bc` — fix(bcg-tv-ndi): conexao NDI estavel e tela limpa; melhora match Beatscode
+- **Push:** enviado para `origin/develop`
 
 ## **PENDÊNCIAS / PRÓXIMO**
 
