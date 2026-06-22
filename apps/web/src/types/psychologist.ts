@@ -9,6 +9,9 @@ export interface Psychologist {
   tenantId?: string | null;
   tenant?: { id: string; name: string; slug: string } | null;
   calendarBlocked: boolean;
+  staffRole?: string | null;
+  supervisorId?: string | null;
+  categories?: string[] | null;
   attendanceLog?: unknown;
   performanceSheet?: unknown;
   createdAt: string;

@@ -129,6 +129,7 @@ model Tenant {
   bostonTvHallChannel   BostonTvHallChannel?
   travelLogistics       TravelLogistics[]
   footballAgendaEntries FootballAgendaEntry[]
+  psychologySessions  PsychologySession[]
   footballActivitySpaces FootballActivitySpace[]
   events                Event[]
   pressPhotos           TenantPressPhoto[]
@@ -790,7 +791,7 @@ model MedicalStaff {
   @@index([tenantId, role])
 }
 
-// Cadastro de psicólogos (Depto Psicologia) — popula seleção em consultas e avaliações
+// Cadastro de psicólogos e estagiários (Depto Saúde / Psicologia)
 model Psychologist {
   id                String   @id @default(cuid())
   name              String
@@ -801,12 +802,56 @@ model Psychologist {
   photoUrl          String?
   tenantId          String?  // null = atende todos os clubes/empresas do grupo
   tenant            Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  staffRole         String   @default("psicologo") // psicologo | estagiario
+  supervisorId      String?
+  supervisor        Psychologist?  @relation("PsychologistSupervision", fields: [supervisorId], references: [id], onDelete: SetNull)
+  supervisees       Psychologist[] @relation("PsychologistSupervision")
+  categories        Json?    // string[] — categorias que acompanha
   calendarBlocked   Boolean  @default(false)
   attendanceLog     Json?    // Array<{ date, startTime?, endTime?, playerId?, playerName?, notes? }>
   performanceSheet  Json?    // { summary?, metrics?, notes?, updatedAt? }
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   @@index([tenantId])
+  @@index([staffRole])
+}
+
+/// Sessões de psicologia: presencial, grupo e relatório semanal — integradas à agenda do clube
+model PsychologySession {
+  id                    String   @id @default(cuid())
+  tenantId              String
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sessionType           String   // presencial | grupo | relatorio_semanal
+  date                  String
+  time                  String?
+  endTime               String?
+  category              String?
+  playerId              String?
+  psychologistId        String?
+  estagiarioId          String?
+  psychologistName      String?
+  estagiarioName        String?
+  location              String?
+  status                String   @default("scheduled") // scheduled | completed | cancelled
+  notes                 String?  @db.Text
+  periodStart           String?
+  periodEnd             String?
+  categoriesLabel       String?
+  activities            String?  @db.Text
+  individualDemands     String?  @db.Text
+  weeklyDevelopment     String?  @db.Text
+  identifiedDemands     String?  @db.Text
+  nextWeekPlanning      String?  @db.Text
+  finalSummary          String?  @db.Text
+  generalNotes          String?  @db.Text
+  groupSummary          String?  @db.Text
+  attendance            Json?    // [{ playerId, playerName, present, individualNotes? }]
+  footballAgendaEntryId String?
+  durationSeconds       Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  @@index([tenantId, date])
+  @@index([sessionType])
 }
 
 // Integrações centralizadas (planilhas Google únicas) — uma planilha por tipo, sistema filtra por slug

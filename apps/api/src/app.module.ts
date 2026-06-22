@@ -41,6 +41,7 @@ import { RegistrationInviteModule } from './registration-invite/registration-inv
 import { FmfScraperModule } from './fmf-scraper/fmf-scraper.module';
 import { BeatscodeImportModule } from './beatscode-import/beatscode-import.module';
 import { CaptacaoModule } from './captacao/captacao.module';
+import { PsychologySessionsModule } from './psychology-sessions/psychology-sessions.module';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { CaptacaoModule } from './captacao/captacao.module';
     FmfScraperModule,
     BeatscodeImportModule,
     CaptacaoModule,
+    PsychologySessionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

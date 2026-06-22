@@ -28,11 +28,14 @@ export class ConsultationsService {
   ) {}
 
   async listAllConsultations(): Promise<Array<ConsultationItem & { id: string; tenantId: string }>> {
-    const [players, psychList] = await Promise.all([
+    const [players, psychList, sessions] = await Promise.all([
       this.prisma.player.findMany({
         include: { tenant: { select: { name: true, logoUrl: true } } },
       }),
       this.prisma.psychologist.findMany({ select: { name: true, photoUrl: true } }),
+      this.prisma.psychologySession.findMany({
+        include: { tenant: { select: { name: true, logoUrl: true } } },
+      }),
     ]);
     const psychPhotoByName = new Map(
       psychList.map((x) => [x.name.toLowerCase().trim(), x.photoUrl] as const)
@@ -71,6 +74,39 @@ export class ConsultationsService {
       }
     }
 
+    for (const s of sessions) {
+      if (s.sessionType === 'relatorio_semanal') continue;
+      const attendance = Array.isArray(s.attendance)
+        ? (s.attendance as Array<{ playerName?: string }>)
+        : [];
+      const psychName = s.psychologistName?.trim();
+      result.push({
+        id: `session-${s.id}`,
+        playerId: s.playerId ?? '',
+        tenantId: s.tenantId,
+        playerName:
+          s.sessionType === 'grupo'
+            ? `${s.category ?? s.categoriesLabel ?? 'Grupo'} (${attendance.length} atletas)`
+            : s.playerId
+              ? players.find((p) => p.id === s.playerId)?.name ?? 'Atleta'
+              : 'Presencial',
+        tenantName: s.tenant?.name,
+        tenantLogoUrl: s.tenant?.logoUrl ?? undefined,
+        category: s.category ?? undefined,
+        date: s.date,
+        time: s.time ?? undefined,
+        type: s.sessionType,
+        link: undefined,
+        notes: s.notes ?? s.groupSummary ?? undefined,
+        status: s.status,
+        psychologist: psychName ?? undefined,
+        psychologistPhotoUrl: psychName
+          ? psychPhotoByName.get(psychName.toLowerCase()) ?? undefined
+          : undefined,
+        durationSeconds: s.durationSeconds ?? undefined,
+      });
+    }
+
     result.sort((a, b) => {
       const da = a.date ? new Date(a.date + (a.time ? `T${a.time}` : 'T00:00')).getTime() : 0;
       const db = b.date ? new Date(b.date + (b.time ? `T${b.time}` : 'T00:00')).getTime() : 0;
@@ -97,6 +133,15 @@ export class ConsultationsService {
 
   /** Remove uma consulta pelo id (formato playerId-index) */
   async removeConsultation(consultationId: string): Promise<boolean> {
+    if (consultationId.startsWith('session-')) {
+      const sessionId = consultationId.slice('session-'.length);
+      try {
+        await this.prisma.psychologySession.delete({ where: { id: sessionId } });
+        return true;
+      } catch {
+        return false;
+      }
+    }
     const match = consultationId.match(/^(.+)-(\d+)$/);
     if (!match) return false;
     const [, playerId, indexStr] = match;
@@ -137,6 +182,29 @@ export class ConsultationsService {
       durationSeconds?: number;
     },
   ): Promise<boolean> {
+    if (consultationId.startsWith('session-')) {
+      const sessionId = consultationId.slice('session-'.length);
+      try {
+        const row = await this.prisma.psychologySession.update({
+          where: { id: sessionId },
+          data: {
+            ...(patch.date !== undefined && { date: patch.date }),
+            ...(patch.time !== undefined && { time: patch.time }),
+            ...(patch.status !== undefined && { status: patch.status }),
+            ...(patch.psychologist !== undefined && { psychologistName: patch.psychologist }),
+            ...(patch.notes !== undefined && { notes: patch.notes }),
+            ...(patch.durationSeconds !== undefined && { durationSeconds: patch.durationSeconds }),
+          },
+        });
+        if (row.status === 'completed') {
+          // attendance sync handled by psychology-sessions service on full update;
+          // lightweight status patch for calendar actions
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    }
     const match = consultationId.match(/^(.+)-(\d+)$/);
     if (!match) return false;
     const [, playerId, indexStr] = match;

@@ -37,6 +37,9 @@ export class PsychologistsService {
     photoUrl?: string;
     tenantId?: string;
     calendarBlocked?: boolean;
+    staffRole?: string;
+    supervisorId?: string;
+    categories?: string[] | object;
     attendanceLog?: object | unknown;
     performanceSheet?: object | unknown;
   }) {
@@ -49,6 +52,12 @@ export class PsychologistsService {
         bio: cadastroUpper(data.bio),
         photoUrl: data.photoUrl ?? null,
         tenantId: data.tenantId ?? null,
+        staffRole: data.staffRole ?? 'psicologo',
+        supervisorId: data.supervisorId ?? null,
+        categories:
+          data.categories === undefined || data.categories === null
+            ? Prisma.JsonNull
+            : (data.categories as object),
         calendarBlocked: data.calendarBlocked ?? false,
         attendanceLog: data.attendanceLog === undefined || data.attendanceLog === null ? Prisma.JsonNull : (data.attendanceLog as object),
         performanceSheet: data.performanceSheet === undefined || data.performanceSheet === null ? Prisma.JsonNull : (data.performanceSheet as object),
@@ -68,6 +77,9 @@ export class PsychologistsService {
       photoUrl?: string;
       tenantId?: string;
       calendarBlocked?: boolean;
+      staffRole?: string;
+      supervisorId?: string;
+      categories?: string[] | object;
       attendanceLog?: object | unknown;
       performanceSheet?: object | unknown;
     },
@@ -83,6 +95,12 @@ export class PsychologistsService {
         ...(data.bio !== undefined && { bio: cadastroUpper(data.bio) }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl ?? null }),
         ...(data.tenantId !== undefined && { tenantId: data.tenantId ?? null }),
+        ...(data.staffRole !== undefined && { staffRole: data.staffRole }),
+        ...(data.supervisorId !== undefined && { supervisorId: data.supervisorId ?? null }),
+        ...(data.categories !== undefined && {
+          categories:
+            data.categories === null ? Prisma.JsonNull : (data.categories as object),
+        }),
         ...(data.calendarBlocked !== undefined && { calendarBlocked: data.calendarBlocked }),
         ...(data.attendanceLog !== undefined && { attendanceLog: data.attendanceLog as object }),
         ...(data.performanceSheet !== undefined && { performanceSheet: data.performanceSheet as object }),

@@ -19,8 +19,10 @@ import { ConsultasCalendar } from "@/components/dashboard/ConsultasCalendar";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import {
   type PsychologicalAssessmentEntry,
-  PSYCH_FIELDS,
 } from "@/components/dashboard/player-module-types";
+import { PsychAnamnesisForm } from "@/components/dashboard/psychology/PsychAnamnesisForm";
+import { PsychologySchedulingCard } from "@/components/dashboard/psychology/PsychologySchedulingCard";
+import { emptyPsychAnamnesis, psychEntryLabel } from "@/lib/psych-anamnesis";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import type { Psychologist } from "@/types/psychologist";
@@ -548,113 +550,30 @@ export default function ConsultasPage() {
             </CardContent>
           </Card>
 
-          {/* Agendar consulta no Meet — usa o atleta do filtro acima */}
+          {/* Agenda: online, presencial, grupo e relatório */}
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
-                <Video className="h-5 w-5" />
-                Agendar consulta no Meet
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Selecione um atleta no filtro <strong>Atleta</strong> acima. Depois escolha data e horário e crie o link da reunião no Google Meet.
-              </p>
-              <div className="space-y-3">
-                {!filterAtleta ? (
-                  <p className="text-sm text-amber-600 dark:text-amber-400 py-2">
-                    Selecione um atleta no filtro &quot;Atleta&quot; acima para agendar uma consulta.
-                  </p>
-                ) : (
-                  <>
-                    <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
-                      Atleta: <strong>{selectedPlayerName}</strong>
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Psicólogo que fará a consulta</label>
-                      <select
-                        className="flex h-10 w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                        value={
-                          psychologists.some((p) => p.name === newPsychologist)
-                            ? newPsychologist
-                            : newPsychologist.trim()
-                              ? "__outro__"
-                              : ""
-                        }
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setNewPsychologist(v === "__outro__" ? newPsychologist : v);
-                        }}
-                      >
-                        <option value="">— Selecione —</option>
-                        {psychologists
-                          .filter((p) => !p.calendarBlocked)
-                          .map((p) => (
-                            <option key={p.id} value={p.name}>
-                              {p.name}
-                              {p.crpOrEquivalent ? ` (${p.crpOrEquivalent})` : ""}
-                            </option>
-                          ))}
-                        <option value="__outro__">Outro…</option>
-                      </select>
-                      {!psychologists.some((p) => p.name === newPsychologist) && (
-                        <Input
-                          className="mt-2 w-full max-w-xs text-foreground"
-                          placeholder="Nome do psicólogo (quando não está na lista)"
-                          value={newPsychologist}
-                          onChange={(e) => setNewPsychologist(e.target.value)}
-                        />
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Data</label>
-                        <Input
-                          type="date"
-                          className="w-[10rem] text-foreground"
-                          value={newDate}
-                          onChange={(e) => setNewDate(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-muted-foreground mb-1 block">Horário</label>
-                        <Input
-                          type="time"
-                          className="w-[8rem] text-foreground"
-                          value={newTime}
-                          onChange={(e) => setNewTime(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Anotações (opcional)</label>
-                      <textarea
-                        className="w-full min-h-[72px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground resize-y"
-                        placeholder="Notas da sessão..."
-                        value={newNotes}
-                        onChange={(e) => setNewNotes(e.target.value)}
-                      />
-                    </div>
-                    {meetAvailable && (
-                      <Button
-                        type="button"
-                        onClick={handleCreateMeet}
-                        disabled={meetCreating || !newDate}
-                      >
-                        {meetCreating ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <Video className="h-4 w-4 mr-2" />
-                        )}
-                        Criar no Meet
-                      </Button>
-                    )}
-                    {meetAvailable === false && (
-                      <p className="text-sm text-muted-foreground">
-                        Google Calendar/Meet não configurado. Configure as variáveis GOOGLE_CALENDAR_* no .env da API.
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
+              <PsychologySchedulingCard
+                filterClube={filterClube}
+                filterAtleta={filterAtleta}
+                filterCategoria={filterCategoria}
+                selectedPlayerName={selectedPlayerName}
+                players={players}
+                psychologists={psychologists}
+                meetAvailable={meetAvailable}
+                meetCreating={meetCreating}
+                newDate={newDate}
+                newTime={newTime}
+                newNotes={newNotes}
+                newPsychologist={newPsychologist}
+                onNewDateChange={setNewDate}
+                onNewTimeChange={setNewTime}
+                onNewNotesChange={setNewNotes}
+                onNewPsychologistChange={setNewPsychologist}
+                onCreateMeet={() => void handleCreateMeet()}
+                onScheduled={() => setCalendarRefreshTrigger((t) => t + 1)}
+                showFeedback={showFeedback}
+              />
             </CardContent>
           </Card>
         </div>
@@ -808,79 +727,97 @@ export default function ConsultasPage() {
                     )}
                   </div>
 
-                  {/* Anamnese / Avaliação psicológica */}
+                  {/* Anamnese — modelo Boston City (PDF) */}
                   <div>
                     <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
                       <FileText className="h-4 w-4" />
-                      Anamnese / Avaliação psicológica
+                      Anamnese e registros psicológicos
                     </h4>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Dados pessoais, histórico esportivo, motivação, ansiedade, concentração, autoconfiança, coping, relações e vida fora do esporte. Edite aqui e clique em Salvar.
+                      Anamnese esportiva no padrão do departamento, além de registros de atendimento em grupo ou presencial na ficha do atleta.
                     </p>
-                    {psychList.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-2 mb-3">Nenhuma avaliação cadastrada. Adicione abaixo.</p>
-                    ) : null}
                     <div className="space-y-6">
-                      {psychList.map((entry, idx) => (
-                        <div key={idx} className="rounded-lg border p-4 space-y-4 bg-muted/20">
-                          <div className="flex flex-wrap justify-between items-center gap-2">
-                            <div className="flex flex-wrap gap-2">
-                              <Input
-                                type="date"
-                                className="w-[165px] min-w-[165px] text-foreground"
-                                placeholder="Data"
-                                value={entry.date ?? ""}
-                                onChange={(e) => updatePsychEntry(idx, "date", e.target.value || undefined)}
-                              />
-                              <Input
-                                className="w-[180px] text-foreground"
-                                placeholder="Avaliador/Psicólogo"
-                                value={entry.evaluator ?? ""}
-                                onChange={(e) => updatePsychEntry(idx, "evaluator", e.target.value || undefined)}
-                              />
+                      {psychList.map((entry, idx) => {
+                        const kind = entry.kind ?? (entry.dadosPessoais ? "anamnese" : "anamnese");
+                        if (kind !== "anamnese" && entry.kind) {
+                          return (
+                            <div key={idx} className="rounded-lg border border-border/80 bg-muted/20 p-4 text-sm space-y-2">
+                              <div className="flex flex-wrap justify-between gap-2">
+                                <p className="font-semibold text-foreground">{psychEntryLabel(entry.kind)}</p>
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removePsychEntry(idx)} aria-label="Remover">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                              <p className="text-muted-foreground">
+                                {entry.date}
+                                {entry.time ? ` · ${entry.time}` : ""}
+                                {entry.category ? ` · ${entry.category}` : ""}
+                              </p>
+                              {entry.present !== undefined && (
+                                <p>Presença: {entry.present ? "Presente" : "Ausente"}</p>
+                              )}
+                              {entry.groupSummary && <p className="whitespace-pre-wrap">{entry.groupSummary}</p>}
+                              {entry.individualNotes && (
+                                <p className="whitespace-pre-wrap text-foreground">{entry.individualNotes}</p>
+                              )}
+                              {entry.observacaoGeral && (
+                                <p className="whitespace-pre-wrap">{entry.observacaoGeral}</p>
+                              )}
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removePsychEntry(idx)}
-                              aria-label="Remover avaliação"
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                          );
+                        }
+                        return (
+                          <div key={idx} className="rounded-lg border p-4 space-y-4 bg-muted/20">
+                            <div className="flex flex-wrap justify-between items-center gap-2">
+                              <div className="flex flex-wrap gap-2">
+                                <Input
+                                  type="date"
+                                  className="w-[165px] text-foreground"
+                                  value={entry.date ?? ""}
+                                  onChange={(e) => updatePsychEntry(idx, "date", e.target.value || undefined)}
+                                />
+                                <Input
+                                  className="w-[180px] text-foreground"
+                                  placeholder="Avaliador"
+                                  value={entry.evaluator ?? ""}
+                                  onChange={(e) => updatePsychEntry(idx, "evaluator", e.target.value || undefined)}
+                                />
+                              </div>
+                              <Button type="button" variant="ghost" size="icon" onClick={() => removePsychEntry(idx)} aria-label="Remover anamnese">
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                            <PsychAnamnesisForm
+                              value={{ ...emptyPsychAnamnesis(), ...entry }}
+                              onChange={(data) => {
+                                setPsychList((prev) => {
+                                  const next = [...prev];
+                                  next[idx] = { ...next[idx], ...data, kind: "anamnese" };
+                                  return next;
+                                });
+                              }}
+                            />
                           </div>
-                          {PSYCH_FIELDS.map(({ key, label, placeholder }) => (
-                            <div key={key} className="space-y-1">
-                              <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
-                              <textarea
-                                className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground resize-y"
-                                placeholder={placeholder}
-                                value={(entry as Record<string, string>)[key] ?? ""}
-                                onChange={(e) => updatePsychEntry(idx, key as keyof PsychologicalAssessmentEntry, e.target.value || undefined)}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <div className="flex flex-wrap gap-2 mt-4">
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setPsychList((prev) => [...prev, {}])}
+                        onClick={() =>
+                          setPsychList((prev) => [
+                            ...prev,
+                            { kind: "anamnese", date: new Date().toISOString().slice(0, 10), ...emptyPsychAnamnesis() },
+                          ])
+                        }
                       >
                         <Plus className="mr-2 h-4 w-4" />
-                        Adicionar avaliação psicológica
+                        Nova anamnese
                       </Button>
-                      <Button
-                        type="button"
-                        onClick={savePsych}
-                        disabled={psychSaving}
-                      >
-                        {psychSaving ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        ) : null}
-                        Salvar alterações da anamnese
+                      <Button type="button" onClick={() => void savePsych()} disabled={psychSaving}>
+                        {psychSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                        Salvar ficha psicológica
                       </Button>
                     </div>
                   </div>

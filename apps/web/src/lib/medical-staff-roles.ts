@@ -7,6 +7,7 @@ export const MEDICAL_STAFF_ROLES = [
   { value: "nutricionista", label: "Nutricionista" },
   { value: "fisiologista", label: "Fisiologista" },
   { value: "massagista", label: "Massagista" },
+  { value: "estagiario", label: "Estagiário(a)" },
   { value: "outro", label: "Outro" },
 ] as const;
 
@@ -19,6 +20,7 @@ export const REGISTRY_LABELS: Record<string, string> = {
   nutricionista: "CRN",
   fisiologista: "CREF",
   massagista: "Registro",
+  estagiario: "Registro / matrícula",
   outro: "Registro",
 };
 

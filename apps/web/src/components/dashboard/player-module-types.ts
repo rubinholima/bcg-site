@@ -2,6 +2,8 @@
  * Tipos compartilhados entre a ficha do jogador e os módulos Médico / Psicologia.
  */
 
+import type { PsychAnamnesisData, PsychEntryKind } from "@/lib/psych-anamnesis";
+
 export interface MedicalProfile {
   bloodType?: string;
   allergies?: string;
@@ -38,9 +40,19 @@ export function normalizeMedicalHistory(mh: unknown): { profile: MedicalProfile;
   return { profile: {}, records: [] };
 }
 
-export interface PsychologicalAssessmentEntry {
+export interface PsychologicalAssessmentEntry extends Partial<PsychAnamnesisData> {
   date?: string;
+  time?: string;
   evaluator?: string;
+  supervisor?: string;
+  estagiario?: string;
+  kind?: PsychEntryKind;
+  sessionId?: string;
+  present?: boolean;
+  groupSummary?: string;
+  individualNotes?: string;
+  category?: string;
+  /** Campos legados (anamneses antigas) */
   dadosPessoais?: string;
   historicoEsportivo?: string;
   motivacaoObjetivos?: string;
@@ -57,7 +69,7 @@ export interface PsychologicalAssessmentEntry {
 export interface OnlineConsultation {
   date?: string;
   time?: string;
-  type?: "meet";
+  type?: "meet" | "presencial" | "grupo";
   link?: string;
   notes?: string;
   status?: "scheduled" | "completed" | "cancelled";
