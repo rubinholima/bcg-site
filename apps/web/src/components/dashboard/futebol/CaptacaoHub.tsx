@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  ArrowLeft,
   ClipboardList,
   Eye,
   Loader2,
@@ -18,6 +17,13 @@ import {
   UserCheck,
   Scale,
 } from "lucide-react";
+import {
+  DashboardDeptHeader,
+  DashboardDeptSearch,
+  DashboardDeptSection,
+  DashboardDeptTabs,
+  DashboardDeptToolbarAside,
+} from "@/components/dashboard/DashboardDeptHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +118,15 @@ const EMPTY_PROSPECT = {
   scoutId: "",
   notes: "",
 };
+
+const CAPTACAO_MAIN_TABS = [
+  { id: "pipeline", label: "Pipeline", icon: Eye },
+  { id: "mapa", label: "Mapa GPS", icon: Map },
+  { id: "captadores", label: "Captadores", icon: Users },
+  { id: "relatorios", label: "Relatórios", icon: ClipboardList },
+] as const;
+
+type CaptacaoMainTab = (typeof CAPTACAO_MAIN_TABS)[number]["id"];
 
 export function CaptacaoHub() {
   const { canAccessModule, loading: authLoading } = useAuth();
@@ -266,6 +281,35 @@ export function CaptacaoHub() {
     () => prospects.filter((p) => p.stage === "cadastrado"),
     [prospects],
   );
+
+  const mainTabActive: CaptacaoMainTab =
+    tab === "novo-prospect"
+      ? "pipeline"
+      : tab === "novo-relatorio"
+        ? "relatorios"
+        : tab === "novo-captador"
+          ? "captadores"
+          : CAPTACAO_MAIN_TABS.some((t) => t.id === tab)
+            ? (tab as CaptacaoMainTab)
+            : "pipeline";
+
+  const headerStats = useMemo(
+    () => [
+      { value: stats?.activeProspects ?? 0, label: "Prospects" },
+      { value: stats?.totalScouts ?? 0, label: "Captadores" },
+      { value: stats?.totalReports ?? 0, label: "Relatórios" },
+      { value: stats?.byPriority?.alta ?? 0, label: "Prioridade alta" },
+    ],
+    [stats],
+  );
+
+  function handleMainTabChange(id: CaptacaoMainTab) {
+    setTab(id);
+    if (id !== "captadores") {
+      setSelectedScoutId(null);
+      setScoutDetail(null);
+    }
+  }
 
   const manualStageOptions = SCOUTING_STAGES.filter(
     (s) => s.value !== "aprovado" && s.value !== "cadastrado",
@@ -495,89 +539,125 @@ export function CaptacaoHub() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Link
-          href="/dashboard/futebol"
-          className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Depto Futebol
-        </Link>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
-          <UserPlus className="h-7 w-7 sm:h-8 sm:w-8" />
-          Captação
-        </h1>
-        <p className="mt-1 max-w-3xl text-sm text-muted-foreground sm:text-base">
-          Ficha de <strong className="text-foreground">captação</strong> (scouting) — separada do
-          cadastro oficial de atletas. Após aprovação do supervisor, o prospect vira atleta do
-          clube e segue para contratos no jurídico.
-        </p>
-      </div>
-
-      <Card className="border-dashed bg-card/30">
-        <CardContent className="grid gap-3 p-4 text-sm sm:grid-cols-3">
-          <div>
-            <p className="font-semibold text-foreground">1 · Captação</p>
-            <p className="text-muted-foreground">
-              Prospect com dados mínimos de scouting. Não é atleta do clube ainda.
-            </p>
+    <>
+      <DashboardDeptHeader
+        section="Depto Futebol"
+        sectionIcon={UserPlus}
+        title="Captação"
+        description="Prospects, captadores e relatórios de scouting — separado do cadastro oficial."
+        backHref="/dashboard/futebol"
+        stats={headerStats}
+        toolbar={
+          <div className="flex w-full flex-col gap-3">
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="w-full sm:w-[min(220px,100%)] shrink-0">
+                <Label className="mb-1.5 block text-xs text-muted-foreground">Clube</Label>
+                <Select
+                  value={effectiveTenantId || "none"}
+                  onValueChange={(v) => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    if (v === "none") params.delete("tenantId");
+                    else params.set("tenantId", v);
+                    window.history.replaceState(null, "", `?${params.toString()}`);
+                    window.location.reload();
+                  }}
+                >
+                  <SelectTrigger className="min-h-[44px] text-foreground">
+                    <SelectValue placeholder="Selecione o clube" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenants.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <DashboardDeptSearch
+                value={search}
+                onChange={setSearch}
+                placeholder="Buscar atleta ou clube…"
+                className="min-w-0"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                className="min-h-[44px] shrink-0"
+                onClick={() => void loadAll()}
+              >
+                Filtrar
+              </Button>
+            </div>
+            <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center">
+              <div className="min-w-0 flex-1">
+                <DashboardDeptTabs
+                  tabs={[...CAPTACAO_MAIN_TABS]}
+                  active={mainTabActive}
+                  onChange={handleMainTabChange}
+                />
+              </div>
+              <DashboardDeptToolbarAside>
+                {tab === "novo-prospect" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px]"
+                    onClick={() => setTab("pipeline")}
+                  >
+                    Voltar ao pipeline
+                  </Button>
+                ) : tab === "novo-relatorio" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px]"
+                    onClick={() => setTab("relatorios")}
+                  >
+                    Voltar aos relatórios
+                  </Button>
+                ) : tab === "novo-captador" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px]"
+                    onClick={() => setTab("captadores")}
+                  >
+                    Voltar aos captadores
+                  </Button>
+                ) : mainTabActive === "pipeline" ? (
+                  <Button
+                    type="button"
+                    className="min-h-[44px]"
+                    onClick={() => setTab("novo-prospect")}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo prospect
+                  </Button>
+                ) : mainTabActive === "relatorios" ? (
+                  <Button
+                    type="button"
+                    className="min-h-[44px]"
+                    onClick={() => setTab("novo-relatorio")}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo relatório
+                  </Button>
+                ) : mainTabActive === "captadores" ? (
+                  <Button
+                    type="button"
+                    className="min-h-[44px]"
+                    onClick={() => setTab("novo-captador")}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Novo captador
+                  </Button>
+                ) : null}
+              </DashboardDeptToolbarAside>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-emerald-400">2 · Aprovação supervisor</p>
-            <p className="text-muted-foreground">
-              Try-out / negociação → supervisor aprova. Cadastro completo vem depois.
-            </p>
-          </div>
-          <div>
-            <p className="font-semibold text-violet-300">3 · Clube + jurídico</p>
-            <p className="text-muted-foreground">
-              Gera ficha em Cadastros → Jogadores e contratos em Jurídico.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="min-w-[200px] flex-1 sm:max-w-xs">
-          <Label className="text-xs text-muted-foreground">Clube</Label>
-          <Select
-            value={effectiveTenantId || "none"}
-            onValueChange={(v) => {
-              const params = new URLSearchParams(searchParams.toString());
-              if (v === "none") params.delete("tenantId");
-              else params.set("tenantId", v);
-              window.history.replaceState(
-                null,
-                "",
-                `?${params.toString()}`,
-              );
-              window.location.reload();
-            }}
-          >
-            <SelectTrigger className="text-foreground">
-              <SelectValue placeholder="Selecione o clube" />
-            </SelectTrigger>
-            <SelectContent>
-              {tenants.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Input
-          placeholder="Buscar atleta ou clube..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && loadAll()}
-          className="text-foreground sm:max-w-xs"
-        />
-        <Button type="button" variant="secondary" onClick={() => loadAll()}>
-          Filtrar
-        </Button>
-      </div>
+        }
+      />
 
       {error && (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -591,86 +671,47 @@ export function CaptacaoHub() {
         </div>
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Prospects ativos</CardDescription>
-                <CardTitle className="text-3xl">{stats?.activeProspects ?? 0}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Captadores</CardDescription>
-                <CardTitle className="text-3xl">{stats?.totalScouts ?? 0}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Relatórios</CardDescription>
-                <CardTitle className="text-3xl">{stats?.totalReports ?? 0}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Prioridade alta</CardDescription>
-                <CardTitle className="text-3xl">{stats?.byPriority?.alta ?? 0}</CardTitle>
-              </CardHeader>
-            </Card>
-          </div>
-
-          <div className="flex flex-wrap gap-2 border-b border-border pb-2">
-            {[
-              { id: "pipeline", label: "Pipeline" },
-              { id: "mapa", label: "Mapa GPS" },
-              { id: "captadores", label: "Captadores" },
-              { id: "relatorios", label: "Relatórios" },
-              { id: "novo-prospect", label: "+ Prospect" },
-              { id: "novo-relatorio", label: "+ Relatório" },
-              { id: "novo-captador", label: "+ Captador" },
-            ].map((t) => (
-              <Button
-                key={t.id}
-                type="button"
-                size="sm"
-                variant={tab === t.id ? "default" : "outline"}
-                onClick={() => setTab(t.id)}
-              >
-                {t.label}
-              </Button>
-            ))}
-          </div>
-
           {tab === "pipeline" && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Select value={filterStage || "all"} onValueChange={(v) => setFilterStage(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-[180px] text-foreground">
-                    <SelectValue placeholder="Estágio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos estágios</SelectItem>
-                    {SCOUTING_STAGES.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterScout || "all"} onValueChange={(v) => setFilterScout(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-[200px] text-foreground">
-                    <SelectValue placeholder="Captador" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos captadores</SelectItem>
-                    {scouts.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
+            <DashboardDeptSection
+              title="Pipeline"
+              description="Prospects por estágio — da identificação até try-out e negociação."
+              aside={
+                <div className="flex flex-wrap gap-2">
+                  <Select
+                    value={filterStage || "all"}
+                    onValueChange={(v) => setFilterStage(v === "all" ? "" : v)}
+                  >
+                    <SelectTrigger className="min-h-[44px] w-[min(180px,100%)] text-foreground">
+                      <SelectValue placeholder="Estágio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos estágios</SelectItem>
+                      {SCOUTING_STAGES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={filterScout || "all"}
+                    onValueChange={(v) => setFilterScout(v === "all" ? "" : v)}
+                  >
+                    <SelectTrigger className="min-h-[44px] w-[min(200px,100%)] text-foreground">
+                      <SelectValue placeholder="Captador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos captadores</SelectItem>
+                      {scouts.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
+            >
               <div className="hidden gap-3 overflow-x-auto pb-2 lg:flex">
                 {pipelineColumns.map((col) => (
                   <div
@@ -825,10 +866,14 @@ export function CaptacaoHub() {
                   </Table>
                 </CardContent>
               </Card>
-            </div>
+            </DashboardDeptSection>
           )}
 
           {tab === "mapa" && (
+            <DashboardDeptSection
+              title="Mapa GPS"
+              description="Rastreamento em campo e radar dos captadores."
+            >
             <div className="space-y-4">
               <CaptacaoFieldMode
                 scouts={scouts}
@@ -910,21 +955,17 @@ export function CaptacaoHub() {
                 </CardContent>
               </Card>
             </div>
+            </DashboardDeptSection>
           )}
 
           {tab === "captadores" && (
+            <DashboardDeptSection
+              title="Captadores"
+              description="Clique em um captador para ver carteira ativa e histórico de relatórios."
+            >
             <div className="space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Captadores
-                  </CardTitle>
-                  <CardDescription>
-                    Clique em um captador para ver carteira ativa e histórico de relatórios.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="overflow-x-auto p-0 sm:p-6 sm:pt-0">
+                <CardContent className="overflow-x-auto p-0 sm:p-6 sm:pt-6">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1106,17 +1147,16 @@ export function CaptacaoHub() {
                 </Card>
               )}
             </div>
+            </DashboardDeptSection>
           )}
 
           {tab === "relatorios" && (
+            <DashboardDeptSection
+              title="Relatórios"
+              description="Observações de jogo e avaliações dos captadores."
+            >
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ClipboardList className="h-5 w-5" />
-                    Relatórios de observação
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="overflow-x-auto p-0 sm:p-6 sm:pt-0">
+                <CardContent className="overflow-x-auto p-0 sm:p-6 sm:pt-6">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1158,19 +1198,16 @@ export function CaptacaoHub() {
                   </Table>
                 </CardContent>
               </Card>
+            </DashboardDeptSection>
           )}
 
           {tab === "novo-prospect" && (
+            <DashboardDeptSection
+              title="Novo prospect"
+              description="Dados mínimos de scouting — cadastro completo só após aprovação do supervisor."
+            >
               <Card>
-                <CardHeader>
-                  <CardTitle>Novo prospect (captação)</CardTitle>
-                  <CardDescription>
-                    Somente dados de scouting — nome, clube atual, origem e prioridade. O cadastro
-                    completo do atleta (foto, documentos, fisiologia…) só após aprovação do
-                    supervisor e botão &quot;Cadastrar no clube&quot;.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <form onSubmit={handleCreateProspect} className="grid gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <Label>Nome completo *</Label>
@@ -1417,21 +1454,16 @@ export function CaptacaoHub() {
                   </form>
                 </CardContent>
               </Card>
+            </DashboardDeptSection>
           )}
 
           {tab === "novo-relatorio" && (
+            <DashboardDeptSection
+              title="Novo relatório"
+              description="Contexto do jogo e recomendação clara. O GPS é anexado automaticamente ao salvar, se permitido."
+            >
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
-                    Novo relatório de observação
-                  </CardTitle>
-                  <CardDescription>
-                    Contexto do jogo + recomendação clara (contratar / continuar / descartar).
-                    O GPS do dispositivo é anexado automaticamente ao salvar, se permitido.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <form onSubmit={handleCreateReport} className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <Label>Prospect *</Label>
@@ -1691,18 +1723,16 @@ export function CaptacaoHub() {
                   </form>
                 </CardContent>
               </Card>
+            </DashboardDeptSection>
           )}
 
           {tab === "novo-captador" && (
+            <DashboardDeptSection
+              title="Novo captador"
+              description="Regiões, categorias e foco — histórico gerado pelos relatórios e prospects vinculados."
+            >
               <Card>
-                <CardHeader>
-                  <CardTitle>Cadastrar captador</CardTitle>
-                  <CardDescription>
-                    Regiões, categorias e posições de foco — histórico gerado automaticamente
-                    pelos relatórios e prospects vinculados.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <form onSubmit={handleCreateScout} className="grid gap-4 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <Label>Nome *</Label>
@@ -1802,26 +1832,10 @@ export function CaptacaoHub() {
                   </form>
                 </CardContent>
               </Card>
+            </DashboardDeptSection>
           )}
-
-          <Card className="border-dashed">
-            <CardHeader>
-              <CardTitle className="text-base">Checklist de captação assertiva</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-              <p>✓ Perfil alinhado ao modelo de jogo do clube</p>
-              <p>✓ Situação contratual e agente mapeados</p>
-              <p>✓ Mínimo 2 observações antes de try-out</p>
-              <p>✓ Relatório com recomendação sem ambiguidade</p>
-              <p>✓ Captador responsável em cada prospect</p>
-              <p>✓ Categoria alvo definida (sub-17, profissional…)</p>
-              <p>✓ GPS em campo — modo ao vivo ou check-in no mapa</p>
-              <p>✓ Prospect ≠ atleta: cadastro oficial só após supervisor</p>
-              <p>✓ Contratos no Jurídico depois do cadastro no clube</p>
-            </CardContent>
-          </Card>
         </>
       )}
-    </div>
+    </>
   );
 }

@@ -19,6 +19,7 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "requisicoes", label: "Requisições" },
   { id: "futebol", label: "Depto Futebol" },
   { id: "futebol-cadastro-atletas", label: "→ Cadastro de atletas", indent: true },
+  { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
   { id: "boston-tv", label: "BCG TV" },
@@ -368,6 +369,45 @@ export default function ManualPage() {
                 contratos, prontuários, logística, nutrição, entre outros), conforme o processo de cadastro e alteração
                 do atleta no clube.
               </p>
+            </SubSection>
+
+            <SubSection id="futebol-captacao" title="Captação">
+              <p>
+                Ficha de <strong>captação</strong> (scouting) — separada do cadastro oficial de atletas. Após
+                aprovação do supervisor, o prospect vira atleta do clube e segue para contratos no jurídico.
+              </p>
+              <div className="grid gap-3 rounded-lg border border-border bg-muted/20 p-4 text-sm sm:grid-cols-3">
+                <div>
+                  <p className="font-semibold text-foreground">1 · Captação</p>
+                  <p className="text-muted-foreground">
+                    Prospect com dados mínimos de scouting. Não é atleta do clube ainda.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-400">2 · Aprovação supervisor</p>
+                  <p className="text-muted-foreground">
+                    Try-out / negociação → supervisor aprova. Cadastro completo vem depois.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-violet-300">3 · Clube + jurídico</p>
+                  <p className="text-muted-foreground">
+                    Gera ficha em Cadastros → Jogadores e contratos em Jurídico.
+                  </p>
+                </div>
+              </div>
+              <p className="mt-4 text-sm font-medium text-foreground">Checklist de captação assertiva</p>
+              <ul className="mt-2 grid gap-1.5 text-sm text-muted-foreground sm:grid-cols-2">
+                <li>Perfil alinhado ao modelo de jogo do clube</li>
+                <li>Situação contratual e agente mapeados</li>
+                <li>Mínimo 2 observações antes de try-out</li>
+                <li>Relatório com recomendação sem ambiguidade</li>
+                <li>Captador responsável em cada prospect</li>
+                <li>Categoria alvo definida (sub-17, profissional…)</li>
+                <li>GPS em campo — modo ao vivo ou check-in no mapa</li>
+                <li>Prospect ≠ atleta: cadastro oficial só após supervisor</li>
+                <li>Contratos no Jurídico depois do cadastro no clube</li>
+              </ul>
             </SubSection>
           </Section>
 
