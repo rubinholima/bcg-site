@@ -92,13 +92,13 @@ function groupByPosition(players: JogadorListItem[]) {
 function PlayerCard({ player }: { player: JogadorListItem }) {
   const displayName = getPlayerListDisplayName(player);
   const fullName = player.name.trim();
-  const showFullName = fullName && displayName.toLowerCase() !== fullName.toLowerCase();
 
   return (
-    <div className="group flex items-start gap-2 rounded-xl border border-border/70 bg-gradient-to-br from-zinc-900/80 via-card/50 to-zinc-950/60 p-3 transition-all hover:border-violet-500/45 hover:shadow-[0_0_24px_-8px_rgba(139,92,246,0.55)]">
+    <div className="group flex items-center gap-2 rounded-xl border border-border/70 bg-gradient-to-br from-zinc-900/80 via-card/50 to-zinc-950/60 p-3 transition-all hover:border-violet-500/45 hover:shadow-[0_0_24px_-8px_rgba(139,92,246,0.55)]">
       <Link
         href={`/dashboard/cadastros/jogadores/${player.id}/edit`}
-        className="flex min-w-0 flex-1 items-start gap-3"
+        className="flex min-w-0 flex-1 items-center gap-3"
+        title={fullName || displayName}
       >
         {player.photoUrl ? (
           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted">
@@ -113,20 +113,17 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
             —
           </div>
         )}
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-sm font-semibold leading-snug break-words text-foreground group-hover:text-violet-100">
+        <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <p className="whitespace-nowrap text-sm font-semibold text-foreground group-hover:text-violet-100">
             {displayName}
+            {player.jerseyNumber != null ? (
+              <span className="ml-1.5 text-[11px] font-medium text-violet-300/90">#{player.jerseyNumber}</span>
+            ) : null}
           </p>
-          {showFullName ? (
-            <p className="text-[11px] leading-snug break-words text-muted-foreground">{fullName}</p>
-          ) : null}
-          {player.jerseyNumber != null ? (
-            <p className="text-[11px] font-medium text-violet-300/90">#{player.jerseyNumber}</p>
-          ) : null}
-          <PlayerMatchAvailabilityBadge
-            availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(player))}
-          />
         </div>
+        <PlayerMatchAvailabilityBadge
+          availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(player))}
+        />
       </Link>
       <div className="flex shrink-0 flex-col gap-1">
         <Link href={`/dashboard/cadastros/jogadores/${player.id}/edit`}>
@@ -159,7 +156,7 @@ function PositionBlock({
           {players.length}
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         {players.map((p) => (
           <PlayerCard key={p.id} player={p} />
         ))}
