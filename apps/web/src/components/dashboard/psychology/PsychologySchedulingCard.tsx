@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { CalendarDays, ClipboardList, Loader2, MapPin, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DashboardDeptTabs } from "@/components/dashboard/DashboardDeptHeader";
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
@@ -21,6 +29,17 @@ import type { PsychologyAttendanceRow, PsychologySessionType } from "@/types/psy
 type SchedulingTab = "online" | PsychologySessionType | "relatorio_semanal";
 
 type PlayerOption = { id: string; name: string; tenantId?: string; category?: string | null };
+
+type ActivitySpace = {
+  id: string;
+  tenantId: string;
+  name: string;
+  address?: string | null;
+};
+
+function spaceLabel(space: ActivitySpace) {
+  return space.address?.trim() ? `${space.name} — ${space.address.trim()}` : space.name;
+}
 
 export function PsychologySchedulingCard({
   filterClube,
@@ -65,6 +84,8 @@ export function PsychologySchedulingCard({
 }) {
   const [tab, setTab] = useState<SchedulingTab>("online");
   const [saving, setSaving] = useState(false);
+  const [spaces, setSpaces] = useState<ActivitySpace[]>([]);
+  const [spaceId, setSpaceId] = useState("");
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState(filterCategoria);
   const [psychologistId, setPsychologistId] = useState("");
@@ -81,6 +102,8 @@ export function PsychologySchedulingCard({
   const [nextWeekPlanning, setNextWeekPlanning] = useState("");
   const [finalSummary, setFinalSummary] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
+  const [noteDialogIdx, setNoteDialogIdx] = useState<number | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
 
   const psychologos = psychologists.filter((p) => (p.staffRole ?? "psicologo") === "psicologo");
   const estagiarios = psychologists.filter((p) => p.staffRole === "estagiario");
@@ -89,6 +112,18 @@ export function PsychologySchedulingCard({
   useEffect(() => {
     if (filterCategoria) setCategory(filterCategoria);
   }, [filterCategoria]);
+
+  useEffect(() => {
+    if (!tenantId) {
+      setSpaces([]);
+      setSpaceId("");
+      return;
+    }
+    api
+      .get<ActivitySpace[]>(`/football-activity-spaces?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(({ data }) => setSpaces(Array.isArray(data) ? data : []))
+      .catch(() => setSpaces([]));
+  }, [tenantId]);
 
   const loadRoster = useCallback(async () => {
     if (!tenantId || !category) {
@@ -101,7 +136,12 @@ export function PsychologySchedulingCard({
       );
       setAttendance(
         Array.isArray(data)
-          ? data.map((r) => ({ ...r, present: r.present ?? false }))
+          ? data.map((r) => ({
+              playerId: r.playerId,
+              playerName: r.playerName,
+              present: r.present ?? false,
+              individualNotes: r.individualNotes,
+            }))
           : [],
       );
     } catch {
@@ -112,6 +152,29 @@ export function PsychologySchedulingCard({
   useEffect(() => {
     if (tab === "grupo") void loadRoster();
   }, [tab, loadRoster]);
+
+  function handleSpaceChange(value: string) {
+    const id = value === "none" ? "" : value;
+    setSpaceId(id);
+    const space = spaces.find((s) => s.id === id);
+    setLocation(space ? spaceLabel(space) : "");
+  }
+
+  function openNoteDialog(idx: number) {
+    setNoteDialogIdx(idx);
+    setNoteDraft(attendance[idx]?.individualNotes ?? "");
+  }
+
+  function saveNoteDialog() {
+    if (noteDialogIdx == null) return;
+    setAttendance((prev) => {
+      const next = [...prev];
+      next[noteDialogIdx] = { ...next[noteDialogIdx], individualNotes: noteDraft.trim() || undefined };
+      return next;
+    });
+    setNoteDialogIdx(null);
+    setNoteDraft("");
+  }
 
   const tabs = [
     { id: "online" as const, label: "Online (Meet)", icon: Video },
@@ -165,6 +228,7 @@ export function PsychologySchedulingCard({
       onScheduled();
       setGroupSummary("");
       setLocation("");
+      setSpaceId("");
     } catch (e: unknown) {
       showFeedback("Erro", e instanceof Error ? e.message : "Erro ao salvar.", "error");
     } finally {
@@ -172,16 +236,38 @@ export function PsychologySchedulingCard({
     }
   }
 
+  const locationSelect = (
+    <div>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <Label className="text-xs text-muted-foreground">Local</Label>
+        <Link href="/dashboard/cadastros/espacos" className="text-xs text-primary hover:underline">
+          Cadastrar espaços
+        </Link>
+      </div>
+      <Select value={spaceId || "none"} onValueChange={handleSpaceChange}>
+        <SelectTrigger className="text-foreground">
+          <SelectValue placeholder="Selecione o espaço" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="none">—</SelectItem>
+          {spaces.map((s) => (
+            <SelectItem key={s.id} value={s.id}>
+              {spaceLabel(s)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+
+  const noteDialogRow = noteDialogIdx != null ? attendance[noteDialogIdx] : null;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <CalendarDays className="h-5 w-5 text-violet-400" />
         <h3 className="text-lg font-semibold">Agenda de atendimentos</h3>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Online, presencial, grupo por categoria ou relatório semanal — tudo na mesma agenda do clube
-        (integrada à agenda geral de compromissos).
-      </p>
       <DashboardDeptTabs tabs={tabs} active={tab} onChange={setTab} />
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -244,14 +330,10 @@ export function PsychologySchedulingCard({
       {tab === "online" && (
         <div className="space-y-3 rounded-lg border border-border/80 bg-muted/20 p-4">
           {!filterAtleta ? (
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              Selecione um atleta no filtro para agendar consulta online.
-            </p>
+            <p className="text-sm text-amber-600 dark:text-amber-400">Selecione o atleta no filtro.</p>
           ) : (
             <>
-              <p className="text-sm">
-                Atleta: <strong>{selectedPlayerName}</strong>
-              </p>
+              <p className="text-sm font-medium">{selectedPlayerName}</p>
               <div>
                 <Label className="text-xs text-muted-foreground">Psicólogo (lista legada Meet)</Label>
                 <Input
@@ -263,7 +345,7 @@ export function PsychologySchedulingCard({
               </div>
               <textarea
                 className="w-full min-h-[72px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                placeholder="Anotações (opcional)"
+                placeholder="Anotações"
                 value={newNotes}
                 onChange={(e) => onNewNotesChange(e.target.value)}
               />
@@ -273,9 +355,7 @@ export function PsychologySchedulingCard({
                   Criar no Meet
                 </Button>
               ) : (
-                <p className="text-sm text-muted-foreground">
-                  Google Meet não configurado na API (GOOGLE_CALENDAR_*).
-                </p>
+                <p className="text-sm text-muted-foreground">Google Meet não configurado na API.</p>
               )}
             </>
           )}
@@ -288,29 +368,15 @@ export function PsychologySchedulingCard({
             <p className="text-sm text-amber-600 dark:text-amber-400">Selecione o atleta no filtro.</p>
           ) : (
             <>
-              <p className="text-sm">
-                Atendimento individual: <strong>{selectedPlayerName}</strong>
-              </p>
-              <div>
-                <Label className="text-xs text-muted-foreground">Local</Label>
-                <Input
-                  className="mt-1 text-foreground"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Sala, CT, endereço…"
-                />
-              </div>
+              <p className="text-sm font-medium">{selectedPlayerName}</p>
+              {locationSelect}
               <textarea
                 className="w-full min-h-[72px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                placeholder="Resumo / observações do atendimento"
+                placeholder="Resumo do atendimento"
                 value={newNotes}
                 onChange={(e) => onNewNotesChange(e.target.value)}
               />
-              <Button
-                type="button"
-                disabled={saving}
-                onClick={() => void saveSession("presencial")}
-              >
+              <Button type="button" disabled={saving} onClick={() => void saveSession("presencial")}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}
                 Agendar presencial
               </Button>
@@ -337,14 +403,7 @@ export function PsychologySchedulingCard({
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Local</Label>
-            <Input
-              className="mt-1 text-foreground"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-          </div>
+          {locationSelect}
           <textarea
             className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
             placeholder="Resumo geral do atendimento em grupo"
@@ -352,43 +411,42 @@ export function PsychologySchedulingCard({
             onChange={(e) => setGroupSummary(e.target.value)}
           />
           {attendance.length > 0 ? (
-            <div className="max-h-[280px] space-y-2 overflow-y-auto rounded-md border border-border p-2">
-              <p className="text-xs font-medium text-muted-foreground">Chamada de presença</p>
+            <div className="max-h-[280px] space-y-1 overflow-y-auto rounded-md border border-border p-2">
+              <p className="px-1 text-xs font-medium text-muted-foreground">Chamada de presença</p>
               {attendance.map((row, idx) => (
-                <div key={row.playerId} className="rounded-md border border-border/60 bg-background p-2 text-sm">
-                  <label className="flex items-center gap-2 font-medium">
-                    <input
-                      type="checkbox"
-                      checked={row.present === true}
-                      onChange={(e) => {
-                        setAttendance((prev) => {
-                          const next = [...prev];
-                          next[idx] = { ...next[idx], present: e.target.checked };
-                          return next;
-                        });
-                      }}
-                      className="h-4 w-4"
-                    />
-                    {row.playerName ?? row.playerId}
-                  </label>
-                  <textarea
-                    className="mt-2 w-full min-h-[48px] rounded border border-input bg-background px-2 py-1 text-xs text-foreground"
-                    placeholder="Observação individual (opcional)"
-                    value={row.individualNotes ?? ""}
+                <div
+                  key={row.playerId}
+                  className="flex min-h-[44px] items-center gap-3 rounded-md border border-border/60 bg-background px-2 py-2 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={row.present === true}
                     onChange={(e) => {
                       setAttendance((prev) => {
                         const next = [...prev];
-                        next[idx] = { ...next[idx], individualNotes: e.target.value };
+                        next[idx] = { ...next[idx], present: e.target.checked };
                         return next;
                       });
                     }}
+                    className="h-4 w-4 shrink-0"
+                    aria-label={`Presença de ${row.playerName ?? "atleta"}`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => openNoteDialog(idx)}
+                    className="min-w-0 flex-1 text-left font-medium hover:underline"
+                  >
+                    {row.playerName ?? "—"}
+                  </button>
+                  {row.individualNotes?.trim() ? (
+                    <span className="shrink-0 text-xs text-violet-400">Obs.</span>
+                  ) : null}
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Selecione clube e categoria para carregar os atletas.</p>
-          )}
+          ) : category && tenantId ? (
+            <p className="text-sm text-muted-foreground">Nenhum atleta nesta categoria.</p>
+          ) : null}
           <Button type="button" disabled={saving || !category} onClick={() => void saveSession("grupo")}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}
             Registrar sessão em grupo
@@ -456,6 +514,29 @@ export function PsychologySchedulingCard({
           </Button>
         </div>
       )}
+
+      <Dialog open={noteDialogIdx != null} onOpenChange={(open) => !open && setNoteDialogIdx(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{noteDialogRow?.playerName ?? "Observação"}</DialogTitle>
+          </DialogHeader>
+          <textarea
+            className="min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+            placeholder="Observação individual"
+            value={noteDraft}
+            onChange={(e) => setNoteDraft(e.target.value)}
+            autoFocus
+          />
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setNoteDialogIdx(null)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={saveNoteDialog}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

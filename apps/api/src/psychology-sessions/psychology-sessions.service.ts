@@ -186,7 +186,11 @@ export class PsychologySessionsService {
       select: { id: true, name: true, category: true, photoUrl: true },
       orderBy: { name: 'asc' },
     });
-    return players;
+    return players.map((p) => ({
+      playerId: p.id,
+      playerName: p.name,
+      present: false,
+    }));
   }
 
   private async assertTenant(tenantId: string) {

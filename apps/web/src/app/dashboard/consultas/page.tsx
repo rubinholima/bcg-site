@@ -672,15 +672,14 @@ export default function ConsultasPage() {
       {/* Registro do atleta: consultas + anamnese — tudo aqui, sem ir à ficha */}
       <Card>
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-2">
+          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
             <User className="h-5 w-5" />
             Registro do atleta
+            {filterAtleta && selectedPlayerName ? (
+              <span className="font-normal text-muted-foreground">— {selectedPlayerName}</span>
+            ) : null}
           </h3>
-          {!filterAtleta ? (
-            <p className="text-muted-foreground">
-              Selecione um atleta no filtro <strong>Atleta</strong> acima para ver e editar aqui o registro completo: consultas e anamnese. Tudo fica nesta página, sem precisar ir à ficha do jogador.
-            </p>
-          ) : (
+          {!filterAtleta ? null : (
             <>
               {psychLoading ? (
                 <p className="text-muted-foreground py-4 flex items-center gap-2">
@@ -692,9 +691,6 @@ export default function ConsultasPage() {
                   {/* Consultas */}
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Consultas</h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Histórico de <strong>{selectedPlayerName}</strong>. Agende novas consultas no card &quot;Agendar consulta no Meet&quot; acima.
-                    </p>
                     {historicoAtleta.length === 0 ? (
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground py-2">Nenhuma consulta cadastrada para este atleta.</p>
@@ -729,13 +725,10 @@ export default function ConsultasPage() {
 
                   {/* Anamnese — modelo Boston City (PDF) */}
                   <div>
-                    <h4 className="text-sm font-medium flex items-center gap-2 mb-2">
+                    <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
                       <FileText className="h-4 w-4" />
                       Anamnese e registros psicológicos
                     </h4>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Anamnese esportiva no padrão do departamento, além de registros de atendimento em grupo ou presencial na ficha do atleta.
-                    </p>
                     <div className="space-y-6">
                       {psychList.map((entry, idx) => {
                         const kind = entry.kind ?? (entry.dadosPessoais ? "anamnese" : "anamnese");
