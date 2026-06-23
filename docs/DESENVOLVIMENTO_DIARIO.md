@@ -32,6 +32,50 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 22 DE JUNHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+1. **Psicologia — sessões, consultas e estagiários**  
+   - `PsychologySession` (presencial, grupo, relatório semanal); estagiários com supervisão.  
+   - Calendário unificado em Consultas; anamnese; agendamento presencial/grupo.  
+   - UI Consultas: layout em faixas, abas compactas violeta, horários ocupados em vermelho, chamada de presença com nomes.  
+   - Menu **Depto Saúde → Cadastros → Estagiários** (`/dashboard/saude/estagiarios`).  
+   - Abas compactas na edição do jogador.
+
+2. **Beatscode — diagnóstico do sync lento + reinício overnight**  
+   - Sync anterior (~16h) morreu com `BEATSCODE_BROWSER_RETRY_ERRORS=1`, gastando tempo nos 308 atletas “Não encontrado no painel”.  
+   - Status: **502** atletas Beatscode, **135** com PDF, **440** pendentes.  
+   - Ajuste: fila prioriza **pendentes primeiro** (sem `RETRY_ERRORS` no overnight).  
+   - **Sync reiniciado em background** (`pnpm beatscode:sync-documents`, log `apps/api/data/beatscode-sync-overnight.log`).
+
+3. **Deploy**  
+   - `pnpm build` ok; push para `develop`.
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/api/src/psychology-sessions/` (sessões, presença, roster)
+- `apps/web/src/components/dashboard/psychology/`
+- `apps/web/src/app/dashboard/consultas/page.tsx`
+- `apps/web/src/app/dashboard/saude/estagiarios/`
+- `apps/api/src/beatscode-import/beatscode-documents-import.service.ts`
+- `apps/api/scripts/run-beatscode-sync-documents.ts`
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** ver hash do encerramento (psicologia/consultas + fix sync Beatscode)
+- **Push:** enviado para `origin/develop`
+
+## **PENDÊNCIAS / PRÓXIMO**
+
+- Manhã: `pnpm --filter api beatscode:sync-status` — conferir quantos PDFs subiram.  
+- Segunda passagem opcional com `BEATSCODE_BROWSER_RETRY_ERRORS=1` só para os 308 sem match.  
+- Produção: `prisma migrate deploy` + restart API se ainda não feito (migration psicologia).  
+- **Não commitar:** `apps/api/data/`, probes, `backup_clean.sql`, `temp_*`, APKs.
+
+---
+
 # 📅 21 DE JUNHO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO**

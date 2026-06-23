@@ -6,7 +6,8 @@
  * - BEATSCODE_USERNAME / BEATSCODE_PASSWORD
  * - AWS/S3 (mesmo da produção)
  * - Opcional: BEATSCODE_BROWSER_PLAYER_LIMIT=5 (teste)
- * - Opcional: BEATSCODE_BROWSER_RETRY_ERRORS=1 (prioriza quem falhou "Não encontrado no painel")
+ * - Opcional: BEATSCODE_BROWSER_RETRY_ERRORS=1 (só segunda passagem — prioriza falhas de match)
+ * - Overnight: não usar RETRY_ERRORS; pendentes já vêm primeiro automaticamente
  *
  * Sem MySQL Beatscode usa Playwright automaticamente.
  */

@@ -260,22 +260,19 @@ export class BeatscodeDocumentsImportService {
           ...players.filter((p) => lastErrors.has(p.externalId ?? '')),
           ...players.filter((p) => !lastErrors.has(p.externalId ?? '')),
         ]
-      : players;
+      : [
+          ...players.filter((p) => this.playerNeedsDocumentSync(p.registrationProfile)),
+          ...players.filter((p) => !this.playerNeedsDocumentSync(p.registrationProfile)),
+        ];
 
     try {
       for (const player of orderedPlayers) {
         if (maxSuccess > 0 && result.playersProcessed >= maxSuccess) break;
         try {
           const profile = this.parseProfile(player.registrationProfile);
+          if (!this.playerNeedsDocumentSync(player.registrationProfile)) continue;
           const docs = this.normalizeDocs(profile.documents);
-          const hasPending =
-            docs.some((d) => d.pendingDownload || !d.fileUrl?.trim()) ||
-            docs.length === 0;
           const contracts = this.getBeatscodeContracts(profile);
-          const hasContractPending = contracts.some(
-            (c) => (c.attachmentIds?.length ?? 0) + (c.extraFileIds?.length ?? 0) > 0,
-          );
-          if (!hasPending && !hasContractPending) continue;
 
           const employeeId = this.parseBeatscodeEmployeeId(player.externalId ?? '');
           const beatscodeMeta = this.parseBeatscodeProfileMeta(profile);
@@ -346,6 +343,18 @@ export class BeatscodeDocumentsImportService {
       `Beatscode browser: ${result.filesDownloaded} arquivo(s), ${result.playersProcessed} jogador(es)`,
     );
     return result;
+  }
+
+  private playerNeedsDocumentSync(registrationProfile: unknown): boolean {
+    const profile = this.parseProfile(registrationProfile);
+    const docs = this.normalizeDocs(profile.documents);
+    const hasPending =
+      docs.some((d) => d.pendingDownload || !d.fileUrl?.trim()) || docs.length === 0;
+    const contracts = this.getBeatscodeContracts(profile);
+    const hasContractPending = contracts.some(
+      (c) => (c.attachmentIds?.length ?? 0) + (c.extraFileIds?.length ?? 0) > 0,
+    );
+    return hasPending || hasContractPending;
   }
 
   private parseBeatscodeEmployeeId(externalId: string): number | undefined {
