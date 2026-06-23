@@ -162,13 +162,13 @@ export interface PlayerTabConfig {
 
 /** Abas do formulário de jogador. Avaliação psicológica e Análise de desempenho exigem módulo. */
 export const PLAYER_TABS: PlayerTabConfig[] = [
-  { id: "dados", label: "Dados base", icon: UserCircle, moduleSlug: null },
-  { id: "psicologica", label: "Avaliação psicológica", icon: Brain, moduleSlug: "saude" },
+  { id: "dados", label: "Dados", icon: UserCircle, moduleSlug: null },
+  { id: "psicologica", label: "Psicológica", icon: Brain, moduleSlug: "saude" },
   { id: "status", label: "Status", icon: Activity, moduleSlug: "diretoria" },
-  { id: "mapa", label: "Mapa / Posição", icon: MapIcon, moduleSlug: null },
-  { id: "momentos", label: "Melhores momentos", icon: Youtube, moduleSlug: null },
+  { id: "mapa", label: "Mapa", icon: MapIcon, moduleSlug: null },
+  { id: "momentos", label: "Momentos", icon: Youtube, moduleSlug: null },
   { id: "imagens", label: "Imagens", icon: ImageIcon, moduleSlug: null },
-  { id: "desempenho", label: "Análise de desempenho", icon: BarChart3, moduleSlug: "futebol_analise" },
+  { id: "desempenho", label: "Desempenho", icon: BarChart3, moduleSlug: "futebol_analise" },
 ];
 
 /** Estrutura completa do menu do dashboard. */

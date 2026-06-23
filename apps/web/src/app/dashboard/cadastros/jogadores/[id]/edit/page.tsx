@@ -435,15 +435,15 @@ export default function EditJogadorPage() {
         <PlayerMatchAvailabilityHeader availability={matchAvailability} />
       </div>
 
-      <div className="relative z-0 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
+      <div className="relative z-0 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-2 sm:p-3">
         <BostonTvDashboardTabs
           tabs={PLAYER_TABS.filter((tab) => !tab.moduleSlug || canAccessModule(tab.moduleSlug))}
           active={activeTab}
           onChange={setActiveTab}
           ariaLabel="Seções do atleta"
-          wrap={false}
+          wrap
           uppercase
-          compact
+          dense
         />
       </div>
 
