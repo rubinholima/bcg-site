@@ -12,6 +12,7 @@ export function BostonTvDashboardTabs<T extends string>({
   uppercase = false,
   compact = false,
   dense = false,
+  stretch = false,
 }: {
   tabs: Array<{ id: T; label: string; icon?: LucideIcon }>;
   active: T;
@@ -25,6 +26,8 @@ export function BostonTvDashboardTabs<T extends string>({
   compact?: boolean;
   /** ainda menor — muitas abas na mesma linha, sem barra de rolagem */
   dense?: boolean;
+  /** cada aba ocupa largura igual — preenche 100% da linha */
+  stretch?: boolean;
 }) {
   return (
     <div
@@ -32,13 +35,15 @@ export function BostonTvDashboardTabs<T extends string>({
       aria-label={ariaLabel}
       className={cn(
         "flex gap-1 sm:gap-1.5",
-        wrap
-          ? "flex-wrap"
-          : cn(
-              "flex-nowrap overflow-x-auto pb-0.5",
-              "[scrollbar-width:thin] [scrollbar-color:rgba(139,92,246,0.35)_transparent]",
-              "[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-violet-500/35 [&::-webkit-scrollbar-track]:bg-transparent",
-            ),
+        stretch && "w-full flex-nowrap",
+        !stretch &&
+          (wrap
+            ? "flex-wrap"
+            : cn(
+                "flex-nowrap overflow-x-auto pb-0.5",
+                "[scrollbar-width:thin] [scrollbar-color:rgba(139,92,246,0.35)_transparent]",
+                "[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-violet-500/35 [&::-webkit-scrollbar-track]:bg-transparent",
+              )),
       )}
     >
       {tabs.map(({ id, label, icon: Icon }) => {
@@ -52,7 +57,10 @@ export function BostonTvDashboardTabs<T extends string>({
             onClick={() => onChange(id)}
             title={label}
             className={cn(
-              "group relative inline-flex shrink-0 items-center rounded-lg border transition-all duration-200",
+              "group relative inline-flex items-center rounded-lg border transition-all duration-200",
+              stretch
+                ? "min-w-0 flex-1 basis-0 justify-center"
+                : "shrink-0",
               dense
                 ? "min-h-[30px] gap-1 px-1.5 py-1 text-[10px] sm:px-2"
                 : compact
@@ -87,7 +95,8 @@ export function BostonTvDashboardTabs<T extends string>({
             ) : null}
             <span
               className={cn(
-                "whitespace-nowrap tracking-tight",
+                "tracking-tight",
+                stretch ? "truncate text-center" : "whitespace-nowrap",
                 uppercase &&
                   (dense
                     ? "text-[9px] font-semibold uppercase tracking-wide sm:text-[10px]"

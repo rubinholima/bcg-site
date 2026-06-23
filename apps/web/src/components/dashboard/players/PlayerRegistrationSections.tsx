@@ -191,6 +191,7 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
         ariaLabel="Seções do cadastro do atleta"
         uppercase
         compact
+        stretch
       />
 
       {activeRegTab === "identificacao" && (

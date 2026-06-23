@@ -441,9 +441,9 @@ export default function EditJogadorPage() {
           active={activeTab}
           onChange={setActiveTab}
           ariaLabel="Seções do atleta"
-          wrap
           uppercase
           dense
+          stretch
         />
       </div>
 
