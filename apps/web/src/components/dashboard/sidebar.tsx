@@ -91,11 +91,13 @@ function isFutebolCadastroPath(pathname: string | null): boolean {
   );
 }
 
-function isMedicoCadastroPath(pathname: string | null): boolean {
+function isSaudeCadastroPath(pathname: string | null): boolean {
   if (!pathname) return false;
   return (
     pathname.startsWith("/dashboard/medico/equipe") ||
-    pathname.startsWith("/dashboard/medico/enfermeiros")
+    pathname.startsWith("/dashboard/medico/enfermeiros") ||
+    pathname.startsWith("/dashboard/psicologia/psicologos") ||
+    pathname.startsWith("/dashboard/saude/estagiarios")
   );
 }
 
@@ -134,11 +136,11 @@ function isSaudePath(pathname: string | null, relHub: string | null): boolean {
   if (relHub === "saude") return true;
   if (!pathname) return false;
   return (
-    (pathname.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)) ||
+    (pathname.startsWith("/dashboard/medico") && !isSaudeCadastroPath(pathname)) ||
     pathname.startsWith("/dashboard/consultas") ||
     (pathname.startsWith("/dashboard/psicologia") && !pathname.startsWith("/dashboard/psicologia/psicologos")) ||
     pathname.startsWith("/dashboard/saude") ||
-    isMedicoCadastroPath(pathname) ||
+    isSaudeCadastroPath(pathname) ||
     pathname.startsWith("/dashboard/psicologia/psicologos")
   );
 }
@@ -391,7 +393,7 @@ function SidebarNav() {
       (pathname?.startsWith("/dashboard/psicologia") && !pathname?.startsWith("/dashboard/psicologia/psicologos"))
   );
   const [medicoOpen, setMedicoOpen] = useState(
-    () => pathname?.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)
+    () => pathname?.startsWith("/dashboard/medico") && !isSaudeCadastroPath(pathname)
   );
   const [socioOpen, setSocioOpen] = useState(() => isSocioPath(pathname, relHub));
   const [academiasOpen, setAcademiasOpen] = useState(() => isAcademiasPath(pathname));
@@ -457,7 +459,7 @@ function SidebarNav() {
         !pathname.startsWith("/dashboard/psicologia/psicologos"))
     ) {
       setPsicologiaOpen(true);
-    } else if (pathname?.startsWith("/dashboard/medico") && !isMedicoCadastroPath(pathname)) {
+    } else if (pathname?.startsWith("/dashboard/medico") && !isSaudeCadastroPath(pathname)) {
       setMedicoOpen(true);
     }
   };

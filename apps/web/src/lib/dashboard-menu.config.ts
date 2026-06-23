@@ -526,6 +526,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: UserCircle,
             moduleSlug: "saude",
           },
+          {
+            slug: "cad_estagiarios",
+            label: "Estagiários",
+            href: "/dashboard/saude/estagiarios",
+            icon: GraduationCap,
+            moduleSlug: "saude",
+          },
         ],
       },
       {

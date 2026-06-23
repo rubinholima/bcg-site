@@ -49,8 +49,9 @@ export default function PsicologosPage() {
   }, [tenantId]);
 
   const filtered = useMemo(() => {
-    if (!search) return list;
-    return list.filter((p) => p.name.toLowerCase().includes(search));
+    const onlyPsychologos = list.filter((p) => (p.staffRole ?? "psicologo") === "psicologo");
+    if (!search) return onlyPsychologos;
+    return onlyPsychologos.filter((p) => p.name.toLowerCase().includes(search));
   }, [list, search]);
 
   const showSuccess = searchParams.get("success") === "true";

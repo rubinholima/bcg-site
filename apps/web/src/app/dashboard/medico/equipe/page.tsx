@@ -48,8 +48,9 @@ export default function MedicoEquipePage() {
   }, [tenantId]);
 
   const filtered = useMemo(() => {
-    if (!search) return list;
-    return list.filter(
+    const withoutEstagiarios = list.filter((p) => p.role !== "estagiario");
+    if (!search) return withoutEstagiarios;
+    return withoutEstagiarios.filter(
       (p) =>
         p.name.toLowerCase().includes(search) ||
         (p.specialty ?? "").toLowerCase().includes(search) ||

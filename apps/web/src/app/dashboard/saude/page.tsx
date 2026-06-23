@@ -6,6 +6,7 @@ import {
   Heart,
   Activity,
   UserCircle,
+  GraduationCap,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { SaudeHubInsights } from "@/components/dashboard/hub/SaudeHubInsights";
@@ -30,6 +31,13 @@ const LINKS = [
     description: "Cadastro de psicólogos.",
     href: "/dashboard/psicologia/psicologos",
     icon: UserCircle,
+    moduleSlug: "saude",
+  },
+  {
+    title: "Estagiários",
+    description: "Estagiários de saúde — área médica ou psicologia.",
+    href: "/dashboard/saude/estagiarios",
+    icon: GraduationCap,
     moduleSlug: "saude",
   },
   {

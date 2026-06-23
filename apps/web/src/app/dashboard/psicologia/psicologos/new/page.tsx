@@ -19,7 +19,6 @@ import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import type { Tenant } from "@/types/tenant";
-import type { Psychologist } from "@/types/psychologist";
 
 export default function NovoPsicologoPage() {
   const router = useRouter();
@@ -36,17 +35,10 @@ export default function NovoPsicologoPage() {
     bio: "",
     tenantId: "",
     calendarBlocked: false,
-    staffRole: "psicologo",
-    supervisorId: "",
   });
-  const [supervisors, setSupervisors] = useState<Psychologist[]>([]);
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => setTenants(Array.isArray(data) ? data : [])).catch(() => setTenants([]));
-    api.get<Psychologist[]>("/psychologists").then(({ data }) => {
-      const list = Array.isArray(data) ? data : [];
-      setSupervisors(list.filter((p) => (p.staffRole ?? "psicologo") === "psicologo"));
-    }).catch(() => setSupervisors([]));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,8 +77,7 @@ export default function NovoPsicologoPage() {
         photoUrl: finalPhotoUrl || undefined,
         tenantId: form.tenantId.trim() || undefined,
         calendarBlocked: form.calendarBlocked,
-        staffRole: form.staffRole,
-        supervisorId: form.staffRole === "estagiario" && form.supervisorId ? form.supervisorId : undefined,
+        staffRole: "psicologo",
       });
       router.push("/dashboard/psicologia/psicologos?success=true");
     } catch (err) {
@@ -103,56 +94,13 @@ export default function NovoPsicologoPage() {
       <Card>
         <CardHeader>
           <CardTitle>Cadastro — Psicologia</CardTitle>
-          <CardDescription>
-            Psicóloga(o) ou estagiária(o). Estagiários podem ser vinculados a uma supervisora.
-          </CardDescription>
+          <CardDescription>Psicóloga(o) do departamento.</CardDescription>
         </CardHeader>
         <CardContent>
           <form id="form-psicologia-new" onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
             )}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Vínculo</Label>
-                <Select
-                  value={form.staffRole}
-                  onValueChange={(v) => setForm((p) => ({ ...p, staffRole: v, supervisorId: v === "psicologo" ? "" : p.supervisorId }))}
-                  disabled={loading}
-                >
-                  <SelectTrigger className="text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="psicologo">Psicóloga(o)</SelectItem>
-                    <SelectItem value="estagiario">Estagiária(o)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {form.staffRole === "estagiario" ? (
-                <div className="space-y-2">
-                  <Label>Supervisora</Label>
-                  <Select
-                    value={form.supervisorId || "none"}
-                    onValueChange={(v) => setForm((p) => ({ ...p, supervisorId: v === "none" ? "" : v }))}
-                    disabled={loading}
-                  >
-                    <SelectTrigger className="text-foreground">
-                      <SelectValue placeholder="Supervisora" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">—</SelectItem>
-                      {supervisors.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : null}
-            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

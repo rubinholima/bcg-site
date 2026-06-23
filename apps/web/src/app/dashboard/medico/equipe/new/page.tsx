@@ -147,7 +147,7 @@ export default function NovoMedicoEquipePage() {
                     <SelectValue placeholder="Selecione o cargo" />
                   </SelectTrigger>
                   <SelectContent>
-                    {MEDICAL_STAFF_ROLES.map((r) => (
+                    {MEDICAL_STAFF_ROLES.filter((r) => r.value !== "estagiario").map((r) => (
                       <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                     ))}
                   </SelectContent>

@@ -13,6 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -411,39 +420,66 @@ export function PsychologySchedulingCard({
             onChange={(e) => setGroupSummary(e.target.value)}
           />
           {attendance.length > 0 ? (
-            <div className="max-h-[280px] space-y-1 overflow-y-auto rounded-md border border-border p-2">
-              <p className="px-1 text-xs font-medium text-muted-foreground">Chamada de presença</p>
-              {attendance.map((row, idx) => (
-                <div
-                  key={row.playerId}
-                  className="flex min-h-[44px] items-center gap-3 rounded-md border border-border/60 bg-background px-2 py-2 text-sm"
-                >
-                  <input
-                    type="checkbox"
-                    checked={row.present === true}
-                    onChange={(e) => {
-                      setAttendance((prev) => {
-                        const next = [...prev];
-                        next[idx] = { ...next[idx], present: e.target.checked };
-                        return next;
-                      });
-                    }}
-                    className="h-4 w-4 shrink-0"
-                    aria-label={`Presença de ${row.playerName ?? "atleta"}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => openNoteDialog(idx)}
-                    className="min-w-0 flex-1 text-left font-medium hover:underline"
-                  >
-                    {row.playerName ?? "—"}
-                  </button>
-                  {row.individualNotes?.trim() ? (
-                    <span className="shrink-0 text-xs text-violet-400">Obs.</span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Chamada de presença</CardTitle>
+                <CardDescription>{attendance.length} atleta{attendance.length > 1 ? "s" : ""} na categoria</CardDescription>
+              </CardHeader>
+              <CardContent className="max-h-[320px] overflow-y-auto p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-14">Presente</TableHead>
+                      <TableHead>Atleta</TableHead>
+                      <TableHead className="w-16 text-center">Obs.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {attendance.map((row, idx) => (
+                      <TableRow key={row.playerId}>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={row.present === true}
+                            onChange={(e) => {
+                              setAttendance((prev) => {
+                                const next = [...prev];
+                                next[idx] = { ...next[idx], present: e.target.checked };
+                                return next;
+                              });
+                            }}
+                            className="h-4 w-4"
+                            aria-label={`Presença de ${row.playerName ?? "atleta"}`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            type="button"
+                            onClick={() => openNoteDialog(idx)}
+                            className="font-medium hover:underline"
+                          >
+                            {row.playerName ?? "—"}
+                          </button>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {row.individualNotes?.trim() ? (
+                            <button
+                              type="button"
+                              onClick={() => openNoteDialog(idx)}
+                              className="text-xs font-medium text-violet-400 hover:underline"
+                            >
+                              Ver
+                            </button>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
           ) : category && tenantId ? (
             <p className="text-sm text-muted-foreground">Nenhum atleta nesta categoria.</p>
           ) : null}
