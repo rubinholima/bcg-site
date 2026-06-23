@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
-import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
+import { FOOTBALL_POSITIONS, getPositionLabel } from "@/lib/football-positions";
 import { SPORTS_SITUATION_OPTIONS } from "@/lib/player-registration-profile";
 
 interface Tenant {
@@ -168,7 +168,9 @@ export function JogadoresFilters({
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Todas" />
+              <SelectValue placeholder="Todas">
+                {position ? getPositionLabel(position) : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>
@@ -218,7 +220,9 @@ export function JogadoresFilters({
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Todas" />
+              <SelectValue placeholder="Todas">
+                {position ? getPositionLabel(position) : undefined}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas</SelectItem>

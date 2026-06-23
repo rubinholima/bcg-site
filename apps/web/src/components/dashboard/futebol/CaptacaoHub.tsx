@@ -47,7 +47,8 @@ import {
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
-import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
+import { FootballPositionSelect } from "@/components/dashboard/players/FootballPositionSelect";
+import { getPositionLabel } from "@/lib/football-positions";
 import {
   type CaptacaoStats,
   type Scout,
@@ -729,7 +730,7 @@ export function CaptacaoHub() {
                         >
                           <p className="font-semibold">{p.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {p.position ?? "—"} · {p.currentClub ?? "Sem clube"}
+                            {getPositionLabel(p.position) || "—"} · {p.currentClub ?? "Sem clube"}
                           </p>
                           <div className="mt-1 flex flex-wrap gap-1">
                             <span
@@ -1075,7 +1076,7 @@ export function CaptacaoHub() {
                                 <div>
                                   <p className="font-semibold">{p.name}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {p.position ?? "—"} · {p.currentClub ?? "Sem clube"}
+                                    {getPositionLabel(p.position) || "—"} · {p.currentClub ?? "Sem clube"}
                                   </p>
                                 </div>
                                 <div className="flex flex-wrap gap-1">
@@ -1124,7 +1125,7 @@ export function CaptacaoHub() {
                                     <TableCell>
                                       <p className="font-medium">{r.prospect?.name}</p>
                                       <p className="text-xs text-muted-foreground">
-                                        {r.prospect?.position}
+                                        {getPositionLabel(r.prospect?.position) || "—"}
                                       </p>
                                     </TableCell>
                                     <TableCell>{r.overallRating?.toFixed(1) ?? "—"}</TableCell>
@@ -1222,27 +1223,20 @@ export function CaptacaoHub() {
                     </div>
                     <div>
                       <Label>Posição</Label>
-                      <Select
-                        value={prospectForm.position || "none"}
+                      <FootballPositionSelect
+                        value={prospectForm.position || null}
                         onValueChange={(v) =>
                           setProspectForm((f) => ({
                             ...f,
-                            position: v === "none" ? "" : v,
+                            position: v,
                           }))
                         }
-                      >
-                        <SelectTrigger className="text-foreground">
-                          <SelectValue placeholder="Posição" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">—</SelectItem>
-                          {FOOTBALL_POSITIONS.map((p) => (
-                            <SelectItem key={p.value} value={p.value}>
-                              {p.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        placeholder="Posição"
+                        showEmptyOption
+                        emptyValue="none"
+                        emptyLabel="—"
+                        triggerClassName="text-foreground"
+                      />
                     </div>
                     <div>
                       <Label>Data nascimento</Label>

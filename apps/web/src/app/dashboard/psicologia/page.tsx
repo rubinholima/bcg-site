@@ -18,6 +18,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
+import { getPositionLabel } from "@/lib/football-positions";
 import { PsicologiaFilters } from "./PsicologiaFilters";
 
 interface Player {
@@ -141,7 +142,7 @@ export default function PsicologiaListPage() {
                         {p.category ?? "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {p.position ?? "—"}
+                        {getPositionLabel(p.position) || "—"}
                       </TableCell>
                       <TableCell>
                         <Link href={`/dashboard/psicologia/${p.id}`}>

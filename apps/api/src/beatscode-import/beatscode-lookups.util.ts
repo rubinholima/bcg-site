@@ -30,18 +30,16 @@ export type BeatscodeLookupInput = {
   banks?: Array<Record<string, unknown>>;
 };
 
-/** Fallback Boston City FC — espelha GET /position?route=/settings/position (mai/2026). */
+/** Fallback Boston City FC — posições canônicas BCG. */
 export const BEATSCODE_FALLBACK_POSITIONS: Array<{ id: number; acronym: string; name: string }> = [
   { id: 1, acronym: 'GOL', name: 'Goleiro' },
   { id: 2, acronym: 'ZAG', name: 'Zagueiro' },
-  { id: 3, acronym: 'LAT', name: 'Lateral' },
-  { id: 4, acronym: 'VOL', name: 'Volante' },
-  { id: 5, acronym: 'MEI', name: 'Meio Campo' },
-  { id: 6, acronym: 'ATA', name: 'Atacante' },
-  { id: 50, acronym: 'LP', name: 'Lateral/Ponta' },
-  { id: 51, acronym: 'EXT', name: 'Extremo' },
   { id: 52, acronym: 'L.E', name: 'Lateral Esquerdo' },
   { id: 53, acronym: 'L.D', name: 'Lateral Direito' },
+  { id: 4, acronym: 'VOL', name: 'Volante' },
+  { id: 5, acronym: 'MEI', name: 'Meio-campo' },
+  { id: 51, acronym: 'EXT', name: 'Extremo' },
+  { id: 6, acronym: 'ATA', name: 'Centroavante' },
 ];
 
 const BEATSCODE_FALLBACK_FEET: Array<{ id: number; foot: 'left' | 'right' | 'both' }> = [
@@ -51,16 +49,31 @@ const BEATSCODE_FALLBACK_FEET: Array<{ id: number; foot: 'left' | 'right' | 'bot
 ];
 
 const ACRONYM_TO_BCG_POSITION: Record<string, string> = {
-  GOL: 'GK',
-  ZAG: 'CB',
-  LAT: 'LB',
-  VOL: 'CDM',
-  MEI: 'CM',
-  ATA: 'ST',
-  LP: 'LW',
-  EXT: 'RW',
-  'L.E': 'LB',
-  'L.D': 'RB',
+  GOL: 'GOLEIRO',
+  ZAG: 'ZAGUEIRO',
+  LAT: 'LATERAL ESQUERDO',
+  VOL: 'VOLANTE',
+  MEI: 'MEIO-CAMPO',
+  ATA: 'CENTROAVANTE',
+  LP: 'EXTREMO',
+  EXT: 'EXTREMO',
+  'L.E': 'LATERAL ESQUERDO',
+  'L.D': 'LATERAL DIREITO',
+  GK: 'GOLEIRO',
+  CB: 'ZAGUEIRO',
+  LB: 'LATERAL ESQUERDO',
+  RB: 'LATERAL DIREITO',
+  CDM: 'VOLANTE',
+  CM: 'MEIO-CAMPO',
+  ST: 'CENTROAVANTE',
+  LWB: 'LATERAL ESQUERDO',
+  RWB: 'LATERAL DIREITO',
+  CAM: 'MEIO-CAMPO',
+  LM: 'MEIO-CAMPO',
+  RM: 'MEIO-CAMPO',
+  LW: 'EXTREMO',
+  RW: 'EXTREMO',
+  CF: 'CENTROAVANTE',
 };
 
 export function buildBeatscodeLookupContext(input: BeatscodeLookupInput): BeatscodeLookupContext {

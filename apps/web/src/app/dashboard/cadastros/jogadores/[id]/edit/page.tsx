@@ -36,6 +36,10 @@ import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
 import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
+import {
+  FIELD_POSITION_DEFAULTS,
+  type FootballPositionCode,
+} from "@/lib/football-positions";
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
@@ -482,7 +486,21 @@ export default function EditJogadorPage() {
               responsibleUserName={responsibleUserName}
               onPhotoUrlChange={(v) => update({ photoUrl: v })}
               onPendingPhotoFile={setPendingPhotoFile}
-              onPlayerField={(field, value) => update({ [field]: value } as Partial<PlayerData>)}
+              onPlayerField={(field, value) => {
+                if (field === "position" && typeof value === "string" && value) {
+                  const code = value as FootballPositionCode;
+                  const def = FIELD_POSITION_DEFAULTS[code];
+                  if (def) {
+                    update({
+                      position: code,
+                      fieldPositionX: def.x,
+                      fieldPositionY: def.y,
+                    });
+                    return;
+                  }
+                }
+                update({ [field]: value } as Partial<PlayerData>);
+              }}
               onProfileChange={(next) => update({ registrationProfile: next })}
               canAccessLogistica={canAccessModule("futebol_logistica")}
               canAccessJuridico={canAccessModule("juridico")}

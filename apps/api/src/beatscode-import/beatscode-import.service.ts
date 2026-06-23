@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
+import { normalizeFootballPositionCode } from '../common/football-positions.util';
 import { mediaKeyFromStoredUrl } from '../common/media-key.util';
 import { getPlayerPhotoDisplayName } from '../common/photo-display-name';
 import { MediaMetaService } from '../media/media-meta.service';
@@ -412,7 +413,7 @@ export class BeatscodeImportService {
       weight: mapped.weight ?? null,
       preferredFoot: mapped.preferredFoot ?? null,
       jerseyNumber: mapped.jerseyNumber ?? null,
-      position: cadastroUpper(mapped.position),
+      position: normalizeFootballPositionCode(mapped.position) ?? cadastroUpper(mapped.position),
       contactEmail: mapped.contactEmail ?? null,
       contactPhone: mapped.contactPhone ?? null,
       emergencyContactName: mapped.emergencyContactName ?? null,

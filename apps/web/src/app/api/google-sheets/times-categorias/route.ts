@@ -100,29 +100,12 @@ function normalizePreferredFoot(value: string): "left" | "right" | "both" | unde
   return undefined;
 }
 
-/** Mapeia labels de posição (planilha) para códigos (GK, CB, etc.). Aceita nomes completos em PT. */
-const POSITION_LABEL_TO_VALUE: Record<string, string> = {
-  goleiro: "GK",
-  "zagueiro central": "CB",
-  "lateral esquerdo": "LB",
-  "lateral direito": "RB",
-  "ala esquerdo": "LWB",
-  "ala direito": "RWB",
-  volante: "CDM",
-  "meio-campista": "CM",
-  "meia-atacante": "CAM",
-  "meia esquerda": "LM",
-  "meia direita": "RM",
-  "ponta esquerda": "LW",
-  "ponta direita": "RW",
-  atacante: "CF",
-  centroavante: "ST",
-};
+import { normalizeFootballPositionCode } from "@/lib/football-positions";
+
 function normalizePosition(value: string): string {
   const v = value?.trim();
   if (!v) return "";
-  const lower = v.toLowerCase();
-  return POSITION_LABEL_TO_VALUE[lower] ?? v;
+  return normalizeFootballPositionCode(v) ?? v;
 }
 
 /** Índice da coluna clube/slug. -1 se não existir. */

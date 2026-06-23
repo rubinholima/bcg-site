@@ -7,6 +7,7 @@ import {
   cadastroUpper,
   cadastroUpperRequired,
 } from '../common/cadastro-text';
+import { normalizeFootballPositionCode } from '../common/football-positions.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
@@ -719,7 +720,7 @@ export class PlayersService {
           weight: p.weight != null ? Number(p.weight) : null,
           preferredFoot: (p.preferredFoot as string)?.trim() || null,
           jerseyNumber: p.jerseyNumber != null ? Number(p.jerseyNumber) : null,
-          position: cadastroUpper((p.position as string) ?? undefined),
+          position: this.normalizePlayerPosition((p.position as string) ?? undefined),
           currentTeam: cadastroUpper((p.currentTeam as string) ?? undefined),
           previousTeams: Array.isArray(p.previousTeams) && p.previousTeams.every((x) => typeof x === 'string')
             ? cadastroJsonStringArray(p.previousTeams)
@@ -844,7 +845,7 @@ export class PlayersService {
           weight: p.weight != null ? Number(p.weight) : null,
           preferredFoot: (p.preferredFoot as string)?.trim() || null,
           jerseyNumber: p.jerseyNumber != null ? Number(p.jerseyNumber) : null,
-          position: cadastroUpper((p.position as string) ?? undefined),
+          position: this.normalizePlayerPosition((p.position as string) ?? undefined),
           currentTeam: cadastroUpper((p.currentTeam as string) ?? undefined),
           previousTeams: Array.isArray(p.previousTeams) && p.previousTeams.every((x) => typeof x === 'string')
             ? cadastroJsonStringArray(p.previousTeams)
@@ -911,6 +912,13 @@ export class PlayersService {
     return { created, updated, skipped };
   }
 
+  private normalizePlayerPosition(value: string | null | undefined): string | null {
+    if (value == null || !String(value).trim()) return null;
+    const canonical = normalizeFootballPositionCode(String(value));
+    if (canonical) return canonical;
+    return cadastroUpper(String(value));
+  }
+
   private toCreateData(dto: CreatePlayerDto): Prisma.PlayerUncheckedCreateInput {
     const d = dto as unknown as Record<string, unknown>;
     const j = (v: unknown) => (v != null ? (v as object) : Prisma.JsonNull);
@@ -933,7 +941,7 @@ export class PlayersService {
       leanMassKg: d.leanMassKg != null ? (d.leanMassKg as number) : null,
       preferredFoot: (d.preferredFoot as string)?.trim() || null,
       jerseyNumber: d.jerseyNumber != null ? (d.jerseyNumber as number) : null,
-      position: cadastroUpper((d.position as string) ?? undefined),
+      position: this.normalizePlayerPosition(d.position as string | undefined),
       fieldPositionX: d.fieldPositionX != null ? (d.fieldPositionX as number) : null,
       fieldPositionY: d.fieldPositionY != null ? (d.fieldPositionY as number) : null,
       currentTeam: cadastroUpper((d.currentTeam as string) ?? undefined),
@@ -988,7 +996,7 @@ export class PlayersService {
       ...(d.leanMassKg !== undefined && { leanMassKg: d.leanMassKg as number | null }),
       ...(d.preferredFoot !== undefined && { preferredFoot: (d.preferredFoot as string)?.trim() || null }),
       ...(d.jerseyNumber !== undefined && { jerseyNumber: d.jerseyNumber as number | null }),
-      ...(d.position !== undefined && { position: cadastroUpper((d.position as string) ?? undefined) }),
+      ...(d.position !== undefined && { position: this.normalizePlayerPosition(d.position as string | undefined) }),
       ...(d.fieldPositionX !== undefined && { fieldPositionX: d.fieldPositionX as number | null }),
       ...(d.fieldPositionY !== undefined && { fieldPositionY: d.fieldPositionY as number | null }),
       ...(d.currentTeam !== undefined && { currentTeam: cadastroUpper((d.currentTeam as string) ?? undefined) }),

@@ -24,7 +24,7 @@ import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName"
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { formatPhoneForDisplay } from "@/lib/format-phone";
 import { formatCpfForDisplay, formatCpfInput } from "@/lib/format-cpf";
-import { FOOTBALL_POSITIONS } from "@/lib/football-positions";
+import { FootballPositionSelect } from "@/components/dashboard/players/FootballPositionSelect";
 import {
   CLOTHING_SIZE_FIELDS,
   CLOTHING_SIZE_OPTIONS,
@@ -862,18 +862,10 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               Posição
               <RequiredMark />
             </Label>
-            <Select value={position ?? ""} onValueChange={(v) => onPlayerField("position", v || null)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {FOOTBALL_POSITIONS.map((pos) => (
-                  <SelectItem key={pos.value} value={pos.value}>
-                    {pos.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FootballPositionSelect
+              value={position}
+              onValueChange={(v) => onPlayerField("position", v || null)}
+            />
           </div>
           <div className="space-y-2">
             <Label>Nº camisa</Label>
