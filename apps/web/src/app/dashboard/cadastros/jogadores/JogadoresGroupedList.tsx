@@ -94,22 +94,22 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
   const fullName = player.name.trim();
 
   return (
-    <div className="group flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/40 px-2 py-1.5 transition-colors hover:border-violet-500/40 hover:bg-violet-950/20">
+    <div className="group flex items-center gap-1 rounded-full border border-border/50 bg-zinc-900/40 py-1 pl-1 pr-0.5 transition-colors hover:border-violet-500/35 hover:bg-violet-950/25">
       <Link
         href={`/dashboard/cadastros/jogadores/${player.id}/edit`}
         className="flex min-w-0 flex-1 items-center gap-2"
         title={fullName || displayName}
       >
         {player.photoUrl ? (
-          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md border border-border/50 bg-muted">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-border/40 bg-muted">
             <img
               src={getPublicImageUrl(player.photoUrl)}
               alt=""
-              className="h-full w-full object-contain object-center"
+              className="h-full w-full object-cover object-[center_18%]"
             />
           </div>
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/40 text-[10px] text-muted-foreground">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-border/50 bg-muted/40 text-[10px] text-muted-foreground">
             —
           </div>
         )}
@@ -125,14 +125,14 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
           className="shrink-0 [&_span]:px-1.5 [&_span]:py-0 [&_span]:text-[10px]"
         />
       </Link>
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
         <Link href={`/dashboard/cadastros/jogadores/${player.id}/edit`}>
-          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Editar">
+          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Editar">
             <Pencil className="h-3 w-3" />
           </Button>
         </Link>
         <Link href={`/dashboard/cadastros/jogadores/${player.id}/delete`}>
-          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Excluir">
+          <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Excluir">
             <Trash2 className="h-3 w-3 text-destructive" />
           </Button>
         </Link>
