@@ -420,6 +420,7 @@ export default function EditJogadorPage() {
           ariaLabel="Seções do atleta"
           wrap={false}
           uppercase
+          compact
         />
       </div>
 
