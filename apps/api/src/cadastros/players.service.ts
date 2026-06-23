@@ -21,6 +21,10 @@ import { parseTravelCategories, travelMatchesCategoryFilter } from '../futebol-a
 import { FootballAgendaBirthdaysService } from '../futebol-agenda/football-agenda-birthdays.service';
 import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
 import {
+  buildPlayerMatchAvailabilityInput,
+  getPlayerMatchAvailability,
+} from '../common/player-match-availability.util';
+import {
   normalizeSportsSituation,
   isArchivedSportsSituation,
   isLoanedSportsSituation,
@@ -44,6 +48,7 @@ export class PlayersService {
     position?: string;
     search?: string;
     situation?: string;
+    availability?: string;
     archived?: boolean;
     loaned?: boolean;
   }) {
@@ -99,6 +104,15 @@ export class PlayersService {
         (p) =>
           !this.isArchivedPlayer(p.registrationProfile) && !this.isLoanedPlayer(p.registrationProfile),
       );
+    }
+
+    const availability = filters?.availability?.trim().toLowerCase();
+    if (availability === 'apto' || availability === 'nao_apto') {
+      const wantApto = availability === 'apto';
+      players = players.filter((p) => {
+        const avail = getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(p));
+        return avail.apto === wantApto;
+      });
     }
 
     return players;

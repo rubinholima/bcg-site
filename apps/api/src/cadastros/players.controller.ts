@@ -50,6 +50,7 @@ export class PlayersController {
     @Query('position') position?: string,
     @Query('search') search?: string,
     @Query('situation') situation?: string,
+    @Query('availability') availability?: string,
     @Query('archived') archived?: string,
     @Query('loaned') loaned?: string,
   ) {
@@ -59,6 +60,7 @@ export class PlayersController {
       position,
       search,
       situation,
+      availability,
       archived: archived === '1' || archived === 'true',
       loaned: loaned === '1' || loaned === 'true',
     });

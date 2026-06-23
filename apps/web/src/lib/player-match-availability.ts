@@ -6,8 +6,10 @@ export type PlayerMatchAvailabilityInput = {
   statusUntil?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
-  /** Registro CBF (registrationProfile.sports.cbf) — proxy para estar no BID. */
+  /** Registro CBF — apenas informativo; aptidão segue o campo status do atleta. */
   cbfRegistration?: string | null;
+  /** Quando true, exibe aviso de CBF/BID pendente mesmo estando apto. */
+  bidRegistrationPending?: boolean;
 };
 
 export type PlayerMatchAvailability = {
@@ -17,6 +19,8 @@ export type PlayerMatchAvailability = {
   reason: string | null;
   /** Versão curta para cabeçalho / lista. */
   shortReason: string | null;
+  /** Aviso opcional (ex.: CBF não preenchido) sem bloquear aptidão. */
+  warning: string | null;
 };
 
 function statusLabel(value: string): string {
@@ -38,6 +42,7 @@ export function getPlayerMatchAvailability(
       label: "Não apto",
       reason: "Fora do elenco",
       shortReason: "Fora do elenco",
+      warning: null,
     };
   }
 
@@ -48,6 +53,7 @@ export function getPlayerMatchAvailability(
       label: "Não apto",
       reason: details ? `Lesão — ${details}` : "Lesão física",
       shortReason,
+      warning: null,
     };
   }
 
@@ -61,6 +67,7 @@ export function getPlayerMatchAvailability(
       label: "Não apto",
       reason: shortReason,
       shortReason,
+      warning: null,
     };
   }
 
@@ -71,43 +78,33 @@ export function getPlayerMatchAvailability(
       label: "Não apto",
       reason: shortReason,
       shortReason,
+      warning: null,
     };
   }
 
   const cbf = input.cbfRegistration?.trim();
-  if (!cbf) {
-    return {
-      apto: false,
-      label: "Não apto",
-      reason: "Sem registro CBF — ainda não está no BID",
-      shortReason: "Não está no BID",
-    };
-  }
+  const bidWarning =
+    input.bidRegistrationPending && !cbf
+      ? "Registro CBF não cadastrado no sistema"
+      : null;
 
-  if (status === "on_bench") {
+  if (status === "on_bench" || status === "available") {
     return {
       apto: true,
       label: "Apto",
       reason: null,
       shortReason: null,
+      warning: bidWarning,
     };
   }
 
-  if (status !== "available") {
-    const lbl = statusLabel(status);
-    return {
-      apto: false,
-      label: "Não apto",
-      reason: lbl,
-      shortReason: lbl,
-    };
-  }
-
+  const lbl = statusLabel(status);
   return {
-    apto: true,
-    label: "Apto",
-    reason: null,
-    shortReason: null,
+    apto: false,
+    label: "Não apto",
+    reason: lbl,
+    shortReason: lbl,
+    warning: null,
   };
 }
 

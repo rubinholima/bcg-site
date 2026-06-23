@@ -32,6 +32,11 @@ export function PlayerMatchAvailabilityBadge({
           {availability.shortReason}
         </p>
       ) : null}
+      {showReason && availability.warning ? (
+        <p className="mt-0.5 text-[11px] leading-snug text-amber-500/90 line-clamp-2">
+          {availability.warning}
+        </p>
+      ) : null}
     </div>
   );
 }

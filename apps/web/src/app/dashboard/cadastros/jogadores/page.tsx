@@ -27,6 +27,7 @@ async function getPlayers(params: {
   position?: string;
   search?: string;
   situation?: string;
+  availability?: string;
   archived?: boolean;
 }): Promise<Player[]> {
   try {
@@ -36,6 +37,7 @@ async function getPlayers(params: {
     if (params.position) searchParams.set("position", params.position);
     if (params.search) searchParams.set("search", params.search);
     if (params.situation) searchParams.set("situation", params.situation);
+    if (params.availability) searchParams.set("availability", params.availability);
     if (params.archived) searchParams.set("archived", "1");
     const { data } = await api.get<Player[]>(`/players?${searchParams.toString()}`);
     return data ?? [];
@@ -70,6 +72,7 @@ export default async function JogadoresPage({
     position?: string;
     search?: string;
     situation?: string;
+    availability?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -80,6 +83,7 @@ export default async function JogadoresPage({
       position: params.position,
       search: params.search,
       situation: params.situation,
+      availability: params.availability,
     }),
     getLoanedPlayers({
       tenantId: params.tenantId,

@@ -42,6 +42,7 @@ export function JogadoresFilters({
   const [position, setPosition] = useState(searchParams.get("position") ?? "");
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [situation, setSituation] = useState(searchParams.get("situation") ?? "");
+  const [availability, setAvailability] = useState(searchParams.get("availability") ?? "");
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -63,6 +64,7 @@ export function JogadoresFilters({
       position: string;
       search: string;
       situation: string;
+      availability: string;
     }) => {
       const params = new URLSearchParams();
       if (values.tenantId) params.set("tenantId", values.tenantId);
@@ -72,13 +74,16 @@ export function JogadoresFilters({
       if (!archivedMode && !loanedMode && values.situation) {
         params.set("situation", values.situation);
       }
+      if (!archivedMode && !loanedMode && values.availability) {
+        params.set("availability", values.availability);
+      }
       const qs = params.toString();
       router.replace(qs ? `${basePath}?${qs}` : basePath);
     },
     [archivedMode, basePath, loanedMode, router],
   );
 
-  const filterValues = { tenantId, category, position, search, situation };
+  const filterValues = { tenantId, category, position, search, situation, availability };
 
   useEffect(() => {
     const urlSearch = searchParams.get("search") ?? "";
@@ -96,6 +101,7 @@ export function JogadoresFilters({
     setPosition("");
     setSearch("");
     setSituation("");
+    setAvailability("");
     router.replace(basePath);
   };
 
@@ -109,12 +115,13 @@ export function JogadoresFilters({
             const nextTenantId = v === "all" ? "" : v;
             setTenantId(nextTenantId);
             setCategory("");
-            pushFilters({
+              pushFilters({
               tenantId: nextTenantId,
               category: "",
               position,
               search,
               situation,
+              availability,
             });
           }}
         >
@@ -139,7 +146,7 @@ export function JogadoresFilters({
             onValueChange={(v) => {
               const nextCategory = v === "all" ? "" : v;
               setCategory(nextCategory);
-              pushFilters({ tenantId, category: nextCategory, position, search, situation });
+              pushFilters({ tenantId, category: nextCategory, position, search, situation, availability });
             }}
           >
             <SelectTrigger>
@@ -164,7 +171,7 @@ export function JogadoresFilters({
             onValueChange={(v) => {
               const nextPosition = v === "all" ? "" : v;
               setPosition(nextPosition);
-              pushFilters({ tenantId, category, position: nextPosition, search, situation });
+              pushFilters({ tenantId, category, position: nextPosition, search, situation, availability });
             }}
           >
             <SelectTrigger>
@@ -191,7 +198,7 @@ export function JogadoresFilters({
             onValueChange={(v) => {
               const nextCategory = v === "all" ? "" : v;
               setCategory(nextCategory);
-              pushFilters({ tenantId, category: nextCategory, position, search, situation });
+              pushFilters({ tenantId, category: nextCategory, position, search, situation, availability });
             }}
           >
             <SelectTrigger>
@@ -216,7 +223,7 @@ export function JogadoresFilters({
             onValueChange={(v) => {
               const nextPosition = v === "all" ? "" : v;
               setPosition(nextPosition);
-              pushFilters({ tenantId, category, position: nextPosition, search, situation });
+              pushFilters({ tenantId, category, position: nextPosition, search, situation, availability });
             }}
           >
             <SelectTrigger>
@@ -237,13 +244,13 @@ export function JogadoresFilters({
       ) : null}
       {!archivedMode && !loanedMode ? (
         <div className="min-w-[150px]">
-          <label className="text-xs text-muted-foreground mb-1 block">Situação</label>
+          <label className="text-xs text-muted-foreground mb-1 block">Vínculo</label>
           <Select
             value={situation || "all"}
             onValueChange={(v) => {
               const nextSituation = v === "all" ? "" : v;
               setSituation(nextSituation);
-              pushFilters({ tenantId, category, position, search, situation: nextSituation });
+              pushFilters({ tenantId, category, position, search, situation: nextSituation, availability });
             }}
           >
             <SelectTrigger>
@@ -258,6 +265,28 @@ export function JogadoresFilters({
                   {o.label}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
+      {!archivedMode && !loanedMode ? (
+        <div className="min-w-[150px]">
+          <label className="text-xs text-muted-foreground mb-1 block">Aptidão</label>
+          <Select
+            value={availability || "all"}
+            onValueChange={(v) => {
+              const nextAvailability = v === "all" ? "" : v;
+              setAvailability(nextAvailability);
+              pushFilters({ tenantId, category, position, search, situation, availability: nextAvailability });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="apto">Apto para jogo</SelectItem>
+              <SelectItem value="nao_apto">Não apto</SelectItem>
             </SelectContent>
           </Select>
         </div>
