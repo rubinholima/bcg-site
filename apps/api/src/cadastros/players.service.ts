@@ -65,6 +65,13 @@ export class PlayersService {
         { position: { contains: term, mode: 'insensitive' } },
         {
           registrationProfile: {
+            path: ['personal', 'nickname'],
+            string_contains: term,
+            mode: 'insensitive',
+          },
+        },
+        {
+          registrationProfile: {
             path: ['personal', 'cpf'],
             string_contains: term,
             mode: 'insensitive',

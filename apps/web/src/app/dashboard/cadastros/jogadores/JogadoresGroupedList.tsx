@@ -4,23 +4,19 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronDown, Pencil, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { getCategoryLabel } from "@/lib/fixture-categories";
-import { getPositionLabel } from "@/lib/football-positions";
+import {
+  FOOTBALL_POSITIONS,
+  getPositionLabel,
+  normalizeFootballPositionCode,
+} from "@/lib/football-positions";
 import {
   buildPlayerMatchAvailabilityInput,
   getPlayerMatchAvailability,
 } from "@/lib/player-match-availability";
 import { PlayerMatchAvailabilityBadge } from "@/components/dashboard/players/PlayerMatchAvailabilityBadge";
+import { comparePlayersByDisplayName, getPlayerListDisplayName } from "@/lib/player-display-name";
 import { cn } from "@/lib/utils";
 
 export interface JogadorListItem {
@@ -45,59 +41,148 @@ interface JogadoresGroupedListProps {
   groupByTeam: boolean;
 }
 
-function PlayerTable({ rows }: { rows: JogadorListItem[] }) {
+const POSITION_ORDER = FOOTBALL_POSITIONS.map((p) => p.value);
+const NO_POSITION_KEY = "__sem_posicao__";
+
+function groupByPosition(players: JogadorListItem[]) {
+  const map = new Map<string, JogadorListItem[]>();
+
+  for (const p of players) {
+    const code = normalizeFootballPositionCode(p.position) ?? NO_POSITION_KEY;
+    const list = map.get(code) ?? [];
+    list.push(p);
+    map.set(code, list);
+  }
+
+  const groups: Array<{ key: string; label: string; players: JogadorListItem[] }> = [];
+
+  for (const code of POSITION_ORDER) {
+    const rows = map.get(code);
+    if (!rows?.length) continue;
+    groups.push({
+      key: code,
+      label: getPositionLabel(code),
+      players: [...rows].sort(comparePlayersByDisplayName),
+    });
+    map.delete(code);
+  }
+
+  const unknown = map.get(NO_POSITION_KEY);
+  if (unknown?.length) {
+    groups.push({
+      key: NO_POSITION_KEY,
+      label: "Sem posição",
+      players: [...unknown].sort(comparePlayersByDisplayName),
+    });
+    map.delete(NO_POSITION_KEY);
+  }
+
+  for (const [key, rows] of map) {
+    if (!rows.length) continue;
+    groups.push({
+      key,
+      label: getPositionLabel(key) || key,
+      players: [...rows].sort(comparePlayersByDisplayName),
+    });
+  }
+
+  return groups;
+}
+
+function PlayerCard({ player }: { player: JogadorListItem }) {
+  const displayName = getPlayerListDisplayName(player);
+  const fullName = player.name.trim();
+  const showFullName = fullName && displayName.toLowerCase() !== fullName.toLowerCase();
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="w-14">Foto</TableHead>
-          <TableHead>Nome</TableHead>
-          <TableHead>Nº</TableHead>
-          <TableHead>Posição</TableHead>
-          <TableHead>Aptidão</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.map((p) => (
-          <ClickableTableRow key={p.id} href={`/dashboard/cadastros/jogadores/${p.id}/edit`}>
-            <TableCell>
-              {p.photoUrl ? (
-                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-muted">
-                  <img src={getPublicImageUrl(p.photoUrl)} alt="" className="h-full w-full object-cover" />
-                </div>
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
-                  —
-                </div>
-              )}
-            </TableCell>
-            <TableCell className="font-medium">{p.name}</TableCell>
-            <TableCell>{p.jerseyNumber ?? "—"}</TableCell>
-            <TableCell>{getPositionLabel(p.position) || p.position || "—"}</TableCell>
-            <TableCell>
-              <PlayerMatchAvailabilityBadge
-                availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(p))}
-              />
-            </TableCell>
-            <TableRowActions>
-              <div className="flex justify-end gap-2">
-                <Link href={`/dashboard/cadastros/jogadores/${p.id}/edit`}>
-                  <Button variant="ghost" size="icon" aria-label="Editar">
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href={`/dashboard/cadastros/jogadores/${p.id}/delete`}>
-                  <Button variant="ghost" size="icon" aria-label="Excluir">
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </Link>
-              </div>
-            </TableRowActions>
-          </ClickableTableRow>
+    <div className="group flex items-center gap-2 rounded-xl border border-border/70 bg-gradient-to-br from-zinc-900/80 via-card/50 to-zinc-950/60 p-3 transition-all hover:border-violet-500/45 hover:shadow-[0_0_24px_-8px_rgba(139,92,246,0.55)]">
+      <Link
+        href={`/dashboard/cadastros/jogadores/${player.id}/edit`}
+        className="flex min-w-0 flex-1 items-center gap-3"
+      >
+        {player.photoUrl ? (
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted">
+            <img
+              src={getPublicImageUrl(player.photoUrl)}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/40 text-xs text-muted-foreground">
+            —
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground group-hover:text-violet-100">
+            {displayName}
+          </p>
+          {showFullName ? (
+            <p className="truncate text-[11px] text-muted-foreground">{fullName}</p>
+          ) : null}
+          {player.jerseyNumber != null ? (
+            <p className="mt-0.5 text-[11px] font-medium text-violet-300/90">#{player.jerseyNumber}</p>
+          ) : null}
+        </div>
+        <PlayerMatchAvailabilityBadge
+          availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(player))}
+        />
+      </Link>
+      <div className="flex shrink-0 flex-col gap-1">
+        <Link href={`/dashboard/cadastros/jogadores/${player.id}/edit`}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Editar">
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+        </Link>
+        <Link href={`/dashboard/cadastros/jogadores/${player.id}/delete`}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Excluir">
+            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function PositionBlock({
+  label,
+  players,
+}: {
+  label: string;
+  players: JogadorListItem[];
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2 border-b border-violet-500/20 pb-2">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-violet-200 sm:text-sm">{label}</h3>
+        <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-medium text-violet-300 sm:text-xs">
+          {players.length}
+        </span>
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        {players.map((p) => (
+          <PlayerCard key={p.id} player={p} />
         ))}
-      </TableBody>
-    </Table>
+      </div>
+    </section>
+  );
+}
+
+function PlayersByPosition({ players }: { players: JogadorListItem[] }) {
+  const positions = useMemo(() => groupByPosition(players), [players]);
+
+  if (!players.length) {
+    return (
+      <p className="px-2 py-6 text-center text-sm text-muted-foreground">Nenhum atleta nesta categoria.</p>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {positions.map((pos) => (
+        <PositionBlock key={pos.key} label={pos.label} players={pos.players} />
+      ))}
+    </div>
   );
 }
 
@@ -112,7 +197,7 @@ function CategoryBlock({
   const label = categoryKey === "__sem_categoria__" ? "Sem categoria" : getCategoryLabel(categoryKey, "pt");
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border/60 bg-muted/10">
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-muted/10">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -125,8 +210,8 @@ function CategoryBlock({
         </div>
       </button>
       {open ? (
-        <div className="border-t border-border/60 bg-background/50 p-2 sm:p-3">
-          <PlayerTable rows={players} />
+        <div className="border-t border-border/60 bg-background/40 p-3 sm:p-4">
+          <PlayersByPosition players={players} />
         </div>
       ) : null}
     </div>
@@ -196,7 +281,7 @@ function groupByCategory(players: JogadorListItem[]) {
   return [...map.entries()]
     .map(([key, rows]) => ({
       key,
-      players: rows.sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+      players: rows,
     }))
     .sort((a, b) => {
       if (a.key === "__sem_categoria__") return 1;
@@ -245,6 +330,10 @@ export function JogadoresGroupedList({ players, groupByTeam }: JogadoresGroupedL
         ))}
       </div>
     );
+  }
+
+  if (grouped.categories?.length === 1) {
+    return <PlayersByPosition players={grouped.categories[0]!.players} />;
   }
 
   return (

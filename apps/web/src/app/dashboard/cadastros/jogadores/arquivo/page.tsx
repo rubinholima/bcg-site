@@ -81,7 +81,7 @@ export default async function JogadoresArquivoPage({
               ? "Nenhum atleta desligado"
               : `${players.length} atleta${players.length > 1 ? "s" : ""} desligado${players.length > 1 ? "s" : ""}${
                   groupByTeam && distinctTeams > 1 ? ` em ${distinctTeams} clubes` : ""
-                }`}
+                } — por posição (apelido)`}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -118,8 +118,8 @@ export default async function JogadoresPage({
             {players.length === 0
               ? "Nenhum atleta cadastrado"
               : groupByTeam && distinctTeams > 1
-                ? `${players.length} atleta${players.length > 1 ? "s" : ""} em ${distinctTeams} clubes — agrupado por time e categoria`
-                : `${players.length} atleta${players.length > 1 ? "s" : ""} — agrupado por categoria`}
+                ? `${players.length} atleta${players.length > 1 ? "s" : ""} em ${distinctTeams} clubes — por time, categoria e posição`
+                : `${players.length} atleta${players.length > 1 ? "s" : ""} — por posição (apelido)`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
