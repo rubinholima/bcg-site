@@ -229,16 +229,18 @@ export class BeatscodeImportService {
     const fetchAthleteFull = process.env.BEATSCODE_FETCH_FULL !== '0';
     const athleteFullCache = new Map<number, Record<string, unknown> | null>();
 
-    const resolveAthleteFull = async (employeeId: number): Promise<Record<string, unknown> | null> => {
+    const resolveAthleteFull = async (
+      athleteRecordId: number,
+    ): Promise<Record<string, unknown> | null> => {
       if (!fetchAthleteFull) return null;
-      if (athleteFullCache.has(employeeId)) return athleteFullCache.get(employeeId) ?? null;
+      if (athleteFullCache.has(athleteRecordId)) return athleteFullCache.get(athleteRecordId) ?? null;
       try {
-        const full = await client.getAthleteFull(employeeId);
-        athleteFullCache.set(employeeId, full);
+        const full = await client.getAthleteFull(athleteRecordId);
+        athleteFullCache.set(athleteRecordId, full);
         await sleep(35);
         return full;
       } catch {
-        athleteFullCache.set(employeeId, null);
+        athleteFullCache.set(athleteRecordId, null);
         return null;
       }
     };
@@ -266,19 +268,17 @@ export class BeatscodeImportService {
           }
 
           try {
-            const idRaw =
-              baseRow.employeeId ??
-              baseRow.idEmployee ??
-              baseRow.athleteId ??
-              baseRow.idPerson ??
-              baseRow.id;
-            const employeeId = Number(idRaw);
+            const employeeId = Number(
+              baseRow.employeeId ?? baseRow.idEmployee ?? baseRow.idPerson,
+            );
+            /** `/athlete-full` exige o id do registro de atleta (`row.id`), não o employeeId. */
+            const athleteRecordId = Number(baseRow.id ?? baseRow.athleteId);
             const person =
               Number.isFinite(employeeId) ? personByEmployeeId.get(employeeId) : undefined;
             const employee =
               Number.isFinite(employeeId) ? employeeByEmployeeId.get(employeeId) : undefined;
-            const athleteFull = Number.isFinite(employeeId)
-              ? await resolveAthleteFull(employeeId)
+            const athleteFull = Number.isFinite(athleteRecordId)
+              ? await resolveAthleteFull(athleteRecordId)
               : null;
             const athleteFullFlat = athleteFull ? flattenAthleteFullPayload(athleteFull) : undefined;
             const row = mergeBeatscodeSources(

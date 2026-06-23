@@ -192,11 +192,15 @@ export class BeatscodeApiClient {
     return this.normalizeList(data);
   }
 
-  /** Cadastro completo do atleta (CPF, RG, extras, contratos). */
-  async getAthleteFull(employeeId: number | string): Promise<Record<string, unknown> | null> {
+  /**
+   * Cadastro completo do atleta (CPF, RG, extras, contratos).
+   * O parâmetro `id` da API é o **id do registro de atleta** (`row.id` na listagem),
+   * não o `employeeId` — nas categorias base (sub14/sub13) esses IDs divergem.
+   */
+  async getAthleteFull(athleteRecordId: number | string): Promise<Record<string, unknown> | null> {
     const data = await this.request<unknown>('GET', '/athlete-full', {
       route: '/person/athlete',
-      params: { id: employeeId },
+      params: { id: athleteRecordId },
     });
     if (!data || typeof data !== 'object') return null;
     if (Array.isArray(data)) return null;
