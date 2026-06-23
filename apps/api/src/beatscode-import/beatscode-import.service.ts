@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from 'fs/promises';
 import { dirname, resolve } from 'path';
 import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { normalizeFootballPositionCode } from '../common/football-positions.util';
+import { normalizeHeightCm, normalizeWeightKg } from '../common/body-measures.util';
 import { mediaKeyFromStoredUrl } from '../common/media-key.util';
 import { getPlayerPhotoDisplayName } from '../common/photo-display-name';
 import { MediaMetaService } from '../media/media-meta.service';
@@ -409,8 +410,8 @@ export class BeatscodeImportService {
       photoUrl: photoUrl ?? null,
       birthDate: mapped.birthDate ?? null,
       nationality: cadastroUpper(mapped.nationality),
-      height: mapped.height ?? null,
-      weight: mapped.weight ?? null,
+      height: normalizeHeightCm(mapped.height) ?? null,
+      weight: normalizeWeightKg(mapped.weight) ?? null,
       preferredFoot: mapped.preferredFoot ?? null,
       jerseyNumber: mapped.jerseyNumber ?? null,
       position: normalizeFootballPositionCode(mapped.position) ?? cadastroUpper(mapped.position),

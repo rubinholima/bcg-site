@@ -8,6 +8,7 @@ import {
   cadastroUpperRequired,
 } from '../common/cadastro-text';
 import { normalizeFootballPositionCode } from '../common/football-positions.util';
+import { normalizeHeightCm, normalizeWeightKg } from '../common/body-measures.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
@@ -948,8 +949,8 @@ export class PlayersService {
       photoUrl: (d.photoUrl as string)?.trim() || null,
       birthDate: (d.birthDate as string)?.trim() || null,
       nationality: cadastroUpper((d.nationality as string) ?? undefined),
-      height: d.height != null ? (d.height as number) : null,
-      weight: d.weight != null ? (d.weight as number) : null,
+      height: d.height != null ? normalizeHeightCm(d.height) : null,
+      weight: d.weight != null ? normalizeWeightKg(d.weight) : null,
       bmi: d.bmi != null ? (d.bmi as number) : null,
       bodyFatPercent: d.bodyFatPercent != null ? (d.bodyFatPercent as number) : null,
       leanMassKg: d.leanMassKg != null ? (d.leanMassKg as number) : null,
@@ -1003,8 +1004,8 @@ export class PlayersService {
       ...(d.photoUrl !== undefined && { photoUrl: (d.photoUrl as string)?.trim() || null }),
       ...(d.birthDate !== undefined && { birthDate: (d.birthDate as string)?.trim() || null }),
       ...(d.nationality !== undefined && { nationality: cadastroUpper((d.nationality as string) ?? undefined) }),
-      ...(d.height !== undefined && { height: d.height as number | null }),
-      ...(d.weight !== undefined && { weight: d.weight as number | null }),
+      ...(d.height !== undefined && { height: normalizeHeightCm(d.height) }),
+      ...(d.weight !== undefined && { weight: normalizeWeightKg(d.weight) }),
       ...(d.bmi !== undefined && { bmi: d.bmi as number | null }),
       ...(d.bodyFatPercent !== undefined && { bodyFatPercent: d.bodyFatPercent as number | null }),
       ...(d.leanMassKg !== undefined && { leanMassKg: d.leanMassKg as number | null }),

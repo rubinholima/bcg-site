@@ -10,6 +10,8 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { normalizeHeightCm, normalizeWeightKg } from '../../common/body-measures.util';
 
 /** UpdatePlayerDto: todos os campos opcionais (tenantId não pode ser alterado) */
 export class UpdatePlayerDto {
@@ -39,14 +41,16 @@ export class UpdatePlayerDto {
   nationality?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (value == null || value === '' ? undefined : normalizeHeightCm(value) ?? undefined))
   @IsInt()
-  @Min(50)
+  @Min(80)
   @Max(250)
   height?: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(30)
+  @Transform(({ value }) => (value == null || value === '' ? undefined : normalizeWeightKg(value) ?? undefined))
+  @IsNumber()
+  @Min(20)
   @Max(150)
   weight?: number;
 

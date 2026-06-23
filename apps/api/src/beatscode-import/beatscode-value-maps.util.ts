@@ -1,5 +1,7 @@
 /** Beatscode → valores canônicos do cadastro BCG (pt-BR). */
 
+import { normalizeHeightCm, normalizeWeightKg } from '../common/body-measures.util';
+
 export function mapBeatscodeGenderName(name?: string | null): string | undefined {
   const n = name?.trim().toLowerCase();
   if (!n) return undefined;
@@ -47,15 +49,11 @@ export function mapBeatscodePixKeyType(keyType?: string | null): string | undefi
 }
 
 export function normalizeBeatscodeHeight(value: unknown): number | undefined {
-  const n = typeof value === 'number' ? value : parseFloat(String(value ?? '').replace(',', '.'));
-  if (!Number.isFinite(n) || n <= 0) return undefined;
-  return Math.round(n * 100) / 100;
+  return normalizeHeightCm(value) ?? undefined;
 }
 
 export function normalizeBeatscodeWeight(value: unknown): number | undefined {
-  const n = typeof value === 'number' ? value : parseFloat(String(value ?? '').replace(',', '.'));
-  if (!Number.isFinite(n) || n <= 0) return undefined;
-  return Math.round(n * 100) / 100;
+  return normalizeWeightKg(value) ?? undefined;
 }
 
 export function resolveBeatscodePlayerStatus(row: Record<string, unknown>): string | undefined {

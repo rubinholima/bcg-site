@@ -28,6 +28,7 @@
     "beatscode:sync-documents": "ts-node -r tsconfig-paths/register scripts/run-beatscode-sync-documents.ts",
     "beatscode:sync-status": "ts-node -r tsconfig-paths/register scripts/beatscode-sync-status.ts",
     "migrate:football-positions": "ts-node -r tsconfig-paths/register scripts/migrate-football-positions.ts",
+    "fix:player-body-metrics": "ts-node -r tsconfig-paths/register scripts/fix-player-body-metrics.ts",
     "beatscode:discover-browser": "ts-node -r tsconfig-paths/register scripts/discover-beatscode-browser.ts",
     "players:normalize-situations": "ts-node -r tsconfig-paths/register scripts/normalize-player-situations.ts",
     "seed:local-user": "ts-node -r tsconfig-paths/register scripts/seed-local-user.ts",

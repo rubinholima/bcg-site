@@ -36,7 +36,7 @@ async function bootstrap() {
   });
   app.useBodyParser('json', { limit: JSON_BODY_LIMIT });
   app.useBodyParser('urlencoded', { limit: JSON_BODY_LIMIT, extended: true });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableCors({ origin: true }); // permite localhost:3000 (Next) e outros em dev
   // Garante charset UTF-8 em respostas JSON
