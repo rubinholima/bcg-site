@@ -186,10 +186,10 @@ export function PsychologySchedulingCard({
   }
 
   const tabs = [
-    { id: "online" as const, label: "Online (Meet)", icon: Video },
+    { id: "online" as const, label: "Online", icon: Video },
     { id: "presencial" as const, label: "Presencial", icon: MapPin },
-    { id: "grupo" as const, label: "Grupo / categoria", icon: Users },
-    { id: "relatorio_semanal" as const, label: "Relatório semanal", icon: ClipboardList },
+    { id: "grupo" as const, label: "Grupo", icon: Users },
+    { id: "relatorio_semanal" as const, label: "Relatório", icon: ClipboardList },
   ];
 
   async function saveSession(sessionType: PsychologySessionType, extra?: Record<string, unknown>) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Video, Loader2, User, Plus, Trash2, FileText, History } from "lucide-react";
@@ -189,19 +189,6 @@ export default function ConsultasPage() {
     message: string;
     variant: FeedbackVariant;
   }>({ open: false, title: "", message: "", variant: "info" });
-
-  const leftColRef = useRef<HTMLDivElement>(null);
-  const [leftColHeight, setLeftColHeight] = useState<number | null>(null);
-
-  useEffect(() => {
-    const el = leftColRef.current;
-    if (!el) return;
-    const sync = () => setLeftColHeight(el.offsetHeight);
-    const ro = new ResizeObserver(sync);
-    ro.observe(el);
-    sync();
-    return () => ro.disconnect();
-  }, [filterAtleta, filterClube, filterCategoria]);
 
   const showFeedback = useCallback(
     (title: string, message: string, variant: FeedbackVariant = "info") => {
@@ -467,7 +454,7 @@ export default function ConsultasPage() {
       {/* Layout: coluna esquerda = Filtros + Agendar Meet (como nas fotos); coluna direita = Calendário */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Coluna esquerda: Filtros + Agendar consulta no Meet */}
-        <div ref={leftColRef} className="space-y-6">
+        <div className="space-y-6">
           {/* Filtros: Clube (só clubes), Atleta, Categoria — no lugar do atleta como nas fotos */}
           <Card>
             <CardContent className="pt-6">
@@ -578,13 +565,10 @@ export default function ConsultasPage() {
           </Card>
         </div>
 
-        {/* Coluna direita: alinhada ao Meet só quando o Histórico está fechado; ao abrir Histórico, a caixa pode expandir */}
-        <div
-          className="space-y-4 flex flex-col min-h-0 overflow-y-auto"
-          style={leftColHeight != null && historyPlayerId === null ? { maxHeight: leftColHeight } : undefined}
-        >
-          <Card className="shrink-0 flex flex-col min-h-0 flex-1 overflow-hidden">
-            <CardContent className="pt-6 flex-1 flex flex-col min-h-0 overflow-hidden">
+        {/* Coluna direita: calendário com espaço adequado */}
+        <div className="flex min-h-0 flex-col space-y-4">
+          <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
               <ConsultasCalendar
                 refreshTrigger={calendarRefreshTrigger}
                 nameFilter={nameFilter}

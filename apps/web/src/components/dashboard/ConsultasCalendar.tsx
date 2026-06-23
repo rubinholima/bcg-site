@@ -340,47 +340,49 @@ export function ConsultasCalendar({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-        {/* Mini calendário + horários do dia — altura fixa pelo conteúdo, não estica */}
-        <div className="space-y-3 rounded-lg border p-3 bg-muted/30 shrink-0 lg:shrink-0 self-start w-full">
-          <h4 className="text-sm font-medium">Horários do dia</h4>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setCalendarMonth((m) =>
-                  m.month === 0 ? { year: m.year - 1, month: 11 } : { year: m.year, month: m.month - 1 }
-                )
-              }
-            >
-              ‹
-            </Button>
-            <span className="text-sm py-1.5 capitalize">{monthLabel}</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setCalendarMonth((m) =>
-                  m.month === 11 ? { year: m.year + 1, month: 0 } : { year: m.year, month: m.month + 1 }
-                )
-              }
-            >
-              ›
-            </Button>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(300px,360px)_1fr]">
+        {/* Calendário + horários do dia */}
+        <div className="rounded-2xl border border-border/80 bg-card/40 p-4 sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <h4 className="text-sm font-semibold">Horários do dia</h4>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() =>
+                  setCalendarMonth((m) =>
+                    m.month === 0 ? { year: m.year - 1, month: 11 } : { year: m.year, month: m.month - 1 }
+                  )
+                }
+              >
+                ‹
+              </Button>
+              <span className="min-w-[9rem] text-center text-sm font-medium capitalize">{monthLabel}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() =>
+                  setCalendarMonth((m) =>
+                    m.month === 11 ? { year: m.year + 1, month: 0 } : { year: m.year, month: m.month + 1 }
+                  )
+                }
+              >
+                ›
+              </Button>
+            </div>
           </div>
-          <div className="grid grid-cols-7 gap-0.5 text-center text-xs">
-            {["D", "S", "T", "Q", "Q", "S", "S"].map((d, i) => (
-              <div key={`wd-${i}`} className="font-medium text-muted-foreground py-1">
+          <div className="grid grid-cols-7 gap-1.5 text-center text-xs">
+            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
+              <div key={d} className="py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 {d}
               </div>
             ))}
             {new Date(calendarMonth.year, calendarMonth.month, 1).getDay() > 0 &&
-              Array.from({ length: new Date(calendarMonth.year, calendarMonth.month, 1).getDay() }).map(
-                (_, i) => (
-                  <div key={`empty-${i}`} />
-                )
-              )}
+              Array.from({ length: new Date(calendarMonth.year, calendarMonth.month, 1).getDay() }).map((_, i) => (
+                <div key={`empty-${i}`} />
+              ))}
             {days.map(({ date, day }) => {
               const hasConsultation = activeConsultations.some((c) => c.date === date);
               const isSelected = dateFilter === date;
@@ -389,12 +391,12 @@ export function ConsultasCalendar({
                   key={date}
                   type="button"
                   onClick={() => setDateFilter(date)}
-                  className={`py-1 rounded text-xs ${
+                  className={`flex min-h-[40px] items-center justify-center rounded-lg text-sm font-medium transition-colors ${
                     isSelected
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary text-primary-foreground shadow-sm"
                       : hasConsultation
-                        ? "bg-amber-500/30 text-amber-700 dark:text-amber-400"
-                        : "hover:bg-muted"
+                        ? "bg-destructive/15 text-destructive ring-1 ring-destructive/30 hover:bg-destructive/25"
+                        : "text-foreground hover:bg-muted"
                   }`}
                 >
                   {day}
@@ -402,19 +404,19 @@ export function ConsultasCalendar({
               );
             })}
           </div>
-          {dateFilter && (
-            <div className="border-t pt-2 mt-2">
-              <p className="text-xs text-muted-foreground mb-1">
-                {formatDate(dateFilter)} — ocupados
+          {dateFilter ? (
+            <div className="mt-5 border-t border-border/60 pt-4">
+              <p className="mb-3 text-xs font-medium text-muted-foreground">
+                {formatDate(dateFilter)} — horários ocupados em vermelho
               </p>
-              <div className="flex flex-wrap gap-1">
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                 {HOURS.map((h) => (
                   <span
                     key={h}
-                    className={`inline-flex items-center justify-center w-8 h-6 rounded text-xs ${
+                    className={`inline-flex min-h-[36px] items-center justify-center rounded-lg text-xs font-medium ${
                       occupiedSlots.has(h)
-                        ? "bg-amber-500/30 text-amber-700 dark:text-amber-400"
-                        : "bg-muted/50 text-muted-foreground"
+                        ? "border border-destructive/40 bg-destructive/20 text-destructive"
+                        : "bg-muted/40 text-muted-foreground"
                     }`}
                   >
                     {h}h
@@ -422,11 +424,13 @@ export function ConsultasCalendar({
                 ))}
               </div>
             </div>
+          ) : (
+            <p className="mt-4 text-xs text-muted-foreground">Selecione um dia para ver os horários ocupados.</p>
           )}
         </div>
 
-        {/* Lista de consultas — só esta área rola; calendário fica parado */}
-        <div className="lg:col-span-2 space-y-4 overflow-y-auto min-h-0 max-h-[36vh] pr-1">
+        {/* Lista de consultas */}
+        <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

@@ -250,20 +250,20 @@ export function DashboardDeptTabs<T extends string>({
   onChange: (id: T) => void;
 }) {
   return (
-    <div className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-muted/30 p-1">
+    <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-muted/30 p-1">
       {tabs.map(({ id, label, icon: Icon }) => (
         <button
           key={id}
           type="button"
           onClick={() => onChange(id)}
-          className={`inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors ${
+          className={`inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-colors sm:flex-none sm:justify-start ${
             active === id
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:bg-background/60"
           }`}
         >
-          {Icon ? <Icon className="h-4 w-4" /> : null}
-          {label}
+          {Icon ? <Icon className="h-4 w-4 shrink-0" /> : null}
+          <span className="whitespace-nowrap">{label}</span>
         </button>
       ))}
     </div>
