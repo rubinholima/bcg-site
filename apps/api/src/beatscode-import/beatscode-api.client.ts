@@ -192,6 +192,19 @@ export class BeatscodeApiClient {
     return this.normalizeList(data);
   }
 
+  /** Cadastro completo do atleta (CPF, RG, extras, contratos). */
+  async getAthleteFull(employeeId: number | string): Promise<Record<string, unknown> | null> {
+    const data = await this.request<unknown>('GET', '/athlete-full', {
+      route: '/person/athlete',
+      params: { id: employeeId },
+    });
+    if (!data || typeof data !== 'object') return null;
+    if (Array.isArray(data)) return null;
+    const obj = data as Record<string, unknown>;
+    if (!obj.data || typeof obj.data !== 'object') return null;
+    return obj;
+  }
+
   /** Detalhe do cadastro RH (pix, banco, escolaridade, anexos). */
   async getEmployeeDetail(employeeId: number | string): Promise<Record<string, unknown>> {
     const id = Number(employeeId);

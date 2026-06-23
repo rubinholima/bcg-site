@@ -24,6 +24,7 @@ import {
 } from './beatscode-lookups.util';
 import { loadBeatscodeReferences } from './beatscode-reference.loader';
 import { mergeBeatscodeSources } from './beatscode-row.util';
+import { flattenAthleteFullPayload } from './beatscode-athlete-full.util';
 import {
   deserializeBeatscodeReferences,
   serializeBeatscodeReferences,
@@ -225,6 +226,27 @@ export class BeatscodeImportService {
     const categoriesProcessed: string[] = [];
     let processedRows = 0;
 
+    const fetchAthleteFull = process.env.BEATSCODE_FETCH_FULL !== '0';
+    const athleteFullCache = new Map<number, Record<string, unknown> | null>();
+
+    const resolveAthleteFull = async (employeeId: number): Promise<Record<string, unknown> | null> => {
+      if (!fetchAthleteFull) return null;
+      if (athleteFullCache.has(employeeId)) return athleteFullCache.get(employeeId) ?? null;
+      try {
+        const full = await client.getAthleteFull(employeeId);
+        athleteFullCache.set(employeeId, full);
+        await sleep(35);
+        return full;
+      } catch {
+        athleteFullCache.set(employeeId, null);
+        return null;
+      }
+    };
+
+    if (fetchAthleteFull) {
+      this.log.log('Beatscode: buscando cadastro completo (/athlete-full) por atleta');
+    }
+
     for (const cat of categoryTargets) {
       const categoryKey = cat.mapped;
       categoriesProcessed.push(`${cat.name} → ${categoryKey}`);
@@ -255,9 +277,14 @@ export class BeatscodeImportService {
               Number.isFinite(employeeId) ? personByEmployeeId.get(employeeId) : undefined;
             const employee =
               Number.isFinite(employeeId) ? employeeByEmployeeId.get(employeeId) : undefined;
+            const athleteFull = Number.isFinite(employeeId)
+              ? await resolveAthleteFull(employeeId)
+              : null;
+            const athleteFullFlat = athleteFull ? flattenAthleteFullPayload(athleteFull) : undefined;
             const row = mergeBeatscodeSources(
               person,
               employee,
+              athleteFullFlat,
               baseRow as Record<string, unknown>,
             );
 
