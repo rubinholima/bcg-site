@@ -340,7 +340,7 @@ export function ConsultasCalendar({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(300px,360px)_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(280px,340px)_1fr]">
         {/* Calendário + horários do dia */}
         <div className="rounded-2xl border border-border/80 bg-card/40 p-4 sm:p-5">
           <div className="mb-4 flex items-center justify-between gap-2">
@@ -430,7 +430,7 @@ export function ConsultasCalendar({
         </div>
 
         {/* Lista de consultas */}
-        <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
+        <div className="min-h-[200px] space-y-4 overflow-x-hidden">
           {loading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

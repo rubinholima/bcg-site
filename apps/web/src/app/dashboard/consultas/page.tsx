@@ -451,157 +451,153 @@ export default function ConsultasPage() {
 
   return (
     <div className="space-y-6">
-      {/* Layout: coluna esquerda = Filtros + Agendar Meet (como nas fotos); coluna direita = Calendário */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Coluna esquerda: Filtros + Agendar consulta no Meet */}
-        <div className="space-y-6">
-          {/* Filtros: Clube (só clubes), Atleta, Categoria — no lugar do atleta como nas fotos */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">Filtros</h3>
-              <div className="flex flex-col gap-3">
-                <div className="min-w-0">
-                  <label className="text-xs text-muted-foreground mb-1 block">Clube</label>
-                  <Select
-                    value={filterClube || "all"}
-                    onValueChange={(v) => {
-                      setFilterClube(v === "all" ? "" : v);
-                      setFilterAtleta("");
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Todos os clubes" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os clubes</SelectItem>
-                      {tenantsForClubeDropdown.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          {t.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-0">
-                  <label className="text-xs text-muted-foreground mb-1 block">Atleta</label>
-                  <Select
-                    value={filterAtleta || "all"}
-                    onValueChange={(v) => setFilterAtleta(v === "all" ? "" : v)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Todos os atletas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os atletas</SelectItem>
-                      {playersByClube.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}
-                          {p.category ? ` (${FIXTURE_CATEGORIES.find((c) => c.value === p.category)?.labelPT ?? p.category})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="min-w-0">
-                  <label className="text-xs text-muted-foreground mb-1 block">Categoria</label>
-                  <Select
-                    value={filterCategoria || "all"}
-                    onValueChange={(v) => setFilterCategoria(v === "all" ? "" : v)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Todas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todas</SelectItem>
-                      {FIXTURE_CATEGORIES.filter((c) => categoriesInUse.includes(c.value)).map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.labelPT}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setFilterClube("");
-                    setFilterAtleta("");
-                    setFilterCategoria("");
-                    setNameFilter("");
-                  }}
-                >
-                  Limpar filtros
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Agenda: online, presencial, grupo e relatório */}
-          <Card>
-            <CardContent className="pt-6">
-              <PsychologySchedulingCard
-                filterClube={filterClube}
-                filterAtleta={filterAtleta}
-                filterCategoria={filterCategoria}
-                selectedPlayerName={selectedPlayerName}
-                players={players}
-                psychologists={psychologists}
-                meetAvailable={meetAvailable}
-                meetCreating={meetCreating}
-                newDate={newDate}
-                newTime={newTime}
-                newNotes={newNotes}
-                newPsychologist={newPsychologist}
-                onNewDateChange={setNewDate}
-                onNewTimeChange={setNewTime}
-                onNewNotesChange={setNewNotes}
-                onNewPsychologistChange={setNewPsychologist}
-                onCreateMeet={() => void handleCreateMeet()}
-                onScheduled={() => setCalendarRefreshTrigger((t) => t + 1)}
-                showFeedback={showFeedback}
-              />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Coluna direita: calendário com espaço adequado */}
-        <div className="flex min-h-0 flex-col space-y-4">
-          <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <CardContent className="flex min-h-0 flex-1 flex-col overflow-hidden pt-6">
-              <ConsultasCalendar
-                refreshTrigger={calendarRefreshTrigger}
-                nameFilter={nameFilter}
-                onNameFilterChange={setNameFilter}
-                tenantIdFilter={filterClube || undefined}
-                playerIdFilter={filterAtleta || undefined}
-                categoryFilter={filterCategoria || undefined}
-                consultationsProp={consultations}
-                onRefreshRequested={() => setCalendarRefreshTrigger((t) => t + 1)}
-                onShowHistory={(id, name) => {
-                  setHistoryPlayerId(id);
-                  setHistoryPlayerName(name);
+      {/* Filtros — largura total */}
+      <Card>
+        <CardContent className="pt-6">
+          <h3 className="mb-3 text-sm font-medium text-muted-foreground">Filtros</h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs text-muted-foreground">Clube</label>
+              <Select
+                value={filterClube || "all"}
+                onValueChange={(v) => {
+                  setFilterClube(v === "all" ? "" : v);
+                  setFilterAtleta("");
                 }}
-                selectedPlayerName={selectedPlayerName}
-              />
-            </CardContent>
-          </Card>
-          {historyPlayerId !== null && (
-            <Card className="flex-1 min-h-0 flex flex-col">
-              <CardContent className="pt-4 pb-4 flex flex-col min-h-0">
-                <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Histórico do atleta: {historyPlayerName || "—"}
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setHistoryPlayerId(null); setHistoryPlayerName(""); }}
-                  >
-                    Fechar
-                  </Button>
-                </div>
-                <div className="overflow-y-auto flex-1 min-h-[200px] rounded border bg-muted/20 p-3">
+              >
+                <SelectTrigger className="w-full text-foreground">
+                  <SelectValue placeholder="Todos os clubes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os clubes</SelectItem>
+                  {tenantsForClubeDropdown.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs text-muted-foreground">Atleta</label>
+              <Select
+                value={filterAtleta || "all"}
+                onValueChange={(v) => setFilterAtleta(v === "all" ? "" : v)}
+              >
+                <SelectTrigger className="w-full text-foreground">
+                  <SelectValue placeholder="Todos os atletas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os atletas</SelectItem>
+                  {playersByClube.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                      {p.category ? ` (${FIXTURE_CATEGORIES.find((c) => c.value === p.category)?.labelPT ?? p.category})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs text-muted-foreground">Categoria</label>
+              <Select
+                value={filterCategoria || "all"}
+                onValueChange={(v) => setFilterCategoria(v === "all" ? "" : v)}
+              >
+                <SelectTrigger className="w-full text-foreground">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {FIXTURE_CATEGORIES.filter((c) => categoriesInUse.includes(c.value)).map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.labelPT}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="min-h-[40px] w-full sm:w-auto"
+              onClick={() => {
+                setFilterClube("");
+                setFilterAtleta("");
+                setFilterCategoria("");
+                setNameFilter("");
+              }}
+            >
+              Limpar filtros
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Agenda — largura total */}
+      <Card>
+        <CardContent className="pt-6">
+          <PsychologySchedulingCard
+            filterClube={filterClube}
+            filterAtleta={filterAtleta}
+            filterCategoria={filterCategoria}
+            selectedPlayerName={selectedPlayerName}
+            players={players}
+            psychologists={psychologists}
+            meetAvailable={meetAvailable}
+            meetCreating={meetCreating}
+            newDate={newDate}
+            newTime={newTime}
+            newNotes={newNotes}
+            newPsychologist={newPsychologist}
+            onNewDateChange={setNewDate}
+            onNewTimeChange={setNewTime}
+            onNewNotesChange={setNewNotes}
+            onNewPsychologistChange={setNewPsychologist}
+            onCreateMeet={() => void handleCreateMeet()}
+            onScheduled={() => setCalendarRefreshTrigger((t) => t + 1)}
+            showFeedback={showFeedback}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Calendário — largura total */}
+      <Card>
+        <CardContent className="pt-6">
+          <ConsultasCalendar
+            refreshTrigger={calendarRefreshTrigger}
+            nameFilter={nameFilter}
+            onNameFilterChange={setNameFilter}
+            tenantIdFilter={filterClube || undefined}
+            playerIdFilter={filterAtleta || undefined}
+            categoryFilter={filterCategoria || undefined}
+            consultationsProp={consultations}
+            onRefreshRequested={() => setCalendarRefreshTrigger((t) => t + 1)}
+            onShowHistory={(id, name) => {
+              setHistoryPlayerId(id);
+              setHistoryPlayerName(name);
+            }}
+            selectedPlayerName={selectedPlayerName}
+          />
+        </CardContent>
+      </Card>
+
+      {historyPlayerId !== null && (
+        <Card>
+          <CardContent className="flex flex-col pt-4 pb-4">
+            <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Histórico do atleta: {historyPlayerName || "—"}
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setHistoryPlayerId(null); setHistoryPlayerName(""); }}
+              >
+                Fechar
+              </Button>
+            </div>
+            <div className="min-h-[200px] overflow-y-auto rounded border bg-muted/20 p-3">
                   {(() => {
                     const list = consultations
                       .filter((c) => c.playerId === historyPlayerId)
@@ -647,13 +643,11 @@ export default function ConsultasPage() {
                     );
                   })()}
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Registro do atleta: consultas + anamnese — tudo aqui, sem ir à ficha */}
+      {/* Registro do atleta */}
       <Card>
         <CardContent className="pt-6">
           <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">

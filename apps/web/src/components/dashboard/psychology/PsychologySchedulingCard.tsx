@@ -29,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { DashboardDeptTabs } from "@/components/dashboard/DashboardDeptHeader";
+import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import type { Psychologist } from "@/types/psychologist";
@@ -277,7 +277,13 @@ export function PsychologySchedulingCard({
         <CalendarDays className="h-5 w-5 text-violet-400" />
         <h3 className="text-lg font-semibold">Agenda de atendimentos</h3>
       </div>
-      <DashboardDeptTabs tabs={tabs} active={tab} onChange={setTab} />
+      <BostonTvDashboardTabs
+        tabs={tabs}
+        active={tab}
+        onChange={setTab}
+        ariaLabel="Tipo de atendimento"
+        compact
+      />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
