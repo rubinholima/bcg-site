@@ -24,6 +24,9 @@ export async function loadBeatscodeReferences(client: BeatscodeApiClient): Promi
     countries,
     characteristics,
     banks,
+    bankAccounts,
+    breeds,
+    schoolings,
     documentTypes,
   ] = await Promise.all([
     client.listPositions(),
@@ -37,6 +40,9 @@ export async function loadBeatscodeReferences(client: BeatscodeApiClient): Promi
     client.listByPath('/country', '/person/athlete').catch(() => []),
     client.listByPath('/characteristics', '/person/athlete'),
     client.listByPath('/bank', '/person/athlete').catch(() => []),
+    client.listByPath('/bank-account', '/person/athlete').catch(() => []),
+    client.listByPath('/breed', '/person/athlete').catch(() => []),
+    client.listByPath('/schooling', '/person/athlete').catch(() => []),
     client.listByPath('/document-type', '/person/athlete').catch(() => []),
   ]);
 
@@ -57,6 +63,9 @@ export async function loadBeatscodeReferences(client: BeatscodeApiClient): Promi
     cities,
     countries: countriesList,
     banks,
+    bankAccounts,
+    breeds,
+    schoolings,
   });
 
   const characteristicsById = new Map<

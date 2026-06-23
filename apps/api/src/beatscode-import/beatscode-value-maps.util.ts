@@ -38,6 +38,15 @@ export function mapBeatscodeBloodTypeName(name?: string | null): string | undefi
   return map[raw];
 }
 
+/** Normaliza CPF vindo do Beatscode (pix, campo direto, etc.). */
+export function normalizeBeatscodeCpf(raw?: string | null): string | undefined {
+  const s = raw?.trim();
+  if (!s) return undefined;
+  const digits = s.replace(/\D/g, '');
+  if (digits.length !== 11) return s;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+}
+
 export function mapBeatscodePixKeyType(keyType?: string | null): string | undefined {
   const k = keyType?.trim().toLowerCase();
   if (!k) return undefined;

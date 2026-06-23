@@ -4,6 +4,13 @@ import {
   mapBeatscodeMaritalName,
 } from './beatscode-value-maps.util';
 
+export type BeatscodeBankAccountInfo = {
+  bankName?: string;
+  agency?: string;
+  accountNumber?: string;
+  accountType?: string;
+};
+
 export type BeatscodeLookupContext = {
   positionById: Map<number, { acronym: string; name: string }>;
   footById: Map<number, 'left' | 'right' | 'both'>;
@@ -13,6 +20,9 @@ export type BeatscodeLookupContext = {
   cityById: Map<number, string>;
   countryById: Map<number, string>;
   bankById: Map<number, string>;
+  bankAccountById: Map<number, BeatscodeBankAccountInfo>;
+  breedById: Map<number, string>;
+  schoolingById: Map<number, string>;
   contactById: Map<number, { value: string; contactTypeId: number; typeName?: string }>;
   contactTypeById: Map<number, string>;
 };
@@ -28,6 +38,9 @@ export type BeatscodeLookupInput = {
   cities?: Array<Record<string, unknown>>;
   countries?: Array<Record<string, unknown>>;
   banks?: Array<Record<string, unknown>>;
+  bankAccounts?: Array<Record<string, unknown>>;
+  breeds?: Array<Record<string, unknown>>;
+  schoolings?: Array<Record<string, unknown>>;
 };
 
 /** Fallback Boston City FC — posições canônicas BCG. */
@@ -166,6 +179,33 @@ export function buildBeatscodeLookupContext(input: BeatscodeLookupInput): Beatsc
     if (Number.isFinite(id) && name) bankById.set(id, name);
   }
 
+  const bankAccountById = new Map<number, BeatscodeBankAccountInfo>();
+  for (const row of input.bankAccounts ?? []) {
+    const id = Number(row.id);
+    if (!Number.isFinite(id)) continue;
+    const bankId = Number(row.bankId);
+    bankAccountById.set(id, {
+      bankName: Number.isFinite(bankId) ? bankById.get(bankId) : String(row.bankName ?? '').trim() || undefined,
+      agency: str(row.agency ?? row.agencyNumber),
+      accountNumber: str(row.account ?? row.accountNumber ?? row.number),
+      accountType: str(row.type ?? row.accountType),
+    });
+  }
+
+  const breedById = new Map<number, string>();
+  for (const row of input.breeds ?? []) {
+    const id = Number(row.id);
+    const name = String(row.name ?? '').trim();
+    if (Number.isFinite(id) && name) breedById.set(id, name);
+  }
+
+  const schoolingById = new Map<number, string>();
+  for (const row of input.schoolings ?? []) {
+    const id = Number(row.id);
+    const name = String(row.name ?? '').trim();
+    if (Number.isFinite(id) && name) schoolingById.set(id, name);
+  }
+
   return {
     positionById,
     footById,
@@ -175,9 +215,17 @@ export function buildBeatscodeLookupContext(input: BeatscodeLookupInput): Beatsc
     cityById,
     countryById,
     bankById,
+    bankAccountById,
+    breedById,
+    schoolingById,
     contactById,
     contactTypeById,
   };
+}
+
+function str(v: unknown): string | undefined {
+  const s = String(v ?? '').trim();
+  return s || undefined;
 }
 
 export function defaultBeatscodeLookupContext(): BeatscodeLookupContext {

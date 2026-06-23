@@ -192,23 +192,58 @@ export class BeatscodeApiClient {
     return this.normalizeList(data);
   }
 
-  /** Detalhe do atleta (quando a listagem não traz todos os campos). */
-  async getAthleteDetail(athleteId: number | string): Promise<Record<string, unknown>> {
-    const data = await this.request<unknown>('GET', '/athlete', {
-      route: `/person/athlete/id/${athleteId}`,
+  /** Detalhe do cadastro RH (pix, banco, escolaridade, anexos). */
+  async getEmployeeDetail(employeeId: number | string): Promise<Record<string, unknown>> {
+    const id = Number(employeeId);
+    const data = await this.request<unknown>('GET', '/employee', {
+      route: `/person/employee/id/${employeeId}`,
     });
-    if (Array.isArray(data)) return (data[0] as Record<string, unknown>) ?? {};
-    if (data && typeof data === 'object') {
-      const obj = data as Record<string, unknown>;
-      if (obj.data && typeof obj.data === 'object') return obj.data as Record<string, unknown>;
-      return obj;
-    }
-    return {};
+    return this.pickRecordById(data, id);
   }
 
-  /** Dados pessoais (nome, nascimento, endereço) — complementa a listagem. */
-  async getPersonDetail(athleteId: number | string): Promise<Record<string, unknown>> {
-    return this.getByRoute('/person', `/person/athlete/id/${athleteId}`);
+  /** Dados pessoais completos por personId. */
+  async getPersonById(personId: number | string): Promise<Record<string, unknown>> {
+    const id = Number(personId);
+    const data = await this.request<unknown>('GET', '/person', {
+      route: `/person/id/${personId}`,
+    });
+    return this.pickRecordById(data, id);
+  }
+
+  /** @deprecated use getPersonById(personId) */
+  async getPersonDetail(employeeId: number | string): Promise<Record<string, unknown>> {
+    const employee = await this.getEmployeeDetail(employeeId);
+    const personId = Number(employee.personId);
+    if (!Number.isFinite(personId)) return {};
+    return this.getPersonById(personId);
+  }
+
+  /** Detalhe esportivo do atleta (categoria ativa). */
+  async getAthleteDetail(employeeId: number | string): Promise<Record<string, unknown>> {
+    const id = Number(employeeId);
+    const data = await this.request<unknown>('GET', '/athlete', {
+      route: `/person/athlete/id/${employeeId}`,
+    });
+    return this.pickRecordById(data, id);
+  }
+
+  private pickRecordById(data: unknown, id: number): Record<string, unknown> {
+    if (Array.isArray(data)) {
+      const row = data.find((item) => Number((item as Record<string, unknown>).id) === id);
+      return (row as Record<string, unknown>) ?? {};
+    }
+    if (data && typeof data === 'object') {
+      const obj = data as Record<string, unknown>;
+      const byKey = obj[String(id)];
+      if (byKey && typeof byKey === 'object' && !Array.isArray(byKey)) {
+        return byKey as Record<string, unknown>;
+      }
+      if (obj.data && typeof obj.data === 'object' && !Array.isArray(obj.data)) {
+        return obj.data as Record<string, unknown>;
+      }
+      if (Number(obj.id) === id) return obj;
+    }
+    return {};
   }
 
   /** Busca genérica por route (descoberta de endpoints Beatscode). */
@@ -225,7 +260,15 @@ export class BeatscodeApiClient {
     params?: Record<string, string | number | boolean | undefined>,
   ): Promise<Record<string, unknown>> {
     const data = await this.request<unknown>('GET', path, { route, params });
-    if (Array.isArray(data)) return (data[0] as Record<string, unknown>) ?? {};
+    if (Array.isArray(data)) {
+      const idMatch = route.match(/\/id\/(\d+)\s*$/);
+      if (idMatch) {
+        const id = Number(idMatch[1]);
+        const row = data.find((item) => Number((item as Record<string, unknown>).id) === id);
+        if (row && typeof row === 'object') return row as Record<string, unknown>;
+      }
+      return (data[0] as Record<string, unknown>) ?? {};
+    }
     if (data && typeof data === 'object') return data as Record<string, unknown>;
     return {};
   }

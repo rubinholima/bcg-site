@@ -19,6 +19,7 @@ import {
 } from './beatscode-row.util';
 import {
   mapBeatscodePixKeyType,
+  normalizeBeatscodeCpf,
   normalizeBeatscodeHeight,
   normalizeBeatscodeWeight,
   resolveBeatscodePlayerStatus,
@@ -29,17 +30,27 @@ import { BEATSCODE_NATIONALITY_FALLBACK } from './beatscode-category.util';
 export { mapBeatscodeCategoryName, resolveBeatscodeCategoryKey } from './beatscode-category.util';
 
 function inferCpf(normalized: Record<string, unknown>): string | undefined {
-  const direct = pickString(normalized, ['cpf', 'CPF']);
-  if (direct) return direct;
+  const direct = pickString(normalized, ['cpf', 'CPF', 'cpfNumber', 'documentCpf']);
+  if (direct) return normalizeBeatscodeCpf(direct);
+
   const pix = normalized.pix;
   if (pix && typeof pix === 'object' && pix !== null) {
     const p = pix as Record<string, unknown>;
-    if (String(p.keyType ?? '').toLowerCase() === 'cpf' && p.key) return String(p.key).trim();
+    if (String(p.keyType ?? '').toLowerCase() === 'cpf' && p.key) {
+      return normalizeBeatscodeCpf(String(p.key));
+    }
   }
   if (String(normalized.pixKeyType ?? '').toLowerCase() === 'cpf' && normalized.pixKey) {
-    return String(normalized.pixKey).trim();
+    return normalizeBeatscodeCpf(String(normalized.pixKey));
   }
   return undefined;
+}
+
+function inferRgOrRne(normalized: Record<string, unknown>): string | undefined {
+  return (
+    pickString(normalized, ['rg', 'RG', 'rgNumber', 'identityCard']) ??
+    pickString(normalized, ['rne', 'RNE', 'foreignerRegistration', 'foreignRegistration', 'rneNumber'])
+  );
 }
 
 function mapBeatscodeDocuments(
@@ -135,7 +146,9 @@ export function mapBeatscodeAthleteRow(
     'personId',
     'id',
   ]);
-  const name = pickString(normalized, ['name', 'fullName', 'athleteName', 'personName']);
+  const name =
+    pickString(normalized, ['name', 'fullName', 'athleteName', 'personName']) ??
+    pickString(normalized, ['nickname', 'apelido', 'shortName']);
   if (!beatscodeId || !name) return null;
 
   const nickname = pickString(normalized, ['nickname', 'apelido', 'shortName']);
@@ -158,9 +171,26 @@ export function mapBeatscodeAthleteRow(
   const mainAddress = buildAddressBlock(normalized, '', mainCity);
   const localAddress = buildAddressBlock(normalized, 'local', localCity);
 
-  const bankName = normalized.pixBankId
-    ? lookups.bankById.get(Number(normalized.pixBankId))
+  const bankName =
+    (normalized.bankAccountId
+      ? lookups.bankAccountById.get(Number(normalized.bankAccountId))?.bankName ??
+        lookups.bankById.get(Number(normalized.pixBankId))
+      : undefined) ??
+    (normalized.pixBankId ? lookups.bankById.get(Number(normalized.pixBankId)) : undefined);
+
+  const skinColor =
+    (normalized.breedId
+      ? lookups.breedById.get(Number(normalized.breedId))
+      : undefined) ?? pickString(normalized, ['skinColor', 'corPele', 'breed']);
+
+  const educationLevel = normalized.schoolingId
+    ? lookups.schoolingById.get(Number(normalized.schoolingId)) ??
+      String(normalized.schoolingId)
     : undefined;
+
+  const voterCity = resolveBeatscodeCityId(normalized.voterIdCardCityId, lookups);
+
+  const workVisa = pickString(normalized, ['workVisa', 'visa', 'workVisaNumber']);
 
   const employeeNotes = [
     pickString(normalized, ['observation']),
@@ -168,7 +198,7 @@ export function mapBeatscodeAthleteRow(
     normalized.responsible ? `Responsável: ${String(normalized.responsible)}` : undefined,
     normalized.registerDate ? `Cadastro RH: ${String(normalized.registerDate)}` : undefined,
     normalized.waitingFederation === true ? 'Aguardando federação' : undefined,
-    normalized.workVisa ? `Visto: ${String(normalized.workVisa)}` : undefined,
+    workVisa ? `Visto trabalho: ${workVisa}` : undefined,
   ]
     .filter(Boolean)
     .join('\n');
@@ -177,8 +207,17 @@ export function mapBeatscodeAthleteRow(
     personal: {
       nickname,
       cpf: inferCpf(normalized),
-      rg: pickString(normalized, ['rg', 'RG']),
-      rgIssuer: pickString(normalized, ['rgIssuer', 'rg_issuer', 'orgaoExpedidor']),
+      rg: inferRgOrRne(normalized),
+      rgIssuer: pickString(normalized, [
+        'rgIssuer',
+        'rg_issuer',
+        'orgaoExpedidor',
+        'rgIssuingAgency',
+        'identityIssuer',
+      ]),
+      rgValidUntil: normalizeDate(
+        pickString(normalized, ['rgValidUntil', 'rgExpiry', 'rgExpirationDate', 'identityValidUntil']),
+      ),
       maritalStatus: normalized.maritalStatusId
         ? lookups.maritalById.get(Number(normalized.maritalStatusId))
         : pickString(normalized, ['maritalStatus', 'marital_status', 'estadoCivil']),
@@ -189,7 +228,12 @@ export function mapBeatscodeAthleteRow(
       otherNationalities: nationality,
       rhEnrollment: pickString(normalized, ['rhEnrollment', 'enrollment', 'matricula']),
       clubArrivalDate: normalizeDate(
-        pickString(normalized, ['clubArrivalDate', 'arrivalDate', 'dataChegada', 'arrivalTeamDate']),
+        pickString(normalized, [
+          'clubArrivalDate',
+          'arrivalDate',
+          'dataChegada',
+          'arrivalTeamDate',
+        ]),
       ),
     },
     sports: {
@@ -218,25 +262,46 @@ export function mapBeatscodeAthleteRow(
       local: localAddress,
     }),
     complement: stripEmpty({
-      skinColor: normalized.breedId
-        ? pickString(normalized, ['skinColor', 'corPele'])
-        : pickString(normalized, ['skinColor', 'corPele']),
+      skinColor,
       rhFactor: normalized.bloodTypeId
         ? lookups.bloodTypeById.get(Number(normalized.bloodTypeId))
         : undefined,
-      physicalBiotype: pickString(normalized, ['physicalBiotype', 'biotipo', 'biotype']),
+      physicalBiotype: pickString(normalized, ['physicalBiotype', 'biotype', 'biotype']),
       costCenter: pickString(normalized, ['costCenter', 'costCenterId']),
       observation: employeeNotes || pickString(normalized, ['observation', 'observacao', 'notes']),
     }),
     extras: stripEmpty({
-      pixKeyType: mapBeatscodePixKeyType(pickString(normalized, ['pixKeyType'])),
-      pixKey: pickString(normalized, ['pixKey']),
+      pixKeyType: mapBeatscodePixKeyType(
+        pickString(normalized, ['pixKeyType']) ??
+          (normalized.pix && typeof normalized.pix === 'object'
+            ? String((normalized.pix as Record<string, unknown>).keyType ?? '')
+            : undefined),
+      ),
+      pixKey: pickString(normalized, ['pixKey']) ??
+        (normalized.pix && typeof normalized.pix === 'object'
+          ? String((normalized.pix as Record<string, unknown>).key ?? '')
+          : undefined),
       pixBank: bankName,
-      educationLevel: normalized.schoolingId
-        ? String(normalized.schoolingId)
-        : undefined,
+      educationLevel,
+      voterCity,
+      bankName:
+        lookups.bankAccountById.get(Number(normalized.bankAccountId))?.bankName ?? bankName,
+      bankAgency: lookups.bankAccountById.get(Number(normalized.bankAccountId))?.agency,
+      bankAccountNumber: lookups.bankAccountById.get(Number(normalized.bankAccountId))?.accountNumber,
+      bankAccountType: lookups.bankAccountById.get(Number(normalized.bankAccountId))?.accountType,
       observation: pickString(normalized, ['observationBusinessman']),
     }),
+    travel: workVisa
+      ? {
+          visas: [
+            {
+              id: `beatscode-visa-${beatscodeId}`,
+              country: workVisa,
+              notes: workVisa,
+            },
+          ],
+        }
+      : undefined,
     characteristics: buildCharacteristics(normalized.characteristicsId, ctx),
     agent: stripEmpty({
       hasAgent: normalized.businessmanId != null || normalized.agencyLegalRepresentativeId != null,
@@ -261,7 +326,13 @@ export function mapBeatscodeAthleteRow(
     name,
     photoPath,
     birthDate: normalizeDate(
-      pickString(normalized, ['birthDate', 'birth_date', 'dataNascimento', 'dateBirth', 'birthdate']),
+      pickString(normalized, [
+        'birthDate',
+        'birth_date',
+        'birthdate',
+        'dataNascimento',
+        'dateBirth',
+      ]),
     ),
     nationality,
     height: normalizeBeatscodeHeight(pickNumber(normalized, ['height', 'altura', 'heightCm'])),
@@ -276,7 +347,9 @@ export function mapBeatscodeAthleteRow(
       pickString(normalized, ['position', 'posicao', 'positionName', 'function']) ??
       resolveBeatscodePositionId(normalized.positionId, lookups),
     status: resolveBeatscodePlayerStatus(normalized),
-    contactEmail: contacts.primaryEmail ?? pickString(normalized, ['email', 'contactEmail', 'mail']),
+    contactEmail:
+      contacts.primaryEmail ??
+      pickString(normalized, ['email', 'contactEmail', 'mail', 'personalEmail']),
     contactPhone: contacts.primaryPhone ?? pickString(normalized, ['phone', 'contactPhone', 'telefone', 'cellphone']),
     emergencyContactName: pickString(normalized, [
       'emergencyContactName',

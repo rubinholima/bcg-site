@@ -69,15 +69,17 @@ export function normalizeBeatscodeRow(row: Record<string, unknown>): Record<stri
 }
 
 export function mergeBeatscodeSources(
-  athlete: Record<string, unknown>,
-  person?: Record<string, unknown>,
-  employee?: Record<string, unknown>,
+  ...sources: Array<Record<string, unknown> | undefined>
 ): Record<string, unknown> {
-  return normalizeBeatscodeRow({
-    ...(person ?? {}),
-    ...(employee ?? {}),
-    ...athlete,
-  });
+  const merged: Record<string, unknown> = {};
+  for (const src of sources) {
+    if (!src) continue;
+    for (const [key, value] of Object.entries(src)) {
+      if (value === null || value === undefined) continue;
+      merged[key] = value;
+    }
+  }
+  return normalizeBeatscodeRow(merged);
 }
 
 export type AddressBlockInput = {

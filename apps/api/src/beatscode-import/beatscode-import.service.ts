@@ -256,9 +256,9 @@ export class BeatscodeImportService {
             const employee =
               Number.isFinite(employeeId) ? employeeByEmployeeId.get(employeeId) : undefined;
             const row = mergeBeatscodeSources(
-              baseRow as Record<string, unknown>,
               person,
               employee,
+              baseRow as Record<string, unknown>,
             );
 
             const mapped = mapBeatscodeAthleteRow(row, categoryKey, {

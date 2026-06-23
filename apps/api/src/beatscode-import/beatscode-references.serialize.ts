@@ -1,4 +1,4 @@
-import type { BeatscodeLookupContext } from './beatscode-lookups.util';
+import type { BeatscodeBankAccountInfo, BeatscodeLookupContext } from './beatscode-lookups.util';
 
 export type SerializedBeatscodeReferences = {
   positions: Array<Record<string, unknown>>;
@@ -11,6 +11,9 @@ export type SerializedBeatscodeReferences = {
   cities: Array<Record<string, unknown>>;
   countries: Array<Record<string, unknown>>;
   banks: Array<Record<string, unknown>>;
+  bankAccounts?: Array<Record<string, unknown>>;
+  breeds?: Array<Record<string, unknown>>;
+  schoolings?: Array<Record<string, unknown>>;
   characteristics: Array<Record<string, unknown>>;
   documentTypes: Array<Record<string, unknown>>;
 };
@@ -32,6 +35,9 @@ export function serializeBeatscodeReferences(bundle: {
     cities: [...lookups.cityById.entries()].map(([id, name]) => ({ id, name })),
     countries: [...lookups.countryById.entries()].map(([id, name]) => ({ id, name })),
     banks: [...lookups.bankById.entries()].map(([id, name]) => ({ id, name })),
+    bankAccounts: [...lookups.bankAccountById.entries()].map(([id, row]) => ({ id, ...row })),
+    breeds: [...lookups.breedById.entries()].map(([id, name]) => ({ id, name })),
+    schoolings: [...lookups.schoolingById.entries()].map(([id, name]) => ({ id, name })),
     characteristics: [...characteristicsById.entries()].map(([id, row]) => ({
       id,
       ...(row as Record<string, unknown>),
@@ -128,6 +134,32 @@ export function deserializeBeatscodeReferences(raw: SerializedBeatscodeReference
     if (Number.isFinite(id) && name) bankById.set(id, name);
   }
 
+  const bankAccountById = new Map<number, BeatscodeBankAccountInfo>();
+  for (const row of raw.bankAccounts ?? []) {
+    const id = Number(row.id);
+    if (!Number.isFinite(id)) continue;
+    bankAccountById.set(id, {
+      bankName: str(row.bankName),
+      agency: str(row.agency),
+      accountNumber: str(row.accountNumber),
+      accountType: str(row.accountType),
+    });
+  }
+
+  const breedById = new Map<number, string>();
+  for (const row of raw.breeds ?? []) {
+    const id = Number(row.id);
+    const name = String(row.name ?? '').trim();
+    if (Number.isFinite(id) && name) breedById.set(id, name);
+  }
+
+  const schoolingById = new Map<number, string>();
+  for (const row of raw.schoolings ?? []) {
+    const id = Number(row.id);
+    const name = String(row.name ?? '').trim();
+    if (Number.isFinite(id) && name) schoolingById.set(id, name);
+  }
+
   const characteristicsById = new Map<
     number,
     { technical?: string; tactical?: string; physical?: string; additional?: string }
@@ -153,6 +185,9 @@ export function deserializeBeatscodeReferences(raw: SerializedBeatscodeReference
       cityById,
       countryById,
       bankById,
+      bankAccountById,
+      breedById,
+      schoolingById,
       contactById,
       contactTypeById,
     },
