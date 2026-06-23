@@ -78,7 +78,7 @@ export class PsychologistsService {
       tenantId?: string;
       calendarBlocked?: boolean;
       staffRole?: string;
-      supervisorId?: string;
+      supervisorId?: string | null;
       categories?: string[] | object;
       attendanceLog?: object | unknown;
       performanceSheet?: object | unknown;

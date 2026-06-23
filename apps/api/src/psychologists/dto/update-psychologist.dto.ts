@@ -1,4 +1,6 @@
-import { IsString, IsOptional, IsBoolean, IsObject, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsObject, IsArray, IsIn, ValidateIf } from 'class-validator';
+
+const STAFF_ROLES = ['psicologo', 'estagiario'] as const;
 
 export class UpdatePsychologistDto {
   @IsOptional()
@@ -28,6 +30,16 @@ export class UpdatePsychologistDto {
   @IsOptional()
   @IsString()
   tenantId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(STAFF_ROLES)
+  staffRole?: string;
+
+  @IsOptional()
+  @ValidateIf((_o, value) => value != null)
+  @IsString()
+  supervisorId?: string | null;
 
   @IsOptional()
   @IsBoolean()
