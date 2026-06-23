@@ -129,3 +129,16 @@ function pickDisplayName(obj: Record<string, unknown>, path: string, id: number)
   const base = path.split('/').pop();
   return base && base.includes('.') ? base : `anexo-${id}.pdf`;
 }
+
+/** Caminho S3/arquivo a partir de objeto attachment da API Beatscode. */
+export function pickBeatscodeStoragePath(obj: Record<string, unknown>): string | null {
+  return pickStoragePath(obj);
+}
+
+export function pickBeatscodeAttachmentDisplayName(
+  obj: Record<string, unknown>,
+  path: string,
+  id: number,
+): string {
+  return pickDisplayName(obj, path, id);
+}

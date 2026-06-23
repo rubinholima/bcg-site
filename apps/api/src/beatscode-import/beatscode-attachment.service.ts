@@ -111,14 +111,126 @@ export class BeatscodeAttachmentService {
     if (this.metaCache.has(attachmentId)) return this.metaCache.get(attachmentId) ?? null;
 
     const pool = await this.getPool();
-    if (!pool) {
-      this.metaCache.set(attachmentId, null);
-      return null;
+    if (pool) {
+      const fromDb = await this.resolveAttachmentMetaFromDb(pool, attachmentId);
+      if (fromDb) return fromDb;
     }
 
+    this.metaCache.set(attachmentId, null);
+    return null;
+  }
+
+  /** Resolve metadados do anexo pela API (sem MySQL). */
+  async resolveAttachmentMetaViaApi(
+    client: BeatscodeApiClient,
+    attachmentId: number,
+  ): Promise<BeatscodeAttachmentMeta | null> {
+    if (!Number.isFinite(attachmentId)) return null;
+    if (this.metaCache.has(attachmentId)) {
+      const cached = this.metaCache.get(attachmentId);
+      if (cached) return cached;
+    }
+
+    const routeCandidates = [
+      `/attachment/id/${attachmentId}`,
+      `/archive/id/${attachmentId}`,
+      `/file/id/${attachmentId}`,
+    ];
+    const pathCandidates = ['/attachment', '/archive', '/file', '/document'];
+
+    for (const path of pathCandidates) {
+      for (const route of routeCandidates) {
+        try {
+          const one = await client.getByRoute(path, route);
+          if (!one || typeof one !== 'object') continue;
+          const storagePath = this.pickStoragePathFromObject(one);
+          if (!storagePath) continue;
+          const displayName =
+            this.pickNameFromObject(one, storagePath, attachmentId);
+          const meta: BeatscodeAttachmentMeta = {
+            id: attachmentId,
+            storagePath,
+            displayName,
+            mimeType: displayName.toLowerCase().endsWith('.pdf')
+              ? 'application/pdf'
+              : undefined,
+          };
+          this.metaCache.set(attachmentId, meta);
+          return meta;
+        } catch {
+          /* tenta próxima rota */
+        }
+      }
+    }
+
+    this.metaCache.set(attachmentId, null);
+    return null;
+  }
+
+  async downloadAttachment(
+    client: BeatscodeApiClient,
+    attachmentId: number,
+  ): Promise<{ buffer: Buffer; meta: BeatscodeAttachmentMeta } | null> {
+    const meta =
+      (await this.resolveAttachmentMeta(attachmentId)) ??
+      (await this.resolveAttachmentMetaViaApi(client, attachmentId));
+    if (!meta) return null;
+
+    const buf = await client.downloadFile(meta.storagePath);
+    if (!buf?.length) return null;
+    return { buffer: buf, meta };
+  }
+
+  private pickStoragePathFromObject(obj: Record<string, unknown>): string | null {
+    const candidates = [
+      obj.file,
+      obj.path,
+      obj.filename,
+      obj.link,
+      obj.url,
+      obj.hash,
+      obj.fileName,
+      obj.name,
+    ];
+    for (const c of candidates) {
+      if (typeof c !== 'string' || !c.trim()) continue;
+      const v = c.trim();
+      if (v.startsWith('http')) {
+        const m = v.match(/files\/[^\s?#]+/i);
+        if (m) return m[0]!;
+        return v;
+      }
+      if (
+        v.includes('.pdf') ||
+        v.includes('.jpg') ||
+        v.includes('.png') ||
+        v.startsWith('files/')
+      ) {
+        return v.replace(/^\/+/, '');
+      }
+    }
+    return null;
+  }
+
+  private pickNameFromObject(
+    obj: Record<string, unknown>,
+    path: string,
+    id: number,
+  ): string {
+    for (const k of ['name', 'title', 'label', 'originalName', 'fileName']) {
+      const v = obj[k];
+      if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    const base = path.split('/').pop();
+    return base && base.includes('.') ? base : `anexo-${id}.pdf`;
+  }
+
+  private async resolveAttachmentMetaFromDb(
+    pool: Pool,
+    attachmentId: number,
+  ): Promise<BeatscodeAttachmentMeta | null> {
     const config = await this.resolveTableConfig(pool, attachmentId);
     if (!config) {
-      this.metaCache.set(attachmentId, null);
       return null;
     }
 
@@ -129,13 +241,11 @@ export class BeatscodeAttachmentService {
     );
     const row = rows[0];
     if (!row) {
-      this.metaCache.set(attachmentId, null);
       return null;
     }
 
     const storagePath = String(row[config.pathColumn] ?? '').trim();
     if (!storagePath) {
-      this.metaCache.set(attachmentId, null);
       return null;
     }
 
@@ -154,18 +264,6 @@ export class BeatscodeAttachmentService {
     };
     this.metaCache.set(attachmentId, meta);
     return meta;
-  }
-
-  async downloadAttachment(
-    client: BeatscodeApiClient,
-    attachmentId: number,
-  ): Promise<{ buffer: Buffer; meta: BeatscodeAttachmentMeta } | null> {
-    const meta = await this.resolveAttachmentMeta(attachmentId);
-    if (!meta) return null;
-
-    const buf = await client.downloadFile(meta.storagePath);
-    if (!buf?.length) return null;
-    return { buffer: buf, meta };
   }
 
   private async getPool(): Promise<Pool | null> {

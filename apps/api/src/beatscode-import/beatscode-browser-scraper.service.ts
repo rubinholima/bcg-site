@@ -12,9 +12,10 @@ import {
   type BeatscodeSniffedAttachment,
 } from './beatscode-browser.util';
 
-const DEFAULT_PLAYER_TIMEOUT_MS = 180_000;
-const DEFAULT_TAB_TIMEOUT_MS = 45_000;
+const DEFAULT_PLAYER_TIMEOUT_MS = 240_000;
+const DEFAULT_TAB_TIMEOUT_MS = 25_000;
 const DEFAULT_DOWNLOAD_TIMEOUT_MS = 12_000;
+const DEFAULT_DOWNLOAD_CONCURRENCY = 6;
 
 export type BeatscodeScrapedDocument = {
   name: string;
@@ -78,7 +79,15 @@ export class BeatscodeBrowserScraperService {
   }
 
   private recycleEvery(): number {
-    return Number(process.env.BEATSCODE_BROWSER_RECYCLE_EVERY ?? 25);
+    return Number(process.env.BEATSCODE_BROWSER_RECYCLE_EVERY ?? 40);
+  }
+
+  private isFastMode(): boolean {
+    return process.env.BEATSCODE_BROWSER_FAST !== '0';
+  }
+
+  private pauseMs(slow: number, fast: number): number {
+    return this.isFastMode() ? fast : slow;
   }
 
   async beforePlayerScrape(): Promise<void> {
@@ -218,7 +227,7 @@ export class BeatscodeBrowserScraperService {
         timeout: 120_000,
       });
       await page.waitForSelector('.card-people', { timeout: 60_000 }).catch(() => undefined);
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(this.pauseMs(2000, 700));
 
       for (const name of searchNames) {
         if (await this.openPersonCard(page, name)) {
@@ -233,7 +242,7 @@ export class BeatscodeBrowserScraperService {
       }
     }
 
-    if (!opened) {
+    if (!opened && !options.employeeId && !options.athleteRecordId) {
       for (const category of categories) {
         try {
           await page.goto(`${resolveBeatscodeWebUrl()}${modulePath}`, {
@@ -270,6 +279,8 @@ export class BeatscodeBrowserScraperService {
 
     const tabs = ['Documentos', 'Anexos', 'Contrato'] as const;
     for (const tab of tabs) {
+      const sniffedCount = (this.sniffedByTab.get('__all__') ?? []).length;
+      if (sniffedCount > 0 && tab !== 'Documentos') break;
       try {
         await this.withTimeout(
           () => this.activateDocumentsTab(page, tab),
@@ -301,6 +312,7 @@ export class BeatscodeBrowserScraperService {
             `download UI ${tab}`,
           );
           result.documents.push(...docs);
+          if (docs.length > 0) break;
         } catch (e) {
           result.errors.push(
             `${tab}: ${e instanceof Error ? e.message : String(e)}`,
@@ -319,24 +331,39 @@ export class BeatscodeBrowserScraperService {
     defaultTab: string,
   ): Promise<BeatscodeScrapedDocument[]> {
     const client = await this.getApiClient();
+    const concurrency = Number(
+      process.env.BEATSCODE_BROWSER_DOWNLOAD_CONCURRENCY ?? DEFAULT_DOWNLOAD_CONCURRENCY,
+    );
     const docs: BeatscodeScrapedDocument[] = [];
-    for (const meta of sniffed) {
-      try {
-        const buf = await client.downloadFile(meta.storagePath);
-        if (!buf?.length) continue;
-        const mapped = mapBeatscodeDocumentTypeLabel(meta.displayName);
-        docs.push({
-          name: meta.displayName.replace(/\.(pdf|png|jpe?g|webp)$/i, '').trim() || meta.displayName,
-          documentType: mapped.documentType,
-          documentCategory: mapped.documentCategory,
-          storagePath: meta.storagePath.replace(/^\/+/, ''),
-          buffer: buf,
-          tab: defaultTab,
-        });
-      } catch (e) {
-        this.log.warn(
-          `Download API ${meta.id} falhou: ${e instanceof Error ? e.message : e}`,
-        );
+
+    for (let i = 0; i < sniffed.length; i += concurrency) {
+      const chunk = sniffed.slice(i, i + concurrency);
+      const batch = await Promise.all(
+        chunk.map(async (meta) => {
+          try {
+            const buf = await client.downloadFile(meta.storagePath);
+            if (!buf?.length) return null;
+            const mapped = mapBeatscodeDocumentTypeLabel(meta.displayName);
+            return {
+              name:
+                meta.displayName.replace(/\.(pdf|png|jpe?g|webp)$/i, '').trim() ||
+                meta.displayName,
+              documentType: mapped.documentType,
+              documentCategory: mapped.documentCategory,
+              storagePath: meta.storagePath.replace(/^\/+/, ''),
+              buffer: buf,
+              tab: defaultTab,
+            } satisfies BeatscodeScrapedDocument;
+          } catch (e) {
+            this.log.warn(
+              `Download API ${meta.id} falhou: ${e instanceof Error ? e.message : e}`,
+            );
+            return null;
+          }
+        }),
+      );
+      for (const doc of batch) {
+        if (doc) docs.push(doc);
       }
     }
     return docs;
@@ -367,8 +394,10 @@ export class BeatscodeBrowserScraperService {
     const tab = page.getByText(tabLabel, { exact: true }).first();
     if (!(await tab.isVisible().catch(() => false))) return;
     await tab.click();
-    await page.waitForTimeout(900);
-    await page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
+    await page.waitForTimeout(this.pauseMs(900, 350));
+    await page
+      .waitForLoadState('networkidle', { timeout: this.pauseMs(8_000, 4_000) })
+      .catch(() => undefined);
   }
 
   private async login(page: Page): Promise<void> {
@@ -457,7 +486,7 @@ export class BeatscodeBrowserScraperService {
       const url = `${resolveBeatscodeWebUrl()}${modulePath}/id/${id}`;
       try {
         await page.goto(url, { waitUntil: 'load', timeout: 45_000 });
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(this.pauseMs(1000, 450));
         const onPerson =
           page.url().includes(`${modulePath}/id/`) ||
           (await page.getByText('Documentos', { exact: true }).first().isVisible().catch(() => false));
@@ -518,7 +547,7 @@ export class BeatscodeBrowserScraperService {
         .catch(() => '');
       if (!this.nameMatchesPanel(target, name)) continue;
       await cards.nth(i).click();
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(this.pauseMs(1500, 500));
       return true;
     }
     return false;
@@ -592,7 +621,7 @@ export class BeatscodeBrowserScraperService {
     const tab = page.getByText(tabLabel, { exact: true }).first();
     if (!(await tab.isVisible().catch(() => false))) return [];
     await tab.click();
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(this.pauseMs(900, 350));
 
     const rows = page.locator('table tbody tr');
     const rowCount = await rows.count();

@@ -8,8 +8,10 @@
  * - Opcional: BEATSCODE_BROWSER_PLAYER_LIMIT=5 (teste)
  * - Opcional: BEATSCODE_BROWSER_RETRY_ERRORS=1 (só segunda passagem — prioriza falhas de match)
  * - Opcional: BEATSCODE_BROWSER_SKIP_NOT_FOUND=0 (processa também os 308 já marcados como não encontrados)
- * - Opcional: BEATSCODE_BROWSER_PLAYER_TIMEOUT_MS=180000 (3 min por atleta; reinicia browser se estourar)
- * - Opcional: BEATSCODE_BROWSER_RECYCLE_EVERY=25 (reinicia Playwright a cada N atletas)
+ * - Opcional: BEATSCODE_BROWSER_PLAYER_TIMEOUT_MS=240000 (4 min por atleta)
+ * - Opcional: BEATSCODE_BROWSER_RECYCLE_EVERY=40 (reinicia Playwright a cada N atletas)
+ * - Opcional: BEATSCODE_BROWSER_FAST=1 (padrão — menos esperas no painel)
+ * - Opcional: BEATSCODE_BROWSER_DOWNLOAD_CONCURRENCY=6 (downloads API em paralelo)
  * - Overnight: não usar RETRY_ERRORS; pendentes vêm primeiro e not-found é pulado
  *
  * Sem MySQL Beatscode usa Playwright automaticamente.

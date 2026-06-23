@@ -278,8 +278,22 @@ export class BeatscodeDocumentsImportService {
     }
 
     let apiResolver: BeatscodeApiClient | null = null;
+    let athleteRecordByEmployee = new Map<number, string>();
     const checkpointEvery = Number(process.env.BEATSCODE_BROWSER_CHECKPOINT_EVERY ?? 10);
     let attempted = 0;
+
+    if (this.hasApiCredentials()) {
+      apiResolver = new BeatscodeApiClient(
+        process.env.BEATSCODE_API_URL?.trim() || 'https://bostoncityfc-api.beatscode.com',
+        process.env.BEATSCODE_USERNAME!.trim(),
+        process.env.BEATSCODE_PASSWORD!.trim(),
+      );
+      await apiResolver.login();
+      athleteRecordByEmployee = await this.buildAthleteRecordIdMap(apiResolver);
+      this.log.log(
+        `Beatscode sync: ${athleteRecordByEmployee.size} athleteRecordId(s) indexados pela API`,
+      );
+    }
 
     try {
       for (const player of orderedPlayers) {
@@ -301,18 +315,38 @@ export class BeatscodeDocumentsImportService {
 
           const employeeId = this.parseBeatscodeEmployeeId(player.externalId ?? '');
           let beatscodeMeta = this.parseBeatscodeProfileMeta(profile);
-          if (!beatscodeMeta.athleteRecordId && employeeId) {
-            if (!apiResolver) {
-              apiResolver = new BeatscodeApiClient(
-                process.env.BEATSCODE_API_URL?.trim() || 'https://bostoncityfc-api.beatscode.com',
-                process.env.BEATSCODE_USERNAME!.trim(),
-                process.env.BEATSCODE_PASSWORD!.trim(),
-              );
-              await apiResolver.login();
-            }
+          const mappedRecordId =
+            employeeId != null ? athleteRecordByEmployee.get(employeeId) : undefined;
+          if (!beatscodeMeta.athleteRecordId && mappedRecordId) {
+            beatscodeMeta = { ...beatscodeMeta, athleteRecordId: mappedRecordId };
+          }
+          if (!beatscodeMeta.athleteRecordId && employeeId && apiResolver) {
             const resolved = await this.resolveAthleteRecordId(apiResolver, employeeId);
             if (resolved) {
               beatscodeMeta = { ...beatscodeMeta, athleteRecordId: resolved };
+              athleteRecordByEmployee.set(employeeId, resolved);
+            }
+          }
+
+          if (apiResolver) {
+            const apiDone = await this.trySyncPlayerDocumentsViaApi(
+              player.id,
+              profile,
+              docs,
+              contracts,
+              apiResolver,
+              result,
+            );
+            if (apiDone) {
+              const refreshed = await this.prisma.player.findUnique({
+                where: { id: player.id },
+                select: { registrationProfile: true },
+              });
+              if (refreshed) player.registrationProfile = refreshed.registrationProfile;
+              this.log.log(
+                `Beatscode sync ${label}: só API (${Math.round((Date.now() - started) / 1000)}s)`,
+              );
+              continue;
             }
           }
 
@@ -501,6 +535,125 @@ export class BeatscodeDocumentsImportService {
     });
   }
 
+  private async buildAthleteRecordIdMap(
+    client: BeatscodeApiClient,
+  ): Promise<Map<number, string>> {
+    const map = new Map<number, string>();
+    try {
+      const initial = await client.fetchInitialData('/person/athlete');
+      for (const cat of initial.categories) {
+        try {
+          await client.setCategory(cat.id, '/person/athlete');
+          const rows = await client.listAthletes();
+          for (const row of rows) {
+            const emp = Number(row.employeeId ?? row.idEmployee);
+            const recId = row.id ?? row.athleteId;
+            if (Number.isFinite(emp) && recId != null && String(recId).trim()) {
+              map.set(emp, String(recId).trim());
+            }
+          }
+        } catch {
+          /* categoria opcional */
+        }
+      }
+    } catch (e) {
+      this.log.warn(
+        `Índice athleteRecordId falhou: ${e instanceof Error ? e.message : e}`,
+      );
+    }
+    return map;
+  }
+
+  /**
+   * Tenta concluir o jogador só com API (IDs de anexo no cadastro).
+   * Retorna true se não precisa abrir o browser para este atleta.
+   */
+  private async trySyncPlayerDocumentsViaApi(
+    playerId: string,
+    profile: Record<string, unknown>,
+    docs: StoredDoc[],
+    contracts: ReturnType<BeatscodeDocumentsImportService['getBeatscodeContracts']>,
+    client: BeatscodeApiClient,
+    result: BeatscodeDocumentsSyncResult,
+  ): Promise<boolean> {
+    const pendingDocs = docs.filter((d) => d.pendingDownload || !d.fileUrl?.trim());
+    const hasContractIds = contracts.some(
+      (c) => (c.attachmentIds?.length ?? 0) + (c.extraFileIds?.length ?? 0) > 0,
+    );
+    if (!pendingDocs.length && !hasContractIds) {
+      return this.countPendingDocuments(profile) === 0;
+    }
+
+    let changed = false;
+    for (const doc of pendingDocs) {
+      const attId = doc.beatscodeAttachmentId;
+      if (!Number.isFinite(attId)) continue;
+      const downloaded = await this.attachments.downloadAttachment(client, attId!);
+      if (!downloaded) continue;
+
+      const mapped = mapBeatscodeDocumentTypeLabel(downloaded.meta.displayName);
+      const uploaded = await this.s3.uploadPlayerRegistrationDocument(
+        downloaded.buffer,
+        playerId,
+        `${downloaded.meta.displayName}.pdf`,
+        downloaded.meta.mimeType ?? 'application/pdf',
+      );
+      doc.name =
+        downloaded.meta.displayName.replace(/\.(pdf|png|jpe?g|webp)$/i, '').trim() ||
+        doc.name ||
+        `Documento pessoal`;
+      doc.documentType = mapped.documentType;
+      doc.documentCategory = mapped.documentCategory;
+      doc.fileUrl = uploaded.url;
+      doc.fileKey = uploaded.key;
+      doc.pendingDownload = false;
+      doc.uploadedAt = new Date().toISOString();
+      doc.beatscodeAttachmentId = attId;
+      doc.source = 'beatscode';
+      result.filesDownloaded += 1;
+      result.documentsUpdated += 1;
+      changed = true;
+    }
+
+    for (const contract of contracts) {
+      const attIds = [...(contract.attachmentIds ?? []), ...(contract.extraFileIds ?? [])];
+      for (const attId of attIds) {
+        const created = await this.syncContractLegalDocument(
+          playerId,
+          contract,
+          attId,
+          client,
+          true,
+          result,
+        );
+        if (created) changed = true;
+      }
+    }
+
+    if (!changed) return false;
+
+    await this.prisma.player.update({
+      where: { id: playerId },
+      data: {
+        registrationProfile: {
+          ...profile,
+          documents: docs,
+        } as Prisma.InputJsonValue,
+      },
+    });
+    result.playersProcessed += 1;
+
+    return this.countPendingDocuments({
+      ...profile,
+      documents: docs,
+    }) === 0;
+  }
+
+  private countPendingDocuments(profile: Record<string, unknown>): number {
+    const docs = this.normalizeDocs(profile.documents);
+    return docs.filter((d) => d.pendingDownload || !d.fileUrl?.trim()).length;
+  }
+
   private async resolveAthleteRecordId(
     client: BeatscodeApiClient,
     employeeId: number,
@@ -643,7 +796,11 @@ export class BeatscodeDocumentsImportService {
     });
     if (existing?.fileUrl) return false;
 
-    const meta = await this.attachments.resolveAttachmentMeta(attachmentId);
+    const meta =
+      (await this.attachments.resolveAttachmentMeta(attachmentId)) ??
+      (client
+        ? await this.attachments.resolveAttachmentMetaViaApi(client, attachmentId)
+        : null);
     if (!downloadFiles || !client || !meta?.storagePath) {
       if (!meta?.storagePath) result.skippedNoPath += 1;
       return false;
