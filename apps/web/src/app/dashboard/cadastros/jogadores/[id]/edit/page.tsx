@@ -43,6 +43,14 @@ import {
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
+  buildPlayerMatchAvailabilityInput,
+  getPlayerMatchAvailability,
+} from "@/lib/player-match-availability";
+import {
+  PlayerMatchAvailabilityBall,
+  PlayerMatchAvailabilityHeader,
+} from "@/components/dashboard/players/PlayerMatchAvailabilityBadge";
+import {
   getRegistrationIdentifiersError,
   parseRegistrationProfile,
   seedCategoryHistoryIfEmpty,
@@ -381,19 +389,26 @@ export default function EditJogadorPage() {
 
   const imagesList = (player.images ?? []) as ImageEntry[];
 
+  const matchAvailability = getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(player));
+
   const playerPhotoLeading = (
-    <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-violet-500/35 bg-muted sm:h-32 sm:w-32">
-      {(pendingPreviewUrl || player.photoUrl) ? (
-        <img
-          src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
-          alt={player.name}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-          <User className="h-10 w-10 sm:h-12 sm:w-12" />
-        </div>
-      )}
+    <div className="relative shrink-0">
+      <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-violet-500/35 bg-muted sm:h-32 sm:w-32">
+        {(pendingPreviewUrl || player.photoUrl) ? (
+          <img
+            src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
+            alt={player.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <User className="h-10 w-10 sm:h-12 sm:w-12" />
+          </div>
+        )}
+      </div>
+      <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1">
+        <PlayerMatchAvailabilityBall availability={matchAvailability} size="sm" />
+      </div>
     </div>
   );
 
@@ -415,6 +430,10 @@ export default function EditJogadorPage() {
           </Button>
         }
       />
+
+      <div className="rounded-xl border border-border/60 bg-card/40 px-3 py-2.5 sm:px-4">
+        <PlayerMatchAvailabilityHeader availability={matchAvailability} />
+      </div>
 
       <div className="relative z-0 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-950/25 via-zinc-950/40 to-background p-3 sm:flex sm:items-center sm:p-4">
         <BostonTvDashboardTabs

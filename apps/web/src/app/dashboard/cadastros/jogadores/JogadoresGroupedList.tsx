@@ -16,7 +16,11 @@ import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-ta
 import { getPublicImageUrl } from "@/lib/media-url";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
-import { getSportsSituationLabel, parseRegistrationProfile } from "@/lib/player-registration-profile";
+import {
+  buildPlayerMatchAvailabilityInput,
+  getPlayerMatchAvailability,
+} from "@/lib/player-match-availability";
+import { PlayerMatchAvailabilityBadge } from "@/components/dashboard/players/PlayerMatchAvailabilityBadge";
 import { cn } from "@/lib/utils";
 
 export interface JogadorListItem {
@@ -29,6 +33,10 @@ export interface JogadorListItem {
   tenantId: string;
   tenant?: { id: string; name: string; slug: string; logoUrl?: string | null };
   status?: string | null;
+  statusDetails?: string | null;
+  statusUntil?: string | null;
+  yellowCards?: number | null;
+  redCards?: number | null;
   registrationProfile?: unknown;
 }
 
@@ -46,7 +54,7 @@ function PlayerTable({ rows }: { rows: JogadorListItem[] }) {
           <TableHead>Nome</TableHead>
           <TableHead>Nº</TableHead>
           <TableHead>Posição</TableHead>
-          <TableHead>Situação</TableHead>
+          <TableHead>Aptidão</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -68,7 +76,9 @@ function PlayerTable({ rows }: { rows: JogadorListItem[] }) {
             <TableCell>{p.jerseyNumber ?? "—"}</TableCell>
             <TableCell>{getPositionLabel(p.position) || p.position || "—"}</TableCell>
             <TableCell>
-              {getSportsSituationLabel(parseRegistrationProfile(p.registrationProfile).sports?.situation)}
+              <PlayerMatchAvailabilityBadge
+                availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(p))}
+              />
             </TableCell>
             <TableRowActions>
               <div className="flex justify-end gap-2">
