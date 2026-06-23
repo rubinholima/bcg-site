@@ -279,6 +279,10 @@ export class BeatscodeDocumentsImportService {
 
     let apiResolver: BeatscodeApiClient | null = null;
     let athleteRecordByEmployee = new Map<number, string>();
+    let apiSessionStartedAt = 0;
+    const apiSessionMaxMs = Number(
+      process.env.BEATSCODE_BROWSER_SESSION_MAX_MS ?? 9 * 60 * 1000,
+    );
     const checkpointEvery = Number(process.env.BEATSCODE_BROWSER_CHECKPOINT_EVERY ?? 10);
     let attempted = 0;
 
@@ -289,6 +293,7 @@ export class BeatscodeDocumentsImportService {
         process.env.BEATSCODE_PASSWORD!.trim(),
       );
       await apiResolver.login();
+      apiSessionStartedAt = Date.now();
       athleteRecordByEmployee = await this.buildAthleteRecordIdMap(apiResolver);
       this.log.log(
         `Beatscode sync: ${athleteRecordByEmployee.size} athleteRecordId(s) indexados pela API`,
@@ -307,7 +312,20 @@ export class BeatscodeDocumentsImportService {
         const started = Date.now();
 
         try {
-          await this.browserScraper.beforePlayerScrape();
+          const sessionRecycled = await this.browserScraper.beforePlayerScrape();
+          if (sessionRecycled && apiResolver) {
+            await apiResolver.login();
+            apiSessionStartedAt = Date.now();
+          } else if (
+            apiResolver &&
+            apiSessionMaxMs > 0 &&
+            apiSessionStartedAt > 0 &&
+            Date.now() - apiSessionStartedAt >= apiSessionMaxMs
+          ) {
+            this.log.log('Beatscode sync: renovando token API (~9 min)');
+            await apiResolver.login();
+            apiSessionStartedAt = Date.now();
+          }
 
           const profile = this.parseProfile(player.registrationProfile);
           const docs = this.normalizeDocs(profile.documents);
@@ -415,8 +433,12 @@ export class BeatscodeDocumentsImportService {
           const msg = e instanceof Error ? e.message : String(e);
           result.errors.push(`${player.externalId}: ${msg}`);
           this.log.warn(`Beatscode sync ${label} falhou: ${msg}`);
-          if (/timeout/i.test(msg)) {
-            await this.browserScraper.resetSession();
+          if (/timeout|signin|sessão|session|unauthorized|401/i.test(msg)) {
+            await this.browserScraper.resetSession(msg);
+            if (apiResolver) {
+              await apiResolver.login();
+              apiSessionStartedAt = Date.now();
+            }
           }
         }
 

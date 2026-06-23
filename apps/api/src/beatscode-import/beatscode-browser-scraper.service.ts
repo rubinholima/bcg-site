@@ -16,6 +16,8 @@ const DEFAULT_PLAYER_TIMEOUT_MS = 240_000;
 const DEFAULT_TAB_TIMEOUT_MS = 25_000;
 const DEFAULT_DOWNLOAD_TIMEOUT_MS = 12_000;
 const DEFAULT_DOWNLOAD_CONCURRENCY = 6;
+/** Beatscode costuma derrubar sessão web/API após ~10 min — renovar antes disso. */
+const DEFAULT_SESSION_MAX_MS = 9 * 60 * 1000;
 
 export type BeatscodeScrapedDocument = {
   name: string;
@@ -46,6 +48,7 @@ export class BeatscodeBrowserScraperService {
   private sniffedByTab = new Map<string, BeatscodeSniffedAttachment[]>();
   private responseHandler: ((res: Response) => void) | null = null;
   private playersSinceLaunch = 0;
+  private sessionStartedAt: number | null = null;
 
   hasCredentials(): boolean {
     return Boolean(
@@ -62,16 +65,43 @@ export class BeatscodeBrowserScraperService {
     this.cachedCategories = null;
     this.sniffedByTab.clear();
     this.playersSinceLaunch = 0;
+    this.sessionStartedAt = null;
     if (this.tempDir) {
       await rm(this.tempDir, { recursive: true, force: true }).catch(() => undefined);
       this.tempDir = null;
     }
   }
 
-  /** Reinicia navegador (evita travamentos após muitas páginas). */
-  async resetSession(): Promise<void> {
-    this.log.warn('Beatscode browser: reiniciando sessão Playwright');
+  /** Reinicia navegador (sessão expirada, timeout ou ciclo programado). */
+  async resetSession(reason?: string): Promise<void> {
+    this.log.warn(
+      `Beatscode browser: reiniciando sessão Playwright${reason ? ` — ${reason}` : ''}`,
+    );
     await this.close();
+  }
+
+  private sessionMaxMs(): number {
+    const raw = process.env.BEATSCODE_BROWSER_SESSION_MAX_MS;
+    if (raw === '0') return 0;
+    return Number(raw ?? DEFAULT_SESSION_MAX_MS);
+  }
+
+  private markSessionFresh(): void {
+    this.sessionStartedAt = Date.now();
+  }
+
+  private isSessionAgeExceeded(): boolean {
+    const max = this.sessionMaxMs();
+    if (max <= 0 || this.sessionStartedAt == null) return false;
+    return Date.now() - this.sessionStartedAt >= max;
+  }
+
+  /** Garante login web se o painel redirecionou para /signin. */
+  private async ensureWebSessionAlive(page: Page): Promise<void> {
+    if (!page.url().includes('signin')) return;
+    this.log.warn('Beatscode: sessão web expirou — fazendo login de novo');
+    await this.login(page);
+    this.apiClient = null;
   }
 
   private playerTimeoutMs(): number {
@@ -90,15 +120,35 @@ export class BeatscodeBrowserScraperService {
     return this.isFastMode() ? fast : slow;
   }
 
-  async beforePlayerScrape(): Promise<void> {
+  /**
+   * Renova sessão antes de cada atleta se passou o tempo limite (~9 min) ou N atletas.
+   * @returns true se o browser foi reiniciado (relogue API Beatscode no caller).
+   */
+  async beforePlayerScrape(): Promise<boolean> {
+    let recycled = false;
+
+    if (this.isSessionAgeExceeded()) {
+      const mins = Math.round(this.sessionMaxMs() / 60_000);
+      await this.resetSession(`sessão Beatscode ~${mins} min`);
+      recycled = true;
+      this.playersSinceLaunch = 0;
+    }
+
     this.playersSinceLaunch += 1;
     const every = this.recycleEvery();
     if (every > 0 && this.playersSinceLaunch > 1 && (this.playersSinceLaunch - 1) % every === 0) {
-      await this.resetSession();
+      await this.resetSession(`a cada ${every} atleta(s)`);
+      recycled = true;
+      this.playersSinceLaunch = 1;
     }
+
+    return recycled;
   }
 
   private async getApiClient(): Promise<BeatscodeApiClient> {
+    if (this.apiClient && this.isSessionAgeExceeded()) {
+      this.apiClient = null;
+    }
     if (!this.apiClient) {
       this.apiClient = new BeatscodeApiClient(
         resolveBeatscodeApiUrl(),
@@ -154,7 +204,10 @@ export class BeatscodeBrowserScraperService {
   }
 
   async ensurePage(headed = process.env.BEATSCODE_HEADED === '1'): Promise<Page> {
-    if (this.page) return this.page;
+    if (this.page) {
+      await this.ensureWebSessionAlive(this.page);
+      return this.page;
+    }
     this.tempDir = await mkdtemp(join(tmpdir(), 'bcg-beatscode-'));
     this.browser = await chromium.launch({
       headless: !headed,
@@ -165,6 +218,7 @@ export class BeatscodeBrowserScraperService {
     this.page.setDefaultNavigationTimeout(60_000);
     this.attachSniffer(this.page);
     await this.login(this.page);
+    this.markSessionFresh();
     return this.page;
   }
 
@@ -198,6 +252,7 @@ export class BeatscodeBrowserScraperService {
       : await this.loadCategoryNames(modulePath);
 
     const page = await this.ensurePage();
+    await this.ensureWebSessionAlive(page);
     this.clearSniffed();
     const result: BeatscodeBrowserScrapeResult = {
       employeeId: options.employeeId,
@@ -226,6 +281,7 @@ export class BeatscodeBrowserScraperService {
         waitUntil: 'load',
         timeout: 120_000,
       });
+      await this.ensureWebSessionAlive(page);
       await page.waitForSelector('.card-people', { timeout: 60_000 }).catch(() => undefined);
       await page.waitForTimeout(this.pauseMs(2000, 700));
 
@@ -249,6 +305,7 @@ export class BeatscodeBrowserScraperService {
             waitUntil: 'load',
             timeout: 120_000,
           });
+          await this.ensureWebSessionAlive(page);
           await page.waitForSelector('.card-people', { timeout: 60_000 }).catch(() => undefined);
           await page.waitForTimeout(2000);
           await this.selectCategory(page, category);
@@ -405,12 +462,16 @@ export class BeatscodeBrowserScraperService {
       waitUntil: 'networkidle',
       timeout: 120_000,
     });
-    if (!page.url().includes('signin')) return;
+    if (!page.url().includes('signin')) {
+      this.markSessionFresh();
+      return;
+    }
     await page.locator('#username').fill(process.env.BEATSCODE_USERNAME!.trim());
     await page.locator('#password').fill(process.env.BEATSCODE_PASSWORD!.trim());
     await page.locator('input.signin-btn[type="submit"]').click();
     await page.waitForURL((url) => !url.pathname.includes('signin'), { timeout: 60_000 });
     await page.waitForTimeout(800);
+    this.markSessionFresh();
   }
 
   private async loadCategoryNames(
@@ -486,6 +547,7 @@ export class BeatscodeBrowserScraperService {
       const url = `${resolveBeatscodeWebUrl()}${modulePath}/id/${id}`;
       try {
         await page.goto(url, { waitUntil: 'load', timeout: 45_000 });
+        await this.ensureWebSessionAlive(page);
         await page.waitForTimeout(this.pauseMs(1000, 450));
         const onPerson =
           page.url().includes(`${modulePath}/id/`) ||
