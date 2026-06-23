@@ -45,6 +45,15 @@ async function main() {
     console.log('Nenhum sync finalizado salvo ainda (roda ao terminar).\n');
   }
 
+  const checkpoint = await prisma.integrationConfig.findUnique({
+    where: { key: 'beatscode_documents_sync_checkpoint' },
+  });
+  if (checkpoint?.config) {
+    console.log('Checkpoint (sync em andamento ou interrompido):');
+    console.log(JSON.stringify(checkpoint.config, null, 2));
+    console.log('');
+  }
+
   const players = await prisma.player.findMany({
     where: { externalId: { startsWith: 'beatscode-' } },
     select: { registrationProfile: true },

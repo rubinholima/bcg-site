@@ -15,6 +15,48 @@ export function resolveBeatscodeApiUrl(): string {
   ).replace(/\/+$/, '');
 }
 
+export type BeatscodeSniffedAttachment = {
+  id: number;
+  storagePath: string;
+  displayName: string;
+};
+
+/** Extrai todos os anexos de uma resposta JSON (sniffer de rede no painel). */
+export function extractAllAttachmentsFromJson(body: string): BeatscodeSniffedAttachment[] {
+  const byId = new Map<number, BeatscodeSniffedAttachment>();
+  if (!body.trim()) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    return [];
+  }
+
+  const visit = (node: unknown, depth = 0): void => {
+    if (depth > 14 || node == null) return;
+    if (Array.isArray(node)) {
+      for (const item of node) visit(item, depth + 1);
+      return;
+    }
+    if (typeof node !== 'object') return;
+    const obj = node as Record<string, unknown>;
+    const id = Number(obj.id ?? obj.attachmentId);
+    const path = pickStoragePath(obj);
+    if (Number.isFinite(id) && path && !byId.has(id)) {
+      byId.set(id, {
+        id,
+        storagePath: path,
+        displayName: pickDisplayName(obj, path, id),
+      });
+    }
+    for (const v of Object.values(obj)) visit(v, depth + 1);
+  };
+
+  visit(parsed);
+  return [...byId.values()];
+}
+
 /** Extrai metadados de anexo de respostas JSON / dict do Beatscode. */
 export function extractAttachmentMetaFromJson(
   body: string,

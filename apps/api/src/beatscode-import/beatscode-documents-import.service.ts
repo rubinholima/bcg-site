@@ -254,7 +254,10 @@ export class BeatscodeDocumentsImportService {
     });
 
     const retryOnly = process.env.BEATSCODE_BROWSER_RETRY_ERRORS === '1';
-    const lastErrors = retryOnly ? await this.loadLastSyncNotFoundIds() : new Set<string>();
+    const skipNotFound =
+      process.env.BEATSCODE_BROWSER_SKIP_NOT_FOUND !== '0' && !retryOnly;
+    const knownNotFound = skipNotFound ? await this.loadLastSyncNotFoundIds() : new Set<string>();
+    const lastErrors = retryOnly ? knownNotFound : new Set<string>();
     const orderedPlayers = retryOnly
       ? [
           ...players.filter((p) => lastErrors.has(p.externalId ?? '')),
@@ -265,17 +268,54 @@ export class BeatscodeDocumentsImportService {
           ...players.filter((p) => !this.playerNeedsDocumentSync(p.registrationProfile)),
         ];
 
+    const pendingTotal = orderedPlayers.filter((p) =>
+      this.playerNeedsDocumentSync(p.registrationProfile),
+    ).length;
+    if (knownNotFound.size && skipNotFound) {
+      this.log.log(
+        `Beatscode sync: ${pendingTotal} pendente(s); pulando ${knownNotFound.size} já marcados como não encontrados`,
+      );
+    }
+
+    let apiResolver: BeatscodeApiClient | null = null;
+    const checkpointEvery = Number(process.env.BEATSCODE_BROWSER_CHECKPOINT_EVERY ?? 10);
+    let attempted = 0;
+
     try {
       for (const player of orderedPlayers) {
         if (maxSuccess > 0 && result.playersProcessed >= maxSuccess) break;
+        if (!this.playerNeedsDocumentSync(player.registrationProfile)) continue;
+        if (skipNotFound && knownNotFound.has(player.externalId ?? '')) continue;
+
+        attempted += 1;
+        const label = `[${attempted}/${pendingTotal}] ${player.externalId} ${player.name}`;
+        this.log.log(`Beatscode sync ${label}…`);
+        const started = Date.now();
+
         try {
+          await this.browserScraper.beforePlayerScrape();
+
           const profile = this.parseProfile(player.registrationProfile);
-          if (!this.playerNeedsDocumentSync(player.registrationProfile)) continue;
           const docs = this.normalizeDocs(profile.documents);
           const contracts = this.getBeatscodeContracts(profile);
 
           const employeeId = this.parseBeatscodeEmployeeId(player.externalId ?? '');
-          const beatscodeMeta = this.parseBeatscodeProfileMeta(profile);
+          let beatscodeMeta = this.parseBeatscodeProfileMeta(profile);
+          if (!beatscodeMeta.athleteRecordId && employeeId) {
+            if (!apiResolver) {
+              apiResolver = new BeatscodeApiClient(
+                process.env.BEATSCODE_API_URL?.trim() || 'https://bostoncityfc-api.beatscode.com',
+                process.env.BEATSCODE_USERNAME!.trim(),
+                process.env.BEATSCODE_PASSWORD!.trim(),
+              );
+              await apiResolver.login();
+            }
+            const resolved = await this.resolveAthleteRecordId(apiResolver, employeeId);
+            if (resolved) {
+              beatscodeMeta = { ...beatscodeMeta, athleteRecordId: resolved };
+            }
+          }
+
           const scraped = await this.browserScraper.scrapePersonDocuments({
             playerName: player.name,
             employeeId,
@@ -287,6 +327,9 @@ export class BeatscodeDocumentsImportService {
           );
           if (!scraped.documents.length) {
             if (!scraped.errors.length) result.skippedNoPath += 1;
+            this.log.log(
+              `Beatscode sync ${label}: sem PDF (${Math.round((Date.now() - started) / 1000)}s)`,
+            );
             continue;
           }
 
@@ -312,21 +355,43 @@ export class BeatscodeDocumentsImportService {
           }
 
           if (changed) {
+            const profileUpdate: Record<string, unknown> = {
+              ...profile,
+              documents: docs,
+            };
+            if (beatscodeMeta.athleteRecordId) {
+              const beatscode = (profile.beatscode as Record<string, unknown> | undefined) ?? {};
+              profileUpdate.beatscode = {
+                ...beatscode,
+                athleteRecordId: beatscodeMeta.athleteRecordId,
+              };
+            }
             await this.prisma.player.update({
               where: { id: player.id },
               data: {
-                registrationProfile: {
-                  ...profile,
-                  documents: docs,
-                } as Prisma.InputJsonValue,
+                registrationProfile: profileUpdate as Prisma.InputJsonValue,
               },
             });
             result.playersProcessed += 1;
+            this.log.log(
+              `Beatscode sync ${label}: +${scraped.documents.length} arquivo(s) (${Math.round((Date.now() - started) / 1000)}s)`,
+            );
           }
         } catch (e) {
-          result.errors.push(
-            `${player.externalId}: ${e instanceof Error ? e.message : String(e)}`,
-          );
+          const msg = e instanceof Error ? e.message : String(e);
+          result.errors.push(`${player.externalId}: ${msg}`);
+          this.log.warn(`Beatscode sync ${label} falhou: ${msg}`);
+          if (/timeout/i.test(msg)) {
+            await this.browserScraper.resetSession();
+          }
+        }
+
+        if (checkpointEvery > 0 && attempted % checkpointEvery === 0) {
+          await this.saveSyncCheckpoint(result, {
+            attempted,
+            pendingTotal,
+            lastPlayerExternalId: player.externalId ?? undefined,
+          });
         }
       }
     } finally {
@@ -396,10 +461,70 @@ export class BeatscodeDocumentsImportService {
       const m = err.match(/^(beatscode-\d+):.*Não encontrado no painel/i);
       if (m) ids.add(m[1]!);
     }
-    if (ids.size) {
+    if (ids.size && process.env.BEATSCODE_BROWSER_RETRY_ERRORS === '1') {
       this.log.log(`Beatscode retry: ${ids.size} atleta(s) com falha de match na última passagem`);
     }
     return ids;
+  }
+
+  private async saveSyncCheckpoint(
+    result: BeatscodeDocumentsSyncResult,
+    extra: {
+      attempted: number;
+      pendingTotal: number;
+      lastPlayerExternalId?: string;
+    },
+  ): Promise<void> {
+    await this.prisma.integrationConfig.upsert({
+      where: { key: 'beatscode_documents_sync_checkpoint' },
+      create: {
+        key: 'beatscode_documents_sync_checkpoint',
+        config: {
+          updatedAt: new Date().toISOString(),
+          ...extra,
+          playersProcessed: result.playersProcessed,
+          filesDownloaded: result.filesDownloaded,
+          documentsUpdated: result.documentsUpdated,
+          errorCount: result.errors.length,
+        },
+      },
+      update: {
+        config: {
+          updatedAt: new Date().toISOString(),
+          ...extra,
+          playersProcessed: result.playersProcessed,
+          filesDownloaded: result.filesDownloaded,
+          documentsUpdated: result.documentsUpdated,
+          errorCount: result.errors.length,
+        },
+      },
+    });
+  }
+
+  private async resolveAthleteRecordId(
+    client: BeatscodeApiClient,
+    employeeId: number,
+  ): Promise<string | undefined> {
+    try {
+      const detail = await client.getAthleteDetail(employeeId);
+      const id = detail.id ?? detail.athleteId;
+      if (id != null && String(id).trim()) return String(id).trim();
+    } catch {
+      /* tenta listagem */
+    }
+    try {
+      const athletes = await client.listAthletes();
+      for (const row of athletes) {
+        const emp = Number(row.employeeId ?? row.idEmployee);
+        if (emp === employeeId) {
+          const id = row.id ?? row.athleteId;
+          if (id != null && String(id).trim()) return String(id).trim();
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    return undefined;
   }
 
   private async applyScrapedPersonalDocument(

@@ -2,10 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { mkdtemp, readFile, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { chromium, type Browser, type Download, type Page } from 'playwright';
+import { chromium, type Browser, type Download, type Page, type Response } from 'playwright';
 import { BeatscodeApiClient } from './beatscode-api.client';
 import { mapBeatscodeDocumentTypeLabel } from './beatscode-document.types';
-import { resolveBeatscodeApiUrl, resolveBeatscodeWebUrl } from './beatscode-browser.util';
+import {
+  extractAllAttachmentsFromJson,
+  resolveBeatscodeApiUrl,
+  resolveBeatscodeWebUrl,
+  type BeatscodeSniffedAttachment,
+} from './beatscode-browser.util';
+
+const DEFAULT_PLAYER_TIMEOUT_MS = 180_000;
+const DEFAULT_TAB_TIMEOUT_MS = 45_000;
+const DEFAULT_DOWNLOAD_TIMEOUT_MS = 12_000;
 
 export type BeatscodeScrapedDocument = {
   name: string;
@@ -32,6 +41,10 @@ export class BeatscodeBrowserScraperService {
   private page: Page | null = null;
   private tempDir: string | null = null;
   private cachedCategories: string[] | null = null;
+  private apiClient: BeatscodeApiClient | null = null;
+  private sniffedByTab = new Map<string, BeatscodeSniffedAttachment[]>();
+  private responseHandler: ((res: Response) => void) | null = null;
+  private playersSinceLaunch = 0;
 
   hasCredentials(): boolean {
     return Boolean(
@@ -40,14 +53,95 @@ export class BeatscodeBrowserScraperService {
   }
 
   async close(): Promise<void> {
+    await this.detachSniffer();
     await this.browser?.close().catch(() => undefined);
     this.browser = null;
     this.page = null;
+    this.apiClient = null;
     this.cachedCategories = null;
+    this.sniffedByTab.clear();
+    this.playersSinceLaunch = 0;
     if (this.tempDir) {
       await rm(this.tempDir, { recursive: true, force: true }).catch(() => undefined);
       this.tempDir = null;
     }
+  }
+
+  /** Reinicia navegador (evita travamentos após muitas páginas). */
+  async resetSession(): Promise<void> {
+    this.log.warn('Beatscode browser: reiniciando sessão Playwright');
+    await this.close();
+  }
+
+  private playerTimeoutMs(): number {
+    return Number(process.env.BEATSCODE_BROWSER_PLAYER_TIMEOUT_MS ?? DEFAULT_PLAYER_TIMEOUT_MS);
+  }
+
+  private recycleEvery(): number {
+    return Number(process.env.BEATSCODE_BROWSER_RECYCLE_EVERY ?? 25);
+  }
+
+  async beforePlayerScrape(): Promise<void> {
+    this.playersSinceLaunch += 1;
+    const every = this.recycleEvery();
+    if (every > 0 && this.playersSinceLaunch > 1 && (this.playersSinceLaunch - 1) % every === 0) {
+      await this.resetSession();
+    }
+  }
+
+  private async getApiClient(): Promise<BeatscodeApiClient> {
+    if (!this.apiClient) {
+      this.apiClient = new BeatscodeApiClient(
+        resolveBeatscodeApiUrl(),
+        process.env.BEATSCODE_USERNAME!.trim(),
+        process.env.BEATSCODE_PASSWORD!.trim(),
+      );
+      await this.apiClient.login();
+    }
+    return this.apiClient;
+  }
+
+  private async detachSniffer(): Promise<void> {
+    if (this.page && this.responseHandler) {
+      this.page.off('response', this.responseHandler);
+    }
+    this.responseHandler = null;
+    this.sniffedByTab.clear();
+  }
+
+  private attachSniffer(page: Page): void {
+    if (this.responseHandler) return;
+    this.responseHandler = (res: Response) => {
+      void this.onApiResponse(res);
+    };
+    page.on('response', this.responseHandler);
+  }
+
+  private async onApiResponse(res: Response): Promise<void> {
+    try {
+      const url = res.url();
+      if (!url.includes('beatscode')) return;
+      const ct = res.headers()['content-type'] ?? '';
+      if (!ct.includes('json')) return;
+      const body = await res.text();
+      const found = extractAllAttachmentsFromJson(body);
+      if (!found.length) return;
+      const bucket = this.sniffedByTab.get('__all__') ?? [];
+      const known = new Set(bucket.map((x) => x.id));
+      for (const item of found) {
+        if (!known.has(item.id)) {
+          bucket.push(item);
+          known.add(item.id);
+        }
+      }
+      this.sniffedByTab.set('__all__', bucket);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  private clearSniffed(): void {
+    this.sniffedByTab.clear();
   }
 
   async ensurePage(headed = process.env.BEATSCODE_HEADED === '1'): Promise<Page> {
@@ -58,6 +152,9 @@ export class BeatscodeBrowserScraperService {
       slowMo: headed ? 60 : 0,
     });
     this.page = await this.browser.newPage();
+    this.page.setDefaultTimeout(30_000);
+    this.page.setDefaultNavigationTimeout(60_000);
+    this.attachSniffer(this.page);
     await this.login(this.page);
     return this.page;
   }
@@ -71,12 +168,28 @@ export class BeatscodeBrowserScraperService {
     modulePath?: '/person/athlete' | '/person/technical-committee';
     categoryNames?: string[];
   }): Promise<BeatscodeBrowserScrapeResult> {
+    return this.withTimeout(
+      () => this.scrapePersonDocumentsInner(options),
+      this.playerTimeoutMs(),
+      `atleta ${options.playerName}`,
+    );
+  }
+
+  private async scrapePersonDocumentsInner(options: {
+    playerName: string;
+    employeeId?: number;
+    athleteRecordId?: string | number;
+    aliasNames?: string[];
+    modulePath?: '/person/athlete' | '/person/technical-committee';
+    categoryNames?: string[];
+  }): Promise<BeatscodeBrowserScrapeResult> {
     const modulePath = options.modulePath ?? '/person/athlete';
     const categories = options.categoryNames?.length
       ? options.categoryNames
       : await this.loadCategoryNames(modulePath);
 
     const page = await this.ensurePage();
+    this.clearSniffed();
     const result: BeatscodeBrowserScrapeResult = {
       employeeId: options.employeeId,
       playerName: options.playerName,
@@ -155,10 +268,14 @@ export class BeatscodeBrowserScraperService {
       return result;
     }
 
-    for (const tab of ['Documentos', 'Anexos', 'Contrato']) {
+    const tabs = ['Documentos', 'Anexos', 'Contrato'] as const;
+    for (const tab of tabs) {
       try {
-        const docs = await this.scrapeDocumentsTab(page, tab);
-        result.documents.push(...docs);
+        await this.withTimeout(
+          () => this.activateDocumentsTab(page, tab),
+          DEFAULT_TAB_TIMEOUT_MS,
+          `aba ${tab}`,
+        );
       } catch (e) {
         result.errors.push(
           `${tab}: ${e instanceof Error ? e.message : String(e)}`,
@@ -166,8 +283,92 @@ export class BeatscodeBrowserScraperService {
       }
     }
 
+    const sniffed = this.sniffedByTab.get('__all__') ?? [];
+    if (sniffed.length) {
+      const apiDocs = await this.downloadSniffedAttachments(sniffed, tabs[0]);
+      result.documents.push(...apiDocs);
+      this.log.log(
+        `${options.playerName}: ${apiDocs.length} PDF(s) via API (${sniffed.length} anexo(s) na rede)`,
+      );
+    }
+
+    if (!result.documents.length) {
+      for (const tab of tabs) {
+        try {
+          const docs = await this.withTimeout(
+            () => this.scrapeDocumentsTab(page, tab),
+            DEFAULT_TAB_TIMEOUT_MS,
+            `download UI ${tab}`,
+          );
+          result.documents.push(...docs);
+        } catch (e) {
+          result.errors.push(
+            `${tab}: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        }
+      }
+    }
+
+    await page.keyboard.press('Escape').catch(() => undefined);
     await page.keyboard.press('Escape').catch(() => undefined);
     return result;
+  }
+
+  private async downloadSniffedAttachments(
+    sniffed: BeatscodeSniffedAttachment[],
+    defaultTab: string,
+  ): Promise<BeatscodeScrapedDocument[]> {
+    const client = await this.getApiClient();
+    const docs: BeatscodeScrapedDocument[] = [];
+    for (const meta of sniffed) {
+      try {
+        const buf = await client.downloadFile(meta.storagePath);
+        if (!buf?.length) continue;
+        const mapped = mapBeatscodeDocumentTypeLabel(meta.displayName);
+        docs.push({
+          name: meta.displayName.replace(/\.(pdf|png|jpe?g|webp)$/i, '').trim() || meta.displayName,
+          documentType: mapped.documentType,
+          documentCategory: mapped.documentCategory,
+          storagePath: meta.storagePath.replace(/^\/+/, ''),
+          buffer: buf,
+          tab: defaultTab,
+        });
+      } catch (e) {
+        this.log.warn(
+          `Download API ${meta.id} falhou: ${e instanceof Error ? e.message : e}`,
+        );
+      }
+    }
+    return docs;
+  }
+
+  private async withTimeout<T>(
+    fn: () => Promise<T>,
+    ms: number,
+    label: string,
+  ): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        fn(),
+        new Promise<T>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new Error(`Timeout (${Math.round(ms / 1000)}s): ${label}`)),
+            ms,
+          );
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  private async activateDocumentsTab(page: Page, tabLabel: string): Promise<void> {
+    const tab = page.getByText(tabLabel, { exact: true }).first();
+    if (!(await tab.isVisible().catch(() => false))) return;
+    await tab.click();
+    await page.waitForTimeout(900);
+    await page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
   }
 
   private async login(page: Page): Promise<void> {
@@ -180,7 +381,7 @@ export class BeatscodeBrowserScraperService {
     await page.locator('#password').fill(process.env.BEATSCODE_PASSWORD!.trim());
     await page.locator('input.signin-btn[type="submit"]').click();
     await page.waitForURL((url) => !url.pathname.includes('signin'), { timeout: 60_000 });
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(800);
   }
 
   private async loadCategoryNames(
@@ -207,14 +408,14 @@ export class BeatscodeBrowserScraperService {
     const btn = page.locator('button[title="Categorias"]').first();
     if (!(await btn.isVisible().catch(() => false))) return;
     await btn.click();
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(400);
     const option = page
       .locator('.ant-select-dropdown:visible .ant-select-item-option-content')
       .filter({ hasText: categoryName })
       .first();
     if (await option.isVisible().catch(() => false)) {
       await option.click();
-      await page.waitForTimeout(2500);
+      await page.waitForTimeout(1200);
     } else {
       await page.keyboard.press('Escape').catch(() => undefined);
     }
@@ -255,8 +456,8 @@ export class BeatscodeBrowserScraperService {
     for (const id of ids) {
       const url = `${resolveBeatscodeWebUrl()}${modulePath}/id/${id}`;
       try {
-        await page.goto(url, { waitUntil: 'load', timeout: 90_000 });
-        await page.waitForTimeout(2500);
+        await page.goto(url, { waitUntil: 'load', timeout: 45_000 });
+        await page.waitForTimeout(1000);
         const onPerson =
           page.url().includes(`${modulePath}/id/`) ||
           (await page.getByText('Documentos', { exact: true }).first().isVisible().catch(() => false));
@@ -317,7 +518,7 @@ export class BeatscodeBrowserScraperService {
         .catch(() => '');
       if (!this.nameMatchesPanel(target, name)) continue;
       await cards.nth(i).click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       return true;
     }
     return false;
@@ -339,7 +540,7 @@ export class BeatscodeBrowserScraperService {
 
     for (const query of queries) {
       await searchBtn.click();
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(800);
 
       const input = page.locator('input[placeholder*="Fulano"], input[placeholder*="Silva"]').first();
       if (!(await input.isVisible().catch(() => false))) {
@@ -347,7 +548,7 @@ export class BeatscodeBrowserScraperService {
         continue;
       }
       await input.fill(query);
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const modalRows = page.locator('.ant-modal .ant-table-row, .ant-modal tbody tr');
       const rowCount = await modalRows.count();
@@ -366,14 +567,14 @@ export class BeatscodeBrowserScraperService {
       }
       if (bestIdx >= 0) {
         await modalRows.nth(bestIdx).click();
-        await page.waitForTimeout(3500);
+        await page.waitForTimeout(1500);
         await page.keyboard.press('Escape').catch(() => undefined);
         return true;
       }
 
       if (rowCount === 1) {
         await modalRows.first().click();
-        await page.waitForTimeout(3500);
+        await page.waitForTimeout(1500);
         await page.keyboard.press('Escape').catch(() => undefined);
         return true;
       }
@@ -391,7 +592,7 @@ export class BeatscodeBrowserScraperService {
     const tab = page.getByText(tabLabel, { exact: true }).first();
     if (!(await tab.isVisible().catch(() => false))) return [];
     await tab.click();
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(900);
 
     const rows = page.locator('table tbody tr');
     const rowCount = await rows.count();
@@ -436,7 +637,7 @@ export class BeatscodeBrowserScraperService {
   ): Promise<Download | null> {
     try {
       const [download] = await Promise.all([
-        page.waitForEvent('download', { timeout: 15_000 }),
+        page.waitForEvent('download', { timeout: DEFAULT_DOWNLOAD_TIMEOUT_MS }),
         locator.click({ force: true }),
       ]);
       return download;
