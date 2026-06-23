@@ -94,14 +94,14 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
   const fullName = player.name.trim();
 
   return (
-    <div className="group flex items-center gap-2 rounded-xl border border-border/70 bg-gradient-to-br from-zinc-900/80 via-card/50 to-zinc-950/60 p-3 transition-all hover:border-violet-500/45 hover:shadow-[0_0_24px_-8px_rgba(139,92,246,0.55)]">
+    <div className="group flex items-center gap-1.5 rounded-lg border border-border/60 bg-card/40 px-2 py-1.5 transition-colors hover:border-violet-500/40 hover:bg-violet-950/20">
       <Link
         href={`/dashboard/cadastros/jogadores/${player.id}/edit`}
-        className="flex min-w-0 flex-1 items-center gap-3"
+        className="flex min-w-0 flex-1 items-center gap-2"
         title={fullName || displayName}
       >
         {player.photoUrl ? (
-          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-muted">
+          <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md border border-border/50 bg-muted">
             <img
               src={getPublicImageUrl(player.photoUrl)}
               alt=""
@@ -109,31 +109,31 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
             />
           </div>
         ) : (
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-dashed border-border/60 bg-muted/40 text-xs text-muted-foreground">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/40 text-[10px] text-muted-foreground">
             —
           </div>
         )}
-        <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <p className="whitespace-nowrap text-sm font-semibold text-foreground group-hover:text-violet-100">
-            {displayName}
-            {player.jerseyNumber != null ? (
-              <span className="ml-1.5 text-[11px] font-medium text-violet-300/90">#{player.jerseyNumber}</span>
-            ) : null}
-          </p>
-        </div>
+        <p className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground group-hover:text-violet-100">
+          {displayName}
+          {player.jerseyNumber != null ? (
+            <span className="ml-1 font-medium text-violet-300/80">#{player.jerseyNumber}</span>
+          ) : null}
+        </p>
         <PlayerMatchAvailabilityBadge
           availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(player))}
+          showReason={false}
+          className="shrink-0 [&_span]:px-1.5 [&_span]:py-0 [&_span]:text-[10px]"
         />
       </Link>
-      <div className="flex shrink-0 flex-col gap-1">
+      <div className="flex shrink-0 items-center">
         <Link href={`/dashboard/cadastros/jogadores/${player.id}/edit`}>
-          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Editar">
-            <Pencil className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Editar">
+            <Pencil className="h-3 w-3" />
           </Button>
         </Link>
         <Link href={`/dashboard/cadastros/jogadores/${player.id}/delete`}>
-          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Excluir">
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Excluir">
+            <Trash2 className="h-3 w-3 text-destructive" />
           </Button>
         </Link>
       </div>
@@ -156,7 +156,7 @@ function PositionBlock({
           {players.length}
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
         {players.map((p) => (
           <PlayerCard key={p.id} player={p} />
         ))}
