@@ -94,38 +94,8 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
   const fullName = player.name.trim();
 
   return (
-    <div className="group flex items-center gap-1 rounded-full border border-border/50 bg-zinc-900/40 py-1 pl-1 pr-0.5 transition-colors hover:border-violet-500/35 hover:bg-violet-950/25">
-      <Link
-        href={`/dashboard/cadastros/jogadores/${player.id}/edit`}
-        className="flex min-w-0 flex-1 items-center gap-2"
-        title={fullName || displayName}
-      >
-        {player.photoUrl ? (
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-1 ring-border/40 bg-muted">
-            <img
-              src={getPublicImageUrl(player.photoUrl)}
-              alt=""
-              className="h-full w-full object-cover object-[center_18%]"
-            />
-          </div>
-        ) : (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-border/50 bg-muted/40 text-[10px] text-muted-foreground">
-            —
-          </div>
-        )}
-        <p className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground group-hover:text-violet-100">
-          {displayName}
-          {player.jerseyNumber != null ? (
-            <span className="ml-1 font-medium text-violet-300/80">#{player.jerseyNumber}</span>
-          ) : null}
-        </p>
-        <PlayerMatchAvailabilityBadge
-          availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(player))}
-          showReason={false}
-          className="shrink-0 [&_span]:px-1.5 [&_span]:py-0 [&_span]:text-[10px]"
-        />
-      </Link>
-      <div className="flex shrink-0 items-center opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
+    <div className="group relative flex flex-col items-center rounded-lg border border-border/50 bg-zinc-900/50 px-2 pb-2 pt-2.5 transition-colors hover:border-violet-500/35 hover:bg-violet-950/30">
+      <div className="absolute right-0.5 top-0.5 flex items-center opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
         <Link href={`/dashboard/cadastros/jogadores/${player.id}/edit`}>
           <Button variant="ghost" size="icon" className="h-6 w-6" aria-label="Editar">
             <Pencil className="h-3 w-3" />
@@ -137,6 +107,36 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
           </Button>
         </Link>
       </div>
+      <Link
+        href={`/dashboard/cadastros/jogadores/${player.id}/edit`}
+        className="flex w-full flex-col items-center gap-1.5"
+        title={fullName || displayName}
+      >
+        {player.photoUrl ? (
+          <div className="h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-full ring-2 ring-border/30 bg-muted">
+            <img
+              src={getPublicImageUrl(player.photoUrl)}
+              alt=""
+              className="h-full w-full object-cover object-[center_18%]"
+            />
+          </div>
+        ) : (
+          <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 items-center justify-center rounded-full border border-dashed border-border/50 bg-muted/40 text-xs text-muted-foreground">
+            —
+          </div>
+        )}
+        <p className="w-full truncate text-center text-xs font-semibold leading-tight text-foreground group-hover:text-violet-100">
+          {displayName}
+        </p>
+        {player.jerseyNumber != null ? (
+          <p className="text-[10px] font-medium text-violet-300/80">#{player.jerseyNumber}</p>
+        ) : null}
+        <PlayerMatchAvailabilityBadge
+          availability={getPlayerMatchAvailability(buildPlayerMatchAvailabilityInput(player))}
+          showReason={false}
+          className="[&_span]:px-1.5 [&_span]:py-0 [&_span]:text-[10px]"
+        />
+      </Link>
     </div>
   );
 }
@@ -156,7 +156,7 @@ function PositionBlock({
           {players.length}
         </span>
       </div>
-      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {players.map((p) => (
           <PlayerCard key={p.id} player={p} />
         ))}
