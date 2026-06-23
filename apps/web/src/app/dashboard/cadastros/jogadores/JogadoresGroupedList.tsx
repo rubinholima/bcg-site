@@ -105,7 +105,7 @@ function PlayerCard({ player }: { player: JogadorListItem }) {
             <img
               src={getPublicImageUrl(player.photoUrl)}
               alt=""
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain object-center"
             />
           </div>
         ) : (
