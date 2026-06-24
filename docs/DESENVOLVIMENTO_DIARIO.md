@@ -32,6 +32,54 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 24 DE JUNHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+1. **Beatscode — CPF/RG sub13–sub15**  
+   - Fix `athlete-full` usa `id` do atleta (não `employeeId`). Commit `2e8a860`.
+
+2. **Beatscode — sync documentos via API + S3**  
+   - Download direto URL Beatscode, enrich `athlete-full`, espelhamento S3.  
+   - Scripts: `beatscode:sync-documents` (API), `beatscode:merge-docs-export`, `check-doc-mirror-progress`. Commit `fb93e96`.
+
+3. **Sync PDFs (local → S3)**  
+   - Rodadas 1–3: **651 PDFs** no S3, **0** URLs Beatscode restantes.  
+   - Merge: `data/beatscode-athletes-export-with-docs.json` (537 atletas, 651 docs com URL S3).  
+   - ~332 docs no cadastro ainda sem arquivo na API Beatscode (sem caminho/URL).
+
+4. **Beatscode — export contratos**  
+   - `pnpm beatscode:export-contracts` → `data/beatscode-contracts-export.json` (1082 contratos: 999 atleta, 72 comissão, 11 venda futura; 240 ativos).
+
+5. **Sync overnight**  
+   - `pnpm beatscode:sync-documents` reiniciado em background (tentar docs sem caminho restantes).
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/api/src/beatscode-import/beatscode-documents-import.service.ts`
+- `apps/api/src/beatscode-import/beatscode-import.service.ts`
+- `apps/api/scripts/run-beatscode-sync-documents-api.ts`
+- `apps/api/scripts/run-beatscode-merge-docs-export.ts`
+- `apps/api/scripts/check-doc-mirror-progress.ts`
+- `apps/api/data/beatscode-athletes-export-with-docs.json` (local, gitignore)
+- `apps/api/data/beatscode-contracts-export.json` (local, gitignore)
+
+## **COMMITS / BRANCH**
+
+- **Branch:** `develop`
+- **Último commit:** `fb93e96` — fix(api): sync documentos Beatscode via API com espelhamento S3
+- **Push:** enviado para `origin/develop`
+
+## **PENDÊNCIAS / PRÓXIMO**
+
+- **Produção (dashboard → Importação Beatscode, Boston City FC Brasil):**  
+  1. `beatscode-athletes-export-with-docs.json` (atletas + PDFs S3)  
+  2. `beatscode-contracts-export.json` (contratos)  
+- Opcional: `beatscode:export-agenda` se quiser logística/agenda.  
+- **Não commitar:** `apps/api/data/`, probes, `backup_clean.sql`, `temp_*`, APKs.
+
+---
+
 # 📅 22 DE JUNHO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO**
