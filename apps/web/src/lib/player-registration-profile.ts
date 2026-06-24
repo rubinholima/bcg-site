@@ -172,6 +172,39 @@ export function getPlayerDocumentTypeLabel(value: string): string {
   return PLAYER_DOCUMENT_TYPE_OPTIONS.find((o) => o.value === value)?.label ?? value;
 }
 
+const GENERIC_IMPORTED_DOC_NAME = /^Documento pessoal \d+$/i;
+
+/** Nome legível na UI — evita rótulos genéricos da importação (ex.: "Documento pessoal 1"). */
+export function formatDocumentDisplayName(doc: PlayerRegistrationDocument): string {
+  const trimmed = doc.name?.trim() ?? "";
+  const effectiveType =
+    trimmed === "Registro Geral" && doc.documentType === "documento_esportivo"
+      ? "rg"
+      : doc.documentType;
+
+  if (!GENERIC_IMPORTED_DOC_NAME.test(trimmed)) {
+    if (effectiveType === "rg") return "Registro Geral";
+    if (effectiveType === "cpf") return "CPF";
+    return trimmed || "—";
+  }
+
+  const typeLabel = getPlayerDocumentTypeLabel(effectiveType);
+  if (typeLabel && typeLabel !== "Outros") return typeLabel;
+
+  const category = doc.documentCategory ?? "outro";
+  const categoryLabels: Record<string, string> = {
+    pessoal: "Documento pessoal",
+    contrato: "Contrato ou anexo",
+    medico: "Documento médico",
+    outro: "Documento",
+  };
+  return categoryLabels[category] ?? "Documento";
+}
+
+export function isDocumentPendingFile(doc: PlayerRegistrationDocument): boolean {
+  return Boolean(doc.pendingDownload || !doc.fileUrl?.trim());
+}
+
 export function normalizeDocumentsProfile(
   documents: PlayerRegistrationProfile["documents"],
 ): PlayerRegistrationDocument[] {

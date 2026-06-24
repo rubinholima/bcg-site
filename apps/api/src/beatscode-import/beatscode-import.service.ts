@@ -23,6 +23,7 @@ import {
   resolveBeatscodePositionId,
 } from './beatscode-lookups.util';
 import { loadBeatscodeReferences } from './beatscode-reference.loader';
+import { rebuildBeatscodeDocumentsFromProfile } from './beatscode-document.types';
 import { mergeBeatscodeSources } from './beatscode-row.util';
 import { flattenAthleteFullPayload } from './beatscode-athlete-full.util';
 import {
@@ -371,9 +372,15 @@ export class BeatscodeImportService {
       (profile as { beatscode?: unknown }).beatscode != null;
 
     if (hasFullProfile) {
+      const prof = profile as Record<string, unknown>;
+      const documents = rebuildBeatscodeDocumentsFromProfile(prof);
       return {
         ...athlete,
         jerseyNumber: normalizeBeatscodeJerseyNumber(athlete.jerseyNumber),
+        registrationProfile: {
+          ...prof,
+          documents,
+        },
       };
     }
 

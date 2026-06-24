@@ -53,56 +53,12 @@ function inferRgOrRne(normalized: Record<string, unknown>): string | undefined {
   );
 }
 
-import { mapBeatscodeDocumentTypeLabel } from './beatscode-document.types';
+import { rebuildBeatscodeDocuments } from './beatscode-document.types';
 
 function mapBeatscodeDocuments(
   normalized: Record<string, unknown>,
 ): Array<Record<string, unknown>> | undefined {
-  const now = new Date().toISOString();
-  const docs: Array<Record<string, unknown>> = [];
-
-  const attachmentMap = normalized.beatscodeAttachmentMap;
-  if (attachmentMap && typeof attachmentMap === 'object') {
-    for (const [key, raw] of Object.entries(attachmentMap as Record<string, unknown>)) {
-      if (key === 'photo' || !raw || typeof raw !== 'object') continue;
-      const att = raw as Record<string, unknown>;
-      const num = Number(att.id);
-      if (!Number.isFinite(num)) continue;
-      const mapped = mapBeatscodeDocumentTypeLabel(key);
-      docs.push({
-        id: `beatscode-att-${key}-${num}`,
-        name: key === 'rg' ? 'Registro Geral' : key === 'cpf' ? 'CPF' : String(att.name ?? key),
-        documentType: mapped.documentType,
-        documentCategory: mapped.documentCategory,
-        fileUrl: String(att.link ?? ''),
-        uploadedAt: now,
-        beatscodeAttachmentId: num,
-        source: 'beatscode',
-        pendingDownload: !String(att.link ?? '').trim(),
-      });
-    }
-  }
-
-  const attachmentIds = normalized.attachmentId;
-  if (Array.isArray(attachmentIds)) {
-    for (const [index, rawId] of attachmentIds.entries()) {
-      const num = Number(rawId);
-      if (!Number.isFinite(num)) continue;
-      if (docs.some((d) => d.beatscodeAttachmentId === num)) continue;
-      docs.push({
-        id: `beatscode-att-${num}`,
-        name: `Documento pessoal ${index + 1}`,
-        documentType: 'outro',
-        documentCategory: 'pessoal',
-        fileUrl: '',
-        uploadedAt: now,
-        beatscodeAttachmentId: num,
-        source: 'beatscode',
-        pendingDownload: true,
-      });
-    }
-  }
-
+  const docs = rebuildBeatscodeDocuments(normalized);
   return docs.length ? docs : undefined;
 }
 

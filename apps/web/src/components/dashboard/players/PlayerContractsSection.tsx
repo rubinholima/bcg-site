@@ -140,8 +140,7 @@ export function PlayerContractsSection({
   const actionSourceLabel = (row: PlayerContractRow) => {
     if (row.source === "juridico") return "Jurídico";
     if (row.source === "rh") return "RH";
-    if (row.source === "beatscode") return "Beatscode";
-    return "—";
+    return null;
   };
 
   return (
@@ -342,11 +341,11 @@ export function PlayerContractsSection({
                                   <ExternalLink className="h-4 w-4" />
                                 </Link>
                               </Button>
-                            ) : (
+                            ) : actionSourceLabel(row) ? (
                               <span className="min-w-[4.5rem] text-xs text-muted-foreground">
                                 {actionSourceLabel(row)}
                               </span>
-                            )}
+                            ) : null}
                           </div>
                         </TableCell>
                       </TableRow>

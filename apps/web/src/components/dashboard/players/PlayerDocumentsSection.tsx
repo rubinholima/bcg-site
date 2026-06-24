@@ -23,7 +23,9 @@ import {
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
 import {
+  formatDocumentDisplayName,
   getPlayerDocumentTypeLabel,
+  isDocumentPendingFile,
   normalizeDocumentsProfile,
   PLAYER_DOCUMENT_TYPE_OPTIONS,
   type PlayerRegistrationDocument,
@@ -97,7 +99,12 @@ export function PlayerDocumentsSection({
     const q = search.trim().toLowerCase();
     if (!q) return documents;
     return documents.filter((doc) => {
-      const haystack = [doc.name, getPlayerDocumentTypeLabel(doc.documentType), doc.uploadedAt]
+      const haystack = [
+        doc.name,
+        formatDocumentDisplayName(doc),
+        getPlayerDocumentTypeLabel(doc.documentType),
+        doc.uploadedAt,
+      ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
@@ -115,12 +122,7 @@ export function PlayerDocumentsSection({
   const grouped = useMemo(() => groupDocumentsByCategory(sorted), [sorted]);
 
   const pendingCount = useMemo(
-    () => documents.filter((d) => d.pendingDownload || !d.fileUrl?.trim()).length,
-    [documents],
-  );
-
-  const beatscodeCount = useMemo(
-    () => documents.filter((d) => d.source === "beatscode").length,
+    () => documents.filter((d) => isDocumentPendingFile(d)).length,
     [documents],
   );
 
@@ -244,15 +246,11 @@ export function PlayerDocumentsSection({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">Todos os documentos</p>
-              {(beatscodeCount > 0 || pendingCount > 0) && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {beatscodeCount > 0 && `${beatscodeCount} do Beatscode`}
-                  {beatscodeCount > 0 && pendingCount > 0 && " · "}
-                  {pendingCount > 0 && (
-                    <span className="text-amber-400">
-                      {pendingCount} aguardando arquivo (rode sync local)
-                    </span>
-                  )}
+              {pendingCount > 0 && (
+                <p className="mt-1 text-xs text-amber-400">
+                  {pendingCount === 1
+                    ? "1 documento sem arquivo anexado"
+                    : `${pendingCount} documentos sem arquivo anexado`}
                 </p>
               )}
             </div>
@@ -285,39 +283,32 @@ export function PlayerDocumentsSection({
                           <TableHead>Data</TableHead>
                           <TableHead>Nome</TableHead>
                           <TableHead>Tipo</TableHead>
-                          <TableHead>Origem</TableHead>
                           <TableHead className="w-24 text-center">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {group.items.map((doc) => {
                           const canView = Boolean(doc.fileUrl?.trim());
-                          const isPending = doc.pendingDownload || !canView;
+                          const isPending = isDocumentPendingFile(doc);
+                          const displayName = formatDocumentDisplayName(doc);
                           return (
                             <TableRow key={doc.id}>
                               <TableCell className="whitespace-nowrap">
                                 {formatDocumentDate(doc.uploadedAt)}
                               </TableCell>
                               <TableCell>
-                                <span className="line-clamp-2">{doc.name}</span>
-                              </TableCell>
-                              <TableCell>
-                                {getPlayerDocumentTypeLabel(doc.documentType)}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-wrap gap-1">
-                                  {doc.source === "beatscode" && (
-                                    <span className="rounded bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-medium text-violet-300">
-                                      Beatscode
-                                    </span>
-                                  )}
+                                <div className="space-y-0.5">
+                                  <span className="line-clamp-2">{displayName}</span>
                                   {isPending && (
-                                    <span className="inline-flex items-center gap-0.5 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
-                                      <FileWarning className="h-3 w-3" />
-                                      Pendente
+                                    <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-400">
+                                      <FileWarning className="h-3 w-3 shrink-0" />
+                                      Sem arquivo
                                     </span>
                                   )}
                                 </div>
+                              </TableCell>
+                              <TableCell>
+                                {getPlayerDocumentTypeLabel(doc.documentType)}
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center justify-center gap-1">
