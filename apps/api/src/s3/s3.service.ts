@@ -70,6 +70,8 @@ const LOGOS_PREFIX = 'logos/';
 /** Logos de adversários (Clubes Adv) — pasta dedicada no bucket */
 const LOGOS_CLUBES_ADV_PREFIX = 'logos/clubes-adv/';
 const LEGAL_PREFIX = 'legal/';
+/** Staging interno (import Beatscode — manifest + PDFs antes de copiar para legal/). */
+const BEATSCODE_STAGING_PREFIX = 'beatscode-staging/';
 
 /** Quando definido, URLs públicas são retornadas via este domínio (CloudFront OAC) em vez de s3.amazonaws.com. */
 const PUBLIC_MEDIA_ORIGIN = (process.env.PUBLIC_MEDIA_ORIGIN ?? '').replace(/\/$/, '');
@@ -89,6 +91,15 @@ export class S3Service {
     const config = getAwsClientConfig();
     this.region = config.region;
     this.client = new S3Client(config);
+  }
+
+  private isAllowedObjectKey(safeKey: string): boolean {
+    return (
+      safeKey.startsWith(MEDIA_PREFIX) ||
+      safeKey.startsWith(LOGOS_PREFIX) ||
+      safeKey.startsWith(LEGAL_PREFIX) ||
+      safeKey.startsWith(BEATSCODE_STAGING_PREFIX)
+    );
   }
 
   /** URL pública do objeto: domínio oficial se configurado, senão S3 direto. */
@@ -590,11 +601,7 @@ export class S3Service {
    */
   async deleteObject(key: string): Promise<void> {
     const safeKey = key.replace(/^\/+/, '').replace(/\.\./g, '');
-    if (
-      !safeKey.startsWith(MEDIA_PREFIX) &&
-      !safeKey.startsWith(LOGOS_PREFIX) &&
-      !safeKey.startsWith(LEGAL_PREFIX)
-    ) {
+    if (!this.isAllowedObjectKey(safeKey)) {
       throw new InternalServerErrorException('Key inválida');
     }
     try {
@@ -895,11 +902,7 @@ export class S3Service {
    */
   async getObject(key: string): Promise<{ body: Readable; contentType: string }> {
     const safeKey = key.replace(/^\/+/, '').replace(/\.\./g, '');
-    if (
-      !safeKey.startsWith(MEDIA_PREFIX) &&
-      !safeKey.startsWith(LOGOS_PREFIX) &&
-      !safeKey.startsWith(LEGAL_PREFIX)
-    ) {
+    if (!this.isAllowedObjectKey(safeKey)) {
       throw new InternalServerErrorException('Key inválida');
     }
     try {
