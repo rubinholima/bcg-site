@@ -151,6 +151,11 @@ function isAdmPath(pathname: string | null, relHub: string | null): boolean {
   return !!pathname?.startsWith("/dashboard/adm") && !pathname.startsWith("/dashboard/adm/nutricao");
 }
 
+function isAgendaSectionPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return pathname === "/dashboard/agenda" || pathname.startsWith("/dashboard/agenda/");
+}
+
 function isRequisicoesPath(pathname: string | null): boolean {
   return !!pathname?.startsWith("/dashboard/requisicoes");
 }
@@ -196,6 +201,7 @@ function getActiveGroupSlug(pathname: string | null, relHub: string | null): str
   if (isGrupoMasterPath(pathname, relHub)) return "grupo_master";
   if (isAdmPath(pathname, relHub)) return "adm";
   if (isRequisicoesPath(pathname)) return "requisicoes";
+  if (isAgendaSectionPath(pathname)) return "agenda";
   if (isSaudePath(pathname, relHub)) return "saude";
   if (isFutebolOperacaoPath(pathname, relHub)) return "futebol";
   if (isJuridicoPath(pathname, relHub)) return "juridico";
@@ -223,6 +229,7 @@ function getPathnameHub(pathname: string | null, relHub: string | null): string 
   if (isGrupoMasterPath(pathname, null)) return "grupo_master";
   if (isAdmPath(pathname, null)) return "adm";
   if (isRequisicoesPath(pathname)) return "requisicoes";
+  if (isAgendaSectionPath(pathname)) return "agenda";
   if (isSaudePath(pathname, null)) return "saude";
   if (isFutebolOperacaoPath(pathname, null)) return "futebol";
   if (isJuridicoPath(pathname, null)) return "juridico";
@@ -239,13 +246,29 @@ function getPathnameHub(pathname: string | null, relHub: string | null): string 
 function resolveLinkActive(
   href: string | undefined,
   pathname: string | null,
-  currentHub: string | null
+  currentHub: string | null,
+  searchParams: URLSearchParams | null,
 ): boolean {
   if (!href) return false;
   if (isRelatorioLinkActive(href, pathname, currentHub)) return true;
   if (relatorioHub(href)) return false;
+  if (href.startsWith("/dashboard/agenda")) {
+    if (pathname !== "/dashboard/agenda") return false;
+    try {
+      const hrefUrl = new URL(href, "https://agenda.local");
+      const hrefVisao = hrefUrl.searchParams.get("visao");
+      const currentVisao = searchParams?.get("visao") ?? null;
+      if (!hrefVisao) return !currentVisao || currentVisao === "geral";
+      return hrefVisao === currentVisao;
+    } catch {
+      return !searchParams?.get("visao");
+    }
+  }
   if (href === "/dashboard/requisicoes") {
     return pathname === "/dashboard/requisicoes";
+  }
+  if (href === "/dashboard/agenda") {
+    return pathname === "/dashboard/agenda" && (!searchParams?.get("visao") || searchParams.get("visao") === "geral");
   }
   if (href === "/dashboard/empresas") {
     return pathname === "/dashboard/empresas" || !!pathname?.startsWith("/dashboard/tenants");
@@ -261,12 +284,12 @@ function resolveLinkActive(
   if (href === "/dashboard/futebol/logistica") {
     return (
       !!pathname?.startsWith("/dashboard/futebol/logistica") &&
-      !pathname.startsWith("/dashboard/futebol/logistica/agenda") &&
       !pathname.startsWith("/dashboard/cadastros/espacos")
     );
   }
   if (href === "/dashboard/futebol/logistica/agenda") {
     return (
+      (pathname === "/dashboard/agenda" && searchParams?.get("visao") === "futebol") ||
       pathname === "/dashboard/futebol/logistica/agenda" ||
       !!pathname?.startsWith("/dashboard/cadastros/espacos")
     );
@@ -297,12 +320,13 @@ function pickMostSpecificActiveHref(
   items: MenuItemConfig[],
   pathname: string | null,
   relHub: string | null,
+  searchParams: URLSearchParams | null,
 ): string | null {
   let best: string | null = null;
   let bestLen = -1;
   for (const item of items) {
     if (!item.href || item.external) continue;
-    if (resolveLinkActive(item.href, pathname, relHub) && item.href.length > bestLen) {
+    if (resolveLinkActive(item.href, pathname, relHub, searchParams) && item.href.length > bestLen) {
       bestLen = item.href.length;
       best = item.href;
     }
@@ -375,6 +399,7 @@ function SidebarNav() {
   const [eventosOpen, setEventosOpen] = useState(() => isEventosPath(pathname, relHub));
   const [admOpen, setAdmOpen] = useState(() => isAdmPath(pathname, relHub));
   const [requisicoesOpen, setRequisicoesOpen] = useState(() => isRequisicoesPath(pathname));
+  const [agendaOpen, setAgendaOpen] = useState(() => isAgendaSectionPath(pathname));
   const [ferramentasOpen, setFerramentasOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/emails") ||
@@ -390,7 +415,8 @@ function SidebarNav() {
   const [psicologiaOpen, setPsicologiaOpen] = useState(
     () =>
       pathname?.startsWith("/dashboard/consultas") ||
-      (pathname?.startsWith("/dashboard/psicologia") && !pathname?.startsWith("/dashboard/psicologia/psicologos"))
+      (pathname?.startsWith("/dashboard/psicologia") &&
+        !pathname?.startsWith("/dashboard/psicologia/psicologos"))
   );
   const [medicoOpen, setMedicoOpen] = useState(
     () => pathname?.startsWith("/dashboard/medico") && !isSaudeCadastroPath(pathname)
@@ -423,6 +449,7 @@ function SidebarNav() {
     setEventosOpen(slug === "eventos");
     setAdmOpen(slug === "adm");
     setRequisicoesOpen(slug === "requisicoes");
+    setAgendaOpen(slug === "agenda");
     setFerramentasOpen(slug === "ferramentas");
     setConfigOpen(slug === "configuracoes");
     setSocioOpen(slug === "socio_torcedor");
@@ -638,6 +665,8 @@ function SidebarNav() {
                     ? admOpen
                     : item.slug === "requisicoes"
                       ? requisicoesOpen
+                    : item.slug === "agenda"
+                      ? agendaOpen
                     : item.slug === "saude"
                       ? saudeOpen
                       : item.slug === "futebol"
@@ -666,7 +695,7 @@ function SidebarNav() {
                 : canAccessMenuLeaf(c, item.slug, canAccessModule) ||
                   (c.moduleSlug === "emails" && canAccessDashboard),
             );
-            const activeHubChildHref = pickMostSpecificActiveHref(visibleHubChildren, pathname, relHub);
+            const activeHubChildHref = pickMostSpecificActiveHref(visibleHubChildren, pathname, relHub, searchParams);
 
             return (
               <div key={item.slug} className="relative shrink-0 space-y-0.5">
@@ -763,6 +792,7 @@ function SidebarNav() {
                                         bchLeaves,
                                         pathname,
                                         relHub,
+                                        searchParams,
                                       );
                                       return child.children
                                         .filter(
@@ -886,6 +916,7 @@ function SidebarNav() {
                                       nestedLeaves,
                                       pathname,
                                       relHub,
+                                      searchParams,
                                     );
                                     return child.children
                                       .filter(
@@ -937,7 +968,7 @@ function SidebarNav() {
                                                     .map((ccc) => {
                                                       const isLeafActive =
                                                         !ccc.external &&
-                                                        resolveLinkActive(ccc.href, pathname, relHub);
+                                                        resolveLinkActive(ccc.href, pathname, relHub, searchParams);
                                                       return (
                                                         <SidebarMenuLink
                                                           key={ccc.slug}

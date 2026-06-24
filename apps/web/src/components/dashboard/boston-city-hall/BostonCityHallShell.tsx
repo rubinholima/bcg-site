@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { ArrowLeft, CalendarDays, ClipboardList, ContactRound, Kanban, LayoutDashboard } from "lucide-react";
 import { BostonCityHallLogo } from "@/components/dashboard/boston-city-hall/BostonCityHallLogo";
 import { DEPT_HUB_MENU_LABEL } from "@/lib/dashboard-labels";
+import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 import { cn } from "@/lib/utils";
 
 const BCH_BASE = "/dashboard/eventos/boston-city-hall";
 
 const NAV = [
   { href: BCH_BASE, label: DEPT_HUB_MENU_LABEL, icon: LayoutDashboard, exact: true as const },
-  { href: `${BCH_BASE}/agenda`, label: "Agenda", icon: CalendarDays },
+  { href: agendaHubUrl(AGENDA_VISAO.BOSTON_HALL), label: "Agenda", icon: CalendarDays },
   { href: `${BCH_BASE}/crm`, label: "CRM", icon: ContactRound },
   { href: `${BCH_BASE}/reservas`, label: "Reservas", icon: ClipboardList },
   { href: `${BCH_BASE}/pipeline`, label: "Pipeline", icon: Kanban },
@@ -27,6 +28,8 @@ export function BostonCityHallShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const bchAgendaHref = agendaHubUrl(AGENDA_VISAO.BOSTON_HALL);
 
   return (
     <div className="space-y-6">
@@ -55,9 +58,11 @@ export function BostonCityHallShell({
         {NAV.map((item) => {
           const { href, label, icon: Icon } = item;
           const active =
-            "exact" in item && item.exact
-              ? pathname === href
-              : pathname === href || pathname.startsWith(`${href}/`);
+            href === bchAgendaHref
+              ? pathname === "/dashboard/agenda" && searchParams.get("visao") === AGENDA_VISAO.BOSTON_HALL
+              : "exact" in item && item.exact
+                ? pathname === href
+                : pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}

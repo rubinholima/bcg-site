@@ -49,6 +49,7 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   adm_compras: "Compras",
   adm_ti: "TI — Atendimento",
   requisicoes: "Requisições",
+  agenda: "Agenda",
   adm_estoque: "Estoque",
   adm_rh: "RH",
   adm_patrimonio: "Patrim\u00F4nio",

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -119,7 +120,7 @@ export default function EspacosCadastroPage() {
           </p>
         </div>
         <Button variant="outline" asChild className="min-h-[44px]">
-          <Link href="/dashboard/futebol/logistica/agenda">Ir para agenda</Link>
+          <Link href={agendaHubUrl(AGENDA_VISAO.FUTEBOL)}>Ir para agenda</Link>
         </Button>
       </div>
 

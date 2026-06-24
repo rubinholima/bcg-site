@@ -17,10 +17,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import type { VenueOverview } from "@/types/boston-city-hall";
+import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 
 const QUICK_LINKS = [
   {
-    href: "/dashboard/eventos/boston-city-hall/agenda",
+    href: agendaHubUrl(AGENDA_VISAO.BOSTON_HALL),
     label: "Agenda operacional",
     description: "Calendário mensal de reservas e bloqueios",
     icon: CalendarDays,

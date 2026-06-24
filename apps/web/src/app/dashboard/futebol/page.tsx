@@ -18,6 +18,7 @@ import {
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { FutebolHubInsights } from "@/components/dashboard/hub/FutebolHubInsights";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
+import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 
 const LINKS = [
   {
@@ -65,7 +66,7 @@ const LINKS = [
   {
     title: "Logística — Agenda",
     description: "Calendário operacional: viagens, treinos, jogos e compromissos.",
-    href: "/dashboard/futebol/logistica/agenda",
+    href: agendaHubUrl(AGENDA_VISAO.FUTEBOL),
     icon: Calendar,
     moduleSlug: "futebol_logistica",
   },

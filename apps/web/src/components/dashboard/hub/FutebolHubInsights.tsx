@@ -23,6 +23,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 import { useAuth } from "@/context/AuthContext";
 import { HubStatCard } from "./HubStatCard";
 import { getCategoryLabel } from "@/lib/fixture-categories";
@@ -202,7 +203,7 @@ export function FutebolHubInsights() {
                 value={upcomingCount}
                 hint="Viagens e jogos no calendário"
                 icon={Calendar}
-                href="/dashboard/futebol/agenda"
+                href={agendaHubUrl(AGENDA_VISAO.FUTEBOL)}
                 accent="from-sky-500/10 to-sky-600/5 border-sky-500/20"
                 iconClass="text-sky-600 dark:text-sky-400"
               />
@@ -254,7 +255,7 @@ export function FutebolHubInsights() {
                 <CardDescription>Jogos e deslocamentos nos próximos 30 dias</CardDescription>
               </div>
               <Button variant="outline" size="sm" asChild className="shrink-0">
-                <Link href="/dashboard/futebol/agenda">Ver agenda</Link>
+                <Link href={agendaHubUrl(AGENDA_VISAO.FUTEBOL)}>Ver agenda</Link>
               </Button>
             </CardHeader>
             <CardContent>

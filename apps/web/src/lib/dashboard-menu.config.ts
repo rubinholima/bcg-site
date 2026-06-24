@@ -68,6 +68,7 @@ import {
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
+import { agendaHubUrl, AGENDA_VISAO } from "./agenda-hub";
 
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
 export const ACCESS_GROUP_LABELS: Record<string, string> = {};
@@ -254,6 +255,50 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     ],
   },
   {
+    slug: "agenda",
+    label: "Agenda",
+    icon: Calendar,
+    moduleSlug: "agenda",
+    children: [
+      {
+        slug: "agenda_visao",
+        label: DEPT_HUB_MENU_LABEL,
+        href: "/dashboard/agenda",
+        icon: LayoutDashboard,
+        moduleSlug: "agenda",
+      },
+      {
+        slug: "agenda_futebol",
+        label: "Futebol",
+        href: agendaHubUrl(AGENDA_VISAO.FUTEBOL),
+        icon: Shirt,
+        moduleSlug: "futebol_logistica",
+      },
+      {
+        slug: "agenda_boston_hall",
+        label: "Boston City Hall",
+        href: agendaHubUrl(AGENDA_VISAO.BOSTON_HALL),
+        icon: Building2,
+        moduleSlug: "eventos",
+        menuLogoSrc: BCH_LOGO_STATIC,
+      },
+      {
+        slug: "agenda_consultas",
+        label: "Consultas (psicologia)",
+        href: agendaHubUrl(AGENDA_VISAO.CONSULTAS),
+        icon: ClipboardList,
+        moduleSlug: "saude",
+      },
+      {
+        slug: "agenda_marketing",
+        label: "Marketing — Planner",
+        href: agendaHubUrl(AGENDA_VISAO.MARKETING),
+        icon: Megaphone,
+        moduleSlug: "marketing",
+      },
+    ],
+  },
+  {
     slug: "futebol",
     label: "Depto de Futebol",
     icon: Shirt,
@@ -330,17 +375,17 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "futebol_logistica",
         children: [
           {
-            slug: "futebol_logistica_agenda",
-            label: "Agenda",
-            href: "/dashboard/futebol/logistica/agenda",
-            icon: Calendar,
-            moduleSlug: "futebol_logistica",
-          },
-          {
             slug: "futebol_logistica_viagens",
             label: "Viagens",
             href: "/dashboard/futebol/logistica",
             icon: MapIcon,
+            moduleSlug: "futebol_logistica",
+          },
+          {
+            slug: "futebol_logistica_agenda",
+            label: "Agenda",
+            href: agendaHubUrl(AGENDA_VISAO.FUTEBOL),
+            icon: Calendar,
             moduleSlug: "futebol_logistica",
           },
         ],
@@ -626,13 +671,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             moduleSlug: "eventos",
           },
           {
-            slug: "boston_hall_agenda",
-            label: "Agenda",
-            href: "/dashboard/eventos/boston-city-hall/agenda",
-            icon: Calendar,
-            moduleSlug: "eventos",
-          },
-          {
             slug: "boston_hall_crm",
             label: "CRM",
             href: "/dashboard/eventos/boston-city-hall/crm",
@@ -651,6 +689,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Pipeline",
             href: "/dashboard/eventos/boston-city-hall/pipeline",
             icon: Kanban,
+            moduleSlug: "eventos",
+          },
+          {
+            slug: "boston_hall_agenda",
+            label: "Agenda",
+            href: agendaHubUrl(AGENDA_VISAO.BOSTON_HALL),
+            icon: Calendar,
             moduleSlug: "eventos",
           },
         ],
@@ -894,6 +939,7 @@ export function getMenuAccessCatalog(): MenuAccessCatalogEntry[] {
 }
 
 const API_ONLY_MODULE_SLUGS: Array<{ slug: string; name: string }> = [
+  { slug: "agenda", name: "Agenda (hub)" },
   { slug: "vault_manage", name: "Senhas / Vault (gerenciar)" },
   { slug: "vault_reveal", name: "Senhas / Vault (revelar/copiar)" },
   { slug: "vault_export", name: "Senhas / Vault (exportar)" },

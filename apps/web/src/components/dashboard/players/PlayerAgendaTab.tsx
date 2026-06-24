@@ -6,6 +6,7 @@ import { ExternalLink, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { FOOTBALL_AGENDA_TYPE_LABEL } from "@/types/futebol-agenda";
+import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 import { ExpandableSection } from "./ExpandableSection";
 
 export type PlayerAgendaItem = {
@@ -114,7 +115,7 @@ export function PlayerAgendaTab({ playerId, canAccessLogistica }: PlayerAgendaTa
         </ul>
       )}
       <div className="mt-3">
-        <Link href="/dashboard/futebol/logistica/agenda" className="text-xs font-medium text-primary hover:underline">
+        <Link href={agendaHubUrl(AGENDA_VISAO.FUTEBOL)} className="text-xs font-medium text-primary hover:underline">
           Ver agenda completa do clube
         </Link>
       </div>
