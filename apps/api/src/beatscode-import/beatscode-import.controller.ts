@@ -168,13 +168,19 @@ export class BeatscodeImportController {
       tenantSlug?: string;
       s3StagingPrefix?: string;
       dryRun?: boolean;
+      limit?: number;
+      offset?: number;
     },
   ) {
+    const limit = body?.limit ?? 40;
+    const offset = body?.offset ?? 0;
     const result = await this.beatscodeContractImport.importFromDownloadManifest({
       tenantSlug: body?.tenantSlug,
       filesSource: 's3',
       s3StagingPrefix: body?.s3StagingPrefix,
       dryRun: body?.dryRun,
+      limit,
+      offset,
     });
     return { ok: true, ...result };
   }

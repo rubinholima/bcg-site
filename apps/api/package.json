@@ -31,6 +31,7 @@
     "beatscode:repair-documents": "ts-node -r tsconfig-paths/register scripts/run-beatscode-repair-documents.ts",
     "beatscode:download-contracts": "ts-node -r tsconfig-paths/register scripts/run-beatscode-download-contracts.ts",
     "beatscode:upload-contracts": "ts-node -r tsconfig-paths/register scripts/run-beatscode-upload-contracts.ts",
+    "beatscode:upload-contracts-s3": "ts-node -r tsconfig-paths/register scripts/run-beatscode-upload-contracts.ts -- --s3",
     "beatscode:sync-status": "ts-node -r tsconfig-paths/register scripts/beatscode-sync-status.ts",
     "migrate:football-positions": "ts-node -r tsconfig-paths/register scripts/migrate-football-positions.ts",
     "fix:player-body-metrics": "ts-node -r tsconfig-paths/register scripts/fix-player-body-metrics.ts",

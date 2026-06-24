@@ -50,6 +50,11 @@ export type BeatscodeContractImportResult = {
   byCategory: Record<string, number>;
   byStatus: Record<string, number>;
   errors: string[];
+  /** Paginação do manifest (import em lotes via dashboard). */
+  manifestEntriesTotal?: number;
+  offset?: number;
+  batchSize?: number;
+  hasMore?: boolean;
 };
 
 @Injectable()
@@ -435,10 +440,13 @@ export class BeatscodeContractImportService {
 
     const offset = Math.max(0, options?.offset ?? 0);
     const limit = options?.limit;
+    const manifestEntriesTotal = manifest.entries.length;
     const manifestEntries = manifest.entries.slice(
       offset,
       limit ? offset + limit : undefined,
     );
+    const batchSize = manifestEntries.length;
+    const hasMore = limit != null && offset + batchSize < manifestEntriesTotal;
 
     const entryByKey = new Map<string, BeatscodeContractDownloadEntry>();
     for (const entry of manifestEntries) {
@@ -485,6 +493,10 @@ export class BeatscodeContractImportService {
       byCategory: {},
       byStatus: {},
       errors: [],
+      manifestEntriesTotal,
+      offset,
+      batchSize,
+      hasMore,
     };
 
     for (const c of exportFile.contracts) {

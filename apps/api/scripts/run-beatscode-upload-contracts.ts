@@ -8,6 +8,8 @@
  *   pnpm --filter api beatscode:upload-contracts -- --dry-run
  *   pnpm --filter api beatscode:upload-contracts -- --limit 10
  *   pnpm --filter api beatscode:upload-contracts -- --tenant boston-city-fc-brasil
+ *   pnpm --filter api beatscode:upload-contracts -- --s3
+ *   pnpm --filter api beatscode:upload-contracts -- --s3 --limit 40 --offset 0
  */
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
@@ -32,6 +34,8 @@ async function main() {
   const limit = limitRaw != null ? Number(limitRaw) : undefined;
   const offset = offsetRaw != null ? Number(offsetRaw) : 0;
   const dryRun = hasFlag('--dry-run');
+  const fromS3 = hasFlag('--s3');
+  const s3StagingPrefix = readArg('--s3-prefix');
   const manifestPath = readArg('--manifest') || DEFAULT_CONTRACTS_MANIFEST_PATH;
   const contractsExportPath = readArg('--contracts-export');
   const tenantSlug =
@@ -49,13 +53,15 @@ async function main() {
     const svc = app.get(BeatscodeContractImportService);
     const result = await svc.importFromDownloadManifest({
       tenantSlug,
-      manifestPath,
+      manifestPath: fromS3 ? undefined : manifestPath,
       contractsExportPath,
+      filesSource: fromS3 ? 's3' : 'local',
+      s3StagingPrefix,
       dryRun,
       limit: Number.isFinite(limit) ? limit : undefined,
       offset: Number.isFinite(offset) ? offset : 0,
     });
-    console.log(JSON.stringify({ ok: true, dryRun, manifestPath, ...result }, null, 2));
+    console.log(JSON.stringify({ ok: true, dryRun, fromS3, manifestPath: fromS3 ? 's3' : manifestPath, ...result }, null, 2));
   } finally {
     await app.close();
   }

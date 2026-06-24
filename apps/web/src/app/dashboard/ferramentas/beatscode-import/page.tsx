@@ -241,23 +241,56 @@ export default function BeatscodeImportPage() {
     setRunning("contracts-manifest-s3");
     setError(null);
     setContractsMessage(null);
+    const BATCH = 40;
+    let offset = 0;
+    let totalDocs = 0;
+    let totalFiles = 0;
+    let totalSkipped = 0;
+    let manifestTotal = 0;
+    const allErrors: string[] = [];
     try {
-      const res = await authFetch("/api/beatscode-import/import-contracts-manifest-s3", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenantSlug: targetTenantSlug }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha ao vincular PDFs.");
-        return;
+      while (true) {
+        setContractsMessage(
+          `Vinculando PDFs do S3… lote ${Math.floor(offset / BATCH) + 1} (${offset} / ${offset + BATCH} entradas do manifest)`,
+        );
+        const res = await authFetch("/api/beatscode-import/import-contracts-manifest-s3", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tenantSlug: targetTenantSlug, limit: BATCH, offset }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const msg =
+            typeof data.message === "string"
+              ? data.message
+              : Array.isArray(data.message)
+                ? data.message.join("; ")
+                : typeof data.error === "string"
+                  ? data.error
+                  : `HTTP ${res.status}`;
+          setError(`Falha ao vincular PDFs (offset ${offset}): ${msg}`);
+          return;
+        }
+        totalDocs += data.legalDocumentsCreated ?? 0;
+        totalFiles += data.filesDownloaded ?? 0;
+        totalSkipped += data.skippedExisting ?? 0;
+        if (data.manifestEntriesTotal) manifestTotal = data.manifestEntriesTotal;
+        if (Array.isArray(data.errors) && data.errors.length) {
+          allErrors.push(...data.errors.slice(0, 5));
+        }
+        const total = manifestTotal || data.manifestEntriesTotal || offset + BATCH;
+        const done = offset + (data.batchSize ?? BATCH);
+        setContractsMessage(`Progresso: ${Math.min(done, total)} / ${total} entradas do manifest…`);
+        if (!data.hasMore) break;
+        offset += BATCH;
       }
       setContractsMessage(
-        `PDFs contratos (S3): ${data.legalDocumentsCreated ?? 0} LegalDocument(s), ${data.playersUpdated ?? 0} jogador(es), ${data.filesDownloaded ?? 0} arquivo(s).` +
-          (data.skippedExisting ? ` ${data.skippedExisting} já existiam.` : ""),
+        `PDFs contratos (S3): ${totalDocs} LegalDocument(s), ${totalFiles} arquivo(s) processado(s).` +
+          (totalSkipped ? ` ${totalSkipped} já existiam.` : "") +
+          (allErrors.length ? ` Avisos: ${allErrors.slice(0, 3).join(" | ")}` : ""),
       );
     } catch {
-      setError("Erro ao importar PDFs de contratos do S3.");
+      setError("Erro de rede ao importar PDFs de contratos do S3 (timeout?). Tente de novo ou rode no servidor: pnpm beatscode:upload-contracts-s3");
     } finally {
       setRunning(null);
     }
