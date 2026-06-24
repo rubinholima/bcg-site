@@ -272,6 +272,31 @@ export class PlayersService {
     return { economicRights, contracts, tenantName };
   }
 
+  /** Stream PDF jurídico do atleta (pasta S3 legal/* — privada). */
+  async streamLegalDocumentFile(
+    playerId: string,
+    documentId: string,
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    await this.findOne(playerId);
+    const doc = await this.prisma.legalDocument.findFirst({
+      where: { id: documentId, playerId },
+      include: { player: { select: { name: true } } },
+    });
+    if (!doc) throw new NotFoundException('Documento não encontrado');
+    const key = doc.signedFileKey ?? doc.fileKey;
+    if (!key?.trim()) throw new NotFoundException('Arquivo do documento não disponível');
+    const buffer = await this.s3.getObjectBuffer(key);
+    const playerName = doc.player?.name?.trim();
+    const isSigned = !!doc.signedFileKey;
+    const filename =
+      isSigned && playerName
+        ? `${playerName} - ${doc.name} - Assinado.pdf`
+        : doc.name.endsWith('.pdf')
+          ? doc.name
+          : `${doc.name}.pdf`;
+    return { buffer, filename };
+  }
+
   private assertRegistrationIdentifiers(profile: Record<string, unknown> | undefined) {
     if (!profile || typeof profile !== 'object') {
       throw new BadRequestException('Preencha o CPF do atleta (11 dígitos).');
@@ -359,7 +384,7 @@ export class PlayersService {
         observation: c.observation,
         endReason: c.contractEndReasonName,
         fileUrl: c.files?.[0]?.fileUrl ?? null,
-        legalDocumentId: c.files?.[0]?.legalDocumentId ?? null,
+        juridicoDocumentId: c.files?.[0]?.legalDocumentId ?? null,
       };
     });
   }

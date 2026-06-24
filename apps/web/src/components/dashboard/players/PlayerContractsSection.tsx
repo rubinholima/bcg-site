@@ -14,7 +14,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
-import { getPublicImageUrl } from "@/lib/media-url";
 import {
   formatContractDate,
   type PlayerContractRow,
@@ -68,6 +67,7 @@ export function PlayerContractsSection({
   const [loading, setLoading] = useState(true);
   const [contracts, setContracts] = useState<PlayerContractRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [openingPdfId, setOpeningPdfId] = useState<string | null>(null);
 
   const economicRights = normalizeEconomicRights(profile, tenantName);
 
@@ -130,11 +130,30 @@ export function PlayerContractsSection({
     return null;
   };
 
-  const canViewContractPdf = (row: PlayerContractRow) => Boolean(row.fileUrl?.trim());
+  const canViewContractPdf = (row: PlayerContractRow) =>
+    Boolean(row.juridicoDocumentId?.trim());
 
-  const handleViewContract = (row: PlayerContractRow) => {
-    if (!row.fileUrl?.trim()) return;
-    window.open(getPublicImageUrl(row.fileUrl), "_blank", "noopener,noreferrer");
+  const handleViewContract = async (row: PlayerContractRow) => {
+    const docId = row.juridicoDocumentId?.trim();
+    if (!docId) return;
+    setOpeningPdfId(row.id);
+    setLoadError(null);
+    try {
+      const res = await fetch(`/api/players/${playerId}/contract-documents/${docId}/file`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error("Não foi possível abrir o PDF do contrato.");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+      window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Erro ao abrir PDF do contrato.");
+    } finally {
+      setOpeningPdfId(null);
+    }
   };
 
   const actionSourceLabel = (row: PlayerContractRow) => {
@@ -330,10 +349,14 @@ export function PlayerContractsSection({
                                   ? "Visualizar PDF do contrato"
                                   : "PDF ainda não disponível"
                               }
-                              disabled={!canViewContractPdf(row)}
-                              onClick={() => handleViewContract(row)}
+                              disabled={!canViewContractPdf(row) || openingPdfId === row.id}
+                              onClick={() => void handleViewContract(row)}
                             >
-                              <Eye className="h-4 w-4" />
+                              {openingPdfId === row.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
                             </Button>
                             {href ? (
                               <Button variant="ghost" size="icon" asChild title="Abrir no departamento">

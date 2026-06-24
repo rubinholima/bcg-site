@@ -18,6 +18,8 @@ import {
 
   Query,
 
+  StreamableFile,
+
   UploadedFile,
 
   UseInterceptors,
@@ -81,6 +83,20 @@ export class PlayersController {
   @Get(':id/contracts-overview')
   findContractsOverview(@Param('id') id: string) {
     return this.service.findContractsOverview(id);
+  }
+
+  /** PDF de contrato jurídico — autenticado (legal/* não é público no CDN). */
+  @Get(':id/contract-documents/:docId/file')
+  async streamContractDocument(
+    @Param('id') id: string,
+    @Param('docId') docId: string,
+  ) {
+    const { buffer, filename } = await this.service.streamLegalDocumentFile(id, docId);
+    const safeFilename = filename.replace(/[^a-zA-Z0-9\u00C0-\u024F\s._-]/g, '_');
+    return new StreamableFile(buffer, {
+      type: 'application/pdf',
+      disposition: `inline; filename="${safeFilename}"`,
+    });
   }
 
   @Post(':id/registration-documents')
