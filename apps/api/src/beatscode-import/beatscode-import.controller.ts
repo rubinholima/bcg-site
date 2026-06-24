@@ -160,6 +160,25 @@ export class BeatscodeImportController {
     return { ok: true, ...result };
   }
 
+  /** PDFs já no S3 (staging) → legal/ + LegalDocument + profile (produção, sem SCP). */
+  @Post('import-contracts-manifest-s3')
+  async importContractsManifestS3(
+    @Body()
+    body: {
+      tenantSlug?: string;
+      s3StagingPrefix?: string;
+      dryRun?: boolean;
+    },
+  ) {
+    const result = await this.beatscodeContractImport.importFromDownloadManifest({
+      tenantSlug: body?.tenantSlug,
+      filesSource: 's3',
+      s3StagingPrefix: body?.s3StagingPrefix,
+      dryRun: body?.dryRun,
+    });
+    return { ok: true, ...result };
+  }
+
   @Get('documents/status')
   async documentsStatus() {
     const row = await this.prisma.integrationConfig.findUnique({

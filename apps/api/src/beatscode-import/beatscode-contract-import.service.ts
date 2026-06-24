@@ -29,6 +29,7 @@ import {
 } from './beatscode-contract-legal.util';
 import {
   DEFAULT_CONTRACTS_MANIFEST_PATH,
+  DEFAULT_S3_CONTRACTS_STAGING_PREFIX,
   type BeatscodeContractDownloadEntry,
   type BeatscodeContractDownloadManifestFile,
   isBeatscodeContractDownloadManifest,
@@ -37,7 +38,7 @@ import {
 export type BeatscodeContractImportResult = {
   importedAt: string;
   tenantSlug: string;
-  source: 'beatscode_api' | 'export_file' | 'local_manifest';
+  source: 'beatscode_api' | 'export_file' | 'local_manifest' | 's3_staging_manifest';
   contractsTotal: number;
   playersUpdated: number;
   contractsLinked: number;
@@ -355,30 +356,82 @@ export class BeatscodeContractImportService {
     return this.importFromExport(exportData, options);
   }
 
-  /** Sobe PDFs locais (manifest do beatscode:download-contracts) → S3 + LegalDocument + profile. */
+  /** Sobe PDFs (local ou S3 staging) → legal/ no S3 + LegalDocument + profile. */
   async importFromDownloadManifest(options?: {
     tenantSlug?: string;
+    manifest?: BeatscodeContractDownloadManifestFile;
     manifestPath?: string;
+    contractsExport?: BeatscodeContractExportFile;
     contractsExportPath?: string;
+    filesSource?: 'local' | 's3';
+    s3StagingPrefix?: string;
     dryRun?: boolean;
     limit?: number;
     offset?: number;
   }): Promise<BeatscodeContractImportResult> {
-    const manifestPath = resolve(
-      process.cwd(),
-      options?.manifestPath?.trim() || DEFAULT_CONTRACTS_MANIFEST_PATH,
-    );
-    const rawManifest = JSON.parse(await readFile(manifestPath, 'utf8')) as unknown;
-    if (!isBeatscodeContractDownloadManifest(rawManifest)) {
-      throw new Error(`Manifest inválido: ${manifestPath}`);
+    const filesSource = options?.filesSource ?? 'local';
+    const s3Prefix = (
+      options?.s3StagingPrefix?.trim() || DEFAULT_S3_CONTRACTS_STAGING_PREFIX
+    ).replace(/\/+$/, '');
+
+    let manifest: BeatscodeContractDownloadManifestFile;
+    if (options?.manifest) {
+      manifest = options.manifest;
+    } else if (filesSource === 's3') {
+      const raw = JSON.parse(
+        (await this.s3.getObjectBuffer(`${s3Prefix}/manifest.json`)).toString('utf8'),
+      ) as unknown;
+      if (!isBeatscodeContractDownloadManifest(raw)) {
+        throw new Error(`Manifest inválido no S3: ${s3Prefix}/manifest.json`);
+      }
+      manifest = raw;
+    } else {
+      const manifestPath = resolve(
+        process.cwd(),
+        options?.manifestPath?.trim() || DEFAULT_CONTRACTS_MANIFEST_PATH,
+      );
+      const rawManifest = JSON.parse(await readFile(manifestPath, 'utf8')) as unknown;
+      if (!isBeatscodeContractDownloadManifest(rawManifest)) {
+        throw new Error(`Manifest inválido: ${manifestPath}`);
+      }
+      manifest = rawManifest;
     }
-    const manifest = rawManifest as BeatscodeContractDownloadManifestFile;
-    const contractsPath = resolve(
-      process.cwd(),
-      options?.contractsExportPath?.trim() || manifest.contractsExportPath,
-    );
-    const exportFile = await this.readExportFile(contractsPath);
-    const manifestBaseDir = dirname(manifestPath);
+
+    let exportFile: BeatscodeContractExportFile;
+    if (options?.contractsExport) {
+      exportFile = options.contractsExport;
+    } else if (filesSource === 's3') {
+      const exportKey = `${s3Prefix}/beatscode-contracts-export.json`;
+      try {
+        const raw = JSON.parse(
+          (await this.s3.getObjectBuffer(exportKey)).toString('utf8'),
+        ) as unknown;
+        if (!isBeatscodeContractExportFile(raw)) {
+          throw new Error(`Export inválido no S3: ${exportKey}`);
+        }
+        exportFile = raw;
+      } catch (e) {
+        throw new Error(
+          `Coloque beatscode-contracts-export.json em s3://${s3Prefix}/ — ${e instanceof Error ? e.message : e}`,
+        );
+      }
+    } else {
+      const contractsPath = resolve(
+        process.cwd(),
+        options?.contractsExportPath?.trim() || manifest.contractsExportPath,
+      );
+      exportFile = await this.readExportFile(contractsPath);
+    }
+
+    const manifestBaseDir =
+      filesSource === 's3'
+        ? s3Prefix
+        : dirname(
+            resolve(
+              process.cwd(),
+              options?.manifestPath?.trim() || DEFAULT_CONTRACTS_MANIFEST_PATH,
+            ),
+          );
 
     const offset = Math.max(0, options?.offset ?? 0);
     const limit = options?.limit;
@@ -420,7 +473,7 @@ export class BeatscodeContractImportService {
     const result: BeatscodeContractImportResult = {
       importedAt: new Date().toISOString(),
       tenantSlug,
-      source: 'local_manifest',
+      source: filesSource === 's3' ? 's3_staging_manifest' : 'local_manifest',
       contractsTotal: exportFile.contracts.length,
       playersUpdated: 0,
       contractsLinked: 0,
@@ -465,6 +518,7 @@ export class BeatscodeContractImportService {
             row,
             entryByKey,
             manifestBaseDir,
+            filesSource,
             dryRun,
             result,
           );
@@ -552,6 +606,7 @@ export class BeatscodeContractImportService {
     row: BeatscodeContractExportFile['contracts'][number],
     entryByKey: Map<string, BeatscodeContractDownloadEntry>,
     manifestBaseDir: string,
+    filesSource: 'local' | 's3',
     dryRun: boolean,
     result: BeatscodeContractImportResult,
   ): Promise<NonNullable<StoredBeatscodeContract['files']>> {
@@ -585,17 +640,7 @@ export class BeatscodeContractImportService {
 
       if (!manifestEntry) continue;
 
-      const absPath = resolve(manifestBaseDir, manifestEntry.localFilePath);
-      try {
-        await access(absPath, fsConstants.R_OK);
-      } catch {
-        result.skippedNoFile = (result.skippedNoFile ?? 0) + 1;
-        result.errors.push(
-          `Contrato ${row.beatscodeId} att ${attachmentId}: arquivo não encontrado (${absPath})`,
-        );
-        continue;
-      }
-
+      const relPath = manifestEntry.localFilePath.replace(/\\/g, '/');
       const displayName = buildContractDocumentName(
         row.contractTypeName,
         row.number,
@@ -609,18 +654,49 @@ export class BeatscodeContractImportService {
             : `${manifestEntry.documentName}.pdf`
           : `${displayName}.pdf`;
 
+      let buf: Buffer | null = null;
+      let sourceLabel = relPath;
+
+      if (filesSource === 's3') {
+        const s3Key = `${manifestBaseDir.replace(/\/+$/, '')}/${relPath}`;
+        try {
+          buf = await this.s3.getObjectBuffer(s3Key);
+          sourceLabel = `s3:${s3Key}`;
+        } catch {
+          result.skippedNoFile = (result.skippedNoFile ?? 0) + 1;
+          result.errors.push(
+            `Contrato ${row.beatscodeId} att ${attachmentId}: PDF não encontrado no S3 (${s3Key})`,
+          );
+          continue;
+        }
+      } else {
+        const absPath = resolve(manifestBaseDir, relPath);
+        try {
+          await access(absPath, fsConstants.R_OK);
+        } catch {
+          result.skippedNoFile = (result.skippedNoFile ?? 0) + 1;
+          result.errors.push(
+            `Contrato ${row.beatscodeId} att ${attachmentId}: arquivo não encontrado (${absPath})`,
+          );
+          continue;
+        }
+        sourceLabel = absPath;
+        if (!dryRun) {
+          buf = await readFile(absPath);
+        }
+      }
+
       if (dryRun) {
         files.push({
           attachmentId,
-          fileUrl: `(dry-run) ${absPath}`,
+          fileUrl: `(dry-run) ${sourceLabel}`,
           name: displayName,
         });
         result.filesDownloaded += 1;
         continue;
       }
 
-      const buf = await readFile(absPath);
-      if (!buf.length) {
+      if (!buf?.length) {
         result.errors.push(`Contrato ${row.beatscodeId} att ${attachmentId}: PDF vazio`);
         continue;
       }
@@ -643,7 +719,7 @@ export class BeatscodeContractImportService {
             beatscodeAttachmentId: attachmentId,
             beatscodeContractNumber: row.number,
             menuCategory: row.menuCategory,
-            importedFrom: 'local_manifest',
+            importedFrom: filesSource === 's3' ? 's3_staging_manifest' : 'local_manifest',
           },
         },
       });

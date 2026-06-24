@@ -39,6 +39,9 @@ export type BeatscodeContractDownloadEntry = {
 export const DEFAULT_CONTRACTS_DOWNLOAD_DIR = 'data/beatscode-contracts-download';
 export const DEFAULT_CONTRACTS_MANIFEST_PATH =
   'data/beatscode-contracts-download/manifest.json';
+/** Prefixo no bucket S3 para staging antes do import em produção (sem SCP). */
+export const DEFAULT_S3_CONTRACTS_STAGING_PREFIX =
+  'beatscode-staging/contracts-download';
 
 export function isBeatscodeContractDownloadManifest(
   raw: unknown,

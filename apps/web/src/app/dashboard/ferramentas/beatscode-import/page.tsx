@@ -54,6 +54,7 @@ export default function BeatscodeImportPage() {
     | "agenda-api"
     | "contracts-file"
     | "contracts-api"
+    | "contracts-manifest-s3"
     | "documents-sync"
     | null
   >(null);
@@ -233,6 +234,32 @@ export default function BeatscodeImportPage() {
     } finally {
       setRunning(null);
       if (contractsFileRef.current) contractsFileRef.current.value = "";
+    }
+  };
+
+  const handleImportContractsManifestS3 = async () => {
+    setRunning("contracts-manifest-s3");
+    setError(null);
+    setContractsMessage(null);
+    try {
+      const res = await authFetch("/api/beatscode-import/import-contracts-manifest-s3", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantSlug: targetTenantSlug }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha ao vincular PDFs.");
+        return;
+      }
+      setContractsMessage(
+        `PDFs contratos (S3): ${data.legalDocumentsCreated ?? 0} LegalDocument(s), ${data.playersUpdated ?? 0} jogador(es), ${data.filesDownloaded ?? 0} arquivo(s).` +
+          (data.skippedExisting ? ` ${data.skippedExisting} já existiam.` : ""),
+      );
+    } catch {
+      setError("Erro ao importar PDFs de contratos do S3.");
+    } finally {
+      setRunning(null);
     }
   };
 
@@ -473,8 +500,15 @@ export default function BeatscodeImportPage() {
             <code className="text-xs">employeeId</code> do Beatscode. Situação ativa em{" "}
             <strong>Dados esportivos → Situação do contrato</strong>.
             <br />
-            Local: <code className="text-xs">pnpm --filter api beatscode:export-contracts</code> →{" "}
-            <code className="text-xs">data/beatscode-contracts-export.json</code>
+            <strong>Metadados:</strong>{" "}
+            <code className="text-xs">pnpm --filter api beatscode:export-contracts</code> → importar
+            JSON abaixo.
+            <br />
+            <strong>PDFs (887):</strong> no PC{" "}
+            <code className="text-xs">pnpm beatscode:download-contracts</code>, depois{" "}
+            <code className="text-xs">aws s3 sync</code> para{" "}
+            <code className="text-xs">beatscode-staging/contracts-download/</code> e botão
+            &quot;Vincular PDFs do S3&quot;.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -499,6 +533,18 @@ export default function BeatscodeImportPage() {
               <FileUp className="mr-2 h-4 w-4" />
             )}
             Importar JSON de contratos
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={!!running}
+            onClick={handleImportContractsManifestS3}
+          >
+            {running === "contracts-manifest-s3" ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Paperclip className="mr-2 h-4 w-4" />
+            )}
+            Vincular PDFs de contratos (S3 staging)
           </Button>
           <Button
             variant="outline"
