@@ -64,7 +64,7 @@
 ## **COMMITS / BRANCH**
 
 - **Branch:** `develop`
-- **Último commit:** ver hash do encerramento (psicologia/consultas + fix sync Beatscode)
+- **Último commit:** `93a861d` — fix(beatscode): prioriza pendentes no sync overnight e encerra dia 22/06
 - **Push:** enviado para `origin/develop`
 
 ## **PENDÊNCIAS / PRÓXIMO**

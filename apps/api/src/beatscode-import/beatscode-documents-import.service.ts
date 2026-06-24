@@ -49,6 +49,143 @@ export class BeatscodeDocumentsImportService {
     );
   }
 
+  /** Pasta estável no S3 — usa externalId (beatscode-123) para valer igual em local e produção. */
+  private documentStorageOwner(
+    externalId: string | null | undefined,
+    playerId: string,
+  ): string {
+    return externalId?.trim() || playerId;
+  }
+
+  /** URL já espelhada no nosso S3/CloudFront (não link temporário do Beatscode). */
+  private isMirroredDocumentUrl(fileUrl: string | undefined): boolean {
+    const u = fileUrl?.trim().toLowerCase() ?? '';
+    if (!u) return false;
+    if (u.includes('beatscode.com') || u.includes('beatscode')) return false;
+    return (
+      u.includes('bostoncitygroup') ||
+      u.includes('cloudfront.net') ||
+      u.includes('amazonaws.com') ||
+      u.includes('/media/jogadores-documentos/')
+    );
+  }
+
+  private documentNeedsMirror(doc: StoredDoc): boolean {
+    if (doc.pendingDownload) return true;
+    if (!doc.fileUrl?.trim()) return true;
+    return !this.isMirroredDocumentUrl(doc.fileUrl);
+  }
+
+  private async downloadBeatscodeDocumentBuffer(
+    client: BeatscodeApiClient,
+    doc: StoredDoc,
+  ): Promise<{ buffer: Buffer; filename: string; mimeType?: string } | null> {
+    const rawUrl = doc.fileUrl?.trim();
+    if (rawUrl && !this.isMirroredDocumentUrl(rawUrl)) {
+      const buf = await client.downloadFile(rawUrl);
+      if (buf?.length) {
+        const filename =
+          rawUrl.split('/').pop()?.split('?')[0] || `${doc.name || 'documento'}.pdf`;
+        return {
+          buffer: buf,
+          filename,
+          mimeType: filename.toLowerCase().endsWith('.pdf') ? 'application/pdf' : undefined,
+        };
+      }
+    }
+
+    if (Number.isFinite(doc.beatscodeAttachmentId)) {
+      const downloaded = await this.attachments.downloadAttachment(
+        client,
+        doc.beatscodeAttachmentId!,
+      );
+      if (downloaded) {
+        return {
+          buffer: downloaded.buffer,
+          filename: downloaded.meta.displayName,
+          mimeType: downloaded.meta.mimeType,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /** Preenche fileUrl a partir de `/athlete-full` quando só temos beatscodeAttachmentId. */
+  private async enrichDocumentsFromAthleteFull(
+    client: BeatscodeApiClient,
+    profile: Record<string, unknown>,
+    docs: StoredDoc[],
+  ): Promise<boolean> {
+    const needsLink = docs.some(
+      (d) => this.documentNeedsMirror(d) && !d.fileUrl?.trim() && d.beatscodeAttachmentId,
+    );
+    if (!needsLink) return false;
+
+    const { athleteRecordId } = this.parseBeatscodeProfileMeta(profile);
+    if (!athleteRecordId) return false;
+
+    const full = await client.getAthleteFull(athleteRecordId);
+    const data = full?.data as Record<string, unknown> | undefined;
+    const attachment = data?.attachment as Record<string, unknown> | undefined;
+    if (!attachment) return false;
+
+    const linkById = new Map<number, string>();
+    for (const entry of Object.values(attachment)) {
+      if (!entry || typeof entry !== 'object') continue;
+      const row = entry as Record<string, unknown>;
+      const id = Number(row.id);
+      const link = String(row.link ?? '').trim();
+      if (Number.isFinite(id) && link) linkById.set(id, link);
+    }
+
+    let changed = false;
+    for (const doc of docs) {
+      if (!this.documentNeedsMirror(doc) || doc.fileUrl?.trim()) continue;
+      const attId = doc.beatscodeAttachmentId;
+      if (!Number.isFinite(attId)) continue;
+      const link = linkById.get(attId!);
+      if (!link) continue;
+      doc.fileUrl = link;
+      doc.pendingDownload = false;
+      changed = true;
+    }
+    return changed;
+  }
+
+  private async mirrorDocumentToS3(
+    client: BeatscodeApiClient,
+    doc: StoredDoc,
+    storageOwner: string,
+    result: BeatscodeDocumentsSyncResult,
+  ): Promise<boolean> {
+    const downloaded = await this.downloadBeatscodeDocumentBuffer(client, doc);
+    if (!downloaded) return false;
+
+    const mapped = mapBeatscodeDocumentTypeLabel(downloaded.filename || doc.name);
+    const uploaded = await this.s3.uploadPlayerRegistrationDocument(
+      downloaded.buffer,
+      storageOwner,
+      downloaded.filename.endsWith('.pdf') ? downloaded.filename : `${downloaded.filename}.pdf`,
+      downloaded.mimeType ?? 'application/pdf',
+    );
+
+    doc.name =
+      doc.name ||
+      downloaded.filename.replace(/\.(pdf|png|jpe?g|webp)$/i, '').trim() ||
+      'Documento pessoal';
+    doc.documentType = mapped.documentType;
+    doc.documentCategory = mapped.documentCategory;
+    doc.fileUrl = uploaded.url;
+    doc.fileKey = uploaded.key;
+    doc.pendingDownload = false;
+    doc.uploadedAt = new Date().toISOString();
+    doc.source = 'beatscode';
+    result.filesDownloaded += 1;
+    result.documentsUpdated += 1;
+    return true;
+  }
+
   /** Sincroniza PDFs/anexos dos atletas Beatscode → S3 → registrationProfile.documents + LegalDocument (contratos). */
   async syncTenantDocuments(options?: {
     tenantSlug?: string;
@@ -88,6 +225,10 @@ export class BeatscodeDocumentsImportService {
     await this.attachments.preloadAttachmentMeta([...allAttachmentIds]);
 
     let client: BeatscodeApiClient | null = null;
+    let apiSessionStartedAt = 0;
+    const apiSessionMaxMs = Number(
+      process.env.BEATSCODE_BROWSER_SESSION_MAX_MS ?? 9 * 60 * 1000,
+    );
     if (downloadFiles && this.hasApiCredentials()) {
       client = new BeatscodeApiClient(
         process.env.BEATSCODE_API_URL?.trim() || 'https://bostoncityfc-api.beatscode.com',
@@ -95,14 +236,42 @@ export class BeatscodeDocumentsImportService {
         process.env.BEATSCODE_PASSWORD!.trim(),
       );
       await client.login();
+      apiSessionStartedAt = Date.now();
     }
+
+    this.log.log(
+      `Beatscode documentos: modo API (${players.length} jogador(es), sem browser)`,
+    );
 
     for (const player of players) {
       try {
+        if (
+          client &&
+          apiSessionMaxMs > 0 &&
+          apiSessionStartedAt > 0 &&
+          Date.now() - apiSessionStartedAt >= apiSessionMaxMs
+        ) {
+          this.log.log('Beatscode documentos: renovando token API (~9 min)');
+          await client.login();
+          apiSessionStartedAt = Date.now();
+        }
+
+        if (result.playersProcessed > 0 && result.playersProcessed % 25 === 0) {
+          this.log.log(
+            `Beatscode documentos API: ${result.filesDownloaded} arquivo(s), ${result.playersProcessed} jogador(es)…`,
+          );
+        }
+
         const profile = this.parseProfile(player.registrationProfile);
         const docs = this.normalizeDocs(profile.documents);
+        if (!docs.some((d) => this.documentNeedsMirror(d))) continue;
+
         const contracts = this.getBeatscodeContracts(profile);
         let changed = false;
+
+        if (client) {
+          await this.enrichDocumentsFromAthleteFull(client, profile, docs);
+        }
 
         const personalIds = docs
           .map((d) => d.beatscodeAttachmentId)
@@ -111,8 +280,23 @@ export class BeatscodeDocumentsImportService {
         for (let i = 0; i < docs.length; i++) {
           const doc = docs[i]!;
           const attId = doc.beatscodeAttachmentId;
+          if (!attId && !this.documentNeedsMirror(doc)) continue;
+          if (!this.documentNeedsMirror(doc)) continue;
+
+          if (client && downloadFiles && this.documentNeedsMirror(doc)) {
+            const mirrored = await this.mirrorDocumentToS3(
+              client,
+              doc,
+              this.documentStorageOwner(player.externalId, player.id),
+              result,
+            );
+            if (mirrored) {
+              changed = true;
+              continue;
+            }
+          }
+
           if (!attId) continue;
-          if (doc.fileUrl?.trim() && !doc.pendingDownload) continue;
 
           const meta = await this.attachments.resolveAttachmentMeta(attId);
           const typeName = meta?.displayName
@@ -145,7 +329,7 @@ export class BeatscodeDocumentsImportService {
 
           const uploaded = await this.s3.uploadPlayerRegistrationDocument(
             buf,
-            player.id,
+            this.documentStorageOwner(player.externalId, player.id),
             meta.displayName || `beatscode-${attId}.pdf`,
             meta.mimeType,
           );
@@ -211,7 +395,10 @@ export class BeatscodeDocumentsImportService {
   private shouldUseBrowser(options?: { useBrowser?: boolean }): boolean {
     if (options?.useBrowser === false) return false;
     if (options?.useBrowser === true) return true;
+    if (process.env.BEATSCODE_USE_BROWSER === '0') return false;
     if (process.env.BEATSCODE_USE_BROWSER === '1') return true;
+    /** Com credenciais API, download direto (URLs do export) — sem Playwright. */
+    if (this.hasApiCredentials()) return false;
     return !this.attachments.hasDatabaseConfigured();
   }
 
@@ -347,14 +534,36 @@ export class BeatscodeDocumentsImportService {
           }
 
           if (apiResolver) {
-            const apiDone = await this.trySyncPlayerDocumentsViaApi(
-              player.id,
-              profile,
-              docs,
-              contracts,
-              apiResolver,
-              result,
-            );
+            let apiDone = false;
+            try {
+              apiDone = await this.trySyncPlayerDocumentsViaApi(
+                player.id,
+                player.externalId,
+                profile,
+                docs,
+                contracts,
+                apiResolver,
+                result,
+              );
+            } catch (e) {
+              const msg = e instanceof Error ? e.message : String(e);
+              if (/token inv[aá]lido|unauthorized|401/i.test(msg)) {
+                this.log.warn(`Beatscode sync ${label}: token expirado — relogin API`);
+                await apiResolver.login();
+                apiSessionStartedAt = Date.now();
+                apiDone = await this.trySyncPlayerDocumentsViaApi(
+                  player.id,
+                  player.externalId,
+                  profile,
+                  docs,
+                  contracts,
+                  apiResolver,
+                  result,
+                );
+              } else {
+                throw e;
+              }
+            }
             if (apiDone) {
               const refreshed = await this.prisma.player.findUnique({
                 where: { id: player.id },
@@ -398,7 +607,7 @@ export class BeatscodeDocumentsImportService {
             }
 
             const updated = await this.applyScrapedPersonalDocument(
-              player.id,
+              this.documentStorageOwner(player.externalId, player.id),
               docs,
               file,
               result,
@@ -470,7 +679,7 @@ export class BeatscodeDocumentsImportService {
     const profile = this.parseProfile(registrationProfile);
     const docs = this.normalizeDocs(profile.documents);
     const hasPending =
-      docs.some((d) => d.pendingDownload || !d.fileUrl?.trim()) || docs.length === 0;
+      docs.some((d) => this.documentNeedsMirror(d)) || docs.length === 0;
     const contracts = this.getBeatscodeContracts(profile);
     const hasContractPending = contracts.some(
       (c) => (c.attachmentIds?.length ?? 0) + (c.extraFileIds?.length ?? 0) > 0,
@@ -592,49 +801,27 @@ export class BeatscodeDocumentsImportService {
    */
   private async trySyncPlayerDocumentsViaApi(
     playerId: string,
+    externalId: string | null | undefined,
     profile: Record<string, unknown>,
     docs: StoredDoc[],
     contracts: ReturnType<BeatscodeDocumentsImportService['getBeatscodeContracts']>,
     client: BeatscodeApiClient,
     result: BeatscodeDocumentsSyncResult,
   ): Promise<boolean> {
-    const pendingDocs = docs.filter((d) => d.pendingDownload || !d.fileUrl?.trim());
+    const storageOwner = this.documentStorageOwner(externalId, playerId);
+    await this.enrichDocumentsFromAthleteFull(client, profile, docs);
+    const pendingDocs = docs.filter((d) => this.documentNeedsMirror(d));
     const hasContractIds = contracts.some(
       (c) => (c.attachmentIds?.length ?? 0) + (c.extraFileIds?.length ?? 0) > 0,
     );
     if (!pendingDocs.length && !hasContractIds) {
-      return this.countPendingDocuments(profile) === 0;
+      return this.countPendingDocuments({ ...profile, documents: docs }) === 0;
     }
 
     let changed = false;
     for (const doc of pendingDocs) {
-      const attId = doc.beatscodeAttachmentId;
-      if (!Number.isFinite(attId)) continue;
-      const downloaded = await this.attachments.downloadAttachment(client, attId!);
-      if (!downloaded) continue;
-
-      const mapped = mapBeatscodeDocumentTypeLabel(downloaded.meta.displayName);
-      const uploaded = await this.s3.uploadPlayerRegistrationDocument(
-        downloaded.buffer,
-        playerId,
-        `${downloaded.meta.displayName}.pdf`,
-        downloaded.meta.mimeType ?? 'application/pdf',
-      );
-      doc.name =
-        downloaded.meta.displayName.replace(/\.(pdf|png|jpe?g|webp)$/i, '').trim() ||
-        doc.name ||
-        `Documento pessoal`;
-      doc.documentType = mapped.documentType;
-      doc.documentCategory = mapped.documentCategory;
-      doc.fileUrl = uploaded.url;
-      doc.fileKey = uploaded.key;
-      doc.pendingDownload = false;
-      doc.uploadedAt = new Date().toISOString();
-      doc.beatscodeAttachmentId = attId;
-      doc.source = 'beatscode';
-      result.filesDownloaded += 1;
-      result.documentsUpdated += 1;
-      changed = true;
+      const mirrored = await this.mirrorDocumentToS3(client, doc, storageOwner, result);
+      if (mirrored) changed = true;
     }
 
     for (const contract of contracts) {
@@ -673,7 +860,7 @@ export class BeatscodeDocumentsImportService {
 
   private countPendingDocuments(profile: Record<string, unknown>): number {
     const docs = this.normalizeDocs(profile.documents);
-    return docs.filter((d) => d.pendingDownload || !d.fileUrl?.trim()).length;
+    return docs.filter((d) => this.documentNeedsMirror(d)).length;
   }
 
   private async resolveAthleteRecordId(
@@ -703,7 +890,7 @@ export class BeatscodeDocumentsImportService {
   }
 
   private async applyScrapedPersonalDocument(
-    playerId: string,
+    storageOwner: string,
     docs: StoredDoc[],
     file: BeatscodeScrapedDocument,
     result: BeatscodeDocumentsSyncResult,
@@ -730,11 +917,11 @@ export class BeatscodeDocumentsImportService {
       docs.push(doc);
     }
 
-    if (doc.fileUrl?.trim() && !doc.pendingDownload) return false;
+    if (this.isMirroredDocumentUrl(doc.fileUrl) && !doc.pendingDownload) return false;
 
     const uploaded = await this.s3.uploadPlayerRegistrationDocument(
       file.buffer,
-      playerId,
+      storageOwner,
       `${file.name}.pdf`,
       'application/pdf',
     );
