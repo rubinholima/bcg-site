@@ -4,8 +4,6 @@ import { FOOTBALL_AGENDA_TYPE_LABEL } from "@/types/futebol-agenda";
 import { BOOKING_STATUS_LABEL } from "@/types/boston-city-hall";
 import type { FootballAgendaCalendarItem } from "@/types/futebol-agenda";
 import type { VenueBooking } from "@/types/boston-city-hall";
-import type { LucideIcon } from "lucide-react";
-import { Building2, ClipboardList, Megaphone, Shirt } from "lucide-react";
 
 export type AgendaSource = "futebol" | "boston-hall" | "consultas" | "marketing";
 
@@ -19,43 +17,36 @@ export type UnifiedAgendaEvent = {
   allDay: boolean;
   typeLabel: string;
   href: string;
-  /** Tailwind classes for pills/bars */
   tone: string;
   dotClass: string;
 };
 
-export const AGENDA_SOURCE_META: Record<
-  AgendaSource,
-  { label: string; icon: LucideIcon; tone: string; dotClass: string; manageHref: string }
-> = {
-  futebol: {
-    label: "Futebol",
-    icon: Shirt,
-    tone: "bg-sky-500/15 text-sky-100 border-sky-500/40",
-    dotClass: "bg-sky-400",
-    manageHref: "/dashboard/futebol/logistica",
-  },
-  "boston-hall": {
-    label: "Boston City Hall",
-    icon: Building2,
-    tone: "bg-amber-500/15 text-amber-100 border-amber-500/40",
-    dotClass: "bg-amber-400",
-    manageHref: "/dashboard/eventos/boston-city-hall/reservas",
-  },
-  consultas: {
-    label: "Consultas",
-    icon: ClipboardList,
-    tone: "bg-emerald-500/15 text-emerald-100 border-emerald-500/40",
-    dotClass: "bg-emerald-400",
-    manageHref: "/dashboard/consultas",
-  },
-  marketing: {
-    label: "Marketing",
-    icon: Megaphone,
-    tone: "bg-violet-500/15 text-violet-100 border-violet-500/40",
-    dotClass: "bg-violet-400",
-    manageHref: "/dashboard/marketing",
-  },
+export const AGENDA_SOURCE_LABELS: Record<AgendaSource, string> = {
+  futebol: "Futebol",
+  "boston-hall": "Boston City Hall",
+  consultas: "Consultas",
+  marketing: "Marketing",
+};
+
+export const AGENDA_SOURCE_DOT: Record<AgendaSource, string> = {
+  futebol: "bg-sky-400",
+  "boston-hall": "bg-amber-400",
+  consultas: "bg-emerald-400",
+  marketing: "bg-violet-400",
+};
+
+export const AGENDA_SOURCE_TONE: Record<AgendaSource, string> = {
+  futebol: "bg-sky-500/15 text-sky-100 border-sky-500/40",
+  "boston-hall": "bg-amber-500/15 text-amber-100 border-amber-500/40",
+  consultas: "bg-emerald-500/15 text-emerald-100 border-emerald-500/40",
+  marketing: "bg-violet-500/15 text-violet-100 border-violet-500/40",
+};
+
+export const AGENDA_SOURCE_MANAGE_HREF: Record<AgendaSource, string> = {
+  futebol: "/dashboard/futebol/logistica",
+  "boston-hall": "/dashboard/eventos/boston-city-hall/reservas",
+  consultas: "/dashboard/consultas",
+  marketing: "/dashboard/marketing",
 };
 
 const FUTEBOL_TONE: Record<string, string> = {
@@ -150,8 +141,8 @@ function normalizeBch(booking: VenueBooking): UnifiedAgendaEvent {
     allDay: false,
     typeLabel: BOOKING_STATUS_LABEL[booking.status] ?? booking.status,
     href: "/dashboard/eventos/boston-city-hall/reservas",
-    tone: AGENDA_SOURCE_META["boston-hall"].tone,
-    dotClass: AGENDA_SOURCE_META["boston-hall"].dotClass,
+    tone: AGENDA_SOURCE_TONE["boston-hall"],
+    dotClass: AGENDA_SOURCE_DOT["boston-hall"],
   };
 }
 
@@ -175,8 +166,8 @@ function normalizeConsulta(c: {
     allDay: false,
     typeLabel: c.status === "completed" ? "Realizada" : "Agendada",
     href: "/dashboard/consultas",
-    tone: AGENDA_SOURCE_META.consultas.tone,
-    dotClass: AGENDA_SOURCE_META.consultas.dotClass,
+    tone: AGENDA_SOURCE_TONE.consultas,
+    dotClass: AGENDA_SOURCE_DOT.consultas,
   };
 }
 
@@ -200,8 +191,8 @@ function normalizeMarketing(p: {
     allDay: false,
     typeLabel: statusLabel,
     href: "/dashboard/marketing",
-    tone: AGENDA_SOURCE_META.marketing.tone,
-    dotClass: AGENDA_SOURCE_META.marketing.dotClass,
+    tone: AGENDA_SOURCE_TONE.marketing,
+    dotClass: AGENDA_SOURCE_DOT.marketing,
   };
 }
 

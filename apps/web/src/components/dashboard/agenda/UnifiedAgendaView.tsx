@@ -4,11 +4,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  Building2,
   Calendar,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   ExternalLink,
   Loader2,
+  Megaphone,
+  Shirt,
   Sparkles,
 } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
@@ -21,7 +25,10 @@ import {
   type AgendaVisao,
 } from "@/lib/agenda-hub";
 import {
-  AGENDA_SOURCE_META,
+  AGENDA_SOURCE_DOT,
+  AGENDA_SOURCE_LABELS,
+  AGENDA_SOURCE_MANAGE_HREF,
+  AGENDA_SOURCE_TONE,
   fetchUnifiedAgendaEvents,
   formatAgendaDateLong,
   formatAgendaTime,
@@ -35,6 +42,40 @@ import {
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
+
+const SOURCE_UI: Record<
+  AgendaSource,
+  { label: string; icon: typeof Shirt; tone: string; dotClass: string; manageHref: string }
+> = {
+  futebol: {
+    label: AGENDA_SOURCE_LABELS.futebol,
+    icon: Shirt,
+    tone: AGENDA_SOURCE_TONE.futebol,
+    dotClass: AGENDA_SOURCE_DOT.futebol,
+    manageHref: AGENDA_SOURCE_MANAGE_HREF.futebol,
+  },
+  "boston-hall": {
+    label: AGENDA_SOURCE_LABELS["boston-hall"],
+    icon: Building2,
+    tone: AGENDA_SOURCE_TONE["boston-hall"],
+    dotClass: AGENDA_SOURCE_DOT["boston-hall"],
+    manageHref: AGENDA_SOURCE_MANAGE_HREF["boston-hall"],
+  },
+  consultas: {
+    label: AGENDA_SOURCE_LABELS.consultas,
+    icon: ClipboardList,
+    tone: AGENDA_SOURCE_TONE.consultas,
+    dotClass: AGENDA_SOURCE_DOT.consultas,
+    manageHref: AGENDA_SOURCE_MANAGE_HREF.consultas,
+  },
+  marketing: {
+    label: AGENDA_SOURCE_LABELS.marketing,
+    icon: Megaphone,
+    tone: AGENDA_SOURCE_TONE.marketing,
+    dotClass: AGENDA_SOURCE_DOT.marketing,
+    manageHref: AGENDA_SOURCE_MANAGE_HREF.marketing,
+  },
+};
 
 function buildMonthGrid(year: number, month: number) {
   const first = new Date(year, month, 1);
@@ -90,7 +131,7 @@ export function UnifiedAgendaView() {
 
   const availableSources = useMemo(
     () =>
-      (Object.keys(AGENDA_SOURCE_META) as AgendaSource[]).filter((s) => {
+      (Object.keys(SOURCE_UI) as AgendaSource[]).filter((s) => {
         if (s === "futebol") return permissions.futebol;
         if (s === "boston-hall") return permissions.bostonHall;
         if (s === "consultas") return permissions.consultas;
@@ -243,7 +284,7 @@ export function UnifiedAgendaView() {
           Todos
         </button>
         {availableSources.map((source) => {
-          const meta = AGENDA_SOURCE_META[source];
+          const meta = SOURCE_UI[source];
           const Icon = meta.icon;
           const active = sourceFilter === source;
           return (
@@ -349,7 +390,7 @@ export function UnifiedAgendaView() {
               {/* Legenda */}
               <div className="mt-4 flex flex-wrap gap-3 border-t border-border/60 pt-4">
                 {availableSources.map((source) => {
-                  const meta = AGENDA_SOURCE_META[source];
+                  const meta = SOURCE_UI[source];
                   return (
                     <span
                       key={source}
@@ -395,7 +436,7 @@ export function UnifiedAgendaView() {
                 ) : null}
                 <ul className="space-y-2">
                   {items.map((ev) => {
-                    const meta = AGENDA_SOURCE_META[ev.source];
+                    const meta = SOURCE_UI[ev.source];
                     const Icon = meta.icon;
                     return (
                       <li key={ev.id}>
@@ -450,9 +491,9 @@ export function UnifiedAgendaView() {
           {sourceFilter !== "all" ? (
             <div className="border-t border-border/60 pt-4">
               <Button variant="outline" size="sm" className="gap-2" asChild>
-                <Link href={AGENDA_SOURCE_META[sourceFilter].manageHref}>
+                <Link href={SOURCE_UI[sourceFilter].manageHref}>
                   <ExternalLink className="h-4 w-4" />
-                  Abrir gestão — {AGENDA_SOURCE_META[sourceFilter].label}
+                  Abrir gestão — {SOURCE_UI[sourceFilter].label}
                 </Link>
               </Button>
             </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Suspense } from "react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,7 +13,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { formatTravelCategoriesDisplay } from "@/components/dashboard/futebol/TravelCategoriesField";
+import { formatTravelCategoriesDisplay } from "@/lib/travel-categories-utils";
 import { LogisticaFilters } from "./LogisticaFilters";
 
 interface TravelLogisticsItem {
@@ -128,7 +129,15 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
         </Link>
       </div>
 
-      <LogisticaFilters />
+      <Suspense
+        fallback={
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        }
+      >
+        <LogisticaFilters />
+      </Suspense>
 
       <Card>
         <CardHeader>

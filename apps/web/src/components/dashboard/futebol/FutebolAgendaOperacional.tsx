@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
-import { formatTravelCategoriesDisplay } from "@/components/dashboard/futebol/TravelCategoriesField";
+import { formatTravelCategoriesDisplay } from "@/lib/travel-categories-utils";
 import { BOOKING_STATUS_LABEL } from "@/types/boston-city-hall";
 import { isFootballKind } from "@/lib/home-data";
 import type {
