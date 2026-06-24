@@ -68,7 +68,6 @@ import {
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
-import { agendaHubUrl, AGENDA_VISAO } from "./agenda-hub";
 
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
 export const ACCESS_GROUP_LABELS: Record<string, string> = {};
@@ -257,46 +256,9 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
   {
     slug: "agenda",
     label: "Agenda",
+    href: "/dashboard/agenda",
     icon: Calendar,
     moduleSlug: "agenda",
-    children: [
-      {
-        slug: "agenda_visao",
-        label: DEPT_HUB_MENU_LABEL,
-        href: "/dashboard/agenda",
-        icon: LayoutDashboard,
-        moduleSlug: "agenda",
-      },
-      {
-        slug: "agenda_futebol",
-        label: "Futebol",
-        href: agendaHubUrl(AGENDA_VISAO.FUTEBOL),
-        icon: Shirt,
-        moduleSlug: "futebol_logistica",
-      },
-      {
-        slug: "agenda_boston_hall",
-        label: "Boston City Hall",
-        href: agendaHubUrl(AGENDA_VISAO.BOSTON_HALL),
-        icon: Building2,
-        moduleSlug: "eventos",
-        menuLogoSrc: BCH_LOGO_STATIC,
-      },
-      {
-        slug: "agenda_consultas",
-        label: "Consultas (psicologia)",
-        href: agendaHubUrl(AGENDA_VISAO.CONSULTAS),
-        icon: ClipboardList,
-        moduleSlug: "saude",
-      },
-      {
-        slug: "agenda_marketing",
-        label: "Marketing — Planner",
-        href: agendaHubUrl(AGENDA_VISAO.MARKETING),
-        icon: Megaphone,
-        moduleSlug: "marketing",
-      },
-    ],
   },
   {
     slug: "futebol",
@@ -384,7 +346,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           {
             slug: "futebol_logistica_agenda",
             label: "Agenda",
-            href: agendaHubUrl(AGENDA_VISAO.FUTEBOL),
+            href: "/dashboard/futebol/logistica/agenda",
             icon: Calendar,
             moduleSlug: "futebol_logistica",
           },
@@ -694,7 +656,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           {
             slug: "boston_hall_agenda",
             label: "Agenda",
-            href: agendaHubUrl(AGENDA_VISAO.BOSTON_HALL),
+            href: "/dashboard/eventos/boston-city-hall/agenda",
             icon: Calendar,
             moduleSlug: "eventos",
           },

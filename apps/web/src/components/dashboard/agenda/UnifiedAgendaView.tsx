@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   Calendar,
@@ -12,19 +12,24 @@ import {
   ExternalLink,
   Loader2,
   Megaphone,
+  Plus,
+  Search,
   Shirt,
-  Sparkles,
 } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import {
-  agendaHubUrl,
-  parseAgendaVisao,
-  type AgendaVisao,
-} from "@/lib/agenda-hub";
-import {
+  AGENDA_SOURCE_CREATE_HREF,
   AGENDA_SOURCE_DOT,
   AGENDA_SOURCE_LABELS,
   AGENDA_SOURCE_MANAGE_HREF,
@@ -33,9 +38,7 @@ import {
   formatAgendaDateLong,
   formatAgendaTime,
   groupEventsByDate,
-  sourceFilterToVisao,
   todayDateKey,
-  visaoToSourceFilter,
   type AgendaSource,
   type UnifiedAgendaEvent,
 } from "@/lib/unified-agenda";
@@ -116,7 +119,6 @@ function EventPill({ event, compact }: { event: UnifiedAgendaEvent; compact?: bo
 
 export function UnifiedAgendaView() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { canAccessModule, canAccessDashboard, loading: authLoading } = useAuth();
 
   const permissions = useMemo(
@@ -140,13 +142,9 @@ export function UnifiedAgendaView() {
     [permissions],
   );
 
-  const urlVisao = parseAgendaVisao(searchParams.get("visao"));
-  const sourceFilter = useMemo(() => {
-    const f = visaoToSourceFilter(urlVisao);
-    if (f === "all") return "all" as const;
-    if (availableSources.includes(f)) return f;
-    return "all" as const;
-  }, [urlVisao, availableSources]);
+  const [areaFilter, setAreaFilter] = useState<AgendaSource | "all">("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
@@ -166,14 +164,6 @@ export function UnifiedAgendaView() {
     if (!canAccessHub) router.replace("/403");
   }, [authLoading, canAccessHub, router]);
 
-  const setSourceFilter = useCallback(
-    (filter: AgendaSource | "all") => {
-      const visao: AgendaVisao = sourceFilterToVisao(filter);
-      router.replace(agendaHubUrl(visao), { scroll: false });
-    },
-    [router],
-  );
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -189,10 +179,25 @@ export function UnifiedAgendaView() {
     void load();
   }, [authLoading, canAccessHub, load]);
 
+  const typeOptions = useMemo(() => {
+    const labels = new Set(events.map((e) => e.typeLabel));
+    return [...labels].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
-    if (sourceFilter === "all") return events;
-    return events.filter((e) => e.source === sourceFilter);
-  }, [events, sourceFilter]);
+    const q = searchQuery.trim().toLowerCase();
+    return events.filter((e) => {
+      if (areaFilter !== "all" && e.source !== areaFilter) return false;
+      if (typeFilter !== "all" && e.typeLabel !== typeFilter) return false;
+      if (!q) return true;
+      return (
+        e.title.toLowerCase().includes(q) ||
+        e.subtitle.toLowerCase().includes(q) ||
+        e.typeLabel.toLowerCase().includes(q) ||
+        AGENDA_SOURCE_LABELS[e.source].toLowerCase().includes(q)
+      );
+    });
+  }, [areaFilter, events, searchQuery, typeFilter]);
 
   const byDate = useMemo(() => groupEventsByDate(filteredEvents), [filteredEvents]);
 
@@ -256,7 +261,7 @@ export function UnifiedAgendaView() {
         section="Agenda"
         sectionIcon={Calendar}
         title="Agenda geral"
-        description="Todos os compromissos do clube em um calendário — filtre por área e toque no dia para ver os detalhes."
+        description="Visão consolidada de todos os compromissos. Para cadastrar ou filtrar com mais detalhe, use a agenda do departamento."
         stats={[
           { value: filteredEvents.length, label: "Neste mês" },
           { value: availableSources.length, label: "Áreas" },
@@ -268,44 +273,71 @@ export function UnifiedAgendaView() {
         }
       />
 
-      {/* Filtros por área */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setSourceFilter("all")}
-          className={cn(
-            "inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all",
-            sourceFilter === "all"
-              ? "border-violet-500/60 bg-gradient-to-r from-violet-600/30 to-violet-500/10 text-white shadow-[0_0_20px_-6px_rgba(139,92,246,0.6)]"
-              : "border-border/80 bg-zinc-900/50 text-muted-foreground hover:border-violet-500/30 hover:text-foreground",
-          )}
-        >
-          <Sparkles className="h-4 w-4" />
-          Todos
-        </button>
-        {availableSources.map((source) => {
-          const meta = SOURCE_UI[source];
-          const Icon = meta.icon;
-          const active = sourceFilter === source;
-          return (
-            <button
-              key={source}
-              type="button"
-              onClick={() => setSourceFilter(source)}
-              className={cn(
-                "inline-flex min-h-[40px] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all",
-                active
-                  ? cn(meta.tone, "ring-2 ring-white/20 ring-offset-1 ring-offset-background")
-                  : "border-border/80 bg-zinc-900/50 text-muted-foreground hover:border-violet-500/25 hover:text-foreground",
-              )}
+      <Card className="border-border/80">
+        <CardContent className="space-y-4 pt-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_180px_180px]">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar por título, local, tipo ou área..."
+                className="min-h-[44px] pl-9 text-foreground"
+              />
+            </div>
+            <Select
+              value={areaFilter}
+              onValueChange={(v) => setAreaFilter(v as AgendaSource | "all")}
             >
-              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", meta.dotClass)} />
-              <Icon className="h-4 w-4 shrink-0 opacity-80" />
-              {meta.label}
-            </button>
-          );
-        })}
-      </div>
+              <SelectTrigger className="min-h-[44px]">
+                <SelectValue placeholder="Área" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as áreas</SelectItem>
+                {availableSources.map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {AGENDA_SOURCE_LABELS[source]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="min-h-[44px]">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                {typeOptions.map((label) => (
+                  <SelectItem key={label} value={label}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {availableSources.length > 0 ? (
+            <div className="flex flex-col gap-2 border-t border-border/60 pt-4 sm:flex-row sm:flex-wrap sm:items-center">
+              <span className="text-sm font-medium text-muted-foreground">Registrar novo:</span>
+              <div className="flex flex-wrap gap-2">
+                {availableSources.map((source) => {
+                  const meta = SOURCE_UI[source];
+                  const Icon = meta.icon;
+                  return (
+                    <Button key={source} variant="outline" size="sm" className="min-h-[40px] gap-2" asChild>
+                      <Link href={AGENDA_SOURCE_CREATE_HREF[source]}>
+                        <Plus className="h-4 w-4" />
+                        <Icon className="h-4 w-4 opacity-80" />
+                        {meta.label}
+                      </Link>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
       {/* Calendário */}
       <Card className="overflow-hidden border-violet-500/20 bg-gradient-to-b from-violet-950/20 via-background to-background shadow-lg">
@@ -424,7 +456,7 @@ export function UnifiedAgendaView() {
         <CardContent className="space-y-6">
           {listGrouped.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              Nada agendado. Ajuste o filtro ou escolha outro mês.
+              Nada agendado. Ajuste a busca, os filtros ou escolha outro mês.
             </p>
           ) : (
             listGrouped.map(({ dateKey, items }) => (
@@ -488,12 +520,12 @@ export function UnifiedAgendaView() {
             ))
           )}
 
-          {sourceFilter !== "all" ? (
+          {areaFilter !== "all" ? (
             <div className="border-t border-border/60 pt-4">
               <Button variant="outline" size="sm" className="gap-2" asChild>
-                <Link href={SOURCE_UI[sourceFilter].manageHref}>
+                <Link href={AGENDA_SOURCE_MANAGE_HREF[areaFilter]}>
                   <ExternalLink className="h-4 w-4" />
-                  Abrir gestão — {SOURCE_UI[sourceFilter].label}
+                  Abrir agenda — {SOURCE_UI[areaFilter].label}
                 </Link>
               </Button>
             </div>

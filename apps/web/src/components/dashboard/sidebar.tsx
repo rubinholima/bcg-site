@@ -253,22 +253,13 @@ function resolveLinkActive(
   if (isRelatorioLinkActive(href, pathname, currentHub)) return true;
   if (relatorioHub(href)) return false;
   if (href.startsWith("/dashboard/agenda")) {
-    if (pathname !== "/dashboard/agenda") return false;
-    try {
-      const hrefUrl = new URL(href, "https://agenda.local");
-      const hrefVisao = hrefUrl.searchParams.get("visao");
-      const currentVisao = searchParams?.get("visao") ?? null;
-      if (!hrefVisao) return !currentVisao || currentVisao === "geral";
-      return hrefVisao === currentVisao;
-    } catch {
-      return !searchParams?.get("visao");
-    }
+    return pathname === "/dashboard/agenda";
   }
   if (href === "/dashboard/requisicoes") {
     return pathname === "/dashboard/requisicoes";
   }
   if (href === "/dashboard/agenda") {
-    return pathname === "/dashboard/agenda" && (!searchParams?.get("visao") || searchParams.get("visao") === "geral");
+    return pathname === "/dashboard/agenda";
   }
   if (href === "/dashboard/empresas") {
     return pathname === "/dashboard/empresas" || !!pathname?.startsWith("/dashboard/tenants");
@@ -289,7 +280,6 @@ function resolveLinkActive(
   }
   if (href === "/dashboard/futebol/logistica/agenda") {
     return (
-      (pathname === "/dashboard/agenda" && searchParams?.get("visao") === "futebol") ||
       pathname === "/dashboard/futebol/logistica/agenda" ||
       !!pathname?.startsWith("/dashboard/cadastros/espacos")
     );

@@ -332,6 +332,7 @@ export function FutebolAgendaOperacional() {
   }, [viewMode, focusDate]);
 
   const entryIdFromUrl = searchParams.get("entry");
+  const newFromUrl = searchParams.get("new");
 
   useEffect(() => {
     if (!entryIdFromUrl) return;
@@ -464,6 +465,11 @@ export function FutebolAgendaOperacional() {
       }
     }
   };
+
+  useEffect(() => {
+    if (newFromUrl !== "1") return;
+    void openNewEntry(selectedDay ?? todayKey());
+  }, [newFromUrl, selectedDay]);
 
   const categoryLine = (item: FootballAgendaCalendarItem) =>
     formatTravelCategoriesDisplay(item.category, item.categories ?? null, "pt");

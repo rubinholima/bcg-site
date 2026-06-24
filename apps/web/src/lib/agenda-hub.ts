@@ -15,9 +15,20 @@ export function parseAgendaVisao(raw: string | null | undefined): AgendaVisao {
   return AGENDA_VISAO.GERAL;
 }
 
+/** URL da agenda por área — cada departamento no seu hub. */
 export function agendaHubUrl(visao?: AgendaVisao | null): string {
-  if (!visao || visao === AGENDA_VISAO.GERAL) return "/dashboard/agenda";
-  return `/dashboard/agenda?visao=${visao}`;
+  switch (visao) {
+    case AGENDA_VISAO.FUTEBOL:
+      return "/dashboard/futebol/logistica/agenda";
+    case AGENDA_VISAO.BOSTON_HALL:
+      return "/dashboard/eventos/boston-city-hall/agenda";
+    case AGENDA_VISAO.CONSULTAS:
+      return "/dashboard/consultas";
+    case AGENDA_VISAO.MARKETING:
+      return "/dashboard/marketing";
+    default:
+      return "/dashboard/agenda";
+  }
 }
 
 export function isAgendaHubHref(href: string | undefined): boolean {
