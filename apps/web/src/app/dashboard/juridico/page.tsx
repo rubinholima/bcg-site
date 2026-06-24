@@ -111,6 +111,7 @@ export default function JuridicoListPage() {
       {(!selectedPersonId || selectedFromList) && (
         <JuridicoAllContractsCard
           tenantId={tenantId}
+          category={category}
           docType={docType}
           docStatus={docStatus}
           onSelectPlayer={(id) => {

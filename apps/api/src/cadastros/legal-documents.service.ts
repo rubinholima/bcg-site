@@ -41,10 +41,22 @@ export class LegalDocumentsService {
   }
 
   /** Lista todos os documentos legais do sistema (para a tela "Todos os contratos"). */
-  async findAll(filters?: { tenantId?: string; type?: string; status?: string }) {
+  async findAll(filters?: {
+    tenantId?: string;
+    category?: string;
+    type?: string;
+    status?: string;
+  }) {
     const where: Record<string, unknown> = {};
+    const playerWhere: Record<string, unknown> = {};
     if (filters?.tenantId?.trim()) {
-      where.player = { tenantId: filters.tenantId.trim() };
+      playerWhere.tenantId = filters.tenantId.trim();
+    }
+    if (filters?.category?.trim()) {
+      playerWhere.category = filters.category.trim();
+    }
+    if (Object.keys(playerWhere).length > 0) {
+      where.player = playerWhere;
     }
     if (filters?.type?.trim()) {
       where.type = filters.type.trim();
@@ -57,7 +69,12 @@ export class LegalDocumentsService {
       orderBy: { createdAt: 'desc' },
       include: {
         player: {
-          select: { id: true, name: true, tenant: { select: { name: true } } },
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            tenant: { select: { name: true } },
+          },
         },
       },
     });

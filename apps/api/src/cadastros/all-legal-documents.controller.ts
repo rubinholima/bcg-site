@@ -13,11 +13,13 @@ export class AllLegalDocumentsController {
   @Get()
   list(
     @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
     @Query('type') type?: string,
     @Query('status') status?: string,
   ) {
     return this.service.findAll({
       tenantId: tenantId?.trim() || undefined,
+      category: category?.trim() || undefined,
       type: type?.trim() || undefined,
       status: status?.trim() || undefined,
     });

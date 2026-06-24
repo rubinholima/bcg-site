@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Download, FileText, Loader2, RefreshCw, Send } from "lucide-react";
+import { Download, Eye, FileText, Loader2, RefreshCw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,7 @@ import {
   EMPLOYMENT_CONTRACT_STATUS_LABELS,
   type EmploymentContractRow,
 } from "@/lib/contract-templates";
+import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 
 const DOC_TYPE_LABELS: Record<string, string> = {
   contrato_trabalho: "Contrato de trabalho",
@@ -57,7 +58,12 @@ interface LegalDocWithPlayer {
   signerEmail?: string | null;
   signerName?: string | null;
   createdAt: string;
-  player: { id: string; name: string; tenant?: { name: string } | null };
+  player: {
+    id: string;
+    name: string;
+    category?: string | null;
+    tenant?: { name: string } | null;
+  };
 }
 
 type UnifiedRow =
@@ -66,13 +72,30 @@ type UnifiedRow =
 
 interface JuridicoAllContractsCardProps {
   tenantId?: string;
+  category?: string;
   docType?: string;
   docStatus?: string;
   onSelectPlayer?: (playerId: string) => void;
 }
 
+function categoryLabel(value: string | null | undefined): string {
+  if (!value?.trim()) return "—";
+  const found = FIXTURE_CATEGORIES.find((c) => c.value === value);
+  return found?.labelPT ?? value;
+}
+
+async function openPdfBlob(url: string): Promise<void> {
+  const res = await fetch(url, { credentials: "include" });
+  if (!res.ok) throw new Error("Não foi possível abrir o PDF.");
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  window.open(objectUrl, "_blank", "noopener,noreferrer");
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
+}
+
 export function JuridicoAllContractsCard({
   tenantId,
+  category,
   docType,
   docStatus,
   onSelectPlayer,
@@ -85,12 +108,15 @@ export function JuridicoAllContractsCard({
   const [signaturePage, setSignaturePage] = useState("1");
   const [sending, setSending] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [openingPdfId, setOpeningPdfId] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const legalParams = new URLSearchParams();
       if (tenantId) legalParams.set("tenantId", tenantId);
+      if (category) legalParams.set("category", category);
       if (docType) legalParams.set("type", docType);
       if (docStatus) legalParams.set("status", docStatus);
 
@@ -107,10 +133,12 @@ export function JuridicoAllContractsCard({
       const legalRows: UnifiedRow[] = (Array.isArray(legalRes.data) ? legalRes.data : []).map(
         (doc) => ({ kind: "player" as const, doc }),
       );
-      const rhRows: UnifiedRow[] = (Array.isArray(rhRes.data) ? rhRes.data : []).map((doc) => ({
-        kind: "employment" as const,
-        doc,
-      }));
+      const rhRows: UnifiedRow[] = category
+        ? []
+        : (Array.isArray(rhRes.data) ? rhRes.data : []).map((doc) => ({
+            kind: "employment" as const,
+            doc,
+          }));
 
       const merged = [...legalRows, ...rhRows].sort(
         (a, b) => new Date(b.doc.createdAt).getTime() - new Date(a.doc.createdAt).getTime(),
@@ -121,7 +149,7 @@ export function JuridicoAllContractsCard({
     } finally {
       setLoading(false);
     }
-  }, [tenantId, docType, docStatus]);
+  }, [tenantId, category, docType, docStatus]);
 
   useEffect(() => {
     load();
@@ -193,19 +221,41 @@ export function JuridicoAllContractsCard({
     }
   };
 
-  const handleDownload = (row: UnifiedRow, signed = false) => {
-    if (row.kind === "player") {
-      window.open(
-        `/api/players/${row.doc.playerId}/legal-documents/${row.doc.id}/download`,
-        "_blank",
-      );
-      return;
+  const handleView = async (row: UnifiedRow) => {
+    setOpeningPdfId(row.doc.id);
+    setPdfError(null);
+    try {
+      if (row.kind === "player") {
+        await openPdfBlob(
+          `/api/players/${row.doc.playerId}/contract-documents/${row.doc.id}/file`,
+        );
+      } else {
+        await openPdfBlob(
+          `/api/employment-contracts/${row.doc.employmentId}/${row.doc.id}/download`,
+        );
+      }
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : "Erro ao abrir PDF.");
+    } finally {
+      setOpeningPdfId(null);
     }
-    const qs = signed ? "?signed=true" : "";
-    window.open(
-      `/api/employment-contracts/${row.doc.employmentId}/${row.doc.id}/download${qs}`,
-      "_blank",
-    );
+  };
+
+  const handleDownload = async (row: UnifiedRow, signed = false) => {
+    try {
+      if (row.kind === "player") {
+        await openPdfBlob(
+          `/api/players/${row.doc.playerId}/legal-documents/${row.doc.id}/download`,
+        );
+        return;
+      }
+      const qs = signed ? "?signed=true" : "";
+      await openPdfBlob(
+        `/api/employment-contracts/${row.doc.employmentId}/${row.doc.id}/download${qs}`,
+      );
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : "Erro ao baixar PDF.");
+    }
   };
 
   const statusClass = (status: string) =>
@@ -224,8 +274,13 @@ export function JuridicoAllContractsCard({
             Todos os contratos
           </h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Atletas (Jurídico) e vínculos RH. Filtre por clube ou veja todos, conforme seu acesso.
+            Atletas (Jurídico) e vínculos RH. Filtre por clube, categoria ou tipo de documento.
           </p>
+          {pdfError && (
+            <p className="text-sm text-destructive mb-3 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2">
+              {pdfError}
+            </p>
+          )}
           {loading ? (
             <div className="py-8 text-center text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
@@ -242,11 +297,12 @@ export function JuridicoAllContractsCard({
                   <TableRow>
                     <TableHead>Origem</TableHead>
                     <TableHead>Pessoa</TableHead>
+                    <TableHead>Categoria</TableHead>
                     <TableHead>Clube</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Documento</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="w-28">Ações</TableHead>
+                    <TableHead className="w-36">Ações</TableHead>
                     <TableHead className="text-right">Criado em</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -270,6 +326,9 @@ export function JuridicoAllContractsCard({
                             Atleta
                           </TableCell>
                           <TableCell className="font-medium">{doc.player.name}</TableCell>
+                          <TableCell className="text-muted-foreground whitespace-nowrap">
+                            {categoryLabel(doc.player.category)}
+                          </TableCell>
                           <TableCell className="text-muted-foreground">
                             {doc.player.tenant?.name ?? "—"}
                           </TableCell>
@@ -289,8 +348,23 @@ export function JuridicoAllContractsCard({
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
+                                title="Visualizar PDF"
+                                disabled={openingPdfId === id}
+                                onClick={() => void handleView(row)}
+                              >
+                                {openingPdfId === id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
                                 title="Baixar PDF"
-                                onClick={() => handleDownload(row)}
+                                onClick={() => void handleDownload(row)}
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
@@ -345,6 +419,7 @@ export function JuridicoAllContractsCard({
                       <TableRow key={`e-${doc.id}`} className="hover:bg-muted/50">
                         <TableCell className="text-xs uppercase text-muted-foreground">RH</TableCell>
                         <TableCell className="font-medium">{person}</TableCell>
+                        <TableCell className="text-muted-foreground">—</TableCell>
                         <TableCell className="text-muted-foreground">{club}</TableCell>
                         <TableCell className="text-muted-foreground">{typeLabel}</TableCell>
                         <TableCell>{doc.name}</TableCell>
@@ -360,8 +435,23 @@ export function JuridicoAllContractsCard({
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
+                              title="Visualizar PDF"
+                              disabled={openingPdfId === id}
+                              onClick={() => void handleView(row)}
+                            >
+                              {openingPdfId === id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
                               title="Baixar PDF"
-                              onClick={() => handleDownload(row)}
+                              onClick={() => void handleDownload(row)}
                             >
                               <Download className="h-4 w-4" />
                             </Button>
