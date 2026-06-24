@@ -28,6 +28,9 @@ export type BeatscodeScrapedDocument = {
   buffer: Buffer;
   uploadedAt?: string;
   tab: string;
+  attachmentId?: number;
+  contractNumber?: string;
+  contractTypeName?: string;
 };
 
 export type BeatscodeBrowserScrapeResult = {
@@ -230,6 +233,7 @@ export class BeatscodeBrowserScraperService {
     aliasNames?: string[];
     modulePath?: '/person/athlete' | '/person/technical-committee';
     categoryNames?: string[];
+    tabs?: Array<'Documentos' | 'Anexos' | 'Contrato'>;
   }): Promise<BeatscodeBrowserScrapeResult> {
     return this.withTimeout(
       () => this.scrapePersonDocumentsInner(options),
@@ -245,6 +249,7 @@ export class BeatscodeBrowserScraperService {
     aliasNames?: string[];
     modulePath?: '/person/athlete' | '/person/technical-committee';
     categoryNames?: string[];
+    tabs?: Array<'Documentos' | 'Anexos' | 'Contrato'>;
   }): Promise<BeatscodeBrowserScrapeResult> {
     const modulePath = options.modulePath ?? '/person/athlete';
     const categories = options.categoryNames?.length
@@ -334,7 +339,9 @@ export class BeatscodeBrowserScraperService {
       return result;
     }
 
-    const tabs = ['Documentos', 'Anexos', 'Contrato'] as const;
+    const tabs = options.tabs?.length
+      ? options.tabs
+      : (['Documentos', 'Anexos', 'Contrato'] as const);
     for (const tab of tabs) {
       const sniffedCount = (this.sniffedByTab.get('__all__') ?? []).length;
       if (sniffedCount > 0 && tab !== 'Documentos') break;
@@ -410,6 +417,7 @@ export class BeatscodeBrowserScraperService {
               storagePath: meta.storagePath.replace(/^\/+/, ''),
               buffer: buf,
               tab: defaultTab,
+              attachmentId: meta.id,
             } satisfies BeatscodeScrapedDocument;
           } catch (e) {
             this.log.warn(
@@ -716,6 +724,9 @@ export class BeatscodeBrowserScraperService {
         buffer,
         uploadedAt: this.parseBrDate(date),
         tab: tabLabel,
+        contractTypeName: tabLabel === 'Contrato' ? typeLabel || undefined : undefined,
+        contractNumber:
+          tabLabel === 'Contrato' && name && !/^documento \d+$/i.test(name) ? name : undefined,
       });
     }
 

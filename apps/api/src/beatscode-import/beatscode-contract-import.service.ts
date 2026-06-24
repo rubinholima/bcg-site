@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { mkdir, readFile, writeFile } from 'fs/promises';
+import { access } from 'fs/promises';
+import { constants as fsConstants } from 'fs';
 import { dirname, resolve } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
@@ -25,17 +27,25 @@ import {
   mapBeatscodeLegalDocStatus,
   mapBeatscodeLegalDocType,
 } from './beatscode-contract-legal.util';
+import {
+  DEFAULT_CONTRACTS_MANIFEST_PATH,
+  type BeatscodeContractDownloadEntry,
+  type BeatscodeContractDownloadManifestFile,
+  isBeatscodeContractDownloadManifest,
+} from './beatscode-contract-download.types';
 
 export type BeatscodeContractImportResult = {
   importedAt: string;
   tenantSlug: string;
-  source: 'beatscode_api' | 'export_file';
+  source: 'beatscode_api' | 'export_file' | 'local_manifest';
   contractsTotal: number;
   playersUpdated: number;
   contractsLinked: number;
   filesDownloaded: number;
   legalDocumentsCreated: number;
   skippedNoPlayer: number;
+  skippedExisting?: number;
+  skippedNoFile?: number;
   byCategory: Record<string, number>;
   byStatus: Record<string, number>;
   errors: string[];
@@ -153,6 +163,19 @@ export class BeatscodeContractImportService {
           displayName: meta.displayName,
           mimeType: meta.mimeType,
         };
+        continue;
+      }
+      const client = this.createClientOptional();
+      if (client) {
+        await client.login();
+        const viaApi = await this.attachments.resolveAttachmentMetaViaApi(client, id);
+        if (viaApi) {
+          index[key] = {
+            storagePath: viaApi.storagePath,
+            displayName: viaApi.displayName,
+            mimeType: viaApi.mimeType,
+          };
+        }
       }
     }
     return Object.keys(index).length ? index : undefined;
@@ -330,6 +353,313 @@ export class BeatscodeContractImportService {
   }): Promise<BeatscodeContractImportResult> {
     const exportData = await this.fetchExportData(options);
     return this.importFromExport(exportData, options);
+  }
+
+  /** Sobe PDFs locais (manifest do beatscode:download-contracts) → S3 + LegalDocument + profile. */
+  async importFromDownloadManifest(options?: {
+    tenantSlug?: string;
+    manifestPath?: string;
+    contractsExportPath?: string;
+    dryRun?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<BeatscodeContractImportResult> {
+    const manifestPath = resolve(
+      process.cwd(),
+      options?.manifestPath?.trim() || DEFAULT_CONTRACTS_MANIFEST_PATH,
+    );
+    const rawManifest = JSON.parse(await readFile(manifestPath, 'utf8')) as unknown;
+    if (!isBeatscodeContractDownloadManifest(rawManifest)) {
+      throw new Error(`Manifest inválido: ${manifestPath}`);
+    }
+    const manifest = rawManifest as BeatscodeContractDownloadManifestFile;
+    const contractsPath = resolve(
+      process.cwd(),
+      options?.contractsExportPath?.trim() || manifest.contractsExportPath,
+    );
+    const exportFile = await this.readExportFile(contractsPath);
+    const manifestBaseDir = dirname(manifestPath);
+
+    const offset = Math.max(0, options?.offset ?? 0);
+    const limit = options?.limit;
+    const manifestEntries = manifest.entries.slice(
+      offset,
+      limit ? offset + limit : undefined,
+    );
+
+    const entryByKey = new Map<string, BeatscodeContractDownloadEntry>();
+    for (const entry of manifestEntries) {
+      entryByKey.set(`${entry.beatscodeContractId}:${entry.attachmentId}`, entry);
+    }
+
+    const employeeIds = new Set(manifestEntries.map((e) => e.employeeId));
+    const exportByEmployee = new Map<number, BeatscodeContractExportFile['contracts']>();
+    for (const c of exportFile.contracts) {
+      if (c.employeeId == null || !employeeIds.has(c.employeeId)) continue;
+      const list = exportByEmployee.get(c.employeeId) ?? [];
+      list.push(c);
+      exportByEmployee.set(c.employeeId, list);
+    }
+
+    const tenantSlug = resolveBeatscodeTenantSlug(
+      options?.tenantSlug ?? manifest.tenantSlug ?? exportFile.tenantSlug,
+    );
+    const tenant = await this.prisma.tenant.findFirst({ where: { slug: tenantSlug } });
+    if (!tenant) throw new Error(`Tenant não encontrado: ${tenantSlug}`);
+
+    const players = await this.prisma.player.findMany({
+      where: { tenantId: tenant.id, externalId: { startsWith: 'beatscode-' } },
+      select: { id: true, externalId: true, registrationProfile: true },
+    });
+    const playerByEmployeeId = new Map<number, (typeof players)[0]>();
+    for (const p of players) {
+      const m = p.externalId?.match(/^beatscode-(\d+)$/);
+      if (m) playerByEmployeeId.set(Number(m[1]), p);
+    }
+
+    const result: BeatscodeContractImportResult = {
+      importedAt: new Date().toISOString(),
+      tenantSlug,
+      source: 'local_manifest',
+      contractsTotal: exportFile.contracts.length,
+      playersUpdated: 0,
+      contractsLinked: 0,
+      filesDownloaded: 0,
+      legalDocumentsCreated: 0,
+      skippedNoPlayer: 0,
+      skippedExisting: 0,
+      skippedNoFile: 0,
+      byCategory: {},
+      byStatus: {},
+      errors: [],
+    };
+
+    for (const c of exportFile.contracts) {
+      result.byCategory[c.menuCategory] = (result.byCategory[c.menuCategory] ?? 0) + 1;
+      result.byStatus[c.status] = (result.byStatus[c.status] ?? 0) + 1;
+    }
+
+    const dryRun = options?.dryRun === true;
+
+    for (const employeeId of [...employeeIds].sort((a, b) => a - b)) {
+      const contractRows = exportByEmployee.get(employeeId);
+      if (!contractRows?.length) {
+        result.errors.push(`employeeId ${employeeId}: sem contratos no export`);
+        continue;
+      }
+
+      const player = playerByEmployeeId.get(employeeId);
+      if (!player) {
+        result.skippedNoPlayer += contractRows.length;
+        continue;
+      }
+
+      try {
+        const profile = this.parseProfile(player.registrationProfile);
+        const stored: StoredBeatscodeContract[] = [];
+
+        for (const row of contractRows) {
+          const base = toStoredBeatscodeContract(row);
+          const files = await this.syncContractFilesFromManifest(
+            player.id,
+            row,
+            entryByKey,
+            manifestBaseDir,
+            dryRun,
+            result,
+          );
+          stored.push({ ...base, files: files.length ? files : undefined });
+        }
+
+        if (dryRun) {
+          result.playersUpdated += 1;
+          result.contractsLinked += stored.length;
+          continue;
+        }
+
+        const contractsBlock = {
+          ...(typeof profile.contracts === 'object' && profile.contracts
+            ? (profile.contracts as Record<string, unknown>)
+            : {}),
+          beatscode: stored,
+          beatscodeSyncedAt: new Date().toISOString(),
+        };
+
+        const active = stored
+          .filter((c) => c.status === 'active')
+          .sort((a, b) => (b.initialDate ?? '').localeCompare(a.initialDate ?? ''))[0];
+
+        const sports =
+          typeof profile.sports === 'object' && profile.sports
+            ? { ...(profile.sports as Record<string, unknown>) }
+            : {};
+
+        if (active) {
+          sports.contractSituation = active.statusLabel;
+          sports.contractSituationCode = active.status;
+          sports.contractTypeName = active.contractTypeName;
+          sports.contractNumber = active.number;
+          sports.contractValidUntil = active.finalDate;
+        }
+
+        await this.prisma.player.update({
+          where: { id: player.id },
+          data: {
+            registrationProfile: {
+              ...profile,
+              contracts: contractsBlock,
+              sports,
+              beatscode: {
+                ...(typeof profile.beatscode === 'object' && profile.beatscode
+                  ? (profile.beatscode as Record<string, unknown>)
+                  : {}),
+                contractsCount: stored.length,
+                lastContractSyncAt: new Date().toISOString(),
+              },
+            } as Prisma.InputJsonValue,
+          },
+        });
+
+        result.playersUpdated += 1;
+        result.contractsLinked += stored.length;
+      } catch (e) {
+        result.errors.push(
+          `employeeId ${employeeId}: ${e instanceof Error ? e.message : String(e)}`,
+        );
+      }
+    }
+
+    if (!dryRun) {
+      await this.prisma.integrationConfig.upsert({
+        where: { key: 'beatscode_contracts_manifest_import_last' },
+        create: {
+          key: 'beatscode_contracts_manifest_import_last',
+          config: result as object,
+        },
+        update: { config: result as object },
+      });
+    }
+
+    this.log.log(
+      `Contratos manifest → S3: ${result.filesDownloaded} arquivo(s), ${result.legalDocumentsCreated} LegalDocument(s), ${result.playersUpdated} jogador(es)`,
+    );
+
+    return result;
+  }
+
+  private async syncContractFilesFromManifest(
+    playerId: string,
+    row: BeatscodeContractExportFile['contracts'][number],
+    entryByKey: Map<string, BeatscodeContractDownloadEntry>,
+    manifestBaseDir: string,
+    dryRun: boolean,
+    result: BeatscodeContractImportResult,
+  ): Promise<NonNullable<StoredBeatscodeContract['files']>> {
+    const files: NonNullable<StoredBeatscodeContract['files']> = [];
+    const attachmentIds = [...row.attachmentIds, ...row.extraFileIds];
+
+    for (const attachmentId of attachmentIds) {
+      const manifestEntry = entryByKey.get(`${row.beatscodeId}:${attachmentId}`);
+
+      const existing = await this.prisma.legalDocument.findFirst({
+        where: {
+          playerId,
+          metadata: {
+            path: ['beatscodeAttachmentId'],
+            equals: attachmentId,
+          },
+        },
+      });
+
+      if (existing?.fileUrl) {
+        files.push({
+          attachmentId,
+          fileUrl: existing.fileUrl,
+          fileKey: existing.fileKey,
+          name: existing.name,
+          legalDocumentId: existing.id,
+        });
+        result.skippedExisting = (result.skippedExisting ?? 0) + 1;
+        continue;
+      }
+
+      if (!manifestEntry) continue;
+
+      const absPath = resolve(manifestBaseDir, manifestEntry.localFilePath);
+      try {
+        await access(absPath, fsConstants.R_OK);
+      } catch {
+        result.skippedNoFile = (result.skippedNoFile ?? 0) + 1;
+        result.errors.push(
+          `Contrato ${row.beatscodeId} att ${attachmentId}: arquivo não encontrado (${absPath})`,
+        );
+        continue;
+      }
+
+      const displayName = buildContractDocumentName(
+        row.contractTypeName,
+        row.number,
+        row.beatscodeId,
+        attachmentId,
+      );
+      const uploadName =
+        manifestEntry.documentName && !/^imagem$/i.test(manifestEntry.documentName.trim())
+          ? manifestEntry.documentName.endsWith('.pdf')
+            ? manifestEntry.documentName
+            : `${manifestEntry.documentName}.pdf`
+          : `${displayName}.pdf`;
+
+      if (dryRun) {
+        files.push({
+          attachmentId,
+          fileUrl: `(dry-run) ${absPath}`,
+          name: displayName,
+        });
+        result.filesDownloaded += 1;
+        continue;
+      }
+
+      const buf = await readFile(absPath);
+      if (!buf.length) {
+        result.errors.push(`Contrato ${row.beatscodeId} att ${attachmentId}: PDF vazio`);
+        continue;
+      }
+
+      const uploaded = await this.s3.uploadLegalDocument(buf, playerId, uploadName);
+
+      const doc = await this.prisma.legalDocument.create({
+        data: {
+          playerId,
+          type: mapBeatscodeLegalDocType(row.contractTypeName, row.status),
+          name: displayName,
+          fileKey: uploaded.key,
+          fileUrl: uploaded.url,
+          status: mapBeatscodeLegalDocStatus(row.status),
+          validFrom: row.initialDate ? new Date(`${row.initialDate}T12:00:00`) : null,
+          validUntil: row.finalDate ? new Date(`${row.finalDate}T12:00:00`) : null,
+          metadata: {
+            source: 'beatscode',
+            beatscodeContractId: row.beatscodeId,
+            beatscodeAttachmentId: attachmentId,
+            beatscodeContractNumber: row.number,
+            menuCategory: row.menuCategory,
+            importedFrom: 'local_manifest',
+          },
+        },
+      });
+
+      files.push({
+        attachmentId,
+        fileUrl: uploaded.url,
+        fileKey: uploaded.key,
+        name: doc.name,
+        legalDocumentId: doc.id,
+      });
+      result.filesDownloaded += 1;
+      result.legalDocumentsCreated += 1;
+    }
+
+    return files;
   }
 
   private async syncContractFiles(

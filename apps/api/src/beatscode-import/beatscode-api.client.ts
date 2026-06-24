@@ -5,6 +5,7 @@ export type BeatscodeSession = {
   token: string;
   refreshToken?: string;
   expiresAt?: number;
+  shortHash?: string;
 };
 
 export type BeatscodeCategory = {
@@ -78,6 +79,7 @@ export class BeatscodeApiClient {
       token,
       refreshToken: json.refreshToken ? String(json.refreshToken) : undefined,
       expiresAt: json.expiresAt != null ? Number(json.expiresAt) : undefined,
+      shortHash: json.shortHash ? String(json.shortHash) : undefined,
     };
     return this.session;
   }
@@ -291,16 +293,26 @@ export class BeatscodeApiClient {
   }
 
   async downloadFile(pathOrUrl: string): Promise<Buffer | null> {
-    const url = pathOrUrl.startsWith('http')
+    let url = pathOrUrl.startsWith('http')
       ? pathOrUrl
       : this.resolveFileUrl(pathOrUrl);
     if (!url) return null;
+
+    const shortHash = this.session?.shortHash;
+    if (shortHash) {
+      const parsed = new URL(url);
+      if (!parsed.searchParams.has('token')) {
+        parsed.searchParams.set('token', shortHash);
+        url = parsed.toString();
+      }
+    }
 
     const res = await fetch(url, {
       headers: this.authHeaders(),
     });
     if (!res.ok) return null;
-    return Buffer.from(await res.arrayBuffer());
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length ? buf : null;
   }
 
   private authHeaders(): Record<string, string> {

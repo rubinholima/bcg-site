@@ -9,6 +9,7 @@ import { BeatscodeContractImportService } from './beatscode-contract-import.serv
 import { BeatscodeAttachmentService } from './beatscode-attachment.service';
 import { BeatscodeBrowserScraperService } from './beatscode-browser-scraper.service';
 import { BeatscodeDocumentsImportService } from './beatscode-documents-import.service';
+import { BeatscodeContractDownloadService } from './beatscode-contract-download.service';
 
 /** Contexto mínimo para scripts CLI (sem controller/guards). */
 @Module({
@@ -20,6 +21,7 @@ import { BeatscodeDocumentsImportService } from './beatscode-documents-import.se
     BeatscodeAttachmentService,
     BeatscodeBrowserScraperService,
     BeatscodeDocumentsImportService,
+    BeatscodeContractDownloadService,
   ],
   exports: [
     BeatscodeImportService,
@@ -28,6 +30,7 @@ import { BeatscodeDocumentsImportService } from './beatscode-documents-import.se
     BeatscodeAttachmentService,
     BeatscodeBrowserScraperService,
     BeatscodeDocumentsImportService,
+    BeatscodeContractDownloadService,
   ],
 })
 export class BeatscodeImportScriptModule {}
