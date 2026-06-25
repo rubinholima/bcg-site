@@ -6,6 +6,10 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
 import {
+  isArchivedSportsSituation,
+  isLoanedSportsSituation,
+} from '../common/sports-situation.util';
+import {
   CreatePsychologySessionDto,
   PsychologyAttendanceRowDto,
   UpdatePsychologySessionDto,
@@ -181,16 +185,37 @@ export class PsychologySessionsService {
 
   async categoryRoster(tenantId: string, category: string) {
     await this.assertTenant(tenantId);
-    const players = await this.prisma.player.findMany({
-      where: { tenantId, category },
-      select: { id: true, name: true, category: true, photoUrl: true },
-      orderBy: { name: 'asc' },
-    });
+    const players = await this.findActivePlayersByCategory(tenantId, category);
     return players.map((p) => ({
       playerId: p.id,
       playerName: p.name,
       present: false,
     }));
+  }
+
+  private sportsSituationFromProfile(registrationProfile: unknown): string | undefined {
+    if (!registrationProfile || typeof registrationProfile !== 'object' || Array.isArray(registrationProfile)) {
+      return undefined;
+    }
+    const sports = (registrationProfile as Record<string, unknown>).sports;
+    if (!sports || typeof sports !== 'object' || Array.isArray(sports)) return undefined;
+    const situation = (sports as Record<string, unknown>).situation;
+    return typeof situation === 'string' ? situation : undefined;
+  }
+
+  /** Mesma regra da lista principal de jogadores: sem desligados nem emprestados. */
+  private isActiveRosterPlayer(registrationProfile: unknown): boolean {
+    const situation = this.sportsSituationFromProfile(registrationProfile);
+    return !isArchivedSportsSituation(situation) && !isLoanedSportsSituation(situation);
+  }
+
+  private async findActivePlayersByCategory(tenantId: string, category: string) {
+    const players = await this.prisma.player.findMany({
+      where: { tenantId, category },
+      select: { id: true, name: true, registrationProfile: true },
+      orderBy: { name: 'asc' },
+    });
+    return players.filter((p) => this.isActiveRosterPlayer(p.registrationProfile));
   }
 
   private async assertTenant(tenantId: string) {
@@ -224,11 +249,7 @@ export class PsychologySessionsService {
   }
 
   private async buildCategoryAttendance(tenantId: string, category: string): Promise<AttendanceRow[]> {
-    const players = await this.prisma.player.findMany({
-      where: { tenantId, category },
-      select: { id: true, name: true },
-      orderBy: { name: 'asc' },
-    });
+    const players = await this.findActivePlayersByCategory(tenantId, category);
     return players.map((p) => ({
       playerId: p.id,
       playerName: p.name,
