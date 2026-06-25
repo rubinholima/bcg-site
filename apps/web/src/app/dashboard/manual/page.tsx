@@ -22,6 +22,8 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
+  { id: "saude", label: "Depto Saúde" },
+  { id: "saude-material-apoio", label: "→ Material de apoio (psicologia)", indent: true },
   { id: "boston-tv", label: "BCG TV" },
   { id: "boston-tv-bc-hall", label: "→ BC HALL", indent: true },
   { id: "boston-tv-playlists", label: "→ Playlists", indent: true },
@@ -431,6 +433,48 @@ export default function ManualPage() {
               </a>{" "}
               abaixo.
             </p>
+          </Section>
+
+          <Section id="saude" title="Depto Saúde">
+            <p>
+              O hub <strong>Saúde</strong> reúne médicos, enfermeiros, psicólogos, estagiários, histórico médico,
+              consultas online, avaliação psicológica e fisioterapia. O acesso depende do módulo{" "}
+              <strong>saude</strong> liberado para o seu usuário.
+            </p>
+
+            <SubSection id="saude-material-apoio" title="Material de apoio (psicologia)">
+              <p>
+                Em <strong>Depto Saúde → Psicologia → Material de apoio</strong> (ou pelo card no hub Saúde), a
+                equipe de psicologia e estagiários compartilha PDFs, imagens e documentos de uso no dia a dia.
+              </p>
+              <p>
+                <strong>Como enviar um material:</strong>
+              </p>
+              <ol className="list-decimal pl-5 space-y-1">
+                <li>Abra <strong>Material de apoio</strong> no menu Psicologia.</li>
+                <li>Clique em <strong>Enviar material</strong>.</li>
+                <li>
+                  Preencha o <strong>título</strong> (obrigatório) e, se quiser, a descrição e a categoria
+                  (protocolo, material, apresentação, formulário ou outro).
+                </li>
+                <li>
+                  Opcionalmente vincule a um <strong>clube/empresa</strong>; deixe em branco para material do grupo
+                  inteiro.
+                </li>
+                <li>
+                  Selecione o arquivo (PDF, imagem ou documento Office — até 25 MB) e confirme{" "}
+                  <strong>Enviar</strong>.
+                </li>
+              </ol>
+              <p>
+                <strong>Como encontrar e baixar:</strong> use a busca por título, descrição ou nome do arquivo;
+                filtre por categoria ou clube; clique em <strong>Baixar</strong> para abrir ou salvar o arquivo.
+              </p>
+              <p>
+                <strong>Excluir:</strong> use o ícone de lixeira na linha do material — a ação remove o arquivo da
+                biblioteca de forma permanente.
+              </p>
+            </SubSection>
           </Section>
 
           <Section id="boston-tv" title="BCG TV (Boston TV)">

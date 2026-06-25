@@ -42,6 +42,7 @@ import { FmfScraperModule } from './fmf-scraper/fmf-scraper.module';
 import { BeatscodeImportModule } from './beatscode-import/beatscode-import.module';
 import { CaptacaoModule } from './captacao/captacao.module';
 import { PsychologySessionsModule } from './psychology-sessions/psychology-sessions.module';
+import { PsychologySupportMaterialsModule } from './psychology-support-materials/psychology-support-materials.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { PsychologySessionsModule } from './psychology-sessions/psychology-sessi
     BeatscodeImportModule,
     CaptacaoModule,
     PsychologySessionsModule,
+    PsychologySupportMaterialsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -130,6 +130,7 @@ model Tenant {
   travelLogistics       TravelLogistics[]
   footballAgendaEntries FootballAgendaEntry[]
   psychologySessions  PsychologySession[]
+  psychologySupportMaterials PsychologySupportMaterial[]
   footballActivitySpaces FootballActivitySpace[]
   events                Event[]
   pressPhotos           TenantPressPhoto[]
@@ -852,6 +853,26 @@ model PsychologySession {
   updatedAt             DateTime @updatedAt
   @@index([tenantId, date])
   @@index([sessionType])
+}
+
+/// Material de apoio da psicologia (PDFs, imagens, planilhas) — biblioteca compartilhada da equipe
+model PsychologySupportMaterial {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?  @db.Text
+  category      String?  // protocolo | material | apresentacao | formulario | outro
+  fileKey       String
+  fileUrl       String
+  fileName      String
+  mimeType      String?
+  fileSizeBytes Int?
+  tenantId      String?
+  tenant        Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  uploadedBy    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@index([tenantId])
+  @@index([createdAt])
 }
 
 // Integrações centralizadas (planilhas Google únicas) — uma planilha por tipo, sistema filtra por slug

@@ -230,6 +230,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/adm\/financeiro\/aprovacoes$/,
   /^\/dashboard\/adm\/estoque$/,
   /^\/dashboard\/juridico\/contratos-base$/,
+  /^\/dashboard\/psicologia\/material-apoio$/,
   /^\/dashboard\/medico\/enfermeiros$/,
   /^\/dashboard\/saude\/fisioterapia$/,
   /^\/dashboard\/eventos\/new$/,

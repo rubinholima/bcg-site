@@ -885,6 +885,88 @@ export class S3Service {
   }
 
   /**
+   * Material de apoio — psicologia (PDF, imagens, planilhas, apresentações).
+   * Salva em media/psicologia_apoio/{uuid}.{ext}
+   */
+  async uploadPsychologySupportMaterial(
+    buffer: Buffer,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; url: string; mimeType: string }> {
+    const lower = filename.toLowerCase();
+    let ext = 'bin';
+    let contentType = mimeType?.trim() || 'application/octet-stream';
+
+    const extMap: Array<{ test: (n: string) => boolean; ext: string; type: string }> = [
+      { test: (n) => n.endsWith('.pdf'), ext: 'pdf', type: 'application/pdf' },
+      { test: (n) => n.endsWith('.png'), ext: 'png', type: 'image/png' },
+      { test: (n) => n.endsWith('.jpg') || n.endsWith('.jpeg'), ext: 'jpg', type: 'image/jpeg' },
+      { test: (n) => n.endsWith('.webp'), ext: 'webp', type: 'image/webp' },
+      { test: (n) => n.endsWith('.doc'), ext: 'doc', type: 'application/msword' },
+      {
+        test: (n) => n.endsWith('.docx'),
+        ext: 'docx',
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      },
+      { test: (n) => n.endsWith('.xls'), ext: 'xls', type: 'application/vnd.ms-excel' },
+      {
+        test: (n) => n.endsWith('.xlsx'),
+        ext: 'xlsx',
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+      { test: (n) => n.endsWith('.ppt'), ext: 'ppt', type: 'application/vnd.ms-powerpoint' },
+      {
+        test: (n) => n.endsWith('.pptx'),
+        ext: 'pptx',
+        type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      },
+    ];
+
+    for (const row of extMap) {
+      if (row.test(lower)) {
+        ext = row.ext;
+        contentType = row.type;
+        break;
+      }
+    }
+
+    if (ext === 'bin' && mimeType?.startsWith('image/')) {
+      ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+      contentType = mimeType;
+    } else if (ext === 'bin' && mimeType === 'application/pdf') {
+      ext = 'pdf';
+      contentType = 'application/pdf';
+    }
+
+    if (contentType.startsWith('image/')) {
+      const optimized = await this.normalizeImageUpload(buffer, contentType, 'document');
+      buffer = optimized.buffer;
+      contentType = optimized.contentType;
+      ext = optimized.ext;
+    }
+
+    const key = `${MEDIA_PREFIX}psicologia_apoio/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar material de apoio para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key), mimeType: contentType };
+  }
+
+  /**
    * Retorna o buffer de um objeto (para envio ao Adobe Sign).
    */
   async getObjectBuffer(key: string): Promise<Buffer> {

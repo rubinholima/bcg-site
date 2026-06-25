@@ -7,6 +7,7 @@ import {
   Activity,
   UserCircle,
   GraduationCap,
+  FolderOpen,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { SaudeHubInsights } from "@/components/dashboard/hub/SaudeHubInsights";
@@ -59,6 +60,13 @@ const LINKS = [
     description: "Formulários e laudos psicológicos.",
     href: "/dashboard/psicologia",
     icon: ClipboardList,
+    moduleSlug: "saude",
+  },
+  {
+    title: "Material de apoio",
+    description: "Biblioteca compartilhada — PDFs, imagens e documentos para psicólogos e estagiários.",
+    href: "/dashboard/psicologia/material-apoio",
+    icon: FolderOpen,
     moduleSlug: "saude",
   },
   {

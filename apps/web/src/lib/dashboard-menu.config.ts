@@ -65,6 +65,7 @@ import {
   UserPlus,
   Video,
   Dumbbell,
+  FolderOpen,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -568,6 +569,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Consultas",
             href: "/dashboard/consultas",
             icon: ClipboardList,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "psicologia_material_apoio",
+            label: "Material de apoio",
+            href: "/dashboard/psicologia/material-apoio",
+            icon: FolderOpen,
             moduleSlug: "saude",
           },
         ],
