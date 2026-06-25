@@ -196,39 +196,52 @@ export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | 
   };
 }
 
-/** Rotas que já renderizam `DashboardDeptHeader` ou header próprio — sem auto-header. */
+/**
+ * Rotas que já renderizam cabeçalho próprio (DashboardDeptHeader, hub, shell ou `<h1>`).
+ * O layout não deve duplicar — uma página = um cabeçalho.
+ */
 export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard$/,
   /^\/dashboard\/consultas\/sessao/,
   /^\/dashboard\/academias\//,
-  /^\/dashboard\/paginas(\/|$)/,
-  /^\/dashboard\/midia$/,
-  /^\/dashboard\/marketing$/,
-  /^\/dashboard\/noticias$/,
-  /^\/dashboard\/usuarios$/,
-  /^\/dashboard\/eventos$/,
-  /^\/dashboard\/assessoria-imprensa$/,
-  /^\/dashboard\/adm$/,
-  /^\/dashboard\/futebol$/,
-  /^\/dashboard\/futebol\/performance$/,
-  /^\/dashboard\/futebol\/analise-desempenho$/,
-  /^\/dashboard\/futebol\/preparacao-fisica$/,
-  /^\/dashboard\/futebol\/captacao$/,
-  /^\/dashboard\/futebol\/try-outs$/,
-  /^\/dashboard\/saude$/,
-  /^\/dashboard\/clube$/,
-  /^\/dashboard\/relatorios$/,
-  /^\/dashboard\/manual$/,
-  /^\/dashboard\/ferramentas\/fmf-scraper$/,
-  /^\/dashboard\/ferramentas\/beatscode-import$/,
-  /^\/dashboard\/agenda$/,
-  /^\/dashboard\/futebol\/logistica\/agenda$/,
-  /^\/dashboard\/eventos\/boston-city-hall\/agenda$/,
   /^\/dashboard\/marketing\/boston-tv\/controle-hall$/,
-  /^\/dashboard\/marketing\/boston-tv\/playlists\//,
+
+  /^\/dashboard\/paginas(\/|$)/,
+  /^\/dashboard\/agenda$/,
+  /^\/dashboard\/ferramentas\//,
+
+  // Índices com DashboardDeptHeader / HubDashboardPage
+  /^\/dashboard\/(midia|noticias|marketing|usuarios|relatorios|manual|assessoria-imprensa|eventos|adm|futebol|saude|clube)$/,
+
+  // Subárvores com shell ou agenda dedicada
+  /^\/dashboard\/eventos\/boston-city-hall(\/|$)/,
+  /^\/dashboard\/saude\/estagiarios(\/|$)/,
+  /^\/dashboard\/marketing\/boston-tv(\/|$)/,
+  /^\/dashboard\/futebol\/logistica\/agenda$/,
+  /^\/dashboard\/futebol\/(performance|captacao|try-outs|preparacao-fisica)$/,
+  /^\/dashboard\/futebol\/analise-desempenho(\/|$)/,
+
+  // Páginas com título inline (`<h1>`) no componente
+  /^\/dashboard\/futebol\/logistica$/,
+  /^\/dashboard\/configuracoes\/modulos$/,
+  /^\/dashboard\/conteudo$/,
+  /^\/dashboard\/cadastros\/espacos$/,
+  /^\/dashboard\/diretoria\/aprovacoes-compras$/,
+  /^\/dashboard\/adm\/financeiro\/aprovacoes$/,
+  /^\/dashboard\/adm\/estoque$/,
+  /^\/dashboard\/juridico\/contratos-base$/,
+  /^\/dashboard\/medico\/enfermeiros$/,
+  /^\/dashboard\/saude\/fisioterapia$/,
+  /^\/dashboard\/eventos\/new$/,
+  /^\/dashboard\/eventos\/[^/]+\/editar$/,
+
+  // Detalhe / formulário com header dedicado
   /^\/dashboard\/cadastros\/jogadores\/[^/]+\/edit$/,
-  /^\/dashboard\/medico\/[^/]+$/,
   /^\/dashboard\/juridico\/[^/]+$/,
+  /^\/dashboard\/medico\/(?!equipe(?:\/|$))[^/]+$/,
+  /^\/dashboard\/medico\/equipe\/[^/]+\/edit$/,
+  /^\/dashboard\/psicologia\/psicologos\/[^/]+\/edit$/,
+  /^\/dashboard\/futebol\/logistica\/[^/]+\/(edit|delete)$/,
 ];
 
 export function shouldShowAutoDashboardHeader(pathname: string): boolean {
