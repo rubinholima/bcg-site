@@ -39,6 +39,7 @@ interface TenantOption {
   id: string;
   name: string;
   kind?: { id: string; name: string };
+  categories?: string[] | null;
 }
 
 interface ConsultationItem {
@@ -541,6 +542,7 @@ export default function ConsultasPage() {
             filterClube={filterClube}
             filterAtleta={filterAtleta}
             filterCategoria={filterCategoria}
+            tenants={tenants}
             selectedPlayerName={selectedPlayerName}
             players={players}
             psychologists={psychologists}

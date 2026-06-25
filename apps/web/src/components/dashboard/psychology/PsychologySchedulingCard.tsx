@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ClipboardList, Loader2, MapPin, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,16 @@ import {
 } from "@/components/ui/dialog";
 import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { api } from "@/lib/api";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { filterCategoriesForTenant } from "@/lib/fixture-categories";
+import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import type { Psychologist } from "@/types/psychologist";
 import type { PsychologyAttendanceRow, PsychologySessionType } from "@/types/psychology-session";
 
 type SchedulingTab = "online" | PsychologySessionType | "relatorio_semanal";
 
 type PlayerOption = { id: string; name: string; tenantId?: string; category?: string | null };
+
+type TenantOption = { id: string; name?: string; categories?: string[] | null };
 
 type ActivitySpace = {
   id: string;
@@ -54,6 +57,7 @@ export function PsychologySchedulingCard({
   filterClube,
   filterAtleta,
   filterCategoria,
+  tenants,
   selectedPlayerName,
   players,
   psychologists,
@@ -74,6 +78,7 @@ export function PsychologySchedulingCard({
   filterClube: string;
   filterAtleta: string;
   filterCategoria: string;
+  tenants: TenantOption[];
   selectedPlayerName: string;
   players: PlayerOption[];
   psychologists: Psychologist[];
@@ -117,12 +122,33 @@ export function PsychologySchedulingCard({
   const psychologos = psychologists.filter((p) => (p.staffRole ?? "psicologo") === "psicologo");
   const estagiarios = psychologists.filter((p) => p.staffRole === "estagiario");
   const tenantId = filterClube || players.find((p) => p.id === filterAtleta)?.tenantId || "";
+  const selectedTenant = tenants.find((t) => t.id === tenantId);
+  const { categories: allFixtureCategories } = useFixtureCategories();
+  const clubCategories = useMemo(
+    () => filterCategoriesForTenant(allFixtureCategories, selectedTenant?.categories),
+    [allFixtureCategories, selectedTenant?.categories],
+  );
 
   useEffect(() => {
     if (filterCategoria) setCategory(filterCategoria);
   }, [filterCategoria]);
 
   useEffect(() => {
+    if (!tenantId) {
+      setCategory("");
+      return;
+    }
+    if (clubCategories.length === 0) return;
+    setCategory((prev) => {
+      if (prev && clubCategories.some((c) => c.value === prev)) return prev;
+      if (filterCategoria && clubCategories.some((c) => c.value === filterCategoria)) {
+        return filterCategoria;
+      }
+      return clubCategories[0]?.value ?? "";
+    });
+  }, [tenantId, clubCategories, filterCategoria]);
+
+  const reloadSpaces = useCallback(() => {
     if (!tenantId) {
       setSpaces([]);
       setSpaceId("");
@@ -133,6 +159,18 @@ export function PsychologySchedulingCard({
       .then(({ data }) => setSpaces(Array.isArray(data) ? data : []))
       .catch(() => setSpaces([]));
   }, [tenantId]);
+
+  useEffect(() => {
+    reloadSpaces();
+  }, [reloadSpaces]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "visible") reloadSpaces();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [reloadSpaces]);
 
   const loadRoster = useCallback(async () => {
     if (!tenantId || !category) {
@@ -249,7 +287,14 @@ export function PsychologySchedulingCard({
     <div>
       <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
         <Label className="text-xs text-muted-foreground">Local</Label>
-        <Link href="/dashboard/cadastros/espacos" className="text-xs text-primary hover:underline">
+        <Link
+          href={
+            tenantId
+              ? `/dashboard/cadastros/espacos?tenantId=${encodeURIComponent(tenantId)}`
+              : "/dashboard/cadastros/espacos"
+          }
+          className="text-xs text-primary hover:underline"
+        >
           Cadastrar espaços
         </Link>
       </div>
@@ -402,6 +447,11 @@ export function PsychologySchedulingCard({
 
       {tab === "grupo" && (
         <div className="space-y-3 rounded-lg border border-border/80 bg-muted/20 p-4">
+          {!tenantId ? (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              Selecione o clube no filtro acima para ver as categorias e locais do clube.
+            </p>
+          ) : null}
           <div>
             <Label className="text-xs text-muted-foreground">Categoria do grupo</Label>
             <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
@@ -410,13 +460,18 @@ export function PsychologySchedulingCard({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
-                {FIXTURE_CATEGORIES.map((c) => (
+                {clubCategories.map((c) => (
                   <SelectItem key={c.value} value={c.value}>
                     {c.labelPT}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {tenantId && clubCategories.length === 0 ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Nenhuma categoria liberada para este clube — configure em Empresas.
+              </p>
+            ) : null}
           </div>
           {locationSelect}
           <textarea

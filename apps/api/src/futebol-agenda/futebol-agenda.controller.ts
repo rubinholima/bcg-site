@@ -20,7 +20,7 @@ import { FutebolAgendaService } from './futebol-agenda.service';
 
 @Controller('football-activity-spaces')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
-@RequireModule('futebol_logistica')
+@RequireModule(['futebol_logistica', 'saude'])
 export class FootballActivitySpacesController {
   constructor(private readonly service: FootballActivitySpacesService) {}
 

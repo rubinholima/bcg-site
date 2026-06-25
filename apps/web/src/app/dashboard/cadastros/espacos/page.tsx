@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
@@ -36,6 +37,8 @@ type ActivitySpace = {
 };
 
 export default function EspacosCadastroPage() {
+  const searchParams = useSearchParams();
+  const tenantFromUrl = searchParams.get("tenantId") ?? "";
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState("");
   const [spaces, setSpaces] = useState<ActivitySpace[]>([]);
@@ -49,9 +52,13 @@ export default function EspacosCadastroPage() {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
       const list = Array.isArray(data) ? data : [];
       setTenants(list);
-      if (list.length === 1) setTenantId(list[0].id);
+      if (tenantFromUrl && list.some((t) => t.id === tenantFromUrl)) {
+        setTenantId(tenantFromUrl);
+      } else if (list.length === 1) {
+        setTenantId(list[0].id);
+      }
     });
-  }, []);
+  }, [tenantFromUrl]);
 
   const load = useCallback(async () => {
     if (!tenantId) {
