@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Tenant = { id: string; name: string; kind?: { name: string } };
 
@@ -47,6 +64,13 @@ export default function EspacosCadastroPage() {
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<ActivitySpace | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ActivitySpace | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -111,10 +135,49 @@ export default function EspacosCadastroPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Desativar este espaço? Compromissos antigos mantêm o vínculo.")) return;
-    await api.delete(`/football-activity-spaces/${id}`);
-    await load();
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/football-activity-spaces/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      await load();
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const openEdit = (space: ActivitySpace) => {
+    setEditTarget(space);
+    setEditName(space.name);
+    setEditAddress(space.address ?? "");
+    setEditError(null);
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTarget || !editName.trim()) {
+      setEditError("Informe o nome do espaço.");
+      return;
+    }
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      await api.patch(`/football-activity-spaces/${editTarget.id}`, {
+        name: editName.trim(),
+        address: editAddress.trim() || null,
+      });
+      setEditTarget(null);
+      await load();
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === "object" && "response" in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : null;
+      setEditError(typeof msg === "string" ? msg : "Não foi possível salvar as alterações.");
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   return (
@@ -210,7 +273,7 @@ export default function EspacosCadastroPage() {
                       <TableRow>
                         <TableHead>Nome</TableHead>
                         <TableHead>Endereço</TableHead>
-                        <TableHead className="w-12" />
+                        <TableHead className="w-24 text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -218,16 +281,29 @@ export default function EspacosCadastroPage() {
                         <TableRow key={s.id}>
                           <TableCell className="font-medium">{s.name}</TableCell>
                           <TableCell className="text-muted-foreground">{s.address ?? "—"}</TableCell>
-                          <TableCell>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-10 w-10 text-destructive"
-                              onClick={() => handleDelete(s.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10"
+                                aria-label={`Editar ${s.name}`}
+                                onClick={() => openEdit(s)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 text-destructive"
+                                aria-label={`Excluir ${s.name}`}
+                                onClick={() => setDeleteTarget(s)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -239,6 +315,73 @@ export default function EspacosCadastroPage() {
           </Card>
         </>
       ) : null}
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={handleEditSave}>
+            <DialogHeader>
+              <DialogTitle>Editar espaço</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="edit-space-name">Nome *</Label>
+                <Input
+                  id="edit-space-name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="min-h-[44px] text-foreground"
+                  required
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="edit-space-address">Endereço / referência</Label>
+                <Input
+                  id="edit-space-address"
+                  value={editAddress}
+                  onChange={(e) => setEditAddress(e.target.value)}
+                  className="min-h-[44px] text-foreground"
+                />
+              </div>
+              {editError ? <p className="text-sm text-destructive">{editError}</p> : null}
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={() => setEditTarget(null)} disabled={editSaving}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={editSaving || !editName.trim()}>
+                {editSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar espaço?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget
+                ? `“${deleteTarget.name}” será desativado. Compromissos antigos mantêm o vínculo.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {deleting ? "Desativando…" : "Desativar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
