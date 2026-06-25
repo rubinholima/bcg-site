@@ -51,31 +51,43 @@
 4. **Beatscode — export contratos**  
    - `pnpm beatscode:export-contracts` → `data/beatscode-contracts-export.json` (1082 contratos: 999 atleta, 72 comissão, 11 venda futura; 240 ativos).
 
-5. **Sync overnight**  
-   - `pnpm beatscode:sync-documents` reiniciado em background (tentar docs sem caminho restantes).
+5. **Agenda — hub unificado + ajustes UX**  
+   - Calendário consolidado em `/dashboard/agenda` (todas as áreas, cores por tipo). Commits `809ce01`, `ceaee38`.  
+   - Removidos atalhos duplicados por área na agenda geral; cada departamento volta à agenda própria (Futebol → Logística → Agenda, BCH → Agenda, Consultas, Marketing).  
+   - Busca + filtros (área/tipo) e atalhos **Registrar novo** na agenda geral.
+
+6. **Fix produção — Logística**  
+   - Crash server-side em `/dashboard/futebol/logistica`: utilitários movidos para lib server-safe, `Suspense` nos filtros. Commit `cfce78b`.
+
+7. **Sync overnight (encerramento)**  
+   - `pnpm beatscode:sync-documents` reiniciado em background (PDFs restantes).
 
 ## **ARQUIVOS PRINCIPAIS**
 
 - `apps/api/src/beatscode-import/beatscode-documents-import.service.ts`
 - `apps/api/src/beatscode-import/beatscode-import.service.ts`
 - `apps/api/scripts/run-beatscode-sync-documents-api.ts`
-- `apps/api/scripts/run-beatscode-merge-docs-export.ts`
-- `apps/api/scripts/check-doc-mirror-progress.ts`
-- `apps/api/data/beatscode-athletes-export-with-docs.json` (local, gitignore)
-- `apps/api/data/beatscode-contracts-export.json` (local, gitignore)
+- `apps/web/src/components/dashboard/agenda/UnifiedAgendaView.tsx`
+- `apps/web/src/lib/unified-agenda.ts`
+- `apps/web/src/lib/agenda-hub.ts`
+- `apps/web/src/lib/travel-categories-utils.ts`
+- `apps/web/src/app/dashboard/futebol/logistica/page.tsx`
+- `apps/web/src/app/dashboard/futebol/logistica/agenda/page.tsx`
+- `apps/web/src/app/dashboard/eventos/boston-city-hall/agenda/page.tsx`
+- `apps/web/src/lib/dashboard-menu.config.ts`
 
 ## **COMMITS / BRANCH**
 
 - **Branch:** `develop`
-- **Último commit:** `fb93e96` — fix(api): sync documentos Beatscode via API com espelhamento S3
+- **Último commit:** `ceaee38` — feat(web): agenda geral com busca e cada area no seu hub
+- **Commits do dia (web):** `809ce01`, `cfce78b`, `ceaee38`
 - **Push:** enviado para `origin/develop`
 
 ## **PENDÊNCIAS / PRÓXIMO**
 
-- **Produção (dashboard → Importação Beatscode, Boston City FC Brasil):**  
-  1. `beatscode-athletes-export-with-docs.json` (atletas + PDFs S3)  
-  2. `beatscode-contracts-export.json` (contratos)  
-- Opcional: `beatscode:export-agenda` se quiser logística/agenda.  
+- **Produção:** rodar `./deploy.sh` no servidor (fixes Logística + agenda).  
+- **Importação Beatscode (dashboard):** `beatscode-athletes-export-with-docs.json` + `beatscode-contracts-export.json`.  
+- Sync documentos rodando overnight — conferir amanhã progresso.  
 - **Não commitar:** `apps/api/data/`, probes, `backup_clean.sql`, `temp_*`, APKs.
 
 ---
