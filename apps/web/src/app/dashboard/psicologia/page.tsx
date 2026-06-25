@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { DASHBOARD_LABELS } from "@/lib/dashboard-labels";
 import { getPositionLabel } from "@/lib/football-positions";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { PsicologiaFilters } from "./PsicologiaFilters";
 
 interface Player {
@@ -30,6 +31,7 @@ interface Player {
   category?: string | null;
   tenantId: string;
   tenant?: { id: string; name: string; slug: string };
+  registrationProfile?: unknown;
 }
 
 export default function PsicologiaListPage() {
@@ -132,7 +134,7 @@ export default function PsicologiaListPage() {
                       <TableCell>
                         <span className="font-medium">
                           {p.jerseyNumber ? `${p.jerseyNumber} – ` : ""}
-                          {p.name}
+                          {getPlayerListDisplayName(p)}
                         </span>
                       </TableCell>
                       <TableCell className="text-muted-foreground">

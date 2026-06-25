@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleCalendarService } from './google-calendar.service';
+import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
 
 export interface ConsultationItem {
   playerId: string;
@@ -56,7 +57,7 @@ export class ConsultationsService {
           id: `${p.id}-${i}`,
           playerId: p.id,
           tenantId: p.tenantId,
-          playerName: p.name,
+          playerName: getPlayerListDisplayName(p),
           playerPhotoUrl: (p.photoUrl as string) ?? undefined,
           tenantName: p.tenant?.name,
           tenantLogoUrl: p.tenant?.logoUrl ?? undefined,
@@ -88,7 +89,10 @@ export class ConsultationsService {
           s.sessionType === 'grupo'
             ? `${s.category ?? s.categoriesLabel ?? 'Grupo'} (${attendance.length} atletas)`
             : s.playerId
-              ? players.find((p) => p.id === s.playerId)?.name ?? 'Atleta'
+              ? (() => {
+                  const p = players.find((pl) => pl.id === s.playerId);
+                  return p ? getPlayerListDisplayName(p) : 'Atleta';
+                })()
               : 'Presencial',
         tenantName: s.tenant?.name,
         tenantLogoUrl: s.tenant?.logoUrl ?? undefined,
@@ -213,7 +217,7 @@ export class ConsultationsService {
 
     const player = await this.prisma.player.findUnique({
       where: { id: playerId },
-      select: { onlineConsultations: true, name: true },
+      select: { onlineConsultations: true, name: true, registrationProfile: true },
     });
     if (!player) return false;
 
@@ -258,7 +262,7 @@ export class ConsultationsService {
             date,
             startTime: time,
             playerId,
-            playerName: player?.name ?? '',
+            playerName: player ? getPlayerListDisplayName(player) : '',
             durationSeconds: patch.durationSeconds,
             notes: (item.notes as string) ?? undefined,
           });

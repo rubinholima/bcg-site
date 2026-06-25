@@ -27,12 +27,14 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import type { Psychologist } from "@/types/psychologist";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 
 interface PlayerOption {
   id: string;
   name: string;
   tenantId?: string;
   category?: string | null;
+  registrationProfile?: unknown;
 }
 
 interface TenantOption {
@@ -266,7 +268,10 @@ export default function ConsultasPage() {
         })
     : [];
   const selectedPlayerName = filterAtleta
-    ? players.find((p) => p.id === filterAtleta)?.name ?? ""
+    ? (() => {
+        const p = players.find((pl) => pl.id === filterAtleta);
+        return p ? getPlayerListDisplayName(p) : "";
+      })()
     : "";
 
   const handleCreateMeet = async () => {
@@ -492,7 +497,7 @@ export default function ConsultasPage() {
                   <SelectItem value="all">Todos os atletas</SelectItem>
                   {playersByClube.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.name}
+                      {getPlayerListDisplayName(p)}
                       {p.category ? ` (${FIXTURE_CATEGORIES.find((c) => c.value === p.category)?.labelPT ?? p.category})` : ""}
                     </SelectItem>
                   ))}

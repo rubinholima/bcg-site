@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 
 export interface NutritionAssessmentRow {
   id: string;
@@ -32,6 +33,7 @@ interface PlayerOption {
   name: string;
   jerseyNumber: number | null;
   category?: string | null;
+  registrationProfile?: unknown;
   weight?: number | null;
   height?: number | null;
   bmi?: number | null;
@@ -166,7 +168,7 @@ export function NutritionAssessmentFormDialog({
                 <option value="">Selecione</option>
                 {players.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
+                    {getPlayerListDisplayName(p)} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
                     {p.category ? ` • ${getCategoryLabel(p.category, "pt")}` : ""}
                   </option>
                 ))}

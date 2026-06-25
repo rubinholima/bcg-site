@@ -9,6 +9,7 @@ import {
   isArchivedSportsSituation,
   isLoanedSportsSituation,
 } from '../common/sports-situation.util';
+import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
 import {
   CreatePsychologySessionDto,
   PsychologyAttendanceRowDto,
@@ -186,11 +187,15 @@ export class PsychologySessionsService {
   async categoryRoster(tenantId: string, category: string) {
     await this.assertTenant(tenantId);
     const players = await this.findActivePlayersByCategory(tenantId, category);
-    return players.map((p) => ({
-      playerId: p.id,
-      playerName: p.name,
-      present: false,
-    }));
+    return players
+      .map((p) => ({
+        playerId: p.id,
+        playerName: getPlayerListDisplayName(p),
+        present: false,
+      }))
+      .sort((a, b) =>
+        (a.playerName ?? '').localeCompare(b.playerName ?? '', 'pt-BR', { sensitivity: 'base' }),
+      );
   }
 
   private sportsSituationFromProfile(registrationProfile: unknown): string | undefined {
@@ -252,7 +257,7 @@ export class PsychologySessionsService {
     const players = await this.findActivePlayersByCategory(tenantId, category);
     return players.map((p) => ({
       playerId: p.id,
-      playerName: p.name,
+      playerName: getPlayerListDisplayName(p),
       present: false,
     }));
   }

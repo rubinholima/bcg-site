@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { cadastroDisplayUpper } from "@/lib/rh-employee-display";
 import { type EmployeeRow } from "./EmployeeFormDialog";
 
@@ -22,6 +23,7 @@ interface PlayerOption {
   name: string;
   category?: string | null;
   position?: string | null;
+  registrationProfile?: unknown;
 }
 
 interface EmployeeLinkPlayerDialogProps {
@@ -190,7 +192,7 @@ export function EmployeeLinkPlayerDialog({
                   <option value="">Selecione um atleta</option>
                   {playerOptions.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}
+                      {getPlayerListDisplayName(p)}
                       {p.category ? ` · ${p.category}` : ""}
                     </option>
                   ))}

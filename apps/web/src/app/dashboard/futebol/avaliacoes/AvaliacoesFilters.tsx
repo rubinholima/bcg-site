@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 
 interface Tenant {
   id: string;
@@ -25,6 +26,7 @@ export interface PlayerOption {
   id: string;
   name: string;
   category?: string | null;
+  registrationProfile?: unknown;
 }
 
 interface AvaliacoesFiltersProps {
@@ -168,7 +170,7 @@ export function AvaliacoesFilters({
                 <SelectItem value="none">Selecione um atleta</SelectItem>
                 {players.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {categoryLabel(p.category)} • {p.name}
+                    {categoryLabel(p.category)} • {getPlayerListDisplayName(p)}
                   </SelectItem>
                 ))}
               </SelectContent>

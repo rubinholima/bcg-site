@@ -16,6 +16,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { getPositionLabel } from "@/lib/football-positions";
 import {
   formatProfileDate,
@@ -109,7 +110,7 @@ export function JogadoresLoanedList({ players }: JogadoresLoanedListProps) {
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="font-medium">{p.name}</TableCell>
+                  <TableCell className="font-medium">{getPlayerListDisplayName(p)}</TableCell>
                   <TableCell>{p.tenant?.name ?? "—"}</TableCell>
                   <TableCell>{loan.destinationClub?.trim() || "—"}</TableCell>
                   <TableCell>{formatProfileDate(loan.startDate)}</TableCell>

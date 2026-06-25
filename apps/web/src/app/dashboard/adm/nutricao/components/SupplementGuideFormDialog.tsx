@@ -15,6 +15,7 @@ import {
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { getCategoryLabel, FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import type { NutritionCategoryRow } from "./NutritionCategoryFormDialog";
 
 export interface SupplementGuideRow {
@@ -35,6 +36,7 @@ interface PlayerOption {
   name: string;
   jerseyNumber: number | null;
   category?: string | null;
+  registrationProfile?: unknown;
 }
 
 interface SupplementGuideFormDialogProps {
@@ -227,7 +229,7 @@ export function SupplementGuideFormDialog({
                   <option value="">Selecione</option>
                   {players.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
+                      {getPlayerListDisplayName(p)} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
                       {p.category ? ` • ${getCategoryLabel(p.category, "pt")}` : ""}
                     </option>
                   ))}

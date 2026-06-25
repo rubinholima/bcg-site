@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { api } from "@/lib/api";
+import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
 import { ASSET_PIECE_LABEL } from "../patrimonio-labels";
@@ -48,6 +49,7 @@ interface PlayerOption {
   id: string;
   name: string;
   jerseyNumber: number | null;
+  registrationProfile?: unknown;
 }
 
 interface AssetFormDialogProps {
@@ -321,7 +323,7 @@ export function AssetFormDialog({
                     <option value="">Nenhum</option>
                     {dialogPlayers.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
+                        {getPlayerListDisplayName(p)} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
                       </option>
                     ))}
                   </select>
