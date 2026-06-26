@@ -124,14 +124,23 @@ export function PsychologySchedulingCard({
   const tenantId = filterClube || players.find((p) => p.id === filterAtleta)?.tenantId || "";
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const { categories: allFixtureCategories } = useFixtureCategories();
-  const clubCategories = useMemo(
-    () => filterCategoriesForTenant(allFixtureCategories, selectedTenant?.categories),
-    [allFixtureCategories, selectedTenant?.categories],
-  );
+  const clubCategories = useMemo(() => {
+    const fromTenant = filterCategoriesForTenant(
+      allFixtureCategories,
+      selectedTenant?.categories,
+    );
+    if (selectedTenant?.categories?.length) return fromTenant;
+    const inRoster = new Set(
+      players
+        .filter((p) => p.tenantId === tenantId)
+        .map((p) => p.category)
+        .filter((v): v is string => Boolean(v)),
+    );
+    if (inRoster.size === 0) return fromTenant;
+    return allFixtureCategories.filter((c) => inRoster.has(c.value));
+  }, [allFixtureCategories, selectedTenant?.categories, players, tenantId]);
 
-  useEffect(() => {
-    if (filterCategoria) setCategory(filterCategoria);
-  }, [filterCategoria]);
+  const [spacesError, setSpacesError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tenantId) {
@@ -152,12 +161,31 @@ export function PsychologySchedulingCard({
     if (!tenantId) {
       setSpaces([]);
       setSpaceId("");
+      setSpacesError(null);
       return;
     }
     api
       .get<ActivitySpace[]>(`/football-activity-spaces?tenantId=${encodeURIComponent(tenantId)}`)
-      .then(({ data }) => setSpaces(Array.isArray(data) ? data : []))
-      .catch(() => setSpaces([]));
+      .then(({ data }) => {
+        setSpaces(Array.isArray(data) ? data : []);
+        setSpacesError(null);
+      })
+      .catch((err: unknown) => {
+        setSpaces([]);
+        const msg =
+          err && typeof err === "object" && "response" in err
+            ? (err as { response?: { data?: { message?: string }; status?: number } }).response?.data
+                ?.message
+            : null;
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        setSpacesError(
+          typeof msg === "string"
+            ? msg
+            : status === 403
+              ? "Sem permissão para listar espaços — verifique o módulo Saúde na API."
+              : "Não foi possível carregar os espaços do clube.",
+        );
+      });
   }, [tenantId]);
 
   useEffect(() => {
@@ -311,6 +339,13 @@ export function PsychologySchedulingCard({
           ))}
         </SelectContent>
       </Select>
+      {spacesError ? (
+        <p className="mt-1 text-xs text-destructive">{spacesError}</p>
+      ) : tenantId && spaces.length === 0 ? (
+        <p className="mt-1 text-xs text-muted-foreground">
+          Nenhum espaço cadastrado para este clube.
+        </p>
+      ) : null}
     </div>
   );
 

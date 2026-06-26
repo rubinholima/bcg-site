@@ -26,7 +26,8 @@ import { emptyPsychAnamnesis, psychEntryLabel } from "@/lib/psych-anamnesis";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import type { Psychologist } from "@/types/psychologist";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { FIXTURE_CATEGORIES, filterCategoriesForTenant } from "@/lib/fixture-categories";
+import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 
 interface PlayerOption {
@@ -256,8 +257,15 @@ export default function ConsultasPage() {
   });
   const tenantsForClubeDropdown = clubesOnly.length > 0 ? clubesOnly : tenants;
   const categoriesInUse = Array.from(
-    new Set(playersByClube.map((p) => p.category).filter(Boolean))
+    new Set(playersByClube.map((p) => p.category).filter(Boolean)),
   ) as string[];
+  const { categories: allFixtureCategories } = useFixtureCategories();
+  const selectedTenantForFilter = tenants.find((t) => t.id === filterClube);
+  const categoriesForFilter = filterClube
+    ? filterCategoriesForTenant(allFixtureCategories, selectedTenantForFilter?.categories).filter(
+        (c) => categoriesInUse.length === 0 || categoriesInUse.includes(c.value),
+      )
+    : FIXTURE_CATEGORIES.filter((c) => categoriesInUse.includes(c.value));
   const historicoAtleta = filterAtleta
     ? consultations
         .filter((c) => c.playerId === filterAtleta && c.status !== "completed")
@@ -469,6 +477,7 @@ export default function ConsultasPage() {
                 onValueChange={(v) => {
                   setFilterClube(v === "all" ? "" : v);
                   setFilterAtleta("");
+                  setFilterCategoria("");
                 }}
               >
                 <SelectTrigger className="w-full text-foreground">
@@ -515,7 +524,7 @@ export default function ConsultasPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  {FIXTURE_CATEGORIES.filter((c) => categoriesInUse.includes(c.value)).map((c) => (
+                  {categoriesForFilter.map((c) => (
                     <SelectItem key={c.value} value={c.value}>
                       {c.labelPT}
                     </SelectItem>
