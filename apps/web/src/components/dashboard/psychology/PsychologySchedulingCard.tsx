@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ClipboardList, Loader2, MapPin, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -351,6 +351,19 @@ export function PsychologySchedulingCard({
 
   const noteDialogRow = noteDialogIdx != null ? attendance[noteDialogIdx] : null;
 
+  const allPresent = attendance.length > 0 && attendance.every((r) => r.present === true);
+  const somePresent = attendance.some((r) => r.present === true);
+  const headerCheckRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const el = headerCheckRef.current;
+    if (el) el.indeterminate = somePresent && !allPresent;
+  }, [somePresent, allPresent]);
+
+  function setAllPresent(value: boolean) {
+    setAttendance((prev) => prev.map((r) => ({ ...r, present: value })));
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -518,14 +531,41 @@ export function PsychologySchedulingCard({
           {attendance.length > 0 ? (
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Chamada de presença</CardTitle>
-                <CardDescription>{attendance.length} atleta{attendance.length > 1 ? "s" : ""} na categoria</CardDescription>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-base">Chamada de presença</CardTitle>
+                    <CardDescription>
+                      {attendance.length} atleta{attendance.length > 1 ? "s" : ""} na categoria
+                    </CardDescription>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[36px] shrink-0"
+                    onClick={() => setAllPresent(!allPresent)}
+                  >
+                    {allPresent ? "Desmarcar todos" : "Marcar todos presentes"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="max-h-[320px] overflow-y-auto p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-14">Presente</TableHead>
+                      <TableHead className="w-14">
+                        <div className="flex items-center gap-2">
+                          <input
+                            ref={headerCheckRef}
+                            type="checkbox"
+                            checked={allPresent}
+                            onChange={(e) => setAllPresent(e.target.checked)}
+                            className="h-4 w-4 shrink-0"
+                            aria-label="Marcar todos presentes"
+                          />
+                          <span>Presente</span>
+                        </div>
+                      </TableHead>
                       <TableHead>Atleta</TableHead>
                       <TableHead className="w-16 text-center">Obs.</TableHead>
                     </TableRow>
