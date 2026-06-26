@@ -142,20 +142,31 @@ export function PsychologySchedulingCard({
 
   const [spacesError, setSpacesError] = useState<string | null>(null);
 
+  const categoryLockedByFilter = Boolean(
+    filterCategoria && clubCategories.some((c) => c.value === filterCategoria),
+  );
+
+  const effectiveCategory = useMemo(() => {
+    if (categoryLockedByFilter) return filterCategoria;
+    if (category && clubCategories.some((c) => c.value === category)) return category;
+    return "";
+  }, [categoryLockedByFilter, filterCategoria, category, clubCategories]);
+
   useEffect(() => {
     if (!tenantId) {
       setCategory("");
       return;
     }
     if (clubCategories.length === 0) return;
+    if (categoryLockedByFilter) {
+      setCategory(filterCategoria);
+      return;
+    }
     setCategory((prev) => {
       if (prev && clubCategories.some((c) => c.value === prev)) return prev;
-      if (filterCategoria && clubCategories.some((c) => c.value === filterCategoria)) {
-        return filterCategoria;
-      }
       return clubCategories[0]?.value ?? "";
     });
-  }, [tenantId, clubCategories, filterCategoria]);
+  }, [tenantId, clubCategories, filterCategoria, categoryLockedByFilter]);
 
   const reloadSpaces = useCallback(() => {
     if (!tenantId) {
@@ -201,13 +212,13 @@ export function PsychologySchedulingCard({
   }, [reloadSpaces]);
 
   const loadRoster = useCallback(async () => {
-    if (!tenantId || !category) {
+    if (!tenantId || !effectiveCategory) {
       setAttendance([]);
       return;
     }
     try {
       const { data } = await api.get<PsychologyAttendanceRow[]>(
-        `/psychology-sessions/category-roster?tenantId=${encodeURIComponent(tenantId)}&category=${encodeURIComponent(category)}`,
+        `/psychology-sessions/category-roster?tenantId=${encodeURIComponent(tenantId)}&category=${encodeURIComponent(effectiveCategory)}`,
       );
       setAttendance(
         Array.isArray(data)
@@ -222,7 +233,7 @@ export function PsychologySchedulingCard({
     } catch {
       setAttendance([]);
     }
-  }, [tenantId, category]);
+  }, [tenantId, effectiveCategory]);
 
   useEffect(() => {
     if (tab === "grupo") void loadRoster();
@@ -271,8 +282,14 @@ export function PsychologySchedulingCard({
       showFeedback("Atenção", "Selecione o atleta para atendimento presencial.", "warning");
       return;
     }
-    if (sessionType === "grupo" && !category) {
-      showFeedback("Atenção", "Selecione a categoria do grupo.", "warning");
+    if (sessionType === "grupo" && !effectiveCategory) {
+      showFeedback(
+        "Atenção",
+        categoryLockedByFilter
+          ? "Categoria inválida para este clube."
+          : "Selecione a categoria no filtro acima ou no campo do grupo.",
+        "warning",
+      );
       return;
     }
     setSaving(true);
@@ -282,7 +299,7 @@ export function PsychologySchedulingCard({
         sessionType,
         date: newDate,
         time: newTime,
-        category: sessionType === "grupo" ? category : undefined,
+        category: sessionType === "grupo" ? effectiveCategory : undefined,
         playerId: sessionType === "presencial" ? filterAtleta : undefined,
         psychologistId: psychologistId || undefined,
         estagiarioId: estagiarioId || undefined,
@@ -500,27 +517,34 @@ export function PsychologySchedulingCard({
               Selecione o clube no filtro acima para ver as categorias e locais do clube.
             </p>
           ) : null}
-          <div>
-            <Label className="text-xs text-muted-foreground">Categoria do grupo</Label>
-            <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
-              <SelectTrigger className="mt-1 text-foreground">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">—</SelectItem>
-                {clubCategories.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.labelPT}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {tenantId && clubCategories.length === 0 ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Nenhuma categoria liberada para este clube — configure em Empresas.
-              </p>
-            ) : null}
-          </div>
+          {!categoryLockedByFilter && tenantId ? (
+            <div>
+              <Label className="text-xs text-muted-foreground">Categoria do grupo</Label>
+              <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
+                <SelectTrigger className="mt-1 text-foreground">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">—</SelectItem>
+                  {clubCategories.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.labelPT}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {clubCategories.length === 0 ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Nenhuma categoria liberada para este clube — configure em Empresas.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+          {tenantId && !effectiveCategory && categoryLockedByFilter === false ? (
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              Selecione a categoria no filtro acima ou no campo abaixo.
+            </p>
+          ) : null}
           {locationSelect}
           <textarea
             className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
@@ -616,10 +640,10 @@ export function PsychologySchedulingCard({
                 </Table>
               </CardContent>
             </Card>
-          ) : category && tenantId ? (
+          ) : effectiveCategory && tenantId ? (
             <p className="text-sm text-muted-foreground">Nenhum atleta nesta categoria.</p>
           ) : null}
-          <Button type="button" disabled={saving || !category} onClick={() => void saveSession("grupo")}>
+          <Button type="button" disabled={saving || !effectiveCategory} onClick={() => void saveSession("grupo")}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Users className="mr-2 h-4 w-4" />}
             Registrar sessão em grupo
           </Button>
