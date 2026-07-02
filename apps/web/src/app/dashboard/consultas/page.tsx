@@ -259,6 +259,12 @@ export default function ConsultasPage() {
   }, [canAccessModule]);
 
   useEffect(() => {
+    if (tenants.length === 1 && !filterClube) {
+      setFilterClube(tenants[0].id);
+    }
+  }, [tenants, filterClube]);
+
+  useEffect(() => {
     if (!filterAtleta) {
       setPsychList([]);
       return;
@@ -309,7 +315,7 @@ export default function ConsultasPage() {
       })()
     : "";
 
-  const handleCreateMeet = async () => {
+  const handleCreateMeet = async (performerName?: string) => {
     if (!filterAtleta?.trim() || !newDate.trim()) {
       showFeedback(
         "Atenção",
@@ -344,6 +350,7 @@ export default function ConsultasPage() {
           link?: string;
           notes?: string;
         }>;
+        const professionalName = performerName?.trim() || newPsychologist.trim() || undefined;
         const updated = [
           ...current,
           {
@@ -353,7 +360,7 @@ export default function ConsultasPage() {
             time: newTime,
             link: data.meetLink,
             notes: newNotes.trim() || undefined,
-            psychologist: newPsychologist.trim() || undefined,
+            psychologist: professionalName,
           },
         ];
         await api.patch(`/players/${filterAtleta}`, { onlineConsultations: updated });
@@ -361,7 +368,7 @@ export default function ConsultasPage() {
         const linkToSend = data.meetLink;
         const dateToSend = newDate;
         const timeToSend = newTime;
-        const psychologistToSend = newPsychologist.trim() || undefined;
+        const psychologistToSend = professionalName;
         setNewDate("");
         setNewTime("09:00");
         setNewNotes("");
@@ -597,7 +604,7 @@ export default function ConsultasPage() {
             onNewTimeChange={setNewTime}
             onNewNotesChange={setNewNotes}
             onNewPsychologistChange={setNewPsychologist}
-            onCreateMeet={() => void handleCreateMeet()}
+            onCreateMeet={(performerName) => void handleCreateMeet(performerName)}
             onScheduled={() => setCalendarRefreshTrigger((t) => t + 1)}
             showFeedback={showFeedback}
           />

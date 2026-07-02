@@ -18,7 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getPublicImageUrl } from "@/lib/media-url";
-import { getConsultationModality, playerPsychologyProfileHref } from "@/lib/consultation-display";
+import { getConsultationModality, formatPersonFirstLastName, playerPsychologyProfileHref } from "@/lib/consultation-display";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardTitle } from "@/components/ui/card";
 import {
@@ -518,17 +518,19 @@ export function ConsultasCalendar({
                             <span className="text-sm">{c.time}</span>
                           )}
                           {c.psychologist && (
-                            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <span className="flex min-w-0 max-w-[9rem] items-center gap-1 text-sm text-muted-foreground sm:max-w-[11rem]">
                               {c.psychologistPhotoUrl ? (
                                 <img
                                   src={getPublicImageUrl(c.psychologistPhotoUrl)}
-                                  alt={c.psychologist}
+                                  alt={formatPersonFirstLastName(c.psychologist)}
                                   className="h-6 w-6 rounded-full object-cover shrink-0"
                                 />
                               ) : (
                                 <UserCircle className="h-3.5 w-3.5 shrink-0" />
                               )}
-                              {c.psychologist}
+                              <span className="truncate" title={c.psychologist}>
+                                {formatPersonFirstLastName(c.psychologist)}
+                              </span>
                             </span>
                           )}
                           <span

@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import {
@@ -43,18 +49,45 @@ export class PlayersService {
     private readonly agenda: FutebolAgendaService,
   ) {}
 
-  async findAll(filters?: {
-    tenantId?: string;
-    category?: string;
-    position?: string;
-    search?: string;
-    situation?: string;
-    availability?: string;
-    archived?: boolean;
-    loaned?: boolean;
-  }) {
+  private assertTenantAccess(allowedTenantIds: string[] | null | undefined, tenantId: string): void {
+    if (!allowedTenantIds?.length) return;
+    if (!allowedTenantIds.includes(tenantId)) {
+      throw new ForbiddenException('Acesso negado a esta empresa.');
+    }
+  }
+
+  private applyAllowedTenantsToWhere(
+    where: Prisma.PlayerWhereInput,
+    allowedTenantIds: string[] | null | undefined,
+    requestedTenantId?: string,
+  ): void {
+    if (!allowedTenantIds?.length) {
+      if (requestedTenantId) where.tenantId = requestedTenantId;
+      return;
+    }
+    if (requestedTenantId) {
+      this.assertTenantAccess(allowedTenantIds, requestedTenantId);
+      where.tenantId = requestedTenantId;
+      return;
+    }
+    where.tenantId = { in: allowedTenantIds };
+  }
+
+  async findAll(
+    filters?: {
+      tenantId?: string;
+      category?: string;
+      position?: string;
+      search?: string;
+      situation?: string;
+      availability?: string;
+      archived?: boolean;
+      loaned?: boolean;
+    },
+    allowedTenantIds: string[] | null = null,
+  ) {
     const where: Prisma.PlayerWhereInput = {};
-    if (filters?.tenantId) where.tenantId = filters.tenantId;
+    this.applyAllowedTenantsToWhere(where, allowedTenantIds, filters?.tenantId);
     if (filters?.category) where.category = filters.category;
     if (filters?.position?.trim()) where.position = filters.position.trim();
     if (filters?.search?.trim()) {
@@ -156,18 +189,19 @@ export class PlayersService {
     return rows.map((r) => r.id);
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, allowedTenantIds: string[] | null = null) {
     const player = await this.prisma.player.findUnique({
       where: { id },
       include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
     if (!player) throw new NotFoundException('Jogador não encontrado');
+    this.assertTenantAccess(allowedTenantIds, player.tenantId);
     return player;
   }
 
   /** Viagens do hub de logística vinculadas ao atleta (quarto ou categoria). */
-  async findTravelHistory(playerId: string) {
-    const player = await this.findOne(playerId);
+  async findTravelHistory(playerId: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(playerId, allowedTenantIds);
     const travels = await this.prisma.travelLogistics.findMany({
       where: {
         tenantId: player.tenantId,
@@ -214,13 +248,19 @@ export class PlayersService {
     );
   }
 
-  async findAgendaTimeline(playerId: string, from?: string, to?: string) {
+  async findAgendaTimeline(
+    playerId: string,
+    from?: string,
+    to?: string,
+    allowedTenantIds: string[] | null = null,
+  ) {
+    await this.findOne(playerId, allowedTenantIds);
     return this.agenda.findPlayerAgenda(playerId, from, to);
   }
 
   /** Contratos do atleta — Jurídico (LegalDocument) + RH (Employment por CPF). */
-  async findContractsOverview(playerId: string) {
-    const player = await this.findOne(playerId);
+  async findContractsOverview(playerId: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(playerId, allowedTenantIds);
     const profile = this.parseRegistrationProfile(player.registrationProfile);
     const tenantName = player.tenant?.name ?? 'Clube';
 
@@ -276,8 +316,9 @@ export class PlayersService {
   async streamLegalDocumentFile(
     playerId: string,
     documentId: string,
+    allowedTenantIds: string[] | null = null,
   ): Promise<{ buffer: Buffer; filename: string }> {
-    await this.findOne(playerId);
+    await this.findOne(playerId, allowedTenantIds);
     const doc = await this.prisma.legalDocument.findFirst({
       where: { id: documentId, playerId },
       include: { player: { select: { name: true } } },
@@ -517,8 +558,9 @@ export class PlayersService {
     file: { buffer: Buffer; originalname: string; mimetype?: string },
     name: string,
     documentType: string,
+    allowedTenantIds: string[] | null = null,
   ) {
-    await this.findOne(playerId);
+    await this.findOne(playerId, allowedTenantIds);
     if (!name?.trim()) throw new BadRequestException('Nome do documento é obrigatório');
     if (!documentType?.trim()) throw new BadRequestException('Tipo do documento é obrigatório');
 
@@ -552,7 +594,8 @@ export class PlayersService {
     };
   }
 
-  async create(dto: CreatePlayerDto) {
+  async create(dto: CreatePlayerDto, allowedTenantIds: string[] | null = null) {
+    this.assertTenantAccess(allowedTenantIds, dto.tenantId);
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException(`Empresa/clube "${dto.tenantId}" não encontrado`);
 
@@ -567,9 +610,10 @@ export class PlayersService {
     return player;
   }
 
-  async update(id: string, dto: UpdatePlayerDto) {
+  async update(id: string, dto: UpdatePlayerDto, allowedTenantIds: string[] | null = null) {
     const current = await this.prisma.player.findUnique({ where: { id } });
     if (!current) throw new NotFoundException('Jogador não encontrado');
+    this.assertTenantAccess(allowedTenantIds, current.tenantId);
 
     if (dto.registrationProfile !== undefined) {
       this.assertRegistrationIdentifiers(dto.registrationProfile);
@@ -640,7 +684,7 @@ export class PlayersService {
     }
 
     await this.syncBodyMetricsFromSources(id);
-    return this.findOne(id);
+    return this.findOne(id, allowedTenantIds);
   }
 
   /**
@@ -694,9 +738,8 @@ export class PlayersService {
   }
 
   /** Verifica integrações antes de excluir — para exibir aviso na UI. */
-  async getDeleteImpact(id: string) {
-    const player = await this.prisma.player.findUnique({ where: { id } });
-    if (!player) throw new NotFoundException('Jogador não encontrado');
+  async getDeleteImpact(id: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(id, allowedTenantIds);
 
     const [legalDocuments, nutritionAssessments, assignedAssets, supplementGuides] = await Promise.all([
       this.prisma.legalDocument.count({ where: { playerId: id } }),
@@ -734,8 +777,8 @@ export class PlayersService {
     };
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(id, allowedTenantIds);
     await this.prisma.player.delete({ where: { id } });
   }
 

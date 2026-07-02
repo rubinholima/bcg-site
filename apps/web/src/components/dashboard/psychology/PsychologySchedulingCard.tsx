@@ -92,7 +92,7 @@ export function PsychologySchedulingCard({
   onNewTimeChange: (v: string) => void;
   onNewNotesChange: (v: string) => void;
   onNewPsychologistChange: (v: string) => void;
-  onCreateMeet: () => void;
+  onCreateMeet: (performerName?: string) => void;
   onScheduled: () => void;
   showFeedback: (title: string, message: string, variant: "info" | "success" | "warning" | "error") => void;
 }) {
@@ -381,6 +381,18 @@ export function PsychologySchedulingCard({
     setAttendance((prev) => prev.map((r) => ({ ...r, present: value })));
   }
 
+  function resolvePerformerName(): string | undefined {
+    if (estagiarioId) {
+      const estagiario = estagiarios.find((p) => p.id === estagiarioId);
+      if (estagiario?.name?.trim()) return estagiario.name.trim();
+    }
+    if (psychologistId) {
+      const psicologo = psychologos.find((p) => p.id === psychologistId);
+      if (psicologo?.name?.trim()) return psicologo.name.trim();
+    }
+    return newPsychologist.trim() || undefined;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -459,15 +471,9 @@ export function PsychologySchedulingCard({
           ) : (
             <>
               <p className="text-sm font-medium">{selectedPlayerName}</p>
-              <div>
-                <Label className="text-xs text-muted-foreground">Psicólogo (lista legada Meet)</Label>
-                <Input
-                  className="mt-1 text-foreground"
-                  value={newPsychologist}
-                  onChange={(e) => onNewPsychologistChange(e.target.value)}
-                  placeholder="Nome do profissional"
-                />
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Quem atende: selecione estagiária(o) ou psicóloga(o) nos campos acima.
+              </p>
               <textarea
                 className="w-full min-h-[72px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
                 placeholder="Anotações"
@@ -475,7 +481,11 @@ export function PsychologySchedulingCard({
                 onChange={(e) => onNewNotesChange(e.target.value)}
               />
               {meetAvailable ? (
-                <Button type="button" onClick={onCreateMeet} disabled={meetCreating || !newDate}>
+                <Button
+                  type="button"
+                  onClick={() => onCreateMeet(resolvePerformerName())}
+                  disabled={meetCreating || !newDate}
+                >
                   {meetCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Video className="mr-2 h-4 w-4" />}
                   Criar no Meet
                 </Button>

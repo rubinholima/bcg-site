@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -25,15 +26,22 @@ export class PsychologySessionsService {
     private readonly futebolAgenda: FutebolAgendaService,
   ) {}
 
-  async list(params?: {
-    tenantId?: string;
-    from?: string;
-    to?: string;
-    sessionType?: string;
-    category?: string;
-  }) {
+  async list(
+    params?: {
+      tenantId?: string;
+      from?: string;
+      to?: string;
+      sessionType?: string;
+      category?: string;
+    },
+    allowedTenantIds: string[] | null = null,
+  ) {
     const where: Record<string, unknown> = {};
-    if (params?.tenantId) where.tenantId = params.tenantId;
+    if (params?.tenantId) {
+      where.tenantId = params.tenantId;
+    } else if (allowedTenantIds?.length) {
+      where.tenantId = { in: allowedTenantIds };
+    }
     if (params?.sessionType) where.sessionType = params.sessionType;
     if (params?.category) where.category = params.category;
     if (params?.from || params?.to) {
@@ -48,12 +56,15 @@ export class PsychologySessionsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, allowedTenantIds: string[] | null = null) {
     const row = await this.prisma.psychologySession.findUnique({
       where: { id },
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
     if (!row) throw new NotFoundException('Sessão não encontrada');
+    if (allowedTenantIds?.length && !allowedTenantIds.includes(row.tenantId)) {
+      throw new ForbiddenException('Acesso negado a esta empresa.');
+    }
     return row;
   }
 

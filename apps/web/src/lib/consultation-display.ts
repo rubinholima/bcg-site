@@ -36,6 +36,24 @@ export function getConsultationModality(type?: string, link?: string): Consultat
   };
 }
 
+export function getConsultationPerformerName(input: {
+  psychologist?: string | null;
+  estagiario?: string | null;
+}): string | undefined {
+  const performer = input.estagiario?.trim() || input.psychologist?.trim();
+  return performer || undefined;
+}
+
+/** Primeiro + último nome para não quebrar layout (ex.: RÍVIA DA SILVA MARTINS → RÍVIA MARTINS). */
+export function formatPersonFirstLastName(name?: string | null): string {
+  const trimmed = name?.trim();
+  if (!trimmed) return "";
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return parts[0] ?? "";
+  if (parts.length === 2) return `${parts[0]} ${parts[1]}`;
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+}
+
 export function playerPsychologyProfileHref(playerId: string, from?: "consultas"): string {
   const params = new URLSearchParams({ tab: "psicologica" });
   if (from) params.set("from", from);

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GoogleCalendarService } from './google-calendar.service';
 import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
@@ -28,13 +28,33 @@ export class ConsultationsService {
     private readonly googleCalendar: GoogleCalendarService,
   ) {}
 
-  async listAllConsultations(): Promise<Array<ConsultationItem & { id: string; tenantId: string }>> {
+  private consultationPerformerName(
+    psychologistName?: string | null,
+    estagiarioName?: string | null,
+    legacyPsychologist?: string,
+  ): string | undefined {
+    const performer =
+      estagiarioName?.trim() || psychologistName?.trim() || legacyPsychologist?.trim();
+    return performer || undefined;
+  }
+
+  private tenantScopeWhere(allowedTenantIds: string[] | null | undefined): { tenantId?: { in: string[] } } {
+    if (!allowedTenantIds?.length) return {};
+    return { tenantId: { in: allowedTenantIds } };
+  }
+
+  async listAllConsultations(
+    allowedTenantIds: string[] | null = null,
+  ): Promise<Array<ConsultationItem & { id: string; tenantId: string }>> {
+    const tenantFilter = this.tenantScopeWhere(allowedTenantIds);
     const [players, psychList, sessions] = await Promise.all([
       this.prisma.player.findMany({
+        where: tenantFilter,
         include: { tenant: { select: { name: true, logoUrl: true } } },
       }),
       this.prisma.psychologist.findMany({ select: { name: true, photoUrl: true } }),
       this.prisma.psychologySession.findMany({
+        where: tenantFilter,
         include: { tenant: { select: { name: true, logoUrl: true } } },
       }),
     ]);
@@ -52,7 +72,7 @@ export class ConsultationsService {
         const c = list[i];
         const date = (c.date as string) ?? '';
         const status = (c.status as string) ?? 'scheduled';
-        const psychName = (c.psychologist as string)?.trim();
+        const psychName = this.consultationPerformerName(undefined, undefined, c.psychologist as string);
         result.push({
           id: `${p.id}-${i}`,
           playerId: p.id,
@@ -80,7 +100,7 @@ export class ConsultationsService {
       const attendance = Array.isArray(s.attendance)
         ? (s.attendance as Array<{ playerName?: string }>)
         : [];
-      const psychName = s.psychologistName?.trim();
+      const psychName = this.consultationPerformerName(s.psychologistName, s.estagiarioName);
       result.push({
         id: `session-${s.id}`,
         playerId: s.playerId ?? '',
@@ -136,13 +156,25 @@ export class ConsultationsService {
   }
 
   /** Remove uma consulta pelo id (formato playerId-index) */
-  async removeConsultation(consultationId: string): Promise<boolean> {
+  async removeConsultation(
+    consultationId: string,
+    allowedTenantIds: string[] | null = null,
+  ): Promise<boolean> {
     if (consultationId.startsWith('session-')) {
       const sessionId = consultationId.slice('session-'.length);
       try {
+        const session = await this.prisma.psychologySession.findUnique({
+          where: { id: sessionId },
+          select: { tenantId: true },
+        });
+        if (!session) return false;
+        if (allowedTenantIds?.length && !allowedTenantIds.includes(session.tenantId)) {
+          throw new ForbiddenException('Acesso negado a esta empresa.');
+        }
         await this.prisma.psychologySession.delete({ where: { id: sessionId } });
         return true;
-      } catch {
+      } catch (err) {
+        if (err instanceof ForbiddenException) throw err;
         return false;
       }
     }
@@ -154,9 +186,12 @@ export class ConsultationsService {
 
     const player = await this.prisma.player.findUnique({
       where: { id: playerId },
-      select: { onlineConsultations: true },
+      select: { onlineConsultations: true, tenantId: true },
     });
     if (!player) return false;
+    if (allowedTenantIds?.length && !allowedTenantIds.includes(player.tenantId)) {
+      throw new ForbiddenException('Acesso negado a esta empresa.');
+    }
 
     const list = Array.isArray(player.onlineConsultations)
       ? (player.onlineConsultations as Record<string, unknown>[])
@@ -185,10 +220,19 @@ export class ConsultationsService {
       notes?: string;
       durationSeconds?: number;
     },
+    allowedTenantIds: string[] | null = null,
   ): Promise<boolean> {
     if (consultationId.startsWith('session-')) {
       const sessionId = consultationId.slice('session-'.length);
       try {
+        const existing = await this.prisma.psychologySession.findUnique({
+          where: { id: sessionId },
+          select: { tenantId: true },
+        });
+        if (!existing) return false;
+        if (allowedTenantIds?.length && !allowedTenantIds.includes(existing.tenantId)) {
+          throw new ForbiddenException('Acesso negado a esta empresa.');
+        }
         const row = await this.prisma.psychologySession.update({
           where: { id: sessionId },
           data: {
@@ -205,7 +249,8 @@ export class ConsultationsService {
           // lightweight status patch for calendar actions
         }
         return true;
-      } catch {
+      } catch (err) {
+        if (err instanceof ForbiddenException) throw err;
         return false;
       }
     }
@@ -217,9 +262,12 @@ export class ConsultationsService {
 
     const player = await this.prisma.player.findUnique({
       where: { id: playerId },
-      select: { onlineConsultations: true, name: true, registrationProfile: true },
+      select: { onlineConsultations: true, name: true, registrationProfile: true, tenantId: true },
     });
     if (!player) return false;
+    if (allowedTenantIds?.length && !allowedTenantIds.includes(player.tenantId)) {
+      throw new ForbiddenException('Acesso negado a esta empresa.');
+    }
 
     const list = Array.isArray(player.onlineConsultations)
       ? (player.onlineConsultations as Record<string, unknown>[])

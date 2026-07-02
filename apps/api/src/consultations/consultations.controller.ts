@@ -1,10 +1,23 @@
-import { BadRequestException, Body, Delete, Get, Param, Patch, Post, Controller, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Controller,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import type { Request } from 'express';
 import { ConsultationsService } from './consultations.service';
 import { ConsultationNotifyService, NotifyConsultationPayload } from './consultation-notify.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
+import { TenantAccessService } from '../auth/tenant-access.service';
 
 @Controller('consultations')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -12,13 +25,20 @@ export class ConsultationsController {
   constructor(
     private readonly service: ConsultationsService,
     private readonly notifyService: ConsultationNotifyService,
+    private readonly tenantAccess: TenantAccessService,
   ) {}
+
+  private async allowedTenants(req: Request & { user: CognitoJwtPayload }) {
+    const role = req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user';
+    return this.tenantAccess.getAllowedTenantIds(req.user.sub, role);
+  }
 
   @Get()
   @UseGuards(ModuleAccessGuard)
   @RequireModule('saude')
-  async list() {
-    return this.service.listAllConsultations();
+  async list(@Req() req: Request & { user: CognitoJwtPayload }) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.listAllConsultations(allowed);
   }
 
   @Get('meet-available')
@@ -69,8 +89,12 @@ export class ConsultationsController {
   @Delete(':id')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('saude')
-  async removeConsultation(@Param('id') id: string) {
-    const ok = await this.service.removeConsultation(id);
+  async removeConsultation(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    const ok = await this.service.removeConsultation(id, allowed);
     if (!ok) {
       throw new BadRequestException('Consulta não encontrada');
     }
@@ -82,6 +106,7 @@ export class ConsultationsController {
   @UseGuards(ModuleAccessGuard)
   @RequireModule('saude')
   async updateConsultation(
+    @Req() req: Request & { user: CognitoJwtPayload },
     @Param('id') id: string,
     @Body()
     body: {
@@ -93,7 +118,8 @@ export class ConsultationsController {
       durationSeconds?: number;
     },
   ) {
-    const ok = await this.service.updateConsultation(id, body);
+    const allowed = await this.allowedTenants(req);
+    const ok = await this.service.updateConsultation(id, body, allowed);
     if (!ok) {
       throw new BadRequestException('Consulta não encontrada');
     }
