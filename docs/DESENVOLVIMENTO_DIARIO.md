@@ -75,9 +75,11 @@ bash ~/bcg-site/infra/lightsail/install-server-deploy.sh
 
 ## **PENDÊNCIE / PRÓXIMO**
 
-- Rodar `install-server-deploy.sh` no Lightsail se ainda não rodou após este commit.
-- Adicionar remote no PC: `git remote add production bcg:/srv/git/bcg.git`
-- Primeiro push: `git push production develop:develop` — validar saída `[deploy] commits puxados…`
+- ~~Rodar `install-server-deploy.sh` no Lightsail~~ ✅ feito
+- ~~Adicionar remote no PC~~ ✅ `production` → `bcg:/srv/git/bcg.git`
+- ~~Primeiro push~~ ✅ `55ff07b` — API `/group` 200, PM2 online
+
+**Commit:** `55ff07b` · push `origin/develop` + `production/develop`
 
 ---
 
