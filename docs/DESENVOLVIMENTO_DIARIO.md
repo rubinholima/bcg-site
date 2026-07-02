@@ -21,6 +21,7 @@
 - **Módulos de página** — Padrão: cor de fundo, overlay, títulos PT/EN; Hero com carrossel; ver seção MODULOS_PAGINA em DOCS CONSOLIDADOS (final do arquivo).
 - **Módulos do dashboard** — Cadastrar em Module + ModuleRole no backend; sidebar com mesmo `moduleSlug`; proteger página com `canAccessModule("slug")`. Ver seção MODULOS_DASHBOARD em DOCS CONSOLIDADOS.
 - **Encerrar o dia** — Quando o usuário disser "encerre o dia": (1) Commit de tudo. (2) No **topo** da seção "POR DIA" (logo abaixo das regras), adicionar **📅 [DATA] — ENCERRAMENTO** (data do sistema via `date`), com o que foi feito, arquivos, commit e push. (3) `git push origin <branch>`.
+- **Deploy produção (padrão Atrium)** — Após commit: `git push origin develop` **e** `git push production develop:develop`. O hook no Lightsail builda e reinicia PM2 **sem** SSH manual. Rebuild opcional no servidor: `~/deploy.sh`. Ver seção **30/06/2026** abaixo e `infra/lightsail/`.
 - **Estrutura do doc** — O topo do arquivo tem sempre: (1) Regras diárias. (2) Imediatamente após, a seção "POR DIA — ENCERRAMENTOS". Nada entre elas.
 - **Git** — Trabalhar em branch; não commitar direto em main.
 - **Cursor OOM** — `NODE_OPTIONS=--max-old-space-size=8192`; abrir um projeto por vez; ao reabrir após OOM marcar "Don't restore editors". Ver seção CURSOR_EVITAR_OOM em DOCS CONSOLIDADOS.
@@ -31,6 +32,54 @@
 ---
 
 # 📅 POR DIA — ENCERRAMENTOS
+
+# 📅 30 DE JUNHO DE 2026 — DEPLOY AUTOMÁTICO (padrão Atrium / ALT)
+
+## **O QUE FOI FEITO**
+
+1. **Deploy push-to-produce** — Mesmo modelo do **Atrium Live Translator (ALT)**: push do PC → hook no servidor → build + PM2, **sem** `ssh` + `./deploy.sh` manual no dia a dia.
+2. **Infra Lightsail** (`infra/lightsail/`):
+   - `deploy.sh` — verbose (commit anterior/atual, commits puxados, arquivos, health `/group`, PM2)
+   - `post-receive` — hook em `/srv/git/bcg.git/hooks/post-receive`
+   - `install-server-deploy.sh` — instalação única no servidor
+   - `home-deploy.sh` — wrapper `~/deploy.sh`
+3. **`deploy.sh` na raiz** — delega para `infra/lightsail/deploy.sh` (compatível com uso antigo).
+4. **Cursor** — `.cursor/rules/deploy-develop.mdc` atualizado: push `origin` + `production`.
+5. **Secrets** — `.env` da API/Web persistem em `~/bcg-site-shared/` (symlink no deploy).
+
+## **FLUXO NO PC (padrão geral Atrium apps)**
+
+```bash
+pnpm build
+git add … && git commit -m "…"
+git push origin develop
+git push production develop:develop   # BCG — branch develop
+# ALT usa: git push production dev:main
+```
+
+## **SERVIDOR (uma vez)**
+
+```bash
+ssh bcg
+bash ~/bcg-site/infra/lightsail/install-server-deploy.sh
+```
+
+**Remotes PC:** `production` → `bcg:/srv/git/bcg.git` · SSH host `bcg` → `44.196.14.114` (ubuntu).
+
+## **ARQUIVOS**
+
+- `infra/lightsail/deploy.sh`, `post-receive`, `install-server-deploy.sh`, `home-deploy.sh`
+- `deploy.sh` (raiz)
+- `.cursor/rules/deploy-develop.mdc`
+- `docs/DESENVOLVIMENTO_DIARIO.md` (esta seção)
+
+## **PENDÊNCIE / PRÓXIMO**
+
+- Rodar `install-server-deploy.sh` no Lightsail se ainda não rodou após este commit.
+- Adicionar remote no PC: `git remote add production bcg:/srv/git/bcg.git`
+- Primeiro push: `git push production develop:develop` — validar saída `[deploy] commits puxados…`
+
+---
 
 # 📅 24 DE JUNHO DE 2026 — ENCERRAMENTO
 

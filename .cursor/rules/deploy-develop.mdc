@@ -1,5 +1,5 @@
 ---
-description: Deploy automático após toda alteração de código — build + commit + push develop
+description: Deploy automático após alteração de código — build + commit + push develop + produção
 alwaysApply: true
 ---
 
@@ -15,7 +15,8 @@ O usuário trabalha em **produção** e já pediu várias vezes: **não pergunta
 2. **`git status`** → **`git add`** só arquivos relevantes (nunca temp, `.gradle`, `backup_clean.sql`, probes locais, etc.).
 3. **`git commit`** — mensagem clara em pt-BR.
 4. **`git push origin develop`**
-5. **Responder** em uma linha: hash do commit + "Push enviado para origin/develop".
+5. **`git push production develop:develop`** — hook no Lightsail roda `deploy.sh` automaticamente (não precisa SSH manual).
+6. **Responder** com hash do commit + confirmação do push (origin + production).
 
 ## Quando o usuário escrever "deploy" explicitamente
 
@@ -27,6 +28,18 @@ Mesmo fluxo acima. Não pedir confirmação extra.
 - Usuário disse explicitamente **não subir** / **só local** / **não commitar**.
 - Não há nada para commitar (working tree limpa).
 
-## Branch
+## Branch e remotes
 
-Sempre **`develop`**, salvo indicação em contrário.
+- Branch de trabalho: **`develop`**
+- **`origin`** → GitHub (`rubinholima/bcg-site`)
+- **`production`** → `bcg:/srv/git/bcg.git` (Lightsail `44.196.14.114`) · push **`develop:develop`**
+
+## Servidor (só se push falhar ou rebuild sem código novo)
+
+- Manual opcional: `~/deploy.sh` no Lightsail (ubuntu@bcg)
+- Instalar hook (uma vez): `bash ~/bcg-site/infra/lightsail/install-server-deploy.sh`
+- Secrets persistem em `~/bcg-site-shared/` (`.env` da API e Web)
+
+## Padrão Atrium (referência)
+
+Mesmo modelo do **ALT** (`ATRIUM-LIVE-TRANSLATOR`): bare repo `/srv/git/*.git`, hook `post-receive`, deploy verbose, push do PC = produção atualizada. Ver `infra/lightsail/` neste repo.

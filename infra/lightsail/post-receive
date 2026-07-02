@@ -1,0 +1,28 @@
+#!/bin/bash
+# Git post-receive — deploy BCG no Lightsail
+# Instalar: /srv/git/bcg.git/hooks/post-receive (chmod +x)
+
+set -e
+
+GIT_DIR="/srv/git/bcg.git"
+WORK_TREE="/home/ubuntu/bcg-site"
+DEPLOY="$WORK_TREE/infra/lightsail/deploy.sh"
+BRANCH="develop"
+
+while read -r oldrev newrev refname; do
+  case "$refname" in
+    refs/heads/develop|refs/heads/main|refs/heads/master)
+      echo "=========================================="
+      echo " BCG deploy — $(date -Iseconds)"
+      echo " push: $oldrev → $newrev ($refname)"
+      echo "=========================================="
+
+      git --git-dir="$GIT_DIR" --work-tree="$WORK_TREE" checkout -f "${refname#refs/heads/}"
+
+      bash "$DEPLOY" --from-hook "$oldrev" "$newrev"
+      ;;
+    *)
+      echo "[deploy] ignorado: $refname"
+      ;;
+  esac
+done
