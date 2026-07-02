@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { playerPsychologyProfileHref } from "@/lib/consultation-display";
 
 /**
  * Redireciona para a ficha do jogador na aba Avaliação psicológica (relatório sintético).
@@ -11,7 +12,9 @@ import { useAuth } from "@/context/AuthContext";
 export default function PsicologiaPlayerRedirectPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = (params?.playerId ?? params?.id) as string | undefined;
+  const fromConsultas = searchParams.get("from") === "consultas";
   const { canAccessModule, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -21,11 +24,11 @@ export default function PsicologiaPlayerRedirectPage() {
       return;
     }
     if (id) {
-      router.replace(`/dashboard/cadastros/jogadores/${id}/edit?tab=psicologica`);
+      router.replace(playerPsychologyProfileHref(id, fromConsultas ? "consultas" : undefined));
     } else {
       router.replace("/dashboard/psicologia");
     }
-  }, [id, canAccessModule, authLoading, router]);
+  }, [id, fromConsultas, canAccessModule, authLoading, router]);
 
   return (
     <div className="flex items-center justify-center py-12">

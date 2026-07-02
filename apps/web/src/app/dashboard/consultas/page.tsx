@@ -28,6 +28,7 @@ import { api } from "@/lib/api";
 import type { Psychologist } from "@/types/psychologist";
 import { FIXTURE_CATEGORIES, filterCategoriesForTenant } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
+import { getConsultationModality, playerPsychologyProfileHref } from "@/lib/consultation-display";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 
 interface PlayerOption {
@@ -54,6 +55,7 @@ interface ConsultationItem {
   category?: string;
   date?: string;
   time?: string;
+  type?: string;
   link?: string;
   notes?: string;
   status?: string;
@@ -109,6 +111,8 @@ function ConsultationRow({
         ? "bg-destructive/20 text-destructive"
         : "bg-amber-500/20 text-amber-600 dark:text-amber-400";
 
+  const modality = getConsultationModality(item.type, item.link);
+
   const handleIniciarSessao = () => {
     if (!item.link || typeof window === "undefined") return;
     const sw = window.screen.availWidth ?? 1024;
@@ -130,6 +134,9 @@ function ConsultationRow({
     <div className="rounded-lg border p-3 text-sm space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-medium text-muted-foreground">{fmt(item.date ?? "", item.time)}</span>
+        <span className={`rounded px-2 py-0.5 text-xs font-medium ${modality.toneClass}`}>
+          {modality.label}
+        </span>
         <span className={`rounded px-2 py-0.5 text-xs font-medium ${statusClass}`}>
           {statusLabel[status] ?? status}
         </span>
@@ -148,12 +155,32 @@ function ConsultationRow({
         </Select>
         {saving && <span className="text-xs text-muted-foreground">Salvando…</span>}
         {item.link && (
+          <Button variant="outline" size="sm" asChild className="gap-1">
+            <Link
+              href={`/dashboard/consultas/abrir-meet?url=${encodeURIComponent(item.link)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Video className="h-3.5 w-3.5" />
+              Abrir reunião
+            </Link>
+          </Button>
+        )}
+        {item.link && (
           <Button variant="default" size="sm" onClick={handleIniciarSessao} className="gap-1">
             <Video className="h-3.5 w-3.5" />
             Iniciar sessão
           </Button>
         )}
       </div>
+      {modality.isOnline && item.link ? (
+        <p className="text-xs text-muted-foreground break-all">
+          Link:{" "}
+          <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">
+            {item.link}
+          </a>
+        </p>
+      ) : null}
       {item.notes && (
         <p className="text-muted-foreground text-xs truncate max-w-full" title={item.notes}>
           {item.notes}
@@ -666,11 +693,18 @@ export default function ConsultasPage() {
       {/* Registro do atleta */}
       <Card>
         <CardContent className="pt-6">
-          <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+          <h3 className="text-lg font-semibold flex flex-wrap items-center gap-2 mb-4">
             <User className="h-5 w-5" />
             Registro do atleta
             {filterAtleta && selectedPlayerName ? (
               <span className="font-normal text-muted-foreground">— {selectedPlayerName}</span>
+            ) : null}
+            {filterAtleta ? (
+              <Button variant="outline" size="sm" className="ml-auto min-h-[36px]" asChild>
+                <Link href={playerPsychologyProfileHref(filterAtleta, "consultas")}>
+                  Ficha psicológica e anamnese
+                </Link>
+              </Button>
             ) : null}
           </h3>
           {!filterAtleta ? null : (

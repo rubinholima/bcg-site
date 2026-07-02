@@ -23,6 +23,7 @@ export function DashboardDeptHeader({
   toolbar,
   aside,
   backHref,
+  backLabel = "Voltar",
   className,
   leading,
   titleClassName,
@@ -39,6 +40,8 @@ export function DashboardDeptHeader({
   /** Ações no canto superior direito (ex.: botão Salvar) quando não há stats. */
   aside?: React.ReactNode;
   backHref?: string;
+  /** Texto do botão voltar (padrão: "Voltar") */
+  backLabel?: string;
   className?: string;
   /** Avatar ou mídia à esquerda do título (ex.: foto do atleta) */
   leading?: React.ReactNode;
@@ -63,7 +66,7 @@ export function DashboardDeptHeader({
           <Button variant="ghost" size="sm" className="-ml-2 h-8 gap-1.5 px-2" asChild>
             <Link href={backHref}>
               <ArrowLeft className="h-4 w-4" />
-              Voltar
+              {backLabel}
             </Link>
           </Button>
         </div>

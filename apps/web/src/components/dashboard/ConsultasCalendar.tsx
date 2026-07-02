@@ -13,8 +13,12 @@ import {
   CalendarOff,
   CalendarClock,
   UserCircle,
+  Video,
+  MapPin,
+  ExternalLink,
 } from "lucide-react";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { getConsultationModality, playerPsychologyProfileHref } from "@/lib/consultation-display";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardTitle } from "@/components/ui/card";
 import {
@@ -466,7 +470,9 @@ export function ConsultasCalendar({
                       : formatDate(dateKey)}
                   </h3>
                   <div className="space-y-2">
-                    {byDate[dateKey].map((c) => (
+                    {byDate[dateKey].map((c) => {
+                      const modality = getConsultationModality(c.type, c.link);
+                      return (
                       <div
                         key={c.id}
                         className="flex flex-col gap-2 rounded-lg border-2 border-border p-3"
@@ -482,12 +488,17 @@ export function ConsultasCalendar({
                             ) : (
                               <User className="h-4 w-4 shrink-0 text-muted-foreground" />
                             )}
-                            <Link
-                              href={`/dashboard/cadastros/jogadores/${c.playerId}/edit`}
-                              className="truncate font-medium hover:underline"
-                            >
-                              {c.playerName}
-                            </Link>
+                            {c.playerId ? (
+                              <Link
+                                href={playerPsychologyProfileHref(c.playerId, "consultas")}
+                                className="truncate font-medium hover:underline"
+                                title="Abrir ficha psicológica e anamnese"
+                              >
+                                {c.playerName}
+                              </Link>
+                            ) : (
+                              <span className="truncate font-medium">{c.playerName}</span>
+                            )}
                           </div>
                           {c.tenantName && (
                             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -521,6 +532,16 @@ export function ConsultasCalendar({
                             </span>
                           )}
                           <span
+                            className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${modality.toneClass}`}
+                          >
+                            {modality.isOnline ? (
+                              <Video className="h-3 w-3 shrink-0" />
+                            ) : (
+                              <MapPin className="h-3 w-3 shrink-0" />
+                            )}
+                            {modality.label}
+                          </span>
+                          <span
                             className={`rounded px-2 py-0.5 text-xs ${
                               c.status === "completed"
                                 ? "bg-emerald-500/20 text-emerald-600"
@@ -531,6 +552,18 @@ export function ConsultasCalendar({
                           >
                             {STATUS_LABEL[c.status ?? "scheduled"] ?? c.status}
                           </span>
+                          {modality.isOnline && c.link ? (
+                            <Button variant="outline" size="sm" asChild className="min-h-[36px]">
+                              <Link
+                                href={`/dashboard/consultas/abrir-meet?url=${encodeURIComponent(c.link)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                                Abrir reunião
+                              </Link>
+                            </Button>
+                          ) : null}
                           {c.link && (
                             <Button
                               variant="outline"
@@ -611,6 +644,19 @@ export function ConsultasCalendar({
                             {editResult.msg}
                           </p>
                         )}
+                        {modality.isOnline && c.link ? (
+                          <p className="text-xs text-muted-foreground break-all border-t border-border/60 pt-2">
+                            Link da reunião:{" "}
+                            <a
+                              href={c.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-violet-400 hover:underline"
+                            >
+                              {c.link}
+                            </a>
+                          </p>
+                        ) : null}
                         {c.notes && (
                           <div className="flex gap-2 text-sm text-muted-foreground border-t pt-2">
                             <StickyNote className="h-4 w-4 shrink-0 mt-0.5" />
@@ -618,7 +664,8 @@ export function ConsultasCalendar({
                           </div>
                         )}
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               ))}

@@ -41,6 +41,8 @@ import {
   type FootballPositionCode,
 } from "@/lib/football-positions";
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
+import { PlayerPsychologyClinicalSection } from "@/components/dashboard/psychology/PlayerPsychologyClinicalSection";
+import type { PsychologicalAssessmentEntry } from "@/components/dashboard/player-module-types";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
   buildPlayerMatchAvailabilityInput,
@@ -220,6 +222,7 @@ export default function EditJogadorPage() {
   const { canAccessModule, user } = useAuth();
   const responsibleUserName = user?.name?.trim() || user?.email || "Sistema";
   const id = params.id as string;
+  const fromConsultas = searchParams.get("from") === "consultas";
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -419,7 +422,8 @@ export default function EditJogadorPage() {
         sectionIcon={Shirt}
         title={`${player.jerseyNumber ? `${player.jerseyNumber} - ` : ""}${player.name}`}
         description={[player.tenant?.name, player.category].filter(Boolean).join(" • ")}
-        backHref="/dashboard/cadastros/jogadores"
+        backHref={fromConsultas ? "/dashboard/consultas" : "/dashboard/cadastros/jogadores"}
+        backLabel={fromConsultas ? "Voltar para Consultas" : "Voltar"}
         leading={playerPhotoLeading}
         titleClassName="uppercase"
         compact
@@ -530,167 +534,24 @@ export default function EditJogadorPage() {
         </Card>
       )}
 
-      {/* Tab: Avaliação psicológica — relatório sintético para gerência/diretoria (somente leitura) */}
-      {activeTab === "psicologica" && (() => {
-        const psychList = (player.psychologicalAssessment ?? []) as Array<{ date?: string; evaluator?: string; observacoes?: string; [k: string]: unknown }>;
-        const consultationList = (player.onlineConsultations ?? []) as Array<{ date?: string; time?: string; status?: string; psychologist?: string; notes?: string }>;
-        const completedConsultations = consultationList.filter((c) => c.status === "completed");
-        const scheduledConsultations = consultationList.filter((c) => c.status === "scheduled");
-
-        // Nível de atenção: baseado em consultas realizadas, avaliações e pendentes
-        const totalCompleted = completedConsultations.length;
-        const totalScheduled = scheduledConsultations.length;
-        const hasAssessments = psychList.length > 0;
-        let nivelAtencao: "baixo" | "moderado" | "alto" = "baixo";
-        if (totalScheduled > 0 || totalCompleted >= 3 || (totalCompleted > 0 && !hasAssessments))
-          nivelAtencao = "moderado";
-        if (totalScheduled >= 2 || totalCompleted >= 5) nivelAtencao = "alto";
-
-        // Tipo de perfil: síntese do acompanhamento
-        let tipoPerfil = "Sem acompanhamento registrado";
-        if (psychList.length > 0 && consultationList.length > 0)
-          tipoPerfil = "Em acompanhamento regular";
-        else if (psychList.length > 0)
-          tipoPerfil = "Avaliação realizada — aguardando consultas";
-        else if (consultationList.length > 0)
-          tipoPerfil = "Consultas em andamento — avaliação pendente";
-
-        // Consultas por mês (para gráfico)
-        const byMonth: Record<string, number> = {};
-        consultationList.forEach((c) => {
-          if (c.date) {
-            const month = c.date.slice(0, 7);
-            byMonth[month] = (byMonth[month] ?? 0) + 1;
+      {/* Tab: Avaliação psicológica — anamnese e registros (Depto Saúde) */}
+      {activeTab === "psicologica" && player && (
+        <PlayerPsychologyClinicalSection
+          entries={(player.psychologicalAssessment ?? []) as PsychologicalAssessmentEntry[]}
+          onChange={(next) => update({ psychologicalAssessment: next })}
+          consultations={
+            (player.onlineConsultations ?? []) as Array<{
+              date?: string;
+              time?: string;
+              status?: string;
+              psychologist?: string;
+              notes?: string;
+              link?: string;
+              type?: string;
+            }>
           }
-        });
-        const sortedMonths = Object.keys(byMonth).sort();
-        const maxCount = Math.max(...Object.values(byMonth), 1);
-
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>Avaliação psicológica</CardTitle>
-              <CardDescription>
-                Relatório sintético sobre a saúde psicológica do atleta — para gerência e diretoria. Somente visualização.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Resumo: Nível de atenção + Tipo de perfil */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-lg border p-4">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Nível de atenção</p>
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium",
-                      nivelAtencao === "baixo" && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
-                      nivelAtencao === "moderado" && "bg-amber-500/20 text-amber-600 dark:text-amber-400",
-                      nivelAtencao === "alto" && "bg-rose-500/20 text-rose-600 dark:text-rose-400"
-                    )}
-                  >
-                    {nivelAtencao === "baixo" && "Baixo — acompanhamento regular"}
-                    {nivelAtencao === "moderado" && "Moderado — requer acompanhamento"}
-                    {nivelAtencao === "alto" && "Alto — atenção prioritária"}
-                  </span>
-                </div>
-                <div className="rounded-lg border p-4">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Tipo de perfil</p>
-                  <p className="text-foreground font-medium">{tipoPerfil}</p>
-                </div>
-              </div>
-
-              {/* Gráfico: Consultas por mês */}
-              {sortedMonths.length > 0 && (
-                <div className="rounded-lg border p-4">
-                  <p className="text-sm font-medium text-foreground mb-4">Consultas por mês</p>
-                  <div className="flex items-end gap-2 h-24" aria-label="Gráfico de consultas por mês">
-                    {sortedMonths.map((month) => {
-                      const count = byMonth[month] ?? 0;
-                      const pct = (count / maxCount) * 100;
-                      return (
-                        <div key={month} className="flex-1 flex flex-col items-center gap-1 min-w-0">
-                          <div
-                            className="w-full rounded-t bg-primary/60 min-h-[8px] transition-all"
-                            style={{ height: `${Math.max(pct, 12)}%` }}
-                            title={`${month}: ${count} consulta(s)`}
-                          />
-                          <span className="text-[10px] text-muted-foreground truncate w-full text-center">
-                            {month.slice(5)}/{month.slice(2, 4)}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Consultas realizadas e agendadas */}
-              <div className="rounded-lg border p-4 space-y-4">
-                <p className="text-sm font-medium text-foreground">Consultas</p>
-                {consultationList.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhuma consulta registrada.</p>
-                ) : (
-                  <div className="space-y-3 max-h-[280px] overflow-y-auto">
-                    {consultationList.map((c, idx) => {
-                      const dateStr = c.date ? `${c.date.slice(8, 10)}/${c.date.slice(5, 7)}/${c.date.slice(0, 4)}` : "—";
-                      const timeStr = c.time ?? "";
-                      const statusLabel =
-                        c.status === "completed" ? "Realizada" : c.status === "cancelled" ? "Cancelada" : "Agendada";
-                      return (
-                        <div key={idx} className="rounded border p-3 bg-muted/20">
-                          <div className="flex flex-wrap items-center gap-2 text-sm">
-                            <span className="font-medium text-foreground">{dateStr}</span>
-                            {timeStr && <span className="text-muted-foreground">{timeStr}</span>}
-                            <span
-                              className={cn(
-                                "rounded px-2 py-0.5 text-xs",
-                                c.status === "completed" && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
-                                c.status === "cancelled" && "bg-destructive/20 text-destructive",
-                                c.status === "scheduled" && "bg-amber-500/20 text-amber-600 dark:text-amber-400"
-                              )}
-                            >
-                              {statusLabel}
-                            </span>
-                            {c.psychologist && (
-                              <span className="text-muted-foreground">• {c.psychologist}</span>
-                            )}
-                          </div>
-                          {c.notes && (
-                            <p className="mt-2 text-sm text-foreground/90 whitespace-pre-wrap">{c.notes}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Impressões do psicólogo (das avaliações) */}
-              <div className="rounded-lg border p-4 space-y-4">
-                <p className="text-sm font-medium text-foreground">Impressões das avaliações</p>
-                {psychList.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
-                ) : (
-                  <div className="space-y-3 max-h-[200px] overflow-y-auto">
-                    {psychList.map((entry, idx) => (
-                      <div key={idx} className="rounded border p-3 bg-muted/20">
-                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-1">
-                          {entry.date && <span>{entry.date}</span>}
-                          {entry.evaluator && <span>• {entry.evaluator}</span>}
-                        </div>
-                        {entry.observacoes ? (
-                          <p className="text-sm text-foreground/90 whitespace-pre-wrap">{entry.observacoes}</p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground italic">Sem observações registradas.</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
+        />
+      )}
 
       {/* Tab: Status */}
       {activeTab === "status" && (
