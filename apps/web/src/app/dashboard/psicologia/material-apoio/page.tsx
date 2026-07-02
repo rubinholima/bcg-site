@@ -196,7 +196,7 @@ export default function MaterialApoioPage() {
       if (uploadDescription.trim()) formData.append("description", uploadDescription.trim());
       if (uploadCategory) formData.append("category", uploadCategory);
       if (uploadTenantId) formData.append("tenantId", uploadTenantId);
-      await api.post("/psychology-support-materials", formData);
+      await api.postForm("/psychology-support-materials", formData);
       setUploadOpen(false);
       setUploadTitle("");
       setUploadDescription("");
