@@ -43,6 +43,7 @@ import { BeatscodeImportModule } from './beatscode-import/beatscode-import.modul
 import { CaptacaoModule } from './captacao/captacao.module';
 import { PsychologySessionsModule } from './psychology-sessions/psychology-sessions.module';
 import { PsychologySupportMaterialsModule } from './psychology-support-materials/psychology-support-materials.module';
+import { InfrastructureModule } from './infraestrutura/infrastructure.module';
 
 @Module({
   imports: [
@@ -88,6 +89,7 @@ import { PsychologySupportMaterialsModule } from './psychology-support-materials
     CaptacaoModule,
     PsychologySessionsModule,
     PsychologySupportMaterialsModule,
+    InfrastructureModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -12,6 +12,7 @@ import {
   Trash2,
   FolderTree,
   Package,
+  Server,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +41,7 @@ import { AssetCategoryFormDialog, type AssetCategoryRow } from "./components/Ass
 import { AssetFormDialog, type AssetRow } from "./components/AssetFormDialog";
 import { ASSET_CATEGORY_KIND_LABEL, ASSET_PIECE_LABEL } from "./patrimonio-labels";
 import { patrimonioMediaThumbSrc } from "./patrimonio-media";
+import { isTechnologyAssetKind } from "@/lib/infrastructure-tech-kinds";
 
 type TabId = "bens" | "categorias";
 
@@ -448,6 +450,16 @@ export default function AdmPatrimonioPage() {
                                   </TableCell>
                                   <TableCell className="text-right align-middle">
                                     <div className="flex justify-end gap-0.5">
+                                      {isTechnologyAssetKind(a.category.kind) ? (
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" asChild>
+                                          <Link
+                                            href={`/dashboard/adm/patrimonio/${a.id}?tab=infraestrutura`}
+                                            title="Ficha de infraestrutura"
+                                          >
+                                            <Server className="h-4 w-4" />
+                                          </Link>
+                                        </Button>
+                                      ) : null}
                                       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => { setAssetEdit(a); setAssetDialogOpen(true); }}>
                                         <Pencil className="h-4 w-4" />
                                       </Button>

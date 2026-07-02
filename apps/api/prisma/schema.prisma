@@ -114,6 +114,7 @@ model Tenant {
   employmentContracts     EmploymentContract[]
   assetCategories         AssetCategory[]
   assets                  Asset[]
+  infrastructureRacks     InfrastructureRack[]
   nutritionCategories     NutritionCategory[]
   nutritionMealTypes      NutritionMealType[]
   nutritionMenus         NutritionMenu[]
@@ -1338,11 +1339,227 @@ model Asset {
   photoUrl          String?        // foto registrada do bem (URL da mídia / proxy)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+  infrastructureProfile AssetInfrastructureProfile?
+  topologyLinksFrom AssetTopologyLink[] @relation("TopologyFrom")
+  topologyLinksTo   AssetTopologyLink[] @relation("TopologyTo")
+  backboneFibers    AssetBackboneFiber[]
   @@index([tenantId])
   @@index([categoryId])
   @@index([status])
   @@index([assignedPlayerId])
   @@index([tenantId, pieceType])
+}
+
+// ========== Infraestrutura TI (extensão técnica do Patrimônio — sem duplicar bens) ==========
+
+model InfrastructureRack {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String
+  location  String?
+  totalUnits Int     @default(42)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profiles  AssetInfrastructureProfile[]
+  @@index([tenantId])
+}
+
+model AssetInfrastructureProfile {
+  id               String   @id @default(cuid())
+  assetId          String   @unique
+  asset            Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  hostname         String?
+  identity         String?
+  ipAddress        String?
+  subnetMask       String?
+  gateway          String?
+  dns              String?
+  macAddress       String?
+  operatingSystem  String?
+  firmware         String?
+  version          String?
+  manufacturer     String?
+  model            String?
+  serialNumber     String?
+  rackId           String?
+  rack             InfrastructureRack? @relation(fields: [rackId], references: [id], onDelete: SetNull)
+  rackPositionU    Int?
+  rackSide         String?  // frente | traseira
+  infraStatus      String?  // operacional | manutencao | reserva | desativado
+  vlan             String?
+  bridge           String?
+  bond             String?
+  technicalNotes   String?  @db.Text
+  monitoringNotes  String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  interfaces       AssetNetworkInterface[]
+  documents        AssetInfrastructureDocument[]
+  backups          AssetInfrastructureBackup[]
+  credentials      AssetInfrastructureCredential[]
+  softwareInstalls AssetSoftwareInstall[]
+  disasterRecovery AssetDisasterRecoveryPlan?
+  auditLogs        AssetInfrastructureAuditLog[]
+  @@index([rackId])
+}
+
+model AssetNetworkInterface {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     AssetInfrastructureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name        String
+  type        String   // ethernet | sfp | qsfp | fiber | dac | loopback | bridge | wireless
+  speed       String?
+  status      String?  // up | down | disabled
+  description String?
+  connectedTo String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([profileId])
+}
+
+model AssetTopologyLink {
+  id              String   @id @default(cuid())
+  tenantId        String
+  sourceAssetId   String
+  sourceAsset     Asset    @relation("TopologyFrom", fields: [sourceAssetId], references: [id], onDelete: Cascade)
+  targetAssetId   String
+  targetAsset     Asset    @relation("TopologyTo", fields: [targetAssetId], references: [id], onDelete: Cascade)
+  connectionType  String   // fibra | cat6 | dac | wireless | outro
+  speed           String?
+  length          String?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([tenantId])
+  @@index([sourceAssetId])
+  @@index([targetAssetId])
+}
+
+model AssetBackboneFiber {
+  id              String   @id @default(cuid())
+  tenantId        String
+  origin          String
+  destination     String
+  equipmentAssetId String?
+  equipmentAsset  Asset?   @relation(fields: [equipmentAssetId], references: [id], onDelete: SetNull)
+  port            String?
+  fiberType       String?
+  speed           String?
+  status          String?
+  photoUrls       Json?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([tenantId])
+  @@index([equipmentAssetId])
+}
+
+model AssetInfrastructureDocument {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     AssetInfrastructureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name        String
+  docType     String   // pdf | docx | dwg | routeros_backup | routeros_export | config | foto | diagrama | garantia | contrato | outro
+  fileUrl     String?
+  fileKey     String?
+  uploadedBy  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([profileId])
+}
+
+model AssetInfrastructureBackup {
+  id              String   @id @default(cuid())
+  profileId       String
+  profile         AssetInfrastructureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  backupType      String   // routeros | windows | linux | docker | banco | config | outro
+  fileUrl         String?
+  fileKey         String?
+  version         String?
+  backupDate      DateTime?
+  responsibleName String?
+  comments        String?  @db.Text
+  isCurrent       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([profileId])
+}
+
+model AssetInfrastructureCredential {
+  id              String   @id @default(cuid())
+  profileId       String
+  profile         AssetInfrastructureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title           String
+  username        String?
+  secretEnc       String?  @db.Text
+  secretIv        String?
+  url             String?
+  category        String?
+  notes           String?  @db.Text
+  lastChangedAt   DateTime?
+  responsibleName String?
+  vaultItemId     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  auditLogs       AssetInfrastructureCredentialAuditLog[]
+  @@index([profileId])
+}
+
+model AssetInfrastructureCredentialAuditLog {
+  id           String   @id @default(cuid())
+  credentialId String
+  credential   AssetInfrastructureCredential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  action       String   // VIEW | REVEAL | COPY | CREATE | UPDATE | DELETE
+  performedBy  String
+  details      String?
+  createdAt    DateTime @default(now())
+  @@index([credentialId])
+}
+
+model AssetSoftwareInstall {
+  id           String   @id @default(cuid())
+  profileId    String
+  profile      AssetInfrastructureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name         String
+  version      String?
+  licenseKey   String?
+  licenseRef   String?
+  installedAt  DateTime?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([profileId])
+}
+
+model AssetDisasterRecoveryPlan {
+  id              String   @id @default(cuid())
+  profileId       String   @unique
+  profile         AssetInfrastructureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  checklist       Json?
+  procedure       String?  @db.Text
+  estimatedTime   String?
+  prerequisites   String?  @db.Text
+  relatedFiles    Json?
+  backupRefs      Json?
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AssetInfrastructureAuditLog {
+  id          String   @id @default(cuid())
+  profileId   String
+  profile     AssetInfrastructureProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  performedBy String
+  action      String
+  changes     Json?
+  notes       String?
+  createdAt   DateTime @default(now())
+  @@index([profileId])
 }
 
 // ========== Nutrição (clube: cardápios, calendário por categoria, avaliações) ==========
