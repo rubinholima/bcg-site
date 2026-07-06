@@ -18,6 +18,7 @@ import {
 import { getDashboardHomeMenuItem, getHomeDashboardRoute } from "@/lib/dashboard-home";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
+import { DashboardThemeToggle } from "@/components/dashboard/DashboardThemeToggle";
 import { PLATFORM_APP_NAME } from "@/lib/platform-branding";
 
 function SidebarMenuIcon({ item, className = "h-4 w-4 shrink-0" }: { item: MenuItemConfig; className?: string }) {
@@ -1042,6 +1043,15 @@ function SidebarNav() {
           return null;
         })}
       </nav>
+
+      <div
+        className={cn(
+          "shrink-0 border-t border-border p-3",
+          collapsed ? "flex justify-center" : "px-4",
+        )}
+      >
+        <DashboardThemeToggle compact={collapsed} fullWidth={!collapsed} className={collapsed ? undefined : "w-full"} />
+      </div>
     </div>
   );
 }

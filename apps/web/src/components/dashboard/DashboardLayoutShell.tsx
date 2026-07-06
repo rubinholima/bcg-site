@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { DashboardShellProvider, useDashboardShell } from "@/context/DashboardShellContext";
+import { DashboardThemeProvider, useDashboardTheme } from "@/context/DashboardThemeContext";
 import { DashboardPageFrame } from "@/components/dashboard/DashboardPageFrame";
 import { TenantWorkspaceRail } from "@/components/dashboard/TenantWorkspaceBackdrop";
 
@@ -15,20 +16,31 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const isAcademiasEmbed = pathname.startsWith("/dashboard/academias/");
   const usePageFrame = !isSessaoPage && !isAcademiasEmbed && !isControleHallPage;
   const { sidebarOpen, closeSidebar, sidebarDesktopMode } = useDashboardShell();
+  const { resolvedTheme } = useDashboardTheme();
 
   const desktopHidden = sidebarDesktopMode === "hidden";
   const desktopIcons = sidebarDesktopMode === "icons";
 
   if (isSessaoPage || isControleHallPage) {
     return (
-      <div className="h-[100dvh] w-full overflow-hidden bg-zinc-950">
+      <div
+        data-dashboard-root
+        data-theme={resolvedTheme}
+        suppressHydrationWarning
+        className="h-[100dvh] w-full overflow-hidden bg-background"
+      >
         {children}
       </div>
     );
   }
 
   return (
-    <div className="flex h-[100dvh] w-full min-w-0 overflow-clip">
+    <div
+      data-dashboard-root
+      data-theme={resolvedTheme}
+      suppressHydrationWarning
+      className="flex h-[100dvh] w-full min-w-0 overflow-clip"
+    >
       {sidebarOpen ? (
         <button
           type="button"
@@ -91,8 +103,10 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
 export function DashboardLayoutShell({ children }: { children: React.ReactNode }) {
   return (
-    <DashboardShellProvider>
-      <DashboardLayoutInner>{children}</DashboardLayoutInner>
-    </DashboardShellProvider>
+    <DashboardThemeProvider>
+      <DashboardShellProvider>
+        <DashboardLayoutInner>{children}</DashboardLayoutInner>
+      </DashboardShellProvider>
+    </DashboardThemeProvider>
   );
 }

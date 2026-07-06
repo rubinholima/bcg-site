@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useDashboardShell } from "@/context/DashboardShellContext";
 import { Cup360BrandMark } from "@/components/dashboard/Cup360BrandMark";
 import { DashboardHeaderShortcuts } from "@/components/dashboard/DashboardUserShortcuts";
+import { DashboardThemeToggle } from "@/components/dashboard/DashboardThemeToggle";
 import { resolveDashboardHeaderBreadcrumb } from "@/lib/dashboard-page-meta";
 
 export function Header() {
@@ -71,6 +72,7 @@ export function Header() {
         >
           <SidebarModeIcon className="h-5 w-5" />
         </Button>
+        <DashboardThemeToggle />
         <Button
           variant="ghost"
           size="icon"

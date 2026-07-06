@@ -35,6 +35,11 @@ export default function DashboardLayout({
 }) {
   return (
     <DashboardGuard>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var p=localStorage.getItem('cup360-dashboard-theme');var light=p==='light'||(p==='system'&&!window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dashboard-theme-light',light);}catch(e){}})();`,
+        }}
+      />
       <DashboardBodyLock />
       <DashboardHead />
       <DashboardLayoutShell>{children}</DashboardLayoutShell>

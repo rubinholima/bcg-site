@@ -95,6 +95,14 @@ input[type="time"] {
 .dark input[type="datetime-local"] {
   color-scheme: dark;
 }
+[data-dashboard-root][data-theme="light"] input[type="date"],
+[data-dashboard-root][data-theme="light"] input[type="time"],
+[data-dashboard-root][data-theme="light"] input[type="datetime-local"],
+html.dashboard-theme-light [data-dashboard-root] input[type="date"],
+html.dashboard-theme-light [data-dashboard-root] input[type="time"],
+html.dashboard-theme-light [data-dashboard-root] input[type="datetime-local"] {
+  color-scheme: light;
+}
 input[type="date"]::-webkit-datetime-edit,
 input[type="date"]::-webkit-datetime-edit-fields-wrapper,
 input[type="date"]::-webkit-datetime-edit-text,
@@ -532,6 +540,55 @@ body.dashboard-active {
 }
 .dark [data-dashboard-content] .rounded-lg.border.bg-card:hover {
   box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px hsl(var(--border));
+}
+
+/* Dashboard — tema claro (escopo no painel, site público permanece escuro) */
+html.dashboard-theme-light [data-dashboard-root],
+[data-dashboard-root][data-theme="light"] {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+  --dashboard-accent: 38 92% 50%;
+  --dashboard-glow: 0 0 20px rgba(251, 191, 36, 0.15);
+  color-scheme: light;
+}
+html.dashboard-theme-light [data-dashboard-root] .dashboard-sidebar-active,
+[data-dashboard-root][data-theme="light"] .dashboard-sidebar-active {
+  background: hsl(var(--muted) / 0.85) !important;
+  color: hsl(var(--foreground)) !important;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+html.dashboard-theme-light [data-dashboard-root] .dashboard-card-hover:hover,
+html.dashboard-theme-light [data-dashboard-root] [data-dashboard-content] .rounded-lg.border.bg-card:hover,
+[data-dashboard-root][data-theme="light"] .dashboard-card-hover:hover,
+[data-dashboard-root][data-theme="light"] [data-dashboard-content] .rounded-lg.border.bg-card:hover {
+  box-shadow: 0 12px 24px -8px rgba(15, 23, 42, 0.12), 0 4px 12px -4px rgba(15, 23, 42, 0.08);
+}
+html.dashboard-theme-light [data-dashboard-root] .dashboard-main-bg,
+[data-dashboard-root][data-theme="light"] .dashboard-main-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.06), transparent),
+    linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.45) 100%);
+}
+html.dashboard-theme-light [data-dashboard-root] .dashboard-hero-gradient,
+[data-dashboard-root][data-theme="light"] .dashboard-hero-gradient {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--primary) / 0.04) 40%, transparent 70%);
 }
 /* Fade-in suave na entrada da página */
 [data-dashboard-content] > div {
