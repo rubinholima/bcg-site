@@ -30,7 +30,7 @@ export function Header() {
   const displayUser = user?.name?.trim() || user?.email || "Usuário";
 
   return (
-    <header className="flex h-14 min-w-0 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 backdrop-blur-sm shadow-sm sm:h-16 sm:gap-3 sm:px-6">
+    <header className="relative z-30 flex h-14 min-w-0 items-center justify-between gap-2 border-b border-border bg-card/95 px-3 backdrop-blur-sm shadow-sm sm:h-16 sm:gap-3 sm:px-6">
       <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-3">
         <Button
           type="button"

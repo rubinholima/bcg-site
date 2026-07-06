@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import {
   type DashboardThemePreference,
@@ -12,18 +19,16 @@ import {
 const OPTIONS: {
   value: DashboardThemePreference;
   label: string;
-  shortLabel: string;
+  description: string;
   icon: typeof Sun;
 }[] = [
-  { value: "light", label: "Claro", shortLabel: "Claro", icon: Sun },
-  { value: "dark", label: "Escuro", shortLabel: "Escuro", icon: Moon },
-  { value: "system", label: "Sistema", shortLabel: "Auto", icon: Monitor },
+  { value: "light", label: "Claro", description: "Fundo claro e texto escuro", icon: Sun },
+  { value: "dark", label: "Escuro", description: "Fundo escuro (padrão do painel)", icon: Moon },
+  { value: "system", label: "Sistema", description: "Segue o tema do Windows/Chrome", icon: Monitor },
 ];
 
 type DashboardThemeToggleProps = {
-  /** Sidebar recolhida: só ícone */
   compact?: boolean;
-  /** Botão ocupa a largura (rodapé da sidebar) */
   fullWidth?: boolean;
   className?: string;
 };
@@ -35,28 +40,8 @@ export function DashboardThemeToggle({
 }: DashboardThemeToggleProps) {
   const { preference, resolvedTheme, setPreference } = useDashboardTheme();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const listId = useId();
 
   const ActiveIcon = resolvedTheme === "dark" ? Moon : Sun;
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
 
   const handleSelect = (value: DashboardThemePreference) => {
     setPreference(value);
@@ -64,7 +49,7 @@ export function DashboardThemeToggle({
   };
 
   return (
-    <div ref={rootRef} className={cn("relative", className)}>
+    <>
       <Button
         type="button"
         variant="ghost"
@@ -73,65 +58,73 @@ export function DashboardThemeToggle({
           "shrink-0 text-muted-foreground hover:text-foreground",
           compact ? "h-9 w-9" : "h-9 gap-2 px-2.5",
           fullWidth && "w-full justify-start",
+          className,
         )}
         aria-label="Tema da interface"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-controls={listId}
         title="Tema: claro, escuro ou sistema"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen(true)}
       >
         <ActiveIcon className="h-4 w-4 shrink-0" />
         {!compact ? <span className="hidden text-xs font-medium sm:inline">Tema</span> : null}
       </Button>
 
-      {open ? (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label="Escolher tema"
-          className={cn(
-            "absolute z-[60] min-w-[10.5rem] rounded-lg border border-border bg-popover p-1 shadow-lg",
-            compact ? "bottom-full left-0 mb-2" : "right-0 top-full mt-2",
-          )}
-        >
-          {OPTIONS.map((option) => {
-            const Icon = option.icon;
-            const selected = preference === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
-                  selected
-                    ? "bg-accent text-accent-foreground"
-                    : "text-popover-foreground hover:bg-accent/60",
-                )}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => handleSelect(option.value)}
-              >
-                <Icon className="h-4 w-4 shrink-0 opacity-80" />
-                <span className="flex-1">{option.label}</span>
-                {selected ? (
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Ativo
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-          <p className="border-t border-border px-2.5 py-2 text-[11px] font-medium leading-snug text-slate-600 dark:text-muted-foreground">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm gap-0 overflow-hidden p-0" showCloseButton>
+          <DialogHeader className="border-b border-border px-5 py-4 text-left">
+            <DialogTitle>Tema da interface</DialogTitle>
+            <DialogDescription>
+              Escolha como o dashboard deve aparecer neste navegador.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="p-2" role="listbox" aria-label="Escolher tema">
+            {OPTIONS.map((option) => {
+              const Icon = option.icon;
+              const selected = preference === option.value;
+              return (
+                <li key={option.value}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    className={cn(
+                      "flex min-h-[52px] w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                      selected
+                        ? "bg-accent text-accent-foreground"
+                        : "text-foreground hover:bg-accent/60",
+                    )}
+                    onClick={() => handleSelect(option.value)}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border",
+                        selected ? "border-primary/30 bg-background" : "border-border bg-muted/40",
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">{option.label}</span>
+                      <span className="block text-xs text-muted-foreground">{option.description}</span>
+                    </span>
+                    {selected ? (
+                      <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-primary">
+                        Ativo
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground">
             {preference === "system"
-              ? `Sistema: ${resolvedTheme === "dark" ? "escuro" : "claro"}`
+              ? `Sistema aplicado: ${resolvedTheme === "dark" ? "escuro" : "claro"}`
               : preference === "dark"
-                ? "Fundo escuro"
-                : "Fundo claro"}
+                ? "Modo escuro selecionado"
+                : "Modo claro selecionado"}
           </p>
-        </div>
-      ) : null}
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
