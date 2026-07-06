@@ -36,10 +36,10 @@ export const AGENDA_SOURCE_DOT: Record<AgendaSource, string> = {
 };
 
 export const AGENDA_SOURCE_TONE: Record<AgendaSource, string> = {
-  futebol: "bg-sky-500/15 text-sky-100 border-sky-500/40",
-  "boston-hall": "bg-amber-500/15 text-amber-100 border-amber-500/40",
-  consultas: "bg-emerald-500/15 text-emerald-100 border-emerald-500/40",
-  marketing: "bg-violet-500/15 text-violet-100 border-violet-500/40",
+  futebol: "bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-500/15 dark:text-sky-100 dark:border-sky-500/40",
+  "boston-hall": "bg-amber-100 text-amber-950 border-amber-300 dark:bg-amber-500/15 dark:text-amber-100 dark:border-amber-500/40",
+  consultas: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-100 dark:border-emerald-500/40",
+  marketing: "bg-violet-100 text-violet-900 border-violet-300 dark:bg-violet-500/15 dark:text-violet-100 dark:border-violet-500/40",
 };
 
 export const AGENDA_SOURCE_MANAGE_HREF: Record<AgendaSource, string> = {

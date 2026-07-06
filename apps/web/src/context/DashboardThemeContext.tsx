@@ -51,8 +51,11 @@ export function DashboardThemeProvider({ children }: { children: React.ReactNode
   }, []);
 
   useLayoutEffect(() => {
-    document.documentElement.classList.toggle("dashboard-theme-light", resolvedTheme === "light");
+    const isLight = resolvedTheme === "light";
+    document.documentElement.classList.toggle("dark", !isLight);
+    document.documentElement.classList.toggle("dashboard-theme-light", isLight);
     return () => {
+      document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("dashboard-theme-light");
     };
   }, [resolvedTheme]);

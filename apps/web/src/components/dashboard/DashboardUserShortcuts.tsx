@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { dash } from "@/lib/dashboard-theme-classes";
 
 function ShortcutIcon({
   option,
@@ -40,7 +41,7 @@ function ShortcutIcon({
   }
   const Icon = option.icon;
   if (!Icon) return null;
-  return <Icon className={cn("text-violet-400", className)} />;
+  return <Icon className={cn(dash.shortcutIcon, className)} />;
 }
 
 /** Nome curto para caber na barra superior. */
@@ -159,10 +160,7 @@ export function DashboardHeaderShortcuts() {
                   e.preventDefault();
                   openPicker(index);
                 }}
-                className={cn(
-                  shortcutBtnClass,
-                  "border border-violet-500/25 bg-violet-950/30 transition-colors hover:border-violet-500/50 hover:bg-violet-950/50",
-                )}
+                className={cn(shortcutBtnClass, dash.shortcutFilled)}
               >
                 <ShortcutIcon option={option} className="h-4 w-4 shrink-0" />
                 <span className="min-w-0 truncate text-[11px] font-medium leading-tight sm:text-xs">
@@ -178,10 +176,7 @@ export function DashboardHeaderShortcuts() {
               type="button"
               title="Adicionar atalho"
               onClick={() => openPicker(index)}
-              className={cn(
-                shortcutBtnClass,
-                "justify-center border border-dashed border-muted-foreground/35 text-muted-foreground transition-colors hover:border-violet-500/40 hover:bg-violet-950/20 hover:text-foreground",
-              )}
+              className={cn(shortcutBtnClass, "justify-center transition-colors", dash.shortcutEmpty)}
             >
               <Plus className="h-4 w-4 shrink-0" />
               <span className="truncate text-[11px] font-medium leading-tight sm:text-xs">Atalho</span>

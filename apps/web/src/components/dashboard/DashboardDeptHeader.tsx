@@ -6,6 +6,7 @@ import { ArrowLeft, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { dash } from "@/lib/dashboard-theme-classes";
 
 /** Stat no canto superior direito — igual Construção Web. */
 export type DashboardDeptStat = {
@@ -56,10 +57,7 @@ export function DashboardDeptHeader({
   return (
     <div
       data-dashboard-dept-header
-      className={cn(
-        "rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-950/40 via-background to-background p-7 sm:p-9",
-        className,
-      )}
+      className={cn(dash.heroCard, "p-7 sm:p-9", className)}
     >
       {backHref ? (
         <div className={compact ? "mb-2" : "mb-4"}>
@@ -75,7 +73,7 @@ export function DashboardDeptHeader({
         <div className="flex items-start gap-3 sm:gap-4">
           <div className="shrink-0">{leading}</div>
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-400">
+            <p className={cn("flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em]", dash.brandText)}>
               <SectionIcon className="h-3.5 w-3.5 shrink-0" />
               {section}
             </p>
@@ -85,7 +83,7 @@ export function DashboardDeptHeader({
             {description || descriptionAside ? (
               <div className="mt-0.5 flex items-center justify-between gap-3">
                 {description ? (
-                  <p className="min-w-0 truncate text-sm leading-none text-muted-foreground">{description}</p>
+                  <p className="min-w-0 truncate text-sm leading-none text-slate-600 dark:text-muted-foreground">{description}</p>
                 ) : (
                   <span className="flex-1" />
                 )}
@@ -99,7 +97,7 @@ export function DashboardDeptHeader({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
             <div className="mx-auto shrink-0 sm:mx-0">{leading}</div>
             <div className="min-w-0 flex-1 space-y-3 text-center sm:text-left">
-              <p className="flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-violet-400 sm:justify-start">
+              <p className={cn("flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] sm:justify-start", dash.brandText)}>
                 <SectionIcon className="h-4 w-4 shrink-0" />
                 {section}
               </p>
@@ -108,7 +106,7 @@ export function DashboardDeptHeader({
           </div>
           <div className="mt-4 flex flex-row items-center justify-between gap-4 sm:mt-5 sm:pl-[calc(8rem+1.25rem)]">
             {description ? (
-              <p className="min-w-0 flex-1 text-base leading-relaxed text-muted-foreground">{description}</p>
+              <p className="min-w-0 flex-1 text-base leading-relaxed text-slate-600 dark:text-muted-foreground">{description}</p>
             ) : (
               <span className="flex-1" />
             )}
@@ -120,7 +118,7 @@ export function DashboardDeptHeader({
         <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
           {leading ? <div className="mx-auto shrink-0 sm:mx-0">{leading}</div> : null}
           <div className="mx-auto w-full max-w-3xl space-y-4 text-center sm:mx-0 sm:flex-1 sm:text-left">
-          <p className="flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] text-violet-400 sm:justify-start">
+          <p className={cn("flex items-center justify-center gap-2.5 text-sm font-semibold uppercase tracking-[0.18em] sm:justify-start", dash.brandText)}>
             <SectionIcon className="h-4 w-4 shrink-0" />
             {section}
           </p>
@@ -135,7 +133,7 @@ export function DashboardDeptHeader({
               )}
             >
               {description ? (
-                <p className="min-w-0 flex-1 text-base leading-relaxed text-muted-foreground">{description}</p>
+                <p className="min-w-0 flex-1 text-base leading-relaxed text-slate-600 dark:text-muted-foreground">{description}</p>
               ) : null}
               {descriptionAside ? (
                 <div className="shrink-0">{descriptionAside}</div>
@@ -149,10 +147,10 @@ export function DashboardDeptHeader({
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="flex flex-col items-center justify-center rounded-xl border border-border/60 bg-card/50 px-3 py-2 text-center"
+                className={cn("flex flex-col items-center justify-center rounded-xl px-3 py-2 text-center", dash.statChip)}
               >
                 <p className="text-lg font-bold tabular-nums leading-none">{stat.value}</p>
-                <p className="mt-1 text-[10px] uppercase leading-tight text-muted-foreground">{stat.label}</p>
+                <p className="mt-1 text-[10px] font-semibold uppercase leading-tight text-slate-600 dark:text-muted-foreground">{stat.label}</p>
               </div>
             ))}
           </div>

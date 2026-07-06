@@ -43,6 +43,7 @@ import {
   type UnifiedAgendaEvent,
 } from "@/lib/unified-agenda";
 import { cn } from "@/lib/utils";
+import { dash } from "@/lib/dashboard-theme-classes";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 
@@ -340,7 +341,7 @@ export function UnifiedAgendaView() {
       </Card>
 
       {/* Calendário */}
-      <Card className="overflow-hidden border-violet-500/20 bg-gradient-to-b from-violet-950/20 via-background to-background shadow-lg">
+      <Card className={dash.calendarCard}>
         <CardHeader className="flex flex-col gap-4 border-b border-border/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="capitalize text-xl sm:text-2xl">{monthLabel}</CardTitle>
@@ -358,7 +359,7 @@ export function UnifiedAgendaView() {
         <CardContent className="p-3 sm:p-4">
           {loading ? (
             <div className="flex justify-center py-20">
-              <Loader2 className="h-9 w-9 animate-spin text-violet-400" />
+              <Loader2 className={cn("h-9 w-9 animate-spin", dash.brandText)} />
             </div>
           ) : (
             <>
@@ -388,17 +389,17 @@ export function UnifiedAgendaView() {
                       className={cn(
                         "group flex min-h-[72px] flex-col rounded-xl border p-1.5 text-left transition-all sm:min-h-[108px] sm:p-2",
                         isSelected
-                          ? "border-violet-500/70 bg-violet-500/15 ring-2 ring-violet-400/40"
+                          ? dash.calendarDaySelected
                           : isToday
-                            ? "border-violet-500/40 bg-violet-500/5 hover:bg-violet-500/10"
-                            : "border-border/50 bg-zinc-900/30 hover:border-violet-500/25 hover:bg-zinc-800/50",
+                            ? dash.calendarDayToday
+                            : dash.calendarDay,
                       )}
                     >
                       <span
                         className={cn(
                           "mb-1 flex h-7 w-7 items-center justify-center rounded-lg text-sm font-semibold",
-                          isToday && "bg-violet-500 text-white",
-                          isSelected && !isToday && "bg-violet-500/30 text-violet-100",
+                          isToday && dash.calendarDayNumberToday,
+                          isSelected && !isToday && dash.calendarDayNumberSelected,
                           !isToday && !isSelected && "text-foreground",
                         )}
                       >
@@ -409,7 +410,7 @@ export function UnifiedAgendaView() {
                           <EventPill key={ev.id} event={ev} compact />
                         ))}
                         {dayEvents.length > 3 ? (
-                          <span className="text-[10px] font-medium text-violet-300/90">
+                          <span className={cn("text-[10px] font-medium", dash.calendarMore)}>
                             +{dayEvents.length - 3} mais
                           </span>
                         ) : null}
@@ -462,7 +463,7 @@ export function UnifiedAgendaView() {
             listGrouped.map(({ dateKey, items }) => (
               <div key={dateKey}>
                 {!selectedDay ? (
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-violet-400/90">
+                  <p className={cn("mb-3 text-xs font-semibold uppercase tracking-wider", dash.sectionLabel)}>
                     {formatAgendaDateLong(dateKey)}
                   </p>
                 ) : null}
@@ -474,7 +475,7 @@ export function UnifiedAgendaView() {
                       <li key={ev.id}>
                         <Link
                           href={ev.href}
-                          className="group flex gap-3 rounded-xl border border-border/60 bg-zinc-900/40 p-3 transition-all hover:border-violet-500/35 hover:bg-zinc-900/70 sm:p-4"
+                          className={cn("group flex gap-3 rounded-xl border p-3 transition-all sm:p-4", dash.eventListItem)}
                         >
                           <div
                             className={cn("mt-1 w-1 shrink-0 self-stretch rounded-full", ev.dotClass)}
@@ -482,7 +483,7 @@ export function UnifiedAgendaView() {
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-semibold text-foreground group-hover:text-violet-100">
+                              <span className={cn("text-sm font-semibold", dash.eventListTitle)}>
                                 {ev.title}
                               </span>
                               <span
@@ -495,7 +496,7 @@ export function UnifiedAgendaView() {
                               </span>
                             </div>
                             <p className="mt-0.5 text-xs text-muted-foreground">{ev.subtitle}</p>
-                            <p className="mt-1 text-sm font-medium text-violet-200/90">
+                            <p className={cn("mt-1 text-sm font-medium", dash.eventListMeta)}>
                               {formatAgendaTime(ev.startAt, ev.allDay)}
                             </p>
                           </div>

@@ -542,30 +542,30 @@ body.dashboard-active {
   box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px hsl(var(--border));
 }
 
-/* Dashboard — tema claro (escopo no painel, site público permanece escuro) */
+/* Dashboard — tema claro profissional (escopo no painel) */
 html.dashboard-theme-light [data-dashboard-root],
 [data-dashboard-root][data-theme="light"] {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
+  --card-foreground: 222 47% 11%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 222.2 47.4% 11.2%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 222 47% 11%;
   --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 222.2 84% 4.9%;
-  --dashboard-accent: 38 92% 50%;
-  --dashboard-glow: 0 0 20px rgba(251, 191, 36, 0.15);
+  --secondary: 214 32% 91%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 214 32% 93%;
+  --muted-foreground: 215 20% 35%;
+  --accent: 262 35% 94%;
+  --accent-foreground: 262 55% 28%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 85%;
+  --input: 214 32% 85%;
+  --ring: 262 55% 42%;
+  --dashboard-accent: 262 55% 42%;
+  --dashboard-glow: 0 0 20px rgba(109, 40, 217, 0.08);
   color-scheme: light;
 }
 html.dashboard-theme-light [data-dashboard-root] .dashboard-sidebar-active,
@@ -588,7 +588,70 @@ html.dashboard-theme-light [data-dashboard-root] .dashboard-main-bg,
 }
 html.dashboard-theme-light [data-dashboard-root] .dashboard-hero-gradient,
 [data-dashboard-root][data-theme="light"] .dashboard-hero-gradient {
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--primary) / 0.04) 40%, transparent 70%);
+  background: linear-gradient(135deg, hsl(262 35% 94%) 0%, hsl(210 20% 98%) 50%, transparent 80%);
+}
+
+/* Overrides globais — texto claro sobre fundo claro no dashboard */
+html.dashboard-theme-light [data-dashboard-root] .text-violet-100,
+html.dashboard-theme-light [data-dashboard-root] .text-violet-200,
+html.dashboard-theme-light [data-dashboard-root] .text-violet-300,
+[data-dashboard-root][data-theme="light"] .text-violet-100,
+[data-dashboard-root][data-theme="light"] .text-violet-200,
+[data-dashboard-root][data-theme="light"] .text-violet-300 {
+  color: hsl(262 55% 32%) !important;
+}
+html.dashboard-theme-light [data-dashboard-root] .text-violet-400,
+[data-dashboard-root][data-theme="light"] .text-violet-400 {
+  color: hsl(262 55% 38%) !important;
+}
+html.dashboard-theme-light [data-dashboard-root] .text-sky-100,
+html.dashboard-theme-light [data-dashboard-root] .text-amber-100,
+html.dashboard-theme-light [data-dashboard-root] .text-emerald-100,
+[data-dashboard-root][data-theme="light"] .text-sky-100,
+[data-dashboard-root][data-theme="light"] .text-amber-100,
+[data-dashboard-root][data-theme="light"] .text-emerald-100 {
+  color: hsl(222 47% 18%) !important;
+}
+html.dashboard-theme-light [data-dashboard-root] .bg-zinc-900\/30,
+html.dashboard-theme-light [data-dashboard-root] .bg-zinc-900\/40,
+html.dashboard-theme-light [data-dashboard-root] .bg-zinc-900\/50,
+html.dashboard-theme-light [data-dashboard-root] .bg-zinc-900\/95,
+html.dashboard-theme-light [data-dashboard-root] .bg-zinc-950\/25,
+html.dashboard-theme-light [data-dashboard-root] .bg-zinc-950\/40,
+[data-dashboard-root][data-theme="light"] .bg-zinc-900\/30,
+[data-dashboard-root][data-theme="light"] .bg-zinc-900\/40,
+[data-dashboard-root][data-theme="light"] .bg-zinc-900\/50,
+[data-dashboard-root][data-theme="light"] .bg-zinc-900\/95,
+[data-dashboard-root][data-theme="light"] .bg-zinc-950\/25,
+[data-dashboard-root][data-theme="light"] .bg-zinc-950\/40 {
+  background-color: hsl(214 32% 96%) !important;
+}
+html.dashboard-theme-light [data-dashboard-root] .from-violet-950\/20,
+html.dashboard-theme-light [data-dashboard-root] .from-violet-950\/25,
+html.dashboard-theme-light [data-dashboard-root] .from-violet-950\/30,
+html.dashboard-theme-light [data-dashboard-root] .from-violet-950\/40,
+[data-dashboard-root][data-theme="light"] .from-violet-950\/20,
+[data-dashboard-root][data-theme="light"] .from-violet-950\/25,
+[data-dashboard-root][data-theme="light"] .from-violet-950\/30,
+[data-dashboard-root][data-theme="light"] .from-violet-950\/40 {
+  --tw-gradient-from: hsl(262 35% 96%) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: hsl(262 35% 96% / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+html.dashboard-theme-light [data-dashboard-root] .bg-violet-950\/20,
+html.dashboard-theme-light [data-dashboard-root] .bg-violet-950\/30,
+html.dashboard-theme-light [data-dashboard-root] .bg-violet-950\/50,
+[data-dashboard-root][data-theme="light"] .bg-violet-950\/20,
+[data-dashboard-root][data-theme="light"] .bg-violet-950\/30,
+[data-dashboard-root][data-theme="light"] .bg-violet-950\/50 {
+  background-color: hsl(262 35% 94%) !important;
+}
+html.dashboard-theme-light [data-dashboard-root] input::placeholder,
+html.dashboard-theme-light [data-dashboard-root] textarea::placeholder,
+[data-dashboard-root][data-theme="light"] input::placeholder,
+[data-dashboard-root][data-theme="light"] textarea::placeholder {
+  color: hsl(215 20% 42%);
+  opacity: 1;
 }
 /* Fade-in suave na entrada da página */
 [data-dashboard-content] > div {
