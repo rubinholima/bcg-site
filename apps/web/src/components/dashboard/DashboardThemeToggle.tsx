@@ -42,7 +42,7 @@ export function DashboardThemeToggle({
 
   useEffect(() => {
     if (!open) return;
-    const onPointerDown = (event: MouseEvent) => {
+    const onPointerDown = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) {
         setOpen(false);
       }
@@ -50,10 +50,10 @@ export function DashboardThemeToggle({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
@@ -110,6 +110,7 @@ export function DashboardThemeToggle({
                     ? "bg-accent text-accent-foreground"
                     : "text-popover-foreground hover:bg-accent/60",
                 )}
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => handleSelect(option.value)}
               >
                 <Icon className="h-4 w-4 shrink-0 opacity-80" />
@@ -122,7 +123,7 @@ export function DashboardThemeToggle({
               </button>
             );
           })}
-          <p className="border-t border-border px-2.5 py-2 text-[11px] leading-snug text-muted-foreground">
+          <p className="border-t border-border px-2.5 py-2 text-[11px] font-medium leading-snug text-slate-600 dark:text-muted-foreground">
             {preference === "system"
               ? `Sistema: ${resolvedTheme === "dark" ? "escuro" : "claro"}`
               : preference === "dark"

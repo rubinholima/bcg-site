@@ -9,6 +9,10 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  applyDashboardThemeToDocument,
+  restorePublicSiteTheme,
+} from "@/lib/dashboard-theme-document";
 
 export type DashboardThemePreference = "light" | "dark" | "system";
 export type DashboardResolvedTheme = "light" | "dark";
@@ -43,28 +47,35 @@ function readStoredPreference(): DashboardThemePreference {
 export function DashboardThemeProvider({ children }: { children: React.ReactNode }) {
   const [preference, setPreferenceState] = useState<DashboardThemePreference>("dark");
   const [resolvedTheme, setResolvedTheme] = useState<DashboardResolvedTheme>("dark");
+  const [ready, setReady] = useState(false);
 
   useLayoutEffect(() => {
     const stored = readStoredPreference();
+    const resolved = resolveTheme(stored);
     setPreferenceState(stored);
-    setResolvedTheme(resolveTheme(stored));
+    setResolvedTheme(resolved);
+    applyDashboardThemeToDocument(resolved);
+    setReady(true);
   }, []);
 
   useLayoutEffect(() => {
-    const isLight = resolvedTheme === "light";
-    document.documentElement.classList.toggle("dark", !isLight);
-    document.documentElement.classList.toggle("dashboard-theme-light", isLight);
+    if (!ready) return;
+    applyDashboardThemeToDocument(resolvedTheme);
+  }, [resolvedTheme, ready]);
+
+  useEffect(() => {
     return () => {
-      document.documentElement.classList.add("dark");
-      document.documentElement.classList.remove("dashboard-theme-light");
+      restorePublicSiteTheme();
     };
-  }, [resolvedTheme]);
+  }, []);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const syncSystem = () => {
       if (preference === "system") {
-        setResolvedTheme(getSystemTheme());
+        const resolved = getSystemTheme();
+        setResolvedTheme(resolved);
+        applyDashboardThemeToDocument(resolved);
       }
     };
     syncSystem();
@@ -73,9 +84,15 @@ export function DashboardThemeProvider({ children }: { children: React.ReactNode
   }, [preference]);
 
   const setPreference = useCallback((next: DashboardThemePreference) => {
+    const resolved = resolveTheme(next);
     setPreferenceState(next);
-    setResolvedTheme(resolveTheme(next));
-    localStorage.setItem(STORAGE_KEY, next);
+    setResolvedTheme(resolved);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      /* storage indisponível */
+    }
+    applyDashboardThemeToDocument(resolved);
   }, []);
 
   const value = useMemo(
