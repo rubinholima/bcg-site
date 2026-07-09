@@ -12,6 +12,7 @@ import {
   Send,
   CalendarOff,
   CalendarClock,
+  CheckCircle2,
   UserCircle,
   Video,
   MapPin,
@@ -33,6 +34,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
 import type { Psychologist } from "@/types/psychologist";
 
@@ -137,6 +149,23 @@ export function ConsultasCalendar({
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
+  const [completingId, setCompletingId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<
+    | { type: "delete"; id: string }
+    | { type: "cancel"; c: Consultation }
+    | { type: "complete"; c: Consultation }
+    | null
+  >(null);
+  const [feedback, setFeedback] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: FeedbackVariant;
+  }>({ open: false, title: "", message: "", variant: "info" });
+
+  const showFeedback = (title: string, message: string, variant: FeedbackVariant = "info") => {
+    setFeedback({ open: true, title, message, variant });
+  };
 
   const fetchConsultations = useCallback(() => {
     if (consultationsProp !== undefined) return; // controlado pelo parent
@@ -201,13 +230,13 @@ export function ConsultasCalendar({
   );
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Apagar esta reunião/consulta?")) return;
     setDeletingId(id);
     try {
       await api.delete(`/consultations/${encodeURIComponent(id)}`);
       fetchConsultations();
+      onRefreshRequested?.();
     } catch {
-      alert("Erro ao apagar. Tente novamente.");
+      showFeedback("Erro", "Erro ao apagar. Tente novamente.", "error");
     } finally {
       setDeletingId(null);
     }
@@ -215,7 +244,7 @@ export function ConsultasCalendar({
 
   const handleResendLink = async (c: Consultation) => {
     if (!c.link?.trim() || !c.date?.trim()) {
-      alert("Esta consulta não tem link ou data para reenviar.");
+      showFeedback("Atenção", "Esta consulta não tem link ou data para reenviar.", "warning");
       return;
     }
     setResendingId(c.id);
@@ -252,16 +281,40 @@ export function ConsultasCalendar({
 
   const handleCancelConsultation = async (c: Consultation) => {
     if (c.status === "cancelled") return;
-    if (!confirm("Cancelar esta consulta? O atleta permanecerá no histórico como cancelada.")) return;
     setCancellingId(c.id);
     try {
       await api.patch(`/consultations/${encodeURIComponent(c.id)}`, { status: "cancelled" });
       fetchConsultations();
+      onRefreshRequested?.();
     } catch {
-      alert("Erro ao cancelar. Tente novamente.");
+      showFeedback("Erro", "Erro ao cancelar. Tente novamente.", "error");
     } finally {
       setCancellingId(null);
     }
+  };
+
+  const handleMarkCompleted = async (c: Consultation) => {
+    if (c.status === "completed") return;
+    setCompletingId(c.id);
+    try {
+      await api.patch(`/consultations/${encodeURIComponent(c.id)}`, { status: "completed" });
+      showFeedback("Pronto", "Consulta marcada como realizada.", "success");
+      fetchConsultations();
+      onRefreshRequested?.();
+    } catch {
+      showFeedback("Erro", "Erro ao marcar como realizada. Tente novamente.", "error");
+    } finally {
+      setCompletingId(null);
+    }
+  };
+
+  const runConfirmAction = async () => {
+    if (!confirmAction) return;
+    const action = confirmAction;
+    setConfirmAction(null);
+    if (action.type === "delete") await handleDelete(action.id);
+    else if (action.type === "cancel") await handleCancelConsultation(action.c);
+    else if (action.type === "complete") await handleMarkCompleted(action.c);
   };
 
   const openEditModal = (c: Consultation) => {
@@ -588,8 +641,23 @@ export function ConsultasCalendar({
                               Reenviar link
                             </Button>
                           )}
-                          {c.status !== "cancelled" && (
+                          {c.status !== "cancelled" && c.status !== "completed" && (
                             <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
+                                onClick={() => setConfirmAction({ type: "complete", c })}
+                                disabled={completingId === c.id}
+                                title="Marcar esta consulta como realizada"
+                              >
+                                {completingId === c.id ? (
+                                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                                )}
+                                Marcar realizada
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -608,7 +676,7 @@ export function ConsultasCalendar({
                                 variant="outline"
                                 size="sm"
                                 className="text-destructive hover:text-destructive"
-                                onClick={() => handleCancelConsultation(c)}
+                                onClick={() => setConfirmAction({ type: "cancel", c })}
                                 disabled={cancellingId === c.id}
                                 title="Cancelar esta consulta"
                               >
@@ -620,6 +688,18 @@ export function ConsultasCalendar({
                                 Cancelar consulta
                               </Button>
                             </>
+                          )}
+                          {c.status === "completed" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditModal(c)}
+                              disabled={updatingId === c.id}
+                              title="Editar notas da consulta realizada"
+                            >
+                              <CalendarClock className="mr-1 h-3.5 w-3.5" />
+                              Editar
+                            </Button>
                           )}
                           {c.link && onShowHistory && (
                             <Button
@@ -638,7 +718,7 @@ export function ConsultasCalendar({
                             className="ml-auto shrink-0 text-destructive hover:text-destructive"
                             title="Apagar reunião"
                             disabled={deletingId === c.id}
-                            onClick={() => handleDelete(c.id)}
+                            onClick={() => setConfirmAction({ type: "delete", id: c.id })}
                           >
                             {deletingId === c.id ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -804,6 +884,41 @@ export function ConsultasCalendar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmAction != null} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction?.type === "delete"
+                ? "Apagar consulta?"
+                : confirmAction?.type === "cancel"
+                  ? "Cancelar consulta?"
+                  : "Marcar como realizada?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === "delete"
+                ? "Esta ação remove a reunião/consulta. Não dá para desfazer."
+                : confirmAction?.type === "cancel"
+                  ? "A consulta ficará como cancelada no histórico do atleta."
+                  : confirmAction?.type === "complete"
+                    ? `Confirmar que a consulta de ${confirmAction.c.playerName} foi realizada? Ela sai da lista de agendadas.`
+                    : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void runConfirmAction()}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((prev) => ({ ...prev, open }))}
+        title={feedback.title}
+        message={feedback.message}
+        variant={feedback.variant}
+      />
     </div>
   );
 }

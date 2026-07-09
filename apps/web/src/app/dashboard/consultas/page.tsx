@@ -589,7 +589,18 @@ export default function ConsultasPage() {
 
       {/* Agenda — largura total */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="space-y-3 pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              Agende online, presencial, grupo ou preencha o relatório semanal.
+            </p>
+            <Button variant="outline" size="sm" className="min-h-[40px]" asChild>
+              <Link href="/dashboard/psicologia/relatorios">
+                <FileText className="mr-1.5 h-4 w-4" />
+                Ver relatórios salvos
+              </Link>
+            </Button>
+          </div>
           <PsychologySchedulingCard
             filterClube={filterClube}
             filterAtleta={filterAtleta}

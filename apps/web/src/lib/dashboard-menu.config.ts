@@ -662,6 +662,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             moduleSlug: "saude",
           },
           {
+            slug: "psicologia_relatorios",
+            label: "Relatórios semanais",
+            href: "/dashboard/psicologia/relatorios",
+            icon: FileText,
+            moduleSlug: "saude",
+          },
+          {
             slug: "psicologia_material_apoio",
             label: "Material de apoio",
             href: "/dashboard/psicologia/material-apoio",

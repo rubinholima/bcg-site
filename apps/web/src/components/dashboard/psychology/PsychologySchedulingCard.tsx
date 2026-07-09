@@ -718,6 +718,13 @@ export function PsychologySchedulingCard({
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ClipboardList className="mr-2 h-4 w-4" />}
             Salvar relatório semanal
           </Button>
+          <p className="text-xs text-muted-foreground">
+            Depois de salvar, veja e imprima em{" "}
+            <Link href="/dashboard/psicologia/relatorios" className="font-medium text-primary underline-offset-2 hover:underline">
+              Psicologia → Relatórios semanais
+            </Link>
+            .
+          </p>
         </div>
       )}
 
