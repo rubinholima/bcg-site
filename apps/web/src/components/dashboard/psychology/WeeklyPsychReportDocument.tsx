@@ -68,11 +68,11 @@ function MetaItem({
 
 function ReportSection({ label, value }: { label: string; value: string }) {
   return (
-    <section className="rounded-2xl border border-border/70 bg-card/50 p-5 sm:p-6">
-      <h3 className="mb-3 border-l-4 border-violet-500 pl-3 text-xs font-bold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+    <section className="border-b border-border/60 pb-5 last:border-b-0 last:pb-0">
+      <h3 className="mb-2 border-l-4 border-violet-500 pl-3 text-xs font-bold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
         {label}
       </h3>
-      <div className="whitespace-pre-wrap text-[15px] leading-[1.75] text-slate-800 dark:text-foreground/95">
+      <div className="whitespace-pre-wrap pl-1 text-[15px] leading-[1.75] text-foreground/95">
         {value}
       </div>
     </section>
@@ -126,7 +126,7 @@ export function WeeklyPsychReportDocument({
           Este relatório não tem campos de texto preenchidos.
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-5 rounded-xl border border-border/70 bg-card/30 p-5 sm:p-6">
           {filledSections.map((field) => (
             <ReportSection
               key={field.key}

@@ -167,28 +167,43 @@ function buildPrintHtml(report: WeeklyPsychReportData): string {
       Documento gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))} · Boston City Group
     </footer>
   </div>
-  <script>
-    window.onload = function () {
-      setTimeout(function () {
-        window.focus();
-        window.print();
-      }, 250);
-    };
-    window.onafterprint = function () {
-      window.close();
-    };
-  </script>
 </body>
 </html>`;
 }
 
-/** Abre janela dedicada com layout de impressão (A4) — confiável no Chrome/Edge. */
-export function printWeeklyPsychReport(report: WeeklyPsychReportData): boolean {
-  if (typeof window === "undefined") return false;
-  const win = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
-  if (!win) return false;
-  win.document.open();
-  win.document.write(buildPrintHtml(report));
-  win.document.close();
-  return true;
+/** Impressão via iframe oculto — não depende de pop-up do navegador. */
+export function printWeeklyPsychReport(report: WeeklyPsychReportData): void {
+  if (typeof document === "undefined") return;
+
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("title", "Impressão relatório semanal");
+  iframe.style.cssText =
+    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+  document.body.appendChild(iframe);
+
+  const frameWindow = iframe.contentWindow;
+  const frameDoc = frameWindow?.document;
+  if (!frameWindow || !frameDoc) {
+    iframe.remove();
+    return;
+  }
+
+  frameDoc.open();
+  frameDoc.write(buildPrintHtml(report));
+  frameDoc.close();
+
+  const runPrint = () => {
+    try {
+      frameWindow.focus();
+      frameWindow.print();
+    } finally {
+      window.setTimeout(() => iframe.remove(), 1500);
+    }
+  };
+
+  if (frameDoc.readyState === "complete") {
+    window.setTimeout(runPrint, 200);
+  } else {
+    iframe.onload = () => window.setTimeout(runPrint, 200);
+  }
 }

@@ -105,15 +105,7 @@ export default function PsicologiaRelatoriosPage() {
 
   const handlePrint = () => {
     if (!selected) return;
-    const ok = printWeeklyPsychReport(selected);
-    if (!ok) {
-      setFeedback({
-        open: true,
-        title: "Impressão bloqueada",
-        message: "Permita pop-ups neste site para abrir a visualização de impressão.",
-        variant: "warning",
-      });
-    }
+    printWeeklyPsychReport(selected);
   };
 
   if (authLoading) {
@@ -195,7 +187,7 @@ export default function PsicologiaRelatoriosPage() {
               Ainda não há relatórios salvos. Preencha a aba Relatório em Consultas e clique em Salvar.
             </p>
           ) : (
-            <ul className="grid gap-3 sm:grid-cols-2">
+            <ul className="space-y-2">
               {filtered.map((r) => {
                 const professional =
                   formatPersonFirstLastName(r.estagiarioName) ||
@@ -215,21 +207,17 @@ export default function PsicologiaRelatoriosPage() {
                   <li key={r.id}>
                     <button
                       type="button"
-                      className="flex h-full w-full min-h-[88px] flex-col justify-between gap-3 rounded-2xl border border-border bg-gradient-to-br from-card to-muted/20 px-5 py-4 text-left transition-all hover:border-violet-400/60 hover:shadow-md"
+                      className="flex w-full min-h-[56px] flex-col gap-1 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:border-violet-400/50 hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                       onClick={() => setSelected(r)}
                     >
-                      <div className="min-w-0 space-y-1">
-                        <p className="text-base font-bold leading-snug text-foreground sm:text-lg">
-                          {mainTitle}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{secondaryLine}</p>
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <p className="font-semibold leading-snug text-foreground">{mainTitle}</p>
+                        <p className="truncate text-xs text-muted-foreground">{secondaryLine}</p>
                       </div>
-                      <div className="flex justify-end">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                          <Eye className="h-3.5 w-3.5" />
-                          Abrir
-                        </span>
-                      </div>
+                      <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-violet-700 dark:text-violet-300">
+                        <Eye className="h-3.5 w-3.5" />
+                        Ver / imprimir
+                      </span>
                     </button>
                   </li>
                 );
