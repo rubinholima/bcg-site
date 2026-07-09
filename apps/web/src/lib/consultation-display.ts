@@ -59,3 +59,24 @@ export function playerPsychologyProfileHref(playerId: string, from?: "consultas"
   if (from) params.set("from", from);
   return `/dashboard/cadastros/jogadores/${playerId}/edit?${params.toString()}`;
 }
+
+/** Data local YYYY-MM-DD (hoje). */
+export function consultationTodayKey(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Consulta ainda a efetuar: não realizada, não cancelada, e data >= hoje.
+ * Usado no calendário/listagem de Psicologia → Consultas.
+ */
+export function isUpcomingConsultation(c: {
+  date?: string | null;
+  status?: string | null;
+}): boolean {
+  const status = (c.status ?? "scheduled").toLowerCase();
+  if (status === "completed" || status === "cancelled") return false;
+  const date = (c.date ?? "").trim();
+  if (!date) return true;
+  return date >= consultationTodayKey();
+}

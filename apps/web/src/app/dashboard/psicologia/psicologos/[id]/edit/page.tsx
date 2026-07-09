@@ -19,6 +19,7 @@ import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { isUpcomingConsultation } from "@/lib/consultation-display";
 import type { Psychologist } from "@/types/psychologist";
 import type { AttendanceLogEntry, PerformanceSheet } from "@/types/psychologist";
 import type { Tenant } from "@/types/tenant";
@@ -78,7 +79,10 @@ export default function EditarPsicologoPage() {
       .then(({ data }) => {
         const list = Array.isArray(data) ? data : [];
         const byThis = list.filter(
-          (c) => (c.psychologist ?? "").trim() && (c.psychologist ?? "").trim().toLowerCase() === psychologist.name.trim().toLowerCase()
+          (c) =>
+            isUpcomingConsultation(c) &&
+            (c.psychologist ?? "").trim() &&
+            (c.psychologist ?? "").trim().toLowerCase() === psychologist.name.trim().toLowerCase()
         );
         setConsultationsFromSystem(
           byThis.map((c) => ({

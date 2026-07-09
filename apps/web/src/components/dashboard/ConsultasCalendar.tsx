@@ -18,7 +18,12 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getPublicImageUrl } from "@/lib/media-url";
-import { getConsultationModality, formatPersonFirstLastName, playerPsychologyProfileHref } from "@/lib/consultation-display";
+import {
+  getConsultationModality,
+  formatPersonFirstLastName,
+  playerPsychologyProfileHref,
+  isUpcomingConsultation,
+} from "@/lib/consultation-display";
 import { Button } from "@/components/ui/button";
 import { CardDescription, CardTitle } from "@/components/ui/card";
 import {
@@ -159,11 +164,13 @@ export function ConsultasCalendar({
       .catch(() => setPsychologists([]));
   }, []);
 
+  /** Só consultas a efetuar (hoje em diante; sem realizadas/canceladas). */
+  const upcomingConsultations = consultations.filter(isUpcomingConsultation);
+
   const filtered = (dateFilter
-    ? consultations.filter((c) => c.date === dateFilter)
-    : consultations
+    ? upcomingConsultations.filter((c) => c.date === dateFilter)
+    : upcomingConsultations
   )
-    .filter((c) => c.status !== "completed")
     .filter(
       (c) =>
         !nameFilter?.trim() ||
@@ -173,7 +180,6 @@ export function ConsultasCalendar({
     .filter((c) => !playerIdFilter || c.playerId === playerIdFilter)
     .filter((c) => !categoryFilter || (c.category ?? "") === categoryFilter);
 
-  const activeConsultations = consultations.filter((c) => c.status !== "completed");
   const byDate = filtered.reduce<Record<string, Consultation[]>>((acc, c) => {
     const key = c.date ?? "sem-data";
     if (!acc[key]) acc[key] = [];
@@ -183,9 +189,9 @@ export function ConsultasCalendar({
 
   const sortedDates = Object.keys(byDate).sort();
 
-  // Horários ocupados no dia selecionado
+  // Horários ocupados no dia selecionado (só futuras / de hoje)
   const dayConsultations = dateFilter
-    ? activeConsultations.filter((c) => c.date === dateFilter && c.time)
+    ? upcomingConsultations.filter((c) => c.date === dateFilter && c.time)
     : [];
   const occupiedSlots = new Set(
     dayConsultations.map((c) => {
@@ -388,7 +394,7 @@ export function ConsultasCalendar({
                 <div key={`empty-${i}`} />
               ))}
             {days.map(({ date, day }) => {
-              const hasConsultation = activeConsultations.some((c) => c.date === date);
+              const hasConsultation = upcomingConsultations.some((c) => c.date === date);
               const isSelected = dateFilter === date;
               return (
                 <button
@@ -443,10 +449,10 @@ export function ConsultasCalendar({
             <div className="py-4 flex flex-col items-center gap-3 text-center">
               <p className="text-sm text-muted-foreground">
                 {consultations.length === 0
-                  ? "Nenhuma consulta cadastrada."
+                  ? "Nenhuma consulta a efetuar (só aparecem datas de hoje em diante)."
                   : nameFilter?.trim()
                     ? "Nenhuma consulta encontrada para esse nome."
-                    : "Nenhuma consulta na data selecionada."}
+                    : "Nenhuma consulta a efetuar nesta data."}
               </p>
               {playerIdFilter && onShowHistory && (
                 <Button

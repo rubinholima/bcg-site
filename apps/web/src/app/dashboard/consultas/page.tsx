@@ -28,7 +28,11 @@ import { api } from "@/lib/api";
 import type { Psychologist } from "@/types/psychologist";
 import { FIXTURE_CATEGORIES, filterCategoriesForTenant } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
-import { getConsultationModality, playerPsychologyProfileHref } from "@/lib/consultation-display";
+import {
+  getConsultationModality,
+  playerPsychologyProfileHref,
+  isUpcomingConsultation,
+} from "@/lib/consultation-display";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 
 interface PlayerOption {
@@ -301,11 +305,11 @@ export default function ConsultasPage() {
     : FIXTURE_CATEGORIES.filter((c) => categoriesInUse.includes(c.value));
   const historicoAtleta = filterAtleta
     ? consultations
-        .filter((c) => c.playerId === filterAtleta && c.status !== "completed")
+        .filter((c) => c.playerId === filterAtleta && isUpcomingConsultation(c))
         .sort((a, b) => {
           const da = (a.date ?? "") + (a.time ?? "");
           const db = (b.date ?? "") + (b.time ?? "");
-          return db.localeCompare(da);
+          return da.localeCompare(db);
         })
     : [];
   const selectedPlayerName = filterAtleta

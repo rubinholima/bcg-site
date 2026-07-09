@@ -161,7 +161,10 @@ function normalizeConsulta(c: {
   time?: string;
   status?: string;
 }): UnifiedAgendaEvent | null {
-  if (!c.date || c.status === "cancelled") return null;
+  if (!c.date || c.status === "cancelled" || c.status === "completed") return null;
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  if (c.date < todayKey) return null;
   const startAt = `${c.date}T${c.time ?? "09:00"}:00`;
   return {
     id: `consulta-${c.id}`,
@@ -171,7 +174,7 @@ function normalizeConsulta(c: {
     startAt,
     endAt: null,
     allDay: false,
-    typeLabel: c.status === "completed" ? "Realizada" : "Agendada",
+    typeLabel: "Agendada",
     href: "/dashboard/consultas",
     tone: AGENDA_SOURCE_TONE.consultas,
     dotClass: AGENDA_SOURCE_DOT.consultas,
