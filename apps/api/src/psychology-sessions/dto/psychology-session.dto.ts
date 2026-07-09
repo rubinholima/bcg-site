@@ -246,4 +246,8 @@ export class UpdatePsychologySessionDto {
   @IsOptional()
   @IsInt()
   durationSeconds?: number;
+
+  @IsOptional()
+  @IsString()
+  editComment?: string;
 }

@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
+import { MeService } from '../auth/me.service';
+import type { CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import {
   isArchivedSportsSituation,
   isLoanedSportsSituation,
@@ -19,11 +21,20 @@ import {
 
 type AttendanceRow = PsychologyAttendanceRowDto & { playerName?: string };
 
+type SessionEditLogEntry = {
+  at: string;
+  userId: string;
+  userName: string;
+  action: 'created' | 'updated';
+  comment?: string;
+};
+
 @Injectable()
 export class PsychologySessionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly futebolAgenda: FutebolAgendaService,
+    private readonly meService: MeService,
   ) {}
 
   async list(
@@ -68,7 +79,7 @@ export class PsychologySessionsService {
     return row;
   }
 
-  async create(dto: CreatePsychologySessionDto) {
+  async create(dto: CreatePsychologySessionDto, editor?: CognitoJwtPayload) {
     await this.assertTenant(dto.tenantId);
     const names = await this.resolveStaffNames(dto);
     let attendance = dto.attendance;
@@ -104,6 +115,14 @@ export class PsychologySessionsService {
         groupSummary: dto.groupSummary ?? null,
         attendance: attendance as object | undefined,
         durationSeconds: dto.durationSeconds ?? null,
+        editLog:
+          dto.sessionType === 'relatorio_semanal' && editor
+            ? (this.appendEditLog(null, {
+                at: new Date().toISOString(),
+                ...(await this.resolveEditor(editor)),
+                action: 'created',
+              }) as object)
+            : undefined,
       },
     });
 
@@ -124,7 +143,7 @@ export class PsychologySessionsService {
     return updated;
   }
 
-  async update(id: string, dto: UpdatePsychologySessionDto) {
+  async update(id: string, dto: UpdatePsychologySessionDto, editor?: CognitoJwtPayload) {
     const existing = await this.findOne(id);
     const names = await this.resolveStaffNames({
       ...dto,
@@ -133,6 +152,40 @@ export class PsychologySessionsService {
       psychologistName: dto.psychologistName ?? existing.psychologistName ?? undefined,
       estagiarioName: dto.estagiarioName ?? existing.estagiarioName ?? undefined,
     });
+
+    const reportFields = [
+      'periodStart',
+      'periodEnd',
+      'categoriesLabel',
+      'activities',
+      'individualDemands',
+      'weeklyDevelopment',
+      'identifiedDemands',
+      'nextWeekPlanning',
+      'finalSummary',
+      'generalNotes',
+    ] as const;
+    const hasReportFieldChange = reportFields.some((key) => {
+      if (dto[key] === undefined) return false;
+      const next = (dto[key] ?? '').trim();
+      const prev = ((existing[key] as string | null) ?? '').trim();
+      return next !== prev;
+    });
+    const editComment = dto.editComment?.trim();
+    const shouldLog =
+      existing.sessionType === 'relatorio_semanal' &&
+      editor &&
+      (hasReportFieldChange || Boolean(editComment));
+
+    let nextEditLog: SessionEditLogEntry[] | undefined;
+    if (shouldLog) {
+      nextEditLog = this.appendEditLog(existing.editLog, {
+        at: new Date().toISOString(),
+        ...(await this.resolveEditor(editor!)),
+        action: 'updated',
+        comment: editComment || undefined,
+      });
+    }
 
     const row = await this.prisma.psychologySession.update({
       where: { id },
@@ -179,6 +232,7 @@ export class PsychologySessionsService {
             : (existing.attendance as object | undefined),
         durationSeconds:
           dto.durationSeconds !== undefined ? dto.durationSeconds : existing.durationSeconds,
+        ...(nextEditLog ? { editLog: nextEditLog as object } : {}),
       },
     });
 
@@ -237,6 +291,25 @@ export class PsychologySessionsService {
   private async assertTenant(tenantId: string) {
     const t = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!t) throw new BadRequestException('Clube não encontrado');
+  }
+
+  private appendEditLog(existing: unknown, entry: SessionEditLogEntry): SessionEditLogEntry[] {
+    const list = Array.isArray(existing) ? [...(existing as SessionEditLogEntry[])] : [];
+    list.push(entry);
+    return list;
+  }
+
+  private async resolveEditor(user: CognitoJwtPayload) {
+    const dbUser =
+      (await this.meService.findUserByCognitoSub(user.sub)) ??
+      (await this.meService.findUserById(user.sub));
+    const userName =
+      dbUser?.name?.trim() ||
+      (typeof user.name === 'string' ? user.name.trim() : '') ||
+      (typeof user.email === 'string' ? user.email.trim() : '') ||
+      dbUser?.username ||
+      'Usuário';
+    return { userId: dbUser?.id ?? user.sub, userName };
   }
 
   private async resolveStaffNames(dto: {

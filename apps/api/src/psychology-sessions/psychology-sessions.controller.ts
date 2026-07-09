@@ -83,7 +83,7 @@ export class PsychologySessionsController {
   ) {
     const allowed = await this.allowedTenants(req);
     this.tenantAccess.assertCanAccessTenant(allowed, dto.tenantId);
-    return this.service.create(dto);
+    return this.service.create(dto, req.user);
   }
 
   @Patch(':id')
@@ -96,7 +96,7 @@ export class PsychologySessionsController {
   ) {
     const allowed = await this.allowedTenants(req);
     await this.service.findOne(id, allowed);
-    return this.service.update(id, dto);
+    return this.service.update(id, dto, req.user);
   }
 
   @Delete(':id')

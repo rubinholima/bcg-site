@@ -2,6 +2,7 @@
 
 import { formatPersonFirstLastName } from "@/lib/consultation-display";
 import { cn } from "@/lib/utils";
+import type { WeeklyPsychReportEditLogEntry } from "@/components/dashboard/psychology/WeeklyPsychReportEditLog";
 
 export type WeeklyPsychReportData = {
   id?: string;
@@ -19,6 +20,7 @@ export type WeeklyPsychReportData = {
   generalNotes?: string | null;
   psychologistName?: string | null;
   estagiarioName?: string | null;
+  editLog?: WeeklyPsychReportEditLogEntry[] | null;
   tenant?: { id: string; name: string; slug?: string } | null;
 };
 
