@@ -22,30 +22,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
+import {
+  WeeklyPsychReportDocument,
+  type WeeklyPsychReportData,
+} from "@/components/dashboard/psychology/WeeklyPsychReportDocument";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { formatPersonFirstLastName } from "@/lib/consultation-display";
-
-type WeeklyReport = {
-  id: string;
-  tenantId: string;
-  date: string;
-  time?: string | null;
-  periodStart?: string | null;
-  periodEnd?: string | null;
-  categoriesLabel?: string | null;
-  activities?: string | null;
-  individualDemands?: string | null;
-  weeklyDevelopment?: string | null;
-  identifiedDemands?: string | null;
-  nextWeekPlanning?: string | null;
-  finalSummary?: string | null;
-  generalNotes?: string | null;
-  psychologistName?: string | null;
-  estagiarioName?: string | null;
-  status?: string | null;
-  tenant?: { id: string; name: string; slug?: string } | null;
-};
+import { printWeeklyPsychReport } from "@/lib/print-weekly-psych-report";
 
 function formatBrDate(d?: string | null): string {
   if (!d) return "—";
@@ -54,22 +38,12 @@ function formatBrDate(d?: string | null): string {
   return `${day}/${m}/${y}`;
 }
 
-const REPORT_FIELDS: Array<{ key: keyof WeeklyReport; label: string }> = [
-  { key: "activities", label: "Atividades realizadas" },
-  { key: "individualDemands", label: "Demandas individuais (comissão)" },
-  { key: "weeklyDevelopment", label: "Desenvolvimento observado na semana" },
-  { key: "identifiedDemands", label: "Demandas identificadas" },
-  { key: "nextWeekPlanning", label: "Planejamento próxima semana" },
-  { key: "finalSummary", label: "Resumo final" },
-  { key: "generalNotes", label: "Observações gerais" },
-];
-
 export default function PsicologiaRelatoriosPage() {
   const { canAccessModule, loading: authLoading } = useAuth();
-  const [rows, setRows] = useState<WeeklyReport[]>([]);
+  const [rows, setRows] = useState<WeeklyPsychReportData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<WeeklyReport | null>(null);
+  const [selected, setSelected] = useState<WeeklyPsychReportData | null>(null);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -82,7 +56,7 @@ export default function PsicologiaRelatoriosPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get<WeeklyReport[]>(
+      const { data } = await api.get<WeeklyPsychReportData[]>(
         "/psychology-sessions?sessionType=relatorio_semanal",
       );
       const list = Array.isArray(data) ? data : [];
@@ -130,8 +104,16 @@ export default function PsicologiaRelatoriosPage() {
   }, [rows, search]);
 
   const handlePrint = () => {
-    if (typeof window === "undefined") return;
-    window.print();
+    if (!selected) return;
+    const ok = printWeeklyPsychReport(selected);
+    if (!ok) {
+      setFeedback({
+        open: true,
+        title: "Impressão bloqueada",
+        message: "Permita pop-ups neste site para abrir a visualização de impressão.",
+        variant: "warning",
+      });
+    }
   };
 
   if (authLoading) {
@@ -155,10 +137,10 @@ export default function PsicologiaRelatoriosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Button variant="ghost" size="sm" className="-ml-2 mb-2 gap-1.5 px-2 print:hidden" asChild>
+          <Button variant="ghost" size="sm" className="-ml-2 mb-2 gap-1.5 px-2" asChild>
             <Link href="/dashboard/consultas">
               <ArrowLeft className="h-4 w-4" />
               Voltar às consultas
@@ -168,11 +150,11 @@ export default function PsicologiaRelatoriosPage() {
             <ClipboardList className="h-6 w-6 text-violet-600 dark:text-violet-400" />
             Relatórios semanais
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Relatórios preenchidos na aba Relatório da agenda de atendimentos. Abra para ver e imprimir.
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Relatórios preenchidos na aba Relatório da agenda de atendimentos. Abra para visualizar em tela cheia e imprimir em PDF.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 print:hidden">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
             Atualizar
@@ -183,7 +165,7 @@ export default function PsicologiaRelatoriosPage() {
         </div>
       </div>
 
-      <Card className="print:hidden">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Lista</CardTitle>
           <CardDescription>
@@ -213,101 +195,72 @@ export default function PsicologiaRelatoriosPage() {
               Ainda não há relatórios salvos. Preencha a aba Relatório em Consultas e clique em Salvar.
             </p>
           ) : (
-            <ul className="space-y-2">
-              {filtered.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    className="flex w-full min-h-[52px] flex-col gap-1 rounded-xl border border-border bg-card px-4 py-3 text-left transition-colors hover:border-violet-400/50 hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
-                    onClick={() => setSelected(r)}
-                  >
-                    <div className="min-w-0">
-                      <p className="font-semibold text-foreground">
-                        {r.tenant?.name ?? "Clube"} · {formatBrDate(r.date)}
-                        {r.time ? ` ${r.time}` : ""}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {[
-                          r.periodStart || r.periodEnd
-                            ? `Período ${formatBrDate(r.periodStart)} – ${formatBrDate(r.periodEnd)}`
-                            : null,
-                          r.categoriesLabel,
-                          formatPersonFirstLastName(r.estagiarioName || r.psychologistName),
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                    </div>
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-violet-700 dark:text-violet-300">
-                      <Eye className="h-3.5 w-3.5" />
-                      Ver / imprimir
-                    </span>
-                  </button>
-                </li>
-              ))}
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {filtered.map((r) => {
+                const professional =
+                  formatPersonFirstLastName(r.estagiarioName) ||
+                  formatPersonFirstLastName(r.psychologistName);
+                const category = r.categoriesLabel?.trim() || "Sem categoria";
+                const period =
+                  r.periodStart || r.periodEnd
+                    ? `${formatBrDate(r.periodStart)} – ${formatBrDate(r.periodEnd)}`
+                    : "Período não informado";
+                const mainTitle = [category, period, professional || "—"].join(" · ");
+                const secondaryLine = [
+                  r.tenant?.name ?? "Clube",
+                  `${formatBrDate(r.date)}${r.time ? ` ${r.time}` : ""}`,
+                ].join(" · ");
+
+                return (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      className="flex h-full w-full min-h-[88px] flex-col justify-between gap-3 rounded-2xl border border-border bg-gradient-to-br from-card to-muted/20 px-5 py-4 text-left transition-all hover:border-violet-400/60 hover:shadow-md"
+                      onClick={() => setSelected(r)}
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-base font-bold leading-snug text-foreground sm:text-lg">
+                          {mainTitle}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{secondaryLine}</p>
+                      </div>
+                      <div className="flex justify-end">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-violet-700 dark:text-violet-300">
+                          <Eye className="h-3.5 w-3.5" />
+                          Abrir
+                        </span>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </CardContent>
       </Card>
 
       <Dialog open={selected != null} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto print:max-h-none print:max-w-none print:overflow-visible">
-          <DialogHeader className="print:hidden">
-            <DialogTitle>Relatório semanal</DialogTitle>
-          </DialogHeader>
-          {selected ? (
-            <div id="psych-weekly-report-print" className="space-y-4 text-sm text-foreground">
-              <div className="border-b border-border pb-3">
-                <h2 className="text-xl font-bold">Relatório semanal — Psicologia</h2>
-                <p className="mt-1 text-muted-foreground">{selected.tenant?.name ?? "—"}</p>
-                <div className="mt-3 grid gap-1 sm:grid-cols-2">
-                  <p>
-                    <span className="font-medium">Data do registro:</span> {formatBrDate(selected.date)}
-                    {selected.time ? ` ${selected.time}` : ""}
-                  </p>
-                  <p>
-                    <span className="font-medium">Período:</span>{" "}
-                    {formatBrDate(selected.periodStart)} – {formatBrDate(selected.periodEnd)}
-                  </p>
-                  <p>
-                    <span className="font-medium">Categorias:</span> {selected.categoriesLabel?.trim() || "—"}
-                  </p>
-                  <p>
-                    <span className="font-medium">Psicóloga(o):</span>{" "}
-                    {selected.psychologistName?.trim() || "—"}
-                  </p>
-                  <p>
-                    <span className="font-medium">Estagiária(o):</span>{" "}
-                    {selected.estagiarioName?.trim() || "—"}
-                  </p>
-                </div>
-              </div>
-              {REPORT_FIELDS.map((field) => {
-                const value = (selected[field.key] as string | null | undefined)?.trim();
-                if (!value) return null;
-                return (
-                  <div key={field.key}>
-                    <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {field.label}
-                    </h3>
-                    <p className="whitespace-pre-wrap leading-relaxed">{value}</p>
-                  </div>
-                );
-              })}
-              {!REPORT_FIELDS.some((f) => (selected[f.key] as string | null | undefined)?.trim()) ? (
-                <p className="text-muted-foreground">Este relatório não tem campos de texto preenchidos.</p>
-              ) : null}
+        <DialogContent
+          showCloseButton
+          className="!w-[min(56rem,calc(100vw-1.5rem))] !max-w-none max-h-[92vh] overflow-hidden p-0"
+        >
+          <div className="flex max-h-[92vh] flex-col">
+            <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-4">
+              <DialogTitle>Visualização do relatório</DialogTitle>
+            </DialogHeader>
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+              {selected ? <WeeklyPsychReportDocument report={selected} /> : null}
             </div>
-          ) : null}
-          <DialogFooter className="print:hidden gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => setSelected(null)}>
-              Fechar
-            </Button>
-            <Button type="button" onClick={handlePrint}>
-              <Printer className="mr-2 h-4 w-4" />
-              Imprimir
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="shrink-0 gap-2 border-t border-border/60 px-6 py-4 sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => setSelected(null)}>
+                Fechar
+              </Button>
+              <Button type="button" onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" />
+                Imprimir / PDF
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -318,27 +271,6 @@ export default function PsicologiaRelatoriosPage() {
         message={feedback.message}
         variant={feedback.variant}
       />
-
-      <style jsx global>{`
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #psych-weekly-report-print,
-          #psych-weekly-report-print * {
-            visibility: visible !important;
-          }
-          #psych-weekly-report-print {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            padding: 1rem !important;
-            color: #000 !important;
-            background: #fff !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

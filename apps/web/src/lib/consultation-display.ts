@@ -66,16 +66,30 @@ export function consultationTodayKey(): string {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 }
 
+/** Consulta pendente (agendada): não realizada e não cancelada. */
+export function isScheduledConsultation(c: {
+  status?: string | null;
+}): boolean {
+  const status = (c.status ?? "scheduled").toLowerCase();
+  return status !== "completed" && status !== "cancelled";
+}
+
+/** Consulta já realizada. */
+export function isCompletedConsultation(c: {
+  status?: string | null;
+}): boolean {
+  return (c.status ?? "scheduled").toLowerCase() === "completed";
+}
+
 /**
  * Consulta ainda a efetuar: não realizada, não cancelada, e data >= hoje.
- * Usado no calendário/listagem de Psicologia → Consultas.
+ * Usado na agenda unificada e filtros que só mostram o futuro.
  */
 export function isUpcomingConsultation(c: {
   date?: string | null;
   status?: string | null;
 }): boolean {
-  const status = (c.status ?? "scheduled").toLowerCase();
-  if (status === "completed" || status === "cancelled") return false;
+  if (!isScheduledConsultation(c)) return false;
   const date = (c.date ?? "").trim();
   if (!date) return true;
   return date >= consultationTodayKey();
