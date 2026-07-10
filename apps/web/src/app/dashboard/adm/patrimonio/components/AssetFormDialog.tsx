@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +61,8 @@ interface AssetFormDialogProps {
   tenantId: string;
   edit?: AssetRow | null;
   onSuccess: (savedTenantId: string) => void;
+  /** Atualiza miniaturas na lista sem fechar o modal (ex.: foto salva automaticamente). */
+  onPhotoUpdated?: () => void;
 }
 
 const STATUS_OPTIONS = [
@@ -79,8 +82,13 @@ export function AssetFormDialog({
   tenantId,
   edit,
   onSuccess,
+  onPhotoUpdated,
 }: AssetFormDialogProps) {
   const [saving, setSaving] = useState(false);
+  const [savingPhoto, setSavingPhoto] = useState(false);
+  const [feedback, setFeedback] = useState<{ title: string; message: string; variant: "error" | "warning" | "success" } | null>(null);
+  const skipNextPhotoAutosave = useRef(false);
+  const photoAutosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [dialogPlayers, setDialogPlayers] = useState<PlayerOption[]>([]);
   const [catTenantId, setCatTenantId] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -124,8 +132,56 @@ export function AssetFormDialog({
     };
   }, [open, playerTenantId, edit?.id]);
 
+  const persistPhotoUrl = useCallback(
+    async (url: string) => {
+      if (!edit?.id) return;
+      setSavingPhoto(true);
+      try {
+        await api.patch(`/patrimonio/assets/${edit.id}`, {
+          photoUrl: url.trim(),
+        });
+        onPhotoUpdated?.();
+      } catch (err) {
+        setFeedback({
+          variant: "error",
+          title: "Foto não salva",
+          message:
+            err instanceof Error
+              ? err.message
+              : "Não foi possível vincular a foto ao bem. Tente de novo ou clique em Salvar.",
+        });
+      } finally {
+        setSavingPhoto(false);
+      }
+    },
+    [edit?.id, onPhotoUpdated],
+  );
+
+  const handlePhotoUrlChange = useCallback(
+    (url: string) => {
+      setPhotoUrl(url);
+      if (!edit?.id) return;
+      if (skipNextPhotoAutosave.current) {
+        skipNextPhotoAutosave.current = false;
+        return;
+      }
+      if (photoAutosaveTimerRef.current) clearTimeout(photoAutosaveTimerRef.current);
+      photoAutosaveTimerRef.current = setTimeout(() => {
+        void persistPhotoUrl(url);
+      }, 400);
+    },
+    [edit?.id, persistPhotoUrl],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (photoAutosaveTimerRef.current) clearTimeout(photoAutosaveTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (!open) return;
+    skipNextPhotoAutosave.current = true;
     if (edit) {
       setCatTenantId(edit.tenant.id);
       setCategoryId(edit.categoryId);
@@ -175,7 +231,11 @@ export function AssetFormDialog({
     const tenantIdForSubmit = catTenantId;
     if (!tenantIdForSubmit?.trim() || !categoryId?.trim() || !description?.trim()) return;
     if (isUniform && !pieceType) {
-      alert("Para kit uniforme, selecione o tipo de peça.");
+      setFeedback({
+        variant: "warning",
+        title: "Tipo de peça obrigatório",
+        message: "Para kit uniforme, selecione o tipo de peça antes de salvar.",
+      });
       return;
     }
     setSaving(true);
@@ -224,13 +284,18 @@ export function AssetFormDialog({
       onOpenChange(false);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Erro ao salvar");
+      setFeedback({
+        variant: "error",
+        title: "Erro ao salvar",
+        message: err instanceof Error ? err.message : "Não foi possível salvar o bem patrimonial.",
+      });
     } finally {
       setSaving(false);
     }
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[min(48rem,calc(100vw-1.5rem))] max-h-[min(90vh,calc(100dvh-2rem))]">
         <form onSubmit={handleSubmit}>
@@ -347,15 +412,25 @@ export function AssetFormDialog({
               <PhotoUploadWithName
                 sizeKey="patrimonio"
                 value={photoUrl}
-                onChange={setPhotoUrl}
-                placeholder="Escolher da biblioteca"
+                onChange={handlePhotoUrlChange}
+                placeholder="Escolher da pasta Patrimônio"
                 urlPlaceholder="URL da imagem"
-                allowAllFolders
                 uploadFolderHint="patrimonio"
                 displayNameAuto={description.trim() || undefined}
                 showAutomaticPhotoNameNote={false}
                 showFileFormatHint={false}
               />
+              {edit ? (
+                <p className="text-xs text-muted-foreground">
+                  {savingPhoto
+                    ? "Salvando foto no bem…"
+                    : "Ao enviar ou escolher uma imagem, a foto é vinculada ao bem automaticamente."}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  As fotos ficam na pasta <strong>Patrimônio</strong> (Mídia). Ao criar o bem, clique em Salvar para vincular.
+                </p>
+              )}
             </div>
 
             {!isUniform && (
@@ -462,5 +537,13 @@ export function AssetFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+    <FeedbackModal
+      open={!!feedback}
+      onOpenChange={(open) => !open && setFeedback(null)}
+      variant={feedback?.variant ?? "error"}
+      title={feedback?.title ?? ""}
+      message={feedback?.message ?? ""}
+    />
+    </>
   );
 }

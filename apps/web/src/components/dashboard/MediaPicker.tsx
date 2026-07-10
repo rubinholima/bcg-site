@@ -102,6 +102,7 @@ export function MediaPicker({
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [openNonce, setOpenNonce] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -120,9 +121,18 @@ export function MediaPicker({
       qs = `?sizeKey=${encodeURIComponent(sizeKey)}`;
     }
     let cancelled = false;
-    queueMicrotask(() => setLoading(true));
+    queueMicrotask(() => {
+      setLoading(true);
+      setLoadError(null);
+    });
     fetch(`/api/media${qs}`, { credentials: "include", cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : { items: [] }))
+      .then(async (res) => {
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+          throw new Error(body.message ?? body.error ?? `Erro ao listar mídia (${res.status})`);
+        }
+        return res.json() as Promise<{ items: MediaItem[] }>;
+      })
       .then((data: { items: MediaItem[] }) => {
         if (cancelled) return [];
         const list = data.items ?? [];
@@ -133,6 +143,14 @@ export function MediaPicker({
       })
       .then((list) => {
         if (!cancelled) setItems(list);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setItems([]);
+          setLoadError(
+            err instanceof Error ? err.message : "Não foi possível carregar a biblioteca de imagens.",
+          );
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -201,6 +219,7 @@ export function MediaPicker({
         </Label>
       ) : null}
       <div className="mt-1 flex flex-col gap-2">
+        {loadError ? <p className="text-xs text-destructive">{loadError}</p> : null}
         {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Select

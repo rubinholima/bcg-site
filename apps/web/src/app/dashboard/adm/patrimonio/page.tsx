@@ -512,6 +512,9 @@ export default function AdmPatrimonioPage() {
             void loadCategories(savedTenantId);
           }
         }}
+        onPhotoUpdated={() => {
+          void loadAssets(tenantId || undefined);
+        }}
       />
 
       <AlertDialog open={!!deleteKind} onOpenChange={(open) => !open && setDeleteKind(null)}>
