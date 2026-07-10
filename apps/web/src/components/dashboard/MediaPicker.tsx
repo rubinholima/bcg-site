@@ -5,13 +5,6 @@ import { Upload, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   MEDIA_PLACEHOLDER_SIZES,
   type MediaItem,
   type MediaPlaceholderSizeKey,
@@ -21,6 +14,9 @@ import { api } from "@/lib/api";
 import { displayNameFromUploadFilename } from "@/lib/upload-display-name";
 
 const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+
+const NATIVE_SELECT_CLASS =
+  "min-h-[44px] w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 function validatePickerImageFile(file: File): string | null {
   if (file.size > MAX_FILE_SIZE) return "Arquivo muito grande. Máximo 10 MB.";
@@ -114,11 +110,11 @@ export function MediaPicker({
   allowUpload = folder !== "logos",
   allowClear = true,
   showUploadHint = true,
+  hideEmptyFolderHint = false,
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [openNonce, setOpenNonce] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -173,7 +169,7 @@ export function MediaPicker({
     return () => {
       cancelled = true;
     };
-  }, [sizeKey, allowAllFolders, folder, galeriaSlug, refreshTrigger, openNonce]);
+  }, [sizeKey, allowAllFolders, folder, galeriaSlug, refreshTrigger]);
 
   const dimensions = folder === "logos" ? "Logo" : MEDIA_PLACEHOLDER_SIZES[sizeKey]?.dimensions ?? "—";
   const validItems = items.filter((item) => item.url?.trim());
@@ -204,7 +200,6 @@ export function MediaPicker({
       const { data } = await api.postForm<{ url?: string }>("/media", formData);
       if (data?.url) {
         onChange(data.url);
-        setOpenNonce((n) => n + 1);
       } else {
         setUploadError("Upload concluído sem URL. Tente novamente.");
       }
@@ -230,42 +225,32 @@ export function MediaPicker({
         {loadError ? <p className="text-xs text-destructive">{loadError}</p> : null}
         {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Select
+          {/* select nativo: funciona dentro do <dialog> modal (Radix Select quebrava ao abrir) */}
+          <select
+            className={NATIVE_SELECT_CLASS}
             value={selectValue}
-            onOpenChange={(open) => {
-              if (open) setOpenNonce((n) => n + 1);
-            }}
-            onValueChange={(v) => onChange(v === NONE_VALUE ? "" : v)}
-            disabled={loading || uploading}
+            disabled={uploading}
+            onChange={(e) => onChange(e.target.value === NONE_VALUE ? "" : e.target.value)}
           >
-            <SelectTrigger className="min-h-[44px] min-w-0 flex-1 text-foreground">
-              <SelectValue placeholder={loading ? "Carregando…" : placeholder} />
-            </SelectTrigger>
-            <SelectContent className="z-[200] max-h-[min(24rem,70vh)]">
-              <SelectItem value={NONE_VALUE}>Nenhuma (sem imagem)</SelectItem>
-              {orphanValue ? (
-                <SelectItem value={orphanValue}>
-                  <span className="block max-w-[min(100vw-4rem,320px)] truncate" title={orphanValue}>
-                    {selectedValueLabel(orphanValue)}
-                  </span>
-                </SelectItem>
-              ) : null}
-              {validItems.map((item) => (
-                <SelectItem key={item.key} value={item.url}>
-                  <span className="block max-w-[min(100vw-4rem,320px)] truncate" title={item.url}>
-                    {itemOptionLabel(item, showFolderInLabels)}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <option value={NONE_VALUE} disabled={loading && validItems.length === 0}>
+              {loading && validItems.length === 0 ? "Carregando imagens…" : "Nenhuma (sem imagem)"}
+            </option>
+            {orphanValue ? (
+              <option value={orphanValue}>{selectedValueLabel(orphanValue)}</option>
+            ) : null}
+            {validItems.map((item) => (
+              <option key={item.key} value={item.url}>
+                {itemOptionLabel(item, showFolderInLabels)}
+              </option>
+            ))}
+          </select>
           {allowClear && hasSelection ? (
             <Button
               type="button"
               variant="outline"
               size="sm"
               className="min-h-[44px] shrink-0"
-              disabled={loading || uploading}
+              disabled={uploading}
               title="Remover imagem"
               onClick={() => onChange("")}
             >
@@ -291,7 +276,7 @@ export function MediaPicker({
                 variant="outline"
                 size="sm"
                 className="min-h-[44px] shrink-0"
-                disabled={loading || uploading}
+                disabled={uploading}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="mr-2 h-4 w-4" />
@@ -305,10 +290,16 @@ export function MediaPicker({
             PNG, JPG ou WebP — até 10 MB. O sistema otimiza automaticamente (WebP, tamanho máximo por pasta).
           </p>
         ) : null}
-        {!loading && validItems.length === 0 ? (
+        {!hideEmptyFolderHint && !loading && !loadError && validItems.length === 0 ? (
           <p className="text-xs text-muted-foreground">
-            Nenhuma imagem nesta pasta ainda — use <strong>Enviar foto</strong> ou escolha{" "}
-            <strong>Nenhuma (sem imagem)</strong> para remover o fundo.
+            Nenhuma imagem nesta pasta ainda — use <strong>Enviar foto</strong>.
+          </p>
+        ) : null}
+        {!loading && validItems.length > 0 ? (
+          <p className="text-xs text-muted-foreground">
+            {validItems.length} {validItems.length === 1 ? "imagem" : "imagens"} em{" "}
+            <strong>{MEDIA_PLACEHOLDER_SIZES[sizeKey]?.label ?? sizeKey}</strong>
+            {placeholder ? ` — pasta S3: media/${sizeKey}/` : ""}
           </p>
         ) : null}
       </div>

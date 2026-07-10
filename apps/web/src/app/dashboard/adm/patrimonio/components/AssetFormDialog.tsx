@@ -62,7 +62,7 @@ interface AssetFormDialogProps {
   edit?: AssetRow | null;
   onSuccess: (savedTenantId: string) => void;
   /** Atualiza miniaturas na lista sem fechar o modal (ex.: foto salva automaticamente). */
-  onPhotoUpdated?: () => void;
+  onPhotoUpdated?: (photoUrl: string) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -140,7 +140,7 @@ export function AssetFormDialog({
         await api.patch(`/patrimonio/assets/${edit.id}`, {
           photoUrl: url.trim(),
         });
-        onPhotoUpdated?.();
+        onPhotoUpdated?.(url.trim());
       } catch (err) {
         setFeedback({
           variant: "error",
@@ -157,6 +157,16 @@ export function AssetFormDialog({
     [edit?.id, onPhotoUpdated],
   );
 
+  const shouldPersistPhotoImmediately = (url: string) => {
+    const t = url.trim();
+    if (!t) return true;
+    return (
+      t.includes("media/") ||
+      t.includes("amazonaws.com") ||
+      t.includes("bostoncitygroup.biz")
+    );
+  };
+
   const handlePhotoUrlChange = useCallback(
     (url: string) => {
       setPhotoUrl(url);
@@ -166,9 +176,13 @@ export function AssetFormDialog({
         return;
       }
       if (photoAutosaveTimerRef.current) clearTimeout(photoAutosaveTimerRef.current);
+      if (shouldPersistPhotoImmediately(url)) {
+        void persistPhotoUrl(url);
+        return;
+      }
       photoAutosaveTimerRef.current = setTimeout(() => {
         void persistPhotoUrl(url);
-      }, 400);
+      }, 700);
     },
     [edit?.id, persistPhotoUrl],
   );

@@ -512,7 +512,8 @@ export default function AdmPatrimonioPage() {
             void loadCategories(savedTenantId);
           }
         }}
-        onPhotoUpdated={() => {
+        onPhotoUpdated={(photoUrl) => {
+          setAssetEdit((prev) => (prev ? { ...prev, photoUrl: photoUrl || null } : prev));
           void loadAssets(tenantId || undefined);
         }}
       />
