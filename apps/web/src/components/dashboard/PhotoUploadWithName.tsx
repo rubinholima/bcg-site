@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { User } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,6 +65,9 @@ interface PhotoUploadWithNameProps {
   hidePreview?: boolean;
   /** Campo manual de URL da imagem */
   showUrlInput?: boolean;
+  /** Pai está gravando a URL no registro (ex.: PATCH do bem patrimonial). */
+  recordLinking?: boolean;
+  recordLinkingLabel?: string;
 }
 
 export function PhotoUploadWithName({
@@ -87,11 +90,14 @@ export function PhotoUploadWithName({
   uploadFolderHint,
   hidePreview = false,
   showUrlInput = true,
+  recordLinking = false,
+  recordLinkingLabel = "Salvando foto no registro…",
 }: PhotoUploadWithNameProps) {
   const [photoDisplayName, setPhotoDisplayName] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [localUploadPreview, setLocalUploadPreview] = useState<string | null>(null);
   const [photoRefreshKey, setPhotoRefreshKey] = useState(0);
   const photoKey = value ? urlToMediaKey(value) : "";
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,6 +107,12 @@ export function PhotoUploadWithName({
     const t = setTimeout(() => setUploadSuccess(false), 3000);
     return () => clearTimeout(t);
   }, [uploadSuccess]);
+
+  useEffect(() => {
+    return () => {
+      if (localUploadPreview) URL.revokeObjectURL(localUploadPreview);
+    };
+  }, [localUploadPreview]);
 
   useEffect(() => {
     if (!value?.trim()) return;
@@ -165,6 +177,11 @@ export function PhotoUploadWithName({
       return;
     }
     setUploading(true);
+    const previewUrl = URL.createObjectURL(file);
+    setLocalUploadPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return previewUrl;
+    });
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -186,6 +203,10 @@ export function PhotoUploadWithName({
       setUploadError(err instanceof Error ? err.message : "Erro de conexão. Verifique se a API está rodando.");
     } finally {
       setUploading(false);
+      setLocalUploadPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
       e.target.value = "";
     }
   };
@@ -202,7 +223,9 @@ export function PhotoUploadWithName({
   }, [pendingFile]);
 
   const canUpload = !requireNameToUpload || requireNameToUpload.trim().length > 0;
-  const effectivePreview = pendingFile && pendingPreviewUrl ? pendingPreviewUrl : value;
+  const busy = uploading || recordLinking || disabled;
+  const effectivePreview =
+    localUploadPreview || (pendingFile && pendingPreviewUrl ? pendingPreviewUrl : value);
 
   const resolvedPreviewUrl =
     effectivePreview && !effectivePreview.startsWith("blob:")
@@ -211,8 +234,24 @@ export function PhotoUploadWithName({
 
   const folderLabel = SIZE_KEY_TO_LABEL[sizeKey] ?? sizeKey;
 
+  const statusMessage = uploading
+    ? `Enviando foto para pasta ${folderLabel}… aguarde (otimização e upload no servidor).`
+    : recordLinking
+      ? recordLinkingLabel
+      : null;
+
   return (
     <div className="space-y-2">
+      {statusMessage ? (
+        <div
+          className="rounded-md bg-sky-500/15 border border-sky-500/35 px-3 py-2.5 text-sm text-foreground flex items-start gap-2.5"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="h-4 w-4 mt-0.5 animate-spin shrink-0 text-sky-500" />
+          <span>{statusMessage}</span>
+        </div>
+      ) : null}
       {uploadError && (
         <div className="rounded-md bg-destructive/15 border border-destructive/30 px-3 py-2 text-sm text-destructive">
           {uploadError}
@@ -227,18 +266,23 @@ export function PhotoUploadWithName({
       )}
       <div className={hidePreview ? "flex gap-4" : "flex gap-4"}>
         {!hidePreview && (
-        <div className="h-24 w-24 rounded overflow-hidden bg-muted shrink-0">
+        <div className="relative h-24 w-24 rounded overflow-hidden bg-muted shrink-0">
           {effectivePreview ? (
             <img
               src={resolvedPreviewUrl ?? ""}
               alt=""
-              className="h-full w-full object-cover"
+              className={`h-full w-full object-cover ${busy ? "opacity-60" : ""}`}
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-muted-foreground">
               <User className="h-10 w-10" />
             </div>
           )}
+          {busy ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            </div>
+          ) : null}
         </div>
         )}
         <div className="flex-1 space-y-2 min-w-0">
@@ -253,6 +297,7 @@ export function PhotoUploadWithName({
             hideEmptyFolderHint
             allowUpload={false}
             showUploadHint={false}
+            disabled={busy}
           />
           {!displayNameAuto && (
           <div className="space-y-1">
@@ -283,10 +328,18 @@ export function PhotoUploadWithName({
               type="button"
               variant="outline"
               size="sm"
+              className="min-h-[44px]"
               onClick={() => { setUploadError(null); fileInputRef.current?.click(); }}
-              disabled={disabled || !canUpload || uploading}
+              disabled={busy || !canUpload}
             >
-              {uploading ? "Enviando…" : "Enviar foto"}
+              {uploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando foto…
+                </>
+              ) : (
+                "Enviar foto"
+              )}
             </Button>
             {!canUpload && requireNameToUpload !== undefined && (
               <p className="text-xs text-amber-600 dark:text-amber-400">
@@ -304,7 +357,7 @@ export function PhotoUploadWithName({
               placeholder={urlPlaceholder}
               value={value}
               onChange={(e) => onChange(e.target.value)}
-              disabled={disabled}
+              disabled={busy}
               className="text-foreground"
             />
           ) : null}

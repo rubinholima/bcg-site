@@ -53,6 +53,8 @@ interface MediaPickerProps {
   showUploadHint?: boolean;
   /** Exibe botão para remover a imagem selecionada. Padrão: true. */
   allowClear?: boolean;
+  /** Desabilita seletor (ex.: durante upload). */
+  disabled?: boolean;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -111,6 +113,7 @@ export function MediaPicker({
   allowClear = true,
   showUploadHint = true,
   hideEmptyFolderHint = false,
+  disabled = false,
 }: MediaPickerProps) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,7 +232,7 @@ export function MediaPicker({
           <select
             className={NATIVE_SELECT_CLASS}
             value={selectValue}
-            disabled={uploading}
+            disabled={uploading || disabled}
             onChange={(e) => onChange(e.target.value === NONE_VALUE ? "" : e.target.value)}
           >
             <option value={NONE_VALUE} disabled={loading && validItems.length === 0}>

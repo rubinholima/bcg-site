@@ -433,18 +433,14 @@ export function AssetFormDialog({
                 displayNameAuto={description.trim() || undefined}
                 showAutomaticPhotoNameNote={false}
                 showFileFormatHint={false}
+                recordLinking={savingPhoto}
+                recordLinkingLabel="Vinculando foto ao bem patrimonial…"
               />
-              {edit ? (
-                <p className="text-xs text-muted-foreground">
-                  {savingPhoto
-                    ? "Salvando foto no bem…"
-                    : "Ao enviar ou escolher uma imagem, a foto é vinculada ao bem automaticamente."}
-                </p>
-              ) : (
+              {!edit ? (
                 <p className="text-xs text-muted-foreground">
                   As fotos ficam na pasta <strong>Patrimônio</strong> (Mídia). Ao criar o bem, clique em Salvar para vincular.
                 </p>
-              )}
+              ) : null}
             </div>
 
             {!isUniform && (
