@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,13 +15,55 @@ import {
 } from "@/components/ui/dialog";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
-import { ASSET_PIECE_LABEL } from "../patrimonio-labels";
+import { ASSET_CATEGORY_KIND_LABEL, ASSET_PIECE_LABEL } from "../patrimonio-labels";
 
 const NATIVE_SELECT_CLASS =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full min-h-[44px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+
+const STATUS_OPTIONS = [
+  { value: "em_uso", label: "Em uso" },
+  { value: "em_manutencao", label: "Em manutenção" },
+  { value: "emprestado", label: "Emprestado" },
+  { value: "baixado", label: "Baixado" },
+];
+
+const PIECE_OPTIONS = Object.entries(ASSET_PIECE_LABEL).map(([value, label]) => ({ value, label }));
+
+function FormSection({
+  title,
+  children,
+  highlight = false,
+}: {
+  title: string;
+  children: ReactNode;
+  highlight?: boolean;
+}) {
+  return (
+    <section
+      className={cn(
+        "space-y-4 rounded-xl border p-5 sm:p-6",
+        highlight ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card/30",
+      )}
+    >
+      <h3 className="border-l-4 border-emerald-500 pl-3 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: ReactNode }) {
+  return (
+    <Label htmlFor={htmlFor} className="text-xs text-muted-foreground">
+      {children}
+    </Label>
+  );
+}
 
 export interface AssetRow {
   id: string;
@@ -61,18 +103,8 @@ interface AssetFormDialogProps {
   tenantId: string;
   edit?: AssetRow | null;
   onSuccess: (savedTenantId: string) => void;
-  /** Atualiza miniaturas na lista sem fechar o modal (ex.: foto salva automaticamente). */
   onPhotoUpdated?: (photoUrl: string) => void;
 }
-
-const STATUS_OPTIONS = [
-  { value: "em_uso", label: "Em uso" },
-  { value: "em_manutencao", label: "Em manutenção" },
-  { value: "emprestado", label: "Emprestado" },
-  { value: "baixado", label: "Baixado" },
-];
-
-const PIECE_OPTIONS = Object.entries(ASSET_PIECE_LABEL).map(([value, label]) => ({ value, label }));
 
 export function AssetFormDialog({
   open,
@@ -110,6 +142,7 @@ export function AssetFormDialog({
   const selectedCategory = categories.find((c) => c.id === categoryId);
   const isUniform = selectedCategory?.kind === "uniform";
   const tenantCategories = categories.filter((c) => c.tenant.id === (edit ? edit.tenant.id : catTenantId || tenantId));
+  const tenantName = tenants.find((t) => t.id === catTenantId)?.name ?? edit?.tenant.name;
 
   const playerTenantId = edit?.tenant.id || catTenantId || tenantId;
 
@@ -297,7 +330,6 @@ export function AssetFormDialog({
       onSuccess(tenantIdForSubmit);
       onOpenChange(false);
     } catch (err) {
-      console.error(err);
       setFeedback({
         variant: "error",
         title: "Erro ao salvar",
@@ -310,250 +342,298 @@ export function AssetFormDialog({
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[min(48rem,calc(100vw-1.5rem))] max-h-[min(90vh,calc(100dvh-2rem))]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{edit ? "Editar bem" : "Novo bem patrimonial"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Clube/Empresa *</Label>
-              <select
-                required
-                className={NATIVE_SELECT_CLASS}
-                value={catTenantId}
-                onChange={(e) => setCatTenantId(e.target.value)}
-              >
-                <option value="">Selecione</option>
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="asset-category">Categoria *</Label>
-              <select
-                id="asset-category"
-                required
-                className={NATIVE_SELECT_CLASS}
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                <option value="">Selecione a categoria</option>
-                {tenantCategories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} {c.kind === "uniform" ? "(kit)" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent
+          showCloseButton
+          className="!w-[min(56rem,calc(100vw-1.5rem))] !max-w-none max-h-[92vh] overflow-hidden p-0"
+        >
+          <form onSubmit={handleSubmit} className="flex max-h-[92vh] flex-col">
+            <DialogHeader className="shrink-0 border-b border-border/60 px-6 py-4">
+              <DialogTitle>{edit ? "Editar bem patrimonial" : "Novo bem patrimonial"}</DialogTitle>
+            </DialogHeader>
 
-            {isUniform && (
-              <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="asset-piece">Tipo de peça *</Label>
-                  <select
-                    id="asset-piece"
-                    required
-                    className={NATIVE_SELECT_CLASS}
-                    value={pieceType}
-                    onChange={(e) => setPieceType(e.target.value)}
-                  >
-                    <option value="">Selecione...</option>
-                    {PIECE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="asset-size">Tamanho</Label>
-                  <Input
-                    id="asset-size"
-                    value={size}
-                    onChange={(e) => setSize(e.target.value)}
-                    placeholder="P, M, G, GG"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="asset-shirt">Número da camisa</Label>
-                  <Input
-                    id="asset-shirt"
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={shirtNumber}
-                    onChange={(e) => setShirtNumber(e.target.value)}
-                    placeholder="1–99"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="asset-player">Atribuído ao jogador</Label>
-                  <select
-                    id="asset-player"
-                    className={NATIVE_SELECT_CLASS}
-                    value={assignedPlayerId}
-                    onChange={(e) => setAssignedPlayerId(e.target.value)}
-                  >
-                    <option value="">Nenhum</option>
-                    {dialogPlayers.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {getPlayerListDisplayName(p)} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
-            <div className="grid gap-2">
-              <Label htmlFor="asset-desc">Descrição *</Label>
-              <Input
-                id="asset-desc"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex.: Mesa de reunião, Notebook Dell"
-                required
-              />
-            </div>
-
-            <div className="grid gap-2 border-t border-border pt-4">
-              <Label>Foto</Label>
-              <PhotoUploadWithName
-                sizeKey="patrimonio"
-                value={photoUrl}
-                onChange={handlePhotoUrlChange}
-                placeholder="Escolher da pasta Patrimônio"
-                urlPlaceholder="URL da imagem"
-                uploadFolderHint="patrimonio"
-                displayNameAuto={description.trim() || undefined}
-                showAutomaticPhotoNameNote={false}
-                showFileFormatHint={false}
-                recordLinking={savingPhoto}
-                recordLinkingLabel="Vinculando foto ao bem patrimonial…"
-              />
-              {!edit ? (
-                <p className="text-xs text-muted-foreground">
-                  As fotos ficam na pasta <strong>Patrimônio</strong> (Mídia). Ao criar o bem, clique em Salvar para vincular.
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6">
+              <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-br from-slate-50 via-white to-emerald-50/60 p-5 dark:from-emerald-950/40 dark:via-background dark:to-background sm:p-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+                  Patrimônio
                 </p>
-              ) : null}
+                <div className="mt-2 flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                    <Package className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-bold tracking-tight text-foreground">
+                      {description.trim() || (edit ? edit.description : "Cadastro de bem")}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {[tenantName, selectedCategory?.name].filter(Boolean).join(" · ") || "Preencha clube, categoria e descrição"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <FormSection title="Identificação">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-1.5 sm:col-span-2">
+                    <FieldLabel>Clube / Empresa *</FieldLabel>
+                    <select
+                      required
+                      className={NATIVE_SELECT_CLASS}
+                      value={catTenantId}
+                      onChange={(e) => setCatTenantId(e.target.value)}
+                    >
+                      <option value="">Selecione</option>
+                      {tenants.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid gap-1.5 sm:col-span-2">
+                    <FieldLabel htmlFor="asset-category">Categoria *</FieldLabel>
+                    <select
+                      id="asset-category"
+                      required
+                      className={NATIVE_SELECT_CLASS}
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                    >
+                      <option value="">Selecione a categoria</option>
+                      {tenantCategories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.kind === "uniform" ? "(kit)" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedCategory ? (
+                      <p className="text-xs text-muted-foreground">
+                        Tipo: {ASSET_CATEGORY_KIND_LABEL[selectedCategory.kind] ?? selectedCategory.kind}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="grid gap-1.5 sm:col-span-2">
+                    <FieldLabel htmlFor="asset-desc">Descrição *</FieldLabel>
+                    <Input
+                      id="asset-desc"
+                      className="text-foreground"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Ex.: Mesa de reunião, Notebook Dell"
+                      required
+                    />
+                  </div>
+                </div>
+              </FormSection>
+
+              {isUniform && (
+                <FormSection title="Kit uniforme">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-1.5">
+                      <FieldLabel htmlFor="asset-piece">Tipo de peça *</FieldLabel>
+                      <select
+                        id="asset-piece"
+                        required
+                        className={NATIVE_SELECT_CLASS}
+                        value={pieceType}
+                        onChange={(e) => setPieceType(e.target.value)}
+                      >
+                        <option value="">Selecione…</option>
+                        {PIECE_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <FieldLabel htmlFor="asset-size">Tamanho</FieldLabel>
+                      <Input
+                        id="asset-size"
+                        className="text-foreground"
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
+                        placeholder="P, M, G, GG"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <FieldLabel htmlFor="asset-shirt">Número da camisa</FieldLabel>
+                      <Input
+                        id="asset-shirt"
+                        type="number"
+                        min={1}
+                        max={99}
+                        className="text-foreground"
+                        value={shirtNumber}
+                        onChange={(e) => setShirtNumber(e.target.value)}
+                        placeholder="1–99"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <FieldLabel htmlFor="asset-player">Atribuído ao jogador</FieldLabel>
+                      <select
+                        id="asset-player"
+                        className={NATIVE_SELECT_CLASS}
+                        value={assignedPlayerId}
+                        onChange={(e) => setAssignedPlayerId(e.target.value)}
+                      >
+                        <option value="">Nenhum</option>
+                        {dialogPlayers.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {getPlayerListDisplayName(p)} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </FormSection>
+              )}
+
+              <FormSection title="Foto do bem" highlight>
+                <PhotoUploadWithName
+                  sizeKey="patrimonio"
+                  value={photoUrl}
+                  onChange={handlePhotoUrlChange}
+                  placeholder="Escolher da pasta Patrimônio"
+                  urlPlaceholder="URL da imagem"
+                  uploadFolderHint="patrimonio"
+                  displayNameAuto={description.trim() || undefined}
+                  showAutomaticPhotoNameNote={false}
+                  showFileFormatHint={false}
+                  recordLinking={savingPhoto}
+                  recordLinkingLabel="Vinculando foto ao bem patrimonial…"
+                />
+                {!edit ? (
+                  <p className="text-xs text-muted-foreground">
+                    As fotos ficam na pasta <strong>Patrimônio</strong> (Mídia). Ao criar o bem, clique em Salvar para vincular.
+                  </p>
+                ) : null}
+              </FormSection>
+
+              <FormSection title="Localização e responsável">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {!isUniform && (
+                    <div className="grid gap-1.5">
+                      <FieldLabel htmlFor="asset-tag">Nº etiqueta patrimonial</FieldLabel>
+                      <Input
+                        id="asset-tag"
+                        className="text-foreground"
+                        value={tagNumber}
+                        onChange={(e) => setTagNumber(e.target.value)}
+                        placeholder="Ex.: 001234"
+                      />
+                    </div>
+                  )}
+                  <div className="grid gap-1.5">
+                    <FieldLabel htmlFor="asset-location">Localização</FieldLabel>
+                    <Input
+                      id="asset-location"
+                      className="text-foreground"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="Setor, sala, prédio"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <FieldLabel htmlFor="asset-responsible">Responsável</FieldLabel>
+                    <Input
+                      id="asset-responsible"
+                      className="text-foreground"
+                      value={responsibleName}
+                      onChange={(e) => setResponsibleName(e.target.value)}
+                      placeholder="Nome do responsável"
+                    />
+                  </div>
+                  <div className="grid gap-1.5 sm:col-span-2">
+                    <FieldLabel htmlFor="asset-status">Situação</FieldLabel>
+                    <select
+                      id="asset-status"
+                      className={NATIVE_SELECT_CLASS}
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                    >
+                      {STATUS_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </FormSection>
+
+              <FormSection title="Dados financeiros">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-1.5">
+                    <FieldLabel htmlFor="asset-date">Data de aquisição</FieldLabel>
+                    <Input
+                      id="asset-date"
+                      type="date"
+                      className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                      value={acquisitionDate}
+                      onChange={(e) => setAcquisitionDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <FieldLabel htmlFor="asset-value">Valor (R$)</FieldLabel>
+                    <Input
+                      id="asset-value"
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      className="text-foreground"
+                      value={acquisitionValue}
+                      onChange={(e) => setAcquisitionValue(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="grid gap-1.5 sm:col-span-2">
+                    <FieldLabel htmlFor="asset-depreciation">Taxa de depreciação (% ao ano)</FieldLabel>
+                    <Input
+                      id="asset-depreciation"
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      max={100}
+                      className="text-foreground"
+                      value={depreciationRate}
+                      onChange={(e) => setDepreciationRate(e.target.value)}
+                      placeholder="Ex.: 10"
+                    />
+                  </div>
+                </div>
+              </FormSection>
+
+              <FormSection title="Observações">
+                <textarea
+                  id="asset-notes"
+                  className="min-h-[88px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Notas internas sobre o bem"
+                />
+              </FormSection>
             </div>
 
-            {!isUniform && (
-              <div className="grid gap-2">
-                <Label htmlFor="asset-tag">Nº etiqueta patrimonial</Label>
-                <Input
-                  id="asset-tag"
-                  value={tagNumber}
-                  onChange={(e) => setTagNumber(e.target.value)}
-                  placeholder="Ex.: 001234"
-                />
-              </div>
-            )}
-            <div className="grid gap-2">
-              <Label htmlFor="asset-location">Localização</Label>
-              <Input
-                id="asset-location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Setor, sala, prédio"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="asset-responsible">Responsável</Label>
-              <Input
-                id="asset-responsible"
-                value={responsibleName}
-                onChange={(e) => setResponsibleName(e.target.value)}
-                placeholder="Nome do responsável"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="asset-date">Data aquisição</Label>
-                <Input
-                  id="asset-date"
-                  type="date"
-                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                  value={acquisitionDate}
-                  onChange={(e) => setAcquisitionDate(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="asset-value">Valor (R$)</Label>
-                <Input
-                  id="asset-value"
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  value={acquisitionValue}
-                  onChange={(e) => setAcquisitionValue(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="asset-depreciation">Taxa depreciação (% ao ano)</Label>
-              <Input
-                id="asset-depreciation"
-                type="number"
-                step="0.01"
-                min={0}
-                max={100}
-                value={depreciationRate}
-                onChange={(e) => setDepreciationRate(e.target.value)}
-                placeholder="Ex.: 10"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="asset-status">Situação</Label>
-              <select
-                id="asset-status"
-                className={NATIVE_SELECT_CLASS}
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="asset-notes">Observações</Label>
-              <textarea
-                id="asset-notes"
-                className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notas internas"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {edit ? "Salvar" : "Criar"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-    <FeedbackModal
-      open={!!feedback}
-      onOpenChange={(open) => !open && setFeedback(null)}
-      variant={feedback?.variant ?? "error"}
-      title={feedback?.title ?? ""}
-      message={feedback?.message ?? ""}
-    />
+            <DialogFooter className="shrink-0 gap-2 border-t border-border/60 px-6 py-4 sm:justify-end">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saving || savingPhoto} className="min-h-[44px]">
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {edit ? "Salvar alterações" : "Criar bem"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <FeedbackModal
+        open={!!feedback}
+        onOpenChange={(open) => !open && setFeedback(null)}
+        variant={feedback?.variant ?? "error"}
+        title={feedback?.title ?? ""}
+        message={feedback?.message ?? ""}
+      />
     </>
   );
 }
