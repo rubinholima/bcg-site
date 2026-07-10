@@ -6,8 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
-import { getPublicImageUrl, urlToMediaKey, resolvePublicMediaUrlForDisplay, resolveMediaUrlWithProxyFallback } from "@/lib/media-url";
+import { getDashboardMediaThumbSrc, urlToMediaKey } from "@/lib/media-url";
+import { api } from "@/lib/api";
 import type { MediaPlaceholderSizeKey } from "@/lib/media-placeholders";
+
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+
+function validateImageFile(file: File): string | null {
+  if (file.size > 10 * 1024 * 1024) return "Arquivo muito grande. Máximo 10 MB.";
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (ext === "heic" || ext === "heif" || file.type === "image/heic" || file.type === "image/heif") {
+    return "Foto HEIC do iPhone não é suportada aqui. Envie JPG ou PNG, ou ajuste a câmera para «Mais compatível».";
+  }
+  const allowedExt = ["png", "jpg", "jpeg", "webp", "svg"];
+  if ((!file.type || file.type === "application/octet-stream") && allowedExt.includes(ext)) return null;
+  if (ALLOWED_IMAGE_TYPES.includes(file.type)) return null;
+  return "Formato inválido. Use PNG, JPG, WebP ou SVG.";
+}
 
 /** Pastas por departamento: medico, psicologia, comissao, jogadores, etc. */
 const SIZE_KEY_TO_LABEL: Record<string, string> = {
@@ -76,6 +91,7 @@ export function PhotoUploadWithName({
   const [photoDisplayName, setPhotoDisplayName] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [photoRefreshKey, setPhotoRefreshKey] = useState(0);
   const photoKey = value ? urlToMediaKey(value) : "";
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -119,8 +135,6 @@ export function PhotoUploadWithName({
     }
   };
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setUploadError(null);
@@ -129,36 +143,28 @@ export function PhotoUploadWithName({
         onFileSelect(null);
         return;
       }
-      if (file.size > MAX_FILE_SIZE) {
-        setUploadError("Arquivo muito grande. Máximo 10 MB.");
-        return;
-      }
-      const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
-      if (!allowed.includes(file.type)) {
-        setUploadError("Formato inválido. Use PNG, JPG, WebP ou SVG.");
+      const err = validateImageFile(file);
+      if (err) {
+        setUploadError(err);
         return;
       }
       onFileSelect(file);
       return;
     }
-    handleUploadPhoto(e);
+    void handleUploadPhoto(e);
   };
 
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadError(null);
-    if (file.size > MAX_FILE_SIZE) {
-      setUploadError("Arquivo muito grande. Máximo 10 MB.");
+    const validationError = validateImageFile(file);
+    if (validationError) {
+      setUploadError(validationError);
       e.target.value = "";
       return;
     }
-    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
-    if (!allowed.includes(file.type)) {
-      setUploadError("Formato inválido. Use PNG, JPG, WebP ou SVG.");
-      e.target.value = "";
-      return;
-    }
+    setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -167,23 +173,19 @@ export function PhotoUploadWithName({
       if (displayName) {
         formData.append("displayName", displayName);
       }
-      const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
-      const data = (await res.json()) as { url?: string; key?: string; message?: string; error?: string };
-      if (!res.ok) {
-        const errMsg = data?.message ?? data?.error ?? "Erro ao enviar. Tente novamente.";
-        setUploadError(typeof errMsg === "string" ? errMsg : "Erro ao enviar.");
-        e.target.value = "";
-        return;
-      }
+      const { data } = await api.postForm<{ url?: string; key?: string }>("/media", formData);
       if (data?.url) {
         onChange(data.url);
         onPhotoKeyChange?.(data.key ?? photoKey);
         setUploadSuccess(true);
         setPhotoRefreshKey((k) => k + 1);
+      } else {
+        setUploadError("Upload concluído sem URL. Tente novamente.");
       }
-    } catch {
-      setUploadError("Erro de conexão. Verifique se a API está rodando.");
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erro de conexão. Verifique se a API está rodando.");
     } finally {
+      setUploading(false);
       e.target.value = "";
     }
   };
@@ -204,10 +206,7 @@ export function PhotoUploadWithName({
 
   const resolvedPreviewUrl =
     effectivePreview && !effectivePreview.startsWith("blob:")
-      ? resolvePublicMediaUrlForDisplay(effectivePreview) ||
-        resolveMediaUrlWithProxyFallback(effectivePreview) ||
-        getPublicImageUrl(effectivePreview) ||
-        effectivePreview
+      ? getDashboardMediaThumbSrc(effectivePreview)
       : effectivePreview;
 
   const folderLabel = SIZE_KEY_TO_LABEL[sizeKey] ?? sizeKey;
@@ -252,6 +251,8 @@ export function PhotoUploadWithName({
             placeholder={placeholder}
             refreshTrigger={photoRefreshKey}
             hideEmptyFolderHint
+            allowUpload={false}
+            showUploadHint={false}
           />
           {!displayNameAuto && (
           <div className="space-y-1">
@@ -272,8 +273,9 @@ export function PhotoUploadWithName({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
             className="hidden"
+            form=""
             onChange={handleFileChange}
           />
           <div className="space-y-1">
@@ -282,9 +284,9 @@ export function PhotoUploadWithName({
               variant="outline"
               size="sm"
               onClick={() => { setUploadError(null); fileInputRef.current?.click(); }}
-              disabled={disabled || !canUpload}
+              disabled={disabled || !canUpload || uploading}
             >
-              Enviar nova foto
+              {uploading ? "Enviando…" : "Enviar foto"}
             </Button>
             {!canUpload && requireNameToUpload !== undefined && (
               <p className="text-xs text-amber-600 dark:text-amber-400">

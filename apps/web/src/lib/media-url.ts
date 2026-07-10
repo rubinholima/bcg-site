@@ -248,3 +248,24 @@ export function urlToMediaKey(url: string | undefined | null): string {
     return t.replace(/^\//, "");
   }
 }
+
+/**
+ * Miniatura no dashboard — usa proxy autenticado (/api/media/thumbnail) para keys logos/* e media/*,
+ * igual à página Mídia. Funciona com bucket privado (S3 via credenciais AWS).
+ */
+export function getDashboardMediaThumbSrc(url: string | undefined | null): string {
+  if (!url || typeof url !== "string") return "";
+  const t = url.trim();
+  if (!t) return "";
+  if (t.startsWith("blob:")) return t;
+  const key = mediaKeyFromStoredUrl(t);
+  if (key) {
+    return `/api/media/thumbnail?key=${encodeURIComponent(key)}`;
+  }
+  return (
+    resolvePublicMediaUrlForDisplay(t) ||
+    resolveMediaUrlWithProxyFallback(t) ||
+    getPublicImageUrl(t) ||
+    t
+  );
+}

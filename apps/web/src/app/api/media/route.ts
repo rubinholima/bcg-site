@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forwardRequest } from "@/lib/apiProxy";
 
+export const maxDuration = 60;
+
 /**
  * GET /api/media?sizeKey=hero - lista imagens da pasta de mídia (proxy para API).
  * GET /api/media?all=1 - lista tudo (logos + media) a partir das primeiras pastas do bucket.

@@ -17,7 +17,22 @@ import {
   type MediaPlaceholderSizeKey,
 } from "@/lib/media-placeholders";
 import { mediaKeyFromStoredUrl } from "@/lib/media-url";
+import { api } from "@/lib/api";
 import { displayNameFromUploadFilename } from "@/lib/upload-display-name";
+
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
+
+function validatePickerImageFile(file: File): string | null {
+  if (file.size > MAX_FILE_SIZE) return "Arquivo muito grande. Máximo 10 MB.";
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (ext === "heic" || ext === "heif") {
+    return "Foto HEIC do iPhone não é suportada. Use JPG ou PNG.";
+  }
+  const allowedExt = ["png", "jpg", "jpeg", "webp", "svg"];
+  if ((!file.type || file.type === "application/octet-stream") && allowedExt.includes(ext)) return null;
+  if (ALLOWED_IMAGE_TYPES.includes(file.type)) return null;
+  return "Formato inválido. Use PNG, JPG, WebP ou SVG.";
+}
 
 interface MediaPickerProps {
   value: string;
@@ -171,13 +186,9 @@ export function MediaPicker({
 
   const handleUpload = async (file: File) => {
     setUploadError(null);
-    if (file.size > MAX_FILE_SIZE) {
-      setUploadError("Arquivo muito grande. Máximo 10 MB.");
-      return;
-    }
-    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
-    if (!allowed.includes(file.type)) {
-      setUploadError("Formato inválido. Use PNG, JPG, WebP ou SVG.");
+    const validationError = validatePickerImageFile(file);
+    if (validationError) {
+      setUploadError(validationError);
       return;
     }
     setUploading(true);
@@ -190,18 +201,15 @@ export function MediaPicker({
       }
       const autoName = displayNameFromUploadFilename(file.name);
       if (autoName) formData.append("displayName", autoName);
-      const res = await fetch("/api/media", { method: "POST", credentials: "include", body: formData });
-      const data = (await res.json()) as { url?: string; message?: string; error?: string };
-      if (!res.ok) {
-        setUploadError(data?.message ?? data?.error ?? "Erro ao enviar. Tente novamente.");
-        return;
-      }
+      const { data } = await api.postForm<{ url?: string }>("/media", formData);
       if (data?.url) {
         onChange(data.url);
         setOpenNonce((n) => n + 1);
+      } else {
+        setUploadError("Upload concluído sem URL. Tente novamente.");
       }
-    } catch {
-      setUploadError("Erro de conexão. Verifique se a API está rodando.");
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erro de conexão. Verifique se a API está rodando.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -270,8 +278,9 @@ export function MediaPicker({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
                 className="hidden"
+                form=""
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) void handleUpload(file);
