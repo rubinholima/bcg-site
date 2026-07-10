@@ -74,6 +74,7 @@ export function HubDashboardPage({
         title={title}
         description={subtitle}
         stats={headerStats}
+        variant="hero"
         toolbar={
           <DashboardDeptSearch value={search} onChange={setSearch} placeholder={searchPlaceholder} />
         }

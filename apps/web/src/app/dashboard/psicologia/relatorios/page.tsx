@@ -3,19 +3,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
   ClipboardList,
   Eye,
   Loader2,
   Pencil,
   Printer,
   RefreshCw,
-  Search,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  DashboardDeptSearch,
+  DashboardDeptSection,
+  DashboardDeptToolbarAside,
+  DashboardEmptyState,
+  DashboardListRow,
+  DashboardLoadingState,
+} from "@/components/dashboard/DashboardDeptHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -250,66 +254,41 @@ export default function PsicologiaRelatoriosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Button variant="ghost" size="sm" className="-ml-2 mb-2 gap-1.5 px-2" asChild>
-            <Link href="/dashboard/consultas">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar às consultas
-            </Link>
-          </Button>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <ClipboardList className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-            Relatórios semanais
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Relatórios preenchidos na aba Relatório da agenda de atendimentos. Abra para visualizar, editar com histórico e imprimir em PDF.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            Atualizar
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/dashboard/consultas">Novo relatório</Link>
-          </Button>
-        </div>
-      </div>
+    <>
+      <DashboardDeptSection
+        title="Lista"
+        description={
+          filtered.length === 0
+            ? "Nenhum relatório encontrado."
+            : `${filtered.length} relatório(s)`
+        }
+        aside={
+          <DashboardDeptToolbarAside>
+            <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => void load()} disabled={loading}>
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+              Atualizar
+            </Button>
+            <Button size="sm" className="min-h-[44px]" asChild>
+              <Link href="/dashboard/consultas">Novo relatório</Link>
+            </Button>
+          </DashboardDeptToolbarAside>
+        }
+      >
+        <DashboardDeptSearch
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por clube, categoria, psicóloga…"
+        />
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Lista</CardTitle>
-          <CardDescription>
-            {filtered.length === 0
-              ? "Nenhum relatório encontrado."
-              : `${filtered.length} relatório(s)`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="min-h-[44px] pl-9 text-foreground"
-              placeholder="Buscar por clube, categoria, psicóloga…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          {loading ? (
-            <p className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Carregando relatórios…
-            </p>
-          ) : filtered.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Ainda não há relatórios salvos. Preencha a aba Relatório em Consultas e clique em Salvar.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {filtered.map((r) => {
+        {loading ? (
+          <DashboardLoadingState label="Carregando relatórios…" />
+        ) : filtered.length === 0 ? (
+          <DashboardEmptyState>
+            Ainda não há relatórios salvos. Preencha a aba Relatório em Consultas e clique em Salvar.
+          </DashboardEmptyState>
+        ) : (
+          <ul className="space-y-2">
+            {filtered.map((r) => {
                 const professional =
                   formatPersonFirstLastName(r.estagiarioName) ||
                   formatPersonFirstLastName(r.psychologistName);
@@ -326,7 +305,7 @@ export default function PsicologiaRelatoriosPage() {
 
                 return (
                   <li key={r.id}>
-                    <div className="flex w-full min-h-[56px] flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <DashboardListRow>
                       <button
                         type="button"
                         className="min-w-0 flex-1 space-y-0.5 text-left"
@@ -372,14 +351,13 @@ export default function PsicologiaRelatoriosPage() {
                           )}
                         </Button>
                       </div>
-                    </div>
+                    </DashboardListRow>
                   </li>
                 );
               })}
             </ul>
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </DashboardDeptSection>
 
       <Dialog open={selected != null} onOpenChange={(open) => !open && closeDialog()}>
         <DialogContent
@@ -495,6 +473,6 @@ export default function PsicologiaRelatoriosPage() {
         message={feedback.message}
         variant={feedback.variant}
       />
-    </div>
+    </>
   );
 }

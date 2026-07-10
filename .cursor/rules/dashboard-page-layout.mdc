@@ -1,0 +1,39 @@
+---
+description: Layout padrão de páginas do dashboard (Relatórios / Patrimônio)
+globs: apps/web/src/app/dashboard/**/*.tsx,apps/web/src/components/dashboard/**/*.tsx
+alwaysApply: false
+---
+
+# Dashboard — layout padrão global
+
+Todas as páginas do dashboard usam **`DashboardPageFrame`** (via `DashboardLayoutShell`). Não criar `<h1>` manual nem header duplicado.
+
+## Cabeçalho automático
+
+- Metadados em `resolveDashboardPageMeta` (`dashboard-page-meta.ts`)
+- Cor por área em `resolveDashboardAccent` (`dashboard-accent.ts`)
+- `variant="standard"` no frame (listas, formulários)
+- `variant="hero"` só em hubs (`HubDashboardPage`)
+
+## Componentes (`@/components/dashboard/DashboardDeptHeader`)
+
+| Uso | Componente |
+|-----|------------|
+| Container | `DashboardDeptShell` (já no frame) |
+| Lista + filtros | `DashboardDeptSection` |
+| Busca | `DashboardDeptSearch` |
+| Abas | `DashboardDeptTabs` |
+| Filtros destacados | `DashboardFilterBox` + `DashboardFieldLabel` |
+| Resumo numérico | `DashboardStatGrid` |
+| Linha da lista | `DashboardListRow` |
+| Vazio / loading | `DashboardEmptyState`, `DashboardLoadingState` |
+| Dialog | `DashboardDialogBody`, `DashboardDialogFooter` |
+| Form em dialog | `DashboardFormHero`, `DashboardFormSection` |
+
+## Regras
+
+- Ações (Novo, Atualizar) no `aside` do `DashboardDeptSection`, não em header manual
+- Páginas novas: adicionar override em `PAGE_META_OVERRIDES` se título/descrição/back forem específicos
+- Só incluir em `DASHBOARD_AUTO_HEADER_EXCLUDE` se a página já renderiza header próprio (hub hero, sessão fullscreen, editor)
+- Sem `alert`/`confirm` — `FeedbackModal` / `AlertDialog`
+- Touch targets `min-h-[44px]` em botões e busca

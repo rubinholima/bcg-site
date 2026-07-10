@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Sparkles } from "lucide-react";
+import type { DashboardAccent } from "./dashboard-accent";
+import { resolveDashboardAccent } from "./dashboard-accent";
 import { DASHBOARD_MENU, type MenuItemConfig } from "./dashboard-menu.config";
 
 export type DashboardPageMeta = {
@@ -8,6 +10,8 @@ export type DashboardPageMeta = {
   title: string;
   description?: string;
   backHref?: string;
+  backLabel?: string;
+  accent: DashboardAccent;
 };
 
 type MenuMatch = {
@@ -87,6 +91,20 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
     title: "Atletas emprestados",
     description: "Atletas em situação Emprestado — fora da lista por categoria do clube.",
   },
+  "/dashboard/adm/patrimonio": {
+    title: "Patrimônio",
+    description:
+      "Cadastro de bens, categorias, fotos e localização. Equipamentos de TI podem ter ficha de infraestrutura.",
+    backHref: "/dashboard/adm",
+    backLabel: "Voltar ao ADM",
+  },
+  "/dashboard/psicologia/relatorios": {
+    title: "Relatórios semanais",
+    description:
+      "Relatórios preenchidos na aba Relatório da agenda de atendimentos. Abra para visualizar, editar com histórico e imprimir em PDF.",
+    backHref: "/dashboard/consultas",
+    backLabel: "Voltar às consultas",
+  },
 };
 
 function findBestMenuMatch(pathname: string): MenuMatch | null {
@@ -160,6 +178,7 @@ export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | 
       section: "Dashboard",
       sectionIcon: Sparkles,
       title,
+      accent: resolveDashboardAccent(cleanPath),
     };
   }
 
@@ -192,6 +211,7 @@ export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | 
     title,
     description: undefined,
     backHref,
+    accent: resolveDashboardAccent(cleanPath),
     ...override,
   };
 }
@@ -210,8 +230,8 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/agenda$/,
   /^\/dashboard\/ferramentas\//,
 
-  // Índices com DashboardDeptHeader / HubDashboardPage
-  /^\/dashboard\/(midia|noticias|marketing|usuarios|relatorios|manual|assessoria-imprensa|eventos|adm|futebol|saude|clube)$/,
+  // Índices com DashboardDeptHeader / HubDashboardPage (hero — não duplicar)
+  /^\/dashboard\/(midia|noticias|marketing|usuarios|manual|assessoria-imprensa|eventos|adm|futebol|saude|clube)$/,
 
   // Subárvores com shell ou agenda dedicada
   /^\/dashboard\/eventos\/boston-city-hall(\/|$)/,

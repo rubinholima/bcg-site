@@ -24,6 +24,9 @@ export function DashboardPageFrame({ children }: { children: React.ReactNode }) 
           title={meta.title}
           description={meta.description}
           backHref={meta.backHref}
+          backLabel={meta.backLabel}
+          accent={meta.accent}
+          variant="standard"
         />
       ) : null}
       {children}

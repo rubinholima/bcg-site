@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DashboardDialogBody,
+  DashboardDialogFooter,
+  DashboardFieldLabel,
+  DashboardFormHero,
+  DashboardFormSection,
+} from "@/components/dashboard/DashboardDeptHeader";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
@@ -32,38 +36,6 @@ const STATUS_OPTIONS = [
 ];
 
 const PIECE_OPTIONS = Object.entries(ASSET_PIECE_LABEL).map(([value, label]) => ({ value, label }));
-
-function FormSection({
-  title,
-  children,
-  highlight = false,
-}: {
-  title: string;
-  children: ReactNode;
-  highlight?: boolean;
-}) {
-  return (
-    <section
-      className={cn(
-        "space-y-4 rounded-xl border p-5 sm:p-6",
-        highlight ? "border-emerald-500/25 bg-emerald-500/5" : "border-border/70 bg-card/30",
-      )}
-    >
-      <h3 className="border-l-4 border-emerald-500 pl-3 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-function FieldLabel({ htmlFor, children }: { htmlFor?: string; children: ReactNode }) {
-  return (
-    <Label htmlFor={htmlFor} className="text-xs text-muted-foreground">
-      {children}
-    </Label>
-  );
-}
 
 export interface AssetRow {
   id: string;
@@ -352,30 +324,19 @@ export function AssetFormDialog({
               <DialogTitle>{edit ? "Editar bem patrimonial" : "Novo bem patrimonial"}</DialogTitle>
             </DialogHeader>
 
-            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6">
-              <div className="rounded-2xl border border-emerald-200/90 bg-gradient-to-br from-slate-50 via-white to-emerald-50/60 p-5 dark:from-emerald-950/40 dark:via-background dark:to-background sm:p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
-                  Patrimônio
-                </p>
-                <div className="mt-2 flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                    <Package className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-xl font-bold tracking-tight text-foreground">
-                      {description.trim() || (edit ? edit.description : "Cadastro de bem")}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {[tenantName, selectedCategory?.name].filter(Boolean).join(" · ") || "Preencha clube, categoria e descrição"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+            <DashboardDialogBody>
+              <DashboardFormHero
+                eyebrow="Patrimônio"
+                title={description.trim() || (edit ? edit.description : "Cadastro de bem")}
+                subtitle={[tenantName, selectedCategory?.name].filter(Boolean).join(" · ") || "Preencha clube, categoria e descrição"}
+                icon={Package}
+                accent="emerald"
+              />
 
-              <FormSection title="Identificação">
+              <DashboardFormSection title="Identificação" accent="emerald">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-1.5 sm:col-span-2">
-                    <FieldLabel>Clube / Empresa *</FieldLabel>
+                    <DashboardFieldLabel accent="emerald">Clube / Empresa *</DashboardFieldLabel>
                     <select
                       required
                       className={NATIVE_SELECT_CLASS}
@@ -391,7 +352,7 @@ export function AssetFormDialog({
                     </select>
                   </div>
                   <div className="grid gap-1.5 sm:col-span-2">
-                    <FieldLabel htmlFor="asset-category">Categoria *</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-category">Categoria *</DashboardFieldLabel>
                     <select
                       id="asset-category"
                       required
@@ -413,7 +374,7 @@ export function AssetFormDialog({
                     ) : null}
                   </div>
                   <div className="grid gap-1.5 sm:col-span-2">
-                    <FieldLabel htmlFor="asset-desc">Descrição *</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-desc">Descrição *</DashboardFieldLabel>
                     <Input
                       id="asset-desc"
                       className="text-foreground"
@@ -424,13 +385,13 @@ export function AssetFormDialog({
                     />
                   </div>
                 </div>
-              </FormSection>
+              </DashboardFormSection>
 
               {isUniform && (
-                <FormSection title="Kit uniforme">
+                <DashboardFormSection title="Kit uniforme" accent="emerald">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="grid gap-1.5">
-                      <FieldLabel htmlFor="asset-piece">Tipo de peça *</FieldLabel>
+                      <DashboardFieldLabel accent="emerald" htmlFor="asset-piece">Tipo de peça *</DashboardFieldLabel>
                       <select
                         id="asset-piece"
                         required
@@ -447,7 +408,7 @@ export function AssetFormDialog({
                       </select>
                     </div>
                     <div className="grid gap-1.5">
-                      <FieldLabel htmlFor="asset-size">Tamanho</FieldLabel>
+                      <DashboardFieldLabel accent="emerald" htmlFor="asset-size">Tamanho</DashboardFieldLabel>
                       <Input
                         id="asset-size"
                         className="text-foreground"
@@ -457,7 +418,7 @@ export function AssetFormDialog({
                       />
                     </div>
                     <div className="grid gap-1.5">
-                      <FieldLabel htmlFor="asset-shirt">Número da camisa</FieldLabel>
+                      <DashboardFieldLabel accent="emerald" htmlFor="asset-shirt">Número da camisa</DashboardFieldLabel>
                       <Input
                         id="asset-shirt"
                         type="number"
@@ -470,7 +431,7 @@ export function AssetFormDialog({
                       />
                     </div>
                     <div className="grid gap-1.5">
-                      <FieldLabel htmlFor="asset-player">Atribuído ao jogador</FieldLabel>
+                      <DashboardFieldLabel accent="emerald" htmlFor="asset-player">Atribuído ao jogador</DashboardFieldLabel>
                       <select
                         id="asset-player"
                         className={NATIVE_SELECT_CLASS}
@@ -486,10 +447,10 @@ export function AssetFormDialog({
                       </select>
                     </div>
                   </div>
-                </FormSection>
+                </DashboardFormSection>
               )}
 
-              <FormSection title="Foto do bem" highlight>
+              <DashboardFormSection title="Foto do bem" highlight accent="emerald">
                 <PhotoUploadWithName
                   sizeKey="patrimonio"
                   value={photoUrl}
@@ -508,13 +469,13 @@ export function AssetFormDialog({
                     As fotos ficam na pasta <strong>Patrimônio</strong> (Mídia). Ao criar o bem, clique em Salvar para vincular.
                   </p>
                 ) : null}
-              </FormSection>
+              </DashboardFormSection>
 
-              <FormSection title="Localização e responsável">
+              <DashboardFormSection title="Localização e responsável" accent="emerald">
                 <div className="grid gap-4 sm:grid-cols-2">
                   {!isUniform && (
                     <div className="grid gap-1.5">
-                      <FieldLabel htmlFor="asset-tag">Nº etiqueta patrimonial</FieldLabel>
+                      <DashboardFieldLabel accent="emerald" htmlFor="asset-tag">Nº etiqueta patrimonial</DashboardFieldLabel>
                       <Input
                         id="asset-tag"
                         className="text-foreground"
@@ -525,7 +486,7 @@ export function AssetFormDialog({
                     </div>
                   )}
                   <div className="grid gap-1.5">
-                    <FieldLabel htmlFor="asset-location">Localização</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-location">Localização</DashboardFieldLabel>
                     <Input
                       id="asset-location"
                       className="text-foreground"
@@ -535,7 +496,7 @@ export function AssetFormDialog({
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <FieldLabel htmlFor="asset-responsible">Responsável</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-responsible">Responsável</DashboardFieldLabel>
                     <Input
                       id="asset-responsible"
                       className="text-foreground"
@@ -545,7 +506,7 @@ export function AssetFormDialog({
                     />
                   </div>
                   <div className="grid gap-1.5 sm:col-span-2">
-                    <FieldLabel htmlFor="asset-status">Situação</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-status">Situação</DashboardFieldLabel>
                     <select
                       id="asset-status"
                       className={NATIVE_SELECT_CLASS}
@@ -560,12 +521,12 @@ export function AssetFormDialog({
                     </select>
                   </div>
                 </div>
-              </FormSection>
+              </DashboardFormSection>
 
-              <FormSection title="Dados financeiros">
+              <DashboardFormSection title="Dados financeiros" accent="emerald">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-1.5">
-                    <FieldLabel htmlFor="asset-date">Data de aquisição</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-date">Data de aquisição</DashboardFieldLabel>
                     <Input
                       id="asset-date"
                       type="date"
@@ -575,7 +536,7 @@ export function AssetFormDialog({
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <FieldLabel htmlFor="asset-value">Valor (R$)</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-value">Valor (R$)</DashboardFieldLabel>
                     <Input
                       id="asset-value"
                       type="number"
@@ -588,7 +549,7 @@ export function AssetFormDialog({
                     />
                   </div>
                   <div className="grid gap-1.5 sm:col-span-2">
-                    <FieldLabel htmlFor="asset-depreciation">Taxa de depreciação (% ao ano)</FieldLabel>
+                    <DashboardFieldLabel accent="emerald" htmlFor="asset-depreciation">Taxa de depreciação (% ao ano)</DashboardFieldLabel>
                     <Input
                       id="asset-depreciation"
                       type="number"
@@ -602,9 +563,9 @@ export function AssetFormDialog({
                     />
                   </div>
                 </div>
-              </FormSection>
+              </DashboardFormSection>
 
-              <FormSection title="Observações">
+              <DashboardFormSection title="Observações" accent="emerald">
                 <textarea
                   id="asset-notes"
                   className="min-h-[88px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground"
@@ -612,10 +573,10 @@ export function AssetFormDialog({
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Notas internas sobre o bem"
                 />
-              </FormSection>
-            </div>
+              </DashboardFormSection>
+            </DashboardDialogBody>
 
-            <DialogFooter className="shrink-0 gap-2 border-t border-border/60 px-6 py-4 sm:justify-end">
+            <DashboardDialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
                 Cancelar
               </Button>
@@ -623,7 +584,7 @@ export function AssetFormDialog({
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {edit ? "Salvar alterações" : "Criar bem"}
               </Button>
-            </DialogFooter>
+            </DashboardDialogFooter>
           </form>
         </DialogContent>
       </Dialog>

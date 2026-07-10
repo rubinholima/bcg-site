@@ -3,9 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import {
-  ArrowLeft,
-  Warehouse,
   Loader2,
   Plus,
   Pencil,
@@ -14,11 +13,20 @@ import {
   Package,
   Server,
   RefreshCw,
-  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  DashboardDeptSearch,
+  DashboardDeptSection,
+  DashboardDeptTabs,
+  DashboardDeptToolbarAside,
+  DashboardEmptyState,
+  DashboardFieldLabel,
+  DashboardFilterBox,
+  DashboardListRow,
+  DashboardLoadingState,
+  DashboardStatGrid,
+} from "@/components/dashboard/DashboardDeptHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +50,7 @@ import { isTechnologyAssetKind } from "@/lib/infrastructure-tech-kinds";
 
 type TabId = "bens" | "categorias";
 
-const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
+const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "bens", label: "Bens patrimoniais", icon: Package },
   { id: "categorias", label: "Categorias", icon: FolderTree },
 ];
@@ -283,190 +291,120 @@ export default function AdmPatrimonioPage() {
   }
 
   const listCount = activeTab === "bens" ? filteredAssets.length : filteredCategories.length;
+  const tenantLabel = tenantId
+    ? tenants.find((t) => t.id === tenantId)?.name ?? "Clube selecionado"
+    : "Todos os clubes e empresas";
+
+  const pageActions = (
+    <DashboardDeptToolbarAside>
+      <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => void refresh()} disabled={loading}>
+        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+        Atualizar
+      </Button>
+      <Button
+        size="sm"
+        className="min-h-[44px]"
+        onClick={() => {
+          if (activeTab === "categorias") {
+            setCategoryEdit(null);
+            setCategoryDialogOpen(true);
+          } else {
+            setAssetEdit(null);
+            setAssetDialogOpen(true);
+          }
+        }}
+        disabled={activeTab === "bens" && tenants.length === 0}
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        {activeTab === "categorias" ? "Nova categoria" : "Novo bem"}
+      </Button>
+    </DashboardDeptToolbarAside>
+  );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Button variant="ghost" size="sm" className="-ml-2 mb-2 gap-1.5 px-2" asChild>
-            <Link href="/dashboard/adm">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar ao ADM
-            </Link>
-          </Button>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <Warehouse className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-            Patrimônio
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Cadastro de bens, categorias, fotos e localização. Equipamentos de TI podem ter ficha de infraestrutura.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => void refresh()} disabled={loading}>
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-            Atualizar
-          </Button>
-          <Button
-            size="sm"
-            className="min-h-[44px]"
-            onClick={() => {
-              if (activeTab === "categorias") {
-                setCategoryEdit(null);
-                setCategoryDialogOpen(true);
-              } else {
-                setAssetEdit(null);
-                setAssetDialogOpen(true);
-              }
-            }}
-            disabled={activeTab === "bens" && tenants.length === 0}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {activeTab === "categorias" ? "Nova categoria" : "Novo bem"}
-          </Button>
-        </div>
-      </div>
+    <>
+      <DashboardStatGrid
+        items={[
+          { label: "Bens cadastrados", value: stats.bens, tone: "emerald" },
+          { label: "Em uso", value: stats.emUso, tone: "sky" },
+          { label: "Categorias", value: stats.categorias, tone: "amber" },
+        ]}
+      />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[
-          { label: "Bens cadastrados", value: stats.bens, accent: "emerald" },
-          { label: "Em uso", value: stats.emUso, accent: "sky" },
-          { label: "Categorias", value: stats.categorias, accent: "amber" },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className={cn(
-              "rounded-xl border px-4 py-3",
-              s.accent === "emerald" && "border-emerald-500/25 bg-emerald-500/5",
-              s.accent === "sky" && "border-sky-500/25 bg-sky-500/5",
-              s.accent === "amber" && "border-amber-500/25 bg-amber-500/5",
-            )}
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{s.label}</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{s.value}</p>
-          </div>
-        ))}
-      </div>
+      <DashboardDeptSection
+        title="Lista"
+        description={tenantLabel}
+        aside={pageActions}
+      >
+        <DashboardDeptTabs tabs={TABS} active={activeTab} onChange={(id) => { setActiveTab(id); setSearch(""); }} />
 
-      <Card className="overflow-hidden border-border/80">
-        <CardHeader className="border-b border-border/60 bg-muted/20 pb-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <CardTitle className="text-base">Filtros e abas</CardTitle>
-              <CardDescription className="mt-1">
-                {tenantId
-                  ? tenants.find((t) => t.id === tenantId)?.name ?? "Clube selecionado"
-                  : "Todos os clubes e empresas"}
-              </CardDescription>
-            </div>
-            <div className="flex rounded-lg border border-border/80 bg-muted/30 p-1 gap-1">
-              {TABS.map((tab) => (
-                <Button
-                  key={tab.id}
-                  type="button"
-                  variant={activeTab === tab.id ? "secondary" : "ghost"}
-                  size="sm"
-                  className={cn(
-                    "min-h-[36px] gap-1.5",
-                    activeTab === tab.id && "shadow-sm",
-                  )}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setSearch("");
-                  }}
-                >
-                  <tab.icon className="h-4 w-4" />
-                  {tab.label}
-                </Button>
+        <DashboardFilterBox accent="emerald" className={activeTab === "bens" ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"}>
+          <div className="grid gap-1.5 sm:col-span-2 lg:col-span-1">
+            <DashboardFieldLabel accent="emerald">Clube / Empresa</DashboardFieldLabel>
+            <select
+              className={NATIVE_SELECT_CLASS}
+              value={tenantId || "__all__"}
+              onChange={(e) => setTenantId(e.target.value === "__all__" ? "" : e.target.value)}
+            >
+              <option value="__all__">Todos</option>
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-5">
-          <div
-            className={cn(
-              "grid gap-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4",
-              activeTab === "bens" ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2",
-            )}
-          >
-            <div className="grid gap-1.5 sm:col-span-2 lg:col-span-1">
-              <label className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
-                Clube / Empresa
-              </label>
-              <select
-                className={NATIVE_SELECT_CLASS}
-                value={tenantId || "__all__"}
-                onChange={(e) => setTenantId(e.target.value === "__all__" ? "" : e.target.value)}
-              >
-                <option value="__all__">Todos</option>
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {activeTab === "bens" && (
-              <>
-                <div className="grid gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
-                    Situação
-                  </label>
-                  <select
-                    className={NATIVE_SELECT_CLASS}
-                    value={filterStatus || "__all__"}
-                    onChange={(e) => setFilterStatus(e.target.value === "__all__" ? "" : e.target.value)}
-                  >
-                    <option value="__all__">Todas</option>
-                    {Object.entries(STATUS_LABEL).map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid gap-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">
-                    Peça (kit)
-                  </label>
-                  <select
-                    className={NATIVE_SELECT_CLASS}
-                    value={filterPieceType || "__all__"}
-                    onChange={(e) => setFilterPieceType(e.target.value === "__all__" ? "" : e.target.value)}
-                  >
-                    <option value="__all__">Todas</option>
-                    {Object.entries(ASSET_PIECE_LABEL).map(([v, l]) => (
-                      <option key={v} value={v}>
-                        {l}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </>
-            )}
-          </div>
+          {activeTab === "bens" && (
+            <>
+              <div className="grid gap-1.5">
+                <DashboardFieldLabel accent="emerald">Situação</DashboardFieldLabel>
+                <select
+                  className={NATIVE_SELECT_CLASS}
+                  value={filterStatus || "__all__"}
+                  onChange={(e) => setFilterStatus(e.target.value === "__all__" ? "" : e.target.value)}
+                >
+                  <option value="__all__">Todas</option>
+                  {Object.entries(STATUS_LABEL).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-1.5">
+                <DashboardFieldLabel accent="emerald">Peça (kit)</DashboardFieldLabel>
+                <select
+                  className={NATIVE_SELECT_CLASS}
+                  value={filterPieceType || "__all__"}
+                  onChange={(e) => setFilterPieceType(e.target.value === "__all__" ? "" : e.target.value)}
+                >
+                  <option value="__all__">Todas</option>
+                  {Object.entries(ASSET_PIECE_LABEL).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+        </DashboardFilterBox>
 
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              className="min-h-[44px] pl-9 text-foreground"
-              placeholder={
-                activeTab === "bens"
-                  ? "Buscar por descrição, categoria, local, jogador…"
-                  : "Buscar por nome, código ou tipo de categoria…"
-              }
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <DashboardDeptSearch
+          value={search}
+          onChange={setSearch}
+          placeholder={
+            activeTab === "bens"
+              ? "Buscar por descrição, categoria, local, jogador…"
+              : "Buscar por nome, código ou tipo de categoria…"
+          }
+        />
 
-          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-            <span>
-              {listCount === 0
-                ? "Nenhum registro encontrado"
-                : `${listCount} ${activeTab === "bens" ? (listCount === 1 ? "bem" : "bens") : listCount === 1 ? "categoria" : "categorias"}`}
-            </span>
-          </div>
+        <p className="text-sm text-muted-foreground">
+          {listCount === 0
+            ? "Nenhum registro encontrado"
+            : `${listCount} ${activeTab === "bens" ? (listCount === 1 ? "bem" : "bens") : listCount === 1 ? "categoria" : "categorias"}`}
+        </p>
 
           {loading ? (
             <p className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
@@ -652,8 +590,7 @@ export default function AdmPatrimonioPage() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+      </DashboardDeptSection>
 
       <AssetCategoryFormDialog
         open={categoryDialogOpen}
@@ -719,6 +656,6 @@ export default function AdmPatrimonioPage() {
         message={feedback.message}
         variant={feedback.variant}
       />
-    </div>
+    </>
   );
 }
