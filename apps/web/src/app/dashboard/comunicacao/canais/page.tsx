@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,11 @@ import {
   DashboardFormSection,
   DashboardLoadingState,
 } from "@/components/dashboard/DashboardDeptHeader";
+import { ChannelSetupGuide } from "@/components/dashboard/comunicacao/ChannelSetupGuide";
+import {
+  COMMUNICATION_DEPARTMENTS,
+  NATIVE_SELECT_CLASS,
+} from "@/components/dashboard/comunicacao/constants";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
@@ -43,6 +48,15 @@ import {
   CHANNEL_LABELS,
   type CommunicationChannelAccount,
 } from "@/components/dashboard/comunicacao/types";
+
+const EMPTY_FORM = {
+  tenantId: "",
+  channelType: "whatsapp",
+  department: "",
+  departmentCustom: "",
+  externalId: "",
+  displayAddress: "",
+};
 
 export default function ComunicacaoCanaisPage() {
   const router = useRouter();
@@ -53,14 +67,18 @@ export default function ComunicacaoCanaisPage() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    tenantId: "",
-    channelType: "whatsapp",
-    label: "",
-    externalId: "",
-    displayAddress: "",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  const selectedTenantName = useMemo(
+    () => tenants.find((t) => t.id === tenantId)?.name,
+    [tenants, tenantId],
+  );
+
+  const formTenantName = useMemo(
+    () => tenants.find((t) => t.id === (form.tenantId || tenantId))?.name,
+    [tenants, form.tenantId, tenantId],
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -89,18 +107,42 @@ export default function ComunicacaoCanaisPage() {
     void load();
   }, [load, canAccessModule, authLoading]);
 
+  const openNewChannel = () => {
+    setForm({
+      ...EMPTY_FORM,
+      tenantId: tenantId || "",
+    });
+    setOpen(true);
+  };
+
+  const resolveDepartmentLabel = (): string => {
+    if (form.department === "outro") return form.departmentCustom.trim();
+    const preset = COMMUNICATION_DEPARTMENTS.find((d) => d.value === form.department);
+    return preset?.label ?? form.department.trim();
+  };
+
   const handleSave = async () => {
-    if (!form.tenantId || !form.label.trim()) {
-      setFeedback({ type: "err", msg: "Unidade e rótulo são obrigatórios." });
+    const effectiveTenantId = tenantId || form.tenantId;
+    const departmentLabel = resolveDepartmentLabel();
+    if (!effectiveTenantId) {
+      setFeedback({ type: "err", msg: "Selecione a empresa/clube no filtro da página ou no formulário." });
+      return;
+    }
+    if (!departmentLabel) {
+      setFeedback({ type: "err", msg: "Informe o departamento / área do canal." });
+      return;
+    }
+    if (!form.externalId.trim()) {
+      setFeedback({ type: "err", msg: "Informe o phone_number_id do Meta (ID externo)." });
       return;
     }
     setSaving(true);
     try {
       await api.post("/comunicacao/channels", {
-        tenantId: form.tenantId,
+        tenantId: effectiveTenantId,
         channelType: form.channelType,
-        label: form.label.trim(),
-        externalId: form.externalId.trim() || undefined,
+        label: departmentLabel,
+        externalId: form.externalId.trim(),
         displayAddress: form.displayAddress.trim() || undefined,
       });
       setOpen(false);
@@ -117,23 +159,28 @@ export default function ComunicacaoCanaisPage() {
 
   return (
     <>
+      <ChannelSetupGuide />
+
       <DashboardDeptSection
         title="Contas de canal"
-        description="Cadastre o phone_number_id do WhatsApp Cloud API por unidade. Credenciais cifradas entram na próxima fase."
+        description="Um registro por departamento e número WhatsApp. A empresa vem do filtro acima."
         aside={
-          <Button type="button" className="min-h-[44px]" onClick={() => setOpen(true)}>
+          <Button type="button" className="min-h-[44px]" onClick={openNewChannel}>
             <Plus className="mr-2 h-4 w-4" />
             Novo canal
           </Button>
         }
       >
         <div className="mb-3 max-w-sm">
+          <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Empresa / clube
+          </Label>
           <Select
             value={tenantId || "__all__"}
             onValueChange={(v) => setTenantId(v === "__all__" ? "" : v)}
           >
             <SelectTrigger className="min-h-[44px]">
-              <SelectValue placeholder="Filtrar unidade" />
+              <SelectValue placeholder="Todas as unidades" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Todas</SelectItem>
@@ -150,18 +197,18 @@ export default function ComunicacaoCanaisPage() {
           <DashboardLoadingState />
         ) : rows.length === 0 ? (
           <DashboardEmptyState>
-            Nenhum canal cadastrado. Adicione a conta WhatsApp da unidade.
+            Nenhum canal cadastrado. Escolha a empresa e adicione o departamento com o phone_number_id.
           </DashboardEmptyState>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-border/80">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Unidade</TableHead>
+                  <TableHead>Empresa</TableHead>
+                  <TableHead>Departamento</TableHead>
                   <TableHead>Canal</TableHead>
-                  <TableHead>Rótulo</TableHead>
-                  <TableHead>ID externo</TableHead>
-                  <TableHead>Endereço</TableHead>
+                  <TableHead>phone_number_id</TableHead>
+                  <TableHead>Número</TableHead>
                   <TableHead>Ativo</TableHead>
                 </TableRow>
               </TableHeader>
@@ -171,8 +218,8 @@ export default function ComunicacaoCanaisPage() {
                     <TableCell className="text-sm">
                       {tenants.find((t) => t.id === row.tenantId)?.name ?? row.tenantId}
                     </TableCell>
-                    <TableCell>{CHANNEL_LABELS[row.channelType] ?? row.channelType}</TableCell>
                     <TableCell>{row.label}</TableCell>
+                    <TableCell>{CHANNEL_LABELS[row.channelType] ?? row.channelType}</TableCell>
                     <TableCell className="font-mono text-xs">{row.externalId || "—"}</TableCell>
                     <TableCell>{row.displayAddress || "—"}</TableCell>
                     <TableCell>{row.isActive ? "Sim" : "Não"}</TableCell>
@@ -190,61 +237,94 @@ export default function ComunicacaoCanaisPage() {
             <DialogTitle>Novo canal</DialogTitle>
           </DialogHeader>
           <DashboardDialogBody>
-            <DashboardFormSection title="WhatsApp / canal">
+            <DashboardFormSection title="WhatsApp / departamento">
               <div className="grid gap-3">
-                <div className="space-y-1.5">
-                  <Label>Unidade</Label>
-                  <Select
-                    value={form.tenantId || undefined}
-                    onValueChange={(v) => setForm((f) => ({ ...f, tenantId: v }))}
-                  >
-                    <SelectTrigger className="min-h-[44px]">
-                      <SelectValue placeholder="Empresa / clube" />
-                    </SelectTrigger>
-                    <SelectContent>
+                {tenantId ? (
+                  <div className="space-y-1.5">
+                    <Label>Empresa / clube</Label>
+                    <p className="min-h-[44px] rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm text-foreground">
+                      {selectedTenantName ?? "—"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Definida no filtro da página. Para trocar, feche o modal e altere o filtro.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label>Empresa / clube</Label>
+                    <select
+                      className={NATIVE_SELECT_CLASS}
+                      value={form.tenantId}
+                      onChange={(e) => setForm((f) => ({ ...f, tenantId: e.target.value }))}
+                    >
+                      <option value="">Selecione…</option>
                       {tenants.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
+                        <option key={t.id} value={t.id}>
                           {t.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    </select>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
-                  <Label>Tipo</Label>
-                  <Select
-                    value={form.channelType}
-                    onValueChange={(v) => setForm((f) => ({ ...f, channelType: v }))}
+                  <Label>Departamento / área</Label>
+                  <select
+                    className={NATIVE_SELECT_CLASS}
+                    value={form.department}
+                    onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
                   >
-                    <SelectTrigger className="min-h-[44px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(CHANNEL_LABELS).map(([k, label]) => (
-                        <SelectItem key={k} value={k}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <option value="">Selecione o departamento…</option>
+                    {COMMUNICATION_DEPARTMENTS.map((d) => (
+                      <option key={d.value} value={d.value}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {form.department === "outro" && (
+                  <div className="space-y-1.5">
+                    <Label>Nome do departamento</Label>
+                    <Input
+                      className="min-h-[44px] text-foreground"
+                      value={form.departmentCustom}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, departmentCustom: e.target.value }))
+                      }
+                      placeholder="Ex.: Parcerias internacionais"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
-                  <Label>Rótulo</Label>
-                  <Input
-                    className="min-h-[44px] text-foreground"
-                    value={form.label}
-                    onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-                    placeholder="Ex.: Boston City FC USA — WhatsApp"
-                  />
+                  <Label>Tipo de canal</Label>
+                  <select
+                    className={NATIVE_SELECT_CLASS}
+                    value={form.channelType}
+                    onChange={(e) => setForm((f) => ({ ...f, channelType: e.target.value }))}
+                  >
+                    {Object.entries(CHANNEL_LABELS).map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
                 <div className="space-y-1.5">
-                  <Label>ID externo (phone_number_id)</Label>
+                  <Label>phone_number_id (Meta)</Label>
                   <Input
                     className="min-h-[44px] font-mono text-foreground"
                     value={form.externalId}
                     onChange={(e) => setForm((f) => ({ ...f, externalId: e.target.value }))}
+                    placeholder="Ex.: 123456789012345"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Meta Business → WhatsApp → Configuração da API → ID do número de telefone.
+                  </p>
                 </div>
+
                 <div className="space-y-1.5">
                   <Label>Número exibido</Label>
                   <Input
@@ -254,6 +334,16 @@ export default function ComunicacaoCanaisPage() {
                     placeholder="+1 617…"
                   />
                 </div>
+
+                {(tenantId || form.tenantId) && formTenantName && form.department && (
+                  <p className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                    Resumo: <strong className="text-foreground">{formTenantName}</strong>
+                    {" · "}
+                    <strong className="text-foreground">{resolveDepartmentLabel() || "…"}</strong>
+                    {" · "}
+                    {CHANNEL_LABELS[form.channelType] ?? form.channelType}
+                  </p>
+                )}
               </div>
             </DashboardFormSection>
           </DashboardDialogBody>

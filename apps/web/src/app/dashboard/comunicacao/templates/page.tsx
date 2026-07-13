@@ -44,6 +44,7 @@ import {
   CHANNEL_LABELS,
   type CommunicationTemplate,
 } from "@/components/dashboard/comunicacao/types";
+import { NATIVE_SELECT_CLASS } from "@/components/dashboard/comunicacao/constants";
 
 export default function ComunicacaoTemplatesPage() {
   const router = useRouter();
@@ -100,14 +101,16 @@ export default function ComunicacaoTemplatesPage() {
   }, [load, canAccessModule, authLoading]);
 
   const handleSave = async () => {
-    if (!form.tenantId || !form.name.trim() || !form.body.trim()) {
-      setFeedback({ type: "err", msg: "Preencha unidade, nome e corpo." });
+    const effectiveTenantId = tenantId || form.tenantId;
+    if (!effectiveTenantId || !form.name.trim() || !form.body.trim()) {
+      setFeedback({ type: "err", msg: "Preencha empresa, nome e corpo." });
       return;
     }
     setSaving(true);
     try {
       await api.post("/comunicacao/templates", {
-        ...form,
+        tenantId: effectiveTenantId,
+        channelType: form.channelType,
         name: form.name.trim(),
         body: form.body.trim(),
         externalName: form.externalName.trim() || undefined,
@@ -202,40 +205,39 @@ export default function ComunicacaoTemplatesPage() {
             <DashboardFormSection title="Conteúdo">
               <div className="grid gap-3">
                 <div className="space-y-1.5">
-                  <Label>Unidade</Label>
-                  <Select
-                    value={form.tenantId || undefined}
-                    onValueChange={(v) => setForm((f) => ({ ...f, tenantId: v }))}
-                  >
-                    <SelectTrigger className="min-h-[44px]">
-                      <SelectValue placeholder="Empresa / clube" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <Label>Empresa / clube</Label>
+                  {tenantId ? (
+                    <p className="min-h-[44px] rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm text-foreground">
+                      {tenants.find((t) => t.id === tenantId)?.name ?? "—"}
+                    </p>
+                  ) : (
+                    <select
+                      className={NATIVE_SELECT_CLASS}
+                      value={form.tenantId}
+                      onChange={(e) => setForm((f) => ({ ...f, tenantId: e.target.value }))}
+                    >
+                      <option value="">Selecione…</option>
                       {tenants.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
+                        <option key={t.id} value={t.id}>
                           {t.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Canal</Label>
-                  <Select
+                  <select
+                    className={NATIVE_SELECT_CLASS}
                     value={form.channelType}
-                    onValueChange={(v) => setForm((f) => ({ ...f, channelType: v }))}
+                    onChange={(e) => setForm((f) => ({ ...f, channelType: e.target.value }))}
                   >
-                    <SelectTrigger className="min-h-[44px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(CHANNEL_LABELS).map(([k, label]) => (
-                        <SelectItem key={k} value={k}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    {Object.entries(CHANNEL_LABELS).map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Nome</Label>

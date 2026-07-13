@@ -18,13 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
   DashboardDeptSection,
@@ -48,6 +41,7 @@ import {
   type CommunicationConversationListItem,
   type CommunicationStats,
 } from "./types";
+import { NATIVE_SELECT_CLASS } from "./constants";
 
 function formatWhen(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -89,6 +83,11 @@ export function CommunicationInbox() {
     initialMessage: "",
   });
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
+
+  const selectedTenantName = useMemo(
+    () => tenants.find((t) => t.id === tenantId)?.name,
+    [tenants, tenantId],
+  );
 
   const loadList = useCallback(async () => {
     setLoading(true);
@@ -281,60 +280,48 @@ export function CommunicationInbox() {
         <DashboardFilterBox accent="sky" className="sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
             <DashboardFieldLabel>Unidade</DashboardFieldLabel>
-            <Select
+            <select
+              className={NATIVE_SELECT_CLASS}
               value={tenantId || "__all__"}
-              onValueChange={(v) => setTenantId(v === "__all__" ? "" : v)}
+              onChange={(e) => setTenantId(e.target.value === "__all__" ? "" : e.target.value)}
             >
-              <SelectTrigger className="min-h-[44px]">
-                <SelectValue placeholder="Todas" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas</SelectItem>
-                {tenants.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="__all__">Todas</option>
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1.5">
             <DashboardFieldLabel>Status</DashboardFieldLabel>
-            <Select
+            <select
+              className={NATIVE_SELECT_CLASS}
               value={status || "__all__"}
-              onValueChange={(v) => setStatus(v === "__all__" ? "" : v)}
+              onChange={(e) => setStatus(e.target.value === "__all__" ? "" : e.target.value)}
             >
-              <SelectTrigger className="min-h-[44px]">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todos</SelectItem>
-                {Object.entries(STATUS_LABELS).map(([k, label]) => (
-                  <SelectItem key={k} value={k}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="__all__">Todos</option>
+              {Object.entries(STATUS_LABELS).map(([k, label]) => (
+                <option key={k} value={k}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1.5">
             <DashboardFieldLabel>Canal</DashboardFieldLabel>
-            <Select
+            <select
+              className={NATIVE_SELECT_CLASS}
               value={channelType || "__all__"}
-              onValueChange={(v) => setChannelType(v === "__all__" ? "" : v)}
+              onChange={(e) => setChannelType(e.target.value === "__all__" ? "" : e.target.value)}
             >
-              <SelectTrigger className="min-h-[44px]">
-                <SelectValue placeholder="Todos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todos</SelectItem>
-                {Object.entries(CHANNEL_LABELS).map(([k, label]) => (
-                  <SelectItem key={k} value={k}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="__all__">Todos</option>
+              {Object.entries(CHANNEL_LABELS).map(([k, label]) => (
+                <option key={k} value={k}>
+                  {label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="space-y-1.5">
             <DashboardFieldLabel>Busca</DashboardFieldLabel>
@@ -471,18 +458,17 @@ export function CommunicationInbox() {
                     />
                     Favorito
                   </Button>
-                  <Select value={detail.status} onValueChange={(v) => void handleStatus(v)}>
-                    <SelectTrigger className="min-h-[44px] w-[140px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_LABELS).map(([k, label]) => (
-                        <SelectItem key={k} value={k}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    className={cn(NATIVE_SELECT_CLASS, "w-[140px]")}
+                    value={detail.status}
+                    onChange={(e) => void handleStatus(e.target.value)}
+                  >
+                    {Object.entries(STATUS_LABELS).map(([k, label]) => (
+                      <option key={k} value={k}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -606,22 +592,30 @@ export function CommunicationInbox() {
             <DashboardFormSection title="Contato">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label>Unidade</Label>
-                  <Select
-                    value={tenantId || undefined}
-                    onValueChange={setTenantId}
-                  >
-                    <SelectTrigger className="min-h-[44px]">
-                      <SelectValue placeholder="Selecione a empresa/clube" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <Label>Empresa / clube</Label>
+                  {tenantId ? (
+                    <>
+                      <p className="min-h-[44px] rounded-md border border-input bg-muted/30 px-3 py-2.5 text-sm text-foreground">
+                        {selectedTenantName ?? "—"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Usando a unidade do filtro da inbox.
+                      </p>
+                    </>
+                  ) : (
+                    <select
+                      className={NATIVE_SELECT_CLASS}
+                      value={tenantId}
+                      onChange={(e) => setTenantId(e.target.value)}
+                    >
+                      <option value="">Selecione…</option>
                       {tenants.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
+                        <option key={t.id} value={t.id}>
                           {t.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <Label>Nome</Label>
