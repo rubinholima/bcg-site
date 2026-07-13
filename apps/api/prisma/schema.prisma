@@ -147,6 +147,10 @@ model Tenant {
   scoutingProspects     ScoutingProspect[]
   scoutingReports       ScoutingReport[]
   scoutLocationPings    ScoutLocationPing[]
+  communicationChannelAccounts CommunicationChannelAccount[]
+  communicationConversations   CommunicationConversation[]
+  communicationTags            CommunicationTag[]
+  communicationTemplates       CommunicationTemplate[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -195,6 +199,7 @@ model Customer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   financeiroLancamentos FinanceiroLancamento[]
+  communicationConversations CommunicationConversation[]
   @@index([tenantId])
 }
 
@@ -1946,6 +1951,7 @@ model VenuePipelineLead {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   booking       VenueBooking?
+  communicationConversations CommunicationConversation[]
 
   @@index([venueSlug, stage])
   @@index([createdAt])
@@ -2115,4 +2121,171 @@ model ScoutLocationPing {
 
   @@index([tenantId, createdAt])
   @@index([scoutId, createdAt])
+}
+
+// ─── Communication Center (hub unificado de canais) ───────────────────────────
+// Channel-agnostic: WhatsApp é o 1º provedor; IG/Messenger/Email/SMS/interno depois.
+// Business Unit = Tenant. CRM: vincula Customer / VenuePipelineLead existentes (sem CRM paralelo).
+
+/// Conta de canal por unidade (WABA, página Meta, mailbox, etc.)
+model CommunicationChannelAccount {
+  id             String   @id @default(cuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  /// whatsapp | instagram | messenger | email | sms | internal
+  channelType    String
+  label          String
+  /// ID no provedor (phone_number_id, page_id, etc.)
+  externalId     String?
+  /// Display (ex.: +15551234567)
+  displayAddress String?
+  /// Credenciais cifradas (JSON) — padrão Omie
+  credentialsEnc String?  @db.Text
+  credentialsIv  String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  conversations  CommunicationConversation[]
+
+  @@unique([tenantId, channelType, externalId])
+  @@index([tenantId])
+  @@index([channelType, externalId])
+}
+
+/// Thread / conversa unificada
+model CommunicationConversation {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  channelAccountId    String?
+  channelAccount      CommunicationChannelAccount? @relation(fields: [channelAccountId], references: [id], onDelete: SetNull)
+  /// Denormalizado para filtros (whatsapp | …)
+  channelType         String
+  /// open | pending | resolved | closed
+  status              String   @default("open")
+  contactName         String?
+  contactPhone        String?
+  contactEmail        String?
+  /// ID do contato no provedor (wa_id, PSID, etc.)
+  externalContactId   String?
+  subject             String?
+  /// Enriquecimento CRM existente
+  customerId          String?
+  customer            Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  venuePipelineLeadId String?
+  venuePipelineLead   VenuePipelineLead? @relation(fields: [venuePipelineLeadId], references: [id], onDelete: SetNull)
+  /// Fallback polimórfico: employee | player | socio | prospect | supplier
+  linkedEntityType    String?
+  linkedEntityId      String?
+  assignedToUserId    String?
+  assignedToName      String?
+  isFavorite          Boolean  @default(false)
+  unreadCount         Int      @default(0)
+  lastMessageAt       DateTime?
+  lastMessagePreview  String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  messages            CommunicationMessage[]
+  notes               CommunicationNote[]
+  activities          CommunicationActivity[]
+  tags                CommunicationConversationTag[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, channelType])
+  @@index([tenantId, lastMessageAt])
+  @@index([tenantId, isFavorite])
+  @@index([assignedToUserId])
+  @@index([customerId])
+  @@index([venuePipelineLeadId])
+  @@index([contactPhone])
+  @@index([externalContactId])
+}
+
+model CommunicationMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  /// inbound | outbound | system
+  direction      String
+  /// text | image | audio | video | document | template
+  messageType    String   @default("text")
+  body           String?  @db.Text
+  mediaUrl       String?
+  mediaMimeType  String?
+  externalId     String?
+  /// pending | sent | delivered | read | failed
+  deliveryStatus String?
+  sentByUserId   String?
+  sentByName     String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([externalId])
+}
+
+model CommunicationNote {
+  id              String   @id @default(cuid())
+  conversationId  String
+  conversation    CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  body            String   @db.Text
+  createdByUserId String?
+  createdByName   String?
+  createdAt       DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model CommunicationTag {
+  id            String   @id @default(cuid())
+  tenantId      String
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  color         String?
+  createdAt     DateTime @default(now())
+  conversations CommunicationConversationTag[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model CommunicationConversationTag {
+  conversationId String
+  tagId          String
+  conversation    CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tag            CommunicationTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, tagId])
+  @@index([tagId])
+}
+
+model CommunicationActivity {
+  id             String   @id @default(cuid())
+  conversationId String
+  conversation   CommunicationConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  /// message | note | status_change | assignment | tag | link_crm | system
+  type           String
+  summary        String
+  payload        Json?
+  actorUserId    String?
+  actorName      String?
+  createdAt      DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model CommunicationTemplate {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  channelType  String
+  name         String
+  body         String   @db.Text
+  /// Nome do template aprovado no Meta (WhatsApp)
+  externalName String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId, channelType])
 }

@@ -44,6 +44,7 @@ import { CaptacaoModule } from './captacao/captacao.module';
 import { PsychologySessionsModule } from './psychology-sessions/psychology-sessions.module';
 import { PsychologySupportMaterialsModule } from './psychology-support-materials/psychology-support-materials.module';
 import { InfrastructureModule } from './infraestrutura/infrastructure.module';
+import { ComunicacaoModule } from './comunicacao/comunicacao.module';
 
 @Module({
   imports: [
@@ -90,6 +91,7 @@ import { InfrastructureModule } from './infraestrutura/infrastructure.module';
     PsychologySessionsModule,
     PsychologySupportMaterialsModule,
     InfrastructureModule,
+    ComunicacaoModule,
   ],
   controllers: [AppController],
   providers: [AppService],

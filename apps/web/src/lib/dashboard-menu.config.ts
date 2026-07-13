@@ -70,6 +70,8 @@ import {
   Cable,
   HardDrive,
   ShieldAlert,
+  MessageCircle,
+  MessagesSquare,
   Network,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
@@ -870,6 +872,42 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       },
       { slug: "socio_socios", label: "Sócios", href: "/dashboard/socio-torcedor/socios", icon: Users, moduleSlug: "socio_torcedor" },
       hubRelatorio("socio_torcedor"),
+    ],
+  },
+  {
+    slug: "comunicacao",
+    label: "Communication Center",
+    icon: MessagesSquare,
+    moduleSlug: "comunicacao",
+    children: [
+      {
+        slug: "com_dash",
+        label: DEPT_HUB_MENU_LABEL,
+        href: "/dashboard/comunicacao",
+        icon: LayoutDashboard,
+        moduleSlug: "comunicacao",
+      },
+      {
+        slug: "com_inbox",
+        label: "Inbox",
+        href: "/dashboard/comunicacao/inbox",
+        icon: MessageCircle,
+        moduleSlug: "comunicacao",
+      },
+      {
+        slug: "com_canais",
+        label: "Canais",
+        href: "/dashboard/comunicacao/canais",
+        icon: Cable,
+        moduleSlug: "comunicacao",
+      },
+      {
+        slug: "com_templates",
+        label: "Templates",
+        href: "/dashboard/comunicacao/templates",
+        icon: FileText,
+        moduleSlug: "comunicacao",
+      },
     ],
   },
   {

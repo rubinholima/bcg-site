@@ -98,6 +98,24 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
     backHref: "/dashboard/adm",
     backLabel: "Voltar ao ADM",
   },
+  "/dashboard/comunicacao/inbox": {
+    title: "Inbox",
+    description: "Conversas unificadas por unidade — WhatsApp e próximos canais.",
+    backHref: "/dashboard/comunicacao",
+    backLabel: "Voltar",
+  },
+  "/dashboard/comunicacao/canais": {
+    title: "Canais",
+    description: "Contas WhatsApp Cloud API e futuros provedores por unidade de negócio.",
+    backHref: "/dashboard/comunicacao",
+    backLabel: "Voltar",
+  },
+  "/dashboard/comunicacao/templates": {
+    title: "Templates",
+    description: "Respostas e templates por canal.",
+    backHref: "/dashboard/comunicacao",
+    backLabel: "Voltar",
+  },
   "/dashboard/psicologia/relatorios": {
     title: "Relatórios semanais",
     description:
@@ -231,7 +249,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/ferramentas\//,
 
   // Índices com DashboardDeptHeader / HubDashboardPage (hero — não duplicar)
-  /^\/dashboard\/(midia|noticias|marketing|usuarios|manual|assessoria-imprensa|eventos|adm|futebol|saude|clube)$/,
+  /^\/dashboard\/(midia|noticias|marketing|usuarios|manual|assessoria-imprensa|eventos|adm|futebol|saude|clube|comunicacao)$/,
 
   // Subárvores com shell ou agenda dedicada
   /^\/dashboard\/eventos\/boston-city-hall(\/|$)/,

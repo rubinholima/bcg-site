@@ -106,6 +106,7 @@ export function resolveDashboardAccent(pathname: string): DashboardAccent {
   }
   if (path.startsWith("/dashboard/requisicoes")) return "slate";
   if (path.startsWith("/dashboard/eventos")) return "amber";
+  if (path.startsWith("/dashboard/comunicacao")) return "sky";
   return "violet";
 }
 

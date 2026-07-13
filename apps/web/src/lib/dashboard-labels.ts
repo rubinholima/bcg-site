@@ -67,4 +67,5 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   eventos: "Eventos",
   integracoes: "Integra\u00E7\u00F5es",
   fmf_scraper: "Importação FMF",
+  comunicacao: "Communication Center",
 };
