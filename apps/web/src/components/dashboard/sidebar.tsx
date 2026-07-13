@@ -192,6 +192,10 @@ function isAcademiasPath(pathname: string | null): boolean {
   return !!pathname?.startsWith("/dashboard/academias");
 }
 
+function isComunicacaoPath(pathname: string | null): boolean {
+  return !!pathname?.startsWith("/dashboard/comunicacao");
+}
+
 function isConfigPath(pathname: string | null): boolean {
   if (!pathname) return false;
   return pathname.startsWith("/dashboard/configuracoes");
@@ -211,6 +215,7 @@ function getActiveGroupSlug(pathname: string | null, relHub: string | null): str
   if (isAssessoriaImprensaPath(pathname, relHub)) return "assessoria_imprensa";
   if (isSocioPath(pathname, relHub)) return "socio_torcedor";
   if (isAcademiasPath(pathname)) return "academias";
+  if (isComunicacaoPath(pathname)) return "comunicacao";
   if (isFerramentasPath(pathname)) return "ferramentas";
   if (
     pathname?.startsWith("/dashboard/configuracoes") ||
@@ -239,6 +244,7 @@ function getPathnameHub(pathname: string | null, relHub: string | null): string 
   if (isAssessoriaImprensaPath(pathname, null)) return "assessoria_imprensa";
   if (isSocioPath(pathname, null)) return "socio_torcedor";
   if (isAcademiasPath(pathname)) return "academias";
+  if (isComunicacaoPath(pathname)) return "comunicacao";
   if (isFerramentasPath(pathname)) return "ferramentas";
   if (isConfigPath(pathname)) return "configuracoes";
   return null;
@@ -414,6 +420,7 @@ function SidebarNav() {
   );
   const [socioOpen, setSocioOpen] = useState(() => isSocioPath(pathname, relHub));
   const [academiasOpen, setAcademiasOpen] = useState(() => isAcademiasPath(pathname));
+  const [comunicacaoOpen, setComunicacaoOpen] = useState(() => isComunicacaoPath(pathname));
   const [assessoriaImprensaOpen, setAssessoriaImprensaOpen] = useState(() =>
     isAssessoriaImprensaPath(pathname, relHub),
   );
@@ -445,6 +452,7 @@ function SidebarNav() {
     setConfigOpen(slug === "configuracoes");
     setSocioOpen(slug === "socio_torcedor");
     setAcademiasOpen(slug === "academias");
+    setComunicacaoOpen(slug === "comunicacao");
     setAssessoriaImprensaOpen(slug === "assessoria_imprensa");
     setMarketingOpen(slug === "marketing");
   };
@@ -674,6 +682,8 @@ function SidebarNav() {
                               ? socioOpen
                               : item.slug === "academias"
                                 ? academiasOpen
+                                : item.slug === "comunicacao"
+                                  ? comunicacaoOpen
                                 : item.slug === "assessoria_imprensa"
                                   ? assessoriaImprensaOpen
                                 : item.slug === "marketing"
