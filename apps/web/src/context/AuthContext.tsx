@@ -55,16 +55,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       const data: MeResponse = await res.json();
       const canAccessDashboard =
-        data.role === "super_admin" ||
-        data.role === "company_admin" ||
-        data.role === "editor" ||
-        data.role === "gerente" ||
-        data.role === "administrativo" ||
-        data.role === "analista" ||
-        data.role === "diretoria" ||
-        data.role === "medico" ||
-        data.role === "psicologo" ||
-        data.role === "comissao";
+        data.canAccessDashboard ??
+        (data.role === "super_admin" ||
+          data.role === "company_admin" ||
+          data.role === "editor" ||
+          data.role === "gerente" ||
+          data.role === "administrativo" ||
+          data.role === "analista" ||
+          data.role === "diretoria" ||
+          data.role === "medico" ||
+          data.role === "psicologo" ||
+          data.role === "comissao");
       let modules: string[] = [];
       if (canAccessDashboard) {
         try {

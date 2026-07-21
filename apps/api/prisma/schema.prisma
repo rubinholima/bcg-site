@@ -544,9 +544,29 @@ model ModuleRole {
   id       String  @id @default(cuid())
   moduleId String
   module   Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  role     String  // super_admin | company_admin | editor | gerente | administrativo | …
+  role     String  // slug do PlatformRole (company_admin, editor, …)
   canAccess Boolean @default(true)
   @@unique([moduleId, role])
+}
+
+/// Catálogo de perfis de acesso da plataforma (Configurações → Perfis).
+model PlatformRole {
+  id                 String   @id @default(cuid())
+  slug               String   @unique
+  label              String
+  sortOrder          Int      @default(0)
+  /// Pode entrar no dashboard (login Cup360).
+  canAccessDashboard Boolean  @default(true)
+  /// Aparece na matriz Configurações → Acessos.
+  includeInMatrix    Boolean  @default(true)
+  /// Perfis do sistema — slug não pode ser alterado/apagado.
+  isSystem           Boolean  @default(false)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@index([isActive])
 }
 
 // Vault: itens com senha/segredos (sempre criptografados em repouso)

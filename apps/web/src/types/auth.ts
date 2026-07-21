@@ -6,24 +6,13 @@ export interface MeUser {
   cognitoSub: string;
 }
 
-export type MeRole =
-  | "super_admin"
-  | "company_admin"
-  | "editor"
-  | "gerente"
-  | "administrativo"
-  | "analista"
-  | "diretoria"
-  | "medico"
-  | "psicologo"
-  | "comissao"
-  | "user";
+export type MeRole = string;
 
 export interface MeResponse {
   user: MeUser;
   groups: string[];
   role: MeRole;
+  canAccessDashboard?: boolean;
   mustChangePassword: boolean;
-  /** null = sem escopo (todas as empresas). Lista = só esses tenants. */
   tenantIds?: string[] | null;
 }

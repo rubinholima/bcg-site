@@ -9,18 +9,9 @@ import { CredentialsAuthService } from './credentials-auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { validatePlatformPassword } from './password-policy.util';
 
-export type MeRole =
-  | 'super_admin'
-  | 'company_admin'
-  | 'editor'
-  | 'gerente'
-  | 'administrativo'
-  | 'analista'
-  | 'diretoria'
-  | 'medico'
-  | 'psicologo'
-  | 'comissao'
-  | 'user';
+import { isDashboardRole } from '../roles/roles.cache';
+
+export type MeRole = string;
 
 export interface MeResponse {
   user: {
@@ -32,8 +23,8 @@ export interface MeResponse {
   };
   groups: string[];
   role: MeRole;
+  canAccessDashboard: boolean;
   mustChangePassword: boolean;
-  /** null = sem escopo (todas as empresas). Lista = só esses tenantIds. */
   tenantIds: string[] | null;
 }
 
@@ -87,6 +78,7 @@ export class MeController {
       },
       groups: groups.length ? groups : [role],
       role,
+      canAccessDashboard: isDashboardRole(role),
       mustChangePassword: user.mustChangePassword,
       tenantIds,
     };

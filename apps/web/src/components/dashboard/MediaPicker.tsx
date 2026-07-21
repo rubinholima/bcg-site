@@ -12,11 +12,9 @@ import {
 import { mediaKeyFromStoredUrl } from "@/lib/media-url";
 import { api } from "@/lib/api";
 import { displayNameFromUploadFilename } from "@/lib/upload-display-name";
+import { NativeSelect } from "@/components/ui/native-select";
 
 const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/svg+xml"];
-
-const NATIVE_SELECT_CLASS =
-  "min-h-[44px] w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 function validatePickerImageFile(file: File): string | null {
   if (file.size > MAX_FILE_SIZE) return "Arquivo muito grande. Máximo 10 MB.";
@@ -228,9 +226,7 @@ export function MediaPicker({
         {loadError ? <p className="text-xs text-destructive">{loadError}</p> : null}
         {uploadError ? <p className="text-xs text-destructive">{uploadError}</p> : null}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          {/* select nativo: funciona dentro do <dialog> modal (Radix Select quebrava ao abrir) */}
-          <select
-            className={NATIVE_SELECT_CLASS}
+          <NativeSelect
             value={selectValue}
             disabled={uploading || disabled}
             onChange={(e) => onChange(e.target.value === NONE_VALUE ? "" : e.target.value)}
@@ -246,7 +242,7 @@ export function MediaPicker({
                 {itemOptionLabel(item, showFolderInLabels)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           {allowClear && hasSelection ? (
             <Button
               type="button"

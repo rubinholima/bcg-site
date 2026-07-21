@@ -47,6 +47,7 @@ import { AssetFormDialog, type AssetRow } from "./components/AssetFormDialog";
 import { ASSET_CATEGORY_KIND_LABEL, ASSET_PIECE_LABEL } from "./patrimonio-labels";
 import { patrimonioMediaThumbSrc } from "./patrimonio-media";
 import { isTechnologyAssetKind } from "@/lib/infrastructure-tech-kinds";
+import { NativeSelect } from "@/components/ui/native-select";
 
 type TabId = "bens" | "categorias";
 
@@ -54,9 +55,6 @@ const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: "bens", label: "Bens patrimoniais", icon: Package },
   { id: "categorias", label: "Categorias", icon: FolderTree },
 ];
-
-const NATIVE_SELECT_CLASS =
-  "rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-full min-w-0 min-h-[44px]";
 
 const STATUS_LABEL: Record<string, string> = {
   em_uso: "Em uso",
@@ -341,8 +339,7 @@ export default function AdmPatrimonioPage() {
         <DashboardFilterBox accent="emerald" className={activeTab === "bens" ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2"}>
           <div className="grid gap-1.5 sm:col-span-2 lg:col-span-1">
             <DashboardFieldLabel accent="emerald">Clube / Empresa</DashboardFieldLabel>
-            <select
-              className={NATIVE_SELECT_CLASS}
+            <NativeSelect
               value={tenantId || "__all__"}
               onChange={(e) => setTenantId(e.target.value === "__all__" ? "" : e.target.value)}
             >
@@ -352,14 +349,13 @@ export default function AdmPatrimonioPage() {
                   {t.name}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           {activeTab === "bens" && (
             <>
               <div className="grid gap-1.5">
                 <DashboardFieldLabel accent="emerald">Situação</DashboardFieldLabel>
-                <select
-                  className={NATIVE_SELECT_CLASS}
+                <NativeSelect
                   value={filterStatus || "__all__"}
                   onChange={(e) => setFilterStatus(e.target.value === "__all__" ? "" : e.target.value)}
                 >
@@ -369,12 +365,11 @@ export default function AdmPatrimonioPage() {
                       {l}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div className="grid gap-1.5">
                 <DashboardFieldLabel accent="emerald">Peça (kit)</DashboardFieldLabel>
-                <select
-                  className={NATIVE_SELECT_CLASS}
+                <NativeSelect
                   value={filterPieceType || "__all__"}
                   onChange={(e) => setFilterPieceType(e.target.value === "__all__" ? "" : e.target.value)}
                 >
@@ -384,7 +379,7 @@ export default function AdmPatrimonioPage() {
                       {l}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             </>
           )}

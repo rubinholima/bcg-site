@@ -44,9 +44,10 @@ function hasAccessToAnyChild(
   pathPrefix: string,
   canAccessModule: (slug: string) => boolean,
   canAccessDashboard?: boolean,
+  isSuperAdmin?: boolean,
 ): boolean {
   return children.some((c) =>
-    hasAccessToMenuItem(c, pathPrefix, canAccessModule, canAccessDashboard),
+    hasAccessToMenuItem(c, pathPrefix, canAccessModule, canAccessDashboard, isSuperAdmin),
   );
 }
 
@@ -381,7 +382,7 @@ function SidebarNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const relHub = pathname?.startsWith("/dashboard/relatorios") ? searchParams.get("hub") : null;
-  const { canAccessModule, canAccessDashboard, role, modules } = useAuth();
+  const { canAccessModule, canAccessDashboard, role, modules, isSuperAdmin } = useAuth();
   const { onNavClick, sidebarDesktopMode, setSidebarDesktopMode } = useDashboardShell();
   const collapsed = sidebarDesktopMode === "icons";
   const [flyoutSlug, setFlyoutSlug] = useState<string | null>(null);
@@ -653,6 +654,7 @@ function SidebarNav() {
               item.slug,
               canAccessModule,
               canAccessDashboard,
+              isSuperAdmin,
             );
 
             if (!showGroup) return null;
@@ -691,10 +693,7 @@ function SidebarNav() {
                                 : false;
 
             const visibleHubChildren = item.children.filter((c) =>
-              c.children?.length
-                ? hasAccessToAnyChild(c.children, `${item.slug}/${c.slug}`, canAccessModule, canAccessDashboard)
-                : canAccessMenuLeaf(c, item.slug, canAccessModule) ||
-                  (c.moduleSlug === "emails" && canAccessDashboard),
+              hasAccessToMenuItem(c, item.slug, canAccessModule, canAccessDashboard, isSuperAdmin),
             );
             const activeHubChildHref = pickMostSpecificActiveHref(visibleHubChildren, pathname, relHub, searchParams);
 
@@ -740,15 +739,7 @@ function SidebarNav() {
                     <div className="space-y-0.5 border-l border-border pl-3">
                       {item.children
                         .filter((c) =>
-                          c.children?.length
-                            ? hasAccessToAnyChild(
-                                c.children,
-                                `${item.slug}/${c.slug}`,
-                                canAccessModule,
-                                canAccessDashboard,
-                              )
-                            : canAccessMenuLeaf(c, item.slug, canAccessModule) ||
-                              (c.moduleSlug === "emails" && canAccessDashboard),
+                          hasAccessToMenuItem(c, item.slug, canAccessModule, canAccessDashboard, isSuperAdmin),
                         )
                         .map((child) => {
                           if (child.children?.length) {
@@ -757,6 +748,7 @@ function SidebarNav() {
                               `${item.slug}/${child.slug}`,
                               canAccessModule,
                               canAccessDashboard,
+                              isSuperAdmin,
                             );
                             if (!hasAccess) return null;
                             const isSubOpen = isNestedExpanded(child);
@@ -864,15 +856,7 @@ function SidebarNav() {
                   <div className="ml-4 space-y-0.5 border-l border-border pl-3">
                     {item.children
                       .filter((c) =>
-                        c.children?.length
-                          ? hasAccessToAnyChild(
-                              c.children,
-                              `${item.slug}/${c.slug}`,
-                              canAccessModule,
-                              canAccessDashboard,
-                            )
-                          : canAccessMenuLeaf(c, item.slug, canAccessModule) ||
-                            (c.moduleSlug === "emails" && canAccessDashboard),
+                        hasAccessToMenuItem(c, item.slug, canAccessModule, canAccessDashboard, isSuperAdmin),
                       )
                       .map((child) => {
                         if (child.children?.length) {
@@ -881,6 +865,7 @@ function SidebarNav() {
                             `${item.slug}/${child.slug}`,
                             canAccessModule,
                             canAccessDashboard,
+                            isSuperAdmin,
                           );
                           if (!hasAccess) return null;
                           const isSubOpen = isNestedExpanded(child);
@@ -932,6 +917,7 @@ function SidebarNav() {
                                             `${item.slug}/${child.slug}/${cc.slug}`,
                                             canAccessModule,
                                             canAccessDashboard,
+                                            isSuperAdmin,
                                           );
                                           if (!hasCcAccess) return null;
                                           const CcIcon = cc.icon;

@@ -24,9 +24,7 @@ import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import { Tenant } from "@/types/tenant";
 import type { AssetCategoryRow } from "./AssetCategoryFormDialog";
 import { ASSET_CATEGORY_KIND_LABEL, ASSET_PIECE_LABEL } from "../patrimonio-labels";
-
-const NATIVE_SELECT_CLASS =
-  "w-full min-h-[44px] rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+import { NativeSelect } from "@/components/ui/native-select";
 
 const STATUS_OPTIONS = [
   { value: "em_uso", label: "Em uso" },
@@ -337,9 +335,8 @@ export function AssetFormDialog({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="grid gap-1.5 sm:col-span-2">
                     <DashboardFieldLabel accent="emerald">Clube / Empresa *</DashboardFieldLabel>
-                    <select
+                    <NativeSelect
                       required
-                      className={NATIVE_SELECT_CLASS}
                       value={catTenantId}
                       onChange={(e) => setCatTenantId(e.target.value)}
                     >
@@ -349,14 +346,13 @@ export function AssetFormDialog({
                           {t.name}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div className="grid gap-1.5 sm:col-span-2">
                     <DashboardFieldLabel accent="emerald" htmlFor="asset-category">Categoria *</DashboardFieldLabel>
-                    <select
+                    <NativeSelect
                       id="asset-category"
                       required
-                      className={NATIVE_SELECT_CLASS}
                       value={categoryId}
                       onChange={(e) => setCategoryId(e.target.value)}
                     >
@@ -366,7 +362,7 @@ export function AssetFormDialog({
                           {c.name} {c.kind === "uniform" ? "(kit)" : ""}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                     {selectedCategory ? (
                       <p className="text-xs text-muted-foreground">
                         Tipo: {ASSET_CATEGORY_KIND_LABEL[selectedCategory.kind] ?? selectedCategory.kind}
@@ -392,10 +388,9 @@ export function AssetFormDialog({
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="grid gap-1.5">
                       <DashboardFieldLabel accent="emerald" htmlFor="asset-piece">Tipo de peça *</DashboardFieldLabel>
-                      <select
+                      <NativeSelect
                         id="asset-piece"
                         required
-                        className={NATIVE_SELECT_CLASS}
                         value={pieceType}
                         onChange={(e) => setPieceType(e.target.value)}
                       >
@@ -405,7 +400,7 @@ export function AssetFormDialog({
                             {o.label}
                           </option>
                         ))}
-                      </select>
+                      </NativeSelect>
                     </div>
                     <div className="grid gap-1.5">
                       <DashboardFieldLabel accent="emerald" htmlFor="asset-size">Tamanho</DashboardFieldLabel>
@@ -432,9 +427,8 @@ export function AssetFormDialog({
                     </div>
                     <div className="grid gap-1.5">
                       <DashboardFieldLabel accent="emerald" htmlFor="asset-player">Atribuído ao jogador</DashboardFieldLabel>
-                      <select
+                      <NativeSelect
                         id="asset-player"
-                        className={NATIVE_SELECT_CLASS}
                         value={assignedPlayerId}
                         onChange={(e) => setAssignedPlayerId(e.target.value)}
                       >
@@ -444,7 +438,7 @@ export function AssetFormDialog({
                             {getPlayerListDisplayName(p)} {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}
                           </option>
                         ))}
-                      </select>
+                      </NativeSelect>
                     </div>
                   </div>
                 </DashboardFormSection>
@@ -507,9 +501,8 @@ export function AssetFormDialog({
                   </div>
                   <div className="grid gap-1.5 sm:col-span-2">
                     <DashboardFieldLabel accent="emerald" htmlFor="asset-status">Situação</DashboardFieldLabel>
-                    <select
+                    <NativeSelect
                       id="asset-status"
-                      className={NATIVE_SELECT_CLASS}
                       value={status}
                       onChange={(e) => setStatus(e.target.value)}
                     >
@@ -518,7 +511,7 @@ export function AssetFormDialog({
                           {o.label}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
               </DashboardFormSection>

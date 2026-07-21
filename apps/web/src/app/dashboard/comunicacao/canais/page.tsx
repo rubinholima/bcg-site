@@ -36,11 +36,8 @@ import {
   DashboardFormSection,
   DashboardLoadingState,
 } from "@/components/dashboard/DashboardDeptHeader";
-import { ChannelSetupGuide } from "@/components/dashboard/comunicacao/ChannelSetupGuide";
-import {
-  COMMUNICATION_DEPARTMENTS,
-  NATIVE_SELECT_CLASS,
-} from "@/components/dashboard/comunicacao/constants";
+import { COMMUNICATION_DEPARTMENTS } from "@/components/dashboard/comunicacao/constants";
+import { NativeSelect } from "@/components/ui/native-select";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
@@ -159,8 +156,6 @@ export default function ComunicacaoCanaisPage() {
 
   return (
     <>
-      <ChannelSetupGuide />
-
       <DashboardDeptSection
         title="Contas de canal"
         description="Um registro por departamento e número WhatsApp. A empresa vem do filtro acima."
@@ -252,8 +247,7 @@ export default function ComunicacaoCanaisPage() {
                 ) : (
                   <div className="space-y-1.5">
                     <Label>Empresa / clube</Label>
-                    <select
-                      className={NATIVE_SELECT_CLASS}
+                    <NativeSelect
                       value={form.tenantId}
                       onChange={(e) => setForm((f) => ({ ...f, tenantId: e.target.value }))}
                     >
@@ -263,14 +257,13 @@ export default function ComunicacaoCanaisPage() {
                           {t.name}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   </div>
                 )}
 
                 <div className="space-y-1.5">
                   <Label>Departamento / área</Label>
-                  <select
-                    className={NATIVE_SELECT_CLASS}
+                  <NativeSelect
                     value={form.department}
                     onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
                   >
@@ -280,7 +273,7 @@ export default function ComunicacaoCanaisPage() {
                         {d.label}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 {form.department === "outro" && (
@@ -299,8 +292,7 @@ export default function ComunicacaoCanaisPage() {
 
                 <div className="space-y-1.5">
                   <Label>Tipo de canal</Label>
-                  <select
-                    className={NATIVE_SELECT_CLASS}
+                  <NativeSelect
                     value={form.channelType}
                     onChange={(e) => setForm((f) => ({ ...f, channelType: e.target.value }))}
                   >
@@ -309,7 +301,7 @@ export default function ComunicacaoCanaisPage() {
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div className="space-y-1.5">

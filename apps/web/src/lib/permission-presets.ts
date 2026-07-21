@@ -3,6 +3,14 @@
  * não removem permissões já concedidas. Persistir via PATCH na API.
  */
 
+import {
+  type ModulePermissionRow,
+  emptyPermissions,
+  setRolePermission,
+} from "@/lib/module-permission-matrix";
+
+export type { ModulePermissionRow };
+
 export const MANAGED_ROLES = [
   "company_admin",
   "editor",
@@ -17,8 +25,8 @@ export const MANAGED_ROLES = [
 
 export type ManagedRoleKey = (typeof MANAGED_ROLES)[number];
 
-/** Rótulos na tela Configurações → Módulos (por perfil). */
-export const MANAGED_ROLE_LABELS: Record<ManagedRoleKey, string> = {
+/** Rótulos padrão — sobrescritos pelos perfis cadastrados na API. */
+export const MANAGED_ROLE_LABELS: Record<string, string> = {
   company_admin: "Admin da empresa",
   editor: "Editor",
   gerente: "Gerente",
@@ -30,24 +38,8 @@ export const MANAGED_ROLE_LABELS: Record<ManagedRoleKey, string> = {
   comissao: "Comissão",
 };
 
-export interface ModulePermissionRow {
-  slug: string;
-  name: string;
-  sortOrder: number;
-  functionalArea?: string;
-  company_admin: boolean;
-  editor: boolean;
-  gerente: boolean;
-  administrativo: boolean;
-  analista: boolean;
-  diretoria: boolean;
-  medico: boolean;
-  psicologo: boolean;
-  comissao: boolean;
-}
-
 export interface PresetGrant {
-  role: ManagedRoleKey;
+  role: string;
   slug: string;
 }
 
@@ -182,6 +174,7 @@ export function applyAdditivePreset(
   displayRows: readonly { slug: string; sortOrder: number; functionalArea: string; name?: string }[],
   current: ModulePermissionRow[],
   grants: readonly PresetGrant[],
+  managedRoles: string[] = [...MANAGED_ROLES],
 ): ModulePermissionRow[] {
   const base = (slug: string) => current.find((m) => m.slug === slug);
 
@@ -192,15 +185,7 @@ export function applyAdditivePreset(
       name: b?.name ?? d.name ?? d.slug,
       sortOrder: d.sortOrder,
       functionalArea: d.functionalArea,
-      company_admin: b?.company_admin ?? false,
-      editor: b?.editor ?? false,
-      gerente: b?.gerente ?? false,
-      administrativo: b?.administrativo ?? false,
-      analista: b?.analista ?? false,
-      diretoria: b?.diretoria ?? false,
-      medico: b?.medico ?? false,
-      psicologo: b?.psicologo ?? false,
-      comissao: b?.comissao ?? false,
+      permissions: { ...(b?.permissions ?? emptyPermissions(managedRoles)) },
     };
   });
 
@@ -208,10 +193,10 @@ export function applyAdditivePreset(
   for (const g of grants) {
     const row = bySlug.get(g.slug);
     if (!row) continue;
-    (row as unknown as Record<string, boolean>)[g.role] = true;
+    bySlug.set(g.slug, setRolePermission(row, g.role, true));
   }
 
-  return out.sort((a, b) => a.sortOrder - b.sortOrder);
+  return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 const EXPORT_SCHEMA_VERSION = 2 as const;
@@ -223,17 +208,7 @@ export function buildMatrixExportPayload(rows: ModulePermissionRow[]): {
 } {
   const permissions: Record<string, Record<string, boolean>> = {};
   for (const m of rows) {
-    permissions[m.slug] = {
-      company_admin: m.company_admin,
-      editor: m.editor,
-      gerente: m.gerente,
-      administrativo: m.administrativo,
-      analista: m.analista,
-      diretoria: m.diretoria,
-      medico: m.medico,
-      psicologo: m.psicologo,
-      comissao: m.comissao,
-    };
+    permissions[m.slug] = { ...m.permissions };
   }
   return {
     schemaVersion: EXPORT_SCHEMA_VERSION,

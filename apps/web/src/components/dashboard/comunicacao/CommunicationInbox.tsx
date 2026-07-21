@@ -41,7 +41,7 @@ import {
   type CommunicationConversationListItem,
   type CommunicationStats,
 } from "./types";
-import { NATIVE_SELECT_CLASS } from "./constants";
+import { NativeSelect, nativeSelectClassName } from "@/components/ui/native-select";
 
 function formatWhen(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -280,8 +280,7 @@ export function CommunicationInbox() {
         <DashboardFilterBox accent="sky" className="sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1.5">
             <DashboardFieldLabel>Unidade</DashboardFieldLabel>
-            <select
-              className={NATIVE_SELECT_CLASS}
+            <NativeSelect
               value={tenantId || "__all__"}
               onChange={(e) => setTenantId(e.target.value === "__all__" ? "" : e.target.value)}
             >
@@ -291,12 +290,11 @@ export function CommunicationInbox() {
                   {t.name}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="space-y-1.5">
             <DashboardFieldLabel>Status</DashboardFieldLabel>
-            <select
-              className={NATIVE_SELECT_CLASS}
+            <NativeSelect
               value={status || "__all__"}
               onChange={(e) => setStatus(e.target.value === "__all__" ? "" : e.target.value)}
             >
@@ -306,12 +304,11 @@ export function CommunicationInbox() {
                   {label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="space-y-1.5">
             <DashboardFieldLabel>Canal</DashboardFieldLabel>
-            <select
-              className={NATIVE_SELECT_CLASS}
+            <NativeSelect
               value={channelType || "__all__"}
               onChange={(e) => setChannelType(e.target.value === "__all__" ? "" : e.target.value)}
             >
@@ -321,7 +318,7 @@ export function CommunicationInbox() {
                   {label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           </div>
           <div className="space-y-1.5">
             <DashboardFieldLabel>Busca</DashboardFieldLabel>
@@ -458,8 +455,8 @@ export function CommunicationInbox() {
                     />
                     Favorito
                   </Button>
-                  <select
-                    className={cn(NATIVE_SELECT_CLASS, "w-[140px]")}
+                  <NativeSelect
+                    className={nativeSelectClassName("w-[140px]")}
                     value={detail.status}
                     onChange={(e) => void handleStatus(e.target.value)}
                   >
@@ -468,7 +465,7 @@ export function CommunicationInbox() {
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -603,8 +600,7 @@ export function CommunicationInbox() {
                       </p>
                     </>
                   ) : (
-                    <select
-                      className={NATIVE_SELECT_CLASS}
+                    <NativeSelect
                       value={tenantId}
                       onChange={(e) => setTenantId(e.target.value)}
                     >
@@ -614,7 +610,7 @@ export function CommunicationInbox() {
                           {t.name}
                         </option>
                       ))}
-                    </select>
+                    </NativeSelect>
                   )}
                 </div>
                 <div className="space-y-1.5">

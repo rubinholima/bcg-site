@@ -1,15 +1,4 @@
-export type UserRole =
-  | "super_admin"
-  | "company_admin"
-  | "editor"
-  | "gerente"
-  | "administrativo"
-  | "analista"
-  | "diretoria"
-  | "medico"
-  | "psicologo"
-  | "comissao"
-  | "user";
+export type UserRole = string;
 
 export interface UserListItem {
   id: string | null;
@@ -20,9 +9,7 @@ export interface UserListItem {
   role: UserRole;
   enabled: boolean;
   mustChangePassword?: boolean;
-  /** Escopo de empresas (vazio = sem restrição / vê todas). */
   tenantIds?: string[];
-  /** Empresas com nome (lista de usuários). */
   tenants?: { id: string; name: string }[];
   createdAt?: string;
   updatedAt?: string;

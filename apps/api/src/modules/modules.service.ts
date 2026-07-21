@@ -1,35 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-
-const MANAGED_ROLES = [
-  'company_admin',
-  'editor',
-  'gerente',
-  'administrativo',
-  'analista',
-  'diretoria',
-  'medico',
-  'psicologo',
-  'comissao',
-] as const;
-
-export type ManagedRoleKey = (typeof MANAGED_ROLES)[number];
+import { RolesService } from '../roles/roles.service';
 
 export interface ModuleWithPermissions {
   slug: string;
   name: string;
   sortOrder: number;
   functionalArea: string;
-  company_admin: boolean;
-  editor: boolean;
-  gerente: boolean;
-  administrativo: boolean;
-  analista: boolean;
-  diretoria: boolean;
-  medico: boolean;
-  psicologo: boolean;
-  comissao: boolean;
+  permissions: Record<string, boolean>;
 }
 
 export interface MatrixChangeRow {
@@ -53,7 +32,6 @@ export interface UserModulePermissions {
   name: string | null;
   role: string;
   customModuleAccess: boolean;
-  /** slug → canAccess (efetivo se custom; senão derivado do perfil) */
   permissions: Record<string, boolean>;
 }
 
@@ -61,11 +39,23 @@ function getRoleAccess(roles: { role: string; canAccess: boolean }[], role: stri
   return roles.find((r) => r.role === role)?.canAccess ?? false;
 }
 
+function buildPermissionsMap(
+  roles: { role: string; canAccess: boolean }[],
+  managedSlugs: string[],
+): Record<string, boolean> {
+  const out: Record<string, boolean> = {};
+  for (const role of managedSlugs) {
+    out[role] = getRoleAccess(roles, role);
+  }
+  return out;
+}
+
 /** Compara dois estados da matriz e retorna só células que mudaram. */
 export function computeMatrixChanges(
   before: ModuleWithPermissions[],
   after: ModuleWithPermissions[],
   touchedSlugs: Set<string>,
+  managedRoles: string[],
 ): MatrixChangeRow[] {
   const beforeMap = new Map(before.map((m) => [m.slug, m]));
   const afterMap = new Map(after.map((m) => [m.slug, m]));
@@ -74,9 +64,11 @@ export function computeMatrixChanges(
     const a = afterMap.get(slug);
     const b = beforeMap.get(slug);
     if (!a || !b) continue;
-    for (const role of MANAGED_ROLES) {
-      if (b[role] !== a[role]) {
-        changes.push({ slug, role, from: b[role], to: a[role] });
+    for (const role of managedRoles) {
+      const from = b.permissions[role] ?? false;
+      const to = a.permissions[role] ?? false;
+      if (from !== to) {
+        changes.push({ slug, role, from, to });
       }
     }
   }
@@ -85,9 +77,15 @@ export function computeMatrixChanges(
 
 @Injectable()
 export class ModulesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly rolesService: RolesService,
+  ) {}
 
-  /** Slugs efetivos (menu + módulos de API implícitos). */
+  private async managedRoles(): Promise<string[]> {
+    return this.rolesService.getManagedRoleSlugs();
+  }
+
   private async expandModuleSlugs(slugs: string[]): Promise<string[]> {
     const out = new Set(slugs);
     if (slugs.length === 0) return [];
@@ -102,13 +100,9 @@ export class ModulesService {
     return Array.from(out);
   }
 
-  /** Lista de slugs que a role pode acessar. */
   async getSlugsForRole(role: string): Promise<string[]> {
     const rows = await this.prisma.moduleRole.findMany({
-      where: {
-        role,
-        canAccess: true,
-      },
+      where: { role, canAccess: true },
       include: { module: true },
       orderBy: { module: { sortOrder: 'asc' } },
     });
@@ -116,7 +110,6 @@ export class ModulesService {
     return this.expandModuleSlugs(raw);
   }
 
-  /** Todos os slugs cadastrados. */
   async getAllModuleSlugs(): Promise<string[]> {
     const rows = await this.prisma.module.findMany({
       orderBy: { sortOrder: 'asc' },
@@ -125,7 +118,6 @@ export class ModulesService {
     return rows.map((r) => r.slug);
   }
 
-  /** Resolve usuário pelo sub do JWT (cognitoSub ou id interno). */
   async findUserIdByActorSub(actorSub: string): Promise<string | null> {
     const user = await this.prisma.user.findFirst({
       where: { OR: [{ cognitoSub: actorSub }, { id: actorSub }] },
@@ -134,7 +126,6 @@ export class ModulesService {
     return user?.id ?? null;
   }
 
-  /** Slugs efetivos: super_admin = tudo; custom = UserModuleAccess; senão matriz do perfil. */
   async getSlugsForUser(userId: string, role: string): Promise<string[]> {
     if (role === 'super_admin') {
       return this.getAllModuleSlugs();
@@ -166,8 +157,8 @@ export class ModulesService {
     return this.getSlugsForUser(userId, role);
   }
 
-  /** Garante que todos os módulos do menu existam no banco (fonte: catálogo enviado pelo front). */
   async syncModuleCatalog(catalog: ModuleCatalogEntry[]): Promise<{ created: number; updated: number }> {
+    const managed = await this.managedRoles();
     let created = 0;
     let updated = 0;
     for (let i = 0; i < catalog.length; i++) {
@@ -195,7 +186,7 @@ export class ModulesService {
             impliesSlug: entry.impliesSlug ?? null,
           },
         });
-        for (const role of MANAGED_ROLES) {
+        for (const role of managed) {
           await this.prisma.moduleRole.create({
             data: { moduleId: mod.id, role, canAccess: false },
           });
@@ -207,12 +198,10 @@ export class ModulesService {
     return { created, updated };
   }
 
-  /**
-   * group_omie não existe mais no catálogo — copia permissões antigas para Financeiro, Compras e Estoque.
-   */
   private async migrateLegacyGroupOmiePermissions(): Promise<void> {
     const legacySlug = 'group_omie';
     const targetSlugs = ['adm__adm_financeiro', 'adm__adm_compras', 'adm__adm_estoque'];
+    const managed = await this.managedRoles();
 
     const legacy = await this.prisma.module.findUnique({ where: { slug: legacySlug } });
     if (!legacy) return;
@@ -223,7 +212,7 @@ export class ModulesService {
     });
     if (targets.length === 0) return;
 
-    for (const role of MANAGED_ROLES) {
+    for (const role of managed) {
       const legacyRole = await this.prisma.moduleRole.findUnique({
         where: { moduleId_role: { moduleId: legacy.id, role } },
       });
@@ -251,7 +240,6 @@ export class ModulesService {
     }
   }
 
-  /** Permissões de um usuário (para tela Acessos → Usuário). */
   async getUserModulePermissions(userId: string): Promise<UserModulePermissions | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -288,7 +276,6 @@ export class ModulesService {
     };
   }
 
-  /** Atualiza permissões individuais de um usuário. */
   async updateUserModulePermissions(
     userId: string,
     permissions: Record<string, boolean>,
@@ -298,9 +285,7 @@ export class ModulesService {
     if (!user) return;
 
     const custom =
-      options?.customModuleAccess !== undefined
-        ? options.customModuleAccess
-        : true;
+      options?.customModuleAccess !== undefined ? options.customModuleAccess : true;
 
     await this.prisma.user.update({
       where: { id: userId },
@@ -323,7 +308,6 @@ export class ModulesService {
     }
   }
 
-  /** Copia matriz do perfil do usuário para permissões personalizadas. */
   async copyRolePermissionsToUser(userId: string): Promise<UserModulePermissions | null> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -337,48 +321,41 @@ export class ModulesService {
       if (role === 'super_admin') {
         permissions[mod.slug] = true;
       } else {
-        const key = role as ManagedRoleKey;
-        permissions[mod.slug] = mod[key] ?? false;
+        permissions[mod.slug] = mod.permissions[role] ?? false;
       }
     }
     await this.updateUserModulePermissions(userId, permissions, { customModuleAccess: true });
     return this.getUserModulePermissions(userId);
   }
 
-  private mapRow(m: {
-    slug: string;
-    name: string;
-    sortOrder: number;
-    functionalArea: string;
-    roles: { role: string; canAccess: boolean }[];
-  }): ModuleWithPermissions {
+  private mapRow(
+    m: {
+      slug: string;
+      name: string;
+      sortOrder: number;
+      functionalArea: string;
+      roles: { role: string; canAccess: boolean }[];
+    },
+    managedSlugs: string[],
+  ): ModuleWithPermissions {
     return {
       slug: m.slug,
       name: m.name,
       sortOrder: m.sortOrder,
       functionalArea: m.functionalArea,
-      company_admin: getRoleAccess(m.roles, 'company_admin'),
-      editor: getRoleAccess(m.roles, 'editor'),
-      gerente: getRoleAccess(m.roles, 'gerente'),
-      administrativo: getRoleAccess(m.roles, 'administrativo'),
-      analista: getRoleAccess(m.roles, 'analista'),
-      diretoria: getRoleAccess(m.roles, 'diretoria'),
-      medico: getRoleAccess(m.roles, 'medico'),
-      psicologo: getRoleAccess(m.roles, 'psicologo'),
-      comissao: getRoleAccess(m.roles, 'comissao'),
+      permissions: buildPermissionsMap(m.roles, managedSlugs),
     };
   }
 
-  /** Todos os módulos com permissões (super_admin sempre true). Apenas super_admin. */
   async getAllWithPermissions(): Promise<ModuleWithPermissions[]> {
+    const managedSlugs = await this.managedRoles();
     const modules = await this.prisma.module.findMany({
       orderBy: { sortOrder: 'asc' },
       include: { roles: true },
     });
-    return modules.map((m) => this.mapRow(m));
+    return modules.map((m) => this.mapRow(m, managedSlugs));
   }
 
-  /** Últimas alterações na matriz de permissões. */
   async getRecentAuditEntries(
     limit = 50,
     options?: { includeChanges?: boolean },
@@ -421,26 +398,18 @@ export class ModulesService {
     });
   }
 
-  /** Atualiza permissões por slug. Apenas super_admin. */
   async updatePermissions(
-    permissions: Record<string, Partial<Record<ManagedRoleKey, boolean>>>,
+    permissions: Record<string, Record<string, boolean | undefined>>,
   ): Promise<void> {
     for (const [slug, perms] of Object.entries(permissions)) {
       const module = await this.prisma.module.findUnique({ where: { slug } });
       if (!module) continue;
 
-      for (const role of MANAGED_ROLES) {
-        const canAccess = perms[role];
+      for (const [role, canAccess] of Object.entries(perms)) {
         if (canAccess === undefined) continue;
         await this.prisma.moduleRole.upsert({
-          where: {
-            moduleId_role: { moduleId: module.id, role },
-          },
-          create: {
-            moduleId: module.id,
-            role,
-            canAccess,
-          },
+          where: { moduleId_role: { moduleId: module.id, role } },
+          create: { moduleId: module.id, role, canAccess },
           update: { canAccess },
         });
       }

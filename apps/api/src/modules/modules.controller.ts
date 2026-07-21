@@ -11,19 +11,7 @@ import {
   UserModulePermissions,
 } from './modules.service';
 
-export type PermissionsBody = Record<
-  string,
-  {
-    company_admin?: boolean;
-    editor?: boolean;
-    gerente?: boolean;
-    administrativo?: boolean;
-    analista?: boolean;
-    diretoria?: boolean;
-    medico?: boolean;
-    psicologo?: boolean;
-  }
->;
+export type PermissionsBody = Record<string, Record<string, boolean | undefined>>;
 
 @Controller('settings/modules')
 @UseGuards(JwtAuthGuard, SuperAdminGuard)
@@ -116,7 +104,13 @@ export class ModulesController {
     const before = await this.modulesService.getAllWithPermissions();
     await this.modulesService.updatePermissions(permissions);
     const after = await this.modulesService.getAllWithPermissions();
-    const changes = computeMatrixChanges(before, after, touched);
+    const managedRoles = [
+      ...new Set([
+        ...before.flatMap((m) => Object.keys(m.permissions)),
+        ...after.flatMap((m) => Object.keys(m.permissions)),
+      ]),
+    ];
+    const changes = computeMatrixChanges(before, after, touched, managedRoles);
     const user = req.user;
     if (user?.sub && changes.length) {
       await this.modulesService.insertAudit(user.sub, user.email, changes);

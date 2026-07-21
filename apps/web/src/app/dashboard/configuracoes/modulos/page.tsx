@@ -39,30 +39,24 @@ import {
   applyAdditivePreset,
   buildMatrixExportPayload,
   getPresetById,
-  MANAGED_ROLE_LABELS,
   MANAGED_ROLES,
   PERMISSION_PRESETS,
-  type ManagedRoleKey,
-  type ModulePermissionRow,
 } from "@/lib/permission-presets";
+import {
+  type ModulePermissionRow,
+  normalizeModuleFromApi,
+  getRolePermission,
+  setRolePermission,
+  permissionsPayload,
+  emptyPermissions,
+} from "@/lib/module-permission-matrix";
+import {
+  type PlatformRole,
+  managedRolesFromCatalog,
+  roleLabelsFromCatalog,
+} from "@/lib/platform-roles";
 
-interface ModulePermission {
-  slug: string;
-  name: string;
-  sortOrder: number;
-  functionalArea?: string;
-  company_admin: boolean;
-  editor: boolean;
-  gerente: boolean;
-  administrativo: boolean;
-  analista: boolean;
-  diretoria: boolean;
-  medico: boolean;
-  psicologo: boolean;
-  comissao: boolean;
-}
-
-interface DisplayRow extends Omit<ModulePermission, "functionalArea"> {
+interface DisplayRow extends Omit<ModulePermissionRow, "functionalArea"> {
   functionalArea: string;
   /** Caminho amigável no menu (breadcrumb). */
   path: string;
@@ -109,29 +103,26 @@ interface UserModulePermissionsResponse {
 
 type AccessMode = "role" | "user";
 
-/** Papéis armazenados na API por módulo (auditoria e presets). */
-const AUDIT_ROLE_LABELS: Record<string, { short: string }> = {
-  company_admin: { short: MANAGED_ROLE_LABELS.company_admin },
-  editor: { short: MANAGED_ROLE_LABELS.editor },
-  gerente: { short: MANAGED_ROLE_LABELS.gerente },
-  administrativo: { short: MANAGED_ROLE_LABELS.administrativo },
-  analista: { short: MANAGED_ROLE_LABELS.analista },
-  diretoria: { short: MANAGED_ROLE_LABELS.diretoria },
-  comissao: { short: MANAGED_ROLE_LABELS.comissao },
-  medico: { short: MANAGED_ROLE_LABELS.medico },
-  psicologo: { short: MANAGED_ROLE_LABELS.psicologo },
-};
-
-function applyRoleToRow(row: ModulePermission, role: ManagedRoleKey, value: boolean): ModulePermission {
-  return { ...row, [role]: value };
-}
-
-function roleChecked(mod: ModulePermission, role: ManagedRoleKey): boolean {
-  return Boolean(mod[role]);
+function resolveModuleRow(
+  slug: string,
+  display: DisplayRow | undefined,
+  raw: ModulePermissionRow | undefined,
+  managedRoleSlugs: string[],
+): ModulePermissionRow {
+  return {
+    slug,
+    name: MODULE_DISPLAY_NAMES[slug] ?? display?.name ?? raw?.name ?? slug,
+    sortOrder: display?.sortOrder ?? raw?.sortOrder ?? 0,
+    functionalArea: display?.functionalArea ?? raw?.functionalArea ?? "outros",
+    permissions: {
+      ...emptyPermissions(managedRoleSlugs),
+      ...(raw?.permissions ?? display?.permissions ?? {}),
+    },
+  };
 }
 
 interface RoleAccessSummary {
-  role: ManagedRoleKey;
+  role: string;
   moduleCount: number;
   sectionCount: number;
   byDepartment: { label: string; modules: { slug: string; label: string }[] }[];
@@ -149,15 +140,15 @@ function permissionEnabled(
 }
 
 function buildRoleAccessSummary(
-  role: ManagedRoleKey,
-  moduleState: ModulePermission[],
+  role: string,
+  moduleState: ModulePermissionRow[],
   rows: DisplayRow[],
   departments: MenuDepartmentGroup[],
   menuTree: MenuAccessTreeNode[],
 ): RoleAccessSummary {
-  const enabledRows = rows.filter((d) => roleChecked(d, role));
+  const enabledRows = rows.filter((d) => getRolePermission(d, role));
   const enabledPermMap = new Map(
-    moduleState.filter((m) => roleChecked(m, role)).map((m) => [m.slug, true] as const),
+    moduleState.filter((m) => getRolePermission(m, role)).map((m) => [m.slug, true] as const),
   );
 
   const byDepartment: { label: string; modules: { slug: string; label: string }[] }[] = [];
@@ -207,105 +198,62 @@ function buildRoleAccessSummary(
 
 type SectionAccessState = "all" | "none" | "partial";
 
-function getSectionAccessState(rows: DisplayRow[], role: ManagedRoleKey): SectionAccessState {
+function getSectionAccessState(rows: DisplayRow[], role: string): SectionAccessState {
   if (rows.length === 0) return "none";
-  const enabled = rows.filter((r) => r[role]).length;
+  const enabled = rows.filter((r) => getRolePermission(r, role)).length;
   if (enabled === 0) return "none";
   if (enabled === rows.length) return "all";
   return "partial";
 }
 
-function auditChangeLabel(row: AuditChangeRow): string {
+function auditChangeLabel(row: AuditChangeRow, roleLabels: Record<string, string>): string {
   const mod = MODULE_DISPLAY_NAMES[row.slug] ?? row.slug;
-  const rl = AUDIT_ROLE_LABELS[row.role]?.short ?? row.role;
+  const rl = roleLabels[row.role] ?? row.role;
   return `${mod} (${rl}): ${row.from ? "ativo" : "inativo"} → ${row.to ? "ativo" : "inativo"}`;
 }
 
-function buildPermissionsPayload(
-  displayRows: DisplayRow[],
-  modulesState: ModulePermission[],
-): Record<
-  string,
-  {
-    company_admin: boolean;
-    editor: boolean;
-    gerente: boolean;
-    administrativo: boolean;
-    analista: boolean;
-    diretoria: boolean;
-    medico: boolean;
-    psicologo: boolean;
-    comissao: boolean;
-  }
-> {
-  const map = new Map(modulesState.map((m) => [m.slug, m]));
-  const out: Record<
-    string,
-    {
-      company_admin: boolean;
-      editor: boolean;
-      gerente: boolean;
-      administrativo: boolean;
-      analista: boolean;
-      diretoria: boolean;
-      medico: boolean;
-      psicologo: boolean;
-      comissao: boolean;
-    }
-  > = {};
-  for (const d of displayRows) {
-    const mod = map.get(d.slug);
-    out[d.slug] = {
-      company_admin: mod?.company_admin ?? d.company_admin,
-      editor: mod?.editor ?? d.editor,
-      gerente: mod?.gerente ?? d.gerente,
-      administrativo: mod?.administrativo ?? d.administrativo,
-      analista: mod?.analista ?? d.analista,
-      diretoria: mod?.diretoria ?? d.diretoria,
-      medico: mod?.medico ?? d.medico,
-      psicologo: mod?.psicologo ?? d.psicologo,
-      comissao: mod?.comissao ?? d.comissao,
-    };
-  }
-  return out;
-}
-
-function normalizeModuleRows(data: unknown): ModulePermission[] {
+function normalizeModuleRows(data: unknown, managedRoles: string[]): ModulePermissionRow[] {
   if (!Array.isArray(data)) return [];
-  return data.map((item) => {
-    const r = item as Partial<ModulePermission> & { slug: string };
-    return {
-      slug: r.slug,
-      name: r.name ?? r.slug,
-      sortOrder: r.sortOrder ?? 0,
-      functionalArea: r.functionalArea,
-      company_admin: r.company_admin ?? false,
-      editor: r.editor ?? false,
-      gerente: r.gerente ?? false,
-      administrativo: r.administrativo ?? false,
-      analista: r.analista ?? false,
-      diretoria: r.diretoria ?? false,
-      medico: r.medico ?? false,
-      psicologo: r.psicologo ?? false,
-      comissao: r.comissao ?? false,
-    };
-  });
+  return data
+    .map((item) => {
+      const r = item as {
+        slug?: string;
+        name?: string;
+        sortOrder?: number;
+        functionalArea?: string;
+        permissions?: Record<string, boolean>;
+      };
+      if (!r.slug) return null;
+      return normalizeModuleFromApi(
+        {
+          slug: r.slug,
+          name: r.name ?? r.slug,
+          sortOrder: r.sortOrder ?? 0,
+          functionalArea: r.functionalArea,
+          permissions: r.permissions,
+        },
+        managedRoles,
+      );
+    })
+    .filter((row): row is ModulePermissionRow => row !== null);
 }
 
 function AccessSummaryPanel({
   summary,
+  roleLabels,
   hint,
   editable,
   isModuleEnabled,
   onToggleModule,
 }: {
   summary: RoleAccessSummary;
+  roleLabels: Record<string, string>;
   hint?: string;
   editable?: boolean;
   isModuleEnabled?: (slug: string) => boolean;
   onToggleModule?: (slug: string, value: boolean) => void;
 }) {
-  const roleLabel = MANAGED_ROLE_LABELS[summary.role];
+  const roleLabel = roleLabels[summary.role] ?? summary.role;
   return (
     <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-3">
       <div>
@@ -402,10 +350,12 @@ export default function ModulosPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
-  const [modules, setModules] = useState<ModulePermission[]>([]);
+  const [modules, setModules] = useState<ModulePermissionRow[]>([]);
+  const [managedRoleSlugs, setManagedRoleSlugs] = useState<string[]>([...MANAGED_ROLES]);
+  const [roleLabels, setRoleLabels] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedRole, setSelectedRole] = useState<ManagedRoleKey>("administrativo");
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [accessMode, setAccessMode] = useState<AccessMode>("role");
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
@@ -448,13 +398,27 @@ export default function ModulosPage() {
         body: JSON.stringify({ catalog }),
       }),
       fetch("/api/settings/modules", { credentials: "include" }),
+      fetch("/api/settings/roles?includeInactive=1", { credentials: "include" }),
     ])
-      .then(([, res]) => {
-        if (!res.ok) throw new Error("Erro ao carregar módulos");
-        return res.json();
+      .then(([, modulesRes, rolesRes]) => {
+        if (!modulesRes.ok) throw new Error("Erro ao carregar módulos");
+        return Promise.all([
+          modulesRes.json(),
+          rolesRes.ok ? rolesRes.json() : Promise.resolve({ roles: [] as PlatformRole[] }),
+        ]);
       })
-      .then((data: unknown) => {
-        if (!cancelled) setModules(normalizeModuleRows(data));
+      .then(([modulesData, rolesData]) => {
+        if (cancelled) return;
+        const roles = (rolesData as { roles?: PlatformRole[] }).roles ?? [];
+        const slugs = managedRolesFromCatalog(roles);
+        const labels = roleLabelsFromCatalog(roles);
+        const effectiveSlugs = slugs.length > 0 ? slugs : [...MANAGED_ROLES];
+        setManagedRoleSlugs(effectiveSlugs);
+        setRoleLabels(labels);
+        setModules(normalizeModuleRows(modulesData, effectiveSlugs));
+        setSelectedRole((prev) =>
+          prev && effectiveSlugs.includes(prev) ? prev : effectiveSlugs[0] ?? "",
+        );
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : "Erro");
@@ -583,36 +547,20 @@ export default function ModulosPage() {
         departmentId: deptInfo?.departmentId ?? "outros",
         sortOrder: existing?.sortOrder ?? 0,
         functionalArea: existing?.functionalArea ?? "outros",
-        company_admin: existing?.company_admin ?? false,
-        editor: existing?.editor ?? false,
-        gerente: existing?.gerente ?? false,
-        administrativo: existing?.administrativo ?? false,
-        analista: existing?.analista ?? false,
-        diretoria: existing?.diretoria ?? false,
-        medico: existing?.medico ?? false,
-        psicologo: existing?.psicologo ?? false,
-        comissao: existing?.comissao ?? false,
+        permissions: existing?.permissions ?? emptyPermissions(managedRoleSlugs),
       };
     });
-  }, [modules, menuDepartments, slugToDepartment]);
+  }, [modules, menuDepartments, slugToDepartment, managedRoleSlugs]);
 
   /** Estado efetivo da matriz (API + edição local); usado para salvar, exportar e presets. */
-  const mergedModuleState = useMemo<ModulePermission[]>(
+  const mergedModuleState = useMemo<ModulePermissionRow[]>(
     () =>
       displayModules.map((d) => ({
         slug: d.slug,
         name: MODULE_DISPLAY_NAMES[d.slug] ?? d.name,
         sortOrder: d.sortOrder,
         functionalArea: d.functionalArea,
-        company_admin: d.company_admin,
-        editor: d.editor,
-        gerente: d.gerente,
-        administrativo: d.administrativo,
-        analista: d.analista,
-        diretoria: d.diretoria,
-        medico: d.medico,
-        psicologo: d.psicologo,
-        comissao: d.comissao,
+        permissions: { ...d.permissions },
       })),
     [displayModules],
   );
@@ -631,13 +579,14 @@ export default function ModulosPage() {
 
   const userEffectiveSummary = useMemo(() => {
     if (accessMode !== "user" || userCustomAccess) return null;
-    const role = selectedUserRole as ManagedRoleKey;
-    if (!MANAGED_ROLES.includes(role)) return null;
+    const role = selectedUserRole;
+    if (!managedRoleSlugs.includes(role)) return null;
     return buildRoleAccessSummary(role, mergedModuleState, displayModules, menuDepartments, menuTree);
   }, [
     accessMode,
     userCustomAccess,
     selectedUserRole,
+    managedRoleSlugs,
     mergedModuleState,
     displayModules,
     menuDepartments,
@@ -691,85 +640,38 @@ export default function ModulosPage() {
 
   /** Marca/desmarca um perfil em todos os módulos visíveis deste menu. */
   const handleDepartmentAccess = useCallback(
-    (rows: DisplayRow[], role: ManagedRoleKey, value: boolean) => {
+    (rows: DisplayRow[], role: string, value: boolean) => {
       if (rows.length === 0) return;
 
       setModules((prev) => {
         const bySlug = new Map(prev.map((m) => [m.slug, { ...m }]));
         for (const d of rows) {
           const raw = bySlug.get(d.slug);
-          const existing: ModulePermission = {
-            slug: d.slug,
-            name: MODULE_DISPLAY_NAMES[d.slug] ?? d.name,
-            sortOrder: d.sortOrder,
-            functionalArea: d.functionalArea,
-            company_admin: raw?.company_admin ?? d.company_admin,
-            editor: raw?.editor ?? d.editor,
-            gerente: raw?.gerente ?? d.gerente,
-            administrativo: raw?.administrativo ?? d.administrativo,
-            analista: raw?.analista ?? d.analista,
-            diretoria: raw?.diretoria ?? d.diretoria,
-            medico: raw?.medico ?? d.medico,
-            psicologo: raw?.psicologo ?? d.psicologo,
-            comissao: raw?.comissao ?? d.comissao,
-          };
-          bySlug.set(d.slug, applyRoleToRow(existing, role, value));
+          const existing = resolveModuleRow(d.slug, d, raw, managedRoleSlugs);
+          bySlug.set(d.slug, setRolePermission(existing, role, value));
         }
         return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
       });
       setDirty(true);
       setSaveBanner(null);
     },
-    [],
+    [managedRoleSlugs],
   );
 
-  const handleDepartmentToggle = (role: ManagedRoleKey, rows: DisplayRow[]) => {
+  const handleDepartmentToggle = (role: string, rows: DisplayRow[]) => {
     const state = getSectionAccessState(rows, role);
     handleDepartmentAccess(rows, role, state !== "all");
   };
 
-  const handleModuleToggle = (slug: string, role: ManagedRoleKey, value: boolean) => {
+  const handleModuleToggle = (slug: string, role: string, value: boolean) => {
     setModules((prev) => {
       const dm = displayModules.find((x) => x.slug === slug);
-      const baseFromDisplay: ModulePermission | null = dm
-        ? {
-            slug: dm.slug,
-            name: MODULE_DISPLAY_NAMES[dm.slug] ?? dm.name,
-            sortOrder: dm.sortOrder,
-            functionalArea: dm.functionalArea,
-            company_admin: dm.company_admin,
-            editor: dm.editor,
-            gerente: dm.gerente,
-            administrativo: dm.administrativo,
-            analista: dm.analista,
-            diretoria: dm.diretoria,
-            medico: dm.medico,
-            psicologo: dm.psicologo,
-            comissao: dm.comissao,
-          }
-        : null;
       const found = prev.find((m) => m.slug === slug);
       if (found) {
-        return prev.map((m) => (m.slug === slug ? applyRoleToRow(m, role, value) : m));
+        return prev.map((m) => (m.slug === slug ? setRolePermission(m, role, value) : m));
       }
-      const base =
-        baseFromDisplay ??
-        ({
-          slug,
-          name: MODULE_DISPLAY_NAMES[slug] ?? dm?.name ?? slug,
-          sortOrder: dm?.sortOrder ?? 0,
-          functionalArea: dm?.functionalArea ?? "outros",
-          company_admin: false,
-          editor: false,
-          gerente: false,
-          administrativo: false,
-          analista: false,
-          diretoria: false,
-          medico: false,
-          psicologo: false,
-          comissao: false,
-        } satisfies ModulePermission);
-      return [...prev, applyRoleToRow(base, role, value)];
+      const base = resolveModuleRow(slug, dm, undefined, managedRoleSlugs);
+      return [...prev, setRolePermission(base, role, value)];
     });
     setDirty(true);
     setSaveBanner(null);
@@ -778,7 +680,7 @@ export default function ModulosPage() {
   const rolePermissionsMap = useMemo(() => {
     const map = new Map<string, boolean>();
     for (const m of mergedModuleState) {
-      map.set(m.slug, roleChecked(m, selectedRole));
+      map.set(m.slug, getRolePermission(m, selectedRole));
     }
     return map;
   }, [mergedModuleState, selectedRole]);
@@ -794,15 +696,15 @@ export default function ModulosPage() {
           Boolean(moduleSlug && moduleSlug !== accessSlug && userPermissions[moduleSlug])
         );
       }
-      const userRole = selectedUserRole as ManagedRoleKey;
+      const userRole = selectedUserRole;
       const mod = mergedModuleState.find((m) => m.slug === accessSlug);
       const legacyMod =
         moduleSlug && moduleSlug !== accessSlug
           ? mergedModuleState.find((m) => m.slug === moduleSlug)
           : undefined;
       return (
-        (mod ? roleChecked(mod, userRole) : false) ||
-        (legacyMod ? roleChecked(legacyMod, userRole) : false)
+        (mod ? getRolePermission(mod, userRole) : false) ||
+        (legacyMod ? getRolePermission(legacyMod, userRole) : false)
       );
     },
     [accessMode, rolePermissionsMap, userCustomAccess, userPermissions, selectedUserRole, mergedModuleState],
@@ -842,35 +744,21 @@ export default function ModulosPage() {
   };
 
   const applySlugsToRole = useCallback(
-    (slugs: string[], role: ManagedRoleKey, value: boolean) => {
+    (slugs: string[], role: string, value: boolean) => {
       setModules((prev) => {
         const bySlug = new Map(prev.map((m) => [m.slug, { ...m }]));
         for (const slug of slugs) {
           const d = displayModules.find((x) => x.slug === slug);
           const raw = bySlug.get(slug);
-          const existing: ModulePermission = {
-            slug,
-            name: MODULE_DISPLAY_NAMES[slug] ?? d?.name ?? slug,
-            sortOrder: d?.sortOrder ?? raw?.sortOrder ?? 0,
-            functionalArea: d?.functionalArea ?? raw?.functionalArea ?? "outros",
-            company_admin: raw?.company_admin ?? d?.company_admin ?? false,
-            editor: raw?.editor ?? d?.editor ?? false,
-            gerente: raw?.gerente ?? d?.gerente ?? false,
-            administrativo: raw?.administrativo ?? d?.administrativo ?? false,
-            analista: raw?.analista ?? d?.analista ?? false,
-            diretoria: raw?.diretoria ?? d?.diretoria ?? false,
-            medico: raw?.medico ?? d?.medico ?? false,
-            psicologo: raw?.psicologo ?? d?.psicologo ?? false,
-            comissao: raw?.comissao ?? d?.comissao ?? false,
-          };
-          bySlug.set(slug, applyRoleToRow(existing, role, value));
+          const existing = resolveModuleRow(slug, d, raw, managedRoleSlugs);
+          bySlug.set(slug, setRolePermission(existing, role, value));
         }
         return [...bySlug.values()].sort((a, b) => a.sortOrder - b.sortOrder);
       });
       setDirty(true);
       setSaveBanner(null);
     },
-    [displayModules],
+    [displayModules, managedRoleSlugs],
   );
 
   const handlePersonalizeUser = async () => {
@@ -937,7 +825,7 @@ export default function ModulosPage() {
   };
 
   const handleExportSnapshot = useCallback(() => {
-    const payload = buildMatrixExportPayload(mergedModuleState as ModulePermissionRow[]);
+    const payload = buildMatrixExportPayload(mergedModuleState);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -967,10 +855,11 @@ export default function ModulosPage() {
           functionalArea: d.functionalArea,
           name: MODULE_DISPLAY_NAMES[d.slug] ?? d.name,
         })),
-        mergedModuleState as ModulePermissionRow[],
+        mergedModuleState,
         preset.grants,
+        managedRoleSlugs,
       );
-      const permissions = buildPermissionsPayload(displayModules, next as ModulePermission[]);
+      const permissions = permissionsPayload(next);
       const res = await fetch("/api/settings/modules", {
         method: "PATCH",
         credentials: "include",
@@ -979,7 +868,7 @@ export default function ModulosPage() {
       });
       if (!res.ok) throw new Error(await res.text().catch(() => "Erro ao aplicar pacote"));
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; changedCells?: number };
-      setModules(next as ModulePermission[]);
+      setModules(next);
       setDirty(false);
       if (typeof data.changedCells === "number") {
         setSaveBanner(
@@ -997,14 +886,14 @@ export default function ModulosPage() {
       setSaving(false);
       setPresetDialogOpen(false);
     }
-  }, [presetId, mergedModuleState, displayModules, refreshAudit]);
+  }, [presetId, mergedModuleState, displayModules, managedRoleSlugs, refreshAudit]);
 
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     setSaveBanner(null);
     try {
-      const permissions = buildPermissionsPayload(displayModules, mergedModuleState);
+      const permissions = permissionsPayload(mergedModuleState);
       const res = await fetch("/api/settings/modules", {
         method: "PATCH",
         credentials: "include",
@@ -1140,7 +1029,7 @@ export default function ModulosPage() {
 
             {accessMode === "role" ? (
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                {MANAGED_ROLES.map((role) => (
+                {managedRoleSlugs.map((role) => (
                   <Button
                     key={role}
                     type="button"
@@ -1149,7 +1038,7 @@ export default function ModulosPage() {
                     className="shrink-0"
                     onClick={() => setSelectedRole(role)}
                   >
-                    {MANAGED_ROLE_LABELS[role]}
+                    {roleLabels[role] ?? role}
                   </Button>
                 ))}
               </div>
@@ -1176,7 +1065,7 @@ export default function ModulosPage() {
                       <p className="text-sm text-muted-foreground w-full">
                         Herda o perfil{" "}
                         <strong className="text-foreground">
-                          {MANAGED_ROLE_LABELS[selectedUserRole as ManagedRoleKey] ?? selectedUserRole}
+                          {roleLabels[selectedUserRole] ?? selectedUserRole}
                         </strong>
                         . Personalize para definir acessos só deste usuário.
                       </p>
@@ -1201,6 +1090,7 @@ export default function ModulosPage() {
             {accessMode === "role" ? (
               <AccessSummaryPanel
                 summary={roleSummary}
+                roleLabels={roleLabels}
                 hint='Perfis servem como modelo para grupos; use "Por usuário" para exceções individuais.'
                 editable
                 isModuleEnabled={(slug) => rolePermissionsMap.get(slug) ?? false}
@@ -1209,6 +1099,7 @@ export default function ModulosPage() {
             ) : userEffectiveSummary ? (
               <AccessSummaryPanel
                 summary={userEffectiveSummary}
+                roleLabels={roleLabels}
                 hint="Acessos herdados do perfil — personalize em Por usuário para alterar só este usuário."
               />
             ) : null}
@@ -1349,7 +1240,7 @@ export default function ModulosPage() {
                                 <ul className="list-disc pl-5 space-y-1 max-h-48 overflow-y-auto">
                                   {e.changes.map((c, i) => (
                                     <li key={`${e.id}-${i}-${c.slug}-${c.role}`}>
-                                      {auditChangeLabel(c)}
+                                      {auditChangeLabel(c, roleLabels)}
                                     </li>
                                   ))}
                                 </ul>

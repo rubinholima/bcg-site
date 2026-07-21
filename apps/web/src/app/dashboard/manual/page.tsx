@@ -22,6 +22,8 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
+  { id: "comunicacao", label: "Communication Center" },
+  { id: "comunicacao-canais", label: "→ Canais e WhatsApp", indent: true },
   { id: "saude", label: "Depto Saúde" },
   { id: "saude-material-apoio", label: "→ Material de apoio (psicologia)", indent: true },
   { id: "boston-tv", label: "BCG TV" },
@@ -433,6 +435,52 @@ export default function ManualPage() {
               </a>{" "}
               abaixo.
             </p>
+          </Section>
+
+          <Section id="comunicacao" title="Communication Center">
+            <p>
+              Hub unificado de mensagens (WhatsApp primeiro; Instagram, e-mail e outros canais depois). Acesso
+              pelo menu <strong>Communication Center</strong> — módulo <code>comunicacao</code>.
+            </p>
+            <p>
+              <strong>Inbox:</strong> conversas por unidade de negócio. <strong>Canais:</strong> cadastro de
+              números e departamentos. <strong>Templates:</strong> respostas prontas por canal.
+            </p>
+
+            <SubSection id="comunicacao-canais" title="Canais e WhatsApp Cloud API">
+              <p>Como empresa, departamento e números se conectam no Cup360:</p>
+              <ul className="list-disc pl-5 space-y-2">
+                <li>
+                  <strong>Empresa / clube</strong> — escolha no filtro da página Canais (Boston City FC USA,
+                  Brazil, Hall, etc.). Corresponde ao <code>Tenant</code> do Cup360.
+                </li>
+                <li>
+                  <strong>Departamento / área</strong> — no cadastro do canal (Comercial, Marketing, Mídia…).
+                  Cada departamento pode ter um número WhatsApp próprio.
+                </li>
+                <li>
+                  <strong>phone_number_id</strong> — ID do número no Meta Business (Configurações → WhatsApp →
+                  engrenagem do número). O webhook da BCG identifica qual departamento recebeu a mensagem por
+                  esse ID.
+                </li>
+                <li>
+                  <strong>Número exibido</strong> — só referência visual (ex.: +1 339-241-7286).
+                </li>
+                <li>
+                  <strong>Uma API, vários números</strong> — não precisa de app Meta separado por departamento.
+                  Um webhook (<code>/api/comunicacao/webhooks/whatsapp</code>) e token de acesso servem todos os
+                  números da mesma conta Business.
+                </li>
+              </ul>
+              <p>
+                <strong>Cadastrar um canal:</strong> Communication Center → Canais → filtrar a empresa → Novo
+                canal → preencher departamento, <code>phone_number_id</code> e número exibido.
+              </p>
+              <p>
+                <strong>EUA e Brasil:</strong> o primeiro número é só o piloto; depois adicione outros números
+                no Meta e registre cada um como canal separado no Cup360.
+              </p>
+            </SubSection>
           </Section>
 
           <Section id="saude" title="Depto Saúde">

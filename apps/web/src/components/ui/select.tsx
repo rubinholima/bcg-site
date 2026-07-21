@@ -1,5 +1,9 @@
 "use client"
 
+/**
+ * Radix Select — use apenas FORA de Dialog/AlertDialog.
+ * Dentro de modal: @/components/ui/native-select (NativeSelect).
+ */
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"

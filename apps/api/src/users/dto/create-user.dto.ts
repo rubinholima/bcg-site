@@ -1,6 +1,4 @@
-import { IsArray, IsEmail, IsIn, IsOptional, IsString, Matches, MinLength } from 'class-validator';
-import type { UserRole } from './update-role.dto';
-import { USER_ROLES } from './update-role.dto';
+import { IsArray, IsEmail, IsOptional, IsString, Matches } from 'class-validator';
 
 export class CreateUserDto {
   @IsEmail()
@@ -17,10 +15,9 @@ export class CreateUserDto {
   @IsOptional()
   name?: string | null;
 
-  @IsIn([...USER_ROLES])
-  role: UserRole;
+  @IsString()
+  role: string;
 
-  /** Empresas/clubes que o utilizador pode ver (vazio = sem restrição). Só super_admin / company_admin. */
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

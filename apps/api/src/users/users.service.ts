@@ -2,22 +2,12 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException }
 import * as bcrypt from 'bcryptjs';
 import { cadastroUpper } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
+import { RolesService } from '../roles/roles.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DEFAULT_NEW_USER_PASSWORD } from './user-credentials.constants';
 import { ensureUniqueUsername, normalizeUsernameInput } from './user-username.util';
 
-export type UserRole =
-  | 'super_admin'
-  | 'company_admin'
-  | 'editor'
-  | 'gerente'
-  | 'administrativo'
-  | 'analista'
-  | 'diretoria'
-  | 'medico'
-  | 'psicologo'
-  | 'comissao'
-  | 'user';
+export type UserRole = string;
 
 export interface UserListItem {
   id: string | null;
@@ -40,7 +30,17 @@ const SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly rolesService: RolesService,
+  ) {}
+
+  private async assertAssignableRole(role: string) {
+    const ok = await this.rolesService.isAssignableRole(role);
+    if (!ok) {
+      throw new BadRequestException('Perfil inválido ou inativo');
+    }
+  }
 
   private mapUser(u: {
     id: string;
@@ -98,6 +98,8 @@ export class UsersService {
   }
 
   async create(dto: CreateUserDto): Promise<{ username: string; sub: string }> {
+    const role = dto.role?.trim() || 'editor';
+    await this.assertAssignableRole(role);
     const email = dto.email.trim().toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -116,7 +118,7 @@ export class UsersService {
         name: dto.name != null ? cadastroUpper(dto.name) : null,
         passwordHash,
         mustChangePassword: true,
-        role: (dto.role as UserRole) ?? 'editor',
+        role,
       },
     });
     if (dto.tenantIds !== undefined) {
@@ -126,6 +128,7 @@ export class UsersService {
   }
 
   async updateRole(username: string, role: UserRole): Promise<void> {
+    await this.assertAssignableRole(role);
     const user = await this.findByUsername(username);
     await this.prisma.user.update({
       where: { id: user.id },
@@ -173,7 +176,10 @@ export class UsersService {
         data.username = nextUsername;
       }
     }
-    if (dto.role !== undefined) data.role = dto.role;
+    if (dto.role !== undefined) {
+      await this.assertAssignableRole(dto.role);
+      data.role = dto.role;
+    }
     if (dto.password !== undefined && dto.password.length > 0) {
       data.passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
       data.mustChangePassword = false;

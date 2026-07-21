@@ -6,19 +6,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { CognitoJwtPayload } from './jwt-auth.guard';
-
-const DASHBOARD_ROLES = new Set([
-  'super_admin',
-  'company_admin',
-  'editor',
-  'gerente',
-  'administrativo',
-  'analista',
-  'diretoria',
-  'medico',
-  'psicologo',
-  'comissao',
-]);
+import { isDashboardRole } from '../roles/roles.cache';
 
 /**
  * Guard que permite roles com acesso ao dashboard.
@@ -35,7 +23,7 @@ export class DashboardRolesGuard implements CanActivate {
     const role = user.role ?? user['cognito:groups']?.[0];
     const groups: string[] = user['cognito:groups'] ?? [];
     const hasAccess =
-      (role && DASHBOARD_ROLES.has(role)) || groups.some((g) => DASHBOARD_ROLES.has(g));
+      isDashboardRole(role) || groups.some((g) => isDashboardRole(g));
     if (hasAccess) return true;
     throw new ForbiddenException('Acesso restrito ao dashboard');
   }

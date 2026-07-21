@@ -1,22 +1,9 @@
-import { IsIn } from 'class-validator';
+import { IsString, MinLength } from 'class-validator';
 
-export const USER_ROLES = [
-  'super_admin',
-  'company_admin',
-  'editor',
-  'gerente',
-  'administrativo',
-  'analista',
-  'diretoria',
-  'medico',
-  'psicologo',
-  'comissao',
-  'user',
-] as const;
-
-export type UserRole = (typeof USER_ROLES)[number];
+export type UserRole = string;
 
 export class UpdateRoleDto {
-  @IsIn(USER_ROLES)
-  role: UserRole;
+  @IsString()
+  @MinLength(2)
+  role: string;
 }

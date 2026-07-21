@@ -15,9 +15,7 @@ import {
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { ASSET_CATEGORY_KIND_OPTIONS, ASSET_CATEGORY_KIND_LABEL } from "../patrimonio-labels";
-
-const NATIVE_SELECT_CLASS =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+import { NativeSelect } from "@/components/ui/native-select";
 
 export interface AssetCategoryRow {
   id: string;
@@ -102,11 +100,10 @@ export function AssetCategoryFormDialog({
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="cat-tenant">Clube/Empresa *</Label>
-              <select
+              <NativeSelect
                 id="cat-tenant"
                 required
                 disabled={!!edit}
-                className={NATIVE_SELECT_CLASS}
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
               >
@@ -116,7 +113,7 @@ export function AssetCategoryFormDialog({
                     {t.name}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="cat-name">Nome *</Label>
@@ -139,9 +136,8 @@ export function AssetCategoryFormDialog({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="cat-kind">Tipo</Label>
-              <select
+              <NativeSelect
                 id="cat-kind"
-                className={NATIVE_SELECT_CLASS}
                 value={kind}
                 onChange={(e) => setKind(e.target.value)}
               >
@@ -150,7 +146,7 @@ export function AssetCategoryFormDialog({
                     {o.label}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
           </div>
           <DialogFooter>

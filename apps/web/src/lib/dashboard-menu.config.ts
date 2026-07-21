@@ -70,6 +70,7 @@ import {
   Cable,
   HardDrive,
   ShieldAlert,
+  Shield,
   MessageCircle,
   MessagesSquare,
   Network,
@@ -108,6 +109,8 @@ export interface MenuItemConfig {
   accessGroup?: string;
   /** Logo no menu (substitui o ícone Lucide quando definido). */
   menuLogoSrc?: string;
+  /** Visível apenas para super_admin (ex.: cadastro de perfis). */
+  superAdminOnly?: boolean;
 }
 
 /** Slug de permissão usado no Acessos e na sidebar. */
@@ -141,12 +144,14 @@ export function hasAccessToMenuItem(
   pathPrefix: string,
   canAccessModule: (slug: string) => boolean,
   canAccessDashboard?: boolean,
+  isSuperAdmin?: boolean,
 ): boolean {
+  if (item.superAdminOnly && !isSuperAdmin) return false;
   if (item.moduleSlug === "emails" && canAccessDashboard) return true;
   if (item.children?.length) {
     const nestedPrefix = `${pathPrefix}/${item.slug}`;
     return item.children.some((c) =>
-      hasAccessToMenuItem(c, nestedPrefix, canAccessModule, canAccessDashboard),
+      hasAccessToMenuItem(c, nestedPrefix, canAccessModule, canAccessDashboard, isSuperAdmin),
     );
   }
   if (item.href && !item.external) return canAccessMenuLeaf(item, pathPrefix, canAccessModule);
@@ -958,6 +963,14 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         href: "/dashboard/configuracoes/modulos",
         icon: Sliders,
         moduleSlug: "configuracoes",
+      },
+      {
+        slug: "config_perfis",
+        label: "Perfis",
+        href: "/dashboard/configuracoes/roles",
+        icon: Shield,
+        moduleSlug: "configuracoes",
+        superAdminOnly: true,
       },
       {
         slug: "config_empresas",

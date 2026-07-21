@@ -1,0 +1,46 @@
+---
+description: Select em Dialog — usar NativeSelect, nunca Radix Select
+globs: apps/web/src/**/*.tsx
+alwaysApply: true
+---
+
+# Select dentro de Dialog — padrão obrigatório
+
+**Radix Select** (`@/components/ui/select`) **quebra dentro de `Dialog` / `AlertDialog`** (dropdown não abre ou fica atrás do overlay).
+
+## Regra
+
+| Contexto | Componente |
+|----------|------------|
+| Select **dentro** de `Dialog`, `AlertDialog`, `FeedbackModal` com formulário | **`NativeSelect`** ou **`NativeSelectField`** (`@/components/ui/native-select`) |
+| Select **fora** de modal (filtros de página, sidebar, formulário full-page) | Radix `Select` ok |
+
+## Implementação
+
+```tsx
+import { NativeSelect, NativeSelectField } from "@/components/ui/native-select";
+
+// Opções inline
+<NativeSelect value={x} onChange={(e) => setX(e.target.value)}>
+  <option value="">Selecione…</option>
+  <option value="a">Opção A</option>
+</NativeSelect>
+
+// Lista de opções
+<NativeSelectField
+  value={tenantId}
+  onChange={(e) => setTenantId(e.target.value)}
+  placeholder="Selecione a empresa…"
+  options={tenants.map((t) => ({ value: t.id, label: t.name }))}
+/>
+```
+
+## Ao criar ou corrigir
+
+- **Nunca** importar `Select` do shadcn em arquivos cujo select fica **dentro** de modal.
+- Se editar um Dialog e encontrar Radix Select, **substitua** por `NativeSelect`.
+- Não duplicar `NATIVE_SELECT_CLASS` local — usar `nativeSelectClassName()` do componente compartilhado.
+
+## Referência
+
+Patrimônio (`AssetFormDialog`), MediaPicker, Communication Center — já seguem este padrão.

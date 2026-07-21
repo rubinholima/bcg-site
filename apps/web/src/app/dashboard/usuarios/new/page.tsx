@@ -17,29 +17,17 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserRole } from "@/types/user";
-import { selectableRolesForActor } from "@/lib/user-roles";
+import { selectableRolesForActor, roleLabel } from "@/lib/user-roles";
+import { usePlatformRoles } from "@/hooks/usePlatformRoles";
 import { isValidUsername, suggestUsernameFromName } from "@/lib/username";
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin: "Super Admin",
-  company_admin: "Company Admin",
-  editor: "Editor",
-  gerente: "Gerente",
-  administrativo: "Administrativo",
-  analista: "Analista",
-  diretoria: "Diretoria",
-  medico: "Médico",
-  psicologo: "Psicólogo",
-  comissao: "Comissão técnica",
-  user: "Usuário",
-};
 
 const DEFAULT_PASSWORD = "720425";
 
 export default function NovoUsuarioPage() {
   const router = useRouter();
   const { isSuperAdmin, isCompanyAdmin } = useAuth();
-  const roleSelectOptions = selectableRolesForActor(isSuperAdmin);
+  const { roles: roleCatalog } = usePlatformRoles();
+  const roleSelectOptions = selectableRolesForActor(isSuperAdmin, roleCatalog);
   const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -213,7 +201,7 @@ export default function NovoUsuarioPage() {
                 <SelectContent>
                   {roleSelectOptions.map((r) => (
                     <SelectItem key={r} value={r}>
-                      {ROLE_LABELS[r]}
+                      {roleLabel(r, roleCatalog)}
                     </SelectItem>
                   ))}
                 </SelectContent>

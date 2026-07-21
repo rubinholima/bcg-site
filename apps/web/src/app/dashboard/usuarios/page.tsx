@@ -27,23 +27,10 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { authFetch } from "@/lib/authFetch";
-import { selectableRolesForActor } from "@/lib/user-roles";
+import { selectableRolesForActor, roleLabel } from "@/lib/user-roles";
+import { usePlatformRoles } from "@/hooks/usePlatformRoles";
 import { useAuth } from "@/context/AuthContext";
 import type { UserListItem, UserRole } from "@/types/user";
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin: "Super Admin",
-  company_admin: "Company Admin",
-  editor: "Editor",
-  gerente: "Gerente",
-  administrativo: "Administrativo",
-  analista: "Analista",
-  diretoria: "Diretoria",
-  medico: "Médico",
-  psicologo: "Psicólogo",
-  comissao: "Comissão técnica",
-  user: "Usuário",
-};
 
 function filterUsers(
   users: UserListItem[],
@@ -97,7 +84,8 @@ export default function UsuariosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isSuperAdmin, isCompanyAdmin } = useAuth();
-  const roleOptionsForSelect = selectableRolesForActor(isSuperAdmin);
+  const { roles: roleCatalog } = usePlatformRoles();
+  const roleOptionsForSelect = selectableRolesForActor(isSuperAdmin, roleCatalog);
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -217,9 +205,9 @@ export default function UsuariosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os roles</SelectItem>
-                  {(Object.keys(ROLE_LABELS) as UserRole[]).map((r) => (
+                  {roleOptionsForSelect.map((r) => (
                     <SelectItem key={r} value={r}>
-                      {ROLE_LABELS[r]}
+                      {roleLabel(r, roleCatalog)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -311,7 +299,7 @@ export default function UsuariosPage() {
                     <TableCell>
                       {!isSuperAdmin && u.role === "super_admin" ? (
                         <span className="text-sm text-muted-foreground">
-                          {ROLE_LABELS.super_admin}
+                          {roleLabel("super_admin", roleCatalog)}
                         </span>
                       ) : (
                         <Select
@@ -327,7 +315,7 @@ export default function UsuariosPage() {
                           <SelectContent>
                             {roleOptionsForSelect.map((r) => (
                               <SelectItem key={r} value={r}>
-                                {ROLE_LABELS[r]}
+                                {roleLabel(r, roleCatalog)}
                               </SelectItem>
                             ))}
                           </SelectContent>

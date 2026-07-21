@@ -18,29 +18,17 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UserListItem, UserRole } from "@/types/user";
-import { selectableRolesForActor } from "@/lib/user-roles";
+import { selectableRolesForActor, roleLabel } from "@/lib/user-roles";
+import { usePlatformRoles } from "@/hooks/usePlatformRoles";
 import { isValidUsername } from "@/lib/username";
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin: "Super Admin",
-  company_admin: "Company Admin",
-  editor: "Editor",
-  gerente: "Gerente",
-  administrativo: "Administrativo",
-  analista: "Analista",
-  diretoria: "Diretoria",
-  medico: "Médico",
-  psicologo: "Psicólogo",
-  comissao: "Comissão técnica",
-  user: "Usuário",
-};
 
 export default function EditUsuarioPage() {
   const router = useRouter();
   const params = useParams();
   const { isSuperAdmin, isCompanyAdmin } = useAuth();
   const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
-  const roleSelectOptions = selectableRolesForActor(isSuperAdmin);
+  const { roles: roleCatalog } = usePlatformRoles();
+  const roleSelectOptions = selectableRolesForActor(isSuperAdmin, roleCatalog);
   const username = decodeURIComponent(params.username as string);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -232,7 +220,7 @@ export default function EditUsuarioPage() {
               <Label htmlFor="role">Role (grupo)</Label>
               {cannotEdit ? (
                 <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm">
-                  {ROLE_LABELS[formData.role]}
+                  {roleLabel(formData.role, roleCatalog)}
                 </div>
               ) : (
                 <Select
@@ -248,7 +236,7 @@ export default function EditUsuarioPage() {
                   <SelectContent>
                     {roleSelectOptions.map((r) => (
                       <SelectItem key={r} value={r}>
-                        {ROLE_LABELS[r]}
+                        {roleLabel(r, roleCatalog)}
                       </SelectItem>
                     ))}
                   </SelectContent>
