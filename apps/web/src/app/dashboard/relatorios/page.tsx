@@ -38,7 +38,7 @@ function RelatoriosContent() {
     return null;
   }
 
-  if (!canAccessModule(`relatorios_${hub}`) && !canAccessModule("relatorios")) {
+  if (!canAccessModule(`relatorios_${hub}`)) {
     router.replace("/403");
     return null;
   }

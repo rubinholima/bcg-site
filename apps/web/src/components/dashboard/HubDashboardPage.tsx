@@ -116,7 +116,7 @@ export function HubDashboardPage({
         )}
       </div>
 
-      {canAccessModule("relatorios") && (
+      {canAccessModule(`relatorios_${hubId}`) && (
         <Card className="rounded-xl border-dashed">
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>

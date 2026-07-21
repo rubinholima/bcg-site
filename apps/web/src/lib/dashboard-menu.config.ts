@@ -81,15 +81,16 @@ import { BCH_LOGO_STATIC } from "./boston-city-hall";
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
 export const ACCESS_GROUP_LABELS: Record<string, string> = {};
 
-/** Relatórios por hub — query `hub` filtra na página de relatórios. */
+/** Relatórios por hub — permissão isolada por departamento (sem herdar `relatorios` global). */
 export function hubRelatorio(hub: string): MenuItemConfig {
+  const slug = `relatorios_${hub}`;
   return {
     slug: `rel_${hub}`,
     label: "Relatórios",
     href: `/dashboard/relatorios?hub=${hub}`,
     icon: BarChart3,
-    moduleSlug: "relatorios",
-    accessSlug: `relatorios_${hub}`,
+    moduleSlug: slug,
+    accessSlug: slug,
   };
 }
 
@@ -163,7 +164,7 @@ export function canAccessHubRelatorios(
   hub: string,
   canAccessModule: (slug: string) => boolean,
 ): boolean {
-  return canAccessModule(`relatorios_${hub}`) || canAccessModule("relatorios");
+  return canAccessModule(`relatorios_${hub}`);
 }
 
 export interface PlayerTabConfig {
@@ -550,14 +551,14 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
     slug: "adm",
     label: "Depto Adm",
     icon: Building2,
-    moduleSlug: "adm_financeiro",
+    moduleSlug: "adm_visao",
     children: [
       {
         slug: "adm_visao",
         label: DEPT_HUB_MENU_LABEL,
         href: "/dashboard/adm",
         icon: LayoutDashboard,
-        moduleSlug: "adm_financeiro",
+        moduleSlug: "adm_visao",
       },
       {
         slug: "adm_cadastros",
@@ -577,7 +578,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Fornecedores",
             href: "/dashboard/adm/fornecedores",
             icon: Truck,
-            moduleSlug: "adm_financeiro",
+            moduleSlug: "adm_compras",
           },
         ],
       },

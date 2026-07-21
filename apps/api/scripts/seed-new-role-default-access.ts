@@ -76,18 +76,9 @@ const FUTEBOL_CAPTACAO = [
   'diretoria',
 ];
 
-const ADM_HUB = ['adm__adm_visao'];
-
-const ADM_FINANCEIRO = [
-  ...ADM_HUB,
-  'adm__adm_financeiro',
-  'adm__adm_financeiro_aprovacoes',
-  'adm_financeiro',
-  'relatorios_adm',
-];
-
 const ADM_COMPRAS = [
-  ...ADM_HUB,
+  'dashboard__dashboard',
+  'dashboard',
   'adm__adm_compras',
   'adm__adm_estoque',
   'adm_compras',
@@ -98,10 +89,31 @@ const ADM_COMPRAS = [
   'relatorios_adm',
 ];
 
-const ADM_RH = [...ADM_HUB, 'adm__adm_rh', 'adm_rh', 'relatorios_adm'];
+const ADM_FINANCEIRO = [
+  'dashboard__dashboard',
+  'dashboard',
+  'adm__adm_financeiro',
+  'adm__adm_financeiro_aprovacoes',
+  'adm_financeiro',
+  'adm/adm_cadastros__adm_cad_clientes',
+  'adm/adm_cadastros__adm_cad_fornecedores',
+  'relatorios_adm',
+];
+
+const ADM_RH = [
+  'dashboard__dashboard',
+  'dashboard',
+  'adm__adm_rh',
+  'adm_rh',
+  'relatorios_adm',
+];
 
 const ADM_CEO = [
-  ...ADM_HUB,
+  'dashboard__dashboard',
+  'dashboard',
+  'futebol__futebol_visao',
+  'adm__adm_visao',
+  'adm_visao',
   'adm__adm_financeiro',
   'adm__adm_financeiro_aprovacoes',
   'adm__adm_compras',
@@ -118,7 +130,6 @@ const ADM_CEO = [
   'diretoria',
   'relatorios_adm',
   'relatorios_futebol',
-  'relatorios',
 ];
 
 const MARKETING_FULL = [
@@ -195,12 +206,7 @@ const NEW_ROLE_DEFAULTS: Record<string, readonly string[]> = {
   compras: [...ADM_COMPRAS],
   rh: [...ADM_RH],
   financeiro: [...ADM_FINANCEIRO],
-  ceo: [
-    'dashboard__dashboard',
-    'dashboard',
-    'futebol__futebol_visao',
-    ...ADM_CEO,
-  ],
+  ceo: [...ADM_CEO],
   marketing: [...MARKETING_FULL],
 };
 
