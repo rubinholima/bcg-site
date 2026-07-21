@@ -20,6 +20,7 @@ interface AuthState {
   /** null = sem escopo (todas as empresas); lista = só esses tenants */
   tenantIds: string[] | null;
   mustChangePassword: boolean;
+  canAccessDashboard: boolean;
   loading: boolean;
 }
 
@@ -43,29 +44,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     modules: [],
     tenantIds: null,
     mustChangePassword: false,
+    canAccessDashboard: false,
     loading: true,
   });
+
+  /** Fallback legado — perfis dinâmicos vêm de canAccessDashboard na API. */
+  function fallbackCanAccessDashboard(role: MeResponse["role"] | null | undefined): boolean {
+    if (!role || role === "user") return false;
+    if (role === "super_admin") return true;
+    return [
+      "company_admin",
+      "editor",
+      "gerente",
+      "administrativo",
+      "analista",
+      "diretoria",
+      "medico",
+      "psicologo",
+      "comissao",
+      "supervisor",
+      "treinador",
+      "preparador",
+      "roupeiro",
+      "compras",
+      "rh",
+      "financeiro",
+      "ceo",
+      "marketing",
+    ].includes(role);
+  }
 
   const fetchMe = useCallback(async () => {
     try {
       const res = await authFetch("/api/me");
       if (!res.ok) {
-        setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, mustChangePassword: false, loading: false });
+        setState({
+          user: null,
+          groups: [],
+          role: null,
+          modules: [],
+          tenantIds: null,
+          mustChangePassword: false,
+          canAccessDashboard: false,
+          loading: false,
+        });
         return;
       }
       const data: MeResponse = await res.json();
       const canAccessDashboard =
-        data.canAccessDashboard ??
-        (data.role === "super_admin" ||
-          data.role === "company_admin" ||
-          data.role === "editor" ||
-          data.role === "gerente" ||
-          data.role === "administrativo" ||
-          data.role === "analista" ||
-          data.role === "diretoria" ||
-          data.role === "medico" ||
-          data.role === "psicologo" ||
-          data.role === "comissao");
+        data.canAccessDashboard ?? fallbackCanAccessDashboard(data.role);
       let modules: string[] = [];
       if (canAccessDashboard) {
         try {
@@ -116,17 +143,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         modules,
         tenantIds: data.tenantIds ?? null,
         mustChangePassword: Boolean(data.mustChangePassword),
+        canAccessDashboard,
         loading: false,
       });
     } catch {
-      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, mustChangePassword: false, loading: false });
+      setState({
+        user: null,
+        groups: [],
+        role: null,
+        modules: [],
+        tenantIds: null,
+        mustChangePassword: false,
+        canAccessDashboard: false,
+        loading: false,
+      });
     }
   }, []);
 
   useEffect(() => {
     // Na página de login não chama /api/me (evita 401 no console)
     if (pathname === "/login") {
-      setState({ user: null, groups: [], role: null, modules: [], tenantIds: null, mustChangePassword: false, loading: false });
+      setState({
+        user: null,
+        groups: [],
+        role: null,
+        modules: [],
+        tenantIds: null,
+        mustChangePassword: false,
+        canAccessDashboard: false,
+        loading: false,
+      });
       return;
     }
     fetchMe();
@@ -135,17 +181,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isSuperAdmin = state.role === "super_admin";
   const isCompanyAdmin = state.role === "company_admin";
   const isEditor = state.role === "editor";
-  const canAccessDashboard =
-    isSuperAdmin ||
-    isCompanyAdmin ||
-    isEditor ||
-    state.role === "gerente" ||
-    state.role === "administrativo" ||
-    state.role === "analista" ||
-    state.role === "diretoria" ||
-    state.role === "medico" ||
-    state.role === "psicologo" ||
-    state.role === "comissao";
   const canAccessModule = (slug: string) =>
     isSuperAdmin || state.modules.includes(slug);
 
@@ -154,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isSuperAdmin,
     isCompanyAdmin,
     isEditor,
-    canAccessDashboard,
+    canAccessDashboard: state.canAccessDashboard,
     canAccessModule,
     refetch: fetchMe,
   };

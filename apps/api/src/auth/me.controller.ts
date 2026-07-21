@@ -67,6 +67,8 @@ export class MeController {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+    const roleFromDb = (user.role as MeRole) ?? role;
+    role = roleFromDb;
     const tenantIds = await this.tenantAccess.getAllowedTenantIds(user.id, role);
     return {
       user: {
