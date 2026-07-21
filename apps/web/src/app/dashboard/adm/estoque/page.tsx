@@ -49,8 +49,10 @@ import { api } from "@/lib/api";
 import {
   INVENTORY_KIND_LABELS,
   INVENTORY_KIND_ORDER,
+  formatProductPrice,
   type InventoryKind,
 } from "@/lib/inventory-kinds";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Tenant } from "@/types/tenant";
 import { ProductFormDialog, type ProductRow } from "../compras/components/ProductFormDialog";
 
@@ -94,7 +96,13 @@ export default function AdmEstoquePage() {
   const [moveQty, setMoveQty] = useState("");
   const [moveDir, setMoveDir] = useState<"in" | "out">("in");
   const [moveNote, setMoveNote] = useState("");
+  const [moveUnitPrice, setMoveUnitPrice] = useState("");
   const [moveSaving, setMoveSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearchDebounced(search.trim()), 350);
@@ -175,7 +183,7 @@ export default function AdmEstoquePage() {
     const map = new Map<string, ProductRow[]>();
     for (const k of INVENTORY_KIND_ORDER) map.set(k, []);
     for (const p of products) {
-      const k = (p.inventoryKind as InventoryKind) || "geral";
+      const k = (p.inventoryKind as InventoryKind) || "uso_consumo";
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(p);
     }
@@ -187,7 +195,7 @@ export default function AdmEstoquePage() {
     return {
       total: products.length,
       low,
-      kinds: new Set(products.map((p) => p.inventoryKind || "geral")).size,
+      kinds: new Set(products.map((p) => p.inventoryKind || "uso_consumo")).size,
     };
   }, [products]);
 
@@ -206,6 +214,7 @@ export default function AdmEstoquePage() {
     setMoveQty("1");
     setMoveDir("in");
     setMoveNote("");
+    setMoveUnitPrice("");
     setMoveOpen(true);
   };
 
@@ -213,6 +222,19 @@ export default function AdmEstoquePage() {
     if (!moveProduct) return;
     const n = parseInt(moveQty, 10);
     if (!Number.isFinite(n) || n <= 0) return;
+
+    const priceStr = moveUnitPrice.replace(",", ".").trim();
+    const unitPrice = priceStr ? parseFloat(priceStr) : undefined;
+
+    if (moveDir === "in" && (unitPrice == null || !Number.isFinite(unitPrice) || unitPrice < 0)) {
+      setFeedback({
+        open: true,
+        title: "Preço obrigatório",
+        message: "Informe o preço unitário da entrada para atualizar estoque e preço médio.",
+      });
+      return;
+    }
+
     const signed = moveDir === "in" ? n : -n;
     setMoveSaving(true);
     try {
@@ -221,11 +243,16 @@ export default function AdmEstoquePage() {
         quantity: signed,
         type: "adjustment",
         notes: moveNote.trim() || undefined,
+        ...(moveDir === "in" && unitPrice != null ? { unitPrice } : {}),
       });
       setMoveOpen(false);
       await loadData();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Erro na movimentação");
+      setFeedback({
+        open: true,
+        title: "Erro na movimentação",
+        message: e instanceof Error ? e.message : "Não foi possível registrar a movimentação.",
+      });
     } finally {
       setMoveSaving(false);
     }
@@ -299,7 +326,7 @@ export default function AdmEstoquePage() {
           <div className="rounded-xl border border-border/80 bg-background/60 backdrop-blur-md px-4 py-3 shadow-sm">
             <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
               <Shield className="h-3.5 w-3.5" />
-              Famílias em uso
+              Categorias em uso
             </div>
             <p className="text-2xl font-bold tabular-nums mt-1">{stats.kinds}</p>
           </div>
@@ -343,7 +370,7 @@ export default function AdmEstoquePage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Família de material</Label>
+                <Label>Categoria</Label>
                 <Select value={kindFilter} onValueChange={setKindFilter}>
                   <SelectTrigger className="text-foreground">
                     <SelectValue />
@@ -480,6 +507,20 @@ export default function AdmEstoquePage() {
                               </>
                             ) : null}
                           </div>
+                          <div className="grid grid-cols-3 gap-2 text-[11px]">
+                            <div>
+                              <p className="text-muted-foreground">Compra</p>
+                              <p className="font-medium tabular-nums">{formatProductPrice(p.purchasePrice)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Atual</p>
+                              <p className="font-medium tabular-nums">{formatProductPrice(p.currentPrice)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Médio</p>
+                              <p className="font-medium tabular-nums">{formatProductPrice(p.averagePrice)}</p>
+                            </div>
+                          </div>
                           <div className="mt-4 flex flex-wrap gap-2 opacity-100 md:opacity-90 md:group-hover:opacity-100">
                             <Button type="button" size="sm" variant="outline" className="gap-1" onClick={() => openMove(p)}>
                               <TrendingUp className="h-3.5 w-3.5" />
@@ -515,8 +556,9 @@ export default function AdmEstoquePage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-foreground">Item</TableHead>
-                    <TableHead className="text-foreground">Família</TableHead>
+                    <TableHead className="text-foreground">Categoria</TableHead>
                     <TableHead className="text-foreground">Times</TableHead>
+                    <TableHead className="text-foreground text-right">Preço médio</TableHead>
                     <TableHead className="text-foreground text-right">Saldo</TableHead>
                     <TableHead className="text-foreground text-right">Mín.</TableHead>
                     <TableHead className="text-right text-foreground">Ações</TableHead>
@@ -525,7 +567,7 @@ export default function AdmEstoquePage() {
                 <TableBody>
                   {products.map((p) => {
                     const tags = parseSquadTags(p.squadTags);
-                    const k = (p.inventoryKind as InventoryKind) || "geral";
+                    const k = (p.inventoryKind as InventoryKind) || "uso_consumo";
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium text-foreground max-w-[220px]">
@@ -537,6 +579,9 @@ export default function AdmEstoquePage() {
                         <TableCell className="text-sm text-muted-foreground">{INVENTORY_KIND_LABELS[k]}</TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-[160px]">
                           {tags.length ? tags.map(formatCategoryLabel).join(", ") : "—"}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-sm">
+                          {formatProductPrice(p.averagePrice)}
                         </TableCell>
                         <TableCell className="text-right tabular-nums font-medium">
                           {p.currentStock} {p.unit}
@@ -608,6 +653,18 @@ export default function AdmEstoquePage() {
                 min={1}
               />
             </div>
+            {moveDir === "in" ? (
+              <div className="space-y-2">
+                <Label>Preço unitário (R$) *</Label>
+                <Input
+                  inputMode="decimal"
+                  className="text-foreground"
+                  value={moveUnitPrice}
+                  onChange={(e) => setMoveUnitPrice(e.target.value)}
+                  placeholder="0,00"
+                />
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label>Observação (opcional)</Label>
               <Input value={moveNote} onChange={(e) => setMoveNote(e.target.value)} placeholder="Ex.: entrega fornecedor X" />
@@ -623,6 +680,13 @@ export default function AdmEstoquePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(o) => setFeedback((f) => ({ ...f, open: o }))}
+        title={feedback.title}
+        message={feedback.message}
+      />
     </div>
   );
 }

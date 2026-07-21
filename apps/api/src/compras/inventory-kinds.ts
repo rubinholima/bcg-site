@@ -1,24 +1,26 @@
-/** Categoria visual/operacional do item — foco futebol / operação de clube. */
+/** Categorias ADM de produtos (Compras / Estoque) — conforme solicitado pelo departamento. */
 export const INVENTORY_KINDS = [
-  'uniforme',
-  'material_treino',
-  'bola_equipamento',
-  'nutricao_hidratacao',
-  'saude_fisioterapia',
-  'vestuario_lazer',
-  'documental',
-  'geral',
+  'alimentacao',
+  'nutricao_suplementacao',
+  'alimentacao_viagem',
+  'uniforme_apoio',
+  'uniforme_futebol',
+  'uniforme_adm',
+  'produtos_limpeza',
+  'produtos_manutencao',
+  'uso_consumo',
 ] as const;
 
 export type InventoryKind = (typeof INVENTORY_KINDS)[number];
 
 export const INVENTORY_KIND_LABELS: Record<InventoryKind, string> = {
-  uniforme: 'Uniforme & equipamento de jogo',
-  material_treino: 'Material de treino',
-  bola_equipamento: 'Bolas & equipamentos de campo',
-  nutricao_hidratacao: 'Nutrição & hidratação',
-  saude_fisioterapia: 'Saúde & fisioterapia',
-  vestuario_lazer: 'Vestuário & uso diário',
-  documental: 'Material institucional / documental',
-  geral: 'Geral / diversos',
+  alimentacao: 'Alimentação',
+  nutricao_suplementacao: 'Nutrição e suplementação',
+  alimentacao_viagem: 'Alimentação de viagem',
+  uniforme_apoio: 'Uniforme apoio',
+  uniforme_futebol: 'Uniforme futebol',
+  uniforme_adm: 'Uniforme ADM',
+  produtos_limpeza: 'Produtos de limpeza',
+  produtos_manutencao: 'Produtos de manutenção',
+  uso_consumo: 'Uso e consumo (descartáveis)',
 };

@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { PurchaseRequisitionWorkflowPanel } from "./components/PurchaseRequisitionWorkflowPanel";
+import { ProductsCatalogPanel } from "./components/ProductsCatalogPanel";
 import { WorkflowInboxBanner } from "@/components/settings/WorkflowInboxBanner";
 import { type SupplierRow } from "./components/SupplierFormDialog";
 
@@ -43,6 +44,8 @@ export default function AdmComprasPage() {
   return (
     <div className="space-y-6">
       <WorkflowInboxBanner variant="compras" />
+
+      <ProductsCatalogPanel tenants={tenants} defaultTenantId={tenants[0]?.id} />
 
       <PurchaseRequisitionWorkflowPanel
         mode="compras"

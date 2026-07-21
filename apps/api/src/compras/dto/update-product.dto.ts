@@ -22,11 +22,6 @@ export class UpdateProductDto {
   @IsOptional()
   stockMin?: number;
 
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  currentStock?: number;
-
   @IsString()
   @IsOptional()
   @IsIn([...INVENTORY_KINDS])

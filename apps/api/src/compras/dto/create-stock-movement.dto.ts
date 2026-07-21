@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsInt, IsOptional, IsNumber, Min } from 'class-validator';
 
 export class CreateStockMovementDto {
   @IsString()
@@ -11,6 +11,12 @@ export class CreateStockMovementDto {
   /** purchase | requisition | adjustment */
   @IsString()
   type: string;
+
+  /** Preço unitário na entrada (obrigatório quando quantity > 0) */
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  unitPrice?: number;
 
   @IsString()
   @IsOptional()

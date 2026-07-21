@@ -583,6 +583,7 @@ export class PurchaseWorkflowService {
           productId: item.productId,
           quantity: item.quantity,
           type: 'purchase',
+          unitPrice: item.estimatedUnitPrice,
           referenceType: 'requisition',
           referenceId: requisitionId,
           notes: `Recebimento requisição ${requisitionId}`,

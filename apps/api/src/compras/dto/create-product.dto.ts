@@ -6,6 +6,7 @@ import {
   MaxLength,
   IsArray,
   IsIn,
+  IsNumber,
 } from 'class-validator';
 import { INVENTORY_KINDS } from '../inventory-kinds';
 
@@ -32,11 +33,6 @@ export class CreateProductDto {
   @IsOptional()
   stockMin?: number;
 
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  currentStock?: number;
-
   @IsString()
   @IsOptional()
   @IsIn([...INVENTORY_KINDS])
@@ -46,4 +42,16 @@ export class CreateProductDto {
   @IsString({ each: true })
   @IsOptional()
   squadTags?: string[];
+
+  /** Quantidade inicial — exige initialUnitPrice se > 0 */
+  @IsInt()
+  @Min(0)
+  @IsOptional()
+  initialQuantity?: number;
+
+  /** Preço unitário na entrada inicial (R$) */
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  initialUnitPrice?: number;
 }

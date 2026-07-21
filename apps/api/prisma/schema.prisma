@@ -952,8 +952,14 @@ model Product {
   unit          String   @default("un") // un, cx, kg, etc.
   stockMin      Int      @default(0)   // abaixo disso = alerta
   currentStock  Int      @default(0)
-  /// uniforme | material_treino | bola_equipamento | nutricao_hidratacao | saude_fisioterapia | vestuario_lazer | documental | geral
-  inventoryKind String   @default("geral")
+  /// Categoria ADM de compras (alimentacao, uniforme_futebol, produtos_limpeza, …)
+  inventoryKind String   @default("uso_consumo")
+  /// Preço da última compra / entrada (R$)
+  purchasePrice Decimal? @db.Decimal(12, 2)
+  /// Preço unitário atual (última entrada)
+  currentPrice  Decimal? @db.Decimal(12, 2)
+  /// Preço médio ponderado das entradas
+  averagePrice  Decimal? @db.Decimal(12, 2)
   /// Categorias de futebol do clube (ex.: principal, sub20) — null ou [] = vale para todas
   squadTags     Json?
   createdAt     DateTime @default(now())
@@ -1116,6 +1122,7 @@ model StockMovement {
   product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity      Int      // positivo = entrada, negativo = saída
   type          String   // purchase | requisition | adjustment
+  unitPrice     Decimal? @db.Decimal(12, 2)
   referenceType String?  // order | requisition
   referenceId   String?
   notes         String?  @db.Text

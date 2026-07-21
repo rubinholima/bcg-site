@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { cadastroJsonStringArray, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { INVENTORY_KINDS } from './inventory-kinds';
+import { computeEntryPricing, decimalToNumber, toDecimal } from './product-pricing.util';
 
 function parseSquadTags(raw: Prisma.JsonValue | null): string[] | null {
   if (raw == null) return null;
@@ -62,21 +63,55 @@ export class ProductsService {
   async create(dto: CreateProductDto) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException(`Tenant "${dto.tenantId}" não encontrado`);
-    return this.prisma.product.create({
-      data: {
-        tenantId: dto.tenantId,
-        name: cadastroUpperRequired(dto.name),
-        sku: cadastroUpper(dto.sku),
-        unit: dto.unit ?? 'un',
-        stockMin: dto.stockMin ?? 0,
-        currentStock: dto.currentStock ?? 0,
-        inventoryKind: dto.inventoryKind ?? 'geral',
-        squadTags:
-          dto.squadTags && dto.squadTags.length > 0
-            ? (cadastroJsonStringArray(dto.squadTags) as Prisma.InputJsonValue)
-            : Prisma.JsonNull,
-      },
-      include: { tenant: { select: { id: true, name: true, slug: true, categories: true } } },
+
+    const initialQty = dto.initialQuantity ?? 0;
+    const initialPrice = dto.initialUnitPrice;
+    if (initialQty > 0 && (initialPrice == null || initialPrice < 0)) {
+      throw new BadRequestException('Informe o preço de entrada quando houver quantidade inicial');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: {
+          tenantId: dto.tenantId,
+          name: cadastroUpperRequired(dto.name),
+          sku: cadastroUpper(dto.sku),
+          unit: dto.unit ?? 'un',
+          stockMin: dto.stockMin ?? 0,
+          currentStock: 0,
+          inventoryKind: dto.inventoryKind ?? 'uso_consumo',
+          squadTags:
+            dto.squadTags && dto.squadTags.length > 0
+              ? (cadastroJsonStringArray(dto.squadTags) as Prisma.InputJsonValue)
+              : Prisma.JsonNull,
+        },
+        include: { tenant: { select: { id: true, name: true, slug: true, categories: true } } },
+      });
+
+      if (initialQty > 0 && initialPrice != null) {
+        const pricing = computeEntryPricing(0, null, initialQty, initialPrice);
+        await tx.stockMovement.create({
+          data: {
+            productId: product.id,
+            quantity: initialQty,
+            type: 'adjustment',
+            unitPrice: toDecimal(initialPrice),
+            notes: 'Cadastro inicial do produto',
+          },
+        });
+        return tx.product.update({
+          where: { id: product.id },
+          data: {
+            currentStock: pricing.newStock,
+            purchasePrice: toDecimal(pricing.purchasePrice),
+            currentPrice: toDecimal(pricing.currentPrice),
+            averagePrice: toDecimal(pricing.averagePrice),
+          },
+          include: { tenant: { select: { id: true, name: true, slug: true, categories: true } } },
+        });
+      }
+
+      return product;
     });
   }
 
@@ -87,7 +122,6 @@ export class ProductsService {
     if (dto.sku !== undefined) data.sku = cadastroUpper(dto.sku);
     if (dto.unit !== undefined) data.unit = dto.unit ?? 'un';
     if (dto.stockMin !== undefined) data.stockMin = dto.stockMin;
-    if (dto.currentStock !== undefined) data.currentStock = dto.currentStock;
     if (dto.inventoryKind !== undefined) data.inventoryKind = dto.inventoryKind;
     if (dto.squadTags !== undefined) {
       data.squadTags =
@@ -116,5 +150,19 @@ export class ProductsService {
       include: { tenant: { select: { id: true, name: true, slug: true, categories: true } } },
     });
     return products.filter((p) => p.currentStock <= p.stockMin);
+  }
+
+  /** Usado pelo serviço de movimentação após entrada com preço. */
+  applyEntryPricing(
+    product: { currentStock: number; averagePrice: Prisma.Decimal | null },
+    entryQty: number,
+    unitPrice: number,
+  ) {
+    return computeEntryPricing(
+      product.currentStock,
+      decimalToNumber(product.averagePrice),
+      entryQty,
+      unitPrice,
+    );
   }
 }
