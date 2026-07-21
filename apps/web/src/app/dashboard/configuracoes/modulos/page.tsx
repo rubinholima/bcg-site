@@ -52,6 +52,7 @@ import {
 } from "@/lib/module-permission-matrix";
 import {
   type PlatformRole,
+  formatRoleSlug,
   managedRolesFromCatalog,
   roleLabelsFromCatalog,
 } from "@/lib/platform-roles";
@@ -208,7 +209,7 @@ function getSectionAccessState(rows: DisplayRow[], role: string): SectionAccessS
 
 function auditChangeLabel(row: AuditChangeRow, roleLabels: Record<string, string>): string {
   const mod = MODULE_DISPLAY_NAMES[row.slug] ?? row.slug;
-  const rl = roleLabels[row.role] ?? row.role;
+  const rl = roleLabels[row.role] ?? formatRoleSlug(row.role);
   return `${mod} (${rl}): ${row.from ? "ativo" : "inativo"} → ${row.to ? "ativo" : "inativo"}`;
 }
 
@@ -253,7 +254,7 @@ function AccessSummaryPanel({
   isModuleEnabled?: (slug: string) => boolean;
   onToggleModule?: (slug: string, value: boolean) => void;
 }) {
-  const roleLabel = roleLabels[summary.role] ?? summary.role;
+  const roleLabel = roleLabels[summary.role] ?? formatRoleSlug(summary.role);
   return (
     <div className="rounded-lg border bg-muted/25 px-4 py-3 space-y-3">
       <div>
@@ -352,7 +353,9 @@ export default function ModulosPage() {
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
   const [modules, setModules] = useState<ModulePermissionRow[]>([]);
   const [managedRoleSlugs, setManagedRoleSlugs] = useState<string[]>([...MANAGED_ROLES]);
-  const [roleLabels, setRoleLabels] = useState<Record<string, string>>({});
+  const [roleLabels, setRoleLabels] = useState<Record<string, string>>(() =>
+    roleLabelsFromCatalog([]),
+  );
   const [dirty, setDirty] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("");
@@ -1035,10 +1038,10 @@ export default function ModulosPage() {
                     type="button"
                     size="sm"
                     variant={selectedRole === role ? "default" : "outline"}
-                    className="shrink-0"
+                    className="shrink-0 uppercase"
                     onClick={() => setSelectedRole(role)}
                   >
-                    {roleLabels[role] ?? role}
+                    {roleLabels[role] ?? formatRoleSlug(role)}
                   </Button>
                 ))}
               </div>
@@ -1065,7 +1068,7 @@ export default function ModulosPage() {
                       <p className="text-sm text-muted-foreground w-full">
                         Herda o perfil{" "}
                         <strong className="text-foreground">
-                          {roleLabels[selectedUserRole] ?? selectedUserRole}
+                          {roleLabels[selectedUserRole] ?? formatRoleSlug(selectedUserRole)}
                         </strong>
                         . Personalize para definir acessos só deste usuário.
                       </p>

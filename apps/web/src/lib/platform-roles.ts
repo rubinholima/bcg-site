@@ -9,25 +9,48 @@ export interface PlatformRole {
   userCount: number;
 }
 
+/** Exibe nome do perfil sempre em maiúsculas. */
+export function formatRoleLabel(label: string): string {
+  return label.trim().toLocaleUpperCase("pt-BR");
+}
+
+/** Slug → rótulo legível em maiúsculas (fallback quando API ainda não carregou). */
+export function formatRoleSlug(slug: string): string {
+  const key = slug.trim().toLowerCase();
+  if (!key) return "";
+  const known = FALLBACK_ROLE_LABELS[key];
+  if (known) return known;
+  return key.replace(/_/g, " ").toLocaleUpperCase("pt-BR");
+}
+
 /** Fallback quando API ainda não carregou. */
 export const FALLBACK_ROLE_LABELS: Record<string, string> = {
-  super_admin: "Super admin",
-  company_admin: "Admin da empresa",
-  editor: "Editor",
-  gerente: "Gerente",
-  administrativo: "Administrativo",
-  analista: "Analista",
-  diretoria: "Diretoria",
-  medico: "Médico",
-  psicologo: "Psicólogo",
-  comissao: "Comissão",
-  user: "Usuário básico",
+  super_admin: "SUPER ADMIN",
+  company_admin: "ADMIN DA EMPRESA",
+  editor: "EDITOR",
+  gerente: "GERENTE",
+  administrativo: "ADMINISTRATIVO",
+  analista: "ANALISTA",
+  diretoria: "DIRETORIA",
+  medico: "MÉDICO",
+  psicologo: "PSICÓLOGO",
+  comissao: "COMISSÃO",
+  user: "USUÁRIO BÁSICO",
+  supervisor: "SUPERVISOR",
+  treinador: "TREINADOR",
+  preparador: "PREPARADOR",
+  roupeiro: "ROUPEIRO",
+  compras: "COMPRAS",
+  rh: "RH",
+  financeiro: "FINANCEIRO",
+  ceo: "CEO",
+  marketing: "MARKETING",
 };
 
 export function roleLabelsFromCatalog(roles: PlatformRole[]): Record<string, string> {
   const map: Record<string, string> = { ...FALLBACK_ROLE_LABELS };
   for (const r of roles) {
-    map[r.slug] = r.label;
+    map[r.slug] = formatRoleLabel(r.label);
   }
   return map;
 }

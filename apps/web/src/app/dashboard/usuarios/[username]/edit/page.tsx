@@ -230,7 +230,7 @@ export default function EditUsuarioPage() {
                   }
                   disabled={loading}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="uppercase">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

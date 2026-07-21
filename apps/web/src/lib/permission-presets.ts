@@ -8,6 +8,7 @@ import {
   emptyPermissions,
   setRolePermission,
 } from "@/lib/module-permission-matrix";
+import { FALLBACK_ROLE_LABELS } from "@/lib/platform-roles";
 
 export type { ModulePermissionRow };
 
@@ -27,15 +28,15 @@ export type ManagedRoleKey = (typeof MANAGED_ROLES)[number];
 
 /** Rótulos padrão — sobrescritos pelos perfis cadastrados na API. */
 export const MANAGED_ROLE_LABELS: Record<string, string> = {
-  company_admin: "Admin da empresa",
-  editor: "Editor",
-  gerente: "Gerente",
-  administrativo: "Administrativo",
-  analista: "Analista",
-  diretoria: "Diretoria",
-  medico: "Médico",
-  psicologo: "Psicólogo",
-  comissao: "Comissão",
+  company_admin: FALLBACK_ROLE_LABELS.company_admin,
+  editor: FALLBACK_ROLE_LABELS.editor,
+  gerente: FALLBACK_ROLE_LABELS.gerente,
+  administrativo: FALLBACK_ROLE_LABELS.administrativo,
+  analista: FALLBACK_ROLE_LABELS.analista,
+  diretoria: FALLBACK_ROLE_LABELS.diretoria,
+  medico: FALLBACK_ROLE_LABELS.medico,
+  psicologo: FALLBACK_ROLE_LABELS.psicologo,
+  comissao: FALLBACK_ROLE_LABELS.comissao,
 };
 
 export interface PresetGrant {

@@ -200,7 +200,7 @@ export default function UsuariosPage() {
                   applyFiltersToUrl(r, filterQ.trim() || null);
                 }}
               >
-                <SelectTrigger className="min-h-[44px] w-[min(160px,40vw)]">
+                <SelectTrigger className="min-h-[44px] w-[min(160px,40vw)] uppercase">
                   <SelectValue placeholder="Role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -309,7 +309,7 @@ export default function UsuariosPage() {
                           }
                           disabled={updating === u.username}
                         >
-                          <SelectTrigger className="w-[140px]">
+                          <SelectTrigger className="w-[140px] uppercase">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

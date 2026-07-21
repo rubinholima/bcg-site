@@ -38,6 +38,8 @@
     "beatscode:discover-browser": "ts-node -r tsconfig-paths/register scripts/discover-beatscode-browser.ts",
     "players:normalize-situations": "ts-node -r tsconfig-paths/register scripts/normalize-player-situations.ts",
     "seed:local-user": "ts-node -r tsconfig-paths/register scripts/seed-local-user.ts",
+    "import:cup360-users": "ts-node -r tsconfig-paths/register scripts/import-cup360-users-sheet.ts",
+    "seed:new-role-access": "ts-node -r tsconfig-paths/register scripts/seed-new-role-default-access.ts",
     "fix:encoding": "ts-node -r tsconfig-paths/register scripts/fix-encoding.ts",
     "check:encoding": "ts-node -r tsconfig-paths/register scripts/check-encoding.ts",
     "build": "nest build",

@@ -195,7 +195,7 @@ export default function NovoUsuarioPage() {
                 }
                 disabled={loading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="uppercase">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

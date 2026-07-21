@@ -25,6 +25,10 @@ export interface PlatformRoleDto {
 
 const SLUG_RE = /^[a-z][a-z0-9_]{1,48}$/;
 
+function normalizeRoleLabel(label: string): string {
+  return label.trim().toLocaleUpperCase('pt-BR');
+}
+
 @Injectable()
 export class RolesService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
@@ -79,7 +83,7 @@ export class RolesService implements OnModuleInit {
     const countMap = new Map(counts.map((c) => [c.role ?? '', c._count.role]));
     return rows.map((r) => ({
       slug: r.slug,
-      label: r.label,
+      label: normalizeRoleLabel(r.label),
       sortOrder: r.sortOrder,
       canAccessDashboard: r.canAccessDashboard,
       includeInMatrix: r.includeInMatrix,
@@ -102,7 +106,7 @@ export class RolesService implements OnModuleInit {
     includeInMatrix?: boolean;
   }): Promise<PlatformRoleDto> {
     const slug = input.slug.trim().toLowerCase();
-    const label = input.label.trim();
+    const label = normalizeRoleLabel(input.label);
     if (!SLUG_RE.test(slug)) {
       throw new BadRequestException(
         'Slug inválido — use minúsculas, números e underscore (ex.: coordenador_base)',
@@ -167,7 +171,7 @@ export class RolesService implements OnModuleInit {
     await this.prisma.platformRole.update({
       where: { slug },
       data: {
-        ...(input.label !== undefined ? { label: input.label.trim() } : {}),
+        ...(input.label !== undefined ? { label: normalizeRoleLabel(input.label) } : {}),
         ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
         ...(input.canAccessDashboard !== undefined
           ? { canAccessDashboard: input.canAccessDashboard }

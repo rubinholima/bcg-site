@@ -1,6 +1,6 @@
 import type { UserRole } from "@/types/user";
 import type { PlatformRole } from "@/lib/platform-roles";
-import { FALLBACK_ROLE_LABELS } from "@/lib/platform-roles";
+import { FALLBACK_ROLE_LABELS, formatRoleLabel, formatRoleSlug } from "@/lib/platform-roles";
 
 /** Ordem padrão nos selects quando API ainda não carregou. */
 export const USER_ROLES_ORDER: UserRole[] = [
@@ -32,5 +32,8 @@ export function selectableRolesForActor(
 
 export function roleLabel(slug: string, catalog?: PlatformRole[]): string {
   const fromApi = catalog?.find((r) => r.slug === slug)?.label;
-  return fromApi ?? FALLBACK_ROLE_LABELS[slug] ?? slug;
+  if (fromApi) return formatRoleLabel(fromApi);
+  return formatRoleSlug(slug);
 }
+
+export { formatRoleSlug, formatRoleLabel };

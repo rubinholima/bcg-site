@@ -40,6 +40,7 @@ import {
   type PlatformRole,
   slugifyRoleInput,
   FALLBACK_ROLE_LABELS,
+  formatRoleLabel,
 } from "@/lib/platform-roles";
 
 const EMPTY_FORM = {
@@ -235,7 +236,7 @@ export default function ConfiguracoesPerfisPage() {
               {rows.map((row) => (
                 <TableRow key={row.slug} className={!row.isActive ? "opacity-60" : undefined}>
                   <TableCell className="font-mono text-xs">{row.slug}</TableCell>
-                  <TableCell className="font-medium">{row.label}</TableCell>
+                  <TableCell className="font-medium uppercase">{formatRoleLabel(row.label)}</TableCell>
                   <TableCell>{row.canAccessDashboard ? "Sim" : "Não"}</TableCell>
                   <TableCell>{row.includeInMatrix ? "Sim" : "Não"}</TableCell>
                   <TableCell>{row.userCount}</TableCell>
@@ -297,7 +298,7 @@ export default function ConfiguracoesPerfisPage() {
               <Label htmlFor="role-label">Nome exibido</Label>
               <Input
                 id="role-label"
-                className="text-foreground"
+                className="text-foreground uppercase"
                 value={form.label}
                 onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
               />
@@ -347,7 +348,7 @@ export default function ConfiguracoesPerfisPage() {
             <AlertDialogTitle>Excluir perfil?</AlertDialogTitle>
             <AlertDialogDescription>
               O perfil{" "}
-              <strong>{deleteSlug ? (FALLBACK_ROLE_LABELS[deleteSlug] ?? deleteSlug) : ""}</strong>{" "}
+              <strong>{deleteSlug ? formatRoleLabel(FALLBACK_ROLE_LABELS[deleteSlug] ?? deleteSlug) : ""}</strong>{" "}
               será removido. Só é possível se nenhum usuário estiver vinculado.
             </AlertDialogDescription>
           </AlertDialogHeader>
