@@ -4,7 +4,7 @@ import { cadastroJsonStringArray, cadastroUpper, cadastroUpperRequired } from '.
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { INVENTORY_KINDS } from './inventory-kinds';
+import { InventoryCategoriesService } from './inventory-categories.service';
 import { computeEntryPricing, decimalToNumber, toDecimal } from './product-pricing.util';
 
 function parseSquadTags(raw: Prisma.JsonValue | null): string[] | null {
@@ -22,7 +22,10 @@ function matchesSquadFilter(productSquadTags: Prisma.JsonValue | null, squadTag:
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly inventoryCategories: InventoryCategoriesService,
+  ) {}
 
   async findAll(
     tenantId?: string,
@@ -38,7 +41,7 @@ export class ProductsService {
         { sku: { contains: search.trim(), mode: 'insensitive' as const } },
       ];
     }
-    if (inventoryKind?.trim() && (INVENTORY_KINDS as readonly string[]).includes(inventoryKind.trim())) {
+    if (inventoryKind?.trim()) {
       where.inventoryKind = inventoryKind.trim();
     }
     const rows = await this.prisma.product.findMany({
@@ -70,6 +73,9 @@ export class ProductsService {
       throw new BadRequestException('Informe o preço de entrada quando houver quantidade inicial');
     }
 
+    const kind = dto.inventoryKind ?? 'uso_consumo';
+    await this.inventoryCategories.assertValidKind(dto.tenantId, kind);
+
     return this.prisma.$transaction(async (tx) => {
       const product = await tx.product.create({
         data: {
@@ -79,7 +85,7 @@ export class ProductsService {
           unit: dto.unit ?? 'un',
           stockMin: dto.stockMin ?? 0,
           currentStock: 0,
-          inventoryKind: dto.inventoryKind ?? 'uso_consumo',
+          inventoryKind: kind,
           squadTags:
             dto.squadTags && dto.squadTags.length > 0
               ? (cadastroJsonStringArray(dto.squadTags) as Prisma.InputJsonValue)
@@ -116,13 +122,16 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto) {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
     const data: Prisma.ProductUpdateInput = {};
     if (dto.name != null) data.name = cadastroUpperRequired(dto.name);
     if (dto.sku !== undefined) data.sku = cadastroUpper(dto.sku);
     if (dto.unit !== undefined) data.unit = dto.unit ?? 'un';
     if (dto.stockMin !== undefined) data.stockMin = dto.stockMin;
-    if (dto.inventoryKind !== undefined) data.inventoryKind = dto.inventoryKind;
+    if (dto.inventoryKind !== undefined) {
+      await this.inventoryCategories.assertValidKind(existing.tenantId, dto.inventoryKind);
+      data.inventoryKind = dto.inventoryKind;
+    }
     if (dto.squadTags !== undefined) {
       data.squadTags =
         dto.squadTags.length > 0

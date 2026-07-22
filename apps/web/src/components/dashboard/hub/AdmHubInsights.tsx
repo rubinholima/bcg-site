@@ -25,11 +25,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { INVENTORY_KIND_LABELS, type InventoryKind } from "@/lib/inventory-kinds";
+import { labelForInventoryKind } from "@/lib/inventory-kinds";
 import { HubStatCard } from "./HubStatCard";
 
 interface ProductRow {
-  inventoryKind?: InventoryKind | null;
+  inventoryKind?: string | null;
   currentStock?: number | null;
   stockMin?: number | null;
 }
@@ -142,7 +142,7 @@ export function AdmHubInsights() {
     return Object.entries(counts)
       .map(([kind, total], index) => ({
         kind,
-        label: INVENTORY_KIND_LABELS[kind as InventoryKind] ?? kind,
+        label: labelForInventoryKind(kind),
         total,
         fill: TYPE_COLORS[index % TYPE_COLORS.length],
       }))

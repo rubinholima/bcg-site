@@ -15,12 +15,8 @@ import {
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
-import {
-  INVENTORY_KINDS,
-  INVENTORY_KIND_LABELS,
-  formatProductPrice,
-  type InventoryKind,
-} from "@/lib/inventory-kinds";
+import { formatProductPrice } from "@/lib/inventory-kinds";
+import { useInventoryCategories } from "@/hooks/useInventoryCategories";
 
 export interface ProductRow {
   id: string;
@@ -79,7 +75,8 @@ export function ProductFormDialog({
   const [sku, setSku] = useState("");
   const [unit, setUnit] = useState(DEFAULT_UNIT);
   const [stockMin, setStockMin] = useState(0);
-  const [inventoryKind, setInventoryKind] = useState<InventoryKind>("uso_consumo");
+  const [inventoryKind, setInventoryKind] = useState("uso_consumo");
+  const { options: categoryOptions } = useInventoryCategories(tenantId || undefined);
   const [squadSelected, setSquadSelected] = useState<Set<string>>(new Set());
   const [initialQuantity, setInitialQuantity] = useState(0);
   const [initialUnitPrice, setInitialUnitPrice] = useState("");
@@ -95,7 +92,7 @@ export function ProductFormDialog({
       setSku(edit.sku ?? "");
       setUnit(edit.unit || DEFAULT_UNIT);
       setStockMin(edit.stockMin);
-      setInventoryKind((edit.inventoryKind as InventoryKind) || "uso_consumo");
+      setInventoryKind(edit.inventoryKind || "uso_consumo");
       setSquadSelected(new Set(parseSquadTags(edit.squadTags)));
       setInitialQuantity(0);
       setInitialUnitPrice("");
@@ -208,11 +205,11 @@ export function ProductFormDialog({
                   required
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
                   value={inventoryKind}
-                  onChange={(e) => setInventoryKind(e.target.value as InventoryKind)}
+                  onChange={(e) => setInventoryKind(e.target.value)}
                 >
-                  {INVENTORY_KINDS.map((k) => (
-                    <option key={k} value={k}>
-                      {INVENTORY_KIND_LABELS[k]}
+                  {categoryOptions.map((k) => (
+                    <option key={k.slug} value={k.slug}>
+                      {k.name}
                     </option>
                   ))}
                 </select>

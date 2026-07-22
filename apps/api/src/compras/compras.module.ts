@@ -16,6 +16,8 @@ import { PurchaseWorkflowController, MyRequisitionsController } from './purchase
 import { PurchaseWorkflowService } from './purchase-workflow.service';
 import { TiSupportController, TiPublicController } from './ti-support.controller';
 import { TiSupportService } from './ti-support.service';
+import { InventoryCategoriesController } from './inventory-categories.controller';
+import { InventoryCategoriesService } from './inventory-categories.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { MailService } from '../common/mail.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
@@ -32,10 +34,12 @@ import { WorkflowNotifyService } from './workflow-notify.service';
     MyRequisitionsController,
     TiSupportController,
     TiPublicController,
+    InventoryCategoriesController,
   ],
   providers: [
     SuppliersService,
     ProductsService,
+    InventoryCategoriesService,
     PurchaseRequisitionsService,
     PurchaseOrdersService,
     StockMovementsService,

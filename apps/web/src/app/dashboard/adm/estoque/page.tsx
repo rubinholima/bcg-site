@@ -47,11 +47,11 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import {
-  INVENTORY_KIND_LABELS,
-  INVENTORY_KIND_ORDER,
   formatProductPrice,
-  type InventoryKind,
+  labelForInventoryKind,
+  sortCategorySlugs,
 } from "@/lib/inventory-kinds";
+import { useInventoryCategories } from "@/hooks/useInventoryCategories";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { Tenant } from "@/types/tenant";
 import { ProductFormDialog, type ProductRow } from "../compras/components/ProductFormDialog";
@@ -103,6 +103,7 @@ export default function AdmEstoquePage() {
     title: "",
     message: "",
   });
+  const { categories, options, orderSlugs } = useInventoryCategories(tenantId || undefined);
 
   useEffect(() => {
     const t = window.setTimeout(() => setSearchDebounced(search.trim()), 350);
@@ -180,15 +181,20 @@ export default function AdmEstoquePage() {
   }, [loadData]);
 
   const grouped = useMemo(() => {
+    const slugsInProducts = [...new Set(products.map((p) => p.inventoryKind || "uso_consumo"))];
+    const ordered = sortCategorySlugs(
+      [...new Set([...orderSlugs, ...slugsInProducts])],
+      categories,
+    );
     const map = new Map<string, ProductRow[]>();
-    for (const k of INVENTORY_KIND_ORDER) map.set(k, []);
+    for (const k of ordered) map.set(k, []);
     for (const p of products) {
-      const k = (p.inventoryKind as InventoryKind) || "uso_consumo";
+      const k = p.inventoryKind || "uso_consumo";
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(p);
     }
-    return map;
-  }, [products]);
+    return { map, ordered };
+  }, [products, orderSlugs, categories]);
 
   const stats = useMemo(() => {
     const low = products.filter((p) => p.stockMin > 0 && p.currentStock <= p.stockMin).length;
@@ -377,9 +383,9 @@ export default function AdmEstoquePage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todas</SelectItem>
-                    {INVENTORY_KIND_ORDER.map((k) => (
-                      <SelectItem key={k} value={k}>
-                        {INVENTORY_KIND_LABELS[k]}
+                    {options.map((k) => (
+                      <SelectItem key={k.slug} value={k.slug}>
+                        {k.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -440,8 +446,8 @@ export default function AdmEstoquePage() {
         </Card>
       ) : tenantId ? (
         <div className="space-y-10">
-          {INVENTORY_KIND_ORDER.map((kind) => {
-            const items = grouped.get(kind) ?? [];
+          {grouped.ordered.map((kind) => {
+            const items = grouped.map.get(kind) ?? [];
             if (items.length === 0) return null;
             return (
               <section key={kind} className="space-y-4">
@@ -450,7 +456,7 @@ export default function AdmEstoquePage() {
                     <Package className="h-4 w-4" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-foreground">{INVENTORY_KIND_LABELS[kind]}</h2>
+                    <h2 className="text-lg font-semibold text-foreground">{labelForInventoryKind(kind, categories)}</h2>
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -567,7 +573,7 @@ export default function AdmEstoquePage() {
                 <TableBody>
                   {products.map((p) => {
                     const tags = parseSquadTags(p.squadTags);
-                    const k = (p.inventoryKind as InventoryKind) || "uso_consumo";
+                    const k = p.inventoryKind || "uso_consumo";
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="font-medium text-foreground max-w-[220px]">
@@ -576,7 +582,7 @@ export default function AdmEstoquePage() {
                             <span className="block text-xs text-muted-foreground font-mono">{p.sku}</span>
                           ) : null}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">{INVENTORY_KIND_LABELS[k]}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{labelForInventoryKind(k, categories)}</TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-[160px]">
                           {tags.length ? tags.map(formatCategoryLabel).join(", ") : "—"}
                         </TableCell>

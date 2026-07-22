@@ -228,15 +228,19 @@ export function DashboardDeptShell({ children, className }: { children: React.Re
   return <div className={cn("mx-auto flex max-w-6xl flex-col space-y-6", className)}>{children}</div>;
 }
 
-/** Cards de resumo (3 colunas) — padrão Patrimônio / Relatórios. */
+/** Cards de resumo — 4 itens em linha única no desktop; demais layouts em 3 colunas. */
 export function DashboardStatGrid({
   items,
 }: {
   items: Array<{ label: string; value: React.ReactNode; tone?: "emerald" | "sky" | "amber" | "violet" | "rose" | "slate" }>;
 }) {
   const tones: Array<"emerald" | "sky" | "amber" | "violet"> = ["emerald", "sky", "amber", "violet"];
+  const gridClass =
+    items.length === 4
+      ? "grid gap-3 grid-cols-2 sm:grid-cols-4"
+      : "grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className={gridClass}>
       {items.map((item, i) => {
         const tone = item.tone ?? tones[i % tones.length] ?? "violet";
         return (
