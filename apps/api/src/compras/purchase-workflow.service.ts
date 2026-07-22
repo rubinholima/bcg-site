@@ -15,6 +15,7 @@ import {
   REQUISITION_STATUS,
   requisitionInclude,
 } from './purchase-workflow.constants';
+import { cadastroEmail, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 
 interface RequisitionItem {
   productId?: string;
@@ -98,25 +99,25 @@ export class PurchaseWorkflowService {
   ) {
     const notifyFields = {
       ...(data.comprasNotifyEmail !== undefined && {
-        comprasNotifyEmail: data.comprasNotifyEmail?.trim() || null,
+        comprasNotifyEmail: cadastroEmail(data.comprasNotifyEmail),
       }),
       ...(data.comprasNotifyPhone !== undefined && {
         comprasNotifyPhone: data.comprasNotifyPhone?.trim() || null,
       }),
       ...(data.financeiroNotifyEmail !== undefined && {
-        financeiroNotifyEmail: data.financeiroNotifyEmail?.trim() || null,
+        financeiroNotifyEmail: cadastroEmail(data.financeiroNotifyEmail),
       }),
       ...(data.financeiroNotifyPhone !== undefined && {
         financeiroNotifyPhone: data.financeiroNotifyPhone?.trim() || null,
       }),
       ...(data.tiNotifyEmail !== undefined && {
-        tiNotifyEmail: data.tiNotifyEmail?.trim() || null,
+        tiNotifyEmail: cadastroEmail(data.tiNotifyEmail),
       }),
       ...(data.tiNotifyPhone !== undefined && {
         tiNotifyPhone: data.tiNotifyPhone?.trim() || null,
       }),
       ...(data.diretoriaNotifyEmail !== undefined && {
-        diretoriaNotifyEmail: data.diretoriaNotifyEmail?.trim() || null,
+        diretoriaNotifyEmail: cadastroEmail(data.diretoriaNotifyEmail),
       }),
       ...(data.diretoriaNotifyPhone !== undefined && {
         diretoriaNotifyPhone: data.diretoriaNotifyPhone?.trim() || null,
@@ -196,12 +197,16 @@ export class PurchaseWorkflowService {
       data: {
         tenantId: input.tenantId,
         requestedByUserId: input.requestedByUserId ?? null,
-        requestedByName: input.requestedByName.trim().toUpperCase(),
-        requesterEmail: input.requesterEmail?.trim().toLowerCase() ?? null,
+        requestedByName: cadastroUpperRequired(input.requestedByName),
+        requesterEmail: cadastroEmail(input.requesterEmail),
         requestType: input.requestType ?? 'compra',
-        departmentName: input.departmentName?.trim().toUpperCase() ?? null,
+        departmentName: cadastroUpper(input.departmentName),
         justification: input.justification ?? null,
-        items: input.items as object,
+        items: input.items.map((i) => ({
+          ...i,
+          description: cadastroUpperRequired(i.description),
+          unit: i.unit ? cadastroUpperRequired(i.unit) : i.unit,
+        })) as object,
         totalEstimated: input.totalEstimated ?? null,
         isPatrimonial,
         status: REQUISITION_STATUS.RASCUNHO,
@@ -232,11 +237,17 @@ export class PurchaseWorkflowService {
       where: { id },
       data: {
         ...(input.justification !== undefined && { justification: input.justification }),
-        ...(input.items != null && { items: input.items as object }),
+        ...(input.items != null && {
+          items: input.items.map((i) => ({
+            ...i,
+            description: cadastroUpperRequired(i.description),
+            unit: i.unit ? cadastroUpperRequired(i.unit) : i.unit,
+          })) as object,
+        }),
         ...(input.totalEstimated !== undefined && { totalEstimated: input.totalEstimated }),
         ...(input.isPatrimonial !== undefined && { isPatrimonial: input.isPatrimonial }),
         ...(input.departmentName !== undefined && {
-          departmentName: input.departmentName?.trim().toUpperCase() ?? null,
+          departmentName: cadastroUpper(input.departmentName),
         }),
       },
       include: requisitionInclude,
@@ -313,7 +324,7 @@ export class PurchaseWorkflowService {
       data: {
         requisitionId,
         supplierId: input.supplierId ?? null,
-        supplierName: input.supplierName.trim().toUpperCase(),
+        supplierName: cadastroUpperRequired(input.supplierName),
         items: input.items as object,
         totalAmount: input.totalAmount,
         deliveryDays: input.deliveryDays ?? null,
@@ -422,7 +433,7 @@ export class PurchaseWorkflowService {
           requisitionId,
           role: APPROVAL_ROLE.FINANCEIRO,
           approverUserId: approver.userId ?? null,
-          approverName: approver.name.trim().toUpperCase(),
+          approverName: cadastroUpperRequired(approver.name),
           decision: 'approved',
           notes: notes ?? null,
         },
@@ -457,7 +468,7 @@ export class PurchaseWorkflowService {
         requisitionId,
         role: APPROVAL_ROLE.DIRETORIA,
         approverUserId: approver.userId ?? null,
-        approverName: approver.name.trim().toUpperCase(),
+        approverName: cadastroUpperRequired(approver.name),
         decision: 'approved',
         notes: notes ?? null,
       },
@@ -483,7 +494,7 @@ export class PurchaseWorkflowService {
         requisitionId,
         role,
         approverUserId: approver.userId ?? null,
-        approverName: approver.name.trim().toUpperCase(),
+        approverName: cadastroUpperRequired(approver.name),
         decision: 'rejected',
         notes: reason,
       },
@@ -561,8 +572,8 @@ export class PurchaseWorkflowService {
           data: {
             tenantId: req.tenantId,
             categoryId: input.assetCategoryId,
-            description: item.description.trim().toUpperCase(),
-            location: input.location?.trim().toUpperCase() ?? null,
+            description: cadastroUpperRequired(item.description),
+            location: cadastroUpper(input.location),
             responsibleName: req.requestedByName,
             acquisitionDate: new Date(),
             acquisitionValue: item.estimatedUnitPrice
@@ -602,11 +613,11 @@ export class PurchaseWorkflowService {
       where: { requisitionId },
       create: {
         requisitionId,
-        receivedByName: input.receivedByName.trim().toUpperCase(),
+        receivedByName: cadastroUpperRequired(input.receivedByName),
         signatureStatus: 'pending',
       },
       update: {
-        receivedByName: input.receivedByName.trim().toUpperCase(),
+        receivedByName: cadastroUpperRequired(input.receivedByName),
         receivedAt: new Date(),
       },
     });
@@ -629,13 +640,18 @@ export class PurchaseWorkflowService {
     if (!this.helloSign.isConfigured()) {
       throw new BadRequestException('HelloSign não configurado.');
     }
+    const normalizedSignerEmail = cadastroEmail(signerEmail);
+    if (!normalizedSignerEmail) {
+      throw new BadRequestException('E-mail do signatário é obrigatório.');
+    }
+    const normalizedSignerName = signerName ? cadastroUpperRequired(signerName) : null;
     const pdfBuffer = await this.buildReceiptPdf(req);
     const result = await this.helloSign.sendForSignature({
       fileBuffer: pdfBuffer,
       fileName: `Termo recebimento ${req.id.slice(-6)}.pdf`,
       agreementName: `Termo de recebimento — ${req.requestedByName}`,
-      signerEmail: signerEmail.trim().toLowerCase(),
-      signerName: signerName?.trim().toUpperCase(),
+      signerEmail: normalizedSignerEmail,
+      signerName: normalizedSignerName ?? undefined,
       signatureField: { page: 1, x: 100, y: 650 },
     });
 
@@ -643,15 +659,15 @@ export class PurchaseWorkflowService {
       where: { requisitionId },
       create: {
         requisitionId,
-        signerEmail: signerEmail.trim().toLowerCase(),
-        signerName: signerName?.trim().toUpperCase() ?? null,
+        signerEmail: normalizedSignerEmail,
+        signerName: normalizedSignerName,
         helloSignRequestId: result.signatureRequestId,
         signatureStatus: 'sent',
         metadata: result.signingUrl ? { signingUrl: result.signingUrl } : {},
       },
       update: {
-        signerEmail: signerEmail.trim().toLowerCase(),
-        signerName: signerName?.trim().toUpperCase() ?? null,
+        signerEmail: normalizedSignerEmail,
+        signerName: normalizedSignerName,
         helloSignRequestId: result.signatureRequestId,
         signatureStatus: 'sent',
         metadata: result.signingUrl ? { signingUrl: result.signingUrl } : {},
@@ -701,6 +717,7 @@ export class PurchaseWorkflowService {
     line('TERMO DE RECEBIMENTO DE MATERIAL', 14, bold);
     line(`Requisição: ${req.id}`);
     line(`Solicitante: ${req.requestedByName}`);
+    if (req.requesterEmail) line(`E-mail: ${req.requesterEmail}`);
     line(`Empresa: ${req.tenant.name}`);
     line(`Data: ${new Date().toLocaleDateString('pt-BR')}`);
     y -= 8;

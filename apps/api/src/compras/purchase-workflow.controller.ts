@@ -17,17 +17,11 @@ import { SuperAdminGuard } from '../auth/super-admin.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import { requestActor } from '../common/request-actor';
 import { PurchaseWorkflowService } from './purchase-workflow.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
 
 type AuthedRequest = Request & { user: CognitoJwtPayload };
-
-function actor(req: AuthedRequest) {
-  return {
-    userId: req.user.sub,
-    name: (req.user.name as string) ?? (req.user.email as string) ?? 'Usuário',
-  };
-}
 
 @Controller('compras/workflow')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -164,7 +158,7 @@ export class PurchaseWorkflowController {
     @Body('notes') notes: string | undefined,
     @Req() req: AuthedRequest,
   ) {
-    return this.workflow.approve(id, role, actor(req), notes);
+    return this.workflow.approve(id, role, requestActor(req.user), notes);
   }
 
   @Post('requisitions/:id/reject')
@@ -175,7 +169,7 @@ export class PurchaseWorkflowController {
     @Body('reason') reason: string,
     @Req() req: AuthedRequest,
   ) {
-    return this.workflow.reject(id, role, actor(req), reason);
+    return this.workflow.reject(id, role, requestActor(req.user), reason);
   }
 
   @Post('requisitions/:id/create-order')
@@ -251,12 +245,12 @@ export class MyRequisitionsController {
       isPatrimonial?: boolean;
     },
   ) {
-    const a = actor(req);
+    const a = requestActor(req.user);
     return this.workflow.createRequisition({
       ...body,
       requestedByUserId: a.userId,
       requestedByName: a.name,
-      requesterEmail: req.user.email,
+      requesterEmail: a.email ?? undefined,
     });
   }
 

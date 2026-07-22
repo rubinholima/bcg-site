@@ -31,6 +31,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { cadastroEmail, cadastroUpper, formatRequesterDisplay } from "@/lib/cadastro-format";
+import { useAuth } from "@/context/AuthContext";
 import { Tenant } from "@/types/tenant";
 import {
   PurchaseRequisitionWorkflowRow,
@@ -57,6 +59,20 @@ interface PurchaseRequisitionWorkflowPanelProps {
 const selectClass =
   "w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground";
 
+function RequesterCell({ name, email }: { name: string; email?: string | null }) {
+  const { name: displayName, email: displayEmail } = formatRequesterDisplay(name, email);
+  return (
+    <div className="min-w-0">
+      <p className="font-medium truncate">{displayName}</p>
+      {displayEmail ? (
+        <p className="text-xs text-muted-foreground lowercase truncate">{displayEmail}</p>
+      ) : (
+        <p className="text-xs text-muted-foreground italic">E-mail não informado</p>
+      )}
+    </div>
+  );
+}
+
 export function PurchaseRequisitionWorkflowPanel({
   mode,
   tenants,
@@ -68,6 +84,11 @@ export function PurchaseRequisitionWorkflowPanel({
   newButtonLabel = "Nova requisição",
   formTitle = "Nova requisição de compra",
 }: PurchaseRequisitionWorkflowPanelProps) {
+  const { user } = useAuth();
+  const requesterPreview = formatRequesterDisplay(
+    user?.name ?? user?.username ?? "",
+    user?.email ?? "",
+  );
   const [rows, setRows] = useState<PurchaseRequisitionWorkflowRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenantFilter, setTenantFilter] = useState(defaultTenantId ?? "");
@@ -138,7 +159,7 @@ export function PurchaseRequisitionWorkflowPanel({
     try {
       const { data } = await api.get<PurchaseRequisitionWorkflowRow>(`/compras/workflow/requisitions/${id}`);
       setSelected(data);
-      setSignEmail(data.requesterEmail ?? "");
+      setSignEmail(cadastroEmail(data.requesterEmail));
     } catch {
       alert("Erro ao carregar requisição");
     } finally {
@@ -159,13 +180,13 @@ export function PurchaseRequisitionWorkflowPanel({
       await api.post("/requisicoes", {
         tenantId: formTenantId,
         requestType,
-        departmentName: formDepartment || undefined,
+        departmentName: formDepartment ? cadastroUpper(formDepartment) : undefined,
         justification: formJustification || undefined,
         isPatrimonial: formPatrimonial,
         items: formItems.filter((i) => i.description.trim()).map((i) => ({
-          description: i.description.trim(),
+          description: cadastroUpper(i.description),
           quantity: i.quantity,
-          unit: i.unit,
+          unit: cadastroUpper(i.unit) || "UN",
           isPatrimonial: formPatrimonial,
         })),
       });
@@ -325,7 +346,9 @@ export function PurchaseRequisitionWorkflowPanel({
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => openDetail(r.id)}
                     >
-                      <TableCell className="font-medium">{r.requestedByName}</TableCell>
+                      <TableCell>
+                        <RequesterCell name={r.requestedByName} email={r.requesterEmail} />
+                      </TableCell>
                       <TableCell className="text-muted-foreground">{r.tenant?.name}</TableCell>
                       <TableCell className="uppercase text-xs">{r.requestType}</TableCell>
                       <TableCell>
@@ -358,9 +381,22 @@ export function PurchaseRequisitionWorkflowPanel({
           ) : (
             <>
               <DialogHeader>
-                <DialogTitle>Requisição — {selected.requestedByName}</DialogTitle>
+                <DialogTitle>Requisição — {formatRequesterDisplay(selected.requestedByName, selected.requesterEmail).name}</DialogTitle>
                 <p className="text-sm text-muted-foreground">
                   {selected.tenant.name} · {REQUISITION_STATUS_LABELS[selected.status] ?? selected.status}
+                </p>
+                <p className="text-sm pt-1">
+                  <span className="text-muted-foreground">Solicitante:</span>{" "}
+                  {formatRequesterDisplay(selected.requestedByName, selected.requesterEmail).name}
+                  {selected.requesterEmail ? (
+                    <>
+                      {" "}
+                      ·{" "}
+                      <span className="lowercase text-muted-foreground">
+                        {formatRequesterDisplay(selected.requestedByName, selected.requesterEmail).email}
+                      </span>
+                    </>
+                  ) : null}
                 </p>
               </DialogHeader>
 
@@ -480,7 +516,7 @@ export function PurchaseRequisitionWorkflowPanel({
                       <Label className="text-left">E-mail do solicitante (assinatura)</Label>
                       <Input type="email" value={signEmail} onChange={(e) => setSignEmail(e.target.value)} />
                     </div>
-                    <Button type="button" disabled={actionLoading || !signEmail.trim()} onClick={() => runAction("send-receipt-signature", { signerEmail: signEmail, signerName: selected.requestedByName })}>
+                    <Button type="button" disabled={actionLoading || !signEmail.trim()} onClick={() => runAction("send-receipt-signature", { signerEmail: cadastroEmail(signEmail), signerName: selected.requestedByName })}>
                       Enviar termo para assinatura
                     </Button>
                   </>
@@ -500,6 +536,13 @@ export function PurchaseRequisitionWorkflowPanel({
         <DialogContent className="max-h-[90vh]">
           <DialogHeader><DialogTitle>{formTitle}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
+            {mode === "requester" && user && (
+              <div className="rounded-md border bg-muted/30 p-3 text-sm space-y-1">
+                <p className="text-xs text-muted-foreground">Solicitante (usuário logado)</p>
+                <p className="font-medium">{requesterPreview.name}</p>
+                <p className="text-muted-foreground lowercase">{requesterPreview.email || "—"}</p>
+              </div>
+            )}
             <div className="grid gap-2">
               <Label>Clube / Empresa *</Label>
               <select className={selectClass} value={formTenantId} onChange={(e) => setFormTenantId(e.target.value)}>
@@ -509,7 +552,11 @@ export function PurchaseRequisitionWorkflowPanel({
             </div>
             <div className="grid gap-2">
               <Label>Departamento / Área</Label>
-              <Input value={formDepartment} onChange={(e) => setFormDepartment(e.target.value)} className="uppercase" />
+              <Input
+                value={formDepartment}
+                onChange={(e) => setFormDepartment(cadastroUpper(e.target.value))}
+                className="uppercase"
+              />
             </div>
             <div className="grid gap-2">
               <Label>Justificativa</Label>
@@ -523,9 +570,9 @@ export function PurchaseRequisitionWorkflowPanel({
               <div key={idx} className="grid gap-2 border rounded p-2">
                 <Input placeholder="Descrição do material" value={item.description} onChange={(e) => {
                   const next = [...formItems];
-                  next[idx] = { ...next[idx], description: e.target.value };
+                  next[idx] = { ...next[idx], description: cadastroUpper(e.target.value) };
                   setFormItems(next);
-                }} />
+                }} className="uppercase" />
                 <div className="flex gap-2">
                   <Input type="number" min={1} className="w-24" value={item.quantity} onChange={(e) => {
                     const next = [...formItems];

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePurchaseRequisitionDto } from './dto/create-purchase-requisition.dto';
 import { UpdatePurchaseRequisitionDto } from './dto/update-purchase-requisition.dto';
+import { cadastroUpperRequired } from '../common/cadastro-text';
 
 @Injectable()
 export class PurchaseRequisitionsService {
@@ -33,7 +34,7 @@ export class PurchaseRequisitionsService {
     return this.prisma.purchaseRequisition.create({
       data: {
         tenantId: dto.tenantId,
-        requestedByName: dto.requestedByName,
+        requestedByName: cadastroUpperRequired(dto.requestedByName),
         justification: dto.justification ?? null,
         items: dto.items as object,
         totalEstimated: dto.totalEstimated ?? null,
@@ -46,7 +47,7 @@ export class PurchaseRequisitionsService {
   async update(id: string, dto: UpdatePurchaseRequisitionDto) {
     await this.findOne(id);
     const data: Record<string, unknown> = {};
-    if (dto.requestedByName != null) data.requestedByName = dto.requestedByName;
+    if (dto.requestedByName != null) data.requestedByName = cadastroUpperRequired(dto.requestedByName);
     if (dto.justification !== undefined) data.justification = dto.justification ?? null;
     if (dto.items != null) data.items = dto.items;
     if (dto.totalEstimated !== undefined) data.totalEstimated = dto.totalEstimated ?? null;

@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
+import { cadastroEmail } from "@/lib/cadastro-format";
 import { PurchaseSettingsRow, PurchaseSettingsSummaryRow } from "@/lib/purchase-workflow-types";
 import { Tenant } from "@/types/tenant";
 
@@ -38,8 +39,9 @@ const EMPTY_NOTIFY = {
 };
 
 function contactCell(email?: string | null, phone?: string | null) {
-  if (!email?.trim() && !phone?.trim()) return "—";
-  return [email?.trim(), phone?.trim()].filter(Boolean).join(" · ");
+  const mail = cadastroEmail(email);
+  if (!mail && !phone?.trim()) return "—";
+  return [mail || undefined, phone?.trim()].filter(Boolean).join(" · ");
 }
 
 export function PurchaseWorkflowSettingsForm({
@@ -93,13 +95,13 @@ export function PurchaseWorkflowSettingsForm({
         setMinQuotes(String(data.minQuotes ?? 2));
         setMaxQuotes(String(data.maxQuotes ?? 4));
         setNotify({
-          comprasNotifyEmail: data.comprasNotifyEmail ?? "",
+          comprasNotifyEmail: cadastroEmail(data.comprasNotifyEmail),
           comprasNotifyPhone: data.comprasNotifyPhone ?? "",
-          financeiroNotifyEmail: data.financeiroNotifyEmail ?? "",
+          financeiroNotifyEmail: cadastroEmail(data.financeiroNotifyEmail),
           financeiroNotifyPhone: data.financeiroNotifyPhone ?? "",
-          tiNotifyEmail: data.tiNotifyEmail ?? "",
+          tiNotifyEmail: cadastroEmail(data.tiNotifyEmail),
           tiNotifyPhone: data.tiNotifyPhone ?? "",
-          diretoriaNotifyEmail: data.diretoriaNotifyEmail ?? "",
+          diretoriaNotifyEmail: cadastroEmail(data.diretoriaNotifyEmail),
           diretoriaNotifyPhone: data.diretoriaNotifyPhone ?? "",
         });
       })
@@ -115,13 +117,13 @@ export function PurchaseWorkflowSettingsForm({
         approvalThresholdBrl: parseFloat(threshold) || 5000,
         minQuotes: parseInt(minQuotes, 10) || 2,
         maxQuotes: parseInt(maxQuotes, 10) || 4,
-        comprasNotifyEmail: notify.comprasNotifyEmail.trim() || null,
+        comprasNotifyEmail: cadastroEmail(notify.comprasNotifyEmail) || null,
         comprasNotifyPhone: notify.comprasNotifyPhone.trim() || null,
-        financeiroNotifyEmail: notify.financeiroNotifyEmail.trim() || null,
+        financeiroNotifyEmail: cadastroEmail(notify.financeiroNotifyEmail) || null,
         financeiroNotifyPhone: notify.financeiroNotifyPhone.trim() || null,
-        tiNotifyEmail: notify.tiNotifyEmail.trim() || null,
+        tiNotifyEmail: cadastroEmail(notify.tiNotifyEmail) || null,
         tiNotifyPhone: notify.tiNotifyPhone.trim() || null,
-        diretoriaNotifyEmail: notify.diretoriaNotifyEmail.trim() || null,
+        diretoriaNotifyEmail: cadastroEmail(notify.diretoriaNotifyEmail) || null,
         diretoriaNotifyPhone: notify.diretoriaNotifyPhone.trim() || null,
       });
       loadAllSummary();

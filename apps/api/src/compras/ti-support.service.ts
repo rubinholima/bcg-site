@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { WorkflowNotifyService } from './workflow-notify.service';
+import { cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 
 @Injectable()
 export class TiSupportService {
@@ -41,8 +42,8 @@ export class TiSupportService {
       data: {
         tenantId: input.tenantId,
         requestedByUserId: input.requestedByUserId ?? null,
-        requestedByName: input.requestedByName.trim().toUpperCase(),
-        subject: input.subject.trim().toUpperCase(),
+        requestedByName: cadastroUpperRequired(input.requestedByName),
+        subject: cadastroUpperRequired(input.subject),
         description: input.description ?? null,
         priority: input.priority ?? 'normal',
         status: 'aberto',
@@ -77,7 +78,7 @@ export class TiSupportService {
       data: {
         ...(data.status != null && { status: data.status }),
         ...(data.assignedToName !== undefined && {
-          assignedToName: data.assignedToName?.trim().toUpperCase() ?? null,
+          assignedToName: cadastroUpper(data.assignedToName),
         }),
         ...(data.resolutionNotes !== undefined && { resolutionNotes: data.resolutionNotes }),
         ...(data.priority != null && { priority: data.priority }),

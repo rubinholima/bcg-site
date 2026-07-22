@@ -5,6 +5,7 @@ import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { CognitoJwtPayload } from '../auth/jwt-auth.guard';
+import { requestActor } from '../common/request-actor';
 import { TiSupportService } from './ti-support.service';
 import { PurchaseWorkflowService } from './purchase-workflow.service';
 
@@ -30,10 +31,11 @@ export class TiSupportController {
     @Body()
     body: { tenantId: string; subject: string; description?: string; priority?: string },
   ) {
+    const actor = requestActor(req.user);
     return this.ti.create({
       tenantId: body.tenantId,
-      requestedByUserId: req.user.sub,
-      requestedByName: (req.user.name as string) ?? (req.user.email as string) ?? 'Usuário',
+      requestedByUserId: actor.userId,
+      requestedByName: actor.name,
       subject: body.subject,
       description: body.description,
       priority: body.priority,
@@ -78,12 +80,13 @@ export class TiSupportController {
       isPatrimonial?: boolean;
     },
   ) {
+    const actor = requestActor(req.user);
     return this.workflow.createRequisition({
       ...body,
       requestType: 'ti',
-      requestedByUserId: req.user.sub,
-      requestedByName: (req.user.name as string) ?? (req.user.email as string) ?? 'Usuário',
-      requesterEmail: req.user.email,
+      requestedByUserId: actor.userId,
+      requestedByName: actor.name,
+      requesterEmail: actor.email ?? undefined,
     });
   }
 }
@@ -100,10 +103,11 @@ export class TiPublicController {
     @Body()
     body: { tenantId: string; subject: string; description?: string; priority?: string },
   ) {
+    const actor = requestActor(req.user);
     return this.ti.create({
       tenantId: body.tenantId,
-      requestedByUserId: req.user.sub,
-      requestedByName: (req.user.name as string) ?? (req.user.email as string) ?? 'Usuário',
+      requestedByUserId: actor.userId,
+      requestedByName: actor.name,
       subject: body.subject,
       description: body.description,
       priority: body.priority,
