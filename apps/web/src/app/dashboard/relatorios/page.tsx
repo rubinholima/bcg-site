@@ -6,6 +6,7 @@ import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
+import { FutebolRelatoriosHub } from "@/components/dashboard/futebol/FutebolRelatoriosHub";
 
 const HUB_LABELS: Record<string, string> = {
   grupo_master: "Grupo Master",
@@ -53,10 +54,15 @@ function RelatoriosContent() {
         title="Relatórios"
         description={
           hubLabel
-            ? `Indicadores e relatórios do hub ${hubLabel}`
+            ? hub === "futebol"
+              ? `Relatórios para impressão e PDF — ${hubLabel}`
+              : `Indicadores e relatórios do hub ${hubLabel}`
             : "Relatórios consolidados — acesse pelo menu de cada departamento"
         }
       />
+      {hub === "futebol" ? (
+        <FutebolRelatoriosHub />
+      ) : (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -71,6 +77,7 @@ function RelatoriosContent() {
           </p>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

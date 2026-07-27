@@ -46,6 +46,7 @@ import { PsychologySupportMaterialsModule } from './psychology-support-materials
 import { InfrastructureModule } from './infraestrutura/infrastructure.module';
 import { RolesModule } from './roles/roles.module';
 import { ComunicacaoModule } from './comunicacao/comunicacao.module';
+import { FutebolRelatoriosModule } from './futebol-relatorios/futebol-relatorios.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { ComunicacaoModule } from './comunicacao/comunicacao.module';
     PsychologySupportMaterialsModule,
     InfrastructureModule,
     ComunicacaoModule,
+    FutebolRelatoriosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
