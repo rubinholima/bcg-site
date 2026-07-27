@@ -39,7 +39,7 @@ export function PrintPreviewDialog({
             <iframe
               title={title}
               srcDoc={html}
-              className="mx-auto block min-h-[70vh] w-full max-w-[820px] rounded-md border border-border bg-white shadow-sm"
+              className="mx-auto block w-full max-w-[820px] rounded-md border border-border bg-white shadow-sm"
               sandbox="allow-same-origin"
             />
           ) : (

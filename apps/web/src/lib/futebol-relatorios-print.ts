@@ -80,6 +80,12 @@ function baseStyles(size: PrintPageSize): string {
       print-color-adjust: exact;
     }
     .page { max-width: 100%; margin: 0 auto; }
+    .report-intro {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
     .top-bar {
       height: 6px;
       background: linear-gradient(90deg, ${BCG.red} 0%, ${BCG.red} 48%, ${BCG.blue} 52%, ${BCG.blue} 100%);
@@ -91,11 +97,13 @@ function baseStyles(size: PrintPageSize): string {
       align-items: center;
       gap: 20px;
       padding: 16px 18px;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
       background: linear-gradient(135deg, ${BCG.blueLight} 0%, #ffffff 55%, ${BCG.redLight} 100%);
       border: 1px solid #cbd5e1;
       border-left: 5px solid ${BCG.red};
       border-radius: 12px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .logo-wrap {
       flex-shrink: 0;
@@ -164,12 +172,14 @@ function baseStyles(size: PrintPageSize): string {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px 16px;
-      margin-bottom: 20px;
-      padding: 14px 16px;
+      margin-bottom: 0;
+      padding: 12px 14px;
       background: ${BCG.blueLight};
       border: 1px solid #b8c9e8;
       border-top: 3px solid ${BCG.red};
       border-radius: 10px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .meta-item label {
       display: block;
@@ -187,7 +197,8 @@ function baseStyles(size: PrintPageSize): string {
       color: #1e293b;
     }
     .meta-item.full { grid-column: 1 / -1; }
-    .section { margin-bottom: 22px; break-inside: avoid; }
+    .section { margin-bottom: 18px; break-inside: auto; page-break-inside: auto; }
+    .section:first-of-type { margin-top: 14px; }
     .section-title {
       margin: 0 0 8px;
       font-size: 12px;
@@ -200,6 +211,8 @@ function baseStyles(size: PrintPageSize): string {
       gap: 10px;
       padding-left: 10px;
       border-left: 4px solid ${BCG.red};
+      break-after: avoid;
+      page-break-after: avoid;
     }
     .section-title::after {
       content: "";
@@ -212,6 +225,13 @@ function baseStyles(size: PrintPageSize): string {
       width: 100%;
       border-collapse: collapse;
       font-size: 11px;
+      break-inside: auto;
+      page-break-inside: auto;
+    }
+    thead { display: table-header-group; }
+    tbody tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     thead th {
       background: linear-gradient(180deg, ${BCG.blueMid} 0%, ${BCG.blue} 100%);
@@ -246,6 +266,8 @@ function baseStyles(size: PrintPageSize): string {
       gap: 12px;
       font-size: 9px;
       color: #64748b;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .footer strong { color: ${BCG.blue}; }
     .schedule-wrap { overflow: hidden; }
@@ -385,6 +407,7 @@ function documentShell(
   logoUrl: string | null | undefined,
   docTitle: string,
   badge: string,
+  introMeta: string,
   body: string,
   size: PrintPageSize,
 ): string {
@@ -397,16 +420,19 @@ function documentShell(
 </head>
 <body>
   <div class="page">
-    <div class="top-bar"></div>
-    <header class="header">
-      ${logoHtml(logoUrl, clubName)}
-      <div class="brand-block">
-        <p class="brand">Boston City Group · Depto Futebol</p>
-        <h1 class="club">${escapeHtml(clubName)}</h1>
-        <p class="doc-title">${escapeHtml(docTitle)}</p>
-        <span class="badge">${escapeHtml(badge)}</span>
-      </div>
-    </header>
+    <div class="report-intro">
+      <div class="top-bar"></div>
+      <header class="header">
+        ${logoHtml(logoUrl, clubName)}
+        <div class="brand-block">
+          <p class="brand">Boston City Group · Depto Futebol</p>
+          <h1 class="club">${escapeHtml(clubName)}</h1>
+          <p class="doc-title">${escapeHtml(docTitle)}</p>
+          <span class="badge">${escapeHtml(badge)}</span>
+        </div>
+      </header>
+      ${introMeta}
+    </div>
     ${body}
     <footer class="footer">
       <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
@@ -422,8 +448,8 @@ export function buildPassageirosPrintHtml(
   size: PrintPageSize = "A4",
 ): string {
   const { travel } = data;
+  const introMeta = travelMetaHtml(travel);
   const body = `
-    ${travelMetaHtml(travel)}
     ${personTable("Atletas", data.athletes)}
     ${personTable("Comissão técnica", data.staff, true)}
     ${personTable("Convidados", data.guests)}
@@ -438,6 +464,7 @@ export function buildPassageirosPrintHtml(
     travel.tenant.logoUrl,
     "Relação de Passageiros",
     badge,
+    introMeta,
     body,
     size,
   );
@@ -483,7 +510,6 @@ export function buildHospedesPrintHtml(
   }
 
   const body = `
-    ${travelMetaHtml(travel, extra)}
     <section class="section">
       <h2 class="section-title">Hóspedes por quarto</h2>
       <table>
@@ -509,6 +535,7 @@ export function buildHospedesPrintHtml(
     travel.tenant.logoUrl,
     "Relação de Hóspedes",
     travel.categoryLabel,
+    travelMetaHtml(travel, extra),
     body,
     size,
   );
@@ -549,7 +576,7 @@ export function buildProgramacaoPrintHtml(
     })
     .join("");
 
-  const body = `
+  const introMeta = `
     <div class="meta-grid">
       <div class="meta-item full">
         <label>Período</label>
@@ -562,6 +589,9 @@ export function buildProgramacaoPrintHtml(
         )}</span>
       </div>
     </div>
+  `;
+
+  const body = `
     <section class="section schedule-wrap">
       <h2 class="section-title">Programação semanal</h2>
       <table class="schedule-table">
@@ -582,6 +612,7 @@ export function buildProgramacaoPrintHtml(
     data.tenant.logoUrl,
     "Programação Semanal",
     data.period.label,
+    introMeta,
     body,
     size,
   );
