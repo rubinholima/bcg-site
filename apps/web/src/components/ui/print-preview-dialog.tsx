@@ -51,7 +51,11 @@ export function PrintPreviewDialog({
             Fechar
           </Button>
           {onPrint ? (
-            <Button type="button" className="bg-amber-600 text-white hover:bg-amber-500" onClick={onPrint}>
+            <Button
+              type="button"
+              className="bg-[#00205B] text-white hover:bg-[#003087]"
+              onClick={onPrint}
+            >
               <Printer className="mr-2 h-4 w-4" />
               Imprimir / PDF
             </Button>

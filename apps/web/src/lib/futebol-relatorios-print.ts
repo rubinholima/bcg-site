@@ -1,4 +1,5 @@
 import { formatCpfForDisplay } from "@/lib/format-cpf";
+import { getPublicImageUrl } from "@/lib/media-url";
 import type {
   HospedesReportDto,
   PassageirosReportDto,
@@ -8,12 +9,36 @@ import type {
   RelatorioHospedeRow,
 } from "@/lib/futebol-relatorios.types";
 
+/** Cores oficiais Boston City Group — vermelho e azul. */
+const BCG = {
+  red: "#C8102E",
+  redDark: "#9B0C24",
+  blue: "#00205B",
+  blueMid: "#003087",
+  blueLight: "#E8EEF7",
+  redLight: "#FCE8EC",
+} as const;
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/** Logo do clube com URL absoluta (iframe srcDoc não resolve paths relativos). */
+export function resolveLogoUrlForPrint(logoUrl: string | null | undefined): string {
+  const resolved = getPublicImageUrl(logoUrl);
+  if (!resolved) return "";
+  if (/^https?:\/\//i.test(resolved)) return resolved;
+  if (resolved.startsWith("/")) {
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}${resolved}`;
+    }
+    return `https://www.bostoncitygroup.biz${resolved}`;
+  }
+  return resolved;
 }
 
 function formatBrDate(iso?: string | null): string {
@@ -38,7 +63,7 @@ function formatBrDateTime(iso?: string | null): string {
 
 function pageCss(size: PrintPageSize): string {
   const pageSize = size === "Letter" ? "letter" : "A4";
-  return `@page { size: ${pageSize}; margin: 14mm 12mm; }`;
+  return `@page { size: ${pageSize}; margin: 12mm 11mm; }`;
 }
 
 function baseStyles(size: PrintPageSize): string {
@@ -56,74 +81,84 @@ function baseStyles(size: PrintPageSize): string {
     }
     .page { max-width: 100%; margin: 0 auto; }
     .top-bar {
-      height: 5px;
-      background: linear-gradient(90deg, #b45309 0%, #fcd34d 45%, #fef3c7 100%);
+      height: 6px;
+      background: linear-gradient(90deg, ${BCG.red} 0%, ${BCG.red} 48%, ${BCG.blue} 52%, ${BCG.blue} 100%);
       border-radius: 3px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
     .header {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      padding-bottom: 16px;
-      margin-bottom: 18px;
-      border-bottom: 2px solid #fde68a;
+      align-items: center;
+      gap: 20px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, ${BCG.blueLight} 0%, #ffffff 55%, ${BCG.redLight} 100%);
+      border: 1px solid #cbd5e1;
+      border-left: 5px solid ${BCG.red};
+      border-radius: 12px;
+    }
+    .logo-wrap {
+      flex-shrink: 0;
+      width: 88px;
+      height: 88px;
+      border-radius: 14px;
+      border: 2px solid ${BCG.blue};
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0, 32, 91, 0.12);
+    }
+    .logo-wrap img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      padding: 6px;
+    }
+    .logo-fallback {
+      font-size: 11px;
+      font-weight: 800;
+      color: ${BCG.blue};
+      text-align: center;
+      padding: 8px;
+      line-height: 1.2;
     }
     .brand-block { flex: 1; min-width: 0; }
     .brand {
       margin: 0 0 4px;
       font-size: 9px;
       font-weight: 700;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: #92400e;
+      color: ${BCG.red};
     }
     .club {
       margin: 0;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: #0f172a;
-      line-height: 1.15;
+      color: ${BCG.blue};
+      line-height: 1.12;
     }
     .doc-title {
-      margin: 6px 0 0;
-      font-size: 15px;
+      margin: 8px 0 0;
+      font-size: 14px;
       font-weight: 700;
-      color: #b45309;
+      color: ${BCG.redDark};
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     .badge {
       display: inline-block;
-      margin-top: 8px;
-      padding: 4px 10px;
+      margin-top: 10px;
+      padding: 5px 12px;
       border-radius: 999px;
-      background: #fffbeb;
-      border: 1px solid #fcd34d;
-      font-size: 11px;
-      font-weight: 600;
-      color: #92400e;
-    }
-    .logo-slot {
-      width: 72px;
-      height: 72px;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      flex-shrink: 0;
-      background: #fafafa;
-    }
-    .logo-slot img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .logo-fallback {
+      background: ${BCG.blue};
       font-size: 10px;
-      font-weight: 800;
-      color: #b45309;
-      text-align: center;
-      padding: 6px;
-      line-height: 1.2;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.03em;
     }
     .meta-grid {
       display: grid;
@@ -131,8 +166,9 @@ function baseStyles(size: PrintPageSize): string {
       gap: 10px 16px;
       margin-bottom: 20px;
       padding: 14px 16px;
-      background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
-      border: 1px solid #fde68a;
+      background: ${BCG.blueLight};
+      border: 1px solid #b8c9e8;
+      border-top: 3px solid ${BCG.red};
       border-radius: 10px;
     }
     .meta-item label {
@@ -141,7 +177,7 @@ function baseStyles(size: PrintPageSize): string {
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #78716c;
+      color: ${BCG.blueMid};
       margin-bottom: 2px;
     }
     .meta-item span {
@@ -154,20 +190,23 @@ function baseStyles(size: PrintPageSize): string {
     .section { margin-bottom: 22px; break-inside: avoid; }
     .section-title {
       margin: 0 0 8px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #92400e;
+      letter-spacing: 0.08em;
+      color: ${BCG.blue};
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      padding-left: 10px;
+      border-left: 4px solid ${BCG.red};
     }
     .section-title::after {
       content: "";
       flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, #fcd34d, transparent);
+      height: 2px;
+      background: linear-gradient(90deg, ${BCG.blue} 0%, transparent 100%);
+      opacity: 0.35;
     }
     table {
       width: 100%;
@@ -175,23 +214,23 @@ function baseStyles(size: PrintPageSize): string {
       font-size: 11px;
     }
     thead th {
-      background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
-      color: #78350f;
+      background: linear-gradient(180deg, ${BCG.blueMid} 0%, ${BCG.blue} 100%);
+      color: #fff;
       font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 8px 8px;
-      border: 1px solid #fcd34d;
+      letter-spacing: 0.05em;
+      padding: 9px 8px;
+      border: 1px solid ${BCG.blue};
       text-align: left;
     }
     tbody td {
       padding: 7px 8px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #dbe3f0;
       vertical-align: middle;
     }
-    tbody tr:nth-child(even) td { background: #fafafa; }
-    .num { width: 36px; text-align: center; font-weight: 700; color: #64748b; }
+    tbody tr:nth-child(even) td { background: #f8fafc; }
+    .num { width: 36px; text-align: center; font-weight: 700; color: ${BCG.red}; }
     .empty {
       text-align: center;
       color: #94a3b8;
@@ -201,40 +240,39 @@ function baseStyles(size: PrintPageSize): string {
     .footer {
       margin-top: 24px;
       padding-top: 12px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 2px solid ${BCG.blueLight};
       display: flex;
       justify-content: space-between;
       gap: 12px;
       font-size: 9px;
       color: #64748b;
     }
+    .footer strong { color: ${BCG.blue}; }
     .schedule-wrap { overflow: hidden; }
     .schedule-table { font-size: 9.5px; }
-    .schedule-table thead th {
-      text-align: center;
-      padding: 6px 4px;
-    }
+    .schedule-table thead th { text-align: center; padding: 7px 4px; }
     .schedule-table tbody td {
       vertical-align: top;
       min-width: 80px;
       padding: 6px 5px;
     }
     .day-cell {
-      background: #fffbeb !important;
+      background: ${BCG.blueLight} !important;
       font-weight: 700;
-      color: #78350f;
+      color: ${BCG.blue};
       white-space: nowrap;
       width: 110px;
+      border-left: 3px solid ${BCG.red} !important;
     }
     .act {
       margin-bottom: 6px;
       padding-bottom: 6px;
-      border-bottom: 1px dashed #e2e8f0;
+      border-bottom: 1px dashed #cbd5e1;
     }
     .act:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
     .act-time {
       font-weight: 800;
-      color: #b45309;
+      color: ${BCG.red};
       font-size: 9px;
     }
     .act-title { font-weight: 600; color: #0f172a; line-height: 1.3; }
@@ -243,8 +281,9 @@ function baseStyles(size: PrintPageSize): string {
 }
 
 function logoHtml(logoUrl: string | null | undefined, clubName: string): string {
-  if (logoUrl?.trim()) {
-    return `<div class="logo-slot"><img src="${escapeHtml(logoUrl)}" alt="" /></div>`;
+  const absolute = resolveLogoUrlForPrint(logoUrl);
+  if (absolute) {
+    return `<div class="logo-wrap"><img src="${escapeHtml(absolute)}" alt="${escapeHtml(clubName)}" /></div>`;
   }
   const initials = clubName
     .split(/\s+/)
@@ -252,7 +291,7 @@ function logoHtml(logoUrl: string | null | undefined, clubName: string): string 
     .map((w) => w.charAt(0))
     .join("")
     .toUpperCase();
-  return `<div class="logo-slot"><div class="logo-fallback">${escapeHtml(initials || "BCG")}</div></div>`;
+  return `<div class="logo-wrap"><div class="logo-fallback">${escapeHtml(initials || "BCG")}</div></div>`;
 }
 
 function personTableRows(rows: RelatorioPessoaRow[], showRole = false): string {
@@ -300,10 +339,7 @@ function personTable(title: string, rows: RelatorioPessoaRow[], showRole = false
 
 function travelMetaHtml(travel: PassageirosReportDto["travel"], extra?: string): string {
   const location = [travel.stadiumName, travel.city, travel.country].filter(Boolean).join(" · ");
-  const transportLine = [
-    travel.transportLabel,
-    travel.transportDetails?.trim(),
-  ]
+  const transportLine = [travel.transportLabel, travel.transportDetails?.trim()]
     .filter(Boolean)
     .join(" — ");
 
@@ -363,18 +399,18 @@ function documentShell(
   <div class="page">
     <div class="top-bar"></div>
     <header class="header">
+      ${logoHtml(logoUrl, clubName)}
       <div class="brand-block">
         <p class="brand">Boston City Group · Depto Futebol</p>
         <h1 class="club">${escapeHtml(clubName)}</h1>
         <p class="doc-title">${escapeHtml(docTitle)}</p>
         <span class="badge">${escapeHtml(badge)}</span>
       </div>
-      ${logoHtml(logoUrl, clubName)}
     </header>
     ${body}
     <footer class="footer">
       <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
-      <span>Boston City Group · Relatório oficial</span>
+      <span><strong>Boston City Group</strong> · Relatório oficial</span>
     </footer>
   </div>
 </body>
@@ -399,7 +435,7 @@ export function buildPassageirosPrintHtml(
   return documentShell(
     `Relação de Passageiros — ${travel.tenant.name}`,
     travel.tenant.name,
-    null,
+    travel.tenant.logoUrl,
     "Relação de Passageiros",
     badge,
     body,
@@ -470,7 +506,7 @@ export function buildHospedesPrintHtml(
   return documentShell(
     `Relação de Hóspedes — ${travel.tenant.name}`,
     travel.tenant.name,
-    null,
+    travel.tenant.logoUrl,
     "Relação de Hóspedes",
     travel.categoryLabel,
     body,
@@ -483,10 +519,7 @@ export function buildProgramacaoPrintHtml(
   size: PrintPageSize = "A4",
 ): string {
   const catHeaders = data.categories
-    .map(
-      (c) =>
-        `<th>${escapeHtml(data.categoryLabels[c] ?? c)}</th>`,
-    )
+    .map((c) => `<th>${escapeHtml(data.categoryLabels[c] ?? c)}</th>`)
     .join("");
 
   const rows = data.days
@@ -546,7 +579,7 @@ export function buildProgramacaoPrintHtml(
   return documentShell(
     `Programação Semanal — ${data.tenant.name}`,
     data.tenant.name,
-    null,
+    data.tenant.logoUrl,
     "Programação Semanal",
     data.period.label,
     body,

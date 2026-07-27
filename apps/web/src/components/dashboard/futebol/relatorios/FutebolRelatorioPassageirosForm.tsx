@@ -155,7 +155,7 @@ export function FutebolRelatorioPassageirosForm() {
             </Button>
             <Button
               type="button"
-              className="bg-amber-600 text-white hover:bg-amber-500"
+              className="bg-[#00205B] text-white hover:bg-[#003087]"
               disabled={busy}
               onClick={() => void handlePrint()}
             >
