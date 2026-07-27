@@ -108,6 +108,58 @@ const ADM_RH = [
   'relatorios_adm',
 ];
 
+const SAUDE_HUB = [
+  'dashboard__dashboard',
+  'dashboard',
+  'saude__saude_visao',
+  'saude',
+  'relatorios_saude',
+];
+
+const SAUDE_FISIOTERAPIA = [
+  ...SAUDE_HUB,
+  'saude__saude_fisioterapia',
+  'saude/saude_cadastros__cad_estagiarios',
+  'futebol__futebol_visao',
+  'futebol',
+  'futebol/futebol_cadastros__cad_jogadores',
+  'player_tab__desempenho',
+];
+
+const SAUDE_ENFERMEIRO = [
+  ...SAUDE_HUB,
+  'saude/saude_cadastros__cad_enfermeiros',
+  'saude__medico',
+  'saude/medico__medico_historico',
+  'medico',
+  'player_tab__medico',
+  'futebol/futebol_cadastros__cad_jogadores',
+];
+
+const SAUDE_ESTAGIARIO = [
+  ...SAUDE_HUB,
+  'saude__saude_fisioterapia',
+  'saude/saude_cadastros__cad_estagiarios',
+];
+
+const PERF_COORDENADOR = [
+  ...FUTEBOL_HUB,
+  ...FUTEBOL_CADASTROS.filter((s) => !s.includes('desligados')),
+  ...FUTEBOL_PERFORMANCE,
+  'relatorios_futebol',
+];
+
+const PERF_NUTRICIONISTA = [
+  ...FUTEBOL_HUB,
+  'futebol/futebol_cadastros__cad_jogadores',
+  'futebol/futebol_performance__futebol_performance_dash',
+  'futebol/futebol_performance__futebol_nutricionista',
+  'futebol_performance',
+  'adm__adm_nutricao',
+  'adm_nutricao',
+  'relatorios_futebol',
+];
+
 const ADM_CEO = [
   'dashboard__dashboard',
   'dashboard',
@@ -208,6 +260,15 @@ const NEW_ROLE_DEFAULTS: Record<string, readonly string[]> = {
   financeiro: [...ADM_FINANCEIRO],
   ceo: [...ADM_CEO],
   marketing: [...MARKETING_FULL],
+  fisioterapia: [...SAUDE_FISIOTERAPIA],
+  estagiario: [...SAUDE_ESTAGIARIO],
+  estagiaria: [...SAUDE_ESTAGIARIO],
+  massagista: [...SAUDE_FISIOTERAPIA],
+  coordenador: [...PERF_COORDENADOR],
+  coordenadora: [...PERF_COORDENADOR],
+  nutricionista: [...PERF_NUTRICIONISTA],
+  enfermeiro: [...SAUDE_ENFERMEIRO],
+  enfermeiro_tec: [...SAUDE_ENFERMEIRO],
 };
 
 async function applyRoleDefaults(roleSlug: string, slugs: readonly string[]) {

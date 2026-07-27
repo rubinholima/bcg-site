@@ -1,5 +1,5 @@
 /**
- * Importa usuários das abas ADM e FUTEBOL da planilha Cup360 BCFC.
+ * Importa usuários das abas da planilha Cup360 BCFC.
  *
  * Planilha: https://docs.google.com/spreadsheets/d/19slG84asLFQ376Ll7tH9tJst7aDpvjxEOjbVnz4tf4o
  *
@@ -8,8 +8,9 @@
  *
  * Uso:
  *   cd apps/api
- *   pnpm import:cup360-users          # aplica
- *   pnpm import:cup360-users -- --dry-run
+ *   pnpm import:cup360-users                              # todas as abas
+ *   pnpm import:cup360-users -- --tabs=FISIOTERAPIA,PERFORMANCE,SAUDE
+ *   pnpm import:cup360-users -- --dry-run --tabs=FISIOTERAPIA,PERFORMANCE,SAUDE
  */
 
 import * as path from 'path';
@@ -29,7 +30,19 @@ const SALT_ROUNDS = 10;
 const DRY_RUN = process.argv.includes('--dry-run');
 const SHEET_ID = '19slG84asLFQ376Ll7tH9tJst7aDpvjxEOjbVnz4tf4o';
 
+const ALL_SHEET_TABS = [
+  'ADM',
+  'FUTEBOL',
+  'FISIOTERAPIA',
+  'PERFORMANCE',
+  'SAUDE',
+  'PSICOLOGIA',
+] as const;
+
+type SheetTab = (typeof ALL_SHEET_TABS)[number];
+
 type SheetRow = {
+  sheet: SheetTab;
   name: string;
   username: string;
   email: string;
@@ -52,6 +65,18 @@ const ROLE_SLUG_MAP: Record<string, string> = {
   FINANCEIRO: 'financeiro',
   CEO: 'ceo',
   MARKETING: 'marketing',
+  FISIOTERAPIA: 'fisioterapia',
+  ESTAGIARIO: 'estagiario',
+  ESTAGIARIA: 'estagiaria',
+  MASSAGISTA: 'massagista',
+  COORDENADOR: 'coordenador',
+  COORDENADORA: 'coordenadora',
+  NUTRICIONISTA: 'nutricionista',
+  ENFERMEIRO: 'enfermeiro',
+  ENFERMEIRA: 'enfermeiro',
+  ENFERMEIRO_TEC: 'enfermeiro_tec',
+  PSICOLOGO: 'psicologo',
+  PSICOLOGA: 'psicologo',
 };
 
 const NEW_ROLES: { slug: string; label: string; sortOrder: number }[] = [
@@ -64,7 +89,43 @@ const NEW_ROLES: { slug: string; label: string; sortOrder: number }[] = [
   { slug: 'financeiro', label: 'FINANCEIRO', sortOrder: 170 },
   { slug: 'ceo', label: 'CEO', sortOrder: 180 },
   { slug: 'marketing', label: 'MARKETING', sortOrder: 190 },
+  { slug: 'fisioterapia', label: 'FISIOTERAPIA', sortOrder: 200 },
+  { slug: 'estagiario', label: 'ESTAGIÁRIO', sortOrder: 210 },
+  { slug: 'estagiaria', label: 'ESTAGIÁRIA', sortOrder: 215 },
+  { slug: 'massagista', label: 'MASSAGISTA', sortOrder: 220 },
+  { slug: 'coordenador', label: 'COORDENADOR', sortOrder: 230 },
+  { slug: 'coordenadora', label: 'COORDENADORA', sortOrder: 235 },
+  { slug: 'nutricionista', label: 'NUTRICIONISTA', sortOrder: 240 },
+  { slug: 'enfermeiro', label: 'ENFERMEIRO', sortOrder: 250 },
+  { slug: 'enfermeiro_tec', label: 'TÉCNICO ENFERMAGEM', sortOrder: 255 },
 ];
+
+function parseTabsArg(): SheetTab[] {
+  const parts: string[] = [];
+  for (let i = 0; i < process.argv.length; i++) {
+    const a = process.argv[i];
+    if (a.startsWith('--tabs=')) {
+      parts.push(...a.slice('--tabs='.length).split(/[,\s]+/));
+      continue;
+    }
+    if (a === '--tabs') {
+      const next = process.argv[i + 1];
+      if (next && !next.startsWith('--')) {
+        parts.push(...next.split(/[,\s]+/));
+        i++;
+      }
+    }
+  }
+
+  const tabs = parts.map((t) => t.trim().toUpperCase()).filter(Boolean);
+  if (!tabs.length) return [...ALL_SHEET_TABS];
+
+  const invalid = tabs.filter((t) => !ALL_SHEET_TABS.includes(t as SheetTab));
+  if (invalid.length) {
+    throw new Error(`Abas inválidas: ${invalid.join(', ')}. Válidas: ${ALL_SHEET_TABS.join(', ')}`);
+  }
+  return tabs as SheetTab[];
+}
 
 function normalizeRoleLabel(label: string): string {
   return label.trim().toLocaleUpperCase('pt-BR');
@@ -105,7 +166,24 @@ function parseCsvLine(line: string): string[] {
   return out.map((c) => c.trim());
 }
 
-function rowFromParts(parts: string[], sheet: 'ADM' | 'FUTEBOL'): SheetRow | null {
+function normalizeRoleKey(key: string): string {
+  return key
+    .trim()
+    .toLocaleUpperCase('pt-BR')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+}
+
+function resolveRoleKey(sheet: SheetTab, parts: SheetRow): string {
+  const cargo = normalizeRoleKey(parts.cargo);
+  if (sheet === 'SAUDE') {
+    if (cargo.includes('ENFERMEIR')) return 'ENFERMEIRO';
+    if (cargo.includes('TECNICO') && cargo.includes('ENFERMAGEM')) return 'ENFERMEIRO_TEC';
+  }
+  return normalizeRoleKey(parts.role);
+}
+
+function rowFromParts(parts: string[], sheet: SheetTab): SheetRow | null {
   // Colunas: vazio, NOME, USERNAME, EMAIL, CARGO, CLUBE, ROLE, (CARGO dup ADM), SENHA
   const name = parts[1]?.trim();
   const username = parts[2]?.trim();
@@ -115,15 +193,17 @@ function rowFromParts(parts: string[], sheet: 'ADM' | 'FUTEBOL'): SheetRow | nul
   const role = parts[6]?.trim().toUpperCase();
   const password = (sheet === 'ADM' ? parts[8] : parts[7])?.trim() || '720425';
 
-  if (!name || !username || !email || !role) return null;
+  if (!name || !username || !role) return null;
   if (name.startsWith('***') || name === '720425') return null;
-  if (!email.includes('@')) return null;
+  if (!email?.includes('@')) return null;
 
-  return { name, username, email, cargo, club, role, password };
+  const row: SheetRow = { sheet, name, username, email, cargo, club, role, password };
+  row.role = resolveRoleKey(sheet, row);
+  return row;
 }
 
-async function fetchSheetTab(sheet: 'ADM' | 'FUTEBOL'): Promise<SheetRow[]> {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${sheet}`;
+async function fetchSheetTab(sheet: SheetTab): Promise<SheetRow[]> {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Falha ao baixar aba ${sheet}: ${res.status}`);
   const text = await res.text();
@@ -193,9 +273,10 @@ async function resolveTenantId(clubName: string): Promise<string> {
 }
 
 async function upsertUser(row: SheetRow, tenantId: string) {
-  const roleSlug = ROLE_SLUG_MAP[row.role];
+  const roleKey = normalizeRoleKey(row.role);
+  const roleSlug = ROLE_SLUG_MAP[roleKey];
   if (!roleSlug) {
-    throw new Error(`ROLE desconhecido na planilha: ${row.role}`);
+    throw new Error(`ROLE desconhecido na planilha (${row.sheet}): ${row.role}`);
   }
 
   const username = fixUsername(row.username);
@@ -212,7 +293,7 @@ async function upsertUser(row: SheetRow, tenantId: string) {
 
   if (DRY_RUN) {
     console.log(
-      `  [dry-run] ${byEmail || byUsername ? 'atualizaria' : 'criaria'} ${username} | ${email} | role=${roleSlug} | cargo=${row.cargo}`,
+      `  [dry-run] ${byEmail || byUsername ? 'atualizaria' : 'criaria'} [${row.sheet}] ${username} | ${email} | role=${roleSlug} | cargo=${row.cargo}`,
     );
     return;
   }
@@ -240,7 +321,7 @@ async function upsertUser(row: SheetRow, tenantId: string) {
     await prisma.userTenant.create({
       data: { userId: existing.id, tenantId },
     });
-    console.log(`  atualizado: ${username} (${roleSlug})`);
+    console.log(`  atualizado [${row.sheet}]: ${username} (${roleSlug})`);
     return;
   }
 
@@ -257,18 +338,25 @@ async function upsertUser(row: SheetRow, tenantId: string) {
   await prisma.userTenant.create({
     data: { userId: user.id, tenantId },
   });
-  console.log(`  criado: ${username} (${roleSlug}) — ${row.cargo}`);
+  console.log(`  criado [${row.sheet}]: ${username} (${roleSlug}) — ${row.cargo}`);
 }
 
 async function main() {
+  const tabs = parseTabsArg();
   console.log(DRY_RUN ? '=== DRY RUN ===' : '=== IMPORTAÇÃO CUP360 USUÁRIOS ===');
+  console.log(`Abas: ${tabs.join(', ')}`);
 
-  const [admRows, futebolRows] = await Promise.all([
-    fetchSheetTab('ADM'),
-    fetchSheetTab('FUTEBOL'),
-  ]);
-  const allRows = [...admRows, ...futebolRows];
-  console.log(`Linhas: ADM=${admRows.length}, FUTEBOL=${futebolRows.length}, total=${allRows.length}`);
+  const batches = await Promise.all(tabs.map(async (tab) => ({ tab, rows: await fetchSheetTab(tab) })));
+  for (const b of batches) {
+    console.log(`  ${b.tab}: ${b.rows.length} linha(s)`);
+  }
+  const allRows = batches.flatMap((b) => b.rows);
+  console.log(`Total: ${allRows.length} usuário(s)`);
+
+  if (allRows.length === 0) {
+    console.log('\nNenhuma linha válida (verifique e-mails na planilha).');
+    return;
+  }
 
   const tenantId = await resolveTenantId(allRows[0]?.club ?? 'BOSTON CITY FC - BRASIL');
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { name: true } });
@@ -278,12 +366,37 @@ async function main() {
   await ensureRoles();
 
   console.log('\nUsuários:');
+  const skipped: string[] = [];
+  for (const tab of tabs) {
+    const tabRows = batches.find((b) => b.tab === tab)?.rows ?? [];
+    if (tabRows.length === 0) {
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+      const res = await fetch(url);
+      const text = await res.text();
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      for (let i = 1; i < lines.length; i++) {
+        const parts = parseCsvLine(lines[i]);
+        const name = parts[1]?.trim();
+        const username = parts[2]?.trim();
+        const email = parts[3]?.trim();
+        if (name && username && !email?.includes('@') && !name.startsWith('***')) {
+          skipped.push(`${tab}: ${name} (${username}) — sem e-mail`);
+        }
+      }
+    }
+  }
+
   for (const row of allRows) {
     try {
       await upsertUser(row, tenantId);
     } catch (err) {
-      console.error(`  ERRO ${row.email}:`, err instanceof Error ? err.message : err);
+      console.error(`  ERRO [${row.sheet}] ${row.email}:`, err instanceof Error ? err.message : err);
     }
+  }
+
+  if (skipped.length) {
+    console.log('\nIgnorados (sem e-mail na planilha):');
+    for (const s of skipped) console.log(`  - ${s}`);
   }
 
   console.log('\nConcluído.');
