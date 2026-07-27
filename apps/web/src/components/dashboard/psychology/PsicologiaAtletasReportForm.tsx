@@ -22,7 +22,6 @@ import {
   PSICOLOGIA_ATLETA_FIELDS,
   buildPsicologiaAtletasPrintHtml,
   printPsicologiaAtletasReport,
-  resolveTenantLogoForReport,
   type PrintPageSize,
   type PsicologiaAtletaFieldKey,
   type PsicologiaAtletaReportData,
@@ -35,6 +34,11 @@ interface Tenant {
   slug?: string;
   logoUrl?: string | null;
   categories?: string[] | null;
+}
+
+interface GroupInfo {
+  name: string;
+  logoUrl?: string | null;
 }
 
 const DEFAULT_FIELDS = PSICOLOGIA_ATLETA_FIELDS.filter((f) => f.defaultSelected).map(
@@ -66,6 +70,7 @@ function PageSizeSelect({
 
 export function PsicologiaAtletasReportForm() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [group, setGroup] = useState<GroupInfo | null>(null);
   const [tenantId, setTenantId] = useState("");
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
@@ -88,6 +93,10 @@ export function PsicologiaAtletasReportForm() {
       setTenants(list);
       if (list.length === 1) setTenantId(list[0]!.id);
     });
+    api
+      .get<GroupInfo>("/group")
+      .then(({ data }) => setGroup(data ?? null))
+      .catch(() => setGroup(null));
   }, []);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
@@ -131,10 +140,8 @@ export function PsicologiaAtletasReportForm() {
   };
 
   const buildReportData = (players: PsicologiaAtletaReportPlayer[]): PsicologiaAtletaReportData => {
-    const titleClubName = selectedTenant?.name ?? "Boston City Group";
-    const logoUrl = selectedTenant
-      ? resolveTenantLogoForReport(selectedTenant.logoUrl)
-      : null;
+    const titleClubName = selectedTenant?.name ?? group?.name ?? "Boston City Group";
+    const logoUrl = selectedTenant?.logoUrl ?? group?.logoUrl ?? null;
 
     return {
       titleClubName,

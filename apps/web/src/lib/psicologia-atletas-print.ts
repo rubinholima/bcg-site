@@ -1,7 +1,6 @@
 import { formatCpfForDisplay } from "@/lib/format-cpf";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
-import { getPublicImageUrl } from "@/lib/media-url";
 import {
   GENDER_OPTIONS,
   parseRegistrationProfile,
@@ -469,12 +468,4 @@ export function printPsicologiaAtletasReport(
     buildPsicologiaAtletasPrintHtml(data, size),
     `Lista de Atletas — ${data.titleClubName}`,
   );
-}
-
-/** Logo do tenant para cabeçalho quando filtro por clube único. */
-export function resolveTenantLogoForReport(
-  logoUrl: string | null | undefined,
-): string | null {
-  const resolved = getPublicImageUrl(logoUrl);
-  return resolved || null;
 }
