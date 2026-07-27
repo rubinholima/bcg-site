@@ -74,12 +74,53 @@ import {
   MessageCircle,
   MessagesSquare,
   Network,
+  Hotel,
+  CalendarRange,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
 
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
 export const ACCESS_GROUP_LABELS: Record<string, string> = {};
+
+/** Relatórios Futebol — submenu com cada tipo de relatório. */
+export function hubRelatorioFutebol(): MenuItemConfig {
+  const slug = "relatorios_futebol";
+  return {
+    slug: "rel_futebol",
+    label: "Relatórios",
+    href: "/dashboard/relatorios/futebol",
+    icon: BarChart3,
+    moduleSlug: slug,
+    accessSlug: slug,
+    children: [
+      {
+        slug: "rel_futebol_passageiros",
+        label: "Passageiros",
+        href: "/dashboard/relatorios/futebol/passageiros",
+        icon: Users,
+        moduleSlug: slug,
+        accessSlug: slug,
+      },
+      {
+        slug: "rel_futebol_hospedes",
+        label: "Hóspedes",
+        href: "/dashboard/relatorios/futebol/hospedes",
+        icon: Hotel,
+        moduleSlug: slug,
+        accessSlug: slug,
+      },
+      {
+        slug: "rel_futebol_programacao",
+        label: "Programação semanal",
+        href: "/dashboard/relatorios/futebol/programacao-semanal",
+        icon: CalendarRange,
+        moduleSlug: slug,
+        accessSlug: slug,
+      },
+    ],
+  };
+}
 
 /** Relatórios por hub — permissão isolada por departamento (sem herdar `relatorios` global). */
 export function hubRelatorio(hub: string): MenuItemConfig {
@@ -544,7 +585,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Users,
         moduleSlug: "futebol_comissao",
       },
-      hubRelatorio("futebol"),
+      hubRelatorioFutebol(),
     ],
   },
   {

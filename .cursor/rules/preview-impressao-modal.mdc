@@ -1,0 +1,44 @@
+---
+description: Pré-visualização de relatórios/HTML para impressão — modal com iframe, nunca pop-up
+globs: apps/web/**/*.{tsx,ts}
+alwaysApply: false
+---
+
+# Pré-visualização para impressão / PDF
+
+**PROIBIDO** usar `window.open("", "_blank")` + `document.write(html)` para **Visualizar** relatórios ou documentos HTML gerados no dashboard.
+
+Pop-ups em branco são bloqueados pelo navegador (especialmente com `noopener`).
+
+## Padrão obrigatório
+
+| Ação | Implementação |
+|------|----------------|
+| **Visualizar** | `PrintPreviewDialog` (`@/components/ui/print-preview-dialog`) com `html` + iframe `srcDoc` |
+| **Imprimir / PDF** | iframe oculto + `contentWindow.print()` (ex.: `printWeeklyPsychReport`, `printPassageirosReport`) |
+
+## PrintPreviewDialog
+
+```tsx
+import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
+
+<PrintPreviewDialog
+  open={previewOpen}
+  onOpenChange={setPreviewOpen}
+  title="Pré-visualização — …"
+  html={previewHtml}
+  onPrint={() => printXxxReport(data, pageSize)}
+/>
+```
+
+## Ao criar ou corrigir
+
+- Botão **Visualizar** → abre modal interno, nunca nova aba.
+- Gerar HTML com função `build*PrintHtml` separada da impressão.
+- `window.open(url)` continua ok para **links externos** (Meet, WhatsApp, download de arquivo) — não para preview de HTML gerado.
+
+## Referências no projeto
+
+- `apps/web/src/components/ui/print-preview-dialog.tsx`
+- `apps/web/src/lib/print-weekly-psych-report.ts` (impressão via iframe oculto)
+- Relatórios futebol: `FutebolRelatorio*Form.tsx`

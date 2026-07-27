@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
-import { FutebolRelatoriosHub } from "@/components/dashboard/futebol/FutebolRelatoriosHub";
 
 const HUB_LABELS: Record<string, string> = {
   grupo_master: "Grupo Master",
@@ -25,6 +24,12 @@ function RelatoriosContent() {
   const searchParams = useSearchParams();
   const hub = searchParams.get("hub");
   const { canAccessModule, loading } = useAuth();
+
+  useEffect(() => {
+    if (hub === "futebol") {
+      router.replace("/dashboard/relatorios/futebol");
+    }
+  }, [hub, router]);
 
   if (loading) {
     return (
@@ -46,6 +51,14 @@ function RelatoriosContent() {
 
   const hubLabel = hub ? HUB_LABELS[hub] ?? hub : null;
 
+  if (hub === "futebol") {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Redirecionando…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <DashboardDeptHeader
@@ -54,15 +67,10 @@ function RelatoriosContent() {
         title="Relatórios"
         description={
           hubLabel
-            ? hub === "futebol"
-              ? `Relatórios para impressão e PDF — ${hubLabel}`
-              : `Indicadores e relatórios do hub ${hubLabel}`
+            ? `Indicadores e relatórios do hub ${hubLabel}`
             : "Relatórios consolidados — acesse pelo menu de cada departamento"
         }
       />
-      {hub === "futebol" ? (
-        <FutebolRelatoriosHub />
-      ) : (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -77,7 +85,6 @@ function RelatoriosContent() {
           </p>
         </CardContent>
       </Card>
-      )}
     </div>
   );
 }

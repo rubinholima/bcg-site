@@ -607,12 +607,3 @@ export function printProgramacaoReport(
 ): void {
   printHtmlDocument(buildProgramacaoPrintHtml(data, size), "Impressão — Programação");
 }
-
-export function openReportPreview(html: string): void {
-  if (typeof window === "undefined") return;
-  const w = window.open("", "_blank", "noopener,noreferrer,width=920,height=720");
-  if (!w) return;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-}

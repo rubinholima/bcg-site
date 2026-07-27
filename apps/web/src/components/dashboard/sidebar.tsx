@@ -51,10 +51,21 @@ function hasAccessToAnyChild(
   );
 }
 
+function relatorioHubFromPath(pathname: string | null): string | null {
+  if (!pathname?.startsWith("/dashboard/relatorios/")) return null;
+  const seg = pathname.split("/")[3];
+  return seg?.trim() || null;
+}
+
 function relatorioHub(href: string | undefined): string | null {
   if (!href?.includes("/dashboard/relatorios")) return null;
   const match = href.match(/[?&]hub=([^&]+)/);
-  return match?.[1] ?? null;
+  if (match?.[1]) return match[1];
+  if (href.startsWith("/dashboard/relatorios/")) {
+    const seg = href.split("/")[3];
+    return seg?.trim() || null;
+  }
+  return null;
 }
 
 function isRelatorioLinkActive(
@@ -108,6 +119,7 @@ function isFutebolOperacaoPath(pathname: string | null, relHub: string | null): 
   if (!pathname) return false;
   return (
     pathname === "/dashboard/futebol" ||
+    pathname.startsWith("/dashboard/relatorios/futebol") ||
     pathname.startsWith("/dashboard/futebol/logistica") ||
     pathname.startsWith("/dashboard/futebol/analise") ||
     pathname.startsWith("/dashboard/futebol/analise-desempenho") ||
@@ -280,6 +292,9 @@ function resolveLinkActive(
   if (href === "/dashboard/eventos/boston-city-hall") {
     return pathname === "/dashboard/eventos/boston-city-hall";
   }
+  if (href === "/dashboard/relatorios/futebol") {
+    return !!pathname?.startsWith("/dashboard/relatorios/futebol");
+  }
   if (href === "/dashboard/futebol/logistica") {
     return (
       !!pathname?.startsWith("/dashboard/futebol/logistica") &&
@@ -381,7 +396,9 @@ export function Sidebar() {
 function SidebarNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const relHub = pathname?.startsWith("/dashboard/relatorios") ? searchParams.get("hub") : null;
+  const relHub = pathname?.startsWith("/dashboard/relatorios")
+    ? searchParams.get("hub") ?? relatorioHubFromPath(pathname)
+    : null;
   const { canAccessModule, canAccessDashboard, role, modules, isSuperAdmin } = useAuth();
   const { onNavClick, sidebarDesktopMode, setSidebarDesktopMode } = useDashboardShell();
   const collapsed = sidebarDesktopMode === "icons";
