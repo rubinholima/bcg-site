@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import { BarChart3 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart3, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 
@@ -55,6 +57,38 @@ function RelatoriosContent() {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-muted-foreground">Redirecionando…</p>
+      </div>
+    );
+  }
+
+  if (hub === "saude") {
+    return (
+      <div className="space-y-6">
+        <DashboardDeptHeader
+          section={hubLabel ?? "Relatórios"}
+          sectionIcon={BarChart3}
+          title="Relatórios"
+          description="Relatórios do Depto de Saúde — psicologia, elenco e indicadores."
+        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-[#6d28d9]" />
+              Lista de atletas — Psicologia
+            </CardTitle>
+            <CardDescription>
+              Filtre por clube e categoria, escolha as colunas (nome completo, apelido, data de
+              nascimento, etc.) e imprima ou salve em PDF.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/psicologia/relatorios/lista-atletas">
+              <Button className="bg-[#5b21b6] text-white hover:bg-[#6d28d9]">
+                Abrir relatório
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }

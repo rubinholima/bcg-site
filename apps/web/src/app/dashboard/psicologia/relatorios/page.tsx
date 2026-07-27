@@ -10,6 +10,7 @@ import {
   Printer,
   RefreshCw,
   Trash2,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -267,6 +268,12 @@ export default function PsicologiaRelatoriosPage() {
             <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => void load()} disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
               Atualizar
+            </Button>
+            <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
+              <Link href="/dashboard/psicologia/relatorios/lista-atletas">
+                <Users className="mr-2 h-4 w-4" />
+                Lista de atletas
+              </Link>
             </Button>
             <Button size="sm" className="min-h-[44px]" asChild>
               <Link href="/dashboard/consultas">Novo relatório</Link>

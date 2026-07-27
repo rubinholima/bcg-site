@@ -718,6 +718,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             moduleSlug: "saude",
           },
           {
+            slug: "psicologia_lista_atletas",
+            label: "Lista de atletas",
+            href: "/dashboard/psicologia/relatorios/lista-atletas",
+            icon: Users,
+            moduleSlug: "saude",
+          },
+          {
             slug: "psicologia_material_apoio",
             label: "Material de apoio",
             href: "/dashboard/psicologia/material-apoio",
