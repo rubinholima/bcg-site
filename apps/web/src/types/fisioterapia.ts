@@ -1,0 +1,106 @@
+export type PhysioSide = "E" | "D" | "bilateral";
+export type PhysioBodyMapView = "front" | "back";
+export type PhysioSessionStatus = "active" | "completed" | "cancelled";
+
+export interface PhysioBodyRegion {
+  id: string;
+  namePt: string;
+  sortOrder: number;
+  bilateral: boolean;
+  diagnoses?: PhysioDiagnosis[];
+}
+
+export interface PhysioDiagnosis {
+  id: string;
+  regionId: string;
+  name: string;
+  isSystem: boolean;
+  active: boolean;
+}
+
+export interface PhysioTreatment {
+  id: string;
+  name: string;
+  regionId: string | null;
+  equipment: string | null;
+  isSystem: boolean;
+  active: boolean;
+}
+
+export interface PhysioAttachment {
+  name: string;
+  url: string;
+  key?: string;
+  mimeType?: string;
+}
+
+export interface PhysioEvolutionNote {
+  at: string;
+  note: string;
+  painScore?: number | null;
+  userId?: string | null;
+  userName?: string | null;
+}
+
+export interface PhysioSession {
+  id: string;
+  tenantId: string;
+  playerId: string;
+  category: string | null;
+  regionId: string;
+  side: PhysioSide | null;
+  bodyMapView: PhysioBodyMapView | null;
+  bodyMapX: number | null;
+  bodyMapY: number | null;
+  symptoms: string | null;
+  painScore: number | null;
+  diagnosisId: string | null;
+  diagnosisLabel: string | null;
+  treatmentId: string | null;
+  treatmentLabel: string | null;
+  treatmentNotes: string | null;
+  estimatedDays: number | null;
+  estimatedEndDate: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  status: PhysioSessionStatus;
+  staffId: string | null;
+  staffName: string | null;
+  attachments: PhysioAttachment[] | null;
+  evolutionNotes: PhysioEvolutionNote[] | null;
+  region?: PhysioBodyRegion;
+  diagnosis?: PhysioDiagnosis | null;
+  treatment?: PhysioTreatment | null;
+  player?: {
+    id: string;
+    name: string;
+    category: string | null;
+    photoUrl: string | null;
+    status: string | null;
+    tenantId: string;
+  };
+  tenant?: { id: string; name: string; slug: string };
+}
+
+export interface CreatePhysioSessionPayload {
+  tenantId: string;
+  playerId: string;
+  category?: string;
+  regionId: string;
+  side?: PhysioSide;
+  bodyMapView?: PhysioBodyMapView;
+  bodyMapX?: number;
+  bodyMapY?: number;
+  symptoms?: string;
+  painScore?: number;
+  diagnosisId?: string;
+  diagnosisLabel?: string;
+  treatmentId?: string;
+  treatmentLabel?: string;
+  treatmentNotes?: string;
+  estimatedDays?: number;
+  estimatedEndDate?: string;
+  staffId?: string;
+  staffName?: string;
+  attachments?: PhysioAttachment[];
+}

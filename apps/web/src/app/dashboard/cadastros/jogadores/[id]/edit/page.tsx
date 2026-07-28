@@ -42,6 +42,7 @@ import {
 } from "@/lib/football-positions";
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
 import { PlayerPsychologyClinicalSection } from "@/components/dashboard/psychology/PlayerPsychologyClinicalSection";
+import { PlayerPhysioSection } from "@/components/dashboard/fisioterapia/PlayerPhysioSection";
 import type { PsychologicalAssessmentEntry } from "@/components/dashboard/player-module-types";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
@@ -551,6 +552,10 @@ export default function EditJogadorPage() {
             }>
           }
         />
+      )}
+
+      {activeTab === "fisioterapia" && player && (
+        <PlayerPhysioSection playerId={player.id} tenantId={player.tenantId} />
       )}
 
       {/* Tab: Status */}
