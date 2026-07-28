@@ -33,6 +33,77 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 28 DE JULHO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+### 1. Relatórios Depto Futebol (Passageiros, Hóspedes, Programação semanal)
+
+- **API** — módulo `futebol-relatorios`: endpoints para viagens, relação de passageiros, hóspedes por quarto e programação semanal por categoria/período. Módulo de acesso: `relatorios_futebol`.
+- **Web** — hub em `/dashboard/relatorios/futebol` com submenus:
+  - Passageiros — `/dashboard/relatorios/futebol/passageiros`
+  - Hóspedes — `/dashboard/relatorios/futebol/hospedes`
+  - Programação semanal — `/dashboard/relatorios/futebol/programacao-semanal`
+- **Impressão/PDF** — HTML A4/Letter em `futebol-relatorios-print.ts` (visual BCG: vermelho `#C8102E`, azul `#00205B`, logo do clube).
+- **Preview** — modal com iframe `srcDoc` (`PrintPreviewDialog`); regra `.cursor/rules/preview-impressao-modal.mdc` (proibido `window.open` + `document.write` para preview).
+- **Correção page-break** — tabelas passam a fluir na mesma página após cabeçalho/meta (sem página em branco entre intro e conteúdo).
+
+### 2. Relatório Psicologia — Lista de atletas (colunas escolhíveis)
+
+- Pedido do dept. psicologia: lista imprimível com **nome completo, apelido, data de nascimento, posição**, etc. — **sem CSV**, com escolha de colunas.
+- Rota: `/dashboard/psicologia/relatorios/lista-atletas`
+- Menu: **Psicologia → Lista de atletas**; atalho também em Relatórios semanais e hub **Depto Saúde → Relatórios**.
+- Filtros: clube, categoria, busca por nome.
+- **15 colunas** opcionais (#, nome, apelido, nascimento, posição, categoria, clube, camisa, CPF, RG, nacionalidade, gênero, naturalidade, e-mail, telefone).
+- Preview modal + Imprimir/PDF (A4/Letter), estilo roxo psicologia.
+- **Fix logo** — com filtro “Todos os clubes”, usa logo do **grupo BCG** (`GET /group`); clube específico usa logo do tenant.
+
+## **COMMITS / DEPLOYS (28/07 e sessão anterior contínua)**
+
+| Commit | Descrição |
+|--------|-----------|
+| `913adb9` | feat(futebol): relatórios passageiros, hóspedes e programação semanal |
+| `298f836` | fix(futebol): submenus + preview em modal interno |
+| `61f37dc` | fix(futebol): logo do clube e cores vermelho/azul BCG |
+| `09698d7` | fix(relatórios futebol): conteúdo na mesma página após cabeçalho |
+| `f89cb37` | feat(psicologia): relatório lista de atletas com colunas escolhíveis |
+| `f96bed8` | fix(psicologia): logo do grupo BCG quando clube é “todos” |
+
+**Branch:** `develop` · **Produção:** push `origin` + `production` em todos os deploys acima.
+
+## **ARQUIVOS PRINCIPAIS**
+
+**API**
+- `apps/api/src/futebol-relatorios/` (service, controller, module, types)
+
+**Web — Futebol**
+- `apps/web/src/lib/futebol-relatorios-print.ts`
+- `apps/web/src/lib/futebol-relatorios.types.ts`
+- `apps/web/src/components/dashboard/futebol/relatorios/*`
+- `apps/web/src/app/dashboard/relatorios/futebol/**`
+- `apps/web/src/components/ui/print-preview-dialog.tsx`
+
+**Web — Psicologia**
+- `apps/web/src/lib/psicologia-atletas-print.ts`
+- `apps/web/src/components/dashboard/psychology/PsicologiaAtletasReportForm.tsx`
+- `apps/web/src/app/dashboard/psicologia/relatorios/lista-atletas/page.tsx`
+- `apps/web/src/app/dashboard/psicologia/relatorios/page.tsx` (atalho)
+- `apps/web/src/app/dashboard/relatorios/page.tsx` (hub saúde)
+
+**Menu / regras**
+- `apps/web/src/lib/dashboard-menu.config.ts`
+- `.cursor/rules/preview-impressao-modal.mdc`
+
+## **PENDÊNCIE / PRÓXIMO**
+
+- Psicologia: opcional checkboxes para exportar subconjunto manual de atletas (hoje exporta elenco filtrado inteiro).
+- Convidados em relatório de passageiros: tabela vazia até existir cadastro de convidados no sistema.
+- Validar relatórios futebol/psicologia com usuários finais (impressão real A4).
+
+**Último commit em produção:** `f96bed8` · https://bostoncitygroup.biz
+
+---
+
 # 📅 30 DE JUNHO DE 2026 — DEPLOY AUTOMÁTICO (padrão Atrium / ALT)
 
 ## **O QUE FOI FEITO**
