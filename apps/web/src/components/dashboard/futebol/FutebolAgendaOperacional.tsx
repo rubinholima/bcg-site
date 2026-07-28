@@ -47,6 +47,13 @@ import {
   TRAVEL_STATUS_LABEL,
 } from "@/types/futebol-agenda";
 import { cn } from "@/lib/utils";
+import {
+  agendaCalendarPillClass,
+  agendaMatchSideBadgeClass,
+  agendaMatchSideLabel,
+  compareAgendaEventsByPriority,
+  type AgendaMatchSide,
+} from "@/lib/agenda-match-style";
 
 interface Tenant {
   id: string;
@@ -99,8 +106,20 @@ function viewRange(focusDate: Date, mode: ViewMode) {
   return monthRange(focusDate.getFullYear(), focusDate.getMonth());
 }
 
-function sortByStart(items: FootballAgendaCalendarItem[]) {
-  return [...items].sort((a, b) => a.startAt.localeCompare(b.startAt));
+function sortAgendaItems(items: FootballAgendaCalendarItem[]) {
+  return [...items].sort((a, b) =>
+    compareAgendaEventsByPriority(
+      { type: a.type, startAt: a.startAt },
+      { type: b.type, startAt: b.startAt },
+    ),
+  );
+}
+
+function matchSideOf(item: FootballAgendaCalendarItem): AgendaMatchSide {
+  if (item.type === "viagem") return "fora";
+  if (item.isOurTeamHome === true) return "casa";
+  if (item.isOurTeamHome === false) return "fora";
+  return null;
 }
 
 function formatTime(iso: string, allDay: boolean): string {
@@ -372,7 +391,7 @@ export function FutebolAgendaOperacional() {
   }, [focusDate]);
 
   const focusDayKey = dateKeyFromDate(focusDate);
-  const selectedItems = sortByStart(
+  const selectedItems = sortAgendaItems(
     viewMode === "day"
       ? byDay.get(focusDayKey) ?? []
       : selectedDay
@@ -507,25 +526,42 @@ export function FutebolAgendaOperacional() {
 
   const renderAgendaItem = (item: FootballAgendaCalendarItem) => {
     const cats = categoryLine(item);
+    const side = matchSideOf(item);
+    const sideLabel = agendaMatchSideLabel(side);
     return (
     <div
       key={item.id}
       className={cn(
-        "rounded-lg border p-3 text-foreground shadow-sm",
-        FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
+        "rounded-lg border-2 p-3 text-foreground shadow-sm",
+        side === "casa" &&
+          "border-emerald-500/50 bg-gradient-to-br from-emerald-500/20 via-card to-card",
+        side === "fora" &&
+          "border-amber-500/50 bg-gradient-to-br from-amber-500/20 via-card to-card",
+        !side && (FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro),
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-md border border-current/20 bg-black/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide dark:bg-white/10">
-              {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
-            </span>
+            {sideLabel ? (
+              <span
+                className={cn(
+                  "rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                  agendaMatchSideBadgeClass(side),
+                )}
+              >
+                {sideLabel}
+              </span>
+            ) : (
+              <span className="rounded-md border border-current/20 bg-black/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide dark:bg-white/10">
+                {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
+              </span>
+            )}
             {cats !== "—" ? (
               <span className="text-xs font-medium opacity-90">{cats}</span>
             ) : null}
             {isFmfGame(item) ? (
-              <span className="rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-950 dark:text-violet-100">
+              <span className="rounded bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                 FMF
               </span>
             ) : null}
@@ -536,10 +572,10 @@ export function FutebolAgendaOperacional() {
             ) : null}
           </div>
           {item.tenantName ? (
-            <p className="mt-1 text-xs font-medium opacity-90">{item.tenantName}</p>
+            <p className="mt-1 text-xs font-semibold text-foreground/90">{item.tenantName}</p>
           ) : null}
-          <p className="mt-0.5 text-base font-semibold leading-tight text-foreground">{item.title}</p>
-          <p className="mt-1 text-sm font-medium opacity-95">
+          <p className="mt-0.5 text-base font-bold leading-tight text-foreground">{item.title}</p>
+          <p className="mt-1 text-sm font-semibold opacity-95">
             {formatTime(item.startAt, item.allDay)}
             {item.endAt && !item.allDay && item.source === "travel"
               ? ` · jogo ${formatTime(item.endAt, false)}`
@@ -548,22 +584,25 @@ export function FutebolAgendaOperacional() {
                 : ""}
           </p>
           {item.location ? (
-            <p className="mt-1 flex items-center gap-1 text-xs opacity-90">
+            <p className="mt-1 flex items-center gap-1 text-xs font-medium opacity-90">
               <MapPin className="h-3 w-3 shrink-0" />
               {item.location}
             </p>
           ) : null}
           {item.source === "travel" ? (
-            <p className="mt-1 text-xs opacity-90">
+            <p className="mt-1 text-xs font-medium opacity-90">
               {TRAVEL_STATUS_LABEL[item.status] ?? item.status}
               {item.championshipName ? ` · ${item.championshipName}` : ""}
             </p>
           ) : null}
           {item.source === "bch_booking" ? (
-            <p className="mt-1 text-xs opacity-90">
+            <p className="mt-1 text-xs font-medium opacity-90">
               {BOOKING_STATUS_LABEL[item.status] ?? item.status}
               {item.spaceName ? ` · ${item.spaceName}` : ""}
             </p>
+          ) : null}
+          {item.championshipName && item.source === "entry" ? (
+            <p className="mt-1 text-xs font-medium opacity-90">{item.championshipName}</p>
           ) : null}
         </div>
       </div>
@@ -571,21 +610,21 @@ export function FutebolAgendaOperacional() {
         {item.source === "travel" ? (
           <Link
             href={item.href}
-            className="text-xs font-semibold underline-offset-2 hover:underline"
+            className="text-xs font-bold underline-offset-2 hover:underline"
           >
             Abrir viagem
           </Link>
         ) : item.source === "bch_booking" ? (
           <Link
             href={item.href}
-            className="text-xs font-semibold underline-offset-2 hover:underline"
+            className="text-xs font-bold underline-offset-2 hover:underline"
           >
             Editar no Boston City Hall
           </Link>
         ) : (
           <button
             type="button"
-            className="text-xs font-semibold underline-offset-2 hover:underline"
+            className="text-xs font-bold underline-offset-2 hover:underline"
             onClick={() => {
               const id = item.id.replace(/^entry-/, "");
               api.get<FootballAgendaEntry>(`/futebol-agenda/entries/${id}`).then(({ data }) => {
@@ -847,12 +886,12 @@ export function FutebolAgendaOperacional() {
                           >
                             <span className={dayNumberClass(dateKey, isSelected)}>{day}</span>
                             <div className="mt-1 space-y-0.5">
-                              {dayItems.slice(0, 4).map((item) => (
+                              {sortAgendaItems(dayItems).slice(0, 4).map((item) => (
                                 <div
                                   key={item.id}
                                   className={cn(
                                     "truncate rounded border px-1 py-0.5 text-[10px] leading-tight sm:text-[11px]",
-                                    FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
+                                    agendaCalendarPillClass(item.type, matchSideOf(item)),
                                   )}
                                   title={
                                     item.category
@@ -860,11 +899,16 @@ export function FutebolAgendaOperacional() {
                                       : item.title
                                   }
                                 >
+                                  {matchSideOf(item) === "casa"
+                                    ? "C · "
+                                    : matchSideOf(item) === "fora"
+                                      ? "F · "
+                                      : ""}
                                   {item.title}
                                 </div>
                               ))}
                               {dayItems.length > 4 ? (
-                                <p className="text-[10px] text-muted-foreground">+{dayItems.length - 4}</p>
+                                <p className="text-[10px] font-semibold text-muted-foreground">+{dayItems.length - 4}</p>
                               ) : null}
                             </div>
                           </button>
@@ -898,14 +942,14 @@ export function FutebolAgendaOperacional() {
                             <p className={dayNumberClass(dateKey, isSelected)}>{d.getDate()}</p>
                           </button>
                           <div className="space-y-1">
-                            {sortByStart(dayItems).map((item) => (
+                            {sortAgendaItems(dayItems).map((item) => (
                               <button
                                 key={item.id}
                                 type="button"
                                 onClick={() => handleDayClick(dateKey)}
                                 className={cn(
                                   "w-full truncate rounded border px-1.5 py-1 text-left text-[10px] leading-tight sm:text-[11px]",
-                                  FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
+                                  agendaCalendarPillClass(item.type, matchSideOf(item)),
                                 )}
                                 title={
                                   item.category

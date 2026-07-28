@@ -45,6 +45,8 @@ export type FootballAgendaCalendarItemDto = {
   spaceName?: string | null;
   opponentName?: string | null;
   championshipName?: string | null;
+  /** true = mando de campo; false = visitante; null = não se aplica */
+  isOurTeamHome?: boolean | null;
   href: string;
   externalId?: string | null;
   agendaLocked?: boolean;

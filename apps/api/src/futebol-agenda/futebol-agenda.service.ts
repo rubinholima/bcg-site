@@ -16,12 +16,64 @@ import {
 import { findSpaceConflicts } from './football-agenda-conflicts';
 import { travelMatchesCategoryFilter, parseTravelCategories } from './travel-categories.util';
 import { FootballActivitySpacesService } from './football-activity-spaces.service';
+import { normalizeTeamNameKeyForMerge } from '../public/visiting-team-logo-merge.util';
 
 const entryInclude = {
   tenant: { select: { name: true } },
   space: { select: { id: true, name: true } },
   participants: { select: { playerId: true } },
 } as const;
+
+function resolveIsOurTeamHome(
+  type: string,
+  title: string,
+  tenantName: string | undefined,
+  meta: unknown,
+): boolean | null {
+  if (type === 'viagem') return false;
+  if (type !== 'jogo') return null;
+
+  const m = meta as {
+    isOurTeamHome?: boolean;
+    homeName?: string;
+    awayName?: string;
+  } | null;
+
+  if (typeof m?.isOurTeamHome === 'boolean') return m.isOurTeamHome;
+
+  const tenantKey = normalizeTeamNameKeyForMerge(tenantName ?? '');
+  if (tenantKey && m?.homeName) {
+    const homeKey = normalizeTeamNameKeyForMerge(m.homeName);
+    if (homeKey && (homeKey.includes(tenantKey) || tenantKey.includes(homeKey))) {
+      return true;
+    }
+  }
+  if (tenantKey && m?.awayName) {
+    const awayKey = normalizeTeamNameKeyForMerge(m.awayName);
+    if (awayKey && (awayKey.includes(tenantKey) || tenantKey.includes(awayKey))) {
+      return false;
+    }
+  }
+
+  const parts = title.match(/^(.+?)\s+x\s+(.+)$/i);
+  if (parts && tenantKey) {
+    const homeKey = normalizeTeamNameKeyForMerge(parts[1] ?? '');
+    const awayKey = normalizeTeamNameKeyForMerge(parts[2] ?? '');
+    if (homeKey && (homeKey.includes(tenantKey) || tenantKey.includes(homeKey))) return true;
+    if (awayKey && (awayKey.includes(tenantKey) || tenantKey.includes(awayKey))) return false;
+  }
+
+  if (/^casa\b/i.test(title.trim())) return true;
+  if (/^fora\b/i.test(title.trim())) return false;
+
+  return null;
+}
+
+function agendaSortPriority(type: string): number {
+  if (type === 'jogo' || type === 'viagem') return 0;
+  if (type === 'aniversario') return 90;
+  return 40;
+}
 
 function toEntryDto(row: {
   id: string;
@@ -242,11 +294,18 @@ export class FutebolAgendaService {
         location,
         opponentName: t.opponentName,
         championshipName: t.championshipName,
+        isOurTeamHome: false,
         href: `/dashboard/futebol/logistica/${t.id}/edit`,
       });
     }
 
     for (const e of entries) {
+      const isOurTeamHome = resolveIsOurTeamHome(
+        e.type,
+        e.title,
+        e.tenant.name,
+        e.beatscodeMeta,
+      );
       items.push({
         id: `entry-${e.id}`,
         source: 'entry',
@@ -264,6 +323,12 @@ export class FutebolAgendaService {
         spaceName: e.space?.name ?? null,
         externalId: e.externalId,
         agendaLocked: e.agendaLocked,
+        championshipName:
+          typeof (e.beatscodeMeta as { competitionName?: string } | null)?.competitionName ===
+          'string'
+            ? (e.beatscodeMeta as { competitionName: string }).competitionName
+            : null,
+        isOurTeamHome,
         href: `/dashboard/futebol/logistica/agenda?entry=${e.id}`,
       });
     }
@@ -283,11 +348,17 @@ export class FutebolAgendaService {
         status: b.status,
         location: b.space?.name ?? null,
         spaceName: b.space?.name ?? null,
+        isOurTeamHome: null,
         href: `/dashboard/eventos/boston-city-hall/reservas?edit=${b.id}`,
       });
     }
 
-    items.sort((a, b) => a.startAt.localeCompare(b.startAt));
+    items.sort((a, b) => {
+      const pa = agendaSortPriority(a.type);
+      const pb = agendaSortPriority(b.type);
+      if (pa !== pb) return pa - pb;
+      return a.startAt.localeCompare(b.startAt);
+    });
     return items;
   }
 

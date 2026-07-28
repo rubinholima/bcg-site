@@ -92,8 +92,12 @@ export class FmfAgendaSyncService {
             isFmfTeamMatch(m.awayName, tenant.name, aliases);
           if (!isOurs) continue;
 
+          const isHome = isFmfTeamMatch(m.homeName, tenant.name, aliases);
           const externalId = buildFmfExternalId(presetKey, m);
-          const title = `${m.homeName.trim()} x ${m.awayName.trim()}`;
+          const opponent = isHome ? m.awayName.trim() : m.homeName.trim();
+          const title = isHome
+            ? `Casa — ${opponent}`
+            : `Fora — ${opponent}`;
           const description =
             [snap.name, m.phaseLabel?.trim(), m.venueText?.trim()].filter(Boolean).join(' · ') ||
             null;
@@ -119,6 +123,7 @@ export class FmfAgendaSyncService {
             awayName: m.awayName,
             venueText: m.venueText,
             competitionName: snap.name,
+            isOurTeamHome: isHome,
           } satisfies Record<string, unknown>;
 
           if (existing) {

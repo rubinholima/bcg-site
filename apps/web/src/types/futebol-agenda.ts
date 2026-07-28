@@ -15,6 +15,7 @@ export type FootballAgendaCalendarItem = {
   spaceName?: string | null;
   opponentName?: string | null;
   championshipName?: string | null;
+  isOurTeamHome?: boolean | null;
   href: string;
   externalId?: string | null;
   agendaLocked?: boolean;
