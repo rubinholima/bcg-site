@@ -60,10 +60,12 @@ DialogOverlay.displayName = "DialogOverlay";
 
 interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
   showCloseButton?: boolean;
+  /** Classes do wrapper interno (padrão: grid + padding). Use para layouts full-height. */
+  contentClassName?: string;
 }
 
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
-  ({ className, children, showCloseButton = true, ...props }, ref) => {
+  ({ className, children, showCloseButton = true, contentClassName, ...props }, ref) => {
     const { open: controlledOpen, onOpenChange } = React.useContext(DialogContext);
     const dialogRef = React.useRef<HTMLDialogElement>(null);
     const [mounted, setMounted] = React.useState(false);
@@ -107,7 +109,10 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
         >
           <div
             ref={ref}
-            className="relative grid min-w-0 gap-4 overflow-y-auto p-6 text-foreground"
+            className={cn(
+              "relative grid min-w-0 gap-4 overflow-y-auto p-6 text-foreground",
+              contentClassName,
+            )}
             {...props}
           >
             {children}
