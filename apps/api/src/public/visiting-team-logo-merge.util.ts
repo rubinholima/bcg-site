@@ -29,6 +29,27 @@ export function normalizeTeamNameKeyForMerge(s: string): string {
   return t.replace(/[^a-z0-9]/g, '');
 }
 
+/**
+ * Chave mais agressiva para unificar cadastros quase iguais
+ * (ex.: "XV DE NOVEMBRO" ↔ "XV DE NOVEMBRO ESPORTE CLUBE").
+ */
+export function softNormalizeTeamNameKey(s: string): string {
+  let t = s
+    .trim()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLocaleLowerCase('pt-BR');
+  t = t.replace(
+    /\b(esporte\s+clube|futebol\s+clube|sport\s+club|sociedade\s+esportiva)\b/g,
+    ' ',
+  );
+  t = t.replace(/\b(s\.?\s*a\.?\s*f\.?|saf)\b/g, ' ');
+  t = t.replace(/\b(f\.?\s*c\.?|e\.?\s*c\.?|a\.?\s*c\.?|c\.?\s*a\.?)\b/g, ' ');
+  t = t.replace(/\b(clube|clube\s+de\s+regatas)\b/g, ' ');
+  t = t.replace(/\b(de|da|do|das|dos)\b/g, ' ');
+  return t.replace(/[^a-z0-9]/g, '');
+}
+
 function isAllowedPublicMediaKey(key: string): boolean {
   const k = key.trim().toLowerCase();
   return k.startsWith('logos/') || k.startsWith('media/');

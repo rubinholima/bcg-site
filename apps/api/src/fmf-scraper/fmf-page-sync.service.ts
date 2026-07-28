@@ -8,6 +8,7 @@ import {
   buildVisitingTeamLogoUrlByMergeKey,
   mediaKeyFromStoredUrl,
   normalizeTeamNameKeyForMerge,
+  softNormalizeTeamNameKey,
 } from '../public/visiting-team-logo-merge.util';
 import {
   FMF_SCRAPER_PRESET_KEYS,
@@ -146,6 +147,7 @@ export class FmfPageSyncService {
   async getSyncCandidates(): Promise<FmfSyncCandidate[]> {
     const store = await this.loadStore();
     const logoMap = await this.buildLogoMap();
+    const clubLogoMap = await this.buildClubTenantLogoMap();
     const clubs = await this.listClubTenants();
     const syncConfig = await this.getSyncConfig();
 
@@ -160,6 +162,7 @@ export class FmfPageSyncService {
         aliases,
         t.logoUrl,
         logoMap,
+        clubLogoMap,
       );
 
       const matchCountByPreset: Partial<Record<FmfScraperPresetKey, number>> = {};
@@ -201,6 +204,7 @@ export class FmfPageSyncService {
     }
 
     const logoMap = await this.buildLogoMap();
+    const clubLogoMap = await this.buildClubTenantLogoMap();
     const clubs = await this.listClubTenants();
     const syncConfig = await this.getSyncConfig();
 
@@ -267,6 +271,7 @@ export class FmfPageSyncService {
         aliases,
         tenant.logoUrl,
         logoMap,
+        clubLogoMap,
       );
 
       if (collected.matches.length === 0 && collected.tabelaRows.length === 0) {
@@ -505,6 +510,7 @@ export class FmfPageSyncService {
     aliases: string[],
     tenantLogoUrl: string | null,
     logoMap: Map<string, string>,
+    clubLogoMap: Map<string, string>,
   ): {
     matches: Array<{ presetKey: FmfScraperPresetKey; fixture: ManualFixture }>;
     resultadosManuais: Record<string, { homeScore: number; awayScore: number }>;
@@ -520,7 +526,16 @@ export class FmfPageSyncService {
     const leagueFixtureIds = new Set<string>();
     const tabelaKeys = new Set<string>();
 
-    const ourLogo = this.resolveLogo(tenantName, tenantName, aliases, tenantLogoUrl, logoMap, missingLogos, true);
+    const ourLogo = this.resolveLogo(
+      tenantName,
+      tenantName,
+      aliases,
+      tenantLogoUrl,
+      logoMap,
+      clubLogoMap,
+      missingLogos,
+      true,
+    );
 
     for (const presetKey of presetKeys) {
       const snap = store.categories[presetKey];
@@ -537,9 +552,27 @@ export class FmfPageSyncService {
         const isHome = isFmfTeamMatch(m.homeName, tenantName, aliases);
         const homeLogo = isHome
           ? ourLogo
-          : this.resolveLogo(m.homeName, tenantName, aliases, null, logoMap, missingLogos, false);
+          : this.resolveLogo(
+              m.homeName,
+              tenantName,
+              aliases,
+              null,
+              logoMap,
+              clubLogoMap,
+              missingLogos,
+              false,
+            );
         const awayLogo = isHome
-          ? this.resolveLogo(m.awayName, tenantName, aliases, null, logoMap, missingLogos, false)
+          ? this.resolveLogo(
+              m.awayName,
+              tenantName,
+              aliases,
+              null,
+              logoMap,
+              clubLogoMap,
+              missingLogos,
+              false,
+            )
           : ourLogo;
 
         const finished =
@@ -582,9 +615,27 @@ export class FmfPageSyncService {
         const isHome = isFmfTeamMatch(m.homeName, tenantName, aliases);
         const homeLogo = isHome
           ? ourLogo
-          : this.resolveLogo(m.homeName, tenantName, aliases, null, logoMap, missingLogos, false);
+          : this.resolveLogo(
+              m.homeName,
+              tenantName,
+              aliases,
+              null,
+              logoMap,
+              clubLogoMap,
+              missingLogos,
+              false,
+            );
         const awayLogo = isHome
-          ? this.resolveLogo(m.awayName, tenantName, aliases, null, logoMap, missingLogos, false)
+          ? this.resolveLogo(
+              m.awayName,
+              tenantName,
+              aliases,
+              null,
+              logoMap,
+              clubLogoMap,
+              missingLogos,
+              false,
+            )
           : ourLogo;
 
         const finished =
@@ -622,7 +673,16 @@ export class FmfPageSyncService {
         const isOurRow = isFmfTeamMatch(row.time, tenantName, aliases);
         const rowLogo = isOurRow
           ? ourLogo
-          : this.resolveLogo(row.time, tenantName, aliases, null, logoMap, missingLogos, false);
+          : this.resolveLogo(
+              row.time,
+              tenantName,
+              aliases,
+              null,
+              logoMap,
+              clubLogoMap,
+              missingLogos,
+              false,
+            );
 
         tabelaRows.push(standingToTabelaRow(row, rowLogo));
       }
@@ -637,6 +697,7 @@ export class FmfPageSyncService {
     aliases: string[],
     tenantLogoUrl: string | null,
     logoMap: Map<string, string>,
+    clubLogoMap: Map<string, string>,
     missingLogos: Set<string>,
     isOurTeam: boolean,
   ): string | undefined {
@@ -646,8 +707,16 @@ export class FmfPageSyncService {
       return url;
     }
 
+    // Outro clube BCG (ex.: Boston na página do Villa) → logo do cadastro da empresa
     const nk = normalizeTeamNameKeyForMerge(teamName);
-    const url = nk ? logoMap.get(nk) : undefined;
+    const soft = softNormalizeTeamNameKey(teamName);
+    const clubUrl =
+      (nk ? clubLogoMap.get(nk) : undefined) ??
+      (soft ? clubLogoMap.get(soft) : undefined);
+    if (clubUrl) return clubUrl;
+
+    const url =
+      (nk ? logoMap.get(nk) : undefined) ?? (soft ? logoMap.get(soft) : undefined);
     if (!url) {
       missingLogos.add(teamName.trim());
     }
@@ -662,6 +731,27 @@ export class FmfPageSyncService {
     return undefined;
   }
 
+  /** Logos dos clubes BCG (Boston, Villa…) indexadas por nome FMF/aliases. */
+  private async buildClubTenantLogoMap(): Promise<Map<string, string>> {
+    const clubs = await this.listClubTenants();
+    const syncConfig = await this.getSyncConfig();
+    const map = new Map<string, string>();
+
+    for (const t of clubs) {
+      const url = this.tenantLogoPublicUrl(t.logoUrl);
+      if (!url) continue;
+      const cfg = syncConfig.tenants?.find((c) => c.tenantId === t.id);
+      const aliases = this.resolveAliases(t.slug, t.name, cfg);
+      for (const name of [t.name, ...aliases]) {
+        const nk = normalizeTeamNameKeyForMerge(name);
+        const soft = softNormalizeTeamNameKey(name);
+        if (nk) map.set(nk, url);
+        if (soft) map.set(soft, url);
+      }
+    }
+    return map;
+  }
+
   private async buildLogoMap(): Promise<Map<string, string>> {
     const [teams, assets] = await Promise.all([
       this.prisma.visitingTeam.findMany({ orderBy: { name: 'asc' } }),
@@ -673,7 +763,7 @@ export class FmfPageSyncService {
         a.key.startsWith('logos/external/'),
     );
     const displayNames = await this.mediaMeta.getDisplayNames(advAssets.map((a) => a.key));
-    return buildVisitingTeamLogoUrlByMergeKey(
+    const base = buildVisitingTeamLogoUrlByMergeKey(
       teams.map((t) => ({ id: t.id, name: t.name, logoUrl: t.logoUrl })),
       advAssets.map((a) => ({
         key: a.key,
@@ -681,6 +771,16 @@ export class FmfPageSyncService {
         displayName: displayNames[a.key] ?? null,
       })),
     );
+    // Também indexa por chave soft (XV DE NOVEMBRO ≈ XV DE NOVEMBRO ESPORTE CLUBE)
+    const out = new Map(base);
+    for (const t of teams) {
+      const soft = softNormalizeTeamNameKey(t.name);
+      if (!soft || out.has(soft)) continue;
+      const hard = normalizeTeamNameKeyForMerge(t.name);
+      const url = (hard && base.get(hard)) || undefined;
+      if (url) out.set(soft, url);
+    }
+    return out;
   }
 }
 
