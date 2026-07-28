@@ -994,112 +994,50 @@ export function FutebolAgendaOperacional() {
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <p className="text-xs text-muted-foreground sm:text-sm">
-                      Toque em um dia para abrir a visão diária. Toque em um evento para editar.
-                    </p>
                     <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
-                      <div className="grid min-w-[640px] grid-cols-7">
+                      <div className="grid min-w-[560px] grid-cols-7 gap-2 p-3">
                         {weekDays.map((d) => {
                           const dateKey = dateKeyFromDate(d);
                           const dayItems = byDay.get(dateKey) ?? [];
                           const isSelected = dateKey === selectedDay;
                           const isTodayCol = dateKey === today;
                           return (
-                            <div
+                            <button
                               key={dateKey}
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => goToDayView(dateKey)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
-                                  goToDayView(dateKey);
-                                }
+                              type="button"
+                              onClick={() => {
+                                setSelectedDay(dateKey);
+                                setFocusDate(d);
                               }}
+                              onDoubleClick={() => goToDayView(dateKey)}
                               className={cn(
-                                "flex min-h-[240px] cursor-pointer flex-col border-r border-border/50 last:border-r-0 transition-colors",
-                                "hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
-                                isSelected && "bg-primary/10",
-                                isTodayCol && !isSelected && "bg-amber-500/10",
+                                "min-h-[88px] w-full rounded-xl border px-2 py-3 text-center transition-colors",
+                                isSelected &&
+                                  "border-primary bg-primary/15 ring-2 ring-primary/50 shadow-md",
+                                isTodayCol && !isSelected && "border-amber-400 bg-amber-500/15",
+                                !isSelected && !isTodayCol && "border-border/60 bg-muted/20 hover:bg-muted/40",
+                                !isSelected && "opacity-55 hover:opacity-100",
                               )}
-                              title={`Abrir ${formatDateLong(`${dateKey}T12:00:00`)}`}
                             >
-                              <div
+                              <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                                {WEEKDAY_LABELS[d.getDay()]}
+                              </p>
+                              <p
                                 className={cn(
-                                  "border-b px-1.5 py-2.5 text-center",
+                                  "mx-auto mt-1 flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold",
                                   isSelected
-                                    ? "border-primary/40 bg-primary/15"
+                                    ? "bg-primary text-primary-foreground"
                                     : isTodayCol
-                                      ? "border-amber-400/50 bg-amber-500/20"
-                                      : "border-border/60 bg-muted/30",
+                                      ? "bg-amber-500 text-amber-950"
+                                      : "text-foreground",
                                 )}
                               >
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                                  {WEEKDAY_LABELS[d.getDay()]}
-                                </p>
-                                <p
-                                  className={cn(
-                                    "mx-auto mt-1 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold",
-                                    isTodayCol
-                                      ? "bg-amber-500 text-amber-950"
-                                      : isSelected
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-foreground",
-                                  )}
-                                >
-                                  {d.getDate()}
-                                </p>
-                                <p className="mt-1 text-[10px] font-medium text-muted-foreground">
-                                  {dayItems.length} evento{dayItems.length === 1 ? "" : "s"}
-                                </p>
-                              </div>
-                              <div className="flex flex-1 flex-col gap-1 p-1.5">
-                                {sortAgendaItems(dayItems)
-                                  .slice(0, 6)
-                                  .map((item) => {
-                                    const side = matchSideOf(item);
-                                    const style = agendaSwatchStyle(agendaColors, item.type, side);
-                                    const line = `${agendaLinePrefix(item, side)}${item.title}`;
-                                    return (
-                                      <button
-                                        key={item.id}
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          openCalendarItem(item);
-                                        }}
-                                        className="block w-full truncate whitespace-nowrap rounded-md border px-1.5 py-1 text-left text-[10px] font-semibold leading-tight sm:text-[11px]"
-                                        style={style}
-                                        title={line}
-                                      >
-                                        {!item.allDay ? (
-                                          <span className="mr-1 font-bold opacity-90">
-                                            {formatTime(item.startAt, false)}
-                                          </span>
-                                        ) : null}
-                                        {line}
-                                      </button>
-                                    );
-                                  })}
-                                {dayItems.length > 6 ? (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      goToDayView(dateKey);
-                                    }}
-                                    className="text-left text-[10px] font-semibold text-primary hover:underline"
-                                  >
-                                    +{dayItems.length - 6} · ver dia
-                                  </button>
-                                ) : null}
-                                {dayItems.length === 0 ? (
-                                  <p className="px-1 py-3 text-center text-[10px] text-muted-foreground/60">
-                                    Vazio · toque para abrir
-                                  </p>
-                                ) : null}
-                              </div>
-                            </div>
+                                {d.getDate()}
+                              </p>
+                              <p className="mt-2 text-[11px] font-semibold text-muted-foreground">
+                                {dayItems.length}
+                              </p>
+                            </button>
                           );
                         })}
                       </div>
@@ -1110,7 +1048,7 @@ export function FutebolAgendaOperacional() {
                         <CardTitle className="text-base capitalize">
                           {selectedDay
                             ? formatDateLong(`${selectedDay}T12:00:00`)
-                            : "Selecione um dia na semana"}
+                            : "Dia selecionado"}
                         </CardTitle>
                         {selectedDay ? (
                           <div className="flex flex-wrap gap-2">
@@ -1120,7 +1058,7 @@ export function FutebolAgendaOperacional() {
                               className="min-h-[40px]"
                               onClick={() => goToDayView(selectedDay)}
                             >
-                              Abrir visão diária
+                              Abrir dia
                             </Button>
                             <Button
                               variant="outline"
@@ -1135,11 +1073,7 @@ export function FutebolAgendaOperacional() {
                         ) : null}
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        {!selectedDay ? (
-                          <p className="text-sm text-muted-foreground">
-                            Clique em qualquer coluna da semana para ver e editar aquele dia.
-                          </p>
-                        ) : selectedItems.length === 0 ? (
+                        {!selectedDay ? null : selectedItems.length === 0 ? (
                           <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
                         ) : (
                           selectedItems.map(renderAgendaItem)
@@ -1168,16 +1102,12 @@ export function FutebolAgendaOperacional() {
                         className="mt-1 w-fit"
                         onClick={() => handleDayClick(selectedDay)}
                       >
-                        Abrir visão diária
+                        Abrir dia
                       </Button>
                     ) : null}
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {!selectedDay ? (
-                      <p className="text-sm text-muted-foreground">
-                        Toque no número do dia para a visão diária, ou em um evento para editar.
-                      </p>
-                    ) : selectedItems.length === 0 ? (
+                    {!selectedDay ? null : selectedItems.length === 0 ? (
                       <div className="space-y-3">
                         <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
                         <Button variant="outline" size="sm" onClick={() => openNewEntry(selectedDay)}>
@@ -1194,11 +1124,11 @@ export function FutebolAgendaOperacional() {
             </div>
           )}
           <p className="mt-4 text-xs text-muted-foreground">
-            Viagens vêm do módulo{" "}
+            Viagens: módulo{" "}
             <Link href="/dashboard/futebol/logistica" className="text-primary hover:underline">
               Viagens
             </Link>
-            ; treinos, reuniões e jogos você cadastra aqui na agenda.
+            .
           </p>
         </CardContent>
       </Card>

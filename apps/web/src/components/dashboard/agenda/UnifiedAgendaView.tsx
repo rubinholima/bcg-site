@@ -364,15 +364,15 @@ export function UnifiedAgendaView() {
 
   const listEvents = useMemo(() => {
     if (viewMode === "day") return byDate.get(focusDayKey) ?? [];
-    if (viewMode === "week") {
-      return weekDays.flatMap((d) => byDate.get(dateKeyFromDate(d)) ?? []);
-    }
+    if (viewMode === "week") return byDate.get(focusDayKey) ?? [];
     if (selectedDay) return byDate.get(selectedDay) ?? [];
     return [...filteredEvents];
-  }, [byDate, filteredEvents, focusDayKey, selectedDay, viewMode, weekDays]);
+  }, [byDate, filteredEvents, focusDayKey, selectedDay, viewMode]);
 
   const listGrouped = useMemo(() => {
-    if (viewMode === "day") return [{ dateKey: focusDayKey, items: listEvents }];
+    if (viewMode === "day" || viewMode === "week") {
+      return [{ dateKey: focusDayKey, items: listEvents }];
+    }
     const keys = [...new Set(listEvents.map((e) => e.startAt.slice(0, 10)))].sort();
     return keys.map((dateKey) => ({
       dateKey,
@@ -459,7 +459,7 @@ export function UnifiedAgendaView() {
         section="Agenda"
         sectionIcon={Calendar}
         title="Agenda geral"
-        description="Jogos em casa (verde) e fora (âmbar) primeiro. Dia, semana ou mês."
+        description="Compromissos de futebol, Hall, consultas e comunicação."
         stats={[
           { value: filteredEvents.length, label: "No período" },
           {
@@ -575,18 +575,6 @@ export function UnifiedAgendaView() {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="flex flex-wrap gap-2 text-xs">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-600 px-2.5 py-1 font-bold text-white">
-              <Home className="h-3 w-3" /> Casa
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400 bg-amber-500 px-2.5 py-1 font-bold text-zinc-950">
-              <Plane className="h-3 w-3" /> Fora
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-pink-400 bg-pink-600 px-2.5 py-1 font-bold text-white">
-              Aniversário
-            </span>
-          </div>
         </CardContent>
       </Card>
 
@@ -665,40 +653,48 @@ export function UnifiedAgendaView() {
           ) : viewMode === "week" ? (
             <Card className="border-border/80 shadow-md overflow-x-auto">
               <CardContent className="pt-6">
-                <div className="grid min-w-[720px] grid-cols-7 gap-2">
+                <div className="grid min-w-[560px] grid-cols-7 gap-2">
                   {weekDays.map((d) => {
                     const key = dateKeyFromDate(d);
                     const dayEvents = byDate.get(key) ?? [];
                     const isToday = key === today;
                     const isSelected = key === selectedDay;
                     return (
-                      <div key={key} className="min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedDay(key);
-                            setFocusDate(d);
-                          }}
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDay(key);
+                          setFocusDate(d);
+                        }}
+                        className={cn(
+                          "min-h-[88px] w-full rounded-xl border px-2 py-3 text-center transition-colors",
+                          isSelected &&
+                            "border-primary bg-primary/15 ring-2 ring-primary/50 shadow-md",
+                          isToday && !isSelected && "border-amber-400 bg-amber-500/15",
+                          !isSelected && !isToday && "border-border/60 bg-muted/20 hover:bg-muted/40",
+                          !isSelected && "opacity-55 hover:opacity-100",
+                        )}
+                      >
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                          {WEEKDAYS[d.getDay()]}
+                        </p>
+                        <p
                           className={cn(
-                            "mb-2 w-full rounded-xl border px-2 py-2 text-center",
-                            isSelected && "border-primary ring-2 ring-primary/40 bg-primary/10",
-                            isToday && !isSelected && "border-amber-400 bg-amber-500/15",
-                            !isSelected && !isToday && "border-border/60 bg-muted/20",
+                            "mx-auto mt-1 flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold",
+                            isSelected
+                              ? "bg-primary text-primary-foreground"
+                              : isToday
+                                ? "bg-amber-500 text-amber-950"
+                                : "text-foreground",
                           )}
                         >
-                          <p className="text-[10px] font-bold uppercase text-muted-foreground">
-                            {WEEKDAYS[d.getDay()]}
-                          </p>
-                          <p className="text-lg font-bold text-foreground">{d.getDate()}</p>
-                        </button>
-                        <div className="space-y-1">
-                          {dayEvents.map((ev) => (
-                            <Link key={ev.id} href={ev.href}>
-                              <EventPill event={ev} />
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
+                          {d.getDate()}
+                        </p>
+                        <p className="mt-2 text-[11px] font-semibold text-muted-foreground">
+                          {dayEvents.length}
+                        </p>
+                      </button>
                     );
                   })}
                 </div>
@@ -711,25 +707,27 @@ export function UnifiedAgendaView() {
               <CardTitle className="text-lg capitalize">
                 {viewMode === "month" && selectedDay
                   ? formatAgendaDateLong(selectedDay)
-                  : viewMode === "day"
+                  : viewMode === "day" || viewMode === "week"
                     ? formatAgendaDateLong(focusDayKey)
                     : "Compromissos"}
               </CardTitle>
-              <CardDescription>
-                {listEvents.length === 0
-                  ? "Nenhum compromisso neste período."
-                  : `${listEvents.length} compromisso(s) — jogos primeiro · casa verde · fora âmbar`}
-              </CardDescription>
+              {listEvents.length > 0 ? (
+                <CardDescription>
+                  {listEvents.length} compromisso{listEvents.length === 1 ? "" : "s"}
+                </CardDescription>
+              ) : (
+                <CardDescription>Nenhum compromisso neste dia.</CardDescription>
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
-              {listGrouped.length === 0 ? (
+              {listGrouped.length === 0 || listEvents.length === 0 ? (
                 <p className="py-10 text-center text-sm text-muted-foreground">
-                  Nada agendado. Ajuste filtros ou escolha outro período.
+                  Nada agendado neste dia.
                 </p>
               ) : (
                 listGrouped.map(({ dateKey, items }) => (
                   <div key={dateKey}>
-                    {viewMode !== "day" ? (
+                    {viewMode === "month" ? (
                       <p
                         className={cn(
                           "mb-3 text-xs font-bold uppercase tracking-wider",
