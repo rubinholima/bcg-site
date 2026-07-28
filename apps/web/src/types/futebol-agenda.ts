@@ -74,15 +74,24 @@ export const FOOTBALL_AGENDA_TYPE_LABEL: Record<string, string> = {
 };
 
 export const FOOTBALL_AGENDA_TYPE_COLOR: Record<string, string> = {
-  viagem: "bg-amber-500/20 text-amber-200 border-amber-500/35",
-  treino: "bg-emerald-500/20 text-emerald-200 border-emerald-500/35",
-  reuniao: "bg-sky-500/20 text-sky-200 border-sky-500/35",
-  jogo: "bg-violet-500/20 text-violet-200 border-violet-500/35",
-  compromisso: "bg-cyan-500/20 text-cyan-200 border-cyan-500/35",
-  preparacao: "bg-orange-500/20 text-orange-200 border-orange-500/35",
-  aniversario: "bg-pink-500/20 text-pink-200 border-pink-500/35",
-  palco: "bg-fuchsia-500/20 text-fuchsia-200 border-fuchsia-500/35",
-  outro: "bg-zinc-500/20 text-zinc-300 border-zinc-500/35",
+  viagem:
+    "border-l-4 border-l-amber-500 bg-amber-100 text-amber-950 border-amber-300 dark:bg-amber-500/20 dark:text-amber-50 dark:border-amber-500/40",
+  treino:
+    "border-l-4 border-l-emerald-500 bg-emerald-100 text-emerald-950 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-50 dark:border-emerald-500/40",
+  reuniao:
+    "border-l-4 border-l-sky-500 bg-sky-100 text-sky-950 border-sky-300 dark:bg-sky-500/20 dark:text-sky-50 dark:border-sky-500/40",
+  jogo:
+    "border-l-4 border-l-violet-500 bg-violet-100 text-violet-950 border-violet-300 dark:bg-violet-500/20 dark:text-violet-50 dark:border-violet-500/40",
+  compromisso:
+    "border-l-4 border-l-cyan-500 bg-cyan-100 text-cyan-950 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-50 dark:border-cyan-500/40",
+  preparacao:
+    "border-l-4 border-l-orange-500 bg-orange-100 text-orange-950 border-orange-300 dark:bg-orange-500/20 dark:text-orange-50 dark:border-orange-500/40",
+  aniversario:
+    "border-l-4 border-l-pink-500 bg-pink-100 text-pink-950 border-pink-300 dark:bg-pink-500/20 dark:text-pink-50 dark:border-pink-500/40",
+  palco:
+    "border-l-4 border-l-fuchsia-500 bg-fuchsia-100 text-fuchsia-950 border-fuchsia-300 dark:bg-fuchsia-500/20 dark:text-fuchsia-50 dark:border-fuchsia-500/40",
+  outro:
+    "border-l-4 border-l-zinc-500 bg-zinc-100 text-zinc-900 border-zinc-300 dark:bg-zinc-500/20 dark:text-zinc-100 dark:border-zinc-500/40",
 };
 
 export const TRAVEL_STATUS_LABEL: Record<string, string> = {

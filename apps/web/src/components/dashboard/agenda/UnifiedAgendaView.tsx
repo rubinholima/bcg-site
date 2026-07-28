@@ -11,10 +11,12 @@ import {
   ClipboardList,
   ExternalLink,
   Loader2,
+  MapPin,
   Megaphone,
   Plus,
   Search,
   Shirt,
+  Trophy,
 } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { Button } from "@/components/ui/button";
@@ -145,6 +147,7 @@ export function UnifiedAgendaView() {
 
   const [areaFilter, setAreaFilter] = useState<AgendaSource | "all">("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [clubFilter, setClubFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [cursor, setCursor] = useState(() => {
@@ -185,20 +188,38 @@ export function UnifiedAgendaView() {
     return [...labels].sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [events]);
 
+  const clubOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const e of events) {
+      if (e.tenantId && e.tenantName) map.set(e.tenantId, e.tenantName);
+      else if (e.tenantName) map.set(e.tenantName, e.tenantName);
+    }
+    return [...map.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  }, [events]);
+
   const filteredEvents = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return events.filter((e) => {
       if (areaFilter !== "all" && e.source !== areaFilter) return false;
       if (typeFilter !== "all" && e.typeLabel !== typeFilter) return false;
+      if (clubFilter !== "all") {
+        const clubKey = e.tenantId || e.tenantName || "";
+        if (clubKey !== clubFilter) return false;
+      }
       if (!q) return true;
       return (
         e.title.toLowerCase().includes(q) ||
         e.subtitle.toLowerCase().includes(q) ||
         e.typeLabel.toLowerCase().includes(q) ||
+        (e.location ?? "").toLowerCase().includes(q) ||
+        (e.championshipName ?? "").toLowerCase().includes(q) ||
+        (e.tenantName ?? "").toLowerCase().includes(q) ||
         AGENDA_SOURCE_LABELS[e.source].toLowerCase().includes(q)
       );
     });
-  }, [areaFilter, events, searchQuery, typeFilter]);
+  }, [areaFilter, clubFilter, events, searchQuery, typeFilter]);
 
   const byDate = useMemo(() => groupEventsByDate(filteredEvents), [filteredEvents]);
 
@@ -276,13 +297,13 @@ export function UnifiedAgendaView() {
 
       <Card className="border-border/80">
         <CardContent className="space-y-4 pt-6">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_180px_180px]">
-            <div className="relative">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="relative sm:col-span-2 lg:col-span-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por título, local, tipo ou área..."
+                placeholder="Buscar título, clube, local…"
                 className="min-h-[44px] pl-9 text-foreground"
               />
             </div>
@@ -298,6 +319,19 @@ export function UnifiedAgendaView() {
                 {availableSources.map((source) => (
                   <SelectItem key={source} value={source}>
                     {AGENDA_SOURCE_LABELS[source]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={clubFilter} onValueChange={setClubFilter}>
+              <SelectTrigger className="min-h-[44px]">
+                <SelectValue placeholder="Clube" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os clubes</SelectItem>
+                {clubOptions.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -475,42 +509,65 @@ export function UnifiedAgendaView() {
                       <li key={ev.id}>
                         <Link
                           href={ev.href}
-                          className={cn("group flex gap-3 rounded-xl border p-3 transition-all sm:p-4", dash.eventListItem)}
+                          className={cn(
+                            "group flex gap-3 rounded-xl border p-3 transition-all sm:gap-4 sm:p-4",
+                            dash.eventListItem,
+                          )}
                         >
                           <div
-                            className={cn("mt-1 w-1 shrink-0 self-stretch rounded-full", ev.dotClass)}
+                            className={cn("mt-0.5 w-1.5 shrink-0 self-stretch rounded-full", ev.dotClass)}
                             aria-hidden
                           />
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className={cn("text-sm font-semibold", dash.eventListTitle)}>
+                              <span className={cn("text-base font-semibold leading-snug", dash.eventListTitle)}>
                                 {ev.title}
                               </span>
                               <span
                                 className={cn(
-                                  "rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+                                  "rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                                   ev.tone,
                                 )}
                               >
                                 {ev.typeLabel}
                               </span>
+                              {ev.statusLabel ? (
+                                <span className="rounded-full border border-border/70 bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-foreground">
+                                  {ev.statusLabel}
+                                </span>
+                              ) : null}
                             </div>
-                            <p className="mt-0.5 text-xs text-muted-foreground">{ev.subtitle}</p>
-                            <p className={cn("mt-1 text-sm font-medium", dash.eventListMeta)}>
+                            <p className="mt-1 text-sm font-medium text-foreground/90">{ev.subtitle}</p>
+                            <p className={cn("mt-1.5 text-sm font-semibold", dash.eventListMeta)}>
                               {formatAgendaTime(ev.startAt, ev.allDay)}
+                              {ev.endAt && !ev.allDay && ev.source === "futebol" && ev.typeLabel.toLowerCase().includes("viagem")
+                                ? ` · jogo ${formatAgendaTime(ev.endAt, false)}`
+                                : null}
                             </p>
+                            {ev.location ? (
+                              <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+                                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <span>{ev.location}</span>
+                              </p>
+                            ) : null}
+                            {ev.championshipName ? (
+                              <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+                                <Trophy className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <span>{ev.championshipName}</span>
+                              </p>
+                            ) : null}
                           </div>
                           <div className="flex shrink-0 flex-col items-end gap-2">
                             <span
                               className={cn(
-                                "inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-medium",
+                                "inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-semibold",
                                 meta.tone,
                               )}
                             >
                               <Icon className="h-3 w-3" />
                               {meta.label}
                             </span>
-                            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-50 transition-opacity group-hover:opacity-100" />
                           </div>
                         </Link>
                       </li>

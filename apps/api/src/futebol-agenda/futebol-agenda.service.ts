@@ -214,22 +214,32 @@ export class FutebolAgendaService {
       const title = t.opponentName
         ? `Jogo fora — ${t.opponentName}`
         : t.championshipName ?? 'Viagem';
-      const start = t.estimatedDeparture ?? t.matchDate;
+      const matchAt = t.matchDate;
+      const departureAt = t.estimatedDeparture;
+      const start = departureAt ?? matchAt;
+      // Com horário de jogo/partida, não tratar como "dia inteiro"
+      const hasClock =
+        start.getHours() !== 0 ||
+        start.getMinutes() !== 0 ||
+        start.getSeconds() !== 0 ||
+        Boolean(departureAt);
       const travelCats = parseTravelCategories(t.categories);
+      const location =
+        [t.stadiumName, t.city, t.country].filter(Boolean).join(' · ') || null;
       items.push({
         id: `travel-${t.id}`,
         source: 'travel',
         type: 'viagem',
         title,
         startAt: start.toISOString(),
-        endAt: t.matchDate.toISOString(),
-        allDay: !t.estimatedDeparture,
+        endAt: matchAt.toISOString(),
+        allDay: !hasClock,
         tenantId: t.tenantId,
         tenantName: t.tenant.name,
         category: t.category,
         categories: travelCats.length > 0 ? travelCats : undefined,
         status: t.status,
-        location: [t.city, t.country].filter(Boolean).join(', ') || t.stadiumName,
+        location,
         opponentName: t.opponentName,
         championshipName: t.championshipName,
         href: `/dashboard/futebol/logistica/${t.id}/edit`,

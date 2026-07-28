@@ -511,48 +511,56 @@ export function FutebolAgendaOperacional() {
     <div
       key={item.id}
       className={cn(
-        "rounded-lg border p-3",
-        FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? "",
+        "rounded-lg border p-3 text-foreground shadow-sm",
+        FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro,
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase opacity-80">
-            {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
-            {cats !== "—" ? ` · ${cats}` : ""}
-            {item.tenantName ? ` · ${item.tenantName}` : ""}
-          </p>
-          <div className="mt-1 flex flex-wrap gap-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="rounded-md border border-current/20 bg-black/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide dark:bg-white/10">
+              {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
+            </span>
+            {cats !== "—" ? (
+              <span className="text-xs font-medium opacity-90">{cats}</span>
+            ) : null}
             {isFmfGame(item) ? (
-              <span className="rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+              <span className="rounded bg-violet-600/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-950 dark:text-violet-100">
                 FMF
               </span>
             ) : null}
             {item.agendaLocked ? (
-              <span className="rounded bg-zinc-600/40 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+              <span className="rounded bg-zinc-600/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                 Editado
               </span>
             ) : null}
           </div>
-          <p className="mt-0.5 font-semibold leading-tight">{item.title}</p>
-          <p className="mt-1 text-xs opacity-90">
+          {item.tenantName ? (
+            <p className="mt-1 text-xs font-medium opacity-90">{item.tenantName}</p>
+          ) : null}
+          <p className="mt-0.5 text-base font-semibold leading-tight text-foreground">{item.title}</p>
+          <p className="mt-1 text-sm font-medium opacity-95">
             {formatTime(item.startAt, item.allDay)}
-            {item.endAt && !item.allDay ? ` — ${formatTime(item.endAt, false)}` : ""}
+            {item.endAt && !item.allDay && item.source === "travel"
+              ? ` · jogo ${formatTime(item.endAt, false)}`
+              : item.endAt && !item.allDay
+                ? ` — ${formatTime(item.endAt, false)}`
+                : ""}
           </p>
           {item.location ? (
-            <p className="mt-1 flex items-center gap-1 text-xs opacity-80">
+            <p className="mt-1 flex items-center gap-1 text-xs opacity-90">
               <MapPin className="h-3 w-3 shrink-0" />
               {item.location}
             </p>
           ) : null}
           {item.source === "travel" ? (
-            <p className="mt-1 text-xs opacity-75">
+            <p className="mt-1 text-xs opacity-90">
               {TRAVEL_STATUS_LABEL[item.status] ?? item.status}
               {item.championshipName ? ` · ${item.championshipName}` : ""}
             </p>
           ) : null}
           {item.source === "bch_booking" ? (
-            <p className="mt-1 text-xs opacity-75">
+            <p className="mt-1 text-xs opacity-90">
               {BOOKING_STATUS_LABEL[item.status] ?? item.status}
               {item.spaceName ? ` · ${item.spaceName}` : ""}
             </p>
@@ -563,21 +571,21 @@ export function FutebolAgendaOperacional() {
         {item.source === "travel" ? (
           <Link
             href={item.href}
-            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+            className="text-xs font-semibold underline-offset-2 hover:underline"
           >
             Abrir viagem
           </Link>
         ) : item.source === "bch_booking" ? (
           <Link
             href={item.href}
-            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+            className="text-xs font-semibold underline-offset-2 hover:underline"
           >
             Editar no Boston City Hall
           </Link>
         ) : (
           <button
             type="button"
-            className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+            className="text-xs font-semibold underline-offset-2 hover:underline"
             onClick={() => {
               const id = item.id.replace(/^entry-/, "");
               api.get<FootballAgendaEntry>(`/futebol-agenda/entries/${id}`).then(({ data }) => {

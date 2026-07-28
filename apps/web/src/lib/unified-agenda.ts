@@ -1,9 +1,13 @@
 import { api } from "@/lib/api";
 import { agendaHubUrl, AGENDA_VISAO, type AgendaVisao } from "@/lib/agenda-hub";
-import { FOOTBALL_AGENDA_TYPE_LABEL } from "@/types/futebol-agenda";
+import {
+  FOOTBALL_AGENDA_TYPE_LABEL,
+  TRAVEL_STATUS_LABEL,
+  type FootballAgendaCalendarItem,
+} from "@/types/futebol-agenda";
 import { BOOKING_STATUS_LABEL } from "@/types/boston-city-hall";
-import type { FootballAgendaCalendarItem } from "@/types/futebol-agenda";
 import type { VenueBooking } from "@/types/boston-city-hall";
+import { getCategoryLabel } from "@/lib/fixture-categories";
 
 export type AgendaSource = "futebol" | "boston-hall" | "consultas" | "marketing";
 
@@ -19,6 +23,13 @@ export type UnifiedAgendaEvent = {
   href: string;
   tone: string;
   dotClass: string;
+  /** Clube / empresa (quando houver) */
+  tenantId?: string;
+  tenantName?: string;
+  location?: string | null;
+  championshipName?: string | null;
+  statusLabel?: string | null;
+  categoryLabel?: string | null;
 };
 
 export const AGENDA_SOURCE_LABELS: Record<AgendaSource, string> = {
@@ -56,16 +67,26 @@ export const AGENDA_SOURCE_CREATE_HREF: Record<AgendaSource, string> = {
   marketing: "/dashboard/marketing",
 };
 
+/** Tons legíveis no claro e no escuro (chips de tipo). */
 const FUTEBOL_TONE: Record<string, string> = {
-  viagem: "bg-amber-500/25 text-amber-50 border-amber-500/50",
-  treino: "bg-emerald-500/25 text-emerald-50 border-emerald-500/50",
-  reuniao: "bg-sky-500/25 text-sky-50 border-sky-500/50",
-  jogo: "bg-violet-500/25 text-violet-50 border-violet-500/50",
-  compromisso: "bg-cyan-500/25 text-cyan-50 border-cyan-500/50",
-  preparacao: "bg-orange-500/25 text-orange-50 border-orange-500/50",
-  aniversario: "bg-pink-500/25 text-pink-50 border-pink-500/50",
-  palco: "bg-fuchsia-500/25 text-fuchsia-50 border-fuchsia-500/50",
-  outro: "bg-zinc-500/25 text-zinc-100 border-zinc-500/40",
+  viagem:
+    "bg-amber-100 text-amber-950 border-amber-400 dark:bg-amber-500/25 dark:text-amber-50 dark:border-amber-500/50",
+  treino:
+    "bg-emerald-100 text-emerald-950 border-emerald-400 dark:bg-emerald-500/25 dark:text-emerald-50 dark:border-emerald-500/50",
+  reuniao:
+    "bg-sky-100 text-sky-950 border-sky-400 dark:bg-sky-500/25 dark:text-sky-50 dark:border-sky-500/50",
+  jogo:
+    "bg-violet-100 text-violet-950 border-violet-400 dark:bg-violet-500/25 dark:text-violet-50 dark:border-violet-500/50",
+  compromisso:
+    "bg-cyan-100 text-cyan-950 border-cyan-400 dark:bg-cyan-500/25 dark:text-cyan-50 dark:border-cyan-500/50",
+  preparacao:
+    "bg-orange-100 text-orange-950 border-orange-400 dark:bg-orange-500/25 dark:text-orange-50 dark:border-orange-500/50",
+  aniversario:
+    "bg-pink-100 text-pink-950 border-pink-400 dark:bg-pink-500/25 dark:text-pink-50 dark:border-pink-500/50",
+  palco:
+    "bg-fuchsia-100 text-fuchsia-950 border-fuchsia-400 dark:bg-fuchsia-500/25 dark:text-fuchsia-50 dark:border-fuchsia-500/50",
+  outro:
+    "bg-zinc-100 text-zinc-900 border-zinc-400 dark:bg-zinc-500/25 dark:text-zinc-100 dark:border-zinc-500/40",
 };
 
 const FUTEBOL_DOT: Record<string, string> = {
@@ -122,11 +143,29 @@ export function formatAgendaDateLong(dateKey: string): string {
 
 function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent {
   const type = item.type || "outro";
+  const categoryLabel = item.category
+    ? getCategoryLabel(item.category, "pt")
+    : item.categories?.length
+      ? item.categories.map((c) => getCategoryLabel(c, "pt")).join(", ")
+      : null;
+  const statusLabel =
+    item.source === "travel"
+      ? TRAVEL_STATUS_LABEL[item.status] ?? item.status
+      : item.status === "confirmado"
+        ? "Confirmado"
+        : item.status === "provisorio"
+          ? "Provisório"
+          : item.status === "cancelado"
+            ? "Cancelado"
+            : item.status;
+
+  const subtitleParts = [item.tenantName, categoryLabel].filter(Boolean);
+
   return {
     id: `futebol-${item.id}`,
     source: "futebol",
     title: item.title,
-    subtitle: [item.tenantName, item.category].filter(Boolean).join(" · ") || "Futebol",
+    subtitle: subtitleParts.join(" · ") || "Futebol",
     startAt: item.startAt,
     endAt: item.endAt,
     allDay: item.allDay,
@@ -134,6 +173,12 @@ function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent 
     href: item.href || agendaHubUrl(AGENDA_VISAO.FUTEBOL),
     tone: FUTEBOL_TONE[type] ?? FUTEBOL_TONE.outro,
     dotClass: FUTEBOL_DOT[type] ?? FUTEBOL_DOT.outro,
+    tenantId: item.tenantId || undefined,
+    tenantName: item.tenantName,
+    location: item.location,
+    championshipName: item.championshipName,
+    statusLabel,
+    categoryLabel,
   };
 }
 

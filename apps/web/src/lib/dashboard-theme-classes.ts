@@ -25,9 +25,9 @@ export const dash = {
     "bg-violet-200 text-violet-900 dark:bg-violet-500/30 dark:text-violet-100",
   calendarMore: "text-violet-700 dark:text-violet-300/90",
   eventListItem:
-    "border-slate-200 bg-white hover:border-violet-300 hover:bg-slate-50 dark:border-border/60 dark:bg-zinc-900/40 dark:hover:border-violet-500/35 dark:hover:bg-zinc-900/70",
-  eventListTitle: "text-slate-900 group-hover:text-violet-800 dark:group-hover:text-violet-100",
-  eventListMeta: "text-violet-700 dark:text-violet-200/90",
+    "border-border/70 bg-card text-card-foreground hover:border-violet-400/60 hover:bg-muted/40 dark:border-border/60 dark:bg-zinc-900/60 dark:hover:border-violet-500/40 dark:hover:bg-zinc-900/80",
+  eventListTitle: "text-foreground group-hover:text-violet-700 dark:group-hover:text-violet-100",
+  eventListMeta: "text-violet-700 dark:text-violet-200",
   sectionLabel: "text-violet-700 dark:text-violet-400/90",
   statChip:
     "border-slate-200 bg-white/90 dark:border-border/60 dark:bg-card/50",
