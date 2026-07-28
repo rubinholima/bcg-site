@@ -37,8 +37,7 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
   },
   "/dashboard/futebol/logistica/convocacao": {
     title: "Convocação",
-    description:
-      "Selecione atletas e comissão por clube/categoria para a viagem — vínculo no cadastro individual e base dos relatórios",
+    backHref: "/dashboard/futebol/logistica",
   },
   "/dashboard/empresas": {
     description: "Gerencie as empresas do grupo",

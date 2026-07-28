@@ -1,0 +1,34 @@
+---
+description: Sem textos de ajuda longos nas telas — ajuda vai no Manual (? no header)
+alwaysApply: true
+---
+
+# Sem help na tela de operação
+
+**PROIBIDO** colocar textos explicativos / “como funciona” / CardDescription longa / parágrafos de tutorial nas telas do dashboard.
+
+## Onde vai a ajuda
+
+| O quê | Onde |
+|-------|------|
+| Ajuda, fluxo, exemplos, regras de uso | **Manual da plataforma** — ícone **?** no header (`/dashboard/manual`) |
+| Título da página | Curto, só o nome da ação/tela |
+| `description` em `dashboard-page-meta` | Evitar ou no máximo **uma linha** operacional; sem tutorial |
+
+## O que NÃO fazer nas telas
+
+- ❌ `CardDescription` com tutorial (“Selecione o clube… Cada atleta fica ligado…”)
+- ❌ Parágrafos “A lista prioriza… Sem convocação usa…”
+- ❌ Blocos “Como funciona”
+- ❌ Duplicar no formulário o que já está (ou deve estar) no Manual
+
+## Ao criar feature nova
+
+1. Tela = só campos, botões e feedback curto (erro/sucesso).
+2. Explicação → seção/subseção no `apps/web/src/app/dashboard/manual/page.tsx` + item no sumário (`NAV`).
+3. FeedbackModal: mensagem objetiva, sem aula.
+
+## Referência
+
+- Header: `apps/web/src/components/dashboard/header.tsx` → link para `/dashboard/manual`
+- Manual: `apps/web/src/app/dashboard/manual/page.tsx`

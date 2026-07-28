@@ -37,3 +37,4 @@ Todas as páginas do dashboard usam **`DashboardPageFrame`** (via `DashboardLayo
 - Só incluir em `DASHBOARD_AUTO_HEADER_EXCLUDE` se a página já renderiza header próprio (hub hero, sessão fullscreen, editor)
 - Sem `alert`/`confirm` — `FeedbackModal` / `AlertDialog`
 - Touch targets `min-h-[44px]` em botões e busca
+- **Sem textos de ajuda / tutorial na tela** — vão no Manual (`?` no header). Ver `.cursor/rules/sem-help-na-tela.mdc`

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -99,9 +99,6 @@ export function FutebolRelatorioPassageirosForm() {
       <Card>
         <CardHeader>
           <CardTitle>Relação de Passageiros</CardTitle>
-          <CardDescription>
-            Lista oficial de atletas, comissão e convidados para transporte — CPF, RG e data de nascimento.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -149,20 +146,6 @@ export function FutebolRelatorioPassageirosForm() {
             </div>
           </div>
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
-          <p className="text-sm text-muted-foreground">
-            A lista prioriza a{" "}
-            <Link
-              href={
-                travelId
-                  ? `/dashboard/futebol/logistica/convocacao?travelId=${encodeURIComponent(travelId)}`
-                  : "/dashboard/futebol/logistica/convocacao"
-              }
-              className="text-[#C8102E] underline-offset-2 hover:underline"
-            >
-              convocação da viagem
-            </Link>{" "}
-            (atletas com vínculo no cadastro). Sem convocação, usa quartos ou elenco por categoria.
-          </p>
           <div className="flex flex-wrap gap-2 pt-1">
             <Button type="button" variant="outline" disabled={busy} onClick={() => void handlePreview()}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
@@ -176,6 +159,17 @@ export function FutebolRelatorioPassageirosForm() {
             >
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
               Imprimir / PDF
+            </Button>
+            <Button type="button" variant="outline" asChild>
+              <Link
+                href={
+                  travelId
+                    ? `/dashboard/futebol/logistica/convocacao?travelId=${encodeURIComponent(travelId)}`
+                    : "/dashboard/futebol/logistica/convocacao"
+                }
+              >
+                Convocação
+              </Link>
             </Button>
           </div>
         </CardContent>

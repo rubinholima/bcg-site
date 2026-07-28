@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckSquare, Loader2, Save, Square, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -309,8 +309,7 @@ export function LogisticaConvocacaoForm() {
       setFeedback({
         open: true,
         title: "Convocação salva",
-        message:
-          "Atletas e comissão vinculados à viagem e ao cadastro individual. Os relatórios de passageiros usam esta lista.",
+        message: "Lista atualizada.",
         variant: "success",
       });
     } catch {
@@ -347,11 +346,6 @@ export function LogisticaConvocacaoForm() {
             <Users className="h-5 w-5 text-[#C8102E]" />
             Convocação para viagem
           </CardTitle>
-          <CardDescription>
-            Selecione o clube, a viagem e os atletas por categoria. Cada atleta fica
-            ligado ao cadastro individual (histórico na ficha + relatórios de
-            passageiros).
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -403,7 +397,6 @@ export function LogisticaConvocacaoForm() {
 
           {travelId ? (
             <p className="text-sm text-muted-foreground">
-              Selecionados:{" "}
               <span className="font-medium text-foreground">
                 {selectedPlayerIds.size} atleta(s)
               </span>
@@ -413,10 +406,10 @@ export function LogisticaConvocacaoForm() {
               </span>
               {" · "}
               <Link
-                href={`/dashboard/relatorios/futebol/passageiros`}
+                href="/dashboard/relatorios/futebol/passageiros"
                 className="text-[#C8102E] underline-offset-2 hover:underline"
               >
-                Ir para relatório de passageiros
+                Passageiros
               </Link>
             </p>
           ) : null}
@@ -428,12 +421,7 @@ export function LogisticaConvocacaoForm() {
           <Card className="border-zinc-800 bg-zinc-950/60">
             <CardHeader className="pb-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <CardTitle className="text-base">Atletas</CardTitle>
-                  <CardDescription>
-                    Filtre por categoria da viagem e marque quem viaja.
-                  </CardDescription>
-                </div>
+                <CardTitle className="text-base">Atletas</CardTitle>
                 <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
@@ -540,10 +528,6 @@ export function LogisticaConvocacaoForm() {
           <Card className="border-zinc-800 bg-zinc-950/60">
             <CardHeader>
               <CardTitle className="text-base">Comissão técnica</CardTitle>
-              <CardDescription>
-                Opcional — também vinculada à viagem (aparece no relatório de
-                passageiros).
-              </CardDescription>
             </CardHeader>
             <CardContent>
               {loadingPeople ? (

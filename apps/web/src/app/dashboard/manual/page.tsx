@@ -19,6 +19,7 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "requisicoes", label: "Requisições" },
   { id: "futebol", label: "Depto Futebol" },
   { id: "futebol-cadastro-atletas", label: "→ Cadastro de atletas", indent: true },
+  { id: "futebol-logistica-convocacao", label: "→ Logística e convocação", indent: true },
   { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
@@ -372,6 +373,23 @@ export default function ManualPage() {
                 <strong>LGPD:</strong> este cadastro trata dados pessoais nos módulos da plataforma (cadastros,
                 contratos, prontuários, logística, nutrição, entre outros), conforme o processo de cadastro e alteração
                 do atleta no clube.
+              </p>
+            </SubSection>
+
+            <SubSection id="futebol-logistica-convocacao" title="Logística — convocação e relatórios">
+              <p>
+                Fluxo: criar a <strong>viagem</strong> em Logística → abrir{" "}
+                <strong>Convocação</strong> → escolher clube, viagem e marcar atletas (e comissão) →{" "}
+                <strong>Salvar</strong> → gerar relatórios (Passageiros, Hóspedes, Programação).
+              </p>
+              <p>
+                Cada atleta convocado fica ligado ao <strong>cadastro individual</strong> (histórico na
+                ficha). O relatório de passageiros usa a convocação; sem convocação, cai para quartos ou
+                elenco por categoria.
+              </p>
+              <p>
+                Menu: Depto Futebol → Logística → Convocação / Relatórios. Atalho também na edição da
+                viagem.
               </p>
             </SubSection>
 
