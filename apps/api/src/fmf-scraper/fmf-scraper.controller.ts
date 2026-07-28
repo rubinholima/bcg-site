@@ -9,6 +9,14 @@ import {
   type FmfScraperSyncConfig,
 } from './fmf-page-sync.service';
 import { FmfScraperService } from './fmf-scraper.service';
+import {
+  FmfTravelSyncService,
+  type FmfTravelSyncResult,
+} from './fmf-travel-sync.service';
+import {
+  FmfVisitingTeamsSyncService,
+  type FmfVisitingTeamsSyncResult,
+} from './fmf-visiting-teams-sync.service';
 
 @Controller('api/fmf-scraper')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -18,6 +26,8 @@ export class FmfScraperController {
     private readonly fmfScraper: FmfScraperService,
     private readonly fmfSync: FmfPageSyncService,
     private readonly fmfAgendaSync: FmfAgendaSyncService,
+    private readonly visitingTeamsSync: FmfVisitingTeamsSyncService,
+    private readonly travelSync: FmfTravelSyncService,
   ) {}
 
   @Get('presets')
@@ -36,13 +46,29 @@ export class FmfScraperController {
       preset: body?.preset,
       all: body?.all === true,
     });
+
+    let visitingTeams: FmfVisitingTeamsSyncResult | null = null;
+    try {
+      visitingTeams = await this.visitingTeamsSync.syncFromStore(store);
+    } catch {
+      /* opcional */
+    }
+
     let agendaSync: FmfAgendaSyncResult | null = null;
     try {
       agendaSync = await this.fmfAgendaSync.syncAll();
     } catch {
       /* agenda sync opcional após import */
     }
-    return { ok: true, store, agendaSync };
+
+    let travelSync: FmfTravelSyncResult | null = null;
+    try {
+      travelSync = await this.travelSync.syncAll();
+    } catch {
+      /* viagens sync opcional após import */
+    }
+
+    return { ok: true, store, visitingTeams, agendaSync, travelSync };
   }
 
   @Get('sync/candidates')
@@ -81,6 +107,20 @@ export class FmfScraperController {
   async syncAgenda(@Body() body: { tenantId?: string; all?: boolean }) {
     const result = await this.fmfAgendaSync.syncAll(
       body?.tenantId ? { tenantId: body.tenantId } : body?.all ? {} : {},
+    );
+    return { ok: true, ...result };
+  }
+
+  @Post('sync/visiting-teams')
+  async syncVisitingTeams() {
+    const result = await this.visitingTeamsSync.syncFromStore();
+    return { ok: true, ...result };
+  }
+
+  @Post('sync/travels')
+  async syncTravels(@Body() body: { tenantId?: string; all?: boolean }) {
+    const result = await this.travelSync.syncAll(
+      body?.tenantId ? { tenantId: body.tenantId } : {},
     );
     return { ok: true, ...result };
   }

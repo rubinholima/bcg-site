@@ -1,15 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { FutebolRelatorioProgramacaoForm } from "@/components/dashboard/futebol/relatorios/FutebolRelatorioProgramacaoForm";
-import { FutebolRelatorioShell } from "@/components/dashboard/futebol/relatorios/FutebolRelatorioShell";
-
-export default function FutebolRelatorioProgramacaoPage() {
-  return (
-    <FutebolRelatorioShell
-      title="Programação Semanal"
-      description="Grade por dia e categoria com atividades da agenda operacional."
-    >
-      <FutebolRelatorioProgramacaoForm />
-    </FutebolRelatorioShell>
-  );
+export default function LegacyProgramacaoPage() {
+  redirect("/dashboard/futebol/logistica/relatorios/programacao-semanal");
 }

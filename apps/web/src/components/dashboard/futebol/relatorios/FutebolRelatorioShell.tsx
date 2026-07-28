@@ -2,25 +2,34 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3 } from "lucide-react";
+import { Map as MapIcon } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { useAuth } from "@/context/AuthContext";
 
 interface FutebolRelatorioShellProps {
   title: string;
-  description: string;
   children: ReactNode;
+  backHref?: string;
+  backLabel?: string;
 }
 
-export function FutebolRelatorioShell({ title, description, children }: FutebolRelatorioShellProps) {
+export function FutebolRelatorioShell({
+  title,
+  children,
+  backHref = "/dashboard/futebol/logistica",
+  backLabel = "Logística",
+}: FutebolRelatorioShellProps) {
   const router = useRouter();
   const { canAccessModule, loading } = useAuth();
 
+  const canAccess =
+    canAccessModule("futebol_logistica") || canAccessModule("relatorios_futebol");
+
   useEffect(() => {
-    if (!loading && !canAccessModule("relatorios_futebol")) {
+    if (!loading && !canAccess) {
       router.replace("/403");
     }
-  }, [loading, canAccessModule, router]);
+  }, [loading, canAccess, router]);
 
   if (loading) {
     return (
@@ -30,15 +39,16 @@ export function FutebolRelatorioShell({ title, description, children }: FutebolR
     );
   }
 
-  if (!canAccessModule("relatorios_futebol")) return null;
+  if (!canAccess) return null;
 
   return (
     <div className="space-y-6">
       <DashboardDeptHeader
-        section="Depto Futebol"
-        sectionIcon={BarChart3}
+        section="Logística"
+        sectionIcon={MapIcon}
         title={title}
-        description={description}
+        backHref={backHref}
+        backLabel={backLabel}
       />
       {children}
     </div>

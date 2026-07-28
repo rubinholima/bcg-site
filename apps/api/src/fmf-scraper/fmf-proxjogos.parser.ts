@@ -59,7 +59,18 @@ function parseScoreFromTds(tds: string[]) {
   return { home: null, away: null, scheduled: true };
 }
 
+function absoluteEscudoUrl(src: string | undefined | null): string | null {
+  if (!src?.trim()) return null;
+  const t = src.trim();
+  if (/^https?:\/\//i.test(t)) return t;
+  if (t.startsWith('//')) return `http:${t}`;
+  if (t.startsWith('/')) return `http://esumula.fmf.com.br${t}`;
+  return `http://esumula.fmf.com.br/escudos/${t.replace(/^escudos\//i, '')}`;
+}
+
 export type FmfParsedMatch = {
+  /** Ex.: CLASSIFICATÓRIA, QUARTAS, SEMIFINAIS, OCTOGONAL */
+  phaseLabel: string | null;
   roundNumber: number | null;
   matchDate: string | null;
   kickoffTime: string | null;
@@ -70,84 +81,165 @@ export type FmfParsedMatch = {
   status: 'scheduled' | 'finished';
   fmfJogoNumber: number | null;
   venueText: string | null;
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
 };
 
-/** Extrai partidas do HTML ProxJogos (portado do SOCCER SOLUTION). */
+/** Fase de pontos / grupos — usada na tabela; mata-mata fica de fora. */
+export function isFmfGroupStagePhase(phaseLabel: string | null | undefined): boolean {
+  if (!phaseLabel?.trim()) return true;
+  const p = phaseLabel
+    .trim()
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+  if (/QUARTA|SEMI|FINAL|OITAVA|DISPUTA\s+DE\s+3|TERCEIRO\s+LUGAR|MATA|ELIMIN/.test(p)) {
+    return false;
+  }
+  return true;
+}
+
+function buildPhaseLabelMap($: cheerio.CheerioAPI): Map<string, string> {
+  const map = new Map<string, string>();
+  $('a[href^="#fase"], a[data-toggle="tab"][href^="#"]').each((_, el) => {
+    const href = ($(el).attr('href') ?? '').trim();
+    const id = href.replace(/^#/, '');
+    if (!id) return;
+    const label = $(el).text().replace(/\s+/g, ' ').trim();
+    if (label) map.set(id, label);
+  });
+  return map;
+}
+
+function phaseForBox(
+  $: cheerio.CheerioAPI,
+  box: any,
+  phaseById: Map<string, string>,
+): string | null {
+  const pane = $(box).closest('.tab-pane, [id^="fase_"]');
+  if (!pane.length) return null;
+  const id = (pane.attr('id') ?? '').trim();
+  if (!id) return null;
+  return phaseById.get(id) ?? null;
+}
+
+function extractMatchFromRow(
+  $: cheerio.CheerioAPI,
+  row: any,
+  ctx: {
+    phaseLabel: string | null;
+    roundNumber: number | null;
+    currentDate: string | null;
+  },
+): FmfParsedMatch | null {
+  const $row = $(row);
+  if ($row.find('div.col-md-12 b').first().length) return null;
+
+  const timeRaw = $row.find('div.col-md-1').first().text().trim();
+  if (!/^\d{1,2}:\d{2}$/.test(timeRaw)) return null;
+
+  const innerRow = $row.find('div.col-md-11 div.row').first();
+  if (!innerRow.length) return null;
+
+  const homeName = innerRow.find('div.col-md-3[align="right"]').first().text().trim();
+  const awayName = innerRow.find('div.col-md-3[align="left"]').first().text().trim();
+  if (!homeName || !awayName) return null;
+
+  const logoImgs = innerRow
+    .find('img[src*="escudos"]')
+    .toArray()
+    .map((img) => absoluteEscudoUrl($(img).attr('src')))
+    .filter((u): u is string => Boolean(u));
+
+  const tds = innerRow
+    .find('div.col-md-6 table tr td')
+    .toArray()
+    .map((td) => $(td).text().trim());
+  const { home: homeGoals, away: awayGoals, scheduled } = parseScoreFromTds(tds);
+
+  const sideNote = $row.find('div.col-md-3').filter((_, el) => /Jogo\s+\d+/i.test($(el).text()));
+  let venueText: string | null = null;
+  let fmfJogo: number | null = null;
+  if (sideNote.length) {
+    const block = sideNote.first().text().replace(/\s+/g, ' ').trim();
+    const jm = block.match(/Jogo\s+(\d+)/i);
+    if (jm) fmfJogo = parseInt(jm[1]!, 10);
+    venueText = block.replace(/^Jogo\s+\d+\s*/i, '').trim() || null;
+  }
+
+  return {
+    phaseLabel: ctx.phaseLabel,
+    roundNumber: ctx.roundNumber,
+    matchDate: ctx.currentDate,
+    kickoffTime: normalizeTime(timeRaw),
+    homeName,
+    awayName,
+    homeGoals,
+    awayGoals,
+    status: scheduled ? 'scheduled' : 'finished',
+    fmfJogoNumber: fmfJogo,
+    venueText,
+    homeLogoUrl: logoImgs[0] ?? null,
+    awayLogoUrl: logoImgs[1] ?? null,
+  };
+}
+
+/** Extrai partidas do HTML ProxJogos (todas as abas/fases: classificatória, quartas, etc.). */
 export function parseFmfProxJogosHtml(html: string): FmfParsedMatch[] {
   const $ = cheerio.load(html);
   const out: FmfParsedMatch[] = [];
+  const phaseById = buildPhaseLabelMap($);
+
   let roundNumber: number | null = null;
   let currentDate: string | null = null;
+  let lastPaneId: string | null = null;
 
   $('div.box.box-solid').each((_, box) => {
+    const pane = $(box).closest('.tab-pane, [id^="fase_"]');
+    const paneId = pane.length ? (pane.attr('id') ?? '').trim() || null : null;
+    // Nova aba/fase: reinicia rodada/data (HTML da FMF reinicia o contexto por pane)
+    if (paneId !== lastPaneId) {
+      lastPaneId = paneId;
+      roundNumber = null;
+      currentDate = null;
+    }
+
+    const phaseLabel = phaseForBox($, box, phaseById);
     const title = $(box).find('h3.box-title_es').first().text().trim();
     const rm = title.match(/RODADA\s+(\d+)/i);
     if (rm) roundNumber = parseInt(rm[1]!, 10);
 
     $(box)
       .find('div.box-body div.row')
-      .each((_, row) => {
-        const $row = $(row);
-        const bold = $row.find('div.col-md-12 b').first();
+      .each((__, row) => {
+        const bold = $(row).find('div.col-md-12 b').first();
         if (bold.length) {
           const d = parseMatchDateFromHeader(bold.text().trim());
           if (d) currentDate = d;
           return;
         }
 
-        const timeRaw = $row.find('div.col-md-1').first().text().trim();
-        if (!/^\d{1,2}:\d{2}$/.test(timeRaw)) return;
-
-        const innerRow = $row.find('div.col-md-11 div.row').first();
-        if (!innerRow.length) return;
-
-        const homeName = innerRow.find('div.col-md-3[align="right"]').first().text().trim();
-        const awayName = innerRow.find('div.col-md-3[align="left"]').first().text().trim();
-        if (!homeName || !awayName) return;
-
-        const tds = innerRow
-          .find('div.col-md-6 table tr td')
-          .toArray()
-          .map((td) => $(td).text().trim());
-        const { home: homeGoals, away: awayGoals, scheduled } = parseScoreFromTds(tds);
-
-        const sideNote = $row.find('div.col-md-3').filter((_, el) => {
-          const t = $(el).text();
-          return /Jogo\s+\d+/i.test(t);
-        });
-        let venueText: string | null = null;
-        let fmfJogo: number | null = null;
-        if (sideNote.length) {
-          const block = sideNote.first().text().replace(/\s+/g, ' ').trim();
-          const jm = block.match(/Jogo\s+(\d+)/i);
-          if (jm) fmfJogo = parseInt(jm[1]!, 10);
-          venueText = block.replace(/^Jogo\s+\d+\s*/i, '').trim() || null;
-        }
-
-        out.push({
+        const parsed = extractMatchFromRow($, row, {
+          phaseLabel,
           roundNumber,
-          matchDate: currentDate,
-          kickoffTime: normalizeTime(timeRaw),
-          homeName,
-          awayName,
-          homeGoals,
-          awayGoals,
-          status: scheduled ? 'scheduled' : 'finished',
-          fmfJogoNumber: fmfJogo,
-          venueText,
+          currentDate,
         });
+        if (parsed) out.push(parsed);
       });
   });
 
   const best = new Map<string, FmfParsedMatch>();
   const stableKey = (m: FmfParsedMatch) =>
-    `${m.roundNumber ?? ''}|${m.matchDate ?? ''}|${m.homeName}|${m.awayName}`;
+    `${m.phaseLabel ?? ''}|${m.roundNumber ?? ''}|${m.matchDate ?? ''}|${m.kickoffTime ?? ''}|${m.homeName}|${m.awayName}`;
 
   function scoreRow(m: FmfParsedMatch): number {
     let s = 0;
     if (m.fmfJogoNumber != null) s += 4;
     if (m.venueText) s += 2;
     if (m.kickoffTime) s += 1;
+    if (m.homeLogoUrl) s += 1;
+    if (m.awayLogoUrl) s += 1;
+    if (m.phaseLabel) s += 1;
     if (m.status === 'finished' && m.homeGoals != null && m.awayGoals != null) s += 1;
     return s;
   }

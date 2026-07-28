@@ -1,7 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { parseFmfOfficialStandingsHtml } from './fmf-classificacao.parser';
-import { parseFmfProxJogosHtml, type FmfParsedMatch } from './fmf-proxjogos.parser';
+import {
+  isFmfGroupStagePhase,
+  parseFmfProxJogosHtml,
+  type FmfParsedMatch,
+} from './fmf-proxjogos.parser';
 import {
   FMF_SCRAPER_PRESET_KEYS,
   FMF_SCRAPER_PRESETS,
@@ -152,7 +156,11 @@ function resolveStandings(
   meta: { competicao: string; categoria: string; temporada: string },
 ): FmfStandingsRow[] {
   const fmfOfficial = parseFmfOfficialStandingsHtml(html, meta);
-  const computed = computeStandingsFromMatches(matches, meta);
+  const groupMatches = matches.filter((m) => isFmfGroupStagePhase(m.phaseLabel));
+  const computed = computeStandingsFromMatches(
+    groupMatches.length > 0 ? groupMatches : matches,
+    meta,
+  );
 
   if (!hasFinishedMatches(matches)) {
     return fmfOfficial.length > 0 ? fmfOfficial : computed;

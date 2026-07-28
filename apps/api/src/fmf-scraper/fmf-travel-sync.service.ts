@@ -3,47 +3,45 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { isClubKind } from '../public/public.service';
 import {
-  buildFmfExternalId,
+  buildFmfTravelExternalId,
   fmfMatchToStartISO,
-} from '../fmf-scraper/fmf-fixture.util';
-import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
+} from './fmf-fixture.util';
+import { isFmfTeamMatch } from './fmf-team-match.util';
 import {
   FMF_SCRAPER_PRESET_KEYS,
   FMF_SCRAPER_PRESETS,
   type FmfScraperPresetKey,
-} from '../fmf-scraper/fmf-scraper.presets';
-import { FmfScraperService, type FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
+} from './fmf-scraper.presets';
+import { FmfScraperService, type FmfScraperStore } from './fmf-scraper.service';
 import {
   FMF_SYNC_TENANT_DEFAULTS,
   FMF_SYNC_TENANT_SLUGS,
   isFmfSyncTenantSlug,
   parseTenantCategoryKeys,
-} from '../fmf-scraper/fmf-sync-tenants.config';
-import { FootballActivitySpacesService } from './football-activity-spaces.service';
+} from './fmf-sync-tenants.config';
 
-export type FmfAgendaSyncResult = {
+export type FmfTravelSyncResult = {
   syncedAt: string;
   tenants: Array<{
     tenantId: string;
     tenantSlug: string;
     created: number;
     updated: number;
-    skippedLocked: number;
     skippedPast: number;
+    skippedHome: number;
   }>;
 };
 
 @Injectable()
-export class FmfAgendaSyncService {
-  private readonly log = new Logger(FmfAgendaSyncService.name);
+export class FmfTravelSyncService {
+  private readonly log = new Logger(FmfTravelSyncService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly fmfScraper: FmfScraperService,
-    private readonly spaces: FootballActivitySpacesService,
   ) {}
 
-  async syncAll(options?: { tenantId?: string }): Promise<FmfAgendaSyncResult> {
+  async syncAll(options?: { tenantId?: string }): Promise<FmfTravelSyncResult> {
     const status = await this.fmfScraper.getStatus();
     const store = status as FmfScraperStore;
     if (!store.updatedAt) {
@@ -60,15 +58,14 @@ export class FmfAgendaSyncService {
     }
 
     const syncedAt = new Date().toISOString();
-    const tenants: FmfAgendaSyncResult['tenants'] = [];
+    const tenants: FmfTravelSyncResult['tenants'] = [];
     const now = new Date();
 
     for (const tenant of targets) {
-      await this.spaces.ensureDefaults(tenant.id);
       let created = 0;
       let updated = 0;
-      let skippedLocked = 0;
       let skippedPast = 0;
+      let skippedHome = 0;
 
       const presetKeys = this.resolvePresetKeys(store, tenant.categoryKeys);
       const aliases = this.resolveAliases(tenant.slug, tenant.name);
@@ -79,36 +76,30 @@ export class FmfAgendaSyncService {
 
         for (const m of snap.matches) {
           if (m.status !== 'scheduled') continue;
+
+          const isAway = isFmfTeamMatch(m.awayName, tenant.name, aliases);
+          if (!isAway) {
+            if (isFmfTeamMatch(m.homeName, tenant.name, aliases)) skippedHome++;
+            continue;
+          }
+
           const startISO = fmfMatchToStartISO(m);
           if (!startISO) continue;
-          const startAt = new Date(startISO);
-          if (startAt < now) {
+          const matchDate = new Date(startISO);
+          if (matchDate < now) {
             skippedPast++;
             continue;
           }
 
-          const isOurs =
-            isFmfTeamMatch(m.homeName, tenant.name, aliases) ||
-            isFmfTeamMatch(m.awayName, tenant.name, aliases);
-          if (!isOurs) continue;
-
-          const externalId = buildFmfExternalId(presetKey, m);
-          const title = `${m.homeName.trim()} x ${m.awayName.trim()}`;
-          const description =
-            [snap.name, m.phaseLabel?.trim(), m.venueText?.trim()].filter(Boolean).join(' · ') ||
-            null;
-          const spaceId = m.venueText?.trim()
-            ? await this.spaces.resolveByName(tenant.id, m.venueText.trim())
-            : null;
-
-          const existing = await this.prisma.footballAgendaEntry.findFirst({
-            where: { tenantId: tenant.id, externalId },
-          });
-
-          if (existing?.agendaLocked) {
-            skippedLocked++;
-            continue;
-          }
+          const externalId = buildFmfTravelExternalId(presetKey, m);
+          const opponentName = m.homeName.trim() || null;
+          const championshipParts = [
+            snap.name,
+            m.phaseLabel?.trim(),
+            m.roundNumber != null ? `Rodada ${m.roundNumber}` : '',
+          ].filter(Boolean);
+          const championshipName = championshipParts.join(' — ') || null;
+          const stadiumName = m.venueText?.trim() || null;
 
           const meta = {
             source: 'fmf',
@@ -121,40 +112,38 @@ export class FmfAgendaSyncService {
             competitionName: snap.name,
           } satisfies Record<string, unknown>;
 
+          const existing = await this.prisma.travelLogistics.findFirst({
+            where: { tenantId: tenant.id, externalId },
+          });
+
           if (existing) {
-            await this.prisma.footballAgendaEntry.update({
+            if (existing.status === 'cancelado') continue;
+            await this.prisma.travelLogistics.update({
               where: { id: existing.id },
               data: {
                 category: snap.fixtureCategory,
-                type: 'jogo',
-                title,
-                startAt,
-                endAt: null,
-                allDay: false,
-                location: m.venueText?.trim() || null,
-                spaceId,
-                description,
-                status: 'confirmado',
+                matchDate,
+                opponentName,
+                stadiumName,
+                championshipName,
+                country: existing.country?.trim() || 'Brasil',
                 beatscodeMeta: meta as Prisma.InputJsonValue,
               },
             });
             updated++;
           } else {
-            await this.prisma.footballAgendaEntry.create({
+            await this.prisma.travelLogistics.create({
               data: {
                 tenantId: tenant.id,
                 externalId,
                 category: snap.fixtureCategory,
-                type: 'jogo',
-                title,
-                startAt,
-                endAt: null,
-                allDay: false,
-                location: m.venueText?.trim() || null,
-                spaceId,
-                description,
-                status: 'confirmado',
-                agendaLocked: false,
+                matchDate,
+                opponentName,
+                stadiumName,
+                city: null,
+                country: 'Brasil',
+                championshipName,
+                status: 'planejamento',
                 beatscodeMeta: meta as Prisma.InputJsonValue,
               },
             });
@@ -168,11 +157,11 @@ export class FmfAgendaSyncService {
         tenantSlug: tenant.slug,
         created,
         updated,
-        skippedLocked,
         skippedPast,
+        skippedHome,
       });
       this.log.log(
-        `FMF→agenda ${tenant.slug}: +${created} ~${updated} locked=${skippedLocked}`,
+        `FMF→viagens ${tenant.slug}: +${created} ~${updated} past=${skippedPast} home=${skippedHome}`,
       );
     }
 

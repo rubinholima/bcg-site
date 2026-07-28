@@ -10,6 +10,8 @@ import { FmfScraperController } from './fmf-scraper.controller';
 import { FmfPageSyncService } from './fmf-page-sync.service';
 import { FmfScraperService } from './fmf-scraper.service';
 import { FmfScraperSchedulerService } from './fmf-scraper-scheduler.service';
+import { FmfTravelSyncService } from './fmf-travel-sync.service';
+import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
 
 @Module({
   imports: [
@@ -21,7 +23,19 @@ import { FmfScraperSchedulerService } from './fmf-scraper-scheduler.service';
     forwardRef(() => FutebolAgendaModule),
   ],
   controllers: [FmfScraperController],
-  providers: [FmfScraperService, FmfPageSyncService, FmfScraperSchedulerService, ModuleAccessGuard],
-  exports: [FmfScraperService, FmfPageSyncService],
+  providers: [
+    FmfScraperService,
+    FmfVisitingTeamsSyncService,
+    FmfTravelSyncService,
+    FmfPageSyncService,
+    FmfScraperSchedulerService,
+    ModuleAccessGuard,
+  ],
+  exports: [
+    FmfScraperService,
+    FmfPageSyncService,
+    FmfVisitingTeamsSyncService,
+    FmfTravelSyncService,
+  ],
 })
 export class FmfScraperModule {}

@@ -237,14 +237,7 @@ export function LogisticaConvocacaoForm() {
     });
   }, [players, categoryFilter, travelCategories, search]);
 
-  const filteredStaff = useMemo(() => {
-    if (travelCategories.length === 0) return staff;
-    return staff.filter((s) => {
-      const cats = Array.isArray(s.categories) ? s.categories : null;
-      if (!cats || cats.length === 0) return true;
-      return travelCategories.some((c) => cats.includes(c));
-    });
-  }, [staff, travelCategories]);
+  const filteredStaff = useMemo(() => staff, [staff]);
 
   const togglePlayer = (id: string) => {
     setSelectedPlayerIds((prev) => {
@@ -279,6 +272,14 @@ export function LogisticaConvocacaoForm() {
       for (const id of visible) next.delete(id);
       return next;
     });
+  };
+
+  const selectAllStaff = () => {
+    setSelectedStaffIds(new Set(filteredStaff.map((s) => s.id)));
+  };
+
+  const clearAllStaff = () => {
+    setSelectedStaffIds(new Set());
   };
 
   const handleSave = async () => {
@@ -406,7 +407,7 @@ export function LogisticaConvocacaoForm() {
               </span>
               {" · "}
               <Link
-                href="/dashboard/relatorios/futebol/passageiros"
+                href="/dashboard/futebol/logistica/relatorios/passageiros"
                 className="text-[#C8102E] underline-offset-2 hover:underline"
               >
                 Passageiros
@@ -418,6 +419,7 @@ export function LogisticaConvocacaoForm() {
 
       {travelId ? (
         <>
+          <div className="grid gap-6 lg:grid-cols-2">
           <Card className="border-zinc-800 bg-zinc-950/60">
             <CardHeader className="pb-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -443,7 +445,7 @@ export function LogisticaConvocacaoForm() {
                     disabled={loadingPeople || filteredPlayers.length === 0}
                   >
                     <Square className="mr-2 h-4 w-4" />
-                    Limpar visíveis
+                    Limpar
                   </Button>
                 </div>
               </div>
@@ -526,8 +528,34 @@ export function LogisticaConvocacaoForm() {
           </Card>
 
           <Card className="border-zinc-800 bg-zinc-950/60">
-            <CardHeader>
-              <CardTitle className="text-base">Comissão técnica</CardTitle>
+            <CardHeader className="pb-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <CardTitle className="text-base">Comissão técnica</CardTitle>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px]"
+                    onClick={selectAllStaff}
+                    disabled={loadingPeople || filteredStaff.length === 0}
+                  >
+                    <CheckSquare className="mr-2 h-4 w-4" />
+                    Marcar todos
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px]"
+                    onClick={clearAllStaff}
+                    disabled={loadingPeople || selectedStaffIds.size === 0}
+                  >
+                    <Square className="mr-2 h-4 w-4" />
+                    Limpar
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {loadingPeople ? (
@@ -539,7 +567,7 @@ export function LogisticaConvocacaoForm() {
                   Nenhum membro da comissão neste clube.
                 </p>
               ) : (
-                <ul className="max-h-[240px] space-y-1 overflow-y-auto rounded-md border border-zinc-800 p-2">
+                <ul className="max-h-[min(420px,50vh)] space-y-1 overflow-y-auto rounded-md border border-zinc-800 p-2">
                   {filteredStaff.map((s) => {
                     const checked = selectedStaffIds.has(s.id);
                     return (
@@ -568,6 +596,7 @@ export function LogisticaConvocacaoForm() {
               )}
             </CardContent>
           </Card>
+          </div>
 
           <div className="flex flex-wrap gap-2">
             <Button

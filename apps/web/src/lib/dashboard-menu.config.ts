@@ -83,40 +83,36 @@ import { BCH_LOGO_STATIC } from "./boston-city-hall";
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
 export const ACCESS_GROUP_LABELS: Record<string, string> = {};
 
-/** Relatórios Futebol — submenu com cada tipo de relatório. */
+/** Relatórios Futebol — agora em Logística (mantido para redirects/atalhos). */
 export function hubRelatorioFutebol(): MenuItemConfig {
-  const slug = "relatorios_futebol";
+  const slug = "futebol_logistica";
   return {
     slug: "rel_futebol",
     label: "Relatórios",
-    href: "/dashboard/relatorios/futebol",
+    href: "/dashboard/futebol/logistica/relatorios",
     icon: BarChart3,
     moduleSlug: slug,
-    accessSlug: slug,
     children: [
       {
         slug: "rel_futebol_passageiros",
         label: "Passageiros",
-        href: "/dashboard/relatorios/futebol/passageiros",
+        href: "/dashboard/futebol/logistica/relatorios/passageiros",
         icon: Users,
         moduleSlug: slug,
-        accessSlug: slug,
       },
       {
         slug: "rel_futebol_hospedes",
         label: "Hóspedes",
-        href: "/dashboard/relatorios/futebol/hospedes",
+        href: "/dashboard/futebol/logistica/relatorios/hospedes",
         icon: Hotel,
         moduleSlug: slug,
-        accessSlug: slug,
       },
       {
         slug: "rel_futebol_programacao",
         label: "Programação semanal",
-        href: "/dashboard/relatorios/futebol/programacao-semanal",
+        href: "/dashboard/futebol/logistica/relatorios/programacao-semanal",
         icon: CalendarRange,
         moduleSlug: slug,
-        accessSlug: slug,
       },
     ],
   };
@@ -500,33 +496,30 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           {
             slug: "futebol_logistica_relatorios",
             label: "Relatórios",
+            href: "/dashboard/futebol/logistica/relatorios",
             icon: BarChart3,
-            moduleSlug: "relatorios_futebol",
-            accessSlug: "relatorios_futebol",
+            moduleSlug: "futebol_logistica",
             children: [
               {
                 slug: "futebol_logistica_rel_passageiros",
                 label: "Passageiros",
-                href: "/dashboard/relatorios/futebol/passageiros",
+                href: "/dashboard/futebol/logistica/relatorios/passageiros",
                 icon: Users,
-                moduleSlug: "relatorios_futebol",
-                accessSlug: "relatorios_futebol",
+                moduleSlug: "futebol_logistica",
               },
               {
                 slug: "futebol_logistica_rel_hospedes",
                 label: "Hóspedes",
-                href: "/dashboard/relatorios/futebol/hospedes",
+                href: "/dashboard/futebol/logistica/relatorios/hospedes",
                 icon: Hotel,
-                moduleSlug: "relatorios_futebol",
-                accessSlug: "relatorios_futebol",
+                moduleSlug: "futebol_logistica",
               },
               {
                 slug: "futebol_logistica_rel_programacao",
                 label: "Programação semanal",
-                href: "/dashboard/relatorios/futebol/programacao-semanal",
+                href: "/dashboard/futebol/logistica/relatorios/programacao-semanal",
                 icon: CalendarRange,
-                moduleSlug: "relatorios_futebol",
-                accessSlug: "relatorios_futebol",
+                moduleSlug: "futebol_logistica",
               },
             ],
           },
@@ -625,7 +618,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Users,
         moduleSlug: "futebol_comissao",
       },
-      hubRelatorioFutebol(),
     ],
   },
   {

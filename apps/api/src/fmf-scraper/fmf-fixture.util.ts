@@ -12,7 +12,13 @@ export function buildFmfExternalId(presetKey: string, m: FmfParsedMatch): string
   if (m.fmfJogoNumber != null) return `fmf-${presetKey}-j${m.fmfJogoNumber}`;
   const h = normalizeTeamNameKeyForMerge(m.homeName);
   const a = normalizeTeamNameKeyForMerge(m.awayName);
-  return `fmf-${presetKey}-${m.matchDate ?? 'nodate'}-${h}-${a}`;
+  const phase = normalizeTeamNameKeyForMerge(m.phaseLabel ?? '') || 'fase';
+  return `fmf-${presetKey}-${phase}-${m.matchDate ?? 'nodate'}-${h}-${a}`;
+}
+
+export function buildFmfTravelExternalId(presetKey: string, m: FmfParsedMatch): string {
+  if (m.fmfJogoNumber != null) return `fmf-travel-${presetKey}-j${m.fmfJogoNumber}`;
+  return `fmf-travel-${buildFmfExternalId(presetKey, m).replace(/^fmf-/, '')}`;
 }
 
 export function fmfMatchToStartISO(m: FmfParsedMatch): string {
@@ -49,7 +55,9 @@ export function buildLeagueFixturesFromFmfStore(
         externalId,
         startISO,
         status: finished ? 'FINAL' : 'SCHEDULED',
-        competitionName: snap.name,
+        competitionName: m.phaseLabel?.trim()
+          ? `${snap.name} — ${m.phaseLabel.trim()}`
+          : snap.name,
         venueName: m.venueText ?? undefined,
         homeTeamName: m.homeName,
         awayTeamName: m.awayName,

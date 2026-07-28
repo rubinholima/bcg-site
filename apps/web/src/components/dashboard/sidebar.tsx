@@ -295,11 +295,19 @@ function resolveLinkActive(
   if (href === "/dashboard/relatorios/futebol") {
     return !!pathname?.startsWith("/dashboard/relatorios/futebol");
   }
+  if (href === "/dashboard/futebol/logistica/relatorios") {
+    return !!pathname?.startsWith("/dashboard/futebol/logistica/relatorios");
+  }
+  if (href === "/dashboard/futebol/logistica/convocacao") {
+    return !!pathname?.startsWith("/dashboard/futebol/logistica/convocacao");
+  }
   if (href === "/dashboard/futebol/logistica") {
-    return (
-      !!pathname?.startsWith("/dashboard/futebol/logistica") &&
-      !pathname.startsWith("/dashboard/cadastros/espacos")
-    );
+    if (!pathname?.startsWith("/dashboard/futebol/logistica")) return false;
+    if (pathname.startsWith("/dashboard/cadastros/espacos")) return false;
+    if (pathname.startsWith("/dashboard/futebol/logistica/agenda")) return false;
+    if (pathname.startsWith("/dashboard/futebol/logistica/convocacao")) return false;
+    if (pathname.startsWith("/dashboard/futebol/logistica/relatorios")) return false;
+    return true;
   }
   if (href === "/dashboard/futebol/logistica/agenda") {
     return (
@@ -353,7 +361,16 @@ function nestedDefaultOpen(
   inPath: (href: string) => boolean
 ): boolean {
   if (!child.children?.length) return false;
-  return child.children.some((cc) => cc.href && inPath(cc.href));
+  if (child.href && (pathname === child.href || pathname?.startsWith(child.href + "/"))) {
+    return true;
+  }
+  return child.children.some((cc) => {
+    if (cc.href && inPath(cc.href)) return true;
+    if (cc.children?.length) {
+      return cc.children.some((ccc) => !!ccc.href && inPath(ccc.href));
+    }
+    return false;
+  });
 }
 
 function SidebarMenuLink({
@@ -514,13 +531,13 @@ function SidebarNav() {
   }, [pathname, relHub]);
 
   const toggleNested = (child: MenuItemConfig) => {
-    const expanded = nestedOpen[child.slug] ?? nestedDefaultOpen(child, pathname, inPath);
+    const expanded = isNestedExpanded(child);
     if (expanded) {
       setNestedOpen((prev) => ({ ...prev, [child.slug]: false }));
       return;
     }
-    closeAllNested();
-    setNestedOpen({ [child.slug]: true });
+    // Não chama closeAllNested — senão fecha o pai (ex.: Logística) ao abrir Relatórios
+    setNestedOpen((prev) => ({ ...prev, [child.slug]: true }));
   };
 
   const isNestedExpanded = (child: MenuItemConfig): boolean => {
@@ -808,9 +825,111 @@ function SidebarNav() {
                                         .filter(
                                           (cc) =>
                                             canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
-                                            (cc.moduleSlug === "emails" && canAccessDashboard),
+                                            (cc.moduleSlug === "emails" && canAccessDashboard) ||
+                                            (cc.children?.length &&
+                                              hasAccessToAnyChild(
+                                                cc.children,
+                                                `${item.slug}/${child.slug}/${cc.slug}`,
+                                                canAccessModule,
+                                                canAccessDashboard,
+                                                isSuperAdmin,
+                                              )),
                                         )
                                         .map((cc) => {
+                                        if (cc.children?.length) {
+                                          const isCcOpen = isNestedExpanded(cc);
+                                          const CcIcon = cc.icon;
+                                          return (
+                                            <div key={cc.slug} className="space-y-0.5">
+                                              {cc.href ? (
+                                                <div className="flex items-center gap-1">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => toggleNested(cc)}
+                                                    className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent"
+                                                    aria-label={isCcOpen ? "Recolher" : "Expandir"}
+                                                  >
+                                                    {isCcOpen ? (
+                                                      <ChevronDown className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                      <ChevronRight className="h-3.5 w-3.5" />
+                                                    )}
+                                                  </button>
+                                                  <SidebarMenuLink
+                                                    href={cc.href}
+                                                    external={cc.external}
+                                                    onNavigate={() => {
+                                                      onNavClick();
+                                                      setFlyoutSlug(null);
+                                                    }}
+                                                    className={cn(
+                                                      "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                      resolveLinkActive(cc.href, pathname, relHub, searchParams)
+                                                        ? "dashboard-sidebar-active"
+                                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                                    )}
+                                                  >
+                                                    {CcIcon && <CcIcon className="h-4 w-4 shrink-0" />}
+                                                    <span className="truncate">{cc.label}</span>
+                                                  </SidebarMenuLink>
+                                                </div>
+                                              ) : (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => toggleNested(cc)}
+                                                  className={cn(
+                                                    "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                                  )}
+                                                >
+                                                  {isCcOpen ? (
+                                                    <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                                                  ) : (
+                                                    <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                                                  )}
+                                                  {CcIcon && <CcIcon className="h-3.5 w-3.5 shrink-0" />}
+                                                  <span>{cc.label}</span>
+                                                </button>
+                                              )}
+                                              {isCcOpen ? (
+                                                <div className="ml-3 space-y-0.5 border-l border-border pl-2">
+                                                  {cc.children
+                                                    .filter(
+                                                      (ccc) =>
+                                                        canAccessMenuLeaf(
+                                                          ccc,
+                                                          `${item.slug}/${child.slug}/${cc.slug}`,
+                                                          canAccessModule,
+                                                        ) ||
+                                                        (ccc.moduleSlug === "emails" && canAccessDashboard),
+                                                    )
+                                                    .map((ccc) => {
+                                                      if (!ccc.href) return null;
+                                                      return (
+                                                        <SidebarMenuLink
+                                                          key={ccc.slug}
+                                                          href={ccc.href}
+                                                          external={ccc.external}
+                                                          onNavigate={() => {
+                                                            onNavClick();
+                                                            setFlyoutSlug(null);
+                                                          }}
+                                                          className={cn(
+                                                            "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                            resolveLinkActive(ccc.href, pathname, relHub, searchParams)
+                                                              ? "dashboard-sidebar-active"
+                                                              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                                          )}
+                                                        >
+                                                          {ccc.icon && <ccc.icon className="h-4 w-4 shrink-0" />}
+                                                          {ccc.label}
+                                                        </SidebarMenuLink>
+                                                      );
+                                                    })}
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                          );
+                                        }
                                         if (!cc.href) return null;
                                         const isChildActive =
                                           !cc.external && cc.href === activeBchHref;
@@ -941,6 +1060,36 @@ function SidebarNav() {
                                           const isCcOpen = isNestedExpanded(cc);
                                           return (
                                             <div key={cc.slug} className="space-y-0.5">
+                                              {cc.href ? (
+                                                <div className="flex items-center gap-1">
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => toggleNested(cc)}
+                                                    className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent"
+                                                    aria-label={isCcOpen ? "Recolher" : "Expandir"}
+                                                  >
+                                                    {isCcOpen ? (
+                                                      <ChevronDown className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                      <ChevronRight className="h-3.5 w-3.5" />
+                                                    )}
+                                                  </button>
+                                                  <SidebarMenuLink
+                                                    href={cc.href}
+                                                    external={cc.external}
+                                                    onNavigate={onNavClick}
+                                                    className={cn(
+                                                      "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
+                                                      resolveLinkActive(cc.href, pathname, relHub, searchParams)
+                                                        ? "dashboard-sidebar-active"
+                                                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                                                    )}
+                                                  >
+                                                    {CcIcon && <CcIcon className="h-3.5 w-3.5 shrink-0" />}
+                                                    <span>{cc.label}</span>
+                                                  </SidebarMenuLink>
+                                                </div>
+                                              ) : (
                                               <button
                                                 type="button"
                                                 onClick={() => toggleNested(cc)}
@@ -957,6 +1106,7 @@ function SidebarNav() {
                                                 {CcIcon && <CcIcon className="h-3.5 w-3.5 shrink-0" />}
                                                 <span>{cc.label}</span>
                                               </button>
+                                              )}
                                               {isCcOpen ? (
                                                 <div className="ml-3 space-y-0.5 border-l border-border pl-2">
                                                   {cc.children

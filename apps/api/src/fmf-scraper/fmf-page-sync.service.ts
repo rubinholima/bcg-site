@@ -26,6 +26,7 @@ import {
   isFmfSyncTenantSlug,
   parseTenantCategoryKeys,
 } from './fmf-sync-tenants.config';
+import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
 
 const SYNC_CONFIG_KEY = 'fmf_scraper_sync';
 const FMF_FIXTURE_CATEGORIES = new Set(
@@ -120,6 +121,7 @@ export class FmfPageSyncService {
     private readonly s3: S3Service,
     private readonly mediaMeta: MediaMetaService,
     private readonly fmfScraper: FmfScraperService,
+    private readonly visitingTeamsSync: FmfVisitingTeamsSyncService,
   ) {}
 
   async getSyncConfig(): Promise<FmfScraperSyncConfig> {
@@ -187,6 +189,15 @@ export class FmfPageSyncService {
     const store = await this.loadStore();
     if (!store.updatedAt) {
       throw new Error('Nenhum dado FMF importado. Execute a importação antes de aplicar no site.');
+    }
+
+    // Garante cadastro de adversários com nome FMF + logos antes de montar o site
+    try {
+      await this.visitingTeamsSync.syncFromStore(store);
+    } catch (e) {
+      this.log.warn(
+        `FMF sync adversários: ${e instanceof Error ? e.message : String(e)}`,
+      );
     }
 
     const logoMap = await this.buildLogoMap();
@@ -538,7 +549,9 @@ export class FmfPageSyncService {
           externalId: extId,
           startISO: fmfMatchToStartISO(m),
           status: finished ? 'FINAL' : 'SCHEDULED',
-          competitionName: snap.name,
+          competitionName: m.phaseLabel?.trim()
+            ? `${snap.name} — ${m.phaseLabel.trim()}`
+            : snap.name,
           venueName: m.venueText ?? undefined,
           homeTeamName: m.homeName,
           awayTeamName: m.awayName,
@@ -581,7 +594,9 @@ export class FmfPageSyncService {
           externalId: extId,
           startISO: fmfMatchToStartISO(m),
           status: finished ? 'FINAL' : 'SCHEDULED',
-          competitionName: snap.name,
+          competitionName: m.phaseLabel?.trim()
+            ? `${snap.name} — ${m.phaseLabel.trim()}`
+            : snap.name,
           venueName: m.venueText ?? undefined,
           homeTeamName: m.homeName,
           awayTeamName: m.awayName,
