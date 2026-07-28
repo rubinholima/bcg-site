@@ -545,11 +545,13 @@ export function FutebolAgendaOperacional() {
   const categoryLine = (item: FootballAgendaCalendarItem) =>
     formatTravelCategoriesDisplay(item.category, item.categories ?? null, "pt");
 
-  const isFmfGame = (item: FootballAgendaCalendarItem) =>
-    item.source === "entry" &&
-    item.type === "jogo" &&
-    typeof item.externalId === "string" &&
-    item.externalId.startsWith("fmf-");
+  /** Prefixo legível na mesma linha do título (casa/fora/tipo). */
+  const agendaLinePrefix = (item: FootballAgendaCalendarItem, side: AgendaMatchSide) => {
+    if (side === "casa") return "Jogo em casa · ";
+    if (side === "fora" || item.type === "viagem") return "Jogo fora · ";
+    const typeLabel = FOOTBALL_AGENDA_TYPE_LABEL[item.type];
+    return typeLabel ? `${typeLabel} · ` : "";
+  };
 
   const openEditEntry = (entry: FootballAgendaEntry) => {
     const start = new Date(entry.startAt);
@@ -592,6 +594,12 @@ export function FutebolAgendaOperacional() {
     const side = matchSideOf(item);
     const sideLabel = agendaMatchSideLabel(side);
     const swatch = agendaSwatchStyle(agendaColors, item.type, side);
+    const typeOrSide =
+      sideLabel === "Casa"
+        ? "Jogo em casa"
+        : sideLabel === "Fora"
+          ? "Jogo fora"
+          : FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type;
     return (
     <button
       key={item.id}
@@ -603,72 +611,57 @@ export function FutebolAgendaOperacional() {
         background: `linear-gradient(135deg, ${swatch.backgroundColor}33 0%, hsl(var(--card)) 55%)`,
       }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {sideLabel ? (
-              <span
-                className="rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                style={swatch}
-              >
-                {sideLabel}
-              </span>
-            ) : (
-              <span
-                className="rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                style={swatch}
-              >
-                {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
-              </span>
-            )}
-            {cats !== "—" ? (
-              <span className="text-xs font-medium opacity-90">{cats}</span>
-            ) : null}
-            {isFmfGame(item) ? (
-              <span className="rounded bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                FMF
-              </span>
-            ) : null}
-            {item.agendaLocked ? (
-              <span className="rounded bg-zinc-600/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                Editado
-              </span>
-            ) : null}
-          </div>
-          {item.tenantName ? (
-            <p className="mt-1 text-xs font-semibold text-foreground/90">{item.tenantName}</p>
-          ) : null}
-          <p className="mt-0.5 text-base font-bold leading-tight text-foreground">{item.title}</p>
-          <p className="mt-1 text-sm font-semibold opacity-95">
-            {formatTime(item.startAt, item.allDay)}
-            {item.endAt && !item.allDay && item.source === "travel"
-              ? ` · jogo ${formatTime(item.endAt, false)}`
-              : item.endAt && !item.allDay
-                ? ` — ${formatTime(item.endAt, false)}`
-                : ""}
+      <div className="min-w-0 space-y-1">
+        <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+          <span
+            className="shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+            style={swatch}
+          >
+            {typeOrSide}
+          </span>
+          <p className="min-w-0 truncate text-base font-bold leading-tight text-foreground">
+            {item.title}
           </p>
-          {item.location ? (
-            <p className="mt-1 flex items-center gap-1 text-xs font-medium opacity-90">
-              <MapPin className="h-3 w-3 shrink-0" />
-              {item.location}
-            </p>
-          ) : null}
-          {item.source === "travel" ? (
-            <p className="mt-1 text-xs font-medium opacity-90">
-              {TRAVEL_STATUS_LABEL[item.status] ?? item.status}
-              {item.championshipName ? ` · ${item.championshipName}` : ""}
-            </p>
-          ) : null}
-          {item.source === "bch_booking" ? (
-            <p className="mt-1 text-xs font-medium opacity-90">
-              {BOOKING_STATUS_LABEL[item.status] ?? item.status}
-              {item.spaceName ? ` · ${item.spaceName}` : ""}
-            </p>
-          ) : null}
-          {item.championshipName && item.source === "entry" ? (
-            <p className="mt-1 text-xs font-medium opacity-90">{item.championshipName}</p>
-          ) : null}
         </div>
+        {(cats !== "—" || item.tenantName) ? (
+          <p className="truncate text-xs font-semibold text-foreground/90">
+            {[item.tenantName, cats !== "—" ? cats : null].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
+        {item.agendaLocked ? (
+          <span className="inline-block rounded bg-zinc-600/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+            Editado
+          </span>
+        ) : null}
+        <p className="text-sm font-semibold opacity-95">
+          {formatTime(item.startAt, item.allDay)}
+          {item.endAt && !item.allDay && item.source === "travel"
+            ? ` · jogo ${formatTime(item.endAt, false)}`
+            : item.endAt && !item.allDay
+              ? ` — ${formatTime(item.endAt, false)}`
+              : ""}
+        </p>
+        {item.location ? (
+          <p className="flex min-w-0 items-center gap-1 truncate text-xs font-medium opacity-90">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{item.location}</span>
+          </p>
+        ) : null}
+        {item.source === "travel" ? (
+          <p className="truncate text-xs font-medium opacity-90">
+            {TRAVEL_STATUS_LABEL[item.status] ?? item.status}
+            {item.championshipName ? ` · ${item.championshipName}` : ""}
+          </p>
+        ) : null}
+        {item.source === "bch_booking" ? (
+          <p className="truncate text-xs font-medium opacity-90">
+            {BOOKING_STATUS_LABEL[item.status] ?? item.status}
+            {item.spaceName ? ` · ${item.spaceName}` : ""}
+          </p>
+        ) : null}
+        {item.championshipName && item.source === "entry" ? (
+          <p className="truncate text-xs font-medium opacity-90">{item.championshipName}</p>
+        ) : null}
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
         <span className="text-xs font-bold underline-offset-2">
@@ -949,21 +942,21 @@ export function FutebolAgendaOperacional() {
                               {sortAgendaItems(dayItems).slice(0, 4).map((item) => {
                                 const side = matchSideOf(item);
                                 const style = agendaSwatchStyle(agendaColors, item.type, side);
+                                const line = `${agendaLinePrefix(item, side)}${item.title}`;
                                 return (
                                   <button
                                     key={item.id}
                                     type="button"
                                     onClick={() => openCalendarItem(item)}
-                                    className="line-clamp-2 w-full rounded border px-1 py-0.5 text-left text-[10px] font-semibold leading-tight sm:text-[11px]"
+                                    className="block w-full truncate whitespace-nowrap rounded border px-1 py-0.5 text-left text-[10px] font-semibold leading-tight sm:text-[11px]"
                                     style={style}
                                     title={
                                       item.category
-                                        ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
-                                        : item.title
+                                        ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${line}`
+                                        : line
                                     }
                                   >
-                                    {side === "casa" ? "C · " : side === "fora" ? "F · " : ""}
-                                    {item.title}
+                                    {line}
                                   </button>
                                 );
                               })}
@@ -1021,25 +1014,26 @@ export function FutebolAgendaOperacional() {
                               {sortAgendaItems(dayItems).map((item) => {
                                 const side = matchSideOf(item);
                                 const style = agendaSwatchStyle(agendaColors, item.type, side);
+                                const line = `${agendaLinePrefix(item, side)}${item.title}`;
                                 return (
                                   <button
                                     key={item.id}
                                     type="button"
                                     onClick={() => openCalendarItem(item)}
-                                    className="rounded-md border px-1.5 py-1.5 text-left text-[11px] font-semibold leading-snug shadow-sm transition-opacity hover:opacity-90"
+                                    className="block w-full truncate whitespace-nowrap rounded-md border px-1.5 py-1.5 text-left text-[11px] font-semibold leading-snug shadow-sm transition-opacity hover:opacity-90"
                                     style={style}
                                     title={
                                       item.category
-                                        ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
-                                        : item.title
+                                        ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${line}`
+                                        : line
                                     }
                                   >
                                     {!item.allDay ? (
-                                      <span className="mb-0.5 block text-[10px] font-bold opacity-90">
+                                      <span className="mr-1 font-bold opacity-90">
                                         {formatTime(item.startAt, false)}
                                       </span>
                                     ) : null}
-                                    <span className="line-clamp-3 break-words">{item.title}</span>
+                                    {line}
                                   </button>
                                 );
                               })}
