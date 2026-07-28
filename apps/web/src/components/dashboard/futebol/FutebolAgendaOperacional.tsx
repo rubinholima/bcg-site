@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
   Loader2,
   MapPin,
+  Palette,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -42,18 +43,24 @@ import type {
 } from "@/types/futebol-agenda";
 import {
   FOOTBALL_AGENDA_ENTRY_TYPES,
-  FOOTBALL_AGENDA_TYPE_COLOR,
   FOOTBALL_AGENDA_TYPE_LABEL,
   TRAVEL_STATUS_LABEL,
 } from "@/types/futebol-agenda";
 import { cn } from "@/lib/utils";
 import {
-  agendaCalendarPillClass,
-  agendaMatchSideBadgeClass,
   agendaMatchSideLabel,
   compareAgendaEventsByPriority,
   type AgendaMatchSide,
 } from "@/lib/agenda-match-style";
+import {
+  AGENDA_COLOR_LABELS,
+  DEFAULT_AGENDA_COLORS,
+  agendaSwatchStyle,
+  loadAgendaColors,
+  saveAgendaColors,
+  type AgendaColorKey,
+  type AgendaColorSwatch,
+} from "@/lib/agenda-color-prefs";
 
 interface Tenant {
   id: string;
@@ -211,9 +218,11 @@ const modalSelectClassName =
 function TypeLegend({
   typeFilter,
   onTypeFilterChange,
+  colors,
 }: {
   typeFilter: string;
   onTypeFilterChange: (value: string) => void;
+  colors: Record<AgendaColorKey, AgendaColorSwatch>;
 }) {
   return (
     <div className="mt-4 flex flex-wrap gap-2">
@@ -231,15 +240,20 @@ function TypeLegend({
       </button>
       {Object.entries(FOOTBALL_AGENDA_TYPE_LABEL).map(([key, label]) => {
         const active = typeFilter === key;
+        const style = agendaSwatchStyle(
+          colors,
+          key === "viagem" ? "viagem" : key,
+          key === "viagem" ? "fora" : null,
+        );
         return (
           <button
             key={key}
             type="button"
             onClick={() => onTypeFilterChange(active ? "all" : key)}
+            style={style}
             className={cn(
-              "min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all",
-              FOOTBALL_AGENDA_TYPE_COLOR[key],
-              active && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+              "min-h-[32px] rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-all",
+              active && "ring-2 ring-white/80 ring-offset-1 ring-offset-background",
               typeFilter !== "all" && !active && "opacity-45 hover:opacity-70",
             )}
           >
@@ -251,7 +265,20 @@ function TypeLegend({
   );
 }
 
+function contrastTextForBg(hex: string): string {
+  const raw = hex.replace("#", "");
+  const full = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
+  const n = parseInt(full, 16);
+  if (Number.isNaN(n)) return "#ffffff";
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.55 ? "#18181b" : "#ffffff";
+}
+
 export function FutebolAgendaOperacional() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [focusDate, setFocusDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
@@ -269,6 +296,14 @@ export function FutebolAgendaOperacional() {
   const [spaces, setSpaces] = useState<ActivitySpace[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [agendaColors, setAgendaColors] = useState<Record<AgendaColorKey, AgendaColorSwatch>>(
+    () => ({ ...DEFAULT_AGENDA_COLORS }),
+  );
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    setAgendaColors(loadAgendaColors());
+  }, []);
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -432,12 +467,29 @@ export function FutebolAgendaOperacional() {
     }
   };
 
-  const handleDayClick = (dateKey: string) => {
+  /** Abre a visão diária do dia clicado (não força “hoje”). */
+  const goToDayView = (dateKey: string) => {
+    const [y, m, d] = dateKey.split("-").map(Number);
     setSelectedDay(dateKey);
-    if (viewMode === "day") {
-      const [y, m, d] = dateKey.split("-").map(Number);
-      setFocusDate(new Date(y, m - 1, d));
-    }
+    setFocusDate(new Date(y, m - 1, d));
+    setViewMode("day");
+  };
+
+  const handleDayClick = (dateKey: string) => {
+    goToDayView(dateKey);
+  };
+
+  const persistAgendaColors = (next: Record<AgendaColorKey, AgendaColorSwatch>) => {
+    setAgendaColors(next);
+    saveAgendaColors(next);
+  };
+
+  const updateAgendaColorBg = (key: AgendaColorKey, bg: string) => {
+    const text = contrastTextForBg(bg);
+    persistAgendaColors({
+      ...agendaColors,
+      [key]: { bg, text, border: bg },
+    });
   };
 
   const dayCellClass = (dateKey: string, isSelected: boolean) =>
@@ -524,36 +576,48 @@ export function FutebolAgendaOperacional() {
     setDialogOpen(true);
   };
 
+  const openCalendarItem = (item: FootballAgendaCalendarItem) => {
+    if (item.source === "travel" || item.source === "bch_booking") {
+      router.push(item.href);
+      return;
+    }
+    const id = item.id.replace(/^entry-/, "");
+    void api.get<FootballAgendaEntry>(`/futebol-agenda/entries/${id}`).then(({ data }) => {
+      if (data) openEditEntry(data);
+    });
+  };
+
   const renderAgendaItem = (item: FootballAgendaCalendarItem) => {
     const cats = categoryLine(item);
     const side = matchSideOf(item);
     const sideLabel = agendaMatchSideLabel(side);
+    const swatch = agendaSwatchStyle(agendaColors, item.type, side);
     return (
-    <div
+    <button
       key={item.id}
-      className={cn(
-        "rounded-lg border-2 p-3 text-foreground shadow-sm",
-        side === "casa" &&
-          "border-emerald-500/50 bg-gradient-to-br from-emerald-500/20 via-card to-card",
-        side === "fora" &&
-          "border-amber-500/50 bg-gradient-to-br from-amber-500/20 via-card to-card",
-        !side && (FOOTBALL_AGENDA_TYPE_COLOR[item.type] ?? FOOTBALL_AGENDA_TYPE_COLOR.outro),
-      )}
+      type="button"
+      onClick={() => openCalendarItem(item)}
+      className="w-full rounded-lg border-2 p-3 text-left text-foreground shadow-sm transition-opacity hover:opacity-95"
+      style={{
+        borderColor: swatch.borderColor,
+        background: `linear-gradient(135deg, ${swatch.backgroundColor}33 0%, hsl(var(--card)) 55%)`,
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             {sideLabel ? (
               <span
-                className={cn(
-                  "rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                  agendaMatchSideBadgeClass(side),
-                )}
+                className="rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                style={swatch}
               >
                 {sideLabel}
               </span>
             ) : (
-              <span className="rounded-md border border-current/20 bg-black/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide dark:bg-white/10">
+              <span
+                className="rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                style={swatch}
+              >
                 {FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type}
               </span>
             )}
@@ -607,36 +671,15 @@ export function FutebolAgendaOperacional() {
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
-        {item.source === "travel" ? (
-          <Link
-            href={item.href}
-            className="text-xs font-bold underline-offset-2 hover:underline"
-          >
-            Abrir viagem
-          </Link>
-        ) : item.source === "bch_booking" ? (
-          <Link
-            href={item.href}
-            className="text-xs font-bold underline-offset-2 hover:underline"
-          >
-            Editar no Boston City Hall
-          </Link>
-        ) : (
-          <button
-            type="button"
-            className="text-xs font-bold underline-offset-2 hover:underline"
-            onClick={() => {
-              const id = item.id.replace(/^entry-/, "");
-              api.get<FootballAgendaEntry>(`/futebol-agenda/entries/${id}`).then(({ data }) => {
-                if (data) openEditEntry(data);
-              });
-            }}
-          >
-            Editar
-          </button>
-        )}
+        <span className="text-xs font-bold underline-offset-2">
+          {item.source === "travel"
+            ? "Abrir viagem"
+            : item.source === "bch_booking"
+              ? "Editar no Boston City Hall"
+              : "Editar / excluir"}
+        </span>
       </div>
-    </div>
+    </button>
     );
   };
 
@@ -757,6 +800,10 @@ export function FutebolAgendaOperacional() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => setPaletteOpen(true)} className="min-h-[44px] shrink-0">
+                <Palette className="mr-2 h-4 w-4" />
+                Cores
+              </Button>
             <Button variant="outline" onClick={goToToday} className="min-h-[44px] shrink-0">
                 Hoje
               </Button>
@@ -849,16 +896,20 @@ export function FutebolAgendaOperacional() {
               ) : (
                 <div className="space-y-2">{selectedItems.map(renderAgendaItem)}</div>
               )}
-              <TypeLegend typeFilter={typeFilter} onTypeFilterChange={setTypeFilter} />
+              <TypeLegend
+                typeFilter={typeFilter}
+                onTypeFilterChange={setTypeFilter}
+                colors={agendaColors}
+              />
             </div>
           ) : (
             <div
               className={cn(
                 "grid gap-4",
-                viewMode === "month" && "lg:grid-cols-[1fr_minmax(260px,320px)]",
+                viewMode === "month" && "lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start",
               )}
             >
-              <div className={viewMode === "week" ? "overflow-x-auto pb-1" : undefined}>
+              <div className={viewMode === "week" ? "min-w-0" : undefined}>
                 {viewMode === "month" ? (
                   <>
                     <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted-foreground">
@@ -878,111 +929,160 @@ export function FutebolAgendaOperacional() {
                         const dayItems = byDay.get(dateKey) ?? [];
                         const isSelected = dateKey === selectedDay;
                         return (
-                          <button
+                          <div
                             key={dateKey}
-                            type="button"
-                            onClick={() => handleDayClick(dateKey)}
                             className={dayCellClass(dateKey, isSelected)}
                           >
-                            <span className={dayNumberClass(dateKey, isSelected)}>{day}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const [y, m, d] = dateKey.split("-").map(Number);
+                                setSelectedDay(dateKey);
+                                setFocusDate(new Date(y, m - 1, d));
+                              }}
+                              className="flex w-full items-center justify-between gap-1 text-left"
+                              title="Selecionar dia"
+                            >
+                              <span className={dayNumberClass(dateKey, isSelected)}>{day}</span>
+                            </button>
                             <div className="mt-1 space-y-0.5">
-                              {sortAgendaItems(dayItems).slice(0, 4).map((item) => (
-                                <div
-                                  key={item.id}
-                                  className={cn(
-                                    "truncate rounded border px-1 py-0.5 text-[10px] leading-tight sm:text-[11px]",
-                                    agendaCalendarPillClass(item.type, matchSideOf(item)),
-                                  )}
-                                  title={
-                                    item.category
-                                      ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
-                                      : item.title
-                                  }
-                                >
-                                  {matchSideOf(item) === "casa"
-                                    ? "C · "
-                                    : matchSideOf(item) === "fora"
-                                      ? "F · "
-                                      : ""}
-                                  {item.title}
-                                </div>
-                              ))}
+                              {sortAgendaItems(dayItems).slice(0, 4).map((item) => {
+                                const side = matchSideOf(item);
+                                const style = agendaSwatchStyle(agendaColors, item.type, side);
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => openCalendarItem(item)}
+                                    className="line-clamp-2 w-full rounded border px-1 py-0.5 text-left text-[10px] font-semibold leading-tight sm:text-[11px]"
+                                    style={style}
+                                    title={
+                                      item.category
+                                        ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
+                                        : item.title
+                                    }
+                                  >
+                                    {side === "casa" ? "C · " : side === "fora" ? "F · " : ""}
+                                    {item.title}
+                                  </button>
+                                );
+                              })}
                               {dayItems.length > 4 ? (
-                                <p className="text-[10px] font-semibold text-muted-foreground">+{dayItems.length - 4}</p>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDayClick(dateKey)}
+                                  className="text-[10px] font-semibold text-muted-foreground hover:text-foreground"
+                                >
+                                  +{dayItems.length - 4} · ver dia
+                                </button>
                               ) : null}
                             </div>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
                   </>
                 ) : (
-                  <div className="grid min-w-[640px] grid-cols-7 gap-1 sm:min-w-0">
-                    {weekDays.map((d) => {
-                      const dateKey = dateKeyFromDate(d);
-                      const dayItems = byDay.get(dateKey) ?? [];
-                      const isSelected = dateKey === selectedDay;
-                      return (
-                        <div key={dateKey} className="min-w-[88px]">
-                          <button
-                            type="button"
-                            onClick={() => handleDayClick(dateKey)}
+                  <div className="overflow-x-auto rounded-xl border border-border/80 bg-card">
+                    <div className="grid min-w-[720px] grid-cols-7 divide-x divide-border/50">
+                      {weekDays.map((d) => {
+                        const dateKey = dateKeyFromDate(d);
+                        const dayItems = byDay.get(dateKey) ?? [];
+                        const isSelected = dateKey === selectedDay;
+                        return (
+                          <div
+                            key={dateKey}
                             className={cn(
-                              "mb-2 w-full rounded-lg border px-2 py-2 text-center transition-colors",
-                              isSelected
-                                ? "border-primary ring-2 ring-primary/40 bg-primary/10"
-                                : dateKey === today
-                                  ? "border-amber-400/80 bg-amber-500/20 ring-2 ring-amber-400/45"
-                                  : "border-border/60 bg-muted/20 hover:bg-muted/40",
+                              "flex min-h-[320px] flex-col bg-background/30",
+                              dateKey === today && "bg-amber-500/5",
                             )}
                           >
-                            <p className="text-[10px] font-semibold uppercase text-muted-foreground">
-                              {WEEKDAY_LABELS[d.getDay()]}
-                            </p>
-                            <p className={dayNumberClass(dateKey, isSelected)}>{d.getDate()}</p>
-                          </button>
-                          <div className="space-y-1">
-                            {sortAgendaItems(dayItems).map((item) => (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => handleDayClick(dateKey)}
-                                className={cn(
-                                  "w-full truncate rounded border px-1.5 py-1 text-left text-[10px] leading-tight sm:text-[11px]",
-                                  agendaCalendarPillClass(item.type, matchSideOf(item)),
-                                )}
-                                title={
-                                  item.category
-                                    ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
-                                    : item.title
-                                }
-                              >
-                                {!item.allDay ? (
-                                  <span className="mr-1 opacity-75">{formatTime(item.startAt, false)}</span>
-                                ) : null}
-                                {item.title}
-                              </button>
-                            ))}
+                            <button
+                              type="button"
+                              onClick={() => handleDayClick(dateKey)}
+                              className={cn(
+                                "sticky top-0 z-[1] border-b px-2 py-2.5 text-center transition-colors",
+                                isSelected
+                                  ? "border-primary bg-primary/15"
+                                  : dateKey === today
+                                    ? "border-amber-400/60 bg-amber-500/15"
+                                    : "border-border/60 bg-muted/25 hover:bg-muted/40",
+                              )}
+                              title="Abrir visão diária deste dia"
+                            >
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                {WEEKDAY_LABELS[d.getDay()]}
+                              </p>
+                              <p className={cn("mx-auto mt-0.5", dayNumberClass(dateKey, isSelected))}>
+                                {d.getDate()}
+                              </p>
+                            </button>
+                            <div className="flex flex-1 flex-col gap-1.5 p-1.5">
+                              {sortAgendaItems(dayItems).map((item) => {
+                                const side = matchSideOf(item);
+                                const style = agendaSwatchStyle(agendaColors, item.type, side);
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => openCalendarItem(item)}
+                                    className="rounded-md border px-1.5 py-1.5 text-left text-[11px] font-semibold leading-snug shadow-sm transition-opacity hover:opacity-90"
+                                    style={style}
+                                    title={
+                                      item.category
+                                        ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${item.title}`
+                                        : item.title
+                                    }
+                                  >
+                                    {!item.allDay ? (
+                                      <span className="mb-0.5 block text-[10px] font-bold opacity-90">
+                                        {formatTime(item.startAt, false)}
+                                      </span>
+                                    ) : null}
+                                    <span className="line-clamp-3 break-words">{item.title}</span>
+                                  </button>
+                                );
+                              })}
+                              {dayItems.length === 0 ? (
+                                <p className="px-1 py-2 text-center text-[10px] text-muted-foreground/70">
+                                  —
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
-                <TypeLegend typeFilter={typeFilter} onTypeFilterChange={setTypeFilter} />
+                <TypeLegend
+                  typeFilter={typeFilter}
+                  onTypeFilterChange={setTypeFilter}
+                  colors={agendaColors}
+                />
               </div>
 
               {viewMode === "month" ? (
-                <Card className="border-dashed lg:border-solid">
+                <Card className="h-fit border-dashed lg:sticky lg:top-4 lg:border-solid">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">
                       {selectedDay ? formatDateLong(`${selectedDay}T12:00:00`) : "Selecione um dia"}
                     </CardTitle>
+                    {selectedDay ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-1 w-fit"
+                        onClick={() => handleDayClick(selectedDay)}
+                      >
+                        Abrir visão diária
+                      </Button>
+                    ) : null}
                   </CardHeader>
-                  <CardContent className="max-h-[420px] space-y-2 overflow-y-auto">
+                  <CardContent className="space-y-2">
                     {!selectedDay ? (
                       <p className="text-sm text-muted-foreground">
-                        Toque em um dia do calendário para ver viagens e compromissos.
+                        Toque no número do dia para a visão diária, ou em um evento para editar.
                       </p>
                     ) : selectedItems.length === 0 ? (
                       <div className="space-y-3">
@@ -1174,6 +1274,58 @@ export function FutebolAgendaOperacional() {
             </Button>
             <Button onClick={handleSave} disabled={saving} className="min-h-[44px]">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={paletteOpen} onOpenChange={setPaletteOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cores da agenda</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Escolha a cor de cada tipo de evento. As preferências ficam salvas neste navegador.
+          </p>
+          <div className="grid gap-3 py-2">
+            {(Object.keys(AGENDA_COLOR_LABELS) as AgendaColorKey[]).map((key) => (
+              <div
+                key={key}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">{AGENDA_COLOR_LABELS[key]}</p>
+                  <span
+                    className="mt-1 inline-block rounded border px-2 py-0.5 text-[10px] font-semibold"
+                    style={{
+                      backgroundColor: agendaColors[key].bg,
+                      color: agendaColors[key].text,
+                      borderColor: agendaColors[key].border,
+                    }}
+                  >
+                    Exemplo
+                  </span>
+                </div>
+                <Input
+                  type="color"
+                  className="h-10 w-14 cursor-pointer p-1"
+                  value={agendaColors[key].bg}
+                  onChange={(e) => updateAgendaColorBg(key, e.target.value)}
+                  aria-label={`Cor de ${AGENDA_COLOR_LABELS[key]}`}
+                />
+              </div>
+            ))}
+          </div>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => persistAgendaColors({ ...DEFAULT_AGENDA_COLORS })}
+            >
+              Restaurar padrão
+            </Button>
+            <Button type="button" onClick={() => setPaletteOpen(false)}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>
