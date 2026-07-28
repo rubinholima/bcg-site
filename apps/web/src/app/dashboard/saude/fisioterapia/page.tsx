@@ -14,7 +14,7 @@ import type { PhysioSession } from "@/types/fisioterapia";
 import { cn } from "@/lib/utils";
 import { isFootballKind } from "@/lib/home-data";
 
-type Tenant = { id: string; name: string; kind?: { name?: string } };
+type Tenant = { id: string; name: string; categories?: string[] | null; kind?: { name?: string } };
 
 const STATUS_LABEL: Record<string, string> = {
   active: "Em tratamento",

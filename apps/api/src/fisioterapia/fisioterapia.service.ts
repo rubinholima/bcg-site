@@ -81,26 +81,30 @@ export class FisioterapiaService implements OnModuleInit {
     }
   }
 
-  listRegions() {
-    return this.prisma.physioBodyRegion.findMany({
-      orderBy: { sortOrder: 'asc' },
-      include: {
-        diagnoses: {
-          where: { active: true },
-          orderBy: { name: 'asc' },
+  listDiagnoses(regionId?: string) {
+    return this.ensureCatalog().then(() =>
+      this.prisma.physioDiagnosis.findMany({
+        where: {
+          active: true,
+          ...(regionId ? { regionId } : {}),
         },
-      },
-    });
+        orderBy: [{ regionId: 'asc' }, { name: 'asc' }],
+      }),
+    );
   }
 
-  listDiagnoses(regionId?: string) {
-    return this.prisma.physioDiagnosis.findMany({
-      where: {
-        active: true,
-        ...(regionId ? { regionId } : {}),
-      },
-      orderBy: [{ regionId: 'asc' }, { name: 'asc' }],
-    });
+  listRegions() {
+    return this.ensureCatalog().then(() =>
+      this.prisma.physioBodyRegion.findMany({
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          diagnoses: {
+            where: { active: true },
+            orderBy: { name: 'asc' },
+          },
+        },
+      }),
+    );
   }
 
   async createDiagnosis(dto: CreatePhysioDiagnosisDto, userId?: string) {

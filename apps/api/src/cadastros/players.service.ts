@@ -593,14 +593,42 @@ export class PlayersService {
       file.mimetype,
     );
 
-    return {
+    const doc = {
       id: randomUUID(),
       name: name.trim(),
       documentType: documentType.trim(),
+      documentCategory:
+        documentType.trim() === 'exame_fisio' ||
+        documentType.trim() === 'laudo' ||
+        documentType.trim() === 'exame'
+          ? ('medico' as const)
+          : ('outro' as const),
       fileKey: uploaded.key,
       fileUrl: uploaded.url,
       uploadedAt: new Date().toISOString(),
+      source: 'manual' as const,
     };
+
+    const player = await this.prisma.player.findUnique({
+      where: { id: playerId },
+      select: { registrationProfile: true },
+    });
+    const profile =
+      player?.registrationProfile && typeof player.registrationProfile === 'object'
+        ? (player.registrationProfile as Record<string, unknown>)
+        : {};
+    const prevDocs = Array.isArray(profile.documents) ? profile.documents : [];
+    await this.prisma.player.update({
+      where: { id: playerId },
+      data: {
+        registrationProfile: {
+          ...profile,
+          documents: [doc, ...prevDocs],
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    return doc;
   }
 
   async create(dto: CreatePlayerDto, allowedTenantIds: string[] | null = null) {

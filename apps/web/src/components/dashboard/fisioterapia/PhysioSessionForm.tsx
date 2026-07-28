@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Plus, Upload } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +15,13 @@ import type {
   PhysioDiagnosis,
   PhysioTreatment,
 } from "@/types/fisioterapia";
-import { getCategoryLabel } from "@/lib/fixture-categories";
+import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
+import { getPublicImageUrl } from "@/lib/media-url";
 
 type PlayerOpt = { id: string; name: string; category: string | null };
-type TenantOpt = { id: string; name: string };
+type TenantOpt = { id: string; name: string; categories?: string[] | null };
+type StaffOpt = { id: string; name: string; role: string; tenantId?: string | null };
 
 export function PhysioSessionForm({
   tenants,
@@ -39,7 +41,9 @@ export function PhysioSessionForm({
   const [category, setCategory] = useState(initialCategory ?? "");
   const [playerId, setPlayerId] = useState(initialPlayerId ?? "");
   const [players, setPlayers] = useState<PlayerOpt[]>([]);
+  const [staffList, setStaffList] = useState<StaffOpt[]>([]);
   const [regions, setRegions] = useState<PhysioBodyRegion[]>([]);
+  const [diagnoses, setDiagnoses] = useState<PhysioDiagnosis[]>([]);
   const [treatments, setTreatments] = useState<PhysioTreatment[]>([]);
   const [view, setView] = useState<"front" | "back">("front");
   const [regionId, setRegionId] = useState("");
@@ -53,15 +57,24 @@ export function PhysioSessionForm({
   const [treatmentNotes, setTreatmentNotes] = useState("");
   const [estimatedDays, setEstimatedDays] = useState("");
   const [estimatedEndDate, setEstimatedEndDate] = useState("");
-  const [staffName, setStaffName] = useState("");
-  const [attachmentUrl, setAttachmentUrl] = useState("");
-  const [attachmentName, setAttachmentName] = useState("");
+  const [staffId, setStaffId] = useState("");
   const [attachments, setAttachments] = useState<PhysioAttachment[]>([]);
+  const [attachmentName, setAttachmentName] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [newDx, setNewDx] = useState("");
   const [newTx, setNewTx] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingMeta, setLoadingMeta] = useState(true);
+  const [loadingDx, setLoadingDx] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const selectedTenant = tenants.find((t) => t.id === tenantId);
+  const categoriesForClub = useMemo(
+    () => filterCategoriesForTenant(allCats, selectedTenant?.categories),
+    [allCats, selectedTenant?.categories],
+  );
 
   useEffect(() => {
     setLoadingMeta(true);
@@ -83,6 +96,7 @@ export function PhysioSessionForm({
   useEffect(() => {
     if (!tenantId) {
       setPlayers([]);
+      setStaffList([]);
       return;
     }
     api
@@ -98,19 +112,51 @@ export function PhysioSessionForm({
         );
       })
       .catch(() => setPlayers([]));
+
+    api
+      .get<StaffOpt[]>(
+        `/medical-staff?tenantId=${encodeURIComponent(tenantId)}&role=fisioterapeuta`,
+      )
+      .then(({ data }) => {
+        setStaffList(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setStaffList([]));
   }, [tenantId]);
+
+  useEffect(() => {
+    if (!regionId) {
+      setDiagnoses([]);
+      return;
+    }
+    setLoadingDx(true);
+    api
+      .get<PhysioDiagnosis[]>(
+        `/fisioterapia/diagnoses?regionId=${encodeURIComponent(regionId)}`,
+      )
+      .then(({ data }) => {
+        setDiagnoses(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setDiagnoses([]))
+      .finally(() => setLoadingDx(false));
+  }, [regionId]);
+
+  useEffect(() => {
+    if (category && !categoriesForClub.some((c) => c.value === category)) {
+      setCategory("");
+    }
+  }, [category, categoriesForClub]);
 
   const filteredPlayers = useMemo(() => {
     if (!category) return players;
     return players.filter((p) => p.category === category);
   }, [players, category]);
 
-  const selectedRegion = regions.find((r) => r.id === regionId);
-  const diagnoses: PhysioDiagnosis[] = selectedRegion?.diagnoses ?? [];
   const filteredTreatments = useMemo(() => {
     if (!regionId) return treatments;
     return treatments.filter((t) => !t.regionId || t.regionId === regionId);
   }, [treatments, regionId]);
+
+  const selectedStaff = staffList.find((s) => s.id === staffId);
 
   const handleMapSelect = (hit: BodyMapHit) => {
     setRegionId(hit.regionId);
@@ -123,43 +169,72 @@ export function PhysioSessionForm({
 
   const addDiagnosis = async () => {
     if (!regionId || !newDx.trim()) return;
-    const { data } = await api.post<PhysioDiagnosis>("/fisioterapia/diagnoses", {
-      regionId,
-      name: newDx.trim(),
-    });
-    setRegions((prev) =>
-      prev.map((r) =>
-        r.id === regionId
-          ? { ...r, diagnoses: [...(r.diagnoses ?? []), data].sort((a, b) => a.name.localeCompare(b.name)) }
-          : r,
-      ),
-    );
-    setDiagnosisId(data.id);
-    setNewDx("");
+    try {
+      const { data } = await api.post<PhysioDiagnosis>("/fisioterapia/diagnoses", {
+        regionId,
+        name: newDx.trim(),
+      });
+      setDiagnoses((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
+      setDiagnosisId(data.id);
+      setNewDx("");
+    } catch {
+      setError("Não foi possível criar o diagnóstico.");
+    }
   };
 
   const addTreatment = async () => {
     if (!newTx.trim()) return;
-    const { data } = await api.post<PhysioTreatment>("/fisioterapia/treatments", {
-      name: newTx.trim(),
-      regionId: regionId || undefined,
-    });
-    setTreatments((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
-    setTreatmentId(data.id);
-    setNewTx("");
+    try {
+      const { data } = await api.post<PhysioTreatment>("/fisioterapia/treatments", {
+        name: newTx.trim(),
+        regionId: regionId || undefined,
+      });
+      setTreatments((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
+      setTreatmentId(data.id);
+      setNewTx("");
+    } catch {
+      setError("Não foi possível criar o tratamento.");
+    }
   };
 
-  const addAttachment = () => {
-    if (!attachmentUrl.trim()) return;
-    setAttachments((prev) => [
-      ...prev,
-      {
-        name: attachmentName.trim() || "Anexo",
-        url: attachmentUrl.trim(),
-      },
-    ]);
-    setAttachmentUrl("");
-    setAttachmentName("");
+  const uploadExam = async () => {
+    if (!playerId) {
+      setError("Selecione o atleta antes de enviar o exame.");
+      return;
+    }
+    if (!uploadFile) {
+      setError("Selecione um arquivo (PDF ou imagem).");
+      return;
+    }
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", uploadFile);
+      formData.append("name", attachmentName.trim() || uploadFile.name);
+      formData.append("documentType", "exame_fisio");
+      const { data } = await api.postForm<{
+        name: string;
+        fileUrl: string;
+        fileKey?: string;
+      }>(`/players/${playerId}/registration-documents`, formData);
+      setAttachments((prev) => [
+        ...prev,
+        {
+          name: data.name,
+          url: data.fileUrl,
+          key: data.fileKey,
+          mimeType: uploadFile.type || undefined,
+        },
+      ]);
+      setAttachmentName("");
+      setUploadFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+    } catch {
+      setError("Falha no upload do exame para a pasta do atleta.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -186,7 +261,8 @@ export function PhysioSessionForm({
         treatmentNotes: treatmentNotes || undefined,
         estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
         estimatedEndDate: estimatedEndDate || undefined,
-        staffName: staffName || undefined,
+        staffId: staffId || undefined,
+        staffName: selectedStaff?.name || undefined,
         attachments: attachments.length ? attachments : undefined,
       };
       const { data } = await api.post<{ id: string }>("/fisioterapia/sessions", payload);
@@ -224,18 +300,32 @@ export function PhysioSessionForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <Label>Clube *</Label>
-            <NativeSelect value={tenantId} onChange={(e) => { setTenantId(e.target.value); setPlayerId(""); }}>
+            <NativeSelect
+              value={tenantId}
+              onChange={(e) => {
+                setTenantId(e.target.value);
+                setPlayerId("");
+                setStaffId("");
+                setCategory("");
+              }}
+            >
               <option value="">Selecione…</option>
               {tenants.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </NativeSelect>
           </div>
           <div className="grid gap-1.5">
             <Label>Categoria</Label>
-            <NativeSelect value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">Todas</option>
-              {allCats.map((c) => (
+            <NativeSelect
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              disabled={!tenantId}
+            >
+              <option value="">Todas do clube</option>
+              {categoriesForClub.map((c) => (
                 <option key={c.value} value={c.value}>
                   {getCategoryLabel(c.value, "pt", allCats)}
                 </option>
@@ -269,7 +359,9 @@ export function PhysioSessionForm({
             >
               <option value="">Selecione no mapa ou aqui…</option>
               {regions.map((r) => (
-                <option key={r.id} value={r.id}>{r.namePt}</option>
+                <option key={r.id} value={r.id}>
+                  {r.namePt}
+                </option>
               ))}
             </NativeSelect>
           </div>
@@ -308,18 +400,54 @@ export function PhysioSessionForm({
           </div>
           <div className="grid gap-1.5">
             <Label>Fisioterapeuta</Label>
-            <Input value={staffName} onChange={(e) => setStaffName(e.target.value)} />
+            <NativeSelect
+              value={staffId}
+              onChange={(e) => setStaffId(e.target.value)}
+              disabled={!tenantId}
+            >
+              <option value="">Selecione do cadastro…</option>
+              {staffList.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </NativeSelect>
+            {tenantId && staffList.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Nenhum fisioterapeuta cadastrado em Saúde → Equipe.
+              </p>
+            ) : null}
           </div>
         </div>
 
         <div className="grid gap-1.5">
           <Label>Diagnóstico</Label>
-          <NativeSelect value={diagnosisId} onChange={(e) => setDiagnosisId(e.target.value)} disabled={!regionId}>
-            <option value="">Selecione…</option>
-            {diagnoses.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </NativeSelect>
+          {!regionId ? (
+            <p className="rounded-md border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground">
+              Selecione a região no mapa (ou no campo Região) para carregar os diagnósticos.
+            </p>
+          ) : loadingDx ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Carregando diagnósticos…
+            </div>
+          ) : (
+            <NativeSelect
+              value={diagnosisId}
+              onChange={(e) => setDiagnosisId(e.target.value)}
+            >
+              <option value="">
+                {diagnoses.length === 0
+                  ? "Nenhum diagnóstico — cadastre abaixo"
+                  : `Selecione… (${diagnoses.length})`}
+              </option>
+              {diagnoses.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </NativeSelect>
+          )}
           <div className="flex gap-2">
             <Input
               placeholder="Novo diagnóstico nesta região"
@@ -327,7 +455,12 @@ export function PhysioSessionForm({
               onChange={(e) => setNewDx(e.target.value)}
               disabled={!regionId}
             />
-            <Button type="button" variant="outline" onClick={() => void addDiagnosis()} disabled={!regionId || !newDx.trim()}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void addDiagnosis()}
+              disabled={!regionId || !newDx.trim()}
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -350,7 +483,12 @@ export function PhysioSessionForm({
               value={newTx}
               onChange={(e) => setNewTx(e.target.value)}
             />
-            <Button type="button" variant="outline" onClick={() => void addTreatment()} disabled={!newTx.trim()}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void addTreatment()}
+              disabled={!newTx.trim()}
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -387,20 +525,53 @@ export function PhysioSessionForm({
           </div>
         </div>
 
-        <div className="grid gap-1.5">
-          <Label>Anexos (laudos / exames — URL)</Label>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input placeholder="Nome" value={attachmentName} onChange={(e) => setAttachmentName(e.target.value)} />
-            <Input placeholder="https://…" value={attachmentUrl} onChange={(e) => setAttachmentUrl(e.target.value)} />
-            <Button type="button" variant="outline" onClick={addAttachment}>
-              Adicionar
+        <div className="grid gap-1.5 rounded-lg border border-border/70 p-3">
+          <Label>Exames / laudos (pasta do atleta no S3)</Label>
+          <p className="text-xs text-muted-foreground">
+            Envia para a pasta do jogador e também fica no atendimento. Selecione o atleta antes.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="grid flex-1 gap-1.5">
+              <Input
+                placeholder="Nome do exame"
+                value={attachmentName}
+                onChange={(e) => setAttachmentName(e.target.value)}
+              />
+              <Input
+                ref={fileRef}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"
+                className="text-foreground file:mr-2 file:rounded file:border-0 file:bg-muted file:px-2 file:py-1"
+                onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[44px]"
+              disabled={uploading || !playerId || !uploadFile}
+              onClick={() => void uploadExam()}
+            >
+              {uploading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-2 h-4 w-4" />
+              )}
+              Enviar
             </Button>
           </div>
           {attachments.length > 0 ? (
-            <ul className="space-y-1 text-sm">
+            <ul className="mt-2 space-y-1 text-sm">
               {attachments.map((a, i) => (
-                <li key={`${a.url}-${i}`} className="truncate text-muted-foreground">
-                  {a.name}: {a.url}
+                <li key={`${a.url}-${i}`}>
+                  <a
+                    href={getPublicImageUrl(a.url)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {a.name}
+                  </a>
                 </li>
               ))}
             </ul>

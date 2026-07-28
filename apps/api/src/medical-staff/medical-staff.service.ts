@@ -6,11 +6,22 @@ import { PrismaService } from '../prisma/prisma.service';
 export class MedicalStaffService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId?: string) {
-    const where: { tenantId?: string | null } = {};
-    if (tenantId !== undefined) {
-      where.tenantId = tenantId || null;
+  async findAll(tenantId?: string, role?: string) {
+    // Cadastro grava role em MAIÚSCULAS (cadastroUpperRequired)
+    const roleFilter = role?.trim() ? cadastroUpperRequired(role) : undefined;
+    const where: { tenantId?: string | null; role?: string } = {};
+    if (tenantId !== undefined && tenantId !== '') {
+      // clube específico + profissionais do grupo (tenantId null)
+      return this.prisma.medicalStaff.findMany({
+        where: {
+          ...(roleFilter ? { role: roleFilter } : {}),
+          OR: [{ tenantId }, { tenantId: null }],
+        },
+        include: { tenant: { select: { id: true, name: true, slug: true } } },
+        orderBy: [{ name: 'asc' }],
+      });
     }
+    if (roleFilter) where.role = roleFilter;
     return this.prisma.medicalStaff.findMany({
       where,
       include: { tenant: { select: { id: true, name: true, slug: true } } },

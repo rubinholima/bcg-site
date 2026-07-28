@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PhysioSessionForm } from "@/components/dashboard/fisioterapia/PhysioSessionForm";
 import { isFootballKind } from "@/lib/home-data";
 
-type Tenant = { id: string; name: string; kind?: { name?: string } };
+type Tenant = { id: string; name: string; categories?: string[] | null; kind?: { name?: string } };
 
 export default function NovoAtendimentoFisioPage() {
   const router = useRouter();

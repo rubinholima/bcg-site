@@ -25,8 +25,8 @@ export class MedicalStaffController {
   @Get()
   @UseGuards(ModuleAccessGuard)
   @RequireModule('saude')
-  list(@Query('tenantId') tenantId?: string) {
-    return this.service.findAll(tenantId);
+  list(@Query('tenantId') tenantId?: string, @Query('role') role?: string) {
+    return this.service.findAll(tenantId, role);
   }
 
   @Get(':id')
