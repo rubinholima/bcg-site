@@ -91,31 +91,47 @@ export class FutebolRelatoriosService {
     const categories = this.resolveTravelCategories(travel);
     const categoryLabel = await this.buildCategoryLabel(categories);
 
-    const roomAssignments = this.parseRooms(travel.accommodationRooms);
-    const occupantIds = this.collectOccupantIds(roomAssignments);
+    const participants = await this.prisma.travelParticipant.findMany({
+      where: { travelLogisticsId: travelId },
+      orderBy: [{ personType: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
 
     let athletes: RelatorioPessoaRow[];
     let staff: RelatorioPessoaRow[];
+    let guests: RelatorioPessoaRow[] = [];
 
-    if (occupantIds.playerIds.size > 0 || occupantIds.staffIds.size > 0) {
-      const enriched = await this.enrichOccupants(
+    if (participants.length > 0) {
+      const fromConvocation = await this.enrichFromParticipants(
         travel.tenantId,
-        occupantIds.playerIds,
-        occupantIds.staffIds,
+        participants,
       );
-      athletes = enriched.athletes;
-      staff = enriched.staff;
+      athletes = fromConvocation.athletes;
+      staff = fromConvocation.staff;
+      guests = fromConvocation.guests;
     } else {
-      const squad = await this.loadSquadForCategories(travel.tenantId, categories);
-      athletes = squad.athletes;
-      staff = squad.staff;
+      const roomAssignments = this.parseRooms(travel.accommodationRooms);
+      const occupantIds = this.collectOccupantIds(roomAssignments);
+
+      if (occupantIds.playerIds.size > 0 || occupantIds.staffIds.size > 0) {
+        const enriched = await this.enrichOccupants(
+          travel.tenantId,
+          occupantIds.playerIds,
+          occupantIds.staffIds,
+        );
+        athletes = enriched.athletes;
+        staff = enriched.staff;
+      } else {
+        const squad = await this.loadSquadForCategories(travel.tenantId, categories);
+        athletes = squad.athletes;
+        staff = squad.staff;
+      }
     }
 
     return {
       travel: this.buildTravelMeta(travel, categories, categoryLabel),
       athletes,
       staff,
-      guests: [],
+      guests,
       generatedAt: new Date().toISOString(),
     };
   }
@@ -441,6 +457,7 @@ export class FutebolRelatoriosService {
           cpf: profile.personal?.cpf ?? null,
           rg: profile.personal?.rg ?? null,
           birthDate: formatIsoDate(p.birthDate),
+          playerId: p.id,
         });
       }
     }
@@ -458,11 +475,93 @@ export class FutebolRelatoriosService {
           rg: s.rg,
           birthDate: formatIsoDate(s.birthDate),
           role: s.role,
+          staffId: s.id,
         });
       }
     }
 
     return { athletes, staff };
+  }
+
+  /** Prioridade: convocação (TravelParticipant) com FK no cadastro do atleta. */
+  private async enrichFromParticipants(
+    tenantId: string,
+    participants: Array<{
+      personType: string;
+      playerId: string | null;
+      staffId: string | null;
+      guestName: string | null;
+      guestDocument: string | null;
+    }>,
+  ) {
+    const athletes: RelatorioPessoaRow[] = [];
+    const staff: RelatorioPessoaRow[] = [];
+    const guests: RelatorioPessoaRow[] = [];
+
+    const playerIds = participants
+      .filter((p) => p.personType === 'player' && p.playerId)
+      .map((p) => p.playerId!);
+    const staffIds = participants
+      .filter((p) => p.personType === 'staff' && p.staffId)
+      .map((p) => p.staffId!);
+
+    const players =
+      playerIds.length > 0
+        ? await this.prisma.player.findMany({
+            where: { tenantId, id: { in: playerIds } },
+          })
+        : [];
+    const playerMap = new Map(players.map((p) => [p.id, p]));
+
+    const staffMembers =
+      staffIds.length > 0
+        ? await this.prisma.technicalStaff.findMany({
+            where: { tenantId, id: { in: staffIds } },
+          })
+        : [];
+    const staffMap = new Map(staffMembers.map((s) => [s.id, s]));
+
+    for (const part of participants) {
+      if (part.personType === 'player' && part.playerId) {
+        const p = playerMap.get(part.playerId);
+        if (!p || this.isInactivePlayer(p.registrationProfile)) continue;
+        const profile = parseRegistrationProfile(p.registrationProfile);
+        athletes.push({
+          num: athletes.length + 1,
+          name: p.name,
+          cpf: profile.personal?.cpf ?? null,
+          rg: profile.personal?.rg ?? null,
+          birthDate: formatIsoDate(p.birthDate),
+          playerId: p.id,
+        });
+        continue;
+      }
+      if (part.personType === 'staff' && part.staffId) {
+        const s = staffMap.get(part.staffId);
+        if (!s) continue;
+        staff.push({
+          num: staff.length + 1,
+          name: s.name,
+          cpf: s.cpf,
+          rg: s.rg,
+          birthDate: formatIsoDate(s.birthDate),
+          role: s.role,
+          staffId: s.id,
+        });
+        continue;
+      }
+      if (part.personType === 'guest') {
+        guests.push({
+          num: guests.length + 1,
+          name: (part.guestName ?? '—').trim() || '—',
+          cpf: part.guestDocument ?? null,
+          rg: null,
+          birthDate: null,
+        });
+      }
+    }
+
+    return { athletes, staff, guests };
   }
 
   private async loadSquadForCategories(tenantId: string, categories: string[]) {
@@ -497,6 +596,7 @@ export class FutebolRelatoriosService {
         cpf: profile.personal?.cpf ?? null,
         rg: profile.personal?.rg ?? null,
         birthDate: formatIsoDate(p.birthDate),
+        playerId: p.id,
       };
     });
 
@@ -507,6 +607,7 @@ export class FutebolRelatoriosService {
       rg: s.rg,
       birthDate: formatIsoDate(s.birthDate),
       role: s.role,
+      staffId: s.id,
     }));
 
     return { athletes, staff };

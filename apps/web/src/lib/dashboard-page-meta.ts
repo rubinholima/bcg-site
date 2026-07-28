@@ -35,6 +35,11 @@ const PAGE_META_OVERRIDES: Record<string, Partial<DashboardPageMeta>> = {
     description:
       "Visão por tipo: clubes (futebol) e empresas — indicadores pertinentes a cada perfil",
   },
+  "/dashboard/futebol/logistica/convocacao": {
+    title: "Convocação",
+    description:
+      "Selecione atletas e comissão por clube/categoria para a viagem — vínculo no cadastro individual e base dos relatórios",
+  },
   "/dashboard/empresas": {
     description: "Gerencie as empresas do grupo",
   },

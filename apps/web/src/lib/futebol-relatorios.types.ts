@@ -7,6 +7,9 @@ export type RelatorioPessoaRow = {
   rg: string | null;
   birthDate: string | null;
   role?: string | null;
+  /** FK no cadastro — relatório da vida do atleta */
+  playerId?: string | null;
+  staffId?: string | null;
 };
 
 export type RelatorioHospedeRow = RelatorioPessoaRow & {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -339,9 +339,17 @@ export default function EditLogisticaPage() {
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
-        <Button type="submit" form="form-logistica-edit" disabled={saving}>
-          {saving ? "Salvando..." : "Salvar"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" form="form-logistica-edit" disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href={`/dashboard/futebol/logistica/convocacao?travelId=${id}`}>
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Convocação
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <form id="form-logistica-edit" onSubmit={handleSubmit} className="space-y-6">

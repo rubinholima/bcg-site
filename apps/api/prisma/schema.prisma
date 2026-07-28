@@ -250,6 +250,37 @@ model TravelLogistics {
   @@index([status])
   @@unique([tenantId, externalId])
   footballAgendaEntries FootballAgendaEntry[]
+  /** Convocados / passageiros ligados ao cadastro (Player / TechnicalStaff) — base dos relatórios e da ficha do atleta */
+  participants          TravelParticipant[]
+}
+
+/**
+ * Participantes de uma viagem (convocação).
+ * Obrigatório ter FK no cadastro: playerId ou staffId (ou guest sem cadastro).
+ * Alimenta relatórios de passageiros e o histórico na ficha do atleta.
+ */
+model TravelParticipant {
+  id                String          @id @default(cuid())
+  travelLogisticsId String
+  travelLogistics   TravelLogistics @relation(fields: [travelLogisticsId], references: [id], onDelete: Cascade)
+  /** player | staff | guest */
+  personType        String
+  playerId          String?
+  player            Player?         @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  staffId           String?
+  staff             TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  /** Só para personType=guest (sem cadastro no sistema) */
+  guestName         String?
+  guestDocument     String?
+  notes             String?         @db.Text
+  sortOrder         Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([travelLogisticsId])
+  @@index([playerId])
+  @@index([staffId])
+  @@index([travelLogisticsId, personType])
 }
 
 /** Compromissos operacionais do Depto Futebol (treinos, reuniões, jogos, etc.) — exibidos na agenda junto com viagens. */
@@ -703,6 +734,7 @@ model Player {
   rhEmployee           Employee?
   registrationInvites  RegistrationInvite[]
   agendaParticipations FootballAgendaEntryParticipant[]
+  travelParticipations TravelParticipant[]
   scoutingProspects    ScoutingProspect[]
   @@index([tenantId])
   @@index([tenantId, category])
@@ -790,7 +822,8 @@ model TechnicalStaff {
   notes             String?   @db.Text
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
-  scoutProfile      Scout?
+  scoutProfile         Scout?
+  travelParticipations TravelParticipant[]
   @@index([tenantId])
   @@index([tenantId, role])
 }

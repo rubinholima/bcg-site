@@ -1,0 +1,43 @@
+---
+description: Tudo que envolve atleta DEVE ter FK/relação no cadastro individual (Player) — viagens, tratamentos, agenda, etc.
+alwaysApply: true
+---
+
+# Relação obrigatória com o cadastro do atleta
+
+## Princípio
+
+**Tudo que criarmos daqui pra frente e que diga respeito a um atleta TEM que estar ligado ao registro individual do atleta (`Player`).**
+
+Objetivo: montar depois o **relatório da vida do atleta** (viagens, tratamentos, consultas, agenda, documentos, etc.) a partir da ficha — sem dados órfãos em JSON solto ou só por “categoria do elenco”.
+
+## O que fazer
+
+| Situação | Como |
+|----------|------|
+| Viagem / convocação | Tabela com `playerId` → `Player` (ex.: `TravelParticipant`) |
+| Agenda / treino / jogo | `FootballAgendaEntryParticipant.playerId` (já existe) |
+| Atendimento médico / tratamento | Model com `playerId` (não só texto no JSON sem vínculo tipado quando for feature nova) |
+| Psicologia / nutrição / ativo | Preferir FK `playerId` como nos models já existentes |
+| Relatórios / impressão | Incluir `playerId` no DTO quando listar atletas; histórico na ficha usa a relação, não “chute” por categoria |
+
+## O que NÃO fazer
+
+- ❌ Listar “todos da categoria” como se fossem participantes reais **sem** gravar quem foi convocado/participou
+- ❌ Guardar só `personName` em JSON **sem** `playerId` quando o atleta existe no cadastro
+- ❌ Histórico na ficha baseado só em “viagem da mesma categoria” (falso positivo)
+- ❌ Feature nova de evento/atendimento/deslocamento **sem** caminho até `/dashboard/cadastros/jogadores/[id]`
+
+## Checklist ao criar feature
+
+1. O model tem `playerId` (ou tabela N:N) apontando para `Player`?
+2. A ficha do atleta consegue listar esse histórico (aba ou endpoint `/players/:id/...`)?
+3. Relatórios usam os IDs convocados/participantes, não só fallback de elenco?
+4. Migração Prisma + índices em `playerId`?
+
+## Referências
+
+- `TravelParticipant` — convocados da viagem (Logística)
+- `FootballAgendaEntryParticipant` — participantes da agenda
+- `PlayerTravelTab` / `findTravelHistory` — histórico na ficha
+- Cadastro: `Player` em `apps/api/prisma/schema.prisma`

@@ -4,6 +4,32 @@ import { TenantsService } from '../tenants/tenants.service';
 import { normalizeTravelCategoriesInput } from '../futebol-agenda/travel-categories.util';
 import { CreateTravelLogisticsDto } from './dto/create-travel-logistics.dto';
 import { UpdateTravelLogisticsDto } from './dto/update-travel-logistics.dto';
+import {
+  SetTravelParticipantsDto,
+  TravelParticipantItemDto,
+} from './dto/set-travel-participants.dto';
+
+const PARTICIPANT_INCLUDE = {
+  player: {
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      birthDate: true,
+      photoUrl: true,
+      jerseyNumber: true,
+      position: true,
+    },
+  },
+  staff: {
+    select: {
+      id: true,
+      name: true,
+      role: true,
+      photoUrl: true,
+    },
+  },
+} as const;
 
 @Injectable()
 export class LogisticaService {
@@ -51,17 +77,145 @@ export class LogisticaService {
     return this.prisma.travelLogistics.findMany({
       where,
       orderBy: [{ matchDate: 'asc' }, { createdAt: 'desc' }],
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        _count: { select: { participants: true } },
+      },
     });
   }
 
   async findOne(id: string) {
     const item = await this.prisma.travelLogistics.findUnique({
       where: { id },
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        participants: {
+          include: PARTICIPANT_INCLUDE,
+          orderBy: [{ personType: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+        },
+        _count: { select: { participants: true } },
+      },
     });
     if (!item) throw new NotFoundException('Planejamento não encontrado');
     return item;
+  }
+
+  async listParticipants(travelId: string) {
+    await this.findOne(travelId);
+    return this.prisma.travelParticipant.findMany({
+      where: { travelLogisticsId: travelId },
+      include: PARTICIPANT_INCLUDE,
+      orderBy: [{ personType: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+  }
+
+  /**
+   * Substitui a convocação inteira. Cada atleta/staff fica com FK no cadastro
+   * (playerId / staffId) — base do histórico na ficha e dos relatórios.
+   */
+  async setParticipants(travelId: string, dto: SetTravelParticipantsDto) {
+    const travel = await this.findOne(travelId);
+    const items = dto.participants ?? [];
+    const normalized = this.normalizeParticipantItems(items);
+
+    const playerIds = normalized
+      .filter((p) => p.personType === 'player' && p.playerId)
+      .map((p) => p.playerId!);
+    const staffIds = normalized
+      .filter((p) => p.personType === 'staff' && p.staffId)
+      .map((p) => p.staffId!);
+
+    if (playerIds.length > 0) {
+      const players = await this.prisma.player.findMany({
+        where: { id: { in: playerIds }, tenantId: travel.tenantId },
+        select: { id: true },
+      });
+      if (players.length !== new Set(playerIds).size) {
+        throw new BadRequestException(
+          'Um ou mais atletas não pertencem a este clube ou não existem',
+        );
+      }
+    }
+
+    if (staffIds.length > 0) {
+      const staff = await this.prisma.technicalStaff.findMany({
+        where: { id: { in: staffIds }, tenantId: travel.tenantId },
+        select: { id: true },
+      });
+      if (staff.length !== new Set(staffIds).size) {
+        throw new BadRequestException(
+          'Um ou mais membros da comissão não pertencem a este clube ou não existem',
+        );
+      }
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.travelParticipant.deleteMany({
+        where: { travelLogisticsId: travelId },
+      });
+      if (normalized.length === 0) return;
+      await tx.travelParticipant.createMany({
+        data: normalized.map((p, index) => ({
+          travelLogisticsId: travelId,
+          personType: p.personType,
+          playerId: p.personType === 'player' ? p.playerId! : null,
+          staffId: p.personType === 'staff' ? p.staffId! : null,
+          guestName:
+            p.personType === 'guest' ? (p.guestName ?? '').trim() || null : null,
+          guestDocument:
+            p.personType === 'guest'
+              ? p.guestDocument?.trim() || null
+              : null,
+          notes: p.notes?.trim() || null,
+          sortOrder: index,
+        })),
+      });
+    });
+
+    return this.listParticipants(travelId);
+  }
+
+  private normalizeParticipantItems(items: TravelParticipantItemDto[]) {
+    const seenPlayers = new Set<string>();
+    const seenStaff = new Set<string>();
+    const out: TravelParticipantItemDto[] = [];
+
+    for (const raw of items) {
+      const personType = raw.personType;
+      if (personType === 'player') {
+        const playerId = raw.playerId?.trim();
+        if (!playerId) {
+          throw new BadRequestException('playerId é obrigatório para atleta');
+        }
+        if (seenPlayers.has(playerId)) continue;
+        seenPlayers.add(playerId);
+        out.push({ personType, playerId, notes: raw.notes });
+        continue;
+      }
+      if (personType === 'staff') {
+        const staffId = raw.staffId?.trim();
+        if (!staffId) {
+          throw new BadRequestException('staffId é obrigatório para comissão');
+        }
+        if (seenStaff.has(staffId)) continue;
+        seenStaff.add(staffId);
+        out.push({ personType, staffId, notes: raw.notes });
+        continue;
+      }
+      if (personType === 'guest') {
+        const guestName = raw.guestName?.trim();
+        if (!guestName) {
+          throw new BadRequestException('guestName é obrigatório para convidado');
+        }
+        out.push({
+          personType,
+          guestName,
+          guestDocument: raw.guestDocument,
+          notes: raw.notes,
+        });
+      }
+    }
+    return out;
   }
 
   async create(dto: CreateTravelLogisticsDto) {

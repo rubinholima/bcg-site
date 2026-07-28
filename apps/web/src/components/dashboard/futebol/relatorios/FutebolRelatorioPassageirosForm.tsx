@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -148,6 +149,20 @@ export function FutebolRelatorioPassageirosForm() {
             </div>
           </div>
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
+          <p className="text-sm text-muted-foreground">
+            A lista prioriza a{" "}
+            <Link
+              href={
+                travelId
+                  ? `/dashboard/futebol/logistica/convocacao?travelId=${encodeURIComponent(travelId)}`
+                  : "/dashboard/futebol/logistica/convocacao"
+              }
+              className="text-[#C8102E] underline-offset-2 hover:underline"
+            >
+              convocação da viagem
+            </Link>{" "}
+            (atletas com vínculo no cadastro). Sem convocação, usa quartos ou elenco por categoria.
+          </p>
           <div className="flex flex-wrap gap-2 pt-1">
             <Button type="button" variant="outline" disabled={busy} onClick={() => void handlePreview()}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}

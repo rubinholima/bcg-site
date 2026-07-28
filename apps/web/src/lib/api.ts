@@ -90,6 +90,20 @@ export const api = {
     const data = (await res.json().catch(() => ({}))) as T;
     return { data };
   },
+  async put<T>(path: string, body?: unknown, init?: RequestInit): Promise<{ data: T }> {
+    const url = getFetchUrl(path);
+    const headers = typeof window !== "undefined" ? { "Content-Type": "application/json", ...init?.headers } : await getServerHeaders(init);
+    const res = await request(url, {
+      method: "PUT",
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      ...init,
+      headers,
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error(await getErrorMessage(res));
+    const data = (await res.json().catch(() => ({}))) as T;
+    return { data };
+  },
   async delete(path: string, init?: RequestInit): Promise<void> {
     const url = getFetchUrl(path);
     const headers = typeof window !== "undefined" ? {} : await getServerHeaders(init);

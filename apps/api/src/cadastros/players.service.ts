@@ -24,7 +24,6 @@ import {
   computeBestSharedMetricsFromSources,
 } from './body-metrics.util';
 import { syncLinkedIdentityByPlayerId } from '../rh/employee-player-link';
-import { parseTravelCategories, travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
 import { FootballAgendaBirthdaysService } from '../futebol-agenda/football-agenda-birthdays.service';
 import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
 import {
@@ -202,19 +201,43 @@ export class PlayersService {
   /** Viagens do hub de logística vinculadas ao atleta (quarto ou categoria). */
   async findTravelHistory(playerId: string, allowedTenantIds: string[] | null = null) {
     const player = await this.findOne(playerId, allowedTenantIds);
-    const travels = await this.prisma.travelLogistics.findMany({
+    const baseWhere = {
+      tenantId: player.tenantId,
+      status: { notIn: ['rascunho', 'cancelado'] as string[] },
+    };
+    const include = {
+      tenant: { select: { id: true, name: true, slug: true, logoUrl: true } },
+    };
+
+    const linked = await this.prisma.travelLogistics.findMany({
       where: {
-        tenantId: player.tenantId,
-        status: { notIn: ['rascunho', 'cancelado'] },
+        ...baseWhere,
+        participants: { some: { playerId } },
       },
       orderBy: [{ matchDate: 'desc' }, { createdAt: 'desc' }],
-      include: { tenant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
+      include,
     });
-    return travels.filter(
-      (t) =>
-        this.playerInAccommodationRooms(t.accommodationRooms, playerId) ||
-        this.travelMatchesPlayerCategory(t.category, t.categories, player.category),
+    const linkedIds = new Set(linked.map((t) => t.id));
+
+    // Viagens antigas sem convocação (TravelParticipant): só se o atleta estiver nos quartos
+    const legacyCandidates = await this.prisma.travelLogistics.findMany({
+      where: {
+        ...baseWhere,
+        id: linkedIds.size > 0 ? { notIn: [...linkedIds] } : undefined,
+        participants: { none: {} },
+      },
+      orderBy: [{ matchDate: 'desc' }, { createdAt: 'desc' }],
+      include,
+    });
+    const legacy = legacyCandidates.filter((t) =>
+      this.playerInAccommodationRooms(t.accommodationRooms, playerId),
     );
+
+    return [...linked, ...legacy].sort((a, b) => {
+      const da = new Date(a.matchDate).getTime();
+      const db = new Date(b.matchDate).getTime();
+      return db - da;
+    });
   }
 
   private playerInAccommodationRooms(rooms: unknown, playerId: string): boolean {
@@ -232,20 +255,6 @@ export class PlayersService {
       }
     }
     return false;
-  }
-
-  private travelMatchesPlayerCategory(
-    travelCategory: string | null | undefined,
-    travelCategories: unknown,
-    playerCategory: string | null | undefined,
-  ): boolean {
-    if (!playerCategory) return false;
-    const list = parseTravelCategories(travelCategories);
-    if (list.length > 0) return list.includes(playerCategory);
-    return travelMatchesCategoryFilter(
-      { category: travelCategory ?? null, categories: travelCategories },
-      playerCategory,
-    );
   }
 
   async findAgendaTimeline(

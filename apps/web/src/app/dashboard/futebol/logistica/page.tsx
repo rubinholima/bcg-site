@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -121,12 +121,20 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
             Planejamento de deslocamentos: transporte, hospedagem, alimentação e custos — somente clubes.
           </p>
         </div>
-        <Link href="/dashboard/futebol/logistica/new">
-          <Button className="min-h-[44px] shrink-0">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo planejamento
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <Link href="/dashboard/futebol/logistica/convocacao">
+            <Button variant="outline" className="min-h-[44px]">
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Convocação
+            </Button>
+          </Link>
+          <Link href="/dashboard/futebol/logistica/new">
+            <Button className="min-h-[44px]">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo planejamento
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Suspense
@@ -210,6 +218,13 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
                       </TableCell>
                       <TableRowActions>
                         <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/dashboard/futebol/logistica/convocacao?travelId=${item.id}`}
+                          >
+                            <Button variant="ghost" size="icon" aria-label="Convocação">
+                              <ClipboardCheck className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Link href={`/dashboard/futebol/logistica/${item.id}/edit`}>
                             <Button variant="ghost" size="icon" aria-label="Editar">
                               <Pencil className="h-4 w-4" />
