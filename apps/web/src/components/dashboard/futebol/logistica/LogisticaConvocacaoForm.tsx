@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckSquare, Loader2, Save, Square, Users } from "lucide-react";
+import { CheckSquare, Loader2, Save, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,6 +98,7 @@ export function LogisticaConvocacaoForm() {
   const [loadingGuests, setLoadingGuests] = useState(false);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [convocationSaved, setConvocationSaved] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -261,8 +262,24 @@ export function LogisticaConvocacaoForm() {
       .finally(() => setLoadingPeople(false));
   }, [tenantId]);
 
+  const selectedTravel = useMemo(
+    () => travels.find((t) => t.id === travelId) ?? null,
+    [travels, travelId],
+  );
+
+  const isHomeMatch = useMemo(() => {
+    if (selectedTravel?.isHomeMatch === true) return true;
+    if (selectedTravel?.isHomeMatch === false) return false;
+    if (selectedFixtureId) {
+      const fixture = fixtures.find((f) => f.externalId === selectedFixtureId);
+      if (fixture?.isOurTeamHome === true) return true;
+      if (fixture?.isOurTeamHome === false) return false;
+    }
+    return false;
+  }, [selectedTravel, selectedFixtureId, fixtures]);
+
   useEffect(() => {
-    if (!tenantId) {
+    if (!tenantId || isHomeMatch) {
       setGuests([]);
       return;
     }
@@ -274,12 +291,24 @@ export function LogisticaConvocacaoForm() {
       .then(({ data }) => setGuests(Array.isArray(data) ? data : []))
       .catch(() => setGuests([]))
       .finally(() => setLoadingGuests(false));
-  }, [tenantId]);
+  }, [tenantId, isHomeMatch]);
 
-  const selectedTravel = useMemo(
-    () => travels.find((t) => t.id === travelId) ?? null,
-    [travels, travelId],
-  );
+  useEffect(() => {
+    if (!travelId || !selectedTravel?.externalId) return;
+    setSelectedFixtureId(selectedTravel.externalId);
+  }, [travelId, selectedTravel?.externalId]);
+
+  useEffect(() => {
+    setConvocationSaved(false);
+  }, [travelId]);
+
+  useEffect(() => {
+    if (isHomeMatch) setSelectedGuestIds(new Set());
+  }, [isHomeMatch]);
+
+  useEffect(() => {
+    setConvocationSaved(false);
+  }, [selectedPlayerIds, selectedStaffIds, selectedGuestIds]);
 
   const travelCategories = useMemo(() => {
     if (!selectedTravel) return [] as string[];
@@ -451,14 +480,17 @@ export function LogisticaConvocacaoForm() {
           personType: "staff" as const,
           staffId,
         })),
-        ...[...selectedGuestIds].map((logisticsGuestId) => ({
-          personType: "guest" as const,
-          logisticsGuestId,
-        })),
+        ...(isHomeMatch
+          ? []
+          : [...selectedGuestIds].map((logisticsGuestId) => ({
+              personType: "guest" as const,
+              logisticsGuestId,
+            }))),
       ];
       await api.put(`/logistica/${encodeURIComponent(travelId)}/participants`, {
         participants,
       });
+      setConvocationSaved(true);
       setFeedback({
         open: true,
         title: "Convocação salva",
@@ -491,16 +523,36 @@ export function LogisticaConvocacaoForm() {
     return [...map.entries()].map(([value, label]) => ({ value, label }));
   }, [travelCategories, fixtureCats, categoryLabel]);
 
+  const convokedPlayerNames = useMemo(
+    () =>
+      [...selectedPlayerIds]
+        .map((id) => players.find((p) => p.id === id)?.name)
+        .filter(Boolean) as string[],
+    [selectedPlayerIds, players],
+  );
+
+  const convokedStaffNames = useMemo(
+    () =>
+      [...selectedStaffIds]
+        .map((id) => staff.find((s) => s.id === id)?.name)
+        .filter(Boolean) as string[],
+    [selectedStaffIds, staff],
+  );
+
+  const convokedGuestNames = useMemo(
+    () =>
+      [...selectedGuestIds]
+        .map((id) => guests.find((g) => g.id === id)?.name)
+        .filter(Boolean) as string[],
+    [selectedGuestIds, guests],
+  );
+
+  const travelSummaryLabel = selectedTravel ? formatTravelLabel(selectedTravel) : "";
+
   return (
     <div className="space-y-6">
       <Card className="border-zinc-800 bg-zinc-950/60">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="h-5 w-5 text-[#C8102E]" />
-            Convocação para jogo
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Clube</Label>
@@ -529,7 +581,7 @@ export function LogisticaConvocacaoForm() {
 
           {tenantId ? (
             <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-              <Label>Jogo da agenda (casa ou fora)</Label>
+              <Label>Jogo da agenda</Label>
               <Select
                 value={selectedFixtureId || "none"}
                 onValueChange={(v) => void handleSelectFixture(v === "none" ? "" : v)}
@@ -555,10 +607,6 @@ export function LogisticaConvocacaoForm() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Jogos em casa e fora. Se ainda não existir registro, um planejamento mínimo é criado
-                automaticamente para a convocação.
-              </p>
             </div>
           ) : null}
 
@@ -599,17 +647,21 @@ export function LogisticaConvocacaoForm() {
               <span className="font-medium text-foreground">
                 {selectedStaffIds.size} comissão
               </span>
-              {" · "}
-              <span className="font-medium text-foreground">
-                {selectedGuestIds.size} pessoa(s) autorizada(s)
-              </span>
-              {" · "}
-              <Link
-                href="/dashboard/futebol/logistica/relatorios/passageiros"
-                className="text-[#C8102E] underline-offset-2 hover:underline"
-              >
-                Passageiros
-              </Link>
+              {!isHomeMatch ? (
+                <>
+                  {" · "}
+                  <span className="font-medium text-foreground">
+                    {selectedGuestIds.size} pessoa(s) autorizada(s)
+                  </span>
+                  {" · "}
+                  <Link
+                    href="/dashboard/futebol/logistica/relatorios/passageiros"
+                    className="text-[#C8102E] underline-offset-2 hover:underline"
+                  >
+                    Passageiros
+                  </Link>
+                </>
+              ) : null}
             </p>
           ) : null}
         </CardContent>
@@ -796,6 +848,7 @@ export function LogisticaConvocacaoForm() {
           </Card>
           </div>
 
+          {!isHomeMatch ? (
           <Card className="border-zinc-800 bg-zinc-950/60 lg:col-span-2">
             <CardHeader className="pb-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -870,6 +923,7 @@ export function LogisticaConvocacaoForm() {
               )}
             </CardContent>
           </Card>
+          ) : null}
 
           <div className="flex flex-wrap gap-2">
             <Button
@@ -891,6 +945,73 @@ export function LogisticaConvocacaoForm() {
               </Link>
             </Button>
           </div>
+
+          {convocationSaved && selectedTravel ? (
+            <Card className="border-green-500/30 bg-green-500/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-green-400">Convocação registrada</CardTitle>
+                <CardDescription>{travelSummaryLabel}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Atletas</p>
+                    <p className="text-lg font-semibold tabular-nums">{convokedPlayerNames.length}</p>
+                  </div>
+                  <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Comissão</p>
+                    <p className="text-lg font-semibold tabular-nums">{convokedStaffNames.length}</p>
+                  </div>
+                  {!isHomeMatch ? (
+                    <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+                      <p className="text-xs text-muted-foreground">Pessoas autorizadas</p>
+                      <p className="text-lg font-semibold tabular-nums">{convokedGuestNames.length}</p>
+                    </div>
+                  ) : null}
+                  <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+                    <p className="text-xs text-muted-foreground">Local</p>
+                    <p className="text-lg font-semibold">{isHomeMatch ? "Casa" : "Fora"}</p>
+                  </div>
+                </div>
+
+                {convokedPlayerNames.length > 0 ? (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Atletas convocados
+                    </p>
+                    <p className="text-foreground">{convokedPlayerNames.join(" · ")}</p>
+                  </div>
+                ) : null}
+
+                {convokedStaffNames.length > 0 ? (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Comissão
+                    </p>
+                    <p className="text-foreground">{convokedStaffNames.join(" · ")}</p>
+                  </div>
+                ) : null}
+
+                {!isHomeMatch && convokedGuestNames.length > 0 ? (
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Pessoas autorizadas
+                    </p>
+                    <p className="text-foreground">{convokedGuestNames.join(" · ")}</p>
+                  </div>
+                ) : null}
+
+                {!isHomeMatch ? (
+                  <Link
+                    href="/dashboard/futebol/logistica/relatorios/passageiros"
+                    className="inline-flex text-sm text-[#C8102E] underline-offset-2 hover:underline"
+                  >
+                    Ver relatório de passageiros
+                  </Link>
+                ) : null}
+              </CardContent>
+            </Card>
+          ) : null}
         </>
       ) : null}
 
