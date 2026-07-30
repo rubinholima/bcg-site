@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { useLogisticaCadastrosLookups } from "@/hooks/useLogisticaCadastrosLookups";
 
 export interface RoomOccupant {
   personId?: string;
@@ -30,6 +31,8 @@ export interface RoomOccupant {
 
 export interface RoomAssignment {
   roomNumber: string;
+  roomTypeId?: string;
+  roomTypeName?: string;
   occupants: RoomOccupant[];
 }
 
@@ -60,28 +63,37 @@ function buildStaffOption(staff: TechnicalStaffMember) {
   return { value: `staff:${staff.id}`, label: staff.name, type: "staff" as const, id: staff.id };
 }
 
+function slotCountForRoom(room: RoomAssignment, roomTypes: { id: string; capacity?: number }[]): number {
+  const rt = roomTypes.find((r) => r.id === room.roomTypeId);
+  const cap = rt?.capacity ?? 3;
+  return Math.min(Math.max(cap, 1), 8);
+}
+
 export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: RoomAssignmentTableProps) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [staff, setStaff] = useState<TechnicalStaffMember[]>([]);
+  const { roomTypes, loading: loadingLookups } = useLogisticaCadastrosLookups();
 
   useEffect(() => {
     if (!tenantId) return;
     Promise.all([
       api.get<Player[]>(`/players?tenantId=${encodeURIComponent(tenantId)}`),
       api.get<TechnicalStaffMember[]>(`/technical-staff?tenantId=${encodeURIComponent(tenantId)}`),
-    ]).then(([pRes, sRes]) => {
-      setPlayers(Array.isArray(pRes.data) ? pRes.data : []);
-      setStaff(Array.isArray(sRes.data) ? sRes.data : []);
-    }).catch(() => {
-      setPlayers([]);
-      setStaff([]);
-    });
+    ])
+      .then(([pRes, sRes]) => {
+        setPlayers(Array.isArray(pRes.data) ? pRes.data : []);
+        setStaff(Array.isArray(sRes.data) ? sRes.data : []);
+      })
+      .catch(() => {
+        setPlayers([]);
+        setStaff([]);
+      });
   }, [tenantId]);
 
-  const allOptions = [
-    ...players.map(buildPersonOption),
-    ...staff.map(buildStaffOption),
-  ];
+  const allOptions = useMemo(
+    () => [...players.map(buildPersonOption), ...staff.map(buildStaffOption)],
+    [players, staff],
+  );
 
   const addRoom = () => {
     onChange([...value, { roomNumber: "", occupants: [] }]);
@@ -97,10 +109,24 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
     onChange(next);
   };
 
+  const setRoomType = (index: number, roomTypeId: string) => {
+    const next = [...value];
+    const rt = roomTypes.find((r) => r.id === roomTypeId);
+    const maxSlots = roomTypeId && rt?.capacity ? Math.min(rt.capacity, 8) : 3;
+    next[index] = {
+      ...next[index],
+      roomTypeId: roomTypeId || undefined,
+      roomTypeName: rt?.name,
+      occupants: (next[index]?.occupants ?? []).slice(0, maxSlots),
+    };
+    onChange(next);
+  };
+
   const setOccupant = (roomIndex: number, slotIndex: number, optionValue: string) => {
     const next = value.map((r, i) =>
-      i === roomIndex ? { ...r, occupants: [...r.occupants] } : r
+      i === roomIndex ? { ...r, occupants: [...r.occupants] } : r,
     );
+    const maxSlots = slotCountForRoom(next[roomIndex], roomTypes);
     const occ = next[roomIndex].occupants;
     while (occ.length <= slotIndex) occ.push({ personName: "", personType: "player" });
     if (optionValue === "none" || !optionValue) {
@@ -114,7 +140,7 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
         personType: (type as "player" | "staff") ?? "player",
       };
     }
-    next[roomIndex].occupants = occ.slice(0, 3);
+    next[roomIndex].occupants = occ.slice(0, maxSlots);
     onChange(next);
   };
 
@@ -124,7 +150,6 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
     return `${occ.personType}:${occ.personId}`;
   };
 
-  /** Pessoas já atribuídas em outros quartos (excluindo o quarto atual) — 1 pessoa = 1 quarto */
   const usedInOtherRooms = (roomIndex: number) => {
     const used = new Set<string>();
     value.forEach((r, ri) => {
@@ -145,86 +170,115 @@ export function RoomAssignmentTable({ tenantId, value, onChange, disabled }: Roo
     });
   };
 
+  const maxSlotsGlobal = useMemo(() => {
+    return Math.max(3, ...value.map((r) => slotCountForRoom(r, roomTypes)));
+  }, [value, roomTypes]);
+
+  const slotHeaders = Array.from({ length: maxSlotsGlobal }, (_, i) => i);
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Label>Quartos (até 3 pessoas por quarto)</Label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addRoom}
-          disabled={disabled}
-        >
-          <Plus className="h-4 w-4 mr-1" />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Label>Quartos (categoria de acomodação + ocupantes)</Label>
+        <Button type="button" variant="outline" size="sm" onClick={addRoom} disabled={disabled} className="min-h-[44px]">
+          <Plus className="mr-1 h-4 w-4" />
           Adicionar quarto
         </Button>
       </div>
-      <div className="border rounded-lg overflow-hidden">
+      <div className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-32">Nº quarto</TableHead>
-              <TableHead>Ocupante 1</TableHead>
-              <TableHead>Ocupante 2</TableHead>
-              <TableHead>Ocupante 3</TableHead>
+              <TableHead className="w-28">Nº quarto</TableHead>
+              <TableHead className="min-w-[140px]">Acomodação</TableHead>
+              {slotHeaders.map((i) => (
+                <TableHead key={i}>Ocupante {i + 1}</TableHead>
+              ))}
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {value.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-6">
+                <TableCell colSpan={3 + maxSlotsGlobal} className="py-6 text-center text-muted-foreground">
                   Nenhum quarto. Clique em &quot;Adicionar quarto&quot;.
                 </TableCell>
               </TableRow>
             ) : (
-              value.map((room, roomIndex) => (
-                <TableRow key={roomIndex}>
-                  <TableCell>
-                    <Input
-                      placeholder="Ex: 101"
-                      value={room.roomNumber}
-                      onChange={(e) => setRoomNumber(roomIndex, e.target.value)}
-                      disabled={disabled}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  {[0, 1, 2].map((slotIndex) => (
-                    <TableCell key={slotIndex}>
-                      <Select
-                        value={getOccupantOption(roomIndex, slotIndex)}
-                        onValueChange={(v) => setOccupant(roomIndex, slotIndex, v)}
+              value.map((room, roomIndex) => {
+                const slots = slotCountForRoom(room, roomTypes);
+                return (
+                  <TableRow key={roomIndex}>
+                    <TableCell>
+                      <Input
+                        placeholder="Ex: 101"
+                        value={room.roomNumber}
+                        onChange={(e) => setRoomNumber(roomIndex, e.target.value)}
                         disabled={disabled}
+                        className="w-24 min-h-[44px]"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={room.roomTypeId ?? "none"}
+                        onValueChange={(v) => setRoomType(roomIndex, v === "none" ? "" : v)}
+                        disabled={disabled || loadingLookups}
                       >
-                        <SelectTrigger className="min-w-[140px]">
-                          <SelectValue placeholder="—" />
+                        <SelectTrigger className="min-w-[130px] min-h-[44px]">
+                          <SelectValue placeholder="Categoria" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">—</SelectItem>
-                          {availableOptions(roomIndex, slotIndex).map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>
-                              {opt.label}
-                              {opt.type === "staff" ? " (comissão)" : ""}
+                          {roomTypes.map((rt) => (
+                            <SelectItem key={rt.id} value={rt.id}>
+                              {rt.name}
+                              {rt.capacity ? ` (${rt.capacity})` : ""}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
-                  ))}
-                  <TableCell>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeRoom(roomIndex)}
-                      disabled={disabled}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
+                    {slotHeaders.map((slotIndex) => (
+                      <TableCell key={slotIndex}>
+                        {slotIndex < slots ? (
+                          <Select
+                            value={getOccupantOption(roomIndex, slotIndex)}
+                            onValueChange={(v) => setOccupant(roomIndex, slotIndex, v)}
+                            disabled={disabled}
+                          >
+                            <SelectTrigger className="min-w-[140px] min-h-[44px]">
+                              <SelectValue placeholder="—" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">—</SelectItem>
+                              {availableOptions(roomIndex, slotIndex).map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                  {opt.type === "staff" ? " (comissão)" : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </TableCell>
+                    ))}
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="min-h-[44px] min-w-[44px]"
+                        onClick={() => removeRoom(roomIndex)}
+                        disabled={disabled}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

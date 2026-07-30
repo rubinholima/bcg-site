@@ -22,10 +22,15 @@ export class TravelParticipantItemDto {
   @IsString()
   staffId?: string;
 
-  @ValidateIf((o: TravelParticipantItemDto) => o.personType === 'guest')
+  @ValidateIf((o: TravelParticipantItemDto) => o.personType === 'guest' && !o.logisticsGuestId)
   @IsString()
   @MaxLength(200)
   guestName?: string;
+
+  @ValidateIf((o: TravelParticipantItemDto) => o.personType === 'guest')
+  @IsOptional()
+  @IsString()
+  logisticsGuestId?: string;
 
   @IsOptional()
   @IsString()

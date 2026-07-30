@@ -464,7 +464,7 @@ export function buildPassageirosPrintHtml(
   const body = `
     ${personTable("Atletas", data.athletes)}
     ${personTable("Comissão técnica", data.staff, true)}
-    ${personTable("Convidados", data.guests)}
+    ${personTable("Pessoas autorizadas", data.guests)}
   `;
   const badge = travel.championshipName
     ? `${travel.categoryLabel} · ${travel.championshipName}`

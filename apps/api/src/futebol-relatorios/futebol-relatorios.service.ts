@@ -40,6 +40,8 @@ type RoomOccupant = {
 
 type RoomAssignment = {
   roomNumber?: string;
+  roomTypeId?: string;
+  roomTypeName?: string;
   occupants?: RoomOccupant[];
 };
 
@@ -152,7 +154,9 @@ export class FutebolRelatoriosService {
       );
       if (!roomNumber && occupants.length === 0) continue;
 
-      const roomType = roomTypeFromCount(occupants.length || 1);
+      const roomType =
+        (room.roomTypeName ?? '').trim() ||
+        roomTypeFromCount(occupants.length || 1);
       groupIndex += 1;
 
       if (occupants.length === 0) {

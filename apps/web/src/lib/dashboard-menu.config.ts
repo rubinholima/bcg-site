@@ -76,6 +76,8 @@ import {
   Network,
   Hotel,
   CalendarRange,
+  Clock,
+  CreditCard,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -493,6 +495,77 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             href: "/dashboard/futebol/logistica/agenda",
             icon: Calendar,
             moduleSlug: "futebol_logistica",
+          },
+          {
+            slug: "futebol_logistica_cadastros",
+            label: "Referências",
+            icon: Database,
+            moduleSlug: "futebol_logistica",
+            children: [
+              {
+                slug: "futebol_logistica_cad_hub",
+                label: "Índice",
+                href: "/dashboard/futebol/logistica/cadastros",
+                icon: Database,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_transporte",
+                label: "Transportadoras",
+                href: "/dashboard/futebol/logistica/cadastros/companhias-transporte",
+                icon: Truck,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_convidados",
+                label: "Pessoas autorizadas",
+                href: "/dashboard/futebol/logistica/cadastros/convidados",
+                icon: Users,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_momentos",
+                label: "Finalidades do deslocamento",
+                href: "/dashboard/futebol/logistica/cadastros/momentos-uso",
+                icon: Clock,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_fidelidade",
+                label: "Programas de milhas",
+                href: "/dashboard/futebol/logistica/cadastros/programas-fidelidade",
+                icon: Star,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_pagamento",
+                label: "Formas de pagamento",
+                href: "/dashboard/futebol/logistica/cadastros/tipos-pagamento",
+                icon: CreditCard,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_quarto",
+                label: "Categorias de acomodação",
+                href: "/dashboard/futebol/logistica/cadastros/tipos-quarto",
+                icon: Hotel,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_visto",
+                label: "Vistos internacionais",
+                href: "/dashboard/futebol/logistica/cadastros/tipos-visto",
+                icon: FileText,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_cad_hoteis",
+                label: "Rede de hospedagem",
+                href: "/dashboard/futebol/logistica/cadastros/hoteis",
+                icon: Building2,
+                moduleSlug: "futebol_logistica",
+              },
+            ],
           },
           {
             slug: "futebol_logistica_relatorios",

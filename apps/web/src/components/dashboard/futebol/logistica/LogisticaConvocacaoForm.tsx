@@ -53,7 +53,15 @@ interface ParticipantRow {
   personType: string;
   playerId?: string | null;
   staffId?: string | null;
+  logisticsGuestId?: string | null;
   guestName?: string | null;
+}
+
+interface GuestRow {
+  id: string;
+  name: string;
+  cpf?: string | null;
+  phone?: string | null;
 }
 
 function isInactivePlayer(p: PlayerRow): boolean {
@@ -85,6 +93,9 @@ export function LogisticaConvocacaoForm() {
 
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<Set<string>>(new Set());
   const [selectedStaffIds, setSelectedStaffIds] = useState<Set<string>>(new Set());
+  const [selectedGuestIds, setSelectedGuestIds] = useState<Set<string>>(new Set());
+  const [guests, setGuests] = useState<GuestRow[]>([]);
+  const [loadingGuests, setLoadingGuests] = useState(false);
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -250,6 +261,21 @@ export function LogisticaConvocacaoForm() {
       .finally(() => setLoadingPeople(false));
   }, [tenantId]);
 
+  useEffect(() => {
+    if (!tenantId) {
+      setGuests([]);
+      return;
+    }
+    setLoadingGuests(true);
+    api
+      .get<GuestRow[]>(
+        `/logistica-cadastros/guests?tenantId=${encodeURIComponent(tenantId)}&activeOnly=true`,
+      )
+      .then(({ data }) => setGuests(Array.isArray(data) ? data : []))
+      .catch(() => setGuests([]))
+      .finally(() => setLoadingGuests(false));
+  }, [tenantId]);
+
   const selectedTravel = useMemo(
     () => travels.find((t) => t.id === travelId) ?? null,
     [travels, travelId],
@@ -280,6 +306,7 @@ export function LogisticaConvocacaoForm() {
     if (!id) {
       setSelectedPlayerIds(new Set());
       setSelectedStaffIds(new Set());
+      setSelectedGuestIds(new Set());
       return;
     }
     setLoadingParticipants(true);
@@ -302,9 +329,17 @@ export function LogisticaConvocacaoForm() {
             .map((p) => p.staffId!),
         ),
       );
+      setSelectedGuestIds(
+        new Set(
+          list
+            .filter((p) => p.personType === "guest" && p.logisticsGuestId)
+            .map((p) => p.logisticsGuestId!),
+        ),
+      );
     } catch {
       setSelectedPlayerIds(new Set());
       setSelectedStaffIds(new Set());
+      setSelectedGuestIds(new Set());
     } finally {
       setLoadingParticipants(false);
     }
@@ -378,6 +413,23 @@ export function LogisticaConvocacaoForm() {
     setSelectedStaffIds(new Set());
   };
 
+  const toggleGuest = (id: string) => {
+    setSelectedGuestIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllGuests = () => {
+    setSelectedGuestIds(new Set(guests.map((g) => g.id)));
+  };
+
+  const clearAllGuests = () => {
+    setSelectedGuestIds(new Set());
+  };
+
   const handleSave = async () => {
     if (!travelId) {
       setFeedback({
@@ -398,6 +450,10 @@ export function LogisticaConvocacaoForm() {
         ...[...selectedStaffIds].map((staffId) => ({
           personType: "staff" as const,
           staffId,
+        })),
+        ...[...selectedGuestIds].map((logisticsGuestId) => ({
+          personType: "guest" as const,
+          logisticsGuestId,
         })),
       ];
       await api.put(`/logistica/${encodeURIComponent(travelId)}/participants`, {
@@ -542,6 +598,10 @@ export function LogisticaConvocacaoForm() {
               {" · "}
               <span className="font-medium text-foreground">
                 {selectedStaffIds.size} comissão
+              </span>
+              {" · "}
+              <span className="font-medium text-foreground">
+                {selectedGuestIds.size} pessoa(s) autorizada(s)
               </span>
               {" · "}
               <Link
@@ -735,6 +795,81 @@ export function LogisticaConvocacaoForm() {
             </CardContent>
           </Card>
           </div>
+
+          <Card className="border-zinc-800 bg-zinc-950/60 lg:col-span-2">
+            <CardHeader className="pb-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <CardTitle className="text-base">Pessoas autorizadas</CardTitle>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px]"
+                    onClick={selectAllGuests}
+                    disabled={loadingGuests || guests.length === 0}
+                  >
+                    <CheckSquare className="mr-2 h-4 w-4" />
+                    Marcar todos
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px]"
+                    onClick={clearAllGuests}
+                    disabled={selectedGuestIds.size === 0}
+                  >
+                    <Square className="mr-2 h-4 w-4" />
+                    Limpar
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" className="min-h-[44px]" asChild>
+                    <Link href={`/dashboard/futebol/logistica/cadastros/convidados?tenantId=${tenantId}`}>
+                      Cadastrar pessoa autorizada
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loadingGuests ? (
+                <div className="flex items-center gap-2 py-4 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Carregando pessoas autorizadas…
+                </div>
+              ) : guests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma pessoa autorizada cadastrada para este clube. Use &quot;Cadastrar pessoa autorizada&quot; ou
+                  Logística → Referências → Pessoas autorizadas.
+                </p>
+              ) : (
+                <ul className="max-h-[min(280px,40vh)] space-y-1 overflow-y-auto rounded-md border border-zinc-800 p-2">
+                  {guests.map((g) => {
+                    const checked = selectedGuestIds.has(g.id);
+                    return (
+                      <li key={g.id}>
+                        <label
+                          className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-2 py-2 ${
+                            checked ? "bg-amber-500/15" : "hover:bg-zinc-900"
+                          }`}
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleGuest(g.id)}
+                            aria-label={`Convocar ${g.name}`}
+                          />
+                          <span className="min-w-0 flex-1 truncate font-medium">{g.name}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {[g.cpf, g.phone].filter(Boolean).join(" · ")}
+                          </span>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
 
           <div className="flex flex-wrap gap-2">
             <Button

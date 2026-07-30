@@ -32,6 +32,13 @@ import {
   TravelCategoriesField,
   travelCategoriesPayload,
 } from "@/components/dashboard/futebol/TravelCategoriesField";
+import {
+  LogisticaTravelCadastrosFields,
+} from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
+import {
+  EMPTY_LOGISTICS_TRAVEL_CADASTROS,
+  type LogisticsTravelCadastros,
+} from "@/lib/logistica-travel-cadastros.types";
 
 interface Tenant {
   id: string;
@@ -110,6 +117,8 @@ export default function NewLogisticaPage() {
   const [estimatedArrival, setEstimatedArrival] = useState("");
   const [hotelName, setHotelName] = useState("");
   const [hotelAddress, setHotelAddress] = useState("");
+  const [logisticsCadastros, setLogisticsCadastros] =
+    useState<LogisticsTravelCadastros>(EMPTY_LOGISTICS_TRAVEL_CADASTROS);
   const [accommodationRooms, setAccommodationRooms] = useState<RoomAssignment[]>([]);
   const [nutritionApprovedBy, setNutritionApprovedBy] = useState("");
   const [estimatedCostTotal, setEstimatedCostTotal] = useState("");
@@ -259,6 +268,8 @@ export default function NewLogisticaPage() {
       .filter((r) => r.roomNumber.trim())
       .map((r) => ({
         roomNumber: r.roomNumber.trim(),
+        roomTypeId: r.roomTypeId || undefined,
+        roomTypeName: r.roomTypeName || undefined,
         occupants: r.occupants.filter((o) => o.personName.trim()),
       }));
 
@@ -281,6 +292,7 @@ export default function NewLogisticaPage() {
         estimatedArrival: estimatedArrival.trim() || undefined,
         hotelName: hotelName.trim() || undefined,
         hotelAddress: hotelAddress.trim() || undefined,
+        logisticsCadastros,
         accommodationRooms: roomsPayload.length ? roomsPayload : undefined,
         nutritionApprovedBy: nutritionApprovedBy.trim() || undefined,
         estimatedCostTotal: estimatedCostTotal.trim() ? Number(estimatedCostTotal.replace(",", ".")) : undefined,
@@ -532,23 +544,37 @@ export default function NewLogisticaPage() {
               <Label htmlFor="transportDetails">Detalhes do transporte</Label>
               <Textarea id="transportDetails" value={transportDetails} onChange={(e) => setTransportDetails(e.target.value)} placeholder="Voos, horários, números de reserva..." rows={3} />
             </div>
+            <LogisticaTravelCadastrosFields
+              variant="transport"
+              transportType={transportType}
+              logisticsCadastros={logisticsCadastros}
+              onLogisticsCadastrosChange={setLogisticsCadastros}
+              hotelName={hotelName}
+              hotelAddress={hotelAddress}
+              onHotelNameChange={setHotelName}
+              onHotelAddressChange={setHotelAddress}
+              disabled={loading}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Hospedagem</CardTitle>
-            <CardDescription>Hotel, endereço e distribuição dos quartos (até 3 pessoas por quarto).</CardDescription>
+            <CardDescription>Hotel, endereço e distribuição dos quartos (tipo do cadastro + ocupantes).</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="hotelName">Nome do hotel</Label>
-              <Input id="hotelName" value={hotelName} onChange={(e) => setHotelName(e.target.value)} placeholder="Ex.: Hotel Central" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="hotelAddress">Endereço do hotel</Label>
-              <Textarea id="hotelAddress" value={hotelAddress} onChange={(e) => setHotelAddress(e.target.value)} placeholder="Endereço completo" rows={2} />
-            </div>
+            <LogisticaTravelCadastrosFields
+              variant="hotel"
+              transportType={transportType}
+              logisticsCadastros={logisticsCadastros}
+              onLogisticsCadastrosChange={setLogisticsCadastros}
+              hotelName={hotelName}
+              hotelAddress={hotelAddress}
+              onHotelNameChange={setHotelName}
+              onHotelAddressChange={setHotelAddress}
+              disabled={loading}
+            />
             {tenantId && (
               <RoomAssignmentTable
                 tenantId={tenantId}

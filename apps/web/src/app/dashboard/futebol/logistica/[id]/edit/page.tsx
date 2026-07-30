@@ -27,6 +27,12 @@ import {
   parseTravelCategoriesFromApi,
   travelCategoriesPayload,
 } from "@/components/dashboard/futebol/TravelCategoriesField";
+import { LogisticaTravelCadastrosFields } from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
+import {
+  EMPTY_LOGISTICS_TRAVEL_CADASTROS,
+  parseLogisticsTravelCadastros,
+  type LogisticsTravelCadastros,
+} from "@/lib/logistica-travel-cadastros.types";
 
 interface Championship {
   id: string;
@@ -72,6 +78,7 @@ interface TravelLogisticsItem {
   hotelName?: string | null;
   hotelAddress?: string | null;
   accommodationRooms?: RoomAssignment[] | null;
+  beatscodeMeta?: unknown;
   nutritionApprovedAt?: string | null;
   nutritionApprovedBy?: string | null;
   estimatedCostTotal?: number | null;
@@ -146,6 +153,8 @@ export default function EditLogisticaPage() {
   const [estimatedArrival, setEstimatedArrival] = useState("");
   const [hotelName, setHotelName] = useState("");
   const [hotelAddress, setHotelAddress] = useState("");
+  const [logisticsCadastros, setLogisticsCadastros] =
+    useState<LogisticsTravelCadastros>(EMPTY_LOGISTICS_TRAVEL_CADASTROS);
   const [accommodationRooms, setAccommodationRooms] = useState<RoomAssignment[]>([]);
   const [nutritionApprovedBy, setNutritionApprovedBy] = useState("");
   const [estimatedCostTotal, setEstimatedCostTotal] = useState("");
@@ -175,10 +184,18 @@ export default function EditLogisticaPage() {
         setEstimatedArrival(toDateTimeLocal(data.estimatedArrival));
         setHotelName(data.hotelName ?? "");
         setHotelAddress(data.hotelAddress ?? "");
+        setLogisticsCadastros(parseLogisticsTravelCadastros(data.beatscodeMeta));
         setAccommodationRooms(
           Array.isArray(data.accommodationRooms)
-            ? (data.accommodationRooms as Array<{ roomNumber?: string; occupants?: unknown[] }>).map((r) => ({
+            ? (data.accommodationRooms as Array<{
+                roomNumber?: string;
+                roomTypeId?: string;
+                roomTypeName?: string;
+                occupants?: unknown[];
+              }>).map((r) => ({
                 roomNumber: r.roomNumber ?? "",
+                roomTypeId: r.roomTypeId,
+                roomTypeName: r.roomTypeName,
                 occupants: Array.isArray(r.occupants)
                   ? r.occupants.map((o) => {
                       const oc = o as { personId?: string; personName?: string; personType?: string };
@@ -309,9 +326,12 @@ export default function EditLogisticaPage() {
         estimatedArrival: estimatedArrival.trim() || undefined,
         hotelName: hotelName.trim() || undefined,
         hotelAddress: hotelAddress.trim() || undefined,
+        logisticsCadastros,
         accommodationRooms: accommodationRooms.filter((r) => r.roomNumber.trim()).length
           ? accommodationRooms.filter((r) => r.roomNumber.trim()).map((r) => ({
               roomNumber: r.roomNumber.trim(),
+              roomTypeId: r.roomTypeId || undefined,
+              roomTypeName: r.roomTypeName || undefined,
               occupants: r.occupants.filter((o) => o.personName.trim()),
             }))
           : undefined,
@@ -534,23 +554,37 @@ export default function EditLogisticaPage() {
                 rows={3}
               />
             </div>
+            <LogisticaTravelCadastrosFields
+              variant="transport"
+              transportType={transportType}
+              logisticsCadastros={logisticsCadastros}
+              onLogisticsCadastrosChange={setLogisticsCadastros}
+              hotelName={hotelName}
+              hotelAddress={hotelAddress}
+              onHotelNameChange={setHotelName}
+              onHotelAddressChange={setHotelAddress}
+              disabled={saving}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Hospedagem</CardTitle>
-            <CardDescription>Hotel e distribuição dos quartos (até 3 pessoas por quarto).</CardDescription>
+            <CardDescription>Hotel e distribuição dos quartos (tipo do cadastro + ocupantes).</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="hotelName">Nome do hotel</Label>
-              <Input id="hotelName" value={hotelName} onChange={(e) => setHotelName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="hotelAddress">Endereço</Label>
-              <Textarea id="hotelAddress" value={hotelAddress} onChange={(e) => setHotelAddress(e.target.value)} rows={2} />
-            </div>
+            <LogisticaTravelCadastrosFields
+              variant="hotel"
+              transportType={transportType}
+              logisticsCadastros={logisticsCadastros}
+              onLogisticsCadastrosChange={setLogisticsCadastros}
+              hotelName={hotelName}
+              hotelAddress={hotelAddress}
+              onHotelNameChange={setHotelName}
+              onHotelAddressChange={setHotelAddress}
+              disabled={saving}
+            />
             {item.tenantId && (
               <RoomAssignmentTable
                 tenantId={item.tenantId}

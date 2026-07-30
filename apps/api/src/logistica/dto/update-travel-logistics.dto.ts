@@ -120,4 +120,8 @@ export class UpdateTravelLogisticsDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsOptional()
+  @IsObject()
+  logisticsCadastros?: Record<string, string | null | undefined>;
 }

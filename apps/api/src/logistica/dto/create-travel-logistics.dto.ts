@@ -127,4 +127,8 @@ export class CreateTravelLogisticsDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsOptional()
+  @IsObject()
+  logisticsCadastros?: Record<string, string | null | undefined>;
 }

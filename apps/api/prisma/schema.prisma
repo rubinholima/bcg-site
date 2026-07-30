@@ -130,6 +130,7 @@ model Tenant {
   bostonTvVmixChannels  BostonTvVmixChannel[]
   bostonTvHallChannel   BostonTvHallChannel?
   travelLogistics       TravelLogistics[]
+  logisticsGuests       LogisticsGuest[]
   footballAgendaEntries FootballAgendaEntry[]
   psychologySessions  PsychologySession[]
   physioSessions      PhysioSession[]
@@ -273,7 +274,10 @@ model TravelParticipant {
   player            Player?         @relation(fields: [playerId], references: [id], onDelete: Cascade)
   staffId           String?
   staff             TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  /** Só para personType=guest (sem cadastro no sistema) */
+  /** FK opcional para convidado cadastrado (LogisticsGuest) */
+  logisticsGuestId  String?
+  logisticsGuest    LogisticsGuest? @relation(fields: [logisticsGuestId], references: [id], onDelete: SetNull)
+  /** Legado / convidado avulso sem cadastro */
   guestName         String?
   guestDocument     String?
   notes             String?         @db.Text
@@ -284,7 +288,116 @@ model TravelParticipant {
   @@index([travelLogisticsId])
   @@index([playerId])
   @@index([staffId])
+  @@index([logisticsGuestId])
   @@index([travelLogisticsId, personType])
+}
+
+// ========== Logística — cadastros auxiliares (Beatscode + extras BCG) ==========
+
+model LogisticsTransportCompany {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  loyaltyPrograms LogisticsLoyaltyProgram[]
+}
+
+model LogisticsLoyaltyProgram {
+  id                 String   @id @default(cuid())
+  name               String
+  transportCompanyId String?
+  transportCompany   LogisticsTransportCompany? @relation(fields: [transportCompanyId], references: [id], onDelete: SetNull)
+  isSystem           Boolean  @default(false)
+  active             Boolean  @default(true)
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([name])
+  @@index([transportCompanyId])
+}
+
+model LogisticsUsageMoment {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LogisticsPaymentType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LogisticsRoomType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  capacity  Int      @default(1)
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LogisticsVisaType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LogisticsGuest {
+  id             String    @id @default(cuid())
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name           String
+  birthDate      DateTime?
+  phone          String?
+  rg             String?
+  rgIssuer       String?
+  cpf            String?
+  passport       String?
+  passportExpiry DateTime?
+  active         Boolean   @default(true)
+  notes          String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  travelParticipants TravelParticipant[]
+
+  @@index([tenantId])
+  @@index([tenantId, name])
+}
+
+model LogisticsHotel {
+  id        String   @id @default(cuid())
+  name      String
+  city      String?
+  state     String?
+  country   String?
+  address   String?  @db.Text
+  phone     String?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name, city])
+  @@index([name])
 }
 
 /** Compromissos operacionais do Depto Futebol (treinos, reuniões, jogos, etc.) — exibidos na agenda junto com viagens. */

@@ -29,7 +29,61 @@ const PARTICIPANT_INCLUDE = {
       photoUrl: true,
     },
   },
+  logisticsGuest: {
+    select: {
+      id: true,
+      name: true,
+      cpf: true,
+      rg: true,
+      phone: true,
+      passport: true,
+      birthDate: true,
+    },
+  },
 } as const;
+
+type LogisticsCadastrosPayload = Record<string, string | null | undefined> | undefined;
+
+function normalizeLogisticsCadastros(
+  raw: LogisticsCadastrosPayload,
+): Record<string, string | null> | null {
+  if (raw === undefined) return null;
+  if (raw === null || typeof raw !== 'object') return null;
+  const keys = [
+    'hotelId',
+    'transportCompanyId',
+    'usageMomentId',
+    'loyaltyProgramId',
+    'paymentTypeId',
+  ] as const;
+  const out: Record<string, string | null> = {};
+  for (const key of keys) {
+    const v = raw[key];
+    out[key] = typeof v === 'string' && v.trim() ? v.trim() : null;
+  }
+  return out;
+}
+
+function mergeBeatscodeMeta(
+  existing: unknown,
+  logisticsCadastros: Record<string, string | null> | null | undefined,
+): unknown {
+  if (logisticsCadastros === undefined) return existing ?? undefined;
+  const base =
+    existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...(existing as Record<string, unknown>) }
+      : {};
+  if (logisticsCadastros === null) {
+    delete base.logisticsCadastros;
+    return Object.keys(base).length ? base : undefined;
+  }
+  const hasAny = Object.values(logisticsCadastros).some(Boolean);
+  if (!hasAny) {
+    delete base.logisticsCadastros;
+    return Object.keys(base).length ? base : undefined;
+  }
+  return { ...base, logisticsCadastros };
+}
 
 @Injectable()
 export class LogisticaService {
@@ -149,26 +203,72 @@ export class LogisticaService {
       }
     }
 
+    const guestIds = normalized
+      .filter((p) => p.personType === 'guest' && p.logisticsGuestId)
+      .map((p) => p.logisticsGuestId!);
+    const guestMap = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        cpf: string | null;
+        rg: string | null;
+      }
+    >();
+    if (guestIds.length > 0) {
+      const guests = await this.prisma.logisticsGuest.findMany({
+        where: {
+          id: { in: guestIds },
+          tenantId: travel.tenantId,
+          active: true,
+        },
+        select: { id: true, name: true, cpf: true, rg: true },
+      });
+      if (guests.length !== new Set(guestIds).size) {
+        throw new BadRequestException(
+          'Um ou mais convidados não pertencem a este clube ou não existem',
+        );
+      }
+      for (const g of guests) guestMap.set(g.id, g);
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.travelParticipant.deleteMany({
         where: { travelLogisticsId: travelId },
       });
       if (normalized.length === 0) return;
       await tx.travelParticipant.createMany({
-        data: normalized.map((p, index) => ({
-          travelLogisticsId: travelId,
-          personType: p.personType,
-          playerId: p.personType === 'player' ? p.playerId! : null,
-          staffId: p.personType === 'staff' ? p.staffId! : null,
-          guestName:
-            p.personType === 'guest' ? (p.guestName ?? '').trim() || null : null,
-          guestDocument:
-            p.personType === 'guest'
-              ? p.guestDocument?.trim() || null
-              : null,
-          notes: p.notes?.trim() || null,
-          sortOrder: index,
-        })),
+        data: normalized.map((p, index) => {
+          if (p.personType === 'guest' && p.logisticsGuestId) {
+            const g = guestMap.get(p.logisticsGuestId)!;
+            return {
+              travelLogisticsId: travelId,
+              personType: 'guest',
+              playerId: null,
+              staffId: null,
+              logisticsGuestId: g.id,
+              guestName: g.name,
+              guestDocument: g.cpf ?? g.rg ?? null,
+              notes: p.notes?.trim() || null,
+              sortOrder: index,
+            };
+          }
+          return {
+            travelLogisticsId: travelId,
+            personType: p.personType,
+            playerId: p.personType === 'player' ? p.playerId! : null,
+            staffId: p.personType === 'staff' ? p.staffId! : null,
+            logisticsGuestId: null,
+            guestName:
+              p.personType === 'guest' ? (p.guestName ?? '').trim() || null : null,
+            guestDocument:
+              p.personType === 'guest'
+                ? p.guestDocument?.trim() || null
+                : null,
+            notes: p.notes?.trim() || null,
+            sortOrder: index,
+          };
+        }),
       });
     });
 
@@ -178,6 +278,7 @@ export class LogisticaService {
   private normalizeParticipantItems(items: TravelParticipantItemDto[]) {
     const seenPlayers = new Set<string>();
     const seenStaff = new Set<string>();
+    const seenGuests = new Set<string>();
     const out: TravelParticipantItemDto[] = [];
 
     for (const raw of items) {
@@ -203,9 +304,18 @@ export class LogisticaService {
         continue;
       }
       if (personType === 'guest') {
+        const logisticsGuestId = raw.logisticsGuestId?.trim();
+        if (logisticsGuestId) {
+          if (seenGuests.has(logisticsGuestId)) continue;
+          seenGuests.add(logisticsGuestId);
+          out.push({ personType, logisticsGuestId, notes: raw.notes });
+          continue;
+        }
         const guestName = raw.guestName?.trim();
         if (!guestName) {
-          throw new BadRequestException('guestName é obrigatório para convidado');
+          throw new BadRequestException(
+            'Selecione um convidado cadastrado ou informe o nome',
+          );
         }
         out.push({
           personType,
@@ -218,9 +328,26 @@ export class LogisticaService {
     return out;
   }
 
+  private async applyLogisticsCadastrosToTravelData(
+    data: Parameters<typeof this.prisma.travelLogistics.create>[0]['data'],
+    logisticsCadastros: Record<string, string | null> | null,
+  ) {
+    if (!logisticsCadastros?.hotelId) return;
+    const hotel = await this.prisma.logisticsHotel.findUnique({
+      where: { id: logisticsCadastros.hotelId },
+    });
+    if (!hotel) return;
+    data.hotelName = hotel.name;
+    const addressParts = [hotel.address, hotel.city, hotel.state, hotel.country].filter(
+      Boolean,
+    );
+    data.hotelAddress = addressParts.length ? addressParts.join(' — ') : null;
+  }
+
   async create(dto: CreateTravelLogisticsDto) {
     await this.ensureClubTenant(dto.tenantId);
     const catNorm = normalizeTravelCategoriesInput(dto.categories, dto.category);
+    const logisticsCadastros = normalizeLogisticsCadastros(dto.logisticsCadastros);
     const data: Parameters<typeof this.prisma.travelLogistics.create>[0]['data'] =
       {
         tenantId: dto.tenantId,
@@ -256,7 +383,11 @@ export class LogisticaService {
         estimatedCostBreakdown: dto.estimatedCostBreakdown ?? undefined,
         weatherForecast: dto.weatherForecast ?? null,
         notes: dto.notes ?? null,
+        beatscodeMeta: mergeBeatscodeMeta(undefined, logisticsCadastros) as
+          | Parameters<typeof this.prisma.travelLogistics.create>[0]['data']['beatscodeMeta']
+          | undefined,
       };
+    await this.applyLogisticsCadastrosToTravelData(data, logisticsCadastros);
     return this.prisma.travelLogistics.create({
       data,
       include: { tenant: { select: { id: true, name: true, slug: true } } },
@@ -264,7 +395,7 @@ export class LogisticaService {
   }
 
   async update(id: string, dto: UpdateTravelLogisticsDto) {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
     const data: Parameters<typeof this.prisma.travelLogistics.update>[0]['data'] =
       {};
     if (dto.matchDate != null) data.matchDate = new Date(dto.matchDate);
@@ -312,6 +443,23 @@ export class LogisticaService {
     if (dto.weatherForecast !== undefined)
       data.weatherForecast = dto.weatherForecast ?? null;
     if (dto.notes !== undefined) data.notes = dto.notes ?? null;
+
+    const logisticsCadastros =
+      dto.logisticsCadastros !== undefined
+        ? normalizeLogisticsCadastros(dto.logisticsCadastros)
+        : undefined;
+    if (logisticsCadastros !== undefined) {
+      data.beatscodeMeta = mergeBeatscodeMeta(
+        existing.beatscodeMeta,
+        logisticsCadastros,
+      ) as Parameters<
+        typeof this.prisma.travelLogistics.update
+      >[0]['data']['beatscodeMeta'];
+      await this.applyLogisticsCadastrosToTravelData(
+        data as Parameters<typeof this.prisma.travelLogistics.create>[0]['data'],
+        logisticsCadastros,
+      );
+    }
 
     return this.prisma.travelLogistics.update({
       where: { id },

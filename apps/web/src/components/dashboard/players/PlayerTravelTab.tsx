@@ -337,7 +337,7 @@ export function PlayerTravelTab({
               <TableHeader>
                 <TableRow>
                   <TableHead>País</TableHead>
-                  <TableHead>Tipo de visto</TableHead>
+                  <TableHead>Visto internacional</TableHead>
                   <TableHead>Nº visto</TableHead>
                   <TableHead>Data de emissão</TableHead>
                   <TableHead>Validade até</TableHead>
@@ -459,9 +459,9 @@ export function PlayerTravelTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Companhia de transporte</TableHead>
-                  <TableHead>Programa de fidelidade</TableHead>
-                  <TableHead>Nº fidelidade</TableHead>
+                  <TableHead>Transportadora</TableHead>
+                  <TableHead>Programa de milhas</TableHead>
+                  <TableHead>Nº milhas</TableHead>
                   <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
