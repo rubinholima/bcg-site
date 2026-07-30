@@ -713,6 +713,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: GraduationCap,
             moduleSlug: "saude",
           },
+          {
+            slug: "cad_fisioterapeutas",
+            label: "Fisioterapeutas",
+            href: "/dashboard/saude/fisioterapeutas",
+            icon: Activity,
+            moduleSlug: "saude",
+          },
         ],
       },
       {
@@ -769,9 +776,31 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       {
         slug: "saude_fisioterapia",
         label: "Fisioterapia",
-        href: "/dashboard/saude/fisioterapia",
         icon: Activity,
         moduleSlug: "saude",
+        children: [
+          {
+            slug: "saude_fisioterapia_atendimentos",
+            label: "Atendimentos",
+            href: "/dashboard/saude/fisioterapia",
+            icon: Activity,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "saude_fisioterapia_recovery_grupo",
+            label: "Recovery em grupo",
+            href: "/dashboard/saude/fisioterapia/recovery-grupo",
+            icon: Users,
+            moduleSlug: "saude",
+          },
+          {
+            slug: "saude_fisioterapia_relatorios",
+            label: "Relatórios",
+            href: "/dashboard/saude/fisioterapia/relatorios",
+            icon: BarChart3,
+            moduleSlug: "saude",
+          },
+        ],
       },
       hubRelatorio("saude"),
     ],

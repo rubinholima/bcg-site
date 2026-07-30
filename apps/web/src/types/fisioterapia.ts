@@ -42,6 +42,28 @@ export interface PhysioEvolutionNote {
   userName?: string | null;
 }
 
+export interface PhysioSessionRegion {
+  id: string;
+  sessionId: string;
+  regionId: string;
+  side: PhysioSide | null;
+  bodyMapView: PhysioBodyMapView | null;
+  bodyMapX: number | null;
+  bodyMapY: number | null;
+  sortOrder: number;
+  region?: PhysioBodyRegion;
+}
+
+export interface PhysioSessionDiagnosis {
+  id: string;
+  sessionId: string;
+  regionId: string | null;
+  diagnosisId: string | null;
+  diagnosisLabel: string | null;
+  sortOrder: number;
+  diagnosis?: PhysioDiagnosis | null;
+}
+
 export interface PhysioSession {
   id: string;
   tenantId: string;
@@ -71,6 +93,8 @@ export interface PhysioSession {
   region?: PhysioBodyRegion;
   diagnosis?: PhysioDiagnosis | null;
   treatment?: PhysioTreatment | null;
+  sessionRegions?: PhysioSessionRegion[];
+  sessionDiagnoses?: PhysioSessionDiagnosis[];
   player?: {
     id: string;
     name: string;
@@ -82,11 +106,27 @@ export interface PhysioSession {
   tenant?: { id: string; name: string; slug: string };
 }
 
+export interface PhysioSessionRegionInput {
+  regionId: string;
+  side?: PhysioSide;
+  bodyMapView?: PhysioBodyMapView;
+  bodyMapX?: number;
+  bodyMapY?: number;
+}
+
+export interface PhysioSessionDiagnosisInput {
+  regionId?: string;
+  diagnosisId?: string;
+  diagnosisLabel?: string;
+}
+
 export interface CreatePhysioSessionPayload {
   tenantId: string;
   playerId: string;
   category?: string;
-  regionId: string;
+  regionId?: string;
+  regions?: PhysioSessionRegionInput[];
+  diagnoses?: PhysioSessionDiagnosisInput[];
   side?: PhysioSide;
   bodyMapView?: PhysioBodyMapView;
   bodyMapX?: number;
@@ -103,4 +143,83 @@ export interface CreatePhysioSessionPayload {
   staffId?: string;
   staffName?: string;
   attachments?: PhysioAttachment[];
+}
+
+export interface PhysioGroupAttendanceRow {
+  playerId: string;
+  playerName?: string;
+  present?: boolean;
+  notes?: string;
+}
+
+export interface PhysioGroupSession {
+  id: string;
+  tenantId: string;
+  category: string;
+  sessionDate: string;
+  description: string | null;
+  staffId: string | null;
+  staffName: string | null;
+  location: string | null;
+  attendance: PhysioGroupAttendanceRow[];
+  createdAt: string;
+  updatedAt: string;
+  tenant?: { id: string; name: string; slug: string };
+}
+
+export interface CreatePhysioGroupSessionPayload {
+  tenantId: string;
+  category: string;
+  sessionDate: string;
+  description?: string;
+  staffId?: string;
+  staffName?: string;
+  location?: string;
+  attendance: PhysioGroupAttendanceRow[];
+}
+
+export interface PhysioReportsSummary {
+  totalIndividual: number;
+  totalGroup: number;
+  activeSessions: number;
+  completedSessions: number;
+  groupParticipants: number;
+  uniquePlayers: number;
+  avgPainScore: number | null;
+  avgReturnDays: number | null;
+}
+
+export interface PhysioReportsDashboard {
+  summary: PhysioReportsSummary;
+  byCategory: Array<{
+    category: string;
+    individual: number;
+    group: number;
+    active: number;
+    total: number;
+  }>;
+  byStatus: Array<{ status: string; count: number }>;
+  byRegion: Array<{ regionId: string; regionName: string; count: number }>;
+  byDiagnosis: Array<{ label: string; count: number }>;
+  byTreatment: Array<{ label: string; count: number }>;
+  byStaff: Array<{
+    staffId: string | null;
+    staffName: string;
+    individual: number;
+    group: number;
+  }>;
+  byMonth: Array<{ month: string; individual: number; group: number }>;
+  activeInjured: Array<{
+    id: string;
+    playerId: string;
+    playerName: string;
+    category: string | null;
+    tenantName: string;
+    regions: Array<{ name: string; side: string | null }>;
+    diagnoses: string[];
+    painScore: number | null;
+    estimatedEndDate: string | null;
+    startedAt: string;
+    staffName: string | null;
+  }>;
 }

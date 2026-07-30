@@ -89,6 +89,22 @@ function RelatoriosContent() {
             </Link>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-amber-500" />
+              Relatórios — Fisioterapia
+            </CardTitle>
+            <CardDescription>
+              Atendimentos por categoria e tipo, gráficos de incidência, lesionados ativos e carga por fisio.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link href="/dashboard/saude/fisioterapia/relatorios">
+              <Button variant="outline">Abrir relatórios de fisioterapia</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Activity, Loader2, Plus } from "lucide-react";
+import { Activity, Loader2, Plus, Users } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -73,18 +73,58 @@ export default function FisioterapiaPage() {
 
   const activeMarks = sessions
     .filter((s) => s.status === "active")
-    .map((s) => ({
-      regionId: s.regionId,
-      side: s.side,
-      view: s.bodyMapView,
-      x: s.bodyMapX,
-      y: s.bodyMapY,
-      label: s.diagnosisLabel ?? undefined,
-    }));
+    .flatMap((s) => {
+      const rows =
+        s.sessionRegions && s.sessionRegions.length > 0
+          ? s.sessionRegions
+          : [
+              {
+                regionId: s.regionId,
+                side: s.side,
+                bodyMapView: s.bodyMapView,
+                bodyMapX: s.bodyMapX,
+                bodyMapY: s.bodyMapY,
+              },
+            ];
+      return rows.map((r) => ({
+        regionId: r.regionId,
+        side: r.side,
+        view: r.bodyMapView,
+        x: r.bodyMapX,
+        y: r.bodyMapY,
+        label: s.diagnosisLabel ?? undefined,
+      }));
+    });
+
+  function formatRegions(s: PhysioSession) {
+    const rows =
+      s.sessionRegions && s.sessionRegions.length > 0
+        ? s.sessionRegions
+        : [{ region: s.region, regionId: s.regionId, side: s.side }];
+    return rows
+      .map((r) => {
+        const name = r.region?.namePt ?? r.regionId;
+        const side = r.side === "E" ? " E" : r.side === "D" ? " D" : "";
+        return `${name}${side}`;
+      })
+      .join(" + ");
+  }
+
+  function formatDiagnoses(s: PhysioSession) {
+    const items =
+      s.sessionDiagnoses && s.sessionDiagnoses.length > 0
+        ? s.sessionDiagnoses
+            .map((d) => d.diagnosisLabel ?? d.diagnosis?.name)
+            .filter(Boolean)
+        : s.diagnosisLabel
+          ? [s.diagnosisLabel]
+          : [];
+    return items.length ? items.join(" + ") : "";
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
             <Activity className="h-8 w-8" />
@@ -92,6 +132,12 @@ export default function FisioterapiaPage() {
           </h1>
           <p className="mt-1 text-muted-foreground">Atendimentos, mapa corporal e evolução até a alta.</p>
         </div>
+        <Button asChild variant="outline" className="min-h-[44px]">
+          <Link href="/dashboard/saude/fisioterapia/recovery-grupo">
+            <Users className="mr-2 h-4 w-4" />
+            Recovery em grupo
+          </Link>
+        </Button>
         <Button asChild className="min-h-[44px]">
           <Link href="/dashboard/saude/fisioterapia/novo">
             <Plus className="mr-2 h-4 w-4" />
@@ -164,9 +210,8 @@ export default function FisioterapiaPage() {
                         {s.category ? ` · ${s.category}` : ""}
                       </p>
                       <p className="mt-1 text-sm">
-                        {s.region?.namePt ?? s.regionId}
-                        {s.side === "E" ? " E" : s.side === "D" ? " D" : ""}
-                        {s.diagnosisLabel ? ` · ${s.diagnosisLabel}` : ""}
+                        {formatRegions(s)}
+                        {formatDiagnoses(s) ? ` · ${formatDiagnoses(s)}` : ""}
                       </p>
                     </div>
                     <span

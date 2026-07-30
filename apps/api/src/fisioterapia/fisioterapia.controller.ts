@@ -20,8 +20,10 @@ import { FisioterapiaService } from './fisioterapia.service';
 import {
   AddPhysioEvolutionDto,
   CreatePhysioDiagnosisDto,
+  CreatePhysioGroupSessionDto,
   CreatePhysioSessionDto,
   CreatePhysioTreatmentDto,
+  UpdatePhysioGroupSessionDto,
   UpdatePhysioSessionDto,
 } from './dto/fisioterapia.dto';
 
@@ -163,5 +165,90 @@ export class FisioterapiaController {
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.deleteSession(id, allowed);
+  }
+
+  @Get('group-sessions/category-roster')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async groupCategoryRoster(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+    @Query('category') category: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.categoryRoster(tenantId, category, allowed);
+  }
+
+  @Get('group-sessions')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async listGroupSessions(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.listGroupSessions({ tenantId, category, from, to }, allowed);
+  }
+
+  @Get('group-sessions/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async getGroupSession(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findGroupSession(id, allowed);
+  }
+
+  @Post('group-sessions')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async createGroupSession(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Body() dto: CreatePhysioGroupSessionDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.createGroupSession(dto, allowed, req.user.sub);
+  }
+
+  @Patch('group-sessions/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async updateGroupSession(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: UpdatePhysioGroupSessionDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.updateGroupSession(id, dto, allowed);
+  }
+
+  @Delete('group-sessions/:id')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async removeGroupSession(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.deleteGroupSession(id, allowed);
+  }
+
+  @Get('reports/dashboard')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async reportsDashboard(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.getReportsDashboard({ tenantId, category, from, to }, allowed);
   }
 }

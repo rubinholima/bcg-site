@@ -39,13 +39,27 @@ export function PlayerPhysioSection({
   }, [load]);
 
   const active = sessions.filter((s) => s.status === "active");
-  const marks = active.map((s) => ({
-    regionId: s.regionId,
-    side: s.side,
-    view: s.bodyMapView,
-    x: s.bodyMapX,
-    y: s.bodyMapY,
-  }));
+  const marks = active.flatMap((s) => {
+    const rows =
+      s.sessionRegions && s.sessionRegions.length > 0
+        ? s.sessionRegions
+        : [
+            {
+              regionId: s.regionId,
+              side: s.side,
+              bodyMapView: s.bodyMapView,
+              bodyMapX: s.bodyMapX,
+              bodyMapY: s.bodyMapY,
+            },
+          ];
+    return rows.map((r) => ({
+      regionId: r.regionId,
+      side: r.side,
+      view: r.bodyMapView,
+      x: r.bodyMapX,
+      y: r.bodyMapY,
+    }));
+  });
 
   return (
     <div className="space-y-4">
@@ -96,11 +110,26 @@ export function PlayerPhysioSection({
                   <div className="flex justify-between gap-2">
                     <div>
                       <p className="font-medium">
-                        {s.region?.namePt ?? s.regionId}
-                        {s.side === "E" ? " E" : s.side === "D" ? " D" : ""}
+                        {(s.sessionRegions?.length
+                          ? s.sessionRegions.map((r) => {
+                              const name = r.region?.namePt ?? r.regionId;
+                              const side = r.side === "E" ? " E" : r.side === "D" ? " D" : "";
+                              return `${name}${side}`;
+                            })
+                          : [
+                              `${s.region?.namePt ?? s.regionId}${
+                                s.side === "E" ? " E" : s.side === "D" ? " D" : ""
+                              }`,
+                            ]
+                        ).join(" + ")}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {s.diagnosisLabel ?? "Sem diagnóstico"}
+                        {(s.sessionDiagnoses?.length
+                          ? s.sessionDiagnoses
+                              .map((d) => d.diagnosisLabel ?? d.diagnosis?.name)
+                              .filter(Boolean)
+                              .join(" + ")
+                          : s.diagnosisLabel) || "Sem diagnóstico"}
                         {s.treatmentLabel ? ` · ${s.treatmentLabel}` : ""}
                       </p>
                     </div>

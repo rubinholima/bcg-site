@@ -70,6 +70,13 @@ const LINKS = [
     moduleSlug: "saude",
   },
   {
+    title: "Fisioterapeutas",
+    description: "Cadastro de fisioterapeutas para atendimentos e recovery.",
+    href: "/dashboard/saude/fisioterapeutas",
+    icon: Activity,
+    moduleSlug: "saude",
+  },
+  {
     title: "Fisioterapia",
     description: "Tratamentos e evolução fisioterapêutica.",
     href: "/dashboard/saude/fisioterapia",

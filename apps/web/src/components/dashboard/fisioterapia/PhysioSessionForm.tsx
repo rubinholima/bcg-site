@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Plus, Upload } from "lucide-react";
+import { Loader2, Plus, Upload, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,15 +13,29 @@ import type {
   PhysioAttachment,
   PhysioBodyRegion,
   PhysioDiagnosis,
+  PhysioSessionRegionInput,
   PhysioTreatment,
 } from "@/types/fisioterapia";
 import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { getPublicImageUrl } from "@/lib/media-url";
 
-type PlayerOpt = { id: string; name: string; category: string | null };
+type PainRegionEntry = PhysioSessionRegionInput & { key: string };
+
+function regionKey(regionId: string, side?: string) {
+  return `${regionId}:${side ?? ""}`;
+}
+
+function sideLabel(side?: string) {
+  if (side === "E") return "E";
+  if (side === "D") return "D";
+  if (side === "bilateral") return "bilateral";
+  return "";
+}
 type TenantOpt = { id: string; name: string; categories?: string[] | null };
 type StaffOpt = { id: string; name: string; role: string; tenantId?: string | null };
+
+type PlayerOpt = { id: string; name: string; category: string | null };
 
 export function PhysioSessionForm({
   tenants,
@@ -52,7 +66,6 @@ export function PhysioSessionForm({
   const [bodyMapY, setBodyMapY] = useState<number | undefined>();
   const [symptoms, setSymptoms] = useState("");
   const [painScore, setPainScore] = useState("5");
-  const [diagnosisId, setDiagnosisId] = useState("");
   const [treatmentId, setTreatmentId] = useState("");
   const [treatmentNotes, setTreatmentNotes] = useState("");
   const [estimatedDays, setEstimatedDays] = useState("");
@@ -68,6 +81,8 @@ export function PhysioSessionForm({
   const [error, setError] = useState<string | null>(null);
   const [loadingMeta, setLoadingMeta] = useState(true);
   const [loadingDx, setLoadingDx] = useState(false);
+  const [painRegions, setPainRegions] = useState<PainRegionEntry[]>([]);
+  const [selectedDiagnosisIds, setSelectedDiagnosisIds] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
@@ -124,21 +139,34 @@ export function PhysioSessionForm({
   }, [tenantId]);
 
   useEffect(() => {
-    if (!regionId) {
+    const regionIds = [...new Set(painRegions.map((r) => r.regionId))];
+    if (regionIds.length === 0) {
       setDiagnoses([]);
+      setSelectedDiagnosisIds([]);
       return;
     }
     setLoadingDx(true);
-    api
-      .get<PhysioDiagnosis[]>(
-        `/fisioterapia/diagnoses?regionId=${encodeURIComponent(regionId)}`,
-      )
-      .then(({ data }) => {
-        setDiagnoses(Array.isArray(data) ? data : []);
+    Promise.all(
+      regionIds.map((id) =>
+        api.get<PhysioDiagnosis[]>(`/fisioterapia/diagnoses?regionId=${encodeURIComponent(id)}`),
+      ),
+    )
+      .then((responses) => {
+        const merged = new Map<string, PhysioDiagnosis>();
+        for (const { data } of responses) {
+          for (const d of Array.isArray(data) ? data : []) {
+            merged.set(d.id, d);
+          }
+        }
+        setDiagnoses([...merged.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
       })
       .catch(() => setDiagnoses([]))
       .finally(() => setLoadingDx(false));
-  }, [regionId]);
+  }, [painRegions]);
+
+  useEffect(() => {
+    setSelectedDiagnosisIds((prev) => prev.filter((id) => diagnoses.some((d) => d.id === id)));
+  }, [diagnoses]);
 
   useEffect(() => {
     if (category && !categoriesForClub.some((c) => c.value === category)) {
@@ -152,11 +180,26 @@ export function PhysioSessionForm({
   }, [players, category]);
 
   const filteredTreatments = useMemo(() => {
-    if (!regionId) return treatments;
-    return treatments.filter((t) => !t.regionId || t.regionId === regionId);
-  }, [treatments, regionId]);
+    const ids = new Set(painRegions.map((r) => r.regionId));
+    if (ids.size === 0) return treatments;
+    return treatments.filter((t) => !t.regionId || ids.has(t.regionId));
+  }, [treatments, painRegions]);
+
+  const regionNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of regions) map.set(r.id, r.namePt);
+    return map;
+  }, [regions]);
 
   const selectedStaff = staffList.find((s) => s.id === staffId);
+
+  const upsertPainRegion = (entry: Omit<PainRegionEntry, "key">) => {
+    const key = regionKey(entry.regionId, entry.side);
+    setPainRegions((prev) => {
+      const without = prev.filter((r) => r.key !== key);
+      return [...without, { ...entry, key }];
+    });
+  };
 
   const handleMapSelect = (hit: BodyMapHit) => {
     setRegionId(hit.regionId);
@@ -164,7 +207,34 @@ export function PhysioSessionForm({
     setView(hit.view);
     setBodyMapX(hit.x);
     setBodyMapY(hit.y);
-    setDiagnosisId("");
+    upsertPainRegion({
+      regionId: hit.regionId,
+      side: hit.side || undefined,
+      bodyMapView: hit.view,
+      bodyMapX: hit.x,
+      bodyMapY: hit.y,
+    });
+  };
+
+  const addRegionFromSelect = () => {
+    if (!regionId) return;
+    upsertPainRegion({
+      regionId,
+      side: side || undefined,
+      bodyMapView: view,
+      bodyMapX,
+      bodyMapY,
+    });
+  };
+
+  const removePainRegion = (key: string) => {
+    setPainRegions((prev) => prev.filter((r) => r.key !== key));
+  };
+
+  const toggleDiagnosis = (id: string) => {
+    setSelectedDiagnosisIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
   };
 
   const addDiagnosis = async () => {
@@ -175,7 +245,7 @@ export function PhysioSessionForm({
         name: newDx.trim(),
       });
       setDiagnoses((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
-      setDiagnosisId(data.id);
+      setSelectedDiagnosisIds((prev) => [...prev, data.id]);
       setNewDx("");
     } catch {
       setError("Não foi possível criar o diagnóstico.");
@@ -239,8 +309,8 @@ export function PhysioSessionForm({
 
   const handleSubmit = async () => {
     setError(null);
-    if (!tenantId || !playerId || !regionId) {
-      setError("Clube, atleta e região corporal são obrigatórios.");
+    if (!tenantId || !playerId || painRegions.length === 0) {
+      setError("Clube, atleta e ao menos um local de dor são obrigatórios.");
       return;
     }
     setSaving(true);
@@ -249,14 +319,25 @@ export function PhysioSessionForm({
         tenantId,
         playerId,
         category: category || undefined,
-        regionId,
-        side: side || undefined,
-        bodyMapView: view,
-        bodyMapX,
-        bodyMapY,
+        regions: painRegions.map(({ regionId: rid, side: s, bodyMapView, bodyMapX: x, bodyMapY: y }) => ({
+          regionId: rid,
+          side: s,
+          bodyMapView,
+          bodyMapX: x,
+          bodyMapY: y,
+        })),
+        diagnoses: selectedDiagnosisIds.map((id) => {
+          const dx = diagnoses.find((d) => d.id === id);
+          return { diagnosisId: id, regionId: dx?.regionId };
+        }),
+        regionId: painRegions[0]?.regionId,
+        side: painRegions[0]?.side,
+        bodyMapView: painRegions[0]?.bodyMapView ?? view,
+        bodyMapX: painRegions[0]?.bodyMapX,
+        bodyMapY: painRegions[0]?.bodyMapY,
         symptoms: symptoms || undefined,
         painScore: painScore ? Number(painScore) : undefined,
-        diagnosisId: diagnosisId || undefined,
+        diagnosisId: selectedDiagnosisIds[0],
         treatmentId: treatmentId || undefined,
         treatmentNotes: treatmentNotes || undefined,
         estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
@@ -293,6 +374,13 @@ export function PhysioSessionForm({
         onViewChange={setView}
         selectedRegionId={regionId}
         selectedSide={side || null}
+        marks={painRegions.map((r) => ({
+          regionId: r.regionId,
+          side: r.side,
+          view: r.bodyMapView,
+          x: r.bodyMapX,
+          y: r.bodyMapY,
+        }))}
         onSelect={handleMapSelect}
       />
 
@@ -349,12 +437,11 @@ export function PhysioSessionForm({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
-            <Label>Região *</Label>
+            <Label>Região (clique no mapa ou selecione)</Label>
             <NativeSelect
               value={regionId}
               onChange={(e) => {
                 setRegionId(e.target.value);
-                setDiagnosisId("");
               }}
             >
               <option value="">Selecione no mapa ou aqui…</option>
@@ -375,6 +462,47 @@ export function PhysioSessionForm({
             </NativeSelect>
           </div>
         </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-[44px]"
+            disabled={!regionId}
+            onClick={addRegionFromSelect}
+          >
+            <Plus className="mr-1 h-4 w-4" />
+            Adicionar local de dor
+          </Button>
+        </div>
+
+        {painRegions.length > 0 ? (
+          <ul className="space-y-1 rounded-lg border border-border/70 p-2 text-sm">
+            {painRegions.map((r) => (
+              <li key={r.key} className="flex items-center justify-between gap-2">
+                <span>
+                  {regionNameById.get(r.regionId) ?? r.regionId}
+                  {sideLabel(r.side) ? ` (${sideLabel(r.side)})` : ""}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  aria-label="Remover local"
+                  onClick={() => removePainRegion(r.key)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Toque no mapa corporal para marcar um ou mais locais de dor (multi-lesão).
+          </p>
+        )}
 
         <div className="grid gap-1.5">
           <Label>Sintomas</Label>
@@ -414,43 +542,48 @@ export function PhysioSessionForm({
             </NativeSelect>
             {tenantId && staffList.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                Nenhum fisioterapeuta cadastrado em Saúde → Equipe.
+                Nenhum fisioterapeuta cadastrado em Saúde → Cadastros → Fisioterapeutas.
               </p>
             ) : null}
           </div>
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Diagnóstico</Label>
-          {!regionId ? (
+          <Label>Diagnósticos (pode marcar mais de um)</Label>
+          {painRegions.length === 0 ? (
             <p className="rounded-md border border-dashed border-border/70 px-3 py-2 text-sm text-muted-foreground">
-              Selecione a região no mapa (ou no campo Região) para carregar os diagnósticos.
+              Adicione ao menos um local de dor para carregar os diagnósticos.
             </p>
           ) : loadingDx ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Carregando diagnósticos…
             </div>
+          ) : diagnoses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum diagnóstico cadastrado — adicione abaixo.</p>
           ) : (
-            <NativeSelect
-              value={diagnosisId}
-              onChange={(e) => setDiagnosisId(e.target.value)}
-            >
-              <option value="">
-                {diagnoses.length === 0
-                  ? "Nenhum diagnóstico — cadastre abaixo"
-                  : `Selecione… (${diagnoses.length})`}
-              </option>
+            <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border border-border/70 p-3">
               {diagnoses.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
+                <label key={d.id} className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary"
+                    checked={selectedDiagnosisIds.includes(d.id)}
+                    onChange={() => toggleDiagnosis(d.id)}
+                  />
+                  <span>
+                    {d.name}
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      ({regionNameById.get(d.regionId) ?? d.regionId})
+                    </span>
+                  </span>
+                </label>
               ))}
-            </NativeSelect>
+            </div>
           )}
           <div className="flex gap-2">
             <Input
-              placeholder="Novo diagnóstico nesta região"
+              placeholder="Novo diagnóstico (região selecionada acima)"
               value={newDx}
               onChange={(e) => setNewDx(e.target.value)}
               disabled={!regionId}

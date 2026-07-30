@@ -48,7 +48,10 @@ export function hallPositionInLoop(
 }
 
 /** Posição no loop no início do próximo item. */
-export function hallNextItemElapsedMs(items: HallSyncItem[], currentElapsedMs: number): number {
+export function hallNextItemElapsedMs(
+  items: HallSyncItem[],
+  currentElapsedMs: number,
+): number {
   const total = hallLoopDurationMs(items);
   if (total <= 0) return 0;
   const { itemIndex } = hallPositionInLoop(items, currentElapsedMs);

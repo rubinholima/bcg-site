@@ -133,6 +133,7 @@ model Tenant {
   footballAgendaEntries FootballAgendaEntry[]
   psychologySessions  PsychologySession[]
   physioSessions      PhysioSession[]
+  physioGroupSessions PhysioGroupSession[]
   psychologySupportMaterials PsychologySupportMaterial[]
   footballActivitySpaces FootballActivitySpace[]
   events                Event[]
@@ -2375,9 +2376,59 @@ model PhysioBodyRegion {
   namePt     String
   sortOrder  Int      @default(0)
   bilateral  Boolean  @default(true)
-  diagnoses  PhysioDiagnosis[]
-  treatments PhysioTreatment[]
-  sessions   PhysioSession[]
+  diagnoses      PhysioDiagnosis[]
+  treatments     PhysioTreatment[]
+  sessions         PhysioSession[]
+  sessionRegions   PhysioSessionRegion[]
+}
+
+/// Local(is) de dor vinculado a um atendimento (multi-lesão)
+model PhysioSessionRegion {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     PhysioSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  regionId    String
+  region      PhysioBodyRegion @relation(fields: [regionId], references: [id])
+  side        String?
+  bodyMapView String?
+  bodyMapX    Float?
+  bodyMapY    Float?
+  sortOrder   Int      @default(0)
+  @@index([sessionId])
+  @@index([regionId])
+}
+
+/// Diagnóstico vinculado a um atendimento (multi-lesão)
+model PhysioSessionDiagnosis {
+  id             String   @id @default(cuid())
+  sessionId      String
+  session        PhysioSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  regionId       String?
+  diagnosisId    String?
+  diagnosis      PhysioDiagnosis? @relation(fields: [diagnosisId], references: [id], onDelete: SetNull)
+  diagnosisLabel String?
+  sortOrder      Int      @default(0)
+  @@index([sessionId])
+}
+
+/// Recovery pós-jogo em grupo (atletas que jogaram)
+model PhysioGroupSession {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category        String
+  sessionDate     String   // YYYY-MM-DD
+  description     String?  @db.Text
+  staffId         String?
+  staffName       String?
+  location        String?
+  /// [{ playerId, playerName, present, notes? }]
+  attendance      Json
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  @@index([tenantId, sessionDate])
+  @@index([tenantId, category])
 }
 
 /// Diagnóstico clínico categorizado por região (seed + cadastro dinâmico pelo fisio)
@@ -2390,7 +2441,8 @@ model PhysioDiagnosis {
   active          Boolean  @default(true)
   createdByUserId String?
   createdAt       DateTime @default(now())
-  sessions        PhysioSession[]
+  sessions         PhysioSession[]
+  sessionDiagnoses PhysioSessionDiagnosis[]
   @@unique([regionId, name])
   @@index([regionId, active])
 }
@@ -2446,6 +2498,8 @@ model PhysioSession {
   createdByUserId  String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  sessionRegions   PhysioSessionRegion[]
+  sessionDiagnoses PhysioSessionDiagnosis[]
   @@index([tenantId, status])
   @@index([playerId, status])
   @@index([regionId])

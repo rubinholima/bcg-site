@@ -108,6 +108,47 @@ export default function FisioterapiaSessionDetailPage() {
 
   const evolutions = (session.evolutionNotes ?? []) as PhysioEvolutionNote[];
 
+  const mapMarks =
+    session.sessionRegions && session.sessionRegions.length > 0
+      ? session.sessionRegions.map((r) => ({
+          regionId: r.regionId,
+          side: r.side,
+          view: r.bodyMapView,
+          x: r.bodyMapX,
+          y: r.bodyMapY,
+        }))
+      : [
+          {
+            regionId: session.regionId,
+            side: session.side,
+            view: session.bodyMapView,
+            x: session.bodyMapX,
+            y: session.bodyMapY,
+          },
+        ];
+
+  const regionLines =
+    session.sessionRegions && session.sessionRegions.length > 0
+      ? session.sessionRegions.map((r) => {
+          const name = r.region?.namePt ?? r.regionId;
+          const side = r.side === "E" ? " (E)" : r.side === "D" ? " (D)" : "";
+          return `${name}${side}`;
+        })
+      : [
+          `${session.region?.namePt ?? session.regionId}${
+            session.side === "E" ? " (E)" : session.side === "D" ? " (D)" : ""
+          }`,
+        ];
+
+  const diagnosisLines =
+    session.sessionDiagnoses && session.sessionDiagnoses.length > 0
+      ? session.sessionDiagnoses
+          .map((d) => d.diagnosisLabel ?? d.diagnosis?.name)
+          .filter(Boolean)
+      : session.diagnosisLabel
+        ? [session.diagnosisLabel]
+        : [];
+
   return (
     <div className="space-y-4">
       <div>
@@ -146,15 +187,7 @@ export default function FisioterapiaSessionDetailPage() {
               view={(session.bodyMapView as "front" | "back") || "front"}
               selectedRegionId={session.regionId}
               selectedSide={session.side}
-              marks={[
-                {
-                  regionId: session.regionId,
-                  side: session.side,
-                  view: session.bodyMapView,
-                  x: session.bodyMapX,
-                  y: session.bodyMapY,
-                },
-              ]}
+              marks={mapMarks}
             />
           </CardContent>
         </Card>
@@ -166,13 +199,11 @@ export default function FisioterapiaSessionDetailPage() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <p>
-                <span className="text-muted-foreground">Região:</span>{" "}
-                {session.region?.namePt ?? session.regionId}
-                {session.side === "E" ? " (E)" : session.side === "D" ? " (D)" : ""}
+                <span className="text-muted-foreground">Locais de dor:</span> {regionLines.join(" · ")}
               </p>
               <p>
-                <span className="text-muted-foreground">Diagnóstico:</span>{" "}
-                {session.diagnosisLabel ?? "—"}
+                <span className="text-muted-foreground">Diagnóstico(s):</span>{" "}
+                {diagnosisLines.length ? diagnosisLines.join(" · ") : "—"}
               </p>
               <p>
                 <span className="text-muted-foreground">Tratamento:</span>{" "}
