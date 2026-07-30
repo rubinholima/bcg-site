@@ -61,6 +61,7 @@ import {
   type AgendaColorKey,
   type AgendaColorSwatch,
 } from "@/lib/agenda-color-prefs";
+import { combineDateTimeBrazil, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
 
 interface Tenant {
   id: string;
@@ -206,9 +207,7 @@ function isClubTenant(kindName?: string) {
 }
 
 function combineDateTime(date: string, time: string, allDay: boolean): string {
-  if (!date) return "";
-  if (allDay) return new Date(`${date}T12:00:00`).toISOString();
-  return new Date(`${date}T${time}:00`).toISOString();
+  return combineDateTimeBrazil(date, time, allDay);
 }
 
 /** Select nativo — Radix Select (Portal) não funciona dentro de `<dialog showModal>`. */
@@ -402,7 +401,7 @@ export function FutebolAgendaOperacional() {
   const byDay = useMemo(() => {
     const map = new Map<string, FootballAgendaCalendarItem[]>();
     for (const item of items) {
-      const key = item.startAt.slice(0, 10);
+      const key = dateKeyInBrazil(item.startAt);
       const list = map.get(key) ?? [];
       list.push(item);
       map.set(key, list);
@@ -558,20 +557,18 @@ export function FutebolAgendaOperacional() {
   };
 
   const openEditEntry = (entry: FootballAgendaEntry) => {
-    const start = new Date(entry.startAt);
-    const end = entry.endAt ? new Date(entry.endAt) : null;
+    const startKey = dateKeyInBrazil(entry.startAt);
+    const endKey = entry.endAt ? dateKeyInBrazil(entry.endAt) : startKey;
     setEditingId(entry.id);
     setForm({
       tenantId: entry.tenantId,
       category: entry.category ?? "",
       type: entry.type,
       title: entry.title,
-      startAt: entry.startAt.slice(0, 10),
-      startTime: entry.allDay ? "09:00" : `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`,
-      endAt: end ? entry.endAt!.slice(0, 10) : entry.startAt.slice(0, 10),
-      endTime: end && !entry.allDay
-        ? `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`
-        : "10:00",
+      startAt: startKey,
+      startTime: entry.allDay ? "09:00" : timeInBrazil(entry.startAt),
+      endAt: endKey,
+      endTime: entry.endAt && !entry.allDay ? timeInBrazil(entry.endAt) : "10:00",
       allDay: entry.allDay,
       spaceId: entry.spaceId ?? "",
       location: entry.location ?? "",
@@ -590,7 +587,7 @@ export function FutebolAgendaOperacional() {
       }
     }
     if (item.source !== "entry") {
-      const dayKey = item.startAt.slice(0, 10);
+      const dayKey = dateKeyInBrazil(item.startAt);
       goToDayView(dayKey);
       return;
     }
@@ -599,10 +596,10 @@ export function FutebolAgendaOperacional() {
       .get<FootballAgendaEntry>(`/futebol-agenda/entries/${id}`)
       .then(({ data }) => {
         if (data) openEditEntry(data);
-        else goToDayView(item.startAt.slice(0, 10));
+        else goToDayView(dateKeyInBrazil(item.startAt));
       })
       .catch(() => {
-        goToDayView(item.startAt.slice(0, 10));
+        goToDayView(dateKeyInBrazil(item.startAt));
       });
   };
 

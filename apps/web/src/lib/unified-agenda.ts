@@ -13,6 +13,13 @@ import {
   compareAgendaEventsByPriority,
   type AgendaMatchSide,
 } from "@/lib/agenda-match-style";
+import {
+  agendaCategoryDotClass,
+  agendaCategoryPillClass,
+  agendaCategoryPillStyle,
+  resolveCategoryColorKey,
+} from "@/lib/agenda-category-colors";
+import { dateKeyInBrazil, BRAZIL_TZ } from "@/lib/brazil-time";
 
 export type AgendaSource = "futebol" | "boston-hall" | "consultas" | "marketing";
 
@@ -36,6 +43,8 @@ export type UnifiedAgendaEvent = {
   championshipName?: string | null;
   statusLabel?: string | null;
   categoryLabel?: string | null;
+  categoryValue?: string | null;
+  categoryPillStyle?: { backgroundColor: string; color: string; borderColor: string };
   matchSide?: "casa" | "fora" | null;
 };
 
@@ -116,7 +125,7 @@ export function monthRangeIso(year: number, month: number) {
 }
 
 export function dateKeyFromIso(iso: string): string {
-  return iso.slice(0, 10);
+  return dateKeyInBrazil(iso);
 }
 
 export function todayDateKey(): string {
@@ -126,7 +135,12 @@ export function todayDateKey(): string {
 
 export function formatAgendaTime(iso: string, allDay: boolean): string {
   if (allDay) return "Dia inteiro";
-  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const date = new Date(iso);
+  return date.toLocaleTimeString("pt-BR", {
+    timeZone: BRAZIL_TZ,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function formatAgendaDateLong(dateKey: string): string {
@@ -176,6 +190,7 @@ function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent 
         : FOOTBALL_AGENDA_TYPE_LABEL[type] ?? type;
 
   const subtitleParts = [item.tenantName, categoryLabel].filter(Boolean);
+  const categoryValue = resolveCategoryColorKey(item.category, item.categories);
 
   return {
     id: `futebol-${item.id}`,
@@ -188,19 +203,22 @@ function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent 
     allDay: item.allDay,
     typeLabel,
     href: item.href || agendaHubUrl(AGENDA_VISAO.FUTEBOL),
-    tone: agendaCalendarPillClass(type, matchSide),
-    dotClass:
+    tone: categoryValue ? agendaCategoryPillClass(categoryValue) : agendaCalendarPillClass(type, matchSide),
+    dotClass: categoryValue ? agendaCategoryDotClass(categoryValue) : (
       matchSide === "casa"
         ? "bg-emerald-500"
         : matchSide === "fora"
           ? "bg-amber-400"
-          : FUTEBOL_DOT[type] ?? FUTEBOL_DOT.outro,
+          : FUTEBOL_DOT[type] ?? FUTEBOL_DOT.outro
+    ),
     tenantId: item.tenantId || undefined,
     tenantName: item.tenantName,
     location: item.location,
     championshipName: item.championshipName,
     statusLabel,
     categoryLabel,
+    categoryValue,
+    categoryPillStyle: categoryValue ? agendaCategoryPillStyle(categoryValue) : undefined,
     matchSide,
   };
 }

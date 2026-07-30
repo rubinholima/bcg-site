@@ -42,7 +42,8 @@ export function findSpaceConflicts(
   const inputEnd = resolveAgendaEnd(input.startAt, input.endAt, input.allDay);
   return candidates.filter((c) => {
     if (input.excludeEntryId && c.id === input.excludeEntryId) return false;
-    if (c.category && input.category && c.category === input.category) return false;
+    /** Mesma categoria no mesmo horário = conflito; categorias diferentes podem compartilhar o espaço. */
+    if (c.category !== input.category) return false;
     const cEnd = resolveAgendaEnd(c.startAt, c.endAt, c.allDay);
     return agendaTimesOverlap(input.startAt, inputEnd, c.startAt, cEnd);
   });

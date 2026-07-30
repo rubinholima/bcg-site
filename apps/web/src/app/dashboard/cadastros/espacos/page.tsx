@@ -186,7 +186,7 @@ export default function EspacosCadastroPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Espaços</h1>
           <p className="text-sm text-muted-foreground">
-            Campos, salas e locais de treino por clube — usados na agenda para conflito de horário entre categorias.
+            Campos, salas e locais de treino por clube — usados na agenda para conflito de horário na mesma categoria.
           </p>
         </div>
         <Button variant="outline" asChild className="min-h-[44px]">

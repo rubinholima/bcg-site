@@ -311,6 +311,29 @@ function baseStyles(size: PrintPageSize): string {
     }
     .act-title { font-weight: 600; color: #0f172a; line-height: 1.3; }
     .act-meta { font-size: 8.5px; color: #64748b; margin-top: 1px; }
+    .schedule-category-section {
+      margin-bottom: 22px;
+      break-before: page;
+      page-break-before: always;
+    }
+    .schedule-category-section:first-of-type {
+      break-before: auto;
+      page-break-before: auto;
+    }
+    .schedule-category-title {
+      margin: 0 0 10px;
+      padding: 8px 12px;
+      background: ${BCG.blueLight};
+      border-left: 4px solid ${BCG.red};
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: ${BCG.blue};
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .schedule-table-single { font-size: 10px; }
+    .schedule-table-single thead th:last-child { text-align: left; }
   `;
 }
 
@@ -557,17 +580,17 @@ export function buildProgramacaoPrintHtml(
   data: ProgramacaoSemanalReportDto,
   size: PrintPageSize = "A4",
 ): string {
-  const catHeaders = data.categories
-    .map((c) => `<th>${escapeHtml(data.categoryLabels[c] ?? c)}</th>`)
-    .join("");
-
-  const rows = data.days
-    .map((day) => {
-      const cells = data.categories
-        .map((cat) => {
+  const categorySections = data.categories
+    .map((cat) => {
+      const catLabel = data.categoryLabels[cat] ?? cat;
+      const rows = data.days
+        .map((day) => {
           const acts = day.byCategory[cat] ?? [];
           if (acts.length === 0) {
-            return `<td><span class="act-meta">—</span></td>`;
+            return `<tr>
+              <td class="day-cell">${escapeHtml(day.weekdayLabel)}<br/><span style="font-weight:500;font-size:9px;color:#64748b">${escapeHtml(day.dateLabel)}</span></td>
+              <td><span class="act-meta">—</span></td>
+            </tr>`;
           }
           const html = acts
             .map(
@@ -578,13 +601,25 @@ export function buildProgramacaoPrintHtml(
               </div>`,
             )
             .join("");
-          return `<td>${html}</td>`;
+          return `<tr>
+            <td class="day-cell">${escapeHtml(day.weekdayLabel)}<br/><span style="font-weight:500;font-size:9px;color:#64748b">${escapeHtml(day.dateLabel)}</span></td>
+            <td>${html}</td>
+          </tr>`;
         })
         .join("");
-      return `<tr>
-        <td class="day-cell">${escapeHtml(day.weekdayLabel)}<br/><span style="font-weight:500;font-size:9px;color:#64748b">${escapeHtml(day.dateLabel)}</span></td>
-        ${cells}
-      </tr>`;
+
+      return `<section class="section schedule-wrap schedule-category-section">
+        <h3 class="schedule-category-title">${escapeHtml(catLabel)}</h3>
+        <table class="schedule-table schedule-table-single">
+          <thead>
+            <tr>
+              <th>Dia</th>
+              <th>Programação</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </section>`;
     })
     .join("");
 
@@ -604,18 +639,11 @@ export function buildProgramacaoPrintHtml(
   `;
 
   const body = `
-    <section class="section schedule-wrap">
+    <section class="section">
       <h2 class="section-title">Programação semanal</h2>
-      <table class="schedule-table">
-        <thead>
-          <tr>
-            <th>Dia</th>
-            ${catHeaders}
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+      <p style="margin:0 0 14px;font-size:10px;color:#64748b">Uma página por categoria — imprima ou salve em PDF.</p>
     </section>
+    ${categorySections}
   `;
 
   return documentShell(

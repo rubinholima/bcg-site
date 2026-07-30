@@ -117,14 +117,16 @@ function dateKeyFromDate(d: Date): string {
 
 function EventPill({ event, compact }: { event: UnifiedAgendaEvent; compact?: boolean }) {
   const side = agendaMatchSideLabel(event.matchSide ?? null);
+  const useCategoryStyle = event.source === "futebol" && event.categoryPillStyle;
   return (
     <span
       className={cn(
         "block truncate rounded-md border px-1.5 py-0.5 text-left leading-tight",
         compact ? "text-[9px] sm:text-[10px]" : "text-[10px] sm:text-xs",
-        event.tone,
+        !useCategoryStyle && event.tone,
       )}
-      title={`${side ? `${side} · ` : ""}${event.title} — ${event.typeLabel}`}
+      style={useCategoryStyle ? event.categoryPillStyle : undefined}
+      title={`${side ? `${side} · ` : ""}${event.title} — ${event.typeLabel}${event.categoryLabel ? ` (${event.categoryLabel})` : ""}`}
     >
       {side && compact ? (
         <span className="mr-0.5 font-bold">{side === "Casa" ? "C" : "F"}</span>
@@ -156,7 +158,12 @@ function EventDetailCard({ ev }: { ev: UnifiedAgendaEvent }) {
       )}
     >
       <div
-        className={cn("mt-0.5 w-1.5 shrink-0 self-stretch rounded-full", ev.dotClass)}
+        className={cn("mt-0.5 w-1.5 shrink-0 self-stretch rounded-full", !ev.categoryPillStyle && ev.dotClass)}
+        style={
+          ev.categoryPillStyle
+            ? { backgroundColor: ev.categoryPillStyle.backgroundColor }
+            : undefined
+        }
         aria-hidden
       />
       <div className="min-w-0 flex-1">

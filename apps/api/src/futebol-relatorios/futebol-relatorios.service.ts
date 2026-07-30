@@ -16,6 +16,12 @@ import {
   isLoanedSportsSituation,
   normalizeSportsSituation,
 } from '../common/sports-situation.util';
+import {
+  addDaysToDateKey,
+  compareTimeLabels,
+  dateKeyInBrazil,
+  formatTimeBrazil,
+} from '../common/brazil-time.util';
 import type {
   HospedesReportDto,
   PassageirosReportDto,
@@ -72,8 +78,8 @@ function roomTypeFromCount(count: number): string {
 }
 
 function weekdayLabelPt(dateIso: string): string {
-  const d = new Date(`${dateIso}T12:00:00`);
-  return d.toLocaleDateString('pt-BR', { weekday: 'long' });
+  const d = new Date(`${dateIso}T12:00:00-03:00`);
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'America/Sao_Paulo' });
 }
 
 function capitalizeFirst(s: string): string {
@@ -274,29 +280,27 @@ export class FutebolRelatoriosService {
     });
 
     const dayMap = new Map<string, ProgramacaoSemanalReportDto['days'][number]>();
-    const cursor = new Date(from);
-    cursor.setHours(0, 0, 0, 0);
-    const end = new Date(to);
-    end.setHours(23, 59, 59, 999);
+    const fromKey = filters.from.slice(0, 10);
+    const toKey = filters.to.slice(0, 10);
+    let cursorKey = fromKey;
 
-    while (cursor <= end) {
-      const dateIso = cursor.toISOString().slice(0, 10);
+    while (cursorKey <= toKey) {
       const byCategory: Record<string, ProgramacaoSemanalReportDto['days'][number]['byCategory'][string]> =
         {};
       for (const cat of columns) byCategory[cat] = [];
-      dayMap.set(dateIso, {
-        date: dateIso,
-        weekdayLabel: capitalizeFirst(weekdayLabelPt(dateIso)),
-        dateLabel: formatBrDate(dateIso),
+      dayMap.set(cursorKey, {
+        date: cursorKey,
+        weekdayLabel: capitalizeFirst(weekdayLabelPt(cursorKey)),
+        dateLabel: formatBrDate(cursorKey),
         byCategory,
       });
-      cursor.setDate(cursor.getDate() + 1);
+      cursorKey = addDaysToDateKey(cursorKey, 1);
     }
 
     for (const item of items) {
       if (item.source === 'bch_booking') continue;
       const start = new Date(item.startAt);
-      const dateIso = start.toISOString().slice(0, 10);
+      const dateIso = dateKeyInBrazil(start);
       const day = dayMap.get(dateIso);
       if (!day) continue;
 
@@ -317,12 +321,7 @@ export class FutebolRelatoriosService {
       for (const targetCat of targetCats) {
         if (!day.byCategory[targetCat]) day.byCategory[targetCat] = [];
 
-        const time = item.allDay
-          ? 'Dia inteiro'
-          : start.toLocaleTimeString('pt-BR', {
-              hour: '2-digit',
-              minute: '2-digit',
-            });
+        const time = formatTimeBrazil(start, item.allDay);
 
         day.byCategory[targetCat].push({
           time,
@@ -336,7 +335,7 @@ export class FutebolRelatoriosService {
 
     for (const day of dayMap.values()) {
       for (const cat of Object.keys(day.byCategory)) {
-        day.byCategory[cat].sort((a, b) => a.time.localeCompare(b.time));
+        day.byCategory[cat].sort((a, b) => compareTimeLabels(a.time, b.time));
       }
     }
 
