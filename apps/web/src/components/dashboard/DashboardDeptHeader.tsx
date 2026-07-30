@@ -22,6 +22,7 @@ export type DashboardDeptStat = {
 type DashboardDeptHeaderProps = {
   section: string;
   sectionIcon?: LucideIcon;
+  /** Ícone só pode ser passado de outro Client Component — nunca de Server Component (RSC). */
   title: string;
   description?: string;
   stats?: DashboardDeptStat[];
