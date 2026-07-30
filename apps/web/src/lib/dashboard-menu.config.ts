@@ -796,9 +796,32 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           {
             slug: "saude_fisioterapia_relatorios",
             label: "Relatórios",
-            href: "/dashboard/saude/fisioterapia/relatorios",
+            href: "/dashboard/saude/fisioterapia/relatorios/atendimentos",
             icon: BarChart3,
             moduleSlug: "saude",
+            children: [
+              {
+                slug: "saude_fisioterapia_rel_atendimentos",
+                label: "Atendimentos e gráficos",
+                href: "/dashboard/saude/fisioterapia/relatorios/atendimentos",
+                icon: BarChart3,
+                moduleSlug: "saude",
+              },
+              {
+                slug: "saude_fisioterapia_rel_lesionados",
+                label: "Lesionados em tratamento",
+                href: "/dashboard/saude/fisioterapia/relatorios/lesionados-ativos",
+                icon: ClipboardList,
+                moduleSlug: "saude",
+              },
+              {
+                slug: "saude_fisioterapia_rel_carga",
+                label: "Carga por fisioterapeuta",
+                href: "/dashboard/saude/fisioterapia/relatorios/carga-fisio",
+                icon: Users,
+                moduleSlug: "saude",
+              },
+            ],
           },
         ],
       },
