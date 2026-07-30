@@ -840,7 +840,7 @@ export function LogisticaConvocacaoForm() {
               ) : guests.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   Nenhuma pessoa autorizada cadastrada para este clube. Use &quot;Cadastrar pessoa autorizada&quot; ou
-                  Logística → Referências → Pessoas autorizadas.
+                  Logística → Cadastros → Pessoas autorizadas.
                 </p>
               ) : (
                 <ul className="max-h-[min(280px,40vh)] space-y-1 overflow-y-auto rounded-md border border-zinc-800 p-2">

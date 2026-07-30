@@ -45,9 +45,19 @@ export interface LogisticaCadastroResource {
   requiresTenant?: boolean;
 }
 
-/** Nomenclatura BCG — seção de referências auxiliares da logística (não espelhar Beatscode). */
-export const LOGISTICA_REFERENCIAS_SECTION = "Referências";
-export const LOGISTICA_REFERENCIAS_BREADCRUMB = `Logística → ${LOGISTICA_REFERENCIAS_SECTION}`;
+/** Breadcrumb da seção Cadastros dentro de Logística */
+export const LOGISTICA_CADASTROS_SECTION = "Cadastros";
+export const LOGISTICA_CADASTROS_BREADCRUMB = `Logística → ${LOGISTICA_CADASTROS_SECTION}`;
+
+/** Props serializáveis para client components (sem ícone Lucide). */
+export type LogisticaCadastroResourceClient = Omit<LogisticaCadastroResource, "icon">;
+
+export function toLogisticaCadastroResourceClient(
+  resource: LogisticaCadastroResource,
+): LogisticaCadastroResourceClient {
+  const { icon: _icon, ...client } = resource;
+  return client;
+}
 
 export const LOGISTICA_CADASTRO_RESOURCES: LogisticaCadastroResource[] = [
   {

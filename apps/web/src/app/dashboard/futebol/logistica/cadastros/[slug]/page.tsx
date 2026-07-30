@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { LogisticaCadastroListClient } from "../LogisticaCadastroListClient";
 import { LogisticaCadastroTenantFilter } from "../LogisticaCadastroTenantFilter";
 import { fetchLogisticaCadastroList } from "@/lib/logistica-cadastros";
-import { assertLogisticaCadastroResource } from "@/lib/logistica-cadastros.config";
+import { assertLogisticaCadastroResource, toLogisticaCadastroResourceClient } from "@/lib/logistica-cadastros.config";
 
 export default async function LogisticaCadastroListPage({
   params,
@@ -22,12 +22,20 @@ export default async function LogisticaCadastroListPage({
   }
 
   const tenantId = sp.tenantId ?? "";
-  const rows =
-    resource.requiresTenant && !tenantId
-      ? []
-      : await fetchLogisticaCadastroList(resource.apiPath, {
-          tenantId: resource.requiresTenant ? tenantId : undefined,
-        });
+  let rows: Awaited<ReturnType<typeof fetchLogisticaCadastroList>> = [];
+  let loadError: string | null = null;
+
+  if (!(resource.requiresTenant && !tenantId)) {
+    try {
+      rows = await fetchLogisticaCadastroList(resource.apiPath, {
+        tenantId: resource.requiresTenant ? tenantId : undefined,
+      });
+    } catch (err) {
+      loadError = err instanceof Error ? err.message : "Erro ao carregar registros";
+    }
+  }
+
+  const resourceClient = toLogisticaCadastroResourceClient(resource);
 
   return (
     <div className="space-y-6">
@@ -42,10 +50,11 @@ export default async function LogisticaCadastroListPage({
         </p>
       ) : (
         <LogisticaCadastroListClient
-          resource={resource}
+          resource={resourceClient}
           initialRows={rows}
           tenantId={tenantId || undefined}
           showSuccess={sp.success === "true"}
+          loadError={loadError}
         />
       )}
     </div>

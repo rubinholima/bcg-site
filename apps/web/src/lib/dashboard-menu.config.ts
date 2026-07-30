@@ -476,37 +476,16 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "futebol_logistica",
         children: [
           {
-            slug: "futebol_logistica_viagens",
-            label: "Viagens",
-            href: "/dashboard/futebol/logistica",
-            icon: MapIcon,
-            moduleSlug: "futebol_logistica",
-          },
-          {
-            slug: "futebol_logistica_convocacao",
-            label: "Convocação",
-            href: "/dashboard/futebol/logistica/convocacao",
-            icon: ClipboardCheck,
-            moduleSlug: "futebol_logistica",
-          },
-          {
-            slug: "futebol_logistica_agenda",
-            label: "Agenda",
-            href: "/dashboard/futebol/logistica/agenda",
-            icon: Calendar,
-            moduleSlug: "futebol_logistica",
-          },
-          {
             slug: "futebol_logistica_cadastros",
-            label: "Referências",
+            label: "Cadastros",
             icon: Database,
             moduleSlug: "futebol_logistica",
             children: [
               {
                 slug: "futebol_logistica_cad_hub",
-                label: "Índice",
+                label: DEPT_HUB_MENU_LABEL,
                 href: "/dashboard/futebol/logistica/cadastros",
-                icon: Database,
+                icon: LayoutDashboard,
                 moduleSlug: "futebol_logistica",
               },
               {
@@ -566,6 +545,27 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
                 moduleSlug: "futebol_logistica",
               },
             ],
+          },
+          {
+            slug: "futebol_logistica_viagens",
+            label: "Viagens",
+            href: "/dashboard/futebol/logistica",
+            icon: MapIcon,
+            moduleSlug: "futebol_logistica",
+          },
+          {
+            slug: "futebol_logistica_convocacao",
+            label: "Convocação",
+            href: "/dashboard/futebol/logistica/convocacao",
+            icon: ClipboardCheck,
+            moduleSlug: "futebol_logistica",
+          },
+          {
+            slug: "futebol_logistica_agenda",
+            label: "Agenda",
+            href: "/dashboard/futebol/logistica/agenda",
+            icon: Calendar,
+            moduleSlug: "futebol_logistica",
           },
           {
             slug: "futebol_logistica_relatorios",

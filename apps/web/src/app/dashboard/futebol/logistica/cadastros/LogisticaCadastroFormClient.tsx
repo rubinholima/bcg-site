@@ -13,11 +13,11 @@ import { api } from "@/lib/api";
 import { toDateInputValue, type LogisticsLookupRow } from "@/lib/logistica-cadastros";
 import {
   LOGISTICA_CADASTROS_BASE,
-  type LogisticaCadastroResource,
+  type LogisticaCadastroResourceClient,
 } from "@/lib/logistica-cadastros.config";
 
 interface Props {
-  resource: LogisticaCadastroResource;
+  resource: LogisticaCadastroResourceClient;
   mode: "create" | "edit";
   initial?: LogisticsLookupRow | null;
   tenantId?: string;

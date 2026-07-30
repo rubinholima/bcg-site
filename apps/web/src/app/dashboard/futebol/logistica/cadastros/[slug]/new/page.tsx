@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { LogisticaCadastroFormClient } from "../../LogisticaCadastroFormClient";
 import { LogisticaCadastroTenantFilter } from "../../LogisticaCadastroTenantFilter";
-import { assertLogisticaCadastroResource } from "@/lib/logistica-cadastros.config";
+import { assertLogisticaCadastroResource, toLogisticaCadastroResourceClient } from "@/lib/logistica-cadastros.config";
 
 export default async function LogisticaCadastroNewPage({
   params,
@@ -30,7 +30,7 @@ export default async function LogisticaCadastroNewPage({
         </Suspense>
       )}
       <LogisticaCadastroFormClient
-        resource={resource}
+        resource={toLogisticaCadastroResourceClient(resource)}
         mode="create"
         tenantId={tenantId || undefined}
       />

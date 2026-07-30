@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { LogisticaCadastroFormClient } from "../../../LogisticaCadastroFormClient";
 import { fetchLogisticaCadastroOne } from "@/lib/logistica-cadastros";
-import { assertLogisticaCadastroResource } from "@/lib/logistica-cadastros.config";
+import { assertLogisticaCadastroResource, toLogisticaCadastroResourceClient } from "@/lib/logistica-cadastros.config";
 
 export default async function LogisticaCadastroEditPage({
   params,
@@ -25,7 +25,7 @@ export default async function LogisticaCadastroEditPage({
 
   return (
     <LogisticaCadastroFormClient
-      resource={resource}
+      resource={toLogisticaCadastroResourceClient(resource)}
       mode="edit"
       initial={initial}
       tenantId={sp.tenantId ?? undefined}

@@ -16,7 +16,7 @@ import {
   EMPTY_LOGISTICS_TRAVEL_CADASTROS,
   type LogisticsTravelCadastros,
 } from "@/lib/logistica-travel-cadastros.types";
-import { LOGISTICA_CADASTROS_BASE, LOGISTICA_REFERENCIAS_BREADCRUMB } from "@/lib/logistica-cadastros.config";
+import { LOGISTICA_CADASTROS_BASE, LOGISTICA_CADASTROS_BREADCRUMB } from "@/lib/logistica-cadastros.config";
 
 interface Props {
   transportType: string;
@@ -236,9 +236,9 @@ export function LogisticaTravelCadastrosFields({
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Referências em{" "}
+            Cadastros em{" "}
             <Link href={LOGISTICA_CADASTROS_BASE} className="text-primary underline-offset-2 hover:underline">
-              {LOGISTICA_REFERENCIAS_BREADCRUMB}
+            {LOGISTICA_CADASTROS_BREADCRUMB}
             </Link>
             .
           </p>

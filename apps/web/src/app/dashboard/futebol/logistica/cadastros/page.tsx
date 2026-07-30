@@ -10,7 +10,7 @@ export default function LogisticaCadastrosHubPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Referências de logística</CardTitle>
+          <CardTitle>Cadastros de logística</CardTitle>
           <CardDescription>
             Tabelas auxiliares para viagens, convocação e despesas — transportadoras, hospedagem, milhas
             e pessoas autorizadas.

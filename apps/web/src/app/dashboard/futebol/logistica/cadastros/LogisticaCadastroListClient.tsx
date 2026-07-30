@@ -34,14 +34,15 @@ import {
 } from "@/lib/logistica-cadastros";
 import {
   LOGISTICA_CADASTROS_BASE,
-  type LogisticaCadastroResource,
+  type LogisticaCadastroResourceClient,
 } from "@/lib/logistica-cadastros.config";
 
 interface Props {
-  resource: LogisticaCadastroResource;
+  resource: LogisticaCadastroResourceClient;
   initialRows: LogisticsLookupRow[];
   tenantId?: string;
   showSuccess?: boolean;
+  loadError?: string | null;
 }
 
 function cellValue(row: LogisticsLookupRow, key: string, nestedKey?: string): string {
@@ -59,6 +60,7 @@ export function LogisticaCadastroListClient({
   initialRows,
   tenantId,
   showSuccess,
+  loadError,
 }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -112,6 +114,12 @@ export function LogisticaCadastroListClient({
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          {loadError}
+        </div>
+      )}
+
       {showSuccess && (
         <div className="flex items-center gap-2 rounded-lg border border-green-500/50 bg-green-500/10 p-4 text-green-500">
           Operação realizada com sucesso!
