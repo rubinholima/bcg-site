@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Pencil, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,16 @@ import { Label } from "@/components/ui/label";
 import { PhysioBodyMap } from "@/components/dashboard/fisioterapia/PhysioBodyMap";
 import type { PhysioEvolutionNote, PhysioSession } from "@/types/fisioterapia";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function FisioterapiaSessionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +33,8 @@ export default function FisioterapiaSessionDetailPage() {
   const [note, setNote] = useState("");
   const [pain, setPain] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
     open: false,
     title: "",
@@ -84,6 +96,24 @@ export default function FisioterapiaSessionDetailPage() {
       setFeedback({ open: true, title: "Erro", message: "Não foi possível finalizar." });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/fisioterapia/sessions/${id}`);
+      router.push("/dashboard/saude/fisioterapia");
+    } catch {
+      setDeleteOpen(false);
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: "Não foi possível excluir o atendimento. Tente novamente.",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -167,16 +197,32 @@ export default function FisioterapiaSessionDetailPage() {
               {session.category ? ` · ${session.category}` : ""}
             </p>
           </div>
-          {session.status === "active" ? (
-            <Button className="min-h-[44px]" disabled={saving} onClick={() => void complete()}>
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Dar alta
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" className="min-h-[44px]">
+              <Link href={`/dashboard/saude/fisioterapia/${id}/edit`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
+              </Link>
             </Button>
-          ) : (
-            <span className="rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">
-              {session.status === "completed" ? "Alta" : "Cancelado"}
-            </span>
-          )}
+            <Button
+              variant="outline"
+              className="min-h-[44px] text-destructive hover:text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir
+            </Button>
+            {session.status === "active" ? (
+              <Button className="min-h-[44px]" disabled={saving} onClick={() => void complete()}>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Dar alta
+              </Button>
+            ) : (
+              <span className="inline-flex min-h-[44px] items-center rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">
+                {session.status === "completed" ? "Alta" : "Cancelado"}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -307,6 +353,33 @@ export default function FisioterapiaSessionDetailPage() {
         title={feedback.title}
         message={feedback.message}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir atendimento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O registro de fisioterapia de{" "}
+              <strong>{session.player?.name}</strong> será removido permanentemente, incluindo evoluções
+              e anexos vinculados a este atendimento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

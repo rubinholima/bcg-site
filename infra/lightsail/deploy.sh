@@ -144,12 +144,20 @@ fi
 
 echo "$NEW_REV" > "$REV_FILE"
 
-sleep 2
-log "health check..."
-if curl -sf http://127.0.0.1:3001/group >/dev/null; then
-  log "health: GET /group OK"
-else
-  log "AVISO: API :3001 não respondeu /group — veja pm2 logs bcg-api"
+log "health check (GET /group, até 6 tentativas)..."
+HEALTH_OK=0
+for i in 1 2 3 4 5 6; do
+  if curl -sf --connect-timeout 3 --max-time 10 http://127.0.0.1:3001/group >/dev/null; then
+    log "health: GET /group OK (tentativa $i)"
+    HEALTH_OK=1
+    break
+  fi
+  if [ "$i" -lt 6 ]; then
+    sleep 3
+  fi
+done
+if [ "$HEALTH_OK" -eq 0 ]; then
+  log "AVISO: API :3001 não respondeu /group após 6 tentativas — veja pm2 logs bcg-api"
   pm2 logs bcg-api --lines 20 --nostream 2>/dev/null || true
 fi
 

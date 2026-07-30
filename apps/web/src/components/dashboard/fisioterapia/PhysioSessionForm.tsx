@@ -13,8 +13,10 @@ import type {
   PhysioAttachment,
   PhysioBodyRegion,
   PhysioDiagnosis,
+  PhysioSession,
   PhysioSessionRegionInput,
   PhysioTreatment,
+  UpdatePhysioSessionPayload,
 } from "@/types/fisioterapia";
 import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
@@ -42,14 +44,18 @@ export function PhysioSessionForm({
   initialTenantId,
   initialPlayerId,
   initialCategory,
+  sessionId,
   onSaved,
 }: {
   tenants: TenantOpt[];
   initialTenantId?: string;
   initialPlayerId?: string;
   initialCategory?: string;
+  /** Modo edição — carrega atendimento existente e faz PATCH. */
+  sessionId?: string;
   onSaved: (sessionId: string) => void;
 }) {
+  const isEdit = Boolean(sessionId);
   const { categories: allCats } = useFixtureCategories();
   const [tenantId, setTenantId] = useState(initialTenantId ?? "");
   const [category, setCategory] = useState(initialCategory ?? "");
@@ -80,6 +86,8 @@ export function PhysioSessionForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingMeta, setLoadingMeta] = useState(true);
+  const [loadingSession, setLoadingSession] = useState(isEdit);
+  const [pendingStaffName, setPendingStaffName] = useState<string | null>(null);
   const [loadingDx, setLoadingDx] = useState(false);
   const [painRegions, setPainRegions] = useState<PainRegionEntry[]>([]);
   const [selectedDiagnosisIds, setSelectedDiagnosisIds] = useState<string[]>([]);
@@ -107,6 +115,86 @@ export function PhysioSessionForm({
       })
       .finally(() => setLoadingMeta(false));
   }, []);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    setLoadingSession(true);
+    api
+      .get<PhysioSession>(`/fisioterapia/sessions/${sessionId}`)
+      .then(({ data }) => {
+        setTenantId(data.tenantId);
+        setPlayerId(data.playerId);
+        setCategory(data.category ?? "");
+        setView((data.bodyMapView as "front" | "back") || "front");
+        setRegionId(data.regionId);
+        setSide(data.side ?? "");
+        setBodyMapX(data.bodyMapX ?? undefined);
+        setBodyMapY(data.bodyMapY ?? undefined);
+        setSymptoms(data.symptoms ?? "");
+        setPainScore(data.painScore != null ? String(data.painScore) : "");
+        setTreatmentId(data.treatmentId ?? "");
+        setTreatmentNotes(data.treatmentNotes ?? "");
+        setEstimatedDays(data.estimatedDays != null ? String(data.estimatedDays) : "");
+        setEstimatedEndDate(
+          data.estimatedEndDate ? String(data.estimatedEndDate).slice(0, 10) : "",
+        );
+        setStaffId(data.staffId ?? "");
+        if (!data.staffId && data.staffName) setPendingStaffName(data.staffName);
+        else setPendingStaffName(null);
+        setAttachments(Array.isArray(data.attachments) ? data.attachments : []);
+
+        const regionRows =
+          data.sessionRegions && data.sessionRegions.length > 0
+            ? data.sessionRegions
+            : [
+                {
+                  regionId: data.regionId,
+                  side: data.side ?? undefined,
+                  bodyMapView: data.bodyMapView ?? undefined,
+                  bodyMapX: data.bodyMapX ?? undefined,
+                  bodyMapY: data.bodyMapY ?? undefined,
+                },
+              ];
+        setPainRegions(
+          regionRows.map((r) => ({
+            regionId: r.regionId,
+            side: r.side ?? undefined,
+            bodyMapView: (r.bodyMapView as "front" | "back" | undefined) ?? undefined,
+            bodyMapX: r.bodyMapX ?? undefined,
+            bodyMapY: r.bodyMapY ?? undefined,
+            key: regionKey(r.regionId, r.side ?? undefined),
+          })),
+        );
+
+        const dxIds =
+          data.sessionDiagnoses && data.sessionDiagnoses.length > 0
+            ? data.sessionDiagnoses
+                .map((d) => d.diagnosisId)
+                .filter((id): id is string => Boolean(id))
+            : data.diagnosisId
+              ? [data.diagnosisId]
+              : [];
+        setSelectedDiagnosisIds(dxIds);
+      })
+      .catch(() => setError("Não foi possível carregar o atendimento."))
+      .finally(() => setLoadingSession(false));
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!pendingStaffName || staffId || staffList.length === 0) return;
+    const match = staffList.find(
+      (s) => s.name.trim().toLowerCase() === pendingStaffName.trim().toLowerCase(),
+    );
+    if (match) {
+      setStaffId(match.id);
+      setPendingStaffName(null);
+    }
+  }, [pendingStaffName, staffId, staffList]);
+
+  useEffect(() => {
+    if (!isEdit || !staffId || staffList.length === 0) return;
+    if (!staffList.some((s) => s.id === staffId)) setStaffId("");
+  }, [isEdit, staffId, staffList]);
 
   useEffect(() => {
     if (!tenantId) {
@@ -315,21 +403,50 @@ export function PhysioSessionForm({
     }
     setSaving(true);
     try {
+      const regionsPayload = painRegions.map(({ regionId: rid, side: s, bodyMapView, bodyMapX: x, bodyMapY: y }) => ({
+        regionId: rid,
+        side: s,
+        bodyMapView,
+        bodyMapX: x,
+        bodyMapY: y,
+      }));
+      const diagnosesPayload = selectedDiagnosisIds.map((id) => {
+        const dx = diagnoses.find((d) => d.id === id);
+        return { diagnosisId: id, regionId: dx?.regionId };
+      });
+
+      if (isEdit && sessionId) {
+        const payload: UpdatePhysioSessionPayload = {
+          category: category || undefined,
+          regions: regionsPayload,
+          diagnoses: diagnosesPayload,
+          regionId: painRegions[0]?.regionId,
+          side: painRegions[0]?.side,
+          bodyMapView: painRegions[0]?.bodyMapView ?? view,
+          bodyMapX: painRegions[0]?.bodyMapX,
+          bodyMapY: painRegions[0]?.bodyMapY,
+          symptoms: symptoms || undefined,
+          painScore: painScore ? Number(painScore) : undefined,
+          diagnosisId: selectedDiagnosisIds[0],
+          treatmentId: treatmentId || undefined,
+          treatmentNotes: treatmentNotes || undefined,
+          estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
+          estimatedEndDate: estimatedEndDate || null,
+          staffId: staffId || undefined,
+          staffName: selectedStaff?.name || undefined,
+          attachments: attachments.length ? attachments : [],
+        };
+        await api.patch(`/fisioterapia/sessions/${sessionId}`, payload);
+        onSaved(sessionId);
+        return;
+      }
+
       const payload: CreatePhysioSessionPayload = {
         tenantId,
         playerId,
         category: category || undefined,
-        regions: painRegions.map(({ regionId: rid, side: s, bodyMapView, bodyMapX: x, bodyMapY: y }) => ({
-          regionId: rid,
-          side: s,
-          bodyMapView,
-          bodyMapX: x,
-          bodyMapY: y,
-        })),
-        diagnoses: selectedDiagnosisIds.map((id) => {
-          const dx = diagnoses.find((d) => d.id === id);
-          return { diagnosisId: id, regionId: dx?.regionId };
-        }),
+        regions: regionsPayload,
+        diagnoses: diagnosesPayload,
         regionId: painRegions[0]?.regionId,
         side: painRegions[0]?.side,
         bodyMapView: painRegions[0]?.bodyMapView ?? view,
@@ -359,7 +476,7 @@ export function PhysioSessionForm({
     }
   };
 
-  if (loadingMeta) {
+  if (loadingMeta || loadingSession) {
     return (
       <div className="flex justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -396,6 +513,7 @@ export function PhysioSessionForm({
                 setStaffId("");
                 setCategory("");
               }}
+              disabled={isEdit}
             >
               <option value="">Selecione…</option>
               {tenants.map((t) => (
@@ -424,7 +542,7 @@ export function PhysioSessionForm({
 
         <div className="grid gap-1.5">
           <Label>Atleta *</Label>
-          <NativeSelect value={playerId} onChange={(e) => setPlayerId(e.target.value)}>
+          <NativeSelect value={playerId} onChange={(e) => setPlayerId(e.target.value)} disabled={isEdit}>
             <option value="">Selecione…</option>
             {filteredPlayers.map((p) => (
               <option key={p.id} value={p.id}>
@@ -715,7 +833,7 @@ export function PhysioSessionForm({
 
         <Button type="button" className="min-h-[44px]" disabled={saving} onClick={() => void handleSubmit()}>
           {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Salvar atendimento
+          {isEdit ? "Salvar alterações" : "Salvar atendimento"}
         </Button>
       </div>
     </div>

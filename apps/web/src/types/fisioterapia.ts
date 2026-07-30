@@ -145,6 +145,30 @@ export interface CreatePhysioSessionPayload {
   attachments?: PhysioAttachment[];
 }
 
+export interface UpdatePhysioSessionPayload {
+  category?: string;
+  regionId?: string;
+  regions?: PhysioSessionRegionInput[];
+  diagnoses?: PhysioSessionDiagnosisInput[];
+  side?: PhysioSide;
+  bodyMapView?: PhysioBodyMapView;
+  bodyMapX?: number;
+  bodyMapY?: number;
+  symptoms?: string;
+  painScore?: number;
+  diagnosisId?: string;
+  diagnosisLabel?: string;
+  treatmentId?: string;
+  treatmentLabel?: string;
+  treatmentNotes?: string;
+  estimatedDays?: number;
+  estimatedEndDate?: string | null;
+  staffId?: string;
+  staffName?: string;
+  attachments?: PhysioAttachment[];
+  status?: PhysioSessionStatus;
+}
+
 export interface PhysioGroupAttendanceRow {
   playerId: string;
   playerName?: string;
