@@ -31,6 +31,8 @@ export interface FutebolRelatorioTravel {
   category?: string | null;
   categories?: string[] | null;
   status: string;
+  isHomeMatch?: boolean;
+  externalId?: string | null;
 }
 
 export function isClubForRelatorio(kindName: string | null | undefined): boolean {
@@ -46,7 +48,8 @@ export function formatTravelLabel(t: FutebolRelatorioTravel): string {
   const vs = t.opponentName ? ` vs ${t.opponentName}` : "";
   const cat = formatTravelCategoriesDisplay(t.category, t.categories);
   const club = t.tenant?.name ? `${t.tenant.name} · ` : "";
-  return `${club}${date}${vs}${cat ? ` (${cat})` : ""}`;
+  const side = t.isHomeMatch ? " · Casa" : t.isHomeMatch === false ? " · Fora" : "";
+  return `${club}${date}${vs}${side}${cat ? ` (${cat})` : ""}`;
 }
 
 export function startOfWeekMonday(d: Date): Date {

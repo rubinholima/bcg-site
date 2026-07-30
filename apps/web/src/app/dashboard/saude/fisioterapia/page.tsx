@@ -132,18 +132,20 @@ export default function FisioterapiaPage() {
           </h1>
           <p className="mt-1 text-muted-foreground">Atendimentos, mapa corporal e evolução até a alta.</p>
         </div>
-        <Button asChild variant="outline" className="min-h-[44px]">
-          <Link href="/dashboard/saude/fisioterapia/recovery-grupo">
-            <Users className="mr-2 h-4 w-4" />
-            Recovery em grupo
-          </Link>
-        </Button>
-        <Button asChild className="min-h-[44px]">
-          <Link href="/dashboard/saude/fisioterapia/novo">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo atendimento
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2 sm:justify-end">
+          <Button asChild variant="outline" className="min-h-[44px]">
+            <Link href="/dashboard/saude/fisioterapia/recovery-grupo">
+              <Users className="mr-2 h-4 w-4" />
+              Recovery em grupo
+            </Link>
+          </Button>
+          <Button asChild className="min-h-[44px]">
+            <Link href="/dashboard/saude/fisioterapia/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo atendimento
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

@@ -77,11 +77,10 @@ export class FmfTravelSyncService {
         for (const m of snap.matches) {
           if (m.status !== 'scheduled') continue;
 
+          const isHome = isFmfTeamMatch(m.homeName, tenant.name, aliases);
           const isAway = isFmfTeamMatch(m.awayName, tenant.name, aliases);
-          if (!isAway) {
-            if (isFmfTeamMatch(m.homeName, tenant.name, aliases)) skippedHome++;
-            continue;
-          }
+          if (!isHome && !isAway) continue;
+          if (isHome && isAway) continue;
 
           const startISO = fmfMatchToStartISO(m);
           if (!startISO) continue;
@@ -92,7 +91,8 @@ export class FmfTravelSyncService {
           }
 
           const externalId = buildFmfTravelExternalId(presetKey, m);
-          const opponentName = m.homeName.trim() || null;
+          const isHomeMatch = isHome;
+          const opponentName = (isHomeMatch ? m.awayName : m.homeName).trim() || null;
           const championshipParts = [
             snap.name,
             m.phaseLabel?.trim(),
@@ -110,6 +110,7 @@ export class FmfTravelSyncService {
             awayName: m.awayName,
             venueText: m.venueText,
             competitionName: snap.name,
+            isHomeMatch,
           } satisfies Record<string, unknown>;
 
           const existing = await this.prisma.travelLogistics.findFirst({
@@ -123,6 +124,7 @@ export class FmfTravelSyncService {
               data: {
                 category: snap.fixtureCategory,
                 matchDate,
+                isHomeMatch,
                 opponentName,
                 stadiumName,
                 championshipName,
@@ -138,6 +140,7 @@ export class FmfTravelSyncService {
                 externalId,
                 category: snap.fixtureCategory,
                 matchDate,
+                isHomeMatch,
                 opponentName,
                 stadiumName,
                 city: null,

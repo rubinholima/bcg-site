@@ -23,6 +23,12 @@ import { isFootballKind } from "@/lib/home-data";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { RoomAssignmentTable, type RoomAssignment } from "../components/RoomAssignmentTable";
 import {
+  formatFixtureOptionLabel,
+  resolveFixtureOpponentName,
+  upcomingFixtures,
+  type AgendaFixture,
+} from "@/lib/travel-fixture-utils";
+import {
   TravelCategoriesField,
   travelCategoriesPayload,
 } from "@/components/dashboard/futebol/TravelCategoriesField";
@@ -35,16 +41,7 @@ interface Tenant {
   categories?: string[] | null;
 }
 
-interface FixtureItem {
-  externalId: string;
-  startISO: string;
-  competitionName?: string;
-  venueName?: string;
-  homeTeamName: string;
-  awayTeamName: string;
-  category?: string;
-  isOurTeamHome?: boolean;
-}
+interface FixtureItem extends AgendaFixture {}
 
 interface Championship {
   id: string;
@@ -90,7 +87,7 @@ export default function NewLogisticaPage() {
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [stadiums, setStadiums] = useState<Stadium[]>([]);
   const [visitingTeams, setVisitingTeams] = useState<VisitingTeam[]>([]);
-  const [awayFixtures, setAwayFixtures] = useState<FixtureItem[]>([]);
+  const [upcomingFixturesList, setUpcomingFixturesList] = useState<FixtureItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -205,26 +202,25 @@ export default function NewLogisticaPage() {
 
   useEffect(() => {
     if (!tenantId || dataSource !== "fixture") {
-      setAwayFixtures([]);
+      setUpcomingFixturesList([]);
       return;
     }
     fetch(`/api/public/tenants/by-id/${encodeURIComponent(tenantId)}/fixtures`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: FixtureItem[]) => {
         const list = Array.isArray(data) ? data : [];
-        const away = list.filter((f) => f.isOurTeamHome === false && new Date(f.startISO) > new Date());
-        setAwayFixtures(away);
+        setUpcomingFixturesList(upcomingFixtures(list));
         setSelectedFixtureId("");
       })
-      .catch(() => setAwayFixtures([]));
+      .catch(() => setUpcomingFixturesList([]));
   }, [tenantId, dataSource]);
 
   useEffect(() => {
     if (selectedFixtureId && dataSource === "fixture") {
-      const f = awayFixtures.find((x) => x.externalId === selectedFixtureId);
+      const f = upcomingFixturesList.find((x) => x.externalId === selectedFixtureId);
       if (f) {
         setMatchDate(f.startISO.slice(0, 10));
-        setOpponentName(f.homeTeamName || "");
+        setOpponentName(resolveFixtureOpponentName(f, selectedTenant?.name ?? ""));
         setStadiumName(f.venueName || "");
         setChampionshipName(f.competitionName || "");
         setCategory(f.category || "");
@@ -235,18 +231,20 @@ export default function NewLogisticaPage() {
         }
       }
     }
-  }, [selectedFixtureId, dataSource, awayFixtures, stadiums]);
+  }, [selectedFixtureId, dataSource, upcomingFixturesList, stadiums, selectedTenant?.name]);
 
   const categoriesForDropdown = selectedTenant?.categories?.length
     ? FIXTURE_CATEGORIES.filter((c) => selectedTenant.categories!.includes(c.value))
     : FIXTURE_CATEGORIES;
 
-  const filteredAwayFixtures =
+  const filteredFixtures =
     dataSource === "fixture"
       ? category
-        ? awayFixtures.filter((f) => (f.category || "principal") === category)
-        : awayFixtures
-      : awayFixtures;
+        ? upcomingFixturesList.filter((f) => (f.category || "principal") === category)
+        : upcomingFixturesList
+      : upcomingFixturesList;
+
+  const selectedFixture = upcomingFixturesList.find((f) => f.externalId === selectedFixtureId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -269,6 +267,8 @@ export default function NewLogisticaPage() {
         tenantId,
         ...travelCategoriesPayload(multiCategoryMode, category, selectedCategories),
         matchDate: matchDate.trim(),
+        isHomeMatch: selectedFixture?.isOurTeamHome === true,
+        externalId: selectedFixture?.externalId,
         opponentName: opponentName.trim() || undefined,
         stadiumName: stadiumName.trim() || undefined,
         city: city.trim() || undefined,
@@ -312,7 +312,7 @@ export default function NewLogisticaPage() {
           <CardHeader>
             <CardTitle>Jogo</CardTitle>
             <CardDescription>
-              Escolha um jogo do módulo Próximos Jogos (fora) ou preencha manualmente.
+              Escolha um jogo da agenda (casa ou fora) ou preencha manualmente.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -338,7 +338,7 @@ export default function NewLogisticaPage() {
                     onValueChange={(v) => { setCategory(v === "none" ? "" : v); setSelectedFixtureId(""); }}
                   >
                     <SelectTrigger id="categoryFilter">
-                      <SelectValue placeholder="Todas (mostra todos os jogos fora)" />
+                      <SelectValue placeholder="Todas (casa e fora)" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Todas</SelectItem>
@@ -348,7 +348,7 @@ export default function NewLogisticaPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Filtra por categoria. Deixe &quot;Todas&quot; para ver todos os jogos fora.
+                    Filtra por categoria. Deixe &quot;Todas&quot; para ver todos os próximos jogos.
                   </p>
                 </div>
               )}
@@ -359,7 +359,7 @@ export default function NewLogisticaPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="fixture">Próximos jogos fora</SelectItem>
+                    <SelectItem value="fixture">Próximos jogos (casa e fora)</SelectItem>
                     <SelectItem value="manual">Preencher manualmente</SelectItem>
                   </SelectContent>
                 </Select>
@@ -368,23 +368,18 @@ export default function NewLogisticaPage() {
 
             {dataSource === "fixture" && tenantId && (
               <div className="space-y-2">
-                <Label>Selecione o jogo fora</Label>
+                <Label>Selecione o jogo</Label>
                 <Select value={selectedFixtureId || "none"} onValueChange={(v) => setSelectedFixtureId(v === "none" ? "" : v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder={filteredAwayFixtures.length === 0 ? "Nenhum jogo fora" : "Selecione o jogo"} />
+                    <SelectValue placeholder={filteredFixtures.length === 0 ? "Nenhum jogo futuro" : "Selecione o jogo"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">—</SelectItem>
-                    {filteredAwayFixtures.map((f) => {
-                      const awayDisplay = /nosso\s+clube/i.test(f.awayTeamName || "")
-                        ? (selectedTenant?.name ?? "Nosso Clube")
-                        : (f.awayTeamName ?? "");
-                      return (
-                        <SelectItem key={f.externalId} value={f.externalId}>
-                          {f.homeTeamName} vs {awayDisplay} — {new Date(f.startISO).toLocaleDateString("pt-BR")} — {f.venueName || "?"} — {f.competitionName || ""}
-                        </SelectItem>
-                      );
-                    })}
+                    {filteredFixtures.map((f) => (
+                      <SelectItem key={f.externalId} value={f.externalId}>
+                        {formatFixtureOptionLabel(f, selectedTenant?.name ?? "Nosso Clube")}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

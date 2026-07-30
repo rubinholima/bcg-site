@@ -216,6 +216,8 @@ model TravelLogistics {
   /** Categorias quando a viagem é compartilhada (ex.: sub15 + sub17). Se preenchido, prevalece sobre category. */
   categories            Json?
   matchDate             DateTime  // data do jogo
+  /** true = mandante (jogo em casa); false = visitante / viagem fora */
+  isHomeMatch           Boolean   @default(false)
   opponentName          String?   // adversário
   stadiumName           String?
   city                  String?

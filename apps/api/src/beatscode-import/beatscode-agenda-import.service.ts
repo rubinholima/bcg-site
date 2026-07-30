@@ -116,6 +116,7 @@ export class BeatscodeAgendaImportService {
                 externalId: travel.externalId,
                 category: travel.category,
                 matchDate: travel.matchDate,
+                isHomeMatch: travel.isHomeMatch,
                 opponentName: travel.opponentName,
                 stadiumName: travel.stadiumName,
                 city: travel.city,

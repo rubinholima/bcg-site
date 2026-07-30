@@ -5,6 +5,7 @@ import {
   IsDateString,
   IsObject,
   IsIn,
+  IsBoolean,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -23,6 +24,15 @@ export class CreateTravelLogisticsDto {
 
   @IsDateString()
   matchDate: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isHomeMatch?: boolean;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  externalId?: string;
 
   @IsString()
   @IsOptional()

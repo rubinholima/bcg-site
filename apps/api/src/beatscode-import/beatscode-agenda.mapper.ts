@@ -20,6 +20,7 @@ export type MappedBeatscodeTravel = {
   externalId: string;
   category: string;
   matchDate: Date;
+  isHomeMatch: boolean;
   opponentName: string | null;
   stadiumName: string | null;
   city: string | null;
@@ -159,12 +160,10 @@ function scheduleExternalId(categoryKey: string, row: Record<string, unknown>): 
   return null;
 }
 
-function isAwayMatch(row: Record<string, unknown>, dataMatch: Record<string, unknown> | undefined): boolean {
+function isMatchForTravel(row: Record<string, unknown>, dataMatch: Record<string, unknown> | undefined): boolean {
   if (row.isTravel === true) return true;
   if (!dataMatch) return false;
-  const comp = dataMatch.competition as { local?: string } | undefined;
-  const local = String(comp?.local ?? '').toLowerCase();
-  return local.includes('fora') || local.includes('visit');
+  return true;
 }
 
 function mapTravelFromMatch(
@@ -172,7 +171,7 @@ function mapTravelFromMatch(
   row: Record<string, unknown>,
   dataMatch: Record<string, unknown>,
 ): MappedBeatscodeTravel | null {
-  if (!isAwayMatch(row, dataMatch)) return null;
+  if (!isMatchForTravel(row, dataMatch)) return null;
   const link = row.link as { id?: number } | undefined;
   const matchId = link?.id ?? dataMatch.id;
   if (matchId == null) return null;
@@ -203,6 +202,7 @@ function mapTravelFromMatch(
     externalId,
     category: categoryKey,
     matchDate: startAt,
+    isHomeMatch: isPrincipalUs,
     opponentName,
     stadiumName: stadium?.name?.trim() || null,
     city: stadium?.city?.trim() || stadium?.uf?.trim() || null,

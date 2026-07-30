@@ -25,6 +25,12 @@ import {
   useFutebolRelatorioTenants,
   type FutebolRelatorioTravel,
 } from "@/components/dashboard/futebol/relatorios/futebol-relatorio-shared";
+import {
+  formatFixtureOptionLabel,
+  resolveFixtureOpponentName,
+  upcomingFixtures,
+  type AgendaFixture,
+} from "@/lib/travel-fixture-utils";
 
 interface PlayerRow {
   id: string;
@@ -66,6 +72,10 @@ export function LogisticaConvocacaoForm() {
   const [travelId, setTravelId] = useState(initialTravelId);
   const [travels, setTravels] = useState<FutebolRelatorioTravel[]>([]);
   const [loadingTravels, setLoadingTravels] = useState(false);
+  const [fixtures, setFixtures] = useState<AgendaFixture[]>([]);
+  const [loadingFixtures, setLoadingFixtures] = useState(false);
+  const [selectedFixtureId, setSelectedFixtureId] = useState("");
+  const [creatingFromFixture, setCreatingFromFixture] = useState(false);
 
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -127,6 +137,92 @@ export function LogisticaConvocacaoForm() {
       .catch(() => setTravels([]))
       .finally(() => setLoadingTravels(false));
   }, [tenantId]);
+
+  const selectedTenant = useMemo(
+    () => tenants.find((t) => t.id === tenantId) ?? null,
+    [tenants, tenantId],
+  );
+
+  useEffect(() => {
+    if (!tenantId) {
+      setFixtures([]);
+      setSelectedFixtureId("");
+      return;
+    }
+    setLoadingFixtures(true);
+    fetch(`/api/public/tenants/by-id/${encodeURIComponent(tenantId)}/fixtures`, {
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: AgendaFixture[]) => {
+        setFixtures(upcomingFixtures(Array.isArray(data) ? data : []));
+      })
+      .catch(() => setFixtures([]))
+      .finally(() => setLoadingFixtures(false));
+  }, [tenantId]);
+
+  const findTravelForFixture = useCallback(
+    (fixture: AgendaFixture, list: FutebolRelatorioTravel[]) => {
+      const byExternal = list.find((t) => t.externalId === fixture.externalId);
+      if (byExternal) return byExternal;
+      const opponent = resolveFixtureOpponentName(fixture, selectedTenant?.name ?? "");
+      const matchDay = fixture.startISO.slice(0, 10);
+      return list.find((t) => {
+        const sameDay = String(t.matchDate).slice(0, 10) === matchDay;
+        const sameOpponent =
+          (t.opponentName ?? "").trim().toLowerCase() === opponent.trim().toLowerCase();
+        return sameDay && sameOpponent;
+      });
+    },
+    [selectedTenant?.name],
+  );
+
+  const handleSelectFixture = async (fixtureId: string) => {
+    setSelectedFixtureId(fixtureId);
+    if (!fixtureId || !tenantId) return;
+    const fixture = fixtures.find((f) => f.externalId === fixtureId);
+    if (!fixture) return;
+
+    const existing = findTravelForFixture(fixture, travels);
+    if (existing) {
+      setTravelId(existing.id);
+      return;
+    }
+
+    setCreatingFromFixture(true);
+    try {
+      const opponentName = resolveFixtureOpponentName(fixture, selectedTenant?.name ?? "");
+      const { data } = await api.post<FutebolRelatorioTravel>("/logistica", {
+        tenantId,
+        matchDate: fixture.startISO.slice(0, 10),
+        opponentName: opponentName || undefined,
+        stadiumName: fixture.venueName || undefined,
+        championshipName: fixture.competitionName || undefined,
+        category: fixture.category || undefined,
+        isHomeMatch: fixture.isOurTeamHome === true,
+        externalId: fixture.externalId,
+        status: "planejamento",
+      });
+      const created = data as FutebolRelatorioTravel;
+      setTravels((prev) => [...prev, created]);
+      setTravelId(created.id);
+      setFeedback({
+        open: true,
+        title: fixture.isOurTeamHome ? "Jogo em casa" : "Jogo registrado",
+        message: "Registro criado. Agora marque os convocados e salve.",
+        variant: "success",
+      });
+    } catch {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: "Não foi possível preparar a convocação para este jogo.",
+        variant: "error",
+      });
+    } finally {
+      setCreatingFromFixture(false);
+    }
+  };
 
   useEffect(() => {
     if (!tenantId) {
@@ -286,8 +382,8 @@ export function LogisticaConvocacaoForm() {
     if (!travelId) {
       setFeedback({
         open: true,
-        title: "Viagem obrigatória",
-        message: "Selecione a viagem antes de salvar a convocação.",
+        title: "Jogo obrigatório",
+        message: "Selecione o jogo antes de salvar a convocação.",
         variant: "warning",
       });
       return;
@@ -345,7 +441,7 @@ export function LogisticaConvocacaoForm() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-[#C8102E]" />
-            Convocação para viagem
+            Convocação para jogo
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -357,6 +453,7 @@ export function LogisticaConvocacaoForm() {
                 onValueChange={(v) => {
                   setTenantId(v === "none" ? "" : v);
                   setTravelId("");
+                  setSelectedFixtureId("");
                 }}
               >
                 <SelectTrigger className="min-h-[44px]">
@@ -372,16 +469,57 @@ export function LogisticaConvocacaoForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Viagem / jogo</Label>
+          </div>
+
+          {tenantId ? (
+            <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+              <Label>Jogo da agenda (casa ou fora)</Label>
+              <Select
+                value={selectedFixtureId || "none"}
+                onValueChange={(v) => void handleSelectFixture(v === "none" ? "" : v)}
+                disabled={loadingFixtures || creatingFromFixture}
+              >
+                <SelectTrigger className="min-h-[44px]">
+                  <SelectValue
+                    placeholder={
+                      loadingFixtures
+                        ? "Carregando jogos…"
+                        : fixtures.length === 0
+                          ? "Nenhum jogo futuro na agenda"
+                          : "Selecione um jogo para convocar"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Selecione…</SelectItem>
+                  {fixtures.map((f) => (
+                    <SelectItem key={f.externalId} value={f.externalId}>
+                      {formatFixtureOptionLabel(f, selectedTenant?.name ?? "Nosso Clube")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Jogos em casa e fora. Se ainda não existir registro, um planejamento mínimo é criado
+                automaticamente para a convocação.
+              </p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <Label>Ou selecione um registro existente</Label>
               <Select
                 value={travelId || "none"}
-                onValueChange={(v) => setTravelId(v === "none" ? "" : v)}
+                onValueChange={(v) => {
+                  setTravelId(v === "none" ? "" : v);
+                  setSelectedFixtureId("");
+                }}
                 disabled={!tenantId || loadingTravels}
               >
                 <SelectTrigger className="min-h-[44px]">
                   <SelectValue
-                    placeholder={loadingTravels ? "Carregando…" : "Selecione a viagem"}
+                    placeholder={loadingTravels ? "Carregando…" : "Registros de jogos / viagens"}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -614,7 +752,7 @@ export function LogisticaConvocacaoForm() {
             </Button>
             <Button type="button" variant="outline" className="min-h-[44px]" asChild>
               <Link href={`/dashboard/futebol/logistica/${travelId}/edit`}>
-                Editar viagem
+                Editar planejamento
               </Link>
             </Button>
           </div>

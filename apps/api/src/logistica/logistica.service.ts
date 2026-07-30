@@ -225,6 +225,8 @@ export class LogisticaService {
       {
         tenantId: dto.tenantId,
         matchDate: new Date(dto.matchDate),
+        isHomeMatch: dto.isHomeMatch ?? false,
+        externalId: dto.externalId?.trim() || null,
         status: dto.status ?? 'rascunho',
         category: catNorm.category,
         categories: catNorm.categories ?? undefined,
@@ -266,6 +268,7 @@ export class LogisticaService {
     const data: Parameters<typeof this.prisma.travelLogistics.update>[0]['data'] =
       {};
     if (dto.matchDate != null) data.matchDate = new Date(dto.matchDate);
+    if (dto.isHomeMatch !== undefined) data.isHomeMatch = dto.isHomeMatch;
     if (dto.estimatedDeparture != null)
       data.estimatedDeparture = new Date(dto.estimatedDeparture);
     if (dto.estimatedArrival != null)

@@ -23,6 +23,7 @@ export function PhysioReportFilters({
   onToChange,
   onApply,
   loading,
+  showApplyButton = true,
 }: {
   tenantId: string;
   category: string;
@@ -34,6 +35,7 @@ export function PhysioReportFilters({
   onToChange: (v: string) => void;
   onApply: () => void;
   loading?: boolean;
+  showApplyButton?: boolean;
 }) {
   const { categories: allCats } = useFixtureCategories();
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -77,11 +79,13 @@ export function PhysioReportFilters({
         <Label>Até</Label>
         <Input type="date" className="text-foreground" value={to} onChange={(e) => onToChange(e.target.value)} />
       </div>
-      <div className="flex items-end">
-        <Button type="button" className="min-h-[44px] w-full" disabled={loading} onClick={onApply}>
-          Atualizar
-        </Button>
-      </div>
+      {showApplyButton ? (
+        <div className="flex items-end">
+          <Button type="button" className="min-h-[44px] w-full" disabled={loading} onClick={onApply}>
+            Atualizar
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

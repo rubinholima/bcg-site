@@ -5,6 +5,7 @@ import {
   IsDateString,
   IsObject,
   IsIn,
+  IsBoolean,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -21,6 +22,10 @@ export class UpdateTravelLogisticsDto {
   @IsDateString()
   @IsOptional()
   matchDate?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isHomeMatch?: boolean;
 
   @IsString()
   @IsOptional()
