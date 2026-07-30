@@ -1,4 +1,7 @@
-import { resolveLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
+import {
+  reportLogoUrlForPrint,
+  resolveLogoUrlForPrint,
+} from "@/lib/futebol-relatorios-print";
 import type { PrintPageSize } from "@/lib/futebol-relatorios.types";
 import type { PhysioReportsDashboard } from "@/types/fisioterapia";
 
@@ -25,6 +28,115 @@ function escapeHtml(text: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+const CHART = {
+  individual: "#f59e0b",
+  recovery: "#6366f1",
+  region: "#22c55e",
+  treatment: "#ef4444",
+} as const;
+
+function truncateLabel(text: string, max = 14): string {
+  if (text.length <= max) return text;
+  return `${text.slice(0, max - 1)}…`;
+}
+
+function chartLegend(items: { color: string; label: string }[]): string {
+  return `<div class="chart-legend">${items
+    .map(
+      (i) =>
+        `<span class="legend-item"><span class="legend-swatch" style="background:${i.color}"></span>${escapeHtml(i.label)}</span>`,
+    )
+    .join("")}</div>`;
+}
+
+function chartBox(title: string, svg: string, legend?: string): string {
+  return `<div class="chart-box">
+    <h3 class="chart-title">${escapeHtml(title)}</h3>
+    ${svg}
+    ${legend ?? ""}
+  </div>`;
+}
+
+function groupedBarChartSvg(
+  labels: string[],
+  series: { label: string; color: string; values: number[] }[],
+): string {
+  const W = 500;
+  const H = 210;
+  const ml = 36;
+  const mr = 8;
+  const mt = 12;
+  const mb = 56;
+  const plotW = W - ml - mr;
+  const plotH = H - mt - mb;
+  const n = labels.length;
+  if (n === 0) return `<p class="empty">Sem dados no filtro.</p>`;
+
+  const maxVal = Math.max(1, ...series.flatMap((s) => s.values));
+  const groupW = plotW / n;
+  const barCount = series.length;
+  const barW = Math.min(22, (groupW * 0.72) / barCount);
+  const gap = (groupW - barW * barCount) / (barCount + 1);
+
+  let bars = "";
+  labels.forEach((_label, gi) => {
+    const gx = ml + gi * groupW;
+    series.forEach((s, si) => {
+      const val = s.values[gi] ?? 0;
+      const bh = (val / maxVal) * plotH;
+      const x = gx + gap + si * (barW + gap);
+      const y = mt + plotH - bh;
+      bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(bh, 0).toFixed(1)}" fill="${s.color}" rx="3" />`;
+      if (val > 0) {
+        bars += `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="#475569">${val}</text>`;
+      }
+    });
+    const lx = gx + groupW / 2;
+    const ly = mt + plotH + 16;
+    bars += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-size="8" fill="#334155" transform="rotate(-22 ${lx.toFixed(1)} ${ly.toFixed(1)})">${escapeHtml(truncateLabel(labels[gi] ?? "", 12))}</text>`;
+  });
+
+  let yTicks = "";
+  for (let i = 0; i <= 4; i++) {
+    const v = Math.round((maxVal * i) / 4);
+    const y = mt + plotH - (plotH * i) / 4;
+    yTicks += `<line x1="${ml}" y1="${y}" x2="${W - mr}" y2="${y}" stroke="#e2e8f0" stroke-width="1" />`;
+    yTicks += `<text x="${ml - 4}" y="${y + 3}" text-anchor="end" font-size="8" fill="#94a3b8">${v}</text>`;
+  }
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">${yTicks}${bars}</svg>`;
+}
+
+function horizontalBarChartSvg(items: { label: string; value: number }[], color: string, limit = 10): string {
+  const slice = items.slice(0, limit);
+  if (slice.length === 0) return `<p class="empty">Sem dados.</p>`;
+
+  const W = 500;
+  const rowH = 24;
+  const labelW = 108;
+  const H = slice.length * rowH + 12;
+  const maxVal = Math.max(1, ...slice.map((i) => i.value));
+  const barMaxW = W - labelW - 36;
+
+  let content = "";
+  slice.forEach((item, i) => {
+    const y = 6 + i * rowH;
+    const bw = (item.value / maxVal) * barMaxW;
+    content += `<text x="0" y="${y + 15}" font-size="9" fill="#334155">${escapeHtml(truncateLabel(item.label, 18))}</text>`;
+    content += `<rect x="${labelW}" y="${y + 5}" width="${bw.toFixed(1)}" height="14" fill="${color}" rx="3" />`;
+    content += `<text x="${(labelW + bw + 6).toFixed(1)}" y="${y + 15}" font-size="9" fill="#475569">${item.value}</text>`;
+  });
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">${content}</svg>`;
+}
+
+function chartsSection(title: string, chartsHtml: string): string {
+  return `<section class="section">
+    <h2 class="section-title">${escapeHtml(title)}</h2>
+    <div class="charts-grid">${chartsHtml}</div>
+  </section>`;
 }
 
 function formatBrDate(iso?: string | null): string {
@@ -243,11 +355,62 @@ function baseStyles(size: PrintPageSize): string {
       break-inside: avoid;
     }
     .footer strong { color: ${BCG.blue}; }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .chart-box {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px 12px 12px;
+      background: #fff;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .chart-title {
+      margin: 0 0 8px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: ${BCG.blueMid};
+    }
+    .chart-box svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      margin-top: 8px;
+      font-size: 9px;
+      color: #475569;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    @media print {
+      .charts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
   `;
 }
 
 function logoHtml(logoUrl: string | null | undefined, clubName: string): string {
-  const absolute = resolveLogoUrlForPrint(logoUrl);
+  const effective =
+    logoUrl ?? (clubName === "Todos os clubes" ? reportLogoUrlForPrint(null, true) : null);
+  const absolute = resolveLogoUrlForPrint(effective);
   if (absolute) {
     return `<div class="logo-wrap"><img src="${escapeHtml(absolute)}" alt="${escapeHtml(clubName)}" /></div>`;
   }
@@ -364,8 +527,55 @@ export function buildAtendimentosPrintHtml(
     <div class="stat"><div class="stat-value">${s.avgReturnDays != null ? `${s.avgReturnDays}d` : "—"}</div><div class="stat-label">Tempo até alta</div></div>
   </div>`;
 
+  const seriesLegend = chartLegend([
+    { color: CHART.individual, label: "Individual" },
+    { color: CHART.recovery, label: "Recovery" },
+  ]);
+
+  const categoryLabels = data.byCategory.map((r) => fmt(r.category));
+  const categoryChart = chartBox(
+    "Por categoria",
+    groupedBarChartSvg(categoryLabels, [
+      { label: "Individual", color: CHART.individual, values: data.byCategory.map((r) => r.individual) },
+      { label: "Recovery", color: CHART.recovery, values: data.byCategory.map((r) => r.group) },
+    ]),
+    seriesLegend,
+  );
+
+  const monthChart = chartBox(
+    "Evolução mensal",
+    groupedBarChartSvg(
+      data.byMonth.map((r) => monthLabel(r.month)),
+      [
+        { label: "Individual", color: CHART.individual, values: data.byMonth.map((r) => r.individual) },
+        { label: "Recovery", color: CHART.recovery, values: data.byMonth.map((r) => r.group) },
+      ],
+    ),
+    seriesLegend,
+  );
+
+  const regionChart = chartBox(
+    "Top regiões corporais",
+    horizontalBarChartSvg(
+      data.byRegion.map((r) => ({ label: r.regionName, value: r.count })),
+      CHART.region,
+    ),
+  );
+
+  const treatmentChart = chartBox(
+    "Tratamentos mais usados",
+    horizontalBarChartSvg(
+      data.byTreatment.map((r) => ({ label: r.label, value: r.count })),
+      CHART.treatment,
+      8,
+    ),
+  );
+
+  const charts = chartsSection("Gráficos", categoryChart + monthChart + regionChart + treatmentChart);
+
   const body = [
     stats,
+    charts,
     dataTable(
       "Por categoria",
       ["Categoria", "Individual", "Recovery", "Ativos", "Total"],
@@ -475,8 +685,27 @@ export function buildCargaFisioPrintHtml(
     <div class="stat"><div class="stat-value">${data.byStaff.length}</div><div class="stat-label">Profissionais</div></div>
   </div>`;
 
+  const staffChart = chartsSection(
+    "Gráfico",
+    chartBox(
+      "Atendimentos por fisioterapeuta",
+      groupedBarChartSvg(
+        data.byStaff.map((s) => s.staffName),
+        [
+          { label: "Individual", color: CHART.individual, values: data.byStaff.map((s) => s.individual) },
+          { label: "Recovery", color: CHART.recovery, values: data.byStaff.map((s) => s.group) },
+        ],
+      ),
+      chartLegend([
+        { color: CHART.individual, label: "Individual" },
+        { color: CHART.recovery, label: "Recovery" },
+      ]),
+    ),
+  );
+
   const body =
     stats +
+    staffChart +
     dataTable(
       "Carga por fisioterapeuta",
       ["Fisioterapeuta", "Individual", "Recovery", "Total"],

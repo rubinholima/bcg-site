@@ -5,7 +5,7 @@ import {
   GENDER_OPTIONS,
   parseRegistrationProfile,
 } from "@/lib/player-registration-profile";
-import { resolveLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
+import { reportLogoUrlForPrint, resolveLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
 
 export type PsicologiaAtletaFieldKey =
   | "num"

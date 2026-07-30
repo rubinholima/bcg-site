@@ -10,6 +10,7 @@ import { PageSizeSelect } from "@/components/dashboard/futebol/relatorios/futebo
 import { PhysioReportFilters } from "@/components/dashboard/fisioterapia/PhysioReportFilters";
 import { api } from "@/lib/api";
 import type { PrintPageSize } from "@/lib/futebol-relatorios.types";
+import { reportLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
 import {
   buildAtendimentosPrintHtml,
   buildCargaFisioPrintHtml,
@@ -85,12 +86,12 @@ function usePhysioReportForm(defaultFrom: string) {
     const formatCategory = (value: string) => getCategoryLabel(value, "pt", allCats) || value;
     return {
       clubName: selectedTenant?.name ?? "Todos os clubes",
-      logoUrl: selectedTenant?.logoUrl,
+      logoUrl: reportLogoUrlForPrint(selectedTenant?.logoUrl, !tenantId),
       categoryLabel,
       periodLabel,
       formatCategory,
     };
-  }, [allCats, categoryLabel, periodLabel, selectedTenant]);
+  }, [allCats, categoryLabel, periodLabel, selectedTenant, tenantId]);
 
   const fetchReport = useCallback(async (): Promise<PhysioReportsDashboard | null> => {
     try {

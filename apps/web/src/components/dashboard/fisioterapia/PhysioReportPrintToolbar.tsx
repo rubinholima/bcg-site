@@ -8,6 +8,7 @@ import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { PageSizeSelect } from "@/components/dashboard/futebol/relatorios/futebol-relatorio-shared";
 import { api } from "@/lib/api";
 import type { PrintPageSize } from "@/lib/futebol-relatorios.types";
+import { reportLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
 import {
   buildAtendimentosPrintHtml,
   buildCargaFisioPrintHtml,
@@ -92,7 +93,7 @@ export function PhysioReportPrintToolbar({
     const formatCategory = (value: string) => getCategoryLabel(value, "pt", allCats) || value;
     return {
       clubName: selectedTenant?.name ?? "Todos os clubes",
-      logoUrl: selectedTenant?.logoUrl,
+      logoUrl: reportLogoUrlForPrint(selectedTenant?.logoUrl, !tenantId),
       categoryLabel,
       periodLabel,
       formatCategory,

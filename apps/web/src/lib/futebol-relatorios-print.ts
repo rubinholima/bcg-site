@@ -27,6 +27,18 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/** Logo estática do grupo — usada em relatórios com filtro "Todos os clubes". */
+export const BCG_GROUP_LOGO_PATH = "/bcg-logo.png";
+
+/** Logo do relatório: clube específico ou BCG quando não há clube selecionado. */
+export function reportLogoUrlForPrint(
+  tenantLogo: string | null | undefined,
+  allClubs: boolean,
+): string | null | undefined {
+  if (allClubs) return BCG_GROUP_LOGO_PATH;
+  return tenantLogo ?? null;
+}
+
 /** Logo do clube com URL absoluta (iframe srcDoc não resolve paths relativos). */
 export function resolveLogoUrlForPrint(logoUrl: string | null | undefined): string {
   const resolved = getPublicImageUrl(logoUrl);

@@ -17,6 +17,7 @@ import {
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { api } from "@/lib/api";
+import { reportLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 import {
   PSICOLOGIA_ATLETA_FIELDS,
@@ -141,7 +142,7 @@ export function PsicologiaAtletasReportForm() {
 
   const buildReportData = (players: PsicologiaAtletaReportPlayer[]): PsicologiaAtletaReportData => {
     const titleClubName = selectedTenant?.name ?? group?.name ?? "Boston City Group";
-    const logoUrl = selectedTenant?.logoUrl ?? group?.logoUrl ?? null;
+    const logoUrl = reportLogoUrlForPrint(selectedTenant?.logoUrl, !tenantId);
 
     return {
       titleClubName,
