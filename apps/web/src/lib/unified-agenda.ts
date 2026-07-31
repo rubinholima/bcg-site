@@ -13,15 +13,22 @@ import {
   compareAgendaEventsByPriority,
   type AgendaMatchSide,
 } from "@/lib/agenda-match-style";
-import {
-  agendaCategoryDotClass,
-  agendaCategoryPillClass,
-  agendaCategoryPillStyle,
-  resolveCategoryColorKey,
-} from "@/lib/agenda-category-colors";
 import { dateKeyInBrazil, BRAZIL_TZ } from "@/lib/brazil-time";
+import {
+  type AgendaConfigPayload,
+  type AgendaColorSwatch,
+  type AgendaDataSource,
+  buildPermissionsFromAreas,
+  categoryPillStyle,
+  findAgendaCategory,
+  resolveAgendaCategorySlug,
+  swatchToStyle,
+} from "@/lib/agenda-config";
 
-export type AgendaSource = "futebol" | "boston-hall" | "consultas" | "marketing";
+/** Slug da área na agenda (vem do cadastro AgendaArea). */
+export type AgendaSource = string;
+
+export type AgendaDataSourceKey = AgendaDataSource;
 
 export type UnifiedAgendaEvent = {
   id: string;
@@ -43,41 +50,68 @@ export type UnifiedAgendaEvent = {
   championshipName?: string | null;
   statusLabel?: string | null;
   categoryLabel?: string | null;
+  /** Slug da categoria de elenco principal (ex.: sub20). */
   categoryValue?: string | null;
+  /** Todas as categorias de elenco do evento (viagens podem ter várias). */
+  squadCategories?: string[];
+  categorySlug?: string | null;
   categoryPillStyle?: { backgroundColor: string; color: string; borderColor: string };
   matchSide?: "casa" | "fora" | null;
 };
 
-export const AGENDA_SOURCE_LABELS: Record<AgendaSource, string> = {
+function collectSquadCategories(item: FootballAgendaCalendarItem): string[] {
+  const set = new Set<string>();
+  if (item.category?.trim()) set.add(item.category.trim());
+  for (const c of item.categories ?? []) {
+    if (c?.trim()) set.add(c.trim());
+  }
+  return [...set];
+}
+
+export function eventMatchesSquadCategory(
+  event: UnifiedAgendaEvent,
+  categoryValue: string,
+): boolean {
+  if (!categoryValue || categoryValue === "all") return true;
+  return (event.squadCategories ?? []).includes(categoryValue);
+}
+
+/** @deprecated use config areas — fallback estático */
+export const AGENDA_SOURCE_LABELS: Record<string, string> = {
   futebol: "Futebol",
+  psicologia: "Psicologia",
+  consultas: "Psicologia",
   "boston-hall": "Boston City Hall",
-  consultas: "Consultas",
   marketing: "Marketing",
 };
 
-export const AGENDA_SOURCE_DOT: Record<AgendaSource, string> = {
+export const AGENDA_SOURCE_DOT: Record<string, string> = {
   futebol: "bg-sky-400",
   "boston-hall": "bg-amber-400",
+  psicologia: "bg-emerald-400",
   consultas: "bg-emerald-400",
   marketing: "bg-violet-400",
 };
 
-export const AGENDA_SOURCE_TONE: Record<AgendaSource, string> = {
+export const AGENDA_SOURCE_TONE: Record<string, string> = {
   futebol: "bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-500/15 dark:text-sky-100 dark:border-sky-500/40",
   "boston-hall": "bg-amber-100 text-amber-950 border-amber-300 dark:bg-amber-500/15 dark:text-amber-100 dark:border-amber-500/40",
+  psicologia: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-100 dark:border-emerald-500/40",
   consultas: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-100 dark:border-emerald-500/40",
   marketing: "bg-violet-100 text-violet-900 border-violet-300 dark:bg-violet-500/15 dark:text-violet-100 dark:border-violet-500/40",
 };
 
-export const AGENDA_SOURCE_MANAGE_HREF: Record<AgendaSource, string> = {
+export const AGENDA_SOURCE_MANAGE_HREF: Record<string, string> = {
   futebol: "/dashboard/futebol/logistica/agenda",
+  psicologia: "/dashboard/consultas",
   "boston-hall": "/dashboard/eventos/boston-city-hall/agenda",
   consultas: "/dashboard/consultas",
   marketing: "/dashboard/marketing",
 };
 
-export const AGENDA_SOURCE_CREATE_HREF: Record<AgendaSource, string> = {
+export const AGENDA_SOURCE_CREATE_HREF: Record<string, string> = {
   futebol: "/dashboard/futebol/logistica/agenda?new=1",
+  psicologia: "/dashboard/consultas",
   "boston-hall": "/dashboard/eventos/boston-city-hall/reservas",
   consultas: "/dashboard/consultas",
   marketing: "/dashboard/marketing",
@@ -110,12 +144,18 @@ const FUTEBOL_DOT: Record<string, string> = {
 
 export function visaoToSourceFilter(visao: AgendaVisao): AgendaSource | "all" {
   if (visao === AGENDA_VISAO.GERAL) return "all";
+  if (visao === AGENDA_VISAO.PSICOLOGIA || visao === AGENDA_VISAO.CONSULTAS) return "psicologia";
   return visao as AgendaSource;
 }
 
 export function sourceFilterToVisao(filter: AgendaSource | "all"): AgendaVisao {
   if (filter === "all") return AGENDA_VISAO.GERAL;
-  return filter;
+  if (filter === "psicologia") return AGENDA_VISAO.PSICOLOGIA;
+  if (filter === "futebol") return AGENDA_VISAO.FUTEBOL;
+  if (filter === "boston-hall") return AGENDA_VISAO.BOSTON_HALL;
+  if (filter === "marketing") return AGENDA_VISAO.MARKETING;
+  if (filter === "consultas") return AGENDA_VISAO.CONSULTAS;
+  return AGENDA_VISAO.GERAL;
 }
 
 export function monthRangeIso(year: number, month: number) {
@@ -153,13 +193,36 @@ export function formatAgendaDateLong(dateKey: string): string {
   });
 }
 
-function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent {
+function applyCategoryColors(
+  config: AgendaConfigPayload,
+  areaSlug: string,
+  eventType?: string | null,
+  matchSide?: AgendaMatchSide,
+): {
+  categorySlug: string;
+  pillStyle: { backgroundColor: string; color: string; borderColor: string };
+  swatch: AgendaColorSwatch;
+} {
+  const categorySlug = resolveAgendaCategorySlug({
+    areaSlug,
+    eventType,
+    matchSide,
+  });
+  const cat = findAgendaCategory(config.categories, categorySlug);
+  const swatch = categoryPillStyle(cat);
+  return { categorySlug, pillStyle: swatchToStyle(swatch), swatch };
+}
+
+function normalizeFutebol(
+  item: FootballAgendaCalendarItem,
+  config: AgendaConfigPayload,
+): UnifiedAgendaEvent {
   const type = item.type || "outro";
-  const categoryLabel = item.category
-    ? getCategoryLabel(item.category, "pt")
-    : item.categories?.length
-      ? item.categories.map((c) => getCategoryLabel(c, "pt")).join(", ")
-      : null;
+  const squadCategories = collectSquadCategories(item);
+  const categoryLabel = squadCategories.length
+    ? squadCategories.map((c) => getCategoryLabel(c, "pt")).join(", ")
+    : null;
+  const primaryCategory = squadCategories[0] ?? null;
   const statusLabel =
     item.source === "travel"
       ? TRAVEL_STATUS_LABEL[item.status] ?? item.status
@@ -186,7 +249,7 @@ function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent 
         : FOOTBALL_AGENDA_TYPE_LABEL[type] ?? type;
 
   const subtitleParts = [item.tenantName, categoryLabel].filter(Boolean);
-  const categoryValue = resolveCategoryColorKey(item.category, item.categories);
+  const { categorySlug, pillStyle } = applyCategoryColors(config, "futebol", type, matchSide);
 
   return {
     id: `futebol-${item.id}`,
@@ -199,27 +262,29 @@ function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent 
     allDay: item.allDay,
     typeLabel,
     href: item.href || agendaHubUrl(AGENDA_VISAO.FUTEBOL),
-    tone: categoryValue ? agendaCategoryPillClass(categoryValue) : agendaCalendarPillClass(type, matchSide),
-    dotClass: categoryValue ? agendaCategoryDotClass(categoryValue) : (
+    tone: agendaCalendarPillClass(type, matchSide),
+    dotClass:
       matchSide === "casa"
         ? "bg-emerald-500"
         : matchSide === "fora"
           ? "bg-amber-400"
-          : FUTEBOL_DOT[type] ?? FUTEBOL_DOT.outro
-    ),
+          : FUTEBOL_DOT[type] ?? FUTEBOL_DOT.outro,
     tenantId: item.tenantId || undefined,
     tenantName: item.tenantName,
     location: item.location,
     championshipName: item.championshipName,
     statusLabel,
     categoryLabel,
-    categoryValue,
-    categoryPillStyle: categoryValue ? agendaCategoryPillStyle(categoryValue) : undefined,
+    categoryValue: primaryCategory,
+    squadCategories,
+    categorySlug,
+    categoryPillStyle: pillStyle,
     matchSide,
   };
 }
 
-function normalizeBch(booking: VenueBooking): UnifiedAgendaEvent {
+function normalizeBch(booking: VenueBooking, config: AgendaConfigPayload): UnifiedAgendaEvent {
+  const { pillStyle } = applyCategoryColors(config, "boston-hall");
   return {
     id: `bch-${booking.id}`,
     source: "boston-hall",
@@ -232,47 +297,58 @@ function normalizeBch(booking: VenueBooking): UnifiedAgendaEvent {
     href: "/dashboard/eventos/boston-city-hall/reservas",
     tone: AGENDA_SOURCE_TONE["boston-hall"],
     dotClass: AGENDA_SOURCE_DOT["boston-hall"],
+    categoryPillStyle: pillStyle,
   };
 }
 
-function normalizeConsulta(c: {
-  id: string;
-  playerName?: string;
-  tenantName?: string;
-  date?: string;
-  time?: string;
-  status?: string;
-}): UnifiedAgendaEvent | null {
+function normalizeConsulta(
+  c: {
+    id: string;
+    playerName?: string;
+    tenantName?: string;
+    date?: string;
+    time?: string;
+    status?: string;
+  },
+  config: AgendaConfigPayload,
+  areaSlug = "psicologia",
+): UnifiedAgendaEvent | null {
   if (!c.date || c.status === "cancelled" || c.status === "completed") return null;
   const today = new Date();
   const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   if (c.date < todayKey) return null;
   const startAt = `${c.date}T${c.time ?? "09:00"}:00`;
+  const { pillStyle } = applyCategoryColors(config, areaSlug);
   return {
     id: `consulta-${c.id}`,
-    source: "consultas",
+    source: areaSlug,
     title: c.playerName ?? "Consulta",
     subtitle: c.tenantName ?? "Psicologia",
     startAt,
     endAt: null,
     allDay: false,
-    typeLabel: "Agendada",
+    typeLabel: "Consulta",
     href: "/dashboard/consultas",
-    tone: AGENDA_SOURCE_TONE.consultas,
-    dotClass: AGENDA_SOURCE_DOT.consultas,
+    tone: AGENDA_SOURCE_TONE.psicologia ?? AGENDA_SOURCE_TONE.consultas,
+    dotClass: AGENDA_SOURCE_DOT.psicologia ?? AGENDA_SOURCE_DOT.consultas,
+    categoryPillStyle: pillStyle,
   };
 }
 
-function normalizeMarketing(p: {
-  id: string;
-  title: string | null;
-  scheduledAt: string | null;
-  status: string;
-  tenant?: { name: string } | null;
-}): UnifiedAgendaEvent | null {
+function normalizeMarketing(
+  p: {
+    id: string;
+    title: string | null;
+    scheduledAt: string | null;
+    status: string;
+    tenant?: { name: string } | null;
+  },
+  config: AgendaConfigPayload,
+): UnifiedAgendaEvent | null {
   if (!p.scheduledAt) return null;
   const statusLabel =
     p.status === "scheduled" ? "Agendada" : p.status === "published" ? "Publicada" : "Rascunho";
+  const { pillStyle } = applyCategoryColors(config, "marketing");
   return {
     id: `mkt-${p.id}`,
     source: "marketing",
@@ -285,21 +361,20 @@ function normalizeMarketing(p: {
     href: "/dashboard/marketing",
     tone: AGENDA_SOURCE_TONE.marketing,
     dotClass: AGENDA_SOURCE_DOT.marketing,
+    categoryPillStyle: pillStyle,
   };
 }
 
-export type AgendaFetchPermissions = {
-  futebol: boolean;
-  bostonHall: boolean;
-  consultas: boolean;
-  marketing: boolean;
-};
+export type AgendaFetchPermissions = Record<AgendaDataSource, boolean>;
 
 export async function fetchUnifiedAgendaEvents(
   year: number,
   month: number,
   permissions: AgendaFetchPermissions,
+  config?: AgendaConfigPayload,
 ): Promise<UnifiedAgendaEvent[]> {
+  const { fetchAgendaConfig } = await import("@/lib/agenda-config");
+  const cfg = config ?? (await fetchAgendaConfig());
   const { from, to } = monthRangeIso(year, month);
   const events: UnifiedAgendaEvent[] = [];
   const tasks: Promise<void>[] = [];
@@ -311,13 +386,13 @@ export async function fetchUnifiedAgendaEvents(
           `/futebol-agenda/calendar?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
         )
         .then(({ data }) => {
-          for (const row of Array.isArray(data) ? data : []) events.push(normalizeFutebol(row));
+          for (const row of Array.isArray(data) ? data : []) events.push(normalizeFutebol(row, cfg));
         })
         .catch(() => undefined),
     );
   }
 
-  if (permissions.bostonHall) {
+  if (permissions["boston-hall"]) {
     tasks.push(
       api
         .get<VenueBooking[]>(
@@ -325,7 +400,7 @@ export async function fetchUnifiedAgendaEvents(
         )
         .then(({ data }) => {
           for (const row of Array.isArray(data) ? data : []) {
-            if (row.status !== "cancelled") events.push(normalizeBch(row));
+            if (row.status !== "cancelled") events.push(normalizeBch(row, cfg));
           }
         })
         .catch(() => undefined),
@@ -333,6 +408,8 @@ export async function fetchUnifiedAgendaEvents(
   }
 
   if (permissions.consultas) {
+    const psiArea = cfg.areas.find((a) => a.dataSource === "consultas");
+    const areaSlug = psiArea?.slug ?? "psicologia";
     tasks.push(
       api
         .get<
@@ -347,7 +424,7 @@ export async function fetchUnifiedAgendaEvents(
         >("/consultations")
         .then(({ data }) => {
           for (const row of Array.isArray(data) ? data : []) {
-            const ev = normalizeConsulta(row);
+            const ev = normalizeConsulta(row, cfg, areaSlug);
             if (!ev) continue;
             const key = dateKeyFromIso(ev.startAt);
             const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
@@ -373,7 +450,7 @@ export async function fetchUnifiedAgendaEvents(
         >(`/marketing/posts?year=${year}&month=${month + 1}`)
         .then(({ data }) => {
           for (const row of Array.isArray(data) ? data : []) {
-            const ev = normalizeMarketing(row);
+            const ev = normalizeMarketing(row, cfg);
             if (ev) events.push(ev);
           }
         })
@@ -389,6 +466,8 @@ export async function fetchUnifiedAgendaEvents(
     ),
   );
 }
+
+export { buildPermissionsFromAreas };
 
 export function groupEventsByDate(events: UnifiedAgendaEvent[]): Map<string, UnifiedAgendaEvent[]> {
   const map = new Map<string, UnifiedAgendaEvent[]>();

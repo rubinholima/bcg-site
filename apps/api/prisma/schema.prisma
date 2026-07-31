@@ -491,6 +491,49 @@ model LogisticsHotel {
   @@index([name])
 }
 
+/** Áreas exibidas na agenda unificada (Futebol, Psicologia, etc.). */
+model AgendaArea {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  label      String
+  /// Chave interna para buscar eventos (futebol, consultas, boston-hall, marketing)
+  dataSource String
+  /// Módulo necessário quando isPublic=false; null = só isPublic ou dashboard
+  moduleSlug String?
+  isPublic   Boolean  @default(false)
+  manageHref String
+  createHref String?
+  sortOrder  Int      @default(0)
+  active     Boolean  @default(true)
+  isSystem   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+/** Categorias/tipos de evento com cor fixa na agenda (Aniversário, Jogo fora, etc.). */
+model AgendaEventCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  label       String
+  /// Área (slug AgendaArea); null = categorias de futebol por tipo
+  areaSlug    String?
+  /// Tipo bruto futebol: aniversario, jogo, viagem, treino…
+  eventType   String?
+  /// casa | fora — refinamento de jogo/viagem
+  matchSide   String?
+  bgColor     String
+  textColor   String
+  borderColor String
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([areaSlug])
+  @@index([eventType])
+}
+
 /** Compromissos operacionais do Depto Futebol (treinos, reuniões, jogos, etc.) — exibidos na agenda junto com viagens. */
 model FootballAgendaEntry {
   id                String            @id @default(cuid())

@@ -17,6 +17,7 @@ import {
   Plane,
   Plus,
   Search,
+  Settings2,
   Shirt,
   Trophy,
 } from "lucide-react";
@@ -32,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
+import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import {
   agendaMatchSideBadgeClass,
   agendaMatchSideLabel,
@@ -42,6 +44,8 @@ import {
   AGENDA_SOURCE_LABELS,
   AGENDA_SOURCE_MANAGE_HREF,
   AGENDA_SOURCE_TONE,
+  buildPermissionsFromAreas,
+  eventMatchesSquadCategory,
   fetchUnifiedAgendaEvents,
   formatAgendaDateLong,
   formatAgendaTime,
@@ -50,45 +54,42 @@ import {
   type AgendaSource,
   type UnifiedAgendaEvent,
 } from "@/lib/unified-agenda";
+import {
+  fetchAgendaConfig,
+  type AgendaAreaRow,
+  type AgendaConfigPayload,
+} from "@/lib/agenda-config";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dash } from "@/lib/dashboard-theme-classes";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 type ViewMode = "day" | "week" | "month";
 
-const SOURCE_UI: Record<
-  AgendaSource,
-  { label: string; icon: typeof Shirt; tone: string; dotClass: string; manageHref: string }
-> = {
-  futebol: {
-    label: AGENDA_SOURCE_LABELS.futebol,
-    icon: Shirt,
-    tone: AGENDA_SOURCE_TONE.futebol,
-    dotClass: AGENDA_SOURCE_DOT.futebol,
-    manageHref: AGENDA_SOURCE_MANAGE_HREF.futebol,
-  },
-  "boston-hall": {
-    label: AGENDA_SOURCE_LABELS["boston-hall"],
-    icon: Building2,
-    tone: AGENDA_SOURCE_TONE["boston-hall"],
-    dotClass: AGENDA_SOURCE_DOT["boston-hall"],
-    manageHref: AGENDA_SOURCE_MANAGE_HREF["boston-hall"],
-  },
-  consultas: {
-    label: AGENDA_SOURCE_LABELS.consultas,
-    icon: ClipboardList,
-    tone: AGENDA_SOURCE_TONE.consultas,
-    dotClass: AGENDA_SOURCE_DOT.consultas,
-    manageHref: AGENDA_SOURCE_MANAGE_HREF.consultas,
-  },
-  marketing: {
-    label: AGENDA_SOURCE_LABELS.marketing,
-    icon: Megaphone,
-    tone: AGENDA_SOURCE_TONE.marketing,
-    dotClass: AGENDA_SOURCE_DOT.marketing,
-    manageHref: AGENDA_SOURCE_MANAGE_HREF.marketing,
-  },
+const AREA_ICONS: Record<string, LucideIcon> = {
+  futebol: Shirt,
+  psicologia: ClipboardList,
+  consultas: ClipboardList,
+  "boston-hall": Building2,
+  marketing: Megaphone,
 };
+
+function areaUi(area: AgendaAreaRow) {
+  const slug = area.slug;
+  return {
+    label: area.label,
+    icon: AREA_ICONS[slug] ?? Calendar,
+    tone: AGENDA_SOURCE_TONE[slug] ?? AGENDA_SOURCE_TONE.futebol,
+    dotClass: AGENDA_SOURCE_DOT[slug] ?? "bg-zinc-400",
+    manageHref: area.manageHref,
+    createHref: area.createHref ?? area.manageHref,
+  };
+}
+
+function areaLabel(slug: string, areas: AgendaAreaRow[]): string {
+  const found = areas.find((a) => a.slug === slug);
+  return found?.label ?? AGENDA_SOURCE_LABELS[slug] ?? slug;
+}
 
 function buildMonthGrid(year: number, month: number) {
   const first = new Date(year, month, 1);
@@ -117,15 +118,15 @@ function dateKeyFromDate(d: Date): string {
 
 function EventPill({ event, compact }: { event: UnifiedAgendaEvent; compact?: boolean }) {
   const side = agendaMatchSideLabel(event.matchSide ?? null);
-  const useCategoryStyle = event.source === "futebol" && event.categoryPillStyle;
+  const useStyle = !!event.categoryPillStyle;
   return (
     <span
       className={cn(
-        "block truncate rounded-md border px-1.5 py-0.5 text-left leading-tight",
+        "block truncate rounded-md border px-1.5 py-0.5 text-left leading-tight font-semibold shadow-sm",
         compact ? "text-[9px] sm:text-[10px]" : "text-[10px] sm:text-xs",
-        !useCategoryStyle && event.tone,
+        !useStyle && event.tone,
       )}
-      style={useCategoryStyle ? event.categoryPillStyle : undefined}
+      style={useStyle ? event.categoryPillStyle : undefined}
       title={`${side ? `${side} · ` : ""}${event.title} — ${event.typeLabel}${event.categoryLabel ? ` (${event.categoryLabel})` : ""}`}
     >
       {side && compact ? (
@@ -139,8 +140,15 @@ function EventPill({ event, compact }: { event: UnifiedAgendaEvent; compact?: bo
   );
 }
 
-function EventDetailCard({ ev }: { ev: UnifiedAgendaEvent }) {
-  const meta = SOURCE_UI[ev.source];
+function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaAreaRow[] }) {
+  const area = areas.find((a) => a.slug === ev.source);
+  const meta = area ? areaUi(area) : {
+    label: areaLabel(ev.source, areas),
+    icon: Calendar,
+    tone: AGENDA_SOURCE_TONE.futebol,
+    dotClass: "bg-zinc-400",
+    manageHref: AGENDA_SOURCE_MANAGE_HREF.futebol,
+  };
   const Icon = meta.icon;
   const sideLabel = agendaMatchSideLabel(ev.matchSide ?? null);
   const SideIcon = ev.matchSide === "casa" ? Home : ev.matchSide === "fora" ? Plane : null;
@@ -196,6 +204,12 @@ function EventDetailCard({ ev }: { ev: UnifiedAgendaEvent }) {
               {ev.statusLabel}
             </span>
           ) : null}
+          {ev.categoryLabel ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-100">
+              <Shirt className="h-3 w-3" />
+              {ev.categoryLabel}
+            </span>
+          ) : null}
         </div>
         <p className="mt-1 text-sm font-semibold text-foreground">{ev.subtitle}</p>
         <p className={cn("mt-2 text-sm font-bold", dash.eventListMeta)}>
@@ -235,46 +249,83 @@ function EventDetailCard({ ev }: { ev: UnifiedAgendaEvent }) {
 
 export function UnifiedAgendaView() {
   const router = useRouter();
-  const { canAccessModule, canAccessDashboard, loading: authLoading } = useAuth();
+  const { canAccessModule, canAccessDashboard, loading: authLoading, isSuperAdmin } = useAuth();
+
+  const [agendaConfig, setAgendaConfig] = useState<AgendaConfigPayload | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAgendaConfig()
+      .then(setAgendaConfig)
+      .catch(() => setAgendaConfig({ areas: [], categories: [] }))
+      .finally(() => setConfigLoading(false));
+  }, []);
+
+  const visibleAreas = agendaConfig?.areas ?? [];
 
   const permissions = useMemo(
-    () => ({
+    () => (agendaConfig ? buildPermissionsFromAreas(agendaConfig.areas) : {
       futebol: canAccessModule("futebol_logistica"),
-      bostonHall: canAccessModule("eventos"),
-      consultas: canAccessModule("saude") || canAccessDashboard,
+      "boston-hall": canAccessModule("eventos"),
+      consultas: canAccessModule("psicologia") || canAccessModule("saude") || canAccessDashboard,
       marketing: canAccessModule("marketing"),
     }),
-    [canAccessDashboard, canAccessModule],
+    [agendaConfig, canAccessDashboard, canAccessModule],
   );
 
   const availableSources = useMemo(
-    () =>
-      (Object.keys(SOURCE_UI) as AgendaSource[]).filter((s) => {
-        if (s === "futebol") return permissions.futebol;
-        if (s === "boston-hall") return permissions.bostonHall;
-        if (s === "consultas") return permissions.consultas;
-        return permissions.marketing;
-      }),
-    [permissions],
+    () => visibleAreas.map((a) => a.slug),
+    [visibleAreas],
   );
 
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [areaFilter, setAreaFilter] = useState<AgendaSource | "all">("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [clubFilter, setClubFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [focusDate, setFocusDate] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<string | null>(todayDateKey());
   const [events, setEvents] = useState<UnifiedAgendaEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { categories: fixtureCategories } = useFixtureCategories({ activeOnly: true });
+
   const canAccessHub =
     canAccessModule("agenda") || canAccessDashboard || availableSources.length > 0;
 
+  const categoriesForDropdown = useMemo(() => {
+    const merged = [...fixtureCategories];
+    const seen = new Set(merged.map((c) => c.value));
+    for (const e of events) {
+      for (const slug of e.squadCategories ?? []) {
+        if (!seen.has(slug)) {
+          seen.add(slug);
+          merged.push({
+            value: slug,
+            labelPT: slug,
+            labelEN: slug,
+            active: true,
+          });
+        }
+      }
+    }
+    return merged.sort((a, b) =>
+      (a.labelPT || a.value).localeCompare(b.labelPT || b.value, "pt-BR"),
+    );
+  }, [events, fixtureCategories]);
+
   useEffect(() => {
-    if (authLoading) return;
+    if (categoryFilter === "all") return;
+    if (!categoriesForDropdown.some((c) => c.value === categoryFilter)) {
+      setCategoryFilter("all");
+    }
+  }, [categoryFilter, categoriesForDropdown]);
+
+  useEffect(() => {
+    if (authLoading || configLoading) return;
     if (!canAccessHub) router.replace("/403");
-  }, [authLoading, canAccessHub, router]);
+  }, [authLoading, configLoading, canAccessHub, router]);
 
   const loadCursor = useMemo(() => {
     if (viewMode === "day" || viewMode === "week") {
@@ -300,7 +351,7 @@ export function UnifiedAgendaView() {
       const chunks = await Promise.all(
         [...months].map(async (key) => {
           const [y, m] = key.split("-").map(Number);
-          return fetchUnifiedAgendaEvents(y!, m!, permissions);
+          return fetchUnifiedAgendaEvents(y!, m!, permissions, agendaConfig ?? undefined);
         }),
       );
       const byId = new Map<string, UnifiedAgendaEvent>();
@@ -311,12 +362,12 @@ export function UnifiedAgendaView() {
     } finally {
       setLoading(false);
     }
-  }, [loadCursor.month, loadCursor.year, permissions, selectedDay, viewMode]);
+  }, [loadCursor.month, loadCursor.year, permissions, selectedDay, viewMode, agendaConfig]);
 
   useEffect(() => {
-    if (!canAccessHub || authLoading) return;
+    if (!canAccessHub || authLoading || configLoading) return;
     void load();
-  }, [authLoading, canAccessHub, load]);
+  }, [authLoading, configLoading, canAccessHub, load]);
 
   const typeOptions = useMemo(() => {
     const labels = new Set(events.map((e) => e.typeLabel));
@@ -343,18 +394,20 @@ export function UnifiedAgendaView() {
         const clubKey = e.tenantId || e.tenantName || "";
         if (clubKey !== clubFilter) return false;
       }
+      if (!eventMatchesSquadCategory(e, categoryFilter)) return false;
       if (!q) return true;
       return (
         e.title.toLowerCase().includes(q) ||
         e.subtitle.toLowerCase().includes(q) ||
         e.typeLabel.toLowerCase().includes(q) ||
+        (e.categoryLabel ?? "").toLowerCase().includes(q) ||
         (e.location ?? "").toLowerCase().includes(q) ||
         (e.championshipName ?? "").toLowerCase().includes(q) ||
         (e.tenantName ?? "").toLowerCase().includes(q) ||
-        AGENDA_SOURCE_LABELS[e.source].toLowerCase().includes(q)
+        areaLabel(e.source, visibleAreas).toLowerCase().includes(q)
       );
     });
-  }, [areaFilter, clubFilter, events, searchQuery, typeFilter]);
+  }, [areaFilter, categoryFilter, clubFilter, events, searchQuery, typeFilter, visibleAreas]);
 
   const byDate = useMemo(() => groupEventsByDate(filteredEvents), [filteredEvents]);
 
@@ -445,7 +498,7 @@ export function UnifiedAgendaView() {
     setSelectedDay(todayDateKey());
   };
 
-  if (authLoading || !canAccessHub) {
+  if (authLoading || configLoading || !canAccessHub) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -457,8 +510,11 @@ export function UnifiedAgendaView() {
   const grid = buildMonthGrid(focusDate.getFullYear(), focusDate.getMonth());
   const createHref =
     areaFilter !== "all"
-      ? AGENDA_SOURCE_CREATE_HREF[areaFilter]
-      : AGENDA_SOURCE_CREATE_HREF.futebol;
+      ? visibleAreas.find((a) => a.slug === areaFilter)?.createHref ??
+        visibleAreas.find((a) => a.slug === areaFilter)?.manageHref ??
+        AGENDA_SOURCE_CREATE_HREF[areaFilter] ??
+        "/dashboard/agenda"
+      : visibleAreas[0]?.createHref ?? visibleAreas[0]?.manageHref ?? "/dashboard/futebol/logistica/agenda?new=1";
 
   return (
     <div className="space-y-6">
@@ -480,6 +536,14 @@ export function UnifiedAgendaView() {
             <Button type="button" variant="outline" size="sm" className="min-h-[40px]" onClick={goToday}>
               Hoje
             </Button>
+            {isSuperAdmin ? (
+              <Button type="button" variant="outline" size="sm" className="min-h-[40px]" asChild>
+                <Link href="/dashboard/agenda/configuracao">
+                  <Settings2 className="mr-1 h-4 w-4" />
+                  Categorias e áreas
+                </Link>
+              </Button>
+            ) : null}
             <Button type="button" size="sm" className="min-h-[40px]" asChild>
               <Link href={createHref}>
                 <Plus className="mr-1 h-4 w-4" />
@@ -529,16 +593,17 @@ export function UnifiedAgendaView() {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="relative sm:col-span-2 lg:col-span-1">
+          <div className="space-y-3">
+            <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar título, clube, local…"
+                placeholder="Buscar título, clube, categoria, local…"
                 className="min-h-[44px] pl-9 text-foreground"
               />
             </div>
+            <div className="grid gap-3 grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <Select
               value={areaFilter}
               onValueChange={(v) => setAreaFilter(v as AgendaSource | "all")}
@@ -550,7 +615,7 @@ export function UnifiedAgendaView() {
                 <SelectItem value="all">Todas as áreas</SelectItem>
                 {availableSources.map((source) => (
                   <SelectItem key={source} value={source}>
-                    {AGENDA_SOURCE_LABELS[source]}
+                    {areaLabel(source, visibleAreas)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -568,6 +633,19 @@ export function UnifiedAgendaView() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="min-h-[44px]">
+                <SelectValue placeholder="Categoria (elenco)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categoriesForDropdown.map((c) => (
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.labelPT || c.value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
               <SelectTrigger className="min-h-[44px]">
                 <SelectValue placeholder="Tipo" />
@@ -581,6 +659,7 @@ export function UnifiedAgendaView() {
                 ))}
               </SelectContent>
             </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -747,7 +826,7 @@ export function UnifiedAgendaView() {
                     <ul className="space-y-3">
                       {items.map((ev) => (
                         <li key={ev.id}>
-                          <EventDetailCard ev={ev} />
+                          <EventDetailCard ev={ev} areas={visibleAreas} />
                         </li>
                       ))}
                     </ul>
@@ -758,9 +837,15 @@ export function UnifiedAgendaView() {
               {areaFilter !== "all" ? (
                 <div className="border-t border-border/60 pt-4">
                   <Button variant="outline" size="sm" className="gap-2" asChild>
-                    <Link href={AGENDA_SOURCE_MANAGE_HREF[areaFilter]}>
+                    <Link
+                      href={
+                        visibleAreas.find((a) => a.slug === areaFilter)?.manageHref ??
+                        AGENDA_SOURCE_MANAGE_HREF[areaFilter] ??
+                        "/dashboard/agenda"
+                      }
+                    >
                       <ExternalLink className="h-4 w-4" />
-                      Abrir agenda — {SOURCE_UI[areaFilter].label}
+                      Abrir agenda — {areaLabel(areaFilter, visibleAreas)}
                     </Link>
                   </Button>
                 </div>

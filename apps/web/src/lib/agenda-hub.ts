@@ -2,6 +2,7 @@ export const AGENDA_VISAO = {
   GERAL: "geral",
   FUTEBOL: "futebol",
   BOSTON_HALL: "boston-hall",
+  PSICOLOGIA: "psicologia",
   CONSULTAS: "consultas",
   MARKETING: "marketing",
 } as const;
@@ -22,6 +23,7 @@ export function agendaHubUrl(visao?: AgendaVisao | null): string {
       return "/dashboard/futebol/logistica/agenda";
     case AGENDA_VISAO.BOSTON_HALL:
       return "/dashboard/eventos/boston-city-hall/agenda";
+    case AGENDA_VISAO.PSICOLOGIA:
     case AGENDA_VISAO.CONSULTAS:
       return "/dashboard/consultas";
     case AGENDA_VISAO.MARKETING:
