@@ -172,21 +172,17 @@ function normalizeFutebol(item: FootballAgendaCalendarItem): UnifiedAgendaEvent 
             : item.status;
 
   const matchSide: AgendaMatchSide =
-    type === "viagem"
-      ? "fora"
-      : item.isOurTeamHome === true
-        ? "casa"
-        : item.isOurTeamHome === false
-          ? "fora"
-          : null;
+    item.isOurTeamHome === true
+      ? "casa"
+      : item.isOurTeamHome === false
+        ? "fora"
+        : null;
 
   const typeLabel =
     matchSide === "casa"
       ? "Jogo em casa"
       : matchSide === "fora"
-        ? type === "viagem"
-          ? "Jogo fora"
-          : "Jogo fora"
+        ? "Jogo fora"
         : FOOTBALL_AGENDA_TYPE_LABEL[type] ?? type;
 
   const subtitleParts = [item.tenantName, categoryLabel].filter(Boolean);

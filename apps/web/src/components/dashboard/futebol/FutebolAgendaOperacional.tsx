@@ -124,9 +124,9 @@ function sortAgendaItems(items: FootballAgendaCalendarItem[]) {
 }
 
 function matchSideOf(item: FootballAgendaCalendarItem): AgendaMatchSide {
-  if (item.type === "viagem") return "fora";
   if (item.isOurTeamHome === true) return "casa";
   if (item.isOurTeamHome === false) return "fora";
+  if (item.type === "viagem") return "fora";
   return null;
 }
 
@@ -551,7 +551,7 @@ export function FutebolAgendaOperacional() {
   /** Prefixo legível na mesma linha do título (casa/fora/tipo). */
   const agendaLinePrefix = (item: FootballAgendaCalendarItem, side: AgendaMatchSide) => {
     if (side === "casa") return "Jogo em casa · ";
-    if (side === "fora" || item.type === "viagem") return "Jogo fora · ";
+    if (side === "fora") return "Jogo fora · ";
     const typeLabel = FOOTBALL_AGENDA_TYPE_LABEL[item.type];
     return typeLabel ? `${typeLabel} · ` : "";
   };

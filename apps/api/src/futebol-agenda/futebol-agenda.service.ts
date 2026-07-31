@@ -30,16 +30,17 @@ function resolveIsOurTeamHome(
   tenantName: string | undefined,
   meta: unknown,
 ): boolean | null {
-  if (type === 'viagem') return false;
-  if (type !== 'jogo') return null;
+  if (type !== 'jogo' && type !== 'viagem') return null;
 
   const m = meta as {
     isOurTeamHome?: boolean;
+    isHomeMatch?: boolean;
     homeName?: string;
     awayName?: string;
   } | null;
 
   if (typeof m?.isOurTeamHome === 'boolean') return m.isOurTeamHome;
+  if (typeof m?.isHomeMatch === 'boolean') return m.isHomeMatch;
 
   const tenantKey = normalizeTeamNameKeyForMerge(tenantName ?? '');
   if (tenantKey && m?.homeName) {
@@ -200,7 +201,8 @@ export class FutebolAgendaService {
       entryWhere.category = filters.category.trim();
     }
 
-    const includeTravel = !typeFilter || typeFilter.includes('viagem');
+    const includeTravel =
+      !typeFilter || typeFilter.includes('viagem') || typeFilter.includes('jogo');
     const includePalco = !typeFilter || typeFilter.includes('palco');
     const entryTypeList =
       typeFilter?.filter((t) => t !== 'viagem' && t !== 'palco') ?? null;
@@ -263,9 +265,17 @@ export class FutebolAgendaService {
     const items: FootballAgendaCalendarItemDto[] = [];
 
     for (const t of travels) {
+      const isHome = t.isHomeMatch === true;
+      const calendarType = isHome ? 'jogo' : 'viagem';
+      if (typeFilter && !typeFilter.includes(calendarType)) continue;
+
       const title = t.opponentName
-        ? `Jogo fora — ${t.opponentName}`
-        : t.championshipName ?? 'Viagem';
+        ? isHome
+          ? `Jogo em casa — ${t.opponentName}`
+          : `Jogo fora — ${t.opponentName}`
+        : isHome
+          ? t.championshipName ?? 'Jogo em casa'
+          : t.championshipName ?? 'Viagem';
       const matchAt = t.matchDate;
       const departureAt = t.estimatedDeparture;
       const start = departureAt ?? matchAt;
@@ -281,7 +291,7 @@ export class FutebolAgendaService {
       items.push({
         id: `travel-${t.id}`,
         source: 'travel',
-        type: 'viagem',
+        type: calendarType,
         title,
         startAt: start.toISOString(),
         endAt: matchAt.toISOString(),
@@ -294,7 +304,7 @@ export class FutebolAgendaService {
         location,
         opponentName: t.opponentName,
         championshipName: t.championshipName,
-        isOurTeamHome: false,
+        isOurTeamHome: isHome,
         href: `/dashboard/futebol/logistica/${t.id}/edit`,
       });
     }
