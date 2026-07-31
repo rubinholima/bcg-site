@@ -355,6 +355,16 @@ function pickMostSpecificActiveHref(
   return best;
 }
 
+/** Coleta todos os itens com href na árvore (inclui netos) para achar o match mais específico. */
+function collectMenuItemsWithHref(items: MenuItemConfig[]): MenuItemConfig[] {
+  const out: MenuItemConfig[] = [];
+  for (const item of items) {
+    if (item.href) out.push(item);
+    if (item.children?.length) out.push(...collectMenuItemsWithHref(item.children));
+  }
+  return out;
+}
+
 function nestedDefaultOpen(
   child: MenuItemConfig,
   pathname: string | null,
@@ -729,7 +739,12 @@ function SidebarNav() {
             const visibleHubChildren = item.children.filter((c) =>
               hasAccessToMenuItem(c, item.slug, canAccessModule, canAccessDashboard, isSuperAdmin),
             );
-            const activeHubChildHref = pickMostSpecificActiveHref(visibleHubChildren, pathname, relHub, searchParams);
+            const activeHubChildHref = pickMostSpecificActiveHref(
+              collectMenuItemsWithHref(visibleHubChildren),
+              pathname,
+              relHub,
+              searchParams,
+            );
 
             return (
               <div key={item.slug} className="relative shrink-0 space-y-0.5">
@@ -808,15 +823,9 @@ function SidebarNav() {
                                 {isSubOpen && (
                                   <div className="ml-4 space-y-0.5 border-l border-border pl-2">
                                     {(() => {
-                                      const bchLeaves = child.children.filter(
-                                        (cc) =>
-                                          cc.href &&
-                                          !cc.children?.length &&
-                                          (canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
-                                            (cc.moduleSlug === "emails" && canAccessDashboard)),
-                                      );
+                                      const groupItems = collectMenuItemsWithHref(child.children);
                                       const activeBchHref = pickMostSpecificActiveHref(
-                                        bchLeaves,
+                                        groupItems,
                                         pathname,
                                         relHub,
                                         searchParams,
@@ -864,7 +873,7 @@ function SidebarNav() {
                                                     }}
                                                     className={cn(
                                                       "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
-                                                      resolveLinkActive(cc.href, pathname, relHub, searchParams)
+                                                      cc.href === activeBchHref
                                                         ? "dashboard-sidebar-active"
                                                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                                     )}
@@ -915,7 +924,7 @@ function SidebarNav() {
                                                           }}
                                                           className={cn(
                                                             "flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
-                                                            resolveLinkActive(ccc.href, pathname, relHub, searchParams)
+                                                            ccc.href === activeBchHref
                                                               ? "dashboard-sidebar-active"
                                                               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                                           )}
@@ -1027,15 +1036,9 @@ function SidebarNav() {
                               {isSubOpen && (
                                 <div className="ml-4 space-y-0.5 border-l border-border pl-2">
                                   {(() => {
-                                    const nestedLeaves = child.children.filter(
-                                      (cc) =>
-                                        cc.href &&
-                                        !cc.children?.length &&
-                                        (canAccessMenuLeaf(cc, `${item.slug}/${child.slug}`, canAccessModule) ||
-                                          (cc.moduleSlug === "emails" && canAccessDashboard)),
-                                    );
+                                    const groupItems = collectMenuItemsWithHref(child.children);
                                     const activeNestedHref = pickMostSpecificActiveHref(
-                                      nestedLeaves,
+                                      groupItems,
                                       pathname,
                                       relHub,
                                       searchParams,
@@ -1080,7 +1083,7 @@ function SidebarNav() {
                                                     onNavigate={onNavClick}
                                                     className={cn(
                                                       "flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium uppercase tracking-wide transition-all duration-200 dashboard-link-hover",
-                                                      resolveLinkActive(cc.href, pathname, relHub, searchParams)
+                                                      cc.href === activeNestedHref
                                                         ? "dashboard-sidebar-active"
                                                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                                                     )}
@@ -1121,8 +1124,7 @@ function SidebarNav() {
                                                     )
                                                     .map((ccc) => {
                                                       const isLeafActive =
-                                                        !ccc.external &&
-                                                        resolveLinkActive(ccc.href, pathname, relHub, searchParams);
+                                                        !ccc.external && ccc.href === activeNestedHref;
                                                       return (
                                                         <SidebarMenuLink
                                                           key={ccc.slug}
