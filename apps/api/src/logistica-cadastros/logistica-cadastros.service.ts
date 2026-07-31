@@ -13,6 +13,15 @@ import { CreateLogisticsHotelDto } from './dto/create-logistics-hotel.dto';
 import { CreateLogisticsLookupDto } from './dto/create-logistics-lookup.dto';
 import { CreateLogisticsLoyaltyProgramDto } from './dto/create-logistics-loyalty-program.dto';
 import { CreateLogisticsRoomTypeDto } from './dto/create-logistics-room-type.dto';
+import { CreateLogisticsAirportDto, UpdateLogisticsAirportDto } from './dto/create-logistics-airport.dto';
+import {
+  CreateLogisticsSupplierDto,
+  UpdateLogisticsSupplierDto,
+} from './dto/create-logistics-supplier.dto';
+import {
+  CreateLogisticsServiceProductDto,
+  UpdateLogisticsServiceProductDto,
+} from './dto/create-logistics-service-product.dto';
 import { UpdateLogisticsGuestDto } from './dto/update-logistics-guest.dto';
 import { UpdateLogisticsHotelDto } from './dto/update-logistics-hotel.dto';
 import { UpdateLogisticsLookupDto } from './dto/update-logistics-lookup.dto';
@@ -424,6 +433,7 @@ export class LogisticaCadastrosService {
       data: {
         tenantId: dto.tenantId,
         name: cadastroUpperRequired(dto.name),
+        guestType: cadastroUpper(dto.guestType),
         birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
         phone: cadastroUpper(dto.phone),
         rg: cadastroUpper(dto.rg),
@@ -443,6 +453,7 @@ export class LogisticaCadastrosService {
       where: { id },
       data: {
         ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.guestType !== undefined && { guestType: cadastroUpper(dto.guestType) }),
         ...(dto.birthDate !== undefined && {
           birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
         }),
@@ -544,5 +555,435 @@ export class LogisticaCadastrosService {
   async removeHotel(id: string) {
     await this.findHotel(id);
     await this.prisma.logisticsHotel.delete({ where: { id } });
+  }
+
+  // ——— Aeroportos ———
+  findAirports(activeOnly?: string, search?: string) {
+    return this.prisma.logisticsAirport.findMany({
+      where: {
+        ...(activeOnly === 'true' ? { active: true } : {}),
+        ...(search?.trim()
+          ? {
+              OR: [
+                { name: { contains: search.trim(), mode: 'insensitive' } },
+                { code: { contains: search.trim(), mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findAirport(id: string) {
+    const item = await this.prisma.logisticsAirport.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Aeroporto não encontrado');
+    return item;
+  }
+
+  async createAirport(dto: CreateLogisticsAirportDto) {
+    const name = cadastroUpperRequired(dto.name);
+    const code = cadastroUpper(dto.code);
+    const existing = await this.prisma.logisticsAirport.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+    if (existing) throw new ConflictException(`"${name}" já existe`);
+    return this.prisma.logisticsAirport.create({
+      data: {
+        name,
+        code,
+        sortOrder: dto.sortOrder ?? 0,
+        active: dto.active ?? true,
+      },
+    });
+  }
+
+  async updateAirport(id: string, dto: UpdateLogisticsAirportDto) {
+    const current = await this.findAirport(id);
+    this.guardSystemEdit(current.isSystem);
+    if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
+      const existing = await this.prisma.logisticsAirport.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) throw new ConflictException(`"${name}" já existe`);
+    }
+    return this.prisma.logisticsAirport.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.code !== undefined && { code: cadastroUpper(dto.code) }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.active !== undefined && { active: dto.active }),
+      },
+    });
+  }
+
+  async removeAirport(id: string) {
+    const current = await this.findAirport(id);
+    this.guardSystemEdit(current.isSystem);
+    await this.prisma.logisticsAirport.delete({ where: { id } });
+  }
+
+  // ——— Categorias de despesas ———
+  findExpenseCategories(activeOnly?: string) {
+    return this.prisma.logisticsExpenseCategory.findMany({
+      where: activeOnly === 'true' ? { active: true } : undefined,
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findExpenseCategory(id: string) {
+    const item = await this.prisma.logisticsExpenseCategory.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Categoria de despesa não encontrada');
+    return item;
+  }
+
+  async createExpenseCategory(dto: CreateLogisticsLookupDto) {
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.logisticsExpenseCategory.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+    if (existing) throw new ConflictException(`"${name}" já existe`);
+    return this.prisma.logisticsExpenseCategory.create({
+      data: { name, sortOrder: dto.sortOrder ?? 0, active: dto.active ?? true },
+    });
+  }
+
+  async updateExpenseCategory(id: string, dto: UpdateLogisticsLookupDto) {
+    const current = await this.findExpenseCategory(id);
+    this.guardSystemEdit(current.isSystem);
+    if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
+      const existing = await this.prisma.logisticsExpenseCategory.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) throw new ConflictException(`"${name}" já existe`);
+    }
+    return this.prisma.logisticsExpenseCategory.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.active !== undefined && { active: dto.active }),
+      },
+    });
+  }
+
+  async removeExpenseCategory(id: string) {
+    const current = await this.findExpenseCategory(id);
+    this.guardSystemEdit(current.isSystem);
+    await this.prisma.logisticsExpenseCategory.delete({ where: { id } });
+  }
+
+  // ——— Categorias de fornecedores ———
+  findSupplierCategories(activeOnly?: string) {
+    return this.prisma.logisticsSupplierCategory.findMany({
+      where: activeOnly === 'true' ? { active: true } : undefined,
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findSupplierCategory(id: string) {
+    const item = await this.prisma.logisticsSupplierCategory.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Categoria de fornecedor não encontrada');
+    return item;
+  }
+
+  async createSupplierCategory(dto: CreateLogisticsLookupDto) {
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.logisticsSupplierCategory.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+    if (existing) throw new ConflictException(`"${name}" já existe`);
+    return this.prisma.logisticsSupplierCategory.create({
+      data: { name, sortOrder: dto.sortOrder ?? 0, active: dto.active ?? true },
+    });
+  }
+
+  async updateSupplierCategory(id: string, dto: UpdateLogisticsLookupDto) {
+    const current = await this.findSupplierCategory(id);
+    this.guardSystemEdit(current.isSystem);
+    if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
+      const existing = await this.prisma.logisticsSupplierCategory.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) throw new ConflictException(`"${name}" já existe`);
+    }
+    return this.prisma.logisticsSupplierCategory.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.active !== undefined && { active: dto.active }),
+      },
+    });
+  }
+
+  async removeSupplierCategory(id: string) {
+    const current = await this.findSupplierCategory(id);
+    this.guardSystemEdit(current.isSystem);
+    await this.prisma.logisticsSupplierCategory.delete({ where: { id } });
+  }
+
+  // ——— Fornecedores (cadastro global compartilhado) ———
+  findSuppliers(activeOnly?: string, search?: string) {
+    return this.prisma.logisticsSupplier.findMany({
+      where: {
+        ...(activeOnly === 'true' ? { active: true } : {}),
+        ...(search?.trim()
+          ? {
+              OR: [
+                { name: { contains: search.trim(), mode: 'insensitive' } },
+                { document: { contains: search.trim(), mode: 'insensitive' } },
+                { contactName: { contains: search.trim(), mode: 'insensitive' } },
+                { phone: { contains: search.trim(), mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+      },
+      include: { category: { select: { id: true, name: true } } },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findSupplier(id: string) {
+    const item = await this.prisma.logisticsSupplier.findUnique({
+      where: { id },
+      include: { category: { select: { id: true, name: true } } },
+    });
+    if (!item) throw new NotFoundException('Fornecedor não encontrado');
+    return item;
+  }
+
+  async createSupplier(dto: CreateLogisticsSupplierDto) {
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.logisticsSupplier.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+    if (existing) throw new ConflictException(`"${name}" já existe`);
+    return this.prisma.logisticsSupplier.create({
+      data: {
+        name,
+        categoryId: dto.categoryId || null,
+        document: cadastroUpper(dto.document),
+        contactName: cadastroUpper(dto.contactName),
+        email: dto.email?.trim().toLowerCase(),
+        phone: cadastroUpper(dto.phone),
+        sortOrder: dto.sortOrder ?? 0,
+        active: dto.active ?? true,
+      },
+      include: { category: { select: { id: true, name: true } } },
+    });
+  }
+
+  async updateSupplier(id: string, dto: UpdateLogisticsSupplierDto) {
+    const current = await this.findSupplier(id);
+    this.guardSystemEdit(current.isSystem);
+    if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
+      const existing = await this.prisma.logisticsSupplier.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) throw new ConflictException(`"${name}" já existe`);
+    }
+    return this.prisma.logisticsSupplier.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.categoryId !== undefined && { categoryId: dto.categoryId || null }),
+        ...(dto.document !== undefined && { document: cadastroUpper(dto.document) }),
+        ...(dto.contactName !== undefined && { contactName: cadastroUpper(dto.contactName) }),
+        ...(dto.email !== undefined && { email: dto.email?.trim().toLowerCase() || null }),
+        ...(dto.phone !== undefined && { phone: cadastroUpper(dto.phone) }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.active !== undefined && { active: dto.active }),
+      },
+      include: { category: { select: { id: true, name: true } } },
+    });
+  }
+
+  async removeSupplier(id: string) {
+    const current = await this.findSupplier(id);
+    this.guardSystemEdit(current.isSystem);
+    await this.prisma.logisticsSupplier.delete({ where: { id } });
+  }
+
+  // ——— Apoio logístico (locais de interesse) ———
+  findPointsOfInterest(activeOnly?: string) {
+    return this.prisma.logisticsPointOfInterest.findMany({
+      where: activeOnly === 'true' ? { active: true } : undefined,
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findPointOfInterest(id: string) {
+    const item = await this.prisma.logisticsPointOfInterest.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Local de apoio logístico não encontrado');
+    return item;
+  }
+
+  async createPointOfInterest(dto: CreateLogisticsLookupDto) {
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.logisticsPointOfInterest.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+    if (existing) throw new ConflictException(`"${name}" já existe`);
+    return this.prisma.logisticsPointOfInterest.create({
+      data: { name, sortOrder: dto.sortOrder ?? 0, active: dto.active ?? true },
+    });
+  }
+
+  async updatePointOfInterest(id: string, dto: UpdateLogisticsLookupDto) {
+    const current = await this.findPointOfInterest(id);
+    this.guardSystemEdit(current.isSystem);
+    if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
+      const existing = await this.prisma.logisticsPointOfInterest.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) throw new ConflictException(`"${name}" já existe`);
+    }
+    return this.prisma.logisticsPointOfInterest.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.active !== undefined && { active: dto.active }),
+      },
+    });
+  }
+
+  async removePointOfInterest(id: string) {
+    const current = await this.findPointOfInterest(id);
+    this.guardSystemEdit(current.isSystem);
+    await this.prisma.logisticsPointOfInterest.delete({ where: { id } });
+  }
+
+  // ——— Destinos ———
+  findDestinations(activeOnly?: string, search?: string) {
+    return this.prisma.logisticsDestination.findMany({
+      where: {
+        ...(activeOnly === 'true' ? { active: true } : {}),
+        ...(search?.trim()
+          ? { name: { contains: search.trim(), mode: 'insensitive' } }
+          : {}),
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findDestination(id: string) {
+    const item = await this.prisma.logisticsDestination.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Destino não encontrado');
+    return item;
+  }
+
+  async createDestination(dto: CreateLogisticsLookupDto) {
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.logisticsDestination.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+    if (existing) throw new ConflictException(`"${name}" já existe`);
+    return this.prisma.logisticsDestination.create({
+      data: { name, sortOrder: dto.sortOrder ?? 0, active: dto.active ?? true },
+    });
+  }
+
+  async updateDestination(id: string, dto: UpdateLogisticsLookupDto) {
+    const current = await this.findDestination(id);
+    this.guardSystemEdit(current.isSystem);
+    if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
+      const existing = await this.prisma.logisticsDestination.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) throw new ConflictException(`"${name}" já existe`);
+    }
+    return this.prisma.logisticsDestination.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.active !== undefined && { active: dto.active }),
+      },
+    });
+  }
+
+  async removeDestination(id: string) {
+    const current = await this.findDestination(id);
+    this.guardSystemEdit(current.isSystem);
+    await this.prisma.logisticsDestination.delete({ where: { id } });
+  }
+
+  // ——— Serviços e produtos ———
+  findServiceProducts(activeOnly?: string, search?: string) {
+    return this.prisma.logisticsServiceProduct.findMany({
+      where: {
+        ...(activeOnly === 'true' ? { active: true } : {}),
+        ...(search?.trim()
+          ? { name: { contains: search.trim(), mode: 'insensitive' } }
+          : {}),
+      },
+      include: { expenseCategory: { select: { id: true, name: true } } },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async findServiceProduct(id: string) {
+    const item = await this.prisma.logisticsServiceProduct.findUnique({
+      where: { id },
+      include: { expenseCategory: { select: { id: true, name: true } } },
+    });
+    if (!item) throw new NotFoundException('Serviço/produto não encontrado');
+    return item;
+  }
+
+  async createServiceProduct(dto: CreateLogisticsServiceProductDto) {
+    const name = cadastroUpperRequired(dto.name);
+    const existing = await this.prisma.logisticsServiceProduct.findFirst({
+      where: { name: { equals: name, mode: 'insensitive' } },
+    });
+    if (existing) throw new ConflictException(`"${name}" já existe`);
+    return this.prisma.logisticsServiceProduct.create({
+      data: {
+        name,
+        expenseCategoryId: dto.expenseCategoryId || null,
+        sortOrder: dto.sortOrder ?? 0,
+        active: dto.active ?? true,
+      },
+      include: { expenseCategory: { select: { id: true, name: true } } },
+    });
+  }
+
+  async updateServiceProduct(id: string, dto: UpdateLogisticsServiceProductDto) {
+    const current = await this.findServiceProduct(id);
+    this.guardSystemEdit(current.isSystem);
+    if (dto.name) {
+      const name = cadastroUpperRequired(dto.name);
+      const existing = await this.prisma.logisticsServiceProduct.findFirst({
+        where: { name: { equals: name, mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) throw new ConflictException(`"${name}" já existe`);
+    }
+    return this.prisma.logisticsServiceProduct.update({
+      where: { id },
+      data: {
+        ...(dto.name && { name: cadastroUpperRequired(dto.name) }),
+        ...(dto.expenseCategoryId !== undefined && {
+          expenseCategoryId: dto.expenseCategoryId || null,
+        }),
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.active !== undefined && { active: dto.active }),
+      },
+      include: { expenseCategory: { select: { id: true, name: true } } },
+    });
+  }
+
+  async removeServiceProduct(id: string) {
+    const current = await this.findServiceProduct(id);
+    this.guardSystemEdit(current.isSystem);
+    await this.prisma.logisticsServiceProduct.delete({ where: { id } });
   }
 }

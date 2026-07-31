@@ -20,6 +20,15 @@ export interface LogisticsLookupRow {
   address?: string | null;
   transportCompany?: { id: string; name: string } | null;
   transportCompanyId?: string | null;
+  category?: { id: string; name: string } | null;
+  categoryId?: string | null;
+  expenseCategory?: { id: string; name: string } | null;
+  expenseCategoryId?: string | null;
+  code?: string | null;
+  guestType?: string | null;
+  contactName?: string | null;
+  document?: string | null;
+  email?: string | null;
 }
 
 const BASE = "/logistica-cadastros";

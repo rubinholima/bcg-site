@@ -34,6 +34,7 @@ import {
 } from "@/lib/logistica-cadastros";
 import {
   LOGISTICA_CADASTROS_BASE,
+  guestTypeLabel,
   type LogisticaCadastroResourceClient,
 } from "@/lib/logistica-cadastros.config";
 
@@ -45,7 +46,10 @@ interface Props {
   loadError?: string | null;
 }
 
-function cellValue(row: LogisticsLookupRow, key: string, nestedKey?: string): string {
+function cellValue(row: LogisticsLookupRow, key: string, nestedKey?: string, format?: string): string {
+  if (format === "guestType") {
+    return guestTypeLabel(row.guestType);
+  }
   if (nestedKey) {
     const parent = row[key as keyof LogisticsLookupRow] as { name?: string } | null | undefined;
     return parent?.name ?? "—";
@@ -81,10 +85,16 @@ export function LogisticaCadastroListClient({
     return rows.filter((row) => {
       const haystack = [
         row.name,
+        row.code,
         row.phone,
         row.cpf,
         row.city,
+        row.contactName,
+        row.document,
+        row.guestType,
         row.transportCompany?.name,
+        row.category?.name,
+        row.expenseCategory?.name,
       ]
         .filter(Boolean)
         .join(" ")
@@ -114,6 +124,11 @@ export function LogisticaCadastroListClient({
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">{resource.labelPlural}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{resource.description}</p>
+      </div>
+
       {loadError && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
           {loadError}
@@ -183,7 +198,7 @@ export function LogisticaCadastroListClient({
                           <TableCell key={col.key}>
                             {col.format === "date"
                               ? formatCadastroDate(row[col.key as keyof LogisticsLookupRow] as string)
-                              : cellValue(row, col.key, col.nestedKey)}
+                              : cellValue(row, col.key, col.nestedKey, col.format)}
                           </TableCell>
                         ))}
                         <TableRowActions>

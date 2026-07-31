@@ -19,6 +19,15 @@ import { CreateLogisticsHotelDto } from './dto/create-logistics-hotel.dto';
 import { CreateLogisticsLookupDto } from './dto/create-logistics-lookup.dto';
 import { CreateLogisticsLoyaltyProgramDto } from './dto/create-logistics-loyalty-program.dto';
 import { CreateLogisticsRoomTypeDto } from './dto/create-logistics-room-type.dto';
+import { CreateLogisticsAirportDto, UpdateLogisticsAirportDto } from './dto/create-logistics-airport.dto';
+import {
+  CreateLogisticsSupplierDto,
+  UpdateLogisticsSupplierDto,
+} from './dto/create-logistics-supplier.dto';
+import {
+  CreateLogisticsServiceProductDto,
+  UpdateLogisticsServiceProductDto,
+} from './dto/create-logistics-service-product.dto';
 import { UpdateLogisticsGuestDto } from './dto/update-logistics-guest.dto';
 import { UpdateLogisticsHotelDto } from './dto/update-logistics-hotel.dto';
 import { UpdateLogisticsLookupDto } from './dto/update-logistics-lookup.dto';
@@ -233,5 +242,180 @@ export class LogisticaCadastrosController {
   @Delete('hotels/:id')
   removeHotel(@Param('id') id: string) {
     return this.service.removeHotel(id);
+  }
+
+  @Get('airports')
+  findAirports(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+    return this.service.findAirports(activeOnly, search);
+  }
+
+  @Post('airports')
+  createAirport(@Body() dto: CreateLogisticsAirportDto) {
+    return this.service.createAirport(dto);
+  }
+
+  @Get('airports/:id')
+  findAirport(@Param('id') id: string) {
+    return this.service.findAirport(id);
+  }
+
+  @Patch('airports/:id')
+  updateAirport(@Param('id') id: string, @Body() dto: UpdateLogisticsAirportDto) {
+    return this.service.updateAirport(id, dto);
+  }
+
+  @Delete('airports/:id')
+  removeAirport(@Param('id') id: string) {
+    return this.service.removeAirport(id);
+  }
+
+  @Get('expense-categories')
+  findExpenseCategories(@Query('activeOnly') activeOnly?: string) {
+    return this.service.findExpenseCategories(activeOnly);
+  }
+
+  @Post('expense-categories')
+  createExpenseCategory(@Body() dto: CreateLogisticsLookupDto) {
+    return this.service.createExpenseCategory(dto);
+  }
+
+  @Get('expense-categories/:id')
+  findExpenseCategory(@Param('id') id: string) {
+    return this.service.findExpenseCategory(id);
+  }
+
+  @Patch('expense-categories/:id')
+  updateExpenseCategory(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+    return this.service.updateExpenseCategory(id, dto);
+  }
+
+  @Delete('expense-categories/:id')
+  removeExpenseCategory(@Param('id') id: string) {
+    return this.service.removeExpenseCategory(id);
+  }
+
+  @Get('supplier-categories')
+  findSupplierCategories(@Query('activeOnly') activeOnly?: string) {
+    return this.service.findSupplierCategories(activeOnly);
+  }
+
+  @Post('supplier-categories')
+  createSupplierCategory(@Body() dto: CreateLogisticsLookupDto) {
+    return this.service.createSupplierCategory(dto);
+  }
+
+  @Get('supplier-categories/:id')
+  findSupplierCategory(@Param('id') id: string) {
+    return this.service.findSupplierCategory(id);
+  }
+
+  @Patch('supplier-categories/:id')
+  updateSupplierCategory(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+    return this.service.updateSupplierCategory(id, dto);
+  }
+
+  @Delete('supplier-categories/:id')
+  removeSupplierCategory(@Param('id') id: string) {
+    return this.service.removeSupplierCategory(id);
+  }
+
+  @Get('suppliers')
+  findSuppliers(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+    return this.service.findSuppliers(activeOnly, search);
+  }
+
+  @Post('suppliers')
+  createSupplier(@Body() dto: CreateLogisticsSupplierDto) {
+    return this.service.createSupplier(dto);
+  }
+
+  @Get('suppliers/:id')
+  findSupplier(@Param('id') id: string) {
+    return this.service.findSupplier(id);
+  }
+
+  @Patch('suppliers/:id')
+  updateSupplier(@Param('id') id: string, @Body() dto: UpdateLogisticsSupplierDto) {
+    return this.service.updateSupplier(id, dto);
+  }
+
+  @Delete('suppliers/:id')
+  removeSupplier(@Param('id') id: string) {
+    return this.service.removeSupplier(id);
+  }
+
+  @Get('points-of-interest')
+  findPointsOfInterest(@Query('activeOnly') activeOnly?: string) {
+    return this.service.findPointsOfInterest(activeOnly);
+  }
+
+  @Post('points-of-interest')
+  createPointOfInterest(@Body() dto: CreateLogisticsLookupDto) {
+    return this.service.createPointOfInterest(dto);
+  }
+
+  @Get('points-of-interest/:id')
+  findPointOfInterest(@Param('id') id: string) {
+    return this.service.findPointOfInterest(id);
+  }
+
+  @Patch('points-of-interest/:id')
+  updatePointOfInterest(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+    return this.service.updatePointOfInterest(id, dto);
+  }
+
+  @Delete('points-of-interest/:id')
+  removePointOfInterest(@Param('id') id: string) {
+    return this.service.removePointOfInterest(id);
+  }
+
+  @Get('destinations')
+  findDestinations(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+    return this.service.findDestinations(activeOnly, search);
+  }
+
+  @Post('destinations')
+  createDestination(@Body() dto: CreateLogisticsLookupDto) {
+    return this.service.createDestination(dto);
+  }
+
+  @Get('destinations/:id')
+  findDestination(@Param('id') id: string) {
+    return this.service.findDestination(id);
+  }
+
+  @Patch('destinations/:id')
+  updateDestination(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+    return this.service.updateDestination(id, dto);
+  }
+
+  @Delete('destinations/:id')
+  removeDestination(@Param('id') id: string) {
+    return this.service.removeDestination(id);
+  }
+
+  @Get('service-products')
+  findServiceProducts(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+    return this.service.findServiceProducts(activeOnly, search);
+  }
+
+  @Post('service-products')
+  createServiceProduct(@Body() dto: CreateLogisticsServiceProductDto) {
+    return this.service.createServiceProduct(dto);
+  }
+
+  @Get('service-products/:id')
+  findServiceProduct(@Param('id') id: string) {
+    return this.service.findServiceProduct(id);
+  }
+
+  @Patch('service-products/:id')
+  updateServiceProduct(@Param('id') id: string, @Body() dto: UpdateLogisticsServiceProductDto) {
+    return this.service.updateServiceProduct(id, dto);
+  }
+
+  @Delete('service-products/:id')
+  removeServiceProduct(@Param('id') id: string) {
+    return this.service.removeServiceProduct(id);
   }
 }

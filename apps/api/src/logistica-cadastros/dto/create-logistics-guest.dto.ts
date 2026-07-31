@@ -8,6 +8,10 @@ export class CreateLogisticsGuestDto {
   name!: string;
 
   @IsOptional()
+  @IsString()
+  guestType?: string;
+
+  @IsOptional()
   @IsDateString()
   birthDate?: string;
 
@@ -48,6 +52,10 @@ export class UpdateLogisticsGuestDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  guestType?: string | null;
 
   @IsOptional()
   @IsDateString()

@@ -366,6 +366,8 @@ model LogisticsGuest {
   tenantId       String
   tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name           String
+  /// Familiar, autoridade, parceiro, imprensa, etc.
+  guestType      String?
   birthDate      DateTime?
   phone          String?
   rg             String?
@@ -381,6 +383,95 @@ model LogisticsGuest {
 
   @@index([tenantId])
   @@index([tenantId, name])
+}
+
+model LogisticsAirport {
+  id        String   @id @default(cuid())
+  name      String
+  code      String?
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([name])
+  @@index([code])
+}
+
+model LogisticsExpenseCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  services  LogisticsServiceProduct[]
+}
+
+model LogisticsSupplierCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  suppliers LogisticsSupplier[]
+}
+
+model LogisticsSupplier {
+  id          String   @id @default(cuid())
+  name        String
+  categoryId  String?
+  category    LogisticsSupplierCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  document    String?
+  contactName String?
+  email       String?
+  phone       String?
+  isSystem    Boolean  @default(false)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name])
+  @@index([categoryId])
+}
+
+model LogisticsPointOfInterest {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LogisticsDestination {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isSystem  Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LogisticsServiceProduct {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  expenseCategoryId String?
+  expenseCategory   LogisticsExpenseCategory? @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
+  isSystem          Boolean  @default(false)
+  active            Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([expenseCategoryId])
 }
 
 model LogisticsHotel {

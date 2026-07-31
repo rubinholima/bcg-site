@@ -23,19 +23,43 @@ interface Props {
   tenantId?: string;
 }
 
+type ApiOption = { id: string; name: string };
+
+const API_SELECT_PATHS: Record<string, string> = {
+  "transport-companies": "/logistica-cadastros/transport-companies?activeOnly=true",
+  "expense-categories": "/logistica-cadastros/expense-categories?activeOnly=true",
+  "supplier-categories": "/logistica-cadastros/supplier-categories?activeOnly=true",
+};
+
+function fkInitialValue(
+  initial: LogisticsLookupRow | null | undefined,
+  fieldKey: string,
+): string {
+  if (fieldKey === "transportCompanyId") {
+    return (initial?.transportCompanyId ?? initial?.transportCompany?.id ?? "") as string;
+  }
+  if (fieldKey === "categoryId") {
+    return (initial?.categoryId ?? initial?.category?.id ?? "") as string;
+  }
+  if (fieldKey === "expenseCategoryId") {
+    return (initial?.expenseCategoryId ?? initial?.expenseCategory?.id ?? "") as string;
+  }
+  return "";
+}
+
 export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [transportCompanies, setTransportCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [apiOptions, setApiOptions] = useState<Record<string, ApiOption[]>>({});
   const [values, setValues] = useState<Record<string, string>>(() => {
     const base: Record<string, string> = {};
     for (const field of resource.fields) {
       const raw = initial?.[field.key as keyof LogisticsLookupRow];
       if (field.type === "date") {
         base[field.key] = toDateInputValue(raw as string | null);
-      } else if (field.key === "transportCompanyId") {
-        base[field.key] = (initial?.transportCompanyId ?? initial?.transportCompany?.id ?? "") as string;
+      } else if (field.selectFromApi) {
+        base[field.key] = fkInitialValue(initial, field.key);
       } else if (raw != null) {
         base[field.key] = String(raw);
       } else {
@@ -46,12 +70,26 @@ export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId 
   });
 
   useEffect(() => {
-    const needsTransport = resource.fields.some((f) => f.selectFromApi === "transport-companies");
-    if (!needsTransport) return;
-    api
-      .get<{ id: string; name: string }[]>("/logistica-cadastros/transport-companies?activeOnly=true")
-      .then(({ data }) => setTransportCompanies(Array.isArray(data) ? data : []))
-      .catch(() => setTransportCompanies([]));
+    const apiKeys = resource.fields
+      .map((f) => f.selectFromApi)
+      .filter((k): k is NonNullable<typeof k> => !!k);
+    const unique = [...new Set(apiKeys)];
+    if (unique.length === 0) return;
+
+    void Promise.all(
+      unique.map(async (key) => {
+        const path = API_SELECT_PATHS[key];
+        if (!path) return [key, []] as const;
+        try {
+          const { data } = await api.get<ApiOption[]>(path);
+          return [key, Array.isArray(data) ? data : []] as const;
+        } catch {
+          return [key, []] as const;
+        }
+      }),
+    ).then((entries) => {
+      setApiOptions(Object.fromEntries(entries));
+    });
   }, [resource.fields]);
 
   const basePath = `${LOGISTICA_CADASTROS_BASE}/${resource.slug}`;
@@ -77,7 +115,11 @@ export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId 
         body[field.key] = val ? Number(val) : undefined;
       } else if (field.type === "date") {
         body[field.key] = val || undefined;
-      } else if (field.key === "transportCompanyId") {
+      } else if (
+        field.key === "transportCompanyId" ||
+        field.key === "categoryId" ||
+        field.key === "expenseCategoryId"
+      ) {
         body[field.key] = val || null;
       } else {
         body[field.key] = val || undefined;
@@ -135,7 +177,7 @@ export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId 
                     disabled={loading}
                     rows={3}
                   />
-                ) : field.type === "select" && field.selectFromApi === "transport-companies" ? (
+                ) : field.type === "select" && field.selectFromApi ? (
                   <NativeSelect
                     id={field.key}
                     value={values[field.key] ?? ""}
@@ -143,9 +185,24 @@ export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId 
                     disabled={loading}
                   >
                     <option value="">Selecione…</option>
-                    {transportCompanies.map((c) => (
+                    {(apiOptions[field.selectFromApi] ?? []).map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                ) : field.type === "select" && field.selectOptions ? (
+                  <NativeSelect
+                    id={field.key}
+                    value={values[field.key] ?? ""}
+                    onChange={(e) => handleChange(field.key, e.target.value)}
+                    disabled={loading}
+                    required={field.required}
+                  >
+                    <option value="">Selecione…</option>
+                    {field.selectOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
                   </NativeSelect>
@@ -171,7 +228,7 @@ export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId 
                 ) : (
                   <Input
                     id={field.key}
-                    type="text"
+                    type={field.type === "email" ? "email" : "text"}
                     required={field.required}
                     placeholder={field.placeholder}
                     value={values[field.key] ?? ""}

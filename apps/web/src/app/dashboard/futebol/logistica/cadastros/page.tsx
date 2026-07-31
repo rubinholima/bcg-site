@@ -12,8 +12,8 @@ export default function LogisticaCadastrosHubPage() {
         <CardHeader>
           <CardTitle>Cadastros de logística</CardTitle>
           <CardDescription>
-            Tabelas auxiliares para viagens, convocação e despesas — transportadoras, hospedagem, milhas
-            e pessoas autorizadas.
+            Tabelas auxiliares para viagens, convocação e despesas — aeroportos, fornecedores, destinos,
+            serviços e cadastros operacionais.
           </CardDescription>
         </CardHeader>
       </Card>
