@@ -21,10 +21,6 @@ import { CreateLogisticsLoyaltyProgramDto } from './dto/create-logistics-loyalty
 import { CreateLogisticsRoomTypeDto } from './dto/create-logistics-room-type.dto';
 import { CreateLogisticsAirportDto, UpdateLogisticsAirportDto } from './dto/create-logistics-airport.dto';
 import {
-  CreateLogisticsSupplierDto,
-  UpdateLogisticsSupplierDto,
-} from './dto/create-logistics-supplier.dto';
-import {
   CreateLogisticsServiceProductDto,
   UpdateLogisticsServiceProductDto,
 } from './dto/create-logistics-service-product.dto';
@@ -292,56 +288,6 @@ export class LogisticaCadastrosController {
   @Delete('expense-categories/:id')
   removeExpenseCategory(@Param('id') id: string) {
     return this.service.removeExpenseCategory(id);
-  }
-
-  @Get('supplier-categories')
-  findSupplierCategories(@Query('activeOnly') activeOnly?: string) {
-    return this.service.findSupplierCategories(activeOnly);
-  }
-
-  @Post('supplier-categories')
-  createSupplierCategory(@Body() dto: CreateLogisticsLookupDto) {
-    return this.service.createSupplierCategory(dto);
-  }
-
-  @Get('supplier-categories/:id')
-  findSupplierCategory(@Param('id') id: string) {
-    return this.service.findSupplierCategory(id);
-  }
-
-  @Patch('supplier-categories/:id')
-  updateSupplierCategory(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
-    return this.service.updateSupplierCategory(id, dto);
-  }
-
-  @Delete('supplier-categories/:id')
-  removeSupplierCategory(@Param('id') id: string) {
-    return this.service.removeSupplierCategory(id);
-  }
-
-  @Get('suppliers')
-  findSuppliers(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
-    return this.service.findSuppliers(activeOnly, search);
-  }
-
-  @Post('suppliers')
-  createSupplier(@Body() dto: CreateLogisticsSupplierDto) {
-    return this.service.createSupplier(dto);
-  }
-
-  @Get('suppliers/:id')
-  findSupplier(@Param('id') id: string) {
-    return this.service.findSupplier(id);
-  }
-
-  @Patch('suppliers/:id')
-  updateSupplier(@Param('id') id: string, @Body() dto: UpdateLogisticsSupplierDto) {
-    return this.service.updateSupplier(id, dto);
-  }
-
-  @Delete('suppliers/:id')
-  removeSupplier(@Param('id') id: string) {
-    return this.service.removeSupplier(id);
   }
 
   @Get('points-of-interest')

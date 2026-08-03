@@ -410,36 +410,6 @@ model LogisticsExpenseCategory {
   services  LogisticsServiceProduct[]
 }
 
-model LogisticsSupplierCategory {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isSystem  Boolean  @default(false)
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  suppliers LogisticsSupplier[]
-}
-
-model LogisticsSupplier {
-  id          String   @id @default(cuid())
-  name        String
-  categoryId  String?
-  category    LogisticsSupplierCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  document    String?
-  contactName String?
-  email       String?
-  phone       String?
-  isSystem    Boolean  @default(false)
-  active      Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([name])
-  @@index([categoryId])
-}
-
 model LogisticsPointOfInterest {
   id        String   @id @default(cuid())
   name      String   @unique

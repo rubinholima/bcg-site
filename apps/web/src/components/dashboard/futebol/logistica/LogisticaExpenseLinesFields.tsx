@@ -22,6 +22,7 @@ interface Props {
   onChange: (next: LogisticsExpenseLine[]) => void;
   defaultPaymentTypeId?: string | null;
   defaultSupplierId?: string | null;
+  tenantId?: string;
   disabled?: boolean;
 }
 
@@ -30,9 +31,10 @@ export function LogisticaExpenseLinesFields({
   onChange,
   defaultPaymentTypeId,
   defaultSupplierId,
+  tenantId,
   disabled,
 }: Props) {
-  const lookups = useLogisticaCadastrosLookups();
+  const lookups = useLogisticaCadastrosLookups(tenantId);
 
   const updateLine = (id: string, patch: Partial<LogisticsExpenseLine>) => {
     onChange(lines.map((l) => (l.id === id ? { ...l, ...patch } : l)));
@@ -94,7 +96,8 @@ export function LogisticaExpenseLinesFields({
         </Button>
       </div>
       <p className="text-xs text-muted-foreground">
-        Use categoria, serviço/produto, fornecedor e forma de pagamento dos cadastros de logística.
+        Use categoria, serviço/produto e forma de pagamento dos cadastros de logística. Fornecedor
+        vem do cadastro único (Adm → Fornecedores) do clube da viagem.
       </p>
 
       {lines.length === 0 ? (

@@ -9,7 +9,8 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 
 @Controller('compras/suppliers')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
-@RequireModule(['adm_compras', 'adm_financeiro'])
+/** Cadastro único de fornecedores: Compras, Financeiro e Logística. */
+@RequireModule(['adm_compras', 'adm_financeiro', 'futebol_logistica'])
 export class SuppliersController {
   constructor(private readonly service: SuppliersService) {}
 

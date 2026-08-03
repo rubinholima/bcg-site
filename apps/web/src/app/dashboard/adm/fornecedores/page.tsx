@@ -29,6 +29,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
   SupplierFormDialog,
   type SupplierRow,
@@ -37,7 +38,10 @@ import {
 export default function FornecedoresAdmPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
-  const canView = canAccessModule("adm_financeiro") || canAccessModule("adm_compras");
+  const canView =
+    canAccessModule("adm_financeiro") ||
+    canAccessModule("adm_compras") ||
+    canAccessModule("futebol_logistica");
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [rows, setRows] = useState<SupplierRow[]>([]);
@@ -47,6 +51,12 @@ export default function FornecedoresAdmPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [edit, setEdit] = useState<SupplierRow | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{
+    open: boolean;
+    variant: "error" | "success";
+    title: string;
+    message: string;
+  }>({ open: false, variant: "error", title: "", message: "" });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,7 +95,12 @@ export default function FornecedoresAdmPage() {
       setDeleteId(null);
       await load();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Erro ao excluir");
+      setFeedback({
+        open: true,
+        variant: "error",
+        title: "Erro ao excluir",
+        message: err instanceof Error ? err.message : "Não foi possível excluir o fornecedor.",
+      });
     }
   };
 
@@ -191,6 +206,14 @@ export default function FornecedoresAdmPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((f) => ({ ...f, open }))}
+        variant={feedback.variant}
+        title={feedback.title}
+        message={feedback.message}
+      />
     </div>
   );
 }

@@ -62,11 +62,20 @@ async function fetchList(path: string): Promise<LogisticaLookupOption[]> {
   }
 }
 
-export function useLogisticaCadastrosLookups(): LookupsState {
+export function useLogisticaCadastrosLookups(tenantId?: string): LookupsState {
   const [state, setState] = useState<LookupsState>(EMPTY);
 
   useEffect(() => {
     let cancelled = false;
+    const suppliersPromise = tenantId
+      ? api
+          .get<LogisticaLookupOption[]>(
+            `/compras/suppliers?tenantId=${encodeURIComponent(tenantId)}`,
+          )
+          .then(({ data }) => (Array.isArray(data) ? data : []))
+          .catch(() => [] as LogisticaLookupOption[])
+      : Promise.resolve([] as LogisticaLookupOption[]);
+
     Promise.all([
       fetchList("hotels"),
       fetchList("transport-companies"),
@@ -77,7 +86,7 @@ export function useLogisticaCadastrosLookups(): LookupsState {
       fetchList("airports"),
       fetchList("destinations"),
       fetchList("points-of-interest"),
-      fetchList("suppliers"),
+      suppliersPromise,
       fetchList("expense-categories"),
       fetchList("service-products"),
       fetchList("visa-types"),
@@ -119,7 +128,7 @@ export function useLogisticaCadastrosLookups(): LookupsState {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [tenantId]);
 
   return state;
 }

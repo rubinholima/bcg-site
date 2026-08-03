@@ -34,6 +34,8 @@ interface Props {
   onDestinationNameChange?: (name: string) => void;
   pointOfInterestIds?: string[];
   onPointOfInterestIdsChange?: (ids: string[]) => void;
+  /** Clube da viagem — fornecedores unificados (Adm) */
+  tenantId?: string;
   disabled?: boolean;
   /** transport | hotel | destination | all */
   variant?: "transport" | "hotel" | "destination" | "all";
@@ -62,10 +64,11 @@ export function LogisticaTravelCadastrosFields({
   onDestinationNameChange,
   pointOfInterestIds = [],
   onPointOfInterestIdsChange,
+  tenantId,
   disabled,
   variant = "all",
 }: Props) {
-  const lookups = useLogisticaCadastrosLookups();
+  const lookups = useLogisticaCadastrosLookups(tenantId);
   const showTransport = variant === "transport" || variant === "all";
   const showHotel = variant === "hotel" || variant === "all";
   const showDestination = variant === "destination" || variant === "all";
@@ -187,10 +190,18 @@ export function LogisticaTravelCadastrosFields({
             <Select
               value={logisticsCadastros.supplierId ?? "none"}
               onValueChange={(v) => setCadastro({ supplierId: v === "none" ? null : v })}
-              disabled={disabled || lookups.loading}
+              disabled={disabled || lookups.loading || !tenantId}
             >
               <SelectTrigger className="min-h-[44px]">
-                <SelectValue placeholder="Selecione do cadastro" />
+                <SelectValue
+                  placeholder={
+                    !tenantId
+                      ? "Selecione o clube antes"
+                      : lookups.loading
+                        ? "Carregando…"
+                        : "Selecione do cadastro"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
@@ -201,6 +212,18 @@ export function LogisticaTravelCadastrosFields({
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-muted-foreground">
+              Cadastro único em{" "}
+              <Link
+                href="/dashboard/adm/fornecedores"
+                className="text-primary underline-offset-2 hover:underline"
+              >
+                Adm → Fornecedores
+              </Link>
+              {tenantId && lookups.suppliers.length === 0
+                ? " — nenhum fornecedor neste clube ainda."
+                : "."}
+            </p>
           </div>
 
           {showAirFields(transportType) ? (

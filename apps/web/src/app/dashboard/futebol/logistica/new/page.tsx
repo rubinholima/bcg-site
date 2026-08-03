@@ -560,6 +560,7 @@ export default function NewLogisticaPage() {
               onHotelNameChange={setHotelName}
               onHotelAddressChange={setHotelAddress}
               onDestinationNameChange={(name) => setCity(name)}
+              tenantId={tenantId}
               disabled={loading}
             />
             <LogisticaTravelCadastrosFields
@@ -571,6 +572,7 @@ export default function NewLogisticaPage() {
               hotelAddress={hotelAddress}
               onHotelNameChange={setHotelName}
               onHotelAddressChange={setHotelAddress}
+              tenantId={tenantId}
               disabled={loading}
             />
           </CardContent>
@@ -593,6 +595,7 @@ export default function NewLogisticaPage() {
               onHotelAddressChange={setHotelAddress}
               pointOfInterestIds={pointOfInterestIds}
               onPointOfInterestIdsChange={setPointOfInterestIds}
+              tenantId={tenantId}
               disabled={loading}
             />
             {tenantId && (
@@ -627,6 +630,7 @@ export default function NewLogisticaPage() {
               onChange={setExpenseLines}
               defaultPaymentTypeId={logisticsCadastros.paymentTypeId}
               defaultSupplierId={logisticsCadastros.supplierId}
+              tenantId={tenantId}
               disabled={loading}
             />
           </CardContent>

@@ -492,6 +492,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
                 icon: LayoutDashboard,
                 moduleSlug: "futebol_logistica",
               },
+              {
+                slug: "futebol_logistica_cad_fornecedores",
+                label: "Fornecedores",
+                href: "/dashboard/adm/fornecedores",
+                icon: Truck,
+                moduleSlug: "futebol_logistica",
+              },
               ...LOGISTICA_CADASTRO_RESOURCES.map((resource) => ({
                 slug: `futebol_logistica_cad_${resource.slug.replace(/-/g, "_")}`,
                 label: resource.labelPlural,

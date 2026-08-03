@@ -28,7 +28,6 @@ type ApiOption = { id: string; name: string };
 const API_SELECT_PATHS: Record<string, string> = {
   "transport-companies": "/logistica-cadastros/transport-companies?activeOnly=true",
   "expense-categories": "/logistica-cadastros/expense-categories?activeOnly=true",
-  "supplier-categories": "/logistica-cadastros/supplier-categories?activeOnly=true",
 };
 
 function fkInitialValue(

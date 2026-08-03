@@ -10,8 +10,6 @@ import {
   Building2,
   Plane,
   Receipt,
-  Store,
-  Tags,
   MapPinned,
   Navigation,
   Package,
@@ -29,7 +27,7 @@ export interface LogisticaCadastroField {
   /** Opções fixas */
   selectOptions?: { value: string; label: string }[];
   /** API relativa em logistica-cadastros */
-  selectFromApi?: "transport-companies" | "expense-categories" | "supplier-categories";
+  selectFromApi?: "transport-companies" | "expense-categories";
   min?: number;
 }
 
@@ -115,46 +113,6 @@ const LOGISTICA_CADASTRO_RESOURCES_RAW: LogisticaCadastroResource[] = [
     menuOrder: 20,
     columns: [{ key: "name", label: "Nome" }],
     fields: [{ key: "name", label: "Nome", type: "text", required: true, placeholder: "Ex.: ALIMENTAÇÃO" }],
-  },
-  {
-    slug: "categorias-fornecedores",
-    label: "Categoria de fornecedor",
-    labelPlural: "Categorias de fornecedores",
-    description: "Tipos de fornecedor (hotel, restaurante, cia aérea, etc.) — compartilhado entre departamentos.",
-    apiPath: "supplier-categories",
-    icon: Tags,
-    menuOrder: 30,
-    columns: [{ key: "name", label: "Nome" }],
-    fields: [{ key: "name", label: "Nome", type: "text", required: true, placeholder: "Ex.: HOTEL" }],
-  },
-  {
-    slug: "fornecedores",
-    label: "Fornecedor",
-    labelPlural: "Fornecedores",
-    description:
-      "Cadastro global de fornecedores reutilizável por logística, compras e demais departamentos — evita recadastro.",
-    apiPath: "suppliers",
-    icon: Store,
-    menuOrder: 40,
-    columns: [
-      { key: "name", label: "Nome" },
-      { key: "category", label: "Categoria", nestedKey: "name" },
-      { key: "phone", label: "Telefone" },
-      { key: "contactName", label: "Contato" },
-    ],
-    fields: [
-      { key: "name", label: "Nome", type: "text", required: true },
-      {
-        key: "categoryId",
-        label: "Categoria",
-        type: "select",
-        selectFromApi: "supplier-categories",
-      },
-      { key: "document", label: "CPF/CNPJ", type: "text" },
-      { key: "contactName", label: "Nome do contato", type: "text" },
-      { key: "email", label: "E-mail", type: "email", placeholder: "contato@empresa.com" },
-      { key: "phone", label: "Telefone", type: "text", placeholder: "(31) 99999-9999" },
-    ],
   },
   {
     slug: "convidados",
