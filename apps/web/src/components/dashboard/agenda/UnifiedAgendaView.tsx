@@ -119,22 +119,24 @@ function dateKeyFromDate(d: Date): string {
 function EventPill({ event, compact }: { event: UnifiedAgendaEvent; compact?: boolean }) {
   const side = agendaMatchSideLabel(event.matchSide ?? null);
   const useStyle = !!event.categoryPillStyle;
+  const cat = event.categoryLabel?.trim() || null;
   return (
     <span
       className={cn(
-        "block truncate rounded-md border px-1.5 py-0.5 text-left leading-tight font-semibold shadow-sm",
+        "block truncate rounded-md border px-1.5 py-0.5 text-left leading-tight font-semibold uppercase tracking-wide shadow-sm",
         compact ? "text-[9px] sm:text-[10px]" : "text-[10px] sm:text-xs",
         !useStyle && event.tone,
       )}
       style={useStyle ? event.categoryPillStyle : undefined}
-      title={`${side ? `${side} · ` : ""}${event.title} — ${event.typeLabel}${event.categoryLabel ? ` (${event.categoryLabel})` : ""}`}
+      title={`${side ? `${side} · ` : ""}${cat ? `${cat} · ` : ""}${event.title} — ${event.typeLabel}`}
     >
       {side && compact ? (
         <span className="mr-0.5 font-bold">{side === "Casa" ? "C" : "F"}</span>
       ) : null}
       {!event.allDay && !compact ? (
-        <span className="mr-1 opacity-90">{formatAgendaTime(event.startAt, false)}</span>
+        <span className="mr-1 opacity-90 normal-case">{formatAgendaTime(event.startAt, false)}</span>
       ) : null}
+      {cat ? <span className="mr-0.5 font-bold opacity-95">{cat} · </span> : null}
       {event.title}
     </span>
   );
@@ -176,7 +178,12 @@ function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaA
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className={cn("text-base font-bold leading-snug sm:text-lg", dash.eventListTitle)}>
+          <span
+            className={cn(
+              "text-base font-bold uppercase leading-snug tracking-wide sm:text-lg",
+              dash.eventListTitle,
+            )}
+          >
             {ev.title}
           </span>
           {sideLabel && SideIcon ? (
@@ -200,18 +207,18 @@ function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaA
             </span>
           )}
           {ev.statusLabel ? (
-            <span className="rounded-full border border-border/70 bg-background/80 px-2 py-0.5 text-[10px] font-semibold text-foreground">
+            <span className="rounded-full border border-border/70 bg-background/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-foreground">
               {ev.statusLabel}
             </span>
           ) : null}
           {ev.categoryLabel ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold text-sky-100">
+            <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-100">
               <Shirt className="h-3 w-3" />
               {ev.categoryLabel}
             </span>
           ) : null}
         </div>
-        <p className="mt-1 text-sm font-semibold text-foreground">{ev.subtitle}</p>
+        <p className="mt-1 text-sm font-semibold uppercase tracking-wide text-foreground">{ev.subtitle}</p>
         <p className={cn("mt-2 text-sm font-bold", dash.eventListMeta)}>
           {formatAgendaTime(ev.startAt, ev.allDay)}
           {ev.endAt && !ev.allDay && ev.matchSide === "fora"
@@ -234,7 +241,7 @@ function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaA
       <div className="flex shrink-0 flex-col items-end gap-2">
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold",
+            "inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-bold uppercase tracking-wide",
             meta.tone,
           )}
         >
@@ -522,7 +529,7 @@ export function UnifiedAgendaView() {
         section="Agenda"
         sectionIcon={Calendar}
         title="Agenda geral"
-        description="Compromissos de futebol, Hall, consultas e comunicação."
+        description="No calendário: categoria do elenco (ex. SUB-17) aparece no início de cada compromisso. Cores = tipo do evento (jogo, treino…), não o elenco."
         stats={[
           { value: filteredEvents.length, label: "No período" },
           {
@@ -540,7 +547,7 @@ export function UnifiedAgendaView() {
               <Button type="button" variant="outline" size="sm" className="min-h-[40px]" asChild>
                 <Link href="/dashboard/agenda/configuracao">
                   <Settings2 className="mr-1 h-4 w-4" />
-                  Categorias e áreas
+                  Cores e categorias
                 </Link>
               </Button>
             ) : null}

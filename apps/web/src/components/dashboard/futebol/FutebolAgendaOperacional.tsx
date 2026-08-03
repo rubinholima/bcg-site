@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -610,9 +611,9 @@ export function FutebolAgendaOperacional() {
     const swatch = agendaSwatchStyle(agendaColors, item.type, side);
     const typeOrSide =
       sideLabel === "Casa"
-        ? "Jogo em casa"
+        ? "JOGO EM CASA"
         : sideLabel === "Fora"
-          ? "Jogo fora"
+          ? "JOGO FORA"
           : FOOTBALL_AGENDA_TYPE_LABEL[item.type] ?? item.type;
     return (
     <button
@@ -633,12 +634,12 @@ export function FutebolAgendaOperacional() {
           >
             {typeOrSide}
           </span>
-          <p className="min-w-0 truncate text-base font-bold leading-tight text-foreground">
+          <p className="min-w-0 truncate text-base font-bold uppercase leading-tight tracking-wide text-foreground">
             {item.title}
           </p>
         </div>
         {(cats !== "—" || item.tenantName) ? (
-          <p className="truncate text-xs font-semibold text-foreground/90">
+          <p className="truncate text-xs font-semibold uppercase tracking-wide text-foreground/90">
             {[item.tenantName, cats !== "—" ? cats : null].filter(Boolean).join(" · ")}
           </p>
         ) : null}
@@ -701,15 +702,15 @@ export function FutebolAgendaOperacional() {
       tenantId: form.tenantId,
       category: form.category || undefined,
       type: form.type,
-      title: form.title.trim(),
+      title: form.title.trim().toLocaleUpperCase("pt-BR"),
       startAt: combineDateTime(form.startAt, form.startTime, form.allDay),
       endAt: form.endAt
         ? combineDateTime(form.endAt, form.endTime, form.allDay)
         : undefined,
       allDay: form.allDay,
       spaceId: form.spaceId || undefined,
-      location: form.location.trim() || undefined,
-      description: form.description.trim() || undefined,
+      location: form.location.trim().toLocaleUpperCase("pt-BR") || undefined,
+      description: form.description.trim().toLocaleUpperCase("pt-BR") || undefined,
       status: form.status,
     };
     try {
@@ -809,7 +810,7 @@ export function FutebolAgendaOperacional() {
             <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={() => setPaletteOpen(true)} className="min-h-[44px] shrink-0">
                 <Palette className="mr-2 h-4 w-4" />
-                Cores
+                Cores (tipo do evento)
               </Button>
             <Button variant="outline" onClick={goToToday} className="min-h-[44px] shrink-0">
                 Hoje
@@ -954,19 +955,17 @@ export function FutebolAgendaOperacional() {
                               {sortAgendaItems(dayItems).slice(0, 5).map((item) => {
                                 const side = matchSideOf(item);
                                 const style = agendaSwatchStyle(agendaColors, item.type, side);
-                                const line = `${agendaLinePrefix(item, side)}${item.title}`;
+                                const cats = categoryLine(item);
+                                const catPrefix = cats !== "—" ? `${cats} · ` : "";
+                                const line = `${catPrefix}${agendaLinePrefix(item, side)}${item.title}`;
                                 return (
                                   <button
                                     key={item.id}
                                     type="button"
                                     onClick={() => openCalendarItem(item)}
-                                    className="block w-full truncate whitespace-nowrap rounded border px-1 py-0.5 text-left text-[10px] font-semibold leading-tight sm:text-[11px]"
+                                    className="block w-full truncate whitespace-nowrap rounded border px-1 py-0.5 text-left text-[10px] font-semibold uppercase leading-tight tracking-wide sm:text-[11px]"
                                     style={style}
-                                    title={
-                                      item.category
-                                        ? `${getCategoryLabel(item.category, "pt", allFixtureCategories)} · ${line}`
-                                        : line
-                                    }
+                                    title={line}
                                   >
                                     {line}
                                   </button>
@@ -1187,7 +1186,13 @@ export function FutebolAgendaOperacional() {
             </div>
             <div className="grid gap-1.5">
               <Label>Título *</Label>
-              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+              <Input
+                value={form.title}
+                className="uppercase"
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, title: e.target.value.toLocaleUpperCase("pt-BR") }))
+                }
+              />
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -1301,10 +1306,11 @@ export function FutebolAgendaOperacional() {
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Cores da agenda</DialogTitle>
+            <DialogDescription>
+              Define a cor por tipo (treino, jogo, viagem…). A categoria do elenco (Sub-15, Sub-17…)
+              aparece no texto do calendário, não na cor. Preferências ficam neste navegador.
+            </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Escolha a cor de cada tipo de evento. As preferências ficam salvas neste navegador.
-          </p>
           <div className="grid gap-3 py-2">
             {(Object.keys(AGENDA_COLOR_LABELS) as AgendaColorKey[]).map((key) => (
               <div

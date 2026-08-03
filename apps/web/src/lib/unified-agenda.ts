@@ -227,11 +227,11 @@ function normalizeFutebol(
     item.source === "travel"
       ? TRAVEL_STATUS_LABEL[item.status] ?? item.status
       : item.status === "confirmado"
-        ? "Confirmado"
+        ? "CONFIRMADO"
         : item.status === "provisorio"
-          ? "Provisório"
+          ? "PROVISÓRIO"
           : item.status === "cancelado"
-            ? "Cancelado"
+            ? "CANCELADO"
             : item.status;
 
   const matchSide: AgendaMatchSide =
@@ -243,9 +243,9 @@ function normalizeFutebol(
 
   const typeLabel =
     matchSide === "casa"
-      ? "Jogo em casa"
+      ? "JOGO EM CASA"
       : matchSide === "fora"
-        ? "Jogo fora"
+        ? "JOGO FORA"
         : FOOTBALL_AGENDA_TYPE_LABEL[type] ?? type;
 
   const subtitleParts = [item.tenantName, categoryLabel].filter(Boolean);

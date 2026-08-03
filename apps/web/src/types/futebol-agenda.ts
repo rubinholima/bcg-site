@@ -63,15 +63,15 @@ export const FOOTBALL_AGENDA_ENTRY_TYPES = [
 ] as const;
 
 export const FOOTBALL_AGENDA_TYPE_LABEL: Record<string, string> = {
-  viagem: "Viagem",
-  treino: "Treino",
-  reuniao: "Reunião",
-  jogo: "Jogo",
-  compromisso: "Compromisso",
-  preparacao: "Preparação",
-  aniversario: "Aniversário",
-  palco: "Boston City Hall",
-  outro: "Outro",
+  viagem: "VIAGEM",
+  treino: "TREINO",
+  reuniao: "REUNIÃO",
+  jogo: "JOGO",
+  compromisso: "COMPROMISSO",
+  preparacao: "PREPARAÇÃO",
+  aniversario: "ANIVERSÁRIO",
+  palco: "BOSTON CITY HALL",
+  outro: "OUTRO",
 };
 
 export const FOOTBALL_AGENDA_TYPE_COLOR: Record<string, string> = {
@@ -96,10 +96,10 @@ export const FOOTBALL_AGENDA_TYPE_COLOR: Record<string, string> = {
 };
 
 export const TRAVEL_STATUS_LABEL: Record<string, string> = {
-  rascunho: "Rascunho",
-  planejamento: "Planejamento",
-  aprovado: "Aprovado",
-  em_andamento: "Em andamento",
-  concluido: "Concluído",
-  cancelado: "Cancelado",
+  rascunho: "RASCUNHO",
+  planejamento: "PLANEJAMENTO",
+  aprovado: "APROVADO",
+  em_andamento: "EM ANDAMENTO",
+  concluido: "CONCLUÍDO",
+  cancelado: "CANCELADO",
 };

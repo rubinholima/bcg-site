@@ -204,7 +204,9 @@ export function AgendaConfigAdmin() {
             <div>
               <CardTitle>Categorias de evento</CardTitle>
               <CardDescription>
-                Aniversário, jogo em casa, jogo fora e demais tipos — mesma cor em todo o calendário.
+                Cor por <strong>tipo de compromisso</strong> (aniversário, jogo em casa, treino…). A
+                categoria do elenco (Sub-17 etc.) não muda a cor — ela aparece no texto do calendário.
+                Somente super admin.
               </CardDescription>
             </div>
             <Button type="button" size="sm" className="min-h-[44px]" disabled={saving} onClick={() => void addCategory()}>

@@ -21,16 +21,16 @@ export type AgendaColorSwatch = {
 };
 
 export const AGENDA_COLOR_LABELS: Record<AgendaColorKey, string> = {
-  casa: "Jogo em casa",
-  fora: "Jogo fora / viagem",
-  treino: "Treino",
-  reuniao: "Reunião",
-  jogo: "Jogo (geral)",
-  compromisso: "Compromisso",
-  preparacao: "Preparação",
-  aniversario: "Aniversário",
-  palco: "Boston City Hall",
-  outro: "Outro",
+  casa: "JOGO EM CASA",
+  fora: "JOGO FORA / VIAGEM",
+  treino: "TREINO",
+  reuniao: "REUNIÃO",
+  jogo: "JOGO (GERAL)",
+  compromisso: "COMPROMISSO",
+  preparacao: "PREPARAÇÃO",
+  aniversario: "ANIVERSÁRIO",
+  palco: "BOSTON CITY HALL",
+  outro: "OUTRO",
 };
 
 export const DEFAULT_AGENDA_COLORS: Record<AgendaColorKey, AgendaColorSwatch> = {
