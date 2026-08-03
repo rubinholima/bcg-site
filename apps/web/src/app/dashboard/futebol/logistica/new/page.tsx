@@ -35,8 +35,10 @@ import {
 import {
   LogisticaTravelCadastrosFields,
 } from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
+import { LogisticaExpenseLinesFields } from "@/components/dashboard/futebol/logistica/LogisticaExpenseLinesFields";
 import {
   EMPTY_LOGISTICS_TRAVEL_CADASTROS,
+  type LogisticsExpenseLine,
   type LogisticsTravelCadastros,
 } from "@/lib/logistica-travel-cadastros.types";
 
@@ -119,6 +121,8 @@ export default function NewLogisticaPage() {
   const [hotelAddress, setHotelAddress] = useState("");
   const [logisticsCadastros, setLogisticsCadastros] =
     useState<LogisticsTravelCadastros>(EMPTY_LOGISTICS_TRAVEL_CADASTROS);
+  const [pointOfInterestIds, setPointOfInterestIds] = useState<string[]>([]);
+  const [expenseLines, setExpenseLines] = useState<LogisticsExpenseLine[]>([]);
   const [accommodationRooms, setAccommodationRooms] = useState<RoomAssignment[]>([]);
   const [nutritionApprovedBy, setNutritionApprovedBy] = useState("");
   const [estimatedCostTotal, setEstimatedCostTotal] = useState("");
@@ -293,6 +297,8 @@ export default function NewLogisticaPage() {
         hotelName: hotelName.trim() || undefined,
         hotelAddress: hotelAddress.trim() || undefined,
         logisticsCadastros,
+        expenseLines: expenseLines.length ? expenseLines : undefined,
+        pointOfInterestIds: pointOfInterestIds.length ? pointOfInterestIds : undefined,
         accommodationRooms: roomsPayload.length ? roomsPayload : undefined,
         nutritionApprovedBy: nutritionApprovedBy.trim() || undefined,
         estimatedCostTotal: estimatedCostTotal.trim() ? Number(estimatedCostTotal.replace(",", ".")) : undefined,
@@ -545,6 +551,18 @@ export default function NewLogisticaPage() {
               <Textarea id="transportDetails" value={transportDetails} onChange={(e) => setTransportDetails(e.target.value)} placeholder="Voos, horários, números de reserva..." rows={3} />
             </div>
             <LogisticaTravelCadastrosFields
+              variant="destination"
+              transportType={transportType}
+              logisticsCadastros={logisticsCadastros}
+              onLogisticsCadastrosChange={setLogisticsCadastros}
+              hotelName={hotelName}
+              hotelAddress={hotelAddress}
+              onHotelNameChange={setHotelName}
+              onHotelAddressChange={setHotelAddress}
+              onDestinationNameChange={(name) => setCity(name)}
+              disabled={loading}
+            />
+            <LogisticaTravelCadastrosFields
               variant="transport"
               transportType={transportType}
               logisticsCadastros={logisticsCadastros}
@@ -573,6 +591,8 @@ export default function NewLogisticaPage() {
               hotelAddress={hotelAddress}
               onHotelNameChange={setHotelName}
               onHotelAddressChange={setHotelAddress}
+              pointOfInterestIds={pointOfInterestIds}
+              onPointOfInterestIdsChange={setPointOfInterestIds}
               disabled={loading}
             />
             {tenantId && (
@@ -589,7 +609,7 @@ export default function NewLogisticaPage() {
         <Card>
           <CardHeader>
             <CardTitle>Nutrição e custos</CardTitle>
-            <CardDescription>Aval do depto de nutrição e custos estimados.</CardDescription>
+            <CardDescription>Aval do depto de nutrição, despesas por cadastro e custo total.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -602,6 +622,13 @@ export default function NewLogisticaPage() {
                 <Input id="estimatedCostTotal" type="text" inputMode="decimal" value={estimatedCostTotal} onChange={(e) => setEstimatedCostTotal(e.target.value)} placeholder="0,00" />
               </div>
             </div>
+            <LogisticaExpenseLinesFields
+              lines={expenseLines}
+              onChange={setExpenseLines}
+              defaultPaymentTypeId={logisticsCadastros.paymentTypeId}
+              defaultSupplierId={logisticsCadastros.supplierId}
+              disabled={loading}
+            />
           </CardContent>
         </Card>
 

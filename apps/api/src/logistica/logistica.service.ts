@@ -55,6 +55,10 @@ function normalizeLogisticsCadastros(
     'usageMomentId',
     'loyaltyProgramId',
     'paymentTypeId',
+    'destinationId',
+    'departureAirportId',
+    'arrivalAirportId',
+    'supplierId',
   ] as const;
   const out: Record<string, string | null> = {};
   for (const key of keys) {
@@ -64,25 +68,95 @@ function normalizeLogisticsCadastros(
   return out;
 }
 
+type ExpenseLineRaw = {
+  id?: string;
+  expenseCategoryId?: string | null;
+  serviceProductId?: string | null;
+  supplierId?: string | null;
+  paymentTypeId?: string | null;
+  description?: string;
+  amount?: number | null;
+};
+
+function normalizeExpenseLines(
+  raw: ExpenseLineRaw[] | null | undefined,
+): ExpenseLineRaw[] | null {
+  if (raw === undefined) return null;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((row) => row && typeof row === 'object')
+    .map((row, i) => ({
+      id:
+        typeof row.id === 'string' && row.id.trim()
+          ? row.id.trim()
+          : `line-${i}`,
+      expenseCategoryId:
+        typeof row.expenseCategoryId === 'string' && row.expenseCategoryId.trim()
+          ? row.expenseCategoryId.trim()
+          : null,
+      serviceProductId:
+        typeof row.serviceProductId === 'string' && row.serviceProductId.trim()
+          ? row.serviceProductId.trim()
+          : null,
+      supplierId:
+        typeof row.supplierId === 'string' && row.supplierId.trim()
+          ? row.supplierId.trim()
+          : null,
+      paymentTypeId:
+        typeof row.paymentTypeId === 'string' && row.paymentTypeId.trim()
+          ? row.paymentTypeId.trim()
+          : null,
+      description:
+        typeof row.description === 'string' ? row.description.trim() : '',
+      amount:
+        typeof row.amount === 'number' && Number.isFinite(row.amount)
+          ? row.amount
+          : null,
+    }));
+}
+
+function normalizePointOfInterestIds(
+  raw: string[] | null | undefined,
+): string[] | null {
+  if (raw === undefined) return null;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((id): id is string => typeof id === 'string' && !!id.trim());
+}
+
 function mergeBeatscodeMeta(
   existing: unknown,
-  logisticsCadastros: Record<string, string | null> | null | undefined,
+  patch: {
+    logisticsCadastros?: Record<string, string | null> | null;
+    expenseLines?: ExpenseLineRaw[] | null;
+    pointOfInterestIds?: string[] | null;
+  },
 ): unknown {
-  if (logisticsCadastros === undefined) return existing ?? undefined;
   const base =
     existing && typeof existing === 'object' && !Array.isArray(existing)
       ? { ...(existing as Record<string, unknown>) }
       : {};
-  if (logisticsCadastros === null) {
-    delete base.logisticsCadastros;
-    return Object.keys(base).length ? base : undefined;
+
+  if (patch.logisticsCadastros !== undefined) {
+    if (patch.logisticsCadastros === null) {
+      delete base.logisticsCadastros;
+    } else {
+      const hasAny = Object.values(patch.logisticsCadastros).some(Boolean);
+      if (!hasAny) delete base.logisticsCadastros;
+      else base.logisticsCadastros = patch.logisticsCadastros;
+    }
   }
-  const hasAny = Object.values(logisticsCadastros).some(Boolean);
-  if (!hasAny) {
-    delete base.logisticsCadastros;
-    return Object.keys(base).length ? base : undefined;
+
+  if (patch.expenseLines !== undefined) {
+    if (!patch.expenseLines?.length) delete base.expenseLines;
+    else base.expenseLines = patch.expenseLines;
   }
-  return { ...base, logisticsCadastros };
+
+  if (patch.pointOfInterestIds !== undefined) {
+    if (!patch.pointOfInterestIds?.length) delete base.pointOfInterestIds;
+    else base.pointOfInterestIds = patch.pointOfInterestIds;
+  }
+
+  return Object.keys(base).length ? base : undefined;
 }
 
 @Injectable()
@@ -332,22 +406,38 @@ export class LogisticaService {
     data: Parameters<typeof this.prisma.travelLogistics.create>[0]['data'],
     logisticsCadastros: Record<string, string | null> | null,
   ) {
-    if (!logisticsCadastros?.hotelId) return;
-    const hotel = await this.prisma.logisticsHotel.findUnique({
-      where: { id: logisticsCadastros.hotelId },
-    });
-    if (!hotel) return;
-    data.hotelName = hotel.name;
-    const addressParts = [hotel.address, hotel.city, hotel.state, hotel.country].filter(
-      Boolean,
-    );
-    data.hotelAddress = addressParts.length ? addressParts.join(' — ') : null;
+    if (!logisticsCadastros) return;
+    if (logisticsCadastros.hotelId) {
+      const hotel = await this.prisma.logisticsHotel.findUnique({
+        where: { id: logisticsCadastros.hotelId },
+      });
+      if (hotel) {
+        data.hotelName = hotel.name;
+        const addressParts = [
+          hotel.address,
+          hotel.city,
+          hotel.state,
+          hotel.country,
+        ].filter(Boolean);
+        data.hotelAddress = addressParts.length
+          ? addressParts.join(' — ')
+          : null;
+      }
+    }
+    if (logisticsCadastros.destinationId && !data.city) {
+      const dest = await this.prisma.logisticsDestination.findUnique({
+        where: { id: logisticsCadastros.destinationId },
+      });
+      if (dest) data.city = dest.name;
+    }
   }
 
   async create(dto: CreateTravelLogisticsDto) {
     await this.ensureClubTenant(dto.tenantId);
     const catNorm = normalizeTravelCategoriesInput(dto.categories, dto.category);
     const logisticsCadastros = normalizeLogisticsCadastros(dto.logisticsCadastros);
+    const expenseLines = normalizeExpenseLines(dto.expenseLines);
+    const pointOfInterestIds = normalizePointOfInterestIds(dto.pointOfInterestIds);
     const data: Parameters<typeof this.prisma.travelLogistics.create>[0]['data'] =
       {
         tenantId: dto.tenantId,
@@ -383,7 +473,11 @@ export class LogisticaService {
         estimatedCostBreakdown: dto.estimatedCostBreakdown ?? undefined,
         weatherForecast: dto.weatherForecast ?? null,
         notes: dto.notes ?? null,
-        beatscodeMeta: mergeBeatscodeMeta(undefined, logisticsCadastros) as
+        beatscodeMeta: mergeBeatscodeMeta(undefined, {
+          logisticsCadastros,
+          expenseLines,
+          pointOfInterestIds,
+        }) as
           | Parameters<typeof this.prisma.travelLogistics.create>[0]['data']['beatscodeMeta']
           | undefined,
       };
@@ -448,17 +542,35 @@ export class LogisticaService {
       dto.logisticsCadastros !== undefined
         ? normalizeLogisticsCadastros(dto.logisticsCadastros)
         : undefined;
-    if (logisticsCadastros !== undefined) {
-      data.beatscodeMeta = mergeBeatscodeMeta(
-        existing.beatscodeMeta,
-        logisticsCadastros,
-      ) as Parameters<
+    const expenseLines =
+      dto.expenseLines !== undefined
+        ? normalizeExpenseLines(dto.expenseLines)
+        : undefined;
+    const pointOfInterestIds =
+      dto.pointOfInterestIds !== undefined
+        ? normalizePointOfInterestIds(dto.pointOfInterestIds)
+        : undefined;
+
+    if (
+      logisticsCadastros !== undefined ||
+      expenseLines !== undefined ||
+      pointOfInterestIds !== undefined
+    ) {
+      data.beatscodeMeta = mergeBeatscodeMeta(existing.beatscodeMeta, {
+        ...(logisticsCadastros !== undefined ? { logisticsCadastros } : {}),
+        ...(expenseLines !== undefined ? { expenseLines } : {}),
+        ...(pointOfInterestIds !== undefined ? { pointOfInterestIds } : {}),
+      }) as Parameters<
         typeof this.prisma.travelLogistics.update
       >[0]['data']['beatscodeMeta'];
-      await this.applyLogisticsCadastrosToTravelData(
-        data as Parameters<typeof this.prisma.travelLogistics.create>[0]['data'],
-        logisticsCadastros,
-      );
+      if (logisticsCadastros !== undefined) {
+        await this.applyLogisticsCadastrosToTravelData(
+          data as Parameters<
+            typeof this.prisma.travelLogistics.create
+          >[0]['data'],
+          logisticsCadastros,
+        );
+      }
     }
 
     return this.prisma.travelLogistics.update({

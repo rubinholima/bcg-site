@@ -28,9 +28,13 @@ import {
   travelCategoriesPayload,
 } from "@/components/dashboard/futebol/TravelCategoriesField";
 import { LogisticaTravelCadastrosFields } from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
+import { LogisticaExpenseLinesFields } from "@/components/dashboard/futebol/logistica/LogisticaExpenseLinesFields";
 import {
   EMPTY_LOGISTICS_TRAVEL_CADASTROS,
+  parseLogisticsExpenseLines,
   parseLogisticsTravelCadastros,
+  parsePointOfInterestIds,
+  type LogisticsExpenseLine,
   type LogisticsTravelCadastros,
 } from "@/lib/logistica-travel-cadastros.types";
 
@@ -155,6 +159,8 @@ export default function EditLogisticaPage() {
   const [hotelAddress, setHotelAddress] = useState("");
   const [logisticsCadastros, setLogisticsCadastros] =
     useState<LogisticsTravelCadastros>(EMPTY_LOGISTICS_TRAVEL_CADASTROS);
+  const [pointOfInterestIds, setPointOfInterestIds] = useState<string[]>([]);
+  const [expenseLines, setExpenseLines] = useState<LogisticsExpenseLine[]>([]);
   const [accommodationRooms, setAccommodationRooms] = useState<RoomAssignment[]>([]);
   const [nutritionApprovedBy, setNutritionApprovedBy] = useState("");
   const [estimatedCostTotal, setEstimatedCostTotal] = useState("");
@@ -185,6 +191,8 @@ export default function EditLogisticaPage() {
         setHotelName(data.hotelName ?? "");
         setHotelAddress(data.hotelAddress ?? "");
         setLogisticsCadastros(parseLogisticsTravelCadastros(data.beatscodeMeta));
+        setExpenseLines(parseLogisticsExpenseLines(data.beatscodeMeta));
+        setPointOfInterestIds(parsePointOfInterestIds(data.beatscodeMeta));
         setAccommodationRooms(
           Array.isArray(data.accommodationRooms)
             ? (data.accommodationRooms as Array<{
@@ -327,6 +335,8 @@ export default function EditLogisticaPage() {
         hotelName: hotelName.trim() || undefined,
         hotelAddress: hotelAddress.trim() || undefined,
         logisticsCadastros,
+        expenseLines,
+        pointOfInterestIds,
         accommodationRooms: accommodationRooms.filter((r) => r.roomNumber.trim()).length
           ? accommodationRooms.filter((r) => r.roomNumber.trim()).map((r) => ({
               roomNumber: r.roomNumber.trim(),
@@ -555,6 +565,18 @@ export default function EditLogisticaPage() {
               />
             </div>
             <LogisticaTravelCadastrosFields
+              variant="destination"
+              transportType={transportType}
+              logisticsCadastros={logisticsCadastros}
+              onLogisticsCadastrosChange={setLogisticsCadastros}
+              hotelName={hotelName}
+              hotelAddress={hotelAddress}
+              onHotelNameChange={setHotelName}
+              onHotelAddressChange={setHotelAddress}
+              onDestinationNameChange={(name) => setCity(name)}
+              disabled={saving}
+            />
+            <LogisticaTravelCadastrosFields
               variant="transport"
               transportType={transportType}
               logisticsCadastros={logisticsCadastros}
@@ -583,6 +605,8 @@ export default function EditLogisticaPage() {
               hotelAddress={hotelAddress}
               onHotelNameChange={setHotelName}
               onHotelAddressChange={setHotelAddress}
+              pointOfInterestIds={pointOfInterestIds}
+              onPointOfInterestIdsChange={setPointOfInterestIds}
               disabled={saving}
             />
             {item.tenantId && (
@@ -634,6 +658,13 @@ export default function EditLogisticaPage() {
                 </Select>
               </div>
             </div>
+            <LogisticaExpenseLinesFields
+              lines={expenseLines}
+              onChange={setExpenseLines}
+              defaultPaymentTypeId={logisticsCadastros.paymentTypeId}
+              defaultSupplierId={logisticsCadastros.supplierId}
+              disabled={saving}
+            />
           </CardContent>
         </Card>
 

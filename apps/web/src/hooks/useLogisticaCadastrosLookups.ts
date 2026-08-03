@@ -6,8 +6,15 @@ import { api } from "@/lib/api";
 export interface LogisticaLookupOption {
   id: string;
   name: string;
+  code?: string | null;
   capacity?: number;
   transportCompanyId?: string | null;
+  expenseCategoryId?: string | null;
+  categoryId?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
 }
 
 interface LookupsState {
@@ -17,6 +24,13 @@ interface LookupsState {
   loyaltyPrograms: LogisticaLookupOption[];
   paymentTypes: LogisticaLookupOption[];
   roomTypes: LogisticaLookupOption[];
+  airports: LogisticaLookupOption[];
+  destinations: LogisticaLookupOption[];
+  pointsOfInterest: LogisticaLookupOption[];
+  suppliers: LogisticaLookupOption[];
+  expenseCategories: LogisticaLookupOption[];
+  serviceProducts: LogisticaLookupOption[];
+  visaTypes: LogisticaLookupOption[];
   loading: boolean;
 }
 
@@ -27,8 +41,26 @@ const EMPTY: LookupsState = {
   loyaltyPrograms: [],
   paymentTypes: [],
   roomTypes: [],
+  airports: [],
+  destinations: [],
+  pointsOfInterest: [],
+  suppliers: [],
+  expenseCategories: [],
+  serviceProducts: [],
+  visaTypes: [],
   loading: true,
 };
+
+async function fetchList(path: string): Promise<LogisticaLookupOption[]> {
+  try {
+    const { data } = await api.get<LogisticaLookupOption[]>(
+      `/logistica-cadastros/${path}?activeOnly=true`,
+    );
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
 
 export function useLogisticaCadastrosLookups(): LookupsState {
   const [state, setState] = useState<LookupsState>(EMPTY);
@@ -36,28 +68,54 @@ export function useLogisticaCadastrosLookups(): LookupsState {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      api.get<LogisticaLookupOption[]>("/logistica-cadastros/hotels?activeOnly=true"),
-      api.get<LogisticaLookupOption[]>("/logistica-cadastros/transport-companies?activeOnly=true"),
-      api.get<LogisticaLookupOption[]>("/logistica-cadastros/usage-moments?activeOnly=true"),
-      api.get<LogisticaLookupOption[]>("/logistica-cadastros/loyalty-programs?activeOnly=true"),
-      api.get<LogisticaLookupOption[]>("/logistica-cadastros/payment-types?activeOnly=true"),
-      api.get<LogisticaLookupOption[]>("/logistica-cadastros/room-types?activeOnly=true"),
-    ])
-      .then(([hotels, transport, moments, loyalty, payment, rooms]) => {
+      fetchList("hotels"),
+      fetchList("transport-companies"),
+      fetchList("usage-moments"),
+      fetchList("loyalty-programs"),
+      fetchList("payment-types"),
+      fetchList("room-types"),
+      fetchList("airports"),
+      fetchList("destinations"),
+      fetchList("points-of-interest"),
+      fetchList("suppliers"),
+      fetchList("expense-categories"),
+      fetchList("service-products"),
+      fetchList("visa-types"),
+    ]).then(
+      ([
+        hotels,
+        transportCompanies,
+        usageMoments,
+        loyaltyPrograms,
+        paymentTypes,
+        roomTypes,
+        airports,
+        destinations,
+        pointsOfInterest,
+        suppliers,
+        expenseCategories,
+        serviceProducts,
+        visaTypes,
+      ]) => {
         if (cancelled) return;
         setState({
-          hotels: Array.isArray(hotels.data) ? hotels.data : [],
-          transportCompanies: Array.isArray(transport.data) ? transport.data : [],
-          usageMoments: Array.isArray(moments.data) ? moments.data : [],
-          loyaltyPrograms: Array.isArray(loyalty.data) ? loyalty.data : [],
-          paymentTypes: Array.isArray(payment.data) ? payment.data : [],
-          roomTypes: Array.isArray(rooms.data) ? rooms.data : [],
+          hotels,
+          transportCompanies,
+          usageMoments,
+          loyaltyPrograms,
+          paymentTypes,
+          roomTypes,
+          airports,
+          destinations,
+          pointsOfInterest,
+          suppliers,
+          expenseCategories,
+          serviceProducts,
+          visaTypes,
           loading: false,
         });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ ...EMPTY, loading: false });
-      });
+      },
+    );
     return () => {
       cancelled = true;
     };

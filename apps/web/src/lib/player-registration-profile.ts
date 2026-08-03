@@ -237,6 +237,8 @@ export interface PlayerTravelVisa {
   id: string;
   country?: string;
   visaType?: string;
+  /** ID do cadastro Logística → Vistos internacionais */
+  visaTypeId?: string;
   number?: string;
   issueDate?: string;
   validUntil?: string;
@@ -246,7 +248,11 @@ export interface PlayerTravelVisa {
 export interface PlayerLoyaltyProgram {
   id: string;
   transportCompany?: string;
+  /** ID do cadastro Logística → Transportadoras */
+  transportCompanyId?: string;
   programName?: string;
+  /** ID do cadastro Logística → Programas de milhas */
+  loyaltyProgramId?: string;
   membershipNumber?: string;
 }
 

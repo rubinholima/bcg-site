@@ -6,6 +6,7 @@ import {
   IsObject,
   IsIn,
   IsBoolean,
+  IsArray,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -131,4 +132,21 @@ export class CreateTravelLogisticsDto {
   @IsOptional()
   @IsObject()
   logisticsCadastros?: Record<string, string | null | undefined>;
+
+  @IsOptional()
+  @IsArray()
+  expenseLines?: Array<{
+    id?: string;
+    expenseCategoryId?: string | null;
+    serviceProductId?: string | null;
+    supplierId?: string | null;
+    paymentTypeId?: string | null;
+    description?: string;
+    amount?: number | null;
+  }>;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  pointOfInterestIds?: string[];
 }

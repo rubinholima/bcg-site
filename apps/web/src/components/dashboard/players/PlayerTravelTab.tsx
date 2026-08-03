@@ -16,6 +16,14 @@ import {
 } from "@/components/ui/table";
 import { api } from "@/lib/api";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { useLogisticaCadastrosLookups } from "@/hooks/useLogisticaCadastrosLookups";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   createTravelRowId,
   normalizeTravelProfile,
@@ -92,6 +100,7 @@ export function PlayerTravelTab({
   canAccessLogistica,
 }: PlayerTravelTabProps) {
   const travel = normalizeTravelProfile(profile.travel);
+  const lookups = useLogisticaCadastrosLookups();
   const [search, setSearch] = useState("");
   const [history, setHistory] = useState<PlayerTravelHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -368,14 +377,52 @@ export function PlayerTravelTab({
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={row.visaType ?? ""}
-                            onChange={(e) => {
+                          <Select
+                            value={row.visaTypeId ?? "none"}
+                            onValueChange={(v) => {
                               const next = [...(travel.visas ?? [])];
-                              next[index] = { ...next[index], visaType: e.target.value };
+                              if (v === "none") {
+                                next[index] = {
+                                  ...next[index],
+                                  visaTypeId: undefined,
+                                  visaType: "",
+                                };
+                              } else {
+                                const vt = lookups.visaTypes.find((x) => x.id === v);
+                                next[index] = {
+                                  ...next[index],
+                                  visaTypeId: v,
+                                  visaType: vt?.name ?? row.visaType,
+                                };
+                              }
                               updateVisas(next);
                             }}
-                          />
+                            disabled={lookups.loading}
+                          >
+                            <SelectTrigger className="min-h-[44px] min-w-[140px]">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">—</SelectItem>
+                              {lookups.visaTypes.map((vt) => (
+                                <SelectItem key={vt.id} value={vt.id}>
+                                  {vt.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {!row.visaTypeId && row.visaType ? (
+                            <Input
+                              className="mt-1"
+                              value={row.visaType}
+                              onChange={(e) => {
+                                const next = [...(travel.visas ?? [])];
+                                next[index] = { ...next[index], visaType: e.target.value };
+                                updateVisas(next);
+                              }}
+                              placeholder="Texto livre (legado)"
+                            />
+                          ) : null}
                         </TableCell>
                         <TableCell>
                           <Input
@@ -478,24 +525,121 @@ export function PlayerTravelTab({
                     return (
                       <TableRow key={row.id}>
                         <TableCell>
-                          <Input
-                            value={row.transportCompany ?? ""}
-                            onChange={(e) => {
+                          <Select
+                            value={row.transportCompanyId ?? "none"}
+                            onValueChange={(v) => {
                               const next = [...(travel.loyaltyPrograms ?? [])];
-                              next[index] = { ...next[index], transportCompany: e.target.value };
+                              if (v === "none") {
+                                next[index] = {
+                                  ...next[index],
+                                  transportCompanyId: undefined,
+                                  transportCompany: "",
+                                  loyaltyProgramId: undefined,
+                                  programName: "",
+                                };
+                              } else {
+                                const tc = lookups.transportCompanies.find((x) => x.id === v);
+                                next[index] = {
+                                  ...next[index],
+                                  transportCompanyId: v,
+                                  transportCompany: tc?.name ?? "",
+                                  loyaltyProgramId: undefined,
+                                  programName: "",
+                                };
+                              }
                               updateLoyalty(next);
                             }}
-                          />
+                            disabled={lookups.loading}
+                          >
+                            <SelectTrigger className="min-h-[44px] min-w-[140px]">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">—</SelectItem>
+                              {lookups.transportCompanies.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {!row.transportCompanyId && row.transportCompany ? (
+                            <Input
+                              className="mt-1"
+                              value={row.transportCompany}
+                              onChange={(e) => {
+                                const next = [...(travel.loyaltyPrograms ?? [])];
+                                next[index] = {
+                                  ...next[index],
+                                  transportCompany: e.target.value,
+                                };
+                                updateLoyalty(next);
+                              }}
+                              placeholder="Texto livre (legado)"
+                            />
+                          ) : null}
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={row.programName ?? ""}
-                            onChange={(e) => {
+                          <Select
+                            value={row.loyaltyProgramId ?? "none"}
+                            onValueChange={(v) => {
                               const next = [...(travel.loyaltyPrograms ?? [])];
-                              next[index] = { ...next[index], programName: e.target.value };
+                              if (v === "none") {
+                                next[index] = {
+                                  ...next[index],
+                                  loyaltyProgramId: undefined,
+                                  programName: "",
+                                };
+                              } else {
+                                const lp = lookups.loyaltyPrograms.find((x) => x.id === v);
+                                next[index] = {
+                                  ...next[index],
+                                  loyaltyProgramId: v,
+                                  programName: lp?.name ?? "",
+                                  transportCompanyId:
+                                    lp?.transportCompanyId || next[index].transportCompanyId,
+                                  transportCompany: lp?.transportCompanyId
+                                    ? lookups.transportCompanies.find(
+                                        (c) => c.id === lp.transportCompanyId,
+                                      )?.name ?? next[index].transportCompany
+                                    : next[index].transportCompany,
+                                };
+                              }
                               updateLoyalty(next);
                             }}
-                          />
+                            disabled={lookups.loading}
+                          >
+                            <SelectTrigger className="min-h-[44px] min-w-[140px]">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">—</SelectItem>
+                              {lookups.loyaltyPrograms
+                                .filter(
+                                  (lp) =>
+                                    !row.transportCompanyId ||
+                                    !lp.transportCompanyId ||
+                                    lp.transportCompanyId === row.transportCompanyId,
+                                )
+                                .map((lp) => (
+                                  <SelectItem key={lp.id} value={lp.id}>
+                                    {lp.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          {!row.loyaltyProgramId && row.programName ? (
+                            <Input
+                              className="mt-1"
+                              value={row.programName}
+                              onChange={(e) => {
+                                const next = [...(travel.loyaltyPrograms ?? [])];
+                                next[index] = { ...next[index], programName: e.target.value };
+                                updateLoyalty(next);
+                              }}
+                              placeholder="Texto livre (legado)"
+                            />
+                          ) : null}
                         </TableCell>
                         <TableCell>
                           <Input
