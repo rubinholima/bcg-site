@@ -14,6 +14,7 @@ import {
   Loader2,
   MapPin,
   Megaphone,
+  Palette,
   Plane,
   Plus,
   Search,
@@ -22,6 +23,11 @@ import {
   Trophy,
 } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
+import { AgendaColorsDialog } from "@/components/dashboard/agenda/AgendaColorsDialog";
+import {
+  AgendaDualToneBars,
+  AgendaDualTonePill,
+} from "@/components/dashboard/agenda/AgendaDualToneMark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,6 +44,17 @@ import {
   agendaMatchSideBadgeClass,
   agendaMatchSideLabel,
 } from "@/lib/agenda-match-style";
+import {
+  agendaSwatchStyle,
+  loadAgendaColors,
+  type AgendaColorKey,
+  type AgendaColorSwatch,
+} from "@/lib/agenda-color-prefs";
+import {
+  loadSquadCategoryColors,
+  resolveSquadCategoryColor,
+  type SquadCategoryColor,
+} from "@/lib/agenda-squad-category-colors";
 import {
   AGENDA_SOURCE_CREATE_HREF,
   AGENDA_SOURCE_DOT,
@@ -62,6 +79,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dash } from "@/lib/dashboard-theme-classes";
+import { getCategoryLabel } from "@/lib/fixture-categories";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 type ViewMode = "day" | "week" | "month";
@@ -116,18 +134,41 @@ function dateKeyFromDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function EventPill({ event, compact }: { event: UnifiedAgendaEvent; compact?: boolean }) {
+function eventTypeStyle(
+  event: UnifiedAgendaEvent,
+  eventColors: Record<AgendaColorKey, AgendaColorSwatch>,
+): { backgroundColor: string; color: string; borderColor: string } {
+  if (event.source === "futebol" || event.eventType) {
+    return agendaSwatchStyle(eventColors, event.eventType ?? "outro", event.matchSide);
+  }
+  if (event.categoryPillStyle) return event.categoryPillStyle;
+  return { backgroundColor: "#52525b", color: "#ffffff", borderColor: "#a1a1aa" };
+}
+
+function EventPill({
+  event,
+  compact,
+  squadColors,
+  eventColors,
+}: {
+  event: UnifiedAgendaEvent;
+  compact?: boolean;
+  squadColors: Record<string, SquadCategoryColor>;
+  eventColors: Record<AgendaColorKey, AgendaColorSwatch>;
+}) {
   const side = agendaMatchSideLabel(event.matchSide ?? null);
-  const useStyle = !!event.categoryPillStyle;
+  const squad = resolveSquadCategoryColor(squadColors, event.categoryValue);
+  const squadLabel = event.categoryValue
+    ? getCategoryLabel(event.categoryValue, "pt")
+    : event.categoryLabel?.split(",")[0]?.trim() || null;
+  const eventStyle = eventTypeStyle(event, eventColors);
   const cat = event.categoryLabel?.trim() || null;
   return (
-    <span
-      className={cn(
-        "block truncate rounded-md border px-1.5 py-0.5 text-left leading-tight font-semibold uppercase tracking-wide shadow-sm",
-        compact ? "text-[9px] sm:text-[10px]" : "text-[10px] sm:text-xs",
-        !useStyle && event.tone,
-      )}
-      style={useStyle ? event.categoryPillStyle : undefined}
+    <AgendaDualTonePill
+      compact={compact}
+      squadLabel={squadLabel}
+      squadColor={squad}
+      eventStyle={eventStyle}
       title={`${side ? `${side} · ` : ""}${cat ? `${cat} · ` : ""}${event.title} — ${event.typeLabel}`}
     >
       {side && compact ? (
@@ -136,13 +177,22 @@ function EventPill({ event, compact }: { event: UnifiedAgendaEvent; compact?: bo
       {!event.allDay && !compact ? (
         <span className="mr-1 opacity-90 normal-case">{formatAgendaTime(event.startAt, false)}</span>
       ) : null}
-      {cat ? <span className="mr-0.5 font-bold opacity-95">{cat} · </span> : null}
       {event.title}
-    </span>
+    </AgendaDualTonePill>
   );
 }
 
-function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaAreaRow[] }) {
+function EventDetailCard({
+  ev,
+  areas,
+  squadColors,
+  eventColors,
+}: {
+  ev: UnifiedAgendaEvent;
+  areas: AgendaAreaRow[];
+  squadColors: Record<string, SquadCategoryColor>;
+  eventColors: Record<AgendaColorKey, AgendaColorSwatch>;
+}) {
   const area = areas.find((a) => a.slug === ev.source);
   const meta = area ? areaUi(area) : {
     label: areaLabel(ev.source, areas),
@@ -154,28 +204,22 @@ function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaA
   const Icon = meta.icon;
   const sideLabel = agendaMatchSideLabel(ev.matchSide ?? null);
   const SideIcon = ev.matchSide === "casa" ? Home : ev.matchSide === "fora" ? Plane : null;
+  const squad = resolveSquadCategoryColor(squadColors, ev.categoryValue);
+  const eventStyle = eventTypeStyle(ev, eventColors);
 
   return (
     <Link
       href={ev.href}
       className={cn(
         "group flex gap-3 rounded-xl border-2 p-3 shadow-sm transition-all sm:gap-4 sm:p-4",
-        ev.matchSide === "casa" &&
-          "border-emerald-500/50 bg-gradient-to-br from-emerald-500/15 via-card to-card hover:border-emerald-400",
-        ev.matchSide === "fora" &&
-          "border-amber-500/50 bg-gradient-to-br from-amber-500/15 via-card to-card hover:border-amber-400",
-        !ev.matchSide && cn(dash.eventListItem, "border"),
+        "border-border/80 bg-card hover:border-primary/40",
       )}
+      style={{
+        borderColor: eventStyle.borderColor,
+        background: `linear-gradient(135deg, ${eventStyle.backgroundColor}28 0%, hsl(var(--card)) 55%)`,
+      }}
     >
-      <div
-        className={cn("mt-0.5 w-1.5 shrink-0 self-stretch rounded-full", !ev.categoryPillStyle && ev.dotClass)}
-        style={
-          ev.categoryPillStyle
-            ? { backgroundColor: ev.categoryPillStyle.backgroundColor }
-            : undefined
-        }
-        aria-hidden
-      />
+      <AgendaDualToneBars squad={squad} event={eventStyle} className="w-auto" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -198,10 +242,8 @@ function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaA
             </span>
           ) : (
             <span
-              className={cn(
-                "rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                ev.tone,
-              )}
+              className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+              style={eventStyle}
             >
               {ev.typeLabel}
             </span>
@@ -212,7 +254,14 @@ function EventDetailCard({ ev, areas }: { ev: UnifiedAgendaEvent; areas: AgendaA
             </span>
           ) : null}
           {ev.categoryLabel ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-100">
+            <span
+              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+              style={
+                squad
+                  ? { backgroundColor: squad.bg, color: squad.text, borderColor: squad.bg }
+                  : undefined
+              }
+            >
               <Shirt className="h-3 w-3" />
               {ev.categoryLabel}
             </span>
@@ -294,6 +343,10 @@ export function UnifiedAgendaView() {
   const [focusDate, setFocusDate] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<string | null>(todayDateKey());
   const [events, setEvents] = useState<UnifiedAgendaEvent[]>([]);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [colorTick, setColorTick] = useState(0);
+  const eventColors = useMemo(() => loadAgendaColors(), [colorTick]);
+  const squadColors = useMemo(() => loadSquadCategoryColors(), [colorTick]);
   const [loading, setLoading] = useState(true);
 
   const { categories: fixtureCategories } = useFixtureCategories({ activeOnly: true });
@@ -529,7 +582,7 @@ export function UnifiedAgendaView() {
         section="Agenda"
         sectionIcon={Calendar}
         title="Agenda geral"
-        description="No calendário: categoria do elenco (ex. SUB-17) aparece no início de cada compromisso. Cores = tipo do evento (jogo, treino…), não o elenco."
+        description="Cada compromisso mostra duas cores: faixa do elenco (Sub-15…) e fundo do tipo (treino, jogo…). Use o botão Cores para alterar."
         stats={[
           { value: filteredEvents.length, label: "No período" },
           {
@@ -543,11 +596,21 @@ export function UnifiedAgendaView() {
             <Button type="button" variant="outline" size="sm" className="min-h-[40px]" onClick={goToday}>
               Hoje
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-[40px]"
+              onClick={() => setPaletteOpen(true)}
+            >
+              <Palette className="mr-1 h-4 w-4" />
+              Cores
+            </Button>
             {isSuperAdmin ? (
               <Button type="button" variant="outline" size="sm" className="min-h-[40px]" asChild>
                 <Link href="/dashboard/agenda/configuracao">
                   <Settings2 className="mr-1 h-4 w-4" />
-                  Cores e categorias
+                  Áreas (admin)
                 </Link>
               </Button>
             ) : null}
@@ -724,7 +787,13 @@ export function UnifiedAgendaView() {
                         </span>
                         <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
                           {dayEvents.slice(0, 4).map((ev) => (
-                            <EventPill key={ev.id} event={ev} compact />
+                            <EventPill
+                              key={ev.id}
+                              event={ev}
+                              compact
+                              squadColors={squadColors}
+                              eventColors={eventColors}
+                            />
                           ))}
                           {dayEvents.length > 4 ? (
                             <span className={cn("text-[10px] font-bold", dash.calendarMore)}>
@@ -828,7 +897,12 @@ export function UnifiedAgendaView() {
                     <ul className="space-y-3">
                       {items.map((ev) => (
                         <li key={ev.id}>
-                          <EventDetailCard ev={ev} areas={visibleAreas} />
+                          <EventDetailCard
+                            ev={ev}
+                            areas={visibleAreas}
+                            squadColors={squadColors}
+                            eventColors={eventColors}
+                          />
                         </li>
                       ))}
                     </ul>
@@ -856,6 +930,13 @@ export function UnifiedAgendaView() {
           </Card>
         </div>
       )}
+
+      <AgendaColorsDialog
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        squadCategories={fixtureCategories}
+        onColorsChange={() => setColorTick((n) => n + 1)}
+      />
     </div>
   );
 }

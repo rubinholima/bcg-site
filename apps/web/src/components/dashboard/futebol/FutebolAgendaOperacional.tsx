@@ -13,12 +13,16 @@ import {
   Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { AgendaColorsDialog } from "@/components/dashboard/agenda/AgendaColorsDialog";
+import {
+  AgendaDualToneBars,
+  AgendaDualTonePill,
+} from "@/components/dashboard/agenda/AgendaDualToneMark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -54,14 +58,17 @@ import {
   type AgendaMatchSide,
 } from "@/lib/agenda-match-style";
 import {
-  AGENDA_COLOR_LABELS,
   DEFAULT_AGENDA_COLORS,
   agendaSwatchStyle,
   loadAgendaColors,
-  saveAgendaColors,
   type AgendaColorKey,
   type AgendaColorSwatch,
 } from "@/lib/agenda-color-prefs";
+import {
+  loadSquadCategoryColors,
+  resolveSquadCategoryColor,
+  type SquadCategoryColor,
+} from "@/lib/agenda-squad-category-colors";
 import { combineDateTimeBrazil, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
 
 interface Tenant {
@@ -265,18 +272,6 @@ function TypeLegend({
   );
 }
 
-function contrastTextForBg(hex: string): string {
-  const raw = hex.replace("#", "");
-  const full = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
-  const n = parseInt(full, 16);
-  if (Number.isNaN(n)) return "#ffffff";
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.55 ? "#18181b" : "#ffffff";
-}
-
 export function FutebolAgendaOperacional() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -299,11 +294,19 @@ export function FutebolAgendaOperacional() {
   const [agendaColors, setAgendaColors] = useState<Record<AgendaColorKey, AgendaColorSwatch>>(
     () => ({ ...DEFAULT_AGENDA_COLORS }),
   );
+  const [squadColors, setSquadColors] = useState<Record<string, SquadCategoryColor>>(() =>
+    loadSquadCategoryColors(),
+  );
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  useEffect(() => {
+  const refreshColors = useCallback(() => {
     setAgendaColors(loadAgendaColors());
+    setSquadColors(loadSquadCategoryColors());
   }, []);
+
+  useEffect(() => {
+    refreshColors();
+  }, [refreshColors]);
 
   useEffect(() => {
     api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => {
@@ -483,19 +486,6 @@ export function FutebolAgendaOperacional() {
     goToDayView(dateKey);
   };
 
-  const persistAgendaColors = (next: Record<AgendaColorKey, AgendaColorSwatch>) => {
-    setAgendaColors(next);
-    saveAgendaColors(next);
-  };
-
-  const updateAgendaColorBg = (key: AgendaColorKey, bg: string) => {
-    const text = contrastTextForBg(bg);
-    persistAgendaColors({
-      ...agendaColors,
-      [key]: { bg, text, border: bg },
-    });
-  };
-
   const dayCellClass = (dateKey: string, isSelected: boolean) =>
     cn(
       "min-h-[92px] rounded-lg border p-1.5 text-left transition-colors sm:min-h-[100px]",
@@ -609,6 +599,8 @@ export function FutebolAgendaOperacional() {
     const side = matchSideOf(item);
     const sideLabel = agendaMatchSideLabel(side);
     const swatch = agendaSwatchStyle(agendaColors, item.type, side);
+    const primaryCat = item.category?.trim() || item.categories?.[0]?.trim() || null;
+    const squad = resolveSquadCategoryColor(squadColors, primaryCat);
     const typeOrSide =
       sideLabel === "Casa"
         ? "JOGO EM CASA"
@@ -620,14 +612,23 @@ export function FutebolAgendaOperacional() {
       key={item.id}
       type="button"
       onClick={() => openCalendarItem(item)}
-      className="w-full rounded-lg border-2 p-3 text-left text-foreground shadow-sm transition-opacity hover:opacity-95"
+      className="flex w-full gap-3 rounded-lg border-2 p-3 text-left text-foreground shadow-sm transition-opacity hover:opacity-95"
       style={{
         borderColor: swatch.borderColor,
         background: `linear-gradient(135deg, ${swatch.backgroundColor}33 0%, hsl(var(--card)) 55%)`,
       }}
     >
-      <div className="min-w-0 space-y-1">
+      <AgendaDualToneBars squad={squad} event={swatch} />
+      <div className="min-w-0 flex-1 space-y-1">
         <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+          {primaryCat && squad ? (
+            <span
+              className="shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+              style={{ backgroundColor: squad.bg, color: squad.text }}
+            >
+              {getCategoryLabel(primaryCat, "pt", allFixtureCategories)}
+            </span>
+          ) : null}
           <span
             className="shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
             style={swatch}
@@ -677,15 +678,15 @@ export function FutebolAgendaOperacional() {
         {item.championshipName && item.source === "entry" ? (
           <p className="truncate text-xs font-medium opacity-90">{item.championshipName}</p>
         ) : null}
-      </div>
-      <div className="mt-2 flex flex-wrap gap-2">
-        <span className="text-xs font-bold underline-offset-2">
-          {item.source === "travel"
-            ? "Abrir viagem"
-            : item.source === "bch_booking"
-              ? "Editar no Boston City Hall"
-              : "Editar / excluir"}
-        </span>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <span className="text-xs font-bold underline-offset-2">
+            {item.source === "travel"
+              ? "Abrir viagem"
+              : item.source === "bch_booking"
+                ? "Editar no Boston City Hall"
+                : "Editar / excluir"}
+          </span>
+        </div>
       </div>
     </button>
     );
@@ -810,7 +811,7 @@ export function FutebolAgendaOperacional() {
             <div className="flex flex-wrap items-center gap-2">
             <Button variant="outline" onClick={() => setPaletteOpen(true)} className="min-h-[44px] shrink-0">
                 <Palette className="mr-2 h-4 w-4" />
-                Cores (tipo do evento)
+                Cores
               </Button>
             <Button variant="outline" onClick={goToToday} className="min-h-[44px] shrink-0">
                 Hoje
@@ -955,20 +956,25 @@ export function FutebolAgendaOperacional() {
                               {sortAgendaItems(dayItems).slice(0, 5).map((item) => {
                                 const side = matchSideOf(item);
                                 const style = agendaSwatchStyle(agendaColors, item.type, side);
-                                const cats = categoryLine(item);
-                                const catPrefix = cats !== "—" ? `${cats} · ` : "";
-                                const line = `${catPrefix}${agendaLinePrefix(item, side)}${item.title}`;
+                                const primaryCat =
+                                  item.category?.trim() || item.categories?.[0]?.trim() || null;
+                                const squad = resolveSquadCategoryColor(squadColors, primaryCat);
+                                const squadLabel = primaryCat
+                                  ? getCategoryLabel(primaryCat, "pt", allFixtureCategories)
+                                  : null;
                                 return (
-                                  <button
+                                  <AgendaDualTonePill
                                     key={item.id}
-                                    type="button"
                                     onClick={() => openCalendarItem(item)}
-                                    className="block w-full truncate whitespace-nowrap rounded border px-1 py-0.5 text-left text-[10px] font-semibold uppercase leading-tight tracking-wide sm:text-[11px]"
-                                    style={style}
-                                    title={line}
+                                    compact
+                                    squadLabel={squadLabel}
+                                    squadColor={squad}
+                                    eventStyle={style}
+                                    title={`${squadLabel ? `${squadLabel} · ` : ""}${agendaLinePrefix(item, side)}${item.title}`}
                                   >
-                                    {line}
-                                  </button>
+                                    {agendaLinePrefix(item, side)}
+                                    {item.title}
+                                  </AgendaDualTonePill>
                                 );
                               })}
                               {dayItems.length > 5 ? (
@@ -1302,58 +1308,12 @@ export function FutebolAgendaOperacional() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={paletteOpen} onOpenChange={setPaletteOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Cores da agenda</DialogTitle>
-            <DialogDescription>
-              Define a cor por tipo (treino, jogo, viagem…). A categoria do elenco (Sub-15, Sub-17…)
-              aparece no texto do calendário, não na cor. Preferências ficam neste navegador.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 py-2">
-            {(Object.keys(AGENDA_COLOR_LABELS) as AgendaColorKey[]).map((key) => (
-              <div
-                key={key}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{AGENDA_COLOR_LABELS[key]}</p>
-                  <span
-                    className="mt-1 inline-block rounded border px-2 py-0.5 text-[10px] font-semibold"
-                    style={{
-                      backgroundColor: agendaColors[key].bg,
-                      color: agendaColors[key].text,
-                      borderColor: agendaColors[key].border,
-                    }}
-                  >
-                    Exemplo
-                  </span>
-                </div>
-                <Input
-                  type="color"
-                  className="h-10 w-14 cursor-pointer p-1"
-                  value={agendaColors[key].bg}
-                  onChange={(e) => updateAgendaColorBg(key, e.target.value)}
-                  aria-label={`Cor de ${AGENDA_COLOR_LABELS[key]}`}
-                />
-              </div>
-            ))}
-          </div>
-          <DialogFooter className="flex-col gap-2 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => persistAgendaColors({ ...DEFAULT_AGENDA_COLORS })}
-            >
-              Restaurar padrão
-            </Button>
-            <Button type="button" onClick={() => setPaletteOpen(false)}>
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AgendaColorsDialog
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        squadCategories={allFixtureCategories}
+        onColorsChange={refreshColors}
+      />
     </div>
   );
 }
