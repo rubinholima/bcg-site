@@ -669,12 +669,7 @@ export function UnifiedAgendaView() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div
-          className={cn(
-            "grid gap-4",
-            viewMode === "month" && "lg:grid-cols-[1fr_minmax(280px,360px)]",
-          )}
-        >
+        <div className="grid gap-4">
           {viewMode === "month" ? (
             <Card className={cn("border-border/80 shadow-md", dash.calendarCard)}>
               <CardContent className="pt-6">
@@ -685,13 +680,13 @@ export function UnifiedAgendaView() {
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-1.5">
                   {grid.map((cell, idx) => {
                     if (!cell.inMonth) {
                       return (
                         <div
                           key={`e-${idx}`}
-                          className="min-h-[88px] rounded-lg bg-muted/10 sm:min-h-[100px]"
+                          className="min-h-[100px] rounded-lg bg-muted/10 sm:min-h-[120px] lg:min-h-[132px]"
                         />
                       );
                     }
@@ -704,7 +699,7 @@ export function UnifiedAgendaView() {
                         type="button"
                         onClick={() => setSelectedDay(cell.dateKey)}
                         className={cn(
-                          "flex min-h-[88px] flex-col rounded-lg border p-1 text-left transition-colors sm:min-h-[100px] sm:p-1.5",
+                          "flex min-h-[100px] flex-col rounded-lg border p-1 text-left transition-colors sm:min-h-[120px] sm:p-1.5 lg:min-h-[132px]",
                           isToday && dash.calendarDayToday,
                           isSelected && !isToday && dash.calendarDaySelected,
                           !isToday && !isSelected && dash.calendarDay,
@@ -721,12 +716,12 @@ export function UnifiedAgendaView() {
                           {cell.day}
                         </span>
                         <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                          {dayEvents.slice(0, 3).map((ev) => (
+                          {dayEvents.slice(0, 4).map((ev) => (
                             <EventPill key={ev.id} event={ev} compact />
                           ))}
-                          {dayEvents.length > 3 ? (
+                          {dayEvents.length > 4 ? (
                             <span className={cn("text-[10px] font-bold", dash.calendarMore)}>
-                              +{dayEvents.length - 3} mais
+                              +{dayEvents.length - 4} mais
                             </span>
                           ) : null}
                         </div>
@@ -805,7 +800,7 @@ export function UnifiedAgendaView() {
                 <CardDescription>Nenhum compromisso neste dia.</CardDescription>
               )}
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="max-h-[min(70vh,640px)] space-y-6 overflow-y-auto overscroll-contain">
               {listGrouped.length === 0 || listEvents.length === 0 ? (
                 <p className="py-10 text-center text-sm text-muted-foreground">
                   Nada agendado neste dia.

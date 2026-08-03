@@ -910,12 +910,7 @@ export function FutebolAgendaOperacional() {
               />
             </div>
           ) : (
-            <div
-              className={cn(
-                "grid gap-4",
-                viewMode === "month" && "lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start",
-              )}
-            >
+            <div className="grid gap-4">
               <div className={viewMode === "week" ? "min-w-0" : undefined}>
                 {viewMode === "month" ? (
                   <>
@@ -926,9 +921,12 @@ export function FutebolAgendaOperacional() {
                         </div>
                       ))}
                     </div>
-                    <div className="grid grid-cols-7 gap-1">
+                    <div className="grid grid-cols-7 gap-1.5">
                       {Array.from({ length: startWeekday }).map((_, i) => (
-                        <div key={`e-${i}`} className="min-h-[92px] rounded-lg bg-muted/15 sm:min-h-[100px]" />
+                        <div
+                          key={`e-${i}`}
+                          className="min-h-[100px] rounded-lg bg-muted/15 sm:min-h-[120px] lg:min-h-[132px]"
+                        />
                       ))}
                       {Array.from({ length: daysInMonth }).map((_, i) => {
                         const day = i + 1;
@@ -938,7 +936,7 @@ export function FutebolAgendaOperacional() {
                         return (
                           <div
                             key={dateKey}
-                            className={dayCellClass(dateKey, isSelected)}
+                            className={cn(dayCellClass(dateKey, isSelected), "min-h-[100px] sm:min-h-[120px] lg:min-h-[132px]")}
                           >
                             <button
                               type="button"
@@ -953,7 +951,7 @@ export function FutebolAgendaOperacional() {
                               <span className={dayNumberClass(dateKey, isSelected)}>{day}</span>
                             </button>
                             <div className="mt-1 space-y-0.5">
-                              {sortAgendaItems(dayItems).slice(0, 4).map((item) => {
+                              {sortAgendaItems(dayItems).slice(0, 5).map((item) => {
                                 const side = matchSideOf(item);
                                 const style = agendaSwatchStyle(agendaColors, item.type, side);
                                 const line = `${agendaLinePrefix(item, side)}${item.title}`;
@@ -974,13 +972,13 @@ export function FutebolAgendaOperacional() {
                                   </button>
                                 );
                               })}
-                              {dayItems.length > 4 ? (
+                              {dayItems.length > 5 ? (
                                 <button
                                   type="button"
                                   onClick={() => handleDayClick(dateKey)}
                                   className="text-[10px] font-semibold text-muted-foreground hover:text-foreground"
                                 >
-                                  +{dayItems.length - 4} · ver dia
+                                  +{dayItems.length - 5} · ver dia
                                 </button>
                               ) : null}
                             </div>
@@ -1069,7 +1067,7 @@ export function FutebolAgendaOperacional() {
                           </div>
                         ) : null}
                       </CardHeader>
-                      <CardContent className="space-y-2">
+                      <CardContent className="max-h-[min(70vh,640px)] space-y-2 overflow-y-auto overscroll-contain">
                         {!selectedDay ? null : selectedItems.length === 0 ? (
                           <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
                         ) : (
@@ -1087,7 +1085,7 @@ export function FutebolAgendaOperacional() {
               </div>
 
               {viewMode === "month" ? (
-                <Card className="h-fit border-dashed lg:sticky lg:top-4 lg:border-solid">
+                <Card className="border-dashed border-border/80">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base">
                       {selectedDay ? formatDateLong(`${selectedDay}T12:00:00`) : "Selecione um dia"}
@@ -1096,14 +1094,14 @@ export function FutebolAgendaOperacional() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="mt-1 w-fit"
+                        className="mt-1 w-fit min-h-[40px]"
                         onClick={() => handleDayClick(selectedDay)}
                       >
                         Abrir dia
                       </Button>
                     ) : null}
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="max-h-[min(70vh,640px)] space-y-2 overflow-y-auto overscroll-contain">
                     {!selectedDay ? null : selectedItems.length === 0 ? (
                       <div className="space-y-3">
                         <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
