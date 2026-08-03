@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CircleHelp, Loader2, Pencil, Plus, Search, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -41,7 +41,8 @@ export default function FornecedoresAdmPage() {
   const canView =
     canAccessModule("adm_financeiro") ||
     canAccessModule("adm_compras") ||
-    canAccessModule("futebol_logistica");
+    canAccessModule("futebol_logistica") ||
+    canAccessModule("group_fornecedores");
 
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [rows, setRows] = useState<SupplierRow[]>([]);
@@ -114,9 +115,22 @@ export default function FornecedoresAdmPage() {
 
   return (
     <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Fornecedores</h1>
+        <p className="text-sm text-muted-foreground">
+          Cadastro único do sistema — usado por Compras, Financeiro e Logística. Quem tem acesso a
+          Logística ou a Compras/Financeiro pode cadastrar e editar.
+        </p>
+      </div>
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-2">
-          <CardTitle className="text-lg">Lista</CardTitle>
+          <div>
+            <CardTitle className="text-lg">Lista</CardTitle>
+            <CardDescription className="mt-1">
+              Filtre por clube/empresa. Na viagem de logística, o dropdown lista os fornecedores do
+              clube selecionado.
+            </CardDescription>
+          </div>
           <Button type="button" size="sm" onClick={() => { setEdit(null); setDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-1" />
             Novo fornecedor

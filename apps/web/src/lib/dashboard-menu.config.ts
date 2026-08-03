@@ -87,7 +87,9 @@ import {
 } from "./logistica-cadastros.config";
 
 /** Rótulos de grupos de permissão compartilhada (accessGroup). */
-export const ACCESS_GROUP_LABELS: Record<string, string> = {};
+export const ACCESS_GROUP_LABELS: Record<string, string> = {
+  fornecedores: "Fornecedores (cadastro único)",
+};
 
 /** Relatórios Futebol — agora em Logística (mantido para redirects/atalhos). */
 export function hubRelatorioFutebol(): MenuItemConfig {
@@ -498,6 +500,8 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
                 href: "/dashboard/adm/fornecedores",
                 icon: Truck,
                 moduleSlug: "futebol_logistica",
+                /** Mesma permissão do item em Adm → Cadastros → Fornecedores */
+                accessGroup: "fornecedores",
               },
               ...LOGISTICA_CADASTRO_RESOURCES.map((resource) => ({
                 slug: `futebol_logistica_cad_${resource.slug.replace(/-/g, "_")}`,
@@ -688,6 +692,8 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             href: "/dashboard/adm/fornecedores",
             icon: Truck,
             moduleSlug: "adm_compras",
+            /** Cadastro único — mesma permissão liberada também pela Logística */
+            accessGroup: "fornecedores",
           },
         ],
       },
