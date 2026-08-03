@@ -311,14 +311,23 @@ function baseStyles(size: PrintPageSize): string {
     }
     .act-title { font-weight: 600; color: #0f172a; line-height: 1.3; }
     .act-meta { font-size: 8.5px; color: #64748b; margin-top: 1px; }
-    .schedule-category-section {
-      margin-bottom: 22px;
+    /* Uma página por categoria — NÃO quebrar antes da primeira */
+    .print-page {
+      break-inside: auto;
+      page-break-inside: auto;
+    }
+    .print-page + .print-page {
       break-before: page;
       page-break-before: always;
     }
-    .schedule-category-section:first-of-type {
-      break-before: auto;
-      page-break-before: auto;
+    /* Cabeçalho + tabela começam juntos na mesma página (evita folha em branco) */
+    .print-page .report-intro {
+      break-after: auto;
+      page-break-after: auto;
+      margin-bottom: 0;
+    }
+    .print-page .footer {
+      margin-top: 16px;
     }
     .schedule-category-title {
       margin: 0 0 10px;
@@ -331,6 +340,8 @@ function baseStyles(size: PrintPageSize): string {
       color: ${BCG.blue};
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      break-after: avoid;
+      page-break-after: avoid;
     }
     .schedule-table-single { font-size: 10px; }
     .schedule-table-single thead th:last-child { text-align: left; }
@@ -580,9 +591,18 @@ export function buildProgramacaoPrintHtml(
   data: ProgramacaoSemanalReportDto,
   size: PrintPageSize = "A4",
 ): string {
-  const categorySections = data.categories
+  const clubName = data.tenant.name;
+  const logoUrl = data.tenant.logoUrl;
+  const badge = data.period.label;
+  const categories =
+    data.categories.length > 0 ? data.categories : ["—"];
+
+  const pages = categories
     .map((cat) => {
-      const catLabel = data.categoryLabels[cat] ?? cat;
+      const catLabel =
+        cat === "—"
+          ? "Sem categoria"
+          : (data.categoryLabels[cat] ?? cat);
       const rows = data.days
         .map((day) => {
           const acts = day.byCategory[cat] ?? [];
@@ -608,54 +628,60 @@ export function buildProgramacaoPrintHtml(
         })
         .join("");
 
-      return `<section class="section schedule-wrap schedule-category-section">
-        <h3 class="schedule-category-title">${escapeHtml(catLabel)}</h3>
-        <table class="schedule-table schedule-table-single">
-          <thead>
-            <tr>
-              <th>Dia</th>
-              <th>Programação</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </section>`;
+      return `<div class="print-page">
+        <div class="report-intro">
+          <div class="top-bar"></div>
+          <header class="header">
+            ${logoHtml(logoUrl, clubName)}
+            <div class="brand-block">
+              <p class="brand">Boston City Group · Depto Futebol</p>
+              <h1 class="club">${escapeHtml(clubName)}</h1>
+              <p class="doc-title">Programação Semanal</p>
+              <span class="badge">${escapeHtml(badge)}</span>
+            </div>
+          </header>
+          <div class="meta-grid">
+            <div class="meta-item full">
+              <label>Período</label>
+              <span>${escapeHtml(data.period.label)}</span>
+            </div>
+            <div class="meta-item full">
+              <label>Categoria</label>
+              <span>${escapeHtml(catLabel)}</span>
+            </div>
+          </div>
+        </div>
+        <section class="section schedule-wrap" style="margin-top:14px">
+          <h3 class="schedule-category-title">${escapeHtml(catLabel)}</h3>
+          <table class="schedule-table schedule-table-single">
+            <thead>
+              <tr>
+                <th>Dia</th>
+                <th>Programação</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </section>
+        <footer class="footer">
+          <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
+          <span><strong>Boston City Group</strong> · Relatório oficial</span>
+        </footer>
+      </div>`;
     })
     .join("");
 
-  const introMeta = `
-    <div class="meta-grid">
-      <div class="meta-item full">
-        <label>Período</label>
-        <span>${escapeHtml(data.period.label)}</span>
-      </div>
-      <div class="meta-item full">
-        <label>Categorias</label>
-        <span>${escapeHtml(
-          data.categories.map((c) => data.categoryLabels[c] ?? c).join(" · ") || "Todas",
-        )}</span>
-      </div>
-    </div>
-  `;
-
-  const body = `
-    <section class="section">
-      <h2 class="section-title">Programação semanal</h2>
-      <p style="margin:0 0 14px;font-size:10px;color:#64748b">Uma página por categoria — imprima ou salve em PDF.</p>
-    </section>
-    ${categorySections}
-  `;
-
-  return documentShell(
-    `Programação Semanal — ${data.tenant.name}`,
-    data.tenant.name,
-    data.tenant.logoUrl,
-    "Programação Semanal",
-    data.period.label,
-    introMeta,
-    body,
-    size,
-  );
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(`Programação Semanal — ${clubName}`)}</title>
+  <style>${baseStyles(size)}</style>
+</head>
+<body>
+  ${pages}
+</body>
+</html>`;
 }
 
 function printHtmlDocument(html: string, title: string): void {
