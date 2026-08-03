@@ -1,5 +1,9 @@
 import { formatCpfForDisplay } from "@/lib/format-cpf";
 import { getPublicImageUrl } from "@/lib/media-url";
+import {
+  REPORT_PRINT_BREAK_CSS,
+  wrapPrintRootDocument,
+} from "@/lib/report-print-layout";
 import type {
   HospedesReportDto,
   PassageirosReportDto,
@@ -92,12 +96,7 @@ function baseStyles(size: PrintPageSize): string {
       print-color-adjust: exact;
     }
     .page { max-width: 100%; margin: 0 auto; }
-    .report-intro {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      break-after: avoid;
-      page-break-after: avoid;
-    }
+    ${REPORT_PRINT_BREAK_CSS}
     .top-bar {
       height: 6px;
       background: linear-gradient(90deg, ${BCG.red} 0%, ${BCG.red} 48%, ${BCG.blue} 52%, ${BCG.blue} 100%);
@@ -322,8 +321,6 @@ function baseStyles(size: PrintPageSize): string {
     }
     /* Cabeçalho + tabela começam juntos na mesma página (evita folha em branco) */
     .print-page .report-intro {
-      break-after: auto;
-      page-break-after: auto;
       margin-bottom: 0;
     }
     .print-page .footer {
@@ -457,16 +454,7 @@ function documentShell(
   body: string,
   size: PrintPageSize,
 ): string {
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
-  <style>${baseStyles(size)}</style>
-</head>
-<body>
-  <div class="page">
-    <div class="report-intro">
+  const headerHtml = `
       <div class="top-bar"></div>
       <header class="header">
         ${logoHtml(logoUrl, clubName)}
@@ -476,17 +464,20 @@ function documentShell(
           <p class="doc-title">${escapeHtml(docTitle)}</p>
           <span class="badge">${escapeHtml(badge)}</span>
         </div>
-      </header>
-      ${introMeta}
-    </div>
-    ${body}
+      </header>`;
+  const footerHtml = `
     <footer class="footer">
       <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
       <span><strong>Boston City Group</strong> · Relatório oficial</span>
-    </footer>
-  </div>
-</body>
-</html>`;
+    </footer>`;
+  return wrapPrintRootDocument({
+    title: escapeHtml(title),
+    styles: baseStyles(size),
+    headerHtml,
+    metaHtml: introMeta,
+    bodyHtml: body,
+    footerHtml,
+  });
 }
 
 export function buildPassageirosPrintHtml(

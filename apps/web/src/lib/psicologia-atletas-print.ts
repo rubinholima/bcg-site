@@ -6,6 +6,10 @@ import {
   parseRegistrationProfile,
 } from "@/lib/player-registration-profile";
 import { reportLogoUrlForPrint, resolveLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
+import {
+  REPORT_PRINT_BREAK_CSS,
+  wrapPrintRootDocument,
+} from "@/lib/report-print-layout";
 
 export type PsicologiaAtletaFieldKey =
   | "num"
@@ -159,12 +163,7 @@ function baseStyles(size: PrintPageSize): string {
       print-color-adjust: exact;
     }
     .page { max-width: 100%; margin: 0 auto; }
-    .report-intro {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      break-after: avoid;
-      page-break-after: avoid;
-    }
+    ${REPORT_PRINT_BREAK_CSS}
     .top-bar {
       height: 6px;
       background: linear-gradient(90deg, ${purple} 0%, ${purpleDark} 100%);
@@ -381,16 +380,7 @@ export function buildPsicologiaAtletasPrintHtml(
 
   const columnLabels = fields.map((k) => fieldDef(k).label).join(" · ");
 
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>Lista de Atletas — ${escapeHtml(data.titleClubName)}</title>
-  <style>${baseStyles(size)}</style>
-</head>
-<body>
-  <div class="page">
-    <div class="report-intro">
+  const headerHtml = `
       <div class="top-bar"></div>
       <header class="header">
         ${logoHtml(data.logoUrl, data.titleClubName)}
@@ -400,7 +390,8 @@ export function buildPsicologiaAtletasPrintHtml(
           <p class="doc-title">Lista de Atletas</p>
           <span class="badge">${sortedPlayers.length} atleta${sortedPlayers.length === 1 ? "" : "s"}</span>
         </div>
-      </header>
+      </header>`;
+  const metaHtml = `
       <div class="meta-grid">
         <div class="meta-item full">
           <label>Filtros aplicados</label>
@@ -410,21 +401,28 @@ export function buildPsicologiaAtletasPrintHtml(
           <label>Colunas do relatório</label>
           <span>${escapeHtml(columnLabels)}</span>
         </div>
-      </div>
-    </div>
+      </div>`;
+  const bodyHtml = `
     <section class="section">
       <table>
         <thead><tr>${headCells}</tr></thead>
         <tbody>${bodyRows}</tbody>
       </table>
-    </section>
+    </section>`;
+  const footerHtml = `
     <footer class="footer">
       <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
       <span><strong>Boston City Group</strong> · Relatório de psicologia</span>
-    </footer>
-  </div>
-</body>
-</html>`;
+    </footer>`;
+
+  return wrapPrintRootDocument({
+    title: escapeHtml(`Lista de Atletas — ${data.titleClubName}`),
+    styles: baseStyles(size),
+    headerHtml,
+    metaHtml,
+    bodyHtml,
+    footerHtml,
+  });
 }
 
 function printHtmlDocument(html: string, title: string): void {

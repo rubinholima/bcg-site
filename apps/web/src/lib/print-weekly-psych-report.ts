@@ -76,12 +76,20 @@ function buildPrintHtml(report: WeeklyPsychReportData): string {
       padding-bottom: 18px;
       margin-bottom: 22px;
       border-bottom: 2px solid #e9d5ff;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      break-after: auto;
+      page-break-after: auto;
     }
     .meta {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
       margin-bottom: 24px;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      break-after: auto;
+      page-break-after: auto;
     }
     .meta-item {
       border: 1px solid #e2e8f0;
@@ -105,7 +113,12 @@ function buildPrintHtml(report: WeeklyPsychReportData): string {
     }
     .section {
       margin-bottom: 18px;
-      page-break-inside: avoid;
+      break-inside: auto;
+      page-break-inside: auto;
+    }
+    .section:first-of-type {
+      break-before: auto;
+      page-break-before: auto;
     }
     .section h3 {
       margin: 0 0 8px;

@@ -3,6 +3,10 @@ import {
   resolveLogoUrlForPrint,
 } from "@/lib/futebol-relatorios-print";
 import type { PrintPageSize } from "@/lib/futebol-relatorios.types";
+import {
+  REPORT_PRINT_BREAK_CSS,
+  wrapPrintRootDocument,
+} from "@/lib/report-print-layout";
 import type { PhysioReportsDashboard } from "@/types/fisioterapia";
 
 const BCG = {
@@ -165,12 +169,7 @@ function baseStyles(size: PrintPageSize): string {
       print-color-adjust: exact;
     }
     .page { max-width: 100%; margin: 0 auto; }
-    .report-intro {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      break-after: avoid;
-      page-break-after: avoid;
-    }
+    ${REPORT_PRINT_BREAK_CSS}
     .top-bar {
       height: 6px;
       background: linear-gradient(90deg, ${BCG.red} 0%, ${BCG.red} 48%, ${BCG.blue} 52%, ${BCG.blue} 100%);
@@ -439,16 +438,7 @@ function documentShell(
   body: string,
   size: PrintPageSize,
 ): string {
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
-  <style>${baseStyles(size)}</style>
-</head>
-<body>
-  <div class="page">
-    <div class="report-intro">
+  const headerHtml = `
       <div class="top-bar"></div>
       <header class="header">
         ${logoHtml(ctx.logoUrl, ctx.clubName)}
@@ -458,17 +448,20 @@ function documentShell(
           <p class="doc-title">${escapeHtml(docTitle)}</p>
           <span class="badge">${escapeHtml(badge)}</span>
         </div>
-      </header>
-      ${filterMetaHtml(ctx)}
-    </div>
-    ${body}
+      </header>`;
+  const footerHtml = `
     <footer class="footer">
       <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
       <span><strong>Boston City Group</strong> · Relatório oficial</span>
-    </footer>
-  </div>
-</body>
-</html>`;
+    </footer>`;
+  return wrapPrintRootDocument({
+    title: escapeHtml(title),
+    styles: baseStyles(size),
+    headerHtml,
+    metaHtml: filterMetaHtml(ctx),
+    bodyHtml: body,
+    footerHtml,
+  });
 }
 
 function dataTable(
