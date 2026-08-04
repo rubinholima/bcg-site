@@ -204,7 +204,7 @@ export class LogisticaService {
     }
     return this.prisma.travelLogistics.findMany({
       where,
-      orderBy: [{ matchDate: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ matchDate: 'desc' }, { createdAt: 'desc' }],
       include: {
         tenant: { select: { id: true, name: true, slug: true } },
         _count: { select: { participants: true } },

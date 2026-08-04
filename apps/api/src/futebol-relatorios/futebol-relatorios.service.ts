@@ -291,7 +291,10 @@ export class FutebolRelatoriosService {
         status: { not: 'cancelado' },
       },
       orderBy: [{ matchDate: 'desc' }],
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        _count: { select: { participants: true } },
+      },
     });
   }
 

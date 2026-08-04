@@ -50,7 +50,12 @@ export function formatTravelLabel(t: FutebolRelatorioTravel): string {
   const cat = formatTravelCategoriesDisplay(t.category, t.categories);
   const club = t.tenant?.name ? `${t.tenant.name} · ` : "";
   const side = t.isHomeMatch ? " · Casa" : t.isHomeMatch === false ? " · Fora" : "";
-  return `${club}${date}${vs}${side}${cat ? ` (${cat})` : ""}`;
+  const past =
+    !Number.isNaN(new Date(t.matchDate).getTime()) &&
+    new Date(t.matchDate).getTime() < Date.now()
+      ? " · Passado"
+      : "";
+  return `${club}${date}${vs}${side}${past}${cat ? ` (${cat})` : ""}`;
 }
 
 export function startOfWeekMonday(d: Date): Date {

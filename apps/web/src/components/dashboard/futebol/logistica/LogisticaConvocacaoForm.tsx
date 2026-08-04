@@ -27,8 +27,10 @@ import {
 } from "@/components/dashboard/futebol/relatorios/futebol-relatorio-shared";
 import {
   formatFixtureOptionLabel,
-  fixturesForConvocation,
+  mergeTravelsIntoFixturesForConvocation,
+  parseTravelRecordFixtureId,
   resolveFixtureOpponentName,
+  sortTravelsForConvocation,
   type AgendaFixture,
 } from "@/lib/travel-fixture-utils";
 
@@ -80,6 +82,7 @@ export function LogisticaConvocacaoForm() {
   const [travelId, setTravelId] = useState(initialTravelId);
   const [travels, setTravels] = useState<FutebolRelatorioTravel[]>([]);
   const [loadingTravels, setLoadingTravels] = useState(false);
+  const [rawFixtures, setRawFixtures] = useState<AgendaFixture[]>([]);
   const [fixtures, setFixtures] = useState<AgendaFixture[]>([]);
   const [loadingFixtures, setLoadingFixtures] = useState(false);
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
@@ -145,7 +148,7 @@ export function LogisticaConvocacaoForm() {
         const list = (Array.isArray(data) ? data : []).filter(
           (t) => t.status !== "cancelado",
         );
-        setTravels(list);
+        setTravels(sortTravelsForConvocation(list));
       })
       .catch(() => setTravels([]))
       .finally(() => setLoadingTravels(false));
@@ -158,6 +161,7 @@ export function LogisticaConvocacaoForm() {
 
   useEffect(() => {
     if (!tenantId) {
+      setRawFixtures([]);
       setFixtures([]);
       setSelectedFixtureId("");
       return;
@@ -168,14 +172,25 @@ export function LogisticaConvocacaoForm() {
     })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: AgendaFixture[]) => {
-        setFixtures(fixturesForConvocation(Array.isArray(data) ? data : []));
+        setRawFixtures(Array.isArray(data) ? data : []);
       })
-      .catch(() => setFixtures([]))
+      .catch(() => setRawFixtures([]))
       .finally(() => setLoadingFixtures(false));
   }, [tenantId]);
 
+  useEffect(() => {
+    const club = selectedTenant?.name ?? "Nosso Clube";
+    setFixtures(
+      mergeTravelsIntoFixturesForConvocation(rawFixtures, travels, club, 90),
+    );
+  }, [rawFixtures, travels, selectedTenant?.name]);
+
   const findTravelForFixture = useCallback(
     (fixture: AgendaFixture, list: FutebolRelatorioTravel[]) => {
+      const fromSynthetic = parseTravelRecordFixtureId(fixture.externalId);
+      if (fromSynthetic) {
+        return list.find((t) => t.id === fromSynthetic) ?? null;
+      }
       const byExternal = list.find((t) => t.externalId === fixture.externalId);
       if (byExternal) return byExternal;
       const opponent = resolveFixtureOpponentName(fixture, selectedTenant?.name ?? "");
@@ -193,6 +208,13 @@ export function LogisticaConvocacaoForm() {
   const handleSelectFixture = async (fixtureId: string) => {
     setSelectedFixtureId(fixtureId);
     if (!fixtureId || !tenantId) return;
+
+    const travelOnlyId = parseTravelRecordFixtureId(fixtureId);
+    if (travelOnlyId) {
+      setTravelId(travelOnlyId);
+      return;
+    }
+
     const fixture = fixtures.find((f) => f.externalId === fixtureId);
     if (!fixture) return;
 
@@ -217,7 +239,7 @@ export function LogisticaConvocacaoForm() {
         status: "planejamento",
       });
       const created = data as FutebolRelatorioTravel;
-      setTravels((prev) => [...prev, created]);
+      setTravels((prev) => sortTravelsForConvocation([...prev, created]));
       setTravelId(created.id);
       setFeedback({
         open: true,
@@ -576,7 +598,10 @@ export function LogisticaConvocacaoForm() {
 
           {tenantId ? (
             <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-              <Label>Jogo da agenda (últimos 30 dias + futuros)</Label>
+              <Label>Jogo da agenda (próximos + passados dos últimos 90 dias)</Label>
+              <p className="text-xs text-muted-foreground">
+                Passados vêm da agenda e também dos planejamentos já salvos. Marcados com [Passado].
+              </p>
               <Select
                 value={selectedFixtureId || "none"}
                 onValueChange={(v) => void handleSelectFixture(v === "none" ? "" : v)}
@@ -588,8 +613,8 @@ export function LogisticaConvocacaoForm() {
                       loadingFixtures
                         ? "Carregando jogos…"
                         : fixtures.length === 0
-                          ? "Nenhum jogo futuro na agenda"
-                          : "Selecione um jogo para convocar"
+                          ? "Nenhum jogo nos próximos / últimos 90 dias"
+                          : "Próximos e jogos recentes (passados)"
                     }
                   />
                 </SelectTrigger>
@@ -608,7 +633,7 @@ export function LogisticaConvocacaoForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label>Ou selecione um registro existente</Label>
+                <Label>Ou selecione um registro existente (próximos e passados)</Label>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Checkbox
                     checked={onlyWithConvocation}
