@@ -1,0 +1,137 @@
+[
+  {
+    "id": 1,
+    "name": "Camisetas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 2,
+    "name": "Camisas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 3,
+    "name": "Polos",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 4,
+    "name": "Jaquetas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 5,
+    "name": "Parkas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 6,
+    "name": "Regatas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 7,
+    "name": "Blusões",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 8,
+    "name": "Coletes",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 9,
+    "name": "Camisetas Térmicas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores"
+  },
+  {
+    "id": 10,
+    "name": "Calças",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores"
+  },
+  {
+    "id": 11,
+    "name": "Calções",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores"
+  },
+  {
+    "id": 12,
+    "name": "Bermudas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores"
+  },
+  {
+    "id": 13,
+    "name": "Calças Térmicas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores"
+  },
+  {
+    "id": 14,
+    "name": "Bermudas Térmicas",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores"
+  },
+  {
+    "id": 15,
+    "name": "Meião",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true,
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias"
+  }
+]

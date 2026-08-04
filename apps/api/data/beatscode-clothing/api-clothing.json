@@ -1,0 +1,1052 @@
+[
+  {
+    "id": 41,
+    "name": "Bermuda Viagem Atleta",
+    "timestamp": 1710449006,
+    "clothingTypeId": 12,
+    "clothingTypeName": "Bermudas",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2340,
+      "link": "https://bostoncityfc-api.beatscode.com/files/42dabe69f5af465bb3d2b05f3bc68489.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 23,
+    "name": "Bermuda Viagem Atleta AZL",
+    "timestamp": 1685624370,
+    "clothingTypeId": 12,
+    "clothingTypeName": "Bermudas",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1930,
+      "link": "https://bostoncityfc-api.beatscode.com/files/97ed1530904202d724f3ede1f6bf9260.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 20,
+    "name": "Bermuda Viagem Atleta VRM",
+    "timestamp": 1685624337,
+    "clothingTypeId": 12,
+    "clothingTypeName": "Bermudas",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1927,
+      "link": "https://bostoncityfc-api.beatscode.com/files/f8a307fb13d1f013bb36641ec9d86ce6.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 21,
+    "name": "Bermuda Viagem Comissão",
+    "timestamp": 1685624351,
+    "clothingTypeId": 12,
+    "clothingTypeName": "Bermudas",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1928,
+      "link": "https://bostoncityfc-api.beatscode.com/files/5a741f72ad362075a7c5165f1b970c3f.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 47,
+    "name": "Bermuda Viagem CT",
+    "timestamp": 1710449673,
+    "clothingTypeId": 12,
+    "clothingTypeName": "Bermudas",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2347,
+      "link": "https://bostoncityfc-api.beatscode.com/files/65c5e8b2f6a35fe01819dea4d366d94c.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 46,
+    "name": "Bermuda Viagem Vermelha Atleta",
+    "timestamp": 1710449464,
+    "clothingTypeId": 12,
+    "clothingTypeName": "Bermudas",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2345,
+      "link": "https://bostoncityfc-api.beatscode.com/files/0ec9a8b218b9cfff66f7361f550174f4.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 22,
+    "name": "Calça Viagem Comissão",
+    "timestamp": 1685624359,
+    "clothingTypeId": 10,
+    "clothingTypeName": "Calças",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1929,
+      "link": "https://bostoncityfc-api.beatscode.com/files/6d76bd43a28fe1bf6a2b778bc938987c.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 39,
+    "name": "Calça Viagem CT",
+    "timestamp": 1710448931,
+    "clothingTypeId": 10,
+    "clothingTypeName": "Calças",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2338,
+      "link": "https://bostoncityfc-api.beatscode.com/files/9cfacfd3c231078cc3f39671c4172d2f.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 11,
+    "name": "Calção 1",
+    "timestamp": 1685624238,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1918,
+      "link": "https://bostoncityfc-api.beatscode.com/files/9b1516f512c85e9cb2f31fb9a94e3624.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 32,
+    "name": "Calção 1",
+    "timestamp": 1710447985,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2331,
+      "link": "https://bostoncityfc-api.beatscode.com/files/cec021b5a2a8bdb4fbca54fdeab4552e.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 12,
+    "name": "Calção 2",
+    "timestamp": 1685624250,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1919,
+      "link": "https://bostoncityfc-api.beatscode.com/files/0ba434c28d9065e09dbefa5020f795aa.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 40,
+    "name": "Calção 2",
+    "timestamp": 1710448962,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2339,
+      "link": "https://bostoncityfc-api.beatscode.com/files/02d73d858cf36ca292a412026156ca49.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 13,
+    "name": "Calção 3",
+    "timestamp": 1685624261,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1920,
+      "link": "https://bostoncityfc-api.beatscode.com/files/f2df1e6b64b2b4eb9d7cc4fa3fb0a493.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 44,
+    "name": "Calção 3",
+    "timestamp": 1710449137,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2343,
+      "link": "https://bostoncityfc-api.beatscode.com/files/5a44f1b6493da5b59915e6294ec24137.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 14,
+    "name": "Calção Gol 1",
+    "timestamp": 1685624275,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1921,
+      "link": "https://bostoncityfc-api.beatscode.com/files/1b480d708e308056fff01f4672cdfea3.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 33,
+    "name": "Calção Gol 1",
+    "timestamp": 1710448048,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2332,
+      "link": "https://bostoncityfc-api.beatscode.com/files/cc04773fb42178734b2964e72c2ff2e3.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 15,
+    "name": "Calção Gol 2",
+    "timestamp": 1685624288,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1922,
+      "link": "https://bostoncityfc-api.beatscode.com/files/748201c81ac21e2dc21bf072957c6a1e.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 42,
+    "name": "Calção Gol 2",
+    "timestamp": 1710449063,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2341,
+      "link": "https://bostoncityfc-api.beatscode.com/files/402daf146532d3f14b8fb833519920f6.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 16,
+    "name": "Calção Gol 3",
+    "timestamp": 1685624296,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1923,
+      "link": "https://bostoncityfc-api.beatscode.com/files/f2676aeeb3283a064a1f99a6292998cb.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 17,
+    "name": "Calção Gol 4",
+    "timestamp": 1685624306,
+    "clothingTypeId": 11,
+    "clothingTypeName": "Calções",
+    "clothingGroupId": 2,
+    "clothingGroupName": "Roupas Inferiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1924,
+      "link": "https://bostoncityfc-api.beatscode.com/files/f678ce17cd88be56f3f8dd1cd5217773.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 28,
+    "name": "Camisa 01",
+    "timestamp": 1710447701,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2327,
+      "link": "https://bostoncityfc-api.beatscode.com/files/681f11ce9a991982eeee8480c8abbf69.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 29,
+    "name": "Camisa 02",
+    "timestamp": 1710447777,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2328,
+      "link": "https://bostoncityfc-api.beatscode.com/files/41d0a34d49ecf22690605af98e2e9939.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 30,
+    "name": "Camisa Goleiro 01",
+    "timestamp": 1710447823,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2329,
+      "link": "https://bostoncityfc-api.beatscode.com/files/043cf466a40b223d681fb89ca8c4d261.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 31,
+    "name": "Camisa Goleiro 02",
+    "timestamp": 1710447937,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2330,
+      "link": "https://bostoncityfc-api.beatscode.com/files/b3c86a852372c120b4be045085f1cd80.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 43,
+    "name": "Camisa Treino CT",
+    "timestamp": 1710449073,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2342,
+      "link": "https://bostoncityfc-api.beatscode.com/files/77ec1ad4494d7cfa1169068963398704.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 3,
+    "clothingMaterialTypeName": "Treino"
+  },
+  {
+    "id": 45,
+    "name": "Camisa Viagem Atleta",
+    "timestamp": 1710449164,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2344,
+      "link": "https://bostoncityfc-api.beatscode.com/files/b8b57091ef6b6a3fb2a443c3a75eec9c.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 9,
+    "name": "Jogo CT",
+    "timestamp": 1685624221,
+    "clothingTypeId": 3,
+    "clothingTypeName": "Polos",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1917,
+      "link": "https://bostoncityfc-api.beatscode.com/files/07675f97d3157c525c2ecc48c43cd153.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 25,
+    "name": "Meião Azul",
+    "timestamp": 1715970398,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 1932,
+      "link": "https://bostoncityfc-api.beatscode.com/files/fc468fdd7e6a6a61b1d791f9238219c6.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 19,
+    "name": "Meião Bco",
+    "timestamp": 1685624324,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1926,
+      "link": "https://bostoncityfc-api.beatscode.com/files/ce5369282b11702a740d52d08151353b.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 38,
+    "name": "Meião Bco",
+    "timestamp": 1710448893,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2337,
+      "link": "https://bostoncityfc-api.beatscode.com/files/b6c54a02c10d8dbf48ab864c267706bc.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 24,
+    "name": "Meiao Cinza",
+    "timestamp": 1685624381,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1931,
+      "link": "https://bostoncityfc-api.beatscode.com/files/6948fe387fc04e5d53be568f2eb1b85a.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 37,
+    "name": "Meiao Cinza",
+    "timestamp": 1710448823,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2336,
+      "link": "https://bostoncityfc-api.beatscode.com/files/f12b570fbebba00793c97073c134be23.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 26,
+    "name": "Meião Laranja",
+    "timestamp": 1685624403,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1933,
+      "link": "https://bostoncityfc-api.beatscode.com/files/b11b8ed3e7536b2f79637e66b7d2cd6f.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 18,
+    "name": "Meião Ver",
+    "timestamp": 1685624316,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1925,
+      "link": "https://bostoncityfc-api.beatscode.com/files/ab36af468d51ff10db02f3e42f3eeb16.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 27,
+    "name": "Meião Verde",
+    "timestamp": 1685624412,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1934,
+      "link": "https://bostoncityfc-api.beatscode.com/files/cac9586182b5d3d8ce3c156770bafd3a.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 34,
+    "name": "Meião Vermelho",
+    "timestamp": 1710448232,
+    "clothingTypeId": 15,
+    "clothingTypeName": "Meião",
+    "clothingGroupId": 3,
+    "clothingGroupName": "Calçados/Meias",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2333,
+      "link": "https://bostoncityfc-api.beatscode.com/files/3834aae1f24028134da75e23abed3a76.png"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 36,
+    "name": "Polo Jogo CT",
+    "timestamp": 1710448821,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2335,
+      "link": "https://bostoncityfc-api.beatscode.com/files/e57c8751f11d0b739a56c01e29ed01fa.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 35,
+    "name": "Polo Viagem CT",
+    "timestamp": 1710448741,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "image": {
+      "id": 2334,
+      "link": "https://bostoncityfc-api.beatscode.com/files/0672943150acd1350c90837cba0b361d.jpeg"
+    },
+    "active": true,
+    "seasonId": 5,
+    "seasonName": "2024",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 10,
+    "name": "Treino CT",
+    "timestamp": 1685624207,
+    "clothingTypeId": 1,
+    "clothingTypeName": "Camisetas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1916,
+      "link": "https://bostoncityfc-api.beatscode.com/files/0bded96f0b95f7404663540b9b238c6d.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 3,
+    "clothingMaterialTypeName": "Treino"
+  },
+  {
+    "id": 1,
+    "name": "Uniforme 1",
+    "timestamp": 1685624127,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1907,
+      "link": "https://bostoncityfc-api.beatscode.com/files/5f3cf2d0f851d46357ae7de6c0ffb9a9.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 3,
+    "name": "Uniforme 1 - Gol",
+    "timestamp": 1685624144,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1909,
+      "link": "https://bostoncityfc-api.beatscode.com/files/d938f8a545c0e68c61277e000e760aa5.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 2,
+    "name": "Uniforme 2",
+    "timestamp": 1685624136,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1908,
+      "link": "https://bostoncityfc-api.beatscode.com/files/46c6cd16482c637da2edcf8d436bbc98.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 4,
+    "name": "Uniforme 2 - Gol",
+    "timestamp": 1685624154,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1910,
+      "link": "https://bostoncityfc-api.beatscode.com/files/7c8f9119d6ec54552da249a786e23ed4.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 5,
+    "name": "Uniforme 3 - Gol",
+    "timestamp": 1685624163,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1911,
+      "link": "https://bostoncityfc-api.beatscode.com/files/2c7333be042d89dba544f732856b9cb3.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 6,
+    "name": "Uniforme 4 - Gol",
+    "timestamp": 1685624171,
+    "clothingTypeId": 2,
+    "clothingTypeName": "Camisas",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1912,
+      "link": "https://bostoncityfc-api.beatscode.com/files/4502fd40bc53353239a5cea940d9bb15.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo"
+  },
+  {
+    "id": 7,
+    "name": "Viagem Atleta",
+    "timestamp": 1685624179,
+    "clothingTypeId": 3,
+    "clothingTypeName": "Polos",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1913,
+      "link": "https://bostoncityfc-api.beatscode.com/files/3ded0ea0127eabede4e97a8eca72e167.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  },
+  {
+    "id": 8,
+    "name": "Viagem CT",
+    "timestamp": 1685624188,
+    "clothingTypeId": 3,
+    "clothingTypeName": "Polos",
+    "clothingGroupId": 1,
+    "clothingGroupName": "Roupas Superiores",
+    "categoryId": [
+      100
+    ],
+    "image": {
+      "id": 1914,
+      "link": "https://bostoncityfc-api.beatscode.com/files/95854c96c51e0d3d1249f81188ce71d9.png"
+    },
+    "active": true,
+    "seasonId": 1,
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem"
+  }
+]

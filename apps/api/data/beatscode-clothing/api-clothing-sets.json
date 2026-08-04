@@ -1,0 +1,602 @@
+[
+  {
+    "id": 10,
+    "name": "Jogo CT",
+    "timestamp": 1685568330,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      9,
+      22
+    ],
+    "clothing": [
+      {
+        "id": 9,
+        "image": {
+          "id": 1917,
+          "link": "https://bostoncityfc-api.beatscode.com/files/07675f97d3157c525c2ecc48c43cd153.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 22,
+        "image": {
+          "id": 1929,
+          "link": "https://bostoncityfc-api.beatscode.com/files/6d76bd43a28fe1bf6a2b778bc938987c.png"
+        },
+        "clothingGroupId": 2
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 11,
+    "name": "Jogo CT2",
+    "timestamp": 1685568375,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      9,
+      21
+    ],
+    "clothing": [
+      {
+        "id": 9,
+        "image": {
+          "id": 1917,
+          "link": "https://bostoncityfc-api.beatscode.com/files/07675f97d3157c525c2ecc48c43cd153.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 21,
+        "image": {
+          "id": 1928,
+          "link": "https://bostoncityfc-api.beatscode.com/files/5a741f72ad362075a7c5165f1b970c3f.png"
+        },
+        "clothingGroupId": 2
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 13,
+    "name": "Jogo Dirigentes",
+    "timestamp": 1685707232,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      9,
+      22
+    ],
+    "clothing": [
+      {
+        "id": 9,
+        "image": {
+          "id": 1917,
+          "link": "https://bostoncityfc-api.beatscode.com/files/07675f97d3157c525c2ecc48c43cd153.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 22,
+        "image": {
+          "id": 1929,
+          "link": "https://bostoncityfc-api.beatscode.com/files/6d76bd43a28fe1bf6a2b778bc938987c.png"
+        },
+        "clothingGroupId": 2
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 1,
+    "name": "Uniforme 1",
+    "timestamp": 1685565998,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      1,
+      11,
+      18
+    ],
+    "clothing": [
+      {
+        "id": 1,
+        "image": {
+          "id": 1907,
+          "link": "https://bostoncityfc-api.beatscode.com/files/5f3cf2d0f851d46357ae7de6c0ffb9a9.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 11,
+        "image": {
+          "id": 1918,
+          "link": "https://bostoncityfc-api.beatscode.com/files/9b1516f512c85e9cb2f31fb9a94e3624.png"
+        },
+        "clothingGroupId": 2
+      },
+      {
+        "id": 18,
+        "image": {
+          "id": 1925,
+          "link": "https://bostoncityfc-api.beatscode.com/files/ab36af468d51ff10db02f3e42f3eeb16.png"
+        },
+        "clothingGroupId": 3
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 2,
+    "name": "Uniforme 1 - Gol",
+    "timestamp": 1685567028,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      3,
+      14,
+      24
+    ],
+    "clothing": [
+      {
+        "id": 3,
+        "image": {
+          "id": 1909,
+          "link": "https://bostoncityfc-api.beatscode.com/files/d938f8a545c0e68c61277e000e760aa5.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 14,
+        "image": {
+          "id": 1921,
+          "link": "https://bostoncityfc-api.beatscode.com/files/1b480d708e308056fff01f4672cdfea3.png"
+        },
+        "clothingGroupId": 2
+      },
+      {
+        "id": 24,
+        "image": {
+          "id": 1931,
+          "link": "https://bostoncityfc-api.beatscode.com/files/6948fe387fc04e5d53be568f2eb1b85a.png"
+        },
+        "clothingGroupId": 3
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 3,
+    "name": "Uniforme 2",
+    "timestamp": 1685566138,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      2,
+      12,
+      19
+    ],
+    "clothing": [
+      {
+        "id": 2,
+        "image": {
+          "id": 1908,
+          "link": "https://bostoncityfc-api.beatscode.com/files/46c6cd16482c637da2edcf8d436bbc98.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 12,
+        "image": {
+          "id": 1919,
+          "link": "https://bostoncityfc-api.beatscode.com/files/0ba434c28d9065e09dbefa5020f795aa.png"
+        },
+        "clothingGroupId": 2
+      },
+      {
+        "id": 19,
+        "image": {
+          "id": 1926,
+          "link": "https://bostoncityfc-api.beatscode.com/files/ce5369282b11702a740d52d08151353b.png"
+        },
+        "clothingGroupId": 3
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 4,
+    "name": "Uniforme 2 - Gol",
+    "timestamp": 1685566934,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      4,
+      15,
+      25
+    ],
+    "clothing": [
+      {
+        "id": 4,
+        "image": {
+          "id": 1910,
+          "link": "https://bostoncityfc-api.beatscode.com/files/7c8f9119d6ec54552da249a786e23ed4.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 15,
+        "image": {
+          "id": 1922,
+          "link": "https://bostoncityfc-api.beatscode.com/files/748201c81ac21e2dc21bf072957c6a1e.png"
+        },
+        "clothingGroupId": 2
+      },
+      {
+        "id": 25,
+        "image": {
+          "id": 1932,
+          "link": "https://bostoncityfc-api.beatscode.com/files/fc468fdd7e6a6a61b1d791f9238219c6.png"
+        },
+        "clothingGroupId": 3
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 5,
+    "name": "Uniforme 3 - Gol",
+    "timestamp": 1685566999,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      5,
+      16,
+      26
+    ],
+    "clothing": [
+      {
+        "id": 5,
+        "image": {
+          "id": 1911,
+          "link": "https://bostoncityfc-api.beatscode.com/files/2c7333be042d89dba544f732856b9cb3.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 16,
+        "image": {
+          "id": 1923,
+          "link": "https://bostoncityfc-api.beatscode.com/files/f2676aeeb3283a064a1f99a6292998cb.png"
+        },
+        "clothingGroupId": 2
+      },
+      {
+        "id": 26,
+        "image": {
+          "id": 1933,
+          "link": "https://bostoncityfc-api.beatscode.com/files/b11b8ed3e7536b2f79637e66b7d2cd6f.png"
+        },
+        "clothingGroupId": 3
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 6,
+    "name": "Uniforme 4 - Gol",
+    "timestamp": 1685567013,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      6,
+      17,
+      27
+    ],
+    "clothing": [
+      {
+        "id": 6,
+        "image": {
+          "id": 1912,
+          "link": "https://bostoncityfc-api.beatscode.com/files/4502fd40bc53353239a5cea940d9bb15.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 17,
+        "image": {
+          "id": 1924,
+          "link": "https://bostoncityfc-api.beatscode.com/files/f678ce17cd88be56f3f8dd1cd5217773.png"
+        },
+        "clothingGroupId": 2
+      },
+      {
+        "id": 27,
+        "image": {
+          "id": 1934,
+          "link": "https://bostoncityfc-api.beatscode.com/files/cac9586182b5d3d8ce3c156770bafd3a.png"
+        },
+        "clothingGroupId": 3
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 1,
+    "clothingMaterialTypeName": "Jogo",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 7,
+    "name": "Viagem Atleta",
+    "timestamp": 1685567115,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      7,
+      23
+    ],
+    "clothing": [
+      {
+        "id": 7,
+        "image": {
+          "id": 1913,
+          "link": "https://bostoncityfc-api.beatscode.com/files/3ded0ea0127eabede4e97a8eca72e167.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 23,
+        "image": {
+          "id": 1930,
+          "link": "https://bostoncityfc-api.beatscode.com/files/97ed1530904202d724f3ede1f6bf9260.png"
+        },
+        "clothingGroupId": 2
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 8,
+    "name": "Viagem CT",
+    "timestamp": 1685568273,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      8,
+      22
+    ],
+    "clothing": [
+      {
+        "id": 8,
+        "image": {
+          "id": 1914,
+          "link": "https://bostoncityfc-api.beatscode.com/files/95854c96c51e0d3d1249f81188ce71d9.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 22,
+        "image": {
+          "id": 1929,
+          "link": "https://bostoncityfc-api.beatscode.com/files/6d76bd43a28fe1bf6a2b778bc938987c.png"
+        },
+        "clothingGroupId": 2
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 9,
+    "name": "Viagem CT2",
+    "timestamp": 1685568294,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      8,
+      21
+    ],
+    "clothing": [
+      {
+        "id": 8,
+        "image": {
+          "id": 1914,
+          "link": "https://bostoncityfc-api.beatscode.com/files/95854c96c51e0d3d1249f81188ce71d9.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 21,
+        "image": {
+          "id": 1928,
+          "link": "https://bostoncityfc-api.beatscode.com/files/5a741f72ad362075a7c5165f1b970c3f.png"
+        },
+        "clothingGroupId": 2
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  },
+  {
+    "id": 12,
+    "name": "Viagem Dirigentes",
+    "timestamp": 1685707199,
+    "active": true,
+    "categoryId": [
+      100,
+      101,
+      102,
+      103
+    ],
+    "clothingId": [
+      8,
+      22
+    ],
+    "clothing": [
+      {
+        "id": 8,
+        "image": {
+          "id": 1914,
+          "link": "https://bostoncityfc-api.beatscode.com/files/95854c96c51e0d3d1249f81188ce71d9.png"
+        },
+        "clothingGroupId": 1
+      },
+      {
+        "id": 22,
+        "image": {
+          "id": 1929,
+          "link": "https://bostoncityfc-api.beatscode.com/files/6d76bd43a28fe1bf6a2b778bc938987c.png"
+        },
+        "clothingGroupId": 2
+      }
+    ],
+    "seasonId": 1,
+    "season": "2023",
+    "seasonName": "2023",
+    "clothingMaterialTypeId": 4,
+    "clothingMaterialTypeName": "Viagem",
+    "lastEdit": null,
+    "responsibleId": null,
+    "responsible": ""
+  }
+]

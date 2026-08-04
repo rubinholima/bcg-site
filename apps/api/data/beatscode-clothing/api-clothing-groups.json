@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Roupas Superiores",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true
+  },
+  {
+    "id": 2,
+    "name": "Roupas Inferiores",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true
+  },
+  {
+    "id": 3,
+    "name": "Calçados/Meias",
+    "timestamp": 1420070401,
+    "isDefault": true,
+    "active": true
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "name": "Jogo",
+    "timestamp": 1420070400,
+    "isDefault": true,
+    "active": true
+  },
+  {
+    "id": 2,
+    "name": "Passeio",
+    "timestamp": 1420070400,
+    "isDefault": true,
+    "active": true
+  },
+  {
+    "id": 3,
+    "name": "Treino",
+    "timestamp": 1420070400,
+    "isDefault": true,
+    "active": true
+  },
+  {
+    "id": 4,
+    "name": "Viagem",
+    "timestamp": 1420070400,
+    "isDefault": true,
+    "active": true
+  }
+]
