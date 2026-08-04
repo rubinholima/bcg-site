@@ -1,9 +1,18 @@
-import { Controller, Get, Query, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Put,
+  Query,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { FutebolRelatoriosService } from './futebol-relatorios.service';
+import type { PressKitConfigDto } from './futebol-relatorios.types';
 
 @Controller('futebol-relatorios')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -41,6 +50,25 @@ export class FutebolRelatoriosController {
       throw new BadRequestException('travelId é obrigatório');
     }
     return this.service.getLayoutRelacionados(travelId.trim());
+  }
+
+  @Get('press-kit')
+  getPressKit(@Query('travelId') travelId?: string) {
+    if (!travelId?.trim()) {
+      throw new BadRequestException('travelId é obrigatório');
+    }
+    return this.service.getPressKit(travelId.trim());
+  }
+
+  @Put('press-kit')
+  savePressKit(
+    @Query('travelId') travelId?: string,
+    @Body() body?: Partial<PressKitConfigDto>,
+  ) {
+    if (!travelId?.trim()) {
+      throw new BadRequestException('travelId é obrigatório');
+    }
+    return this.service.savePressKit(travelId.trim(), body ?? {});
   }
 
   @Get('programacao-semanal')

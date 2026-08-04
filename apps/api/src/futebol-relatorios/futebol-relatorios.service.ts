@@ -26,10 +26,17 @@ import type {
   HospedesReportDto,
   LayoutRelacionadosReportDto,
   PassageirosReportDto,
+  PressKitConfigDto,
+  PressKitNamedRole,
+  PressKitReportDto,
   ProgramacaoSemanalReportDto,
   RelatorioHospedeRow,
   RelatorioPessoaRow,
   RelatorioTravelMeta,
+} from './futebol-relatorios.types';
+import {
+  DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
+  DEFAULT_PRESS_KIT_REFEREE_ROLES,
 } from './futebol-relatorios.types';
 
 const TRANSPORT_LABELS: Record<string, string> = {
@@ -211,6 +218,63 @@ export class FutebolRelatoriosService {
       rows,
       generatedAt: new Date().toISOString(),
     };
+  }
+
+  async getPressKit(travelId: string): Promise<PressKitReportDto> {
+    const base = await this.getPassageiros(travelId);
+    const travel = await this.loadTravel(travelId);
+    const athletes = base.athletes.map((a, i) => ({ ...a, num: i + 1 }));
+    const config = this.resolvePressKitConfig(travel.beatscodeMeta, athletes, travel.matchDate);
+    const byId = new Map(
+      athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
+    );
+    const starters: RelatorioPessoaRow[] = [];
+    for (const id of config.starterPlayerIds) {
+      const row = byId.get(id);
+      if (row) starters.push({ ...row, num: starters.length + 1 });
+    }
+    const starterSet = new Set(config.starterPlayerIds);
+    const substitutes = athletes
+      .filter((a) => a.playerId && !starterSet.has(a.playerId))
+      .map((a, i) => ({ ...a, num: i + 1 }));
+
+    return {
+      travel: base.travel,
+      athletes,
+      staff: base.staff,
+      starters,
+      substitutes,
+      config,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  async savePressKit(
+    travelId: string,
+    raw: Partial<PressKitConfigDto> | null | undefined,
+  ): Promise<PressKitReportDto> {
+    const travel = await this.loadTravel(travelId);
+    const base = await this.getPassageiros(travelId);
+    const sanitized = this.sanitizePressKitConfig(raw, base.athletes, travel.matchDate);
+
+    const meta =
+      travel.beatscodeMeta &&
+      typeof travel.beatscodeMeta === 'object' &&
+      !Array.isArray(travel.beatscodeMeta)
+        ? { ...(travel.beatscodeMeta as Record<string, unknown>) }
+        : {};
+    meta.pressKit = sanitized;
+
+    await this.prisma.travelLogistics.update({
+      where: { id: travelId },
+      data: {
+        beatscodeMeta: meta as Parameters<
+          typeof this.prisma.travelLogistics.update
+        >[0]['data']['beatscodeMeta'],
+      },
+    });
+
+    return this.getPressKit(travelId);
   }
 
   async getLayoutRelacionados(travelId: string): Promise<LayoutRelacionadosReportDto> {
@@ -551,6 +615,8 @@ export class FutebolRelatoriosService {
           rg: profile.personal?.rg ?? null,
           birthDate: formatIsoDate(p.birthDate),
           playerId: p.id,
+          jerseyNumber: p.jerseyNumber ?? null,
+          position: p.position ?? null,
         });
       }
     }
@@ -626,6 +692,8 @@ export class FutebolRelatoriosService {
           rg: profile.personal?.rg ?? null,
           birthDate: formatIsoDate(p.birthDate),
           playerId: p.id,
+          jerseyNumber: p.jerseyNumber ?? null,
+          position: p.position ?? null,
         });
         continue;
       }
@@ -690,6 +758,8 @@ export class FutebolRelatoriosService {
         rg: profile.personal?.rg ?? null,
         birthDate: formatIsoDate(p.birthDate),
         playerId: p.id,
+        jerseyNumber: p.jerseyNumber ?? null,
+        position: p.position ?? null,
       };
     });
 
@@ -710,6 +780,92 @@ export class FutebolRelatoriosService {
     const profile = registrationProfile as { sports?: { situation?: string } } | null;
     const situation = normalizeSportsSituation(profile?.sports?.situation);
     return isArchivedSportsSituation(situation) || isLoanedSportsSituation(situation);
+  }
+
+  private resolvePressKitConfig(
+    beatscodeMeta: unknown,
+    athletes: RelatorioPessoaRow[],
+    matchDate: Date,
+  ): PressKitConfigDto {
+    const meta =
+      beatscodeMeta && typeof beatscodeMeta === 'object' && !Array.isArray(beatscodeMeta)
+        ? (beatscodeMeta as Record<string, unknown>)
+        : {};
+    const raw =
+      meta.pressKit && typeof meta.pressKit === 'object' && !Array.isArray(meta.pressKit)
+        ? (meta.pressKit as Partial<PressKitConfigDto>)
+        : {};
+    return this.sanitizePressKitConfig(raw, athletes, matchDate);
+  }
+
+  private sanitizePressKitConfig(
+    raw: Partial<PressKitConfigDto> | null | undefined,
+    athletes: RelatorioPessoaRow[],
+    matchDate: Date,
+  ): PressKitConfigDto {
+    const athleteIds = athletes.map((a) => a.playerId).filter((id): id is string => !!id);
+    const athleteSet = new Set(athleteIds);
+
+    let starterPlayerIds = Array.isArray(raw?.starterPlayerIds)
+      ? raw!.starterPlayerIds.filter((id): id is string => typeof id === 'string' && athleteSet.has(id))
+      : [];
+    starterPlayerIds = [...new Set(starterPlayerIds)].slice(0, 11);
+    if (starterPlayerIds.length === 0) {
+      starterPlayerIds = athleteIds.slice(0, Math.min(11, athleteIds.length));
+    }
+
+    const mapNamed = (
+      list: unknown,
+      defaultRoles: readonly string[],
+    ): PressKitNamedRole[] => {
+      const rows = Array.isArray(list) ? list : [];
+      return defaultRoles.map((defaultRole, i) => {
+        const item = rows[i];
+        if (item && typeof item === 'object') {
+          const o = item as Record<string, unknown>;
+          return {
+            role:
+              typeof o.role === 'string' && o.role.trim()
+                ? o.role.trim()
+                : defaultRole,
+            name: typeof o.name === 'string' ? o.name.trim() : '',
+          };
+        }
+        return { role: defaultRole, name: '' };
+      });
+    };
+
+    const matchTimeFromDate = (() => {
+      try {
+        const h = matchDate.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'America/Sao_Paulo',
+        });
+        if (h && h !== '00:00') return h;
+      } catch {
+        /* ignore */
+      }
+      return null;
+    })();
+
+    return {
+      phase:
+        typeof raw?.phase === 'string' && raw.phase.trim() ? raw.phase.trim() : null,
+      matchTime:
+        typeof raw?.matchTime === 'string' && raw.matchTime.trim()
+          ? raw.matchTime.trim()
+          : matchTimeFromDate,
+      referees: mapNamed(raw?.referees, DEFAULT_PRESS_KIT_REFEREE_ROLES),
+      directors: mapNamed(raw?.directors, DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
+      starterPlayerIds,
+      contactLine:
+        typeof raw?.contactLine === 'string' && raw.contactLine.trim()
+          ? raw.contactLine.trim()
+          : null,
+      showDisclaimer: raw?.showDisclaimer !== false,
+    };
   }
 
   private async resolvePersonDetails(

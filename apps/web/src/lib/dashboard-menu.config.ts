@@ -102,6 +102,20 @@ export function hubRelatorioFutebol(): MenuItemConfig {
     moduleSlug: slug,
     children: [
       {
+        slug: "rel_futebol_layout_relacionados",
+        label: "Layout Relacionados",
+        href: "/dashboard/futebol/logistica/relatorios/layout-relacionados",
+        icon: ClipboardList,
+        moduleSlug: slug,
+      },
+      {
+        slug: "rel_futebol_press_kit",
+        label: "Press Kit / Imprensa",
+        href: "/dashboard/futebol/logistica/relatorios/press-kit",
+        icon: Newspaper,
+        moduleSlug: slug,
+      },
+      {
         slug: "rel_futebol_passageiros",
         label: "Passageiros",
         href: "/dashboard/futebol/logistica/relatorios/passageiros",
@@ -540,6 +554,20 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: BarChart3,
             moduleSlug: "futebol_logistica",
             children: [
+              {
+                slug: "futebol_logistica_rel_layout",
+                label: "Layout Relacionados",
+                href: "/dashboard/futebol/logistica/relatorios/layout-relacionados",
+                icon: ClipboardList,
+                moduleSlug: "futebol_logistica",
+              },
+              {
+                slug: "futebol_logistica_rel_press_kit",
+                label: "Press Kit / Imprensa",
+                href: "/dashboard/futebol/logistica/relatorios/press-kit",
+                icon: Newspaper,
+                moduleSlug: "futebol_logistica",
+              },
               {
                 slug: "futebol_logistica_rel_passageiros",
                 label: "Passageiros",

@@ -8,6 +8,8 @@ export type RelatorioPessoaRow = {
   /** FK no cadastro — relatório da vida do atleta */
   playerId?: string | null;
   staffId?: string | null;
+  jerseyNumber?: number | null;
+  position?: string | null;
 };
 
 export type RelatorioHospedeRow = RelatorioPessoaRow & {
@@ -40,6 +42,33 @@ export type RelatorioTravelMeta = {
   hotelCheckOut: string | null;
   isHomeMatch: boolean;
   notes: string | null;
+};
+
+export type PressKitNamedRole = {
+  name: string;
+  role: string;
+};
+
+/** Config persistida em TravelLogistics.beatscodeMeta.pressKit */
+export type PressKitConfigDto = {
+  phase: string | null;
+  matchTime: string | null;
+  referees: PressKitNamedRole[];
+  directors: PressKitNamedRole[];
+  /** Ordem dos titulares no gramado (máx. 11) */
+  starterPlayerIds: string[];
+  contactLine: string | null;
+  showDisclaimer: boolean;
+};
+
+export type PressKitReportDto = {
+  travel: RelatorioTravelMeta;
+  athletes: RelatorioPessoaRow[];
+  staff: RelatorioPessoaRow[];
+  starters: RelatorioPessoaRow[];
+  substitutes: RelatorioPessoaRow[];
+  config: PressKitConfigDto;
+  generatedAt: string;
 };
 
 export type PassageirosReportDto = {
@@ -104,3 +133,17 @@ export type LayoutRelacionadosReportDto = {
   };
   generatedAt: string;
 };
+
+export const DEFAULT_PRESS_KIT_REFEREE_ROLES = [
+  'Árbitro(a)',
+  'Árbitro(a) Assistente 1',
+  'Árbitro(a) Assistente 2',
+  'Quarto(a) Árbitro(a)',
+] as const;
+
+export const DEFAULT_PRESS_KIT_DIRECTOR_ROLES = [
+  'Presidente',
+  'Gerente de Futebol',
+  'Gestor de Futebol',
+  'Supervisor de Futebol',
+] as const;

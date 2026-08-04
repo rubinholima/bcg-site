@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Circle, ClipboardCheck, Printer } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, ClipboardCheck, Newspaper, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -417,6 +417,12 @@ export default function EditLogisticaPage() {
             <Link href={`/dashboard/futebol/logistica/relatorios/layout-relacionados?travelId=${id}&tenantId=${item.tenantId}`}>
               <Printer className="mr-2 h-4 w-4" />
               Layout Relacionados
+            </Link>
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href={`/dashboard/futebol/logistica/relatorios/press-kit?travelId=${id}&tenantId=${item.tenantId}`}>
+              <Newspaper className="mr-2 h-4 w-4" />
+              Press Kit
             </Link>
           </Button>
           {!isHomeMatch ? (

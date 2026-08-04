@@ -12,11 +12,13 @@ import type {
   HospedesReportDto,
   LayoutRelacionadosReportDto,
   PassageirosReportDto,
+  PressKitReportDto,
   PrintPageSize,
   ProgramacaoSemanalReportDto,
   RelatorioPessoaRow,
   RelatorioHospedeRow,
 } from "@/lib/futebol-relatorios.types";
+import { getStaffRoleLabel } from "@/lib/staff-roles";
 
 /** Cores oficiais Boston City Group — vermelho e azul. */
 const BCG = {
@@ -904,4 +906,308 @@ export function printLayoutRelacionadosReport(
     buildLayoutRelacionadosPrintHtml(data, size),
     "Impressão — Layout Relacionados",
   );
+}
+
+function shortAthleteName(full: string): string {
+  const parts = full.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return full.trim();
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+}
+
+function formatBirthShort(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  if (!y || !m || !d) return "";
+  return `${d}/${m}/${y}`;
+}
+
+/** Posições % no gramado (formação visual 4-3-3 — não é o esquema tático real). */
+const PRESS_KIT_FIELD_SLOTS: { top: number; left: number }[] = [
+  { top: 86, left: 50 }, // GK
+  { top: 68, left: 14 },
+  { top: 70, left: 37 },
+  { top: 70, left: 63 },
+  { top: 68, left: 86 },
+  { top: 46, left: 24 },
+  { top: 48, left: 50 },
+  { top: 46, left: 76 },
+  { top: 22, left: 22 },
+  { top: 16, left: 50 },
+  { top: 22, left: 78 },
+];
+
+export function buildPressKitPrintHtml(
+  data: PressKitReportDto,
+  size: PrintPageSize = "A4",
+): string {
+  const { travel, config } = data;
+  const club = travel.tenant.name;
+  const opponent = travel.opponentName?.trim() || "Adversário";
+  const homeName = travel.isHomeMatch ? club : opponent;
+  const awayName = travel.isHomeMatch ? opponent : club;
+  const kickoff = [formatBrDate(travel.matchDate), config.matchTime].filter(Boolean).join(" · ");
+  const venue = [travel.stadiumName, travel.city, travel.country].filter(Boolean).join(" · ");
+  const logo = resolveLogoUrlForPrint(travel.tenant.logoUrl);
+
+  const refereesHtml = config.referees
+    .filter((r) => r.name.trim())
+    .map(
+      (r) =>
+        `<div class="ref-row"><strong>${escapeHtml(r.name)}</strong><span>${escapeHtml(r.role)}</span></div>`,
+    )
+    .join("");
+
+  const directorsHtml = config.directors
+    .filter((d) => d.name.trim())
+    .map(
+      (d) =>
+        `<div class="dir-card"><strong>${escapeHtml(d.name)}</strong><span>${escapeHtml(d.role)}</span></div>`,
+    )
+    .join("");
+
+  const staffHtml = data.staff
+    .map((s) => {
+      const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
+      return `<div class="staff-row"><strong>${escapeHtml(s.name)}</strong><span>${escapeHtml(role)}</span></div>`;
+    })
+    .join("");
+
+  const subsHtml = data.substitutes
+    .map((s) => {
+      const n = s.jerseyNumber != null ? String(s.jerseyNumber) : "—";
+      const birth = formatBirthShort(s.birthDate);
+      return `<div class="sub-row"><span class="sub-num">${escapeHtml(n)}</span><span class="sub-name">${escapeHtml(shortAthleteName(s.name))}</span>${birth ? `<span class="sub-birth">${escapeHtml(birth)}</span>` : ""}</div>`;
+    })
+    .join("");
+
+  const fieldPlayers = PRESS_KIT_FIELD_SLOTS.map((slot, i) => {
+    const p = data.starters[i];
+    if (!p) return "";
+    const n = p.jerseyNumber != null ? String(p.jerseyNumber) : String(i + 1);
+    const birth = formatBirthShort(p.birthDate);
+    return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%">
+      <div class="chip-num">${escapeHtml(n)}</div>
+      <div class="chip-name">${escapeHtml(shortAthleteName(p.name))}</div>
+      ${birth ? `<div class="chip-birth">${escapeHtml(birth)}</div>` : ""}
+    </div>`;
+  }).join("");
+
+  const styles = `
+    ${pageCss(size)}
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      background: #fff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .pk { max-width: 100%; }
+    .pk-top {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 3px solid ${BCG.red};
+    }
+    .pk-logo {
+      width: 88px; height: 88px; object-fit: contain;
+      border: 2px solid ${BCG.blue}; border-radius: 12px; background: #fff; padding: 4px;
+    }
+    .pk-logo-fallback {
+      width: 88px; height: 88px; border-radius: 12px; border: 2px solid ${BCG.blue};
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: ${BCG.blue}; font-size: 22px; background: ${BCG.blueLight};
+    }
+    .pk-matchup {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      font-size: 22px; font-weight: 800; color: ${BCG.blue}; letter-spacing: 0.02em;
+    }
+    .pk-x {
+      display: inline-flex; width: 36px; height: 36px; border-radius: 999px;
+      align-items: center; justify-content: center;
+      background: ${BCG.red}; color: #fff; font-size: 16px; font-weight: 800;
+    }
+    .pk-meta { margin-top: 4px; font-size: 13px; color: #334155; line-height: 1.45; }
+    .pk-meta strong { color: ${BCG.blue}; }
+    .pk-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.55fr 0.95fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .pk-col h3 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: ${BCG.red};
+      border-bottom: 2px solid ${BCG.red};
+      padding-bottom: 4px;
+    }
+    .ref-row, .staff-row, .sub-row {
+      display: flex; flex-direction: column; gap: 1px;
+      padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-size: 11px;
+    }
+    .ref-row strong, .staff-row strong, .sub-name { color: #0f172a; }
+    .ref-row span, .staff-row span, .sub-birth { color: #64748b; font-size: 10px; }
+    .sub-row { flex-direction: row; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .sub-num {
+      min-width: 22px; height: 22px; border-radius: 999px;
+      background: ${BCG.blue}; color: #fff; font-weight: 800; font-size: 11px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .pitch-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 3px solid #166534;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08) 0 50%, transparent 50%),
+        repeating-linear-gradient(
+          90deg,
+          #15803d 0 12.5%,
+          #16a34a 12.5% 25%
+        );
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25);
+    }
+    .pitch-wrap::before {
+      content: "";
+      position: absolute; inset: 8%;
+      border: 2px solid rgba(255,255,255,0.55);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+    .pitch-wrap::after {
+      content: "";
+      position: absolute; left: 50%; top: 50%;
+      width: 56px; height: 56px; margin: -28px 0 0 -28px;
+      border: 2px solid rgba(255,255,255,0.55);
+      border-radius: 999px;
+      pointer-events: none;
+    }
+    .player-chip {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 78px;
+      text-align: center;
+      z-index: 2;
+    }
+    .chip-num {
+      margin: 0 auto 2px;
+      width: 28px; height: 28px; border-radius: 999px;
+      background: ${BCG.blue}; color: #fff; font-weight: 800; font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .chip-name {
+      font-size: 9px; font-weight: 700; color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+      line-height: 1.15;
+    }
+    .chip-birth {
+      font-size: 8px; color: #e2e8f0;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+    }
+    .dir-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+    }
+    .dir-card {
+      border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px;
+      background: linear-gradient(180deg, ${BCG.blueLight}, #fff);
+      display: flex; flex-direction: column; gap: 2px; font-size: 11px;
+    }
+    .dir-card strong { color: ${BCG.blue}; }
+    .dir-card span { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .pk-disclaimer {
+      margin-top: 10px; font-size: 9px; color: #64748b; text-align: center;
+      border-top: 1px dashed #cbd5e1; padding-top: 6px;
+    }
+    .pk-contact {
+      margin-top: 8px; font-size: 10px; color: #334155; text-align: center;
+    }
+    .pk-footer {
+      margin-top: 8px; display: flex; justify-content: space-between;
+      font-size: 9px; color: #94a3b8;
+    }
+    @media print {
+      .pk-grid { break-inside: avoid; }
+    }
+  `;
+
+  const body = `
+    <div class="pk">
+      <div class="pk-top">
+        ${
+          logo
+            ? `<img class="pk-logo" src="${escapeHtml(logo)}" alt="" />`
+            : `<div class="pk-logo-fallback">BC</div>`
+        }
+        <div>
+          <div class="pk-matchup">
+            <span>${escapeHtml(homeName)}</span>
+            <span class="pk-x">X</span>
+            <span>${escapeHtml(awayName)}</span>
+          </div>
+          <div class="pk-meta">
+            ${travel.championshipName ? `<div><strong>${escapeHtml(travel.championshipName)}</strong>${config.phase ? ` · ${escapeHtml(config.phase)}` : ""}</div>` : ""}
+            ${travel.categoryLabel ? `<div>${escapeHtml(travel.categoryLabel)} · ${travel.isHomeMatch ? "Casa" : "Fora"}</div>` : ""}
+            ${kickoff ? `<div>${escapeHtml(kickoff)}</div>` : ""}
+            ${venue ? `<div>${escapeHtml(venue)}</div>` : ""}
+          </div>
+        </div>
+      </div>
+
+      <div class="pk-grid">
+        <div class="pk-col">
+          <h3>Arbitragem</h3>
+          ${refereesHtml || `<p style="font-size:11px;color:#94a3b8">Não informado</p>`}
+          <h3 style="margin-top:14px">Suplentes</h3>
+          ${subsHtml || `<p style="font-size:11px;color:#94a3b8">—</p>`}
+        </div>
+        <div class="pk-col">
+          <h3>Escalação (visual)</h3>
+          <div class="pitch-wrap">${fieldPlayers}</div>
+        </div>
+        <div class="pk-col">
+          <h3>Comissão técnica</h3>
+          ${staffHtml || `<p style="font-size:11px;color:#94a3b8">—</p>`}
+        </div>
+      </div>
+
+      ${directorsHtml ? `<div class="dir-grid">${directorsHtml}</div>` : ""}
+      ${
+        config.showDisclaimer
+          ? `<p class="pk-disclaimer">O quadro acima não representa o esquema utilizado, nem o posicionamento dos jogadores em campo.</p>`
+          : ""
+      }
+      ${config.contactLine ? `<p class="pk-contact">${escapeHtml(config.contactLine)}</p>` : ""}
+      <div class="pk-footer">
+        <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
+        <span><strong>Boston City Group</strong> · Relatório de Imprensa / Press Kit</span>
+      </div>
+    </div>
+  `;
+
+  return wrapPrintRootDocument({
+    title: escapeHtml(`Relatório Imprensa — ${club} x ${opponent}`),
+    styles,
+    headerHtml: "",
+    metaHtml: "",
+    bodyHtml: body,
+    footerHtml: "",
+  });
+}
+
+export function printPressKitReport(
+  data: PressKitReportDto,
+  size: PrintPageSize = "A4",
+): void {
+  printHtmlDocument(buildPressKitPrintHtml(data, size), "Impressão — Press Kit / Relatório Imprensa");
 }

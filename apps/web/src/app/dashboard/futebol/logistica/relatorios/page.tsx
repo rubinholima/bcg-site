@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarRange, ChevronRight, ClipboardList, Hotel, Users } from "lucide-react";
+import {
+  CalendarRange,
+  ChevronRight,
+  ClipboardList,
+  Hotel,
+  Newspaper,
+  Users,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FutebolRelatorioShell } from "@/components/dashboard/futebol/relatorios/FutebolRelatorioShell";
 
@@ -10,6 +17,11 @@ const REPORT_OPTIONS = [
     href: "/dashboard/futebol/logistica/relatorios/layout-relacionados",
     title: "Layout Relacionados",
     icon: ClipboardList,
+  },
+  {
+    href: "/dashboard/futebol/logistica/relatorios/press-kit",
+    title: "Press Kit / Relatório Imprensa",
+    icon: Newspaper,
   },
   {
     href: "/dashboard/futebol/logistica/relatorios/passageiros",
