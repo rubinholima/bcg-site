@@ -12,6 +12,7 @@ import {
 import { api } from "@/lib/api";
 import { isFootballKind } from "@/lib/home-data";
 import { formatTravelCategoriesDisplay } from "@/lib/travel-categories-utils";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import type { PrintPageSize } from "@/lib/futebol-relatorios.types";
 
 export interface FutebolRelatorioTenant {
@@ -45,7 +46,7 @@ export function isClubForRelatorio(kindName: string | null | undefined): boolean
 }
 
 export function formatTravelLabel(t: FutebolRelatorioTravel): string {
-  const date = new Date(t.matchDate).toLocaleDateString("pt-BR");
+  const date = formatDateDayMonYear(t.matchDate);
   const vs = t.opponentName ? ` vs ${t.opponentName}` : "";
   const cat = formatTravelCategoriesDisplay(t.category, t.categories);
   const club = t.tenant?.name ? `${t.tenant.name} · ` : "";
@@ -128,7 +129,7 @@ export function useFutebolRelatorioTravels(tenantId: string) {
         `/futebol-relatorios/viagens?tenantId=${encodeURIComponent(id)}`,
       );
       const list = Array.isArray(data) ? data : [];
-      list.sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime());
+      list.sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
       setTravels(list);
     } catch {
       setTravels([]);

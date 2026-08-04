@@ -1,3 +1,5 @@
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 export interface AgendaFixture {
   externalId: string;
   startISO: string;
@@ -39,31 +41,24 @@ function isPastFixture(f: AgendaFixture, now = Date.now()): boolean {
   return !Number.isNaN(t) && t < now;
 }
 
-/** Futuros + passados recentes (padrão 90 dias) — para reabrir convocação. */
+/** Futuros + passados recentes (padrão 90 dias) — ordem crescente por data. */
 export function fixturesForConvocation(
   fixtures: AgendaFixture[],
   pastDays = 90,
 ): AgendaFixture[] {
   const now = Date.now();
   const pastCutoff = now - pastDays * 24 * 60 * 60 * 1000;
-  const filtered = fixtures.filter((f) => {
-    const t = new Date(f.startISO).getTime();
-    return !Number.isNaN(t) && t >= pastCutoff;
-  });
-  const upcoming = filtered
-    .filter((f) => !isPastFixture(f, now))
+  return fixtures
+    .filter((f) => {
+      const t = new Date(f.startISO).getTime();
+      return !Number.isNaN(t) && t >= pastCutoff;
+    })
     .sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
-  const past = filtered
-    .filter((f) => isPastFixture(f, now))
-    .sort((a, b) => new Date(b.startISO).getTime() - new Date(a.startISO).getTime());
-  // Próximos primeiro; em seguida os mais recentes já jogados (para reabrir convocação).
-  return [...upcoming, ...past];
 }
 
 export function formatFixtureOptionLabel(
   f: AgendaFixture,
   clubName: string,
-  locale = "pt-BR",
 ): string {
   const side = fixtureSideLabel(f);
   const sideTag = side ? ` [${side}]` : "";
@@ -72,29 +67,17 @@ export function formatFixtureOptionLabel(
   const awayDisplay = /nosso\s+clube/i.test(f.awayTeamName || "")
     ? clubName
     : (f.awayTeamName ?? "?");
-  const date = new Date(f.startISO).toLocaleDateString(locale);
-  return `${homeDisplay} vs ${awayDisplay} — ${date}${sideTag}${pastTag}${f.competitionName ? ` · ${f.competitionName}` : ""}`;
+  const date = formatDateDayMonYear(f.startISO);
+  return `${date} · ${homeDisplay} vs ${awayDisplay}${sideTag}${pastTag}${f.competitionName ? ` · ${f.competitionName}` : ""}`;
 }
 
-/** Ordena viagens: próximas (mais cedo primeiro) + passadas recentes (mais recente primeiro). */
+/** Ordena viagens em ordem crescente (data do jogo). */
 export function sortTravelsForConvocation<
   T extends { matchDate: string },
 >(travels: T[]): T[] {
-  const now = Date.now();
-  const upcoming: T[] = [];
-  const past: T[] = [];
-  for (const t of travels) {
-    const ts = new Date(t.matchDate).getTime();
-    if (!Number.isNaN(ts) && ts < now) past.push(t);
-    else upcoming.push(t);
-  }
-  upcoming.sort(
+  return [...travels].sort(
     (a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime(),
   );
-  past.sort(
-    (a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime(),
-  );
-  return [...upcoming, ...past];
 }
 
 const TRAVEL_FIXTURE_PREFIX = "travel:";

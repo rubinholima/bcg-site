@@ -1,3 +1,5 @@
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 export interface PlayerTravelHistoryItem {
   id: string;
   tenantId: string;
@@ -35,10 +37,7 @@ export const TRAVEL_STATUS_LABELS: Record<string, string> = {
 };
 
 export function formatTravelDate(d: string | Date | null | undefined): string {
-  if (!d) return "—";
-  const date = typeof d === "string" ? new Date(d) : d;
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(d);
 }
 
 export function formatTravelDestination(city?: string | null, country?: string | null): string {

@@ -290,7 +290,7 @@ export class FutebolRelatoriosService {
         tenantId: tenantId.trim(),
         status: { not: 'cancelado' },
       },
-      orderBy: [{ matchDate: 'desc' }],
+      orderBy: [{ matchDate: 'asc' }],
       include: {
         tenant: { select: { id: true, name: true, slug: true } },
         _count: { select: { participants: true } },

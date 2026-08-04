@@ -14,6 +14,7 @@ import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-ta
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { formatTravelCategoriesDisplay } from "@/lib/travel-categories-utils";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { LogisticaFilters } from "./LogisticaFilters";
 
 interface TravelLogisticsItem {
@@ -74,9 +75,7 @@ async function getLogistica(params: {
 }
 
 function formatDate(d: string | Date | null | undefined): string {
-  if (!d) return "—";
-  const date = typeof d === "string" ? new Date(d) : d;
-  return date.toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(d);
 }
 
 function formatCurrency(v: number | null | undefined): string {
