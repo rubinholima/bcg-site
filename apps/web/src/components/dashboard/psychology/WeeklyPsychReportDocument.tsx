@@ -1,8 +1,9 @@
 "use client";
 
-import { formatPersonFirstLastName } from "@/lib/consultation-display";
-import { cn } from "@/lib/utils";
 import type { WeeklyPsychReportEditLogEntry } from "@/components/dashboard/psychology/WeeklyPsychReportEditLog";
+import { formatPersonFirstLastName } from "@/lib/consultation-display";
+import { formatDateDayMonYear } from "@/lib/format-date";
+import { cn } from "@/lib/utils";
 
 export type WeeklyPsychReportData = {
   id?: string;
@@ -38,10 +39,7 @@ export const WEEKLY_PSYCH_REPORT_FIELDS: Array<{
 ];
 
 function formatBrDate(d?: string | null): string {
-  if (!d) return "—";
-  const [y, m, day] = d.split("-");
-  if (!y || !m || !day) return d;
-  return `${day}/${m}/${y}`;
+  return formatDateDayMonYear(d);
 }
 
 function MetaItem({

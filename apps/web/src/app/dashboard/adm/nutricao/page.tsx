@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -494,7 +496,7 @@ export default function AdmNutricaoPage() {
                       <TableBody>
                         {calendar.map((e) => (
                           <TableRow key={e.id}>
-                            <TableCell>{new Date(e.date).toLocaleDateString("pt-BR")}</TableCell>
+                            <TableCell>{formatDateDayMonYear(e.date)}</TableCell>
                             <TableCell>{e.category?.name ?? "—"}</TableCell>
                             <TableCell>{e.menu?.name ?? "—"}</TableCell>
                             <TableCell>{e.dayContext ?? "—"}</TableCell>
@@ -551,7 +553,7 @@ export default function AdmNutricaoPage() {
                               {a.player?.name ?? "—"} {a.player?.jerseyNumber != null ? `#${a.player.jerseyNumber}` : ""}
                               {a.player?.category ? ` • ${getCategoryLabel(a.player.category, "pt")}` : ""}
                             </TableCell>
-                            <TableCell>{new Date(a.assessedAt).toLocaleDateString("pt-BR")}</TableCell>
+                            <TableCell>{formatDateDayMonYear(a.assessedAt)}</TableCell>
                             <TableCell>{a.weightKg}</TableCell>
                             <TableCell>{a.bmi ?? "—"}</TableCell>
                             <TableCell>{a.bodyFatPercent ?? "—"}</TableCell>

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -477,7 +479,7 @@ export default function AdmRHPage() {
                           <TableCell>{e.employee?.name ?? e.employeeId}</TableCell>
                           <TableCell>{e.jobRole?.name ?? "—"}</TableCell>
                           <TableCell>{e.contractType}</TableCell>
-                          <TableCell>{new Date(e.startDate).toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell>{formatDateDayMonYear(e.startDate)}</TableCell>
                           <TableCell>{e.status}</TableCell>
                           <TableCell>
                             <Button
@@ -558,8 +560,8 @@ export default function AdmRHPage() {
                         >
                           <TableCell>{vinculoLabel}</TableCell>
                           <TableCell>{tipoLabel}</TableCell>
-                          <TableCell>{new Date(p.startDate).toLocaleDateString("pt-BR")}</TableCell>
-                          <TableCell>{new Date(p.endDate).toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell>{formatDateDayMonYear(p.startDate)}</TableCell>
+                          <TableCell>{formatDateDayMonYear(p.endDate)}</TableCell>
                           <TableCell>{p.status}</TableCell>
                           <TableRowActions align="left">
                             <div className="flex gap-1">

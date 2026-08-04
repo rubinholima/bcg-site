@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
@@ -115,7 +117,7 @@ function formatDateTime(iso: string | null): string {
   if (!iso) return "—";
   try {
     const d = new Date(iso);
-    const date = d.toLocaleDateString("pt-BR");
+    const date = formatDateDayMonYear(d);
     const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     return `${date} ${time}`;
   } catch {

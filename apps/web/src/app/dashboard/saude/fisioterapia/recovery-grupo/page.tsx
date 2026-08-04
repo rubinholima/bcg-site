@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, Users } from "lucide-react";
@@ -382,7 +384,7 @@ export default function PhysioGroupRecoveryPage() {
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold">
-                        {new Date(`${s.sessionDate}T12:00:00`).toLocaleDateString("pt-BR")}
+                        {formatDateDayMonYear(`${s.sessionDate}T12:00:00`)}
                         {" · "}
                         {getCategoryLabel(s.category, "pt", allCats)}
                       </p>

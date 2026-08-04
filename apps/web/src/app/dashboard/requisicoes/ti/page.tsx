@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -125,7 +127,7 @@ export default function RequisicaoTiPage() {
                       <TableCell className="font-medium">{t.subject}</TableCell>
                       <TableCell>{TI_PRIORITY_LABELS[t.priority] ?? t.priority}</TableCell>
                       <TableCell>{TI_TICKET_STATUS_LABELS[t.status] ?? t.status}</TableCell>
-                      <TableCell>{new Date(t.createdAt).toLocaleDateString("pt-BR")}</TableCell>
+                      <TableCell>{formatDateDayMonYear(t.createdAt)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

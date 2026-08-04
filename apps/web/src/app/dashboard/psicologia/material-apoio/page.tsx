@@ -41,6 +41,7 @@ import {
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { Tenant } from "@/types/tenant";
 
@@ -83,15 +84,7 @@ function formatBytes(bytes: number | null | undefined): string {
 }
 
 function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
+  return formatDateDayMonYear(iso);
 }
 
 function fileIcon(row: MaterialRow) {

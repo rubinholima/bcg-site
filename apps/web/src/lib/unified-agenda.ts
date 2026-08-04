@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { agendaHubUrl, AGENDA_VISAO, type AgendaVisao } from "@/lib/agenda-hub";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import {
   FOOTBALL_AGENDA_TYPE_LABEL,
   TRAVEL_STATUS_LABEL,
@@ -184,13 +185,7 @@ export function formatAgendaTime(iso: string, allDay: boolean): string {
 }
 
 export function formatAgendaDateLong(dateKey: string): string {
-  const d = new Date(`${dateKey}T12:00:00`);
-  return d.toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  return formatDateDayMonYear(`${dateKey}T12:00:00`);
 }
 
 function applyCategoryColors(

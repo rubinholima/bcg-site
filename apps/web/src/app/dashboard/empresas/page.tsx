@@ -12,6 +12,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { formatDateTimeDayMonYear } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { Tenant } from "@/types/tenant";
 import { TenantKind } from "@/types/tenant-kind";
@@ -168,13 +169,7 @@ export default async function EmpresasPage({
                     <TableCell className="text-muted-foreground">{t.slug}</TableCell>
                     <TableCell>{t.kind?.name ?? t.kindId ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(t.createdAt).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDateTimeDayMonYear(t.createdAt)}
                     </TableCell>
                     {canManageCompanies ? (
                       <TableRowActions>

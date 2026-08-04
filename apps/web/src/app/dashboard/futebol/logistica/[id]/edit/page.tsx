@@ -419,18 +419,22 @@ export default function EditLogisticaPage() {
               Layout Relacionados
             </Link>
           </Button>
-          <Button type="button" variant="outline" asChild>
-            <Link href={`/dashboard/futebol/logistica/relatorios/passageiros?travelId=${id}&tenantId=${item.tenantId}`}>
-              <Printer className="mr-2 h-4 w-4" />
-              Passageiros
-            </Link>
-          </Button>
-          <Button type="button" variant="outline" asChild>
-            <Link href={`/dashboard/futebol/logistica/relatorios/hospedes?travelId=${id}&tenantId=${item.tenantId}`}>
-              <Printer className="mr-2 h-4 w-4" />
-              Hóspedes
-            </Link>
-          </Button>
+          {!isHomeMatch ? (
+            <>
+              <Button type="button" variant="outline" asChild>
+                <Link href={`/dashboard/futebol/logistica/relatorios/passageiros?travelId=${id}&tenantId=${item.tenantId}`}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Passageiros
+                </Link>
+              </Button>
+              <Button type="button" variant="outline" asChild>
+                <Link href={`/dashboard/futebol/logistica/relatorios/hospedes?travelId=${id}&tenantId=${item.tenantId}`}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  Hóspedes
+                </Link>
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -452,27 +456,26 @@ export default function EditLogisticaPage() {
           const checklist = [
             { ok: participantCount > 0, label: "Convocação", href: `/dashboard/futebol/logistica/convocacao?travelId=${id}` },
             {
-              ok: isHomeMatch ? hasHomeAgenda || hasTransport : hasTransport && hasOutbound,
-              label: isHomeMatch ? "Agenda do jogo (casa)" : "Transporte + ida",
+              ok: isHomeMatch ? hasHomeAgenda : hasTransport && hasOutbound,
+              label: isHomeMatch ? "Agenda do jogo" : "Transporte + ida",
             },
-            { ok: isHomeMatch || hasReturn, label: "Volta", hide: isHomeMatch },
-            { ok: isHomeMatch || hasHotel, label: "Hotel + quartos", hide: isHomeMatch },
+            { ok: hasReturn, label: "Volta", hide: isHomeMatch },
+            { ok: hasHotel, label: "Hotel + quartos", hide: isHomeMatch },
             {
               ok: true,
-              label: "Documentos (imprimir)",
+              label: "Documentos",
               href: `/dashboard/futebol/logistica/relatorios/layout-relacionados?travelId=${id}&tenantId=${item.tenantId}`,
             },
             {
               ok: true,
-              label: "Agenda do clube",
-              href: "/dashboard/futebol/agenda",
+              label: "Agenda Futebol",
+              href: "/dashboard/futebol/logistica/agenda",
             },
           ].filter((c) => !("hide" in c && c.hide));
           return (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Checklist operacional</CardTitle>
-                <CardDescription>Marca verde quando há dados mínimos salvos nesta viagem.</CardDescription>
+                <CardTitle className="text-base">Checklist</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -515,7 +518,7 @@ export default function EditLogisticaPage() {
                 checked={isHomeMatch}
                 onChange={(e) => setIsHomeMatch(e.target.checked)}
               />
-              Jogo em casa (agenda local, sem itinerário de viagem)
+              Jogo em casa
             </label>
             <TravelCategoriesField
               categoriesForDropdown={categoriesForDropdown}
@@ -628,6 +631,7 @@ export default function EditLogisticaPage() {
           </CardContent>
         </Card>
 
+        {!isHomeMatch ? (
         <Card>
           <CardHeader>
             <CardTitle>Transporte</CardTitle>
@@ -715,15 +719,11 @@ export default function EditLogisticaPage() {
             />
           </CardContent>
         </Card>
+        ) : null}
 
         <Card>
           <CardHeader>
-            <CardTitle>{isHomeMatch ? "Agenda do jogo (casa)" : "Itinerário e uniformes"}</CardTitle>
-            <CardDescription>
-              {isHomeMatch
-                ? "Refeições, rouparia, aquecimento, vestiário e retorno."
-                : "Tipo de ônibus (LD/DD), paradas de ida/volta, check-in/out e kits."}
-            </CardDescription>
+            <CardTitle>{isHomeMatch ? "Agenda do jogo" : "Itinerário e uniformes"}</CardTitle>
           </CardHeader>
           <CardContent>
             <LogisticaItineraryFields
@@ -739,10 +739,10 @@ export default function EditLogisticaPage() {
           </CardContent>
         </Card>
 
+        {!isHomeMatch ? (
         <Card>
           <CardHeader>
             <CardTitle>Hospedagem</CardTitle>
-            <CardDescription>Hotel e distribuição dos quartos (tipo do cadastro + ocupantes).</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <LogisticaTravelCadastrosFields
@@ -769,6 +769,7 @@ export default function EditLogisticaPage() {
             )}
           </CardContent>
         </Card>
+        ) : null}
 
         <Card>
           <CardHeader>

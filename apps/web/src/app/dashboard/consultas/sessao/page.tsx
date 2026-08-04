@@ -9,6 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Clock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import {
+  formatDateDayMonYear,
+  formatDateTimeDayMonYear,
+} from "@/lib/format-date";
 
 interface ConsultationEntry {
   date?: string;
@@ -22,13 +26,9 @@ interface ConsultationEntry {
 
 function formatSessionDateTime(date?: string, time?: string): string {
   if (!date) return "—";
-  try {
-    const [y, m, day] = date.split("-");
-    const d = `${day}/${m}/${y}`;
-    return time ? `${d} ${time}` : d;
-  } catch {
-    return date;
-  }
+  return time
+    ? formatDateTimeDayMonYear(`${date}T${time}`)
+    : formatDateDayMonYear(date);
 }
 
 function formatElapsed(seconds: number): string {

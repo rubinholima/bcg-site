@@ -1,4 +1,5 @@
 import { formatCpfForDisplay } from "@/lib/format-cpf";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { getPositionLabel } from "@/lib/football-positions";
 import {
@@ -85,10 +86,7 @@ function escapeHtml(text: string): string {
 }
 
 function formatBrDate(iso?: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+  return formatDateDayMonYear(iso);
 }
 
 function genderLabel(value?: string | null): string {

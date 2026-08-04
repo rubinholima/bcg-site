@@ -471,6 +471,111 @@ model LogisticsHotel {
   @@index([name])
 }
 
+/** Vestuário/uniformes (Beatscode): grupos (Superior/Inferior/Calçados) → categorias → peças; kits reúnem peças por tipo de uniforme. */
+model LogisticsClothingGroup {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  beatscodeId Int?     @unique
+  isSystem    Boolean  @default(false)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  categories LogisticsClothingCategory[]
+  items      LogisticsClothingItem[]
+}
+
+model LogisticsClothingCategory {
+  id          String                 @id @default(cuid())
+  name        String
+  groupId     String
+  group       LogisticsClothingGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  beatscodeId Int?                   @unique
+  isSystem    Boolean                @default(false)
+  active      Boolean                @default(true)
+  sortOrder   Int                    @default(0)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  items LogisticsClothingItem[]
+
+  @@unique([groupId, name])
+  @@index([groupId])
+}
+
+model LogisticsUniformType {
+  id          String   @id @default(cuid())
+  name        String   @unique // Jogo, Passeio, Treino, Viagem…
+  beatscodeId Int?     @unique
+  isSystem    Boolean  @default(false)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items LogisticsClothingItem[]
+  kits  LogisticsUniformKit[]
+}
+
+model LogisticsClothingItem {
+  id            String                     @id @default(cuid())
+  name          String
+  categoryId    String?
+  category      LogisticsClothingCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  groupId       String?
+  group         LogisticsClothingGroup?    @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  uniformTypeId String?
+  uniformType   LogisticsUniformType?      @relation(fields: [uniformTypeId], references: [id], onDelete: SetNull)
+  season        String?
+  imageUrl      String?
+  beatscodeId   Int?                       @unique
+  isSystem      Boolean                    @default(false)
+  active        Boolean                    @default(true)
+  sortOrder     Int                        @default(0)
+  notes         String?                    @db.Text
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+
+  kitItems LogisticsUniformKitItem[]
+
+  @@index([categoryId])
+  @@index([groupId])
+  @@index([uniformTypeId])
+}
+
+model LogisticsUniformKit {
+  id            String                @id @default(cuid())
+  name          String
+  uniformTypeId String?
+  uniformType   LogisticsUniformType? @relation(fields: [uniformTypeId], references: [id], onDelete: SetNull)
+  season        String?
+  imageUrl      String?
+  beatscodeId   Int?                  @unique
+  isSystem      Boolean               @default(false)
+  active        Boolean               @default(true)
+  sortOrder     Int                   @default(0)
+  description   String?               @db.Text
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  items LogisticsUniformKitItem[]
+
+  @@index([uniformTypeId])
+}
+
+model LogisticsUniformKitItem {
+  kitId          String
+  kit            LogisticsUniformKit   @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  clothingItemId String
+  clothingItem   LogisticsClothingItem @relation(fields: [clothingItemId], references: [id], onDelete: Cascade)
+  sortOrder      Int                   @default(0)
+  createdAt      DateTime              @default(now())
+
+  @@id([kitId, clothingItemId])
+  @@index([clothingItemId])
+}
+
 /** Áreas exibidas na agenda unificada (Futebol, Psicologia, etc.). */
 model AgendaArea {
   id         String   @id @default(cuid())

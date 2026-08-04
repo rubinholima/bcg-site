@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Mail, Phone, Plus, Search } from "lucide-react";
 import { api } from "@/lib/api";
@@ -73,7 +75,7 @@ function formatDateTime(iso: string): string {
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(iso);
 }
 
 const STAGE_BADGE: Record<string, string> = {

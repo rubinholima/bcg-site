@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { formatDateDayMonYear } from "@/lib/format-date";
 
 interface InboxItem {
   uid: number;
@@ -196,7 +197,7 @@ export function EmailInboxClient({ tenantSlug }: { tenantSlug: string }) {
                     <div className="truncate font-medium">{item.subject}</div>
                     <div className="truncate text-xs text-zinc-500">{item.from}</div>
                     <div className="text-xs text-zinc-600">
-                      {item.date ? new Date(item.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : ""}
+                      {item.date ? formatDateDayMonYear(item.date) : ""}
                     </div>
                   </button>
                 </li>

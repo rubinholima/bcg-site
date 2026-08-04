@@ -12,6 +12,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { formatDateTimeDayMonYear } from "@/lib/format-date";
 
 interface Championship {
   id: string;
@@ -86,13 +87,7 @@ export default async function CampeonatosPage({
                   <ClickableTableRow key={c.id} href={`/dashboard/cadastros/campeonatos/${c.id}/edit`}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(c.createdAt).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDateTimeDayMonYear(c.createdAt)}
                     </TableCell>
                     <TableRowActions>
                       <div className="flex justify-end gap-2">

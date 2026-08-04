@@ -1,3 +1,4 @@
+import { formatDateDayMonYear } from "@/lib/format-date";
 export interface PlayerEconomicRight {
   id: string;
   clubName: string;
@@ -64,7 +65,7 @@ export function formatContractDate(d: string | Date | null | undefined): string 
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d) : d;
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(date);
 }
 
 export function computeExecutionPercent(

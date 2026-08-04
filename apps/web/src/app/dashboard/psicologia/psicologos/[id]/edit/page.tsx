@@ -18,6 +18,10 @@ import {
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
+import {
+  formatDateDayMonYear,
+  formatDateTimeDayMonYear,
+} from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { isUpcomingConsultation } from "@/lib/consultation-display";
 import type { Psychologist } from "@/types/psychologist";
@@ -527,7 +531,11 @@ export default function EditarPsicologoPage() {
                       className="flex flex-wrap items-center gap-2 rounded-lg border p-3 text-sm"
                     >
                       <span className="text-muted-foreground">
-                        {c.date ? new Date(c.date + (c.time ? `T${c.time}` : "T00:00")).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) + (c.time ? ` ${c.time}` : "") : "—"}
+                        {c.date
+                          ? c.time
+                            ? formatDateTimeDayMonYear(`${c.date}T${c.time}`)
+                            : formatDateDayMonYear(c.date)
+                          : "—"}
                       </span>
                       <User className="h-4 w-4 text-muted-foreground shrink-0" />
                       <Link

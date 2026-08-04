@@ -430,7 +430,7 @@ export default function NewLogisticaPage() {
                 checked={isHomeMatch}
                 onChange={(e) => setIsHomeMatch(e.target.checked)}
               />
-              Jogo em casa (agenda local, sem itinerário de viagem)
+              Jogo em casa
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -542,10 +542,10 @@ export default function NewLogisticaPage() {
           </CardContent>
         </Card>
 
+        {!isHomeMatch ? (
         <Card>
           <CardHeader>
             <CardTitle>Transporte</CardTitle>
-            <CardDescription>Distância, tipo e detalhes do deslocamento.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -607,15 +607,11 @@ export default function NewLogisticaPage() {
             />
           </CardContent>
         </Card>
+        ) : null}
 
         <Card>
           <CardHeader>
-            <CardTitle>{isHomeMatch ? "Agenda do jogo (casa)" : "Itinerário e uniformes"}</CardTitle>
-            <CardDescription>
-              {isHomeMatch
-                ? "Refeições, rouparia, aquecimento, vestiário e retorno."
-                : "Tipo de ônibus (LD/DD), paradas de ida/volta, check-in/out e kits."}
-            </CardDescription>
+            <CardTitle>{isHomeMatch ? "Agenda do jogo" : "Itinerário e uniformes"}</CardTitle>
           </CardHeader>
           <CardContent>
             <LogisticaItineraryFields
@@ -631,10 +627,10 @@ export default function NewLogisticaPage() {
           </CardContent>
         </Card>
 
+        {!isHomeMatch ? (
         <Card>
           <CardHeader>
             <CardTitle>Hospedagem</CardTitle>
-            <CardDescription>Hotel, endereço e distribuição dos quartos (tipo do cadastro + ocupantes).</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <LogisticaTravelCadastrosFields
@@ -661,6 +657,7 @@ export default function NewLogisticaPage() {
             )}
           </CardContent>
         </Card>
+        ) : null}
 
         <Card>
           <CardHeader>

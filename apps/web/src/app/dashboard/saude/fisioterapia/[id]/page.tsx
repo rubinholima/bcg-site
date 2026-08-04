@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -265,7 +267,7 @@ export default function FisioterapiaSessionDetailPage() {
               <p>
                 <span className="text-muted-foreground">Previsão:</span>{" "}
                 {session.estimatedEndDate
-                  ? new Date(session.estimatedEndDate).toLocaleDateString("pt-BR")
+                  ? formatDateDayMonYear(session.estimatedEndDate)
                   : session.estimatedDays
                     ? `${session.estimatedDays} dias`
                     : "—"}

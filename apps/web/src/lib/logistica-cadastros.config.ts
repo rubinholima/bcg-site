@@ -14,6 +14,9 @@ import {
   Navigation,
   Package,
   LifeBuoy,
+  Shirt,
+  Layers,
+  Tag,
 } from "lucide-react";
 
 export type LogisticaCadastroFieldType = "text" | "number" | "date" | "textarea" | "select" | "email";
@@ -27,14 +30,19 @@ export interface LogisticaCadastroField {
   /** Opções fixas */
   selectOptions?: { value: string; label: string }[];
   /** API relativa em logistica-cadastros */
-  selectFromApi?: "transport-companies" | "expense-categories";
+  selectFromApi?:
+    | "transport-companies"
+    | "expense-categories"
+    | "clothing-groups"
+    | "clothing-categories"
+    | "uniform-types";
   min?: number;
 }
 
 export interface LogisticaCadastroColumn {
   key: string;
   label: string;
-  format?: "date" | "guestType";
+  format?: "date" | "guestType" | "image";
   /** nested key ex.: transportCompany.name */
   nestedKey?: string;
 }
@@ -299,6 +307,118 @@ const LOGISTICA_CADASTRO_RESOURCES_RAW: LogisticaCadastroResource[] = [
       { key: "country", label: "País", type: "text" },
       { key: "address", label: "Endereço", type: "textarea" },
       { key: "phone", label: "Telefone", type: "text" },
+    ],
+  },
+  {
+    slug: "grupos-roupas",
+    label: "Grupo de roupa",
+    labelPlural: "Grupos de roupa",
+    description: "Grupos (superiores, inferiores, calçados/meias) para classificar peças.",
+    apiPath: "clothing-groups",
+    icon: Shirt,
+    menuOrder: 160,
+    columns: [{ key: "name", label: "Nome" }],
+    fields: [{ key: "name", label: "Nome", type: "text", required: true, placeholder: "Ex.: Roupas Superiores" }],
+  },
+  {
+    slug: "categorias-roupas",
+    label: "Categoria de roupa",
+    labelPlural: "Categorias de roupas",
+    description: "Tipos de peça (camiseta, calção, meião…) vinculados a um grupo.",
+    apiPath: "clothing-categories",
+    icon: Layers,
+    menuOrder: 170,
+    columns: [
+      { key: "name", label: "Nome" },
+      { key: "group", label: "Grupo", nestedKey: "name" },
+    ],
+    fields: [
+      { key: "name", label: "Nome", type: "text", required: true, placeholder: "Ex.: Camisetas" },
+      {
+        key: "groupId",
+        label: "Grupo de roupa",
+        type: "select",
+        required: true,
+        selectFromApi: "clothing-groups",
+      },
+    ],
+  },
+  {
+    slug: "tipos-uniforme",
+    label: "Tipo de uniforme",
+    labelPlural: "Tipos de uniforme",
+    description: "Momento de uso do uniforme: jogo, viagem, treino, passeio.",
+    apiPath: "uniform-types",
+    icon: Tag,
+    menuOrder: 180,
+    columns: [{ key: "name", label: "Nome" }],
+    fields: [{ key: "name", label: "Nome", type: "text", required: true, placeholder: "Ex.: Jogo" }],
+  },
+  {
+    slug: "roupas",
+    label: "Roupa",
+    labelPlural: "Roupas",
+    description: "Peças individuais com imagem, temporada e tipo de uso.",
+    apiPath: "clothing-items",
+    icon: Shirt,
+    menuOrder: 190,
+    columns: [
+      { key: "imageUrl", label: "Imagem", format: "image" },
+      { key: "name", label: "Nome" },
+      { key: "group", label: "Grupo", nestedKey: "name" },
+      { key: "category", label: "Categoria", nestedKey: "name" },
+      { key: "uniformType", label: "Tipo", nestedKey: "name" },
+      { key: "season", label: "Temporada" },
+    ],
+    fields: [
+      { key: "name", label: "Nome", type: "text", required: true },
+      {
+        key: "groupId",
+        label: "Grupo",
+        type: "select",
+        selectFromApi: "clothing-groups",
+      },
+      {
+        key: "categoryId",
+        label: "Categoria",
+        type: "select",
+        selectFromApi: "clothing-categories",
+      },
+      {
+        key: "uniformTypeId",
+        label: "Tipo de uniforme",
+        type: "select",
+        selectFromApi: "uniform-types",
+      },
+      { key: "season", label: "Temporada", type: "text", placeholder: "Ex.: 2025" },
+      { key: "imageUrl", label: "URL da imagem", type: "text", placeholder: "/media/logistica-uniforms/…" },
+    ],
+  },
+  {
+    slug: "kits-uniforme",
+    label: "Kit / uniforme",
+    labelPlural: "Kits / uniformes",
+    description: "Conjuntos (KIT) usados na convocação — jogo CT, viagem atleta, goleiro etc.",
+    apiPath: "uniform-kits",
+    icon: Package,
+    menuOrder: 200,
+    columns: [
+      { key: "imageUrl", label: "Imagem", format: "image" },
+      { key: "name", label: "Nome" },
+      { key: "uniformType", label: "Tipo", nestedKey: "name" },
+      { key: "season", label: "Temporada" },
+    ],
+    fields: [
+      { key: "name", label: "Nome", type: "text", required: true, placeholder: "Ex.: Uniforme 1" },
+      {
+        key: "uniformTypeId",
+        label: "Tipo de uniforme",
+        type: "select",
+        selectFromApi: "uniform-types",
+      },
+      { key: "season", label: "Temporada", type: "text", placeholder: "Ex.: 2025" },
+      { key: "imageUrl", label: "URL da imagem", type: "text" },
+      { key: "description", label: "Descrição", type: "textarea" },
     ],
   },
 ];

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Loader2 } from "lucide-react";
@@ -31,7 +33,7 @@ interface PlayerAgendaTabProps {
 
 function formatWhen(item: PlayerAgendaItem) {
   const d = new Date(item.startAt);
-  const date = d.toLocaleDateString("pt-BR");
+  const date = formatDateDayMonYear(d);
   if (item.allDay) return date;
   const time = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   return `${date} · ${time}`;

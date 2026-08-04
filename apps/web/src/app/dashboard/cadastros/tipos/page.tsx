@@ -12,6 +12,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { formatDateTimeDayMonYear } from "@/lib/format-date";
 import { TenantKind } from "@/types/tenant-kind";
 import { TiposFilters } from "@/components/dashboard/TiposFilters";
 
@@ -106,13 +107,7 @@ export default async function TiposPage({
                   <ClickableTableRow key={tipo.id} href={`/dashboard/cadastros/tipos/${tipo.id}/edit`}>
                     <TableCell className="font-medium">{tipo.name}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(tipo.createdAt).toLocaleDateString("pt-BR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {formatDateTimeDayMonYear(tipo.createdAt)}
                     </TableCell>
                     <TableRowActions>
                       <div className="flex justify-end gap-2">

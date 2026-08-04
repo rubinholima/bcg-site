@@ -1,3 +1,4 @@
+import { formatDateDayMonYear } from "@/lib/format-date";
 import {
   reportLogoUrlForPrint,
   resolveLogoUrlForPrint,
@@ -144,10 +145,7 @@ function chartsSection(title: string, chartsHtml: string): string {
 }
 
 function formatBrDate(iso?: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+  return formatDateDayMonYear(iso);
 }
 
 function pageCss(size: PrintPageSize): string {

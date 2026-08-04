@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -52,8 +54,8 @@ export default function DeleteLogisticaPage() {
   }
 
   const desc = item.opponentName
-    ? `${item.opponentName} — ${new Date(item.matchDate).toLocaleDateString("pt-BR")}`
-    : `Jogo em ${new Date(item.matchDate).toLocaleDateString("pt-BR")}`;
+    ? `${item.opponentName} — ${formatDateDayMonYear(item.matchDate)}`
+    : `Jogo em ${formatDateDayMonYear(item.matchDate)}`;
 
   return (
     <div className="space-y-6">

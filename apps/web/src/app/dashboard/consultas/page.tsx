@@ -25,6 +25,10 @@ import { PsychologySchedulingCard } from "@/components/dashboard/psychology/Psyc
 import { emptyPsychAnamnesis, psychEntryLabel } from "@/lib/psych-anamnesis";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import {
+  formatDateDayMonYear,
+  formatDateTimeDayMonYear,
+} from "@/lib/format-date";
 import type { Psychologist } from "@/types/psychologist";
 import { FIXTURE_CATEGORIES, filterCategoriesForTenant } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
@@ -75,12 +79,9 @@ const STATUS_LABEL: Record<string, string> = {
 
 function formatDate(d: string, time?: string): string {
   if (!d) return "—";
-  try {
-    const [y, m, day] = d.split("-");
-    return time ? `${day}/${m}/${y} ${time}` : `${day}/${m}/${y}`;
-  } catch {
-    return d;
-  }
+  return time
+    ? formatDateTimeDayMonYear(`${d}T${time}`)
+    : formatDateDayMonYear(d);
 }
 
 interface ConsultationRowProps {

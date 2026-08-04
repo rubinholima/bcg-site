@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -139,7 +141,7 @@ export default function SocioSociosPage() {
   const formatDate = (d: string) => {
     try {
       const date = new Date(d);
-      return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+      return formatDateDayMonYear(date);
     } catch {
       return "—";
     }

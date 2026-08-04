@@ -28,6 +28,9 @@ type ApiOption = { id: string; name: string };
 const API_SELECT_PATHS: Record<string, string> = {
   "transport-companies": "/logistica-cadastros/transport-companies?activeOnly=true",
   "expense-categories": "/logistica-cadastros/expense-categories?activeOnly=true",
+  "clothing-groups": "/logistica-cadastros/clothing-groups?activeOnly=true",
+  "clothing-categories": "/logistica-cadastros/clothing-categories?activeOnly=true",
+  "uniform-types": "/logistica-cadastros/uniform-types?activeOnly=true",
 };
 
 function fkInitialValue(
@@ -42,6 +45,12 @@ function fkInitialValue(
   }
   if (fieldKey === "expenseCategoryId") {
     return (initial?.expenseCategoryId ?? initial?.expenseCategory?.id ?? "") as string;
+  }
+  if (fieldKey === "groupId") {
+    return (initial?.groupId ?? initial?.group?.id ?? "") as string;
+  }
+  if (fieldKey === "uniformTypeId") {
+    return (initial?.uniformTypeId ?? initial?.uniformType?.id ?? "") as string;
   }
   return "";
 }

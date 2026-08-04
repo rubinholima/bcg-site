@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useState } from "react";
 import {
   Check,
@@ -363,7 +365,7 @@ export function PurchaseRequisitionWorkflowPanel({
                         }) ?? "—"}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground text-sm">
-                        {new Date(r.requestedAt).toLocaleDateString("pt-BR")}
+                        {formatDateDayMonYear(r.requestedAt)}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -147,7 +149,7 @@ export default function FisioterapiaLesionadosReportPage() {
                     <TableCell>{r.painScore != null ? `${r.painScore}/10` : "—"}</TableCell>
                     <TableCell>
                       {r.estimatedEndDate
-                        ? new Date(`${r.estimatedEndDate}T12:00:00`).toLocaleDateString("pt-BR")
+                        ? formatDateDayMonYear(`${r.estimatedEndDate}T12:00:00`)
                         : "—"}
                     </TableCell>
                     <TableCell>{r.staffName ?? "—"}</TableCell>

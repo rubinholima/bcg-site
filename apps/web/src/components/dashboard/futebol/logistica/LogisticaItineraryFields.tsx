@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
+import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 import {
   emptyHomeAgendaItem,
   emptyItineraryStop,
@@ -14,6 +17,14 @@ import {
   type TravelItineraryStop,
   type TravelUniforms,
 } from "@/lib/travel-itinerary.types";
+
+type UniformKitOption = {
+  id: string;
+  name: string;
+  imageUrl?: string | null;
+  season?: string | null;
+  uniformType?: { id: string; name: string } | null;
+};
 
 type Props = {
   isHomeMatch: boolean;
@@ -140,12 +151,7 @@ export function LogisticaItineraryFields({
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wide">Agenda do jogo (casa)</p>
-            <p className="text-xs text-muted-foreground">
-              Refeições, rouparia, aquecimento, vestiário, retorno ao campo…
-            </p>
-          </div>
+          <p className="text-sm font-semibold uppercase tracking-wide">Agenda do jogo</p>
           <Button
             type="button"
             variant="outline"
@@ -164,7 +170,7 @@ export function LogisticaItineraryFields({
           </Button>
         </div>
         {items.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Adicione horários da programação do dia.</p>
+          <p className="text-xs text-muted-foreground">Nenhum item.</p>
         ) : (
           items.map((item: TravelHomeAgendaItem, idx) => (
             <div
@@ -294,32 +300,80 @@ function UniformsBlock({
   onChange: (u: TravelUniforms) => void;
   disabled?: boolean;
 }) {
+  const [kits, setKits] = useState<UniformKitOption[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void api
+      .get<UniformKitOption[]>("/logistica-cadastros/uniform-kits?activeOnly=true")
+      .then(({ data }) => {
+        if (!cancelled) setKits(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setKits([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const fields = [
+    ["athletesGame", "Atletas — jogo"],
+    ["athletesTravel", "Atletas — viagem / concentração"],
+    ["staffGame", "Comissão — jogo"],
+    ["staffTravel", "Comissão — viagem"],
+  ] as const;
+
+  const findKit = (name: string | null | undefined) =>
+    kits.find((k) => k.name === name) ?? null;
+
   return (
     <div className="space-y-3">
-      <p className="text-sm font-semibold uppercase tracking-wide">Uniformes</p>
+      <p className="text-sm font-semibold uppercase tracking-wide">Uniformes / kits</p>
       <div className="grid gap-3 sm:grid-cols-2">
-        {(
-          [
-            ["athletesGame", "Atletas — jogo"],
-            ["athletesTravel", "Atletas — viagem / concentração"],
-            ["staffGame", "Comissão — jogo"],
-            ["staffTravel", "Comissão — viagem"],
-          ] as const
-        ).map(([key, label]) => (
-          <div key={key} className="space-y-1">
-            <Label className="text-xs">{label}</Label>
-            <NativeSelect
-              disabled={disabled}
-              value={uniforms[key] ?? ""}
-              onChange={(e) => onChange({ ...uniforms, [key]: e.target.value || null })}
-            >
-              <option value="">—</option>
-              <option value="KIT 1">KIT 1</option>
-              <option value="KIT 2">KIT 2</option>
-              <option value="KIT 3">KIT 3</option>
-            </NativeSelect>
-          </div>
-        ))}
+        {fields.map(([key, label]) => {
+          const selected = findKit(uniforms[key]);
+          const img = selected?.imageUrl
+            ? getPublicImageUrl(selected.imageUrl) || selected.imageUrl
+            : null;
+          return (
+            <div key={key} className="space-y-2 rounded-lg border border-border/60 p-3">
+              <Label className="text-xs">{label}</Label>
+              <div className="flex gap-3">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted/40">
+                  {img ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="px-1 text-center text-[10px] text-muted-foreground">Kit</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <NativeSelect
+                    disabled={disabled}
+                    value={uniforms[key] ?? ""}
+                    onChange={(e) => onChange({ ...uniforms, [key]: e.target.value || null })}
+                  >
+                    <option value="">—</option>
+                    {kits.map((k) => (
+                      <option key={k.id} value={k.name}>
+                        {k.name}
+                        {k.uniformType?.name ? ` · ${k.uniformType.name}` : ""}
+                        {k.season ? ` · ${k.season}` : ""}
+                      </option>
+                    ))}
+                    {/* legado KIT 1/2/3 se ainda existir em viagens antigas */}
+                    {uniforms[key] &&
+                      !kits.some((k) => k.name === uniforms[key]) &&
+                      ["KIT 1", "KIT 2", "KIT 3"].includes(uniforms[key]!) && (
+                        <option value={uniforms[key]!}>{uniforms[key]}</option>
+                      )}
+                  </NativeSelect>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

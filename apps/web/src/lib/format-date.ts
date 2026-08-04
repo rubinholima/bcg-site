@@ -1,17 +1,6 @@
 /**
- * Formata datas para exibição seguindo o padrão local (regionalização).
- * Usa navigator.language (browser) ou document.documentElement.lang (ex: pt-BR) como fallback.
+ * Formato oficial BCG para datas de exibição: 26 AGO 2026
  */
-
-function getLocale(): string {
-  if (typeof navigator !== "undefined" && navigator.language) {
-    return navigator.language;
-  }
-  if (typeof document !== "undefined" && document.documentElement?.lang) {
-    return document.documentElement.lang;
-  }
-  return "pt-BR";
-}
 
 const MONTHS_PT_SHORT = [
   "JAN",
@@ -28,107 +17,118 @@ const MONTHS_PT_SHORT = [
   "DEZ",
 ] as const;
 
+function partsFromValue(value: string | Date): {
+  year: number;
+  month: number;
+  day: number;
+  hour?: number;
+  minute?: number;
+} | null {
+  if (typeof value === "string") {
+    const ymdHm = value.match(
+      /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/,
+    );
+    if (ymdHm) {
+      return {
+        year: Number(ymdHm[1]),
+        month: Number(ymdHm[2]),
+        day: Number(ymdHm[3]),
+        hour: ymdHm[4] != null ? Number(ymdHm[4]) : undefined,
+        minute: ymdHm[5] != null ? Number(ymdHm[5]) : undefined,
+      };
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    value = date;
+  }
+  if (Number.isNaN(value.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(value);
+  const pick = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  return {
+    year: Number(pick("year")),
+    month: Number(pick("month")),
+    day: Number(pick("day")),
+    hour: Number(pick("hour")),
+    minute: Number(pick("minute")),
+  };
+}
+
 /**
- * Data operacional logística / convocação — ex.: 26 AGO 2026
- * Evita ambiguidade de 26/08 vs 08/26.
+ * Data — ex.: 26 AGO 2026
  */
 export function formatDateDayMonYear(
   value: string | Date | null | undefined,
 ): string {
-  if (!value) return "—";
+  if (value == null || value === "") return "—";
   try {
-    let year: number;
-    let month: number;
-    let day: number;
-
-    if (typeof value === "string") {
-      const ymd = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (ymd) {
-        year = Number(ymd[1]);
-        month = Number(ymd[2]);
-        day = Number(ymd[3]);
-      } else {
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return "—";
-        const parts = new Intl.DateTimeFormat("en-CA", {
-          timeZone: "America/Sao_Paulo",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }).formatToParts(date);
-        const pick = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-        year = Number(pick("year"));
-        month = Number(pick("month"));
-        day = Number(pick("day"));
-      }
-    } else {
-      if (Number.isNaN(value.getTime())) return "—";
-      const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "America/Sao_Paulo",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).formatToParts(value);
-      const pick = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-      year = Number(pick("year"));
-      month = Number(pick("month"));
-      day = Number(pick("day"));
+    const p = partsFromValue(value);
+    if (!p || !p.year || !p.month || !p.day || p.month < 1 || p.month > 12) {
+      return "—";
     }
-
-    if (!year || !month || !day || month < 1 || month > 12) return "—";
-    return `${String(day).padStart(2, "0")} ${MONTHS_PT_SHORT[month - 1]} ${year}`;
+    return `${String(p.day).padStart(2, "0")} ${MONTHS_PT_SHORT[p.month - 1]} ${p.year}`;
   } catch {
     return "—";
   }
 }
 
 /**
- * Formata uma data (YYYY-MM-DD ou ISO string) para exibição no locale do usuário.
- * Ex: pt-BR → 17/03/2026 | en-US → 3/17/2026
+ * Mês + ano — ex.: AGO 2026 (cabeçalhos de calendário)
  */
-export function formatDateLocal(
+export function formatMonthYear(
   value: string | Date | null | undefined,
-  options?: Intl.DateTimeFormatOptions
 ): string {
-  if (!value) return "";
+  if (value == null || value === "") return "—";
   try {
-    const date = typeof value === "string" ? new Date(value) : value;
-    if (Number.isNaN(date.getTime())) return String(value);
-    const locale = getLocale();
-    const defaultOptions: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      ...options,
-    };
-    return new Intl.DateTimeFormat(locale, defaultOptions).format(date);
+    const p = partsFromValue(value);
+    if (!p || !p.year || !p.month || p.month < 1 || p.month > 12) return "—";
+    return `${MONTHS_PT_SHORT[p.month - 1]} ${p.year}`;
   } catch {
-    return String(value);
+    return "—";
   }
 }
 
 /**
- * Formata data + hora no locale do usuário.
+ * Data + hora — ex.: 26 AGO 2026 · 14:30
  */
+export function formatDateTimeDayMonYear(
+  value: string | Date | null | undefined,
+): string {
+  if (value == null || value === "") return "—";
+  try {
+    const p = partsFromValue(value);
+    if (!p || !p.year || !p.month || !p.day || p.month < 1 || p.month > 12) {
+      return "—";
+    }
+    const date = `${String(p.day).padStart(2, "0")} ${MONTHS_PT_SHORT[p.month - 1]} ${p.year}`;
+    if (p.hour == null || p.minute == null || Number.isNaN(p.hour)) return date;
+    return `${date} · ${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+  } catch {
+    return "—";
+  }
+}
+
+/** Alias — padrão oficial do app. */
+export function formatDateLocal(
+  value: string | Date | null | undefined,
+  _options?: Intl.DateTimeFormatOptions,
+): string {
+  const formatted = formatDateDayMonYear(value);
+  return formatted === "—" ? "" : formatted;
+}
+
+/** Alias — data + hora no padrão oficial. */
 export function formatDateTimeLocal(
   value: string | Date | null | undefined,
-  options?: Intl.DateTimeFormatOptions
+  _options?: Intl.DateTimeFormatOptions,
 ): string {
-  if (!value) return "";
-  try {
-    const date = typeof value === "string" ? new Date(value) : value;
-    if (Number.isNaN(date.getTime())) return String(value);
-    const locale = getLocale();
-    const defaultOptions: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      ...options,
-    };
-    return new Intl.DateTimeFormat(locale, defaultOptions).format(date);
-  } catch {
-    return String(value);
-  }
+  const formatted = formatDateTimeDayMonYear(value);
+  return formatted === "—" ? "" : formatted;
 }

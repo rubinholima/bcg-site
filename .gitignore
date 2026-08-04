@@ -7,3 +7,6 @@ coverage
 .DS_Store
 _tmp*
 apps/api/data/beatscode-*.json
+apps/api/data/beatscode-clothing/files/
+apps/api/data/beatscode-clothing/*.png
+apps/web/public/media/logistica-uniforms/

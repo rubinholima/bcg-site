@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 import {
   formatCadastroDate,
   type LogisticsLookupRow,
@@ -57,6 +58,25 @@ function cellValue(row: LogisticsLookupRow, key: string, nestedKey?: string, for
   const val = row[key as keyof LogisticsLookupRow];
   if (val == null || val === "") return "—";
   return String(val);
+}
+
+function ImageCell({ url }: { url?: string | null }) {
+  if (!url) {
+    return (
+      <div className="flex h-12 w-12 items-center justify-center rounded-md border border-dashed border-border bg-muted/40 text-[10px] text-muted-foreground">
+        —
+      </div>
+    );
+  }
+  const src = getPublicImageUrl(url) || url;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      className="h-12 w-12 rounded-md border border-border object-cover bg-muted"
+    />
+  );
 }
 
 export function LogisticaCadastroListClient({
@@ -95,6 +115,9 @@ export function LogisticaCadastroListClient({
         row.transportCompany?.name,
         row.category?.name,
         row.expenseCategory?.name,
+        row.group?.name,
+        row.uniformType?.name,
+        row.season,
       ]
         .filter(Boolean)
         .join(" ")
@@ -196,9 +219,18 @@ export function LogisticaCadastroListClient({
                       >
                         {resource.columns.map((col) => (
                           <TableCell key={col.key}>
-                            {col.format === "date"
-                              ? formatCadastroDate(row[col.key as keyof LogisticsLookupRow] as string)
-                              : cellValue(row, col.key, col.nestedKey, col.format)}
+                            {col.format === "image" ? (
+                              <ImageCell
+                                url={
+                                  (row[col.key as keyof LogisticsLookupRow] as string | null | undefined) ??
+                                  null
+                                }
+                              />
+                            ) : col.format === "date" ? (
+                              formatCadastroDate(row[col.key as keyof LogisticsLookupRow] as string)
+                            ) : (
+                              cellValue(row, col.key, col.nestedKey, col.format)
+                            )}
                           </TableCell>
                         ))}
                         <TableRowActions>

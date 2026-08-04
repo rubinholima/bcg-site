@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { formatDateDayMonYear } from "@/lib/format-date";
 
 export interface LogisticsLookupRow {
   id: string;
@@ -24,6 +25,13 @@ export interface LogisticsLookupRow {
   categoryId?: string | null;
   expenseCategory?: { id: string; name: string } | null;
   expenseCategoryId?: string | null;
+  group?: { id: string; name: string } | null;
+  groupId?: string | null;
+  uniformType?: { id: string; name: string } | null;
+  uniformTypeId?: string | null;
+  season?: string | null;
+  imageUrl?: string | null;
+  description?: string | null;
   code?: string | null;
   guestType?: string | null;
   contactName?: string | null;
@@ -63,7 +71,7 @@ export function formatCadastroDate(value: string | null | undefined): string {
   if (!value) return "—";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(d);
 }
 
 export function toDateInputValue(value: string | null | undefined): string {

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { api } from "@/lib/api";
@@ -50,7 +52,7 @@ const emptyLead = (): LeadForm => ({
 
 function formatDate(iso: string | null): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(iso);
 }
 
 export function BostonCityHallPipeline() {

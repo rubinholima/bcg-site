@@ -12,6 +12,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import { getCategoryLabel } from "@/lib/fixture-categories";
@@ -54,7 +55,7 @@ async function getStaff(params: {
 function formatDate(d: string | Date | null | undefined): string {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d) : d;
-  return date.toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(date);
 }
 
 type ComissaoPageProps = {

@@ -80,6 +80,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dash } from "@/lib/dashboard-theme-classes";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { formatDateDayMonYear, formatMonthYear } from "@/lib/format-date";
 
 const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 type ViewMode = "day" | "week" | "month";
@@ -505,11 +506,11 @@ export function UnifiedAgendaView() {
     if (viewMode === "week") {
       const a = weekDays[0]!;
       const b = weekDays[6]!;
-      const fmt = (d: Date) =>
-        d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-      return `${fmt(a)} – ${fmt(b)} · ${a.getFullYear()}`;
+      return `${formatDateDayMonYear(a)} – ${formatDateDayMonYear(b)}`;
     }
-    return focusDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    return formatMonthYear(
+      new Date(focusDate.getFullYear(), focusDate.getMonth(), 1),
+    );
   }, [focusDate, focusDayKey, viewMode, weekDays]);
 
   const goPrev = () => {

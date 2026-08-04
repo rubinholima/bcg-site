@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useState } from "react";
 import { Download, FileText, Loader2, Plus, RefreshCw, Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -235,7 +237,7 @@ export function EmploymentContractsDialog({
                           <p className="font-medium truncate">{c.name}</p>
                           <p className="text-xs text-muted-foreground">
                             {c.template?.name ?? "—"} ·{" "}
-                            {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                            {formatDateDayMonYear(c.createdAt)}
                           </p>
                         </div>
                       </TableCell>

@@ -1,3 +1,4 @@
+import { formatDateDayMonYear } from "@/lib/format-date";
 export interface PlayerAddressBlock {
   street?: string;
   complement?: string;
@@ -393,7 +394,7 @@ export function formatProfileDate(iso?: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso.length === 10 ? `${iso}T12:00:00` : iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("pt-BR");
+  return formatDateDayMonYear(d);
 }
 
 export function computeDaysInCategory(entry: PlayerCategoryHistoryEntry): number | null {

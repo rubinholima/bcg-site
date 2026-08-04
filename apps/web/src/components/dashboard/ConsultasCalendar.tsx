@@ -48,6 +48,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
+import {
+  formatDateDayMonYear,
+  formatDateTimeDayMonYear,
+} from "@/lib/format-date";
 import type { Psychologist } from "@/types/psychologist";
 
 interface Consultation {
@@ -86,13 +90,9 @@ const LIST_VIEW_TABS: { id: ConsultationListView; label: string }[] = [
 
 function formatDate(d: string, time?: string): string {
   if (!d) return "—";
-  try {
-    const [y, m, day] = d.split("-");
-    const br = `${day}/${m}/${y}`;
-    return time ? `${br} ${time}` : br;
-  } catch {
-    return d;
-  }
+  return time
+    ? formatDateTimeDayMonYear(`${d}T${time}`)
+    : formatDateDayMonYear(d);
 }
 
 function getDaysInMonth(year: number, month: number) {

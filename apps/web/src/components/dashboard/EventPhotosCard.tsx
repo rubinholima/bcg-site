@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -337,7 +339,7 @@ export function EventPhotosCard({ eventId }: { eventId: string }) {
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    {l.isPermanent ? "Permanente" : l.expiresAt ? `Expira ${new Date(l.expiresAt).toLocaleDateString("pt-BR")}` : ""}
+                    {l.isPermanent ? "Permanente" : l.expiresAt ? `Expira ${formatDateDayMonYear(l.expiresAt)}` : ""}
                   </span>
                 </li>
               ))}

@@ -52,13 +52,11 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import { formatPersonFirstLastName } from "@/lib/consultation-display";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { printWeeklyPsychReport } from "@/lib/print-weekly-psych-report";
 
 function formatBrDate(d?: string | null): string {
-  if (!d) return "—";
-  const [y, m, day] = d.split("-");
-  if (!y || !m || !day) return d;
-  return `${day}/${m}/${y}`;
+  return formatDateDayMonYear(d);
 }
 
 export default function PsicologiaRelatoriosPage() {

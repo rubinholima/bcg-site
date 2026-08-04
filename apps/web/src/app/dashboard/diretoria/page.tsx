@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
 
 interface TenantProfileStats {
@@ -119,15 +120,7 @@ interface DiretoriaOmieFinanceiro {
 }
 
 function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
+  return formatDateDayMonYear(iso);
 }
 
 function formatCurrency(v: number): string {

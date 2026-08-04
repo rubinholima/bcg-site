@@ -3,12 +3,10 @@ import {
   type WeeklyPsychReportData,
 } from "@/components/dashboard/psychology/WeeklyPsychReportDocument";
 import { formatPersonFirstLastName } from "@/lib/consultation-display";
+import { formatDateDayMonYear } from "@/lib/format-date";
 
 function formatBrDate(d?: string | null): string {
-  if (!d) return "—";
-  const [y, m, day] = d.split("-");
-  if (!y || !m || !day) return d;
-  return `${day}/${m}/${y}`;
+  return formatDateDayMonYear(d);
 }
 
 function escapeHtml(text: string): string {

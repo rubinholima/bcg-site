@@ -27,6 +27,7 @@ import { agendaHubUrl, AGENDA_VISAO } from "@/lib/agenda-hub";
 import { useAuth } from "@/context/AuthContext";
 import { HubStatCard } from "./HubStatCard";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { formatDateDayMonYear } from "@/lib/format-date";
 
 interface TravelLogisticsItem {
   id: string;
@@ -59,11 +60,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function formatDate(d: string): string {
-  return new Date(d).toLocaleDateString("pt-BR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
+  return formatDateDayMonYear(d);
 }
 
 function startOfDay(d: Date): Date {
@@ -269,10 +266,10 @@ export function FutebolHubInsights() {
                     <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
                       <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-sky-500/10 text-center">
                         <span className="text-[10px] font-medium uppercase text-sky-600 dark:text-sky-400">
-                          {new Date(item.matchDate).toLocaleDateString("pt-BR", { month: "short" })}
+                          {formatDateDayMonYear(item.matchDate).split(" ")[1] ?? "—"}
                         </span>
                         <span className="text-lg font-bold leading-none text-foreground">
-                          {new Date(item.matchDate).getDate()}
+                          {formatDateDayMonYear(item.matchDate).split(" ")[0] ?? "—"}
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">

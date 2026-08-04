@@ -1,4 +1,8 @@
 import { formatCpfForDisplay } from "@/lib/format-cpf";
+import {
+  formatDateDayMonYear,
+  formatDateTimeDayMonYear,
+} from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
 import {
   REPORT_PRINT_BREAK_CSS,
@@ -59,23 +63,11 @@ export function resolveLogoUrlForPrint(logoUrl: string | null | undefined): stri
 }
 
 function formatBrDate(iso?: string | null): string {
-  if (!iso) return "—";
-  const [y, m, d] = iso.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+  return formatDateDayMonYear(iso);
 }
 
 function formatBrDateTime(iso?: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return formatDateTimeDayMonYear(iso);
 }
 
 function pageCss(size: PrintPageSize): string {

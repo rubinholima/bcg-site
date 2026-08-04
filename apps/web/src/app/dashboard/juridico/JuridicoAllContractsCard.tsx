@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useState } from "react";
 import { Download, Eye, FileText, Loader2, RefreshCw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -400,7 +402,7 @@ export function JuridicoAllContractsCard({
                             </div>
                           </TableCell>
                           <TableCell className="text-right text-muted-foreground text-sm">
-                            {new Date(doc.createdAt).toLocaleDateString("pt-BR")}
+                            {formatDateDayMonYear(doc.createdAt)}
                           </TableCell>
                         </TableRow>
                       );
@@ -499,7 +501,7 @@ export function JuridicoAllContractsCard({
                           </div>
                         </TableCell>
                         <TableCell className="text-right text-muted-foreground text-sm">
-                          {new Date(doc.createdAt).toLocaleDateString("pt-BR")}
+                          {formatDateDayMonYear(doc.createdAt)}
                         </TableCell>
                       </TableRow>
                     );

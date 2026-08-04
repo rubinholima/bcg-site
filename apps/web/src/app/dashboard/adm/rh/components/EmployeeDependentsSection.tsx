@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ExpandableSection } from "@/components/dashboard/players/ExpandableSection";
 import { type EmployeeDependentRow } from "@/lib/employee-types";
+import { formatDateDayMonYear } from "@/lib/format-date";
 
 interface EmployeeDependentsSectionProps {
   hasMinorChildren: boolean;
@@ -79,7 +80,7 @@ export function EmployeeDependentsSection({
                         <p className="text-xs text-muted-foreground">
                           Nascimento:{" "}
                           {dep.birthDate
-                            ? new Date(`${dep.birthDate.slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR")
+                            ? formatDateDayMonYear(dep.birthDate.slice(0, 10))
                             : "—"}
                         </p>
                       </div>

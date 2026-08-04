@@ -1,5 +1,7 @@
 "use client";
 
+import { formatDateDayMonYear } from "@/lib/format-date";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -796,7 +798,7 @@ export function CaptacaoHub() {
                               <p className="text-xs text-muted-foreground">
                                 Aprovado por {p.supervisorApprovedBy}
                                 {p.supervisorApprovedAt &&
-                                  ` · ${new Date(p.supervisorApprovedAt).toLocaleDateString("pt-BR")}`}
+                                  ` · ${formatDateDayMonYear(p.supervisorApprovedAt)}`}
                               </p>
                             )}
                             {renderProspectActions(p)}
@@ -1120,7 +1122,7 @@ export function CaptacaoHub() {
                                 {scoutDetail.reports.map((r) => (
                                   <TableRow key={r.id}>
                                     <TableCell className="text-sm">
-                                      {new Date(r.reportDate).toLocaleDateString("pt-BR")}
+                                      {formatDateDayMonYear(r.reportDate)}
                                     </TableCell>
                                     <TableCell>
                                       <p className="font-medium">{r.prospect?.name}</p>
@@ -1179,7 +1181,7 @@ export function CaptacaoHub() {
                         reports.map((r) => (
                           <TableRow key={r.id}>
                             <TableCell className="text-sm">
-                              {new Date(r.reportDate).toLocaleDateString("pt-BR")}
+                              {formatDateDayMonYear(r.reportDate)}
                             </TableCell>
                             <TableCell>
                               <p className="font-medium">{r.prospect?.name}</p>

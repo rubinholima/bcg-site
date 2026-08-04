@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { formatDateDayMonYear, formatMonthYear } from "@/lib/format-date";
 import { AgendaColorsDialog } from "@/components/dashboard/agenda/AgendaColorsDialog";
 import {
   AgendaDualToneBars,
@@ -155,12 +156,7 @@ function formatTime(iso: string, allDay: boolean, dayPeriod?: string | null): st
 }
 
 function formatDateLong(iso: string): string {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  return formatDateDayMonYear(iso);
 }
 
 function periodLabel(focusDate: Date, mode: ViewMode): string {
@@ -171,18 +167,11 @@ function periodLabel(focusDate: Date, mode: ViewMode): string {
     const start = startOfWeek(focusDate);
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
-    const fmt = (d: Date) =>
-      d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-    const year =
-      start.getFullYear() === end.getFullYear()
-        ? String(start.getFullYear())
-        : `${start.getFullYear()} – ${end.getFullYear()}`;
-    return `${fmt(start)} – ${fmt(end)} · ${year}`;
+    return `${formatDateDayMonYear(start)} – ${formatDateDayMonYear(end)}`;
   }
-  return new Date(focusDate.getFullYear(), focusDate.getMonth(), 1).toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric",
-  });
+  return formatMonthYear(
+    new Date(focusDate.getFullYear(), focusDate.getMonth(), 1),
+  );
 }
 
 type EntryForm = {

@@ -19,11 +19,34 @@ import { CreateLogisticsHotelDto } from './dto/create-logistics-hotel.dto';
 import { CreateLogisticsLookupDto } from './dto/create-logistics-lookup.dto';
 import { CreateLogisticsLoyaltyProgramDto } from './dto/create-logistics-loyalty-program.dto';
 import { CreateLogisticsRoomTypeDto } from './dto/create-logistics-room-type.dto';
-import { CreateLogisticsAirportDto, UpdateLogisticsAirportDto } from './dto/create-logistics-airport.dto';
+import {
+  CreateLogisticsAirportDto,
+  UpdateLogisticsAirportDto,
+} from './dto/create-logistics-airport.dto';
 import {
   CreateLogisticsServiceProductDto,
   UpdateLogisticsServiceProductDto,
 } from './dto/create-logistics-service-product.dto';
+import {
+  CreateLogisticsClothingGroupDto,
+  UpdateLogisticsClothingGroupDto,
+} from './dto/create-logistics-clothing-group.dto';
+import {
+  CreateLogisticsClothingCategoryDto,
+  UpdateLogisticsClothingCategoryDto,
+} from './dto/create-logistics-clothing-category.dto';
+import {
+  CreateLogisticsUniformTypeDto,
+  UpdateLogisticsUniformTypeDto,
+} from './dto/create-logistics-uniform-type.dto';
+import {
+  CreateLogisticsClothingItemDto,
+  UpdateLogisticsClothingItemDto,
+} from './dto/create-logistics-clothing-item.dto';
+import {
+  CreateLogisticsUniformKitDto,
+  UpdateLogisticsUniformKitDto,
+} from './dto/create-logistics-uniform-kit.dto';
 import { UpdateLogisticsGuestDto } from './dto/update-logistics-guest.dto';
 import { UpdateLogisticsHotelDto } from './dto/update-logistics-hotel.dto';
 import { UpdateLogisticsLookupDto } from './dto/update-logistics-lookup.dto';
@@ -52,7 +75,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('transport-companies/:id')
-  updateTransportCompany(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+  updateTransportCompany(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLookupDto,
+  ) {
     return this.service.updateTransportCompany(id, dto);
   }
 
@@ -77,7 +103,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('loyalty-programs/:id')
-  updateLoyaltyProgram(@Param('id') id: string, @Body() dto: UpdateLogisticsLoyaltyProgramDto) {
+  updateLoyaltyProgram(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLoyaltyProgramDto,
+  ) {
     return this.service.updateLoyaltyProgram(id, dto);
   }
 
@@ -102,7 +131,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('usage-moments/:id')
-  updateUsageMoment(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+  updateUsageMoment(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLookupDto,
+  ) {
     return this.service.updateUsageMoment(id, dto);
   }
 
@@ -127,7 +159,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('payment-types/:id')
-  updatePaymentType(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+  updatePaymentType(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLookupDto,
+  ) {
     return this.service.updatePaymentType(id, dto);
   }
 
@@ -152,7 +187,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('room-types/:id')
-  updateRoomType(@Param('id') id: string, @Body() dto: UpdateLogisticsRoomTypeDto) {
+  updateRoomType(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsRoomTypeDto,
+  ) {
     return this.service.updateRoomType(id, dto);
   }
 
@@ -177,7 +215,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('visa-types/:id')
-  updateVisaType(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+  updateVisaType(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLookupDto,
+  ) {
     return this.service.updateVisaType(id, dto);
   }
 
@@ -216,7 +257,10 @@ export class LogisticaCadastrosController {
   }
 
   @Get('hotels')
-  findHotels(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+  findHotels(
+    @Query('activeOnly') activeOnly?: string,
+    @Query('search') search?: string,
+  ) {
     return this.service.findHotels(activeOnly, search);
   }
 
@@ -241,7 +285,10 @@ export class LogisticaCadastrosController {
   }
 
   @Get('airports')
-  findAirports(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+  findAirports(
+    @Query('activeOnly') activeOnly?: string,
+    @Query('search') search?: string,
+  ) {
     return this.service.findAirports(activeOnly, search);
   }
 
@@ -256,7 +303,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('airports/:id')
-  updateAirport(@Param('id') id: string, @Body() dto: UpdateLogisticsAirportDto) {
+  updateAirport(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsAirportDto,
+  ) {
     return this.service.updateAirport(id, dto);
   }
 
@@ -281,7 +331,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('expense-categories/:id')
-  updateExpenseCategory(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+  updateExpenseCategory(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLookupDto,
+  ) {
     return this.service.updateExpenseCategory(id, dto);
   }
 
@@ -306,7 +359,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('points-of-interest/:id')
-  updatePointOfInterest(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+  updatePointOfInterest(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLookupDto,
+  ) {
     return this.service.updatePointOfInterest(id, dto);
   }
 
@@ -316,7 +372,10 @@ export class LogisticaCadastrosController {
   }
 
   @Get('destinations')
-  findDestinations(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+  findDestinations(
+    @Query('activeOnly') activeOnly?: string,
+    @Query('search') search?: string,
+  ) {
     return this.service.findDestinations(activeOnly, search);
   }
 
@@ -331,7 +390,10 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('destinations/:id')
-  updateDestination(@Param('id') id: string, @Body() dto: UpdateLogisticsLookupDto) {
+  updateDestination(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsLookupDto,
+  ) {
     return this.service.updateDestination(id, dto);
   }
 
@@ -341,7 +403,10 @@ export class LogisticaCadastrosController {
   }
 
   @Get('service-products')
-  findServiceProducts(@Query('activeOnly') activeOnly?: string, @Query('search') search?: string) {
+  findServiceProducts(
+    @Query('activeOnly') activeOnly?: string,
+    @Query('search') search?: string,
+  ) {
     return this.service.findServiceProducts(activeOnly, search);
   }
 
@@ -356,12 +421,179 @@ export class LogisticaCadastrosController {
   }
 
   @Patch('service-products/:id')
-  updateServiceProduct(@Param('id') id: string, @Body() dto: UpdateLogisticsServiceProductDto) {
+  updateServiceProduct(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsServiceProductDto,
+  ) {
     return this.service.updateServiceProduct(id, dto);
   }
 
   @Delete('service-products/:id')
   removeServiceProduct(@Param('id') id: string) {
     return this.service.removeServiceProduct(id);
+  }
+
+  // ——— Vestuário/uniformes — grupos ———
+  @Get('clothing-groups')
+  findClothingGroups(@Query('activeOnly') activeOnly?: string) {
+    return this.service.findClothingGroups(activeOnly);
+  }
+
+  @Post('clothing-groups')
+  createClothingGroup(@Body() dto: CreateLogisticsClothingGroupDto) {
+    return this.service.createClothingGroup(dto);
+  }
+
+  @Get('clothing-groups/:id')
+  findClothingGroup(@Param('id') id: string) {
+    return this.service.findClothingGroup(id);
+  }
+
+  @Patch('clothing-groups/:id')
+  updateClothingGroup(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsClothingGroupDto,
+  ) {
+    return this.service.updateClothingGroup(id, dto);
+  }
+
+  @Delete('clothing-groups/:id')
+  removeClothingGroup(@Param('id') id: string) {
+    return this.service.removeClothingGroup(id);
+  }
+
+  // ——— Vestuário/uniformes — categorias ———
+  @Get('clothing-categories')
+  findClothingCategories(
+    @Query('activeOnly') activeOnly?: string,
+    @Query('groupId') groupId?: string,
+  ) {
+    return this.service.findClothingCategories(activeOnly, groupId);
+  }
+
+  @Post('clothing-categories')
+  createClothingCategory(@Body() dto: CreateLogisticsClothingCategoryDto) {
+    return this.service.createClothingCategory(dto);
+  }
+
+  @Get('clothing-categories/:id')
+  findClothingCategory(@Param('id') id: string) {
+    return this.service.findClothingCategory(id);
+  }
+
+  @Patch('clothing-categories/:id')
+  updateClothingCategory(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsClothingCategoryDto,
+  ) {
+    return this.service.updateClothingCategory(id, dto);
+  }
+
+  @Delete('clothing-categories/:id')
+  removeClothingCategory(@Param('id') id: string) {
+    return this.service.removeClothingCategory(id);
+  }
+
+  // ——— Vestuário/uniformes — tipos de uniforme ———
+  @Get('uniform-types')
+  findUniformTypes(@Query('activeOnly') activeOnly?: string) {
+    return this.service.findUniformTypes(activeOnly);
+  }
+
+  @Post('uniform-types')
+  createUniformType(@Body() dto: CreateLogisticsUniformTypeDto) {
+    return this.service.createUniformType(dto);
+  }
+
+  @Get('uniform-types/:id')
+  findUniformType(@Param('id') id: string) {
+    return this.service.findUniformType(id);
+  }
+
+  @Patch('uniform-types/:id')
+  updateUniformType(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsUniformTypeDto,
+  ) {
+    return this.service.updateUniformType(id, dto);
+  }
+
+  @Delete('uniform-types/:id')
+  removeUniformType(@Param('id') id: string) {
+    return this.service.removeUniformType(id);
+  }
+
+  // ——— Vestuário/uniformes — peças ———
+  @Get('clothing-items')
+  findClothingItems(
+    @Query('activeOnly') activeOnly?: string,
+    @Query('search') search?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('groupId') groupId?: string,
+    @Query('uniformTypeId') uniformTypeId?: string,
+  ) {
+    return this.service.findClothingItems(
+      activeOnly,
+      search,
+      categoryId,
+      groupId,
+      uniformTypeId,
+    );
+  }
+
+  @Post('clothing-items')
+  createClothingItem(@Body() dto: CreateLogisticsClothingItemDto) {
+    return this.service.createClothingItem(dto);
+  }
+
+  @Get('clothing-items/:id')
+  findClothingItem(@Param('id') id: string) {
+    return this.service.findClothingItem(id);
+  }
+
+  @Patch('clothing-items/:id')
+  updateClothingItem(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsClothingItemDto,
+  ) {
+    return this.service.updateClothingItem(id, dto);
+  }
+
+  @Delete('clothing-items/:id')
+  removeClothingItem(@Param('id') id: string) {
+    return this.service.removeClothingItem(id);
+  }
+
+  // ——— Vestuário/uniformes — kits ———
+  @Get('uniform-kits')
+  findUniformKits(
+    @Query('activeOnly') activeOnly?: string,
+    @Query('search') search?: string,
+    @Query('uniformTypeId') uniformTypeId?: string,
+  ) {
+    return this.service.findUniformKits(activeOnly, search, uniformTypeId);
+  }
+
+  @Post('uniform-kits')
+  createUniformKit(@Body() dto: CreateLogisticsUniformKitDto) {
+    return this.service.createUniformKit(dto);
+  }
+
+  @Get('uniform-kits/:id')
+  findUniformKit(@Param('id') id: string) {
+    return this.service.findUniformKit(id);
+  }
+
+  @Patch('uniform-kits/:id')
+  updateUniformKit(
+    @Param('id') id: string,
+    @Body() dto: UpdateLogisticsUniformKitDto,
+  ) {
+    return this.service.updateUniformKit(id, dto);
+  }
+
+  @Delete('uniform-kits/:id')
+  removeUniformKit(@Param('id') id: string) {
+    return this.service.removeUniformKit(id);
   }
 }
