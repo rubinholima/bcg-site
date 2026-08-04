@@ -28,7 +28,7 @@ export default function FutebolLogisticaAgendaPage() {
       <DashboardDeptHeader
         section="Futebol — Logística"
         sectionIcon={Calendar}
-        title="Agenda operacional"
+        title="Agenda Futebol"
         description="Viagens, treinos, jogos e compromissos. Use os filtros e cadastre novos eventos por aqui."
       />
       <Suspense

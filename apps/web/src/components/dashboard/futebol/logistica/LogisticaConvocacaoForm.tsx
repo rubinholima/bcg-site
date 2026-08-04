@@ -31,6 +31,7 @@ import {
   parseTravelRecordFixtureId,
   resolveFixtureOpponentName,
   sortTravelsForConvocation,
+  upcomingFixtures,
   type AgendaFixture,
 } from "@/lib/travel-fixture-utils";
 
@@ -180,10 +181,33 @@ export function LogisticaConvocacaoForm() {
 
   useEffect(() => {
     const club = selectedTenant?.name ?? "Nosso Clube";
+    // Convocação / preparação: só jogos futuros (passados ficam em outra aba depois).
     setFixtures(
-      mergeTravelsIntoFixturesForConvocation(rawFixtures, travels, club, 90),
+      mergeTravelsIntoFixturesForConvocation(
+        upcomingFixtures(rawFixtures),
+        travels,
+        club,
+        0,
+      ),
     );
   }, [rawFixtures, travels, selectedTenant?.name]);
+
+  const travelsForSelect = useMemo(() => {
+    const now = Date.now();
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const cutoff = startOfToday.getTime();
+    const upcoming = travels.filter((t) => {
+      const ts = new Date(t.matchDate).getTime();
+      return !Number.isNaN(ts) && ts >= cutoff;
+    });
+    // Mantém o registro atual se veio por deep link (ex.: travelId antigo).
+    if (travelId && !upcoming.some((t) => t.id === travelId)) {
+      const current = travels.find((t) => t.id === travelId);
+      if (current) return sortTravelsForConvocation([current, ...upcoming]);
+    }
+    return upcoming;
+  }, [travels, travelId]);
 
   const findTravelForFixture = useCallback(
     (fixture: AgendaFixture, list: FutebolRelatorioTravel[]) => {
@@ -598,9 +622,9 @@ export function LogisticaConvocacaoForm() {
 
           {tenantId ? (
             <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-              <Label>Jogo da agenda (próximos + passados dos últimos 90 dias)</Label>
+              <Label>Jogo da agenda (próximos)</Label>
               <p className="text-xs text-muted-foreground">
-                Passados vêm da agenda e também dos planejamentos já salvos. Marcados com [Passado].
+                Só jogos futuros para preparar a convocação / viagem.
               </p>
               <Select
                 value={selectedFixtureId || "none"}
@@ -613,8 +637,8 @@ export function LogisticaConvocacaoForm() {
                       loadingFixtures
                         ? "Carregando jogos…"
                         : fixtures.length === 0
-                          ? "Nenhum jogo nos próximos / últimos 90 dias"
-                          : "Próximos e jogos recentes (passados)"
+                          ? "Nenhum jogo futuro na agenda"
+                          : "Selecione o próximo jogo"
                     }
                   />
                 </SelectTrigger>
@@ -633,7 +657,7 @@ export function LogisticaConvocacaoForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label>Ou selecione um registro existente (próximos e passados)</Label>
+                <Label>Ou selecione um registro existente (próximos)</Label>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Checkbox
                     checked={onlyWithConvocation}
@@ -657,7 +681,7 @@ export function LogisticaConvocacaoForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Selecione…</SelectItem>
-                  {travels
+                  {travelsForSelect
                     .filter((t) => {
                       if (!onlyWithConvocation) return true;
                       const n = t._count?.participants ?? 0;

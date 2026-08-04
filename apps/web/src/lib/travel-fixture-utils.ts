@@ -41,13 +41,14 @@ function isPastFixture(f: AgendaFixture, now = Date.now()): boolean {
   return !Number.isNaN(t) && t < now;
 }
 
-/** Futuros + passados recentes (padrão 90 dias) — ordem crescente por data. */
+/** Futuros + passados recentes. pastDays=0 → só a partir de agora (só futuros). */
 export function fixturesForConvocation(
   fixtures: AgendaFixture[],
   pastDays = 90,
 ): AgendaFixture[] {
   const now = Date.now();
-  const pastCutoff = now - pastDays * 24 * 60 * 60 * 1000;
+  const pastCutoff =
+    pastDays <= 0 ? now : now - pastDays * 24 * 60 * 60 * 1000;
   return fixtures
     .filter((f) => {
       const t = new Date(f.startISO).getTime();

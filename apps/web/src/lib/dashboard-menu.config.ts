@@ -528,7 +528,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
           {
             slug: "futebol_logistica_agenda",
-            label: "Agenda",
+            label: "Agenda Futebol",
             href: "/dashboard/futebol/logistica/agenda",
             icon: Calendar,
             moduleSlug: "futebol_logistica",
