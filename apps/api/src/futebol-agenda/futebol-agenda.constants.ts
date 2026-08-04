@@ -36,6 +36,8 @@ export type FootballAgendaCalendarItemDto = {
   startAt: string;
   endAt: string | null;
   allDay: boolean;
+  /** manha | tarde | noite */
+  dayPeriod?: string | null;
   tenantId: string;
   tenantName?: string;
   category: string | null;
@@ -63,6 +65,7 @@ export type FootballAgendaEntryDto = {
   startAt: string;
   endAt: string | null;
   allDay: boolean;
+  dayPeriod?: string | null;
   location: string | null;
   spaceId: string | null;
   spaceName?: string | null;

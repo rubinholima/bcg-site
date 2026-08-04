@@ -6,6 +6,7 @@ export type FootballAgendaCalendarItem = {
   startAt: string;
   endAt: string | null;
   allDay: boolean;
+  dayPeriod?: string | null;
   tenantId: string;
   tenantName?: string;
   category: string | null;
@@ -32,6 +33,7 @@ export type FootballAgendaEntry = {
   startAt: string;
   endAt: string | null;
   allDay: boolean;
+  dayPeriod?: string | null;
   location: string | null;
   spaceId: string | null;
   spaceName?: string | null;

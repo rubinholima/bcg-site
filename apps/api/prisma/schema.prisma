@@ -233,6 +233,16 @@ model TravelLogistics {
   // Hospedagem
   hotelName             String?
   hotelAddress         String?   @db.Text
+  /** Check-in/out: { checkIn?: ISO, checkOut?: ISO } */
+  hotelStay             Json?
+  /**
+   * Itinerário operacional:
+   * { busType?: 'LD'|'DD', outbound?: Stop[], return?: Stop[], homeMatchAgenda?: HomeItem[] }
+   * Stop: { place, arriveAt?, departAt?, notes? }
+   */
+  itinerary             Json?
+  /** Uniformes: { athletesGame?, athletesTravel?, staffGame?, staffTravel? } — kit 1/2/3 ou texto */
+  uniforms              Json?
   accommodationRooms   Json?     // [{ personId?, personName, personType: 'player'|'staff', roomNumber, roommateId? }]
   // Alimentação (com aval do depto nutrição)
   mealPlan              Json?     // cardápio ou referência ao menu de nutrição
@@ -515,6 +525,8 @@ model FootballAgendaEntry {
   startAt           DateTime
   endAt             DateTime?
   allDay            Boolean           @default(false)
+  /** manha | tarde | noite — compromisso por período do dia (além de horário fino / dia inteiro) */
+  dayPeriod         String?
   location          String?
   description       String?           @db.Text
   status            String            @default("confirmado") // confirmado | provisorio | cancelado

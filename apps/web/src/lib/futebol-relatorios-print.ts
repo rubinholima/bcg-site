@@ -6,6 +6,7 @@ import {
 } from "@/lib/report-print-layout";
 import type {
   HospedesReportDto,
+  LayoutRelacionadosReportDto,
   PassageirosReportDto,
   PrintPageSize,
   ProgramacaoSemanalReportDto,
@@ -407,12 +408,17 @@ function travelMetaHtml(travel: PassageirosReportDto["travel"], extra?: string):
   const transportLine = [travel.transportLabel, travel.transportDetails?.trim()]
     .filter(Boolean)
     .join(" — ");
+  const side = travel.isHomeMatch ? "Casa" : "Fora";
 
   return `
     <div class="meta-grid">
       <div class="meta-item">
         <label>Categoria</label>
         <span>${escapeHtml(travel.categoryLabel)}</span>
+      </div>
+      <div class="meta-item">
+        <label>Mandante</label>
+        <span>${escapeHtml(side)}</span>
       </div>
       <div class="meta-item">
         <label>Data do jogo</label>
@@ -487,13 +493,17 @@ export function buildPassageirosPrintHtml(
   const { travel } = data;
   const introMeta = travelMetaHtml(travel);
   const body = `
-    ${personTable("Atletas", data.athletes)}
+    ${personTable("Atletas convocados", data.athletes)}
     ${personTable("Comissão técnica", data.staff, true)}
     ${personTable("Pessoas autorizadas", data.guests)}
   `;
-  const badge = travel.championshipName
-    ? `${travel.categoryLabel} · ${travel.championshipName}`
-    : travel.categoryLabel;
+  const badge = [
+    travel.categoryLabel,
+    travel.isHomeMatch ? "Casa" : "Fora",
+    travel.championshipName,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return documentShell(
     `Relação de Passageiros — ${travel.tenant.name}`,
@@ -512,16 +522,24 @@ export function buildHospedesPrintHtml(
   size: PrintPageSize = "A4",
 ): string {
   const { travel } = data;
-  const checkIn = travel.estimatedArrival
-    ? formatBrDateTime(travel.estimatedArrival)
-    : formatBrDate(travel.matchDate);
-  const checkOut = travel.estimatedDeparture
-    ? formatBrDateTime(travel.estimatedDeparture)
-    : "—";
+  const checkIn = travel.hotelCheckIn
+    ? formatBrDateTime(
+        travel.hotelCheckIn.includes("T")
+          ? travel.hotelCheckIn
+          : travel.hotelCheckIn,
+      )
+    : travel.estimatedArrival
+      ? formatBrDateTime(travel.estimatedArrival)
+      : formatBrDate(travel.matchDate);
+  const checkOut = travel.hotelCheckOut
+    ? formatBrDateTime(travel.hotelCheckOut)
+    : travel.estimatedDeparture
+      ? formatBrDateTime(travel.estimatedDeparture)
+      : "—";
 
   const extra = `
-    <div class="meta-item"><label>Check-in previsto</label><span>${escapeHtml(checkIn)}</span></div>
-    <div class="meta-item"><label>Check-out previsto</label><span>${escapeHtml(checkOut)}</span></div>
+    <div class="meta-item"><label>Check-in</label><span>${escapeHtml(checkIn)}</span></div>
+    <div class="meta-item"><label>Check-out</label><span>${escapeHtml(checkOut)}</span></div>
   `;
 
   let tableRows = "";
@@ -727,4 +745,155 @@ export function printProgramacaoReport(
   size: PrintPageSize = "A4",
 ): void {
   printHtmlDocument(buildProgramacaoPrintHtml(data, size), "Impressão — Programação");
+}
+
+function formatStopDateTime(v: string | null | undefined): string {
+  if (!v?.trim()) return "—";
+  const raw = v.includes("T") ? formatBrDateTime(v) : v;
+  return escapeHtml(raw);
+}
+
+function stopsTable(
+  title: string,
+  stops: LayoutRelacionadosReportDto["outbound"],
+): string {
+  if (stops.length === 0) {
+    return `
+      <section class="section">
+        <h2 class="section-title">${escapeHtml(title)}</h2>
+        <p class="empty">Sem paradas cadastradas</p>
+      </section>`;
+  }
+  const rows = stops
+    .map(
+      (s, i) => `<tr>
+        <td class="num">${i + 1}</td>
+        <td>${escapeHtml(s.place)}</td>
+        <td>${formatStopDateTime(s.arriveAt)}</td>
+        <td>${formatStopDateTime(s.departAt)}</td>
+        <td>${escapeHtml(s.notes?.trim() || "—")}</td>
+      </tr>`,
+    )
+    .join("");
+  return `
+    <section class="section">
+      <h2 class="section-title">${escapeHtml(title)}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Local</th>
+            <th>Chegada</th>
+            <th>Saída</th>
+            <th>Obs.</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </section>`;
+}
+
+export function buildLayoutRelacionadosPrintHtml(
+  data: LayoutRelacionadosReportDto,
+  size: PrintPageSize = "A4",
+): string {
+  const { travel, uniforms } = data;
+  const busLine = data.busType ? `Ônibus ${data.busType}` : null;
+  const extra = `
+    ${busLine ? `<div class="meta-item"><label>Veículo</label><span>${escapeHtml(busLine)}</span></div>` : ""}
+    ${
+      travel.hotelCheckIn || travel.hotelCheckOut
+        ? `<div class="meta-item"><label>Check-in</label><span>${escapeHtml(formatBrDateTime(travel.hotelCheckIn) || "—")}</span></div>
+           <div class="meta-item"><label>Check-out</label><span>${escapeHtml(formatBrDateTime(travel.hotelCheckOut) || "—")}</span></div>`
+        : ""
+    }
+  `;
+
+  const uniformsRows = [
+    ["Atletas — jogo", uniforms.athletesGame],
+    ["Atletas — viagem", uniforms.athletesTravel],
+    ["Comissão — jogo", uniforms.staffGame],
+    ["Comissão — viagem", uniforms.staffTravel],
+  ]
+    .filter(([, v]) => v?.trim())
+    .map(
+      ([label, v]) =>
+        `<tr><td>${escapeHtml(label as string)}</td><td>${escapeHtml((v as string).trim())}</td></tr>`,
+    )
+    .join("");
+
+  const uniformsSection = uniformsRows
+    ? `<section class="section">
+        <h2 class="section-title">Uniformes</h2>
+        <table>
+          <thead><tr><th>Item</th><th>Kit / observação</th></tr></thead>
+          <tbody>${uniformsRows}</tbody>
+        </table>
+      </section>`
+    : "";
+
+  const homeAgenda =
+    data.homeMatchAgenda.length > 0
+      ? `<section class="section">
+          <h2 class="section-title">Agenda do jogo (casa)</h2>
+          <table>
+            <thead><tr><th class="num">#</th><th>Atividade</th><th>Horário</th><th>Obs.</th></tr></thead>
+            <tbody>
+              ${data.homeMatchAgenda
+                .map(
+                  (a, i) => `<tr>
+                    <td class="num">${i + 1}</td>
+                    <td>${escapeHtml(a.label)}</td>
+                    <td>${escapeHtml(a.time?.trim() || "—")}</td>
+                    <td>${escapeHtml(a.notes?.trim() || "—")}</td>
+                  </tr>`,
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </section>`
+      : "";
+
+  const body = `
+    ${personTable("Atletas convocados", data.athletes)}
+    ${personTable("Comissão técnica", data.staff, true)}
+    ${data.guests.length ? personTable("Pessoas autorizadas", data.guests) : ""}
+    ${uniformsSection}
+    ${
+      travel.isHomeMatch
+        ? homeAgenda
+        : `${stopsTable("Programação de ida", data.outbound)}
+           ${stopsTable("Programação de retorno", data.returnStops)}
+           ${homeAgenda}`
+    }
+  `;
+
+  const badge = [
+    travel.categoryLabel,
+    travel.isHomeMatch ? "Casa" : "Fora",
+    travel.championshipName,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return documentShell(
+    `Layout Relacionados — ${travel.tenant.name}`,
+    travel.tenant.name,
+    travel.tenant.logoUrl,
+    "Layout Relacionados / Programação da viagem",
+    badge,
+    travelMetaHtml(travel, extra),
+    body,
+    size,
+  );
+}
+
+export function printLayoutRelacionadosReport(
+  data: LayoutRelacionadosReportDto,
+  size: PrintPageSize = "A4",
+): void {
+  printHtmlDocument(
+    buildLayoutRelacionadosPrintHtml(data, size),
+    "Impressão — Layout Relacionados",
+  );
 }

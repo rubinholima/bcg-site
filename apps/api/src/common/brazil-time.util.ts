@@ -28,7 +28,14 @@ export function dateKeyInBrazil(d: Date | string): string {
   return `${year}-${month}-${day}`;
 }
 
-export function formatTimeBrazil(d: Date | string, allDay?: boolean): string {
+export function formatTimeBrazil(
+  d: Date | string,
+  allDay?: boolean,
+  dayPeriod?: string | null,
+): string {
+  if (dayPeriod === 'manha') return 'MANHÃ';
+  if (dayPeriod === 'tarde') return 'TARDE';
+  if (dayPeriod === 'noite') return 'NOITE';
   if (allDay) return 'Dia inteiro';
   const date = typeof d === 'string' ? new Date(d) : d;
   return date.toLocaleTimeString('pt-BR', {
@@ -45,6 +52,19 @@ export function addDaysToDateKey(dateKey: string, days: number): string {
 }
 
 export function compareTimeLabels(a: string, b: string): number {
+  const periodOrder: Record<string, number> = {
+    'Dia inteiro': -1,
+    MANHÃ: 8 * 60,
+    TARDE: 13 * 60,
+    NOITE: 19 * 60,
+  };
+  if (a in periodOrder || b in periodOrder) {
+    const av = periodOrder[a];
+    const bv = periodOrder[b];
+    if (av != null && bv != null) return av - bv;
+    if (av != null) return -1;
+    if (bv != null) return 1;
+  }
   if (a === 'Dia inteiro' && b === 'Dia inteiro') return 0;
   if (a === 'Dia inteiro') return -1;
   if (b === 'Dia inteiro') return 1;

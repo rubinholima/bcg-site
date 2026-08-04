@@ -41,6 +41,15 @@ interface Props {
   variant?: "transport" | "hotel" | "destination" | "all";
 }
 
+function showTransportCompanyFields(transportType: string): boolean {
+  return (
+    transportType === "aereo_comercial" ||
+    transportType === "aereo_fretado" ||
+    transportType === "misto" ||
+    transportType === "rodoviario"
+  );
+}
+
 function showAirFields(transportType: string): boolean {
   return (
     transportType === "aereo_comercial" ||
@@ -226,8 +235,10 @@ export function LogisticaTravelCadastrosFields({
             </p>
           </div>
 
-          {showAirFields(transportType) ? (
+          {showAirFields(transportType) || transportType === "rodoviario" ? (
             <div className="grid gap-4 sm:grid-cols-2">
+              {showAirFields(transportType) ? (
+                <>
               <div className="space-y-2">
                 <Label>Aeroporto de embarque</Label>
                 <Select
@@ -272,6 +283,8 @@ export function LogisticaTravelCadastrosFields({
                   </SelectContent>
                 </Select>
               </div>
+                </>
+              ) : null}
               <div className="space-y-2">
                 <Label>Transportadora</Label>
                 <Select
@@ -308,6 +321,7 @@ export function LogisticaTravelCadastrosFields({
                   </SelectContent>
                 </Select>
               </div>
+              {showAirFields(transportType) ? (
               <div className="space-y-2">
                 <Label>Programa de milhas</Label>
                 <Select
@@ -330,6 +344,7 @@ export function LogisticaTravelCadastrosFields({
                   </SelectContent>
                 </Select>
               </div>
+              ) : null}
             </div>
           ) : null}
         </>

@@ -36,6 +36,9 @@ export type RelatorioTravelMeta = {
   estimatedArrival: string | null;
   hotelName: string | null;
   hotelAddress: string | null;
+  hotelCheckIn: string | null;
+  hotelCheckOut: string | null;
+  isHomeMatch: boolean;
   notes: string | null;
 };
 
@@ -74,5 +77,30 @@ export type ProgramacaoSemanalReportDto = {
   categories: string[];
   categoryLabels: Record<string, string>;
   days: ProgramacaoSemanalDay[];
+  generatedAt: string;
+};
+
+export type LayoutRelacionadosStop = {
+  place: string;
+  arriveAt: string | null;
+  departAt: string | null;
+  notes: string | null;
+};
+
+export type LayoutRelacionadosReportDto = {
+  travel: RelatorioTravelMeta;
+  athletes: RelatorioPessoaRow[];
+  staff: RelatorioPessoaRow[];
+  guests: RelatorioPessoaRow[];
+  busType: string | null;
+  outbound: LayoutRelacionadosStop[];
+  returnStops: LayoutRelacionadosStop[];
+  homeMatchAgenda: { label: string; time: string | null; notes: string | null }[];
+  uniforms: {
+    athletesGame: string | null;
+    athletesTravel: string | null;
+    staffGame: string | null;
+    staffTravel: string | null;
+  };
   generatedAt: string;
 };

@@ -473,6 +473,9 @@ export class LogisticaService {
         estimatedCostBreakdown: dto.estimatedCostBreakdown ?? undefined,
         weatherForecast: dto.weatherForecast ?? null,
         notes: dto.notes ?? null,
+        itinerary: dto.itinerary ?? undefined,
+        hotelStay: dto.hotelStay ?? undefined,
+        uniforms: dto.uniforms ?? undefined,
         beatscodeMeta: mergeBeatscodeMeta(undefined, {
           logisticsCadastros,
           expenseLines,
@@ -537,6 +540,9 @@ export class LogisticaService {
     if (dto.weatherForecast !== undefined)
       data.weatherForecast = dto.weatherForecast ?? null;
     if (dto.notes !== undefined) data.notes = dto.notes ?? null;
+    if (dto.itinerary !== undefined) data.itinerary = dto.itinerary ?? undefined;
+    if (dto.hotelStay !== undefined) data.hotelStay = dto.hotelStay ?? undefined;
+    if (dto.uniforms !== undefined) data.uniforms = dto.uniforms ?? undefined;
 
     const logisticsCadastros =
       dto.logisticsCadastros !== undefined

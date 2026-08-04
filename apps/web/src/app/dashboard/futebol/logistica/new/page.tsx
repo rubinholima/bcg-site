@@ -35,12 +35,24 @@ import {
 import {
   LogisticaTravelCadastrosFields,
 } from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
+import { LogisticaItineraryFields } from "@/components/dashboard/futebol/logistica/LogisticaItineraryFields";
 import { LogisticaExpenseLinesFields } from "@/components/dashboard/futebol/logistica/LogisticaExpenseLinesFields";
 import {
   EMPTY_LOGISTICS_TRAVEL_CADASTROS,
   type LogisticsExpenseLine,
   type LogisticsTravelCadastros,
 } from "@/lib/logistica-travel-cadastros.types";
+import {
+  EMPTY_TRAVEL_HOTEL_STAY,
+  EMPTY_TRAVEL_ITINERARY,
+  EMPTY_TRAVEL_UNIFORMS,
+  serializeTravelHotelStay,
+  serializeTravelItinerary,
+  serializeTravelUniforms,
+  type TravelHotelStay,
+  type TravelItinerary,
+  type TravelUniforms,
+} from "@/lib/travel-itinerary.types";
 
 interface Tenant {
   id: string;
@@ -119,6 +131,10 @@ export default function NewLogisticaPage() {
   const [estimatedArrival, setEstimatedArrival] = useState("");
   const [hotelName, setHotelName] = useState("");
   const [hotelAddress, setHotelAddress] = useState("");
+  const [isHomeMatch, setIsHomeMatch] = useState(false);
+  const [itinerary, setItinerary] = useState<TravelItinerary>(EMPTY_TRAVEL_ITINERARY);
+  const [hotelStay, setHotelStay] = useState<TravelHotelStay>(EMPTY_TRAVEL_HOTEL_STAY);
+  const [uniforms, setUniforms] = useState<TravelUniforms>(EMPTY_TRAVEL_UNIFORMS);
   const [logisticsCadastros, setLogisticsCadastros] =
     useState<LogisticsTravelCadastros>(EMPTY_LOGISTICS_TRAVEL_CADASTROS);
   const [pointOfInterestIds, setPointOfInterestIds] = useState<string[]>([]);
@@ -237,6 +253,7 @@ export default function NewLogisticaPage() {
         setStadiumName(f.venueName || "");
         setChampionshipName(f.competitionName || "");
         setCategory(f.category || "");
+        setIsHomeMatch(f.isOurTeamHome === true);
         const stadium = stadiums.find((s) => s.name === f.venueName);
         if (stadium) {
           if (stadium.city) setCity(stadium.city);
@@ -282,7 +299,10 @@ export default function NewLogisticaPage() {
         tenantId,
         ...travelCategoriesPayload(multiCategoryMode, category, selectedCategories),
         matchDate: matchDate.trim(),
-        isHomeMatch: selectedFixture?.isOurTeamHome === true,
+        isHomeMatch,
+        itinerary: serializeTravelItinerary(itinerary),
+        hotelStay: serializeTravelHotelStay(hotelStay),
+        uniforms: serializeTravelUniforms(uniforms),
         externalId: selectedFixture?.externalId,
         opponentName: opponentName.trim() || undefined,
         stadiumName: stadiumName.trim() || undefined,
@@ -402,6 +422,16 @@ export default function NewLogisticaPage() {
                 </Select>
               </div>
             )}
+
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[#C8102E]"
+                checked={isHomeMatch}
+                onChange={(e) => setIsHomeMatch(e.target.checked)}
+              />
+              Jogo em casa (agenda local, sem itinerário de viagem)
+            </label>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
@@ -573,6 +603,29 @@ export default function NewLogisticaPage() {
               onHotelNameChange={setHotelName}
               onHotelAddressChange={setHotelAddress}
               tenantId={tenantId}
+              disabled={loading}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{isHomeMatch ? "Agenda do jogo (casa)" : "Itinerário e uniformes"}</CardTitle>
+            <CardDescription>
+              {isHomeMatch
+                ? "Refeições, rouparia, aquecimento, vestiário e retorno."
+                : "Tipo de ônibus (LD/DD), paradas de ida/volta, check-in/out e kits."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LogisticaItineraryFields
+              isHomeMatch={isHomeMatch}
+              itinerary={itinerary}
+              hotelStay={hotelStay}
+              uniforms={uniforms}
+              onItineraryChange={setItinerary}
+              onHotelStayChange={setHotelStay}
+              onUniformsChange={setUniforms}
               disabled={loading}
             />
           </CardContent>

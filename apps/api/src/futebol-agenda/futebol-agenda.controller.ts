@@ -145,6 +145,7 @@ export class FutebolAgendaController {
       startAt: string;
       endAt?: string;
       allDay?: boolean;
+      dayPeriod?: string | null;
       location?: string;
       spaceId?: string;
       description?: string;
@@ -168,6 +169,7 @@ export class FutebolAgendaController {
       startAt: string;
       endAt: string | null;
       allDay: boolean;
+      dayPeriod: string | null;
       location: string;
       spaceId: string | null;
       description: string;

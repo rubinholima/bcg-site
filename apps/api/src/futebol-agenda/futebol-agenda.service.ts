@@ -85,6 +85,7 @@ function toEntryDto(row: {
   startAt: Date;
   endAt: Date | null;
   allDay: boolean;
+  dayPeriod?: string | null;
   location: string | null;
   spaceId?: string | null;
   description: string | null;
@@ -108,6 +109,7 @@ function toEntryDto(row: {
     startAt: row.startAt.toISOString(),
     endAt: row.endAt?.toISOString() ?? null,
     allDay: row.allDay,
+    dayPeriod: row.dayPeriod ?? null,
     location: row.location,
     spaceId: row.spaceId ?? null,
     spaceName: row.space?.name ?? null,
@@ -324,6 +326,7 @@ export class FutebolAgendaService {
         startAt: e.startAt.toISOString(),
         endAt: e.endAt?.toISOString() ?? null,
         allDay: e.allDay,
+        dayPeriod: e.dayPeriod ?? null,
         tenantId: e.tenantId,
         tenantName: e.tenant.name,
         category: e.category,
@@ -529,6 +532,7 @@ export class FutebolAgendaService {
     startAt: string;
     endAt?: string;
     allDay?: boolean;
+    dayPeriod?: string | null;
     location?: string;
     spaceId?: string;
     description?: string;
@@ -554,6 +558,10 @@ export class FutebolAgendaService {
 
     const category = dto.category?.trim() || null;
     const spaceId = dto.spaceId?.trim() || null;
+    const dayPeriod =
+      dto.dayPeriod === 'manha' || dto.dayPeriod === 'tarde' || dto.dayPeriod === 'noite'
+        ? dto.dayPeriod
+        : null;
 
     await this.assertNoSpaceConflict({
       tenantId: dto.tenantId,
@@ -584,6 +592,7 @@ export class FutebolAgendaService {
         startAt,
         endAt,
         allDay: dto.allDay ?? false,
+        dayPeriod,
         location,
         spaceId,
         description: dto.description?.trim() || null,
@@ -611,6 +620,7 @@ export class FutebolAgendaService {
       startAt: string;
       endAt: string | null;
       allDay: boolean;
+      dayPeriod: string | null;
       location: string;
       spaceId: string | null;
       description: string;
@@ -651,6 +661,12 @@ export class FutebolAgendaService {
     if (dto.startAt !== undefined) data.startAt = startAt;
     if (dto.endAt !== undefined) data.endAt = endAt;
     if (dto.allDay !== undefined) data.allDay = allDay;
+    if (dto.dayPeriod !== undefined) {
+      data.dayPeriod =
+        dto.dayPeriod === 'manha' || dto.dayPeriod === 'tarde' || dto.dayPeriod === 'noite'
+          ? dto.dayPeriod
+          : null;
+    }
     if (dto.description !== undefined) data.description = dto.description.trim() || null;
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.spaceId !== undefined) {

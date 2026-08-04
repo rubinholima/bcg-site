@@ -24,6 +24,7 @@ import {
 } from '../common/brazil-time.util';
 import type {
   HospedesReportDto,
+  LayoutRelacionadosReportDto,
   PassageirosReportDto,
   ProgramacaoSemanalReportDto,
   RelatorioHospedeRow,
@@ -212,6 +213,76 @@ export class FutebolRelatoriosService {
     };
   }
 
+  async getLayoutRelacionados(travelId: string): Promise<LayoutRelacionadosReportDto> {
+    const base = await this.getPassageiros(travelId);
+    const travel = await this.loadTravel(travelId);
+    const itinerary =
+      travel.itinerary && typeof travel.itinerary === 'object'
+        ? (travel.itinerary as Record<string, unknown>)
+        : {};
+    const uniformsRaw =
+      travel.uniforms && typeof travel.uniforms === 'object'
+        ? (travel.uniforms as Record<string, unknown>)
+        : {};
+
+    const mapStops = (raw: unknown) => {
+      if (!Array.isArray(raw)) return [];
+      return raw
+        .filter((s): s is Record<string, unknown> => !!s && typeof s === 'object')
+        .map((s) => ({
+          place: typeof s.place === 'string' ? s.place : '',
+          arriveAt: typeof s.arriveAt === 'string' ? s.arriveAt : null,
+          departAt: typeof s.departAt === 'string' ? s.departAt : null,
+          notes: typeof s.notes === 'string' ? s.notes : null,
+        }))
+        .filter((s) => s.place.trim());
+    };
+
+    const homeMatchAgenda = Array.isArray(itinerary.homeMatchAgenda)
+      ? itinerary.homeMatchAgenda
+          .filter((s): s is Record<string, unknown> => !!s && typeof s === 'object')
+          .map((s) => ({
+            label: typeof s.label === 'string' ? s.label : '',
+            time: typeof s.time === 'string' ? s.time : null,
+            notes: typeof s.notes === 'string' ? s.notes : null,
+          }))
+          .filter((s) => s.label.trim())
+      : [];
+
+    const busType =
+      itinerary.busType === 'LD' || itinerary.busType === 'DD'
+        ? itinerary.busType
+        : null;
+
+    return {
+      travel: base.travel,
+      athletes: base.athletes,
+      staff: base.staff,
+      guests: base.guests,
+      busType,
+      outbound: mapStops(itinerary.outbound),
+      returnStops: mapStops(itinerary.return),
+      homeMatchAgenda,
+      uniforms: {
+        athletesGame:
+          typeof uniformsRaw.athletesGame === 'string'
+            ? uniformsRaw.athletesGame
+            : null,
+        athletesTravel:
+          typeof uniformsRaw.athletesTravel === 'string'
+            ? uniformsRaw.athletesTravel
+            : null,
+        staffGame:
+          typeof uniformsRaw.staffGame === 'string' ? uniformsRaw.staffGame : null,
+        staffTravel:
+          typeof uniformsRaw.staffTravel === 'string'
+            ? uniformsRaw.staffTravel
+            : null,
+      },
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
   async listTravels(tenantId: string) {
     if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
     return this.prisma.travelLogistics.findMany({
@@ -321,7 +392,7 @@ export class FutebolRelatoriosService {
       for (const targetCat of targetCats) {
         if (!day.byCategory[targetCat]) day.byCategory[targetCat] = [];
 
-        const time = formatTimeBrazil(start, item.allDay);
+        const time = formatTimeBrazil(start, item.allDay, item.dayPeriod);
 
         day.byCategory[targetCat].push({
           time,
@@ -392,6 +463,19 @@ export class FutebolRelatoriosService {
     categories: string[],
     categoryLabel: string,
   ): RelatorioTravelMeta {
+    const hotelStay =
+      travel.hotelStay && typeof travel.hotelStay === 'object'
+        ? (travel.hotelStay as { checkIn?: unknown; checkOut?: unknown })
+        : {};
+    const hotelCheckIn =
+      typeof hotelStay.checkIn === 'string' && hotelStay.checkIn.trim()
+        ? hotelStay.checkIn
+        : null;
+    const hotelCheckOut =
+      typeof hotelStay.checkOut === 'string' && hotelStay.checkOut.trim()
+        ? hotelStay.checkOut
+        : null;
+
     return {
       id: travel.id,
       tenant: {
@@ -416,6 +500,9 @@ export class FutebolRelatoriosService {
       estimatedArrival: travel.estimatedArrival?.toISOString() ?? null,
       hotelName: travel.hotelName,
       hotelAddress: travel.hotelAddress,
+      hotelCheckIn,
+      hotelCheckOut,
+      isHomeMatch: travel.isHomeMatch === true,
       notes: travel.notes,
     };
   }

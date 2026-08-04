@@ -33,6 +33,7 @@ export interface FutebolRelatorioTravel {
   status: string;
   isHomeMatch?: boolean;
   externalId?: string | null;
+  _count?: { participants?: number };
 }
 
 export function isClubForRelatorio(kindName: string | null | undefined): boolean {

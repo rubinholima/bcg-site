@@ -70,6 +70,14 @@ import {
   type SquadCategoryColor,
 } from "@/lib/agenda-squad-category-colors";
 import { combineDateTimeBrazil, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
+import {
+  AGENDA_DAY_PERIOD_HOURS,
+  AGENDA_DAY_PERIOD_LABEL,
+  AGENDA_DAY_PERIODS,
+  isAgendaDayPeriod,
+  type AgendaDayPeriod,
+} from "@/lib/travel-itinerary.types";
+import { NativeSelect } from "@/components/ui/native-select";
 
 interface Tenant {
   id: string;
@@ -138,7 +146,10 @@ function matchSideOf(item: FootballAgendaCalendarItem): AgendaMatchSide {
   return null;
 }
 
-function formatTime(iso: string, allDay: boolean): string {
+function formatTime(iso: string, allDay: boolean, dayPeriod?: string | null): string {
+  if (dayPeriod === "manha" || dayPeriod === "tarde" || dayPeriod === "noite") {
+    return AGENDA_DAY_PERIOD_LABEL[dayPeriod];
+  }
   if (allDay) return "Dia inteiro";
   return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
@@ -184,6 +195,7 @@ type EntryForm = {
   endAt: string;
   endTime: string;
   allDay: boolean;
+  dayPeriod: "" | AgendaDayPeriod;
   spaceId: string;
   location: string;
   description: string;
@@ -202,6 +214,7 @@ const emptyForm = (): EntryForm => ({
   endAt: "",
   endTime: "10:00",
   allDay: false,
+  dayPeriod: "",
   spaceId: "",
   location: "",
   description: "",
@@ -559,13 +572,24 @@ export function FutebolAgendaOperacional() {
       startAt: startKey,
       startTime: entry.allDay ? "09:00" : timeInBrazil(entry.startAt),
       endAt: endKey,
-      endTime: entry.endAt && !entry.allDay ? timeInBrazil(entry.endAt) : "10:00",
-      allDay: entry.allDay,
+      endTime: entry.endAt && !entry.allDay && !entry.dayPeriod ? timeInBrazil(entry.endAt) : "10:00",
+      allDay: entry.allDay && !entry.dayPeriod,
+      dayPeriod: isAgendaDayPeriod(entry.dayPeriod) ? entry.dayPeriod : "",
       spaceId: entry.spaceId ?? "",
       location: entry.location ?? "",
       description: entry.description ?? "",
       status: entry.status,
     });
+    if (isAgendaDayPeriod(entry.dayPeriod)) {
+      const hours = AGENDA_DAY_PERIOD_HOURS[entry.dayPeriod];
+      setForm((f) => ({
+        ...f,
+        startTime: hours.start,
+        endTime: hours.end,
+        allDay: false,
+        dayPeriod: entry.dayPeriod as AgendaDayPeriod,
+      }));
+    }
     setError(null);
     setDialogOpen(true);
   };
@@ -650,7 +674,7 @@ export function FutebolAgendaOperacional() {
           </span>
         ) : null}
         <p className="text-sm font-semibold opacity-95">
-          {formatTime(item.startAt, item.allDay)}
+          {formatTime(item.startAt, item.allDay, item.dayPeriod)}
           {item.endAt && !item.allDay && item.source === "travel"
             ? ` · jogo ${formatTime(item.endAt, false)}`
             : item.endAt && !item.allDay
@@ -699,16 +723,21 @@ export function FutebolAgendaOperacional() {
     }
     setSaving(true);
     setError(null);
+    const period = isAgendaDayPeriod(form.dayPeriod) ? form.dayPeriod : null;
+    const hours = period ? AGENDA_DAY_PERIOD_HOURS[period] : null;
+    const startTime = hours ? hours.start : form.startTime;
+    const endTime = hours ? hours.end : form.endTime;
+    const allDay = period ? false : form.allDay;
+    const endDate = form.endAt || form.startAt;
     const payload = {
       tenantId: form.tenantId,
       category: form.category || undefined,
       type: form.type,
       title: form.title.trim().toLocaleUpperCase("pt-BR"),
-      startAt: combineDateTime(form.startAt, form.startTime, form.allDay),
-      endAt: form.endAt
-        ? combineDateTime(form.endAt, form.endTime, form.allDay)
-        : undefined,
-      allDay: form.allDay,
+      startAt: combineDateTime(form.startAt, startTime, allDay),
+      endAt: endDate ? combineDateTime(endDate, endTime, allDay) : undefined,
+      allDay,
+      dayPeriod: period,
       spaceId: form.spaceId || undefined,
       location: form.location.trim().toLocaleUpperCase("pt-BR") || undefined,
       description: form.description.trim().toLocaleUpperCase("pt-BR") || undefined,
@@ -1203,12 +1232,50 @@ export function FutebolAgendaOperacional() {
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                checked={form.allDay}
-                onChange={(e) => setForm((f) => ({ ...f, allDay: e.target.checked }))}
+                checked={form.allDay && !form.dayPeriod}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    allDay: e.target.checked,
+                    dayPeriod: e.target.checked ? "" : f.dayPeriod,
+                  }))
+                }
                 className="h-4 w-4 rounded border-border"
               />
               Dia inteiro
             </label>
+            <div className="grid gap-1.5">
+              <Label>Período do dia</Label>
+              <NativeSelect
+                value={form.dayPeriod}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (isAgendaDayPeriod(v)) {
+                    const hours = AGENDA_DAY_PERIOD_HOURS[v];
+                    setForm((f) => ({
+                      ...f,
+                      dayPeriod: v,
+                      allDay: false,
+                      startTime: hours.start,
+                      endTime: hours.end,
+                      endAt: f.endAt || f.startAt,
+                    }));
+                  } else {
+                    setForm((f) => ({ ...f, dayPeriod: "" }));
+                  }
+                }}
+              >
+                <option value="">Horário específico</option>
+                {AGENDA_DAY_PERIODS.map((p) => (
+                  <option key={p} value={p}>
+                    {AGENDA_DAY_PERIOD_LABEL[p]}
+                  </option>
+                ))}
+              </NativeSelect>
+              <p className="text-xs text-muted-foreground">
+                Use para tarefas longas (ex.: descanso na tarde, noite pré-jogo).
+              </p>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="grid gap-1.5">
                 <Label>Início *</Label>
@@ -1219,7 +1286,7 @@ export function FutebolAgendaOperacional() {
                   onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))}
                 />
               </div>
-              {!form.allDay ? (
+              {!form.allDay && !form.dayPeriod ? (
                 <div className="grid gap-1.5">
                   <Label>Hora início</Label>
                   <Input
@@ -1241,7 +1308,7 @@ export function FutebolAgendaOperacional() {
                   onChange={(e) => setForm((f) => ({ ...f, endAt: e.target.value }))}
                 />
               </div>
-              {!form.allDay ? (
+              {!form.allDay && !form.dayPeriod ? (
                 <div className="grid gap-1.5">
                   <Label>Hora fim</Label>
                   <Input

@@ -48,3 +48,18 @@ export function upcomingFixtures(fixtures: AgendaFixture[]): AgendaFixture[] {
     .filter((f) => new Date(f.startISO) > now)
     .sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
 }
+
+/** Futuros + passados recentes (padrão 30 dias) — para reabrir convocação. */
+export function fixturesForConvocation(
+  fixtures: AgendaFixture[],
+  pastDays = 30,
+): AgendaFixture[] {
+  const now = Date.now();
+  const pastCutoff = now - pastDays * 24 * 60 * 60 * 1000;
+  return fixtures
+    .filter((f) => {
+      const t = new Date(f.startISO).getTime();
+      return !Number.isNaN(t) && t >= pastCutoff;
+    })
+    .sort((a, b) => new Date(a.startISO).getTime() - new Date(b.startISO).getTime());
+}

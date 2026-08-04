@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, ClipboardCheck, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ import {
   travelCategoriesPayload,
 } from "@/components/dashboard/futebol/TravelCategoriesField";
 import { LogisticaTravelCadastrosFields } from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
+import { LogisticaItineraryFields } from "@/components/dashboard/futebol/logistica/LogisticaItineraryFields";
 import { LogisticaExpenseLinesFields } from "@/components/dashboard/futebol/logistica/LogisticaExpenseLinesFields";
 import {
   EMPTY_LOGISTICS_TRAVEL_CADASTROS,
@@ -37,6 +38,20 @@ import {
   type LogisticsExpenseLine,
   type LogisticsTravelCadastros,
 } from "@/lib/logistica-travel-cadastros.types";
+import {
+  EMPTY_TRAVEL_HOTEL_STAY,
+  EMPTY_TRAVEL_ITINERARY,
+  EMPTY_TRAVEL_UNIFORMS,
+  parseTravelHotelStay,
+  parseTravelItinerary,
+  parseTravelUniforms,
+  serializeTravelHotelStay,
+  serializeTravelItinerary,
+  serializeTravelUniforms,
+  type TravelHotelStay,
+  type TravelItinerary,
+  type TravelUniforms,
+} from "@/lib/travel-itinerary.types";
 
 interface Championship {
   id: string;
@@ -69,6 +84,7 @@ interface TravelLogisticsItem {
   category?: string | null;
   categories?: string[] | null;
   matchDate: string;
+  isHomeMatch?: boolean;
   opponentName?: string | null;
   stadiumName?: string | null;
   city?: string | null;
@@ -82,6 +98,9 @@ interface TravelLogisticsItem {
   hotelName?: string | null;
   hotelAddress?: string | null;
   accommodationRooms?: RoomAssignment[] | null;
+  itinerary?: unknown;
+  hotelStay?: unknown;
+  uniforms?: unknown;
   beatscodeMeta?: unknown;
   nutritionApprovedAt?: string | null;
   nutritionApprovedBy?: string | null;
@@ -89,6 +108,7 @@ interface TravelLogisticsItem {
   status: string;
   weatherForecast?: string | null;
   notes?: string | null;
+  _count?: { participants?: number };
 }
 
 function isClubForLogistica(kindName: string | null | undefined): boolean {
@@ -157,6 +177,11 @@ export default function EditLogisticaPage() {
   const [estimatedArrival, setEstimatedArrival] = useState("");
   const [hotelName, setHotelName] = useState("");
   const [hotelAddress, setHotelAddress] = useState("");
+  const [isHomeMatch, setIsHomeMatch] = useState(false);
+  const [itinerary, setItinerary] = useState<TravelItinerary>(EMPTY_TRAVEL_ITINERARY);
+  const [hotelStay, setHotelStay] = useState<TravelHotelStay>(EMPTY_TRAVEL_HOTEL_STAY);
+  const [uniforms, setUniforms] = useState<TravelUniforms>(EMPTY_TRAVEL_UNIFORMS);
+  const [participantCount, setParticipantCount] = useState(0);
   const [logisticsCadastros, setLogisticsCadastros] =
     useState<LogisticsTravelCadastros>(EMPTY_LOGISTICS_TRAVEL_CADASTROS);
   const [pointOfInterestIds, setPointOfInterestIds] = useState<string[]>([]);
@@ -190,6 +215,11 @@ export default function EditLogisticaPage() {
         setEstimatedArrival(toDateTimeLocal(data.estimatedArrival));
         setHotelName(data.hotelName ?? "");
         setHotelAddress(data.hotelAddress ?? "");
+        setIsHomeMatch(data.isHomeMatch === true);
+        setItinerary(parseTravelItinerary(data.itinerary));
+        setHotelStay(parseTravelHotelStay(data.hotelStay));
+        setUniforms(parseTravelUniforms(data.uniforms));
+        setParticipantCount(data._count?.participants ?? 0);
         setLogisticsCadastros(parseLogisticsTravelCadastros(data.beatscodeMeta));
         setExpenseLines(parseLogisticsExpenseLines(data.beatscodeMeta));
         setPointOfInterestIds(parsePointOfInterestIds(data.beatscodeMeta));
@@ -334,6 +364,10 @@ export default function EditLogisticaPage() {
         estimatedArrival: estimatedArrival.trim() || undefined,
         hotelName: hotelName.trim() || undefined,
         hotelAddress: hotelAddress.trim() || undefined,
+        isHomeMatch,
+        itinerary: serializeTravelItinerary(itinerary),
+        hotelStay: serializeTravelHotelStay(hotelStay),
+        uniforms: serializeTravelUniforms(uniforms),
         logisticsCadastros,
         expenseLines,
         pointOfInterestIds,
@@ -379,6 +413,24 @@ export default function EditLogisticaPage() {
               Convocação
             </Link>
           </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href={`/dashboard/futebol/logistica/relatorios/layout-relacionados?travelId=${id}&tenantId=${item.tenantId}`}>
+              <Printer className="mr-2 h-4 w-4" />
+              Layout Relacionados
+            </Link>
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href={`/dashboard/futebol/logistica/relatorios/passageiros?travelId=${id}&tenantId=${item.tenantId}`}>
+              <Printer className="mr-2 h-4 w-4" />
+              Passageiros
+            </Link>
+          </Button>
+          <Button type="button" variant="outline" asChild>
+            <Link href={`/dashboard/futebol/logistica/relatorios/hospedes?travelId=${id}&tenantId=${item.tenantId}`}>
+              <Printer className="mr-2 h-4 w-4" />
+              Hóspedes
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -387,12 +439,84 @@ export default function EditLogisticaPage() {
           <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">{error}</div>
         )}
 
+        {(() => {
+          const hasOutbound = (itinerary.outbound ?? []).some((s) => s.place.trim());
+          const hasReturn = (itinerary.return ?? []).some((s) => s.place.trim());
+          const hasHomeAgenda = (itinerary.homeMatchAgenda ?? []).some((s) => s.label.trim());
+          const hasHotel =
+            !!(hotelName.trim() || logisticsCadastros.hotelId) &&
+            !!(hotelStay.checkIn?.trim() || hotelStay.checkOut?.trim() || accommodationRooms.length > 0);
+          const hasTransport =
+            !!transportType &&
+            (!!logisticsCadastros.transportCompanyId || !!itinerary.busType || hasOutbound);
+          const checklist = [
+            { ok: participantCount > 0, label: "Convocação", href: `/dashboard/futebol/logistica/convocacao?travelId=${id}` },
+            {
+              ok: isHomeMatch ? hasHomeAgenda || hasTransport : hasTransport && hasOutbound,
+              label: isHomeMatch ? "Agenda do jogo (casa)" : "Transporte + ida",
+            },
+            { ok: isHomeMatch || hasReturn, label: "Volta", hide: isHomeMatch },
+            { ok: isHomeMatch || hasHotel, label: "Hotel + quartos", hide: isHomeMatch },
+            {
+              ok: true,
+              label: "Documentos (imprimir)",
+              href: `/dashboard/futebol/logistica/relatorios/layout-relacionados?travelId=${id}&tenantId=${item.tenantId}`,
+            },
+            {
+              ok: true,
+              label: "Agenda do clube",
+              href: "/dashboard/futebol/agenda",
+            },
+          ].filter((c) => !("hide" in c && c.hide));
+          return (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Checklist operacional</CardTitle>
+                <CardDescription>Marca verde quando há dados mínimos salvos nesta viagem.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {checklist.map((c) => {
+                    const Icon = c.ok ? CheckCircle2 : Circle;
+                    const inner = (
+                      <>
+                        <Icon className={`h-4 w-4 shrink-0 ${c.ok ? "text-emerald-500" : "text-muted-foreground"}`} />
+                        <span className={c.ok ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                      </>
+                    );
+                    return (
+                      <li key={c.label}>
+                        {c.href ? (
+                          <Link href={c.href} className="flex items-center gap-2 text-sm hover:underline">
+                            {inner}
+                          </Link>
+                        ) : (
+                          <span className="flex items-center gap-2 text-sm">{inner}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            </Card>
+          );
+        })()}
+
         <Card>
           <CardHeader>
             <CardTitle>Jogo</CardTitle>
             <CardDescription>Clube: {tenants.find((t) => t.id === item.tenantId)?.name ?? item.tenantId}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[#C8102E]"
+                checked={isHomeMatch}
+                onChange={(e) => setIsHomeMatch(e.target.checked)}
+              />
+              Jogo em casa (agenda local, sem itinerário de viagem)
+            </label>
             <TravelCategoriesField
               categoriesForDropdown={categoriesForDropdown}
               multiMode={multiCategoryMode}
@@ -587,6 +711,29 @@ export default function EditLogisticaPage() {
               onHotelNameChange={setHotelName}
               onHotelAddressChange={setHotelAddress}
               tenantId={item.tenantId}
+              disabled={saving}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{isHomeMatch ? "Agenda do jogo (casa)" : "Itinerário e uniformes"}</CardTitle>
+            <CardDescription>
+              {isHomeMatch
+                ? "Refeições, rouparia, aquecimento, vestiário e retorno."
+                : "Tipo de ônibus (LD/DD), paradas de ida/volta, check-in/out e kits."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LogisticaItineraryFields
+              isHomeMatch={isHomeMatch}
+              itinerary={itinerary}
+              hotelStay={hotelStay}
+              uniforms={uniforms}
+              onItineraryChange={setItinerary}
+              onHotelStayChange={setHotelStay}
+              onUniformsChange={setUniforms}
               disabled={saving}
             />
           </CardContent>

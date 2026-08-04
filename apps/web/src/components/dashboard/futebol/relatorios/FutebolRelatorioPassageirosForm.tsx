@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ import {
 } from "./futebol-relatorio-shared";
 
 export function FutebolRelatorioPassageirosForm() {
+  const searchParams = useSearchParams();
   const { tenants } = useFutebolRelatorioTenants();
   const [tenantId, setTenantId] = useState("");
   const [travelId, setTravelId] = useState("");
@@ -47,8 +49,15 @@ export function FutebolRelatorioPassageirosForm() {
   const { travels, loading: loadingTravels } = useFutebolRelatorioTravels(tenantId);
 
   useEffect(() => {
-    if (tenants.length === 1) setTenantId(tenants[0]!.id);
-  }, [tenants]);
+    const qTenant = searchParams.get("tenantId")?.trim() ?? "";
+    const qTravel = searchParams.get("travelId")?.trim() ?? "";
+    if (qTenant) setTenantId(qTenant);
+    if (qTravel) setTravelId(qTravel);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!tenantId && tenants.length === 1) setTenantId(tenants[0]!.id);
+  }, [tenants, tenantId]);
 
   const fetchReport = async (): Promise<PassageirosReportDto | null> => {
     if (!travelId) {

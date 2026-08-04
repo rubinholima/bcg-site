@@ -35,6 +35,14 @@ export class FutebolRelatoriosController {
     return this.service.getHospedes(travelId.trim());
   }
 
+  @Get('layout-relacionados')
+  getLayoutRelacionados(@Query('travelId') travelId?: string) {
+    if (!travelId?.trim()) {
+      throw new BadRequestException('travelId é obrigatório');
+    }
+    return this.service.getLayoutRelacionados(travelId.trim());
+  }
+
   @Get('programacao-semanal')
   getProgramacaoSemanal(
     @Query('tenantId') tenantId?: string,

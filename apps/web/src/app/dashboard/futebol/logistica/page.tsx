@@ -33,6 +33,7 @@ interface TravelLogisticsItem {
   hotelName?: string | null;
   estimatedCostTotal?: number | null;
   status: string;
+  _count?: { participants?: number };
 }
 
 const TRANSPORT_LABELS: Record<string, string> = {
@@ -180,6 +181,7 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
                     <TableHead>Hotel</TableHead>
                     <TableHead>Custo est.</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Convocados</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -214,6 +216,17 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
                       <TableCell>
                         <span className="text-sm">
                           {STATUS_LABELS[item.status] ?? item.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={
+                            (item._count?.participants ?? 0) > 0
+                              ? "inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-400"
+                              : "text-sm text-muted-foreground"
+                          }
+                        >
+                          {item._count?.participants ?? 0}
                         </span>
                       </TableCell>
                       <TableRowActions>

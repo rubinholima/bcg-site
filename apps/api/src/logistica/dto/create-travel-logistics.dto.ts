@@ -149,4 +149,16 @@ export class CreateTravelLogisticsDto {
   @IsArray()
   @IsString({ each: true })
   pointOfInterestIds?: string[];
+
+  @IsOptional()
+  @IsObject()
+  itinerary?: unknown;
+
+  @IsOptional()
+  @IsObject()
+  hotelStay?: unknown;
+
+  @IsOptional()
+  @IsObject()
+  uniforms?: unknown;
 }

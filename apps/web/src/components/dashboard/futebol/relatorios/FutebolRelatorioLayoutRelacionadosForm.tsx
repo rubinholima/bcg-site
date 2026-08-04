@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -15,8 +16,11 @@ import {
 } from "@/components/ui/select";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
-import type { HospedesReportDto, PrintPageSize } from "@/lib/futebol-relatorios.types";
-import { buildHospedesPrintHtml, printHospedesReport } from "@/lib/futebol-relatorios-print";
+import type { LayoutRelacionadosReportDto, PrintPageSize } from "@/lib/futebol-relatorios.types";
+import {
+  buildLayoutRelacionadosPrintHtml,
+  printLayoutRelacionadosReport,
+} from "@/lib/futebol-relatorios-print";
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import {
   PageSizeSelect,
@@ -25,7 +29,7 @@ import {
   useFutebolRelatorioTravels,
 } from "./futebol-relatorio-shared";
 
-export function FutebolRelatorioHospedesForm() {
+export function FutebolRelatorioLayoutRelacionadosForm() {
   const searchParams = useSearchParams();
   const { tenants } = useFutebolRelatorioTenants();
   const [tenantId, setTenantId] = useState("");
@@ -34,7 +38,7 @@ export function FutebolRelatorioHospedesForm() {
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [reportData, setReportData] = useState<HospedesReportDto | null>(null);
+  const [reportData, setReportData] = useState<LayoutRelacionadosReportDto | null>(null);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -55,26 +59,26 @@ export function FutebolRelatorioHospedesForm() {
     if (!tenantId && tenants.length === 1) setTenantId(tenants[0]!.id);
   }, [tenants, tenantId]);
 
-  const fetchReport = async (): Promise<HospedesReportDto | null> => {
+  const fetchReport = async (): Promise<LayoutRelacionadosReportDto | null> => {
     if (!travelId) {
       setFeedback({
         open: true,
         title: "Viagem obrigatória",
-        message: "Selecione a viagem para gerar a relação de hóspedes.",
+        message: "Selecione a viagem para gerar o Layout Relacionados.",
         variant: "warning",
       });
       return null;
     }
     try {
-      const { data } = await api.get<HospedesReportDto>(
-        `/futebol-relatorios/hospedes?travelId=${encodeURIComponent(travelId)}`,
+      const { data } = await api.get<LayoutRelacionadosReportDto>(
+        `/futebol-relatorios/layout-relacionados?travelId=${encodeURIComponent(travelId)}`,
       );
       return data;
     } catch {
       setFeedback({
         open: true,
         title: "Erro",
-        message: "Não foi possível carregar os dados de hospedagem.",
+        message: "Não foi possível carregar os dados da viagem.",
         variant: "error",
       });
       return null;
@@ -86,7 +90,7 @@ export function FutebolRelatorioHospedesForm() {
     const data = await fetchReport();
     if (data) {
       setReportData(data);
-      setPreviewHtml(buildHospedesPrintHtml(data, pageSize));
+      setPreviewHtml(buildLayoutRelacionadosPrintHtml(data, pageSize));
       setPreviewOpen(true);
     }
     setBusy(false);
@@ -95,7 +99,7 @@ export function FutebolRelatorioHospedesForm() {
   const handlePrint = async () => {
     setBusy(true);
     const data = reportData ?? (await fetchReport());
-    if (data) printHospedesReport(data, pageSize);
+    if (data) printLayoutRelacionadosReport(data, pageSize);
     setBusy(false);
   };
 
@@ -103,12 +107,12 @@ export function FutebolRelatorioHospedesForm() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Relação de Hóspedes</CardTitle>
-          <CardDescription>
-            Quartos, tipo de apartamento e ocupantes com documentos — ideal para check-in no hotel.
-          </CardDescription>
+          <CardTitle>Layout Relacionados</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Convocados, uniformes e programação de ida/volta (ou agenda em casa) em um único documento.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Clube</Label>
@@ -168,6 +172,11 @@ export function FutebolRelatorioHospedesForm() {
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
               Imprimir / PDF
             </Button>
+            {travelId ? (
+              <Button type="button" variant="outline" asChild>
+                <Link href={`/dashboard/futebol/logistica/${travelId}/edit`}>Editar viagem</Link>
+              </Button>
+            ) : null}
           </div>
         </CardContent>
       </Card>
@@ -175,10 +184,10 @@ export function FutebolRelatorioHospedesForm() {
       <PrintPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
-        title="Pré-visualização — Hóspedes"
+        title="Pré-visualização — Layout Relacionados"
         html={previewHtml}
         onPrint={() => {
-          if (reportData) printHospedesReport(reportData, pageSize);
+          if (reportData) printLayoutRelacionadosReport(reportData, pageSize);
         }}
       />
 

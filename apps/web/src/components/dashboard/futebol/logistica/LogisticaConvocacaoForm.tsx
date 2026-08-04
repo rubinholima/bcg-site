@@ -27,8 +27,8 @@ import {
 } from "@/components/dashboard/futebol/relatorios/futebol-relatorio-shared";
 import {
   formatFixtureOptionLabel,
+  fixturesForConvocation,
   resolveFixtureOpponentName,
-  upcomingFixtures,
   type AgendaFixture,
 } from "@/lib/travel-fixture-utils";
 
@@ -99,6 +99,7 @@ export function LogisticaConvocacaoForm() {
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [saving, setSaving] = useState(false);
   const [convocationSaved, setConvocationSaved] = useState(false);
+  const [onlyWithConvocation, setOnlyWithConvocation] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -167,7 +168,7 @@ export function LogisticaConvocacaoForm() {
     })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: AgendaFixture[]) => {
-        setFixtures(upcomingFixtures(Array.isArray(data) ? data : []));
+        setFixtures(fixturesForConvocation(Array.isArray(data) ? data : []));
       })
       .catch(() => setFixtures([]))
       .finally(() => setLoadingFixtures(false));
@@ -306,10 +307,6 @@ export function LogisticaConvocacaoForm() {
     if (isHomeMatch) setSelectedGuestIds(new Set());
   }, [isHomeMatch]);
 
-  useEffect(() => {
-    setConvocationSaved(false);
-  }, [selectedPlayerIds, selectedStaffIds, selectedGuestIds]);
-
   const travelCategories = useMemo(() => {
     if (!selectedTravel) return [] as string[];
     const parsed = parseTravelCategoriesFromApi(
@@ -344,27 +341,25 @@ export function LogisticaConvocacaoForm() {
         `/logistica/${encodeURIComponent(id)}/participants`,
       );
       const list = Array.isArray(data) ? data : [];
-      setSelectedPlayerIds(
-        new Set(
-          list
-            .filter((p) => p.personType === "player" && p.playerId)
-            .map((p) => p.playerId!),
-        ),
+      const playersSel = new Set(
+        list
+          .filter((p) => p.personType === "player" && p.playerId)
+          .map((p) => p.playerId!),
       );
-      setSelectedStaffIds(
-        new Set(
-          list
-            .filter((p) => p.personType === "staff" && p.staffId)
-            .map((p) => p.staffId!),
-        ),
+      const staffSel = new Set(
+        list
+          .filter((p) => p.personType === "staff" && p.staffId)
+          .map((p) => p.staffId!),
       );
-      setSelectedGuestIds(
-        new Set(
-          list
-            .filter((p) => p.personType === "guest" && p.logisticsGuestId)
-            .map((p) => p.logisticsGuestId!),
-        ),
+      const guestsSel = new Set(
+        list
+          .filter((p) => p.personType === "guest" && p.logisticsGuestId)
+          .map((p) => p.logisticsGuestId!),
       );
+      setSelectedPlayerIds(playersSel);
+      setSelectedStaffIds(staffSel);
+      setSelectedGuestIds(guestsSel);
+      setConvocationSaved(playersSel.size + staffSel.size + guestsSel.size > 0);
     } catch {
       setSelectedPlayerIds(new Set());
       setSelectedStaffIds(new Set());
@@ -581,7 +576,7 @@ export function LogisticaConvocacaoForm() {
 
           {tenantId ? (
             <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-              <Label>Jogo da agenda</Label>
+              <Label>Jogo da agenda (últimos 30 dias + futuros)</Label>
               <Select
                 value={selectedFixtureId || "none"}
                 onValueChange={(v) => void handleSelectFixture(v === "none" ? "" : v)}
@@ -612,7 +607,16 @@ export function LogisticaConvocacaoForm() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
-              <Label>Ou selecione um registro existente</Label>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label>Ou selecione um registro existente</Label>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={onlyWithConvocation}
+                    onCheckedChange={(v) => setOnlyWithConvocation(v === true)}
+                  />
+                  Só com convocação
+                </label>
+              </div>
               <Select
                 value={travelId || "none"}
                 onValueChange={(v) => {
@@ -628,11 +632,20 @@ export function LogisticaConvocacaoForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Selecione…</SelectItem>
-                  {travels.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {formatTravelLabel(t)}
-                    </SelectItem>
-                  ))}
+                  {travels
+                    .filter((t) => {
+                      if (!onlyWithConvocation) return true;
+                      const n = t._count?.participants ?? 0;
+                      return n > 0;
+                    })
+                    .map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {formatTravelLabel(t)}
+                        {(t._count?.participants ?? 0) > 0
+                          ? ` · ${t._count!.participants} convocados`
+                          : ""}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -946,7 +959,7 @@ export function LogisticaConvocacaoForm() {
             </Button>
           </div>
 
-          {convocationSaved && selectedTravel ? (
+          {convocationSaved && selectedTravel && !loadingParticipants ? (
             <Card className="border-green-500/30 bg-green-500/5">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-green-400">Convocação registrada</CardTitle>
