@@ -622,10 +622,7 @@ export function LogisticaConvocacaoForm() {
 
           {tenantId ? (
             <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-              <Label>Jogo da agenda (próximos)</Label>
-              <p className="text-xs text-muted-foreground">
-                Só jogos futuros para preparar a convocação / viagem.
-              </p>
+              <Label>Jogo da agenda</Label>
               <Select
                 value={selectedFixtureId || "none"}
                 onValueChange={(v) => void handleSelectFixture(v === "none" ? "" : v)}
@@ -638,7 +635,7 @@ export function LogisticaConvocacaoForm() {
                         ? "Carregando jogos…"
                         : fixtures.length === 0
                           ? "Nenhum jogo futuro na agenda"
-                          : "Selecione o próximo jogo"
+                          : "Selecione o jogo"
                     }
                   />
                 </SelectTrigger>
@@ -657,7 +654,7 @@ export function LogisticaConvocacaoForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label>Ou selecione um registro existente (próximos)</Label>
+                <Label>Ou selecione um registro existente</Label>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Checkbox
                     checked={onlyWithConvocation}
