@@ -868,11 +868,15 @@ export function buildLayoutRelacionadosPrintHtml(
     .filter(Boolean)
     .join(" · ");
 
+  const programacaoLabel = travel.isHomeMatch
+    ? "Layout Relacionados / Programação para o jogo"
+    : "Layout Relacionados / Programação da viagem";
+
   return documentShell(
     `Layout Relacionados — ${travel.tenant.name}`,
     travel.tenant.name,
     travel.tenant.logoUrl,
-    "Layout Relacionados / Programação da viagem",
+    programacaoLabel,
     badge,
     travelMetaHtml(travel, extra),
     body,

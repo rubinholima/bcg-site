@@ -13,6 +13,7 @@ import {
 import { ClickableTableRow, TableRowActions } from "@/components/ui/clickable-table-row";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { dateKeyInBrazil } from "@/lib/brazil-time";
 import { formatTravelCategoriesDisplay } from "@/lib/travel-categories-utils";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { LogisticaFilters } from "./LogisticaFilters";
@@ -99,10 +100,12 @@ type LogisticaPageProps = {
 export default async function LogisticaPage(props: LogisticaPageProps) {
   const { searchParams } = props;
   const params = await searchParams;
+  /** Sem filtro de data: só jogos de hoje em diante (não mostrar passados). */
+  const fromDate = params.fromDate?.trim() || dateKeyInBrazil(new Date());
   const items = await getLogistica({
     tenantId: params.tenantId,
     status: params.status,
-    fromDate: params.fromDate,
+    fromDate,
     toDate: params.toDate,
   });
   const showSuccess = params.success === "true";

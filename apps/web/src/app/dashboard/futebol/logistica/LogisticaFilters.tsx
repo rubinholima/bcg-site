@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
+import { dateKeyInBrazil } from "@/lib/brazil-time";
 import { isFootballKind } from "@/lib/home-data";
 
 interface Tenant {
@@ -57,13 +58,16 @@ export function LogisticaFilters() {
 
   const tenantId = searchParams.get("tenantId") ?? "";
   const status = searchParams.get("status") ?? "";
-  const fromDate = searchParams.get("fromDate") ?? "";
+  const fromDateParam = searchParams.get("fromDate");
+  const fromDate = fromDateParam?.trim() || dateKeyInBrazil(new Date());
   const toDate = searchParams.get("toDate") ?? "";
 
   const handleChange = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);
+    // fromDate vazio = padrão "hoje" (não listar passados)
+    if (key === "fromDate" && !value) params.delete("fromDate");
     router.push(`${LOGISTICA_BASE}?${params.toString()}`);
   };
 
@@ -123,7 +127,7 @@ export function LogisticaFilters() {
               onChange={(e) => handleChange("toDate", e.target.value)}
             />
           </div>
-          {(tenantId || status || fromDate || toDate) && (
+          {(tenantId || status || fromDateParam || toDate) && (
             <button
               type="button"
               onClick={() => router.push(LOGISTICA_BASE)}

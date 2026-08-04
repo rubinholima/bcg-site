@@ -197,10 +197,17 @@ export class LogisticaService {
     if (status?.trim()) where.status = status;
     if (fromDate || toDate) {
       where.matchDate = {};
-      if (fromDate)
-        (where.matchDate as Record<string, Date>).gte = new Date(fromDate);
-      if (toDate)
-        (where.matchDate as Record<string, Date>).lte = new Date(toDate);
+      if (fromDate) {
+        // YYYY-MM-DD no fuso de Brasília (evita cortar o dia atual por UTC)
+        (where.matchDate as Record<string, Date>).gte = fromDate.includes('T')
+          ? new Date(fromDate)
+          : new Date(`${fromDate}T00:00:00.000-03:00`);
+      }
+      if (toDate) {
+        (where.matchDate as Record<string, Date>).lte = toDate.includes('T')
+          ? new Date(toDate)
+          : new Date(`${toDate}T23:59:59.999-03:00`);
+      }
     }
     return this.prisma.travelLogistics.findMany({
       where,
