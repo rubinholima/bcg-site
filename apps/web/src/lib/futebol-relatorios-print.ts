@@ -401,6 +401,7 @@ function travelMetaHtml(travel: PassageirosReportDto["travel"], extra?: string):
     .filter(Boolean)
     .join(" — ");
   const side = travel.isHomeMatch ? "Casa" : "Fora";
+  const showTravelLogistics = !travel.isHomeMatch;
 
   return `
     <div class="meta-grid">
@@ -425,15 +426,19 @@ function travelMetaHtml(travel: PassageirosReportDto["travel"], extra?: string):
         <span>${escapeHtml(travel.championshipName?.trim() || "—")}</span>
       </div>
       ${location ? `<div class="meta-item full"><label>Local</label><span>${escapeHtml(location)}</span></div>` : ""}
-      ${transportLine ? `<div class="meta-item full"><label>Transporte</label><span>${escapeHtml(transportLine)}</span></div>` : ""}
       ${
-        travel.estimatedDeparture || travel.estimatedArrival
+        showTravelLogistics && transportLine
+          ? `<div class="meta-item full"><label>Transporte</label><span>${escapeHtml(transportLine)}</span></div>`
+          : ""
+      }
+      ${
+        showTravelLogistics && (travel.estimatedDeparture || travel.estimatedArrival)
           ? `<div class="meta-item"><label>Saída prevista</label><span>${escapeHtml(formatBrDateTime(travel.estimatedDeparture))}</span></div>
              <div class="meta-item"><label>Chegada prevista</label><span>${escapeHtml(formatBrDateTime(travel.estimatedArrival))}</span></div>`
           : ""
       }
       ${
-        travel.hotelName
+        showTravelLogistics && travel.hotelName
           ? `<div class="meta-item full"><label>Hospedagem</label><span>${escapeHtml(travel.hotelName)}${travel.hotelAddress ? ` — ${escapeHtml(travel.hotelAddress)}` : ""}</span></div>`
           : ""
       }
@@ -790,23 +795,30 @@ export function buildLayoutRelacionadosPrintHtml(
   size: PrintPageSize = "A4",
 ): string {
   const { travel, uniforms } = data;
-  const busLine = data.busType ? `Ônibus ${data.busType}` : null;
+  const busLine = !travel.isHomeMatch && data.busType ? `Ônibus ${data.busType}` : null;
   const extra = `
     ${busLine ? `<div class="meta-item"><label>Veículo</label><span>${escapeHtml(busLine)}</span></div>` : ""}
     ${
-      travel.hotelCheckIn || travel.hotelCheckOut
+      !travel.isHomeMatch && (travel.hotelCheckIn || travel.hotelCheckOut)
         ? `<div class="meta-item"><label>Check-in</label><span>${escapeHtml(formatBrDateTime(travel.hotelCheckIn) || "—")}</span></div>
            <div class="meta-item"><label>Check-out</label><span>${escapeHtml(formatBrDateTime(travel.hotelCheckOut) || "—")}</span></div>`
         : ""
     }
   `;
 
-  const uniformsRows = [
-    ["Atletas — jogo", uniforms.athletesGame],
-    ["Atletas — viagem", uniforms.athletesTravel],
-    ["Comissão — jogo", uniforms.staffGame],
-    ["Comissão — viagem", uniforms.staffTravel],
-  ]
+  const uniformsRows = (
+    travel.isHomeMatch
+      ? [
+          ["Atletas — jogo", uniforms.athletesGame],
+          ["Comissão — jogo", uniforms.staffGame],
+        ]
+      : [
+          ["Atletas — jogo", uniforms.athletesGame],
+          ["Atletas — viagem", uniforms.athletesTravel],
+          ["Comissão — jogo", uniforms.staffGame],
+          ["Comissão — viagem", uniforms.staffTravel],
+        ]
+  )
     .filter(([, v]) => v?.trim())
     .map(
       ([label, v]) =>

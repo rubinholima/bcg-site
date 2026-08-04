@@ -225,7 +225,12 @@ export function LogisticaItineraryFields({
             </div>
           ))
         )}
-        <UniformsBlock uniforms={uniforms} onChange={onUniformsChange} disabled={disabled} />
+        <UniformsBlock
+          uniforms={uniforms}
+          onChange={onUniformsChange}
+          disabled={disabled}
+          isHomeMatch
+        />
       </div>
     );
   }
@@ -295,10 +300,12 @@ function UniformsBlock({
   uniforms,
   onChange,
   disabled,
+  isHomeMatch,
 }: {
   uniforms: TravelUniforms;
   onChange: (u: TravelUniforms) => void;
   disabled?: boolean;
+  isHomeMatch?: boolean;
 }) {
   const [kits, setKits] = useState<UniformKitOption[]>([]);
 
@@ -317,12 +324,19 @@ function UniformsBlock({
     };
   }, []);
 
-  const fields = [
-    ["athletesGame", "Atletas — jogo"],
-    ["athletesTravel", "Atletas — viagem / concentração"],
-    ["staffGame", "Comissão — jogo"],
-    ["staffTravel", "Comissão — viagem"],
-  ] as const;
+  const fields = (
+    isHomeMatch
+      ? ([
+          ["athletesGame", "Atletas — jogo"],
+          ["staffGame", "Comissão — jogo"],
+        ] as const)
+      : ([
+          ["athletesGame", "Atletas — jogo"],
+          ["athletesTravel", "Atletas — viagem / concentração"],
+          ["staffGame", "Comissão — jogo"],
+          ["staffTravel", "Comissão — viagem"],
+        ] as const)
+  );
 
   const findKit = (name: string | null | undefined) =>
     kits.find((k) => k.name === name) ?? null;

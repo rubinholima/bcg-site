@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, Loader2, Printer } from "lucide-react";
@@ -48,6 +48,12 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
 
   const { travels, loading: loadingTravels } = useFutebolRelatorioTravels(tenantId);
 
+  const selectedTravel = useMemo(
+    () => travels.find((t) => t.id === travelId) ?? null,
+    [travels, travelId],
+  );
+  const isHomeMatch = selectedTravel?.isHomeMatch === true;
+
   useEffect(() => {
     const qTenant = searchParams.get("tenantId")?.trim() ?? "";
     const qTravel = searchParams.get("travelId")?.trim() ?? "";
@@ -63,8 +69,8 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
     if (!travelId) {
       setFeedback({
         open: true,
-        title: "Viagem obrigatória",
-        message: "Selecione a viagem para gerar o Layout Relacionados.",
+        title: "Seleção obrigatória",
+        message: "Selecione o jogo ou a viagem para gerar o Layout Relacionados.",
         variant: "warning",
       });
       return null;
@@ -78,7 +84,9 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
       setFeedback({
         open: true,
         title: "Erro",
-        message: "Não foi possível carregar os dados da viagem.",
+        message: isHomeMatch
+          ? "Não foi possível carregar os dados do jogo."
+          : "Não foi possível carregar os dados da viagem.",
         variant: "error",
       });
       return null;
@@ -111,7 +119,9 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Convocados, uniformes e programação de ida/volta (ou agenda em casa) em um único documento.
+            {isHomeMatch
+              ? "Convocados, uniformes e programação do jogo em casa em um único documento."
+              : "Convocados, uniformes e programação de ida/volta em um único documento."}
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
@@ -137,14 +147,22 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Viagem / jogo</Label>
+              <Label>{isHomeMatch ? "Jogo" : "Viagem / jogo"}</Label>
               <Select
                 value={travelId || "none"}
                 onValueChange={(v) => setTravelId(v === "none" ? "" : v)}
                 disabled={!tenantId || loadingTravels}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingTravels ? "Carregando…" : "Selecione a viagem"} />
+                  <SelectValue
+                    placeholder={
+                      loadingTravels
+                        ? "Carregando…"
+                        : isHomeMatch
+                          ? "Selecione o jogo"
+                          : "Selecione a viagem"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Selecione…</SelectItem>
@@ -174,7 +192,9 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
             </Button>
             {travelId ? (
               <Button type="button" variant="outline" asChild>
-                <Link href={`/dashboard/futebol/logistica/${travelId}/edit`}>Editar viagem</Link>
+                <Link href={`/dashboard/futebol/logistica/${travelId}/edit`}>
+                  {isHomeMatch ? "Editar planejamento" : "Editar viagem"}
+                </Link>
               </Button>
             ) : null}
           </div>

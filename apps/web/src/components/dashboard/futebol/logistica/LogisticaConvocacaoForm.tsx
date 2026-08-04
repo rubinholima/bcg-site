@@ -770,7 +770,7 @@ export function LogisticaConvocacaoForm() {
                     <SelectContent>
                       {travelCategories.length > 1 ? (
                         <SelectItem value="travel">
-                          Categorias da viagem (
+                          {isHomeMatch ? "Categorias do jogo" : "Categorias da viagem"} (
                           {travelCategories.map(categoryLabel).join(" · ")})
                         </SelectItem>
                       ) : null}
