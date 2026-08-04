@@ -33,6 +33,97 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 4 DE AGOSTO DE 2026 — INÍCIO DO DIA
+
+## **ESTADO AO ABRIR O DIA**
+
+- **Branch:** `develop` · **HEAD produção/local alinhados:** `da64b7b`
+- **Diário estava defasado** desde o encerramento de **28/07** — abaixo fica o catch-up de **30–31/07** e o encerramento de **03/08** (sessão longa de logística, fornecedores, agenda e relatórios).
+- **Não commitado / lixo local (ignorar no deploy):** probes Beatscode, `apps/api/data/`, temps, `BCG-TV-1.6.0.apk`, `backup_clean.sql`, alteração solta em `docs/FLUXO_DEPARTAMENTO_COMPRAS.md`.
+
+## **PRÓXIMO (a definir com o usuário)**
+
+- Continuar prioridades do dia após este alinhamento do diário.
+- Validar impressão real (A4) dos relatórios após o fix de página em branco.
+- Cores da agenda ficam no **navegador** (localStorage); se precisar sincronizar entre PCs, decidir persistência no banco depois.
+
+---
+
+# 📅 3 DE AGOSTO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+### 1. Logística — cadastros ligados à operação
+
+- Mapeamento dos cadastros do menu Logística vs uso real no app.
+- **Ligação completa** dos lookups em viagem e ficha do atleta: destinos, aeroportos, fornecedor, apoio, despesas (categoria/serviço/fornecedor/pagamento), vistos, transportadora/milhas.
+- Hook `useLogisticaCadastrosLookups` ampliado; API grava IDs extras em `beatscodeMeta` + linhas de despesa / pontos de interesse.
+
+### 2. Fornecedores — cadastro único (Adm)
+
+- Unificação: canônico `Supplier` (Adm por `tenantId`); removidos cadastros/menu/API de fornecedores da logística.
+- Migration `20260803150000_unify_suppliers_logistics_to_adm` (copia `LogisticsSupplier` → `Supplier`, remapeia JSON das viagens, drop tabelas logística).
+- Acesso compartilhado: quem tem Logística **ou** Compras/Financeiro acessa o cadastro único; menu com `accessGroup: "fornecedores"`.
+
+### 3. Agenda — UX e cores
+
+- Lista do dia **abaixo** do calendário (calendário maior + scroll na lista) — `UnifiedAgendaView` + `FutebolAgendaOperacional`.
+- Labels em **MAIÚSCULAS**; categoria de elenco (Sub-17…) visível no calendário.
+- **Duas cores** por compromisso: faixa/badge do **elenco** + fundo do **tipo** (treino/jogo…).
+- Botão **Cores** visível nas agendas (abas Elenco e Tipo); preferências em localStorage (`agenda-color-prefs`, `agenda-squad-category-colors`).
+- Componentes: `AgendaColorsDialog`, `AgendaDualToneMark`.
+
+### 4. Relatórios — página 1 em branco + cabeçalho
+
+- Programação semanal: uma página por categoria, cabeçalho em cada página, sem folha em branco no início; 1 categoria filtrada = 1 página.
+- Mesmo padrão em **todos** os PDFs de impressão: futebol (passageiros/hóspedes/programação), fisioterapia, psicologia (lista + semanal).
+- Layout compartilhado: `report-print-layout.ts` (`print-root` + thead repetindo cabeçalho; sem `break-after: avoid` no intro).
+
+## **COMMITS / DEPLOYS (03/08)**
+
+| Commit | Descrição |
+|--------|-----------|
+| `7f8f6fe` | feat(logistica): liga todos os cadastros em dropdowns na viagem e ficha do atleta |
+| `b12f4a4` | feat(fornecedores): unifica cadastro único Adm |
+| `02cf0db` | fix(fornecedores): libera cadastro para Logística ou Compras |
+| `34f4d55` | fix(agenda): lista do dia abaixo do calendário |
+| `03cc7ad` | fix(agenda): maiúsculas, categoria no calendário |
+| `0827f8c` | feat(agenda): duas cores (elenco + tipo) e botão Cores |
+| `e447a32` | fix(relatorio): programação semanal sem página em branco |
+| `da64b7b` | fix(relatorios): page-break + cabeçalho em todos os PDFs |
+
+**Branch:** `develop` · **Push:** `origin` + `production` em cada deploy · **Último em produção:** `da64b7b`
+
+## **ARQUIVOS PRINCIPAIS**
+
+- Logística / fornecedores: migration unify suppliers; forms viagem/ficha; menu; API suppliers
+- Agenda: `UnifiedAgendaView.tsx`, `FutebolAgendaOperacional.tsx`, `agenda-color-prefs.ts`, `agenda-squad-category-colors.ts`, `AgendaColorsDialog.tsx`, `AgendaDualToneMark.tsx`, `unified-agenda.ts`
+- Relatórios: `report-print-layout.ts`, `futebol-relatorios-print.ts`, `fisioterapia-relatorios-print.ts`, `psicologia-atletas-print.ts`, `print-weekly-psych-report.ts`
+
+---
+
+# 📅 30–31 DE JULHO DE 2026 — ENCERRAMENTO (CATCH-UP)
+
+> Diário não tinha sido atualizado nesses dias; resumo a partir dos commits em `develop`.
+
+## **30/07**
+
+- **Fisioterapia:** multi-lesão, recovery em grupo, cadastro de fisios, editar/excluir atendimentos, relatórios oficiais (gráficos + PDF), logo BCG em “todos os clubes”.
+- **Logística:** convocação em casa (sem passageiros), card pós-salvar, referências auxiliares em viagens/convocação; fixes crash SSR convocação e cadastros; menu Cadastros/Dash.
+- **Agenda:** relatório por categoria, horários BR, cores por elenco; jogo casa vs fora (`isHomeMatch`).
+
+## **31/07**
+
+- **Logística:** cadastros aeroportos, fornecedores, destinos e serviços.
+- **Agenda:** config de cores por tipo, áreas dinâmicas, filtro por elenco; fix `AuthModule` no `AgendaConfigModule`.
+- **Dashboard:** um único item ativo no menu aninhado.
+
+## **COMMITS (amostra)**
+
+`b80b30f` … `a345902` … `b465ad2` … `9b6fa92` … `06d41d1` … `c81a1ed` … `0017cfa` … `e999847` … `94c9fbb` … `72a0a6b` … `21535a6` · `0bed88b` · `b0bb92d` · `5c14a55` · `6d1c4bb`
+
+---
+
 # 📅 28 DE JULHO DE 2026 — ENCERRAMENTO
 
 ## **O QUE FOI FEITO**
