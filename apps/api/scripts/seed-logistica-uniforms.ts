@@ -159,10 +159,58 @@ function ensurePublicMediaDir() {
   fs.mkdirSync(PUBLIC_MEDIA_DIR, { recursive: true });
 }
 
+function extFromUrlOrDefault(url: string, fallback = '.png'): string {
+  try {
+    const p = new URL(url).pathname;
+    const ext = path.extname(p).toLowerCase();
+    if (LOCAL_IMAGE_EXTS.includes(ext)) return ext;
+  } catch {
+    /* ignore */
+  }
+  return fallback;
+}
+
+/** Baixa bytes de URL (ex.: Beatscode) para espelhar no nosso S3 — não persistimos URL externa. */
+async function downloadRemoteBuffer(
+  url: string,
+): Promise<{ buffer: Buffer; ext: string } | null> {
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) return null;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (!buffer.length) return null;
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    let ext = extFromUrlOrDefault(url);
+    if (ct.includes('jpeg') || ct.includes('jpg')) ext = '.jpeg';
+    else if (ct.includes('png')) ext = '.png';
+    else if (ct.includes('webp')) ext = '.webp';
+    return { buffer, ext };
+  } catch {
+    return null;
+  }
+}
+
+async function uploadBufferToS3(
+  buffer: Buffer,
+  key: string,
+  ext: string,
+): Promise<string> {
+  const contentType = CONTENT_TYPE_BY_EXT[ext] ?? 'application/octet-stream';
+  await s3Client!.send(
+    new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    }),
+  );
+  return s3PublicUrl(key);
+}
+
 /**
- * Resolve a URL final da imagem de uma peça ou kit.
- * `sourceClothingId` = id (Beatscode) da peça cuja imagem local será usada
- * (para kit, é a primeira peça do conjunto).
+ * Resolve a URL final da imagem de uma peça ou kit **sempre no nosso storage**.
+ * Ordem: arquivo local → download da URL Beatscode → upload S3 (ou pasta public).
+ * Nunca grava URL beatscode.com no banco.
  */
 async function resolveImageUrl(
   prefix: 'clothing' | 'kit',
@@ -171,18 +219,36 @@ async function resolveImageUrl(
   fallbackLink?: string,
 ): Promise<string | null> {
   const localFile = findLocalImageFile(sourceClothingId);
-  if (!localFile) return fallbackLink?.trim() || null;
+  let buffer: Buffer | null = null;
+  let ext = '.png';
 
-  const ext = path.extname(localFile).toLowerCase();
+  if (localFile) {
+    buffer = fs.readFileSync(localFile);
+    ext = path.extname(localFile).toLowerCase() || '.png';
+  } else if (fallbackLink?.trim()) {
+    const remote = await downloadRemoteBuffer(fallbackLink.trim());
+    if (remote) {
+      buffer = remote.buffer;
+      ext = remote.ext;
+      // cache local para próximos seeds
+      fs.mkdirSync(FILES_DIR, { recursive: true });
+      fs.writeFileSync(
+        path.join(FILES_DIR, `clothing_${sourceClothingId}${ext}`),
+        buffer,
+      );
+    }
+  }
+
+  if (!buffer) return null;
 
   if (s3Client) {
     const key = `media/logistica_uniformes/${prefix}-${beatscodeId}${ext}`;
-    return uploadToS3(localFile, key);
+    return uploadBufferToS3(buffer, key, ext);
   }
 
   ensurePublicMediaDir();
   const destName = `${prefix}-${beatscodeId}${ext}`;
-  fs.copyFileSync(localFile, path.join(PUBLIC_MEDIA_DIR, destName));
+  fs.writeFileSync(path.join(PUBLIC_MEDIA_DIR, destName), buffer);
   return `${PUBLIC_MEDIA_URL_PREFIX}/${destName}`;
 }
 
@@ -202,7 +268,7 @@ async function main() {
   console.log(`  Peças: ${clothing.length} | Kits: ${sets.length}`);
   console.log(
     s3Client
-      ? '  Imagens → S3 (media/logistica_uniformes/)'
+      ? '  Imagens → S3 próprio (media/logistica_uniformes/) — sem URL Beatscode'
       : `  Imagens → apps/web/public${PUBLIC_MEDIA_URL_PREFIX}/ (AWS_S3_BUCKET não definido)`,
   );
   console.log('');
@@ -277,7 +343,8 @@ async function main() {
   // ——— Peças ———
   const clothingItemIdByBeatscodeId = new Map<number, string>();
   let withLocalImage = 0;
-  let withFallbackImage = 0;
+  let withMirroredImage = 0;
+  let withoutImage = 0;
   for (const [idx, c] of clothing.entries()) {
     const name = upperRequired(c.name);
     const categoryId = c.clothingTypeId
@@ -290,15 +357,19 @@ async function main() {
       ? (uniformTypeIdByBeatscodeId.get(c.clothingMaterialTypeId) ?? null)
       : null;
 
-    const hasLocalFile = Boolean(findLocalImageFile(c.id));
+    const hadLocal = Boolean(findLocalImageFile(c.id));
     const imageUrl = await resolveImageUrl(
       'clothing',
       c.id,
       c.id,
       c.image?.link,
     );
-    if (hasLocalFile) withLocalImage += 1;
-    else if (imageUrl) withFallbackImage += 1;
+    if (imageUrl) {
+      if (hadLocal) withLocalImage += 1;
+      else withMirroredImage += 1;
+    } else {
+      withoutImage += 1;
+    }
 
     const row = await prisma.logisticsClothingItem.upsert({
       where: { beatscodeId: c.id },
@@ -328,7 +399,7 @@ async function main() {
     clothingItemIdByBeatscodeId.set(c.id, row.id);
   }
   console.log(
-    `  ✓ ${clothingItemIdByBeatscodeId.size} peças sincronizadas (${withLocalImage} com imagem local, ${withFallbackImage} com URL original de fallback)`,
+    `  ✓ ${clothingItemIdByBeatscodeId.size} peças sincronizadas (${withLocalImage} local → S3, ${withMirroredImage} espelhadas Beatscode→S3, ${withoutImage} sem imagem)`,
   );
 
   // ——— Kits ———
