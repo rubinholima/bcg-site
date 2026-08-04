@@ -12,6 +12,7 @@ export type RelatorioPessoaRow = {
   staffId?: string | null;
   jerseyNumber?: number | null;
   position?: string | null;
+  photoUrl?: string | null;
 };
 
 export type RelatorioHospedeRow = RelatorioPessoaRow & {

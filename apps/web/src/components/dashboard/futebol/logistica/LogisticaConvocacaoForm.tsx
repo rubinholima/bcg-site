@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
+import { dateKeyInBrazil } from "@/lib/brazil-time";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { parseTravelCategoriesFromApi } from "@/lib/travel-categories-utils";
 import {
@@ -141,13 +142,14 @@ export function LogisticaConvocacaoForm() {
       return;
     }
     setLoadingTravels(true);
+    const fromDate = dateKeyInBrazil(new Date());
     api
       .get<FutebolRelatorioTravel[]>(
-        `/logistica?tenantId=${encodeURIComponent(tenantId)}`,
+        `/logistica?tenantId=${encodeURIComponent(tenantId)}&fromDate=${encodeURIComponent(fromDate)}`,
       )
       .then(({ data }) => {
         const list = (Array.isArray(data) ? data : []).filter(
-          (t) => t.status !== "cancelado",
+          (t) => t.status !== "cancelado" && dateKeyInBrazil(t.matchDate) >= fromDate,
         );
         setTravels(sortTravelsForConvocation(list));
       })
@@ -193,15 +195,8 @@ export function LogisticaConvocacaoForm() {
   }, [rawFixtures, travels, selectedTenant?.name]);
 
   const travelsForSelect = useMemo(() => {
-    const now = Date.now();
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const cutoff = startOfToday.getTime();
-    const upcoming = travels.filter((t) => {
-      const ts = new Date(t.matchDate).getTime();
-      return !Number.isNaN(ts) && ts >= cutoff;
-    });
-    // Mantém o registro atual se veio por deep link (ex.: travelId antigo).
+    const today = dateKeyInBrazil(new Date());
+    const upcoming = travels.filter((t) => dateKeyInBrazil(t.matchDate) >= today);
     if (travelId && !upcoming.some((t) => t.id === travelId)) {
       const current = travels.find((t) => t.id === travelId);
       if (current) return sortTravelsForConvocation([current, ...upcoming]);

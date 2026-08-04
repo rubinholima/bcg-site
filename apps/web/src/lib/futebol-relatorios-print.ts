@@ -923,18 +923,26 @@ function formatBirthShort(iso: string | null | undefined): string {
 
 /** Posições % no gramado (formação visual 4-3-3 — não é o esquema tático real). */
 const PRESS_KIT_FIELD_SLOTS: { top: number; left: number }[] = [
-  { top: 86, left: 50 }, // GK
-  { top: 68, left: 14 },
-  { top: 70, left: 37 },
-  { top: 70, left: 63 },
-  { top: 68, left: 86 },
-  { top: 46, left: 24 },
-  { top: 48, left: 50 },
-  { top: 46, left: 76 },
-  { top: 22, left: 22 },
-  { top: 16, left: 50 },
-  { top: 22, left: 78 },
+  { top: 88, left: 50 }, // GK
+  { top: 70, left: 12 },
+  { top: 72, left: 36 },
+  { top: 72, left: 64 },
+  { top: 70, left: 88 },
+  { top: 48, left: 22 },
+  { top: 50, left: 50 },
+  { top: 48, left: 78 },
+  { top: 24, left: 20 },
+  { top: 18, left: 50 },
+  { top: 24, left: 80 },
 ];
+
+function playerPhotoHtml(photoUrl: string | null | undefined, alt: string): string {
+  const src = resolveLogoUrlForPrint(photoUrl);
+  if (!src) {
+    return `<div class="chip-photo chip-photo-fallback">${escapeHtml(alt.slice(0, 1).toUpperCase())}</div>`;
+  }
+  return `<img class="chip-photo" src="${escapeHtml(src)}" alt="" />`;
+}
 
 export function buildPressKitPrintHtml(
   data: PressKitReportDto,
@@ -968,7 +976,8 @@ export function buildPressKitPrintHtml(
   const staffHtml = data.staff
     .map((s) => {
       const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
-      return `<div class="staff-row"><strong>${escapeHtml(s.name)}</strong><span>${escapeHtml(role)}</span></div>`;
+      const photo = playerPhotoHtml(s.photoUrl, s.name);
+      return `<div class="staff-row">${photo}<div><strong>${escapeHtml(s.name)}</strong><span>${escapeHtml(role)}</span></div></div>`;
     })
     .join("");
 
@@ -976,7 +985,8 @@ export function buildPressKitPrintHtml(
     .map((s) => {
       const n = s.jerseyNumber != null ? String(s.jerseyNumber) : "—";
       const birth = formatBirthShort(s.birthDate);
-      return `<div class="sub-row"><span class="sub-num">${escapeHtml(n)}</span><span class="sub-name">${escapeHtml(shortAthleteName(s.name))}</span>${birth ? `<span class="sub-birth">${escapeHtml(birth)}</span>` : ""}</div>`;
+      const photo = playerPhotoHtml(s.photoUrl, s.name);
+      return `<div class="sub-row">${photo}<span class="sub-num">${escapeHtml(n)}</span><div class="sub-text"><span class="sub-name">${escapeHtml(shortAthleteName(s.name))}</span>${birth ? `<span class="sub-birth">${escapeHtml(birth)}</span>` : ""}</div></div>`;
     })
     .join("");
 
@@ -985,8 +995,12 @@ export function buildPressKitPrintHtml(
     if (!p) return "";
     const n = p.jerseyNumber != null ? String(p.jerseyNumber) : String(i + 1);
     const birth = formatBirthShort(p.birthDate);
+    const photo = playerPhotoHtml(p.photoUrl, p.name);
     return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%">
-      <div class="chip-num">${escapeHtml(n)}</div>
+      <div class="chip-photo-wrap">
+        ${photo}
+        <span class="chip-num">${escapeHtml(n)}</span>
+      </div>
       <div class="chip-name">${escapeHtml(shortAthleteName(p.name))}</div>
       ${birth ? `<div class="chip-birth">${escapeHtml(birth)}</div>` : ""}
     </div>`;
@@ -1006,138 +1020,183 @@ export function buildPressKitPrintHtml(
     .pk { max-width: 100%; }
     .pk-top {
       display: grid;
-      grid-template-columns: 90px 1fr;
-      gap: 14px;
+      grid-template-columns: 72px 1fr;
+      gap: 12px;
       align-items: center;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
       border-bottom: 3px solid ${BCG.red};
     }
     .pk-logo {
-      width: 88px; height: 88px; object-fit: contain;
-      border: 2px solid ${BCG.blue}; border-radius: 12px; background: #fff; padding: 4px;
+      width: 70px; height: 70px; object-fit: contain;
+      border: 2px solid ${BCG.blue}; border-radius: 12px; background: #fff; padding: 3px;
     }
     .pk-logo-fallback {
-      width: 88px; height: 88px; border-radius: 12px; border: 2px solid ${BCG.blue};
+      width: 70px; height: 70px; border-radius: 12px; border: 2px solid ${BCG.blue};
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; color: ${BCG.blue}; font-size: 22px; background: ${BCG.blueLight};
+      font-weight: 800; color: ${BCG.blue}; font-size: 18px; background: ${BCG.blueLight};
     }
     .pk-matchup {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      font-size: 22px; font-weight: 800; color: ${BCG.blue}; letter-spacing: 0.02em;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      font-size: 18px; font-weight: 800; color: ${BCG.blue}; letter-spacing: 0.02em;
     }
     .pk-x {
-      display: inline-flex; width: 36px; height: 36px; border-radius: 999px;
+      display: inline-flex; width: 30px; height: 30px; border-radius: 999px;
       align-items: center; justify-content: center;
-      background: ${BCG.red}; color: #fff; font-size: 16px; font-weight: 800;
+      background: ${BCG.red}; color: #fff; font-size: 14px; font-weight: 800;
     }
-    .pk-meta { margin-top: 4px; font-size: 13px; color: #334155; line-height: 1.45; }
+    .pk-meta { margin-top: 2px; font-size: 11px; color: #334155; line-height: 1.35; }
     .pk-meta strong { color: ${BCG.blue}; }
-    .pk-grid {
+    .pk-main {
       display: grid;
-      grid-template-columns: 1fr 1.55fr 0.95fr;
-      gap: 10px;
-      align-items: start;
+      grid-template-columns: 1fr;
+      gap: 8px;
     }
-    .pk-col h3 {
-      margin: 0 0 8px;
-      font-size: 12px;
+    .pitch-block h3, .side-grid h3 {
+      margin: 0 0 6px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: ${BCG.red};
       border-bottom: 2px solid ${BCG.red};
-      padding-bottom: 4px;
-    }
-    .ref-row, .staff-row, .sub-row {
-      display: flex; flex-direction: column; gap: 1px;
-      padding: 5px 0; border-bottom: 1px solid #e2e8f0; font-size: 11px;
-    }
-    .ref-row strong, .staff-row strong, .sub-name { color: #0f172a; }
-    .ref-row span, .staff-row span, .sub-birth { color: #64748b; font-size: 10px; }
-    .sub-row { flex-direction: row; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-    .sub-num {
-      min-width: 22px; height: 22px; border-radius: 999px;
-      background: ${BCG.blue}; color: #fff; font-weight: 800; font-size: 11px;
-      display: inline-flex; align-items: center; justify-content: center;
+      padding-bottom: 3px;
     }
     .pitch-wrap {
       position: relative;
       width: 100%;
-      aspect-ratio: 3 / 4;
-      border-radius: 14px;
+      height: 168mm;
+      min-height: 168mm;
+      border-radius: 16px;
       overflow: hidden;
-      border: 3px solid #166534;
+      border: 4px solid #14532d;
       background:
-        linear-gradient(180deg, rgba(255,255,255,0.08) 0 50%, transparent 50%),
+        linear-gradient(180deg, rgba(255,255,255,0.10) 0 50%, transparent 50%),
         repeating-linear-gradient(
           90deg,
-          #15803d 0 12.5%,
-          #16a34a 12.5% 25%
+          #166534 0 12.5%,
+          #15803d 12.5% 25%
         );
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.28);
     }
     .pitch-wrap::before {
       content: "";
-      position: absolute; inset: 8%;
-      border: 2px solid rgba(255,255,255,0.55);
-      border-radius: 4px;
+      position: absolute; inset: 5%;
+      border: 2px solid rgba(255,255,255,0.6);
+      border-radius: 6px;
       pointer-events: none;
     }
     .pitch-wrap::after {
       content: "";
       position: absolute; left: 50%; top: 50%;
-      width: 56px; height: 56px; margin: -28px 0 0 -28px;
-      border: 2px solid rgba(255,255,255,0.55);
+      width: 72px; height: 72px; margin: -36px 0 0 -36px;
+      border: 2px solid rgba(255,255,255,0.6);
       border-radius: 999px;
       pointer-events: none;
     }
     .player-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 78px;
+      width: 92px;
       text-align: center;
       z-index: 2;
     }
+    .chip-photo-wrap {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 3px;
+    }
+    .chip-photo {
+      width: 58px;
+      height: 58px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+      background: ${BCG.blue};
+      display: block;
+    }
+    .chip-photo-fallback {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+    }
     .chip-num {
-      margin: 0 auto 2px;
-      width: 28px; height: 28px; border-radius: 999px;
-      background: ${BCG.blue}; color: #fff; font-weight: 800; font-size: 13px;
+      position: absolute;
+      right: -4px;
+      bottom: -2px;
+      width: 22px; height: 22px; border-radius: 999px;
+      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 11px;
       display: flex; align-items: center; justify-content: center;
       border: 2px solid #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
     .chip-name {
-      font-size: 9px; font-weight: 700; color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+      font-size: 10px; font-weight: 800; color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.85);
       line-height: 1.15;
     }
     .chip-birth {
-      font-size: 8px; color: #e2e8f0;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.65);
+      font-size: 8px; color: #f1f5f9;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.75);
     }
+    .side-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .ref-row, .staff-row, .sub-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 10px;
+    }
+    .staff-row .chip-photo,
+    .sub-row .chip-photo,
+    .staff-row .chip-photo-fallback,
+    .sub-row .chip-photo-fallback {
+      width: 28px;
+      height: 28px;
+      border-width: 2px;
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .ref-row { flex-direction: column; align-items: flex-start; gap: 1px; }
+    .ref-row strong, .staff-row strong, .sub-name { color: #0f172a; }
+    .ref-row span, .staff-row span, .sub-birth { color: #64748b; font-size: 9px; display: block; }
+    .sub-num {
+      min-width: 18px; height: 18px; border-radius: 999px;
+      background: ${BCG.blue}; color: #fff; font-weight: 800; font-size: 10px;
+      display: inline-flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sub-text { min-width: 0; }
     .dir-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;
+      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-top: 8px;
     }
     .dir-card {
-      border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px;
+      border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 8px;
       background: linear-gradient(180deg, ${BCG.blueLight}, #fff);
-      display: flex; flex-direction: column; gap: 2px; font-size: 11px;
+      display: flex; flex-direction: column; gap: 1px; font-size: 10px;
     }
     .dir-card strong { color: ${BCG.blue}; }
-    .dir-card span { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .dir-card span { color: #64748b; font-size: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
     .pk-disclaimer {
-      margin-top: 10px; font-size: 9px; color: #64748b; text-align: center;
-      border-top: 1px dashed #cbd5e1; padding-top: 6px;
+      margin-top: 6px; font-size: 8px; color: #64748b; text-align: center;
+      border-top: 1px dashed #cbd5e1; padding-top: 4px;
     }
     .pk-contact {
-      margin-top: 8px; font-size: 10px; color: #334155; text-align: center;
+      margin-top: 4px; font-size: 9px; color: #334155; text-align: center;
     }
     .pk-footer {
-      margin-top: 8px; display: flex; justify-content: space-between;
-      font-size: 9px; color: #94a3b8;
-    }
-    @media print {
-      .pk-grid { break-inside: avoid; }
+      margin-top: 6px; display: flex; justify-content: space-between;
+      font-size: 8px; color: #94a3b8;
     }
   `;
 
@@ -1164,20 +1223,24 @@ export function buildPressKitPrintHtml(
         </div>
       </div>
 
-      <div class="pk-grid">
-        <div class="pk-col">
-          <h3>Arbitragem</h3>
-          ${refereesHtml || `<p style="font-size:11px;color:#94a3b8">Não informado</p>`}
-          <h3 style="margin-top:14px">Suplentes</h3>
-          ${subsHtml || `<p style="font-size:11px;color:#94a3b8">—</p>`}
-        </div>
-        <div class="pk-col">
-          <h3>Escalação (visual)</h3>
+      <div class="pk-main">
+        <div class="pitch-block">
+          <h3>Escalação visual</h3>
           <div class="pitch-wrap">${fieldPlayers}</div>
         </div>
-        <div class="pk-col">
-          <h3>Comissão técnica</h3>
-          ${staffHtml || `<p style="font-size:11px;color:#94a3b8">—</p>`}
+        <div class="side-grid">
+          <div>
+            <h3>Arbitragem</h3>
+            ${refereesHtml || `<p style="font-size:10px;color:#94a3b8">Não informado</p>`}
+          </div>
+          <div>
+            <h3>Suplentes</h3>
+            ${subsHtml || `<p style="font-size:10px;color:#94a3b8">—</p>`}
+          </div>
+          <div>
+            <h3>Comissão técnica</h3>
+            ${staffHtml || `<p style="font-size:10px;color:#94a3b8">—</p>`}
+          </div>
         </div>
       </div>
 

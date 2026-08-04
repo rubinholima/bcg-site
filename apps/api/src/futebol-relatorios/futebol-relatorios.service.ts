@@ -349,10 +349,12 @@ export class FutebolRelatoriosService {
 
   async listTravels(tenantId: string) {
     if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    const todayKey = dateKeyInBrazil(new Date());
     return this.prisma.travelLogistics.findMany({
       where: {
         tenantId: tenantId.trim(),
         status: { not: 'cancelado' },
+        matchDate: { gte: new Date(`${todayKey}T00:00:00.000-03:00`) },
       },
       orderBy: [{ matchDate: 'asc' }],
       include: {
@@ -617,6 +619,7 @@ export class FutebolRelatoriosService {
           playerId: p.id,
           jerseyNumber: p.jerseyNumber ?? null,
           position: p.position ?? null,
+          photoUrl: p.photoUrl ?? null,
         });
       }
     }
@@ -635,6 +638,7 @@ export class FutebolRelatoriosService {
           birthDate: formatIsoDate(s.birthDate),
           role: s.role,
           staffId: s.id,
+          photoUrl: s.photoUrl ?? null,
         });
       }
     }
@@ -694,6 +698,7 @@ export class FutebolRelatoriosService {
           playerId: p.id,
           jerseyNumber: p.jerseyNumber ?? null,
           position: p.position ?? null,
+          photoUrl: p.photoUrl ?? null,
         });
         continue;
       }
@@ -708,6 +713,7 @@ export class FutebolRelatoriosService {
           birthDate: formatIsoDate(s.birthDate),
           role: s.role,
           staffId: s.id,
+          photoUrl: s.photoUrl ?? null,
         });
         continue;
       }
@@ -760,6 +766,7 @@ export class FutebolRelatoriosService {
         playerId: p.id,
         jerseyNumber: p.jerseyNumber ?? null,
         position: p.position ?? null,
+        photoUrl: p.photoUrl ?? null,
       };
     });
 
@@ -771,6 +778,7 @@ export class FutebolRelatoriosService {
       birthDate: formatIsoDate(s.birthDate),
       role: s.role,
       staffId: s.id,
+      photoUrl: s.photoUrl ?? null,
     }));
 
     return { athletes, staff };

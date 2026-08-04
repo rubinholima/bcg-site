@@ -13,6 +13,7 @@ import { api } from "@/lib/api";
 import { isFootballKind } from "@/lib/home-data";
 import { formatTravelCategoriesDisplay } from "@/lib/travel-categories-utils";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { dateKeyInBrazil } from "@/lib/brazil-time";
 import type { PrintPageSize } from "@/lib/futebol-relatorios.types";
 
 export interface FutebolRelatorioTenant {
@@ -51,12 +52,7 @@ export function formatTravelLabel(t: FutebolRelatorioTravel): string {
   const cat = formatTravelCategoriesDisplay(t.category, t.categories);
   const club = t.tenant?.name ? `${t.tenant.name} · ` : "";
   const side = t.isHomeMatch ? " · Casa" : t.isHomeMatch === false ? " · Fora" : "";
-  const past =
-    !Number.isNaN(new Date(t.matchDate).getTime()) &&
-    new Date(t.matchDate).getTime() < Date.now()
-      ? " · Passado"
-      : "";
-  return `${club}${date}${vs}${side}${past}${cat ? ` (${cat})` : ""}`;
+  return `${club}${date}${vs}${side}${cat ? ` (${cat})` : ""}`;
 }
 
 export function startOfWeekMonday(d: Date): Date {
@@ -128,7 +124,10 @@ export function useFutebolRelatorioTravels(tenantId: string) {
       const { data } = await api.get<FutebolRelatorioTravel[]>(
         `/futebol-relatorios/viagens?tenantId=${encodeURIComponent(id)}`,
       );
-      const list = Array.isArray(data) ? data : [];
+      const today = dateKeyInBrazil(new Date());
+      const list = (Array.isArray(data) ? data : []).filter(
+        (t) => dateKeyInBrazil(t.matchDate) >= today,
+      );
       list.sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
       setTravels(list);
     } catch {
