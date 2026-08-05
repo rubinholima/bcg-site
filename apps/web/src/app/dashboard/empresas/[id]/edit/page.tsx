@@ -25,6 +25,7 @@ import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 
 interface FormData {
   name: string;
+  tradeName: string;
   slug: string;
   kindId: string;
   address?: string;
@@ -56,6 +57,7 @@ export default function EditEmpresaPage() {
   const [empresa, setEmpresa] = useState<Tenant | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: "",
+    tradeName: "",
     slug: "",
     kindId: "",
     omieAppKey: "",
@@ -73,6 +75,7 @@ export default function EditEmpresaPage() {
           setEmpresa(empresa);
           setFormData({
             name: empresa.name,
+            tradeName: empresa.tradeName ?? "",
             slug: empresa.slug,
             kindId: empresa.kindId || empresa.kind?.id || "",
             address: empresa.address ?? "",
@@ -252,6 +255,19 @@ export default function EditEmpresaPage() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Ex: Boston City Futebol"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tradeName">Nome fantasia</Label>
+              <Input
+                id="tradeName"
+                name="tradeName"
+                type="text"
+                value={formData.tradeName}
+                onChange={handleChange}
+                placeholder="Ex: Boston City"
                 disabled={loading}
               />
             </div>

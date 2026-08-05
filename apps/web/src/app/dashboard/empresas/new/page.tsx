@@ -25,6 +25,7 @@ import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 
 interface FormData {
   name: string;
+  tradeName: string;
   slug: string;
   kindId: string;
   address?: string;
@@ -52,6 +53,7 @@ export default function NovaEmpresaPage() {
   const [logoUrl, setLogoUrl] = useState("");
   const [formData, setFormData] = useState<FormData>({
     name: "",
+    tradeName: "",
     slug: "",
     kindId: "",
     address: "",
@@ -211,6 +213,19 @@ export default function NovaEmpresaPage() {
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Ex: Boston City Futebol"
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tradeName">Nome fantasia</Label>
+              <Input
+                id="tradeName"
+                name="tradeName"
+                type="text"
+                value={formData.tradeName}
+                onChange={handleChange}
+                placeholder="Ex: Boston City"
                 disabled={loading}
               />
             </div>

@@ -150,6 +150,7 @@ export class GuiaPartidaService {
     const pressKit = await this.relatorios.getPressKit(travelId);
     const travel = pressKit.travel;
     const tenantId = travel.tenant.id;
+    const clubName = travel.tenant.tradeName?.trim() || travel.tenant.name;
     const matchDate = new Date(`${travel.matchDate}T12:00:00-03:00`);
     const season = matchDate.getFullYear();
     const aliases = await this.tenantAliases(tenantId, travel.tenant.name);
@@ -187,23 +188,23 @@ export class GuiaPartidaService {
       (r) => r.homeScore != null && r.awayScore != null,
     );
 
-    const lines = reports.map((report) => this.toMatchLine(report, travel.tenant.name, aliases));
+    const lines = reports.map((report) => this.toMatchLine(report, clubName, aliases));
     const seasonLines = lines.filter((line) => {
       const report = reports.find((r) => r.id === line.id);
       return report?.season === season;
     });
 
     const squad = await this.buildSquad(pressKit, seasonReports, allReports, matchDate);
-    const campaign = this.buildCampaign(played, travel.tenant.name, aliases);
+    const campaign = this.buildCampaign(played, clubName, aliases);
     const headToHead = this.buildHeadToHead(lines, travel.opponentName);
-    const lastLineups = this.buildLastLineups(seasonReports, squad, travel.tenant.name, aliases);
+    const lastLineups = this.buildLastLineups(seasonReports, squad, clubName, aliases);
     const rankings = this.buildRankings(seasonReports, squad);
     const agenda = await this.buildAgenda(tenantId, travel.categories, travel.matchDate);
     const nextMatches = await this.buildNextMatches(tenantId, travelId, matchDate);
     const standings = await this.buildStandings(
       travel.categories,
       travel.championshipName,
-      travel.tenant.name,
+      clubName,
       aliases,
     );
 

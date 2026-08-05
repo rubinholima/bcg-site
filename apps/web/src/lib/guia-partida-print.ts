@@ -518,7 +518,7 @@ export function buildGuiaPartidaPrintHtml(
   size: PrintPageSize = "A4",
 ): string {
   const { travel, config } = data;
-  const club = travel.tenant.name;
+  const club = travel.tenant.tradeName?.trim() || travel.tenant.name;
   const opponent = travel.opponentName?.trim() || "Adversário";
   const clubLogo = travel.tenant.logoUrl;
   const homeName = travel.isHomeMatch ? club : opponent;

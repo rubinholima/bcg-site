@@ -608,7 +608,11 @@ export class FutebolRelatoriosService {
   private async loadTravel(id: string) {
     const travel = await this.prisma.travelLogistics.findUnique({
       where: { id },
-      include: { tenant: { select: { id: true, name: true, logoUrl: true } } },
+      include: {
+        tenant: {
+          select: { id: true, name: true, tradeName: true, logoUrl: true },
+        },
+      },
     });
     if (!travel) throw new NotFoundException('Viagem não encontrada');
     return travel;
@@ -656,6 +660,7 @@ export class FutebolRelatoriosService {
       tenant: {
         id: travel.tenant.id,
         name: travel.tenant.name,
+        tradeName: travel.tenant.tradeName,
         logoUrl: travel.tenant.logoUrl,
       },
       categories,

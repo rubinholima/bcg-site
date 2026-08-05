@@ -41,6 +41,7 @@ function mapTenant(row: TenantWithKind): TenantResponseDto {
   return {
     id: row.id,
     name: row.name,
+    tradeName: row.tradeName ?? null,
     slug: row.slug,
     location: row.location ?? null,
     address: row.address ?? null,
@@ -140,8 +141,8 @@ export class TenantsService {
       const now = new Date();
       const categoriesJson = categoriesToJsonbParam(dto.categories ?? null);
       await this.prisma.$executeRaw`
-        INSERT INTO "Tenant" (id, name, slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "sofascoreTeamId", categories, "createdAt", "updatedAt")
-        VALUES (${id}, ${cadastroUpperRequired(dto.name)}, ${dto.slug}, ${dto.kindId}, ${cadastroUpper(dto.address)}, ${cadastroUpper(dto.contactName)}, ${cadastroUpper(dto.contactPhone)}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${cadastroUpper(dto.city)}, ${cadastroUpper(dto.country)}, ${dto.websiteUrl?.trim() || null}, ${(dto.sofascoreTeamId ?? "").trim() || null}, ${categoriesJson}::jsonb, ${now}, ${now})
+        INSERT INTO "Tenant" (id, name, "tradeName", slug, "kindId", address, "contactName", "contactPhone", lat, lng, city, country, "websiteUrl", "sofascoreTeamId", categories, "createdAt", "updatedAt")
+        VALUES (${id}, ${cadastroUpperRequired(dto.name)}, ${dto.tradeName?.trim() || null}, ${dto.slug}, ${dto.kindId}, ${cadastroUpper(dto.address)}, ${cadastroUpper(dto.contactName)}, ${cadastroUpper(dto.contactPhone)}, ${dto.lat ?? null}, ${dto.lng ?? null}, ${cadastroUpper(dto.city)}, ${cadastroUpper(dto.country)}, ${dto.websiteUrl?.trim() || null}, ${(dto.sofascoreTeamId ?? "").trim() || null}, ${categoriesJson}::jsonb, ${now}, ${now})
       `;
       return this.findOne(id, allowedTenantIds);
     } catch (err) {
@@ -171,6 +172,10 @@ export class TenantsService {
       if (dto.name !== undefined) {
         updates.push(`name = $${++idx}`);
         values.push(cadastroUpperRequired(dto.name));
+      }
+      if (dto.tradeName !== undefined) {
+        updates.push(`"tradeName" = $${++idx}`);
+        values.push(dto.tradeName?.trim() || null);
       }
       if (dto.slug !== undefined) {
         updates.push(`slug = $${++idx}`);

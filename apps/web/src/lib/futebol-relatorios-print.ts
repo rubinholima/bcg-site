@@ -72,6 +72,12 @@ function formatBrDateTime(iso?: string | null): string {
   return formatDateTimeDayMonYear(iso);
 }
 
+function travelClubName(
+  travel: PassageirosReportDto["travel"],
+): string {
+  return travel.tenant.tradeName?.trim() || travel.tenant.name;
+}
+
 function pageCss(size: PrintPageSize): string {
   const pageSize = size === "Letter" ? "letter" : "A4";
   return `@page { size: ${pageSize}; margin: 12mm 11mm; }`;
@@ -505,8 +511,8 @@ export function buildPassageirosPrintHtml(
     .join(" · ");
 
   return documentShell(
-    `Relação de Passageiros — ${travel.tenant.name}`,
-    travel.tenant.name,
+    `Relação de Passageiros — ${travelClubName(travel)}`,
+    travelClubName(travel),
     travel.tenant.logoUrl,
     "Relação de Passageiros",
     badge,
@@ -584,8 +590,8 @@ export function buildHospedesPrintHtml(
   `;
 
   return documentShell(
-    `Relação de Hóspedes — ${travel.tenant.name}`,
-    travel.tenant.name,
+    `Relação de Hóspedes — ${travelClubName(travel)}`,
+    travelClubName(travel),
     travel.tenant.logoUrl,
     "Relação de Hóspedes",
     travel.categoryLabel,
@@ -887,8 +893,8 @@ export function buildLayoutRelacionadosPrintHtml(
     : "Layout Relacionados / Programação da viagem";
 
   return documentShell(
-    `Layout Relacionados — ${travel.tenant.name}`,
-    travel.tenant.name,
+    `Layout Relacionados — ${travelClubName(travel)}`,
+    travelClubName(travel),
     travel.tenant.logoUrl,
     programacaoLabel,
     badge,
@@ -969,7 +975,7 @@ export function buildPressKitPrintHtml(
   size: PrintPageSize = "A4",
 ): string {
   const { travel, config } = data;
-  const club = travel.tenant.name;
+  const club = travelClubName(travel);
   const opponent = travel.opponentName?.trim() || "Adversário";
   const clubLogo = resolveLogoUrlForPrint(travel.tenant.logoUrl);
   const opponentLogo = resolveLogoUrlForPrint(data.opponentLogoUrl);

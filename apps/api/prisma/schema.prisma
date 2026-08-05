@@ -67,6 +67,7 @@ model TenantKind {
 model Tenant {
   id                      String   @id @default(cuid())
   name                    String
+  tradeName               String?  // Nome fantasia para exibição pública e relatórios
   slug                    String   @unique
   kindId                  String
   kind                    TenantKind @relation(fields: [kindId], references: [id])

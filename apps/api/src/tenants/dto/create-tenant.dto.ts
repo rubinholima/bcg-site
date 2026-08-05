@@ -7,6 +7,11 @@ export class CreateTenantDto {
   name: string;
 
   @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  tradeName?: string;
+
+  @IsString()
   @IsNotEmpty()
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     message: 'Slug deve conter apenas letras minúsculas, números e hífens',

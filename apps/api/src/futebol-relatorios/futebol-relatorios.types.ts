@@ -32,7 +32,12 @@ export type RelatorioHospedeRow = RelatorioPessoaRow & {
 
 export type RelatorioTravelMeta = {
   id: string;
-  tenant: { id: string; name: string; logoUrl: string | null };
+  tenant: {
+    id: string;
+    name: string;
+    tradeName: string | null;
+    logoUrl: string | null;
+  };
   categories: string[];
   categoryLabel: string;
   matchDate: string;

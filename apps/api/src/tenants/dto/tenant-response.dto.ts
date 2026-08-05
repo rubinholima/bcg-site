@@ -1,6 +1,7 @@
 export class TenantResponseDto {
   id: string;
   name: string;
+  tradeName: string | null;
   slug: string;
   location: string | null;
   address: string | null;

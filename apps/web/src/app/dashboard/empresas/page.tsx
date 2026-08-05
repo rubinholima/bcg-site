@@ -60,6 +60,7 @@ function filterTenants(
     list = list.filter(
       (t) =>
         t.name.toLowerCase().includes(lower) ||
+        (t.tradeName ?? "").toLowerCase().includes(lower) ||
         (t.slug ?? "").toLowerCase().includes(lower),
     );
   }
@@ -165,7 +166,14 @@ export default async function EmpresasPage({
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{t.name}</TableCell>
+                    <TableCell>
+                      <span className="block font-medium">{t.name}</span>
+                      {t.tradeName ? (
+                        <span className="block text-xs text-muted-foreground">
+                          {t.tradeName}
+                        </span>
+                      ) : null}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{t.slug}</TableCell>
                     <TableCell>{t.kind?.name ?? t.kindId ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
