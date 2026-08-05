@@ -526,7 +526,7 @@ export default function FmfScraperPage() {
             </div>
           ) : matchReports.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              Nenhuma súmula publicada para este clube nos dados importados.
+              Nenhuma súmula encontrada. Use “Atualizar tudo” e recarregue.
             </p>
           ) : (
             <div className="overflow-x-auto">

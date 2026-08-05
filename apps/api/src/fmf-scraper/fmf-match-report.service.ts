@@ -65,6 +65,15 @@ function cbfFromProfile(value: unknown): string {
   return digits((sports as { cbf?: unknown }).cbf);
 }
 
+/** Snapshots antigos não guardavam o link do PDF da súmula. */
+function storeHasReportLinks(store: {
+  categories: Record<string, { matches: Array<{ reportUrl?: string | null }> } | null>;
+}): boolean {
+  return Object.values(store.categories).some((snapshot) =>
+    (snapshot?.matches ?? []).some((match) => !!match.reportUrl),
+  );
+}
+
 @Injectable()
 export class FmfMatchReportService {
   constructor(
@@ -72,9 +81,21 @@ export class FmfMatchReportService {
     private readonly scraper: FmfScraperService,
   ) {}
 
-  async listCandidates(tenantId: string): Promise<FmfMatchReportCandidate[]> {
+  async listCandidates(
+    tenantId: string,
+    options: { allowRefresh?: boolean } = {},
+  ): Promise<FmfMatchReportCandidate[]> {
     const tenant = await this.getTenant(tenantId);
-    const store = await this.scraper.getStatus();
+    let store = await this.scraper.getStatus();
+    if (options.allowRefresh !== false && !storeHasReportLinks(store)) {
+      // Snapshot salvo antes do link da súmula existir no parser: refaz uma vez.
+      try {
+        await this.scraper.runImport({ all: true });
+        store = await this.scraper.getStatus();
+      } catch {
+        /* segue com o snapshot atual */
+      }
+    }
     const existing = await this.prisma.fmfMatchReport.findMany({
       where: { tenantId },
       select: {
@@ -143,7 +164,7 @@ export class FmfMatchReportService {
   async importReports(options: ImportOptions) {
     if (!options.tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
     const tenant = await this.getTenant(options.tenantId);
-    let candidates = await this.listCandidates(options.tenantId);
+    let candidates = await this.listCandidates(options.tenantId, { allowRefresh: false });
     if (options.externalMatchId) {
       candidates = candidates.filter((item) => item.externalMatchId === options.externalMatchId);
     } else if (options.preset) {
@@ -444,13 +465,16 @@ export class FmfMatchReportService {
   private async getTenant(tenantId: string): Promise<TenantInfo> {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { id: true, name: true, slug: true },
+      select: { id: true, name: true, slug: true, tradeName: true },
     });
     if (!tenant) throw new NotFoundException('Clube não encontrado');
-    const aliases = isFmfSyncTenantSlug(tenant.slug)
-      ? FMF_SYNC_TENANT_DEFAULTS[tenant.slug].fmfTeamNames
-      : [tenant.name];
-    return { ...tenant, aliases };
+    const aliases = [
+      ...(isFmfSyncTenantSlug(tenant.slug)
+        ? FMF_SYNC_TENANT_DEFAULTS[tenant.slug].fmfTeamNames
+        : [tenant.name]),
+      ...(tenant.tradeName?.trim() ? [tenant.tradeName.trim()] : []),
+    ];
+    return { id: tenant.id, name: tenant.name, slug: tenant.slug, aliases };
   }
 
   private async refreshPlayerCareerTotals(tenantId: string): Promise<void> {
