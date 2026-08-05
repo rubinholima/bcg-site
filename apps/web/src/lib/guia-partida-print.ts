@@ -1,0 +1,823 @@
+import {
+  printHtmlDocument,
+  resolveLogoUrlForPrint,
+} from "@/lib/futebol-relatorios-print";
+import { getStaffRoleLabel } from "@/lib/staff-roles";
+import type {
+  GuiaAgendaDay,
+  GuiaCampaignLine,
+  GuiaLineup,
+  GuiaLineupPlayer,
+  GuiaMatchLine,
+  GuiaPartidaReportDto,
+  GuiaRankingRow,
+  GuiaSquadPlayer,
+  GuiaStandingRow,
+  PrintPageSize,
+} from "@/lib/futebol-relatorios.types";
+
+/** Identidade visual do guia — vermelho e azul Boston City Group. */
+const C = {
+  red: "#C8102E",
+  redDark: "#8E0A20",
+  navy: "#00205B",
+  navyDeep: "#001338",
+  navyMid: "#003087",
+  ink: "#0B1220",
+  line: "#D7DEEA",
+  soft: "#F2F5FA",
+  softer: "#F8FAFD",
+  muted: "#5B6B85",
+  gold: "#F2B705",
+} as const;
+
+const POSITION_GROUP_LABEL: Record<string, string> = {
+  GOL: "Goleiros",
+  DEF: "Defensores",
+  MEI: "Meio-campo",
+  ATA: "Ataque",
+};
+
+function esc(text: string | number | null | undefined): string {
+  if (text == null) return "";
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0]}${parts[parts.length - 1]![0]}`.toUpperCase();
+}
+
+function crest(name: string, logoUrl: string | null | undefined, className: string): string {
+  const src = resolveLogoUrlForPrint(logoUrl);
+  if (src) return `<img class="${className}" src="${esc(src)}" alt="" />`;
+  return `<div class="${className} crest-fallback">${esc(initials(name))}</div>`;
+}
+
+function photo(url: string | null | undefined, name: string, className: string): string {
+  const src = resolveLogoUrlForPrint(url);
+  if (src) return `<img class="${className}" src="${esc(src)}" alt="" />`;
+  return `<div class="${className} photo-fallback">${esc(initials(name))}</div>`;
+}
+
+function formatBirth(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  if (!y || !m || !d) return "";
+  return `${d}/${m}/${y}`;
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+function sheet(inner: string, extraClass = ""): string {
+  return `<section class="sheet ${extraClass}">${inner}</section>`;
+}
+
+function sectionTitle(title: string, subtitle?: string | null): string {
+  return `<header class="sec-head">
+    <h2>${esc(title)}</h2>
+    ${subtitle ? `<p>${esc(subtitle)}</p>` : ""}
+  </header>`;
+}
+
+function campaignTable(lines: GuiaCampaignLine[]): string {
+  if (lines.length === 0) {
+    return `<p class="empty">Sem partidas registradas na temporada.</p>`;
+  }
+  const rows = lines
+    .map(
+      (line) => `<tr>
+      <th scope="row">${esc(line.label)}</th>
+      <td>${line.matches}</td>
+      <td class="pos">${line.wins}</td>
+      <td>${line.draws}</td>
+      <td class="neg">${line.losses}</td>
+      <td>${line.goalsFor}</td>
+      <td>${line.goalsAgainst}</td>
+      <td>${line.goalDiff > 0 ? "+" : ""}${line.goalDiff}</td>
+      <td class="hi">${line.winRate}%</td>
+    </tr>`,
+    )
+    .join("");
+  return `<table class="grid">
+    <thead>
+      <tr>
+        <th class="left">Recorte</th>
+        <th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th><th>APR.</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function resultBadge(line: GuiaMatchLine): string {
+  if (!line.result) return `<span class="res res-n">—</span>`;
+  const cls = line.result === "V" ? "res-v" : line.result === "E" ? "res-e" : "res-d";
+  return `<span class="res ${cls}">${line.result}</span>`;
+}
+
+function matchRows(lines: GuiaMatchLine[]): string {
+  if (lines.length === 0) return `<p class="empty">Sem partidas registradas.</p>`;
+  return `<ul class="match-list">
+    ${lines
+      .map(
+        (line) => `<li>
+      ${resultBadge(line)}
+      <div class="match-main">
+        <strong>${esc(line.homeTeam)} <span class="score">${esc(line.scoreLabel)}</span> ${esc(line.awayTeam)}</strong>
+        <span>${esc([line.dateLabel, line.competition, line.phase].filter(Boolean).join(" · "))}</span>
+      </div>
+    </li>`,
+      )
+      .join("")}
+  </ul>`;
+}
+
+function rankingBlock(title: string, rows: GuiaRankingRow[], suffix = ""): string {
+  const body =
+    rows.length === 0
+      ? `<p class="empty">Sem dados na temporada.</p>`
+      : `<ol class="rank">
+      ${rows
+        .map(
+          (row) => `<li>
+        <span class="rank-name">${row.jerseyNumber != null ? `<b>${row.jerseyNumber}</b>` : ""}${esc(row.shortName)}</span>
+        ${row.detail ? `<span class="rank-detail">${esc(row.detail)}</span>` : ""}
+        <span class="rank-value">${row.value}${suffix}</span>
+      </li>`,
+        )
+        .join("")}
+    </ol>`;
+  return `<div class="panel"><h3>${esc(title)}</h3>${body}</div>`;
+}
+
+function playerCard(player: GuiaSquadPlayer): string {
+  const bio = [
+    player.age != null ? `${player.age} anos` : null,
+    player.height ? `${(player.height / 100).toFixed(2).replace(".", ",")} m` : null,
+    player.weight ? `${player.weight} kg` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const lines = [player.season, ...player.byCompetition];
+  const statRows = lines
+    .map(
+      (line, index) => `<tr class="${index === 0 ? "total" : ""}">
+      <th scope="row">${esc(index === 0 ? "Geral" : line.label)}</th>
+      <td>${line.matches}</td>
+      <td>${line.goals}</td>
+      <td>${line.minutes}</td>
+    </tr>`,
+    )
+    .join("");
+
+  return `<article class="pcard">
+    <div class="pcard-photo">
+      ${photo(player.photoUrl, player.name, "pcard-img")}
+      <span class="pcard-pos">${esc(player.positionLabel)}</span>
+    </div>
+    <div class="pcard-body">
+      <div class="pcard-head">
+        <span class="pcard-num">${player.jerseyNumber != null ? player.jerseyNumber : "—"}</span>
+        <div>
+          <strong>${esc(player.shortName)}</strong>
+          <span>${esc(bio || formatBirth(player.birthDate) || "—")}</span>
+        </div>
+      </div>
+      <table class="pstats">
+        <thead><tr><th class="left">Temporada</th><th>J</th><th>G</th><th>MIN</th></tr></thead>
+        <tbody>${statRows}</tbody>
+      </table>
+      <p class="pcard-foot">Carreira no clube: ${player.career.matches} J · ${player.career.goals} G · ${player.career.minutes} min</p>
+    </div>
+  </article>`;
+}
+
+function surname(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts[parts.length - 1] ?? name;
+}
+
+function pitchHtml(starters: GuiaLineupPlayer[]): string {
+  const order = ["GOL", "DEF", "MEI", "ATA"] as const;
+  const rowsTop: Record<(typeof order)[number], number> = {
+    GOL: 86,
+    DEF: 64,
+    MEI: 42,
+    ATA: 18,
+  };
+  const chips = order
+    .flatMap((group) => {
+      const list = starters.filter((p) => p.positionGroup === group);
+      if (list.length === 0) return [];
+      const width = Math.floor(94 / list.length);
+      return list.map((player, index) => {
+        const left = ((index + 0.5) / list.length) * 100;
+        return `<div class="chip" style="top:${rowsTop[group]}%;left:${left}%;width:${width}%">
+          <span class="chip-num">${player.jerseyNumber != null ? player.jerseyNumber : "—"}</span>
+          <span class="chip-name">${esc(surname(player.name))}</span>
+        </div>`;
+      });
+    })
+    .join("");
+
+  return `<div class="pitch">
+    <div class="pl pl-mid"></div>
+    <div class="pl pl-circle"></div>
+    <div class="pl pl-box-top"></div>
+    <div class="pl pl-box-bottom"></div>
+    ${chips}
+  </div>`;
+}
+
+function lineupColumn(lineup: GuiaLineup): string {
+  const rows = [
+    ...lineup.starters.map((p) => ({ p, sub: false })),
+    ...lineup.bench.map((p) => ({ p, sub: true })),
+  ]
+    .map(
+      ({ p, sub }) => `<tr class="${sub ? "sub" : ""}">
+      <td class="num">${p.jerseyNumber != null ? p.jerseyNumber : "—"}</td>
+      <td class="left">${esc(p.shortName)}${sub ? ` <span class="tag">${p.enteredMinute != null ? `${p.enteredMinute}'` : "sub"}</span>` : ""}</td>
+      <td>${p.minutes}</td>
+      <td>${p.goals || ""}</td>
+    </tr>`,
+    )
+    .join("");
+
+  return `<div class="lineup">
+    <div class="lineup-head">
+      <strong>${esc(lineup.match.isHome ? lineup.match.awayTeam : lineup.match.homeTeam)}</strong>
+      <span>${esc(lineup.match.scoreLabel)} · ${esc(lineup.match.dateLabel)}</span>
+    </div>
+    ${pitchHtml(lineup.starters)}
+    <table class="grid tight">
+      <thead><tr><th>#</th><th class="left">Atleta</th><th>MIN</th><th>G</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function agendaTable(days: GuiaAgendaDay[]): string {
+  const withItems = days.filter((day) => day.items.length > 0 || day.isMatchDay);
+  if (withItems.length === 0) return `<p class="empty">Sem compromissos registrados na semana.</p>`;
+  return `<table class="grid agenda">
+    <thead><tr><th class="left">Dia</th><th class="left">Horário</th><th class="left">Atividade</th><th class="left">Local</th></tr></thead>
+    <tbody>
+      ${withItems
+        .map((day) => {
+          if (day.items.length === 0) {
+            return `<tr class="${day.isMatchDay ? "matchday" : ""}">
+            <th scope="row" class="left">${esc(day.weekdayLabel)}<span>${esc(day.dateLabel)}</span></th>
+            <td colspan="3" class="left muted">Sem atividades lançadas</td>
+          </tr>`;
+          }
+          return day.items
+            .map(
+              (item, index) => `<tr class="${day.isMatchDay ? "matchday" : ""}">
+            ${
+              index === 0
+                ? `<th scope="row" class="left" rowspan="${day.items.length}">${esc(day.weekdayLabel)}<span>${esc(day.dateLabel)}</span></th>`
+                : ""
+            }
+            <td class="left">${esc(item.time || "—")}</td>
+            <td class="left">${esc(item.title)}<span class="muted"> · ${esc(item.typeLabel)}</span></td>
+            <td class="left">${esc(item.location ?? "—")}</td>
+          </tr>`,
+            )
+            .join("");
+        })
+        .join("")}
+    </tbody>
+  </table>`;
+}
+
+function standingsTable(rows: GuiaStandingRow[]): string {
+  if (rows.length === 0) return "";
+  return `<table class="grid standings">
+    <thead>
+      <tr>
+        <th>#</th><th class="left">Equipe</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th><th>%</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows
+        .map(
+          (row) => `<tr class="${row.isClub ? "club" : ""}">
+        <td>${row.position}</td>
+        <td class="left">${esc(row.team)}</td>
+        <td class="hi">${row.points}</td>
+        <td>${row.matches}</td>
+        <td>${row.wins}</td>
+        <td>${row.draws}</td>
+        <td>${row.losses}</td>
+        <td>${row.goalsFor}</td>
+        <td>${row.goalsAgainst}</td>
+        <td>${row.goalDiff > 0 ? "+" : ""}${row.goalDiff}</td>
+        <td>${row.winRate}</td>
+      </tr>`,
+        )
+        .join("")}
+    </tbody>
+  </table>`;
+}
+
+function styles(size: PrintPageSize): string {
+  const pageSize = size === "Letter" ? "letter" : "A4";
+  return `
+    @page { size: ${pageSize} portrait; margin: 0; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #fff; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: ${C.ink};
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet {
+      position: relative;
+      width: 210mm;
+      min-height: 296mm;
+      padding: 14mm 13mm 16mm;
+      margin: 0 auto;
+      background: #fff;
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+    }
+    .sheet:last-of-type { page-break-after: auto; break-after: auto; }
+
+    /* ---------- Capa ---------- */
+    .cover {
+      padding: 0;
+      color: #fff;
+      background:
+        radial-gradient(120% 80% at 15% 0%, ${C.navyMid} 0%, ${C.navyDeep} 55%, #000818 100%);
+    }
+    .cover-inner { position: relative; height: 296mm; padding: 20mm 16mm 16mm; display: flex; flex-direction: column; }
+    .cover-stripe { position: absolute; top: 0; left: 0; right: 0; height: 10mm; background: linear-gradient(90deg, ${C.red} 0%, ${C.red} 50%, ${C.navyMid} 50%, ${C.navyMid} 100%); }
+    .cover-glow { position: absolute; right: -40mm; top: 60mm; width: 150mm; height: 150mm; border-radius: 50%; background: radial-gradient(circle, rgba(200,16,46,0.35) 0%, rgba(200,16,46,0) 70%); }
+    .cover-kicker { font-size: 11pt; letter-spacing: .38em; text-transform: uppercase; color: ${C.gold}; font-weight: 700; }
+    .cover-title { margin: 6mm 0 0; font-size: 46pt; line-height: .92; font-weight: 900; letter-spacing: -.02em; text-transform: uppercase; }
+    .cover-title span { display: block; color: ${C.gold}; }
+    .cover-sub { margin-top: 4mm; font-size: 12pt; color: #C9D6EC; letter-spacing: .06em; text-transform: uppercase; }
+    .cover-watermark { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); opacity: .07; }
+    .cover-watermark-crest { width: 130mm; height: 130mm; object-fit: contain; }
+    .cover-watermark .crest-fallback { width: 130mm; height: 130mm; font-size: 60pt; }
+    .cover-match { position: relative; margin-top: 22mm; display: flex; align-items: center; justify-content: center; gap: 10mm; padding: 10mm 6mm; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); border-radius: 6mm; }
+    .cover-facts { position: relative; margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+    .cover-facts div { padding: 4mm; text-align: center; background: rgba(255,255,255,0.05); border-top: 2px solid ${C.gold}; border-radius: 0 0 2mm 2mm; }
+    .cover-facts span { display: block; font-size: 6.8pt; letter-spacing: .16em; text-transform: uppercase; color: #9FB3D4; }
+    .cover-facts strong { display: block; margin: 1.5mm 0; font-size: 20pt; font-weight: 900; color: #fff; line-height: 1; }
+    .cover-facts em { font-style: normal; font-size: 7.5pt; color: #C9D6EC; }
+    .cover-team { flex: 1; text-align: center; }
+    .cover-crest { width: 34mm; height: 34mm; object-fit: contain; display: block; margin: 0 auto 4mm; }
+    .crest-fallback { display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.12); border-radius: 50%; font-weight: 800; font-size: 16pt; color: #fff; }
+    .cover-team strong { display: block; font-size: 15pt; line-height: 1.15; text-transform: uppercase; }
+    .cover-team span { font-size: 8.5pt; letter-spacing: .22em; text-transform: uppercase; color: #9FB3D4; }
+    .cover-vs { font-size: 24pt; font-weight: 900; color: ${C.gold}; }
+    .cover-info { position: relative; margin-top: 5mm; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+    .cover-info div { padding: 4mm; background: rgba(255,255,255,0.07); border-left: 3px solid ${C.red}; border-radius: 2mm; }
+    .cover-info span { display: block; font-size: 7.5pt; letter-spacing: .2em; text-transform: uppercase; color: #9FB3D4; }
+    .cover-info strong { font-size: 11pt; }
+    .cover-foot { position: relative; margin-top: 6mm; display: flex; align-items: center; justify-content: space-between; font-size: 8.5pt; color: #9FB3D4; letter-spacing: .1em; text-transform: uppercase; }
+    .cover-foot img { height: 12mm; object-fit: contain; }
+
+    /* ---------- Seções ---------- */
+    .sec-head { border-bottom: 3px solid ${C.red}; padding-bottom: 3mm; margin-bottom: 6mm; }
+    .sec-head h2 { margin: 0; font-size: 22pt; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; color: ${C.navy}; }
+    .sec-head p { margin: 1.5mm 0 0; font-size: 9pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .14em; }
+    .sheet-tag { position: absolute; right: 13mm; top: 6mm; font-size: 7.5pt; letter-spacing: .22em; text-transform: uppercase; color: ${C.muted}; }
+    .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+    .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
+    .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: avoid; }
+    .panel h3 { margin: 0 0 3mm; font-size: 10pt; text-transform: uppercase; letter-spacing: .14em; color: ${C.navy}; border-bottom: 1px solid ${C.line}; padding-bottom: 2mm; }
+    .empty { margin: 0; font-size: 8.5pt; color: ${C.muted}; font-style: italic; }
+    .muted { color: ${C.muted}; }
+
+    /* ---------- Tabelas ---------- */
+    table.grid { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    table.grid th, table.grid td { border: 1px solid ${C.line}; padding: 1.6mm 2mm; text-align: center; }
+    table.grid thead th { background: ${C.navy}; color: #fff; text-transform: uppercase; font-size: 7.5pt; letter-spacing: .1em; border-color: ${C.navy}; }
+    table.grid tbody th { background: ${C.soft}; text-align: left; font-weight: 700; }
+    table.grid .left { text-align: left; }
+    table.grid .hi { font-weight: 800; color: ${C.navy}; }
+    table.grid .pos { color: #15803D; font-weight: 700; }
+    table.grid .neg { color: ${C.red}; font-weight: 700; }
+    table.grid.tight th, table.grid.tight td { padding: 1.1mm 1.4mm; font-size: 7.5pt; }
+    table.grid tr.sub td { background: ${C.softer}; color: ${C.muted}; }
+    table.grid .tag { font-size: 6.5pt; color: ${C.red}; font-weight: 700; }
+    table.agenda th[scope="row"] span { display: block; font-weight: 400; font-size: 7.5pt; color: ${C.muted}; }
+    table.agenda tr.matchday td, table.agenda tr.matchday th { background: ${C.redDark}; color: #fff; border-color: ${C.redDark}; }
+    table.agenda tr.matchday .muted { color: #F3C9D1; }
+    table.standings tr.club td { background: ${C.navy}; color: #fff; font-weight: 700; border-color: ${C.navy}; }
+    table.standings tr.club .hi { color: ${C.gold}; }
+
+    /* ---------- Ficha do jogo ---------- */
+    .match-hero { display: flex; align-items: center; gap: 6mm; padding: 5mm; border: 1px solid ${C.line}; border-radius: 3mm; background: linear-gradient(120deg, ${C.soft} 0%, #fff 60%); margin-bottom: 6mm; }
+    .match-hero .side { flex: 1; text-align: center; }
+    .match-hero .side img, .match-hero .side .crest-fallback { width: 22mm; height: 22mm; object-fit: contain; margin: 0 auto 2mm; }
+    .match-hero .side .crest-fallback { color: ${C.navy}; background: ${C.soft}; }
+    .match-hero .side strong { display: block; font-size: 11pt; text-transform: uppercase; color: ${C.navy}; }
+    .match-hero .side span { font-size: 7.5pt; letter-spacing: .2em; text-transform: uppercase; color: ${C.muted}; }
+    .match-hero .vs { font-size: 18pt; font-weight: 900; color: ${C.red}; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm; margin-bottom: 6mm; }
+    .info-grid div { padding: 3mm 3.5mm; border-left: 3px solid ${C.red}; background: ${C.softer}; border-radius: 0 2mm 2mm 0; }
+    .info-grid span { display: block; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
+    .info-grid strong { font-size: 10pt; color: ${C.ink}; }
+    .people { list-style: none; margin: 0; padding: 0; font-size: 8.5pt; }
+    .people li { display: flex; justify-content: space-between; gap: 3mm; padding: 1.6mm 0; border-bottom: 1px dotted ${C.line}; }
+    .people li:last-child { border-bottom: none; }
+    .people b { font-weight: 700; }
+    .people span { color: ${C.muted}; text-align: right; }
+
+    /* ---------- Resultados ---------- */
+    .match-list { list-style: none; margin: 0; padding: 0; }
+    .match-list li { display: flex; align-items: center; gap: 3mm; padding: 2mm 0; border-bottom: 1px solid ${C.line}; }
+    .match-list li:last-child { border-bottom: none; }
+    .match-main { display: flex; flex-direction: column; font-size: 8.5pt; }
+    .match-main strong { font-weight: 700; }
+    .match-main .score { color: ${C.red}; font-weight: 900; padding: 0 1mm; }
+    .match-main span { font-size: 7.5pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .06em; }
+    .res { display: inline-flex; align-items: center; justify-content: center; width: 7mm; height: 7mm; border-radius: 50%; font-size: 8pt; font-weight: 900; color: #fff; flex: none; }
+    .res-v { background: #15803D; } .res-e { background: #94A3B8; } .res-d { background: ${C.red}; } .res-n { background: #CBD5E1; color: ${C.muted}; }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin-bottom: 5mm; }
+    .kpi { padding: 4mm 3mm; text-align: center; border-radius: 3mm; background: ${C.navy}; color: #fff; }
+    .kpi strong { display: block; font-size: 20pt; font-weight: 900; line-height: 1; }
+    .kpi span { font-size: 7.5pt; letter-spacing: .18em; text-transform: uppercase; color: #A9BCDC; }
+    .kpi.alt { background: ${C.red}; } .kpi.alt span { color: #FAD3DA; }
+
+    /* ---------- Rankings ---------- */
+    ol.rank { list-style: none; margin: 0; padding: 0; counter-reset: rank; font-size: 8.5pt; }
+    ol.rank li { display: flex; align-items: baseline; gap: 2mm; padding: 1.7mm 0; border-bottom: 1px dotted ${C.line}; }
+    ol.rank li:last-child { border-bottom: none; }
+    .rank-name { flex: 1; font-weight: 600; }
+    .rank-name b { display: inline-block; min-width: 5mm; color: ${C.red}; }
+    .rank-detail { font-size: 7pt; color: ${C.muted}; text-transform: uppercase; }
+    .rank-value { font-weight: 900; color: ${C.navy}; min-width: 10mm; text-align: right; }
+
+    /* ---------- Elenco ---------- */
+    .group-band { margin: 0 0 4mm; padding: 2mm 3mm; background: ${C.navy}; color: #fff; font-size: 9pt; text-transform: uppercase; letter-spacing: .18em; font-weight: 700; border-radius: 2mm; }
+    .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+    .pcard { display: flex; gap: 3mm; border: 1px solid ${C.line}; border-radius: 3mm; overflow: hidden; background: #fff; break-inside: avoid; }
+    .pcard-photo { position: relative; width: 27mm; flex: none; background: linear-gradient(160deg, ${C.navy} 0%, ${C.navyDeep} 100%); }
+    .pcard-img { width: 100%; height: 100%; min-height: 40mm; object-fit: cover; object-position: center 18%; display: block; }
+    .photo-fallback { width: 100%; height: 100%; min-height: 40mm; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14pt; }
+    .pcard-pos { position: absolute; left: 0; bottom: 0; right: 0; padding: 1mm; font-size: 6.5pt; text-transform: uppercase; letter-spacing: .1em; text-align: center; background: ${C.red}; color: #fff; }
+    .pcard-body { flex: 1; padding: 2.5mm 3mm 2mm; min-width: 0; }
+    .pcard-head { display: flex; align-items: center; gap: 2.5mm; margin-bottom: 2mm; }
+    .pcard-num { font-size: 17pt; font-weight: 900; color: ${C.red}; line-height: 1; min-width: 9mm; text-align: center; }
+    .pcard-head strong { display: block; font-size: 10pt; text-transform: uppercase; color: ${C.navy}; line-height: 1.1; }
+    .pcard-head span { font-size: 7pt; color: ${C.muted}; }
+    table.pstats { width: 100%; border-collapse: collapse; font-size: 7pt; }
+    table.pstats th, table.pstats td { border: 1px solid ${C.line}; padding: .9mm 1.2mm; text-align: center; }
+    table.pstats thead th { background: ${C.soft}; color: ${C.navy}; text-transform: uppercase; font-size: 6.2pt; letter-spacing: .06em; }
+    table.pstats tbody th { text-align: left; font-weight: 600; font-size: 6.5pt; }
+    table.pstats tr.total th, table.pstats tr.total td { background: ${C.navy}; color: #fff; font-weight: 700; border-color: ${C.navy}; }
+    .pcard-foot { margin: 1.5mm 0 0; font-size: 6.5pt; color: ${C.muted}; }
+
+    /* ---------- Escalações ---------- */
+    .lineups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+    .lineup { break-inside: avoid; }
+    .lineup-head { text-align: center; padding: 2mm; background: ${C.navy}; color: #fff; border-radius: 2mm 2mm 0 0; }
+    .lineup-head strong { display: block; font-size: 8.5pt; text-transform: uppercase; }
+    .lineup-head span { font-size: 7pt; color: #A9BCDC; }
+    .pitch { position: relative; height: 62mm; background: repeating-linear-gradient(180deg, #1B7A3E 0 8mm, #176E37 8mm 16mm); border: 1px solid #0F5228; }
+    .pl { position: absolute; border: 1px solid rgba(255,255,255,.5); }
+    .pl-mid { left: 0; right: 0; top: 50%; height: 0; border-width: 1px 0 0; }
+    .pl-circle { left: 50%; top: 50%; width: 16mm; height: 16mm; margin: -8mm 0 0 -8mm; border-radius: 50%; }
+    .pl-box-top { left: 50%; top: 0; width: 26mm; height: 8mm; margin-left: -13mm; border-top: none; }
+    .pl-box-bottom { left: 50%; bottom: 0; width: 26mm; height: 8mm; margin-left: -13mm; border-bottom: none; }
+    .chip { position: absolute; transform: translate(-50%, -50%); text-align: center; }
+    .chip-num { display: block; width: 5.6mm; height: 5.6mm; margin: 0 auto; border-radius: 50%; background: #fff; color: ${C.navy}; font-size: 6pt; font-weight: 900; line-height: 5.6mm; border: 1px solid ${C.navy}; }
+    .chip-name { display: block; margin-top: .5mm; font-size: 4.9pt; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .note { margin-top: 5mm; font-size: 7pt; color: ${C.muted}; font-style: italic; }
+    .page-foot { position: absolute; left: 13mm; right: 13mm; bottom: 7mm; display: flex; justify-content: space-between; font-size: 7pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .12em; border-top: 1px solid ${C.line}; padding-top: 2mm; }
+  `;
+}
+
+function pageFoot(club: string, opponent: string, label: string): string {
+  return `<div class="page-foot"><span>${esc(club)} × ${esc(opponent)}</span><span>${esc(label)}</span></div>`;
+}
+
+export function buildGuiaPartidaPrintHtml(
+  data: GuiaPartidaReportDto,
+  size: PrintPageSize = "A4",
+): string {
+  const { travel, config } = data;
+  const club = travel.tenant.name;
+  const opponent = travel.opponentName?.trim() || "Adversário";
+  const clubLogo = travel.tenant.logoUrl;
+  const homeName = travel.isHomeMatch ? club : opponent;
+  const awayName = travel.isHomeMatch ? opponent : club;
+  const homeLogo = travel.isHomeMatch ? clubLogo : data.opponentLogoUrl;
+  const awayLogo = travel.isHomeMatch ? data.opponentLogoUrl : clubLogo;
+  const matchDateLabel = travel.matchDate
+    ? travel.matchDate.split("-").reverse().join("/")
+    : "—";
+  const kickoff = [matchDateLabel, config.matchTime].filter(Boolean).join(" · ");
+  const competition = [travel.championshipName, config.phase].filter(Boolean).join(" · ");
+  const foot = (label: string) => pageFoot(club, opponent, label);
+
+  /* ---------------- Capa ---------------- */
+  const topScorer = data.topScorers[0];
+  const coverFacts = [
+    {
+      label: "Aproveitamento na temporada",
+      value: `${data.campaign.overall.winRate}%`,
+      hint: `${data.campaign.overall.matches} jogos · ${data.campaign.overall.wins}V ${data.campaign.overall.draws}E ${data.campaign.overall.losses}D`,
+    },
+    {
+      label: "Artilheiro",
+      value: topScorer ? `${topScorer.value}` : "—",
+      hint: topScorer ? topScorer.shortName : "Sem gols registrados",
+    },
+    {
+      label: `Retrospecto vs ${opponent}`,
+      value:
+        data.headToHead.played > 0
+          ? `${data.headToHead.wins}-${data.headToHead.draws}-${data.headToHead.losses}`
+          : "—",
+      hint:
+        data.headToHead.played > 0
+          ? `${data.headToHead.played} jogos · ${data.headToHead.goalsFor}x${data.headToHead.goalsAgainst}`
+          : "Primeiro confronto",
+    },
+  ];
+
+  const cover = sheet(
+    `<div class="cover-inner">
+      <div class="cover-stripe"></div>
+      <div class="cover-glow"></div>
+      <div class="cover-watermark">${crest(club, clubLogo, "cover-watermark-crest")}</div>
+      <p class="cover-kicker">${esc(travel.categoryLabel)} · Temporada ${data.season}</p>
+      <h1 class="cover-title">Guia da<span>Partida</span></h1>
+      <p class="cover-sub">${esc(competition || "Relatório de imprensa")}</p>
+
+      <div class="cover-match">
+        <div class="cover-team">
+          ${crest(homeName, homeLogo, "cover-crest")}
+          <strong>${esc(homeName)}</strong>
+          <span>Mandante</span>
+        </div>
+        <div class="cover-vs">×</div>
+        <div class="cover-team">
+          ${crest(awayName, awayLogo, "cover-crest")}
+          <strong>${esc(awayName)}</strong>
+          <span>Visitante</span>
+        </div>
+      </div>
+
+      <div class="cover-facts">
+        ${coverFacts
+          .map(
+            (fact) => `<div>
+          <span>${esc(fact.label)}</span>
+          <strong>${esc(fact.value)}</strong>
+          <em>${esc(fact.hint)}</em>
+        </div>`,
+          )
+          .join("")}
+      </div>
+
+      <div class="cover-info">
+        <div><span>Data e horário</span><strong>${esc(kickoff || "—")}</strong></div>
+        <div><span>Local</span><strong>${esc(travel.stadiumName || travel.city || "A definir")}</strong></div>
+        <div><span>Categoria</span><strong>${esc(travel.categoryLabel)}</strong></div>
+      </div>
+
+      <div class="cover-foot">
+        ${crest(club, clubLogo, "cover-foot-crest")}
+        <span>Assessoria de Imprensa · Boston City Group</span>
+      </div>
+    </div>`,
+    "cover",
+  );
+
+  /* ---------------- A partida ---------------- */
+  const refereesHtml = config.referees.filter((r) => r.name.trim());
+  const directorsHtml = config.directors.filter((d) => d.name.trim());
+
+  const matchSheet = sheet(
+    `<div class="sheet-tag">A partida</div>
+    ${sectionTitle("O confronto", competition || null)}
+    <div class="match-hero">
+      <div class="side">
+        ${crest(homeName, homeLogo, "hero-crest")}
+        <strong>${esc(homeName)}</strong>
+        <span>Mandante</span>
+      </div>
+      <div class="vs">×</div>
+      <div class="side">
+        ${crest(awayName, awayLogo, "hero-crest")}
+        <strong>${esc(awayName)}</strong>
+        <span>Visitante</span>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div><span>Data</span><strong>${esc(matchDateLabel)}</strong></div>
+      <div><span>Horário</span><strong>${esc(config.matchTime || "A definir")}</strong></div>
+      <div><span>Estádio</span><strong>${esc(travel.stadiumName || "A definir")}</strong></div>
+      <div><span>Cidade</span><strong>${esc([travel.city, travel.country].filter(Boolean).join(" / ") || "—")}</strong></div>
+      <div><span>Competição</span><strong>${esc(travel.championshipName || "—")}</strong></div>
+      <div><span>Fase / rodada</span><strong>${esc(config.phase || "—")}</strong></div>
+    </div>
+
+    <div class="cols-2">
+      <div class="panel">
+        <h3>Arbitragem</h3>
+        ${
+          refereesHtml.length > 0
+            ? `<ul class="people">${refereesHtml.map((r) => `<li><b>${esc(r.name)}</b><span>${esc(r.role)}</span></li>`).join("")}</ul>`
+            : `<p class="empty">Escala não divulgada.</p>`
+        }
+      </div>
+      <div class="panel">
+        <h3>Diretoria</h3>
+        ${
+          directorsHtml.length > 0
+            ? `<ul class="people">${directorsHtml.map((d) => `<li><b>${esc(d.name)}</b><span>${esc(d.role)}</span></li>`).join("")}</ul>`
+            : `<p class="empty">—</p>`
+        }
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:6mm">
+      <h3>Comissão técnica</h3>
+      ${
+        data.staff.length > 0
+          ? `<ul class="people">${data.staff
+              .map(
+                (s) =>
+                  `<li><b>${esc(s.name)}</b><span>${esc(s.role ? getStaffRoleLabel(s.role) : "Comissão")}</span></li>`,
+              )
+              .join("")}</ul>`
+          : `<p class="empty">Comissão não informada na convocação.</p>`
+      }
+    </div>
+
+    <div class="panel" style="margin-top:6mm">
+      <h3>Retrospecto contra ${esc(opponent)}</h3>
+      ${
+        data.headToHead.played > 0
+          ? `<div class="kpi-row">
+              <div class="kpi"><strong>${data.headToHead.played}</strong><span>Jogos</span></div>
+              <div class="kpi"><strong>${data.headToHead.wins}</strong><span>Vitórias</span></div>
+              <div class="kpi"><strong>${data.headToHead.draws}</strong><span>Empates</span></div>
+              <div class="kpi alt"><strong>${data.headToHead.losses}</strong><span>Derrotas</span></div>
+            </div>
+            ${matchRows(data.headToHead.matches)}`
+          : `<p class="empty">Sem confrontos anteriores registrados.</p>`
+      }
+    </div>
+    ${foot("A partida")}`,
+  );
+
+  /* ---------------- Números ---------------- */
+  const numbersSheet = sheet(
+    `<div class="sheet-tag">Desempenho</div>
+    ${sectionTitle(`Números na temporada ${data.season}`, travel.categoryLabel)}
+    <div class="kpi-row">
+      <div class="kpi"><strong>${data.campaign.overall.matches}</strong><span>Jogos</span></div>
+      <div class="kpi"><strong>${data.campaign.overall.wins}</strong><span>Vitórias</span></div>
+      <div class="kpi"><strong>${data.campaign.overall.goalsFor}</strong><span>Gols pró</span></div>
+      <div class="kpi alt"><strong>${data.campaign.overall.winRate}%</strong><span>Aproveitamento</span></div>
+    </div>
+
+    ${campaignTable([
+      data.campaign.overall,
+      ...data.campaign.byCompetition,
+      data.campaign.home,
+      data.campaign.away,
+    ])}
+
+    <div class="cols-2" style="margin-top:6mm">
+      <div class="panel">
+        <h3>Últimos resultados</h3>
+        ${matchRows(data.recentResults)}
+      </div>
+      <div class="panel">
+        <h3>Próximos compromissos</h3>
+        ${
+          data.nextMatches.length > 0
+            ? `<ul class="people">${data.nextMatches
+                .map(
+                  (m) =>
+                    `<li><b>${esc(m.isHome ? `${club} × ${m.opponent}` : `${m.opponent} × ${club}`)}</b><span>${esc([m.dateLabel, m.competition].filter(Boolean).join(" · "))}</span></li>`,
+                )
+                .join("")}</ul>`
+            : `<p class="empty">Sem jogos futuros lançados.</p>`
+        }
+      </div>
+    </div>
+
+    <div class="cols-3" style="margin-top:6mm">
+      ${rankingBlock("Artilharia", data.topScorers)}
+      ${rankingBlock("Mais minutos", data.topMinutes, "'")}
+      ${rankingBlock("Cartões", data.topCards)}
+    </div>
+    ${foot("Desempenho")}`,
+  );
+
+  /* ---------------- Elenco ---------------- */
+  const squadSheets = chunk(data.squad, 8).map((page, index) => {
+    const blocks: string[] = [];
+    let currentGroup: GuiaSquadPlayer["positionGroup"] | null = null;
+    let buffer: GuiaSquadPlayer[] = [];
+    const flush = () => {
+      if (buffer.length === 0) return;
+      blocks.push(
+        `<p class="group-band">${esc(POSITION_GROUP_LABEL[currentGroup ?? ""] ?? "Elenco")}</p>
+         <div class="squad-grid">${buffer.map(playerCard).join("")}</div>`,
+      );
+      buffer = [];
+    };
+    for (const player of page) {
+      if (player.positionGroup !== currentGroup) {
+        flush();
+        currentGroup = player.positionGroup;
+      }
+      buffer.push(player);
+    }
+    flush();
+
+    return sheet(
+      `<div class="sheet-tag">Elenco relacionado</div>
+      ${
+        index === 0
+          ? sectionTitle("Elenco", `${data.squad.length} atletas relacionados · ${travel.categoryLabel}`)
+          : sectionTitle("Elenco", "continuação")
+      }
+      ${blocks.join("")}
+      <p class="note">J = jogos · G = gols · MIN = minutos em campo. Números consolidados das partidas oficiais da temporada ${data.season}.</p>
+      ${foot("Elenco")}`,
+    );
+  });
+
+  /* ---------------- Escalações ---------------- */
+  const lineupSheet =
+    data.lastLineups.length > 0
+      ? sheet(
+          `<div class="sheet-tag">Escalações</div>
+          ${sectionTitle("Últimas escalações", `Três partidas mais recentes · ${travel.categoryLabel}`)}
+          <div class="lineups">${data.lastLineups.map(lineupColumn).join("")}</div>
+          <p class="note">O gráfico mostra a distribuição dos titulares por setor, a partir da posição de cadastro — não representa o esquema tático utilizado. Atletas em cinza entraram durante a partida.</p>
+          ${foot("Escalações")}`,
+        )
+      : "";
+
+  /* ---------------- Agenda + classificação ---------------- */
+  const closingSheet = sheet(
+    `<div class="sheet-tag">Agenda</div>
+    ${sectionTitle("Semana do jogo", travel.categoryLabel)}
+    ${agendaTable(data.agenda)}
+    ${
+      data.standings.length > 0
+        ? `<div style="margin-top:7mm">${sectionTitle("Classificação", travel.championshipName ?? null)}${standingsTable(data.standings)}</div>`
+        : ""
+    }
+    <div class="panel" style="margin-top:7mm">
+      <h3>Contato para imprensa</h3>
+      <p style="margin:0;font-size:9pt">${esc(config.contactLine || `Assessoria de Comunicação · ${club}`)}</p>
+    </div>
+    ${foot("Agenda")}`,
+  );
+
+  const body = [cover, matchSheet, numbersSheet, ...squadSheets, lineupSheet, closingSheet]
+    .filter(Boolean)
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>${esc(`Guia da Partida — ${homeName} x ${awayName}`)}</title>
+  <style>${styles(size)}
+    .hero-crest { width: 22mm; height: 22mm; object-fit: contain; display: block; margin: 0 auto 2mm; }
+    .cover-foot-crest { height: 12mm; width: auto; object-fit: contain; }
+  </style>
+</head>
+<body>${body}</body>
+</html>`;
+}
+
+export function printGuiaPartidaReport(
+  data: GuiaPartidaReportDto,
+  size: PrintPageSize = "A4",
+): void {
+  printHtmlDocument(buildGuiaPartidaPrintHtml(data, size), "Impressão — Guia da Partida");
+}

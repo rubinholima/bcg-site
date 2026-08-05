@@ -4,11 +4,12 @@ import { ModulesModule } from '../modules/modules.module';
 import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
 import { FutebolRelatoriosController } from './futebol-relatorios.controller';
 import { FutebolRelatoriosService } from './futebol-relatorios.service';
+import { GuiaPartidaService } from './guia-partida.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 
 @Module({
   imports: [AuthModule, ModulesModule, FutebolAgendaModule],
   controllers: [FutebolRelatoriosController],
-  providers: [FutebolRelatoriosService, ModuleAccessGuard],
+  providers: [FutebolRelatoriosService, GuiaPartidaService, ModuleAccessGuard],
 })
 export class FutebolRelatoriosModule {}

@@ -12,13 +12,17 @@ import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { FutebolRelatoriosService } from './futebol-relatorios.service';
+import { GuiaPartidaService } from './guia-partida.service';
 import type { PressKitConfigDto } from './futebol-relatorios.types';
 
 @Controller('futebol-relatorios')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
 @RequireModule('relatorios_futebol')
 export class FutebolRelatoriosController {
-  constructor(private readonly service: FutebolRelatoriosService) {}
+  constructor(
+    private readonly service: FutebolRelatoriosService,
+    private readonly guiaPartida: GuiaPartidaService,
+  ) {}
 
   @Get('viagens')
   listViagens(@Query('tenantId') tenantId?: string) {
@@ -69,6 +73,14 @@ export class FutebolRelatoriosController {
       throw new BadRequestException('travelId é obrigatório');
     }
     return this.service.savePressKit(travelId.trim(), body ?? {});
+  }
+
+  @Get('guia-partida')
+  getGuiaPartida(@Query('travelId') travelId?: string) {
+    if (!travelId?.trim()) {
+      throw new BadRequestException('travelId é obrigatório');
+    }
+    return this.guiaPartida.getGuiaPartida(travelId.trim());
   }
 
   @Get('programacao-semanal')

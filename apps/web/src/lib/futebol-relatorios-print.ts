@@ -692,7 +692,7 @@ export function buildProgramacaoPrintHtml(
 </html>`;
 }
 
-function printHtmlDocument(html: string, title: string): void {
+export function printHtmlDocument(html: string, title: string): void {
   if (typeof document === "undefined") return;
 
   const iframe = document.createElement("iframe");

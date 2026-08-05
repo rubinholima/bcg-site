@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  BookOpen,
   CalendarRange,
   ChevronRight,
   ClipboardList,
@@ -22,6 +23,11 @@ const REPORT_OPTIONS = [
     href: "/dashboard/futebol/logistica/relatorios/press-kit",
     title: "Press Kit / Relatório Imprensa",
     icon: Newspaper,
+  },
+  {
+    href: "/dashboard/futebol/logistica/relatorios/guia-partida",
+    title: "Guia da Partida",
+    icon: BookOpen,
   },
   {
     href: "/dashboard/futebol/logistica/relatorios/passageiros",
