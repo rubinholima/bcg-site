@@ -75,7 +75,7 @@ function EmployeeTable({
             <TableCell>
               <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
                 {emp.photoUrl ? (
-                  <img src={getPublicImageUrl(emp.photoUrl)} alt="" className="h-full w-full object-cover" />
+                  <img src={getPublicImageUrl(emp.photoUrl)} alt="" className="h-full w-full object-cover object-[center_20%]" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                     <UserCircle className="h-5 w-5" />

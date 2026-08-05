@@ -103,7 +103,7 @@ export const AGENDA_SOURCE_TONE: Record<string, string> = {
 };
 
 export const AGENDA_SOURCE_MANAGE_HREF: Record<string, string> = {
-  futebol: "/dashboard/futebol/logistica/agenda",
+  futebol: "/dashboard/futebol/agenda",
   psicologia: "/dashboard/consultas",
   "boston-hall": "/dashboard/eventos/boston-city-hall/agenda",
   consultas: "/dashboard/consultas",
@@ -111,7 +111,7 @@ export const AGENDA_SOURCE_MANAGE_HREF: Record<string, string> = {
 };
 
 export const AGENDA_SOURCE_CREATE_HREF: Record<string, string> = {
-  futebol: "/dashboard/futebol/logistica/agenda?new=1",
+  futebol: "/dashboard/futebol/agenda?new=1",
   psicologia: "/dashboard/consultas",
   "boston-hall": "/dashboard/eventos/boston-city-hall/reservas",
   consultas: "/dashboard/consultas",

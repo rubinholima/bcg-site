@@ -360,7 +360,7 @@ export class PlayersService {
 
   private parseRegistrationProfile(raw: unknown): {
     personal?: { cpf?: string; clubArrivalDate?: string };
-    sports?: { situation?: string };
+    sports?: { situation?: string; cbf?: string };
     contracts?: {
       economicRights?: Array<{ id: string; clubName: string; percentage: number }>;
       beatscode?: Array<{
@@ -387,6 +387,7 @@ export class PlayersService {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
     return raw as {
       personal?: { cpf?: string };
+      sports?: { situation?: string; cbf?: string };
       contracts?: {
         economicRights?: Array<{ id: string; clubName: string; percentage: number }>;
         beatscode?: Array<{
@@ -1046,6 +1047,18 @@ export class PlayersService {
     return cadastroUpper(String(value));
   }
 
+  private cbfRegistrationFromProfile(value: unknown): string | null {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const sports = (value as { sports?: unknown }).sports;
+    if (!sports || typeof sports !== 'object' || Array.isArray(sports)) return null;
+    const raw = (sports as { cbf?: unknown }).cbf;
+    const normalized =
+      typeof raw === 'string' || typeof raw === 'number'
+        ? String(raw).replace(/\D/g, '')
+        : '';
+    return normalized || null;
+  }
+
   private toCreateData(dto: CreatePlayerDto): Prisma.PlayerUncheckedCreateInput {
     const d = dto as unknown as Record<string, unknown>;
     const j = (v: unknown) => (v != null ? (v as object) : Prisma.JsonNull);
@@ -1085,6 +1098,7 @@ export class PlayersService {
       bioPT: cadastroUpper((d.bioPT as string) ?? undefined),
       bioEN: cadastroUpper((d.bioEN as string) ?? undefined),
       externalId: (d.externalId as string)?.trim() || null,
+      cbfRegistration: this.cbfRegistrationFromProfile(d.registrationProfile),
       contactEmail: cadastroEmail((d.contactEmail as string) ?? undefined),
       contactPhone: cadastroUpper((d.contactPhone as string) ?? undefined),
       emergencyContactName: cadastroUpper((d.emergencyContactName as string) ?? undefined),
@@ -1177,6 +1191,7 @@ export class PlayersService {
       }),
       ...(d.registrationProfile !== undefined && {
         registrationProfile: jsonOrNull(normalizeRegistrationProfileSituation(d.registrationProfile)),
+        cbfRegistration: this.cbfRegistrationFromProfile(d.registrationProfile),
       }),
     };
   }

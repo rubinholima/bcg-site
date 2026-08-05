@@ -242,6 +242,7 @@ export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "mapa", label: "Mapa", icon: MapIcon, moduleSlug: null },
   { id: "momentos", label: "Momentos", icon: Youtube, moduleSlug: null },
   { id: "imagens", label: "Imagens", icon: ImageIcon, moduleSlug: null },
+  { id: "estatisticas", label: "Estatísticas", icon: Trophy, moduleSlug: "futebol_analise" },
   { id: "desempenho", label: "Desempenho", icon: BarChart3, moduleSlug: "futebol_analise" },
 ];
 
@@ -414,7 +415,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
   },
   {
     slug: "agenda",
-    label: "Agenda",
+    label: "Agenda Geral",
     href: "/dashboard/agenda",
     icon: Calendar,
     moduleSlug: "agenda",
@@ -490,6 +491,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         ],
       },
       {
+        slug: "futebol_agenda",
+        label: "Agenda Futebol",
+        href: "/dashboard/futebol/agenda",
+        icon: Calendar,
+        moduleSlug: "futebol_logistica",
+      },
+      {
         slug: "futebol_logistica",
         label: "Logística",
         icon: MapIcon,
@@ -538,13 +546,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Convocação",
             href: "/dashboard/futebol/logistica/convocacao",
             icon: ClipboardCheck,
-            moduleSlug: "futebol_logistica",
-          },
-          {
-            slug: "futebol_logistica_agenda",
-            label: "Agenda Futebol",
-            href: "/dashboard/futebol/logistica/agenda",
-            icon: Calendar,
             moduleSlug: "futebol_logistica",
           },
           {

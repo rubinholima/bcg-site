@@ -8,6 +8,7 @@ import { S3Module } from '../s3/s3.module';
 import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
 import { FmfScraperController } from './fmf-scraper.controller';
 import { FmfPageSyncService } from './fmf-page-sync.service';
+import { FmfMatchReportService } from './fmf-match-report.service';
 import { FmfScraperService } from './fmf-scraper.service';
 import { FmfScraperSchedulerService } from './fmf-scraper-scheduler.service';
 import { FmfTravelSyncService } from './fmf-travel-sync.service';
@@ -28,6 +29,7 @@ import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
     FmfVisitingTeamsSyncService,
     FmfTravelSyncService,
     FmfPageSyncService,
+    FmfMatchReportService,
     FmfScraperSchedulerService,
     ModuleAccessGuard,
   ],
@@ -36,6 +38,7 @@ import { FmfVisitingTeamsSyncService } from './fmf-visiting-teams-sync.service';
     FmfPageSyncService,
     FmfVisitingTeamsSyncService,
     FmfTravelSyncService,
+    FmfMatchReportService,
   ],
 })
 export class FmfScraperModule {}

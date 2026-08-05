@@ -22,6 +22,7 @@ import { TenantAccessService } from '../auth/tenant-access.service';
 import { PlayersService } from './players.service';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
+import { FmfMatchReportService } from '../fmf-scraper/fmf-match-report.service';
 
 @Controller('players')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard)
@@ -29,6 +30,7 @@ export class PlayersController {
   constructor(
     private readonly service: PlayersService,
     private readonly tenantAccess: TenantAccessService,
+    private readonly fmfMatchReports: FmfMatchReportService,
   ) {}
 
   private async allowedTenants(req: Request & { user: CognitoJwtPayload }) {
@@ -91,6 +93,16 @@ export class PlayersController {
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.findContractsOverview(id, allowed);
+  }
+
+  @Get(':id/fmf-stats')
+  async findFmfStats(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    await this.service.findOne(id, allowed);
+    return this.fmfMatchReports.getPlayerStats(id);
   }
 
   /** PDF de contrato jurídico — autenticado (legal/* não é público no CDN). */

@@ -126,7 +126,7 @@ export default function PsicologosPage() {
                           <img
                             src={getPublicImageUrl(p.photoUrl)}
                             alt=""
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover object-[center_20%]"
                           />
                         </div>
                       ) : (

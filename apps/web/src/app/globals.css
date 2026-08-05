@@ -138,15 +138,32 @@ input[type="datetime-local"]::-webkit-datetime-edit {
   display: none;
 }
 
+/* Escala do dashboard: 0.9 = 90%. Alterar só esta linha muda o zoom de todas as telas. */
+:root {
+  --dashboard-zoom: 0.9;
+  --app-zoom: 1;
+}
+/* Mobile/tablet ficam em 100% — reduzir aqui deixaria texto e toque pequenos demais. */
+@media (min-width: 1024px) {
+  html.dashboard-active {
+    zoom: var(--dashboard-zoom);
+    --app-zoom: var(--dashboard-zoom);
+  }
+}
+/* Unidades de viewport não sofrem o zoom: dividir por --app-zoom devolve a altura cheia. */
+.app-screen-h {
+  height: calc(100dvh / var(--app-zoom));
+}
+
 /* Dashboard: quando ativo, html e body não scrollam - UMA ÚNICA scrollbar em dashboard-scroll */
 html.dashboard-active {
   overflow: hidden !important;
-  height: 100vh;
+  height: calc(100vh / var(--app-zoom));
 }
 body.dashboard-active {
   overflow: hidden !important;
-  height: 100vh;
-  max-height: 100vh;
+  height: calc(100vh / var(--app-zoom));
+  max-height: calc(100vh / var(--app-zoom));
 }
 /* Dashboard: única área que rola */
 .dashboard-scroll {

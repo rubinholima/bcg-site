@@ -475,7 +475,7 @@ export default function EditLogisticaPage() {
             {
               ok: true,
               label: "Agenda Futebol",
-              href: "/dashboard/futebol/logistica/agenda",
+              href: "/dashboard/futebol/agenda",
             },
           ].filter((c) => !("hide" in c && c.hide));
           return (

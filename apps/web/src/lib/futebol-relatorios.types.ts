@@ -13,6 +13,15 @@ export type RelatorioPessoaRow = {
   jerseyNumber?: number | null;
   position?: string | null;
   photoUrl?: string | null;
+  seasonStats?: {
+    season: number;
+    matches: number;
+    starts: number;
+    minutes: number;
+    goals: number;
+    yellowCards: number;
+    redCards: number;
+  } | null;
 };
 
 export type RelatorioHospedeRow = RelatorioPessoaRow & {
@@ -132,6 +141,8 @@ export type PressKitReportDto = {
   starters: RelatorioPessoaRow[];
   substitutes: RelatorioPessoaRow[];
   config: PressKitConfigDto;
+  opponentLogoUrl: string | null;
+  championshipLogoUrl: string | null;
   generatedAt: string;
 };
 

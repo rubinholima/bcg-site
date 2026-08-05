@@ -196,7 +196,7 @@ export default function EstagiariosPage() {
                         <img
                           src={getPublicImageUrl(row.photoUrl)}
                           alt=""
-                          className="h-10 w-10 rounded-full object-cover"
+                          className="h-10 w-10 rounded-full object-cover object-[center_20%]"
                         />
                       ) : (
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">

@@ -18,6 +18,8 @@ export interface PrintPreviewDialogProps {
   html: string | null;
   onPrint?: () => void;
   loadingLabel?: string;
+  /** Documento em paisagem — abre o diálogo e o iframe mais largos. */
+  landscape?: boolean;
 }
 
 /** Pré-visualização de HTML para impressão/PDF — iframe srcDoc dentro de Dialog (nunca window.open). */
@@ -28,6 +30,7 @@ export function PrintPreviewDialog({
   html,
   onPrint,
   loadingLabel = "Carregando pré-visualização…",
+  landscape = false,
 }: PrintPreviewDialogProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -57,7 +60,11 @@ export function PrintPreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex h-[min(92vh,980px)] w-[min(960px,calc(100vw-1.5rem))] max-h-[min(92vh,980px)] flex-col overflow-hidden"
+        className={`flex h-[min(92vh,980px)] max-h-[min(92vh,980px)] flex-col overflow-hidden ${
+          landscape
+            ? "w-[min(1280px,calc(100vw-1.5rem))]"
+            : "w-[min(960px,calc(100vw-1.5rem))]"
+        }`}
         contentClassName="flex h-full min-h-0 max-h-full flex-col gap-0 overflow-hidden p-0"
       >
         <DialogHeader className="shrink-0 border-b border-border px-4 py-3 pr-12">
@@ -70,7 +77,9 @@ export function PrintPreviewDialog({
               title={title}
               srcDoc={html}
               onLoad={fitIframe}
-              className="mx-auto block w-full max-w-[820px] rounded-md border border-border bg-white shadow-sm"
+              className={`mx-auto block w-full rounded-md border border-border bg-white shadow-sm ${
+                landscape ? "max-w-[1160px]" : "max-w-[820px]"
+              }`}
               style={{ minHeight: "68vh", height: "68vh" }}
               sandbox="allow-same-origin"
             />

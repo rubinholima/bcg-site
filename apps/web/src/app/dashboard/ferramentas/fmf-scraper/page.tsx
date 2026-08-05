@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Database, ExternalLink, Loader2, RefreshCw, AlertTriangle, Link2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Database,
+  ExternalLink,
+  FileText,
+  Link2,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -18,6 +26,7 @@ import {
 } from "@/components/dashboard/DashboardDeptHeader";
 import { authFetch } from "@/lib/authFetch";
 import { useAuth } from "@/context/AuthContext";
+import { NativeSelect } from "@/components/ui/native-select";
 
 type FmfPreset = {
   key: string;
@@ -100,6 +109,29 @@ type SyncResult = {
   tenants: SyncTenantResult[];
 };
 
+type MatchReportCandidate = {
+  externalMatchId: string;
+  reportUrl: string;
+  preset: string;
+  competition: string;
+  category: string;
+  phase: string | null;
+  round: number | null;
+  matchDate: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  imported: boolean;
+  importedAt: string | null;
+  linkedPlayers: number;
+  unresolvedPlayers: Array<{
+    cbfRegistration: string;
+    sourceName: string;
+    reason: string;
+  }>;
+};
+
 function formatDateTime(iso: string | undefined): string {
   if (!iso) return "—";
   try {
@@ -128,6 +160,11 @@ export default function FmfScraperPage() {
   const [syncing, setSyncing] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<SyncResult | null>(null);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [reportTenantId, setReportTenantId] = useState("");
+  const [matchReports, setMatchReports] = useState<MatchReportCandidate[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportImporting, setReportImporting] = useState<string | null>(null);
+  const [reportMessage, setReportMessage] = useState<string | null>(null);
 
   const canView = canAccessModule("fmf_scraper");
 
@@ -154,6 +191,26 @@ export default function FmfScraperPage() {
     }
   }, []);
 
+  const loadMatchReports = useCallback(async (tenantId: string) => {
+    if (!tenantId) {
+      setMatchReports([]);
+      return;
+    }
+    setReportLoading(true);
+    try {
+      const res = await authFetch(
+        `/api/fmf-scraper/match-reports/candidates?tenantId=${encodeURIComponent(tenantId)}`,
+      );
+      const data = await res.json().catch(() => []);
+      if (!res.ok) throw new Error();
+      setMatchReports(Array.isArray(data) ? data : []);
+    } catch {
+      setError("Erro ao carregar súmulas da FMF.");
+    } finally {
+      setReportLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !canView) {
       router.replace("/403");
@@ -161,6 +218,16 @@ export default function FmfScraperPage() {
     }
     if (canView) load();
   }, [authLoading, canView, load, router]);
+
+  useEffect(() => {
+    if (!reportTenantId && candidates.length > 0) {
+      setReportTenantId(candidates[0].tenantId);
+    }
+  }, [candidates, reportTenantId]);
+
+  useEffect(() => {
+    if (reportTenantId) void loadMatchReports(reportTenantId);
+  }, [loadMatchReports, reportTenantId]);
 
   const handleRun = async (opts: { preset?: string; all?: boolean }) => {
     setRunning(opts.all ? "all" : (opts.preset ?? "all"));
@@ -218,6 +285,42 @@ export default function FmfScraperPage() {
     }
   };
 
+  const handleImportReports = async (externalMatchId?: string) => {
+    if (!reportTenantId) return;
+    const key = externalMatchId ?? "all";
+    setReportImporting(key);
+    setReportMessage(null);
+    setError(null);
+    try {
+      const res = await authFetch("/api/fmf-scraper/match-reports/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantId: reportTenantId,
+          externalMatchId,
+          all: !externalMatchId,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          typeof data.message === "string"
+            ? data.message
+            : "Falha ao importar súmulas.",
+        );
+        return;
+      }
+      setReportMessage(
+        `${data.imported ?? 0} súmula(s) importada(s) · ${data.linked ?? 0} vínculo(s) por CBF · ${data.unresolved ?? 0} pendência(s).`,
+      );
+      await loadMatchReports(reportTenantId);
+    } catch {
+      setError("Erro ao importar súmulas da FMF.");
+    } finally {
+      setReportImporting(null);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -237,7 +340,6 @@ export default function FmfScraperPage() {
         section="Ferramentas"
         sectionIcon={Database}
         title="Importação FMF"
-        description="Próximos jogos, últimos resultados e tabela por categoria (Sub-14/15/17/20, Módulo II) via FMF. Sync automático só para Boston City FC Brasil e Villa Nova; demais clubes usam outras ligas."
         aside={
           <div className="flex flex-wrap gap-2">
             <Button
@@ -370,6 +472,148 @@ export default function FmfScraperPage() {
               Última aplicação: {formatDateTime(lastSync.syncedAt)}
               {" · "}
               {lastSync.tenants.filter((t) => t.ok && !t.skipped).length} clube(s) atualizado(s)
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-base">Súmulas e estatísticas dos atletas</CardTitle>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <NativeSelect
+              value={reportTenantId}
+              onChange={(event) => setReportTenantId(event.target.value)}
+              className="min-h-11 min-w-56"
+            >
+              <option value="">Selecione o clube</option>
+              {candidates.map((candidate) => (
+                <option key={candidate.tenantId} value={candidate.tenantId}>
+                  {candidate.tenantName}
+                </option>
+              ))}
+            </NativeSelect>
+            <Button
+              type="button"
+              onClick={() => handleImportReports()}
+              disabled={
+                !reportTenantId ||
+                reportLoading ||
+                !!reportImporting ||
+                !matchReports.some((report) => !report.imported)
+              }
+            >
+              {reportImporting === "all" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="mr-2 h-4 w-4" />
+              )}
+              Importar todas
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {reportMessage ? (
+            <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+              {reportMessage}
+            </div>
+          ) : null}
+
+          {reportLoading ? (
+            <div className="flex min-h-28 items-center justify-center text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Carregando súmulas…
+            </div>
+          ) : matchReports.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Nenhuma súmula publicada para este clube nos dados importados.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Jogo</TableHead>
+                    <TableHead>Placar</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {matchReports.map((report) => (
+                    <TableRow key={report.externalMatchId}>
+                      <TableCell>{formatMatchDate(report.matchDate, null)}</TableCell>
+                      <TableCell className="uppercase">{report.category}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {report.homeTeam} × {report.awayTeam}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {report.competition}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {report.homeScore ?? "—"} × {report.awayScore ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        {report.imported ? (
+                          <div>
+                            <span className="text-emerald-500">Importada</span>
+                            <div className="text-xs text-muted-foreground">
+                              {report.linkedPlayers} vinculados
+                              {report.unresolvedPlayers.length > 0
+                                ? ` · ${report.unresolvedPlayers.length} pendentes`
+                                : ""}
+                            </div>
+                            {report.unresolvedPlayers.length > 0 ? (
+                              <div className="mt-1 max-w-64 text-xs text-amber-400">
+                                {report.unresolvedPlayers
+                                  .slice(0, 3)
+                                  .map(
+                                    (player) =>
+                                      `${player.cbfRegistration || "sem CBF"} — ${player.reason}`,
+                                  )
+                                  .join("; ")}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <span className="text-amber-400">Pendente</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" asChild>
+                            <a
+                              href={report.reportUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span className="sr-only">Abrir súmula</span>
+                            </a>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={report.imported ? "secondary" : "default"}
+                            onClick={() => handleImportReports(report.externalMatchId)}
+                            disabled={!!reportImporting}
+                          >
+                            {reportImporting === report.externalMatchId ? (
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <FileText className="mr-1.5 h-3.5 w-3.5" />
+                            )}
+                            {report.imported ? "Reimportar" : "Importar"}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

@@ -1729,7 +1729,7 @@ export default function EditarGroupHomePage() {
                                     <img
                                       src={getPublicImageUrl(founderPhoto)}
                                       alt=""
-                                      className="h-full w-full object-cover"
+                                      className="h-full w-full object-cover object-top"
                                     />
                                   ) : (
                                     <User className="h-10 w-10 text-muted-foreground" />

@@ -132,6 +132,7 @@ model Tenant {
   travelLogistics       TravelLogistics[]
   logisticsGuests       LogisticsGuest[]
   footballAgendaEntries FootballAgendaEntry[]
+  fmfMatchReports       FmfMatchReport[]
   psychologySessions  PsychologySession[]
   physioSessions      PhysioSession[]
   physioGroupSessions PhysioGroupSession[]
@@ -1041,6 +1042,8 @@ model Player {
   bioPT           String?  @db.Text
   bioEN           String?  @db.Text
   externalId      String?  // ID da linha no Google Sheets (para sync)
+  /** Registro oficial CBF, espelhado de registrationProfile.sports.cbf para vínculos externos */
+  cbfRegistration String?
   // Contato (para envio do link da consulta por e-mail/WhatsApp)
   contactEmail    String?  // e-mail do atleta
   contactPhone    String?  // telefone/WhatsApp (ex: 5511999999999)
@@ -1075,8 +1078,72 @@ model Player {
   travelParticipations TravelParticipant[]
   scoutingProspects    ScoutingProspect[]
   physioSessions       PhysioSession[]
+  fmfMatchStats        FmfPlayerMatchStat[]
   @@index([tenantId])
   @@index([tenantId, category])
+  @@index([tenantId, cbfRegistration])
+}
+
+/** Súmula oficial de uma partida importada da FMF. */
+model FmfMatchReport {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  externalMatchId     String   // ID do arquivo no SGE/FMF, ex.: 44855
+  sourceUrl           String
+  competition         String
+  phase               String?
+  round               Int?
+  category            String
+  season              Int
+  matchDate           DateTime
+  kickoffTime         String?
+  homeTeam            String
+  awayTeam            String
+  homeScore           Int?
+  awayScore           Int?
+  firstHalfMinutes    Int?
+  secondHalfMinutes   Int?
+  totalMinutes        Int?
+  rawParsed           Json?
+  unresolvedPlayers   Json?
+  importedAt          DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  playerStats         FmfPlayerMatchStat[]
+
+  @@unique([tenantId, externalMatchId])
+  @@index([tenantId, season, category])
+  @@index([tenantId, matchDate])
+}
+
+/** Estatística oficial de um atleta em uma súmula FMF, sempre vinculada ao Player. */
+model FmfPlayerMatchStat {
+  id              String         @id @default(cuid())
+  matchId         String
+  match           FmfMatchReport @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  playerId        String
+  player           Player         @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  cbfRegistration String
+  playerName      String
+  jerseyNumber    Int?
+  starter         Boolean        @default(false)
+  listed          Boolean        @default(true)
+  played          Boolean        @default(false)
+  enteredMinute   Int?
+  exitedMinute    Int?
+  minutesPlayed   Int            @default(0)
+  goals           Int            @default(0)
+  ownGoals        Int            @default(0)
+  penaltyGoals    Int            @default(0)
+  yellowCards     Int            @default(0)
+  redCards        Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([matchId, playerId])
+  @@index([playerId])
+  @@index([playerId, matchId])
+  @@index([cbfRegistration])
 }
 
 /** Link público para atleta/colaborador completar cadastro (token único, expiração opcional) */

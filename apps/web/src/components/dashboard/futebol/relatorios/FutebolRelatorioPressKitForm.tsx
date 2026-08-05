@@ -554,6 +554,7 @@ export function FutebolRelatorioPressKitForm() {
         onOpenChange={setPreviewOpen}
         title="Pré-visualização — Press Kit / Relatório Imprensa"
         html={previewHtml}
+        landscape
         onPrint={() => {
           if (reportData) printPressKitReport(buildLocalReport(reportData), pageSize);
         }}

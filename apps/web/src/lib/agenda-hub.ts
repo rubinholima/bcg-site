@@ -20,7 +20,7 @@ export function parseAgendaVisao(raw: string | null | undefined): AgendaVisao {
 export function agendaHubUrl(visao?: AgendaVisao | null): string {
   switch (visao) {
     case AGENDA_VISAO.FUTEBOL:
-      return "/dashboard/futebol/logistica/agenda";
+      return "/dashboard/futebol/agenda";
     case AGENDA_VISAO.BOSTON_HALL:
       return "/dashboard/eventos/boston-city-hall/agenda";
     case AGENDA_VISAO.PSICOLOGIA:

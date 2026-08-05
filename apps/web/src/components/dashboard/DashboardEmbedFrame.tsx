@@ -25,7 +25,7 @@ export function DashboardEmbedFrame({ src, title }: DashboardEmbedFrameProps) {
           <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5" aria-hidden />
         </a>
       </div>
-      <div className="relative min-h-[calc(100dvh-7.5rem)] min-w-0 flex-1 overflow-hidden rounded-md border border-border bg-background sm:min-h-[calc(100dvh-8.5rem)] sm:rounded-lg">
+      <div className="relative min-h-[calc(100dvh/var(--app-zoom)-7.5rem)] min-w-0 flex-1 overflow-hidden rounded-md border border-border bg-background sm:min-h-[calc(100dvh/var(--app-zoom)-8.5rem)] sm:rounded-lg">
         <iframe
           src={src}
           title={title}

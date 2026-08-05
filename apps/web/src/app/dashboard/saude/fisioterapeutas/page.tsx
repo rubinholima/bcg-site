@@ -122,7 +122,7 @@ export default function FisioterapeutasPage() {
                   <ClickableTableRow key={p.id} href={`/dashboard/saude/fisioterapeutas/${p.id}/edit`}>
                     <TableCell>
                       {p.photoUrl ? (
-                        <img src={getPublicImageUrl(p.photoUrl)} alt="" className="h-10 w-10 rounded-full object-cover" />
+                        <img src={getPublicImageUrl(p.photoUrl)} alt="" className="h-10 w-10 rounded-full object-cover object-[center_20%]" />
                       ) : (
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-xs font-semibold">
                           {initials(p.name)}

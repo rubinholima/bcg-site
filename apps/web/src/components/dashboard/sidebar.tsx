@@ -309,8 +309,9 @@ function resolveLinkActive(
     if (pathname.startsWith("/dashboard/futebol/logistica/relatorios")) return false;
     return true;
   }
-  if (href === "/dashboard/futebol/logistica/agenda") {
+  if (href === "/dashboard/futebol/agenda") {
     return (
+      pathname === "/dashboard/futebol/agenda" ||
       pathname === "/dashboard/futebol/logistica/agenda" ||
       !!pathname?.startsWith("/dashboard/cadastros/espacos")
     );
@@ -781,7 +782,7 @@ function SidebarNav() {
                   {!collapsed && <span className="min-w-0 text-left uppercase tracking-wide leading-snug">{item.label}</span>}
                 </button>
                 {collapsed && flyoutSlug === item.slug ? (
-                  <div className="fixed left-[4.5rem] top-16 z-50 hidden max-h-[calc(100dvh-4rem)] w-80 overflow-y-auto rounded-r-lg border border-border bg-card p-3 shadow-xl lg:block">
+                  <div className="fixed left-[4.5rem] top-16 z-50 hidden max-h-[calc(100dvh/var(--app-zoom)-4rem)] w-80 overflow-y-auto rounded-r-lg border border-border bg-card p-3 shadow-xl lg:block">
                     <p className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
                       {item.label}
                     </p>

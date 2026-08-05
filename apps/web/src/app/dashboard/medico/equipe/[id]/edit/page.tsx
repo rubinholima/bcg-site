@@ -129,7 +129,7 @@ export default function EditarMedicoEquipePage() {
               <img
                 src={pendingPreviewUrl ?? getPublicImageUrl(staff.photoUrl!)}
                 alt=""
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-[center_20%]"
               />
             </div>
           ) : (

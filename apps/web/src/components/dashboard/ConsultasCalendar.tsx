@@ -614,7 +614,7 @@ export function ConsultasCalendar({
                               <img
                                 src={getPublicImageUrl(c.playerPhotoUrl)}
                                 alt={c.playerName}
-                                className="h-8 w-8 rounded-full object-cover shrink-0"
+                                className="h-8 w-8 rounded-full object-cover object-[center_20%] shrink-0"
                               />
                             ) : (
                               <User className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -654,7 +654,7 @@ export function ConsultasCalendar({
                                 <img
                                   src={getPublicImageUrl(c.psychologistPhotoUrl)}
                                   alt={formatPersonFirstLastName(c.psychologist)}
-                                  className="h-6 w-6 rounded-full object-cover shrink-0"
+                                  className="h-6 w-6 rounded-full object-cover object-[center_20%] shrink-0"
                                 />
                               ) : (
                                 <UserCircle className="h-3.5 w-3.5 shrink-0" />

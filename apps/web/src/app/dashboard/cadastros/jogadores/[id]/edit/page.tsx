@@ -43,6 +43,7 @@ import {
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
 import { PlayerPsychologyClinicalSection } from "@/components/dashboard/psychology/PlayerPsychologyClinicalSection";
 import { PlayerPhysioSection } from "@/components/dashboard/fisioterapia/PlayerPhysioSection";
+import { PlayerFmfStatsSection } from "@/components/dashboard/players/PlayerFmfStatsSection";
 import type { PsychologicalAssessmentEntry } from "@/components/dashboard/player-module-types";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
@@ -402,7 +403,7 @@ export default function EditJogadorPage() {
           <img
             src={pendingPreviewUrl ?? getPublicImageUrl(player.photoUrl!)}
             alt={player.name}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover object-[center_20%]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground">
@@ -909,6 +910,8 @@ export default function EditJogadorPage() {
           </CardContent>
         </Card>
       )}
+
+      {activeTab === "estatisticas" && <PlayerFmfStatsSection playerId={player.id} />}
 
       {/* Tab: Análise de desempenho — relatório sintético (somente leitura) baseado no depto de análise */}
       {activeTab === "desempenho" && (() => {

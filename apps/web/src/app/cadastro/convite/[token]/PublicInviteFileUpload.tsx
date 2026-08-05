@@ -108,7 +108,7 @@ export function PublicInviteFileUpload({
                   src={previewUrl}
                   alt="Foto enviada"
                   fill
-                  className="object-cover"
+                  className="object-cover object-[center_20%]"
                   unoptimized
                 />
               </div>

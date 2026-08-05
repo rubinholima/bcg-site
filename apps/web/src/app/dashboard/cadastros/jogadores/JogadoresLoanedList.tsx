@@ -102,7 +102,7 @@ export function JogadoresLoanedList({ players }: JogadoresLoanedListProps) {
                   <TableCell>
                     {p.photoUrl ? (
                       <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded bg-muted">
-                        <img src={getPublicImageUrl(p.photoUrl)} alt="" className="h-full w-full object-cover" />
+                        <img src={getPublicImageUrl(p.photoUrl)} alt="" className="h-full w-full object-cover object-[center_20%]" />
                       </div>
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded bg-muted text-xs text-muted-foreground">

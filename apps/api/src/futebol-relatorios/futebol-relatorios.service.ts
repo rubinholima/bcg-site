@@ -22,6 +22,10 @@ import {
   dateKeyInBrazil,
   formatTimeBrazil,
 } from '../common/brazil-time.util';
+import {
+  normalizeTeamNameKeyForMerge,
+  softNormalizeTeamNameKey,
+} from '../public/visiting-team-logo-merge.util';
 import type {
   HospedesReportDto,
   LayoutRelacionadosReportDto,
@@ -220,10 +224,105 @@ export class FutebolRelatoriosService {
     };
   }
 
+  /** Escudo do adversário e logo do campeonato a partir dos cadastros (match por nome). */
+  private async resolveMatchLogos(
+    opponentName: string | null,
+    championshipName: string | null,
+  ): Promise<{ opponentLogoUrl: string | null; championshipLogoUrl: string | null }> {
+    const [teams, championships] = await Promise.all([
+      opponentName?.trim()
+        ? this.prisma.visitingTeam.findMany({ select: { name: true, logoUrl: true } })
+        : Promise.resolve([] as { name: string; logoUrl: string | null }[]),
+      championshipName?.trim()
+        ? this.prisma.championship.findMany({ select: { name: true, logoUrl: true } })
+        : Promise.resolve([] as { name: string; logoUrl: string | null }[]),
+    ]);
+
+    const pick = (
+      rows: { name: string; logoUrl: string | null }[],
+      target: string | null,
+    ): string | null => {
+      const wanted = target?.trim();
+      if (!wanted) return null;
+      const withLogo = rows.filter((r) => r.logoUrl?.trim());
+      const strictKey = normalizeTeamNameKeyForMerge(wanted);
+      const strict = withLogo.find(
+        (r) => normalizeTeamNameKeyForMerge(r.name) === strictKey,
+      );
+      if (strict) return strict.logoUrl;
+      const softKey = softNormalizeTeamNameKey(wanted);
+      if (!softKey) return null;
+      const soft = withLogo.find((r) => softNormalizeTeamNameKey(r.name) === softKey);
+      return soft?.logoUrl ?? null;
+    };
+
+    return {
+      opponentLogoUrl: pick(teams, opponentName),
+      championshipLogoUrl: pick(championships, championshipName),
+    };
+  }
+
   async getPressKit(travelId: string): Promise<PressKitReportDto> {
     const base = await this.getPassageiros(travelId);
     const travel = await this.loadTravel(travelId);
-    const athletes = base.athletes.map((a, i) => ({ ...a, num: i + 1 }));
+    const season = travel.matchDate.getFullYear();
+    const playerIds = base.athletes
+      .map((athlete) => athlete.playerId)
+      .filter((id): id is string => !!id);
+    const officialStats =
+      playerIds.length > 0
+        ? await this.prisma.fmfPlayerMatchStat.findMany({
+            where: {
+              playerId: { in: playerIds },
+              match: { season, tenantId: travel.tenantId },
+            },
+          })
+        : [];
+    const statsByPlayer = new Map<
+      string,
+      {
+        season: number;
+        matches: number;
+        starts: number;
+        minutes: number;
+        goals: number;
+        yellowCards: number;
+        redCards: number;
+      }
+    >();
+    for (const stat of officialStats) {
+      const current = statsByPlayer.get(stat.playerId) ?? {
+        season,
+        matches: 0,
+        starts: 0,
+        minutes: 0,
+        goals: 0,
+        yellowCards: 0,
+        redCards: 0,
+      };
+      if (stat.played) current.matches += 1;
+      if (stat.starter) current.starts += 1;
+      current.minutes += stat.minutesPlayed;
+      current.goals += stat.goals;
+      current.yellowCards += stat.yellowCards;
+      current.redCards += stat.redCards;
+      statsByPlayer.set(stat.playerId, current);
+    }
+    const athletes = base.athletes.map((athlete, index) => ({
+      ...athlete,
+      num: index + 1,
+      seasonStats: athlete.playerId
+        ? (statsByPlayer.get(athlete.playerId) ?? {
+            season,
+            matches: 0,
+            starts: 0,
+            minutes: 0,
+            goals: 0,
+            yellowCards: 0,
+            redCards: 0,
+          })
+        : null,
+    }));
     const config = this.resolvePressKitConfig(travel.beatscodeMeta, athletes, travel.matchDate);
     const byId = new Map(
       athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
@@ -238,6 +337,11 @@ export class FutebolRelatoriosService {
       .filter((a) => a.playerId && !starterSet.has(a.playerId))
       .map((a, i) => ({ ...a, num: i + 1 }));
 
+    const logos = await this.resolveMatchLogos(
+      base.travel.opponentName,
+      base.travel.championshipName,
+    );
+
     return {
       travel: base.travel,
       athletes,
@@ -245,6 +349,8 @@ export class FutebolRelatoriosService {
       starters,
       substitutes,
       config,
+      opponentLogoUrl: logos.opponentLogoUrl,
+      championshipLogoUrl: logos.championshipLogoUrl,
       generatedAt: new Date().toISOString(),
     };
   }

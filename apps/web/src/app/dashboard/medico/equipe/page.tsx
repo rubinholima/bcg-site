@@ -128,7 +128,7 @@ export default function MedicoEquipePage() {
                     <TableCell>
                       {p.photoUrl ? (
                         <div className="h-10 w-10 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-                          <img src={getPublicImageUrl(p.photoUrl)} alt="" className="h-full w-full object-cover" />
+                          <img src={getPublicImageUrl(p.photoUrl)} alt="" className="h-full w-full object-cover object-[center_20%]" />
                         </div>
                       ) : (
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-medium">

@@ -22,6 +22,7 @@ import { FixtureCategoriesController } from './fixture-categories.controller';
 import { FixtureCategoriesService } from './fixture-categories.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
+import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
 
 @Module({
   controllers: [
@@ -45,7 +46,15 @@ import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
     FixtureCategoriesService,
     ModuleAccessGuard,
   ],
-  imports: [AuthModule, ModulesModule, S3Module, HelloSignModule, ContractsModule, FutebolAgendaModule],
+  imports: [
+    AuthModule,
+    ModulesModule,
+    S3Module,
+    HelloSignModule,
+    ContractsModule,
+    FutebolAgendaModule,
+    FmfScraperModule,
+  ],
   exports: [ChampionshipsService, StadiumsService, VisitingTeamsService, PlayersService, TechnicalStaffService, FixtureCategoriesService],
 })
 export class CadastrosModule {}

@@ -162,7 +162,7 @@ export default function MedicoListPage() {
                     <img
                       src={getPublicImageUrl(selectedPlayer.photoUrl)}
                       alt={selectedPlayer.name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover object-[center_20%]"
                     />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center text-muted-foreground">

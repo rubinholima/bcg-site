@@ -83,6 +83,10 @@ export type FmfParsedMatch = {
   venueText: string | null;
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
+  /** PDF oficial da súmula no SGE/FMF, quando publicado. */
+  reportUrl: string | null;
+  /** ID interno do jogo extraído do nome do PDF da súmula. */
+  externalMatchId: string | null;
 };
 
 /** Fase de pontos / grupos — usada na tabela; mata-mata fica de fora. */
@@ -167,6 +171,15 @@ function extractMatchFromRow(
     venueText = block.replace(/^Jogo\s+\d+\s*/i, '').trim() || null;
   }
 
+  const rawReportUrl = (
+    $row.find('a[href*="/sumulas/"], a[href*="\\\\sumulas\\\\"]').first().attr('href') ?? ''
+  )
+    .trim()
+    .replace(/\\/g, '/');
+  const reportUrl = rawReportUrl || null;
+  const externalMatchId =
+    reportUrl?.match(/Sumula_Jogo_(\d+)_/i)?.[1] ?? null;
+
   return {
     phaseLabel: ctx.phaseLabel,
     roundNumber: ctx.roundNumber,
@@ -181,6 +194,8 @@ function extractMatchFromRow(
     venueText,
     homeLogoUrl: logoImgs[0] ?? null,
     awayLogoUrl: logoImgs[1] ?? null,
+    reportUrl,
+    externalMatchId,
   };
 }
 

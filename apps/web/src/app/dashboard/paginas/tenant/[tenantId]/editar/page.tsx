@@ -2757,7 +2757,7 @@ export default function EditarPaginaTenantPage() {
                                     <img
                                       src={getPublicImageUrl(block.config?.founderPhoto as string)}
                                       alt=""
-                                      className="h-full w-full object-cover"
+                                      className="h-full w-full object-cover object-top"
                                     />
                                   ) : (
                                     <User className="h-10 w-10 text-muted-foreground" />

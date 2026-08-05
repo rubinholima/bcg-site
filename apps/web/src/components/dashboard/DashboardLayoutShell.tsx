@@ -27,7 +27,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         data-dashboard-root
         data-theme={resolvedTheme}
         suppressHydrationWarning
-        className="h-[100dvh] w-full overflow-hidden bg-background"
+        className="app-screen-h w-full overflow-hidden bg-background"
       >
         {children}
       </div>
@@ -39,7 +39,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       data-dashboard-root
       data-theme={resolvedTheme}
       suppressHydrationWarning
-      className="flex h-[100dvh] w-full min-w-0 overflow-clip"
+      className="app-screen-h flex w-full min-w-0 overflow-clip"
     >
       {sidebarOpen ? (
         <button

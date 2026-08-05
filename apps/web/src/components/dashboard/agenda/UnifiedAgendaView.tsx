@@ -575,14 +575,14 @@ export function UnifiedAgendaView() {
         visibleAreas.find((a) => a.slug === areaFilter)?.manageHref ??
         AGENDA_SOURCE_CREATE_HREF[areaFilter] ??
         "/dashboard/agenda"
-      : visibleAreas[0]?.createHref ?? visibleAreas[0]?.manageHref ?? "/dashboard/futebol/logistica/agenda?new=1";
+      : visibleAreas[0]?.createHref ?? visibleAreas[0]?.manageHref ?? "/dashboard/futebol/agenda?new=1";
 
   return (
     <div className="space-y-6">
       <DashboardDeptHeader
         section="Agenda"
         sectionIcon={Calendar}
-        title="Agenda geral"
+        title="Agenda Geral"
         description="Cada compromisso mostra duas cores: faixa do elenco (Sub-15…) e fundo do tipo (treino, jogo…). Use o botão Cores para alterar."
         stats={[
           { value: filteredEvents.length, label: "No período" },

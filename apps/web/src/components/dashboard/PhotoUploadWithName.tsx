@@ -271,7 +271,7 @@ export function PhotoUploadWithName({
             <img
               src={resolvedPreviewUrl ?? ""}
               alt=""
-              className={`h-full w-full object-cover ${busy ? "opacity-60" : ""}`}
+              className={`h-full w-full object-cover object-[center_20%] ${busy ? "opacity-60" : ""}`}
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-muted-foreground">

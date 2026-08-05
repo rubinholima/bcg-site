@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
@@ -9,6 +9,7 @@ import {
   type FmfScraperSyncConfig,
 } from './fmf-page-sync.service';
 import { FmfScraperService } from './fmf-scraper.service';
+import { FmfMatchReportService } from './fmf-match-report.service';
 import {
   FmfTravelSyncService,
   type FmfTravelSyncResult,
@@ -28,6 +29,7 @@ export class FmfScraperController {
     private readonly fmfAgendaSync: FmfAgendaSyncService,
     private readonly visitingTeamsSync: FmfVisitingTeamsSyncService,
     private readonly travelSync: FmfTravelSyncService,
+    private readonly matchReports: FmfMatchReportService,
   ) {}
 
   @Get('presets')
@@ -68,7 +70,44 @@ export class FmfScraperController {
       /* viagens sync opcional após import */
     }
 
-    return { ok: true, store, visitingTeams, agendaSync, travelSync };
+    const matchReportSync: Array<{
+      tenantId: string;
+      imported: number;
+      failed: number;
+      linked: number;
+      unresolved: number;
+    }> = [];
+    try {
+      const tenants = await this.fmfSync.getSyncCandidates();
+      for (const tenant of tenants) {
+        try {
+          const result = await this.matchReports.importReports({
+            tenantId: tenant.tenantId,
+            all: true,
+          });
+          matchReportSync.push({
+            tenantId: tenant.tenantId,
+            imported: result.imported,
+            failed: result.failed,
+            linked: result.linked,
+            unresolved: result.unresolved,
+          });
+        } catch {
+          /* clube sem súmula publicada */
+        }
+      }
+    } catch {
+      /* súmulas opcionais após import */
+    }
+
+    return {
+      ok: true,
+      store,
+      visitingTeams,
+      agendaSync,
+      travelSync,
+      matchReportSync,
+    };
   }
 
   @Get('sync/candidates')
@@ -123,5 +162,28 @@ export class FmfScraperController {
       body?.tenantId ? { tenantId: body.tenantId } : {},
     );
     return { ok: true, ...result };
+  }
+
+  @Get('match-reports/candidates')
+  listMatchReportCandidates(@Query('tenantId') tenantId: string) {
+    return this.matchReports.listCandidates(tenantId);
+  }
+
+  @Post('match-reports/import')
+  importMatchReports(
+    @Body()
+    body: {
+      tenantId: string;
+      externalMatchId?: string;
+      preset?: string;
+      all?: boolean;
+    },
+  ) {
+    return this.matchReports.importReports(body);
+  }
+
+  @Post('match-reports/reconcile')
+  reconcileMatchReports(@Body() body: { tenantId: string }) {
+    return this.matchReports.reconcile(body.tenantId);
   }
 }

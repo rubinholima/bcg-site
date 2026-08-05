@@ -923,7 +923,7 @@ function formatBirthShort(iso: string | null | undefined): string {
 
 /** Posições % no gramado (formação visual 4-3-3 — não é o esquema tático real). */
 const PRESS_KIT_FIELD_SLOTS: { top: number; left: number }[] = [
-  { top: 88, left: 50 }, // GK
+  { top: 85, left: 50 }, // GK
   { top: 70, left: 12 },
   { top: 72, left: 36 },
   { top: 72, left: 64 },
@@ -944,6 +944,26 @@ function playerPhotoHtml(photoUrl: string | null | undefined, alt: string): stri
   return `<img class="chip-photo" src="${escapeHtml(src)}" alt="" />`;
 }
 
+function clubInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
+function clubBadgeHtml(name: string, logo: string, tag: string): string {
+  const crest = logo
+    ? `<img class="pk-crest" src="${escapeHtml(logo)}" alt="" />`
+    : `<div class="pk-crest pk-crest-fallback">${escapeHtml(clubInitials(name))}</div>`;
+  return `<div class="pk-club">
+    ${crest}
+    <div class="pk-club-text">
+      <span class="pk-club-tag">${escapeHtml(tag)}</span>
+      <strong class="pk-club-name">${escapeHtml(name)}</strong>
+    </div>
+  </div>`;
+}
+
 export function buildPressKitPrintHtml(
   data: PressKitReportDto,
   size: PrintPageSize = "A4",
@@ -951,11 +971,16 @@ export function buildPressKitPrintHtml(
   const { travel, config } = data;
   const club = travel.tenant.name;
   const opponent = travel.opponentName?.trim() || "Adversário";
+  const clubLogo = resolveLogoUrlForPrint(travel.tenant.logoUrl);
+  const opponentLogo = resolveLogoUrlForPrint(data.opponentLogoUrl);
+  const championshipLogo = resolveLogoUrlForPrint(data.championshipLogoUrl);
   const homeName = travel.isHomeMatch ? club : opponent;
   const awayName = travel.isHomeMatch ? opponent : club;
+  const homeLogo = travel.isHomeMatch ? clubLogo : opponentLogo;
+  const awayLogo = travel.isHomeMatch ? opponentLogo : clubLogo;
   const kickoff = [formatBrDate(travel.matchDate), config.matchTime].filter(Boolean).join(" · ");
   const venue = [travel.stadiumName, travel.city, travel.country].filter(Boolean).join(" · ");
-  const logo = resolveLogoUrlForPrint(travel.tenant.logoUrl);
+  const competition = [travel.championshipName, config.phase].filter(Boolean).join(" · ");
 
   const refereesHtml = config.referees
     .filter((r) => r.name.trim())
@@ -986,7 +1011,11 @@ export function buildPressKitPrintHtml(
       const n = s.jerseyNumber != null ? String(s.jerseyNumber) : "—";
       const birth = formatBirthShort(s.birthDate);
       const photo = playerPhotoHtml(s.photoUrl, s.name);
-      return `<div class="sub-row">${photo}<span class="sub-num">${escapeHtml(n)}</span><div class="sub-text"><span class="sub-name">${escapeHtml(shortAthleteName(s.name))}</span>${birth ? `<span class="sub-birth">${escapeHtml(birth)}</span>` : ""}</div></div>`;
+      const stats = s.seasonStats;
+      const statsLine = stats
+        ? `J ${stats.matches} · G ${stats.goals} · ${stats.minutes} min`
+        : "";
+      return `<div class="sub-row">${photo}<span class="sub-num">${escapeHtml(n)}</span><div class="sub-text"><span class="sub-name">${escapeHtml(shortAthleteName(s.name))}</span>${birth ? `<span class="sub-birth">${escapeHtml(birth)}</span>` : ""}${statsLine ? `<span class="sub-stats">${escapeHtml(statsLine)}</span>` : ""}</div></div>`;
     })
     .join("");
 
@@ -996,6 +1025,10 @@ export function buildPressKitPrintHtml(
     const n = p.jerseyNumber != null ? String(p.jerseyNumber) : String(i + 1);
     const birth = formatBirthShort(p.birthDate);
     const photo = playerPhotoHtml(p.photoUrl, p.name);
+    const stats = p.seasonStats;
+    const statsLine = stats
+      ? `J ${stats.matches} · G ${stats.goals} · ${stats.minutes} min`
+      : "";
     return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%">
       <div class="chip-photo-wrap">
         ${photo}
@@ -1003,11 +1036,12 @@ export function buildPressKitPrintHtml(
       </div>
       <div class="chip-name">${escapeHtml(shortAthleteName(p.name))}</div>
       ${birth ? `<div class="chip-birth">${escapeHtml(birth)}</div>` : ""}
+      ${statsLine ? `<div class="chip-stats">${escapeHtml(statsLine)}</div>` : ""}
     </div>`;
   }).join("");
 
   const styles = `
-    ${pageCss(size)}
+    @page { size: ${size === "Letter" ? "letter" : "A4"} landscape; margin: 8mm 9mm; }
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -1017,243 +1051,286 @@ export function buildPressKitPrintHtml(
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .pk { max-width: 100%; }
+    .pk { width: 100%; }
+
+    /* ---------- Cabeçalho: escudo x escudo ---------- */
     .pk-top {
       display: grid;
-      grid-template-columns: 72px 1fr;
-      gap: 12px;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
       align-items: center;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 3px solid ${BCG.red};
+      padding: 6px 10px 8px;
+      border-radius: 12px;
+      background: linear-gradient(120deg, ${BCG.blue} 0%, ${BCG.blueMid} 55%, ${BCG.red} 100%);
+      color: #fff;
     }
-    .pk-logo {
-      width: 70px; height: 70px; object-fit: contain;
-      border: 2px solid ${BCG.blue}; border-radius: 12px; background: #fff; padding: 3px;
+    .pk-club { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .pk-top > .pk-club:last-child { flex-direction: row-reverse; text-align: right; }
+    .pk-top > .pk-club:last-child .pk-club-text { align-items: flex-end; }
+    .pk-crest {
+      width: 46px; height: 46px; object-fit: contain; flex-shrink: 0;
+      background: #fff; border-radius: 10px; padding: 3px;
     }
-    .pk-logo-fallback {
-      width: 70px; height: 70px; border-radius: 12px; border: 2px solid ${BCG.blue};
+    .pk-crest-fallback {
       display: flex; align-items: center; justify-content: center;
-      font-weight: 800; color: ${BCG.blue}; font-size: 18px; background: ${BCG.blueLight};
+      font-weight: 800; font-size: 15px; color: ${BCG.blue};
     }
-    .pk-matchup {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      font-size: 18px; font-weight: 800; color: ${BCG.blue}; letter-spacing: 0.02em;
+    .pk-club-text { display: flex; flex-direction: column; min-width: 0; }
+    .pk-club-tag {
+      font-size: 7px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: rgba(255,255,255,0.72);
     }
+    .pk-club-name {
+      font-size: 15px; font-weight: 800; line-height: 1.1; letter-spacing: 0.01em;
+      text-transform: uppercase;
+    }
+    .pk-center { text-align: center; padding: 0 6px; }
+    .pk-comp {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.86);
+    }
+    .pk-comp img { height: 16px; width: auto; max-width: 26px; object-fit: contain; }
     .pk-x {
-      display: inline-flex; width: 30px; height: 30px; border-radius: 999px;
-      align-items: center; justify-content: center;
-      background: ${BCG.red}; color: #fff; font-size: 14px; font-weight: 800;
+      margin: 2px auto 1px;
+      width: 26px; height: 26px; border-radius: 999px;
+      background: #fff; color: ${BCG.red};
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900;
     }
-    .pk-meta { margin-top: 2px; font-size: 11px; color: #334155; line-height: 1.35; }
-    .pk-meta strong { color: ${BCG.blue}; }
+    .pk-when { font-size: 11px; font-weight: 700; }
+    .pk-where { font-size: 8px; color: rgba(255,255,255,0.85); }
+
+    /* ---------- Corpo em 3 colunas ---------- */
     .pk-main {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
+      grid-template-columns: 0.82fr 1.5fr 0.82fr;
+      gap: 9px;
+      margin-top: 7px;
+      align-items: start;
     }
-    .pitch-block h3, .side-grid h3 {
-      margin: 0 0 6px;
-      font-size: 11px;
+    .pk-col { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+    .pk-block h3 {
+      margin: 0 0 4px;
+      font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       color: ${BCG.red};
       border-bottom: 2px solid ${BCG.red};
-      padding-bottom: 3px;
+      padding-bottom: 2px;
     }
+    .pk-empty { margin: 0; font-size: 9px; color: #94a3b8; }
+
+    /* ---------- Gramado ---------- */
     .pitch-wrap {
       position: relative;
       width: 100%;
-      height: 168mm;
-      min-height: 168mm;
-      border-radius: 16px;
+      height: 152mm;
+      border-radius: 12px;
       overflow: hidden;
-      border: 4px solid #14532d;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,0.10) 0 50%, transparent 50%),
-        repeating-linear-gradient(
-          90deg,
-          #166534 0 12.5%,
-          #15803d 12.5% 25%
-        );
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.28);
+      border: 3px solid #14532d;
+      background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25);
     }
-    .pitch-wrap::before {
-      content: "";
-      position: absolute; inset: 5%;
-      border: 2px solid rgba(255,255,255,0.6);
-      border-radius: 6px;
+    .pitch-line {
+      position: absolute;
+      border: 2px solid rgba(255,255,255,0.55);
       pointer-events: none;
     }
-    .pitch-wrap::after {
-      content: "";
-      position: absolute; left: 50%; top: 50%;
-      width: 72px; height: 72px; margin: -36px 0 0 -36px;
-      border: 2px solid rgba(255,255,255,0.6);
-      border-radius: 999px;
-      pointer-events: none;
+    .pl-outer { inset: 3.5%; border-radius: 4px; }
+    .pl-half { left: 3.5%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
+    .pl-circle {
+      left: 50%; top: 50%; width: 74px; height: 74px;
+      margin: -37px 0 0 -37px; border-radius: 999px;
     }
+    .pl-box-top { left: 24%; right: 24%; top: 3.5%; height: 13%; border-top: 0; }
+    .pl-box-bottom { left: 24%; right: 24%; bottom: 3.5%; height: 13%; border-bottom: 0; }
+    .pl-goal-top { left: 37%; right: 37%; top: 3.5%; height: 5.5%; border-top: 0; }
+    .pl-goal-bottom { left: 37%; right: 37%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
+
     .player-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 92px;
+      width: 88px;
       text-align: center;
       z-index: 2;
     }
-    .chip-photo-wrap {
-      position: relative;
-      width: 58px;
-      height: 58px;
-      margin: 0 auto 3px;
-    }
+    .chip-photo-wrap { position: relative; width: 54px; height: 54px; margin: 0 auto 3px; }
     .chip-photo {
-      width: 58px;
-      height: 58px;
+      width: 54px;
+      height: 54px;
       border-radius: 999px;
       object-fit: cover;
+      object-position: center 18%;
       border: 3px solid #fff;
       box-shadow: 0 3px 8px rgba(0,0,0,0.35);
       background: ${BCG.blue};
       display: block;
     }
     .chip-photo-fallback {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 800;
-      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: 17px;
     }
     .chip-num {
       position: absolute;
-      right: -4px;
+      right: -3px;
       bottom: -2px;
-      width: 22px; height: 22px; border-radius: 999px;
-      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 11px;
+      width: 21px; height: 21px; border-radius: 999px;
+      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 10px;
       display: flex; align-items: center; justify-content: center;
       border: 2px solid #fff;
       box-shadow: 0 1px 4px rgba(0,0,0,0.3);
     }
     .chip-name {
-      font-size: 10px; font-weight: 800; color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+      font-size: 9px; font-weight: 800; color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
       line-height: 1.15;
+      text-transform: uppercase;
     }
     .chip-birth {
-      font-size: 8px; color: #f1f5f9;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.75);
+      font-size: 7px; color: #f1f5f9;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     }
-    .side-grid {
-      display: grid;
-      grid-template-columns: 1.1fr 1fr 1fr;
-      gap: 10px;
-      margin-top: 4px;
+    .chip-stats {
+      margin-top: 1px; font-size: 6.5px; font-weight: 700; color: #fef3c7;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.85);
     }
+
+    /* ---------- Listas laterais ---------- */
     .ref-row, .staff-row, .sub-row {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       align-items: center;
-      padding: 4px 0;
+      padding: 2.5px 0;
       border-bottom: 1px solid #e2e8f0;
-      font-size: 10px;
+      font-size: 9px;
     }
     .staff-row .chip-photo,
     .sub-row .chip-photo,
     .staff-row .chip-photo-fallback,
     .sub-row .chip-photo-fallback {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       border-width: 2px;
-      font-size: 11px;
+      font-size: 10px;
       flex-shrink: 0;
+      object-position: center 18%;
     }
-    .ref-row { flex-direction: column; align-items: flex-start; gap: 1px; }
-    .ref-row strong, .staff-row strong, .sub-name { color: #0f172a; }
-    .ref-row span, .staff-row span, .sub-birth { color: #64748b; font-size: 9px; display: block; }
+    .ref-row { flex-direction: column; align-items: flex-start; gap: 0; }
+    .ref-row strong, .staff-row strong, .sub-name {
+      color: #0f172a; line-height: 1.2; display: block;
+    }
+    .ref-row span, .staff-row span, .sub-birth {
+      color: #64748b; font-size: 8px; display: block; line-height: 1.2;
+    }
+    .sub-stats { color: ${BCG.blue}; font-size: 7px; font-weight: 700; display: block; }
     .sub-num {
-      min-width: 18px; height: 18px; border-radius: 999px;
-      background: ${BCG.blue}; color: #fff; font-weight: 800; font-size: 10px;
+      min-width: 17px; height: 17px; border-radius: 999px;
+      background: ${BCG.blue}; color: #fff; font-weight: 800; font-size: 9px;
       display: inline-flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
     .sub-text { min-width: 0; }
-    .dir-grid {
-      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-top: 8px;
-    }
+    .subs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+    .staff-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+
+    .dir-grid { display: grid; grid-template-columns: 1fr; gap: 4px; }
     .dir-card {
-      border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 8px;
+      border: 1px solid #cbd5e1; border-left: 3px solid ${BCG.blue}; border-radius: 6px;
+      padding: 3px 6px;
       background: linear-gradient(180deg, ${BCG.blueLight}, #fff);
-      display: flex; flex-direction: column; gap: 1px; font-size: 10px;
+      display: flex; flex-direction: column; font-size: 9px; line-height: 1.2;
     }
     .dir-card strong { color: ${BCG.blue}; }
-    .dir-card span { color: #64748b; font-size: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .pk-disclaimer {
-      margin-top: 6px; font-size: 8px; color: #64748b; text-align: center;
-      border-top: 1px dashed #cbd5e1; padding-top: 4px;
+    .dir-card span { color: #64748b; font-size: 7px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ---------- Rodapé ---------- */
+    .pk-foot {
+      margin-top: 6px; padding-top: 4px; border-top: 1px solid #cbd5e1;
+      display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end;
     }
-    .pk-contact {
-      margin-top: 4px; font-size: 9px; color: #334155; text-align: center;
-    }
-    .pk-footer {
-      margin-top: 6px; display: flex; justify-content: space-between;
-      font-size: 8px; color: #94a3b8;
-    }
+    .pk-disclaimer { margin: 0; font-size: 7px; color: #64748b; }
+    .pk-contact { margin: 1px 0 0; font-size: 8.5px; color: #334155; font-weight: 600; }
+    .pk-sign { font-size: 7px; color: #94a3b8; text-align: right; line-height: 1.3; }
+    .pk-sign strong { color: ${BCG.blue}; display: block; font-size: 8px; }
   `;
+
+  const categoryLine = [
+    travel.categoryLabel,
+    travel.isHomeMatch ? "Casa" : "Fora",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const body = `
     <div class="pk">
       <div class="pk-top">
-        ${
-          logo
-            ? `<img class="pk-logo" src="${escapeHtml(logo)}" alt="" />`
-            : `<div class="pk-logo-fallback">BC</div>`
-        }
-        <div>
-          <div class="pk-matchup">
-            <span>${escapeHtml(homeName)}</span>
-            <span class="pk-x">X</span>
-            <span>${escapeHtml(awayName)}</span>
-          </div>
-          <div class="pk-meta">
-            ${travel.championshipName ? `<div><strong>${escapeHtml(travel.championshipName)}</strong>${config.phase ? ` · ${escapeHtml(config.phase)}` : ""}</div>` : ""}
-            ${travel.categoryLabel ? `<div>${escapeHtml(travel.categoryLabel)} · ${travel.isHomeMatch ? "Casa" : "Fora"}</div>` : ""}
-            ${kickoff ? `<div>${escapeHtml(kickoff)}</div>` : ""}
-            ${venue ? `<div>${escapeHtml(venue)}</div>` : ""}
-          </div>
+        ${clubBadgeHtml(homeName, homeLogo, "Mandante")}
+        <div class="pk-center">
+          ${
+            competition || championshipLogo
+              ? `<div class="pk-comp">${championshipLogo ? `<img src="${escapeHtml(championshipLogo)}" alt="" />` : ""}<span>${escapeHtml(competition)}</span></div>`
+              : ""
+          }
+          <div class="pk-x">X</div>
+          ${kickoff ? `<div class="pk-when">${escapeHtml(kickoff)}</div>` : ""}
+          ${categoryLine ? `<div class="pk-where">${escapeHtml(categoryLine)}</div>` : ""}
+          ${venue ? `<div class="pk-where">${escapeHtml(venue)}</div>` : ""}
         </div>
+        ${clubBadgeHtml(awayName, awayLogo, "Visitante")}
       </div>
 
       <div class="pk-main">
-        <div class="pitch-block">
-          <h3>Escalação visual</h3>
-          <div class="pitch-wrap">${fieldPlayers}</div>
-        </div>
-        <div class="side-grid">
-          <div>
+        <div class="pk-col">
+          <div class="pk-block">
             <h3>Arbitragem</h3>
-            ${refereesHtml || `<p style="font-size:10px;color:#94a3b8">Não informado</p>`}
+            ${refereesHtml || `<p class="pk-empty">Não informado</p>`}
           </div>
-          <div>
-            <h3>Suplentes</h3>
-            ${subsHtml || `<p style="font-size:10px;color:#94a3b8">—</p>`}
-          </div>
-          <div>
+          <div class="pk-block">
             <h3>Comissão técnica</h3>
-            ${staffHtml || `<p style="font-size:10px;color:#94a3b8">—</p>`}
+            ${staffHtml ? `<div class="staff-grid">${staffHtml}</div>` : `<p class="pk-empty">—</p>`}
+          </div>
+        </div>
+
+        <div class="pk-block">
+          <h3>Escalação visual</h3>
+          <div class="pitch-wrap">
+            <div class="pitch-line pl-outer"></div>
+            <div class="pitch-line pl-half"></div>
+            <div class="pitch-line pl-circle"></div>
+            <div class="pitch-line pl-box-top"></div>
+            <div class="pitch-line pl-goal-top"></div>
+            <div class="pitch-line pl-box-bottom"></div>
+            <div class="pitch-line pl-goal-bottom"></div>
+            ${fieldPlayers}
+          </div>
+        </div>
+
+        <div class="pk-col">
+          <div class="pk-block">
+            <h3>Suplentes</h3>
+            ${subsHtml ? `<div class="subs-grid">${subsHtml}</div>` : `<p class="pk-empty">—</p>`}
+          </div>
+          <div class="pk-block">
+            <h3>Diretoria</h3>
+            ${directorsHtml ? `<div class="dir-grid">${directorsHtml}</div>` : `<p class="pk-empty">—</p>`}
           </div>
         </div>
       </div>
 
-      ${directorsHtml ? `<div class="dir-grid">${directorsHtml}</div>` : ""}
-      ${
-        config.showDisclaimer
-          ? `<p class="pk-disclaimer">O quadro acima não representa o esquema utilizado, nem o posicionamento dos jogadores em campo.</p>`
-          : ""
-      }
-      ${config.contactLine ? `<p class="pk-contact">${escapeHtml(config.contactLine)}</p>` : ""}
-      <div class="pk-footer">
-        <span>Gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}</span>
-        <span><strong>Boston City Group</strong> · Relatório de Imprensa / Press Kit</span>
+      <div class="pk-foot">
+        <div>
+          ${
+            config.showDisclaimer
+              ? `<p class="pk-disclaimer">O quadro acima não representa o esquema utilizado, nem o posicionamento dos jogadores em campo.</p>`
+              : ""
+          }
+          ${config.contactLine ? `<p class="pk-contact">${escapeHtml(config.contactLine)}</p>` : ""}
+        </div>
+        <div class="pk-sign">
+          <strong>Boston City Group</strong>
+          Relatório de Imprensa · gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}
+        </div>
       </div>
     </div>
   `;

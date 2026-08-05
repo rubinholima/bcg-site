@@ -138,7 +138,7 @@ export default async function ComissaoPage(props: ComissaoPageProps) {
                           <img
                             src={getPublicImageUrl(s.photoUrl)}
                             alt=""
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover object-[center_20%]"
                           />
                         </div>
                       ) : (
