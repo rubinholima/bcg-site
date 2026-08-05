@@ -13,7 +13,10 @@ async function main() {
   });
   try {
     const svc = app.get(BeatscodeContractImportService);
-    const result = await svc.importFromApi();
+    const result = await svc.importFromApi({
+      downloadAttachments:
+        process.env.BEATSCODE_DOWNLOAD_CONTRACT_ATTACHMENTS?.trim() !== '0',
+    });
     console.log(JSON.stringify({ ok: true, ...result }, null, 2));
   } finally {
     await app.close();
