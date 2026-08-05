@@ -71,8 +71,8 @@ const LINKS = [
     moduleSlug: "futebol_logistica",
   },
   {
-    title: "Logística — Viagens",
-    description: "Viagens, hospedagem e deslocamentos da equipe.",
+    title: "Jogos e viagens",
+    description: "Planejamentos de jogos em casa e fora.",
     href: "/dashboard/futebol/logistica",
     icon: Map,
     moduleSlug: "futebol_logistica",

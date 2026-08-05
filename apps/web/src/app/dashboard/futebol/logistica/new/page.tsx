@@ -526,6 +526,7 @@ export default function NewLogisticaPage() {
               </div>
             </div>
             <TravelCategoriesField
+              isHomeMatch={isHomeMatch}
               categoriesForDropdown={categoriesForDropdown}
               multiMode={multiCategoryMode}
               onMultiModeChange={setMultiCategoryMode}

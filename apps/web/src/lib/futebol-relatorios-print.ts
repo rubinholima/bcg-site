@@ -1045,6 +1045,26 @@ export function buildPressKitPrintHtml(
       ${statsLine ? `<div class="chip-stats">${escapeHtml(statsLine)}</div>` : ""}
     </div>`;
   }).join("");
+  const uniformHtml = data.uniformKit
+    ? `<div class="kit-card">
+        ${
+          data.uniformKit.imageUrl
+            ? `<img class="kit-main" src="${escapeHtml(resolveLogoUrlForPrint(data.uniformKit.imageUrl) || data.uniformKit.imageUrl)}" alt="" />`
+            : ""
+        }
+        <div class="kit-copy">
+          <strong>${escapeHtml(data.uniformKit.name)}</strong>
+          <div class="kit-pieces">${data.uniformKit.items
+            .filter((item) => item.imageUrl)
+            .slice(0, 3)
+            .map(
+              (item) =>
+                `<img src="${escapeHtml(resolveLogoUrlForPrint(item.imageUrl!) || item.imageUrl!)}" alt="${escapeHtml(item.name)}" />`,
+            )
+            .join("")}</div>
+        </div>
+      </div>`
+    : `<p class="pk-empty">Não informado</p>`;
 
   const styles = `
     @page { size: ${size === "Letter" ? "letter" : "A4"} landscape; margin: 8mm 9mm; }
@@ -1126,6 +1146,12 @@ export function buildPressKitPrintHtml(
       padding-bottom: 2px;
     }
     .pk-empty { margin: 0; font-size: 9px; color: #94a3b8; }
+    .kit-card { display: flex; align-items: center; gap: 6px; padding: 5px; border: 1px solid #cbd5e1; border-radius: 7px; background: ${BCG.blueLight}; }
+    .kit-main { width: 48px; height: 48px; object-fit: contain; border-radius: 5px; background: #fff; }
+    .kit-copy { min-width: 0; flex: 1; }
+    .kit-copy strong { display: block; font-size: 8px; line-height: 1.2; color: ${BCG.blue}; text-transform: uppercase; }
+    .kit-pieces { display: flex; gap: 3px; margin-top: 4px; }
+    .kit-pieces img { width: 22px; height: 22px; object-fit: contain; border: 1px solid #dbe3ee; border-radius: 3px; background: #fff; }
 
     /* ---------- Gramado ---------- */
     .pitch-wrap {
@@ -1296,6 +1322,10 @@ export function buildPressKitPrintHtml(
             <h3>Comissão técnica</h3>
             ${staffHtml ? `<div class="staff-grid">${staffHtml}</div>` : `<p class="pk-empty">—</p>`}
           </div>
+          <div class="pk-block">
+            <h3>Uniforme da partida</h3>
+            ${uniformHtml}
+          </div>
         </div>
 
         <div class="pk-block">
@@ -1356,4 +1386,121 @@ export function printPressKitReport(
   size: PrintPageSize = "A4",
 ): void {
   printHtmlDocument(buildPressKitPrintHtml(data, size), "Impressão — Press Kit / Relatório Imprensa");
+}
+
+export type MatchExternalReportAudience = "opponent" | "referees";
+
+export function buildMatchExternalReportHtml(
+  data: PressKitReportDto,
+  audience: MatchExternalReportAudience,
+  size: PrintPageSize = "A4",
+): string {
+  const { travel, config } = data;
+  const club = travelClubName(travel);
+  const opponent = travel.opponentName?.trim() || "Adversário";
+  const title =
+    audience === "referees" ? "Relação oficial para arbitragem" : "Informações para a equipe adversária";
+  const uniformImage = data.uniformKit?.imageUrl
+    ? resolveLogoUrlForPrint(data.uniformKit.imageUrl) || data.uniformKit.imageUrl
+    : null;
+  const athleteRows = [...data.athletes]
+    .sort((a, b) => (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) || a.name.localeCompare(b.name))
+    .map(
+      (athlete, index) => `<tr>
+        <td>${index + 1}</td>
+        <td>${escapeHtml(String(athlete.jerseyNumber ?? "—"))}</td>
+        <td class="left">${escapeHtml(athlete.name)}</td>
+        <td>${escapeHtml(athlete.position ?? "—")}</td>
+        ${audience === "referees" ? `<td>${escapeHtml(athlete.cbfRegistration ?? "—")}</td>` : ""}
+      </tr>`,
+    )
+    .join("");
+  const staffRows = data.staff
+    .map(
+      (member) =>
+        `<tr><td class="left">${escapeHtml(member.name)}</td><td class="left">${escapeHtml(member.role ? getStaffRoleLabel(member.role) : "Comissão técnica")}</td></tr>`,
+    )
+    .join("");
+  const styles = `
+    @page { size: ${size === "Letter" ? "letter" : "A4"} portrait; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #0f172a; font-family: "Segoe UI", system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .head { display: grid; grid-template-columns: 24mm 1fr 24mm; align-items: center; gap: 5mm; padding: 5mm; color: #fff; background: linear-gradient(120deg, ${BCG.blue}, ${BCG.red}); border-radius: 4mm; }
+    .head img { width: 22mm; height: 22mm; object-fit: contain; padding: 1.5mm; border-radius: 3mm; background: #fff; }
+    .head div { text-align: center; }
+    h1 { margin: 0; font-size: 17pt; text-transform: uppercase; }
+    .head p { margin: 1.5mm 0 0; font-size: 9pt; }
+    .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm; margin: 5mm 0; }
+    .meta div { padding: 3mm; border-left: 3px solid ${BCG.red}; background: #f1f5f9; }
+    .meta span { display: block; color: #64748b; font-size: 7pt; letter-spacing: .12em; text-transform: uppercase; }
+    .meta strong { font-size: 10pt; }
+    .uniform { display: flex; align-items: center; gap: 5mm; margin-bottom: 5mm; padding: 4mm; border: 1px solid #cbd5e1; border-radius: 3mm; background: ${BCG.blueLight}; }
+    .uniform > img { width: 30mm; height: 30mm; object-fit: contain; background: #fff; border-radius: 2mm; }
+    .uniform strong { display: block; color: ${BCG.blue}; font-size: 13pt; text-transform: uppercase; }
+    .pieces { display: flex; gap: 2mm; margin-top: 2mm; }
+    .pieces img { width: 13mm; height: 13mm; object-fit: contain; border: 1px solid #dbe3ee; border-radius: 1.5mm; background: #fff; }
+    h2 { margin: 5mm 0 2mm; padding-bottom: 1.5mm; color: ${BCG.blue}; border-bottom: 2px solid ${BCG.red}; font-size: 12pt; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    th, td { padding: 1.7mm 2mm; border: 1px solid #cbd5e1; text-align: center; }
+    th { color: #fff; background: ${BCG.blue}; font-size: 7.5pt; letter-spacing: .08em; text-transform: uppercase; }
+    .left { text-align: left; }
+    .foot { margin-top: 5mm; padding-top: 3mm; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 8pt; }
+  `;
+  const logo = (url: string | null | undefined) => {
+    const resolved = resolveLogoUrlForPrint(url);
+    return resolved ? `<img src="${escapeHtml(resolved)}" alt="" />` : "<span></span>";
+  };
+  const body = `
+    <div class="head">
+      ${logo(travel.tenant.logoUrl)}
+      <div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(club)} × ${escapeHtml(opponent)}</p></div>
+      ${logo(data.opponentLogoUrl)}
+    </div>
+    <div class="meta">
+      <div><span>Data e horário</span><strong>${escapeHtml([formatBrDate(travel.matchDate), config.matchTime].filter(Boolean).join(" · ") || "A definir")}</strong></div>
+      <div><span>Local</span><strong>${escapeHtml([travel.stadiumName, travel.city].filter(Boolean).join(" · ") || "A definir")}</strong></div>
+      <div><span>Competição</span><strong>${escapeHtml([travel.championshipName, config.phase].filter(Boolean).join(" · ") || "—")}</strong></div>
+      <div><span>Categoria</span><strong>${escapeHtml(travel.categoryLabel)}</strong></div>
+    </div>
+    <div class="uniform">
+      ${uniformImage ? `<img src="${escapeHtml(uniformImage)}" alt="" />` : ""}
+      <div>
+        <span>Uniforme da partida</span>
+        <strong>${escapeHtml(data.uniformKit?.name ?? "Não informado")}</strong>
+        <div class="pieces">${(data.uniformKit?.items ?? [])
+          .filter((item) => item.imageUrl)
+          .slice(0, 3)
+          .map(
+            (item) =>
+              `<img src="${escapeHtml(resolveLogoUrlForPrint(item.imageUrl!) || item.imageUrl!)}" alt="${escapeHtml(item.name)}" />`,
+          )
+          .join("")}</div>
+      </div>
+    </div>
+    <h2>${audience === "referees" ? "Atletas relacionados" : "Relação da equipe"}</h2>
+    <table><thead><tr><th>#</th><th>Camisa</th><th>Atleta</th><th>Posição</th>${audience === "referees" ? "<th>Registro CBF</th>" : ""}</tr></thead><tbody>${athleteRows}</tbody></table>
+    ${
+      audience === "referees" && staffRows
+        ? `<h2>Comissão técnica</h2><table><thead><tr><th>Nome</th><th>Função</th></tr></thead><tbody>${staffRows}</tbody></table>`
+        : ""
+    }
+    <div class="foot">${config.contactLine ? escapeHtml(config.contactLine) : "Boston City Group"}</div>
+  `;
+  return wrapPrintRootDocument({
+    title: escapeHtml(title),
+    styles,
+    headerHtml: "",
+    metaHtml: "",
+    bodyHtml: body,
+    footerHtml: "",
+  });
+}
+
+export function printMatchExternalReport(
+  data: PressKitReportDto,
+  audience: MatchExternalReportAudience,
+  size: PrintPageSize = "A4",
+): void {
+  const title = audience === "referees" ? "Relatório para arbitragem" : "Relatório para adversário";
+  printHtmlDocument(buildMatchExternalReportHtml(data, audience, size), title);
 }

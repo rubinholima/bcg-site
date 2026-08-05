@@ -47,6 +47,7 @@ export function FutebolRelatorioPassageirosForm() {
   }>({ open: false, title: "", message: "", variant: "info" });
 
   const { travels, loading: loadingTravels } = useFutebolRelatorioTravels(tenantId);
+  const awayTravels = travels.filter((travel) => travel.isHomeMatch !== true);
 
   useEffect(() => {
     const qTenant = searchParams.get("tenantId")?.trim() ?? "";
@@ -134,7 +135,7 @@ export function FutebolRelatorioPassageirosForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Viagem / jogo</Label>
+              <Label>Viagem</Label>
               <Select
                 value={travelId || "none"}
                 onValueChange={(v) => setTravelId(v === "none" ? "" : v)}
@@ -145,7 +146,7 @@ export function FutebolRelatorioPassageirosForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Selecione…</SelectItem>
-                  {travels.map((t) => (
+                  {awayTravels.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {formatTravelLabel(t)}
                     </SelectItem>

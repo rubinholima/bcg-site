@@ -543,6 +543,9 @@ export function FutebolAgendaOperacional() {
 
   /** Prefixo legível na mesma linha do título (casa/fora/tipo). */
   const agendaLinePrefix = (item: FootballAgendaCalendarItem, side: AgendaMatchSide) => {
+    const normalizedTitle = item.title.trim().toLocaleLowerCase("pt-BR");
+    if (side === "casa" && normalizedTitle.startsWith("jogo em casa")) return "";
+    if (side === "fora" && normalizedTitle.startsWith("jogo fora")) return "";
     if (side === "casa") return "Jogo em casa · ";
     if (side === "fora") return "Jogo fora · ";
     const typeLabel = FOOTBALL_AGENDA_TYPE_LABEL[item.type];
@@ -614,6 +617,8 @@ export function FutebolAgendaOperacional() {
     const swatch = agendaSwatchStyle(agendaColors, item.type, side);
     const primaryCat = item.category?.trim() || item.categories?.[0]?.trim() || null;
     const squad = resolveSquadCategoryColor(squadColors, primaryCat);
+    const hasDistinctEnd =
+      !!item.endAt && new Date(item.endAt).getTime() !== new Date(item.startAt).getTime();
     const typeOrSide =
       sideLabel === "Casa"
         ? "JOGO EM CASA"
@@ -664,10 +669,10 @@ export function FutebolAgendaOperacional() {
         ) : null}
         <p className="text-sm font-semibold opacity-95">
           {formatTime(item.startAt, item.allDay, item.dayPeriod)}
-          {item.endAt && !item.allDay && item.source === "travel"
-            ? ` · jogo ${formatTime(item.endAt, false)}`
-            : item.endAt && !item.allDay
-              ? ` — ${formatTime(item.endAt, false)}`
+          {hasDistinctEnd && !item.allDay && item.source === "travel"
+            ? ` · jogo ${formatTime(item.endAt!, false)}`
+            : hasDistinctEnd && !item.allDay
+              ? ` — ${formatTime(item.endAt!, false)}`
               : ""}
         </p>
         {item.location ? (
@@ -694,7 +699,9 @@ export function FutebolAgendaOperacional() {
         <div className="mt-2 flex flex-wrap gap-2">
           <span className="text-xs font-bold underline-offset-2">
             {item.source === "travel"
-              ? "Abrir viagem"
+              ? side === "casa"
+                ? "Abrir planejamento"
+                : "Abrir viagem"
               : item.source === "bch_booking"
                 ? "Editar no Boston City Hall"
                 : "Editar / excluir"}

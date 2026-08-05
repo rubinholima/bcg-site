@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -43,6 +43,7 @@ export function FutebolRelatorioHospedesForm() {
   }>({ open: false, title: "", message: "", variant: "info" });
 
   const { travels, loading: loadingTravels } = useFutebolRelatorioTravels(tenantId);
+  const awayTravels = travels.filter((travel) => travel.isHomeMatch !== true);
 
   useEffect(() => {
     const qTenant = searchParams.get("tenantId")?.trim() ?? "";
@@ -104,9 +105,6 @@ export function FutebolRelatorioHospedesForm() {
       <Card>
         <CardHeader>
           <CardTitle>Relação de Hóspedes</CardTitle>
-          <CardDescription>
-            Quartos, tipo de apartamento e ocupantes com documentos — ideal para check-in no hotel.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -133,7 +131,7 @@ export function FutebolRelatorioHospedesForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Viagem / jogo</Label>
+              <Label>Viagem</Label>
               <Select
                 value={travelId || "none"}
                 onValueChange={(v) => setTravelId(v === "none" ? "" : v)}
@@ -144,7 +142,7 @@ export function FutebolRelatorioHospedesForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Selecione…</SelectItem>
-                  {travels.map((t) => (
+                  {awayTravels.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {formatTravelLabel(t)}
                     </SelectItem>

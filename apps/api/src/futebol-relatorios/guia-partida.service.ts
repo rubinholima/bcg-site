@@ -213,6 +213,7 @@ export class GuiaPartidaService {
       config: pressKit.config,
       opponentLogoUrl: pressKit.opponentLogoUrl,
       championshipLogoUrl: pressKit.championshipLogoUrl,
+      uniformKit: pressKit.uniformKit,
       season,
       squad,
       staff: pressKit.staff,

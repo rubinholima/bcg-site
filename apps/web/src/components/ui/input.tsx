@@ -48,6 +48,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             className={cn(
               baseClass,
+              "formatted-date-input",
               "text-transparent caret-transparent",
               "[&::-webkit-datetime-edit]:text-transparent",
               "[&::-webkit-datetime-edit-fields-wrapper]:text-transparent",

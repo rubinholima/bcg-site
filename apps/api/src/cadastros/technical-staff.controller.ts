@@ -21,9 +21,15 @@ export class TechnicalStaffController {
     @Query('tenantId') tenantId?: string,
     @Query('category') category?: string,
     @Query('role') role?: string,
+    @Query('jobRoleId') jobRoleId?: string,
     @Query('search') search?: string,
   ) {
-    return this.service.findAll({ tenantId, category, role, search });
+    return this.service.findAll({ tenantId, category, role, jobRoleId, search });
+  }
+
+  @Get('job-roles')
+  findJobRoles(@Query('tenantId') tenantId: string) {
+    return this.service.findJobRoles(tenantId);
   }
 
   @Get(':id')

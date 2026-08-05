@@ -70,7 +70,7 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
       setFeedback({
         open: true,
         title: "Seleção obrigatória",
-        message: "Selecione o jogo ou a viagem para gerar o Layout Relacionados.",
+        message: "Selecione o planejamento para gerar o Layout Relacionados.",
         variant: "warning",
       });
       return null;
@@ -147,7 +147,7 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{isHomeMatch ? "Jogo" : "Viagem / jogo"}</Label>
+              <Label>Planejamento</Label>
               <Select
                 value={travelId || "none"}
                 onValueChange={(v) => setTravelId(v === "none" ? "" : v)}
@@ -156,11 +156,7 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
                 <SelectTrigger>
                   <SelectValue
                     placeholder={
-                      loadingTravels
-                        ? "Carregando…"
-                        : isHomeMatch
-                          ? "Selecione o jogo"
-                          : "Selecione a viagem"
+                      loadingTravels ? "Carregando…" : "Selecione o planejamento"
                     }
                   />
                 </SelectTrigger>

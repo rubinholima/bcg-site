@@ -20,7 +20,7 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "futebol", label: "Depto Futebol" },
   { id: "futebol-cadastro-atletas", label: "→ Cadastro de atletas", indent: true },
   { id: "futebol-logistica-convocacao", label: "→ Logística e convocação", indent: true },
-  { id: "futebol-guia-partida", label: "→ Guia da Partida", indent: true },
+  { id: "futebol-press-kit", label: "→ Press Kit", indent: true },
   { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
@@ -394,7 +394,7 @@ export default function ManualPage() {
               </p>
             </SubSection>
 
-            <SubSection id="futebol-guia-partida" title="Guia da Partida (imprensa)">
+            <SubSection id="futebol-press-kit" title="Press Kit">
               <p>
                 Revista de pré-jogo em PDF (A4 retrato): capa, ficha do confronto, arbitragem, comissão,
                 retrospecto contra o adversário, números da temporada, elenco relacionado com estatísticas,
@@ -402,13 +402,13 @@ export default function ManualPage() {
               </p>
               <p>
                 Fluxo: convocar os atletas na <strong>Convocação</strong> → preencher arbitragem, diretoria,
-                fase/horário e os 11 titulares no <strong>Press Kit</strong> → abrir{" "}
-                <strong>Guia da Partida</strong>, escolher clube e jogo, visualizar e imprimir. Os números
+                fase/horário e os 11 titulares no <strong>Press Kit</strong> → escolher clube e jogo,
+                visualizar e imprimir. Os números
                 vêm das partidas oficiais já importadas na temporada; o vínculo com o atleta usa o registro
                 CBF do cadastro.
               </p>
               <p>
-                Menu: Depto Futebol → Logística → Relatórios → Guia da Partida.
+                Menu: Depto Futebol → Logística → Relatórios → Press Kit / Imprensa.
               </p>
             </SubSection>
 

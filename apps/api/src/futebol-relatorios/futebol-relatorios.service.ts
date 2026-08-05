@@ -341,6 +341,27 @@ export class FutebolRelatoriosService {
       base.travel.opponentName,
       base.travel.championshipName,
     );
+    const uniforms =
+      travel.uniforms && typeof travel.uniforms === 'object'
+        ? (travel.uniforms as Record<string, unknown>)
+        : {};
+    const gameKitName =
+      typeof uniforms.athletesGame === 'string' ? uniforms.athletesGame.trim() : '';
+    const uniformKit = gameKitName
+      ? await this.prisma.logisticsUniformKit.findFirst({
+          where: { name: gameKitName },
+          select: {
+            name: true,
+            imageUrl: true,
+            items: {
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                clothingItem: { select: { name: true, imageUrl: true } },
+              },
+            },
+          },
+        })
+      : null;
 
     return {
       travel: base.travel,
@@ -351,6 +372,13 @@ export class FutebolRelatoriosService {
       config,
       opponentLogoUrl: logos.opponentLogoUrl,
       championshipLogoUrl: logos.championshipLogoUrl,
+      uniformKit: uniformKit
+        ? {
+            name: uniformKit.name,
+            imageUrl: uniformKit.imageUrl,
+            items: uniformKit.items.map(({ clothingItem }) => clothingItem),
+          }
+        : null,
       generatedAt: new Date().toISOString(),
     };
   }
@@ -729,6 +757,7 @@ export class FutebolRelatoriosService {
           birthDate: formatIsoDate(p.birthDate),
           playerId: p.id,
           jerseyNumber: p.jerseyNumber ?? null,
+          cbfRegistration: p.cbfRegistration ?? null,
           position: p.position ?? null,
           photoUrl: p.photoUrl ?? null,
         });
@@ -808,6 +837,7 @@ export class FutebolRelatoriosService {
           birthDate: formatIsoDate(p.birthDate),
           playerId: p.id,
           jerseyNumber: p.jerseyNumber ?? null,
+          cbfRegistration: p.cbfRegistration ?? null,
           position: p.position ?? null,
           photoUrl: p.photoUrl ?? null,
         });
@@ -876,6 +906,7 @@ export class FutebolRelatoriosService {
         birthDate: formatIsoDate(p.birthDate),
         playerId: p.id,
         jerseyNumber: p.jerseyNumber ?? null,
+        cbfRegistration: p.cbfRegistration ?? null,
         position: p.position ?? null,
         photoUrl: p.photoUrl ?? null,
       };

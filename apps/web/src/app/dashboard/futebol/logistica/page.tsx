@@ -119,10 +119,7 @@ export default async function LogisticaPage(props: LogisticaPageProps) {
       )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Logística — Viagens</h1>
-          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-            Planejamento de deslocamentos: transporte, hospedagem, alimentação e custos — somente clubes.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Jogos e viagens</h1>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           <Link href="/dashboard/futebol/logistica/convocacao">

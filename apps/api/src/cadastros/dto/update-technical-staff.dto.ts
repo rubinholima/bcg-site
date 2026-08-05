@@ -20,8 +20,7 @@ export class UpdateTechnicalStaffDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(64)
-  role?: string;
+  jobRoleId?: string;
 
   @IsOptional()
   @IsArray()

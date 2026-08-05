@@ -175,13 +175,13 @@ export function LogisticaItineraryFields({
           items.map((item: TravelHomeAgendaItem, idx) => (
             <div
               key={item.id ?? `home-${idx}`}
-              className="grid gap-2 rounded-lg border border-border/70 p-3 sm:grid-cols-[100px_1fr_auto]"
+              className="grid gap-2 rounded-lg border border-border/70 p-3 sm:grid-cols-[9rem_minmax(0,1fr)_auto]"
             >
               <div className="space-y-1">
                 <Label className="text-xs">Hora</Label>
                 <Input
                   type="time"
-                  className="text-foreground"
+                  className="min-w-0 text-foreground"
                   disabled={disabled}
                   value={item.time ?? ""}
                   onChange={(e) => {

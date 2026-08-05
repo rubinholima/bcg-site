@@ -436,6 +436,13 @@ function styles(size: PrintPageSize): string {
     .info-grid div { padding: 3mm 3.5mm; border-left: 3px solid ${C.red}; background: ${C.softer}; border-radius: 0 2mm 2mm 0; }
     .info-grid span { display: block; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
     .info-grid strong { font-size: 10pt; color: ${C.ink}; }
+    .uniform-kit { display: flex; align-items: center; gap: 5mm; margin: 0 0 6mm; padding: 4mm; border: 1px solid ${C.line}; border-radius: 3mm; background: ${C.soft}; }
+    .uniform-kit-main { width: 30mm; height: 30mm; object-fit: contain; border-radius: 2mm; background: #fff; }
+    .uniform-kit-copy { flex: 1; }
+    .uniform-kit-copy span { display: block; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
+    .uniform-kit-copy strong { display: block; margin: 1mm 0 2mm; font-size: 13pt; color: ${C.navy}; text-transform: uppercase; }
+    .uniform-kit-items { display: flex; gap: 2mm; }
+    .uniform-kit-items img { width: 14mm; height: 14mm; object-fit: contain; border: 1px solid ${C.line}; border-radius: 1.5mm; background: #fff; }
     .people { list-style: none; margin: 0; padding: 0; font-size: 8.5pt; }
     .people li { display: flex; justify-content: space-between; gap: 3mm; padding: 1.6mm 0; border-bottom: 1px dotted ${C.line}; }
     .people li:last-child { border-bottom: none; }
@@ -564,7 +571,7 @@ export function buildGuiaPartidaPrintHtml(
       <div class="cover-glow"></div>
       <div class="cover-watermark">${crest(club, clubLogo, "cover-watermark-crest")}</div>
       <p class="cover-kicker">${esc(travel.categoryLabel)} · Temporada ${data.season}</p>
-      <h1 class="cover-title">Guia da<span>Partida</span></h1>
+      <h1 class="cover-title">Press<span>Kit</span></h1>
       <p class="cover-sub">${esc(competition || "Relatório de imprensa")}</p>
 
       <div class="cover-match">
@@ -636,6 +643,31 @@ export function buildGuiaPartidaPrintHtml(
       <div><span>Competição</span><strong>${esc(travel.championshipName || "—")}</strong></div>
       <div><span>Fase / rodada</span><strong>${esc(config.phase || "—")}</strong></div>
     </div>
+    ${
+      data.uniformKit
+        ? `<div class="uniform-kit">
+      ${
+        data.uniformKit.imageUrl
+          ? `<img class="uniform-kit-main" src="${esc(resolveLogoUrlForPrint(data.uniformKit.imageUrl) || data.uniformKit.imageUrl)}" alt="" />`
+          : ""
+      }
+      <div class="uniform-kit-copy">
+        <span>Uniforme da partida</span>
+        <strong>${esc(data.uniformKit.name)}</strong>
+        <div class="uniform-kit-items">
+          ${data.uniformKit.items
+            .filter((item) => item.imageUrl)
+            .slice(0, 3)
+            .map(
+              (item) =>
+                `<img src="${esc(resolveLogoUrlForPrint(item.imageUrl!) || item.imageUrl!)}" alt="${esc(item.name)}" />`,
+            )
+            .join("")}
+        </div>
+      </div>
+    </div>`
+        : ""
+    }
 
     <div class="cols-2">
       <div class="panel">
@@ -805,7 +837,7 @@ export function buildGuiaPartidaPrintHtml(
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <title>${esc(`Guia da Partida — ${homeName} x ${awayName}`)}</title>
+  <title>${esc(`Press Kit — ${homeName} x ${awayName}`)}</title>
   <style>${styles(size)}
     .hero-crest { width: 22mm; height: 22mm; object-fit: contain; display: block; margin: 0 auto 2mm; }
     .cover-foot-crest { height: 12mm; width: auto; object-fit: contain; }
@@ -819,5 +851,5 @@ export function printGuiaPartidaReport(
   data: GuiaPartidaReportDto,
   size: PrintPageSize = "A4",
 ): void {
-  printHtmlDocument(buildGuiaPartidaPrintHtml(data, size), "Impressão — Guia da Partida");
+  printHtmlDocument(buildGuiaPartidaPrintHtml(data, size), "Impressão — Press Kit");
 }

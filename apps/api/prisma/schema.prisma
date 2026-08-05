@@ -1211,6 +1211,8 @@ model TechnicalStaff {
   name              String
   photoUrl          String?
   role              String    // tecnico, auxiliar_tecnico, treinador_goleiros, preparador_fisico, medico, fisioterapeuta, fisiologista, psicologo, nutricionista, analista_desempenho, scout, massagista, enfermeiro, outro
+  jobRoleId         String?
+  jobRole           JobRole?  @relation(fields: [jobRoleId], references: [id], onDelete: SetNull)
   categories        Json?    // categorias que atende: ["principal","sub20","sub17"] — null = todas
   birthDate         String?   // YYYY-MM-DD
   nationality       String?
@@ -1232,6 +1234,7 @@ model TechnicalStaff {
   scoutProfile         Scout?
   travelParticipations TravelParticipant[]
   @@index([tenantId])
+  @@index([jobRoleId])
   @@index([tenantId, role])
 }
 
@@ -1615,6 +1618,7 @@ model JobRole {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   employments  Employment[]
+  technicalStaff TechnicalStaff[]
   @@index([tenantId])
   @@index([departmentId])
 }

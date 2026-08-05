@@ -11,6 +11,7 @@ export type RelatorioPessoaRow = {
   playerId?: string | null;
   staffId?: string | null;
   jerseyNumber?: number | null;
+  cbfRegistration?: string | null;
   position?: string | null;
   photoUrl?: string | null;
   seasonStats?: {
@@ -129,6 +130,12 @@ export type PressKitNamedRole = {
   role: string;
 };
 
+export type PressKitUniformKitDto = {
+  name: string;
+  imageUrl: string | null;
+  items: Array<{ name: string; imageUrl: string | null }>;
+};
+
 export type PressKitConfigDto = {
   phase: string | null;
   matchTime: string | null;
@@ -148,6 +155,7 @@ export type PressKitReportDto = {
   config: PressKitConfigDto;
   opponentLogoUrl: string | null;
   championshipLogoUrl: string | null;
+  uniformKit: PressKitUniformKitDto | null;
   generatedAt: string;
 };
 
@@ -309,6 +317,7 @@ export type GuiaPartidaReportDto = {
   config: PressKitConfigDto;
   opponentLogoUrl: string | null;
   championshipLogoUrl: string | null;
+  uniformKit: PressKitUniformKitDto | null;
   season: number;
   squad: GuiaSquadPlayer[];
   staff: RelatorioPessoaRow[];

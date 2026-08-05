@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Eye, Loader2, Printer, Save } from "lucide-react";
+import { ArrowDown, ArrowUp, Eye, Loader2, Printer, Save, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import type {
   PressKitConfigDto,
   PressKitNamedRole,
   PressKitReportDto,
+  GuiaPartidaReportDto,
   PrintPageSize,
 } from "@/lib/futebol-relatorios.types";
 import {
@@ -28,9 +29,14 @@ import {
   DEFAULT_PRESS_KIT_REFEREE_ROLES,
 } from "@/lib/futebol-relatorios.types";
 import {
-  buildPressKitPrintHtml,
-  printPressKitReport,
+  buildMatchExternalReportHtml,
+  printHtmlDocument,
+  printMatchExternalReport,
 } from "@/lib/futebol-relatorios-print";
+import {
+  buildGuiaPartidaPrintHtml,
+  printGuiaPartidaReport,
+} from "@/lib/guia-partida-print";
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import {
@@ -55,6 +61,7 @@ export function FutebolRelatorioPressKitForm() {
   const [loadingReport, setLoadingReport] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [previewLandscape, setPreviewLandscape] = useState(false);
   const [reportData, setReportData] = useState<PressKitReportDto | null>(null);
   const [phase, setPhase] = useState("");
   const [matchTime, setMatchTime] = useState("");
@@ -204,10 +211,24 @@ export function FutebolRelatorioPressKitForm() {
       return;
     }
     setBusy(true);
-    const data = buildLocalReport(reportData);
-    setPreviewHtml(buildPressKitPrintHtml(data, pageSize));
-    setPreviewOpen(true);
-    setBusy(false);
+    try {
+      await api.put(`/futebol-relatorios/press-kit?travelId=${encodeURIComponent(travelId)}`, configPayload());
+      const { data } = await api.get<GuiaPartidaReportDto>(
+        `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
+      );
+      setPreviewHtml(buildGuiaPartidaPrintHtml(data, pageSize));
+      setPreviewLandscape(false);
+      setPreviewOpen(true);
+    } catch {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: "Não foi possível montar o Press Kit completo.",
+        variant: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handlePrint = async () => {
@@ -221,8 +242,42 @@ export function FutebolRelatorioPressKitForm() {
       return;
     }
     setBusy(true);
-    printPressKitReport(buildLocalReport(reportData), pageSize);
-    setBusy(false);
+    try {
+      await api.put(`/futebol-relatorios/press-kit?travelId=${encodeURIComponent(travelId)}`, configPayload());
+      const { data } = await api.get<GuiaPartidaReportDto>(
+        `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
+      );
+      printGuiaPartidaReport(data, pageSize);
+    } catch {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: "Não foi possível imprimir o Press Kit completo.",
+        variant: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleExternalReport = async (
+    audience: "opponent" | "referees",
+    preview: boolean,
+  ) => {
+    if (!reportData) return;
+    setBusy(true);
+    try {
+      const local = buildLocalReport(reportData);
+      if (preview) {
+        setPreviewHtml(buildMatchExternalReportHtml(local, audience, pageSize));
+        setPreviewLandscape(false);
+        setPreviewOpen(true);
+      } else {
+        printMatchExternalReport(local, audience, pageSize);
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const moveStarter = (index: number, dir: -1 | 1) => {
@@ -255,10 +310,6 @@ export function FutebolRelatorioPressKitForm() {
           <CardTitle>Press Kit / Relatório de Imprensa</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Escalação visual no gramado, suplentes, arbitragem, comissão e diretoria — no estilo do
-            Relatório Imprensa.
-          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Clube</Label>
@@ -283,7 +334,7 @@ export function FutebolRelatorioPressKitForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{isHomeMatch ? "Jogo" : "Viagem / jogo"}</Label>
+              <Label>Planejamento</Label>
               <Select
                 value={travelId || "none"}
                 onValueChange={(v) => setTravelId(v === "none" ? "" : v)}
@@ -294,9 +345,7 @@ export function FutebolRelatorioPressKitForm() {
                     placeholder={
                       loadingTravels
                         ? "Carregando…"
-                        : isHomeMatch
-                          ? "Selecione o jogo"
-                          : "Selecione a viagem / jogo"
+                        : "Selecione o planejamento"
                     }
                   />
                 </SelectTrigger>
@@ -538,6 +587,24 @@ export function FutebolRelatorioPressKitForm() {
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
               Imprimir / PDF
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy || !reportData}
+              onClick={() => void handleExternalReport("opponent", true)}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              Relatório para adversário
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy || !reportData}
+              onClick={() => void handleExternalReport("referees", true)}
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              Relatório para arbitragem
+            </Button>
             {travelId ? (
               <Button type="button" variant="outline" asChild>
                 <Link href={`/dashboard/futebol/logistica/${travelId}/edit`}>
@@ -552,11 +619,11 @@ export function FutebolRelatorioPressKitForm() {
       <PrintPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
-        title="Pré-visualização — Press Kit / Relatório Imprensa"
+        title="Pré-visualização"
         html={previewHtml}
-        landscape
+        landscape={previewLandscape}
         onPrint={() => {
-          if (reportData) printPressKitReport(buildLocalReport(reportData), pageSize);
+          if (previewHtml) printHtmlDocument(previewHtml, "Impressão");
         }}
       />
 

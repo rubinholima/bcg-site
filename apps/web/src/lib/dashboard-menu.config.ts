@@ -14,7 +14,6 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-  BookOpen,
   LayoutDashboard,
   Globe,
   FileText,
@@ -114,13 +113,6 @@ export function hubRelatorioFutebol(): MenuItemConfig {
         label: "Press Kit / Imprensa",
         href: "/dashboard/futebol/logistica/relatorios/press-kit",
         icon: Newspaper,
-        moduleSlug: slug,
-      },
-      {
-        slug: "rel_futebol_guia_partida",
-        label: "Guia da Partida",
-        href: "/dashboard/futebol/logistica/relatorios/guia-partida",
-        icon: BookOpen,
         moduleSlug: slug,
       },
       {
@@ -544,7 +536,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
           {
             slug: "futebol_logistica_viagens",
-            label: "Viagens",
+            label: "Jogos e viagens",
             href: "/dashboard/futebol/logistica",
             icon: MapIcon,
             moduleSlug: "futebol_logistica",
@@ -575,13 +567,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
                 label: "Press Kit / Imprensa",
                 href: "/dashboard/futebol/logistica/relatorios/press-kit",
                 icon: Newspaper,
-                moduleSlug: "futebol_logistica",
-              },
-              {
-                slug: "futebol_logistica_rel_guia_partida",
-                label: "Guia da Partida",
-                href: "/dashboard/futebol/logistica/relatorios/guia-partida",
-                icon: BookOpen,
                 moduleSlug: "futebol_logistica",
               },
               {

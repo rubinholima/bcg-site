@@ -527,6 +527,7 @@ export default function EditLogisticaPage() {
               Jogo em casa
             </label>
             <TravelCategoriesField
+              isHomeMatch={isHomeMatch}
               categoriesForDropdown={categoriesForDropdown}
               multiMode={multiCategoryMode}
               onMultiModeChange={setMultiCategoryMode}

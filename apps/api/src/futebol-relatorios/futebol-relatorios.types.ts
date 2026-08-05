@@ -9,6 +9,7 @@ export type RelatorioPessoaRow = {
   playerId?: string | null;
   staffId?: string | null;
   jerseyNumber?: number | null;
+  cbfRegistration?: string | null;
   position?: string | null;
   photoUrl?: string | null;
   seasonStats?: {
@@ -64,6 +65,12 @@ export type PressKitNamedRole = {
   role: string;
 };
 
+export type PressKitUniformKitDto = {
+  name: string;
+  imageUrl: string | null;
+  items: Array<{ name: string; imageUrl: string | null }>;
+};
+
 /** Config persistida em TravelLogistics.beatscodeMeta.pressKit */
 export type PressKitConfigDto = {
   phase: string | null;
@@ -87,6 +94,8 @@ export type PressKitReportDto = {
   opponentLogoUrl: string | null;
   /** Logo do campeonato (cadastro de campeonatos, por nome) */
   championshipLogoUrl: string | null;
+  /** Kit de jogo escolhido no planejamento (camisa, calção e meião). */
+  uniformKit: PressKitUniformKitDto | null;
   generatedAt: string;
 };
 

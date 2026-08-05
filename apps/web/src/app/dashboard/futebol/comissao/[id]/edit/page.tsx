@@ -19,7 +19,7 @@ import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
-import { STAFF_ROLES, CONTRACT_TYPES } from "@/lib/staff-roles";
+import { CONTRACT_TYPES } from "@/lib/staff-roles";
 
 interface Tenant {
   id: string;
@@ -34,6 +34,8 @@ interface StaffData {
   name: string;
   photoUrl?: string | null;
   role: string;
+  jobRoleId?: string | null;
+  jobRole?: { id: string; name: string } | null;
   categories?: string[] | null;
   birthDate?: string | null;
   nationality?: string | null;
@@ -50,6 +52,11 @@ interface StaffData {
   contractEnd?: string | null;
   bio?: string | null;
   notes?: string | null;
+}
+
+interface JobRole {
+  id: string;
+  name: string;
 }
 
 function formatDateInput(d: string | Date | null | undefined): string {
@@ -78,7 +85,8 @@ export default function EditComissaoPage() {
   }, [pendingPhotoFile]);
 
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
+  const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
+  const [jobRoleId, setJobRoleId] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [photoUrl, setPhotoUrl] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -107,7 +115,13 @@ export default function EditComissaoPage() {
         const s = staffRes.data;
         setStaff(s);
         setName(s.name ?? "");
-        setRole(s.role ?? "");
+        setJobRoleId(s.jobRoleId ?? s.jobRole?.id ?? "");
+        void api
+          .get<JobRole[]>(
+            `/technical-staff/job-roles?tenantId=${encodeURIComponent(s.tenantId)}`,
+          )
+          .then(({ data }) => setJobRoles(Array.isArray(data) ? data : []))
+          .catch(() => setJobRoles([]));
         setCategories(Array.isArray(s.categories) ? s.categories : []);
         const url = s.photoUrl ?? "";
         setPhotoUrl(url);
@@ -146,7 +160,7 @@ export default function EditComissaoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !name.trim() || !role) {
+    if (!id || !name.trim() || !jobRoleId) {
       setError("Nome e função são obrigatórios.");
       return;
     }
@@ -178,7 +192,7 @@ export default function EditComissaoPage() {
       }
       await api.patch(`/technical-staff/${id}`, {
         name: name.trim(),
-        role: role.trim(),
+        jobRoleId,
         categories: categories.length ? categories : undefined,
         photoUrl: finalPhotoUrl || undefined,
         birthDate: birthDate.trim() || undefined,
@@ -278,14 +292,14 @@ export default function EditComissaoPage() {
               </div>
               <div className="space-y-2">
                 <Label>Função *</Label>
-                <Select required value={role} onValueChange={setRole}>
+                <Select required value={jobRoleId} onValueChange={setJobRoleId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a função" />
                   </SelectTrigger>
                   <SelectContent>
-                    {STAFF_ROLES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
+                    {jobRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

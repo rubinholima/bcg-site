@@ -23,6 +23,7 @@ interface TechnicalStaffMember {
   name: string;
   photoUrl?: string | null;
   role: string;
+  jobRole?: { id: string; name: string } | null;
   categories?: string[] | null;
   tenantId: string;
   tenant?: { id: string; name: string; slug: string };
@@ -34,14 +35,14 @@ interface TechnicalStaffMember {
 async function getStaff(params: {
   tenantId?: string;
   category?: string;
-  role?: string;
+  jobRoleId?: string;
   search?: string;
 }): Promise<TechnicalStaffMember[]> {
   try {
     const searchParams = new URLSearchParams();
     if (params.tenantId) searchParams.set("tenantId", params.tenantId);
     if (params.category) searchParams.set("category", params.category);
-    if (params.role) searchParams.set("role", params.role);
+    if (params.jobRoleId) searchParams.set("jobRoleId", params.jobRoleId);
     if (params.search) searchParams.set("search", params.search);
     const { data } = await api.get<TechnicalStaffMember[]>(
       `/technical-staff?${searchParams.toString()}`
@@ -63,7 +64,7 @@ type ComissaoPageProps = {
     success?: string;
     tenantId?: string;
     category?: string;
-    role?: string;
+    jobRoleId?: string;
     search?: string;
   }>;
 };
@@ -74,7 +75,7 @@ export default async function ComissaoPage(props: ComissaoPageProps) {
   const staff = await getStaff({
     tenantId: params.tenantId,
     category: params.category,
-    role: params.role,
+    jobRoleId: params.jobRoleId,
     search: params.search,
   });
   const showSuccess = params.success === "true";
@@ -148,7 +149,7 @@ export default async function ComissaoPage(props: ComissaoPageProps) {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">{s.name}</TableCell>
-                    <TableCell>{getStaffRoleLabel(s.role)}</TableCell>
+                    <TableCell>{s.jobRole?.name ?? getStaffRoleLabel(s.role)}</TableCell>
                     <TableCell>{s.tenant?.name ?? s.tenantId}</TableCell>
                     <TableCell>
                       {Array.isArray(s.categories) && s.categories.length

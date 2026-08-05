@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { cadastroEmail, cadastroJsonStringArray, cadastroUpper, cadastroUpperRequired } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
@@ -13,11 +13,13 @@ export class TechnicalStaffService {
     tenantId?: string;
     category?: string;
     role?: string;
+    jobRoleId?: string;
     search?: string;
   }) {
     const where: Record<string, unknown> = {};
     if (filters?.tenantId) where.tenantId = filters.tenantId;
     if (filters?.role) where.role = filters.role;
+    if (filters?.jobRoleId) where.jobRoleId = filters.jobRoleId;
     if (filters?.search?.trim()) {
       where.OR = [
         { name: { contains: filters.search.trim(), mode: 'insensitive' as const } },
@@ -28,7 +30,10 @@ export class TechnicalStaffService {
     let list = await this.prisma.technicalStaff.findMany({
       where,
       orderBy: [{ tenant: { name: 'asc' } }, { role: 'asc' }, { name: 'asc' }],
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        jobRole: { select: { id: true, name: true, type: true } },
+      },
     });
     if (filters?.category) {
       const cat = filters.category.trim();
@@ -44,7 +49,10 @@ export class TechnicalStaffService {
   async findOne(id: string) {
     const staff = await this.prisma.technicalStaff.findUnique({
       where: { id },
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        jobRole: { select: { id: true, name: true, type: true } },
+      },
     });
     if (!staff) throw new NotFoundException('Membro da comissão não encontrado');
     return staff;
@@ -54,11 +62,14 @@ export class TechnicalStaffService {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
     if (!tenant) throw new NotFoundException(`Clube "${dto.tenantId}" não encontrado`);
 
+    if (!dto.photoUrl.trim()) throw new BadRequestException('A foto é obrigatória');
+    const jobRole = await this.findStaffJobRole(dto.tenantId, dto.jobRoleId);
     const data = {
       tenantId: dto.tenantId,
       name: cadastroUpperRequired(dto.name),
-      photoUrl: dto.photoUrl ?? null,
-      role: cadastroUpperRequired(dto.role),
+      photoUrl: dto.photoUrl.trim(),
+      jobRoleId: jobRole.id,
+      role: jobRole.name,
       categories: dto.categories != null ? cadastroJsonStringArray(dto.categories) : Prisma.JsonNull,
       birthDate: dto.birthDate ?? null,
       nationality: cadastroUpper(dto.nationality),
@@ -78,16 +89,23 @@ export class TechnicalStaffService {
     };
     return this.prisma.technicalStaff.create({
       data,
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        jobRole: { select: { id: true, name: true, type: true } },
+      },
     });
   }
 
   async update(id: string, dto: UpdateTechnicalStaffDto) {
-    await this.findOne(id);
+    const current = await this.findOne(id);
     const data: Record<string, unknown> = {};
     if (dto.name != null) data.name = cadastroUpperRequired(dto.name);
     if (dto.photoUrl != null) data.photoUrl = dto.photoUrl;
-    if (dto.role != null) data.role = cadastroUpperRequired(dto.role);
+    if (dto.jobRoleId != null) {
+      const jobRole = await this.findStaffJobRole(current.tenantId, dto.jobRoleId);
+      data.jobRoleId = jobRole.id;
+      data.role = jobRole.name;
+    }
     if (dto.categories != null) data.categories = cadastroJsonStringArray(dto.categories);
     if (dto.birthDate != null) data.birthDate = dto.birthDate;
     if (dto.nationality != null) data.nationality = cadastroUpper(dto.nationality);
@@ -107,12 +125,32 @@ export class TechnicalStaffService {
     return this.prisma.technicalStaff.update({
       where: { id },
       data,
-      include: { tenant: { select: { id: true, name: true, slug: true } } },
+      include: {
+        tenant: { select: { id: true, name: true, slug: true } },
+        jobRole: { select: { id: true, name: true, type: true } },
+      },
     });
   }
 
   async remove(id: string) {
     await this.findOne(id);
     await this.prisma.technicalStaff.delete({ where: { id } });
+  }
+
+  findJobRoles(tenantId: string) {
+    return this.prisma.jobRole.findMany({
+      where: { tenantId, type: 'staff' },
+      orderBy: { name: 'asc' },
+      select: { id: true, name: true },
+    });
+  }
+
+  private async findStaffJobRole(tenantId: string, jobRoleId: string) {
+    const jobRole = await this.prisma.jobRole.findFirst({
+      where: { id: jobRoleId, tenantId, type: 'staff' },
+      select: { id: true, name: true },
+    });
+    if (!jobRole) throw new BadRequestException('Função do RH inválida para este clube');
+    return jobRole;
   }
 }

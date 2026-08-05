@@ -19,12 +19,17 @@ import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
-import { STAFF_ROLES, CONTRACT_TYPES } from "@/lib/staff-roles";
+import { CONTRACT_TYPES } from "@/lib/staff-roles";
 
 interface Tenant {
   id: string;
   name: string;
   categories?: string[] | null;
+}
+
+interface JobRole {
+  id: string;
+  name: string;
 }
 
 export default function NewComissaoPage() {
@@ -35,7 +40,8 @@ export default function NewComissaoPage() {
   const [tenantId, setTenantId] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
+  const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
+  const [jobRoleId, setJobRoleId] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [birthDate, setBirthDate] = useState("");
@@ -58,6 +64,17 @@ export default function NewComissaoPage() {
       setTenants(Array.isArray(data) ? data : []);
     });
   }, []);
+  useEffect(() => {
+    if (!tenantId) {
+      setJobRoles([]);
+      setJobRoleId("");
+      return;
+    }
+    void api
+      .get<JobRole[]>(`/technical-staff/job-roles?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(({ data }) => setJobRoles(Array.isArray(data) ? data : []))
+      .catch(() => setJobRoles([]));
+  }, [tenantId]);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const categoriesForDropdown = selectedTenant?.categories?.length
@@ -68,8 +85,12 @@ export default function NewComissaoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tenantId.trim() || !name.trim() || !role) {
+    if (!tenantId.trim() || !name.trim() || !jobRoleId) {
       setError("Clube, nome e função são obrigatórios.");
+      return;
+    }
+    if (!photoUrl.trim() && !pendingPhotoFile) {
+      setError("A foto é obrigatória.");
       return;
     }
     if (pendingPhotoFile && !name?.trim()) {
@@ -101,7 +122,7 @@ export default function NewComissaoPage() {
       const { data } = await api.post<{ id: string }>("/technical-staff", {
         tenantId,
         name: name.trim(),
-        role: role.trim(),
+        jobRoleId,
         categories: categories.length ? categories : undefined,
         photoUrl: finalPhotoUrl,
         birthDate: birthDate.trim() || undefined,
@@ -149,7 +170,7 @@ export default function NewComissaoPage() {
           <CardHeader>
             <CardTitle>Dados básicos</CardTitle>
             <CardDescription>
-              Clube, nome e função são obrigatórios. Demais campos podem ser preenchidos na edição.
+              Clube, nome, função e foto são obrigatórios.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -178,6 +199,7 @@ export default function NewComissaoPage() {
                   onValueChange={(v) => {
                     setTenantId(v);
                     setCategories([]);
+                    setJobRoleId("");
                   }}
                 >
                   <SelectTrigger id="tenantId">
@@ -194,14 +216,14 @@ export default function NewComissaoPage() {
               </div>
               <div className="space-y-2">
                 <Label>Função *</Label>
-                <Select required value={role} onValueChange={setRole}>
+                <Select required value={jobRoleId} onValueChange={setJobRoleId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a função" />
                   </SelectTrigger>
                   <SelectContent>
-                    {STAFF_ROLES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>
-                        {r.label}
+                    {jobRoles.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

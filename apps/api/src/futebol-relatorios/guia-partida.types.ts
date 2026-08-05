@@ -1,5 +1,6 @@
 import type {
   PressKitConfigDto,
+  PressKitUniformKitDto,
   RelatorioPessoaRow,
   RelatorioTravelMeta,
 } from './futebol-relatorios.types';
@@ -140,6 +141,7 @@ export type GuiaPartidaReportDto = {
   config: PressKitConfigDto;
   opponentLogoUrl: string | null;
   championshipLogoUrl: string | null;
+  uniformKit: PressKitUniformKitDto | null;
   season: number;
   /** Elenco relacionado para a partida, com números da temporada */
   squad: GuiaSquadPlayer[];

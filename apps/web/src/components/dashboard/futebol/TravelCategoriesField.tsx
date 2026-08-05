@@ -17,6 +17,7 @@ interface TravelCategoryOption {
 }
 
 interface TravelCategoriesFieldProps {
+  isHomeMatch?: boolean;
   categoriesForDropdown: readonly TravelCategoryOption[];
   multiMode: boolean;
   onMultiModeChange: (v: boolean) => void;
@@ -27,6 +28,7 @@ interface TravelCategoriesFieldProps {
 }
 
 export function TravelCategoriesField({
+  isHomeMatch = false,
   categoriesForDropdown,
   multiMode,
   onMultiModeChange,
@@ -50,7 +52,9 @@ export function TravelCategoriesField({
           checked={multiMode}
           onCheckedChange={(v) => onMultiModeChange(v === true)}
         />
-        Viagem com várias categorias (ex.: Sub-15 + Sub-17)
+        {isHomeMatch
+          ? "Jogo com várias categorias (ex.: Sub-15 + Sub-17)"
+          : "Viagem com várias categorias (ex.: Sub-15 + Sub-17)"}
       </label>
 
       {!multiMode ? (

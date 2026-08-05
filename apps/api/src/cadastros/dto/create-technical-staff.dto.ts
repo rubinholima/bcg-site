@@ -3,6 +3,7 @@ import {
   IsOptional,
   IsArray,
   IsDateString,
+  IsNotEmpty,
   MaxLength,
 } from 'class-validator';
 
@@ -15,13 +16,12 @@ export class CreateTechnicalStaffDto {
   name: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @MaxLength(2048)
-  photoUrl?: string;
+  photoUrl: string;
 
   @IsString()
-  @MaxLength(64)
-  role: string;
+  jobRoleId: string;
 
   @IsOptional()
   @IsArray()

@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
-import { STAFF_ROLES } from "@/lib/staff-roles";
 
 interface Tenant {
   id: string;
@@ -22,13 +21,19 @@ interface Tenant {
   categories?: string[] | null;
 }
 
+interface JobRole {
+  id: string;
+  name: string;
+}
+
 export function ComissaoFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState(searchParams.get("tenantId") ?? "");
   const [category, setCategory] = useState(searchParams.get("category") ?? "");
-  const [role, setRole] = useState(searchParams.get("role") ?? "");
+  const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
+  const [jobRoleId, setJobRoleId] = useState(searchParams.get("jobRoleId") ?? "");
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
 
   useEffect(() => {
@@ -36,6 +41,17 @@ export function ComissaoFilters() {
       setTenants(Array.isArray(data) ? data : []);
     });
   }, []);
+  useEffect(() => {
+    if (!tenantId) {
+      setJobRoles([]);
+      setJobRoleId("");
+      return;
+    }
+    void api
+      .get<JobRole[]>(`/technical-staff/job-roles?tenantId=${encodeURIComponent(tenantId)}`)
+      .then(({ data }) => setJobRoles(Array.isArray(data) ? data : []))
+      .catch(() => setJobRoles([]));
+  }, [tenantId]);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const categoriesForDropdown = selectedTenant?.categories?.length
@@ -48,7 +64,7 @@ export function ComissaoFilters() {
     const params = new URLSearchParams();
     if (tenantId) params.set("tenantId", tenantId);
     if (category) params.set("category", category);
-    if (role) params.set("role", role);
+    if (jobRoleId) params.set("jobRoleId", jobRoleId);
     if (search.trim()) params.set("search", search.trim());
     router.push(`/dashboard/futebol/comissao?${params.toString()}`);
   };
@@ -56,7 +72,7 @@ export function ComissaoFilters() {
   const clearFilters = () => {
     setTenantId("");
     setCategory("");
-    setRole("");
+    setJobRoleId("");
     setSearch("");
     router.push("/dashboard/futebol/comissao");
   };
@@ -70,6 +86,7 @@ export function ComissaoFilters() {
           onValueChange={(v) => {
             setTenantId(v === "all" ? "" : v);
             setCategory("");
+            setJobRoleId("");
           }}
         >
           <SelectTrigger>
@@ -103,15 +120,19 @@ export function ComissaoFilters() {
       </div>
       <div className="min-w-[180px]">
         <label className="text-xs text-muted-foreground mb-1 block">Função</label>
-        <Select value={role || "all"} onValueChange={(v) => setRole(v === "all" ? "" : v)}>
+        <Select
+          value={jobRoleId || "all"}
+          onValueChange={(v) => setJobRoleId(v === "all" ? "" : v)}
+          disabled={!tenantId}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            {STAFF_ROLES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>
-                {r.label}
+            {jobRoles.map((r) => (
+              <SelectItem key={r.id} value={r.id}>
+                {r.name}
               </SelectItem>
             ))}
           </SelectContent>
