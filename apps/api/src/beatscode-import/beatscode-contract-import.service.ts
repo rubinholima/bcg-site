@@ -104,6 +104,7 @@ export class BeatscodeContractImportService {
 
   async fetchExportData(options?: {
     tenantSlug?: string;
+    includeAttachmentIndex?: boolean;
   }): Promise<BeatscodeContractExportFile> {
     const client = this.createClient();
     await client.login();
@@ -133,7 +134,10 @@ export class BeatscodeContractImportService {
       )
       .filter((r): r is NonNullable<typeof r> => r != null);
 
-    const attachmentIndex = await this.buildAttachmentIndex(contracts);
+    const attachmentIndex =
+      options?.includeAttachmentIndex === false
+        ? undefined
+        : await this.buildAttachmentIndex(contracts);
 
     return {
       version: 1,
@@ -249,10 +253,12 @@ export class BeatscodeContractImportService {
     };
 
     const downloadAttachments = options?.downloadAttachments !== false;
-    const attachmentIndex = await this.buildAttachmentIndex(
-      exportFile.contracts,
-      exportFile.attachmentIndex,
-    );
+    const attachmentIndex = downloadAttachments
+      ? await this.buildAttachmentIndex(
+          exportFile.contracts,
+          exportFile.attachmentIndex,
+        )
+      : exportFile.attachmentIndex;
     let apiClient: BeatscodeApiClient | null = null;
     if (downloadAttachments && (attachmentIndex || this.attachments.hasDatabaseConfigured())) {
       apiClient = this.createClientOptional();
@@ -357,7 +363,10 @@ export class BeatscodeContractImportService {
     tenantSlug?: string;
     downloadAttachments?: boolean;
   }): Promise<BeatscodeContractImportResult> {
-    const exportData = await this.fetchExportData(options);
+    const exportData = await this.fetchExportData({
+      tenantSlug: options?.tenantSlug,
+      includeAttachmentIndex: options?.downloadAttachments !== false,
+    });
     return this.importFromExport(exportData, options);
   }
 
