@@ -13,7 +13,13 @@ async function main() {
   });
   try {
     const svc = app.get(BeatscodeContractImportService);
-    const { filePath, export: data } = await svc.exportToFile();
+    // O índice de anexos percorre TODOS os anexos (1000+ contratos), 1 login por anexo — muito lento.
+    // Só monta quando BEATSCODE_CONTRACT_ATTACHMENT_INDEX=1; por padrão exporta só os dados dos contratos.
+    const includeAttachmentIndex =
+      process.env.BEATSCODE_CONTRACT_ATTACHMENT_INDEX?.trim() === '1';
+    const { filePath, export: data } = await svc.exportToFile({
+      includeAttachmentIndex,
+    });
     const byCategory: Record<string, number> = {};
     const byStatus: Record<string, number> = {};
     for (const c of data.contracts) {

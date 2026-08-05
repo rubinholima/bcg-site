@@ -476,7 +476,18 @@ export class BeatscodeBrowserScraperService {
     }
     await page.locator('#username').fill(process.env.BEATSCODE_USERNAME!.trim());
     await page.locator('#password').fill(process.env.BEATSCODE_PASSWORD!.trim());
-    await page.locator('input.signin-btn[type="submit"]').click();
+    // Beatscode migrou o botão de <input> para <button> (Ant Design). Aceita ambos
+    // e, como fallback, submete o formulário com Enter no campo de senha.
+    const submitBtn = page
+      .locator(
+        'button.signin-btn[type="submit"], input.signin-btn[type="submit"], button[type="submit"]',
+      )
+      .first();
+    if (await submitBtn.count().catch(() => 0)) {
+      await submitBtn.click();
+    } else {
+      await page.locator('#password').press('Enter');
+    }
     await page.waitForURL((url) => !url.pathname.includes('signin'), { timeout: 60_000 });
     await page.waitForTimeout(800);
     this.markSessionFresh();

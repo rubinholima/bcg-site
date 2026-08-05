@@ -81,6 +81,7 @@ export class BeatscodeContractImportService {
   async exportToFile(options?: {
     tenantSlug?: string;
     outputPath?: string;
+    includeAttachmentIndex?: boolean;
   }): Promise<{ filePath: string; export: BeatscodeContractExportFile }> {
     const exportData = await this.fetchExportData(options);
     const rel = options?.outputPath?.trim() || DEFAULT_BEATSCODE_CONTRACTS_EXPORT_PATH;

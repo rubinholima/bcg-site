@@ -19,7 +19,14 @@ async function main() {
   try {
     const svc = app.get(BeatscodeContractImportService);
     const exportFile = await svc.readExportFile(filePath);
-    const result = await svc.importFromExport(exportFile, { tenantSlug });
+    // Baixar/indexar anexos percorre milhares de anexos (1 login cada) e trava.
+    // Por padrão importa só os dados dos contratos; use BEATSCODE_DOWNLOAD_CONTRACT_ATTACHMENTS=1 para baixar.
+    const downloadAttachments =
+      process.env.BEATSCODE_DOWNLOAD_CONTRACT_ATTACHMENTS?.trim() === '1';
+    const result = await svc.importFromExport(exportFile, {
+      tenantSlug,
+      downloadAttachments,
+    });
     console.log(JSON.stringify({ ok: true, filePath, ...result }, null, 2));
   } finally {
     await app.close();
