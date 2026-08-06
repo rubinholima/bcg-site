@@ -33,6 +33,65 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 6 DE AGOSTO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO**
+
+### 1. Press Kit / gramado
+
+- Só **apelido** no chip (fallback nome); fotos maiores; recorte de fundo branco (`photo-edge-white-cutout.ts`).
+- Formações espalhadas (meio bem aberto); goleiro na área; zaga mais baixa; campo lateral maior.
+- Comissão técnica colada ao gramado (sem vão); X remove do gramado (só UI / hover / não imprime).
+- Textos de posição e nascimento mais legíveis; impressão alinhada a `press-kit-formations.ts`.
+
+### 2. Funções RH × Futebol
+
+- Flag `JobRole.forFootball` + migration `20260806210000_job_role_for_football`.
+- Menu **Futebol → Cadastros → Funções**; comissão só lista cargos `forFootball`.
+- Fix salvamento de **árbitros** (DTO/validators + whitelist).
+
+### 3. Relatório Relacionados / Convocação
+
+- Tabelas em modo convocação: **Nome, Apelido, Nascimento** (`12/AGO/2026`); sem CPF/RG.
+- Helper `formatDateDaySlashMonYear` em `format-date.ts`.
+
+### 4. Saúde / outros no dia
+
+- Estagiários unificados; árbitros no Press Kit; desfecho fisioterapia.
+- Fisioterapia: múltiplos diagnósticos/tratamentos; agenda logística Data/Hora/Atividade sem overlap.
+- Categorias do cadastro central + data na agenda do jogo.
+
+### 5. Overnight
+
+- Sync Beatscode documentos iniciado em background (`pnpm beatscode:sync-documents`, limite 500).
+
+## **COMMITS / DEPLOYS (06/08)**
+
+| Commit | Descrição |
+|--------|-----------|
+| `88b6d79` | feat(futebol): categorias do cadastro central e data na agenda do jogo |
+| `ac59cc4` | feat(fisioterapia): multiplos diagnosticos e tratamentos |
+| `00c71d1` | fix(logistica): agenda do jogo em tabela |
+| `5439285` | feat(saude/futebol): estagiarios, arbitros Press Kit, desfecho fisio |
+| `1feca27`…`f04f185` | série Press Kit (apelido, fotos, gramado, comissão, textos) |
+| `9656a64` | feat(futebol): funcoes futebol no menu, sync RH, fix arbitros |
+| `b860eae` | fix(futebol): meio aberto + convocacao sem CPF/RG |
+
+**Branch:** `develop` · **Último em produção (código):** `b860eae` · **Push encerramento:** `origin` (+ `production` se houver commit do diário)
+
+## **ARQUIVOS PRINCIPAIS**
+
+- Press Kit: `press-kit-formations.ts`, `FutebolRelatorioPressKitForm.tsx`, `futebol-relatorios-print.ts`, `guia-partida-print.ts`, `photo-edge-white-cutout.ts`
+- Funções: schema/migration `forFootball`, menu futebol cadastros, APIs JobRole / árbitros
+- Convocação: `futebol-relatorios-print.ts`, `format-date.ts`
+- Regra Cursor: `.cursor/rules/inicio-conversa-bcg.mdc`
+
+## **NÃO COMMITADO (lixo local)**
+
+- probes Beatscode, `apps/api/data/`, temps, `BCG-TV-1.6.0.apk`, `backup_clean.sql`, whitespace em `docs/FLUXO_DEPARTAMENTO_COMPRAS.md`
+
+---
+
 # 📅 4 DE AGOSTO DE 2026 — INÍCIO DO DIA
 
 ## **ESTADO AO ABRIR O DIA**

@@ -1,0 +1,41 @@
+---
+description: Ao abrir conversa no BCG SITE, ler diário + git e confirmar contexto antes de codar
+alwaysApply: true
+---
+
+# Início de conversa — preparação BCG
+
+**Antes de implementar, debugar ou responder sobre código**, faça a preparação abaixo — **mesmo em conversa nova**, sem esperar o usuário colar o bloco de contexto.
+
+## O que fazer (primeira resposta útil)
+
+1. **Ler** `docs/DESENVOLVIMENTO_DIARIO.md`:
+   - seção **⭐ REGRAS DIÁRIAS**
+   - entrada mais recente em **📅 POR DIA** (início do dia, encerramento ou catch-up)
+2. **Consultar git** (em paralelo quando possível): `git status -sb`, `git rev-parse --short HEAD`, últimos 2–3 commits.
+3. **Confirmar contexto** ao usuário em pt-BR, curto:
+   - branch e HEAD
+   - resumo do último registro do diário
+   - pendências relevantes
+   - working tree suja (só mencionar se houver alterações locais)
+4. **Aguardar a tarefa** — a menos que a **primeira mensagem já traga a tarefa**; nesse caso, confirme contexto e **em seguida** execute.
+
+## O que NÃO fazer
+
+- ❌ Começar a codar ou explorar o repo **sem** ler o diário
+- ❌ Pedir ao usuário para colar o bloco “Contexto BCG Site” — a regra substitui isso
+- ❌ Repetir tutorial longo das regras (`.cursor/rules/` já está aplicado); só citar o essencial do dia
+
+## Formato da confirmação (modelo)
+
+```
+Contexto confirmado — BCG SITE · develop · `<HEAD>`
+Diário: <última entrada> — <1 linha do estado>
+Pendências: <se houver>
+Aguardo a tarefa. (ou: seguindo com <tarefa da mensagem>.)
+```
+
+## Referências
+
+- Rotina diária: `docs/DESENVOLVIMENTO_DIARIO.md` → “Rotina do dia”
+- Encerramento: regra `encerrar-o-dia.mdc`
