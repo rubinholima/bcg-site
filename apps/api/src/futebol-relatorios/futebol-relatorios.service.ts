@@ -33,6 +33,7 @@ import type {
   PressKitConfigDto,
   PressKitNamedRole,
   PressKitReportDto,
+  PressKitUniformKitDto,
   ProgramacaoSemanalReportDto,
   RelatorioHospedeRow,
   RelatorioPessoaRow,
@@ -336,10 +337,11 @@ export class FutebolRelatoriosService {
     );
     const starters: RelatorioPessoaRow[] = [];
     for (const id of config.starterPlayerIds) {
+      if (!id) continue;
       const row = byId.get(id);
       if (row) starters.push({ ...row, num: starters.length + 1 });
     }
-    const starterSet = new Set(config.starterPlayerIds);
+    const starterSet = new Set(config.starterPlayerIds.filter(Boolean));
     const substitutes = athletes
       .filter((a) => a.playerId && !starterSet.has(a.playerId))
       .map((a, i) => ({ ...a, num: i + 1 }));
@@ -354,38 +356,25 @@ export class FutebolRelatoriosService {
         : {};
     const gameKitName =
       typeof uniforms.athletesGame === 'string' ? uniforms.athletesGame.trim() : '';
-    const uniformKit = gameKitName
-      ? await this.prisma.logisticsUniformKit.findFirst({
-          where: { name: gameKitName },
-          select: {
-            name: true,
-            imageUrl: true,
-            items: {
-              orderBy: { sortOrder: 'asc' },
-              select: {
-                clothingItem: { select: { name: true, imageUrl: true } },
-              },
-            },
-          },
-        })
-      : null;
+    const uniformKit = await this.resolveUniformKitByName(gameKitName);
+
+    const athletesWithJersey = this.applyJerseyOverrides(athletes, config.jerseyOverrides);
+    const startersWithJersey = this.applyJerseyOverrides(starters, config.jerseyOverrides);
+    const substitutesWithJersey = this.applyJerseyOverrides(
+      substitutes,
+      config.jerseyOverrides,
+    );
 
     return {
       travel: base.travel,
-      athletes,
+      athletes: athletesWithJersey,
       staff: base.staff,
-      starters,
-      substitutes,
+      starters: startersWithJersey,
+      substitutes: substitutesWithJersey,
       config,
       opponentLogoUrl: logos.opponentLogoUrl,
       championshipLogoUrl: logos.championshipLogoUrl,
-      uniformKit: uniformKit
-        ? {
-            name: uniformKit.name,
-            imageUrl: uniformKit.imageUrl,
-            items: uniformKit.items.map(({ clothingItem }) => clothingItem),
-          }
-        : null,
+      uniformKit,
       generatedAt: new Date().toISOString(),
     };
   }
@@ -459,6 +448,31 @@ export class FutebolRelatoriosService {
         ? itinerary.busType
         : null;
 
+    const uniforms = {
+      athletesGame:
+        typeof uniformsRaw.athletesGame === 'string'
+          ? uniformsRaw.athletesGame
+          : null,
+      athletesTravel:
+        typeof uniformsRaw.athletesTravel === 'string'
+          ? uniformsRaw.athletesTravel
+          : null,
+      staffGame:
+        typeof uniformsRaw.staffGame === 'string' ? uniformsRaw.staffGame : null,
+      staffTravel:
+        typeof uniformsRaw.staffTravel === 'string'
+          ? uniformsRaw.staffTravel
+          : null,
+    };
+
+    const [athletesGame, athletesTravel, staffGame, staffTravel] =
+      await Promise.all([
+        this.resolveUniformKitByName(uniforms.athletesGame),
+        this.resolveUniformKitByName(uniforms.athletesTravel),
+        this.resolveUniformKitByName(uniforms.staffGame),
+        this.resolveUniformKitByName(uniforms.staffTravel),
+      ]);
+
     return {
       travel: base.travel,
       athletes: base.athletes,
@@ -468,21 +482,12 @@ export class FutebolRelatoriosService {
       outbound: mapStops(itinerary.outbound),
       returnStops: mapStops(itinerary.return),
       homeMatchAgenda,
-      uniforms: {
-        athletesGame:
-          typeof uniformsRaw.athletesGame === 'string'
-            ? uniformsRaw.athletesGame
-            : null,
-        athletesTravel:
-          typeof uniformsRaw.athletesTravel === 'string'
-            ? uniformsRaw.athletesTravel
-            : null,
-        staffGame:
-          typeof uniformsRaw.staffGame === 'string' ? uniformsRaw.staffGame : null,
-        staffTravel:
-          typeof uniformsRaw.staffTravel === 'string'
-            ? uniformsRaw.staffTravel
-            : null,
+      uniforms,
+      uniformKits: {
+        athletesGame,
+        athletesTravel,
+        staffGame,
+        staffTravel,
       },
       generatedAt: new Date().toISOString(),
     };
@@ -970,12 +975,20 @@ export class FutebolRelatoriosService {
     const athleteIds = athletes.map((a) => a.playerId).filter((id): id is string => !!id);
     const athleteSet = new Set(athleteIds);
 
-    let starterPlayerIds = Array.isArray(raw?.starterPlayerIds)
-      ? raw!.starterPlayerIds.filter((id): id is string => typeof id === 'string' && athleteSet.has(id))
+    const rawStarterIds = Array.isArray(raw?.starterPlayerIds)
+      ? raw!.starterPlayerIds
       : [];
-    starterPlayerIds = [...new Set(starterPlayerIds)].slice(0, 11);
-    if (starterPlayerIds.length === 0) {
-      starterPlayerIds = athleteIds.slice(0, Math.min(11, athleteIds.length));
+    const seenStarters = new Set<string>();
+    let starterPlayerIds = Array.from({ length: 11 }, (_, i) => {
+      const id = rawStarterIds[i];
+      if (typeof id !== 'string' || !id.trim() || !athleteSet.has(id) || seenStarters.has(id)) {
+        return '';
+      }
+      seenStarters.add(id);
+      return id;
+    });
+    if (seenStarters.size === 0) {
+      starterPlayerIds = Array.from({ length: 11 }, (_, i) => athleteIds[i] ?? '');
     }
 
     const mapNamed = (
@@ -1014,6 +1027,34 @@ export class FutebolRelatoriosService {
       return null;
     })();
 
+    const formationRaw =
+      typeof raw?.formation === 'string' && raw.formation.trim()
+        ? raw.formation.trim()
+        : '4-3-3';
+    const allowedFormations = new Set([
+      '4-3-3',
+      '4-4-2',
+      '4-2-3-1',
+      '3-5-2',
+      '3-4-3',
+    ]);
+    const formation = allowedFormations.has(formationRaw) ? formationRaw : '4-3-3';
+
+    const jerseyOverrides: Record<string, number | null> = {};
+    if (raw?.jerseyOverrides && typeof raw.jerseyOverrides === 'object') {
+      for (const [playerId, value] of Object.entries(raw.jerseyOverrides)) {
+        if (!athleteSet.has(playerId)) continue;
+        if (value === null || value === undefined) {
+          jerseyOverrides[playerId] = null;
+          continue;
+        }
+        const n = typeof value === 'number' ? value : Number(value);
+        if (Number.isFinite(n) && n >= 0 && n <= 99) {
+          jerseyOverrides[playerId] = Math.trunc(n);
+        }
+      }
+    }
+
     return {
       phase:
         typeof raw?.phase === 'string' && raw.phase.trim() ? raw.phase.trim() : null,
@@ -1024,11 +1065,51 @@ export class FutebolRelatoriosService {
       referees: mapNamed(raw?.referees, DEFAULT_PRESS_KIT_REFEREE_ROLES),
       directors: mapNamed(raw?.directors, DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
       starterPlayerIds,
+      formation,
+      jerseyOverrides,
       contactLine:
         typeof raw?.contactLine === 'string' && raw.contactLine.trim()
           ? raw.contactLine.trim()
           : null,
       showDisclaimer: raw?.showDisclaimer !== false,
+    };
+  }
+
+  private applyJerseyOverrides(
+    rows: RelatorioPessoaRow[],
+    overrides: Record<string, number | null> | undefined,
+  ): RelatorioPessoaRow[] {
+    if (!overrides || Object.keys(overrides).length === 0) return rows;
+    return rows.map((row) => {
+      if (!row.playerId || !(row.playerId in overrides)) return row;
+      const next = overrides[row.playerId];
+      return { ...row, jerseyNumber: next ?? null };
+    });
+  }
+
+  private async resolveUniformKitByName(
+    name: string | null | undefined,
+  ): Promise<PressKitUniformKitDto | null> {
+    const kitName = name?.trim();
+    if (!kitName) return null;
+    const kit = await this.prisma.logisticsUniformKit.findFirst({
+      where: { name: kitName },
+      select: {
+        name: true,
+        imageUrl: true,
+        items: {
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            clothingItem: { select: { name: true, imageUrl: true } },
+          },
+        },
+      },
+    });
+    if (!kit) return null;
+    return {
+      name: kit.name,
+      imageUrl: kit.imageUrl,
+      items: kit.items.map(({ clothingItem }) => clothingItem),
     };
   }
 

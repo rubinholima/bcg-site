@@ -79,8 +79,12 @@ export type PressKitConfigDto = {
   matchTime: string | null;
   referees: PressKitNamedRole[];
   directors: PressKitNamedRole[];
-  /** Ordem dos titulares no gramado (máx. 11) */
+  /** Ordem dos titulares no gramado (máx. 11) — índice = slot da formação */
   starterPlayerIds: string[];
+  /** Esquema tático (ex.: 4-3-3, 4-4-2) */
+  formation: string | null;
+  /** Camisa editada só neste jogo (playerId → número) */
+  jerseyOverrides: Record<string, number | null>;
   contactLine: string | null;
   showDisclaimer: boolean;
 };
@@ -160,6 +164,13 @@ export type LayoutRelacionadosReportDto = {
     athletesTravel: string | null;
     staffGame: string | null;
     staffTravel: string | null;
+  };
+  /** Kits resolvidos do cadastro (com fotos) — paralelo a `uniforms` */
+  uniformKits: {
+    athletesGame: PressKitUniformKitDto | null;
+    athletesTravel: PressKitUniformKitDto | null;
+    staffGame: PressKitUniformKitDto | null;
+    staffTravel: PressKitUniformKitDto | null;
   };
   generatedAt: string;
 };

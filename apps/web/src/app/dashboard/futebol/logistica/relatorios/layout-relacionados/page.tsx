@@ -7,7 +7,7 @@ import { FutebolRelatorioShell } from "@/components/dashboard/futebol/relatorios
 export default function LogisticaRelatorioLayoutRelacionadosPage() {
   return (
     <FutebolRelatorioShell
-      title="Layout Relacionados"
+      title="Relacionados / Programação"
       backHref="/dashboard/futebol/logistica/relatorios"
       backLabel="Relatórios"
     >

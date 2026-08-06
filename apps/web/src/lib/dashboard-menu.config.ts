@@ -103,7 +103,7 @@ export function hubRelatorioFutebol(): MenuItemConfig {
     children: [
       {
         slug: "rel_futebol_layout_relacionados",
-        label: "Layout Relacionados",
+        label: "Relacionados / Programação",
         href: "/dashboard/futebol/logistica/relatorios/layout-relacionados",
         icon: ClipboardList,
         moduleSlug: slug,
@@ -557,7 +557,7 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             children: [
               {
                 slug: "futebol_logistica_rel_layout",
-                label: "Layout Relacionados",
+                label: "Relacionados / Programação",
                 href: "/dashboard/futebol/logistica/relatorios/layout-relacionados",
                 icon: ClipboardList,
                 moduleSlug: "futebol_logistica",

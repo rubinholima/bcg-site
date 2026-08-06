@@ -70,7 +70,7 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
       setFeedback({
         open: true,
         title: "Seleção obrigatória",
-        message: "Selecione o planejamento para gerar o Layout Relacionados.",
+        message: "Selecione o planejamento para gerar Relacionados / Programação.",
         variant: "warning",
       });
       return null;
@@ -115,7 +115,7 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Layout Relacionados</CardTitle>
+          <CardTitle>Relacionados / Programação</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -200,7 +200,7 @@ export function FutebolRelatorioLayoutRelacionadosForm() {
       <PrintPreviewDialog
         open={previewOpen}
         onOpenChange={setPreviewOpen}
-        title="Pré-visualização — Layout Relacionados"
+        title="Pré-visualização — Relacionados / Programação"
         html={previewHtml}
         onPrint={() => {
           if (reportData) printLayoutRelacionadosReport(reportData, pageSize);

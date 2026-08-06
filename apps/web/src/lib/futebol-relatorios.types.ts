@@ -124,6 +124,12 @@ export type LayoutRelacionadosReportDto = {
     staffGame: string | null;
     staffTravel: string | null;
   };
+  uniformKits: {
+    athletesGame: PressKitUniformKitDto | null;
+    athletesTravel: PressKitUniformKitDto | null;
+    staffGame: PressKitUniformKitDto | null;
+    staffTravel: PressKitUniformKitDto | null;
+  };
   generatedAt: string;
 };
 
@@ -144,6 +150,8 @@ export type PressKitConfigDto = {
   referees: PressKitNamedRole[];
   directors: PressKitNamedRole[];
   starterPlayerIds: string[];
+  formation: string | null;
+  jerseyOverrides: Record<string, number | null>;
   contactLine: string | null;
   showDisclaimer: boolean;
 };

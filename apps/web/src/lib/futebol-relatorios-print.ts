@@ -19,6 +19,8 @@ import type {
   RelatorioHospedeRow,
 } from "@/lib/futebol-relatorios.types";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
+import { getFormation } from "@/lib/press-kit-formations";
+import type { PressKitUniformKitDto } from "@/lib/futebol-relatorios.types";
 
 /** Cores oficiais Boston City Group — vermelho e azul. */
 const BCG = {
@@ -802,11 +804,47 @@ function stopsTable(
     </section>`;
 }
 
+function uniformKitCardHtml(
+  label: string,
+  kit: PressKitUniformKitDto | null | undefined,
+  fallbackName: string | null | undefined,
+): string {
+  const name = kit?.name?.trim() || fallbackName?.trim();
+  if (!name) return "";
+  const mainSrc = kit?.imageUrl
+    ? resolveLogoUrlForPrint(kit.imageUrl) || kit.imageUrl
+    : null;
+  const pieces = (kit?.items ?? [])
+    .filter((item) => item.imageUrl)
+    .slice(0, 4)
+    .map((item) => {
+      const src = resolveLogoUrlForPrint(item.imageUrl!) || item.imageUrl!;
+      return `<div class="uk-piece"><img src="${escapeHtml(src)}" alt="" /><span>${escapeHtml(item.name)}</span></div>`;
+    })
+    .join("");
+  return `<div class="uk-card">
+    <div class="uk-label">${escapeHtml(label)}</div>
+    <div class="uk-body">
+      ${mainSrc ? `<img class="uk-main" src="${escapeHtml(mainSrc)}" alt="" />` : `<div class="uk-main uk-main-empty"></div>`}
+      <div>
+        <strong>${escapeHtml(name)}</strong>
+        ${pieces ? `<div class="uk-pieces">${pieces}</div>` : ""}
+      </div>
+    </div>
+  </div>`;
+}
+
 export function buildLayoutRelacionadosPrintHtml(
   data: LayoutRelacionadosReportDto,
   size: PrintPageSize = "A4",
 ): string {
   const { travel, uniforms } = data;
+  const kits = data.uniformKits ?? {
+    athletesGame: null,
+    athletesTravel: null,
+    staffGame: null,
+    staffTravel: null,
+  };
   const busLine = !travel.isHomeMatch && data.busType ? `Ônibus ${data.busType}` : null;
   const extra = `
     ${busLine ? `<div class="meta-item"><label>Veículo</label><span>${escapeHtml(busLine)}</span></div>` : ""}
@@ -818,33 +856,39 @@ export function buildLayoutRelacionadosPrintHtml(
     }
   `;
 
-  const uniformsRows = (
+  const uniformCards = (
     travel.isHomeMatch
       ? [
-          ["Atletas — jogo", uniforms.athletesGame],
-          ["Comissão — jogo", uniforms.staffGame],
+          uniformKitCardHtml("Atletas — jogo", kits.athletesGame, uniforms.athletesGame),
+          uniformKitCardHtml("Comissão — jogo", kits.staffGame, uniforms.staffGame),
         ]
       : [
-          ["Atletas — jogo", uniforms.athletesGame],
-          ["Atletas — viagem", uniforms.athletesTravel],
-          ["Comissão — jogo", uniforms.staffGame],
-          ["Comissão — viagem", uniforms.staffTravel],
+          uniformKitCardHtml("Atletas — jogo", kits.athletesGame, uniforms.athletesGame),
+          uniformKitCardHtml("Atletas — viagem", kits.athletesTravel, uniforms.athletesTravel),
+          uniformKitCardHtml("Comissão — jogo", kits.staffGame, uniforms.staffGame),
+          uniformKitCardHtml("Comissão — viagem", kits.staffTravel, uniforms.staffTravel),
         ]
   )
-    .filter(([, v]) => v?.trim())
-    .map(
-      ([label, v]) =>
-        `<tr><td>${escapeHtml(label as string)}</td><td>${escapeHtml((v as string).trim())}</td></tr>`,
-    )
+    .filter(Boolean)
     .join("");
 
-  const uniformsSection = uniformsRows
+  const uniformsSection = uniformCards
     ? `<section class="section">
         <h2 class="section-title">Uniformes</h2>
-        <table>
-          <thead><tr><th>Item</th><th>Kit / observação</th></tr></thead>
-          <tbody>${uniformsRows}</tbody>
-        </table>
+        <style>
+          .uk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+          .uk-card { border: 1px solid #cbd5e1; border-radius: 2mm; overflow: hidden; background: #f8fafc; }
+          .uk-label { padding: 1.5mm 2.5mm; color: #fff; background: ${BCG.blue}; font-size: 7.5pt; letter-spacing: .06em; text-transform: uppercase; }
+          .uk-body { display: flex; gap: 2.5mm; padding: 2.5mm; align-items: center; }
+          .uk-main { width: 22mm; height: 22mm; object-fit: contain; border-radius: 1.5mm; background: #fff; border: 1px solid #e2e8f0; }
+          .uk-main-empty { width: 22mm; height: 22mm; border-radius: 1.5mm; background: #e2e8f0; }
+          .uk-body strong { display: block; color: ${BCG.blue}; font-size: 10pt; text-transform: uppercase; }
+          .uk-pieces { display: flex; flex-wrap: wrap; gap: 1.5mm; margin-top: 1.5mm; }
+          .uk-piece { text-align: center; width: 12mm; }
+          .uk-piece img { width: 11mm; height: 11mm; object-fit: contain; border: 1px solid #dbe3ee; border-radius: 1mm; background: #fff; }
+          .uk-piece span { display: block; font-size: 5.5pt; color: #64748b; line-height: 1.1; margin-top: 0.5mm; }
+        </style>
+        <div class="uk-grid">${uniformCards}</div>
       </section>`
     : "";
 
@@ -893,11 +937,11 @@ export function buildLayoutRelacionadosPrintHtml(
     .join(" · ");
 
   const programacaoLabel = travel.isHomeMatch
-    ? "Layout Relacionados / Programação para o jogo"
-    : "Layout Relacionados / Programação da viagem";
+    ? "Relacionados / Programação para o jogo"
+    : "Relacionados / Programação da viagem";
 
   return documentShell(
-    `Layout Relacionados — ${travelClubName(travel)}`,
+    `Relacionados / Programação — ${travelClubName(travel)}`,
     travelClubName(travel),
     travel.tenant.logoUrl,
     programacaoLabel,
@@ -914,7 +958,7 @@ export function printLayoutRelacionadosReport(
 ): void {
   printHtmlDocument(
     buildLayoutRelacionadosPrintHtml(data, size),
-    "Impressão — Layout Relacionados",
+    "Impressão — Relacionados / Programação",
   );
 }
 
@@ -930,21 +974,6 @@ function formatBirthShort(iso: string | null | undefined): string {
   if (!y || !m || !d) return "";
   return `${d}/${m}/${y}`;
 }
-
-/** Posições % no gramado (formação visual 4-3-3 — não é o esquema tático real). */
-const PRESS_KIT_FIELD_SLOTS: { top: number; left: number }[] = [
-  { top: 85, left: 50 }, // GK
-  { top: 70, left: 12 },
-  { top: 72, left: 36 },
-  { top: 72, left: 64 },
-  { top: 70, left: 88 },
-  { top: 48, left: 22 },
-  { top: 50, left: 50 },
-  { top: 48, left: 78 },
-  { top: 24, left: 20 },
-  { top: 18, left: 50 },
-  { top: 24, left: 80 },
-];
 
 function playerPhotoHtml(photoUrl: string | null | undefined, alt: string): string {
   const src = resolveLogoUrlForPrint(photoUrl);
@@ -1032,8 +1061,13 @@ export function buildPressKitPrintHtml(
     })
     .join("");
 
-  const fieldPlayers = PRESS_KIT_FIELD_SLOTS.map((slot, i) => {
-    const p = data.starters[i];
+  const formation = getFormation(config.formation);
+  const athletesById = new Map(
+    data.athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
+  );
+  const fieldPlayers = formation.slots.map((slot, i) => {
+    const slotId = config.starterPlayerIds[i];
+    const p = slotId ? athletesById.get(slotId) : undefined;
     if (!p) return "";
     const n = p.jerseyNumber != null ? String(p.jerseyNumber) : String(i + 1);
     const birth = formatBirthShort(p.birthDate);
@@ -1417,16 +1451,23 @@ export function buildMatchExternalReportHtml(
   const compact = athleteCount > 18;
   const athleteRows = [...data.athletes]
     .sort((a, b) => (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) || a.name.localeCompare(b.name))
-    .map(
-      (athlete, index) => `<tr>
+    .map((athlete, index) => {
+      const photoSrc = athlete.photoUrl
+        ? resolveLogoUrlForPrint(athlete.photoUrl) || athlete.photoUrl
+        : null;
+      const photoCell = photoSrc
+        ? `<img class="ath-photo" src="${escapeHtml(photoSrc)}" alt="" />`
+        : `<span class="ath-photo ath-photo-fallback">${escapeHtml((athlete.nickname || athlete.name).slice(0, 1).toUpperCase())}</span>`;
+      return `<tr>
         <td>${index + 1}</td>
+        <td>${photoCell}</td>
         <td>${escapeHtml(String(athlete.jerseyNumber ?? "—"))}</td>
         <td class="left">${escapeHtml(athlete.name)}</td>
         <td class="left">${escapeHtml(athlete.nickname?.trim() || "—")}</td>
         <td>${escapeHtml(athlete.position ?? "—")}</td>
         ${audience === "referees" ? `<td>${escapeHtml(athlete.cbfRegistration ?? "—")}</td>` : ""}
-      </tr>`,
-    )
+      </tr>`;
+    })
     .join("");
   const staffRows = data.staff
     .map(
@@ -1468,9 +1509,11 @@ export function buildMatchExternalReportHtml(
     .pieces img { width: 10mm; height: 10mm; object-fit: contain; border: 1px solid #dbe3ee; border-radius: 1mm; background: #fff; }
     h2 { margin: 2.5mm 0 1.5mm; padding-bottom: 1mm; color: ${BCG.blue}; border-bottom: 2px solid ${BCG.red}; font-size: ${compact ? "9pt" : "10pt"}; text-transform: uppercase; }
     table { width: 100%; border-collapse: collapse; font-size: ${compact ? "7pt" : "7.8pt"}; }
-    th, td { padding: ${compact ? "0.9mm 1.4mm" : "1.2mm 1.6mm"}; border: 1px solid #cbd5e1; text-align: center; }
-    th { color: #fff; background: ${BCG.blue}; font-size: ${compact ? "6.2pt" : "6.8pt"}; letter-spacing: .06em; text-transform: uppercase; }
+    th, td { padding: ${compact ? "0.7mm 1.2mm" : "1mm 1.4mm"}; border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; }
+    th { color: #fff; background: ${BCG.blue}; font-size: ${compact ? "6pt" : "6.6pt"}; letter-spacing: .06em; text-transform: uppercase; }
     .left { text-align: left; }
+    .ath-photo { width: ${compact ? "6mm" : "7.5mm"}; height: ${compact ? "6mm" : "7.5mm"}; object-fit: cover; border-radius: 50%; display: inline-block; vertical-align: middle; background: #e2e8f0; }
+    .ath-photo-fallback { display: inline-flex; align-items: center; justify-content: center; font-size: 6pt; font-weight: 700; color: ${BCG.blue}; }
     .foot { margin-top: 2.5mm; padding-top: 1.5mm; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 7pt; }
     .staff-table { font-size: ${compact ? "6.5pt" : "7.2pt"}; }
   `;
@@ -1507,7 +1550,7 @@ export function buildMatchExternalReportHtml(
       </div>
     </div>
     <h2>${audience === "referees" ? "Atletas relacionados" : "Relação da equipe"}</h2>
-    <table><thead><tr><th>#</th><th>Camisa</th><th>Nome</th><th>Apelido</th><th>Posição</th>${audience === "referees" ? "<th>Registro CBF</th>" : ""}</tr></thead><tbody>${athleteRows}</tbody></table>
+    <table><thead><tr><th>#</th><th>Foto</th><th>Camisa</th><th>Nome</th><th>Apelido</th><th>Posição</th>${audience === "referees" ? "<th>Registro CBF</th>" : ""}</tr></thead><tbody>${athleteRows}</tbody></table>
     ${
       audience === "referees" && staffRows
         ? `<h2>Comissão técnica</h2><table class="staff-table"><thead><tr><th>Nome</th><th>Função</th></tr></thead><tbody>${staffRows}</tbody></table>`

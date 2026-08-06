@@ -416,7 +416,7 @@ export default function EditLogisticaPage() {
           <Button type="button" variant="outline" asChild>
             <Link href={`/dashboard/futebol/logistica/relatorios/layout-relacionados?travelId=${id}&tenantId=${item.tenantId}`}>
               <Printer className="mr-2 h-4 w-4" />
-              Layout Relacionados
+              Relacionados / Programação
             </Link>
           </Button>
           <Button type="button" variant="outline" asChild>

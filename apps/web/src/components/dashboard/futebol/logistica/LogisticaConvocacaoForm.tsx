@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
+import { getPublicImageUrl } from "@/lib/media-url";
 import { dateKeyInBrazil } from "@/lib/brazil-time";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { parseTravelCategoriesFromApi } from "@/lib/travel-categories-utils";
@@ -42,7 +43,11 @@ interface PlayerRow {
   category?: string | null;
   jerseyNumber?: number | null;
   position?: string | null;
-  registrationProfile?: { sports?: { situation?: string } } | null;
+  photoUrl?: string | null;
+  registrationProfile?: {
+    sports?: { situation?: string };
+    personal?: { nickname?: string };
+  } | null;
 }
 
 interface StaffRow {
@@ -425,8 +430,10 @@ export function LogisticaConvocacaoForm() {
         if (p.category !== categoryFilter) return false;
       }
       if (!q) return true;
+      const nick = (p.registrationProfile?.personal?.nickname ?? "").toLowerCase();
       return (
         p.name.toLowerCase().includes(q) ||
+        nick.includes(q) ||
         (p.position ?? "").toLowerCase().includes(q) ||
         String(p.jerseyNumber ?? "").includes(q)
       );
@@ -802,10 +809,12 @@ export function LogisticaConvocacaoForm() {
                 <ul className="max-h-[min(420px,50vh)] space-y-1 overflow-y-auto rounded-md border border-zinc-800 p-2">
                   {filteredPlayers.map((p) => {
                     const checked = selectedPlayerIds.has(p.id);
+                    const nick = p.registrationProfile?.personal?.nickname?.trim();
+                    const photo = getPublicImageUrl(p.photoUrl);
                     return (
                       <li key={p.id}>
                         <label
-                          className={`flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-2 py-2 transition-colors ${
+                          className={`flex min-h-[48px] cursor-pointer items-center gap-3 rounded-md px-2 py-2 transition-colors ${
                             checked ? "bg-[#C8102E]/15" : "hover:bg-zinc-900"
                           }`}
                         >
@@ -814,8 +823,27 @@ export function LogisticaConvocacaoForm() {
                             onCheckedChange={() => togglePlayer(p.id)}
                             aria-label={`Convocar ${p.name}`}
                           />
-                          <span className="min-w-0 flex-1 truncate font-medium">
-                            {p.name}
+                          {photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={photo}
+                              alt=""
+                              className="h-9 w-9 shrink-0 rounded-full object-cover bg-zinc-800"
+                            />
+                          ) : (
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300">
+                              {(nick || p.name).slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate font-medium">
+                              {nick || p.name}
+                            </span>
+                            {nick ? (
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {p.name}
+                              </span>
+                            ) : null}
                           </span>
                           <span className="shrink-0 text-xs text-muted-foreground">
                             {p.jerseyNumber != null ? `#${p.jerseyNumber}` : ""}

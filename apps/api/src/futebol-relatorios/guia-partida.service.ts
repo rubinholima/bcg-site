@@ -382,7 +382,7 @@ export class GuiaPartidaService {
           })
         : [];
     const playerMap = new Map(players.map((p) => [p.id, p]));
-    const starterIds = new Set(pressKit.config.starterPlayerIds);
+    const starterIds = new Set(pressKit.config.starterPlayerIds.filter(Boolean));
 
     const seasonByPlayer = new Map<string, GuiaStatLine>();
     const competitionByPlayer = new Map<string, Map<string, GuiaStatLine>>();

@@ -15,7 +15,7 @@ import { FutebolRelatorioShell } from "@/components/dashboard/futebol/relatorios
 const REPORT_OPTIONS = [
   {
     href: "/dashboard/futebol/logistica/relatorios/layout-relacionados",
-    title: "Layout Relacionados",
+    title: "Relacionados / Programação",
     icon: ClipboardList,
   },
   {
