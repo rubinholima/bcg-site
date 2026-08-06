@@ -356,8 +356,9 @@ function standingsTable(rows: GuiaStandingRow[]): string {
 function styles(size: PrintPageSize): string {
   const pageSize = size === "Letter" ? "letter" : "A4";
   return `
-    /* Margem 0 na folha — capa full-bleed; padding interno nas sheets (Chrome ignora @page nomeado). */
-    @page { size: ${pageSize} portrait; margin: 0; }
+    /* Conteúdo: margem real da folha. Capa (:first) full-bleed — não alterar visual da capa. */
+    @page { size: ${pageSize} portrait; margin: 12mm 14mm 14mm; }
+    @page :first { margin: 0; }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: #fff; }
     body {
@@ -368,16 +369,17 @@ function styles(size: PrintPageSize): string {
     }
     .sheet {
       position: relative;
-      width: 210mm;
-      padding: 10mm 11mm 12mm;
-      margin: 0 auto;
+      width: 100%;
+      padding: 2mm 0 8mm;
+      margin: 0;
       background: #fff;
+      /* Só page-break-after — break-after:page junto gerava folha em branco no Chrome */
       page-break-after: always;
-      break-after: page;
+      break-after: auto;
       overflow: visible;
       box-sizing: border-box;
     }
-    /* Capa — não alterar: full-bleed aprovado */
+    /* Capa — full-bleed (primeira folha); não alterar */
     .sheet.cover-sheet {
       width: 210mm;
       height: 297mm;
@@ -386,9 +388,8 @@ function styles(size: PrintPageSize): string {
       overflow: hidden;
       padding: 0;
     }
-    /* Última página = tela da preparação (fundo escuro + gramado) */
     .sheet.visual-sheet {
-      padding: 5mm 5mm 6mm;
+      padding: 2mm 0 6mm;
       background: ${C.navyDeep};
       color: #fff;
       page-break-after: auto;
@@ -436,10 +437,10 @@ function styles(size: PrintPageSize): string {
     .sec-head { border-bottom: 3px solid ${C.red}; padding-bottom: 2mm; margin-bottom: 4mm; }
     .sec-head h2 { margin: 0; font-size: 18pt; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; color: ${C.navy}; }
     .sec-head p { margin: 1mm 0 0; font-size: 8pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .12em; }
-    .sheet-tag { position: absolute; right: 11mm; top: 5mm; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
-    .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
-    .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
-    .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: auto; page-break-inside: auto; }
+    .sheet-tag { position: absolute; right: 0; top: 0; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
+    .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; break-inside: avoid; page-break-inside: avoid; }
+    .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; break-inside: avoid; page-break-inside: avoid; }
+    .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: avoid; page-break-inside: avoid; }
     .panel h3 { margin: 0 0 3mm; font-size: 10pt; text-transform: uppercase; letter-spacing: .14em; color: ${C.navy}; border-bottom: 1px solid ${C.line}; padding-bottom: 2mm; }
     .empty { margin: 0; font-size: 8.5pt; color: ${C.muted}; font-style: italic; }
     .muted { color: ${C.muted}; }
@@ -459,8 +460,8 @@ function styles(size: PrintPageSize): string {
     table.agenda th[scope="row"] span { display: block; font-weight: 400; font-size: 7.5pt; color: ${C.muted}; }
     .agenda-wrap { display: flex; flex-direction: column; gap: 3.5mm; }
     .agenda-day {
-      break-inside: auto;
-      page-break-inside: auto;
+      break-inside: avoid;
+      page-break-inside: avoid;
       border: 1px solid ${C.line};
       border-radius: 2mm;
       overflow: hidden;
@@ -791,6 +792,8 @@ function styles(size: PrintPageSize): string {
       letter-spacing: .1em;
       border-top: 1px solid ${C.line};
       padding-top: 1.5mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
   `;
 }
