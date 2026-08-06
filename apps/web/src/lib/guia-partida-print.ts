@@ -356,9 +356,8 @@ function standingsTable(rows: GuiaStandingRow[]): string {
 function styles(size: PrintPageSize): string {
   const pageSize = size === "Letter" ? "letter" : "A4";
   return `
-    @page { size: ${pageSize} portrait; margin: 16mm 14mm 18mm; }
-    @page cover { size: ${pageSize} portrait; margin: 0; }
-    @page content { size: ${pageSize} portrait; margin: 16mm 14mm 18mm; }
+    /* Margem 0 na folha — capa full-bleed; padding interno nas sheets (Chrome ignora @page nomeado). */
+    @page { size: ${pageSize} portrait; margin: 0; }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: #fff; }
     body {
@@ -369,9 +368,9 @@ function styles(size: PrintPageSize): string {
     }
     .sheet {
       position: relative;
-      page: content;
-      width: 100%;
-      padding: 2mm 1mm 10mm;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 10mm 11mm 12mm;
       margin: 0 auto;
       background: #fff;
       page-break-after: always;
@@ -380,7 +379,6 @@ function styles(size: PrintPageSize): string {
       box-sizing: border-box;
     }
     .sheet.cover-sheet {
-      page: cover;
       width: 210mm;
       height: 297mm;
       max-height: 297mm;
@@ -430,7 +428,7 @@ function styles(size: PrintPageSize): string {
     .sec-head { border-bottom: 3px solid ${C.red}; padding-bottom: 2mm; margin-bottom: 4mm; }
     .sec-head h2 { margin: 0; font-size: 18pt; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; color: ${C.navy}; }
     .sec-head p { margin: 1mm 0 0; font-size: 8pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .12em; }
-    .sheet-tag { position: absolute; right: 1mm; top: 0; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
+    .sheet-tag { position: absolute; right: 11mm; top: 5mm; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
     .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
     .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
     .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: avoid; }
@@ -596,24 +594,23 @@ function styles(size: PrintPageSize): string {
       flex-direction: column;
       gap: 3mm;
       align-items: stretch;
+      width: 100%;
     }
     .vis-field-row {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      justify-content: center;
-      align-items: stretch;
+      display: grid;
+      grid-template-columns: 42mm minmax(0, 1fr);
       gap: 3mm;
-      width: max-content;
-      max-width: 100%;
-      margin: 0 auto;
+      align-items: stretch;
+      width: 100%;
     }
     .vis-field-row > .vis-staff-side {
-      width: 46mm;
-      flex: 0 0 46mm;
+      width: auto;
+      min-width: 0;
     }
     .vis-field-row > .vis-pitch-wrap {
-      flex: 0 0 auto;
+      width: 100%;
+      max-width: none;
+      min-width: 0;
     }
     .vis-staff-side {
       display: flex;
@@ -624,6 +621,8 @@ function styles(size: PrintPageSize): string {
       border-radius: 2mm;
       background: ${C.softer};
       break-inside: avoid;
+      min-width: 0;
+      overflow: visible;
     }
     .vis-staff-side-title {
       margin: 0 0 2mm;
@@ -658,8 +657,8 @@ function styles(size: PrintPageSize): string {
     }
     .vis-pitch-wrap {
       position: relative;
-      width: 185mm;
-      max-width: 185mm;
+      width: 100%;
+      max-width: 100%;
       aspect-ratio: 78 / 100;
       border-radius: 3mm;
       overflow: hidden;
@@ -668,7 +667,7 @@ function styles(size: PrintPageSize): string {
     }
     .vis-pitch-players {
       position: absolute;
-      inset: 0 7%;
+      inset: 0 6%;
       z-index: 2;
     }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
