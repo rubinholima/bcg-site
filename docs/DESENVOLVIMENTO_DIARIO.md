@@ -47,6 +47,7 @@
 
 | Commit | Descrição |
 |--------|-----------|
+| `f3851a0` | docs: fecha encerramento 06/08 com HEAD da noite |
 | `981b1f9` | docs: encerramento 06/08/2026 noite Press Kit (sem sync) |
 | `90fb2e8` | fix(press-kit): grande area do gramado sem herdar width 26mm |
 | `29b07a0` | fix(press-kit): marcações do gramado iguais à preparação |
@@ -54,7 +55,7 @@
 | `b9af8d1` | fix(press-kit): margens e quebra de pagina no conteudo (capa intacta) |
 | `78384cc`…`92de8d4` | série restauração relatório / recorte / capa |
 
-**Branch:** `develop` · **HEAD:** `981b1f9` (+ docs HEAD após push deste fechamento) · **Push:** `origin` + `production` · **Sync Beatscode:** não rodado
+**Branch:** `develop` · **HEAD:** `f3851a0` · **Push:** `origin` + `production` · **Sync Beatscode:** não rodado
 
 ## **ARQUIVOS PRINCIPAIS**
 
