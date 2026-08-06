@@ -821,59 +821,59 @@ export function FutebolRelatorioPressKitForm() {
 
                 <div className="space-y-2">
                   <p className="text-sm font-semibold">Relação — titulares</p>
-                  {starterPlayerIds.map((id, index) => {
-                    if (!id) return null;
-                    const a = athletes.find((x) => x.playerId === id);
-                    if (!a) return null;
-                    const slotLabel = formationDef.slots[index]?.label ?? "—";
-                    return (
-                      <div
-                        key={`${id}-${index}`}
-                        className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2"
-                      >
-                        <AthletePhoto3x4
-                          photoUrl={a.photoUrl}
-                          name={a.nickname || a.name}
-                        />
-                        <span className="w-10 shrink-0 text-center text-base font-extrabold text-[#C8102E]">
-                          {a.jerseyNumber ?? "—"}
-                        </span>
-                        <span className="w-12 shrink-0 rounded bg-[#00205B]/20 px-1 py-1 text-center text-xs font-bold uppercase text-[#93c5fd]">
-                          {slotLabel}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {a.nickname?.trim() || a.name}
-                          </p>
-                          <p className="truncate text-xs text-muted-foreground">
-                            {[a.position, a.nickname?.trim() ? a.name : null]
-                              .filter(Boolean)
-                              .join(" · ") || "—"}
-                          </p>
-                        </div>
-                        <div className="w-20 space-y-1">
-                          <Label className="text-[10px] text-muted-foreground">Camisa</Label>
-                          <Input
-                            type="number"
-                            min={0}
-                            max={99}
-                            className="min-h-[40px] text-foreground"
-                            value={jerseyInputValue(a, jerseyOverrides)}
-                            onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="min-h-[40px]"
-                          onClick={() => clearStarterSlot(index)}
+                  {starterPlayerIds
+                    .map((id, slotIndex) => ({ id, slotIndex }))
+                    .filter((row): row is { id: string; slotIndex: number } => !!row.id)
+                    .map((row, ord) => {
+                      const a = athletes.find((x) => x.playerId === row.id);
+                      if (!a) return null;
+                      const slotLabel = formationDef.slots[row.slotIndex]?.label ?? "—";
+                      return (
+                        <div
+                          key={`${row.id}-${row.slotIndex}`}
+                          className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2"
                         >
-                          Remover
-                        </Button>
-                      </div>
-                    );
-                  })}
+                          <span className="w-6 shrink-0 text-center text-sm font-extrabold text-muted-foreground">
+                            {ord + 1}
+                          </span>
+                          <AthletePhoto3x4
+                            photoUrl={a.photoUrl}
+                            name={a.nickname || a.name}
+                          />
+                          <div className="w-20 space-y-1">
+                            <Label className="text-[10px] text-muted-foreground">Camisa</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={99}
+                              className="min-h-[40px] text-foreground"
+                              value={jerseyInputValue(a, jerseyOverrides)}
+                              onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
+                            />
+                          </div>
+                          <span className="w-14 shrink-0 rounded bg-[#00205B]/25 px-1 py-2 text-center text-xs font-bold uppercase text-[#93c5fd]">
+                            {slotLabel}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {a.nickname?.trim() || a.name}
+                            </p>
+                            {a.nickname?.trim() ? (
+                              <p className="truncate text-xs text-muted-foreground">{a.name}</p>
+                            ) : null}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="min-h-[40px]"
+                            onClick={() => clearStarterSlot(row.slotIndex)}
+                          >
+                            Remover
+                          </Button>
+                        </div>
+                      );
+                    })}
                 </div>
 
                 <div className="space-y-2">
@@ -881,7 +881,7 @@ export function FutebolRelatorioPressKitForm() {
                     Reservas ({reserves.length})
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {reserves.map((a) => (
+                    {reserves.map((a, ord) => (
                       <div
                         key={a.playerId}
                         draggable
@@ -891,22 +891,14 @@ export function FutebolRelatorioPressKitForm() {
                         }}
                         className="flex min-h-[64px] items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2"
                       >
+                        <span className="w-6 shrink-0 text-center text-sm font-extrabold text-muted-foreground">
+                          {ord + 1}
+                        </span>
                         <AthletePhoto3x4
                           photoUrl={a.photoUrl}
                           name={a.nickname || a.name}
                           size="sm"
                         />
-                        <span className="w-9 shrink-0 text-center text-sm font-extrabold text-[#C8102E]">
-                          {a.jerseyNumber ?? "—"}
-                        </span>
-                        <span className="w-12 shrink-0 rounded bg-zinc-800 px-1 py-1 text-center text-[10px] font-bold uppercase text-zinc-300">
-                          {a.position?.trim() || "—"}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {a.nickname?.trim() || a.name}
-                          </p>
-                        </div>
                         <div className="w-[72px] space-y-1">
                           <Label className="text-[10px] text-muted-foreground">Camisa</Label>
                           <Input
@@ -917,6 +909,17 @@ export function FutebolRelatorioPressKitForm() {
                             value={jerseyInputValue(a, jerseyOverrides)}
                             onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
                           />
+                        </div>
+                        <span className="w-14 shrink-0 rounded bg-zinc-800 px-1 py-2 text-center text-[10px] font-bold uppercase text-zinc-300">
+                          {a.position?.trim() || "—"}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {a.nickname?.trim() || a.name}
+                          </p>
+                          {a.nickname?.trim() ? (
+                            <p className="truncate text-xs text-muted-foreground">{a.name}</p>
+                          ) : null}
                         </div>
                         <Button
                           type="button"
