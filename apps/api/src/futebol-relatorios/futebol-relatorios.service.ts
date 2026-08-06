@@ -64,10 +64,15 @@ type RoomAssignment = {
 };
 
 function parseRegistrationProfile(raw: unknown): {
-  personal?: { cpf?: string; rg?: string };
+  personal?: { cpf?: string; rg?: string; nickname?: string };
 } {
   if (!raw || typeof raw !== 'object') return {};
-  return raw as { personal?: { cpf?: string; rg?: string } };
+  return raw as { personal?: { cpf?: string; rg?: string; nickname?: string } };
+}
+
+function nicknameFromProfile(raw: unknown): string | null {
+  const nick = parseRegistrationProfile(raw).personal?.nickname?.trim();
+  return nick || null;
 }
 
 function formatIsoDate(d: Date | string | null | undefined): string | null {
@@ -181,6 +186,7 @@ export class FutebolRelatoriosService {
         rows.push({
           num: rows.length + 1,
           name: '—',
+          nickname: null,
           cpf: null,
           rg: null,
           birthDate: null,
@@ -204,6 +210,7 @@ export class FutebolRelatoriosService {
         rows.push({
           num: rows.length + 1,
           name: details.name,
+          nickname: details.nickname,
           cpf: details.cpf,
           rg: details.rg,
           birthDate: details.birthDate,
@@ -752,6 +759,7 @@ export class FutebolRelatoriosService {
         athletes.push({
           num: athletes.length + 1,
           name: p.name,
+          nickname: nicknameFromProfile(p.registrationProfile),
           cpf: profile.personal?.cpf ?? null,
           rg: profile.personal?.rg ?? null,
           birthDate: formatIsoDate(p.birthDate),
@@ -773,6 +781,7 @@ export class FutebolRelatoriosService {
         staff.push({
           num: staff.length + 1,
           name: s.name,
+          nickname: null,
           cpf: s.cpf,
           rg: s.rg,
           birthDate: formatIsoDate(s.birthDate),
@@ -832,6 +841,7 @@ export class FutebolRelatoriosService {
         athletes.push({
           num: athletes.length + 1,
           name: p.name,
+          nickname: nicknameFromProfile(p.registrationProfile),
           cpf: profile.personal?.cpf ?? null,
           rg: profile.personal?.rg ?? null,
           birthDate: formatIsoDate(p.birthDate),
@@ -849,6 +859,7 @@ export class FutebolRelatoriosService {
         staff.push({
           num: staff.length + 1,
           name: s.name,
+          nickname: null,
           cpf: s.cpf,
           rg: s.rg,
           birthDate: formatIsoDate(s.birthDate),
@@ -862,6 +873,7 @@ export class FutebolRelatoriosService {
         guests.push({
           num: guests.length + 1,
           name: (part.guestName ?? '—').trim() || '—',
+          nickname: null,
           cpf: part.guestDocument ?? null,
           rg: null,
           birthDate: null,
@@ -901,6 +913,7 @@ export class FutebolRelatoriosService {
       return {
         num: i + 1,
         name: p.name,
+        nickname: nicknameFromProfile(p.registrationProfile),
         cpf: profile.personal?.cpf ?? null,
         rg: profile.personal?.rg ?? null,
         birthDate: formatIsoDate(p.birthDate),
@@ -915,6 +928,7 @@ export class FutebolRelatoriosService {
     const staff: RelatorioPessoaRow[] = filteredStaff.map((s, i) => ({
       num: i + 1,
       name: s.name,
+      nickname: null,
       cpf: s.cpf,
       rg: s.rg,
       birthDate: formatIsoDate(s.birthDate),
@@ -1031,6 +1045,7 @@ export class FutebolRelatoriosService {
       if (s) {
         return {
           name: s.name,
+          nickname: null as string | null,
           cpf: s.cpf,
           rg: s.rg,
           birthDate: formatIsoDate(s.birthDate),
@@ -1046,6 +1061,7 @@ export class FutebolRelatoriosService {
         const profile = parseRegistrationProfile(p.registrationProfile);
         return {
           name: p.name,
+          nickname: nicknameFromProfile(p.registrationProfile),
           cpf: profile.personal?.cpf ?? null,
           rg: profile.personal?.rg ?? null,
           birthDate: formatIsoDate(p.birthDate),
@@ -1055,6 +1071,7 @@ export class FutebolRelatoriosService {
     }
     return {
       name: (fallbackName ?? '—').trim() || '—',
+      nickname: null as string | null,
       cpf: null,
       rg: null,
       birthDate: null,

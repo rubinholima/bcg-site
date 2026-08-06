@@ -440,6 +440,7 @@ export class GuiaPartidaService {
         playerId: athlete.playerId ?? null,
         name: athlete.name,
         shortName: shortName(athlete.name),
+        nickname: athlete.nickname?.trim() || null,
         jerseyNumber: athlete.jerseyNumber ?? player?.jerseyNumber ?? null,
         position,
         positionLabel: getFootballPositionLabel(position) || '—',

@@ -3,6 +3,8 @@ export type PrintPageSize = "A4" | "Letter";
 export type RelatorioPessoaRow = {
   num: number;
   name: string;
+  /** Apelido do cadastro (registrationProfile.personal.nickname) */
+  nickname?: string | null;
   cpf: string | null;
   rg: string | null;
   birthDate: string | null;
@@ -209,6 +211,7 @@ export type GuiaSquadPlayer = {
   playerId: string | null;
   name: string;
   shortName: string;
+  nickname: string | null;
   jerseyNumber: number | null;
   position: string | null;
   positionLabel: string;

@@ -33,6 +33,7 @@ export type GuiaSquadPlayer = {
   playerId: string | null;
   name: string;
   shortName: string;
+  nickname: string | null;
   jerseyNumber: number | null;
   position: string | null;
   positionLabel: string;

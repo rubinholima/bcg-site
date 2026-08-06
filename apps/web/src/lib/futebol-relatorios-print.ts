@@ -362,7 +362,7 @@ function logoHtml(logoUrl: string | null | undefined, clubName: string): string 
 
 function personTableRows(rows: RelatorioPessoaRow[], showRole = false): string {
   if (rows.length === 0) {
-    return `<tr><td colspan="${showRole ? 6 : 5}" class="empty">Nenhum registro</td></tr>`;
+    return `<tr><td colspan="${showRole ? 7 : 6}" class="empty">Nenhum registro</td></tr>`;
   }
   return rows
     .map((r) => {
@@ -371,7 +371,8 @@ function personTableRows(rows: RelatorioPessoaRow[], showRole = false): string {
         : "";
       return `<tr>
         <td class="num">${r.num}</td>
-        <td>${escapeHtml(r.name)}</td>
+        <td class="left">${escapeHtml(r.name)}</td>
+        <td class="left">${escapeHtml(r.nickname?.trim() || "—")}</td>
         ${roleCell}
         <td>${escapeHtml(formatCpfForDisplay(r.cpf) || "—")}</td>
         <td>${escapeHtml(r.rg?.trim() || "—")}</td>
@@ -391,6 +392,7 @@ function personTable(title: string, rows: RelatorioPessoaRow[], showRole = false
           <tr>
             <th class="num">#</th>
             <th>Nome</th>
+            <th>Apelido</th>
             ${roleHead}
             <th>CPF</th>
             <th>RG</th>
@@ -549,7 +551,7 @@ export function buildHospedesPrintHtml(
 
   let tableRows = "";
   if (data.rows.length === 0) {
-    tableRows = `<tr><td colspan="7" class="empty">Nenhum quarto cadastrado nesta viagem</td></tr>`;
+    tableRows = `<tr><td colspan="8" class="empty">Nenhum quarto cadastrado nesta viagem</td></tr>`;
   } else {
     tableRows = data.rows
       .map((r: RelatorioHospedeRow) => {
@@ -560,7 +562,8 @@ export function buildHospedesPrintHtml(
         return `<tr>
           <td class="num">${r.num}</td>
           ${roomCell}
-          <td>${escapeHtml(r.name)}</td>
+          <td class="left">${escapeHtml(r.name)}</td>
+          <td class="left">${escapeHtml(r.nickname?.trim() || "—")}</td>
           <td>${escapeHtml(formatCpfForDisplay(r.cpf) || "—")}</td>
           <td>${escapeHtml(r.rg?.trim() || "—")}</td>
           <td>${escapeHtml(formatBrDate(r.birthDate))}</td>
@@ -579,6 +582,7 @@ export function buildHospedesPrintHtml(
             <th>Quarto</th>
             <th>Tipo</th>
             <th>Nome</th>
+            <th>Apelido</th>
             <th>CPF</th>
             <th>RG</th>
             <th>Nascimento</th>
@@ -1012,6 +1016,9 @@ export function buildPressKitPrintHtml(
     })
     .join("");
 
+  const athleteLabel = (p: RelatorioPessoaRow) =>
+    p.nickname?.trim() || shortAthleteName(p.name);
+
   const subsHtml = data.substitutes
     .map((s) => {
       const n = s.jerseyNumber != null ? String(s.jerseyNumber) : "—";
@@ -1021,7 +1028,7 @@ export function buildPressKitPrintHtml(
       const statsLine = stats
         ? `J ${stats.matches} · G ${stats.goals} · ${stats.minutes} min`
         : "";
-      return `<div class="sub-row">${photo}<span class="sub-num">${escapeHtml(n)}</span><div class="sub-text"><span class="sub-name">${escapeHtml(shortAthleteName(s.name))}</span>${birth ? `<span class="sub-birth">${escapeHtml(birth)}</span>` : ""}${statsLine ? `<span class="sub-stats">${escapeHtml(statsLine)}</span>` : ""}</div></div>`;
+      return `<div class="sub-row">${photo}<span class="sub-num">${escapeHtml(n)}</span><div class="sub-text"><span class="sub-name">${escapeHtml(athleteLabel(s))}</span><span class="sub-birth">${escapeHtml(s.name)}</span>${birth ? `<span class="sub-birth">${escapeHtml(birth)}</span>` : ""}${statsLine ? `<span class="sub-stats">${escapeHtml(statsLine)}</span>` : ""}</div></div>`;
     })
     .join("");
 
@@ -1035,13 +1042,16 @@ export function buildPressKitPrintHtml(
     const statsLine = stats
       ? `J ${stats.matches} · G ${stats.goals} · ${stats.minutes} min`
       : "";
+    const nick = athleteLabel(p);
+    const fullShort = shortAthleteName(p.name);
+    const secondary = [nick !== fullShort ? fullShort : null, birth].filter(Boolean).join(" · ");
     return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%">
       <div class="chip-photo-wrap">
         ${photo}
         <span class="chip-num">${escapeHtml(n)}</span>
       </div>
-      <div class="chip-name">${escapeHtml(shortAthleteName(p.name))}</div>
-      ${birth ? `<div class="chip-birth">${escapeHtml(birth)}</div>` : ""}
+      <div class="chip-name">${escapeHtml(nick)}</div>
+      ${secondary ? `<div class="chip-birth">${escapeHtml(secondary)}</div>` : ""}
       ${statsLine ? `<div class="chip-stats">${escapeHtml(statsLine)}</div>` : ""}
     </div>`;
   }).join("");
@@ -1403,6 +1413,8 @@ export function buildMatchExternalReportHtml(
   const uniformImage = data.uniformKit?.imageUrl
     ? resolveLogoUrlForPrint(data.uniformKit.imageUrl) || data.uniformKit.imageUrl
     : null;
+  const athleteCount = data.athletes.length;
+  const compact = athleteCount > 18;
   const athleteRows = [...data.athletes]
     .sort((a, b) => (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) || a.name.localeCompare(b.name))
     .map(
@@ -1410,6 +1422,7 @@ export function buildMatchExternalReportHtml(
         <td>${index + 1}</td>
         <td>${escapeHtml(String(athlete.jerseyNumber ?? "—"))}</td>
         <td class="left">${escapeHtml(athlete.name)}</td>
+        <td class="left">${escapeHtml(athlete.nickname?.trim() || "—")}</td>
         <td>${escapeHtml(athlete.position ?? "—")}</td>
         ${audience === "referees" ? `<td>${escapeHtml(athlete.cbfRegistration ?? "—")}</td>` : ""}
       </tr>`,
@@ -1422,35 +1435,51 @@ export function buildMatchExternalReportHtml(
     )
     .join("");
   const styles = `
-    @page { size: ${size === "Letter" ? "letter" : "A4"} portrait; margin: 12mm; }
+    @page { size: ${size === "Letter" ? "letter" : "A4"} portrait; margin: 8mm 9mm; }
     * { box-sizing: border-box; }
-    body { margin: 0; color: #0f172a; font-family: "Segoe UI", system-ui, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .head { display: grid; grid-template-columns: 24mm 1fr 24mm; align-items: center; gap: 5mm; padding: 5mm; color: #fff; background: linear-gradient(120deg, ${BCG.blue}, ${BCG.red}); border-radius: 4mm; }
-    .head img { width: 22mm; height: 22mm; object-fit: contain; padding: 1.5mm; border-radius: 3mm; background: #fff; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      color: #0f172a;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet {
+      min-height: 0;
+      max-height: 100%;
+      overflow: hidden;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .head { display: grid; grid-template-columns: 18mm 1fr 18mm; align-items: center; gap: 3mm; padding: ${compact ? "3mm" : "4mm"}; color: #fff; background: linear-gradient(120deg, ${BCG.blue}, ${BCG.red}); border-radius: 3mm; }
+    .head img { width: 16mm; height: 16mm; object-fit: contain; padding: 1mm; border-radius: 2mm; background: #fff; }
     .head div { text-align: center; }
-    h1 { margin: 0; font-size: 17pt; text-transform: uppercase; }
-    .head p { margin: 1.5mm 0 0; font-size: 9pt; }
-    .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm; margin: 5mm 0; }
-    .meta div { padding: 3mm; border-left: 3px solid ${BCG.red}; background: #f1f5f9; }
-    .meta span { display: block; color: #64748b; font-size: 7pt; letter-spacing: .12em; text-transform: uppercase; }
-    .meta strong { font-size: 10pt; }
-    .uniform { display: flex; align-items: center; gap: 5mm; margin-bottom: 5mm; padding: 4mm; border: 1px solid #cbd5e1; border-radius: 3mm; background: ${BCG.blueLight}; }
-    .uniform > img { width: 30mm; height: 30mm; object-fit: contain; background: #fff; border-radius: 2mm; }
-    .uniform strong { display: block; color: ${BCG.blue}; font-size: 13pt; text-transform: uppercase; }
-    .pieces { display: flex; gap: 2mm; margin-top: 2mm; }
-    .pieces img { width: 13mm; height: 13mm; object-fit: contain; border: 1px solid #dbe3ee; border-radius: 1.5mm; background: #fff; }
-    h2 { margin: 5mm 0 2mm; padding-bottom: 1.5mm; color: ${BCG.blue}; border-bottom: 2px solid ${BCG.red}; font-size: 12pt; text-transform: uppercase; }
-    table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
-    th, td { padding: 1.7mm 2mm; border: 1px solid #cbd5e1; text-align: center; }
-    th { color: #fff; background: ${BCG.blue}; font-size: 7.5pt; letter-spacing: .08em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: ${compact ? "12pt" : "14pt"}; text-transform: uppercase; line-height: 1.1; }
+    .head p { margin: 1mm 0 0; font-size: 8pt; }
+    .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2mm; margin: 3mm 0; }
+    .meta div { padding: 2mm 2.5mm; border-left: 2.5px solid ${BCG.red}; background: #f1f5f9; }
+    .meta span { display: block; color: #64748b; font-size: 6pt; letter-spacing: .1em; text-transform: uppercase; }
+    .meta strong { font-size: ${compact ? "8pt" : "9pt"}; line-height: 1.2; }
+    .uniform { display: flex; align-items: center; gap: 3mm; margin-bottom: 3mm; padding: 2.5mm 3mm; border: 1px solid #cbd5e1; border-radius: 2mm; background: ${BCG.blueLight}; }
+    .uniform > img { width: ${compact ? "18mm" : "22mm"}; height: ${compact ? "18mm" : "22mm"}; object-fit: contain; background: #fff; border-radius: 1.5mm; }
+    .uniform span { display: block; font-size: 6.5pt; color: #64748b; text-transform: uppercase; letter-spacing: .08em; }
+    .uniform strong { display: block; color: ${BCG.blue}; font-size: ${compact ? "10pt" : "11pt"}; text-transform: uppercase; }
+    .pieces { display: flex; gap: 1.5mm; margin-top: 1mm; }
+    .pieces img { width: 10mm; height: 10mm; object-fit: contain; border: 1px solid #dbe3ee; border-radius: 1mm; background: #fff; }
+    h2 { margin: 2.5mm 0 1.5mm; padding-bottom: 1mm; color: ${BCG.blue}; border-bottom: 2px solid ${BCG.red}; font-size: ${compact ? "9pt" : "10pt"}; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; font-size: ${compact ? "7pt" : "7.8pt"}; }
+    th, td { padding: ${compact ? "0.9mm 1.4mm" : "1.2mm 1.6mm"}; border: 1px solid #cbd5e1; text-align: center; }
+    th { color: #fff; background: ${BCG.blue}; font-size: ${compact ? "6.2pt" : "6.8pt"}; letter-spacing: .06em; text-transform: uppercase; }
     .left { text-align: left; }
-    .foot { margin-top: 5mm; padding-top: 3mm; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 8pt; }
+    .foot { margin-top: 2.5mm; padding-top: 1.5mm; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 7pt; }
+    .staff-table { font-size: ${compact ? "6.5pt" : "7.2pt"}; }
   `;
   const logo = (url: string | null | undefined) => {
     const resolved = resolveLogoUrlForPrint(url);
     return resolved ? `<img src="${escapeHtml(resolved)}" alt="" />` : "<span></span>";
   };
   const body = `
+    <div class="sheet">
     <div class="head">
       ${logo(travel.tenant.logoUrl)}
       <div><h1>${escapeHtml(title)}</h1><p>${escapeHtml(club)} × ${escapeHtml(opponent)}</p></div>
@@ -1478,13 +1507,14 @@ export function buildMatchExternalReportHtml(
       </div>
     </div>
     <h2>${audience === "referees" ? "Atletas relacionados" : "Relação da equipe"}</h2>
-    <table><thead><tr><th>#</th><th>Camisa</th><th>Atleta</th><th>Posição</th>${audience === "referees" ? "<th>Registro CBF</th>" : ""}</tr></thead><tbody>${athleteRows}</tbody></table>
+    <table><thead><tr><th>#</th><th>Camisa</th><th>Nome</th><th>Apelido</th><th>Posição</th>${audience === "referees" ? "<th>Registro CBF</th>" : ""}</tr></thead><tbody>${athleteRows}</tbody></table>
     ${
       audience === "referees" && staffRows
-        ? `<h2>Comissão técnica</h2><table><thead><tr><th>Nome</th><th>Função</th></tr></thead><tbody>${staffRows}</tbody></table>`
+        ? `<h2>Comissão técnica</h2><table class="staff-table"><thead><tr><th>Nome</th><th>Função</th></tr></thead><tbody>${staffRows}</tbody></table>`
         : ""
     }
     <div class="foot">${config.contactLine ? escapeHtml(config.contactLine) : "Boston City Group"}</div>
+    </div>
   `;
   return wrapPrintRootDocument({
     title: escapeHtml(title),

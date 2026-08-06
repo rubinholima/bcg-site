@@ -182,6 +182,7 @@ function playerCard(player: GuiaSquadPlayer): string {
     )
     .join("");
 
+  const nick = player.nickname?.trim() || null;
   return `<article class="pcard">
     <div class="pcard-photo">
       ${photo(player.photoUrl, player.name, "pcard-img")}
@@ -191,7 +192,8 @@ function playerCard(player: GuiaSquadPlayer): string {
       <div class="pcard-head">
         <span class="pcard-num">${player.jerseyNumber != null ? player.jerseyNumber : "—"}</span>
         <div>
-          <strong>${esc(player.shortName)}</strong>
+          <strong>${esc(nick || player.shortName)}</strong>
+          <span class="pcard-fullname">${esc(player.name)}</span>
           <span>${esc(bio || formatBirth(player.birthDate) || "—")}</span>
         </div>
       </div>
@@ -348,8 +350,9 @@ function styles(size: PrintPageSize): string {
     .sheet {
       position: relative;
       width: 210mm;
-      min-height: 296mm;
-      padding: 14mm 13mm 16mm;
+      height: 297mm;
+      max-height: 297mm;
+      padding: 11mm 11mm 14mm;
       margin: 0 auto;
       background: #fff;
       page-break-after: always;
@@ -395,10 +398,10 @@ function styles(size: PrintPageSize): string {
     .cover-foot img { height: 12mm; object-fit: contain; }
 
     /* ---------- Seções ---------- */
-    .sec-head { border-bottom: 3px solid ${C.red}; padding-bottom: 3mm; margin-bottom: 6mm; }
-    .sec-head h2 { margin: 0; font-size: 22pt; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; color: ${C.navy}; }
-    .sec-head p { margin: 1.5mm 0 0; font-size: 9pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .14em; }
-    .sheet-tag { position: absolute; right: 13mm; top: 6mm; font-size: 7.5pt; letter-spacing: .22em; text-transform: uppercase; color: ${C.muted}; }
+    .sec-head { border-bottom: 3px solid ${C.red}; padding-bottom: 2mm; margin-bottom: 4mm; }
+    .sec-head h2 { margin: 0; font-size: 18pt; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; color: ${C.navy}; }
+    .sec-head p { margin: 1mm 0 0; font-size: 8pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .12em; }
+    .sheet-tag { position: absolute; right: 11mm; top: 5mm; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
     .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
     .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
     .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: avoid; }
@@ -476,24 +479,25 @@ function styles(size: PrintPageSize): string {
     .rank-value { font-weight: 900; color: ${C.navy}; min-width: 10mm; text-align: right; }
 
     /* ---------- Elenco ---------- */
-    .group-band { margin: 0 0 4mm; padding: 2mm 3mm; background: ${C.navy}; color: #fff; font-size: 9pt; text-transform: uppercase; letter-spacing: .18em; font-weight: 700; border-radius: 2mm; }
-    .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
-    .pcard { display: flex; gap: 3mm; border: 1px solid ${C.line}; border-radius: 3mm; overflow: hidden; background: #fff; break-inside: avoid; }
-    .pcard-photo { position: relative; width: 27mm; flex: none; background: linear-gradient(160deg, ${C.navy} 0%, ${C.navyDeep} 100%); }
-    .pcard-img { width: 100%; height: 100%; min-height: 40mm; object-fit: cover; object-position: center 18%; display: block; }
-    .photo-fallback { width: 100%; height: 100%; min-height: 40mm; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14pt; }
-    .pcard-pos { position: absolute; left: 0; bottom: 0; right: 0; padding: 1mm; font-size: 6.5pt; text-transform: uppercase; letter-spacing: .1em; text-align: center; background: ${C.red}; color: #fff; }
-    .pcard-body { flex: 1; padding: 2.5mm 3mm 2mm; min-width: 0; }
-    .pcard-head { display: flex; align-items: center; gap: 2.5mm; margin-bottom: 2mm; }
-    .pcard-num { font-size: 17pt; font-weight: 900; color: ${C.red}; line-height: 1; min-width: 9mm; text-align: center; }
-    .pcard-head strong { display: block; font-size: 10pt; text-transform: uppercase; color: ${C.navy}; line-height: 1.1; }
-    .pcard-head span { font-size: 7pt; color: ${C.muted}; }
-    table.pstats { width: 100%; border-collapse: collapse; font-size: 7pt; }
-    table.pstats th, table.pstats td { border: 1px solid ${C.line}; padding: .9mm 1.2mm; text-align: center; }
-    table.pstats thead th { background: ${C.soft}; color: ${C.navy}; text-transform: uppercase; font-size: 6.2pt; letter-spacing: .06em; }
-    table.pstats tbody th { text-align: left; font-weight: 600; font-size: 6.5pt; }
+    .group-band { margin: 0 0 2.5mm; padding: 1.4mm 2.5mm; background: ${C.navy}; color: #fff; font-size: 8pt; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; border-radius: 1.5mm; }
+    .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
+    .pcard { display: flex; gap: 2mm; border: 1px solid ${C.line}; border-radius: 2mm; overflow: hidden; background: #fff; break-inside: avoid; height: 38mm; }
+    .pcard-photo { position: relative; width: 22mm; flex: none; background: linear-gradient(160deg, ${C.navy} 0%, ${C.navyDeep} 100%); }
+    .pcard-img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; }
+    .photo-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12pt; }
+    .pcard-pos { position: absolute; left: 0; bottom: 0; right: 0; padding: .7mm; font-size: 5.5pt; text-transform: uppercase; letter-spacing: .08em; text-align: center; background: ${C.red}; color: #fff; }
+    .pcard-body { flex: 1; padding: 1.6mm 2mm 1.2mm; min-width: 0; display: flex; flex-direction: column; }
+    .pcard-head { display: flex; align-items: center; gap: 2mm; margin-bottom: 1mm; }
+    .pcard-num { font-size: 14pt; font-weight: 900; color: ${C.red}; line-height: 1; min-width: 7mm; text-align: center; }
+    .pcard-head strong { display: block; font-size: 8.5pt; text-transform: uppercase; color: ${C.navy}; line-height: 1.05; }
+    .pcard-head .pcard-fullname { display: block; font-size: 5.8pt; color: ${C.ink}; text-transform: uppercase; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55mm; }
+    .pcard-head span { font-size: 6pt; color: ${C.muted}; }
+    table.pstats { width: 100%; border-collapse: collapse; font-size: 6pt; }
+    table.pstats th, table.pstats td { border: 1px solid ${C.line}; padding: .6mm 1mm; text-align: center; }
+    table.pstats thead th { background: ${C.soft}; color: ${C.navy}; text-transform: uppercase; font-size: 5.5pt; letter-spacing: .05em; }
+    table.pstats tbody th { text-align: left; font-weight: 600; font-size: 5.8pt; }
     table.pstats tr.total th, table.pstats tr.total td { background: ${C.navy}; color: #fff; font-weight: 700; border-color: ${C.navy}; }
-    .pcard-foot { margin: 1.5mm 0 0; font-size: 6.5pt; color: ${C.muted}; }
+    .pcard-foot { margin: auto 0 0; font-size: 5.5pt; color: ${C.muted}; }
 
     /* ---------- Escalações ---------- */
     .lineups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
@@ -511,8 +515,8 @@ function styles(size: PrintPageSize): string {
     .chip-num { display: block; width: 5.6mm; height: 5.6mm; margin: 0 auto; border-radius: 50%; background: #fff; color: ${C.navy}; font-size: 6pt; font-weight: 900; line-height: 5.6mm; border: 1px solid ${C.navy}; }
     .chip-name { display: block; margin-top: .5mm; font-size: 4.9pt; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .note { margin-top: 5mm; font-size: 7pt; color: ${C.muted}; font-style: italic; }
-    .page-foot { position: absolute; left: 13mm; right: 13mm; bottom: 7mm; display: flex; justify-content: space-between; font-size: 7pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .12em; border-top: 1px solid ${C.line}; padding-top: 2mm; }
+    .note { margin-top: 3mm; font-size: 6.5pt; color: ${C.muted}; font-style: italic; }
+    .page-foot { position: absolute; left: 11mm; right: 11mm; bottom: 5mm; display: flex; justify-content: space-between; font-size: 6.5pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .1em; border-top: 1px solid ${C.line}; padding-top: 1.5mm; }
   `;
 }
 
@@ -766,7 +770,9 @@ export function buildGuiaPartidaPrintHtml(
   );
 
   /* ---------------- Elenco ---------------- */
-  const squadSheets = chunk(data.squad, 8).map((page, index) => {
+  // 6 cards/folha com altura fixa evita página em branco (conteúdo estourava 297mm).
+  const squadChunks = chunk(data.squad, 6);
+  const squadSheets = squadChunks.map((page, index) => {
     const blocks: string[] = [];
     let currentGroup: GuiaSquadPlayer["positionGroup"] | null = null;
     let buffer: GuiaSquadPlayer[] = [];
@@ -786,6 +792,7 @@ export function buildGuiaPartidaPrintHtml(
       buffer.push(player);
     }
     flush();
+    const isLast = index === squadChunks.length - 1;
 
     return sheet(
       `<div class="sheet-tag">Elenco relacionado</div>
@@ -795,7 +802,11 @@ export function buildGuiaPartidaPrintHtml(
           : sectionTitle("Elenco", "continuação")
       }
       ${blocks.join("")}
-      <p class="note">J = jogos · G = gols · MIN = minutos em campo. Números consolidados das partidas oficiais da temporada ${data.season}.</p>
+      ${
+        isLast
+          ? `<p class="note">J = jogos · G = gols · MIN = minutos em campo. Números consolidados das partidas oficiais da temporada ${data.season}.</p>`
+          : ""
+      }
       ${foot("Elenco")}`,
     );
   });
