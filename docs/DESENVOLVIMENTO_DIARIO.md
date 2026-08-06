@@ -20,7 +20,7 @@
 - **Código** — TypeScript; tenant = empresa (conceito técnico vs UI); não quebrar monorepo.
 - **Módulos de página** — Padrão: cor de fundo, overlay, títulos PT/EN; Hero com carrossel; ver seção MODULOS_PAGINA em DOCS CONSOLIDADOS (final do arquivo).
 - **Módulos do dashboard** — Cadastrar em Module + ModuleRole no backend; sidebar com mesmo `moduleSlug`; proteger página com `canAccessModule("slug")`. Ver seção MODULOS_DASHBOARD em DOCS CONSOLIDADOS.
-- **Encerrar o dia** — Quando o usuário disser "encerre o dia": (1) Commit de tudo. (2) No **topo** da seção "POR DIA" (logo abaixo das regras), adicionar **📅 [DATA] — ENCERRAMENTO** (data do sistema via `date`), com o que foi feito, arquivos, commit e push. (3) `git push origin <branch>`.
+- **Encerrar o dia** — Quando o usuário disser "encerre o dia": (1) Commit de tudo. (2) No **topo** da seção "POR DIA" (logo abaixo das regras), adicionar **📅 [DATA] — ENCERRAMENTO** (data do sistema via `date`), com o que foi feito, arquivos, commit e push. (3) `git push origin <branch>`. **Não** iniciar sync Beatscode a menos que o usuário peça.
 - **Deploy produção (padrão Atrium)** — Após commit: `git push origin develop` **e** `git push production develop:develop`. O hook no Lightsail builda e reinicia PM2 **sem** SSH manual. Rebuild opcional no servidor: `~/deploy.sh`. Ver seção **30/06/2026** abaixo e `infra/lightsail/`.
 - **Estrutura do doc** — O topo do arquivo tem sempre: (1) Regras diárias. (2) Imediatamente após, a seção "POR DIA — ENCERRAMENTOS". Nada entre elas.
 - **Git** — Trabalhar em branch; não commitar direto em main.
@@ -33,62 +33,59 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
-# 📅 6 DE AGOSTO DE 2026 — ENCERRAMENTO
+# 📅 6 DE AGOSTO DE 2026 — ENCERRAMENTO (noite)
 
-## **O QUE FOI FEITO**
+## **O QUE FOI FEITO (sessão noite — Press Kit impressão)**
 
-### 1. Press Kit / gramado
+- Capa full-bleed mantida; conteúdo com margem real (`@page` + `@page :first`).
+- Quebra de página: sem folha em branco “A PARTIDA”; painéis sem cortar no meio.
+- Última página: comissão + titulares + reservas numa folha; recorte só nos titulares do gramado (`data:` preservado em `resolveLogoUrlForPrint`).
+- Gramado do relatório alinhado à preparação (`PitchMarkings`): círculo em %, grande área sem herdar `width: 26mm` das escalações.
+- Regra encerrar o dia: **sem sync Beatscode automático** (só se o usuário pedir). Encerramento desta noite: **sem sync**.
 
-- Só **apelido** no chip (fallback nome); fotos maiores; recorte de fundo branco (`photo-edge-white-cutout.ts`).
-- Formações espalhadas (meio bem aberto); goleiro na área; zaga mais baixa; campo lateral maior.
-- Comissão técnica colada ao gramado (sem vão); X remove do gramado (só UI / hover / não imprime).
-- Textos de posição e nascimento mais legíveis; impressão alinhada a `press-kit-formations.ts`.
-
-### 2. Funções RH × Futebol
-
-- Flag `JobRole.forFootball` + migration `20260806210000_job_role_for_football`.
-- Menu **Futebol → Cadastros → Funções**; comissão só lista cargos `forFootball`.
-- Fix salvamento de **árbitros** (DTO/validators + whitelist).
-
-### 3. Relatório Relacionados / Convocação
-
-- Tabelas em modo convocação: **Nome, Apelido, Nascimento** (`12/AGO/2026`); sem CPF/RG.
-- Helper `formatDateDaySlashMonYear` em `format-date.ts`.
-
-### 4. Saúde / outros no dia
-
-- Estagiários unificados; árbitros no Press Kit; desfecho fisioterapia.
-- Fisioterapia: múltiplos diagnósticos/tratamentos; agenda logística Data/Hora/Atividade sem overlap.
-- Categorias do cadastro central + data na agenda do jogo.
-
-### 5. Overnight
-
-- Sync Beatscode documentos iniciado em background (`pnpm beatscode:sync-documents`, limite 500).
-
-## **COMMITS / DEPLOYS (06/08)**
+## **COMMITS / DEPLOYS (noite 06/08)**
 
 | Commit | Descrição |
 |--------|-----------|
-| `88b6d79` | feat(futebol): categorias do cadastro central e data na agenda do jogo |
-| `ac59cc4` | feat(fisioterapia): multiplos diagnosticos e tratamentos |
-| `00c71d1` | fix(logistica): agenda do jogo em tabela |
-| `5439285` | feat(saude/futebol): estagiarios, arbitros Press Kit, desfecho fisio |
-| `1feca27`…`f04f185` | série Press Kit (apelido, fotos, gramado, comissão, textos) |
-| `9656a64` | feat(futebol): funcoes futebol no menu, sync RH, fix arbitros |
-| `b860eae` | fix(futebol): meio aberto + convocacao sem CPF/RG |
+| `90fb2e8` | fix(press-kit): grande area do gramado sem herdar width 26mm |
+| `29b07a0` | fix(press-kit): marcações do gramado iguais à preparação |
+| `98a0bb3` | fix(press-kit): ultima pagina original com reservas em uma folha |
+| `b9af8d1` | fix(press-kit): margens e quebra de pagina no conteudo (capa intacta) |
+| `78384cc`…`92de8d4` | série restauração relatório / recorte / capa |
 
-**Branch:** `develop` · **Último em produção (código):** `b860eae` · **Push encerramento:** `origin` (+ `production` se houver commit do diário)
+**Branch:** `develop` · **HEAD:** `90fb2e8` · **Push:** `origin` + `production` · **Sync Beatscode:** não rodado
 
 ## **ARQUIVOS PRINCIPAIS**
 
-- Press Kit: `press-kit-formations.ts`, `FutebolRelatorioPressKitForm.tsx`, `futebol-relatorios-print.ts`, `guia-partida-print.ts`, `photo-edge-white-cutout.ts`
-- Funções: schema/migration `forFootball`, menu futebol cadastros, APIs JobRole / árbitros
-- Convocação: `futebol-relatorios-print.ts`, `format-date.ts`
-- Regra Cursor: `.cursor/rules/inicio-conversa-bcg.mdc`
+- `apps/web/src/lib/guia-partida-print.ts`
+- `apps/web/src/lib/futebol-relatorios-print.ts` (`resolveLogoUrlForPrint` data:/blob:)
+- `apps/web/src/components/dashboard/futebol/relatorios/FutebolRelatorioPressKitForm.tsx` (cutouts só titulares)
+- `.cursor/rules/encerrar-o-dia.mdc` (sem sync automático)
 
 ## **NÃO COMMITADO (lixo local)**
 
 - probes Beatscode, `apps/api/data/`, temps, `BCG-TV-1.6.0.apk`, `backup_clean.sql`, whitespace em `docs/FLUXO_DEPARTAMENTO_COMPRAS.md`
+
+---
+
+# 📅 6 DE AGOSTO DE 2026 — ENCERRAMENTO (tarde — catch-up)
+
+## **O QUE FOI FEITO (mais cedo no dia)**
+
+### 1. Press Kit / gramado (UI)
+
+- Apelido no chip; fotos/recorte; formações espalhadas; comissão colada ao gramado.
+
+### 2. Funções RH × Futebol / convocação / saúde
+
+- `JobRole.forFootball`; convocation sem CPF/RG; estagiários, fisio multi, agenda.
+
+## **COMMITS (tarde)**
+
+| Commit | Descrição |
+|--------|-----------|
+| `b860eae` | meio aberto + convocacao sem CPF/RG |
+| `9656a64`…`f04f185` | funções futebol + série Press Kit UI |
 
 ---
 
