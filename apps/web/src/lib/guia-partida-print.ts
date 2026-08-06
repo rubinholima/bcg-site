@@ -681,20 +681,20 @@ function styles(size: PrintPageSize): string {
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 20mm;
+      width: 26mm;
       text-align: center;
       z-index: 2;
     }
     .vis-photo-wrap {
       position: relative;
-      width: 11mm;
-      height: 14.5mm;
-      margin: 0 auto 0.8mm;
+      width: 13mm;
+      height: 17mm;
+      margin: 0 auto 1mm;
       background: transparent;
     }
     .vis-photo {
-      width: 11mm;
-      height: 14.5mm;
+      width: 13mm;
+      height: 17mm;
       object-fit: cover;
       object-position: center 12%;
       border-radius: 1mm;
@@ -704,22 +704,28 @@ function styles(size: PrintPageSize): string {
     }
     .vis-photo.photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 8pt; background: rgba(0,0,0,.45);
+      color: #fff; font-weight: 800; font-size: 9pt; background: rgba(0,0,0,.45);
       mix-blend-mode: normal;
     }
+    .vis-num {
+      position: absolute; left: -1mm; top: -1mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
+      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
+      display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
+      mix-blend-mode: normal; z-index: 2;
+    }
     .vis-nick {
-      font-size: 6pt; font-weight: 800; color: #fde68a;
+      font-size: 6.5pt; font-weight: 800; color: #fde68a;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       text-transform: uppercase; line-height: 1.1;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      white-space: normal; overflow: visible;
     }
     .vis-pos {
-      font-size: 5.5pt; font-weight: 800; color: #fff;
+      font-size: 6pt; font-weight: 800; color: #fff;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       text-transform: uppercase; line-height: 1.1;
     }
     .vis-birth {
-      font-size: 5pt; font-weight: 700; color: #fff;
+      font-size: 5.5pt; font-weight: 700; color: #fff;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       line-height: 1.1;
     }
@@ -1120,19 +1126,20 @@ export function buildGuiaPartidaPrintHtml(
       const slotId = config.starterPlayerIds[i];
       const p = slotId ? squadById.get(slotId) : undefined;
       if (!p) return "";
-      const nickRaw = (
+      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
+      const nickOnly = (
         p.nickname?.trim() ||
         firstLastName(p.name) ||
         p.shortName ||
         ""
       ).toLocaleUpperCase("pt-BR");
-      const nickOnly = nickRaw.length > 12 ? `${nickRaw.slice(0, 11)}…` : nickRaw;
       const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
       const birth = formatBirth(p.birthDate);
       const ty = pitchChipTranslateY(slot.top);
       return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
         <div class="vis-photo-wrap">
           ${photo(p.photoUrl, p.name, "vis-photo")}
+          <span class="vis-num">${esc(n)}</span>
         </div>
         <div class="vis-nick">${esc(nickOnly)}</div>
         ${pos && pos !== "—" ? `<div class="vis-pos">${esc(pos)}</div>` : ""}

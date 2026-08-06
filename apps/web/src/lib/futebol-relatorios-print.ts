@@ -1110,18 +1110,19 @@ export function buildPressKitPrintHtml(
     const slotId = config.starterPlayerIds[i];
     const p = slotId ? athletesById.get(slotId) : undefined;
     if (!p) return "";
+    const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
     const photo = playerPhotoHtml(p.photoUrl, p.name);
-    const nickRaw = (
+    const nickOnly = (
       p.nickname?.trim() ||
       shortAthleteName(p.name)
     ).toLocaleUpperCase("pt-BR");
-    const nickOnly = nickRaw.length > 12 ? `${nickRaw.slice(0, 11)}…` : nickRaw;
     const pos = cadastroPositionAbbrev(p.position);
     const birth = formatBirthShort(p.birthDate);
     const ty = pitchChipTranslateY(slot.top);
     return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
       <div class="chip-photo-wrap">
         ${photo}
+        <span class="chip-num">${escapeHtml(n)}</span>
       </div>
       <div class="chip-nick">${escapeHtml(nickOnly)}</div>
       ${pos && pos !== "—" ? `<div class="chip-pos">${escapeHtml(pos)}</div>` : ""}
@@ -1277,20 +1278,20 @@ export function buildPressKitPrintHtml(
     .player-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 68px;
+      width: 84px;
       text-align: center;
       z-index: 2;
     }
     .chip-photo-wrap {
       position: relative;
-      width: 36px;
-      height: 48px;
-      margin: 0 auto 2px;
+      width: 44px;
+      height: 58px;
+      margin: 0 auto 3px;
       background: transparent;
     }
     .chip-photo {
-      width: 32px;
-      height: 42px;
+      width: 36px;
+      height: 48px;
       border-radius: 2px;
       object-fit: cover;
       object-position: center 12%;
@@ -1298,36 +1299,48 @@ export function buildPressKitPrintHtml(
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
     }
     .pitch-wrap .chip-photo {
-      width: 36px;
-      height: 48px;
+      width: 44px;
+      height: 58px;
       background: transparent;
       box-shadow: none;
     }
     .chip-photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 13px;
+      color: #fff; font-weight: 800; font-size: 14px;
       border-radius: 2px;
       background: rgba(0,0,0,0.45);
     }
     .pitch-wrap .chip-photo-fallback {
-      width: 36px;
-      height: 48px;
-      font-size: 14px;
+      width: 44px;
+      height: 58px;
+      font-size: 15px;
       mix-blend-mode: normal;
     }
+    .chip-num {
+      position: absolute;
+      left: -3px;
+      top: -3px;
+      min-width: 17px; height: 17px; border-radius: 3px;
+      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 9px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      padding: 0 2px;
+      z-index: 2;
+    }
     .chip-nick {
-      font-size: 8px; font-weight: 800; color: #fde68a;
+      font-size: 8.5px; font-weight: 800; color: #fde68a;
       text-shadow: 0 0 3px #000, 0 1px 2px rgba(0,0,0,0.95);
       text-transform: uppercase; line-height: 1.1;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      white-space: normal; overflow: visible;
     }
     .chip-pos {
-      font-size: 7.5px; font-weight: 800; color: #fff;
+      font-size: 8px; font-weight: 800; color: #fff;
       text-shadow: 0 0 3px #000, 0 1px 2px rgba(0,0,0,0.95);
       text-transform: uppercase; line-height: 1.1;
     }
     .chip-birth {
-      font-size: 7px; font-weight: 700; color: #fff;
+      font-size: 7.5px; font-weight: 700; color: #fff;
       text-shadow: 0 0 3px #000, 0 1px 2px rgba(0,0,0,0.95);
       line-height: 1.1;
     }

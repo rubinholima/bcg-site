@@ -1121,14 +1121,12 @@ export function FutebolRelatorioPressKitForm() {
                       const athlete = playerId
                         ? athletes.find((a) => a.playerId === playerId)
                         : undefined;
-                      const nickRaw = athlete
+                      const nickOnly = athlete
                         ? (
                             athlete.nickname?.trim() ||
                             firstLastName(athlete.name)
                           ).toLocaleUpperCase("pt-BR")
                         : "";
-                      const nickOnly =
-                        nickRaw.length > 12 ? `${nickRaw.slice(0, 11)}…` : nickRaw;
                       const pos = athlete ? cadastroPositionAbbrev(athlete.position) : "";
                       const birth = athlete ? formatBirthShortUi(athlete.birthDate) : "";
                       const ty = pitchChipTranslateY(slot.top);
@@ -1164,18 +1162,25 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="group flex w-[68px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing sm:w-[72px]"
+                              className="group flex w-[86px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing sm:w-[92px]"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
                                   photoUrl={athlete.photoUrl}
                                   name={athlete.nickname || athlete.name}
-                                  size="md"
+                                  size="lg"
                                   onPitch
                                 />
+                                <span className="absolute -left-1 -top-1 z-[1] flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
+                                  {provisionalJerseyValue(
+                                    athlete,
+                                    jerseyOverrides,
+                                    slotIndex + 1,
+                                  ) || "—"}
+                                </span>
                                 <button
                                   type="button"
-                                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                                   onClick={() => clearStarterSlot(slotIndex)}
                                   aria-label="Remover do gramado"
                                   title="Remover do gramado"
@@ -1183,22 +1188,22 @@ export function FutebolRelatorioPressKitForm() {
                                   ×
                                 </button>
                               </div>
-                              <span className="w-full truncate text-center text-[10px] font-extrabold uppercase leading-tight text-amber-200 [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
+                              <span className="w-full text-center text-[11px] font-extrabold uppercase leading-tight text-amber-200 [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
                                 {nickOnly}
                               </span>
                               {pos ? (
-                                <span className="w-full text-center text-[9px] font-bold uppercase leading-tight text-white [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
+                                <span className="w-full text-center text-[10px] font-bold uppercase leading-tight text-white [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
                                   {pos}
                                 </span>
                               ) : null}
                               {birth ? (
-                                <span className="w-full text-center text-[9px] font-semibold leading-tight text-white [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
+                                <span className="w-full text-center text-[10px] font-semibold leading-tight text-white [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
                                   {birth}
                                 </span>
                               ) : null}
                             </div>
                           ) : (
-                            <div className="flex h-[72px] w-[56px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[10px] font-bold uppercase text-white/80">
+                            <div className="flex h-[96px] w-[72px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
                               {slot.label}
                             </div>
                           )}
