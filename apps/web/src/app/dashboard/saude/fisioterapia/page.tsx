@@ -122,6 +122,18 @@ export default function FisioterapiaPage() {
     return items.length ? items.join(" + ") : "";
   }
 
+  function formatTreatments(s: PhysioSession) {
+    const items =
+      s.sessionTreatments && s.sessionTreatments.length > 0
+        ? s.sessionTreatments
+            .map((t) => t.treatmentLabel ?? t.treatment?.name)
+            .filter(Boolean)
+        : s.treatmentLabel
+          ? [s.treatmentLabel]
+          : [];
+    return items.length ? items.join(" + ") : "";
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
@@ -214,6 +226,7 @@ export default function FisioterapiaPage() {
                       <p className="mt-1 text-sm">
                         {formatRegions(s)}
                         {formatDiagnoses(s) ? ` · ${formatDiagnoses(s)}` : ""}
+                        {formatTreatments(s) ? ` · ${formatTreatments(s)}` : ""}
                       </p>
                     </div>
                     <span

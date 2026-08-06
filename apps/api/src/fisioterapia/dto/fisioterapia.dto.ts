@@ -48,6 +48,16 @@ export class PhysioSessionDiagnosisItemDto {
   diagnosisLabel?: string;
 }
 
+export class PhysioSessionTreatmentItemDto {
+  @IsOptional()
+  @IsString()
+  treatmentId?: string;
+
+  @IsOptional()
+  @IsString()
+  treatmentLabel?: string;
+}
+
 export class PhysioGroupAttendanceDto {
   @IsString()
   playerId!: string;
@@ -200,6 +210,12 @@ export class CreatePhysioSessionDto {
   diagnoses?: PhysioSessionDiagnosisItemDto[];
 
   @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioSessionTreatmentItemDto)
+  treatments?: PhysioSessionTreatmentItemDto[];
+
+  @IsOptional()
   @IsIn(['E', 'D', 'bilateral'])
   side?: string;
 
@@ -287,6 +303,12 @@ export class UpdatePhysioSessionDto {
   @ValidateNested({ each: true })
   @Type(() => PhysioSessionDiagnosisItemDto)
   diagnoses?: PhysioSessionDiagnosisItemDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhysioSessionTreatmentItemDto)
+  treatments?: PhysioSessionTreatmentItemDto[];
 
   @IsOptional()
   @IsIn(['E', 'D', 'bilateral'])

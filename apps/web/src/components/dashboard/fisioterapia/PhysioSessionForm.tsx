@@ -72,7 +72,6 @@ export function PhysioSessionForm({
   const [bodyMapY, setBodyMapY] = useState<number | undefined>();
   const [symptoms, setSymptoms] = useState("");
   const [painScore, setPainScore] = useState("5");
-  const [treatmentId, setTreatmentId] = useState("");
   const [treatmentNotes, setTreatmentNotes] = useState("");
   const [estimatedDays, setEstimatedDays] = useState("");
   const [estimatedEndDate, setEstimatedEndDate] = useState("");
@@ -91,6 +90,7 @@ export function PhysioSessionForm({
   const [loadingDx, setLoadingDx] = useState(false);
   const [painRegions, setPainRegions] = useState<PainRegionEntry[]>([]);
   const [selectedDiagnosisIds, setSelectedDiagnosisIds] = useState<string[]>([]);
+  const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
@@ -132,7 +132,6 @@ export function PhysioSessionForm({
         setBodyMapY(data.bodyMapY ?? undefined);
         setSymptoms(data.symptoms ?? "");
         setPainScore(data.painScore != null ? String(data.painScore) : "");
-        setTreatmentId(data.treatmentId ?? "");
         setTreatmentNotes(data.treatmentNotes ?? "");
         setEstimatedDays(data.estimatedDays != null ? String(data.estimatedDays) : "");
         setEstimatedEndDate(
@@ -175,6 +174,16 @@ export function PhysioSessionForm({
               ? [data.diagnosisId]
               : [];
         setSelectedDiagnosisIds(dxIds);
+
+        const txIds =
+          data.sessionTreatments && data.sessionTreatments.length > 0
+            ? data.sessionTreatments
+                .map((t) => t.treatmentId)
+                .filter((id): id is string => Boolean(id))
+            : data.treatmentId
+              ? [data.treatmentId]
+              : [];
+        setSelectedTreatmentIds(txIds);
       })
       .catch(() => setError("Não foi possível carregar o atendimento."))
       .finally(() => setLoadingSession(false));
@@ -253,8 +262,9 @@ export function PhysioSessionForm({
   }, [painRegions]);
 
   useEffect(() => {
+    if (loadingDx) return;
     setSelectedDiagnosisIds((prev) => prev.filter((id) => diagnoses.some((d) => d.id === id)));
-  }, [diagnoses]);
+  }, [diagnoses, loadingDx]);
 
   useEffect(() => {
     if (category && !categoriesForClub.some((c) => c.value === category)) {
@@ -267,11 +277,11 @@ export function PhysioSessionForm({
     return players.filter((p) => p.category === category);
   }, [players, category]);
 
-  const filteredTreatments = useMemo(() => {
-    const ids = new Set(painRegions.map((r) => r.regionId));
-    if (ids.size === 0) return treatments;
-    return treatments.filter((t) => !t.regionId || ids.has(t.regionId));
-  }, [treatments, painRegions]);
+  /** Todos os tratamentos ativos — procedimentos são multi e geralmente globais. */
+  const treatmentOptions = useMemo(
+    () => [...treatments].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    [treatments],
+  );
 
   const regionNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -325,6 +335,12 @@ export function PhysioSessionForm({
     );
   };
 
+  const toggleTreatment = (id: string) => {
+    setSelectedTreatmentIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
   const addDiagnosis = async () => {
     if (!regionId || !newDx.trim()) return;
     try {
@@ -345,10 +361,9 @@ export function PhysioSessionForm({
     try {
       const { data } = await api.post<PhysioTreatment>("/fisioterapia/treatments", {
         name: newTx.trim(),
-        regionId: regionId || undefined,
       });
       setTreatments((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")));
-      setTreatmentId(data.id);
+      setSelectedTreatmentIds((prev) => [...prev, data.id]);
       setNewTx("");
     } catch {
       setError("Não foi possível criar o tratamento.");
@@ -414,12 +429,14 @@ export function PhysioSessionForm({
         const dx = diagnoses.find((d) => d.id === id);
         return { diagnosisId: id, regionId: dx?.regionId };
       });
+      const treatmentsPayload = selectedTreatmentIds.map((id) => ({ treatmentId: id }));
 
       if (isEdit && sessionId) {
         const payload: UpdatePhysioSessionPayload = {
           category: category || undefined,
           regions: regionsPayload,
           diagnoses: diagnosesPayload,
+          treatments: treatmentsPayload,
           regionId: painRegions[0]?.regionId,
           side: painRegions[0]?.side,
           bodyMapView: painRegions[0]?.bodyMapView ?? view,
@@ -428,7 +445,7 @@ export function PhysioSessionForm({
           symptoms: symptoms || undefined,
           painScore: painScore ? Number(painScore) : undefined,
           diagnosisId: selectedDiagnosisIds[0],
-          treatmentId: treatmentId || undefined,
+          treatmentId: selectedTreatmentIds[0],
           treatmentNotes: treatmentNotes || undefined,
           estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
           estimatedEndDate: estimatedEndDate || null,
@@ -447,6 +464,7 @@ export function PhysioSessionForm({
         category: category || undefined,
         regions: regionsPayload,
         diagnoses: diagnosesPayload,
+        treatments: treatmentsPayload,
         regionId: painRegions[0]?.regionId,
         side: painRegions[0]?.side,
         bodyMapView: painRegions[0]?.bodyMapView ?? view,
@@ -455,7 +473,7 @@ export function PhysioSessionForm({
         symptoms: symptoms || undefined,
         painScore: painScore ? Number(painScore) : undefined,
         diagnosisId: selectedDiagnosisIds[0],
-        treatmentId: treatmentId || undefined,
+        treatmentId: selectedTreatmentIds[0],
         treatmentNotes: treatmentNotes || undefined,
         estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
         estimatedEndDate: estimatedEndDate || undefined,
@@ -718,16 +736,29 @@ export function PhysioSessionForm({
         </div>
 
         <div className="grid gap-1.5">
-          <Label>Tratamento</Label>
-          <NativeSelect value={treatmentId} onChange={(e) => setTreatmentId(e.target.value)}>
-            <option value="">Selecione…</option>
-            {filteredTreatments.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-                {t.equipment ? ` (${t.equipment})` : ""}
-              </option>
-            ))}
-          </NativeSelect>
+          <Label>Tratamentos (pode marcar mais de um)</Label>
+          {treatmentOptions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum tratamento cadastrado — adicione abaixo.</p>
+          ) : (
+            <div className="max-h-48 space-y-2 overflow-y-auto rounded-md border border-border/70 p-3">
+              {treatmentOptions.map((t) => (
+                <label key={t.id} className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-primary"
+                    checked={selectedTreatmentIds.includes(t.id)}
+                    onChange={() => toggleTreatment(t.id)}
+                  />
+                  <span>
+                    {t.name}
+                    {t.equipment ? (
+                      <span className="ml-1 text-xs text-muted-foreground">({t.equipment})</span>
+                    ) : null}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
           <div className="flex gap-2">
             <Input
               placeholder="Novo tratamento / equipamento"

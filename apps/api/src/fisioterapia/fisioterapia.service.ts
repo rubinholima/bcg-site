@@ -19,6 +19,7 @@ import {
   CreatePhysioTreatmentDto,
   PhysioSessionDiagnosisItemDto,
   PhysioSessionRegionDto,
+  PhysioSessionTreatmentItemDto,
   UpdatePhysioGroupSessionDto,
   UpdatePhysioSessionDto,
 } from './dto/fisioterapia.dto';
@@ -54,6 +55,10 @@ const sessionInclude = {
   sessionDiagnoses: {
     orderBy: { sortOrder: 'asc' as const },
     include: { diagnosis: true },
+  },
+  sessionTreatments: {
+    orderBy: { sortOrder: 'asc' as const },
+    include: { treatment: true },
   },
   player: {
     select: {
@@ -306,13 +311,30 @@ export class FisioterapiaService implements OnModuleInit {
     regionId?: string;
     diagnoses?: PhysioSessionDiagnosisItemDto[];
   }): PhysioSessionDiagnosisItemDto[] {
-    if (dto.diagnoses?.length) return dto.diagnoses;
+    if (dto.diagnoses !== undefined) return dto.diagnoses;
     if (dto.diagnosisId || dto.diagnosisLabel?.trim()) {
       return [
         {
           diagnosisId: dto.diagnosisId,
           diagnosisLabel: dto.diagnosisLabel,
           regionId: dto.regionId,
+        },
+      ];
+    }
+    return [];
+  }
+
+  private normalizeTreatments(dto: {
+    treatmentId?: string;
+    treatmentLabel?: string;
+    treatments?: PhysioSessionTreatmentItemDto[];
+  }): PhysioSessionTreatmentItemDto[] {
+    if (dto.treatments !== undefined) return dto.treatments;
+    if (dto.treatmentId || dto.treatmentLabel?.trim()) {
+      return [
+        {
+          treatmentId: dto.treatmentId,
+          treatmentLabel: dto.treatmentLabel,
         },
       ];
     }
@@ -345,6 +367,27 @@ export class FisioterapiaService implements OnModuleInit {
     return resolved;
   }
 
+  private async resolveTreatmentItems(items: PhysioSessionTreatmentItemDto[]) {
+    const resolved: Array<{
+      treatmentId: string | null;
+      treatmentLabel: string | null;
+    }> = [];
+    for (const item of items) {
+      let label = item.treatmentLabel?.trim() || null;
+      let treatmentId = item.treatmentId || null;
+      if (treatmentId) {
+        const t = await this.prisma.physioTreatment.findUnique({
+          where: { id: treatmentId },
+        });
+        if (!t) throw new BadRequestException('Tratamento inválido.');
+        label = t.name;
+      }
+      if (!label && !treatmentId) continue;
+      resolved.push({ treatmentId, treatmentLabel: label });
+    }
+    return resolved;
+  }
+
   private buildStatusDetails(session: {
     region?: { namePt: string } | null;
     regionId: string;
@@ -354,6 +397,7 @@ export class FisioterapiaService implements OnModuleInit {
     estimatedEndDate?: Date | null;
     sessionRegions?: Array<{ region?: { namePt: string } | null; regionId: string; side?: string | null }>;
     sessionDiagnoses?: Array<{ diagnosisLabel?: string | null; diagnosis?: { name: string } | null }>;
+    sessionTreatments?: Array<{ treatmentLabel?: string | null; treatment?: { name: string } | null }>;
   }) {
     const regionParts =
       session.sessionRegions && session.sessionRegions.length > 0
@@ -381,10 +425,19 @@ export class FisioterapiaService implements OnModuleInit {
           ? [session.diagnosisLabel]
           : [];
 
+    const txParts =
+      session.sessionTreatments && session.sessionTreatments.length > 0
+        ? session.sessionTreatments
+            .map((t) => t.treatmentLabel ?? t.treatment?.name)
+            .filter(Boolean)
+        : session.treatmentLabel
+          ? [session.treatmentLabel]
+          : [];
+
     const parts = [
       `Fisio: ${regionParts.join(' + ')}`,
       dxParts.length ? `Dx: ${dxParts.join(' + ')}` : null,
-      session.treatmentLabel ? `Tx: ${session.treatmentLabel}` : null,
+      txParts.length ? `Tx: ${txParts.join(' + ')}` : null,
       session.estimatedEndDate
         ? `Previsão: ${session.estimatedEndDate.toISOString().slice(0, 10)}`
         : null,
@@ -399,6 +452,7 @@ export class FisioterapiaService implements OnModuleInit {
         region: true,
         sessionRegions: { include: { region: true } },
         sessionDiagnoses: { include: { diagnosis: true } },
+        sessionTreatments: { include: { treatment: true } },
       },
       orderBy: { startedAt: 'desc' },
     });
@@ -463,12 +517,19 @@ export class FisioterapiaService implements OnModuleInit {
       ...dto,
       regionId: primary.regionId,
     }));
+    const treatmentItems = await this.resolveTreatmentItems(
+      this.normalizeTreatments({
+        treatmentId: dto.treatmentId,
+        treatmentLabel: dto.treatmentLabel,
+        treatments: dto.treatments,
+      }),
+    );
 
     const { diagnosisLabel, treatmentLabel } = await this.resolveLabels({
       diagnosisId: dto.diagnosisId ?? diagnosisItems[0]?.diagnosisId ?? undefined,
       diagnosisLabel: dto.diagnosisLabel ?? diagnosisItems[0]?.diagnosisLabel ?? undefined,
-      treatmentId: dto.treatmentId,
-      treatmentLabel: dto.treatmentLabel,
+      treatmentId: dto.treatmentId ?? treatmentItems[0]?.treatmentId ?? undefined,
+      treatmentLabel: dto.treatmentLabel ?? treatmentItems[0]?.treatmentLabel ?? undefined,
     });
     let estimatedEndDate: Date | null = null;
     if (dto.estimatedEndDate) {
@@ -492,8 +553,8 @@ export class FisioterapiaService implements OnModuleInit {
         painScore: dto.painScore ?? null,
         diagnosisId: diagnosisItems[0]?.diagnosisId ?? dto.diagnosisId ?? null,
         diagnosisLabel: diagnosisItems[0]?.diagnosisLabel ?? diagnosisLabel,
-        treatmentId: dto.treatmentId || null,
-        treatmentLabel,
+        treatmentId: treatmentItems[0]?.treatmentId ?? dto.treatmentId ?? null,
+        treatmentLabel: treatmentItems[0]?.treatmentLabel ?? treatmentLabel,
         treatmentNotes: dto.treatmentNotes?.trim() || null,
         estimatedDays: dto.estimatedDays ?? null,
         estimatedEndDate,
@@ -520,6 +581,15 @@ export class FisioterapiaService implements OnModuleInit {
                 regionId: d.regionId,
                 diagnosisId: d.diagnosisId,
                 diagnosisLabel: d.diagnosisLabel,
+                sortOrder: i,
+              })),
+            }
+          : undefined,
+        sessionTreatments: treatmentItems.length
+          ? {
+              create: treatmentItems.map((t, i) => ({
+                treatmentId: t.treatmentId,
+                treatmentLabel: t.treatmentLabel,
                 sortOrder: i,
               })),
             }
@@ -589,6 +659,24 @@ export class FisioterapiaService implements OnModuleInit {
       );
     }
 
+    const shouldUpdateTreatments =
+      dto.treatments !== undefined ||
+      dto.treatmentId !== undefined ||
+      dto.treatmentLabel !== undefined;
+
+    let treatmentItems:
+      | Array<{ treatmentId: string | null; treatmentLabel: string | null }>
+      | undefined;
+    if (shouldUpdateTreatments) {
+      treatmentItems = await this.resolveTreatmentItems(
+        this.normalizeTreatments({
+          treatmentId: dto.treatmentId ?? current.treatmentId ?? undefined,
+          treatmentLabel: dto.treatmentLabel ?? current.treatmentLabel ?? undefined,
+          treatments: dto.treatments,
+        }),
+      );
+    }
+
     const { diagnosisLabel, treatmentLabel } = await this.resolveLabels({
       diagnosisId:
         dto.diagnosisId ??
@@ -600,8 +688,16 @@ export class FisioterapiaService implements OnModuleInit {
         diagnosisItems?.[0]?.diagnosisLabel ??
         current.diagnosisLabel ??
         undefined,
-      treatmentId: dto.treatmentId,
-      treatmentLabel: dto.treatmentLabel ?? current.treatmentLabel ?? undefined,
+      treatmentId:
+        dto.treatmentId ??
+        treatmentItems?.[0]?.treatmentId ??
+        current.treatmentId ??
+        undefined,
+      treatmentLabel:
+        dto.treatmentLabel ??
+        treatmentItems?.[0]?.treatmentLabel ??
+        current.treatmentLabel ??
+        undefined,
     });
 
     let estimatedEndDate: Date | null | undefined = undefined;
@@ -626,6 +722,9 @@ export class FisioterapiaService implements OnModuleInit {
     }
     if (diagnosisItems !== undefined) {
       await this.prisma.physioSessionDiagnosis.deleteMany({ where: { sessionId: id } });
+    }
+    if (treatmentItems !== undefined) {
+      await this.prisma.physioSessionTreatment.deleteMany({ where: { sessionId: id } });
     }
 
     const primary = regions?.[0];
@@ -663,11 +762,18 @@ export class FisioterapiaService implements OnModuleInit {
             : dto.diagnosisId !== undefined || dto.diagnosisLabel !== undefined
               ? diagnosisLabel
               : undefined,
-        treatmentId: dto.treatmentId === undefined ? undefined : dto.treatmentId || null,
+        treatmentId:
+          treatmentItems !== undefined
+            ? treatmentItems[0]?.treatmentId ?? null
+            : dto.treatmentId === undefined
+              ? undefined
+              : dto.treatmentId || null,
         treatmentLabel:
-          dto.treatmentId !== undefined || dto.treatmentLabel !== undefined
-            ? treatmentLabel
-            : undefined,
+          treatmentItems !== undefined
+            ? treatmentItems[0]?.treatmentLabel ?? treatmentLabel
+            : dto.treatmentId !== undefined || dto.treatmentLabel !== undefined
+              ? treatmentLabel
+              : undefined,
         treatmentNotes: dto.treatmentNotes,
         estimatedDays: dto.estimatedDays,
         estimatedEndDate,
@@ -700,6 +806,17 @@ export class FisioterapiaService implements OnModuleInit {
                   regionId: d.regionId,
                   diagnosisId: d.diagnosisId,
                   diagnosisLabel: d.diagnosisLabel,
+                  sortOrder: i,
+                })),
+              },
+            }
+          : {}),
+        ...(treatmentItems !== undefined
+          ? {
+              sessionTreatments: {
+                create: treatmentItems.map((t, i) => ({
+                  treatmentId: t.treatmentId,
+                  treatmentLabel: t.treatmentLabel,
                   sortOrder: i,
                 })),
               },
@@ -976,6 +1093,7 @@ export class FisioterapiaService implements OnModuleInit {
         include: {
           sessionRegions: { include: { region: true } },
           sessionDiagnoses: { include: { diagnosis: true } },
+          sessionTreatments: { include: { treatment: true } },
           region: true,
           player: { select: { id: true, name: true, category: true } },
           tenant: { select: { id: true, name: true } },
@@ -1071,8 +1189,15 @@ export class FisioterapiaService implements OnModuleInit {
         byDiagnosis.set(label, (byDiagnosis.get(label) ?? 0) + 1);
       }
 
-      if (s.treatmentLabel?.trim()) {
-        byTreatment.set(s.treatmentLabel.trim(), (byTreatment.get(s.treatmentLabel.trim()) ?? 0) + 1);
+      const txRows =
+        s.sessionTreatments.length > 0
+          ? s.sessionTreatments.map((t) => t.treatmentLabel ?? t.treatment?.name).filter(Boolean)
+          : s.treatmentLabel
+            ? [s.treatmentLabel]
+            : [];
+      for (const label of txRows) {
+        if (!label) continue;
+        byTreatment.set(label, (byTreatment.get(label) ?? 0) + 1);
       }
     }
 

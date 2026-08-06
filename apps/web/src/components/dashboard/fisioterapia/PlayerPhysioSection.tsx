@@ -130,7 +130,17 @@ export function PlayerPhysioSection({
                               .filter(Boolean)
                               .join(" + ")
                           : s.diagnosisLabel) || "Sem diagnóstico"}
-                        {s.treatmentLabel ? ` · ${s.treatmentLabel}` : ""}
+                        {(() => {
+                          const txs =
+                            s.sessionTreatments && s.sessionTreatments.length > 0
+                              ? s.sessionTreatments
+                                  .map((t) => t.treatmentLabel ?? t.treatment?.name)
+                                  .filter(Boolean)
+                              : s.treatmentLabel
+                                ? [s.treatmentLabel]
+                                : [];
+                          return txs.length ? ` · ${txs.join(" + ")}` : "";
+                        })()}
                       </p>
                     </div>
                     <span className="text-[11px] font-semibold uppercase text-muted-foreground">

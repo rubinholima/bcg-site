@@ -181,6 +181,15 @@ export default function FisioterapiaSessionDetailPage() {
         ? [session.diagnosisLabel]
         : [];
 
+  const treatmentLines =
+    session.sessionTreatments && session.sessionTreatments.length > 0
+      ? session.sessionTreatments
+          .map((t) => t.treatmentLabel ?? t.treatment?.name)
+          .filter(Boolean)
+      : session.treatmentLabel
+        ? [session.treatmentLabel]
+        : [];
+
   return (
     <div className="space-y-4">
       <div>
@@ -254,8 +263,8 @@ export default function FisioterapiaSessionDetailPage() {
                 {diagnosisLines.length ? diagnosisLines.join(" · ") : "—"}
               </p>
               <p>
-                <span className="text-muted-foreground">Tratamento:</span>{" "}
-                {session.treatmentLabel ?? "—"}
+                <span className="text-muted-foreground">Tratamento(s):</span>{" "}
+                {treatmentLines.length ? treatmentLines.join(" · ") : "—"}
               </p>
               <p>
                 <span className="text-muted-foreground">Sintomas:</span> {session.symptoms ?? "—"}

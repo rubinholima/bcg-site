@@ -2819,6 +2819,18 @@ model PhysioSessionDiagnosis {
   @@index([sessionId])
 }
 
+/// Tratamento vinculado a um atendimento (multi-procedimento)
+model PhysioSessionTreatment {
+  id             String   @id @default(cuid())
+  sessionId      String
+  session        PhysioSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  treatmentId    String?
+  treatment      PhysioTreatment? @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
+  treatmentLabel String?
+  sortOrder      Int      @default(0)
+  @@index([sessionId])
+}
+
 /// Recovery pós-jogo em grupo (atletas que jogaram)
 model PhysioGroupSession {
   id              String   @id @default(cuid())
@@ -2867,6 +2879,7 @@ model PhysioTreatment {
   createdByUserId String?
   createdAt       DateTime @default(now())
   sessions        PhysioSession[]
+  sessionTreatments PhysioSessionTreatment[]
   @@index([regionId, active])
   @@index([active])
 }
@@ -2908,6 +2921,7 @@ model PhysioSession {
   updatedAt        DateTime @updatedAt
   sessionRegions   PhysioSessionRegion[]
   sessionDiagnoses PhysioSessionDiagnosis[]
+  sessionTreatments PhysioSessionTreatment[]
   @@index([tenantId, status])
   @@index([playerId, status])
   @@index([regionId])

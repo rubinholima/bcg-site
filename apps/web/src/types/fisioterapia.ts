@@ -64,6 +64,15 @@ export interface PhysioSessionDiagnosis {
   diagnosis?: PhysioDiagnosis | null;
 }
 
+export interface PhysioSessionTreatment {
+  id: string;
+  sessionId: string;
+  treatmentId: string | null;
+  treatmentLabel: string | null;
+  sortOrder: number;
+  treatment?: PhysioTreatment | null;
+}
+
 export interface PhysioSession {
   id: string;
   tenantId: string;
@@ -95,6 +104,7 @@ export interface PhysioSession {
   treatment?: PhysioTreatment | null;
   sessionRegions?: PhysioSessionRegion[];
   sessionDiagnoses?: PhysioSessionDiagnosis[];
+  sessionTreatments?: PhysioSessionTreatment[];
   player?: {
     id: string;
     name: string;
@@ -120,6 +130,11 @@ export interface PhysioSessionDiagnosisInput {
   diagnosisLabel?: string;
 }
 
+export interface PhysioSessionTreatmentInput {
+  treatmentId?: string;
+  treatmentLabel?: string;
+}
+
 export interface CreatePhysioSessionPayload {
   tenantId: string;
   playerId: string;
@@ -127,6 +142,7 @@ export interface CreatePhysioSessionPayload {
   regionId?: string;
   regions?: PhysioSessionRegionInput[];
   diagnoses?: PhysioSessionDiagnosisInput[];
+  treatments?: PhysioSessionTreatmentInput[];
   side?: PhysioSide;
   bodyMapView?: PhysioBodyMapView;
   bodyMapX?: number;
@@ -150,6 +166,7 @@ export interface UpdatePhysioSessionPayload {
   regionId?: string;
   regions?: PhysioSessionRegionInput[];
   diagnoses?: PhysioSessionDiagnosisInput[];
+  treatments?: PhysioSessionTreatmentInput[];
   side?: PhysioSide;
   bodyMapView?: PhysioBodyMapView;
   bodyMapX?: number;
