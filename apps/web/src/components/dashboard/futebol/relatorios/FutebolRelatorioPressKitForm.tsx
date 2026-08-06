@@ -45,7 +45,7 @@ import { getStaffRoleLabel } from "@/lib/staff-roles";
 import { getFormation, PRESS_KIT_FORMATIONS } from "@/lib/press-kit-formations";
 import {
   assignStartersByCadastroPosition,
-  cadastroPositionLabel,
+  cadastroPositionAbbrev,
   provisionalJerseyValue,
   seedProvisionalJerseyOverrides,
 } from "@/lib/press-kit-lineup";
@@ -836,14 +836,14 @@ export function FutebolRelatorioPressKitForm() {
                     .map((row, ord) => {
                       const a = athletes.find((x) => x.playerId === row.id);
                       if (!a) return null;
-                      const posLabel = cadastroPositionLabel(a.position);
+                      const num = ord + 1;
                       return (
                         <div
                           key={`${row.id}-${row.slotIndex}`}
                           className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2"
                         >
                           <span className="w-6 shrink-0 text-center text-sm font-extrabold text-muted-foreground">
-                            {ord + 1}
+                            {num}
                           </span>
                           <AthletePhoto3x4
                             photoUrl={a.photoUrl}
@@ -856,12 +856,12 @@ export function FutebolRelatorioPressKitForm() {
                               min={0}
                               max={99}
                               className="min-h-[40px] text-foreground"
-                              value={provisionalJerseyValue(a, jerseyOverrides, ord + 1)}
+                              value={provisionalJerseyValue(a, jerseyOverrides, num)}
                               onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
                             />
                           </div>
-                          <span className="min-w-[7.5rem] shrink-0 rounded bg-[#00205B]/30 px-2 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-[#93c5fd]">
-                            {posLabel}
+                          <span className="w-14 shrink-0 rounded bg-[#00205B]/25 px-1 py-2 text-center text-xs font-bold uppercase text-[#93c5fd]">
+                            {cadastroPositionAbbrev(a.position)}
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium">
@@ -889,8 +889,9 @@ export function FutebolRelatorioPressKitForm() {
                   <p className="text-sm font-semibold">
                     Reservas ({reserves.length})
                   </p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {reserves.map((a, ord) => (
+                  {reserves.map((a, ord) => {
+                    const num = filledStarters + ord + 1;
+                    return (
                       <div
                         key={a.playerId}
                         draggable
@@ -898,29 +899,28 @@ export function FutebolRelatorioPressKitForm() {
                           setDragPlayerId(a.playerId!);
                           e.dataTransfer.setData("playerId", a.playerId!);
                         }}
-                        className="flex min-h-[64px] items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2"
+                        className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2"
                       >
                         <span className="w-6 shrink-0 text-center text-sm font-extrabold text-muted-foreground">
-                          {ord + 1}
+                          {num}
                         </span>
                         <AthletePhoto3x4
                           photoUrl={a.photoUrl}
                           name={a.nickname || a.name}
-                          size="sm"
                         />
-                        <div className="w-[72px] space-y-1">
+                        <div className="w-20 space-y-1">
                           <Label className="text-[10px] text-muted-foreground">Camisa</Label>
                           <Input
                             type="number"
                             min={0}
                             max={99}
                             className="min-h-[40px] text-foreground"
-                            value={provisionalJerseyValue(a, jerseyOverrides, ord + 1)}
+                            value={provisionalJerseyValue(a, jerseyOverrides, num)}
                             onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
                           />
                         </div>
-                        <span className="min-w-[7.5rem] shrink-0 rounded bg-amber-950/50 px-2 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-amber-300">
-                          {cadastroPositionLabel(a.position)}
+                        <span className="w-14 shrink-0 rounded bg-[#00205B]/25 px-1 py-2 text-center text-xs font-bold uppercase text-[#93c5fd]">
+                          {cadastroPositionAbbrev(a.position)}
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
@@ -941,8 +941,8 @@ export function FutebolRelatorioPressKitForm() {
                           + titular
                         </Button>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -51,6 +51,26 @@ export function cadastroPositionLabel(position: string | null | undefined): stri
   return position?.trim() || "—";
 }
 
+/** Abreviação canônica (GOL, LE, ZAG…) — mesma nomenclatura de titulares e reservas. */
+const POSITION_ABBREV: Record<FootballPositionCode, string> = {
+  GOLEIRO: "GOL",
+  ZAGUEIRO: "ZAG",
+  "LATERAL ESQUERDO": "LE",
+  "LATERAL DIREITO": "LD",
+  VOLANTE: "VOL",
+  "MEIO-CAMPO": "MEI",
+  EXTREMO: "EXT",
+  CENTROAVANTE: "ATA",
+};
+
+export function cadastroPositionAbbrev(position: string | null | undefined): string {
+  const code = normalizeFootballPositionCode(position);
+  if (code) return POSITION_ABBREV[code];
+  const raw = position?.trim();
+  if (!raw) return "—";
+  return raw.slice(0, 3).toUpperCase();
+}
+
 export function cadastroPositionCode(
   position: string | null | undefined,
 ): FootballPositionCode | null {
