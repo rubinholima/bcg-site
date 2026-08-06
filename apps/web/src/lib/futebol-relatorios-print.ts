@@ -1227,7 +1227,7 @@ export function buildPressKitPrintHtml(
     .pitch-wrap {
       position: relative;
       width: 100%;
-      height: 132mm;
+      height: 112mm;
       border-radius: 8px;
       overflow: hidden;
       border: 2.5px solid #14532d;
@@ -1318,7 +1318,7 @@ export function buildPressKitPrintHtml(
 
     .pk-pitch-layout {
       display: grid;
-      grid-template-columns: 0.55fr 1.7fr;
+      grid-template-columns: 0.78fr 1.35fr;
       gap: 8px;
       margin-top: 4px;
       align-items: stretch;

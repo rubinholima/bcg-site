@@ -599,8 +599,8 @@ function styles(size: PrintPageSize): string {
     }
     .vis-field-row {
       display: grid;
-      grid-template-columns: 42mm minmax(0, 1fr);
-      gap: 3mm;
+      grid-template-columns: 56mm minmax(0, 1fr);
+      gap: 4mm;
       align-items: start;
     }
     .vis-staff-side {
@@ -647,9 +647,9 @@ function styles(size: PrintPageSize): string {
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
-      max-width: 155mm;
+      max-width: 128mm;
       margin: 0 auto;
-      aspect-ratio: 5 / 6;
+      aspect-ratio: 68 / 100;
       border-radius: 3mm;
       overflow: hidden;
       border: 2.5px solid #14532d;
