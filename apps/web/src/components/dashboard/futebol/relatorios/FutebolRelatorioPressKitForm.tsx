@@ -1146,13 +1146,13 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="group flex w-[100px] cursor-grab flex-col items-center gap-0 active:cursor-grabbing sm:w-[108px]"
+                              className="group flex w-[86px] cursor-grab flex-col items-center gap-0 active:cursor-grabbing sm:w-[92px]"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
                                   photoUrl={athlete.photoUrl}
                                   name={athlete.nickname || athlete.name}
-                                  size="xl"
+                                  size="lg"
                                   onPitch
                                 />
                                 <span className="absolute -bottom-1 -left-1 flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">

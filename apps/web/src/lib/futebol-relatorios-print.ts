@@ -1,6 +1,7 @@
 import { formatCpfForDisplay } from "@/lib/format-cpf";
 import {
   formatDateDayMonYear,
+  formatDateDaySlashMonYear,
   formatDateTimeDayMonYear,
 } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -363,30 +364,52 @@ function logoHtml(logoUrl: string | null | undefined, clubName: string): string 
   return `<div class="logo-wrap"><div class="logo-fallback">${escapeHtml(initials || "BCG")}</div></div>`;
 }
 
-function personTableRows(rows: RelatorioPessoaRow[], showRole = false): string {
+type PersonTableOpts = {
+  showRole?: boolean;
+  /** Só nome, apelido e nascimento (sem CPF/RG) — convocação / relacionados */
+  convocacao?: boolean;
+};
+
+function personTableRows(rows: RelatorioPessoaRow[], opts: PersonTableOpts = {}): string {
+  const showRole = opts.showRole === true;
+  const convocacao = opts.convocacao === true;
+  const colCount = 3 + (showRole ? 1 : 0) + (convocacao ? 1 : 3);
   if (rows.length === 0) {
-    return `<tr><td colspan="${showRole ? 7 : 6}" class="empty">Nenhum registro</td></tr>`;
+    return `<tr><td colspan="${colCount}" class="empty">Nenhum registro</td></tr>`;
   }
+  const birthFmt = convocacao ? formatDateDaySlashMonYear : formatBrDate;
   return rows
     .map((r) => {
       const roleCell = showRole
         ? `<td>${escapeHtml(r.role?.trim() || "—")}</td>`
         : "";
+      const docsCells = convocacao
+        ? ""
+        : `<td>${escapeHtml(formatCpfForDisplay(r.cpf) || "—")}</td>
+        <td>${escapeHtml(r.rg?.trim() || "—")}</td>`;
       return `<tr>
         <td class="num">${r.num}</td>
         <td class="left">${escapeHtml(r.name)}</td>
         <td class="left">${escapeHtml(r.nickname?.trim() || "—")}</td>
         ${roleCell}
-        <td>${escapeHtml(formatCpfForDisplay(r.cpf) || "—")}</td>
-        <td>${escapeHtml(r.rg?.trim() || "—")}</td>
-        <td>${escapeHtml(formatBrDate(r.birthDate))}</td>
+        ${docsCells}
+        <td>${escapeHtml(birthFmt(r.birthDate))}</td>
       </tr>`;
     })
     .join("");
 }
 
-function personTable(title: string, rows: RelatorioPessoaRow[], showRole = false): string {
+function personTable(
+  title: string,
+  rows: RelatorioPessoaRow[],
+  opts: PersonTableOpts | boolean = {},
+): string {
+  const normalized: PersonTableOpts =
+    typeof opts === "boolean" ? { showRole: opts } : opts;
+  const showRole = normalized.showRole === true;
+  const convocacao = normalized.convocacao === true;
   const roleHead = showRole ? "<th>Função</th>" : "";
+  const docsHead = convocacao ? "" : "<th>CPF</th><th>RG</th>";
   return `
     <section class="section">
       <h2 class="section-title">${escapeHtml(title)}</h2>
@@ -397,12 +420,11 @@ function personTable(title: string, rows: RelatorioPessoaRow[], showRole = false
             <th>Nome</th>
             <th>Apelido</th>
             ${roleHead}
-            <th>CPF</th>
-            <th>RG</th>
+            ${docsHead}
             <th>Nascimento</th>
           </tr>
         </thead>
-        <tbody>${personTableRows(rows, showRole)}</tbody>
+        <tbody>${personTableRows(rows, normalized)}</tbody>
       </table>
     </section>
   `;
@@ -917,9 +939,9 @@ export function buildLayoutRelacionadosPrintHtml(
       : "";
 
   const body = `
-    ${personTable("Atletas convocados", data.athletes)}
-    ${personTable("Comissão técnica", data.staff, true)}
-    ${data.guests.length ? personTable("Pessoas autorizadas", data.guests) : ""}
+    ${personTable("Atletas convocados", data.athletes, { convocacao: true })}
+    ${personTable("Comissão técnica", data.staff, { showRole: true, convocacao: true })}
+    ${data.guests.length ? personTable("Pessoas autorizadas", data.guests, { convocacao: true }) : ""}
     ${uniformsSection}
     ${
       travel.isHomeMatch

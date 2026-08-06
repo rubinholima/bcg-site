@@ -80,6 +80,24 @@ export function formatDateDayMonYear(
 }
 
 /**
+ * Data com barras — ex.: 12/AGO/2026 (relatórios de convocação)
+ */
+export function formatDateDaySlashMonYear(
+  value: string | Date | null | undefined,
+): string {
+  if (value == null || value === "") return "—";
+  try {
+    const p = partsFromValue(value);
+    if (!p || !p.year || !p.month || !p.day || p.month < 1 || p.month > 12) {
+      return "—";
+    }
+    return `${String(p.day).padStart(2, "0")}/${MONTHS_PT_SHORT[p.month - 1]}/${p.year}`;
+  } catch {
+    return "—";
+  }
+}
+
+/**
  * Mês + ano — ex.: AGO 2026 (cabeçalhos de calendário)
  */
 export function formatMonthYear(
