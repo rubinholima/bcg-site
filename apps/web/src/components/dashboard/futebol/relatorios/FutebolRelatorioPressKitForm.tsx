@@ -1061,8 +1061,8 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                 </div>
 
-                <div className="mx-auto grid w-full max-w-5xl gap-4 sm:grid-cols-[200px_minmax(0,1fr)] sm:items-start">
-                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 sm:order-1 sm:max-h-[min(68vh,600px)] sm:overflow-y-auto">
+                <div className="mx-auto grid w-full max-w-6xl gap-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
+                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 sm:order-1">
                     <p className="mb-3 text-xs font-extrabold uppercase tracking-wide text-[#93c5fd]">
                       Comissão
                     </p>
@@ -1094,7 +1094,7 @@ export function FutebolRelatorioPressKitForm() {
                     )}
                   </aside>
                   <div
-                    className="relative order-1 mx-auto aspect-[68/100] h-[min(64vh,560px)] w-auto max-w-full overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(66vh,580px)]"
+                    className="relative order-1 mx-auto aspect-[68/100] h-[min(72vh,750px)] w-auto max-w-full overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(74vh,760px)]"
                     onDragOver={(e) => e.preventDefault()}
                   >
                     <PitchMarkings />
@@ -1144,16 +1144,16 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="flex w-[88px] cursor-grab flex-col items-center gap-0 active:cursor-grabbing sm:w-[96px]"
+                              className="flex w-[100px] cursor-grab flex-col items-center gap-0 active:cursor-grabbing sm:w-[108px]"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
                                   photoUrl={athlete.photoUrl}
                                   name={athlete.nickname || athlete.name}
-                                  size="lg"
+                                  size="xl"
                                   onPitch
                                 />
-                                <span className="absolute -bottom-1 -left-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-[#C8102E] px-1 text-[11px] font-extrabold text-white shadow">
+                                <span className="absolute -bottom-1 -left-1 flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
                                   {provisionalJerseyValue(
                                     athlete,
                                     jerseyOverrides,
@@ -1169,7 +1169,7 @@ export function FutebolRelatorioPressKitForm() {
                                   ×
                                 </button>
                               </div>
-                              <span className="w-full text-center text-[10px] font-extrabold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                              <span className="w-full text-center text-[11px] font-extrabold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                                 {nickOnly}
                               </span>
                               {pos ? (
@@ -1178,13 +1178,13 @@ export function FutebolRelatorioPressKitForm() {
                                 </span>
                               ) : null}
                               {birth ? (
-                                <span className="w-full text-center text-[7px] font-medium leading-tight text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                <span className="w-full text-center text-[8px] font-medium leading-tight text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                                   {birth}
                                 </span>
                               ) : null}
                             </div>
                           ) : (
-                            <div className="flex h-[64px] w-[48px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[10px] font-bold uppercase text-white/80">
+                            <div className="flex h-[96px] w-[72px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
                               {slot.label}
                             </div>
                           )}

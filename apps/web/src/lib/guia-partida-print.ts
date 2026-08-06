@@ -599,7 +599,7 @@ function styles(size: PrintPageSize): string {
     }
     .vis-field-row {
       display: grid;
-      grid-template-columns: 56mm minmax(0, 1fr);
+      grid-template-columns: 50mm minmax(0, 1fr);
       gap: 4mm;
       align-items: start;
     }
@@ -647,7 +647,7 @@ function styles(size: PrintPageSize): string {
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
-      max-width: 128mm;
+      max-width: 148mm;
       margin: 0 auto;
       aspect-ratio: 68 / 100;
       border-radius: 3mm;
@@ -665,20 +665,20 @@ function styles(size: PrintPageSize): string {
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 24mm;
+      width: 26mm;
       text-align: center;
       z-index: 2;
     }
     .vis-photo-wrap {
       position: relative;
-      width: 11mm;
-      height: 14.5mm;
+      width: 13mm;
+      height: 17mm;
       margin: 0 auto 0.5mm;
       background: transparent;
     }
     .vis-photo {
-      width: 11mm;
-      height: 14.5mm;
+      width: 13mm;
+      height: 17mm;
       object-fit: cover;
       object-position: center 12%;
       border-radius: 1mm;

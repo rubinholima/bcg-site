@@ -1227,7 +1227,7 @@ export function buildPressKitPrintHtml(
     .pitch-wrap {
       position: relative;
       width: 100%;
-      height: 112mm;
+      height: 126mm;
       border-radius: 8px;
       overflow: hidden;
       border: 2.5px solid #14532d;
@@ -1251,14 +1251,14 @@ export function buildPressKitPrintHtml(
     .player-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 72px;
+      width: 84px;
       text-align: center;
       z-index: 2;
     }
     .chip-photo-wrap {
       position: relative;
-      width: 38px;
-      height: 50px;
+      width: 44px;
+      height: 58px;
       margin: 0 auto 1px;
       background: transparent;
     }
@@ -1272,8 +1272,8 @@ export function buildPressKitPrintHtml(
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
     }
     .pitch-wrap .chip-photo {
-      width: 38px;
-      height: 50px;
+      width: 44px;
+      height: 58px;
       background: transparent;
       box-shadow: none;
     }
@@ -1284,9 +1284,9 @@ export function buildPressKitPrintHtml(
       background: rgba(0,0,0,0.45);
     }
     .pitch-wrap .chip-photo-fallback {
-      width: 38px;
-      height: 50px;
-      font-size: 14px;
+      width: 44px;
+      height: 58px;
+      font-size: 15px;
       mix-blend-mode: normal;
     }
     .chip-num {
@@ -1318,10 +1318,10 @@ export function buildPressKitPrintHtml(
 
     .pk-pitch-layout {
       display: grid;
-      grid-template-columns: 0.78fr 1.35fr;
+      grid-template-columns: 0.7fr 1.5fr;
       gap: 8px;
       margin-top: 4px;
-      align-items: stretch;
+      align-items: start;
     }
     .pk-page-pitch .pk-block h3 { margin-bottom: 3px; }
     .pk-bench-strip {
