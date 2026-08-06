@@ -670,7 +670,6 @@ function styles(size: PrintPageSize): string {
       position: absolute;
       inset: 0 7%;
       z-index: 2;
-      overflow: hidden;
     }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
     .vis-pitch-wrap .pl-half { left: 0; right: 0; top: 50%; border-width: 0 0 2px 0; }
@@ -708,18 +707,17 @@ function styles(size: PrintPageSize): string {
       color: #fff; font-weight: 800; font-size: 9pt; background: rgba(0,0,0,.45);
       mix-blend-mode: normal;
     }
-    /* Número na base da foto (peito/camisa), um pouco acima do nome — nunca no rosto */
+    /* Um pouco acima do nome (base da foto) — não no rosto. */
     .vis-num {
       position: absolute; left: -1mm; bottom: 1.2mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
       border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
-      mix-blend-mode: normal; z-index: 2;
+      mix-blend-mode: normal;
     }
     .vis-nick {
       font-size: 6.5pt; font-weight: 800; color: #fde68a;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       text-transform: uppercase; line-height: 1.1;
-      white-space: normal; overflow: visible;
     }
     .vis-pos {
       font-size: 6pt; font-weight: 800; color: #fff;
@@ -786,10 +784,17 @@ function pageFoot(club: string, opponent: string, label: string): string {
   return `<div class="page-foot"><span>${esc(club)} × ${esc(opponent)}</span><span>${esc(label)}</span></div>`;
 }
 
+export type GuiaPartidaPrintOptions = {
+  /** Recortes (data-URL) só dos titulares — usados apenas na última página (gramado). */
+  starterCutouts?: Record<string, string>;
+};
+
 export function buildGuiaPartidaPrintHtml(
   data: GuiaPartidaReportDto,
   size: PrintPageSize = "A4",
+  options?: GuiaPartidaPrintOptions,
 ): string {
+  const starterCutouts = options?.starterCutouts ?? {};
   const { travel, config } = data;
   const club = travel.tenant.tradeName?.trim() || travel.tenant.name;
   const opponent = travel.opponentName?.trim() || "Adversário";
@@ -1138,9 +1143,11 @@ export function buildGuiaPartidaPrintHtml(
       const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
       const birth = formatBirth(p.birthDate);
       const ty = pitchChipTranslateY(slot.top);
+      const pitchPhoto =
+        (p.playerId && starterCutouts[p.playerId]) || p.photoUrl;
       return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
         <div class="vis-photo-wrap">
-          ${photo(p.photoUrl, p.name, "vis-photo")}
+          ${photo(pitchPhoto, p.name, "vis-photo")}
           <span class="vis-num">${esc(n)}</span>
         </div>
         <div class="vis-nick">${esc(nickOnly)}</div>
@@ -1243,6 +1250,10 @@ export function buildGuiaPartidaPrintHtml(
 export function printGuiaPartidaReport(
   data: GuiaPartidaReportDto,
   size: PrintPageSize = "A4",
+  options?: GuiaPartidaPrintOptions,
 ): void {
-  printHtmlDocument(buildGuiaPartidaPrintHtml(data, size), "Impressão — Press Kit");
+  printHtmlDocument(
+    buildGuiaPartidaPrintHtml(data, size, options),
+    "Impressão — Press Kit",
+  );
 }

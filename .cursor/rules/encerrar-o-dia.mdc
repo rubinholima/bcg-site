@@ -7,15 +7,12 @@ alwaysApply: true
 
 Quando o usuário disser **"encerre o dia"** (ou equivalente: "encerra o dia", "encerrar o dia", "chega por hoje"):
 
-0. **Sync Beatscode (PDFs restantes)** — Iniciar automaticamente em **background** o sync de documentos:
-   - `cd apps/api`
-   - Variáveis opcionais: `BEATSCODE_BROWSER_PLAYER_LIMIT` alto (ex. 500) ou omitir; **não** usar `BEATSCODE_BROWSER_MAX_SUCCESS` (processar todos do limite).
-   - `pnpm beatscode:sync-documents`
-   - Informar ao usuário que o sync está rodando overnight; não bloquear commit/push por ele.
 1. **Commit de tudo** — `git status`, `git add` dos arquivos alterados/criados, `git commit` com mensagem clara e concisa.
 2. **Atualizar resumo diário** — No **topo** da seção **"📅 POR DIA — ENCERRAMENTOS"** em `docs/DESENVOLVIMENTO_DIARIO.md`:
    - Adicionar **📅 [DATA] — ENCERRAMENTO** (usar data do sistema: rodar `date` no terminal).
    - Incluir: o que foi feito no dia, arquivos envolvidos, e no fechamento: último commit, branch, confirmação de push.
 3. **Push** — `git push origin <branch>` (em geral `develop`).
+
+**Não** iniciar sync Beatscode no encerramento a menos que o usuário peça explicitamente.
 
 Referência completa: `docs/DESENVOLVIMENTO_DIARIO.md`, seção **⭐ REGRAS DIÁRIAS** → "Encerrar o dia".

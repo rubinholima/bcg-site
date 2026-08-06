@@ -54,9 +54,13 @@ export function reportLogoUrlForPrint(
   return tenantLogo ?? null;
 }
 
-/** Logo do clube com URL absoluta (iframe srcDoc não resolve paths relativos). */
+/** Logo/foto com URL absoluta (iframe srcDoc não resolve paths relativos). */
 export function resolveLogoUrlForPrint(logoUrl: string | null | undefined): string {
-  const resolved = getPublicImageUrl(logoUrl);
+  if (!logoUrl) return "";
+  const raw = logoUrl.trim();
+  // Recorte do gramado (canvas) — não passar por getPublicImageUrl (apagava data:/blob:).
+  if (raw.startsWith("data:") || raw.startsWith("blob:")) return raw;
+  const resolved = getPublicImageUrl(raw);
   if (!resolved) return "";
   if (/^https?:\/\//i.test(resolved)) return resolved;
   if (resolved.startsWith("/")) {

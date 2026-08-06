@@ -132,6 +132,26 @@ function formatBirthShortUi(iso: string | null | undefined): string {
   return `${d}/${m}/${y}`;
 }
 
+/** Recortes só dos titulares — injetados só na última página (não altera capa/elenco). */
+async function buildStarterCutouts(
+  data: GuiaPartidaReportDto,
+): Promise<Record<string, string>> {
+  const starterIds = data.config.starterPlayerIds.filter(Boolean);
+  const byId = new Map(
+    (data.squad ?? []).filter((p) => p.playerId).map((p) => [p.playerId!, p]),
+  );
+  const out: Record<string, string> = {};
+  await Promise.all(
+    starterIds.map(async (id) => {
+      const p = byId.get(id);
+      if (!p?.photoUrl) return;
+      const cut = await cutoutWhiteBackgroundUrlCached(p.photoUrl);
+      if (cut) out[id] = cut;
+    }),
+  );
+  return out;
+}
+
 function applyJerseyOverridesLocal(
   rows: RelatorioPessoaRow[],
   overrides: Record<string, number | null>,
@@ -587,8 +607,10 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      // Sem cutout no HTML de impressão: data-URL em massa quebra fotos/páginas do relatório.
-      setPreviewHtml(buildGuiaPartidaPrintHtml(data, pageSize));
+      const starterCutouts = await buildStarterCutouts(data);
+      setPreviewHtml(
+        buildGuiaPartidaPrintHtml(data, pageSize, { starterCutouts }),
+      );
       setPreviewLandscape(false);
       setPreviewOpen(true);
     } catch {
@@ -620,7 +642,8 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      printGuiaPartidaReport(data, pageSize);
+      const starterCutouts = await buildStarterCutouts(data);
+      printGuiaPartidaReport(data, pageSize, { starterCutouts });
     } catch {
       setFeedback({
         open: true,
@@ -1165,7 +1188,7 @@ export function FutebolRelatorioPressKitForm() {
                                 </span>
                                 <button
                                   type="button"
-                                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                                   onClick={() => clearStarterSlot(slotIndex)}
                                   aria-label="Remover do gramado"
                                   title="Remover do gramado"
