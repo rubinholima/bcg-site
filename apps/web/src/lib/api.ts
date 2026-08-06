@@ -14,6 +14,9 @@ async function getErrorMessage(res: Response): Promise<string> {
     if (code === 405) return "Método não permitido (405). Faça o deploy no servidor e verifique CloudFront.";
     if (code === 403) return "Acesso negado (403). Verifique CloudFront: Allowed HTTP Methods deve incluir POST.";
     if (code === 401) return "Não autenticado. Faça login novamente.";
+    if (code === 502 || code === 503 || code === 504) {
+      return "Servidor reiniciando ou indisponível. Aguarde alguns segundos e tente de novo.";
+    }
     return res.statusText || `Erro ${code}`;
   }
 }
