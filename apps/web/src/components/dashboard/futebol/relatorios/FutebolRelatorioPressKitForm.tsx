@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, Loader2, Printer, Save, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +15,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NativeSelect } from "@/components/ui/native-select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -46,6 +55,7 @@ import { getFormation, PRESS_KIT_FORMATIONS } from "@/lib/press-kit-formations";
 import {
   assignStartersByCadastroPosition,
   cadastroPositionAbbrev,
+  orderedAthleteIdsForJerseySeed,
   provisionalJerseyValue,
   seedProvisionalJerseyOverrides,
 } from "@/lib/press-kit-lineup";
@@ -64,8 +74,28 @@ type StaffDirectoryRow = {
   id: string;
   name: string;
   role?: string | null;
+  photoUrl?: string | null;
   jobRole?: { id: string; name: string } | null;
 };
+
+function isHeadCoachRole(role: string | null | undefined): boolean {
+  const raw = (role ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+  const label = getStaffRoleLabel(role ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  return raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"));
+}
+
+function staffDisplayRank(role: string | null | undefined): number {
+  if (isHeadCoachRole(role)) return 0;
+  const label = getStaffRoleLabel(role ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  if (label.includes("auxiliar")) return 1;
+  return 10;
+}
 
 function staffRhCargo(s: StaffDirectoryRow): string {
   const fromJob = s.jobRole?.name?.trim();
@@ -150,6 +180,7 @@ function PitchMarkings() {
 }
 
 export function FutebolRelatorioPressKitForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { tenants } = useFutebolRelatorioTenants();
   const [tenantId, setTenantId] = useState("");
@@ -176,6 +207,9 @@ export function FutebolRelatorioPressKitForm() {
   const [jerseyOverrides, setJerseyOverrides] = useState<Record<string, number | null>>({});
   const [dragPlayerId, setDragPlayerId] = useState<string | null>(null);
   const [staffDirectory, setStaffDirectory] = useState<StaffDirectoryRow[]>([]);
+  const [savedSnapshot, setSavedSnapshot] = useState("");
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const pendingLeaveRef = useRef<(() => void) | null>(null);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -250,13 +284,36 @@ export function FutebolRelatorioPressKitForm() {
             ? data.config.directors
             : emptyNamed(DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
         );
-        setStarterPlayerIds(padStarterSlots(data.config.starterPlayerIds));
+        const starters = padStarterSlots(data.config.starterPlayerIds);
+        const seeded = seedProvisionalJerseyOverrides(
+          orderedAthleteIdsForJerseySeed(starters, data.athletes),
+          data.athletes,
+          data.config.jerseyOverrides ?? {},
+        );
+        setStarterPlayerIds(starters);
         setFormation(data.config.formation?.trim() || "4-3-3");
-        setJerseyOverrides(data.config.jerseyOverrides ?? {});
+        setJerseyOverrides(seeded);
+        setSavedSnapshot(
+          JSON.stringify({
+            phase: data.config.phase ?? "",
+            matchTime: data.config.matchTime ?? "",
+            contactLine: data.config.contactLine ?? "",
+            referees: data.config.referees.length
+              ? data.config.referees
+              : emptyNamed(DEFAULT_PRESS_KIT_REFEREE_ROLES),
+            directors: data.config.directors.length
+              ? data.config.directors
+              : emptyNamed(DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
+            starterPlayerIds: starters,
+            formation: data.config.formation?.trim() || "4-3-3",
+            jerseyOverrides: seeded,
+          }),
+        );
       })
       .catch(() => {
         if (!cancelled) {
           setReportData(null);
+          setSavedSnapshot("");
           setFeedback({
             open: true,
             title: "Erro",
@@ -285,9 +342,58 @@ export function FutebolRelatorioPressKitForm() {
     showDisclaimer: true,
   });
 
+  const currentSnapshot = useMemo(
+    () =>
+      JSON.stringify({
+        phase,
+        matchTime,
+        contactLine,
+        referees,
+        directors,
+        starterPlayerIds: padStarterSlots(starterPlayerIds),
+        formation,
+        jerseyOverrides,
+      }),
+    [
+      phase,
+      matchTime,
+      contactLine,
+      referees,
+      directors,
+      starterPlayerIds,
+      formation,
+      jerseyOverrides,
+    ],
+  );
+  const isDirty = Boolean(savedSnapshot) && currentSnapshot !== savedSnapshot;
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
+
+  const requestLeave = (action: () => void) => {
+    if (!isDirty) {
+      action();
+      return;
+    }
+    pendingLeaveRef.current = action;
+    setLeaveOpen(true);
+  };
+
   const buildLocalReport = (base: PressKitReportDto): PressKitReportDto => {
     const cfg = configPayload();
-    const athletes = applyJerseyOverridesLocal(base.athletes, cfg.jerseyOverrides);
+    const seeded = seedProvisionalJerseyOverrides(
+      orderedAthleteIdsForJerseySeed(cfg.starterPlayerIds, base.athletes),
+      base.athletes,
+      cfg.jerseyOverrides,
+    );
+    const athletes = applyJerseyOverridesLocal(base.athletes, seeded);
     const byId = new Map(
       athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
     );
@@ -300,27 +406,65 @@ export function FutebolRelatorioPressKitForm() {
     const substitutes = athletes
       .filter((a) => a.playerId && !starterSet.has(a.playerId))
       .map((a, i) => ({ ...a, num: i + 1 }));
-    return { ...base, athletes, config: cfg, starters, substitutes };
+    return {
+      ...base,
+      athletes,
+      config: { ...cfg, jerseyOverrides: seeded },
+      starters,
+      substitutes,
+    };
   };
 
-  const handleSave = async () => {
-    if (!travelId || !reportData) return;
+  const handleSave = async (opts?: { silent?: boolean }): Promise<boolean> => {
+    if (!travelId || !reportData) return false;
     setSaving(true);
     try {
+      const payload = configPayload();
+      const seeded = seedProvisionalJerseyOverrides(
+        orderedAthleteIdsForJerseySeed(payload.starterPlayerIds, reportData.athletes),
+        reportData.athletes,
+        payload.jerseyOverrides,
+      );
       const { data } = await api.put<PressKitReportDto>(
         `/futebol-relatorios/press-kit?travelId=${encodeURIComponent(travelId)}`,
-        configPayload(),
+        { ...payload, jerseyOverrides: seeded },
+      );
+      const starters = padStarterSlots(data.config.starterPlayerIds);
+      const nextJerseys = seedProvisionalJerseyOverrides(
+        orderedAthleteIdsForJerseySeed(starters, data.athletes),
+        data.athletes,
+        data.config.jerseyOverrides ?? {},
       );
       setReportData(data);
-      setStarterPlayerIds(padStarterSlots(data.config.starterPlayerIds));
+      setPhase(data.config.phase ?? "");
+      setMatchTime(data.config.matchTime ?? "");
+      setContactLine(data.config.contactLine ?? "");
+      setReferees(data.config.referees);
+      setDirectors(data.config.directors);
+      setStarterPlayerIds(starters);
       setFormation(data.config.formation?.trim() || "4-3-3");
-      setJerseyOverrides(data.config.jerseyOverrides ?? {});
-      setFeedback({
-        open: true,
-        title: "Salvo",
-        message: "Press kit salvo neste planejamento.",
-        variant: "success",
-      });
+      setJerseyOverrides(nextJerseys);
+      setSavedSnapshot(
+        JSON.stringify({
+          phase: data.config.phase ?? "",
+          matchTime: data.config.matchTime ?? "",
+          contactLine: data.config.contactLine ?? "",
+          referees: data.config.referees,
+          directors: data.config.directors,
+          starterPlayerIds: starters,
+          formation: data.config.formation?.trim() || "4-3-3",
+          jerseyOverrides: nextJerseys,
+        }),
+      );
+      if (!opts?.silent) {
+        setFeedback({
+          open: true,
+          title: "Salvo",
+          message: "Press kit salvo neste planejamento.",
+          variant: "success",
+        });
+      }
+      return true;
     } catch {
       setFeedback({
         open: true,
@@ -328,6 +472,7 @@ export function FutebolRelatorioPressKitForm() {
         message: "Não foi possível salvar o press kit.",
         variant: "error",
       });
+      return false;
     } finally {
       setSaving(false);
     }
@@ -345,7 +490,8 @@ export function FutebolRelatorioPressKitForm() {
     }
     setBusy(true);
     try {
-      await api.put(`/futebol-relatorios/press-kit?travelId=${encodeURIComponent(travelId)}`, configPayload());
+      const ok = await handleSave({ silent: true });
+      if (!ok) return;
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
@@ -376,7 +522,8 @@ export function FutebolRelatorioPressKitForm() {
     }
     setBusy(true);
     try {
-      await api.put(`/futebol-relatorios/press-kit?travelId=${encodeURIComponent(travelId)}`, configPayload());
+      const ok = await handleSave({ silent: true });
+      if (!ok) return;
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
@@ -469,10 +616,16 @@ export function FutebolRelatorioPressKitForm() {
           /* sem dados FMF — só cadastro */
         }
       }
-      const assigned = assignStartersByCadastroPosition(athletes, formation, preferred);
-      setStarterPlayerIds(padStarterSlots(assigned));
+      const assigned = padStarterSlots(
+        assignStartersByCadastroPosition(athletes, formation, preferred),
+      );
+      setStarterPlayerIds(assigned);
       setJerseyOverrides((prev) =>
-        seedProvisionalJerseyOverrides(assigned, athletes, prev),
+        seedProvisionalJerseyOverrides(
+          orderedAthleteIdsForJerseySeed(assigned, athletes),
+          athletes,
+          prev,
+        ),
       );
     })();
   };
@@ -501,35 +654,31 @@ export function FutebolRelatorioPressKitForm() {
   const filledStarters = starterPlayerIds.filter(Boolean).length;
   const reserves = athletes.filter((a) => a.playerId && !starterSet.has(a.playerId));
   const categoryCoach =
-    (reportData?.staff ?? []).find((s) => {
-      const raw = (s.role ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
-      const label = getStaffRoleLabel(s.role ?? "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/\p{M}/gu, "");
-      return raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"));
-    }) ?? null;
+    (reportData?.staff ?? []).find((s) => isHeadCoachRole(s.role)) ?? null;
+  const commissionStaff = useMemo(() => {
+    return [...(reportData?.staff ?? [])].sort((a, b) => {
+      const d = staffDisplayRank(a.role) - staffDisplayRank(b.role);
+      if (d !== 0) return d;
+      return a.name.localeCompare(b.name, "pt-BR");
+    });
+  }, [reportData?.staff]);
   const directorPeople = useMemo(() => {
     const byId = new Map<string, StaffDirectoryRow>();
     for (const s of staffDirectory) {
       if (!s.id || !s.name?.trim()) continue;
       byId.set(s.id, s);
     }
-    // Inclui convocados do jogo caso ainda não estejam no map (legado)
     for (const s of reportData?.staff ?? []) {
       if (!s.staffId || !s.name?.trim() || byId.has(s.staffId)) continue;
       byId.set(s.staffId, {
         id: s.staffId,
         name: s.name,
         role: s.role,
+        photoUrl: s.photoUrl,
         jobRole: s.role ? { id: s.staffId, name: getStaffRoleLabel(s.role) } : null,
       });
     }
-    return [...byId.values()].sort((a, b) => {
-      const ca = staffRhCargo(a).localeCompare(staffRhCargo(b), "pt-BR");
-      if (ca !== 0) return ca;
-      return a.name.localeCompare(b.name, "pt-BR");
-    });
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
   }, [staffDirectory, reportData?.staff]);
 
   return (
@@ -545,8 +694,11 @@ export function FutebolRelatorioPressKitForm() {
               <Select
                 value={tenantId || "none"}
                 onValueChange={(v) => {
-                  setTenantId(v === "none" ? "" : v);
-                  setTravelId("");
+                  requestLeave(() => {
+                    setTenantId(v === "none" ? "" : v);
+                    setTravelId("");
+                    setSavedSnapshot("");
+                  });
                 }}
               >
                 <SelectTrigger>
@@ -566,7 +718,9 @@ export function FutebolRelatorioPressKitForm() {
               <Label>Planejamento</Label>
               <Select
                 value={travelId || "none"}
-                onValueChange={(v) => setTravelId(v === "none" ? "" : v)}
+                onValueChange={(v) => {
+                  requestLeave(() => setTravelId(v === "none" ? "" : v));
+                }}
                 disabled={!tenantId || loadingTravels}
               >
                 <SelectTrigger>
@@ -663,7 +817,7 @@ export function FutebolRelatorioPressKitForm() {
                     return (
                       <div key={`dir-${i}`} className="grid gap-2 sm:grid-cols-2">
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Nome (comissão / RH)</Label>
+                          <Label className="text-xs text-muted-foreground">Nome</Label>
                           <NativeSelect
                             className="min-h-[44px]"
                             value={selected?.id ?? ""}
@@ -682,23 +836,20 @@ export function FutebolRelatorioPressKitForm() {
                             }}
                           >
                             <option value="">Selecione…</option>
-                            {directorPeople.map((s) => {
-                              const cargo = staffRhCargo(s);
-                              return (
-                                <option key={s.id} value={s.id}>
-                                  {cargo ? `${s.name} — ${cargo}` : s.name}
-                                </option>
-                              );
-                            })}
+                            {directorPeople.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
                           </NativeSelect>
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Cargo (RH)</Label>
+                          <Label className="text-xs text-muted-foreground">Cargo</Label>
                           <Input
                             className="min-h-[44px] text-foreground"
                             value={d.role}
                             readOnly
-                            placeholder="Vem do cargo da pessoa no RH"
+                            placeholder="Cargo da pessoa"
                           />
                         </div>
                       </div>
@@ -753,79 +904,115 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                 </div>
 
-                <div
-                  className="relative mx-auto aspect-[3/4] w-full max-w-xl overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner"
-                  onDragOver={(e) => e.preventDefault()}
-                >
-                  <PitchMarkings />
-                  {formationDef.slots.map((slot, slotIndex) => {
-                    const playerId = starterPlayerIds[slotIndex] ?? "";
-                    const athlete = playerId
-                      ? athletes.find((a) => a.playerId === playerId)
-                      : undefined;
-                    return (
-                      <div
-                        key={slot.id}
-                        className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                        style={{ top: `${slot.top}%`, left: `${slot.left}%` }}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          const fromSlot = e.dataTransfer.getData("slotIndex");
-                          const pid =
-                            e.dataTransfer.getData("playerId") || dragPlayerId || "";
-                          if (fromSlot !== "" && fromSlot != null) {
-                            swapStarterSlots(Number(fromSlot), slotIndex);
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+                  <div
+                    className="relative mx-auto aspect-[3/4] w-full max-w-xl overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner"
+                    onDragOver={(e) => e.preventDefault()}
+                  >
+                    <PitchMarkings />
+                    {formationDef.slots.map((slot, slotIndex) => {
+                      const playerId = starterPlayerIds[slotIndex] ?? "";
+                      const athlete = playerId
+                        ? athletes.find((a) => a.playerId === playerId)
+                        : undefined;
+                      return (
+                        <div
+                          key={slot.id}
+                          className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
+                          style={{ top: `${slot.top}%`, left: `${slot.left}%` }}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            const fromSlot = e.dataTransfer.getData("slotIndex");
+                            const pid =
+                              e.dataTransfer.getData("playerId") || dragPlayerId || "";
+                            if (fromSlot !== "" && fromSlot != null) {
+                              swapStarterSlots(Number(fromSlot), slotIndex);
+                              setDragPlayerId(null);
+                              return;
+                            }
+                            if (pid) placeStarterInSlot(pid, slotIndex);
                             setDragPlayerId(null);
-                            return;
-                          }
-                          if (pid) placeStarterInSlot(pid, slotIndex);
-                          setDragPlayerId(null);
-                        }}
-                      >
-                        {athlete ? (
-                          <div
-                            draggable
-                            onDragStart={(e) => {
-                              setDragPlayerId(athlete.playerId!);
-                              e.dataTransfer.setData("playerId", athlete.playerId!);
-                              e.dataTransfer.setData("slotIndex", String(slotIndex));
-                            }}
-                            className="flex w-[92px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
-                          >
-                            <div className="relative">
-                              <AthletePhoto3x4
-                                photoUrl={athlete.photoUrl}
-                                name={athlete.nickname || athlete.name}
-                                size="lg"
-                              />
-                              <span className="absolute -bottom-1 -left-1 flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
-                                {athlete.jerseyNumber ?? "—"}
+                          }}
+                        >
+                          {athlete ? (
+                            <div
+                              draggable
+                              onDragStart={(e) => {
+                                setDragPlayerId(athlete.playerId!);
+                                e.dataTransfer.setData("playerId", athlete.playerId!);
+                                e.dataTransfer.setData("slotIndex", String(slotIndex));
+                              }}
+                              className="flex w-[92px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
+                            >
+                              <div className="relative">
+                                <AthletePhoto3x4
+                                  photoUrl={athlete.photoUrl}
+                                  name={athlete.nickname || athlete.name}
+                                  size="lg"
+                                />
+                                <span className="absolute -bottom-1 -left-1 flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
+                                  {provisionalJerseyValue(
+                                    athlete,
+                                    jerseyOverrides,
+                                    slotIndex + 1,
+                                  ) || "—"}
+                                </span>
+                                <span className="absolute -right-1 -top-1 rounded bg-[#00205B] px-1 py-0.5 text-[9px] font-bold uppercase text-white shadow">
+                                  {slot.label}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white"
+                                  onClick={() => clearStarterSlot(slotIndex)}
+                                  aria-label="Remover do gramado"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              <span className="max-w-full truncate text-center text-[11px] font-extrabold uppercase text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                {athlete.nickname?.trim() || athlete.name.split(/\s+/)[0]}
                               </span>
-                              <span className="absolute -right-1 -top-1 rounded bg-[#00205B] px-1 py-0.5 text-[9px] font-bold uppercase text-white shadow">
-                                {slot.label}
-                              </span>
-                              <button
-                                type="button"
-                                className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white"
-                                onClick={() => clearStarterSlot(slotIndex)}
-                                aria-label="Remover do gramado"
-                              >
-                                ×
-                              </button>
                             </div>
-                            <span className="max-w-full truncate text-center text-[11px] font-extrabold uppercase text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                              {athlete.nickname?.trim() || athlete.name.split(/\s+/)[0]}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex h-[72px] w-[54px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
-                            {slot.label}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          ) : (
+                            <div className="flex h-[72px] w-[54px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
+                              {slot.label}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <aside className="rounded-xl border border-border bg-card/40 p-3">
+                    <p className="mb-2 text-sm font-semibold">Comissão técnica</p>
+                    {commissionStaff.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Nenhum convocado</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {commissionStaff.map((s) => (
+                          <li
+                            key={s.staffId ?? `${s.num}-${s.name}`}
+                            className="flex items-center gap-2"
+                          >
+                            <AthletePhoto3x4
+                              photoUrl={s.photoUrl}
+                              name={s.name}
+                              size="sm"
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium leading-tight">
+                                {s.name}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {s.role ? getStaffRoleLabel(s.role) : "Comissão"}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </aside>
                 </div>
 
                 <div className="space-y-2">
@@ -946,19 +1133,6 @@ export function FutebolRelatorioPressKitForm() {
                 </div>
               </div>
 
-              {reportData.staff.length > 0 ? (
-                <div className="rounded-lg border border-border/60 p-3 text-sm text-muted-foreground">
-                  <p className="mb-1 font-medium text-foreground">Comissão (da convocação)</p>
-                  <ul className="space-y-0.5">
-                    {reportData.staff.map((s) => (
-                      <li key={s.staffId ?? s.num}>
-                        {s.name}
-                        {s.role ? ` — ${getStaffRoleLabel(s.role)}` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
             </div>
           ) : null}
 
@@ -1004,10 +1178,16 @@ export function FutebolRelatorioPressKitForm() {
               Relatório para arbitragem
             </Button>
             {travelId ? (
-              <Button type="button" variant="outline" asChild>
-                <Link href={`/dashboard/futebol/logistica/${travelId}/edit`}>
-                  {isHomeMatch ? "Editar planejamento" : "Editar viagem"}
-                </Link>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  requestLeave(() =>
+                    router.push(`/dashboard/futebol/logistica/${travelId}/edit`),
+                  )
+                }
+              >
+                {isHomeMatch ? "Editar planejamento" : "Editar viagem"}
               </Button>
             ) : null}
           </div>
@@ -1024,6 +1204,59 @@ export function FutebolRelatorioPressKitForm() {
           if (previewHtml) printHtmlDocument(previewHtml, "Impressão");
         }}
       />
+
+      <AlertDialog
+        open={leaveOpen}
+        onOpenChange={(open) => {
+          setLeaveOpen(open);
+          if (!open) pendingLeaveRef.current = null;
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você alterou o press kit e ainda não salvou. Deseja salvar antes de sair?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                pendingLeaveRef.current = null;
+              }}
+            >
+              Continuar editando
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const action = pendingLeaveRef.current;
+                pendingLeaveRef.current = null;
+                setLeaveOpen(false);
+                action?.();
+              }}
+            >
+              Sair sem salvar
+            </Button>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void (async () => {
+                  const ok = await handleSave();
+                  if (!ok) return;
+                  const action = pendingLeaveRef.current;
+                  pendingLeaveRef.current = null;
+                  setLeaveOpen(false);
+                  action?.();
+                })();
+              }}
+            >
+              Salvar e sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <FeedbackModal
         open={feedback.open}

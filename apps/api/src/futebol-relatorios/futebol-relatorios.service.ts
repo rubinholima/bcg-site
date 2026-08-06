@@ -1085,7 +1085,6 @@ export class FutebolRelatoriosService {
       return id;
     });
 
-    let autoAssigned = false;
     if (seenStarters.size === 0) {
       const preferred = await this.findLastLineupPreferredIds(
         tenantId,
@@ -1098,7 +1097,6 @@ export class FutebolRelatoriosService {
         formation,
         preferred,
       );
-      autoAssigned = true;
     }
 
     const mapNamed = (
@@ -1152,19 +1150,44 @@ export class FutebolRelatoriosService {
       }
     }
 
-    if (autoAssigned) {
-      let ord = 0;
+    // Camisa provisória para TODOS sem número no cadastro (titulares + reservas).
+    // Número fica no playerId — troca titular/reserva não “rouba” camisa do slot.
+    {
       const byId = new Map(
         athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
       );
-      for (const id of starterPlayerIds) {
-        if (!id) continue;
-        ord += 1;
+      const starterSet = new Set(starterPlayerIds.filter(Boolean));
+      const orderedIds = [
+        ...starterPlayerIds.filter(Boolean),
+        ...athletes
+          .filter((a) => a.playerId && !starterSet.has(a.playerId))
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+          .map((a) => a.playerId!),
+      ];
+      const used = new Set<number>();
+      for (const a of athletes) {
+        if (!a.playerId) continue;
+        if (a.playerId in jerseyOverrides && jerseyOverrides[a.playerId] != null) {
+          used.add(jerseyOverrides[a.playerId]!);
+        } else if (a.jerseyNumber != null) {
+          used.add(a.jerseyNumber);
+        }
+      }
+      let candidate = 1;
+      const nextFree = (): number => {
+        while (candidate <= 99 && used.has(candidate)) candidate += 1;
+        const n = candidate <= 99 ? candidate : 99;
+        used.add(n);
+        candidate = n + 1;
+        return n;
+      };
+      for (const id of orderedIds) {
         const a = byId.get(id);
         if (!a) continue;
         if (a.jerseyNumber != null) continue;
         if (id in jerseyOverrides) continue;
-        jerseyOverrides[id] = ord;
+        jerseyOverrides[id] = nextFree();
       }
     }
 

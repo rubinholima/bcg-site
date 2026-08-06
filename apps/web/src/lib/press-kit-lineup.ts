@@ -138,6 +138,21 @@ export function assignStartersByCadastroPosition(
   return Array.from({ length: 11 }, (_, i) => result[i] ?? "");
 }
 
+/** Ordem estável para semear camisa: titulares (slots) e depois reservas. */
+export function orderedAthleteIdsForJerseySeed(
+  starterPlayerIds: string[],
+  athletes: RelatorioPessoaRow[],
+): string[] {
+  const starters = starterPlayerIds.filter(Boolean);
+  const starterSet = new Set(starters);
+  const reserves = athletes
+    .filter((a) => a.playerId && !starterSet.has(a.playerId))
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
+    .map((a) => a.playerId!);
+  return [...starters, ...reserves];
+}
+
 /** Camisa: override → cadastro → número de ordem provisório. */
 export function provisionalJerseyValue(
   athlete: RelatorioPessoaRow,
@@ -152,7 +167,11 @@ export function provisionalJerseyValue(
   return String(orderNum);
 }
 
-/** Semear overrides só onde não há camisa no cadastro (ordem 1..n). */
+/**
+ * Semear overrides onde não há camisa no cadastro.
+ * O número fica ligado ao playerId (não muda ao trocar titular ↔ reserva).
+ * Evita colisão com camisas já usadas no elenco.
+ */
 export function seedProvisionalJerseyOverrides(
   orderedPlayerIds: string[],
   athletes: RelatorioPessoaRow[],
@@ -162,15 +181,30 @@ export function seedProvisionalJerseyOverrides(
     athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
   );
   const next = { ...existing };
-  let ord = 0;
+  const used = new Set<number>();
+  for (const a of athletes) {
+    if (!a.playerId) continue;
+    if (a.playerId in next && next[a.playerId] != null) {
+      used.add(next[a.playerId]!);
+    } else if (a.jerseyNumber != null) {
+      used.add(a.jerseyNumber);
+    }
+  }
+  let candidate = 1;
+  const nextFree = (): number => {
+    while (candidate <= 99 && used.has(candidate)) candidate += 1;
+    const n = candidate <= 99 ? candidate : 99;
+    used.add(n);
+    candidate = n + 1;
+    return n;
+  };
   for (const id of orderedPlayerIds) {
     if (!id) continue;
-    ord += 1;
     const a = byId.get(id);
     if (!a) continue;
     if (a.jerseyNumber != null) continue;
     if (id in next) continue;
-    next[id] = ord;
+    next[id] = nextFree();
   }
   return next;
 }

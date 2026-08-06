@@ -1037,7 +1037,24 @@ export function buildPressKitPrintHtml(
     )
     .join("");
 
-  const staffHtml = data.staff
+  const staffRank = (m: RelatorioPessoaRow) => {
+    const raw = (m.role ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+    const label = getStaffRoleLabel(m.role ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    if (raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"))) {
+      return 0;
+    }
+    if (label.includes("auxiliar")) return 1;
+    return 10;
+  };
+  const staffSorted = [...data.staff].sort((a, b) => {
+    const d = staffRank(a) - staffRank(b);
+    if (d !== 0) return d;
+    return a.name.localeCompare(b.name, "pt-BR");
+  });
+  const staffHtml = staffSorted
     .map((s) => {
       const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
       const photo = playerPhotoHtml(s.photoUrl, s.name);
@@ -1069,7 +1086,7 @@ export function buildPressKitPrintHtml(
     const slotId = config.starterPlayerIds[i];
     const p = slotId ? athletesById.get(slotId) : undefined;
     if (!p) return "";
-    const n = p.jerseyNumber != null ? String(p.jerseyNumber) : String(i + 1);
+    const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
     const birth = formatBirthShort(p.birthDate);
     const photo = playerPhotoHtml(p.photoUrl, p.name);
     const stats = p.seasonStats;
@@ -1171,13 +1188,28 @@ export function buildPressKitPrintHtml(
     .pk-when { font-size: 11px; font-weight: 700; }
     .pk-where { font-size: 8px; color: rgba(255,255,255,0.85); }
 
-    /* ---------- Corpo em 3 colunas ---------- */
+    .pk-page { page-break-after: always; break-after: page; }
+    .pk-page:last-child { page-break-after: auto; break-after: auto; }
+    /* ---------- Corpo em colunas ---------- */
     .pk-main {
       display: grid;
       grid-template-columns: 0.82fr 1.5fr 0.82fr;
       gap: 9px;
       margin-top: 7px;
       align-items: start;
+    }
+    .pk-main-lists { grid-template-columns: 1fr 1fr; }
+    .pk-pitch-layout {
+      display: grid;
+      grid-template-columns: 0.72fr 1.4fr;
+      gap: 10px;
+      margin-top: 7px;
+      align-items: start;
+    }
+    .pk-staff-aside .staff-row .chip-photo,
+    .pk-staff-aside .staff-row .chip-photo-fallback {
+      width: 22px;
+      height: 30px;
     }
     .pk-col { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
     .pk-block h3 {
@@ -1341,8 +1373,7 @@ export function buildPressKitPrintHtml(
     .filter(Boolean)
     .join(" · ");
 
-  const body = `
-    <div class="pk">
+  const matchHeader = `
       <div class="pk-top">
         ${clubBadgeHtml(homeName, homeLogo, "Mandante")}
         <div class="pk-center">
@@ -1357,38 +1388,22 @@ export function buildPressKitPrintHtml(
           ${venue ? `<div class="pk-where">${escapeHtml(venue)}</div>` : ""}
         </div>
         ${clubBadgeHtml(awayName, awayLogo, "Visitante")}
-      </div>
+      </div>`;
 
-      <div class="pk-main">
+  const body = `
+    <div class="pk pk-page">
+      ${matchHeader}
+      <div class="pk-main pk-main-lists">
         <div class="pk-col">
           <div class="pk-block">
             <h3>Arbitragem</h3>
             ${refereesHtml || `<p class="pk-empty">Não informado</p>`}
           </div>
           <div class="pk-block">
-            <h3>Comissão técnica</h3>
-            ${staffHtml ? `<div class="staff-grid">${staffHtml}</div>` : `<p class="pk-empty">—</p>`}
-          </div>
-          <div class="pk-block">
             <h3>Uniforme da partida</h3>
             ${uniformHtml}
           </div>
         </div>
-
-        <div class="pk-block">
-          <h3>Escalação visual</h3>
-          <div class="pitch-wrap">
-            <div class="pitch-line pl-outer"></div>
-            <div class="pitch-line pl-half"></div>
-            <div class="pitch-line pl-circle"></div>
-            <div class="pitch-line pl-box-top"></div>
-            <div class="pitch-line pl-goal-top"></div>
-            <div class="pitch-line pl-box-bottom"></div>
-            <div class="pitch-line pl-goal-bottom"></div>
-            ${fieldPlayers}
-          </div>
-        </div>
-
         <div class="pk-col">
           <div class="pk-block">
             <h3>Suplentes</h3>
@@ -1400,7 +1415,38 @@ export function buildPressKitPrintHtml(
           </div>
         </div>
       </div>
+      <div class="pk-foot">
+        <div>
+          ${config.contactLine ? `<p class="pk-contact">${escapeHtml(config.contactLine)}</p>` : ""}
+        </div>
+        <div class="pk-sign">
+          <strong>Boston City Group</strong>
+          Relatório de Imprensa · gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}
+        </div>
+      </div>
+    </div>
 
+    <div class="pk pk-page pk-page-pitch">
+      ${matchHeader}
+      <div class="pk-pitch-layout">
+        <div class="pk-block pk-staff-aside">
+          <h3>Comissão técnica</h3>
+          ${staffHtml ? `<div class="staff-grid">${staffHtml}</div>` : `<p class="pk-empty">—</p>`}
+        </div>
+        <div class="pk-block">
+          <h3>Escalação visual · ${escapeHtml(formation.label)}</h3>
+          <div class="pitch-wrap">
+            <div class="pitch-line pl-outer"></div>
+            <div class="pitch-line pl-half"></div>
+            <div class="pitch-line pl-circle"></div>
+            <div class="pitch-line pl-box-top"></div>
+            <div class="pitch-line pl-goal-top"></div>
+            <div class="pitch-line pl-box-bottom"></div>
+            <div class="pitch-line pl-goal-bottom"></div>
+            ${fieldPlayers}
+          </div>
+        </div>
+      </div>
       <div class="pk-foot">
         <div>
           ${
@@ -1408,11 +1454,10 @@ export function buildPressKitPrintHtml(
               ? `<p class="pk-disclaimer">O quadro acima não representa o esquema utilizado, nem o posicionamento dos jogadores em campo.</p>`
               : ""
           }
-          ${config.contactLine ? `<p class="pk-contact">${escapeHtml(config.contactLine)}</p>` : ""}
         </div>
         <div class="pk-sign">
           <strong>Boston City Group</strong>
-          Relatório de Imprensa · gerado em ${escapeHtml(new Date().toLocaleString("pt-BR"))}
+          Escalação visual
         </div>
       </div>
     </div>
@@ -1472,11 +1517,37 @@ export function buildMatchExternalReportHtml(
       </tr>`;
     })
     .join("");
-  const staffRows = data.staff
-    .map(
-      (member) =>
-        `<tr><td class="left">${escapeHtml(member.name)}</td><td class="left">${escapeHtml(member.role ? getStaffRoleLabel(member.role) : "Comissão técnica")}</td></tr>`,
-    )
+  const staffRows = [...data.staff]
+    .sort((a, b) => {
+      const rank = (m: (typeof data.staff)[number]) => {
+        const raw = (m.role ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+        const label = getStaffRoleLabel(m.role ?? "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/\p{M}/gu, "");
+        if (raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"))) {
+          return 0;
+        }
+        if (label.includes("auxiliar")) return 1;
+        return 10;
+      };
+      const d = rank(a) - rank(b);
+      if (d !== 0) return d;
+      return a.name.localeCompare(b.name, "pt-BR");
+    })
+    .map((member) => {
+      const photoSrc = member.photoUrl
+        ? resolveLogoUrlForPrint(member.photoUrl) || member.photoUrl
+        : null;
+      const photoCell = photoSrc
+        ? `<img class="ath-photo" src="${escapeHtml(photoSrc)}" alt="" />`
+        : `<span class="ath-photo ath-photo-fallback">${escapeHtml(member.name.slice(0, 1).toUpperCase())}</span>`;
+      return `<tr>
+        <td>${photoCell}</td>
+        <td class="left">${escapeHtml(member.name)}</td>
+        <td class="left">${escapeHtml(member.role ? getStaffRoleLabel(member.role) : "Comissão técnica")}</td>
+      </tr>`;
+    })
     .join("");
   const styles = `
     @page { size: ${size === "Letter" ? "letter" : "A4"} portrait; margin: 8mm 9mm; }
@@ -1515,8 +1586,25 @@ export function buildMatchExternalReportHtml(
     th, td { padding: ${compact ? "0.7mm 1.2mm" : "1mm 1.4mm"}; border: 1px solid #cbd5e1; text-align: center; vertical-align: middle; }
     th { color: #fff; background: ${BCG.blue}; font-size: ${compact ? "6pt" : "6.6pt"}; letter-spacing: .06em; text-transform: uppercase; }
     .left { text-align: left; }
-    .ath-photo { width: ${compact ? "6mm" : "7.5mm"}; height: ${compact ? "6mm" : "7.5mm"}; object-fit: cover; border-radius: 50%; display: inline-block; vertical-align: middle; background: #e2e8f0; }
-    .ath-photo-fallback { display: inline-flex; align-items: center; justify-content: center; font-size: 6pt; font-weight: 700; color: ${BCG.blue}; }
+    .ath-photo {
+      width: ${compact ? "5.5mm" : "6.5mm"};
+      height: ${compact ? "7.5mm" : "9mm"};
+      object-fit: cover;
+      object-position: center 12%;
+      border-radius: 1mm;
+      display: inline-block;
+      vertical-align: middle;
+      background: #e2e8f0;
+      border: 0.3mm solid #cbd5e1;
+    }
+    .ath-photo-fallback {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6pt;
+      font-weight: 700;
+      color: ${BCG.blue};
+    }
     .foot { margin-top: 2.5mm; padding-top: 1.5mm; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 7pt; }
     .staff-table { font-size: ${compact ? "6.5pt" : "7.2pt"}; }
   `;
@@ -1556,7 +1644,7 @@ export function buildMatchExternalReportHtml(
     <table><thead><tr><th>#</th><th>Foto</th><th>Camisa</th><th>Nome</th><th>Apelido</th><th>Posição</th>${audience === "referees" ? "<th>Registro CBF</th>" : ""}</tr></thead><tbody>${athleteRows}</tbody></table>
     ${
       audience === "referees" && staffRows
-        ? `<h2>Comissão técnica</h2><table class="staff-table"><thead><tr><th>Nome</th><th>Função</th></tr></thead><tbody>${staffRows}</tbody></table>`
+        ? `<h2>Comissão técnica</h2><table class="staff-table"><thead><tr><th>Foto</th><th>Nome</th><th>Função</th></tr></thead><tbody>${staffRows}</tbody></table>`
         : ""
     }
     <div class="foot">${config.contactLine ? escapeHtml(config.contactLine) : "Boston City Group"}</div>

@@ -2,6 +2,7 @@ import {
   printHtmlDocument,
   resolveLogoUrlForPrint,
 } from "@/lib/futebol-relatorios-print";
+import { getFormation } from "@/lib/press-kit-formations";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import type {
   GuiaAgendaDay,
@@ -14,6 +15,7 @@ import type {
   GuiaSquadPlayer,
   GuiaStandingRow,
   PrintPageSize,
+  RelatorioPessoaRow,
 } from "@/lib/futebol-relatorios.types";
 
 /** Identidade visual do guia — vermelho e azul Boston City Group. */
@@ -513,6 +515,37 @@ function styles(size: PrintPageSize): string {
     .pl-box-bottom { left: 50%; bottom: 0; width: 26mm; height: 8mm; margin-left: -13mm; border-bottom: none; }
     .chip { position: absolute; transform: translate(-50%, -50%); text-align: center; }
     .chip-num { display: block; width: 5.6mm; height: 5.6mm; margin: 0 auto; border-radius: 50%; background: #fff; color: ${C.navy}; font-size: 6pt; font-weight: 900; line-height: 5.6mm; border: 1px solid ${C.navy}; }
+    .vis-layout { display: grid; grid-template-columns: 58mm 1fr; gap: 4mm; align-items: start; }
+    .vis-staff h3 { margin: 0 0 2mm; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; color: ${C.red}; border-bottom: 2px solid ${C.red}; padding-bottom: 1mm; }
+    .vis-staff-row { display: flex; gap: 2mm; align-items: center; padding: 1.5mm 0; border-bottom: 1px solid ${C.line}; }
+    .vis-staff-row strong { display: block; font-size: 8pt; line-height: 1.15; color: ${C.ink}; }
+    .vis-staff-row span { display: block; font-size: 7pt; color: ${C.muted}; }
+    .vis-staff-photo { width: 9mm; height: 12mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1px solid ${C.line}; background: ${C.soft}; flex: none; }
+    .vis-staff-photo.photo-fallback { display: flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 800; color: ${C.navy}; }
+    .vis-pitch {
+      position: relative; width: 100%; height: 210mm; border-radius: 3mm; overflow: hidden;
+      border: 2.5px solid #14532d;
+      background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
+    }
+    .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
+    .vis-pitch .pl-outer { inset: 3.5%; border-radius: 2mm; }
+    .vis-pitch .pl-half { left: 3.5%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
+    .vis-pitch .pl-circle { left: 50%; top: 50%; width: 22mm; height: 22mm; margin: -11mm 0 0 -11mm; border-radius: 50%; }
+    .vis-pitch .pl-box-top { left: 24%; right: 24%; top: 3.5%; height: 13%; border-top: 0; }
+    .vis-pitch .pl-box-bottom { left: 24%; right: 24%; bottom: 3.5%; height: 13%; border-bottom: 0; }
+    .vis-pitch .pl-goal-top { left: 37%; right: 37%; top: 3.5%; height: 5.5%; border-top: 0; }
+    .vis-pitch .pl-goal-bottom { left: 37%; right: 37%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
+    .vis-chip { position: absolute; transform: translate(-50%, -50%); width: 22mm; text-align: center; z-index: 2; }
+    .vis-photo-wrap { position: relative; width: 12mm; height: 16mm; margin: 0 auto 1mm; }
+    .vis-photo { width: 12mm; height: 16mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1.5px solid #fff; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); background: ${C.navy}; display: block; }
+    .vis-photo.photo-fallback { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 9pt; }
+    .vis-num {
+      position: absolute; left: -1.2mm; bottom: -1mm; min-width: 5mm; height: 5mm; padding: 0 1mm;
+      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 7pt;
+      display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
+    }
+    .vis-name { font-size: 7pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.1; }
+    .vis-slot { font-size: 6pt; font-weight: 700; color: #fef3c7; text-shadow: 0 1px 2px rgba(0,0,0,.85); }
     .chip-name { display: block; margin-top: .5mm; font-size: 4.9pt; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .note { margin-top: 3mm; font-size: 6.5pt; color: ${C.muted}; font-style: italic; }
@@ -840,7 +873,78 @@ export function buildGuiaPartidaPrintHtml(
     ${foot("Agenda")}`,
   );
 
-  const body = [cover, matchSheet, numbersSheet, ...squadSheets, lineupSheet, closingSheet]
+  /* ---------------- Escalação visual (última página) ---------------- */
+  const formation = getFormation(config.formation);
+  const squadById = new Map(
+    data.squad.filter((p) => p.playerId).map((p) => [p.playerId!, p]),
+  );
+  const visualPlayers = formation.slots
+    .map((slot, i) => {
+      const slotId = config.starterPlayerIds[i];
+      const p = slotId ? squadById.get(slotId) : undefined;
+      if (!p) return "";
+      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
+      const nick = p.nickname?.trim() || p.shortName;
+      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%">
+        <div class="vis-photo-wrap">
+          ${photo(p.photoUrl, p.name, "vis-photo")}
+          <span class="vis-num">${esc(n)}</span>
+        </div>
+        <div class="vis-name">${esc(nick)}</div>
+        <div class="vis-slot">${esc(slot.label)}</div>
+      </div>`;
+    })
+    .join("");
+  const staffRank = (m: RelatorioPessoaRow) => {
+    const raw = (m.role ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+    const label = getStaffRoleLabel(m.role ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    if (raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"))) {
+      return 0;
+    }
+    if (label.includes("auxiliar")) return 1;
+    return 10;
+  };
+  const staffVisual = [...data.staff]
+    .sort((a, b) => {
+      const d = staffRank(a) - staffRank(b);
+      if (d !== 0) return d;
+      return a.name.localeCompare(b.name, "pt-BR");
+    })
+    .map((s) => {
+      const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
+      return `<div class="vis-staff-row">
+        ${photo(s.photoUrl, s.name, "vis-staff-photo")}
+        <div><strong>${esc(s.name)}</strong><span>${esc(role)}</span></div>
+      </div>`;
+    })
+    .join("");
+  const visualSheet = sheet(
+    `<div class="sheet-tag">Escalação</div>
+    ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
+    <div class="vis-layout">
+      <aside class="vis-staff">
+        <h3>Comissão técnica</h3>
+        ${staffVisual || `<p class="empty">—</p>`}
+      </aside>
+      <div class="vis-pitch">
+        <div class="vis-pitch-mark pl-outer"></div>
+        <div class="vis-pitch-mark pl-half"></div>
+        <div class="vis-pitch-mark pl-circle"></div>
+        <div class="vis-pitch-mark pl-box-top"></div>
+        <div class="vis-pitch-mark pl-goal-top"></div>
+        <div class="vis-pitch-mark pl-box-bottom"></div>
+        <div class="vis-pitch-mark pl-goal-bottom"></div>
+        ${visualPlayers}
+      </div>
+    </div>
+    <p class="note">O quadro não representa o esquema utilizado em campo, nem o posicionamento definitivo dos atletas.</p>
+    ${foot("Escalação visual")}`,
+  );
+
+  const body = [cover, matchSheet, numbersSheet, ...squadSheets, lineupSheet, closingSheet, visualSheet]
     .filter(Boolean)
     .join("\n");
 
