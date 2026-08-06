@@ -666,9 +666,19 @@ function styles(size: PrintPageSize): string {
       inset: 0 7%;
       z-index: 2;
     }
-    .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
-    .vis-pitch-wrap .pl-half { left: 0; right: 0; top: 50%; border-width: 0 0 2px 0; }
-    .vis-pitch-wrap .pl-circle { left: 50%; top: 50%; width: 16mm; height: 16mm; margin: -8mm 0 0 -8mm; border-radius: 50%; }
+    /* Marcações = PitchMarkings da preparação (%, não mm fixo) */
+    .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; box-sizing: border-box; }
+    .vis-pitch-wrap .pl-half {
+      left: 0; right: 0; top: 50%; height: 0;
+      border-width: 2px 0 0 0;
+    }
+    .vis-pitch-wrap .pl-circle {
+      left: 50%; top: 50%;
+      width: 24%; height: 18%;
+      margin: 0;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+    }
     .vis-pitch-wrap .pl-box-top { left: 22%; right: 22%; top: 0; height: 14%; border-top: 0; }
     .vis-pitch-wrap .pl-box-bottom { left: 22%; right: 22%; bottom: 0; height: 14%; border-bottom: 0; }
     .vis-pitch-wrap .pl-goal-top { left: 36%; right: 36%; top: 0; height: 6%; border-top: 0; }
