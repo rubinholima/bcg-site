@@ -18,7 +18,7 @@ import {
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { CONTRACT_TYPES } from "@/lib/staff-roles";
 
 interface Tenant {
@@ -77,11 +77,9 @@ export default function NewComissaoPage() {
   }, [tenantId]);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) =>
-        selectedTenant.categories!.includes(c.value)
-      )
-    : FIXTURE_CATEGORIES;
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(
+    selectedTenant?.categories,
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

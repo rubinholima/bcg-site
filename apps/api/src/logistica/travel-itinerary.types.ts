@@ -12,6 +12,8 @@ export type TravelItineraryStop = {
 
 export type TravelHomeAgendaItem = {
   id?: string;
+  /** YYYY-MM-DD — preparação pode ser D-1 / D-2 */
+  date?: string | null;
   label: string;
   time?: string | null;
   notes?: string | null;

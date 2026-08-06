@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 
 interface Tenant {
   id: string;
@@ -36,11 +36,9 @@ export function PsicologiaFilters() {
   }, []);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) =>
-        selectedTenant.categories!.includes(c.value)
-      )
-    : FIXTURE_CATEGORIES;
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(
+    selectedTenant?.categories,
+  );
 
   const applyFilters = () => {
     const params = new URLSearchParams();

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { getEmployeeTypeLabel } from "@/lib/employee-types";
 
 interface Tenant {
@@ -66,11 +66,9 @@ export function JuridicoFilters({
   }, [searchParams]);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) =>
-        selectedTenant.categories!.includes(c.value)
-      )
-    : FIXTURE_CATEGORIES;
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(
+    selectedTenant?.categories,
+  );
 
   const applyFilters = useCallback(
     (updates?: {

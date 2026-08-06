@@ -117,7 +117,12 @@ export type LayoutRelacionadosReportDto = {
   busType: string | null;
   outbound: LayoutRelacionadosStop[];
   returnStops: LayoutRelacionadosStop[];
-  homeMatchAgenda: { label: string; time: string | null; notes: string | null }[];
+  homeMatchAgenda: {
+    date: string | null;
+    label: string;
+    time: string | null;
+    notes: string | null;
+  }[];
   uniforms: {
     athletesGame: string | null;
     athletesTravel: string | null;

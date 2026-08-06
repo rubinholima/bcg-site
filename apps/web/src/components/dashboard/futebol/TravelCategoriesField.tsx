@@ -1,6 +1,5 @@
 "use client";
 
-import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
@@ -69,7 +68,7 @@ export function TravelCategoriesField({
             <option value="">Todas / não especificada</option>
             {categoriesForDropdown.map((c) => (
               <option key={c.value} value={c.value}>
-                {getCategoryLabel(c.value, "pt")}
+                {c.labelPT}
               </option>
             ))}
           </select>
@@ -85,7 +84,7 @@ export function TravelCategoriesField({
                 checked={selectedCategories.includes(c.value)}
                 onCheckedChange={(v) => toggleCat(c.value, v === true)}
               />
-              {getCategoryLabel(c.value, "pt")}
+              {c.labelPT}
             </label>
           ))}
         </div>

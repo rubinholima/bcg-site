@@ -12,6 +12,8 @@ export type TravelItineraryStop = {
 
 export type TravelHomeAgendaItem = {
   id?: string;
+  /** YYYY-MM-DD — preparação pode ser D-1 / D-2 */
+  date?: string | null;
   label: string;
   time?: string | null;
   notes?: string | null;
@@ -68,9 +70,10 @@ export function emptyItineraryStop(): TravelItineraryStop {
   };
 }
 
-export function emptyHomeAgendaItem(label = ""): TravelHomeAgendaItem {
+export function emptyHomeAgendaItem(label = "", date = ""): TravelHomeAgendaItem {
   return {
     id: `h-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    date: date || "",
     label,
     time: "",
     notes: "",
@@ -118,6 +121,7 @@ export function parseTravelItinerary(raw: unknown): TravelItinerary {
         .filter((s): s is Record<string, unknown> => !!s && typeof s === "object")
         .map((s, i) => ({
           id: typeof s.id === "string" ? s.id : `h-${i}`,
+          date: typeof s.date === "string" ? s.date : "",
           label: typeof s.label === "string" ? s.label : "",
           time: typeof s.time === "string" ? s.time : "",
           notes: typeof s.notes === "string" ? s.notes : "",

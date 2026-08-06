@@ -76,6 +76,64 @@ function agendaSortPriority(type: string): number {
   return 40;
 }
 
+function dateKeyFromDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseHomeMatchAgendaItems(raw: unknown): Array<{
+  id: string;
+  date: string | null;
+  label: string;
+  time: string | null;
+  notes: string | null;
+}> {
+  if (!raw || typeof raw !== 'object') return [];
+  const itinerary = raw as Record<string, unknown>;
+  if (!Array.isArray(itinerary.homeMatchAgenda)) return [];
+  return itinerary.homeMatchAgenda
+    .filter((s): s is Record<string, unknown> => !!s && typeof s === 'object')
+    .map((s, i) => ({
+      id: typeof s.id === 'string' ? s.id : `h-${i}`,
+      date:
+        typeof s.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.date.trim())
+          ? s.date.trim()
+          : null,
+      label: typeof s.label === 'string' ? s.label.trim() : '',
+      time: typeof s.time === 'string' ? s.time.trim() : null,
+      notes: typeof s.notes === 'string' ? s.notes.trim() : null,
+    }))
+    .filter((s) => s.label.length > 0);
+}
+
+/** Monta Date local a partir de YYYY-MM-DD + HH:mm (fallback meio-dia se sem hora). */
+function combineDateAndTime(
+  dateKey: string,
+  time: string | null | undefined,
+): { start: Date; allDay: boolean } {
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const timeMatch = (time ?? '').match(/^(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    const hh = Number(timeMatch[1]);
+    const mm = Number(timeMatch[2]);
+    return {
+      start: new Date(y, m - 1, d, hh, mm, 0, 0),
+      allDay: false,
+    };
+  }
+  return {
+    start: new Date(y, m - 1, d, 12, 0, 0, 0),
+    allDay: true,
+  };
+}
+
+function isDateKeyInRange(dateKey: string, from: Date, to: Date): boolean {
+  const { start } = combineDateAndTime(dateKey, '12:00');
+  return start.getTime() >= from.getTime() && start.getTime() <= to.getTime();
+}
+
 function toEntryDto(row: {
   id: string;
   tenantId: string;
@@ -203,14 +261,29 @@ export class FutebolAgendaService {
       entryWhere.category = filters.category.trim();
     }
 
-    const includeTravel =
+    const includeTravelMatch =
       !typeFilter || typeFilter.includes('viagem') || typeFilter.includes('jogo');
+    const includeTravelAgendaItems =
+      !typeFilter ||
+      typeFilter.includes('compromisso') ||
+      typeFilter.includes('preparacao') ||
+      typeFilter.includes('jogo') ||
+      typeFilter.includes('viagem');
+    const includeTravel = includeTravelMatch || includeTravelAgendaItems;
     const includePalco = !typeFilter || typeFilter.includes('palco');
     const entryTypeList =
       typeFilter?.filter((t) => t !== 'viagem' && t !== 'palco') ?? null;
     const includeEntries =
       !typeFilter || (entryTypeList != null && entryTypeList.length > 0);
     const categoryFilter = filters.category?.trim() || null;
+
+    // Amplia busca de viagens: agenda do jogo pode ter itens em D-1 / D-2
+    const travelPadMs = 7 * 24 * 60 * 60 * 1000;
+    const travelFrom = new Date(from.getTime() - travelPadMs);
+    const travelTo = new Date(to.getTime() + travelPadMs);
+    if (includeTravel) {
+      travelWhere.matchDate = { gte: travelFrom, lte: travelTo };
+    }
 
     type TravelWithTenant = Awaited<
       ReturnType<
@@ -269,46 +342,101 @@ export class FutebolAgendaService {
     for (const t of travels) {
       const isHome = t.isHomeMatch === true;
       const calendarType = isHome ? 'jogo' : 'viagem';
-      if (typeFilter && !typeFilter.includes(calendarType)) continue;
-
-      const title = t.opponentName
-        ? isHome
-          ? `Jogo em casa — ${t.opponentName}`
-          : `Jogo fora — ${t.opponentName}`
-        : isHome
-          ? t.championshipName ?? 'Jogo em casa'
-          : t.championshipName ?? 'Viagem';
       const matchAt = t.matchDate;
-      const departureAt = t.estimatedDeparture;
-      const start = departureAt ?? matchAt;
-      // Com horário de jogo/partida, não tratar como "dia inteiro"
-      const hasClock =
-        start.getHours() !== 0 ||
-        start.getMinutes() !== 0 ||
-        start.getSeconds() !== 0 ||
-        Boolean(departureAt);
+      const matchInRange =
+        matchAt.getTime() >= from.getTime() && matchAt.getTime() <= to.getTime();
       const travelCats = parseTravelCategories(t.categories);
       const location =
         [t.stadiumName, t.city, t.country].filter(Boolean).join(' · ') || null;
-      items.push({
-        id: `travel-${t.id}`,
-        source: 'travel',
-        type: calendarType,
-        title,
-        startAt: start.toISOString(),
-        endAt: matchAt.toISOString(),
-        allDay: !hasClock,
-        tenantId: t.tenantId,
-        tenantName: t.tenant.name,
-        category: t.category,
-        categories: travelCats.length > 0 ? travelCats : undefined,
-        status: t.status,
-        location,
-        opponentName: t.opponentName,
-        championshipName: t.championshipName,
-        isOurTeamHome: isHome,
-        href: `/dashboard/futebol/logistica/${t.id}/edit`,
-      });
+
+      if (
+        includeTravelMatch &&
+        matchInRange &&
+        (!typeFilter || typeFilter.includes(calendarType))
+      ) {
+        const title = t.opponentName
+          ? isHome
+            ? `Jogo em casa — ${t.opponentName}`
+            : `Jogo fora — ${t.opponentName}`
+          : isHome
+            ? t.championshipName ?? 'Jogo em casa'
+            : t.championshipName ?? 'Viagem';
+        const departureAt = t.estimatedDeparture;
+        const start = departureAt ?? matchAt;
+        const hasClock =
+          start.getHours() !== 0 ||
+          start.getMinutes() !== 0 ||
+          start.getSeconds() !== 0 ||
+          Boolean(departureAt);
+        items.push({
+          id: `travel-${t.id}`,
+          source: 'travel',
+          type: calendarType,
+          title,
+          startAt: start.toISOString(),
+          endAt: matchAt.toISOString(),
+          allDay: !hasClock,
+          tenantId: t.tenantId,
+          tenantName: t.tenant.name,
+          category: t.category,
+          categories: travelCats.length > 0 ? travelCats : undefined,
+          status: t.status,
+          location,
+          opponentName: t.opponentName,
+          championshipName: t.championshipName,
+          isOurTeamHome: isHome,
+          href: `/dashboard/futebol/logistica/${t.id}/edit`,
+        });
+      }
+
+      if (!includeTravelAgendaItems) continue;
+      if (
+        typeFilter &&
+        !typeFilter.includes('compromisso') &&
+        !typeFilter.includes('preparacao') &&
+        !typeFilter.includes('jogo') &&
+        !typeFilter.includes('viagem')
+      ) {
+        continue;
+      }
+
+      const matchDateKey = dateKeyFromDate(matchAt);
+      const agendaItems = parseHomeMatchAgendaItems(t.itinerary);
+      for (const agenda of agendaItems) {
+        const dateKey = agenda.date || matchDateKey;
+        if (!isDateKeyInRange(dateKey, from, to)) continue;
+        const { start, allDay } = combineDateAndTime(dateKey, agenda.time);
+        const end = new Date(start.getTime() + 60 * 60 * 1000);
+        const itemType =
+          dateKey < matchDateKey ? 'preparacao' : 'compromisso';
+        if (
+          typeFilter &&
+          !typeFilter.includes(itemType) &&
+          !typeFilter.includes('jogo') &&
+          !typeFilter.includes('viagem')
+        ) {
+          continue;
+        }
+        items.push({
+          id: `travel-${t.id}-agenda-${agenda.id}`,
+          source: 'travel',
+          type: itemType,
+          title: agenda.label,
+          startAt: start.toISOString(),
+          endAt: end.toISOString(),
+          allDay,
+          tenantId: t.tenantId,
+          tenantName: t.tenant.name,
+          category: t.category,
+          categories: travelCats.length > 0 ? travelCats : undefined,
+          status: t.status,
+          location: agenda.notes || location,
+          opponentName: t.opponentName,
+          championshipName: t.championshipName,
+          isOurTeamHome: isHome,
+          href: `/dashboard/futebol/logistica/${t.id}/edit`,
+        });
+      }
     }
 
     for (const e of entries) {

@@ -32,7 +32,7 @@ import { useAuth } from "@/context/AuthContext";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
 import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
@@ -273,12 +273,15 @@ export default function EditJogadorPage() {
     load();
   }, [id]);
 
+  const { categories: tenantCategoryOptions, allCategories } = useCategoriesForTenant(
+    tenantCategories,
+    { requireTenantSelection: true },
+  );
+
   const categoriesForDropdown = (() => {
-    const fromTenant = tenantCategories.length
-      ? FIXTURE_CATEGORIES.filter((c) => tenantCategories.includes(c.value))
-      : [];
+    const fromTenant = tenantCategoryOptions;
     if (player?.category && !fromTenant.some((c) => c.value === player.category)) {
-      const fallback = FIXTURE_CATEGORIES.find((c) => c.value === player!.category);
+      const fallback = allCategories.find((c) => c.value === player!.category);
       if (fallback) return [fallback, ...fromTenant];
     }
     return fromTenant;

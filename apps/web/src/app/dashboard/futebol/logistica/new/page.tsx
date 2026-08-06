@@ -20,7 +20,7 @@ import { api } from "@/lib/api";
 import { namesMatch } from "@/lib/names-match";
 import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 import { isFootballKind } from "@/lib/home-data";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { RoomAssignmentTable, type RoomAssignment } from "../components/RoomAssignmentTable";
 import {
   formatFixtureOptionLabel,
@@ -263,9 +263,9 @@ export default function NewLogisticaPage() {
     }
   }, [selectedFixtureId, dataSource, upcomingFixturesList, stadiums, selectedTenant?.name]);
 
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) => selectedTenant.categories!.includes(c.value))
-    : FIXTURE_CATEGORIES;
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(
+    selectedTenant?.categories,
+  );
 
   const filteredFixtures =
     dataSource === "fixture"
@@ -617,6 +617,7 @@ export default function NewLogisticaPage() {
           <CardContent>
             <LogisticaItineraryFields
               isHomeMatch={isHomeMatch}
+              matchDate={matchDate}
               itinerary={itinerary}
               hotelStay={hotelStay}
               uniforms={uniforms}

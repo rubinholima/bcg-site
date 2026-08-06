@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { PhotoUploadWithName } from "@/components/dashboard/PhotoUploadWithName";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { getPhotoDisplayName, PHOTO_DEPARTMENT_BY_SIZE_KEY } from "@/lib/utils";
 
 interface Tenant {
@@ -45,13 +45,10 @@ export default function NewJogadorPage() {
   }, []);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) =>
-        selectedTenant.categories!.some(
-          (saved) => saved.trim().toLowerCase() === c.value,
-        ),
-      )
-    : [];
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(
+    selectedTenant?.categories,
+    { requireTenantSelection: true },
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

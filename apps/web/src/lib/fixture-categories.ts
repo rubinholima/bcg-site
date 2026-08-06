@@ -19,6 +19,7 @@ export const FIXTURE_CATEGORIES_FALLBACK: readonly FixtureCategoryItem[] = [
   { value: "sub15", labelPT: "Sub-15", labelEN: "U-15" },
   { value: "sub14", labelPT: "Sub-14", labelEN: "U-14" },
   { value: "sub13", labelPT: "Sub-13", labelEN: "U-13" },
+  { value: "sub12", labelPT: "Sub-12", labelEN: "U-12" },
   { value: "sub11", labelPT: "Sub-11", labelEN: "U-11" },
   { value: "sub9", labelPT: "Sub-9", labelEN: "U-9" },
   { value: "feminino", labelPT: "Feminino", labelEN: "Women's" },
@@ -79,6 +80,8 @@ export function filterCategoriesForTenant(
   tenantCategories: string[] | null | undefined,
 ): FixtureCategoryItem[] {
   if (!tenantCategories?.length) return [...all];
-  const set = new Set(tenantCategories);
-  return all.filter((c) => set.has(c.value));
+  const set = new Set(
+    tenantCategories.map((s) => s.trim().toLowerCase()).filter(Boolean),
+  );
+  return all.filter((c) => set.has(c.value.trim().toLowerCase()));
 }

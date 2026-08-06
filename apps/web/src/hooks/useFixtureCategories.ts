@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import {
   FIXTURE_CATEGORIES_FALLBACK,
+  filterCategoriesForTenant,
   mapApiFixtureCategory,
   type FixtureCategoryItem,
 } from "@/lib/fixture-categories";
@@ -66,4 +67,22 @@ export function useFixtureCategories(options?: { activeOnly?: boolean }) {
   }, [activeOnly]);
 
   return { categories, loading, reload };
+}
+
+/**
+ * Categorias do cadastro central filtradas pelo que o clube liberou em Empresas.
+ * Se `tenantCategories` estiver vazio/nulo e `requireTenantSelection` for true, retorna [].
+ * Caso contrário (filtros de lista), sem liberação no clube = lista completa da API.
+ */
+export function useCategoriesForTenant(
+  tenantCategories: string[] | null | undefined,
+  options?: { requireTenantSelection?: boolean },
+) {
+  const { categories: all, loading, reload } = useFixtureCategories();
+  const requireTenant = options?.requireTenantSelection === true;
+  const categories = useMemo(() => {
+    if (requireTenant && !tenantCategories?.length) return [];
+    return filterCategoriesForTenant(all, tenantCategories);
+  }, [all, tenantCategories, requireTenant]);
+  return { categories, allCategories: all, loading, reload };
 }

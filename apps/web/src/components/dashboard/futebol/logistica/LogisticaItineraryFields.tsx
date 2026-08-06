@@ -28,6 +28,8 @@ type UniformKitOption = {
 
 type Props = {
   isHomeMatch: boolean;
+  /** Data do jogo (YYYY-MM-DD) — default nos itens novos da agenda */
+  matchDate?: string;
   itinerary: TravelItinerary;
   hotelStay: TravelHotelStay;
   uniforms: TravelUniforms;
@@ -138,6 +140,7 @@ function StopRows({
 
 export function LogisticaItineraryFields({
   isHomeMatch,
+  matchDate = "",
   itinerary,
   hotelStay,
   uniforms,
@@ -161,7 +164,7 @@ export function LogisticaItineraryFields({
             onClick={() =>
               onItineraryChange({
                 ...itinerary,
-                homeMatchAgenda: [...items, emptyHomeAgendaItem()],
+                homeMatchAgenda: [...items, emptyHomeAgendaItem("", matchDate)],
               })
             }
           >
@@ -175,8 +178,22 @@ export function LogisticaItineraryFields({
           items.map((item: TravelHomeAgendaItem, idx) => (
             <div
               key={item.id ?? `home-${idx}`}
-              className="grid gap-2 rounded-lg border border-border/70 p-3 sm:grid-cols-[9rem_minmax(0,1fr)_auto]"
+              className="grid gap-2 rounded-lg border border-border/70 p-3 sm:grid-cols-[9rem_7rem_minmax(0,1fr)_auto]"
             >
+              <div className="space-y-1">
+                <Label className="text-xs">Data</Label>
+                <Input
+                  type="date"
+                  className="min-w-0 text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                  disabled={disabled}
+                  value={item.date ?? ""}
+                  onChange={(e) => {
+                    const next = [...items];
+                    next[idx] = { ...item, date: e.target.value };
+                    onItineraryChange({ ...itinerary, homeMatchAgenda: next });
+                  }}
+                />
+              </div>
               <div className="space-y-1">
                 <Label className="text-xs">Hora</Label>
                 <Input

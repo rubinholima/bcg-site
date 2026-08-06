@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 
 interface Tenant {
@@ -62,11 +62,9 @@ export function AvaliacoesFilters({
   }, [searchParams]);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) =>
-        selectedTenant.categories!.includes(c.value)
-      )
-    : FIXTURE_CATEGORIES;
+  const { categories: categoriesForDropdown, allCategories } = useCategoriesForTenant(
+    selectedTenant?.categories,
+  );
 
   const applyFilters = useCallback(
     (updates?: { tenantId?: string; category?: string; search?: string }) => {
@@ -92,7 +90,7 @@ export function AvaliacoesFilters({
 
   const categoryLabel = (cat: string | null | undefined) =>
     cat
-      ? FIXTURE_CATEGORIES.find((c) => c.value === cat)?.labelPT ?? cat
+      ? allCategories.find((c) => c.value === cat)?.labelPT ?? cat
       : "—";
 
   return (

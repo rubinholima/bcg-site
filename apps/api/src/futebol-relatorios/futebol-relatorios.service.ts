@@ -456,6 +456,7 @@ export class FutebolRelatoriosService {
       ? itinerary.homeMatchAgenda
           .filter((s): s is Record<string, unknown> => !!s && typeof s === 'object')
           .map((s) => ({
+            date: typeof s.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s.date) ? s.date : null,
             label: typeof s.label === 'string' ? s.label : '',
             time: typeof s.time === 'string' ? s.time : null,
             notes: typeof s.notes === 'string' ? s.notes : null,

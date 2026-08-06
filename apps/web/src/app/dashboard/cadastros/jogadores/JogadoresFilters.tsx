@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { FOOTBALL_POSITIONS, getPositionLabel } from "@/lib/football-positions";
 import { SPORTS_SITUATION_OPTIONS } from "@/lib/player-registration-profile";
 
@@ -51,11 +51,9 @@ export function JogadoresFilters({
   }, []);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) =>
-        selectedTenant.categories!.includes(c.value)
-      )
-    : FIXTURE_CATEGORIES;
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(
+    selectedTenant?.categories,
+  );
 
   const pushFilters = useCallback(
     (values: {

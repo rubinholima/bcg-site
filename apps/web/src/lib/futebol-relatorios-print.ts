@@ -897,14 +897,15 @@ export function buildLayoutRelacionadosPrintHtml(
       ? `<section class="section">
           <h2 class="section-title">Agenda do jogo (casa)</h2>
           <table>
-            <thead><tr><th class="num">#</th><th>Atividade</th><th>Horário</th><th>Obs.</th></tr></thead>
+            <thead><tr><th class="num">#</th><th>Data</th><th>Horário</th><th>Atividade</th><th>Obs.</th></tr></thead>
             <tbody>
               ${data.homeMatchAgenda
                 .map(
                   (a, i) => `<tr>
                     <td class="num">${i + 1}</td>
-                    <td>${escapeHtml(a.label)}</td>
+                    <td>${escapeHtml(formatBrDate(a.date) || "—")}</td>
                     <td>${escapeHtml(a.time?.trim() || "—")}</td>
+                    <td>${escapeHtml(a.label)}</td>
                     <td>${escapeHtml(a.notes?.trim() || "—")}</td>
                   </tr>`,
                 )

@@ -18,7 +18,8 @@ import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-mo
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { api } from "@/lib/api";
 import { reportLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
-import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
+import { getCategoryLabel } from "@/lib/fixture-categories";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import {
   PSICOLOGIA_ATLETA_FIELDS,
   buildPsicologiaAtletasPrintHtml,
@@ -101,19 +102,19 @@ export function PsicologiaAtletasReportForm() {
   }, []);
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
-  const categoriesForDropdown = selectedTenant?.categories?.length
-    ? FIXTURE_CATEGORIES.filter((c) => selectedTenant.categories!.includes(c.value))
-    : FIXTURE_CATEGORIES;
+  const { categories: categoriesForDropdown, allCategories } = useCategoriesForTenant(
+    selectedTenant?.categories,
+  );
 
   const filtersSummary = useMemo(() => {
     const parts: string[] = [];
     parts.push(selectedTenant ? `Clube: ${selectedTenant.name}` : "Clube: todos");
     parts.push(
-      category ? `Categoria: ${getCategoryLabel(category, "pt")}` : "Categoria: todas",
+      category ? `Categoria: ${getCategoryLabel(category, "pt", allCategories)}` : "Categoria: todas",
     );
     parts.push(search.trim() ? `Busca: "${search.trim()}"` : "Busca: —");
     return parts.join(" · ");
-  }, [selectedTenant, category, search]);
+  }, [selectedTenant, category, search, allCategories]);
 
   const toggleField = (key: PsicologiaAtletaFieldKey, checked: boolean) => {
     setSelectedFields((prev) => {
