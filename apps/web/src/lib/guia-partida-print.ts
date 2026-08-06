@@ -598,10 +598,22 @@ function styles(size: PrintPageSize): string {
       align-items: stretch;
     }
     .vis-field-row {
-      display: grid;
-      grid-template-columns: 50mm minmax(0, 1fr);
-      gap: 4mm;
-      align-items: start;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: stretch;
+      gap: 3mm;
+      width: max-content;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    .vis-field-row > .vis-staff-side {
+      width: 46mm;
+      flex: 0 0 46mm;
+    }
+    .vis-field-row > .vis-pitch-wrap {
+      flex: 0 0 auto;
     }
     .vis-staff-side {
       display: flex;
@@ -646,9 +658,8 @@ function styles(size: PrintPageSize): string {
     }
     .vis-pitch-wrap {
       position: relative;
-      width: 100%;
-      max-width: 148mm;
-      margin: 0 auto;
+      width: 162mm;
+      max-width: 162mm;
       aspect-ratio: 68 / 100;
       border-radius: 3mm;
       overflow: hidden;

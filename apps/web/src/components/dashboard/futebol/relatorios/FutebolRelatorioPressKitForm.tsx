@@ -1061,8 +1061,9 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                 </div>
 
-                <div className="mx-auto grid w-full max-w-6xl gap-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
-                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 sm:order-1">
+                <div className="flex w-full justify-center overflow-x-auto">
+                  <div className="flex w-max max-w-none flex-col items-stretch gap-2 sm:flex-row sm:items-stretch sm:gap-2">
+                  <aside className="order-2 w-full shrink-0 rounded-xl border border-border bg-card/50 p-3 sm:order-1 sm:w-[168px]">
                     <p className="mb-3 text-xs font-extrabold uppercase tracking-wide text-[#93c5fd]">
                       Comissão
                     </p>
@@ -1094,7 +1095,7 @@ export function FutebolRelatorioPressKitForm() {
                     )}
                   </aside>
                   <div
-                    className="relative order-1 mx-auto aspect-[68/100] h-[min(72vh,750px)] w-auto max-w-full overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(74vh,760px)]"
+                    className="relative order-1 aspect-[68/100] h-[min(78vh,835px)] w-auto shrink-0 overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(80vh,850px)]"
                     onDragOver={(e) => e.preventDefault()}
                   >
                     <PitchMarkings />
@@ -1191,6 +1192,7 @@ export function FutebolRelatorioPressKitForm() {
                         </div>
                       );
                     })}
+                  </div>
                   </div>
                 </div>
 

@@ -1226,8 +1226,8 @@ export function buildPressKitPrintHtml(
     /* ---------- Gramado ---------- */
     .pitch-wrap {
       position: relative;
-      width: 100%;
-      height: 126mm;
+      width: 118mm;
+      height: 139mm;
       border-radius: 8px;
       overflow: hidden;
       border: 2.5px solid #14532d;
@@ -1317,11 +1317,22 @@ export function buildPressKitPrintHtml(
     }
 
     .pk-pitch-layout {
-      display: grid;
-      grid-template-columns: 0.7fr 1.5fr;
-      gap: 8px;
-      margin-top: 4px;
-      align-items: start;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: stretch;
+      gap: 6px;
+      width: max-content;
+      max-width: 100%;
+      margin: 4px auto 0;
+    }
+    .pk-pitch-layout .pk-staff-aside {
+      width: 48mm;
+      flex: 0 0 48mm;
+    }
+    .pk-pitch-layout > .pk-block:not(.pk-staff-aside) {
+      flex: 0 0 auto;
     }
     .pk-page-pitch .pk-block h3 { margin-bottom: 3px; }
     .pk-bench-strip {
