@@ -369,7 +369,6 @@ function styles(size: PrintPageSize): string {
     .sheet {
       position: relative;
       width: 210mm;
-      min-height: 297mm;
       padding: 10mm 11mm 12mm;
       margin: 0 auto;
       background: #fff;
@@ -378,6 +377,7 @@ function styles(size: PrintPageSize): string {
       overflow: visible;
       box-sizing: border-box;
     }
+    /* Capa — não alterar: full-bleed aprovado */
     .sheet.cover-sheet {
       width: 210mm;
       height: 297mm;
@@ -385,6 +385,14 @@ function styles(size: PrintPageSize): string {
       min-height: 297mm;
       overflow: hidden;
       padding: 0;
+    }
+    /* Última página = tela da preparação (fundo escuro + gramado) */
+    .sheet.visual-sheet {
+      padding: 5mm 5mm 6mm;
+      background: ${C.navyDeep};
+      color: #fff;
+      page-break-after: auto;
+      break-after: auto;
     }
     .sheet:last-of-type { page-break-after: auto; break-after: auto; }
 
@@ -431,7 +439,7 @@ function styles(size: PrintPageSize): string {
     .sheet-tag { position: absolute; right: 11mm; top: 5mm; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
     .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
     .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
-    .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: avoid; }
+    .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: auto; page-break-inside: auto; }
     .panel h3 { margin: 0 0 3mm; font-size: 10pt; text-transform: uppercase; letter-spacing: .14em; color: ${C.navy}; border-bottom: 1px solid ${C.line}; padding-bottom: 2mm; }
     .empty { margin: 0; font-size: 8.5pt; color: ${C.muted}; font-style: italic; }
     .muted { color: ${C.muted}; }
@@ -451,8 +459,8 @@ function styles(size: PrintPageSize): string {
     table.agenda th[scope="row"] span { display: block; font-weight: 400; font-size: 7.5pt; color: ${C.muted}; }
     .agenda-wrap { display: flex; flex-direction: column; gap: 3.5mm; }
     .agenda-day {
-      break-inside: avoid;
-      page-break-inside: avoid;
+      break-inside: auto;
+      page-break-inside: auto;
       border: 1px solid ${C.line};
       border-radius: 2mm;
       overflow: hidden;
@@ -592,34 +600,42 @@ function styles(size: PrintPageSize): string {
     .vis-stage {
       display: flex;
       flex-direction: column;
-      gap: 3mm;
+      gap: 0;
       align-items: stretch;
       width: 100%;
+      height: 100%;
+      min-height: 280mm;
     }
     .vis-field-row {
       display: grid;
-      grid-template-columns: 42mm minmax(0, 1fr);
+      grid-template-columns: 40mm minmax(0, 1fr);
       gap: 3mm;
       align-items: stretch;
       width: 100%;
+      flex: 1;
+      min-height: 0;
     }
     .vis-field-row > .vis-staff-side {
       width: auto;
       min-width: 0;
+      align-self: stretch;
     }
     .vis-field-row > .vis-pitch-wrap {
       width: 100%;
       max-width: none;
       min-width: 0;
+      height: 100%;
+      max-height: 280mm;
+      aspect-ratio: auto;
     }
     .vis-staff-side {
       display: flex;
       flex-direction: column;
-      gap: 2.2mm;
-      padding: 3.5mm 3mm;
-      border: 1px solid ${C.line};
-      border-radius: 2mm;
-      background: ${C.softer};
+      gap: 2mm;
+      padding: 3mm 2.5mm;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 3mm;
+      background: rgba(255,255,255,0.06);
       break-inside: avoid;
       min-width: 0;
       overflow: visible;
@@ -630,7 +646,7 @@ function styles(size: PrintPageSize): string {
       font-weight: 800;
       letter-spacing: .08em;
       text-transform: uppercase;
-      color: ${C.navy};
+      color: #93c5fd;
       border-bottom: 2px solid ${C.red};
       padding-bottom: 1.5mm;
     }
@@ -641,33 +657,33 @@ function styles(size: PrintPageSize): string {
     }
     .vis-staff-side-photo {
       width: 8mm; height: 10.5mm; object-fit: cover; object-position: center 12%;
-      border-radius: 1mm; border: 1px solid ${C.line}; background: ${C.soft}; flex: none;
+      border-radius: 1mm; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.35); flex: none;
     }
     .vis-staff-side-photo.photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      font-size: 6pt; font-weight: 800; color: ${C.navy};
+      font-size: 6pt; font-weight: 800; color: #fff;
     }
     .vis-staff-side-row strong {
-      display: block; font-size: 6.2pt; line-height: 1.15; color: ${C.ink}; text-transform: uppercase;
+      display: block; font-size: 6.2pt; line-height: 1.15; color: #fff; text-transform: uppercase;
       overflow: visible; white-space: normal;
     }
     .vis-staff-side-row span {
-      display: block; font-size: 5.2pt; color: ${C.muted}; text-transform: uppercase; line-height: 1.15;
+      display: block; font-size: 5.2pt; color: #9FB3D4; text-transform: uppercase; line-height: 1.15;
       overflow: visible; white-space: normal;
     }
+    /* Mesmo gramado da preparação (PitchMarkings) */
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
-      max-width: 100%;
-      aspect-ratio: 78 / 100;
       border-radius: 3mm;
       overflow: hidden;
       border: 2.5px solid #14532d;
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
     }
     .vis-pitch-players {
       position: absolute;
-      inset: 0 6%;
+      inset: 0 7%;
       z-index: 2;
     }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
@@ -694,9 +710,9 @@ function styles(size: PrintPageSize): string {
     .vis-photo {
       width: 13mm;
       height: 17mm;
-      object-fit: cover;
-      object-position: center 12%;
-      border-radius: 1mm;
+      object-fit: contain;
+      object-position: center bottom;
+      border-radius: 0;
       display: block;
       background: transparent;
       box-shadow: none;
@@ -1126,7 +1142,6 @@ export function buildGuiaPartidaPrintHtml(
   const squadById = new Map(
     data.squad.filter((p) => p.playerId).map((p) => [p.playerId!, p]),
   );
-  const starterIdSet = new Set(config.starterPlayerIds.filter(Boolean));
   const visualPlayers = formation.slots
     .map((slot, i) => {
       const slotId = config.starterPlayerIds[i];
@@ -1182,28 +1197,13 @@ export function buildGuiaPartidaPrintHtml(
       </div>`;
     })
     .join("");
-  const benchPlayers = data.squad.filter(
-    (p) => p.playerId && !starterIdSet.has(p.playerId),
-  );
-  const benchHtml = benchPlayers
-    .map((p) => {
-      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-      const nick = athletePrintName(p);
-      return `<div class="vis-bench-row">
-        ${photo(p.photoUrl, p.name, "vis-bench-photo")}
-        <span class="vis-bench-num">${esc(n)}</span>
-        <div><strong>${esc(nick)}</strong><span>${esc(p.positionLabel)}</span></div>
-      </div>`;
-    })
-    .join("");
+  /* Igual à tela da preparação: comissão + gramado (sem título/banco/rodapé que geravam página extra). */
   const visualSheet = sheet(
-    `<div class="sheet-tag">Escalação</div>
-    ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
-    <div class="vis-stage">
+    `<div class="vis-stage">
       <div class="vis-field-row">
         <aside class="vis-staff-side">
           <p class="vis-staff-side-title">Comissão</p>
-          ${staffBeside || `<p class="empty">—</p>`}
+          ${staffBeside || `<p class="empty" style="color:#9FB3D4">—</p>`}
         </aside>
         <div class="vis-pitch-wrap">
           <div class="vis-pitch-mark pl-half"></div>
@@ -1215,17 +1215,8 @@ export function buildGuiaPartidaPrintHtml(
           <div class="vis-pitch-players">${visualPlayers}</div>
         </div>
       </div>
-      <div class="vis-bench">
-        <h3>Reservas · banco</h3>
-        ${
-          benchHtml
-            ? `<div class="vis-bench-grid">${benchHtml}</div>`
-            : `<p class="empty">Sem reservas.</p>`
-        }
-      </div>
-    </div>
-    <p class="note">No gramado só os titulares. Comissão ao lado do campo.</p>
-    ${foot("Escalação visual")}`,
+    </div>`,
+    "visual-sheet",
   );
 
   const body = [cover, matchSheet, numbersSheet, ...squadSheets, lineupSheet, closingSheet, visualSheet]
