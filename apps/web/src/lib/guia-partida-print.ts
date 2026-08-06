@@ -179,10 +179,8 @@ function playerCard(player: GuiaSquadPlayer): string {
     .join("");
 
   const nick = player.nickname?.trim() || null;
-  const extras: string[] = [];
-  if (!player.isStarter) extras.push("bench");
-  if ((player.status ?? "").toLowerCase() === "suspended") extras.push("suspended");
-  const cardClass = ["pcard", ...extras].join(" ");
+  const cardClass =
+    (player.status ?? "").toLowerCase() === "suspended" ? "pcard suspended" : "pcard";
   return `<article class="${cardClass}">
     <div class="pcard-photo">
       ${photo(player.photoUrl, player.name, "pcard-img")}
@@ -193,7 +191,6 @@ function playerCard(player: GuiaSquadPlayer): string {
         <span class="pcard-num">${player.jerseyNumber != null ? player.jerseyNumber : "—"}</span>
         <div>
           <strong>${esc(nick || player.shortName)}</strong>
-          <span class="pcard-fullname">${esc(player.name)}</span>
           <span>${esc(bio || formatBirth(player.birthDate) || "—")}</span>
         </div>
       </div>
@@ -204,6 +201,19 @@ function playerCard(player: GuiaSquadPlayer): string {
       <p class="pcard-foot">Carreira no clube: ${player.career.matches} J · ${player.career.goals} G · ${player.career.minutes} min</p>
     </div>
   </article>`;
+}
+
+function athletePrintName(player: {
+  nickname?: string | null;
+  shortName?: string;
+  name: string;
+}): string {
+  const nick = player.nickname?.trim();
+  if (nick) return nick;
+  if (player.shortName?.trim()) return player.shortName.trim();
+  const parts = player.name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return parts.join(" ");
+  return `${parts[0]} ${parts[parts.length - 1]}`;
 }
 
 function surname(name: string): string {
@@ -274,35 +284,31 @@ function lineupColumn(lineup: GuiaLineup): string {
 function agendaTable(days: GuiaAgendaDay[]): string {
   const withItems = days.filter((day) => day.items.length > 0 || day.isMatchDay);
   if (withItems.length === 0) return `<p class="empty">Sem compromissos registrados na semana.</p>`;
-  return `<table class="grid agenda">
-    <thead><tr><th class="left">Dia</th><th class="left">Horário</th><th class="left">Atividade</th><th class="left">Local</th></tr></thead>
-    <tbody>
-      ${withItems
-        .map((day) => {
-          if (day.items.length === 0) {
-            return `<tr class="${day.isMatchDay ? "matchday" : ""}">
-            <th scope="row" class="left">${esc(day.weekdayLabel)}<span>${esc(day.dateLabel)}</span></th>
-            <td colspan="3" class="left muted">Sem atividades lançadas</td>
-          </tr>`;
-          }
-          return day.items
-            .map(
-              (item, index) => `<tr class="${day.isMatchDay ? "matchday" : ""}">
-            ${
-              index === 0
-                ? `<th scope="row" class="left" rowspan="${day.items.length}">${esc(day.weekdayLabel)}<span>${esc(day.dateLabel)}</span></th>`
-                : ""
-            }
+  return `<div class="agenda-wrap">
+    ${withItems
+      .map((day) => {
+        const rows =
+          day.items.length === 0
+            ? `<tr><td class="left muted" colspan="3">Sem atividades lançadas</td></tr>`
+            : day.items
+                .map(
+                  (item) => `<tr>
             <td class="left">${esc(item.time || "—")}</td>
             <td class="left">${esc(item.title)}<span class="muted"> · ${esc(item.typeLabel)}</span></td>
             <td class="left">${esc(item.location ?? "—")}</td>
           </tr>`,
-            )
-            .join("");
-        })
-        .join("")}
-    </tbody>
-  </table>`;
+                )
+                .join("");
+        return `<div class="agenda-day${day.isMatchDay ? " is-match" : ""}">
+          <div class="agenda-day-head">${esc(day.weekdayLabel)} · ${esc(day.dateLabel)}${day.isMatchDay ? " · Dia de jogo" : ""}</div>
+          <table class="grid agenda">
+            <thead><tr><th class="left">Horário</th><th class="left">Atividade</th><th class="left">Local</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+      })
+      .join("")}
+  </div>`;
 }
 
 function standingsTable(rows: GuiaStandingRow[]): string {
@@ -350,8 +356,7 @@ function styles(size: PrintPageSize): string {
     .sheet {
       position: relative;
       width: 210mm;
-      min-height: 297mm;
-      padding: 11mm 11mm 14mm;
+      padding: 10mm 11mm 12mm;
       margin: 0 auto;
       background: #fff;
       page-break-after: always;
@@ -429,8 +434,27 @@ function styles(size: PrintPageSize): string {
     table.grid tr.sub td { background: ${C.softer}; color: ${C.muted}; }
     table.grid .tag { font-size: 6.5pt; color: ${C.red}; font-weight: 700; }
     table.agenda th[scope="row"] span { display: block; font-weight: 400; font-size: 7.5pt; color: ${C.muted}; }
-    table.agenda tr.matchday td, table.agenda tr.matchday th { background: ${C.redDark}; color: #fff; border-color: ${C.redDark}; }
-    table.agenda tr.matchday .muted { color: #F3C9D1; }
+    .agenda-wrap { display: flex; flex-direction: column; gap: 3.5mm; }
+    .agenda-day {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      border: 1px solid ${C.line};
+      border-radius: 2mm;
+      overflow: hidden;
+      background: #fff;
+    }
+    .agenda-day-head {
+      padding: 1.6mm 2.5mm;
+      background: ${C.navy};
+      color: #fff;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .agenda-day.is-match .agenda-day-head { background: ${C.red}; }
+    .agenda-day table.agenda { margin: 0; border: 0; }
+    .agenda-day table.agenda th, .agenda-day table.agenda td { border-color: ${C.line}; }
     table.standings tr.club td { background: ${C.navy}; color: #fff; font-weight: 700; border-color: ${C.navy}; }
     table.standings tr.club .hi { color: ${C.gold}; }
 
@@ -489,8 +513,7 @@ function styles(size: PrintPageSize): string {
     .group-band { margin: 0 0 2.5mm; padding: 1.4mm 2.5mm; background: ${C.navy}; color: #fff; font-size: 8pt; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; border-radius: 1.5mm; }
     .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; }
     .pcard { display: flex; gap: 2mm; border: 1px solid ${C.line}; border-radius: 2mm; overflow: hidden; background: #fff; break-inside: avoid; page-break-inside: avoid; height: 34mm; }
-    .pcard.bench { background: #FFF7ED; border-color: #FDBA74; }
-    .pcard.suspended { background: #FEF2F2; border-color: #FECACA; }
+    .pcard.suspended { border-color: #FECACA; }
     .pcard-photo { position: relative; width: 22mm; flex: none; background: linear-gradient(160deg, ${C.navy} 0%, ${C.navyDeep} 100%); }
     .pcard-img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; }
     .photo-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12pt; }
@@ -499,7 +522,6 @@ function styles(size: PrintPageSize): string {
     .pcard-head { display: flex; align-items: center; gap: 2mm; margin-bottom: 1mm; }
     .pcard-num { font-size: 14pt; font-weight: 900; color: ${C.red}; line-height: 1; min-width: 7mm; text-align: center; }
     .pcard-head strong { display: block; font-size: 8.5pt; text-transform: uppercase; color: ${C.navy}; line-height: 1.05; }
-    .pcard-head .pcard-fullname { display: block; font-size: 5.8pt; color: ${C.ink}; text-transform: uppercase; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 55mm; }
     .pcard-head span { font-size: 6pt; color: ${C.muted}; }
     table.pstats { width: 100%; border-collapse: collapse; font-size: 6pt; }
     table.pstats th, table.pstats td { border: 1px solid ${C.line}; padding: .6mm 1mm; text-align: center; }
@@ -529,10 +551,55 @@ function styles(size: PrintPageSize): string {
       gap: 3mm;
       align-items: stretch;
     }
+    .vis-field-row {
+      display: grid;
+      grid-template-columns: 42mm 1fr;
+      gap: 3mm;
+      align-items: stretch;
+    }
+    .vis-staff-side {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5mm;
+      padding: 2mm;
+      border: 1px solid ${C.line};
+      border-radius: 2mm;
+      background: ${C.softer};
+      break-inside: avoid;
+    }
+    .vis-staff-side-title {
+      margin: 0 0 1mm;
+      font-size: 7.5pt;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: ${C.navy};
+      border-bottom: 2px solid ${C.red};
+      padding-bottom: 1mm;
+    }
+    .vis-staff-side-row {
+      display: flex;
+      gap: 1.5mm;
+      align-items: center;
+    }
+    .vis-staff-side-photo {
+      width: 8mm; height: 10.5mm; object-fit: cover; object-position: center 12%;
+      border-radius: 1mm; border: 1px solid ${C.line}; background: ${C.soft}; flex: none;
+    }
+    .vis-staff-side-photo.photo-fallback {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 6pt; font-weight: 800; color: ${C.navy};
+    }
+    .vis-staff-side-row strong {
+      display: block; font-size: 6.5pt; line-height: 1.1; color: ${C.ink}; text-transform: uppercase;
+    }
+    .vis-staff-side-row span {
+      display: block; font-size: 5.5pt; color: ${C.muted}; text-transform: uppercase;
+    }
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
-      max-width: 128mm;
+      max-width: 118mm;
       margin: 0 auto;
       aspect-ratio: 68 / 105;
       border-radius: 3mm;
@@ -541,55 +608,14 @@ function styles(size: PrintPageSize): string {
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
       box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.2);
     }
-    .vis-tech {
-      position: absolute;
-      left: 0;
-      top: 8%;
-      bottom: 8%;
-      width: 18%;
-      z-index: 3;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      gap: 1.2mm;
-      padding: 2mm 1mm;
-      background: linear-gradient(90deg, rgba(15,40,20,0.88) 0%, rgba(15,40,20,0.35) 70%, transparent 100%);
-      border-right: 1.5px dashed rgba(255,255,255,0.35);
-    }
-    .vis-tech-label {
-      font-size: 5.5pt; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
-      color: #fde68a; text-shadow: 0 1px 2px rgba(0,0,0,.8); margin-bottom: 1mm;
-    }
-    .vis-tech-row {
-      display: flex; flex-direction: column; align-items: center; gap: 0.4mm;
-      text-align: center;
-    }
-    .vis-tech-photo {
-      width: 9mm; height: 12mm; object-fit: cover; object-position: center 12%;
-      border-radius: 1mm; border: 1.2px solid #fff; background: ${C.navy}; display: block;
-      box-shadow: 0 1mm 2mm rgba(0,0,0,.4);
-    }
-    .vis-tech-photo.photo-fallback {
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 7pt;
-    }
-    .vis-tech-name {
-      font-size: 5pt; font-weight: 800; color: #fff; line-height: 1.05;
-      text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,.9);
-      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .vis-tech-role {
-      font-size: 4.5pt; font-weight: 700; color: #fde68a; line-height: 1.05;
-      text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,.85);
-    }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
-    .vis-pitch-wrap .pl-outer { inset: 3.5%; left: 18%; border-radius: 2mm; }
-    .vis-pitch-wrap .pl-half { left: 18%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
-    .vis-pitch-wrap .pl-circle { left: 59%; top: 50%; width: 16mm; height: 16mm; margin: -8mm 0 0 -8mm; border-radius: 50%; }
-    .vis-pitch-wrap .pl-box-top { left: 34%; right: 18%; top: 3.5%; height: 13%; border-top: 0; }
-    .vis-pitch-wrap .pl-box-bottom { left: 34%; right: 18%; bottom: 3.5%; height: 13%; border-bottom: 0; }
-    .vis-pitch-wrap .pl-goal-top { left: 44%; right: 28%; top: 3.5%; height: 5.5%; border-top: 0; }
-    .vis-pitch-wrap .pl-goal-bottom { left: 44%; right: 28%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
+    .vis-pitch-wrap .pl-outer { inset: 3.5%; border-radius: 2mm; }
+    .vis-pitch-wrap .pl-half { left: 3.5%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
+    .vis-pitch-wrap .pl-circle { left: 50%; top: 50%; width: 16mm; height: 16mm; margin: -8mm 0 0 -8mm; border-radius: 50%; }
+    .vis-pitch-wrap .pl-box-top { left: 24%; right: 24%; top: 3.5%; height: 13%; border-top: 0; }
+    .vis-pitch-wrap .pl-box-bottom { left: 24%; right: 24%; bottom: 3.5%; height: 13%; border-bottom: 0; }
+    .vis-pitch-wrap .pl-goal-top { left: 37%; right: 37%; top: 3.5%; height: 5.5%; border-top: 0; }
+    .vis-pitch-wrap .pl-goal-bottom { left: 37%; right: 37%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
     .vis-chip { position: absolute; transform: translate(-50%, -50%); width: 18mm; text-align: center; z-index: 2; }
     .vis-photo-wrap { position: relative; width: 10mm; height: 13.5mm; margin: 0 auto 0.8mm; }
     .vis-photo { width: 10mm; height: 13.5mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1.5px solid #fff; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); background: ${C.navy}; display: block; }
@@ -599,8 +625,11 @@ function styles(size: PrintPageSize): string {
       border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
     }
-    .vis-name { font-size: 6pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.1; }
-    .vis-slot { font-size: 5pt; font-weight: 700; color: #fef3c7; text-shadow: 0 1px 2px rgba(0,0,0,.85); }
+    .vis-name {
+      font-size: 6pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      text-transform: uppercase; line-height: 1.1;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .vis-bench {
       border: 1.5px solid #EA580C; border-radius: 2.5mm; padding: 2.5mm 3mm;
       background: linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%);
@@ -821,7 +850,7 @@ export function buildGuiaPartidaPrintHtml(
               <div class="kpi alt"><strong>${data.headToHead.losses}</strong><span>Derrotas</span></div>
             </div>
             ${matchRows(data.headToHead.matches)}`
-          : `<p class="empty">Sem confrontos anteriores com ${esc(opponent)} (nome completo).</p>`
+          : `<p class="empty">Sem confrontos anteriores com ${esc(opponent)}.</p>`
       }
     </div>
     ${foot("A partida")}`,
@@ -929,7 +958,7 @@ export function buildGuiaPartidaPrintHtml(
       `<div class="sheet-tag">Elenco relacionado</div>
       ${sectionTitle("Elenco", `${data.squad.length} atletas relacionados · ${travel.categoryLabel}`)}
       ${squadBlocks.join("")}
-      <p class="note">J = jogos · G = gols · MIN = minutos. Reserva = fundo laranja. Suspenso = fundo vermelho claro. Temporada ${data.season}.</p>
+      <p class="note">J = jogos · G = gols · MIN = minutos. Temporada ${data.season}.</p>
       ${foot("Elenco")}`,
     ),
   ];
@@ -969,22 +998,19 @@ export function buildGuiaPartidaPrintHtml(
     data.squad.filter((p) => p.playerId).map((p) => [p.playerId!, p]),
   );
   const starterIdSet = new Set(config.starterPlayerIds.filter(Boolean));
-  // Área de jogo começa em 18% (faixa da comissão à esquerda)
   const visualPlayers = formation.slots
     .map((slot, i) => {
       const slotId = config.starterPlayerIds[i];
       const p = slotId ? squadById.get(slotId) : undefined;
       if (!p) return "";
       const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-      const nick = p.nickname?.trim() || p.shortName;
-      const left = 18 + (slot.left / 100) * 82;
-      return `<div class="vis-chip" style="top:${slot.top}%;left:${left}%">
+      const nick = athletePrintName(p);
+      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%">
         <div class="vis-photo-wrap">
           ${photo(p.photoUrl, p.name, "vis-photo")}
           <span class="vis-num">${esc(n)}</span>
         </div>
         <div class="vis-name">${esc(nick)}</div>
-        <div class="vis-slot">${esc(slot.label)}</div>
       </div>`;
     })
     .join("");
@@ -1000,21 +1026,19 @@ export function buildGuiaPartidaPrintHtml(
     if (label.includes("auxiliar")) return 1;
     return 10;
   };
-  const staffOnPitch = [...data.staff]
+  const staffBeside = [...data.staff]
     .sort((a, b) => {
       const d = staffRank(a) - staffRank(b);
       if (d !== 0) return d;
       return a.name.localeCompare(b.name, "pt-BR");
     })
-    .slice(0, 8)
     .map((s) => {
       const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
       const short =
         s.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(" ") || s.name;
-      return `<div class="vis-tech-row">
-        ${photo(s.photoUrl, s.name, "vis-tech-photo")}
-        <span class="vis-tech-name">${esc(short)}</span>
-        <span class="vis-tech-role">${esc(role)}</span>
+      return `<div class="vis-staff-side-row">
+        ${photo(s.photoUrl, s.name, "vis-staff-side-photo")}
+        <div><strong>${esc(short)}</strong><span>${esc(role)}</span></div>
       </div>`;
     })
     .join("");
@@ -1024,7 +1048,7 @@ export function buildGuiaPartidaPrintHtml(
   const benchHtml = benchPlayers
     .map((p) => {
       const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-      const nick = p.nickname?.trim() || p.shortName;
+      const nick = athletePrintName(p);
       return `<div class="vis-bench-row">
         ${photo(p.photoUrl, p.name, "vis-bench-photo")}
         <span class="vis-bench-num">${esc(n)}</span>
@@ -1036,19 +1060,21 @@ export function buildGuiaPartidaPrintHtml(
     `<div class="sheet-tag">Escalação</div>
     ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
     <div class="vis-stage">
-      <div class="vis-pitch-wrap">
-        <div class="vis-tech">
-          <div class="vis-tech-label">Área técnica</div>
-          ${staffOnPitch || `<p class="empty" style="color:#fff;font-size:7pt">—</p>`}
+      <div class="vis-field-row">
+        <aside class="vis-staff-side">
+          <p class="vis-staff-side-title">Comissão</p>
+          ${staffBeside || `<p class="empty">—</p>`}
+        </aside>
+        <div class="vis-pitch-wrap">
+          <div class="vis-pitch-mark pl-outer"></div>
+          <div class="vis-pitch-mark pl-half"></div>
+          <div class="vis-pitch-mark pl-circle"></div>
+          <div class="vis-pitch-mark pl-box-top"></div>
+          <div class="vis-pitch-mark pl-goal-top"></div>
+          <div class="vis-pitch-mark pl-box-bottom"></div>
+          <div class="vis-pitch-mark pl-goal-bottom"></div>
+          ${visualPlayers}
         </div>
-        <div class="vis-pitch-mark pl-outer"></div>
-        <div class="vis-pitch-mark pl-half"></div>
-        <div class="vis-pitch-mark pl-circle"></div>
-        <div class="vis-pitch-mark pl-box-top"></div>
-        <div class="vis-pitch-mark pl-goal-top"></div>
-        <div class="vis-pitch-mark pl-box-bottom"></div>
-        <div class="vis-pitch-mark pl-goal-bottom"></div>
-        ${visualPlayers}
       </div>
       <div class="vis-bench">
         <h3>Reservas · banco</h3>
@@ -1059,7 +1085,7 @@ export function buildGuiaPartidaPrintHtml(
         }
       </div>
     </div>
-    <p class="note">Comissão na área técnica (lateral do gramado). O quadro não representa o esquema utilizado em campo, nem o posicionamento definitivo dos atletas.</p>
+    <p class="note">No gramado só os titulares. Comissão ao lado do campo. O quadro não representa o esquema utilizado em partida.</p>
     ${foot("Escalação visual")}`,
   );
 
