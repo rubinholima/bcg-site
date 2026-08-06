@@ -43,12 +43,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             : "";
 
       return (
-        <div className={cn("relative w-full", className)}>
+        <div className={cn("relative w-full min-w-0 max-w-full", className)}>
           <input
             type={type}
             className={cn(
               baseClass,
-              "formatted-date-input",
+              "formatted-date-input max-w-full",
               "text-transparent caret-transparent",
               "[&::-webkit-datetime-edit]:text-transparent",
               "[&::-webkit-datetime-edit-fields-wrapper]:text-transparent",
@@ -70,7 +70,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
           <span
             className={cn(
-              "pointer-events-none absolute inset-y-0 left-3 right-10 flex items-center text-sm",
+              "pointer-events-none absolute inset-y-0 left-3 right-10 flex items-center truncate text-sm",
               label ? "text-foreground" : "text-muted-foreground",
             )}
           >

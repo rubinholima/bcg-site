@@ -19,7 +19,7 @@ import type {
   RelatorioHospedeRow,
 } from "@/lib/futebol-relatorios.types";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
-import { getFormation } from "@/lib/press-kit-formations";
+import { getFormation, pitchChipTranslateY } from "@/lib/press-kit-formations";
 import { cadastroPositionAbbrev } from "@/lib/press-kit-lineup";
 import type { PressKitUniformKitDto } from "@/lib/futebol-relatorios.types";
 
@@ -1096,8 +1096,7 @@ export function buildPressKitPrintHtml(
     ).toLocaleUpperCase("pt-BR");
     const pos = cadastroPositionAbbrev(p.position);
     const birth = formatBirthShort(p.birthDate);
-    const nearBottom = slot.top >= 72;
-    const ty = nearBottom ? "-78%" : "-50%";
+    const ty = pitchChipTranslateY(slot.top);
     return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
       <div class="chip-photo-wrap">
         ${photo}
@@ -1228,7 +1227,7 @@ export function buildPressKitPrintHtml(
     .pitch-wrap {
       position: relative;
       width: 100%;
-      height: 118mm;
+      height: 132mm;
       border-radius: 8px;
       overflow: hidden;
       border: 2.5px solid #14532d;
@@ -1252,15 +1251,15 @@ export function buildPressKitPrintHtml(
     .player-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 92px;
+      width: 72px;
       text-align: center;
       z-index: 2;
     }
     .chip-photo-wrap {
       position: relative;
-      width: 48px;
-      height: 64px;
-      margin: 0 auto 2px;
+      width: 38px;
+      height: 50px;
+      margin: 0 auto 1px;
       background: transparent;
     }
     .chip-photo {
@@ -1273,10 +1272,9 @@ export function buildPressKitPrintHtml(
       box-shadow: 0 2px 6px rgba(0,0,0,0.25);
     }
     .pitch-wrap .chip-photo {
-      width: 48px;
-      height: 64px;
+      width: 38px;
+      height: 50px;
       background: transparent;
-      mix-blend-mode: multiply;
       box-shadow: none;
     }
     .chip-photo-fallback {
@@ -1286,9 +1284,9 @@ export function buildPressKitPrintHtml(
       background: rgba(0,0,0,0.45);
     }
     .pitch-wrap .chip-photo-fallback {
-      width: 48px;
-      height: 64px;
-      font-size: 16px;
+      width: 38px;
+      height: 50px;
+      font-size: 14px;
       mix-blend-mode: normal;
     }
     .chip-num {
@@ -1320,7 +1318,7 @@ export function buildPressKitPrintHtml(
 
     .pk-pitch-layout {
       display: grid;
-      grid-template-columns: 0.68fr 1.45fr;
+      grid-template-columns: 0.55fr 1.7fr;
       gap: 8px;
       margin-top: 4px;
       align-items: stretch;

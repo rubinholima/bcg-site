@@ -28,6 +28,7 @@ import {
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { cutoutWhiteBackgroundUrlCached } from "@/lib/photo-edge-white-cutout";
 import type {
   PressKitConfigDto,
   PressKitNamedRole,
@@ -51,7 +52,7 @@ import {
 } from "@/lib/guia-partida-print";
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
-import { getFormation, PRESS_KIT_FORMATIONS } from "@/lib/press-kit-formations";
+import { getFormation, PRESS_KIT_FORMATIONS, pitchChipTranslateY } from "@/lib/press-kit-formations";
 import {
   assignStartersByCadastroPosition,
   cadastroPositionAbbrev,
@@ -131,6 +132,20 @@ function formatBirthShortUi(iso: string | null | undefined): string {
   return `${d}/${m}/${y}`;
 }
 
+/** Recorta fundo branco de estúdio nas fotos do elenco (gramado / impressão). */
+async function applySquadPhotoCutouts(
+  data: GuiaPartidaReportDto,
+): Promise<GuiaPartidaReportDto> {
+  const squad = await Promise.all(
+    (data.squad ?? []).map(async (p) => {
+      if (!p.photoUrl) return p;
+      const cut = await cutoutWhiteBackgroundUrlCached(p.photoUrl);
+      return cut ? { ...p, photoUrl: cut } : p;
+    }),
+  );
+  return { ...data, squad };
+}
+
 function applyJerseyOverridesLocal(
   rows: RelatorioPessoaRow[],
   overrides: Record<string, number | null>,
@@ -147,7 +162,7 @@ function AthletePhoto3x4({
   photoUrl,
   name,
   size = "md",
-  /** No gramado: mistura fundo branco da foto com o verde */
+  /** No gramado: remove fundo branco de estúdio (recorte) */
   onPitch = false,
 }: {
   photoUrl?: string | null;
@@ -155,7 +170,29 @@ function AthletePhoto3x4({
   size?: "sm" | "md" | "lg" | "xl";
   onPitch?: boolean;
 }) {
-  const src = getPublicImageUrl(photoUrl);
+  const [displaySrc, setDisplaySrc] = useState<string | null>(() =>
+    onPitch ? null : getPublicImageUrl(photoUrl) || null,
+  );
+  const [ready, setReady] = useState(!onPitch);
+
+  useEffect(() => {
+    if (!onPitch) {
+      setDisplaySrc(getPublicImageUrl(photoUrl) || null);
+      setReady(true);
+      return;
+    }
+    let cancelled = false;
+    setReady(false);
+    void cutoutWhiteBackgroundUrlCached(photoUrl).then((url) => {
+      if (cancelled) return;
+      setDisplaySrc(url);
+      setReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [photoUrl, onPitch]);
+
   const dim =
     size === "xl"
       ? "h-[96px] w-[72px]"
@@ -164,14 +201,23 @@ function AthletePhoto3x4({
         : size === "sm"
           ? "h-12 w-9"
           : "h-14 w-[42px]";
-  const pitchBlend = onPitch ? "bg-transparent mix-blend-multiply" : "";
-  if (src) {
+
+  if (!ready && onPitch) {
+    return (
+      <div
+        className={`${dim} shrink-0 animate-pulse rounded-sm bg-black/30`}
+        aria-hidden
+      />
+    );
+  }
+
+  if (displaySrc) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={src}
+        src={displaySrc}
         alt=""
-        className={`${dim} ${pitchBlend} shrink-0 rounded-sm object-cover object-[center_12%] ${onPitch ? "shadow-none" : "shadow-md"}`}
+        className={`${dim} shrink-0 bg-transparent object-cover object-[center_12%] ${onPitch ? "rounded-sm shadow-none" : "rounded-sm shadow-md"}`}
       />
     );
   }
@@ -539,7 +585,8 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      setPreviewHtml(buildGuiaPartidaPrintHtml(data, pageSize));
+      const withCutouts = await applySquadPhotoCutouts(data);
+      setPreviewHtml(buildGuiaPartidaPrintHtml(withCutouts, pageSize));
       setPreviewLandscape(false);
       setPreviewOpen(true);
     } catch {
@@ -571,7 +618,8 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      printGuiaPartidaReport(data, pageSize);
+      const withCutouts = await applySquadPhotoCutouts(data);
+      printGuiaPartidaReport(withCutouts, pageSize);
     } catch {
       setFeedback({
         open: true,
@@ -1013,8 +1061,8 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                 </div>
 
-                <div className="mx-auto grid w-full max-w-4xl gap-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-stretch">
-                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 sm:order-1 sm:max-h-[min(70vh,640px)] sm:overflow-y-auto">
+                <div className="mx-auto grid w-full max-w-6xl gap-3 lg:grid-cols-[140px_minmax(0,1fr)] lg:items-stretch">
+                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 lg:order-1 lg:max-h-[min(72vh,720px)] lg:overflow-y-auto">
                     <p className="mb-3 text-xs font-extrabold uppercase tracking-wide text-[#93c5fd]">
                       Comissão
                     </p>
@@ -1046,7 +1094,7 @@ export function FutebolRelatorioPressKitForm() {
                     )}
                   </aside>
                   <div
-                    className="relative order-1 mx-auto aspect-[68/105] h-[min(68vh,600px)] w-auto max-w-full overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(70vh,640px)]"
+                    className="relative order-1 mx-auto aspect-[5/6] w-full max-w-none overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 lg:min-h-[min(72vh,720px)]"
                     onDragOver={(e) => e.preventDefault()}
                   >
                     <PitchMarkings />
@@ -1063,12 +1111,16 @@ export function FutebolRelatorioPressKitForm() {
                         : "";
                       const pos = athlete ? cadastroPositionAbbrev(athlete.position) : "";
                       const birth = athlete ? formatBirthShortUi(athlete.birthDate) : "";
-                      const nearBottom = slot.top >= 72;
+                      const ty = pitchChipTranslateY(slot.top);
                       return (
                         <div
                           key={slot.id}
-                          className={`absolute z-10 -translate-x-1/2 ${nearBottom ? "-translate-y-[78%]" : "-translate-y-1/2"}`}
-                          style={{ top: `${slot.top}%`, left: `${slot.left}%` }}
+                          className="absolute z-10"
+                          style={{
+                            top: `${slot.top}%`,
+                            left: `${slot.left}%`,
+                            transform: `translate(-50%, ${ty})`,
+                          }}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => {
                             e.preventDefault();
@@ -1092,16 +1144,16 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="flex w-[112px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
+                              className="flex w-[88px] cursor-grab flex-col items-center gap-0 active:cursor-grabbing sm:w-[96px]"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
                                   photoUrl={athlete.photoUrl}
                                   name={athlete.nickname || athlete.name}
-                                  size="xl"
+                                  size="lg"
                                   onPitch
                                 />
-                                <span className="absolute -bottom-1 -left-1 flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
+                                <span className="absolute -bottom-1 -left-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-[#C8102E] px-1 text-[11px] font-extrabold text-white shadow">
                                   {provisionalJerseyValue(
                                     athlete,
                                     jerseyOverrides,
@@ -1117,7 +1169,7 @@ export function FutebolRelatorioPressKitForm() {
                                   ×
                                 </button>
                               </div>
-                              <span className="w-full text-center text-[11px] font-extrabold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                              <span className="w-full text-center text-[10px] font-extrabold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                                 {nickOnly}
                               </span>
                               {pos ? (
@@ -1126,13 +1178,13 @@ export function FutebolRelatorioPressKitForm() {
                                 </span>
                               ) : null}
                               {birth ? (
-                                <span className="w-full text-center text-[8px] font-medium leading-tight text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                <span className="w-full text-center text-[7px] font-medium leading-tight text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                                   {birth}
                                 </span>
                               ) : null}
                             </div>
                           ) : (
-                            <div className="flex h-[96px] w-[72px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
+                            <div className="flex h-[64px] w-[48px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[10px] font-bold uppercase text-white/80">
                               {slot.label}
                             </div>
                           )}

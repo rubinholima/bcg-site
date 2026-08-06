@@ -2,7 +2,7 @@ import {
   printHtmlDocument,
   resolveLogoUrlForPrint,
 } from "@/lib/futebol-relatorios-print";
-import { getFormation } from "@/lib/press-kit-formations";
+import { getFormation, pitchChipTranslateY } from "@/lib/press-kit-formations";
 import { cadastroPositionAbbrev } from "@/lib/press-kit-lineup";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import type {
@@ -599,8 +599,8 @@ function styles(size: PrintPageSize): string {
     }
     .vis-field-row {
       display: grid;
-      grid-template-columns: 52mm minmax(0, 1fr);
-      gap: 4mm;
+      grid-template-columns: 42mm minmax(0, 1fr);
+      gap: 3mm;
       align-items: start;
     }
     .vis-staff-side {
@@ -647,9 +647,9 @@ function styles(size: PrintPageSize): string {
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
-      max-width: 130mm;
+      max-width: 155mm;
       margin: 0 auto;
-      aspect-ratio: 68 / 105;
+      aspect-ratio: 5 / 6;
       border-radius: 3mm;
       overflow: hidden;
       border: 2.5px solid #14532d;
@@ -665,26 +665,25 @@ function styles(size: PrintPageSize): string {
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 28mm;
+      width: 24mm;
       text-align: center;
       z-index: 2;
     }
     .vis-photo-wrap {
       position: relative;
-      width: 14mm;
-      height: 18.5mm;
-      margin: 0 auto 0.8mm;
+      width: 11mm;
+      height: 14.5mm;
+      margin: 0 auto 0.5mm;
       background: transparent;
     }
     .vis-photo {
-      width: 14mm;
-      height: 18.5mm;
+      width: 11mm;
+      height: 14.5mm;
       object-fit: cover;
       object-position: center 12%;
       border-radius: 1mm;
       display: block;
       background: transparent;
-      mix-blend-mode: multiply;
       box-shadow: none;
     }
     .vis-photo.photo-fallback {
@@ -1112,8 +1111,7 @@ export function buildGuiaPartidaPrintHtml(
       ).toLocaleUpperCase("pt-BR");
       const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
       const birth = formatBirth(p.birthDate);
-      const nearBottom = slot.top >= 72;
-      const ty = nearBottom ? "-78%" : "-50%";
+      const ty = pitchChipTranslateY(slot.top);
       return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
         <div class="vis-photo-wrap">
           ${photo(p.photoUrl, p.name, "vis-photo")}

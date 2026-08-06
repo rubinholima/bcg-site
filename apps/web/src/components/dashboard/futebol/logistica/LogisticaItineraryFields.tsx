@@ -175,26 +175,17 @@ export function LogisticaItineraryFields({
         {items.length === 0 ? (
           <p className="text-xs text-muted-foreground">Nenhum item.</p>
         ) : (
-          <div className="space-y-3">
-            <div
-              className="hidden grid-cols-[9rem_6.5rem_minmax(0,1fr)_2.5rem] gap-2 px-1 text-xs font-medium text-muted-foreground sm:grid"
-              aria-hidden
-            >
-              <span>Data</span>
-              <span>Hora</span>
-              <span>Atividade</span>
-              <span className="sr-only">Remover</span>
-            </div>
+          <div className="flex flex-col gap-4">
             {items.map((item: TravelHomeAgendaItem, idx) => (
               <div
                 key={item.id ?? `home-${idx}`}
-                className="grid grid-cols-1 gap-2 rounded-lg border border-border/70 bg-card/40 p-3 sm:grid-cols-[9rem_6.5rem_minmax(0,1fr)_2.5rem] sm:items-center sm:gap-3"
+                className="flex flex-col gap-3 rounded-lg border border-border/70 bg-card/40 p-3 sm:flex-row sm:items-end sm:gap-4"
               >
-                <div className="space-y-1 sm:space-y-0">
-                  <Label className="text-xs sm:sr-only">Data</Label>
+                <div className="w-full shrink-0 space-y-1.5 sm:w-[13.5rem]">
+                  <Label className="text-xs text-muted-foreground">Data</Label>
                   <Input
                     type="date"
-                    className="min-h-[44px] min-w-0 text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                    className="min-h-[44px] w-full max-w-full text-foreground [&::-webkit-datetime-edit]:text-foreground"
                     disabled={disabled}
                     value={item.date ?? ""}
                     onChange={(e) => {
@@ -204,11 +195,11 @@ export function LogisticaItineraryFields({
                     }}
                   />
                 </div>
-                <div className="space-y-1 sm:space-y-0">
-                  <Label className="text-xs sm:sr-only">Hora</Label>
+                <div className="w-full shrink-0 space-y-1.5 sm:w-[9.5rem]">
+                  <Label className="text-xs text-muted-foreground">Hora</Label>
                   <Input
                     type="time"
-                    className="min-h-[44px] min-w-0 text-foreground"
+                    className="min-h-[44px] w-full min-w-0 max-w-full text-foreground"
                     disabled={disabled}
                     value={item.time ?? ""}
                     onChange={(e) => {
@@ -218,10 +209,10 @@ export function LogisticaItineraryFields({
                     }}
                   />
                 </div>
-                <div className="space-y-1 sm:space-y-0">
-                  <Label className="text-xs sm:sr-only">Atividade</Label>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Atividade</Label>
                   <Input
-                    className="min-h-[44px] uppercase"
+                    className="min-h-[44px] w-full min-w-0 uppercase"
                     disabled={disabled}
                     value={item.label}
                     onChange={(e) => {
@@ -232,7 +223,7 @@ export function LogisticaItineraryFields({
                     placeholder="CAFÉ DA MANHÃ / ROUPARIA / AQUECIMENTO…"
                   />
                 </div>
-                <div className="flex justify-end sm:justify-center">
+                <div className="flex shrink-0 justify-end sm:pb-0.5">
                   <Button
                     type="button"
                     variant="ghost"
