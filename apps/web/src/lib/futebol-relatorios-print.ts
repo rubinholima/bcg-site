@@ -1306,18 +1306,18 @@ export function buildPressKitPrintHtml(
       padding: 0 2px;
     }
     .chip-nick {
-      font-size: 8px; font-weight: 800; color: #fde68a;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.95);
+      font-size: 8.5px; font-weight: 800; color: #fde68a;
+      text-shadow: 0 0 3px #000, 0 1px 2px rgba(0,0,0,0.95);
       text-transform: uppercase; line-height: 1.1;
     }
     .chip-pos {
-      font-size: 6.5px; font-weight: 700; color: #e2e8f0;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+      font-size: 8px; font-weight: 800; color: #fff;
+      text-shadow: 0 0 3px #000, 0 1px 2px rgba(0,0,0,0.95);
       text-transform: uppercase; line-height: 1.1;
     }
     .chip-birth {
-      font-size: 6.5px; color: #f1f5f9;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.85);
+      font-size: 7.5px; font-weight: 700; color: #fff;
+      text-shadow: 0 0 3px #000, 0 1px 2px rgba(0,0,0,0.95);
       line-height: 1.1;
     }
 

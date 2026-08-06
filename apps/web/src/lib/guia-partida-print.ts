@@ -714,12 +714,19 @@ function styles(size: PrintPageSize): string {
       mix-blend-mode: normal;
     }
     .vis-nick {
-      font-size: 6pt; font-weight: 800; color: #fde68a; text-shadow: 0 1px 2px rgba(0,0,0,.95);
+      font-size: 6.5pt; font-weight: 800; color: #fde68a;
+      text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       text-transform: uppercase; line-height: 1.1;
     }
-    .vis-pos, .vis-birth {
-      font-size: 4.8pt; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,.9);
-      text-transform: uppercase; line-height: 1.05;
+    .vis-pos {
+      font-size: 6pt; font-weight: 800; color: #fff;
+      text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
+      text-transform: uppercase; line-height: 1.1;
+    }
+    .vis-birth {
+      font-size: 5.5pt; font-weight: 700; color: #fff;
+      text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
+      line-height: 1.1;
     }
     .vis-bench {
       border: 1.5px solid #EA580C; border-radius: 2.5mm; padding: 3.5mm 3.5mm;

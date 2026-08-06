@@ -1146,7 +1146,7 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="flex w-[100px] cursor-grab flex-col items-center gap-0 active:cursor-grabbing sm:w-[108px]"
+                              className="group flex w-[100px] cursor-grab flex-col items-center gap-0 active:cursor-grabbing sm:w-[108px]"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
@@ -1164,23 +1164,24 @@ export function FutebolRelatorioPressKitForm() {
                                 </span>
                                 <button
                                   type="button"
-                                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white"
+                                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                                   onClick={() => clearStarterSlot(slotIndex)}
                                   aria-label="Remover do gramado"
+                                  title="Remover do gramado"
                                 >
                                   ×
                                 </button>
                               </div>
-                              <span className="w-full text-center text-[11px] font-extrabold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                              <span className="w-full text-center text-[11px] font-extrabold uppercase leading-tight text-amber-200 [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
                                 {nickOnly}
                               </span>
                               {pos ? (
-                                <span className="w-full text-center text-[8px] font-semibold uppercase leading-tight text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                <span className="w-full text-center text-[10px] font-bold uppercase leading-tight text-white [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
                                   {pos}
                                 </span>
                               ) : null}
                               {birth ? (
-                                <span className="w-full text-center text-[8px] font-medium leading-tight text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                <span className="w-full text-center text-[10px] font-semibold leading-tight text-white [text-shadow:0_0_3px_#000,0_1px_2px_rgba(0,0,0,0.95)]">
                                   {birth}
                                 </span>
                               ) : null}
