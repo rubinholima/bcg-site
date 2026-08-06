@@ -147,25 +147,31 @@ function AthletePhoto3x4({
   photoUrl,
   name,
   size = "md",
+  /** No gramado: mistura fundo branco da foto com o verde */
+  onPitch = false,
 }: {
   photoUrl?: string | null;
   name: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
+  onPitch?: boolean;
 }) {
   const src = getPublicImageUrl(photoUrl);
   const dim =
-    size === "lg"
-      ? "h-[72px] w-[54px]"
-      : size === "sm"
-        ? "h-12 w-9"
-        : "h-14 w-[42px]";
+    size === "xl"
+      ? "h-[96px] w-[72px]"
+      : size === "lg"
+        ? "h-[80px] w-[60px]"
+        : size === "sm"
+          ? "h-12 w-9"
+          : "h-14 w-[42px]";
+  const pitchBlend = onPitch ? "bg-transparent mix-blend-multiply" : "";
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt=""
-        className={`${dim} shrink-0 rounded-sm object-cover object-[center_12%] shadow-md`}
+        className={`${dim} ${pitchBlend} shrink-0 rounded-sm object-cover object-[center_12%] ${onPitch ? "shadow-none" : "shadow-md"}`}
       />
     );
   }
@@ -1049,15 +1055,19 @@ export function FutebolRelatorioPressKitForm() {
                       const athlete = playerId
                         ? athletes.find((a) => a.playerId === playerId)
                         : undefined;
-                      const label = athlete ? firstLastName(athlete.name) : "";
-                      const labelParts = label.split(/\s+/).filter(Boolean);
-                      const nick = athlete?.nickname?.trim() || "";
+                      const nickOnly = athlete
+                        ? (
+                            athlete.nickname?.trim() ||
+                            firstLastName(athlete.name)
+                          ).toLocaleUpperCase("pt-BR")
+                        : "";
                       const pos = athlete ? cadastroPositionAbbrev(athlete.position) : "";
                       const birth = athlete ? formatBirthShortUi(athlete.birthDate) : "";
+                      const nearBottom = slot.top >= 72;
                       return (
                         <div
                           key={slot.id}
-                          className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
+                          className={`absolute z-10 -translate-x-1/2 ${nearBottom ? "-translate-y-[78%]" : "-translate-y-1/2"}`}
                           style={{ top: `${slot.top}%`, left: `${slot.left}%` }}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => {
@@ -1082,13 +1092,14 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="flex w-[100px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
+                              className="flex w-[112px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
                                   photoUrl={athlete.photoUrl}
                                   name={athlete.nickname || athlete.name}
-                                  size="lg"
+                                  size="xl"
+                                  onPitch
                                 />
                                 <span className="absolute -bottom-1 -left-1 flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
                                   {provisionalJerseyValue(
@@ -1106,22 +1117,9 @@ export function FutebolRelatorioPressKitForm() {
                                   ×
                                 </button>
                               </div>
-                              <span className="w-full text-center text-[10px] font-extrabold uppercase leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                                {labelParts.length >= 2 ? (
-                                  <>
-                                    {labelParts[0]}
-                                    <br />
-                                    {labelParts.slice(1).join(" ")}
-                                  </>
-                                ) : (
-                                  label
-                                )}
+                              <span className="w-full text-center text-[11px] font-extrabold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                {nickOnly}
                               </span>
-                              {nick ? (
-                                <span className="w-full text-center text-[9px] font-bold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                                  {nick}
-                                </span>
-                              ) : null}
                               {pos ? (
                                 <span className="w-full text-center text-[8px] font-semibold uppercase leading-tight text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                                   {pos}
@@ -1134,7 +1132,7 @@ export function FutebolRelatorioPressKitForm() {
                               ) : null}
                             </div>
                           ) : (
-                            <div className="flex h-[72px] w-[54px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
+                            <div className="flex h-[96px] w-[72px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
                               {slot.label}
                             </div>
                           )}

@@ -665,33 +665,45 @@ function styles(size: PrintPageSize): string {
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 26mm;
+      width: 28mm;
       text-align: center;
       z-index: 2;
     }
-    .vis-photo-wrap { position: relative; width: 10.5mm; height: 14mm; margin: 0 auto 0.8mm; }
-    .vis-photo { width: 10.5mm; height: 14mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); display: block; }
-    .vis-photo.photo-fallback { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 8pt; background: rgba(0,0,0,.45); }
+    .vis-photo-wrap {
+      position: relative;
+      width: 14mm;
+      height: 18.5mm;
+      margin: 0 auto 0.8mm;
+      background: transparent;
+    }
+    .vis-photo {
+      width: 14mm;
+      height: 18.5mm;
+      object-fit: cover;
+      object-position: center 12%;
+      border-radius: 1mm;
+      display: block;
+      background: transparent;
+      mix-blend-mode: multiply;
+      box-shadow: none;
+    }
+    .vis-photo.photo-fallback {
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: 9pt; background: rgba(0,0,0,.45);
+      mix-blend-mode: normal;
+    }
     .vis-num {
       position: absolute; left: -1mm; bottom: -0.8mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
       border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
-    }
-    .vis-name {
-      font-size: 5.5pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9);
-      text-transform: uppercase; line-height: 1.1;
-      max-width: 100%;
-      overflow: visible;
-      white-space: normal;
-      word-break: break-word;
-      hyphens: manual;
+      mix-blend-mode: normal;
     }
     .vis-nick {
-      font-size: 4.8pt; font-weight: 700; color: #fde68a; text-shadow: 0 1px 2px rgba(0,0,0,.9);
-      text-transform: uppercase; line-height: 1.05;
+      font-size: 6pt; font-weight: 800; color: #fde68a; text-shadow: 0 1px 2px rgba(0,0,0,.95);
+      text-transform: uppercase; line-height: 1.1;
     }
     .vis-pos, .vis-birth {
-      font-size: 4.5pt; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      font-size: 4.8pt; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,.9);
       text-transform: uppercase; line-height: 1.05;
     }
     .vis-bench {
@@ -1092,22 +1104,22 @@ export function buildGuiaPartidaPrintHtml(
       const p = slotId ? squadById.get(slotId) : undefined;
       if (!p) return "";
       const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-      const displayName = firstLastName(p.name) || p.shortName || "";
-      const nameParts = displayName.split(/\s+/).filter(Boolean);
-      const nameHtml =
-        nameParts.length >= 2
-          ? `<div class="vis-name">${esc(nameParts[0])}<br/>${esc(nameParts.slice(1).join(" "))}</div>`
-          : `<div class="vis-name">${esc(displayName)}</div>`;
-      const nick = p.nickname?.trim() || "";
+      const nickOnly = (
+        p.nickname?.trim() ||
+        firstLastName(p.name) ||
+        p.shortName ||
+        ""
+      ).toLocaleUpperCase("pt-BR");
       const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
       const birth = formatBirth(p.birthDate);
-      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%">
+      const nearBottom = slot.top >= 72;
+      const ty = nearBottom ? "-78%" : "-50%";
+      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
         <div class="vis-photo-wrap">
           ${photo(p.photoUrl, p.name, "vis-photo")}
           <span class="vis-num">${esc(n)}</span>
         </div>
-        ${nameHtml}
-        ${nick ? `<div class="vis-nick">${esc(nick)}</div>` : ""}
+        <div class="vis-nick">${esc(nickOnly)}</div>
         ${pos && pos !== "—" ? `<div class="vis-pos">${esc(pos)}</div>` : ""}
         ${birth ? `<div class="vis-birth">${esc(birth)}</div>` : ""}
       </div>`;

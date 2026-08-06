@@ -19,7 +19,7 @@ export const PRESS_KIT_FORMATIONS: FormationDef[] = [
     id: "4-3-3",
     label: "4-3-3",
     slots: [
-      { id: "gk", label: "GOL", top: 86, left: 50 },
+      { id: "gk", label: "GOL", top: 78, left: 50 },
       { id: "lb", label: "LE", top: 68, left: 16 },
       { id: "cb1", label: "ZAG", top: 68, left: 37 },
       { id: "cb2", label: "ZAG", top: 68, left: 63 },
@@ -36,7 +36,7 @@ export const PRESS_KIT_FORMATIONS: FormationDef[] = [
     id: "4-4-2",
     label: "4-4-2",
     slots: [
-      { id: "gk", label: "GOL", top: 86, left: 50 },
+      { id: "gk", label: "GOL", top: 78, left: 50 },
       { id: "lb", label: "LE", top: 68, left: 16 },
       { id: "cb1", label: "ZAG", top: 68, left: 37 },
       { id: "cb2", label: "ZAG", top: 68, left: 63 },
@@ -53,7 +53,7 @@ export const PRESS_KIT_FORMATIONS: FormationDef[] = [
     id: "4-2-3-1",
     label: "4-2-3-1",
     slots: [
-      { id: "gk", label: "GOL", top: 86, left: 50 },
+      { id: "gk", label: "GOL", top: 78, left: 50 },
       { id: "lb", label: "LE", top: 70, left: 16 },
       { id: "cb1", label: "ZAG", top: 70, left: 37 },
       { id: "cb2", label: "ZAG", top: 70, left: 63 },
@@ -70,7 +70,7 @@ export const PRESS_KIT_FORMATIONS: FormationDef[] = [
     id: "3-5-2",
     label: "3-5-2",
     slots: [
-      { id: "gk", label: "GOL", top: 86, left: 50 },
+      { id: "gk", label: "GOL", top: 78, left: 50 },
       { id: "cb1", label: "ZAG", top: 70, left: 26 },
       { id: "cb2", label: "ZAG", top: 70, left: 50 },
       { id: "cb3", label: "ZAG", top: 70, left: 74 },
@@ -87,7 +87,7 @@ export const PRESS_KIT_FORMATIONS: FormationDef[] = [
     id: "3-4-3",
     label: "3-4-3",
     slots: [
-      { id: "gk", label: "GOL", top: 86, left: 50 },
+      { id: "gk", label: "GOL", top: 78, left: 50 },
       { id: "cb1", label: "ZAG", top: 70, left: 26 },
       { id: "cb2", label: "ZAG", top: 70, left: 50 },
       { id: "cb3", label: "ZAG", top: 70, left: 74 },

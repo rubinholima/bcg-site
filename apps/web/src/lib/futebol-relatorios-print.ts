@@ -1090,22 +1090,20 @@ export function buildPressKitPrintHtml(
     if (!p) return "";
     const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
     const photo = playerPhotoHtml(p.photoUrl, p.name);
-    const fullShort = shortAthleteName(p.name);
-    const nameParts = fullShort.split(/\s+/).filter(Boolean);
-    const nameHtml =
-      nameParts.length >= 2
-        ? `${escapeHtml(nameParts[0]!)}<br/>${escapeHtml(nameParts.slice(1).join(" "))}`
-        : escapeHtml(fullShort);
-    const nick = p.nickname?.trim() || "";
+    const nickOnly = (
+      p.nickname?.trim() ||
+      shortAthleteName(p.name)
+    ).toLocaleUpperCase("pt-BR");
     const pos = cadastroPositionAbbrev(p.position);
     const birth = formatBirthShort(p.birthDate);
-    return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%">
+    const nearBottom = slot.top >= 72;
+    const ty = nearBottom ? "-78%" : "-50%";
+    return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
       <div class="chip-photo-wrap">
         ${photo}
         <span class="chip-num">${escapeHtml(n)}</span>
       </div>
-      <div class="chip-name">${nameHtml}</div>
-      ${nick ? `<div class="chip-nick">${escapeHtml(nick)}</div>` : ""}
+      <div class="chip-nick">${escapeHtml(nickOnly)}</div>
       ${pos && pos !== "—" ? `<div class="chip-pos">${escapeHtml(pos)}</div>` : ""}
       ${birth ? `<div class="chip-birth">${escapeHtml(birth)}</div>` : ""}
     </div>`;
@@ -1254,19 +1252,32 @@ export function buildPressKitPrintHtml(
     .player-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 78px;
+      width: 92px;
       text-align: center;
       z-index: 2;
     }
-    .chip-photo-wrap { position: relative; width: 36px; height: 48px; margin: 0 auto 2px; }
+    .chip-photo-wrap {
+      position: relative;
+      width: 48px;
+      height: 64px;
+      margin: 0 auto 2px;
+      background: transparent;
+    }
     .chip-photo {
       width: 36px;
       height: 48px;
       border-radius: 2px;
       object-fit: cover;
       object-position: center 12%;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
       display: block;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .pitch-wrap .chip-photo {
+      width: 48px;
+      height: 64px;
+      background: transparent;
+      mix-blend-mode: multiply;
+      box-shadow: none;
     }
     .chip-photo-fallback {
       display: flex; align-items: center; justify-content: center;
@@ -1274,35 +1285,35 @@ export function buildPressKitPrintHtml(
       border-radius: 2px;
       background: rgba(0,0,0,0.45);
     }
+    .pitch-wrap .chip-photo-fallback {
+      width: 48px;
+      height: 64px;
+      font-size: 16px;
+      mix-blend-mode: normal;
+    }
     .chip-num {
       position: absolute;
       left: -3px;
       bottom: -2px;
-      min-width: 16px; height: 16px; border-radius: 3px;
-      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 8px;
+      min-width: 17px; height: 17px; border-radius: 3px;
+      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 9px;
       display: flex; align-items: center; justify-content: center;
       border: 1px solid #fff;
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
       padding: 0 2px;
     }
-    .chip-name {
-      font-size: 7.5px; font-weight: 800; color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.95);
-      line-height: 1.1;
-      text-transform: uppercase;
-    }
     .chip-nick {
-      font-size: 6.5px; font-weight: 700; color: #fde68a;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+      font-size: 8px; font-weight: 800; color: #fde68a;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.95);
       text-transform: uppercase; line-height: 1.1;
     }
     .chip-pos {
-      font-size: 6px; font-weight: 700; color: #e2e8f0;
+      font-size: 6.5px; font-weight: 700; color: #e2e8f0;
       text-shadow: 0 1px 2px rgba(0,0,0,0.9);
       text-transform: uppercase; line-height: 1.1;
     }
     .chip-birth {
-      font-size: 6px; color: #f1f5f9;
+      font-size: 6.5px; color: #f1f5f9;
       text-shadow: 0 1px 2px rgba(0,0,0,0.85);
       line-height: 1.1;
     }
