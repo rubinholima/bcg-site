@@ -658,13 +658,18 @@ function styles(size: PrintPageSize): string {
     }
     .vis-pitch-wrap {
       position: relative;
-      width: 162mm;
-      max-width: 162mm;
-      aspect-ratio: 68 / 100;
+      width: 185mm;
+      max-width: 185mm;
+      aspect-ratio: 78 / 100;
       border-radius: 3mm;
       overflow: hidden;
       border: 2.5px solid #14532d;
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
+    }
+    .vis-pitch-players {
+      position: absolute;
+      inset: 0 7%;
+      z-index: 2;
     }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
     .vis-pitch-wrap .pl-half { left: 0; right: 0; top: 50%; border-width: 0 0 2px 0; }
@@ -1191,7 +1196,7 @@ export function buildGuiaPartidaPrintHtml(
           <div class="vis-pitch-mark pl-goal-top"></div>
           <div class="vis-pitch-mark pl-box-bottom"></div>
           <div class="vis-pitch-mark pl-goal-bottom"></div>
-          ${visualPlayers}
+          <div class="vis-pitch-players">${visualPlayers}</div>
         </div>
       </div>
       <div class="vis-bench">

@@ -8,10 +8,12 @@ import { UpdateJobRoleDto } from './dto/update-job-role.dto';
 export class JobRolesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(tenantId?: string, type?: string) {
+  async findAll(tenantId?: string, type?: string, forFootball?: boolean) {
     const where: Record<string, unknown> = {};
     if (tenantId) where.tenantId = tenantId;
     if (type?.trim()) where.type = type.trim();
+    if (forFootball === true) where.forFootball = true;
+    if (forFootball === false) where.forFootball = false;
     return this.prisma.jobRole.findMany({
       where,
       orderBy: [{ tenant: { name: 'asc' } }, { name: 'asc' }],
@@ -48,6 +50,7 @@ export class JobRolesService {
         name: cadastroUpperRequired(dto.name),
         code: cadastroUpper(dto.code),
         type: dto.type,
+        forFootball: dto.forFootball === true,
       },
       include: {
         tenant: { select: { id: true, name: true, slug: true } },
@@ -65,6 +68,7 @@ export class JobRolesService {
         ...(dto.name != null && { name: cadastroUpperRequired(dto.name) }),
         ...(dto.code !== undefined && { code: cadastroUpper(dto.code) }),
         ...(dto.type != null && { type: dto.type }),
+        ...(dto.forFootball !== undefined && { forFootball: dto.forFootball === true }),
       },
       include: {
         tenant: { select: { id: true, name: true, slug: true } },

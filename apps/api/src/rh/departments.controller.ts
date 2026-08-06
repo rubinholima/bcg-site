@@ -14,7 +14,7 @@ export class DepartmentsController {
 
   @Get()
   @UseGuards(ModuleAccessGuard)
-  @RequireModule('adm_rh')
+  @RequireModule(['adm_rh', 'tipos', 'futebol_comissao'])
   findAll(@Query('tenantId') tenantId?: string) {
     return this.service.findAll(tenantId);
   }

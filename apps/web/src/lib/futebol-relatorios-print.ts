@@ -1226,12 +1226,17 @@ export function buildPressKitPrintHtml(
     /* ---------- Gramado ---------- */
     .pitch-wrap {
       position: relative;
-      width: 118mm;
+      width: 135mm;
       height: 139mm;
       border-radius: 8px;
       overflow: hidden;
       border: 2.5px solid #14532d;
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
+    }
+    .pitch-players {
+      position: absolute;
+      inset: 0 7%;
+      z-index: 2;
     }
     .pitch-line {
       position: absolute;
@@ -1513,7 +1518,7 @@ export function buildPressKitPrintHtml(
             <div class="pitch-line pl-goal-top"></div>
             <div class="pitch-line pl-box-bottom"></div>
             <div class="pitch-line pl-goal-bottom"></div>
-            ${fieldPlayers}
+            <div class="pitch-players">${fieldPlayers}</div>
           </div>
         </div>
       </div>

@@ -139,7 +139,7 @@ export class TechnicalStaffService {
 
   findJobRoles(tenantId: string) {
     return this.prisma.jobRole.findMany({
-      where: { tenantId, type: 'staff' },
+      where: { tenantId, type: 'staff', forFootball: true },
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
     });
@@ -147,10 +147,14 @@ export class TechnicalStaffService {
 
   private async findStaffJobRole(tenantId: string, jobRoleId: string) {
     const jobRole = await this.prisma.jobRole.findFirst({
-      where: { id: jobRoleId, tenantId, type: 'staff' },
+      where: { id: jobRoleId, tenantId, type: 'staff', forFootball: true },
       select: { id: true, name: true },
     });
-    if (!jobRole) throw new BadRequestException('Função do RH inválida para este clube');
+    if (!jobRole) {
+      throw new BadRequestException(
+        'Função inválida para este clube. Cadastre em Futebol → Cadastros → Funções.',
+      );
+    }
     return jobRole;
   }
 }

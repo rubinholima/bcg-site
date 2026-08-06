@@ -1660,12 +1660,15 @@ model JobRole {
   name         String
   code         String?
   type         String   // staff | athlete
+  /** Aparece em Cadastros do Futebol → Funções e no dropdown da comissão */
+  forFootball  Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   employments  Employment[]
   technicalStaff TechnicalStaff[]
   @@index([tenantId])
   @@index([departmentId])
+  @@index([forFootball])
 }
 
 model Employee {

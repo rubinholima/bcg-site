@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsBoolean, IsString, IsOptional, MaxLength } from 'class-validator';
 
 export class CreateJobRoleDto {
   @IsString()
@@ -20,4 +20,8 @@ export class CreateJobRoleDto {
   @IsString()
   @MaxLength(32)
   type: string; // staff | athlete
+
+  @IsOptional()
+  @IsBoolean()
+  forFootball?: boolean;
 }

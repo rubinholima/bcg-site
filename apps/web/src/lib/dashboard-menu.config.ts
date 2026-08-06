@@ -78,6 +78,7 @@ import {
   CalendarRange,
   Clock,
   CreditCard,
+  Briefcase,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -479,6 +480,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Árbitros",
             href: "/dashboard/cadastros/arbitros",
             icon: Shield,
+            moduleSlug: "tipos",
+          },
+          {
+            slug: "cad_funcoes_futebol",
+            label: "Funções",
+            href: "/dashboard/cadastros/funcoes",
+            icon: Briefcase,
             moduleSlug: "tipos",
           },
           {

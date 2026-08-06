@@ -1095,10 +1095,11 @@ export function FutebolRelatorioPressKitForm() {
                     )}
                   </aside>
                   <div
-                    className="relative order-1 aspect-[68/100] h-[min(78vh,835px)] w-auto shrink-0 overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(80vh,850px)]"
+                    className="relative order-1 aspect-[78/100] h-[min(78vh,835px)] w-auto shrink-0 overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(80vh,850px)]"
                     onDragOver={(e) => e.preventDefault()}
                   >
                     <PitchMarkings />
+                    <div className="pointer-events-none absolute inset-y-0 left-[7%] right-[7%] z-10">
                     {formationDef.slots.map((slot, slotIndex) => {
                       const playerId = starterPlayerIds[slotIndex] ?? "";
                       const athlete = playerId
@@ -1116,7 +1117,7 @@ export function FutebolRelatorioPressKitForm() {
                       return (
                         <div
                           key={slot.id}
-                          className="absolute z-10"
+                          className="pointer-events-auto absolute z-10"
                           style={{
                             top: `${slot.top}%`,
                             left: `${slot.left}%`,
@@ -1192,6 +1193,7 @@ export function FutebolRelatorioPressKitForm() {
                         </div>
                       );
                     })}
+                    </div>
                   </div>
                   </div>
                 </div>

@@ -354,6 +354,7 @@ export default function AdmRHPage() {
                         <TableHead>Código</TableHead>
                         <TableHead>Departamento</TableHead>
                         <TableHead>Tipo</TableHead>
+                        <TableHead>Futebol</TableHead>
                         <TableHead className="w-24">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -371,6 +372,7 @@ export default function AdmRHPage() {
                           <TableCell>{r.code ?? "—"}</TableCell>
                           <TableCell>{r.department?.name ?? "—"}</TableCell>
                           <TableCell>{r.type}</TableCell>
+                          <TableCell>{r.forFootball ? "Sim" : "—"}</TableCell>
                           <TableRowActions align="left">
                             <div className="flex gap-1">
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setRoleEdit(r); setRoleDialogOpen(true); }}>

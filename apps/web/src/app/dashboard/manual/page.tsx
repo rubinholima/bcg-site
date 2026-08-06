@@ -415,6 +415,11 @@ export default function ManualPage() {
                 busca e o dropdown de cada função (árbitro principal, assistentes etc.) — nome e foto vão para
                 a impressão automaticamente.
               </p>
+              <p>
+                <strong>Funções (comissão):</strong> em Cadastros → Funções, cadastre só os cargos de futebol.
+                Eles ficam também no RH (aba Cargos, marcados como futebol). A comissão técnica só lista essas
+                funções.
+              </p>
             </SubSection>
 
             <SubSection id="futebol-captacao" title="Captação">

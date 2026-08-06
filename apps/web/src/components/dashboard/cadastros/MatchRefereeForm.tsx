@@ -100,7 +100,7 @@ export function MatchRefereeForm({
         phone: form.phone.trim() || undefined,
         email: form.email.trim() || undefined,
         notes: form.notes.trim() || undefined,
-        photoUrl: finalPhotoUrl,
+        ...(finalPhotoUrl ? { photoUrl: finalPhotoUrl } : {}),
         active: form.active,
       };
 
@@ -111,8 +111,12 @@ export function MatchRefereeForm({
         await api.patch(`/match-referees/${refereeId}`, payload);
         onSaved(refereeId);
       }
-    } catch {
-      setError("Não foi possível salvar o árbitro.");
+    } catch (err: unknown) {
+      const msg = (
+        err as { response?: { data?: { message?: string | string[] } } }
+      )?.response?.data?.message;
+      const text = Array.isArray(msg) ? msg.join(", ") : msg;
+      setError(text || "Não foi possível salvar o árbitro.");
     } finally {
       setSaving(false);
     }
