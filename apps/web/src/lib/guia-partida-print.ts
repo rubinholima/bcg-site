@@ -668,8 +668,9 @@ function styles(size: PrintPageSize): string {
     }
     .vis-pitch-players {
       position: absolute;
-      inset: 0 6%;
+      inset: 0 7%;
       z-index: 2;
+      overflow: hidden;
     }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
     .vis-pitch-wrap .pl-half { left: 0; right: 0; top: 50%; border-width: 0 0 2px 0; }
@@ -689,7 +690,7 @@ function styles(size: PrintPageSize): string {
       position: relative;
       width: 13mm;
       height: 17mm;
-      margin: 0 auto 1mm;
+      margin: 0 auto 0.5mm;
       background: transparent;
     }
     .vis-photo {
@@ -707,8 +708,9 @@ function styles(size: PrintPageSize): string {
       color: #fff; font-weight: 800; font-size: 9pt; background: rgba(0,0,0,.45);
       mix-blend-mode: normal;
     }
+    /* Número na base da foto (peito/camisa), um pouco acima do nome — nunca no rosto */
     .vis-num {
-      position: absolute; left: -1mm; top: -1mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
+      position: absolute; left: -1mm; bottom: 1.2mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
       border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
       mix-blend-mode: normal; z-index: 2;

@@ -1257,8 +1257,9 @@ export function buildPressKitPrintHtml(
     }
     .pitch-players {
       position: absolute;
-      inset: 0 6%;
+      inset: 0 7%;
       z-index: 2;
+      overflow: hidden;
     }
     .pitch-line {
       position: absolute;
@@ -1319,7 +1320,7 @@ export function buildPressKitPrintHtml(
     .chip-num {
       position: absolute;
       left: -3px;
-      top: -3px;
+      bottom: 4px;
       min-width: 17px; height: 17px; border-radius: 3px;
       background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 9px;
       display: flex; align-items: center; justify-content: center;

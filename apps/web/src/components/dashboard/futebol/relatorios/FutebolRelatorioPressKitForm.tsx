@@ -132,20 +132,6 @@ function formatBirthShortUi(iso: string | null | undefined): string {
   return `${d}/${m}/${y}`;
 }
 
-/** Recorta fundo branco de estúdio nas fotos do elenco (gramado / impressão). */
-async function applySquadPhotoCutouts(
-  data: GuiaPartidaReportDto,
-): Promise<GuiaPartidaReportDto> {
-  const squad = await Promise.all(
-    (data.squad ?? []).map(async (p) => {
-      if (!p.photoUrl) return p;
-      const cut = await cutoutWhiteBackgroundUrlCached(p.photoUrl);
-      return cut ? { ...p, photoUrl: cut } : p;
-    }),
-  );
-  return { ...data, squad };
-}
-
 function applyJerseyOverridesLocal(
   rows: RelatorioPessoaRow[],
   overrides: Record<string, number | null>,
@@ -601,8 +587,8 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      const withCutouts = await applySquadPhotoCutouts(data);
-      setPreviewHtml(buildGuiaPartidaPrintHtml(withCutouts, pageSize));
+      // Sem cutout no HTML de impressão: data-URL em massa quebra fotos/páginas do relatório.
+      setPreviewHtml(buildGuiaPartidaPrintHtml(data, pageSize));
       setPreviewLandscape(false);
       setPreviewOpen(true);
     } catch {
@@ -634,8 +620,7 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      const withCutouts = await applySquadPhotoCutouts(data);
-      printGuiaPartidaReport(withCutouts, pageSize);
+      printGuiaPartidaReport(data, pageSize);
     } catch {
       setFeedback({
         open: true,
@@ -1115,7 +1100,7 @@ export function FutebolRelatorioPressKitForm() {
                     onDragOver={(e) => e.preventDefault()}
                   >
                     <PitchMarkings />
-                    <div className="pointer-events-none absolute inset-y-0 left-[6%] right-[6%] z-10">
+                    <div className="pointer-events-none absolute inset-y-0 left-[7%] right-[7%] z-10 overflow-hidden">
                     {formationDef.slots.map((slot, slotIndex) => {
                       const playerId = starterPlayerIds[slotIndex] ?? "";
                       const athlete = playerId
@@ -1171,7 +1156,7 @@ export function FutebolRelatorioPressKitForm() {
                                   size="lg"
                                   onPitch
                                 />
-                                <span className="absolute -left-1 -top-1 z-[1] flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
+                                <span className="absolute -left-1 bottom-1.5 z-[1] flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
                                   {provisionalJerseyValue(
                                     athlete,
                                     jerseyOverrides,
@@ -1180,7 +1165,7 @@ export function FutebolRelatorioPressKitForm() {
                                 </span>
                                 <button
                                   type="button"
-                                  className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                                   onClick={() => clearStarterSlot(slotIndex)}
                                   aria-label="Remover do gramado"
                                   title="Remover do gramado"
