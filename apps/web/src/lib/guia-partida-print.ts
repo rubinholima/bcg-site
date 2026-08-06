@@ -679,10 +679,23 @@ function styles(size: PrintPageSize): string {
       transform: translate(-50%, -50%);
       border-radius: 50%;
     }
-    .vis-pitch-wrap .pl-box-top { left: 22%; right: 22%; top: 0; height: 14%; border-top: 0; }
-    .vis-pitch-wrap .pl-box-bottom { left: 22%; right: 22%; bottom: 0; height: 14%; border-bottom: 0; }
-    .vis-pitch-wrap .pl-goal-top { left: 36%; right: 36%; top: 0; height: 6%; border-top: 0; }
-    .vis-pitch-wrap .pl-goal-bottom { left: 36%; right: 36%; bottom: 0; height: 6%; border-bottom: 0; }
+    /* width/margin zerados — senão herda .pl-box-* das escalações (26mm) e a grande área fica minúscula */
+    .vis-pitch-wrap .pl-box-top {
+      left: 22%; right: 22%; top: 0; height: 14%;
+      width: auto; margin: 0; border-top: 0;
+    }
+    .vis-pitch-wrap .pl-box-bottom {
+      left: 22%; right: 22%; bottom: 0; height: 14%;
+      width: auto; margin: 0; border-bottom: 0;
+    }
+    .vis-pitch-wrap .pl-goal-top {
+      left: 36%; right: 36%; top: 0; height: 6%;
+      width: auto; margin: 0; border-top: 0;
+    }
+    .vis-pitch-wrap .pl-goal-bottom {
+      left: 36%; right: 36%; bottom: 0; height: 6%;
+      width: auto; margin: 0; border-bottom: 0;
+    }
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
