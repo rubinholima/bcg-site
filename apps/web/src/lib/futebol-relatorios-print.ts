@@ -1231,14 +1231,14 @@ export function buildPressKitPrintHtml(
       text-align: center;
       z-index: 2;
     }
-    .chip-photo-wrap { position: relative; width: 54px; height: 54px; margin: 0 auto 3px; }
+    .chip-photo-wrap { position: relative; width: 48px; height: 64px; margin: 0 auto 3px; }
     .chip-photo {
-      width: 54px;
-      height: 54px;
-      border-radius: 999px;
+      width: 48px;
+      height: 64px;
+      border-radius: 4px;
       object-fit: cover;
-      object-position: center 18%;
-      border: 3px solid #fff;
+      object-position: center 12%;
+      border: 2px solid #fff;
       box-shadow: 0 3px 8px rgba(0,0,0,0.35);
       background: ${BCG.blue};
       display: block;
@@ -1246,16 +1246,18 @@ export function buildPressKitPrintHtml(
     .chip-photo-fallback {
       display: flex; align-items: center; justify-content: center;
       color: #fff; font-weight: 800; font-size: 17px;
+      border-radius: 4px;
     }
     .chip-num {
       position: absolute;
-      right: -3px;
+      left: -4px;
       bottom: -2px;
-      width: 21px; height: 21px; border-radius: 999px;
+      min-width: 20px; height: 20px; border-radius: 4px;
       background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 10px;
       display: flex; align-items: center; justify-content: center;
       border: 2px solid #fff;
       box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      padding: 0 3px;
     }
     .chip-name {
       font-size: 9px; font-weight: 800; color: #fff;
@@ -1285,12 +1287,13 @@ export function buildPressKitPrintHtml(
     .sub-row .chip-photo,
     .staff-row .chip-photo-fallback,
     .sub-row .chip-photo-fallback {
-      width: 24px;
+      width: 18px;
       height: 24px;
-      border-width: 2px;
-      font-size: 10px;
+      border-radius: 3px;
+      border-width: 1px;
+      font-size: 9px;
       flex-shrink: 0;
-      object-position: center 18%;
+      object-position: center 12%;
     }
     .ref-row { flex-direction: column; align-items: flex-start; gap: 0; }
     .ref-row strong, .staff-row strong, .sub-name {

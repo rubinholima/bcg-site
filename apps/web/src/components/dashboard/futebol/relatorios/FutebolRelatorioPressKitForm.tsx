@@ -69,33 +69,71 @@ function applyJerseyOverridesLocal(
   });
 }
 
-function AthleteAvatar({
+/** Foto 3×4 sem círculo — evita cortar a cabeça (object-position no topo). */
+function AthletePhoto3x4({
   photoUrl,
   name,
   size = "md",
 }: {
   photoUrl?: string | null;
   name: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }) {
   const src = getPublicImageUrl(photoUrl);
-  const dim = size === "sm" ? "h-8 w-8" : "h-10 w-10";
+  const dim =
+    size === "lg"
+      ? "h-[72px] w-[54px]"
+      : size === "sm"
+        ? "h-12 w-9"
+        : "h-14 w-[42px]";
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt=""
-        className={`${dim} shrink-0 rounded-full object-cover bg-zinc-800`}
+        className={`${dim} shrink-0 rounded-md border border-white/30 object-cover object-[center_12%] bg-zinc-800 shadow-md`}
       />
     );
   }
   return (
     <div
-      className={`${dim} flex shrink-0 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-300`}
+      className={`${dim} flex shrink-0 items-center justify-center rounded-md border border-white/20 bg-zinc-800 text-xs font-bold text-zinc-300`}
     >
       {(name || "?").slice(0, 1).toUpperCase()}
     </div>
+  );
+}
+
+function jerseyInputValue(
+  athlete: RelatorioPessoaRow,
+  overrides: Record<string, number | null>,
+): string {
+  if (athlete.playerId && athlete.playerId in overrides) {
+    const v = overrides[athlete.playerId];
+    return v == null ? "" : String(v);
+  }
+  return athlete.jerseyNumber != null ? String(athlete.jerseyNumber) : "";
+}
+
+function PitchMarkings() {
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute inset-0 opacity-90"
+        style={{
+          background:
+            "repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%)",
+        }}
+      />
+      <div className="pointer-events-none absolute inset-[3.5%] rounded-sm border-2 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[3.5%] top-1/2 border-t-2 border-white/55" />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[18%] w-[24%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[24%] top-[3.5%] h-[13%] border-2 border-t-0 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[37%] top-[3.5%] h-[5.5%] border-2 border-t-0 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[24%] bottom-[3.5%] h-[13%] border-2 border-b-0 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[37%] bottom-[3.5%] h-[5.5%] border-2 border-b-0 border-white/55" />
+    </>
   );
 }
 
@@ -403,6 +441,16 @@ export function FutebolRelatorioPressKitForm() {
   const starterSet = new Set(starterPlayerIds.filter(Boolean));
   const formationDef = getFormation(formation);
   const filledStarters = starterPlayerIds.filter(Boolean).length;
+  const reserves = athletes.filter((a) => a.playerId && !starterSet.has(a.playerId));
+  const categoryCoach =
+    (reportData?.staff ?? []).find((s) => {
+      const raw = (s.role ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+      const label = getStaffRoleLabel(s.role ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{M}/gu, "");
+      return raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"));
+    }) ?? null;
   const directorNameOptions = Array.from(
     new Set(
       [
@@ -586,6 +634,18 @@ export function FutebolRelatorioPressKitForm() {
                     <p className="text-sm font-semibold">
                       Titulares no gramado ({filledStarters}/11)
                     </p>
+                    <p className="text-sm text-foreground">
+                      Técnico:{" "}
+                      <span className="font-semibold text-[#C8102E]">
+                        {categoryCoach?.name?.trim() || "Não convocado"}
+                      </span>
+                      {reportData.travel.categoryLabel ? (
+                        <span className="text-muted-foreground">
+                          {" "}
+                          · {reportData.travel.categoryLabel}
+                        </span>
+                      ) : null}
+                    </p>
                   </div>
                   <div className="flex flex-wrap items-end gap-2">
                     <div className="space-y-1">
@@ -624,11 +684,10 @@ export function FutebolRelatorioPressKitForm() {
                 </div>
 
                 <div
-                  className="relative mx-auto aspect-[3/4] w-full max-w-md overflow-hidden rounded-xl border border-emerald-900/60 bg-gradient-to-b from-emerald-800 to-emerald-950"
+                  className="relative mx-auto aspect-[3/4] w-full max-w-xl overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner"
                   onDragOver={(e) => e.preventDefault()}
                 >
-                  <div className="pointer-events-none absolute inset-x-[8%] top-1/2 h-px bg-white/25" />
-                  <div className="pointer-events-none absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/20" />
+                  <PitchMarkings />
                   {formationDef.slots.map((slot, slotIndex) => {
                     const playerId = starterPlayerIds[slotIndex] ?? "";
                     const athlete = playerId
@@ -662,31 +721,35 @@ export function FutebolRelatorioPressKitForm() {
                               e.dataTransfer.setData("playerId", athlete.playerId!);
                               e.dataTransfer.setData("slotIndex", String(slotIndex));
                             }}
-                            className="flex w-[72px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
+                            className="flex w-[92px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
                           >
                             <div className="relative">
-                              <AthleteAvatar
+                              <AthletePhoto3x4
                                 photoUrl={athlete.photoUrl}
                                 name={athlete.nickname || athlete.name}
-                                size="sm"
+                                size="lg"
                               />
-                              <span className="absolute -bottom-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#C8102E] px-1 text-[10px] font-bold text-white">
+                              <span className="absolute -bottom-1 -left-1 flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
                                 {athlete.jerseyNumber ?? "—"}
                               </span>
+                              <span className="absolute -right-1 -top-1 rounded bg-[#00205B] px-1 py-0.5 text-[9px] font-bold uppercase text-white shadow">
+                                {slot.label}
+                              </span>
+                              <button
+                                type="button"
+                                className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[11px] font-bold text-white"
+                                onClick={() => clearStarterSlot(slotIndex)}
+                                aria-label="Remover do gramado"
+                              >
+                                ×
+                              </button>
                             </div>
-                            <span className="max-w-full truncate text-center text-[10px] font-semibold text-white drop-shadow">
+                            <span className="max-w-full truncate text-center text-[11px] font-extrabold uppercase text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
                               {athlete.nickname?.trim() || athlete.name.split(/\s+/)[0]}
                             </span>
-                            <button
-                              type="button"
-                              className="text-[10px] text-white/70 underline"
-                              onClick={() => clearStarterSlot(slotIndex)}
-                            >
-                              Tirar
-                            </button>
                           </div>
                         ) : (
-                          <div className="flex h-14 w-14 flex-col items-center justify-center rounded-full border border-dashed border-white/40 bg-black/20 text-[10px] font-semibold uppercase text-white/70">
+                          <div className="flex h-[72px] w-[54px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">
                             {slot.label}
                           </div>
                         )}
@@ -696,34 +759,36 @@ export function FutebolRelatorioPressKitForm() {
                 </div>
 
                 <div className="space-y-2">
+                  <p className="text-sm font-semibold">Relação — titulares</p>
                   {starterPlayerIds.map((id, index) => {
                     if (!id) return null;
                     const a = athletes.find((x) => x.playerId === id);
                     if (!a) return null;
-                    const jerseyValue =
-                      a.playerId && a.playerId in jerseyOverrides
-                        ? jerseyOverrides[a.playerId] == null
-                          ? ""
-                          : String(jerseyOverrides[a.playerId])
-                        : a.jerseyNumber != null
-                          ? String(a.jerseyNumber)
-                          : "";
+                    const slotLabel = formationDef.slots[index]?.label ?? "—";
                     return (
                       <div
                         key={`${id}-${index}`}
                         className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2"
                       >
-                        <span className="w-10 shrink-0 text-xs font-semibold text-muted-foreground">
-                          {formationDef.slots[index]?.label ?? index + 1}
+                        <AthletePhoto3x4
+                          photoUrl={a.photoUrl}
+                          name={a.nickname || a.name}
+                        />
+                        <span className="w-10 shrink-0 text-center text-base font-extrabold text-[#C8102E]">
+                          {a.jerseyNumber ?? "—"}
                         </span>
-                        <AthleteAvatar photoUrl={a.photoUrl} name={a.nickname || a.name} />
+                        <span className="w-12 shrink-0 rounded bg-[#00205B]/20 px-1 py-1 text-center text-xs font-bold uppercase text-[#93c5fd]">
+                          {slotLabel}
+                        </span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
                             {a.nickname?.trim() || a.name}
                           </p>
-                          {a.nickname?.trim() ? (
-                            <p className="truncate text-xs text-muted-foreground">{a.name}</p>
-                          ) : null}
+                          <p className="truncate text-xs text-muted-foreground">
+                            {[a.position, a.nickname?.trim() ? a.name : null]
+                              .filter(Boolean)
+                              .join(" · ") || "—"}
+                          </p>
                         </div>
                         <div className="w-20 space-y-1">
                           <Label className="text-[10px] text-muted-foreground">Camisa</Label>
@@ -732,7 +797,7 @@ export function FutebolRelatorioPressKitForm() {
                             min={0}
                             max={99}
                             className="min-h-[40px] text-foreground"
-                            value={jerseyValue}
+                            value={jerseyInputValue(a, jerseyOverrides)}
                             onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
                           />
                         </div>
@@ -750,31 +815,61 @@ export function FutebolRelatorioPressKitForm() {
                   })}
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {athletes.map((a) => {
-                    if (!a.playerId || starterSet.has(a.playerId)) return null;
-                    return (
-                      <button
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold">
+                    Reservas ({reserves.length})
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {reserves.map((a) => (
+                      <div
                         key={a.playerId}
-                        type="button"
                         draggable
                         onDragStart={(e) => {
                           setDragPlayerId(a.playerId!);
                           e.dataTransfer.setData("playerId", a.playerId!);
                         }}
-                        className="flex min-h-[52px] items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-left text-sm hover:border-[#C8102E]/50 hover:bg-[#C8102E]/5"
-                        onClick={() => addStarterToFirstEmpty(a.playerId!)}
-                        disabled={filledStarters >= 11}
+                        className="flex min-h-[64px] items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2"
                       >
-                        <AthleteAvatar photoUrl={a.photoUrl} name={a.nickname || a.name} size="sm" />
-                        <span className="min-w-0 flex-1 truncate">
-                          {a.jerseyNumber != null ? `#${a.jerseyNumber} · ` : ""}
-                          {a.nickname?.trim() || a.name}
+                        <AthletePhoto3x4
+                          photoUrl={a.photoUrl}
+                          name={a.nickname || a.name}
+                          size="sm"
+                        />
+                        <span className="w-9 shrink-0 text-center text-sm font-extrabold text-[#C8102E]">
+                          {a.jerseyNumber ?? "—"}
                         </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">+ titular</span>
-                      </button>
-                    );
-                  })}
+                        <span className="w-12 shrink-0 rounded bg-zinc-800 px-1 py-1 text-center text-[10px] font-bold uppercase text-zinc-300">
+                          {a.position?.trim() || "—"}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {a.nickname?.trim() || a.name}
+                          </p>
+                        </div>
+                        <div className="w-[72px] space-y-1">
+                          <Label className="text-[10px] text-muted-foreground">Camisa</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={99}
+                            className="min-h-[40px] text-foreground"
+                            value={jerseyInputValue(a, jerseyOverrides)}
+                            onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="min-h-[40px] shrink-0"
+                          onClick={() => addStarterToFirstEmpty(a.playerId!)}
+                          disabled={filledStarters >= 11}
+                        >
+                          + titular
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
