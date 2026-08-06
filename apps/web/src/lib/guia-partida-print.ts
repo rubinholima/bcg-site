@@ -3,6 +3,7 @@ import {
   resolveLogoUrlForPrint,
 } from "@/lib/futebol-relatorios-print";
 import { getFormation } from "@/lib/press-kit-formations";
+import { cadastroPositionAbbrev } from "@/lib/press-kit-lineup";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import type {
   GuiaAgendaDay,
@@ -501,6 +502,17 @@ function styles(size: PrintPageSize): string {
     .people li:last-child { border-bottom: none; }
     .people b { font-weight: 700; }
     .people span { color: ${C.muted}; text-align: right; }
+    .people-photos li { justify-content: flex-start; align-items: center; gap: 2mm; }
+    .people-photos li > div { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .people-photos li span { text-align: left; }
+    .people-photo {
+      width: 8mm; height: 10.5mm; object-fit: cover; object-position: center 12%;
+      border-radius: 1mm; border: 1px solid ${C.line}; background: ${C.soft}; flex: none;
+    }
+    .people-photo-fallback {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7pt; font-weight: 800; color: ${C.navy};
+    }
 
     /* ---------- Resultados ---------- */
     .match-list { list-style: none; margin: 0; padding: 0; }
@@ -642,16 +654,14 @@ function styles(size: PrintPageSize): string {
       overflow: hidden;
       border: 2.5px solid #14532d;
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
-      box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.2);
     }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
-    .vis-pitch-wrap .pl-outer { inset: 3.5%; border-radius: 2mm; }
-    .vis-pitch-wrap .pl-half { left: 3.5%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
+    .vis-pitch-wrap .pl-half { left: 0; right: 0; top: 50%; border-width: 0 0 2px 0; }
     .vis-pitch-wrap .pl-circle { left: 50%; top: 50%; width: 16mm; height: 16mm; margin: -8mm 0 0 -8mm; border-radius: 50%; }
-    .vis-pitch-wrap .pl-box-top { left: 24%; right: 24%; top: 3.5%; height: 13%; border-top: 0; }
-    .vis-pitch-wrap .pl-box-bottom { left: 24%; right: 24%; bottom: 3.5%; height: 13%; border-bottom: 0; }
-    .vis-pitch-wrap .pl-goal-top { left: 37%; right: 37%; top: 3.5%; height: 5.5%; border-top: 0; }
-    .vis-pitch-wrap .pl-goal-bottom { left: 37%; right: 37%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
+    .vis-pitch-wrap .pl-box-top { left: 22%; right: 22%; top: 0; height: 14%; border-top: 0; }
+    .vis-pitch-wrap .pl-box-bottom { left: 22%; right: 22%; bottom: 0; height: 14%; border-bottom: 0; }
+    .vis-pitch-wrap .pl-goal-top { left: 36%; right: 36%; top: 0; height: 6%; border-top: 0; }
+    .vis-pitch-wrap .pl-goal-bottom { left: 36%; right: 36%; bottom: 0; height: 6%; border-bottom: 0; }
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
@@ -660,8 +670,8 @@ function styles(size: PrintPageSize): string {
       z-index: 2;
     }
     .vis-photo-wrap { position: relative; width: 10.5mm; height: 14mm; margin: 0 auto 0.8mm; }
-    .vis-photo { width: 10.5mm; height: 14mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1.5px solid #fff; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); background: ${C.navy}; display: block; }
-    .vis-photo.photo-fallback { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 8pt; }
+    .vis-photo { width: 10.5mm; height: 14mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); display: block; }
+    .vis-photo.photo-fallback { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 8pt; background: rgba(0,0,0,.45); }
     .vis-num {
       position: absolute; left: -1mm; bottom: -0.8mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
       border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
@@ -675,6 +685,14 @@ function styles(size: PrintPageSize): string {
       white-space: normal;
       word-break: break-word;
       hyphens: manual;
+    }
+    .vis-nick {
+      font-size: 4.8pt; font-weight: 700; color: #fde68a; text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      text-transform: uppercase; line-height: 1.05;
+    }
+    .vis-pos, .vis-birth {
+      font-size: 4.5pt; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      text-transform: uppercase; line-height: 1.05;
     }
     .vis-bench {
       border: 1.5px solid #EA580C; border-radius: 2.5mm; padding: 3.5mm 3.5mm;
@@ -885,7 +903,17 @@ export function buildGuiaPartidaPrintHtml(
         <h3>Arbitragem</h3>
         ${
           refereesHtml.length > 0
-            ? `<ul class="people">${refereesHtml.map((r) => `<li><b>${esc(r.name)}</b><span>${esc(r.role)}</span></li>`).join("")}</ul>`
+            ? `<ul class="people people-photos">${refereesHtml
+                .map((r) => {
+                  const src = r.photoUrl
+                    ? resolveLogoUrlForPrint(r.photoUrl) || r.photoUrl
+                    : null;
+                  const photo = src
+                    ? `<img class="people-photo" src="${esc(src)}" alt="" />`
+                    : `<span class="people-photo people-photo-fallback">${esc(r.name.slice(0, 1))}</span>`;
+                  return `<li>${photo}<div><b>${esc(r.name)}</b><span>${esc(r.role)}</span></div></li>`;
+                })
+                .join("")}</ul>`
             : `<p class="empty">Escala não divulgada.</p>`
         }
       </div>
@@ -1064,18 +1092,24 @@ export function buildGuiaPartidaPrintHtml(
       const p = slotId ? squadById.get(slotId) : undefined;
       if (!p) return "";
       const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-      const nick = athletePrintName(p);
-      const nameParts = nick.split(/\s+/).filter(Boolean);
+      const displayName = firstLastName(p.name) || p.shortName || "";
+      const nameParts = displayName.split(/\s+/).filter(Boolean);
       const nameHtml =
         nameParts.length >= 2
           ? `<div class="vis-name">${esc(nameParts[0])}<br/>${esc(nameParts.slice(1).join(" "))}</div>`
-          : `<div class="vis-name">${esc(nick)}</div>`;
+          : `<div class="vis-name">${esc(displayName)}</div>`;
+      const nick = p.nickname?.trim() || "";
+      const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
+      const birth = formatBirth(p.birthDate);
       return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%">
         <div class="vis-photo-wrap">
           ${photo(p.photoUrl, p.name, "vis-photo")}
           <span class="vis-num">${esc(n)}</span>
         </div>
         ${nameHtml}
+        ${nick ? `<div class="vis-nick">${esc(nick)}</div>` : ""}
+        ${pos && pos !== "—" ? `<div class="vis-pos">${esc(pos)}</div>` : ""}
+        ${birth ? `<div class="vis-birth">${esc(birth)}</div>` : ""}
       </div>`;
     })
     .join("");
@@ -1130,7 +1164,6 @@ export function buildGuiaPartidaPrintHtml(
           ${staffBeside || `<p class="empty">—</p>`}
         </aside>
         <div class="vis-pitch-wrap">
-          <div class="vis-pitch-mark pl-outer"></div>
           <div class="vis-pitch-mark pl-half"></div>
           <div class="vis-pitch-mark pl-circle"></div>
           <div class="vis-pitch-mark pl-box-top"></div>
@@ -1149,7 +1182,7 @@ export function buildGuiaPartidaPrintHtml(
         }
       </div>
     </div>
-    <p class="note">No gramado só os titulares. Comissão ao lado do campo. O quadro não representa o esquema utilizado em partida.</p>
+    <p class="note">No gramado só os titulares. Comissão ao lado do campo.</p>
     ${foot("Escalação visual")}`,
   );
 

@@ -65,9 +65,10 @@ import {
   useFutebolRelatorioTenants,
   useFutebolRelatorioTravels,
 } from "./futebol-relatorio-shared";
+import type { MatchReferee } from "@/types/match-referee";
 
 function emptyNamed(roles: readonly string[]): PressKitNamedRole[] {
-  return roles.map((role) => ({ role, name: "" }));
+  return roles.map((role) => ({ role, name: "", refereeId: null, photoUrl: null }));
 }
 
 type StaffDirectoryRow = {
@@ -123,6 +124,13 @@ function firstLastName(full: string | null | undefined): string {
   return `${parts[0]} ${parts[parts.length - 1]}`.toLocaleUpperCase("pt-BR");
 }
 
+function formatBirthShortUi(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  if (!y || !m || !d) return "";
+  return `${d}/${m}/${y}`;
+}
+
 function applyJerseyOverridesLocal(
   rows: RelatorioPessoaRow[],
   overrides: Record<string, number | null>,
@@ -157,13 +165,13 @@ function AthletePhoto3x4({
       <img
         src={src}
         alt=""
-        className={`${dim} shrink-0 rounded-md border border-white/30 object-cover object-[center_12%] bg-zinc-800 shadow-md`}
+        className={`${dim} shrink-0 rounded-sm object-cover object-[center_12%] shadow-md`}
       />
     );
   }
   return (
     <div
-      className={`${dim} flex shrink-0 items-center justify-center rounded-md border border-white/20 bg-zinc-800 text-xs font-bold text-zinc-300`}
+      className={`${dim} flex shrink-0 items-center justify-center rounded-sm bg-black/50 text-xs font-bold text-white`}
     >
       {(name || "?").slice(0, 1).toUpperCase()}
     </div>
@@ -180,13 +188,13 @@ function PitchMarkings() {
             "repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%)",
         }}
       />
-      <div className="pointer-events-none absolute inset-[3.5%] rounded-sm border-2 border-white/55" />
-      <div className="pointer-events-none absolute inset-x-[3.5%] top-1/2 border-t-2 border-white/55" />
+      {/* Linhas do campo — sem retângulo interno (não faz parte do gramado) */}
+      <div className="pointer-events-none absolute inset-x-0 top-1/2 border-t-2 border-white/55" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[18%] w-[24%] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/55" />
-      <div className="pointer-events-none absolute inset-x-[24%] top-[3.5%] h-[13%] border-2 border-t-0 border-white/55" />
-      <div className="pointer-events-none absolute inset-x-[37%] top-[3.5%] h-[5.5%] border-2 border-t-0 border-white/55" />
-      <div className="pointer-events-none absolute inset-x-[24%] bottom-[3.5%] h-[13%] border-2 border-b-0 border-white/55" />
-      <div className="pointer-events-none absolute inset-x-[37%] bottom-[3.5%] h-[5.5%] border-2 border-b-0 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[22%] top-0 h-[14%] border-2 border-t-0 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[36%] top-0 h-[6%] border-2 border-t-0 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[22%] bottom-0 h-[14%] border-2 border-b-0 border-white/55" />
+      <div className="pointer-events-none absolute inset-x-[36%] bottom-0 h-[6%] border-2 border-b-0 border-white/55" />
     </>
   );
 }
@@ -219,6 +227,8 @@ export function FutebolRelatorioPressKitForm() {
   const [jerseyOverrides, setJerseyOverrides] = useState<Record<string, number | null>>({});
   const [dragPlayerId, setDragPlayerId] = useState<string | null>(null);
   const [staffDirectory, setStaffDirectory] = useState<StaffDirectoryRow[]>([]);
+  const [refereeDirectory, setRefereeDirectory] = useState<MatchReferee[]>([]);
+  const [refereeSearch, setRefereeSearch] = useState("");
   const [savedSnapshot, setSavedSnapshot] = useState("");
   const [leaveOpen, setLeaveOpen] = useState(false);
   const pendingLeaveRef = useRef<(() => void) | null>(null);
@@ -246,6 +256,22 @@ export function FutebolRelatorioPressKitForm() {
   useEffect(() => {
     if (!tenantId && tenants.length === 1) setTenantId(tenants[0]!.id);
   }, [tenants, tenantId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void api
+      .get<MatchReferee[]>("/match-referees?activeOnly=1")
+      .then(({ data }) => {
+        if (cancelled) return;
+        setRefereeDirectory(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setRefereeDirectory([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!tenantId) {
@@ -800,20 +826,85 @@ export function FutebolRelatorioPressKitForm() {
               <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-3">
                   <p className="text-sm font-semibold">Arbitragem</p>
-                  {referees.map((r, i) => (
-                    <div key={`ref-${i}`} className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">{r.role}</Label>
-                      <Input
-                        className="min-h-[44px] text-foreground"
-                        value={r.name}
-                        onChange={(e) => {
-                          const next = [...referees];
-                          next[i] = { ...r, name: e.target.value };
-                          setReferees(next);
-                        }}
-                      />
-                    </div>
-                  ))}
+                  <Input
+                    className="min-h-[44px] text-foreground"
+                    placeholder="Buscar árbitro cadastrado…"
+                    value={refereeSearch}
+                    onChange={(e) => setRefereeSearch(e.target.value)}
+                  />
+                  {referees.map((r, i) => {
+                    const q = refereeSearch.trim().toLocaleLowerCase("pt-BR");
+                    const options = refereeDirectory.filter((ref) => {
+                      if (!q) return true;
+                      return (
+                        ref.name.toLocaleLowerCase("pt-BR").includes(q) ||
+                        (ref.federation ?? "").toLocaleLowerCase("pt-BR").includes(q) ||
+                        (ref.licenseNumber ?? "").toLocaleLowerCase("pt-BR").includes(q)
+                      );
+                    });
+                    const selected =
+                      refereeDirectory.find((ref) => ref.id === r.refereeId) ??
+                      refereeDirectory.find(
+                        (ref) =>
+                          ref.name.trim().toLocaleUpperCase("pt-BR") ===
+                          r.name.trim().toLocaleUpperCase("pt-BR"),
+                      ) ??
+                      null;
+                    const photoSrc = getPublicImageUrl(selected?.photoUrl ?? r.photoUrl);
+                    return (
+                      <div key={`ref-${i}`} className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">{r.role}</Label>
+                        <div className="flex items-center gap-2">
+                          {photoSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={photoSrc}
+                              alt=""
+                              className="h-12 w-9 shrink-0 rounded object-cover object-[center_12%]"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-9 shrink-0 items-center justify-center rounded bg-muted text-xs font-bold">
+                              {(selected?.name || r.name || "?").slice(0, 1)}
+                            </div>
+                          )}
+                          <NativeSelect
+                            className="min-h-[44px] flex-1"
+                            value={selected?.id ?? ""}
+                            onChange={(e) => {
+                              const person = refereeDirectory.find(
+                                (ref) => ref.id === e.target.value,
+                              );
+                              const next = [...referees];
+                              if (!person) {
+                                next[i] = {
+                                  role: r.role,
+                                  name: "",
+                                  refereeId: null,
+                                  photoUrl: null,
+                                };
+                              } else {
+                                next[i] = {
+                                  role: r.role,
+                                  name: person.name,
+                                  refereeId: person.id,
+                                  photoUrl: person.photoUrl,
+                                };
+                              }
+                              setReferees(next);
+                            }}
+                          >
+                            <option value="">Selecione o árbitro…</option>
+                            {options.map((ref) => (
+                              <option key={ref.id} value={ref.id}>
+                                {ref.name}
+                                {ref.federation ? ` · ${ref.federation}` : ""}
+                              </option>
+                            ))}
+                          </NativeSelect>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="space-y-3">
                   <p className="text-sm font-semibold">Diretoria (até 4)</p>
@@ -916,8 +1007,8 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                 </div>
 
-                <div className="mx-auto grid w-full max-w-3xl gap-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
-                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 sm:order-1">
+                <div className="mx-auto grid w-full max-w-4xl gap-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-stretch">
+                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 sm:order-1 sm:max-h-[min(70vh,640px)] sm:overflow-y-auto">
                     <p className="mb-3 text-xs font-extrabold uppercase tracking-wide text-[#93c5fd]">
                       Comissão
                     </p>
@@ -949,7 +1040,7 @@ export function FutebolRelatorioPressKitForm() {
                     )}
                   </aside>
                   <div
-                    className="relative order-1 aspect-[68/105] w-full overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2"
+                    className="relative order-1 mx-auto aspect-[68/105] h-[min(68vh,600px)] w-auto max-w-full overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner sm:order-2 sm:h-[min(70vh,640px)]"
                     onDragOver={(e) => e.preventDefault()}
                   >
                     <PitchMarkings />
@@ -960,6 +1051,9 @@ export function FutebolRelatorioPressKitForm() {
                         : undefined;
                       const label = athlete ? firstLastName(athlete.name) : "";
                       const labelParts = label.split(/\s+/).filter(Boolean);
+                      const nick = athlete?.nickname?.trim() || "";
+                      const pos = athlete ? cadastroPositionAbbrev(athlete.position) : "";
+                      const birth = athlete ? formatBirthShortUi(athlete.birthDate) : "";
                       return (
                         <div
                           key={slot.id}
@@ -988,7 +1082,7 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="flex w-[96px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
+                              className="flex w-[100px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
@@ -1002,9 +1096,6 @@ export function FutebolRelatorioPressKitForm() {
                                     jerseyOverrides,
                                     slotIndex + 1,
                                   ) || "—"}
-                                </span>
-                                <span className="absolute -right-1 -top-1 rounded bg-[#00205B] px-1 py-0.5 text-[9px] font-bold uppercase text-white shadow">
-                                  {slot.label}
                                 </span>
                                 <button
                                   type="button"
@@ -1026,6 +1117,21 @@ export function FutebolRelatorioPressKitForm() {
                                   label
                                 )}
                               </span>
+                              {nick ? (
+                                <span className="w-full text-center text-[9px] font-bold uppercase leading-tight text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                  {nick}
+                                </span>
+                              ) : null}
+                              {pos ? (
+                                <span className="w-full text-center text-[8px] font-semibold uppercase leading-tight text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                  {pos}
+                                </span>
+                              ) : null}
+                              {birth ? (
+                                <span className="w-full text-center text-[8px] font-medium leading-tight text-white/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                  {birth}
+                                </span>
+                              ) : null}
                             </div>
                           ) : (
                             <div className="flex h-[72px] w-[54px] flex-col items-center justify-center rounded-md border-2 border-dashed border-white/50 bg-black/25 text-[11px] font-bold uppercase text-white/80">

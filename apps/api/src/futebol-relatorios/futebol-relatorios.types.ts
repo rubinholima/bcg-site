@@ -65,6 +65,9 @@ export type RelatorioTravelMeta = {
 export type PressKitNamedRole = {
   name: string;
   role: string;
+  /** FK do cadastro de árbitros (quando houver) */
+  refereeId?: string | null;
+  photoUrl?: string | null;
 };
 
 export type PressKitUniformKitDto = {

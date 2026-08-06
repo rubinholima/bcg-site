@@ -175,9 +175,9 @@ export function LogisticaItineraryFields({
         {items.length === 0 ? (
           <p className="text-xs text-muted-foreground">Nenhum item.</p>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border/70">
+          <div className="space-y-3">
             <div
-              className="hidden grid-cols-[9rem_6.5rem_minmax(0,1fr)_2.5rem] gap-2 border-b border-border/60 bg-muted/30 px-3 py-2 text-xs font-medium text-muted-foreground sm:grid"
+              className="hidden grid-cols-[9rem_6.5rem_minmax(0,1fr)_2.5rem] gap-2 px-1 text-xs font-medium text-muted-foreground sm:grid"
               aria-hidden
             >
               <span>Data</span>
@@ -185,75 +185,73 @@ export function LogisticaItineraryFields({
               <span>Atividade</span>
               <span className="sr-only">Remover</span>
             </div>
-            <div className="divide-y divide-border/60">
-              {items.map((item: TravelHomeAgendaItem, idx) => (
-                <div
-                  key={item.id ?? `home-${idx}`}
-                  className="grid grid-cols-1 gap-2 px-3 py-2 sm:grid-cols-[9rem_6.5rem_minmax(0,1fr)_2.5rem] sm:items-center"
-                >
-                  <div className="space-y-1 sm:space-y-0">
-                    <Label className="text-xs sm:sr-only">Data</Label>
-                    <Input
-                      type="date"
-                      className="min-h-[40px] min-w-0 text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                      disabled={disabled}
-                      value={item.date ?? ""}
-                      onChange={(e) => {
-                        const next = [...items];
-                        next[idx] = { ...item, date: e.target.value };
-                        onItineraryChange({ ...itinerary, homeMatchAgenda: next });
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-1 sm:space-y-0">
-                    <Label className="text-xs sm:sr-only">Hora</Label>
-                    <Input
-                      type="time"
-                      className="min-h-[40px] min-w-0 text-foreground"
-                      disabled={disabled}
-                      value={item.time ?? ""}
-                      onChange={(e) => {
-                        const next = [...items];
-                        next[idx] = { ...item, time: e.target.value };
-                        onItineraryChange({ ...itinerary, homeMatchAgenda: next });
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-1 sm:space-y-0">
-                    <Label className="text-xs sm:sr-only">Atividade</Label>
-                    <Input
-                      className="min-h-[40px] uppercase"
-                      disabled={disabled}
-                      value={item.label}
-                      onChange={(e) => {
-                        const next = [...items];
-                        next[idx] = { ...item, label: e.target.value.toLocaleUpperCase("pt-BR") };
-                        onItineraryChange({ ...itinerary, homeMatchAgenda: next });
-                      }}
-                      placeholder="CAFÉ DA MANHÃ / ROUPARIA / AQUECIMENTO…"
-                    />
-                  </div>
-                  <div className="flex justify-end sm:justify-center">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="min-h-[40px] min-w-[40px] text-destructive"
-                      disabled={disabled}
-                      aria-label="Remover item"
-                      onClick={() =>
-                        onItineraryChange({
-                          ...itinerary,
-                          homeMatchAgenda: items.filter((_, i) => i !== idx),
-                        })
-                      }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+            {items.map((item: TravelHomeAgendaItem, idx) => (
+              <div
+                key={item.id ?? `home-${idx}`}
+                className="grid grid-cols-1 gap-2 rounded-lg border border-border/70 bg-card/40 p-3 sm:grid-cols-[9rem_6.5rem_minmax(0,1fr)_2.5rem] sm:items-center sm:gap-3"
+              >
+                <div className="space-y-1 sm:space-y-0">
+                  <Label className="text-xs sm:sr-only">Data</Label>
+                  <Input
+                    type="date"
+                    className="min-h-[44px] min-w-0 text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                    disabled={disabled}
+                    value={item.date ?? ""}
+                    onChange={(e) => {
+                      const next = [...items];
+                      next[idx] = { ...item, date: e.target.value };
+                      onItineraryChange({ ...itinerary, homeMatchAgenda: next });
+                    }}
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="space-y-1 sm:space-y-0">
+                  <Label className="text-xs sm:sr-only">Hora</Label>
+                  <Input
+                    type="time"
+                    className="min-h-[44px] min-w-0 text-foreground"
+                    disabled={disabled}
+                    value={item.time ?? ""}
+                    onChange={(e) => {
+                      const next = [...items];
+                      next[idx] = { ...item, time: e.target.value };
+                      onItineraryChange({ ...itinerary, homeMatchAgenda: next });
+                    }}
+                  />
+                </div>
+                <div className="space-y-1 sm:space-y-0">
+                  <Label className="text-xs sm:sr-only">Atividade</Label>
+                  <Input
+                    className="min-h-[44px] uppercase"
+                    disabled={disabled}
+                    value={item.label}
+                    onChange={(e) => {
+                      const next = [...items];
+                      next[idx] = { ...item, label: e.target.value.toLocaleUpperCase("pt-BR") };
+                      onItineraryChange({ ...itinerary, homeMatchAgenda: next });
+                    }}
+                    placeholder="CAFÉ DA MANHÃ / ROUPARIA / AQUECIMENTO…"
+                  />
+                </div>
+                <div className="flex justify-end sm:justify-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="min-h-[44px] min-w-[44px] text-destructive"
+                    disabled={disabled}
+                    aria-label="Remover item"
+                    onClick={() =>
+                      onItineraryChange({
+                        ...itinerary,
+                        homeMatchAgenda: items.filter((_, i) => i !== idx),
+                      })
+                    }
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
         <UniformsBlock

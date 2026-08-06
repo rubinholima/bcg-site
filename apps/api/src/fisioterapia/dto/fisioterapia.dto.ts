@@ -370,6 +370,10 @@ export class UpdatePhysioSessionDto {
   status?: string;
 
   @IsOptional()
+  @IsIn(['alta', 'em_tratamento', 'nao_apto'])
+  disposition?: string;
+
+  @IsOptional()
   @IsString()
   staffId?: string;
 
@@ -380,6 +384,11 @@ export class UpdatePhysioSessionDto {
   @IsOptional()
   @IsArray()
   attachments?: PhysioAttachmentDto[];
+}
+
+export class SetPhysioDispositionDto {
+  @IsIn(['alta', 'em_tratamento', 'nao_apto'])
+  disposition!: 'alta' | 'em_tratamento' | 'nao_apto';
 }
 
 export class AddPhysioEvolutionDto {

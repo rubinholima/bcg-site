@@ -23,6 +23,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { ConsultationsModule } from './consultations/consultations.module';
 import { PsychologistsModule } from './psychologists/psychologists.module';
 import { MedicalStaffModule } from './medical-staff/medical-staff.module';
+import { HealthInternsModule } from './health-interns/health-interns.module';
 import { ComprasModule } from './compras/compras.module';
 import { RhModule } from './rh/rh.module';
 import { PatrimonioModule } from './patrimonio/patrimonio.module';
@@ -75,6 +76,7 @@ import { AgendaConfigModule } from './agenda-config/agenda-config.module';
     ConsultationsModule,
     PsychologistsModule,
     MedicalStaffModule,
+    HealthInternsModule,
     ComprasModule,
     RhModule,
     PatrimonioModule,

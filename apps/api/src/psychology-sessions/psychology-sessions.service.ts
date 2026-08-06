@@ -328,11 +328,19 @@ export class PsychologySessionsService {
       if (p) psychologistName = p.name;
     }
     if (dto.estagiarioId) {
-      const e = await this.prisma.psychologist.findUnique({
+      const intern = await this.prisma.healthIntern.findUnique({
         where: { id: dto.estagiarioId },
         select: { name: true },
       });
-      if (e) estagiarioName = e.name;
+      if (intern) {
+        estagiarioName = intern.name;
+      } else {
+        const e = await this.prisma.psychologist.findUnique({
+          where: { id: dto.estagiarioId },
+          select: { name: true },
+        });
+        if (e) estagiarioName = e.name;
+      }
     }
     return { psychologistName, estagiarioName };
   }

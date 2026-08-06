@@ -45,7 +45,6 @@ export default function EditarPsicologoPage() {
     setPendingPreviewUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [pendingPhotoFile]);
-  const [supervisors, setSupervisors] = useState<Psychologist[]>([]);
   const [consultationsFromSystem, setConsultationsFromSystem] = useState<Array<{
     id: string;
     date?: string;
@@ -61,16 +60,10 @@ export default function EditarPsicologoPage() {
     Promise.all([
       api.get<Psychologist>(`/psychologists/${id}`).then(({ data }) => data),
       api.get<Tenant[]>("/tenants?clubsOnly=1").then(({ data }) => Array.isArray(data) ? data : []),
-      api.get<Psychologist[]>("/psychologists").then(({ data }) => Array.isArray(data) ? data : []),
     ])
-      .then(([p, t, allPsychologists]) => {
+      .then(([p, t]) => {
         setPsychologist(p ?? null);
         setTenants(t ?? []);
-        setSupervisors(
-          allPsychologists.filter(
-            (item) => item.id !== id && (item.staffRole ?? "psicologo") === "psicologo"
-          )
-        );
       })
       .catch(() => setPsychologist(null))
       .finally(() => setLoading(false));
@@ -171,7 +164,6 @@ export default function EditarPsicologoPage() {
           setPsychologist((p) => (p ? { ...p, photoUrl: data.url ?? null } : p));
         }
       }
-      const staffRole = psychologist.staffRole ?? "psicologo";
       await api.patch(`/psychologists/${psychologist.id}`, {
         name: psychologist.name,
         email: psychologist.email ?? undefined,
@@ -180,8 +172,8 @@ export default function EditarPsicologoPage() {
         bio: psychologist.bio ?? undefined,
         photoUrl,
         tenantId: psychologist.tenantId ?? undefined,
-        staffRole,
-        supervisorId: staffRole === "estagiario" && psychologist.supervisorId ? psychologist.supervisorId : null,
+        staffRole: "psicologo",
+        supervisorId: null,
         calendarBlocked: psychologist.calendarBlocked,
         attendanceLog: attendanceLog.length > 0 ? attendanceLog : undefined,
         performanceSheet: Object.keys(performanceSheet).length > 0 ? { ...performanceSheet, updatedAt: new Date().toISOString() } : undefined,
@@ -249,60 +241,6 @@ export default function EditarPsicologoPage() {
             <CardDescription>Estes dados populam a seleção de psicólogo em consultas e e-mails.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Vínculo</Label>
-                <Select
-                  value={psychologist.staffRole ?? "psicologo"}
-                  onValueChange={(v) =>
-                    setPsychologist((p) =>
-                      p
-                        ? {
-                            ...p,
-                            staffRole: v,
-                            supervisorId: v === "psicologo" ? null : p.supervisorId,
-                          }
-                        : p
-                    )
-                  }
-                  disabled={saving}
-                >
-                  <SelectTrigger className="text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="psicologo">Psicóloga(o)</SelectItem>
-                    <SelectItem value="estagiario">Estagiária(o)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {(psychologist.staffRole ?? "psicologo") === "estagiario" ? (
-                <div className="space-y-2">
-                  <Label>Supervisora</Label>
-                  <Select
-                    value={psychologist.supervisorId ?? "none"}
-                    onValueChange={(v) =>
-                      setPsychologist((p) =>
-                        p ? { ...p, supervisorId: v === "none" ? null : v } : p
-                      )
-                    }
-                    disabled={saving}
-                  >
-                    <SelectTrigger className="text-foreground">
-                      <SelectValue placeholder="Supervisora" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">—</SelectItem>
-                      {supervisors.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : null}
-            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome *</Label>

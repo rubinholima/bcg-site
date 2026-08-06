@@ -52,8 +52,8 @@ export class PsychologistsService {
         bio: cadastroUpper(data.bio),
         photoUrl: data.photoUrl ?? null,
         tenantId: data.tenantId ?? null,
-        staffRole: data.staffRole ?? 'psicologo',
-        supervisorId: data.supervisorId ?? null,
+        staffRole: 'psicologo',
+        supervisorId: null,
         categories:
           data.categories === undefined || data.categories === null
             ? Prisma.JsonNull
@@ -95,8 +95,10 @@ export class PsychologistsService {
         ...(data.bio !== undefined && { bio: cadastroUpper(data.bio) }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl ?? null }),
         ...(data.tenantId !== undefined && { tenantId: data.tenantId ?? null }),
-        ...(data.staffRole !== undefined && { staffRole: data.staffRole }),
-        ...(data.supervisorId !== undefined && { supervisorId: data.supervisorId ?? null }),
+        ...(data.staffRole !== undefined && {
+          staffRole: data.staffRole === 'estagiario' ? 'psicologo' : data.staffRole,
+        }),
+        ...(data.supervisorId !== undefined && { supervisorId: null }),
         ...(data.categories !== undefined && {
           categories:
             data.categories === null ? Prisma.JsonNull : (data.categories as object),

@@ -456,12 +456,16 @@ export class FisioterapiaService implements OnModuleInit {
       },
       orderBy: { startedAt: 'desc' },
     });
-    if (active.length === 0) {
+
+    const clearFisioStatus = async () => {
       const player = await this.prisma.player.findUnique({
         where: { id: playerId },
         select: { status: true, statusDetails: true },
       });
-      if (player?.status === 'injured' && player.statusDetails?.startsWith('Fisio:')) {
+      if (
+        (player?.status === 'injured' || player?.status === 'available') &&
+        player.statusDetails?.startsWith('Fisio:')
+      ) {
         await this.prisma.player.update({
           where: { id: playerId },
           data: {
@@ -471,21 +475,63 @@ export class FisioterapiaService implements OnModuleInit {
           },
         });
       }
+    };
+
+    if (active.length === 0) {
+      await clearFisioStatus();
       return;
     }
-    const details = active.map((s) => this.buildStatusDetails(s)).join(' | ');
+
+    const hasNaoApto = active.some(
+      (s) => s.disposition === 'nao_apto' || !s.disposition,
+    );
+    const hasEmTratamento = active.some((s) => s.disposition === 'em_tratamento');
+    const detailsBase = active.map((s) => this.buildStatusDetails(s)).join(' | ');
     const latestEnd = active
       .map((s) => s.estimatedEndDate)
       .filter((d): d is Date => !!d)
       .sort((a, b) => b.getTime() - a.getTime())[0];
-    await this.prisma.player.update({
-      where: { id: playerId },
-      data: {
-        status: 'injured',
-        statusDetails: details,
-        statusUntil: latestEnd ?? null,
-      },
-    });
+
+    if (hasNaoApto) {
+      await this.prisma.player.update({
+        where: { id: playerId },
+        data: {
+          status: 'injured',
+          statusDetails: `Fisio: NÃO APTO · ${detailsBase}`,
+          statusUntil: latestEnd ?? null,
+        },
+      });
+      return;
+    }
+
+    if (hasEmTratamento) {
+      await this.prisma.player.update({
+        where: { id: playerId },
+        data: {
+          status: 'available',
+          statusDetails: `Fisio: EM TRATAMENTO (pode treinar) · ${detailsBase}`,
+          statusUntil: latestEnd ?? null,
+        },
+      });
+      return;
+    }
+
+    await clearFisioStatus();
+  }
+
+  async setDisposition(
+    id: string,
+    disposition: 'alta' | 'em_tratamento' | 'nao_apto',
+    allowed: string[] | null,
+  ) {
+    if (disposition === 'alta') {
+      return this.updateSession(
+        id,
+        { status: 'completed', disposition: 'alta' },
+        allowed,
+      );
+    }
+    return this.updateSession(id, { status: 'active', disposition }, allowed);
   }
 
   async createSession(
@@ -778,6 +824,7 @@ export class FisioterapiaService implements OnModuleInit {
         estimatedDays: dto.estimatedDays,
         estimatedEndDate,
         status: dto.status,
+        disposition: dto.disposition,
         endedAt,
         staffId: dto.staffId,
         staffName: dto.staffName,
@@ -861,7 +908,7 @@ export class FisioterapiaService implements OnModuleInit {
   }
 
   async completeSession(id: string, allowed: string[] | null) {
-    return this.updateSession(id, { status: 'completed' }, allowed);
+    return this.setDisposition(id, 'alta', allowed);
   }
 
   async deleteSession(id: string, allowed: string[] | null) {

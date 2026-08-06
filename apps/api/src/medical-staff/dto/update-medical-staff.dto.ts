@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsIn } from 'class-validator';
 
-const ROLES = ['medico', 'enfermeiro', 'enfermeiro_tec', 'fisioterapeuta', 'nutricionista', 'fisiologista', 'massagista', 'estagiario', 'outro'] as const;
+const ROLES = ['medico', 'enfermeiro', 'enfermeiro_tec', 'fisioterapeuta', 'nutricionista', 'fisiologista', 'massagista', 'outro'] as const;
 
 export class UpdateMedicalStaffDto {
   @IsOptional()

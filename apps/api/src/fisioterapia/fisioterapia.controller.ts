@@ -23,6 +23,7 @@ import {
   CreatePhysioGroupSessionDto,
   CreatePhysioSessionDto,
   CreatePhysioTreatmentDto,
+  SetPhysioDispositionDto,
   UpdatePhysioGroupSessionDto,
   UpdatePhysioSessionDto,
 } from './dto/fisioterapia.dto';
@@ -154,6 +155,18 @@ export class FisioterapiaController {
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.completeSession(id, allowed);
+  }
+
+  @Post('sessions/:id/disposition')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async setDisposition(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+    @Body() dto: SetPhysioDispositionDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.setDisposition(id, dto.disposition, allowed);
   }
 
   @Delete('sessions/:id')

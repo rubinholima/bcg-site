@@ -475,6 +475,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             moduleSlug: "tipos",
           },
           {
+            slug: "cad_arbitros",
+            label: "Árbitros",
+            href: "/dashboard/cadastros/arbitros",
+            icon: Shield,
+            moduleSlug: "tipos",
+          },
+          {
             slug: "cad_categorias",
             label: "Categoria",
             href: "/dashboard/cadastros/categorias",

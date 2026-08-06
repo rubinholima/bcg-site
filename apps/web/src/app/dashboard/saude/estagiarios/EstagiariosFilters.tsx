@@ -12,6 +12,7 @@ import {
 import { DashboardDeptSearch } from "@/components/dashboard/DashboardDeptHeader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { HEALTH_INTERN_AREAS } from "@/lib/health-intern-areas";
 
 type Tenant = { id: string; name: string };
 
@@ -64,8 +65,11 @@ export function EstagiariosFilters() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="medico">Médico</SelectItem>
-            <SelectItem value="psicologia">Psicologia</SelectItem>
+            {HEALTH_INTERN_AREAS.map((a) => (
+              <SelectItem key={a.value} value={a.value}>
+                {a.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

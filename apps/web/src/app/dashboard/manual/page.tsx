@@ -410,6 +410,11 @@ export default function ManualPage() {
               <p>
                 Menu: Depto Futebol → Logística → Relatórios → Press Kit / Imprensa.
               </p>
+              <p>
+                <strong>Árbitros:</strong> cadastre nome e foto em Cadastros → Árbitros. No Press Kit, use a
+                busca e o dropdown de cada função (árbitro principal, assistentes etc.) — nome e foto vão para
+                a impressão automaticamente.
+              </p>
             </SubSection>
 
             <SubSection id="futebol-captacao" title="Captação">
@@ -525,6 +530,17 @@ export default function ManualPage() {
               O hub <strong>Saúde</strong> reúne médicos, enfermeiros, psicólogos, estagiários, histórico médico,
               consultas online, avaliação psicológica e fisioterapia. O acesso depende do módulo{" "}
               <strong>saude</strong> liberado para o seu usuário.
+            </p>
+            <p>
+              <strong>Estagiários:</strong> cadastro único em Depto Saúde → Estagiários. Informe a área de
+              atuação (medicina, psicologia, fisioterapia, enfermagem, nutrição, etc.). Médicos e psicólogos
+              profissionais continuam nos cadastros próprios; estagiário não se cadastra mais lá.
+            </p>
+            <p>
+              <strong>Fisioterapia — desfecho do atendimento:</strong> após atender, registre o resultado na ficha:
+              <strong> Alta</strong> (problema resolvido), <strong>Em tratamento</strong> (precisa de novo
+              atendimento, mas pode treinar) ou <strong>Não apto</strong> (tratamento intensivo — não treina). Isso
+              atualiza o status do atleta no cadastro para a comissão separar quem segue no treino normal.
             </p>
 
             <SubSection id="saude-material-apoio" title="Material de apoio (psicologia)">

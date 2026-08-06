@@ -1122,9 +1122,17 @@ export class FutebolRelatoriosService {
                 ? o.role.trim()
                 : defaultRole,
             name: typeof o.name === 'string' ? o.name.trim() : '',
+            refereeId:
+              typeof o.refereeId === 'string' && o.refereeId.trim()
+                ? o.refereeId.trim()
+                : null,
+            photoUrl:
+              typeof o.photoUrl === 'string' && o.photoUrl.trim()
+                ? o.photoUrl.trim()
+                : null,
           };
         }
-        return { role: defaultRole, name: '' };
+        return { role: defaultRole, name: '', refereeId: null, photoUrl: null };
       });
     };
 
@@ -1199,6 +1207,10 @@ export class FutebolRelatoriosService {
       }
     }
 
+    const referees = await this.enrichReferees(
+      mapNamed(raw?.referees, DEFAULT_PRESS_KIT_REFEREE_ROLES),
+    );
+
     return {
       phase:
         typeof raw?.phase === 'string' && raw.phase.trim() ? raw.phase.trim() : null,
@@ -1206,7 +1218,7 @@ export class FutebolRelatoriosService {
         typeof raw?.matchTime === 'string' && raw.matchTime.trim()
           ? raw.matchTime.trim()
           : matchTimeFromDate,
-      referees: mapNamed(raw?.referees, DEFAULT_PRESS_KIT_REFEREE_ROLES),
+      referees,
       directors: mapNamed(raw?.directors, DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
       starterPlayerIds,
       formation,
@@ -1217,6 +1229,45 @@ export class FutebolRelatoriosService {
           : null,
       showDisclaimer: raw?.showDisclaimer !== false,
     };
+  }
+
+  private async enrichReferees(
+    referees: PressKitNamedRole[],
+  ): Promise<PressKitNamedRole[]> {
+    const ids = referees
+      .map((r) => r.refereeId)
+      .filter((id): id is string => Boolean(id));
+    const names = referees
+      .map((r) => r.name.trim())
+      .filter(Boolean)
+      .map((n) => n.toLocaleUpperCase('pt-BR'));
+    if (ids.length === 0 && names.length === 0) return referees;
+
+    const rows = await this.prisma.matchReferee.findMany({
+      where: {
+        OR: [
+          ...(ids.length ? [{ id: { in: ids } }] : []),
+          ...(names.length ? [{ name: { in: names } }] : []),
+        ],
+      },
+    });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const byName = new Map(rows.map((r) => [r.name.toLocaleUpperCase('pt-BR'), r]));
+
+    return referees.map((r) => {
+      const fromId = r.refereeId ? byId.get(r.refereeId) : undefined;
+      const fromName = r.name.trim()
+        ? byName.get(r.name.trim().toLocaleUpperCase('pt-BR'))
+        : undefined;
+      const hit = fromId ?? fromName;
+      if (!hit) return r;
+      return {
+        ...r,
+        refereeId: hit.id,
+        name: hit.name,
+        photoUrl: hit.photoUrl ?? r.photoUrl ?? null,
+      };
+    });
   }
 
   private applyJerseyOverrides(

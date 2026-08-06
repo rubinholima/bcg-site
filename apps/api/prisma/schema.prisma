@@ -101,6 +101,7 @@ model Tenant {
   psychologists           Psychologist[]
   technicalStaff          TechnicalStaff[]
   medicalStaff            MedicalStaff[]
+  healthInterns           HealthIntern[]
   suppliers               Supplier[]
   products                Product[]
   inventoryCategories     InventoryCategory[]
@@ -1262,7 +1263,50 @@ model MedicalStaff {
   @@index([tenantId, role])
 }
 
-// Cadastro de psicólogos e estagiários (Depto Saúde / Psicologia)
+/// Estagiários do Depto Saúde / futebol — cadastro único com área de atuação
+model HealthIntern {
+  id             String        @id @default(cuid())
+  tenantId       String?
+  tenant         Tenant?       @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  name           String
+  /// medicina | psicologia | fisioterapia | enfermagem | nutricao | fisiologia | massagem | outro
+  area           String
+  photoUrl       String?
+  email          String?
+  phone          String?
+  registry       String?       // matrícula / registro acadêmico
+  bio            String?       @db.Text
+  notes          String?       @db.Text
+  supervisorId   String?       // psicóloga(o) supervisora — área psicologia
+  supervisor     Psychologist? @relation("HealthInternSupervision", fields: [supervisorId], references: [id], onDelete: SetNull)
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  @@index([tenantId])
+  @@index([area])
+  @@index([active])
+  @@index([name])
+  @@index([supervisorId])
+}
+
+/// Árbitros oficiais (cadastro com foto para Press Kit / relatórios)
+model MatchReferee {
+  id             String   @id @default(cuid())
+  name           String
+  photoUrl       String?
+  federation     String?  // CBF, FMF, etc.
+  licenseNumber  String?
+  phone          String?
+  email          String?
+  notes          String?  @db.Text
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@index([name])
+  @@index([active])
+}
+
+// Cadastro de psicólogos (Depto Saúde / Psicologia) — estagiários ficam em HealthIntern
 model Psychologist {
   id                String   @id @default(cuid())
   name              String
@@ -1273,10 +1317,11 @@ model Psychologist {
   photoUrl          String?
   tenantId          String?  // null = atende todos os clubes/empresas do grupo
   tenant            Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  staffRole         String   @default("psicologo") // psicologo | estagiario
+  staffRole         String   @default("psicologo") // legado: psicologo | estagiario (novos só psicologo)
   supervisorId      String?
   supervisor        Psychologist?  @relation("PsychologistSupervision", fields: [supervisorId], references: [id], onDelete: SetNull)
   supervisees       Psychologist[] @relation("PsychologistSupervision")
+  supervisedInterns HealthIntern[] @relation("HealthInternSupervision")
   categories        Json?    // string[] — categorias que acompanha
   calendarBlocked   Boolean  @default(false)
   attendanceLog     Json?    // Array<{ date, startTime?, endTime?, playerId?, playerName?, notes? }>
@@ -2912,6 +2957,8 @@ model PhysioSession {
   startedAt        DateTime @default(now())
   endedAt          DateTime?
   status           String   @default("active") // active | completed | cancelled
+  /// Desfecho do atendimento: alta | em_tratamento | nao_apto
+  disposition      String?
   staffId          String?
   staffName        String?
   attachments      Json?

@@ -22,6 +22,14 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
+function sessionStatusLabel(s: { status: string; disposition?: string | null }) {
+  if (s.disposition === "alta" || s.status === "completed") return "Alta";
+  if (s.disposition === "em_tratamento") return "Em tratamento · pode treinar";
+  if (s.disposition === "nao_apto") return "Não apto";
+  if (s.status === "active") return "Em atendimento";
+  return STATUS_LABEL[s.status] ?? s.status;
+}
+
 export default function FisioterapiaPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
@@ -239,7 +247,7 @@ export default function FisioterapiaPage() {
                             : "bg-zinc-600 text-white",
                       )}
                     >
-                      {STATUS_LABEL[s.status] ?? s.status}
+                      {sessionStatusLabel(s)}
                     </span>
                   </div>
                 </Link>

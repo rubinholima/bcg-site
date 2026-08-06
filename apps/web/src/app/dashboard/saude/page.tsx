@@ -36,7 +36,7 @@ const LINKS = [
   },
   {
     title: "Estagiários",
-    description: "Estagiários de saúde — área médica ou psicologia.",
+    description: "Cadastro único — área de atuação no futebol.",
     href: "/dashboard/saude/estagiarios",
     icon: GraduationCap,
     moduleSlug: "saude",

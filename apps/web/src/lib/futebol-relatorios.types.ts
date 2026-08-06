@@ -141,6 +141,8 @@ export type LayoutRelacionadosReportDto = {
 export type PressKitNamedRole = {
   name: string;
   role: string;
+  refereeId?: string | null;
+  photoUrl?: string | null;
 };
 
 export type PressKitUniformKitDto = {

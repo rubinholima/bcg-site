@@ -1,6 +1,19 @@
 export type PhysioSide = "E" | "D" | "bilateral";
 export type PhysioBodyMapView = "front" | "back";
 export type PhysioSessionStatus = "active" | "completed" | "cancelled";
+export type PhysioDisposition = "alta" | "em_tratamento" | "nao_apto";
+
+export const PHYSIO_DISPOSITION_LABEL: Record<PhysioDisposition, string> = {
+  alta: "Atendido — problema resolvido (Alta)",
+  em_tratamento: "Atendido — precisa de novo atendimento, pode treinar (Em tratamento)",
+  nao_apto: "Atendido — tratamento intensivo (Não apto)",
+};
+
+export const PHYSIO_DISPOSITION_SHORT: Record<PhysioDisposition, string> = {
+  alta: "Alta",
+  em_tratamento: "Em tratamento",
+  nao_apto: "Não apto",
+};
 
 export interface PhysioBodyRegion {
   id: string;
@@ -95,6 +108,7 @@ export interface PhysioSession {
   startedAt: string;
   endedAt: string | null;
   status: PhysioSessionStatus;
+  disposition?: PhysioDisposition | null;
   staffId: string | null;
   staffName: string | null;
   attachments: PhysioAttachment[] | null;

@@ -34,6 +34,7 @@ import { api } from "@/lib/api";
 import { filterCategoriesForTenant } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import type { Psychologist } from "@/types/psychologist";
+import type { HealthIntern } from "@/types/health-intern";
 import type { PsychologyAttendanceRow, PsychologySessionType } from "@/types/psychology-session";
 
 type SchedulingTab = "online" | PsychologySessionType | "relatorio_semanal";
@@ -118,9 +119,16 @@ export function PsychologySchedulingCard({
   const [generalNotes, setGeneralNotes] = useState("");
   const [noteDialogIdx, setNoteDialogIdx] = useState<number | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [estagiarios, setEstagiarios] = useState<HealthIntern[]>([]);
+
+  useEffect(() => {
+    api
+      .get<HealthIntern[]>("/health-interns?area=psicologia&activeOnly=1")
+      .then(({ data }) => setEstagiarios(Array.isArray(data) ? data : []))
+      .catch(() => setEstagiarios([]));
+  }, []);
 
   const psychologos = psychologists.filter((p) => (p.staffRole ?? "psicologo") === "psicologo");
-  const estagiarios = psychologists.filter((p) => p.staffRole === "estagiario");
   const tenantId = filterClube || players.find((p) => p.id === filterAtleta)?.tenantId || "";
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const { categories: allFixtureCategories } = useFixtureCategories();

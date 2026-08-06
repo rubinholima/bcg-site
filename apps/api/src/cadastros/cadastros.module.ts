@@ -20,6 +20,8 @@ import { TechnicalStaffController } from './technical-staff.controller';
 import { TechnicalStaffService } from './technical-staff.service';
 import { FixtureCategoriesController } from './fixture-categories.controller';
 import { FixtureCategoriesService } from './fixture-categories.service';
+import { MatchRefereesController } from './match-referees.controller';
+import { MatchRefereesService } from './match-referees.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
 import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
@@ -35,6 +37,7 @@ import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
     ContractTemplatesController,
     TechnicalStaffController,
     FixtureCategoriesController,
+    MatchRefereesController,
   ],
   providers: [
     ChampionshipsService,
@@ -44,6 +47,7 @@ import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
     LegalDocumentsService,
     TechnicalStaffService,
     FixtureCategoriesService,
+    MatchRefereesService,
     ModuleAccessGuard,
   ],
   imports: [
@@ -55,6 +59,14 @@ import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
     FutebolAgendaModule,
     FmfScraperModule,
   ],
-  exports: [ChampionshipsService, StadiumsService, VisitingTeamsService, PlayersService, TechnicalStaffService, FixtureCategoriesService],
+  exports: [
+    ChampionshipsService,
+    StadiumsService,
+    VisitingTeamsService,
+    PlayersService,
+    TechnicalStaffService,
+    FixtureCategoriesService,
+    MatchRefereesService,
+  ],
 })
 export class CadastrosModule {}

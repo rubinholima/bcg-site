@@ -13,7 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhysioBodyMap } from "@/components/dashboard/fisioterapia/PhysioBodyMap";
-import type { PhysioEvolutionNote, PhysioSession } from "@/types/fisioterapia";
+import type { PhysioDisposition, PhysioEvolutionNote, PhysioSession } from "@/types/fisioterapia";
+import {
+  PHYSIO_DISPOSITION_LABEL,
+  PHYSIO_DISPOSITION_SHORT,
+} from "@/types/fisioterapia";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
   AlertDialog,
@@ -83,19 +87,19 @@ export default function FisioterapiaSessionDetailPage() {
     }
   };
 
-  const complete = async () => {
+  const setDisposition = async (disposition: PhysioDisposition) => {
     if (!id) return;
     setSaving(true);
     try {
-      await api.post(`/fisioterapia/sessions/${id}/complete`);
+      await api.post(`/fisioterapia/sessions/${id}/disposition`, { disposition });
       await load();
       setFeedback({
         open: true,
-        title: "Alta registrada",
-        message: "Tratamento finalizado. O status do atleta será liberado se não houver outros tratamentos ativos.",
+        title: "Desfecho registrado",
+        message: PHYSIO_DISPOSITION_LABEL[disposition],
       });
     } catch {
-      setFeedback({ open: true, title: "Erro", message: "Não foi possível finalizar." });
+      setFeedback({ open: true, title: "Erro", message: "Não foi possível registrar o desfecho." });
     } finally {
       setSaving(false);
     }
@@ -223,15 +227,46 @@ export default function FisioterapiaSessionDetailPage() {
               <Trash2 className="mr-2 h-4 w-4" />
               Excluir
             </Button>
-            {session.status === "active" ? (
-              <Button className="min-h-[44px]" disabled={saving} onClick={() => void complete()}>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Dar alta
-              </Button>
-            ) : (
-              <span className="inline-flex min-h-[44px] items-center rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">
-                {session.status === "completed" ? "Alta" : "Cancelado"}
+            {session.status === "cancelled" ? (
+              <span className="inline-flex min-h-[44px] items-center rounded-full bg-zinc-600 px-3 py-1 text-sm font-semibold text-white">
+                Cancelado
               </span>
+            ) : session.disposition === "alta" || session.status === "completed" ? (
+              <span className="inline-flex min-h-[44px] items-center rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">
+                Alta
+              </span>
+            ) : (
+              <div className="flex w-full flex-col gap-2 sm:w-auto">
+                <Button
+                  className="min-h-[44px] bg-emerald-600 hover:bg-emerald-700"
+                  disabled={saving}
+                  onClick={() => void setDisposition("alta")}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Alta — problema resolvido
+                </Button>
+                <Button
+                  variant="outline"
+                  className="min-h-[44px] border-amber-500/60 text-amber-200"
+                  disabled={saving}
+                  onClick={() => void setDisposition("em_tratamento")}
+                >
+                  Em tratamento — pode treinar
+                </Button>
+                <Button
+                  variant="outline"
+                  className="min-h-[44px] border-red-500/60 text-red-300"
+                  disabled={saving}
+                  onClick={() => void setDisposition("nao_apto")}
+                >
+                  Não apto — tratamento intensivo
+                </Button>
+                {session.disposition ? (
+                  <p className="text-xs text-muted-foreground">
+                    Atual: {PHYSIO_DISPOSITION_SHORT[session.disposition as PhysioDisposition] ?? session.disposition}
+                  </p>
+                ) : null}
+              </div>
             )}
           </div>
         </div>

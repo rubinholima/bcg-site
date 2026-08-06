@@ -20,6 +20,7 @@ import type {
 } from "@/lib/futebol-relatorios.types";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import { getFormation } from "@/lib/press-kit-formations";
+import { cadastroPositionAbbrev } from "@/lib/press-kit-lineup";
 import type { PressKitUniformKitDto } from "@/lib/futebol-relatorios.types";
 
 /** Cores oficiais Boston City Group — vermelho e azul. */
@@ -1024,10 +1025,10 @@ export function buildPressKitPrintHtml(
 
   const refereesHtml = config.referees
     .filter((r) => r.name.trim())
-    .map(
-      (r) =>
-        `<div class="ref-row"><strong>${escapeHtml(r.name)}</strong><span>${escapeHtml(r.role)}</span></div>`,
-    )
+    .map((r) => {
+      const photo = playerPhotoHtml(r.photoUrl, r.name);
+      return `<div class="ref-row">${photo}<div><strong>${escapeHtml(r.name)}</strong><span>${escapeHtml(r.role)}</span></div></div>`;
+    })
     .join("");
 
   const directorsHtml = config.directors
@@ -1088,23 +1089,25 @@ export function buildPressKitPrintHtml(
     const p = slotId ? athletesById.get(slotId) : undefined;
     if (!p) return "";
     const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-    const birth = formatBirthShort(p.birthDate);
     const photo = playerPhotoHtml(p.photoUrl, p.name);
-    const stats = p.seasonStats;
-    const statsLine = stats
-      ? `J ${stats.matches} · G ${stats.goals} · ${stats.minutes} min`
-      : "";
-    const nick = athleteLabel(p);
     const fullShort = shortAthleteName(p.name);
-    const secondary = [nick !== fullShort ? fullShort : null, birth].filter(Boolean).join(" · ");
+    const nameParts = fullShort.split(/\s+/).filter(Boolean);
+    const nameHtml =
+      nameParts.length >= 2
+        ? `${escapeHtml(nameParts[0]!)}<br/>${escapeHtml(nameParts.slice(1).join(" "))}`
+        : escapeHtml(fullShort);
+    const nick = p.nickname?.trim() || "";
+    const pos = cadastroPositionAbbrev(p.position);
+    const birth = formatBirthShort(p.birthDate);
     return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%">
       <div class="chip-photo-wrap">
         ${photo}
         <span class="chip-num">${escapeHtml(n)}</span>
       </div>
-      <div class="chip-name">${escapeHtml(nick)}</div>
-      ${secondary ? `<div class="chip-birth">${escapeHtml(secondary)}</div>` : ""}
-      ${statsLine ? `<div class="chip-stats">${escapeHtml(statsLine)}</div>` : ""}
+      <div class="chip-name">${nameHtml}</div>
+      ${nick ? `<div class="chip-nick">${escapeHtml(nick)}</div>` : ""}
+      ${pos && pos !== "—" ? `<div class="chip-pos">${escapeHtml(pos)}</div>` : ""}
+      ${birth ? `<div class="chip-birth">${escapeHtml(birth)}</div>` : ""}
     </div>`;
   }).join("");
   const uniformHtml = data.uniformKit
@@ -1200,13 +1203,6 @@ export function buildPressKitPrintHtml(
       align-items: start;
     }
     .pk-main-lists { grid-template-columns: 1fr 1fr; }
-    .pk-pitch-layout {
-      display: grid;
-      grid-template-columns: 0.72fr 1.4fr;
-      gap: 10px;
-      margin-top: 7px;
-      align-items: start;
-    }
     .pk-staff-aside .staff-row .chip-photo,
     .pk-staff-aside .staff-row .chip-photo-fallback {
       width: 22px;
@@ -1234,81 +1230,141 @@ export function buildPressKitPrintHtml(
     .pitch-wrap {
       position: relative;
       width: 100%;
-      height: 152mm;
-      border-radius: 12px;
+      height: 118mm;
+      border-radius: 8px;
       overflow: hidden;
-      border: 3px solid #14532d;
+      border: 2.5px solid #14532d;
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.25);
     }
     .pitch-line {
       position: absolute;
       border: 2px solid rgba(255,255,255,0.55);
       pointer-events: none;
     }
-    .pl-outer { inset: 3.5%; border-radius: 4px; }
-    .pl-half { left: 3.5%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
+    .pl-half { left: 0; right: 0; top: 50%; border-width: 0 0 2px 0; }
     .pl-circle {
-      left: 50%; top: 50%; width: 74px; height: 74px;
-      margin: -37px 0 0 -37px; border-radius: 999px;
+      left: 50%; top: 50%; width: 56px; height: 56px;
+      margin: -28px 0 0 -28px; border-radius: 999px;
     }
-    .pl-box-top { left: 24%; right: 24%; top: 3.5%; height: 13%; border-top: 0; }
-    .pl-box-bottom { left: 24%; right: 24%; bottom: 3.5%; height: 13%; border-bottom: 0; }
-    .pl-goal-top { left: 37%; right: 37%; top: 3.5%; height: 5.5%; border-top: 0; }
-    .pl-goal-bottom { left: 37%; right: 37%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
+    .pl-box-top { left: 22%; right: 22%; top: 0; height: 14%; border-top: 0; }
+    .pl-box-bottom { left: 22%; right: 22%; bottom: 0; height: 14%; border-bottom: 0; }
+    .pl-goal-top { left: 36%; right: 36%; top: 0; height: 6%; border-top: 0; }
+    .pl-goal-bottom { left: 36%; right: 36%; bottom: 0; height: 6%; border-bottom: 0; }
 
     .player-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 88px;
+      width: 78px;
       text-align: center;
       z-index: 2;
     }
-    .chip-photo-wrap { position: relative; width: 48px; height: 64px; margin: 0 auto 3px; }
+    .chip-photo-wrap { position: relative; width: 36px; height: 48px; margin: 0 auto 2px; }
     .chip-photo {
-      width: 48px;
-      height: 64px;
-      border-radius: 4px;
+      width: 36px;
+      height: 48px;
+      border-radius: 2px;
       object-fit: cover;
       object-position: center 12%;
-      border: 2px solid #fff;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
-      background: ${BCG.blue};
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
       display: block;
     }
     .chip-photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 17px;
-      border-radius: 4px;
+      color: #fff; font-weight: 800; font-size: 14px;
+      border-radius: 2px;
+      background: rgba(0,0,0,0.45);
     }
     .chip-num {
       position: absolute;
-      left: -4px;
+      left: -3px;
       bottom: -2px;
-      min-width: 20px; height: 20px; border-radius: 4px;
-      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 10px;
+      min-width: 16px; height: 16px; border-radius: 3px;
+      background: ${BCG.red}; color: #fff; font-weight: 800; font-size: 8px;
       display: flex; align-items: center; justify-content: center;
-      border: 2px solid #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-      padding: 0 3px;
+      border: 1px solid #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      padding: 0 2px;
     }
     .chip-name {
-      font-size: 9px; font-weight: 800; color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-      line-height: 1.15;
+      font-size: 7.5px; font-weight: 800; color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.95);
+      line-height: 1.1;
       text-transform: uppercase;
     }
-    .chip-birth {
-      font-size: 7px; color: #f1f5f9;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    .chip-nick {
+      font-size: 6.5px; font-weight: 700; color: #fde68a;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+      text-transform: uppercase; line-height: 1.1;
     }
-    .chip-stats {
-      margin-top: 1px; font-size: 6.5px; font-weight: 700; color: #fef3c7;
+    .chip-pos {
+      font-size: 6px; font-weight: 700; color: #e2e8f0;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+      text-transform: uppercase; line-height: 1.1;
+    }
+    .chip-birth {
+      font-size: 6px; color: #f1f5f9;
       text-shadow: 0 1px 2px rgba(0,0,0,0.85);
+      line-height: 1.1;
+    }
+
+    .pk-pitch-layout {
+      display: grid;
+      grid-template-columns: 0.68fr 1.45fr;
+      gap: 8px;
+      margin-top: 4px;
+      align-items: stretch;
+    }
+    .pk-page-pitch .pk-block h3 { margin-bottom: 3px; }
+    .pk-bench-strip {
+      margin-top: 5px;
+      padding: 4px 6px;
+      border: 1px solid #fdba74;
+      border-radius: 6px;
+      background: #fff7ed;
+    }
+    .pk-bench-strip h3 {
+      margin: 0 0 3px;
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #c2410c;
+      border-bottom: 1.5px solid #ea580c;
+      padding-bottom: 2px;
+    }
+    .pk-bench-strip .subs-grid { gap: 0 6px; }
+    .pk-bench-strip .sub-row { padding: 1.5px 0; font-size: 8px; }
+    .pk-bench-strip .staff-row .chip-photo,
+    .pk-bench-strip .sub-row .chip-photo,
+    .pk-bench-strip .staff-row .chip-photo-fallback,
+    .pk-bench-strip .sub-row .chip-photo-fallback {
+      width: 14px; height: 19px;
     }
 
     /* ---------- Listas laterais ---------- */
-    .ref-row, .staff-row, .sub-row {
+    .ref-row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      padding: 2.5px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 9px;
+    }
+    .ref-row .chip-photo,
+    .ref-row .chip-photo-fallback {
+      width: 22px;
+      height: 30px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      object-fit: cover;
+      object-position: center 12%;
+    }
+    .ref-row strong, .staff-row strong, .sub-name {
+      color: #0f172a; line-height: 1.2; display: block;
+    }
+    .ref-row span, .staff-row span, .sub-birth {
+      color: #64748b; font-size: 8px; display: block; line-height: 1.2;
+    }
+    .staff-row, .sub-row {
       display: flex;
       gap: 5px;
       align-items: center;
@@ -1326,14 +1382,8 @@ export function buildPressKitPrintHtml(
       border-width: 1px;
       font-size: 9px;
       flex-shrink: 0;
+      object-fit: cover;
       object-position: center 12%;
-    }
-    .ref-row { flex-direction: column; align-items: flex-start; gap: 0; }
-    .ref-row strong, .staff-row strong, .sub-name {
-      color: #0f172a; line-height: 1.2; display: block;
-    }
-    .ref-row span, .staff-row span, .sub-birth {
-      color: #64748b; font-size: 8px; display: block; line-height: 1.2;
     }
     .sub-stats { color: ${BCG.blue}; font-size: 7px; font-weight: 700; display: block; }
     .sub-num {
@@ -1437,7 +1487,6 @@ export function buildPressKitPrintHtml(
         <div class="pk-block">
           <h3>Escalação visual · ${escapeHtml(formation.label)}</h3>
           <div class="pitch-wrap">
-            <div class="pitch-line pl-outer"></div>
             <div class="pitch-line pl-half"></div>
             <div class="pitch-line pl-circle"></div>
             <div class="pitch-line pl-box-top"></div>
@@ -1448,13 +1497,13 @@ export function buildPressKitPrintHtml(
           </div>
         </div>
       </div>
+      <div class="pk-bench-strip">
+        <h3>Reservas · banco</h3>
+        ${subsHtml ? `<div class="subs-grid">${subsHtml}</div>` : `<p class="pk-empty">—</p>`}
+      </div>
       <div class="pk-foot">
         <div>
-          ${
-            config.showDisclaimer
-              ? `<p class="pk-disclaimer">O quadro acima não representa o esquema utilizado, nem o posicionamento dos jogadores em campo.</p>`
-              : ""
-          }
+          ${config.contactLine ? `<p class="pk-contact">${escapeHtml(config.contactLine)}</p>` : ""}
         </div>
         <div class="pk-sign">
           <strong>Boston City Group</strong>
