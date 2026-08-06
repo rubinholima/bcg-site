@@ -388,13 +388,6 @@ function styles(size: PrintPageSize): string {
       overflow: hidden;
       padding: 0;
     }
-    .sheet.visual-sheet {
-      padding: 2mm 0 6mm;
-      background: ${C.navyDeep};
-      color: #fff;
-      page-break-after: auto;
-      break-after: auto;
-    }
     .sheet:last-of-type { page-break-after: auto; break-after: auto; }
 
     /* ---------- Capa ---------- */
@@ -597,90 +590,76 @@ function styles(size: PrintPageSize): string {
     .pl-box-bottom { left: 50%; bottom: 0; width: 26mm; height: 8mm; margin-left: -13mm; border-bottom: none; }
     .chip { position: absolute; transform: translate(-50%, -50%); text-align: center; }
     .chip-num { display: block; width: 5.6mm; height: 5.6mm; margin: 0 auto; border-radius: 50%; background: #fff; color: ${C.navy}; font-size: 6pt; font-weight: 900; line-height: 5.6mm; border: 1px solid ${C.navy}; }
+    /* Última página — layout original (comissão + gramado + reservas) numa folha */
     .vis-layout { display: block; }
     .vis-stage {
       display: flex;
       flex-direction: column;
-      gap: 0;
+      gap: 2.5mm;
       align-items: stretch;
       width: 100%;
-      height: 100%;
-      min-height: 280mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .vis-field-row {
       display: grid;
-      grid-template-columns: 40mm minmax(0, 1fr);
-      gap: 3mm;
-      align-items: stretch;
+      grid-template-columns: 38mm minmax(0, 1fr);
+      gap: 2.5mm;
+      align-items: start;
       width: 100%;
-      flex: 1;
-      min-height: 0;
-    }
-    .vis-field-row > .vis-staff-side {
-      width: auto;
-      min-width: 0;
-      align-self: stretch;
-    }
-    .vis-field-row > .vis-pitch-wrap {
-      width: 100%;
-      max-width: none;
-      min-width: 0;
-      height: 100%;
-      max-height: 280mm;
-      aspect-ratio: auto;
     }
     .vis-staff-side {
       display: flex;
       flex-direction: column;
-      gap: 2mm;
-      padding: 3mm 2.5mm;
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 3mm;
-      background: rgba(255,255,255,0.06);
+      gap: 1.6mm;
+      padding: 2.5mm 2mm;
+      border: 1px solid ${C.line};
+      border-radius: 2mm;
+      background: ${C.softer};
       break-inside: avoid;
-      min-width: 0;
-      overflow: visible;
     }
     .vis-staff-side-title {
-      margin: 0 0 2mm;
-      font-size: 7.5pt;
+      margin: 0 0 1.5mm;
+      font-size: 7pt;
       font-weight: 800;
       letter-spacing: .08em;
       text-transform: uppercase;
-      color: #93c5fd;
+      color: ${C.navy};
       border-bottom: 2px solid ${C.red};
-      padding-bottom: 1.5mm;
+      padding-bottom: 1mm;
     }
     .vis-staff-side-row {
       display: flex;
-      gap: 1.8mm;
+      gap: 1.5mm;
       align-items: flex-start;
     }
     .vis-staff-side-photo {
-      width: 8mm; height: 10.5mm; object-fit: cover; object-position: center 12%;
-      border-radius: 1mm; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.35); flex: none;
+      width: 7mm; height: 9mm; object-fit: cover; object-position: center 12%;
+      border-radius: 1mm; border: 1px solid ${C.line}; background: ${C.soft}; flex: none;
     }
     .vis-staff-side-photo.photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      font-size: 6pt; font-weight: 800; color: #fff;
+      font-size: 5.5pt; font-weight: 800; color: ${C.navy};
     }
     .vis-staff-side-row strong {
-      display: block; font-size: 6.2pt; line-height: 1.15; color: #fff; text-transform: uppercase;
+      display: block; font-size: 5.8pt; line-height: 1.12; color: ${C.ink}; text-transform: uppercase;
       overflow: visible; white-space: normal;
     }
     .vis-staff-side-row span {
-      display: block; font-size: 5.2pt; color: #9FB3D4; text-transform: uppercase; line-height: 1.15;
+      display: block; font-size: 5pt; color: ${C.muted}; text-transform: uppercase; line-height: 1.1;
       overflow: visible; white-space: normal;
     }
-    /* Mesmo gramado da preparação (PitchMarkings) */
+    /* Gramado original (mesmas faixas da preparação) — proporção fixa, sem esticar */
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
+      max-width: 136mm;
+      aspect-ratio: 78 / 100;
       border-radius: 3mm;
       overflow: hidden;
       border: 2.5px solid #14532d;
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
+      justify-self: start;
     }
     .vis-pitch-players {
       position: absolute;
@@ -697,20 +676,20 @@ function styles(size: PrintPageSize): string {
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 26mm;
+      width: 24mm;
       text-align: center;
       z-index: 2;
     }
     .vis-photo-wrap {
       position: relative;
-      width: 13mm;
-      height: 17mm;
-      margin: 0 auto 0.5mm;
+      width: 12mm;
+      height: 16mm;
+      margin: 0 auto 0.4mm;
       background: transparent;
     }
     .vis-photo {
-      width: 13mm;
-      height: 17mm;
+      width: 12mm;
+      height: 16mm;
       object-fit: contain;
       object-position: center bottom;
       border-radius: 0;
@@ -720,60 +699,59 @@ function styles(size: PrintPageSize): string {
     }
     .vis-photo.photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 9pt; background: rgba(0,0,0,.45);
+      color: #fff; font-weight: 800; font-size: 8pt; background: rgba(0,0,0,.45);
       mix-blend-mode: normal;
     }
-    /* Um pouco acima do nome (base da foto) — não no rosto. */
     .vis-num {
-      position: absolute; left: -1mm; bottom: 1.2mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
-      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
+      position: absolute; left: -1mm; bottom: 1.2mm; min-width: 4.2mm; height: 4.2mm; padding: 0 0.7mm;
+      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6pt;
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
       mix-blend-mode: normal;
     }
     .vis-nick {
-      font-size: 6.5pt; font-weight: 800; color: #fde68a;
+      font-size: 6pt; font-weight: 800; color: #fde68a;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
-      text-transform: uppercase; line-height: 1.1;
+      text-transform: uppercase; line-height: 1.05;
     }
     .vis-pos {
-      font-size: 6pt; font-weight: 800; color: #fff;
+      font-size: 5.5pt; font-weight: 800; color: #fff;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
-      text-transform: uppercase; line-height: 1.1;
+      text-transform: uppercase; line-height: 1.05;
     }
     .vis-birth {
-      font-size: 5.5pt; font-weight: 700; color: #fff;
+      font-size: 5pt; font-weight: 700; color: #fff;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
-      line-height: 1.1;
+      line-height: 1.05;
     }
     .vis-bench {
-      border: 1.5px solid #EA580C; border-radius: 2.5mm; padding: 3.5mm 3.5mm;
+      border: 1.5px solid #EA580C; border-radius: 2mm; padding: 2.5mm 2.5mm;
       background: linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%);
       break-inside: avoid;
     }
     .vis-bench h3 {
-      margin: 0 0 2.5mm; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em;
-      color: #C2410C; border-bottom: 2px solid #EA580C; padding-bottom: 1.5mm;
+      margin: 0 0 1.8mm; font-size: 8pt; text-transform: uppercase; letter-spacing: .08em;
+      color: #C2410C; border-bottom: 2px solid #EA580C; padding-bottom: 1mm;
     }
-    .vis-bench-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5mm 3mm; }
-    .vis-bench-row { display: flex; gap: 1.5mm; align-items: flex-start; font-size: 7.5pt; }
+    .vis-bench-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.8mm 2.5mm; }
+    .vis-bench-row { display: flex; gap: 1.2mm; align-items: flex-start; font-size: 7pt; }
     .vis-bench-photo {
-      width: 7mm; height: 9.5mm; object-fit: cover; object-position: center 12%;
+      width: 6.5mm; height: 8.5mm; object-fit: cover; object-position: center 12%;
       border-radius: 1mm; border: 1px solid #FDBA74; background: ${C.soft}; flex: none;
     }
     .vis-bench-photo.photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      font-size: 6pt; font-weight: 800; color: #C2410C;
+      font-size: 5.5pt; font-weight: 800; color: #C2410C;
     }
     .vis-bench-num {
-      min-width: 5mm; height: 5mm; border-radius: 1mm; background: #EA580C; color: #fff;
-      font-weight: 800; font-size: 6.5pt; display: inline-flex; align-items: center; justify-content: center;
+      min-width: 4.5mm; height: 4.5mm; border-radius: 1mm; background: #EA580C; color: #fff;
+      font-weight: 800; font-size: 6pt; display: inline-flex; align-items: center; justify-content: center;
       flex: none;
     }
     .vis-bench-row strong {
-      display: block; font-size: 6.5pt; line-height: 1.15; color: ${C.ink}; text-transform: uppercase;
+      display: block; font-size: 6pt; line-height: 1.12; color: ${C.ink}; text-transform: uppercase;
       overflow: visible; white-space: normal;
     }
-    .vis-bench-row span { display: block; font-size: 5.5pt; color: #9A3412; }
+    .vis-bench-row span { display: block; font-size: 5pt; color: #9A3412; }
     .discipline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 5mm; }
     .discipline-grid .panel.danger { border-color: #FECACA; background: #FEF2F2; }
     .discipline-grid .panel.warn { border-color: #FDE68A; background: #FFFBEB; }
@@ -1200,13 +1178,30 @@ export function buildGuiaPartidaPrintHtml(
       </div>`;
     })
     .join("");
-  /* Igual à tela da preparação: comissão + gramado (sem título/banco/rodapé que geravam página extra). */
+  const starterIdSet = new Set(config.starterPlayerIds.filter(Boolean));
+  const benchPlayers = data.squad.filter(
+    (p) => p.playerId && !starterIdSet.has(p.playerId),
+  );
+  const benchHtml = benchPlayers
+    .map((p) => {
+      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
+      const nick = athletePrintName(p);
+      return `<div class="vis-bench-row">
+        ${photo(p.photoUrl, p.name, "vis-bench-photo")}
+        <span class="vis-bench-num">${esc(n)}</span>
+        <div><strong>${esc(nick)}</strong><span>${esc(p.positionLabel)}</span></div>
+      </div>`;
+    })
+    .join("");
+
   const visualSheet = sheet(
-    `<div class="vis-stage">
+    `<div class="sheet-tag">Escalação</div>
+    ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
+    <div class="vis-stage">
       <div class="vis-field-row">
         <aside class="vis-staff-side">
           <p class="vis-staff-side-title">Comissão</p>
-          ${staffBeside || `<p class="empty" style="color:#9FB3D4">—</p>`}
+          ${staffBeside || `<p class="empty">—</p>`}
         </aside>
         <div class="vis-pitch-wrap">
           <div class="vis-pitch-mark pl-half"></div>
@@ -1218,8 +1213,16 @@ export function buildGuiaPartidaPrintHtml(
           <div class="vis-pitch-players">${visualPlayers}</div>
         </div>
       </div>
-    </div>`,
-    "visual-sheet",
+      <div class="vis-bench">
+        <h3>Reservas · banco</h3>
+        ${
+          benchHtml
+            ? `<div class="vis-bench-grid">${benchHtml}</div>`
+            : `<p class="empty">Sem reservas.</p>`
+        }
+      </div>
+    </div>
+    ${foot("Escalação visual")}`,
   );
 
   const body = [cover, matchSheet, numbersSheet, ...squadSheets, lineupSheet, closingSheet, visualSheet]
