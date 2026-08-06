@@ -781,6 +781,7 @@ export class FutebolRelatoriosService {
       const members = await this.prisma.technicalStaff.findMany({
         where: { tenantId, id: { in: [...staffIds] } },
         orderBy: [{ role: 'asc' }, { name: 'asc' }],
+        include: { jobRole: { select: { name: true } } },
       });
       for (const s of members) {
         staff.push({
@@ -790,7 +791,7 @@ export class FutebolRelatoriosService {
           cpf: s.cpf,
           rg: s.rg,
           birthDate: formatIsoDate(s.birthDate),
-          role: s.role,
+          role: s.jobRole?.name?.trim() || s.role,
           staffId: s.id,
           photoUrl: s.photoUrl ?? null,
         });
@@ -834,6 +835,7 @@ export class FutebolRelatoriosService {
       staffIds.length > 0
         ? await this.prisma.technicalStaff.findMany({
             where: { tenantId, id: { in: staffIds } },
+            include: { jobRole: { select: { name: true } } },
           })
         : [];
     const staffMap = new Map(staffMembers.map((s) => [s.id, s]));
@@ -868,7 +870,7 @@ export class FutebolRelatoriosService {
           cpf: s.cpf,
           rg: s.rg,
           birthDate: formatIsoDate(s.birthDate),
-          role: s.role,
+          role: s.jobRole?.name?.trim() || s.role,
           staffId: s.id,
           photoUrl: s.photoUrl ?? null,
         });
@@ -904,6 +906,7 @@ export class FutebolRelatoriosService {
     const staffAll = await this.prisma.technicalStaff.findMany({
       where: { tenantId },
       orderBy: [{ role: 'asc' }, { name: 'asc' }],
+      include: { jobRole: { select: { name: true } } },
     });
 
     const filteredStaff = staffAll.filter((s) => {
@@ -937,7 +940,7 @@ export class FutebolRelatoriosService {
       cpf: s.cpf,
       rg: s.rg,
       birthDate: formatIsoDate(s.birthDate),
-      role: s.role,
+      role: s.jobRole?.name?.trim() || s.role,
       staffId: s.id,
       photoUrl: s.photoUrl ?? null,
     }));

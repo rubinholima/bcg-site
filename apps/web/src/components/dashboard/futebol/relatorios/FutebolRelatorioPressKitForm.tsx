@@ -54,6 +54,23 @@ function emptyNamed(roles: readonly string[]): PressKitNamedRole[] {
   return roles.map((role) => ({ role, name: "" }));
 }
 
+type StaffDirectoryRow = {
+  id: string;
+  name: string;
+  role?: string | null;
+  jobRole?: { id: string; name: string } | null;
+};
+
+function staffRhCargo(s: StaffDirectoryRow): string {
+  const fromJob = s.jobRole?.name?.trim();
+  if (fromJob) return fromJob;
+  const raw = (s.role ?? "").trim();
+  if (!raw) return "";
+  // role antigo (slug) ou já nome do cargo RH
+  if (raw.includes(" ") || /[A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(raw)) return raw;
+  return getStaffRoleLabel(raw);
+}
+
 function padStarterSlots(ids: string[] | undefined): string[] {
   return Array.from({ length: 11 }, (_, i) => ids?.[i] ?? "");
 }
@@ -163,6 +180,7 @@ export function FutebolRelatorioPressKitForm() {
   const [formation, setFormation] = useState("4-3-3");
   const [jerseyOverrides, setJerseyOverrides] = useState<Record<string, number | null>>({});
   const [dragPlayerId, setDragPlayerId] = useState<string | null>(null);
+  const [staffDirectory, setStaffDirectory] = useState<StaffDirectoryRow[]>([]);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -187,6 +205,28 @@ export function FutebolRelatorioPressKitForm() {
   useEffect(() => {
     if (!tenantId && tenants.length === 1) setTenantId(tenants[0]!.id);
   }, [tenants, tenantId]);
+
+  useEffect(() => {
+    if (!tenantId) {
+      setStaffDirectory([]);
+      return;
+    }
+    let cancelled = false;
+    void api
+      .get<StaffDirectoryRow[]>(
+        `/technical-staff?tenantId=${encodeURIComponent(tenantId)}`,
+      )
+      .then(({ data }) => {
+        if (cancelled) return;
+        setStaffDirectory(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setStaffDirectory([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
 
   useEffect(() => {
     if (!travelId) {
@@ -451,14 +491,28 @@ export function FutebolRelatorioPressKitForm() {
         .replace(/\p{M}/gu, "");
       return raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"));
     }) ?? null;
-  const directorNameOptions = Array.from(
-    new Set(
-      [
-        ...(reportData?.staff ?? []).map((s) => s.name.trim()).filter(Boolean),
-        ...directors.map((d) => d.name.trim()).filter(Boolean),
-      ],
-    ),
-  ).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const directorPeople = useMemo(() => {
+    const byId = new Map<string, StaffDirectoryRow>();
+    for (const s of staffDirectory) {
+      if (!s.id || !s.name?.trim()) continue;
+      byId.set(s.id, s);
+    }
+    // Inclui convocados do jogo caso ainda não estejam no map (legado)
+    for (const s of reportData?.staff ?? []) {
+      if (!s.staffId || !s.name?.trim() || byId.has(s.staffId)) continue;
+      byId.set(s.staffId, {
+        id: s.staffId,
+        name: s.name,
+        role: s.role,
+        jobRole: s.role ? { id: s.staffId, name: getStaffRoleLabel(s.role) } : null,
+      });
+    }
+    return [...byId.values()].sort((a, b) => {
+      const ca = staffRhCargo(a).localeCompare(staffRhCargo(b), "pt-BR");
+      if (ca !== 0) return ca;
+      return a.name.localeCompare(b.name, "pt-BR");
+    });
+  }, [staffDirectory, reportData?.staff]);
 
   return (
     <>
@@ -579,52 +633,59 @@ export function FutebolRelatorioPressKitForm() {
                 </div>
                 <div className="space-y-3">
                   <p className="text-sm font-semibold">Diretoria (até 4)</p>
-                  {directors.map((d, i) => (
-                    <div key={`dir-${i}`} className="grid gap-2 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Cargo</Label>
-                        <NativeSelect
-                          className="min-h-[44px]"
-                          value={d.role}
-                          onChange={(e) => {
-                            const next = [...directors];
-                            next[i] = { ...d, role: e.target.value };
-                            setDirectors(next);
-                          }}
-                        >
-                          {Array.from(
-                            new Set([
-                              ...DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
-                              d.role.trim(),
-                            ].filter(Boolean)),
-                          ).map((role) => (
-                            <option key={role} value={role}>
-                              {role}
-                            </option>
-                          ))}
-                        </NativeSelect>
+                  {directors.map((d, i) => {
+                    const selected =
+                      directorPeople.find(
+                        (s) =>
+                          s.name.trim() === d.name.trim() &&
+                          (!d.role.trim() || staffRhCargo(s) === d.role.trim()),
+                      ) ??
+                      directorPeople.find((s) => s.name.trim() === d.name.trim()) ??
+                      null;
+                    return (
+                      <div key={`dir-${i}`} className="grid gap-2 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Nome (comissão / RH)</Label>
+                          <NativeSelect
+                            className="min-h-[44px]"
+                            value={selected?.id ?? ""}
+                            onChange={(e) => {
+                              const person = directorPeople.find((s) => s.id === e.target.value);
+                              const next = [...directors];
+                              if (!person) {
+                                next[i] = { role: "", name: "" };
+                              } else {
+                                next[i] = {
+                                  name: person.name.trim(),
+                                  role: staffRhCargo(person),
+                                };
+                              }
+                              setDirectors(next);
+                            }}
+                          >
+                            <option value="">Selecione…</option>
+                            {directorPeople.map((s) => {
+                              const cargo = staffRhCargo(s);
+                              return (
+                                <option key={s.id} value={s.id}>
+                                  {cargo ? `${s.name} — ${cargo}` : s.name}
+                                </option>
+                              );
+                            })}
+                          </NativeSelect>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Cargo (RH)</Label>
+                          <Input
+                            className="min-h-[44px] text-foreground"
+                            value={d.role}
+                            readOnly
+                            placeholder="Vem do cargo da pessoa no RH"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Nome</Label>
-                        <NativeSelect
-                          className="min-h-[44px]"
-                          value={d.name}
-                          onChange={(e) => {
-                            const next = [...directors];
-                            next[i] = { ...d, name: e.target.value };
-                            setDirectors(next);
-                          }}
-                        >
-                          <option value="">Selecione…</option>
-                          {directorNameOptions.map((name) => (
-                            <option key={name} value={name}>
-                              {name}
-                            </option>
-                          ))}
-                        </NativeSelect>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
