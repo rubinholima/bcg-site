@@ -147,7 +147,7 @@ function rankingBlock(title: string, rows: GuiaRankingRow[], suffix = ""): strin
       ${rows
         .map(
           (row) => `<li>
-        <span class="rank-name">${row.jerseyNumber != null ? `<b>${row.jerseyNumber}</b>` : ""}${esc(row.shortName)}</span>
+        <span class="rank-name">${row.jerseyNumber != null ? `<b>${row.jerseyNumber}</b>` : ""}${esc(firstLastName(row.name) || row.shortName)}</span>
         ${row.detail ? `<span class="rank-detail">${esc(row.detail)}</span>` : ""}
         <span class="rank-value">${row.value}${suffix}</span>
       </li>`,
@@ -178,7 +178,7 @@ function playerCard(player: GuiaSquadPlayer): string {
     )
     .join("");
 
-  const nick = player.nickname?.trim() || null;
+  const nick = athletePrintName(player);
   const cardClass =
     (player.status ?? "").toLowerCase() === "suspended" ? "pcard suspended" : "pcard";
   return `<article class="${cardClass}">
@@ -190,7 +190,7 @@ function playerCard(player: GuiaSquadPlayer): string {
       <div class="pcard-head">
         <span class="pcard-num">${player.jerseyNumber != null ? player.jerseyNumber : "—"}</span>
         <div>
-          <strong>${esc(nick || player.shortName)}</strong>
+          <strong>${esc(nick)}</strong>
           <span>${esc(bio || formatBirth(player.birthDate) || "—")}</span>
         </div>
       </div>
@@ -203,17 +203,28 @@ function playerCard(player: GuiaSquadPlayer): string {
   </article>`;
 }
 
+function firstLastName(full: string | null | undefined): string {
+  const cleaned = (full ?? "")
+    .replace(/\u2026/g, "")
+    .replace(/\.{2,}/g, "")
+    .trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0]!.toLocaleUpperCase("pt-BR");
+  return `${parts[0]} ${parts[parts.length - 1]}`.toLocaleUpperCase("pt-BR");
+}
+
 function athletePrintName(player: {
   nickname?: string | null;
   shortName?: string;
   name: string;
 }): string {
-  const nick = player.nickname?.trim();
-  if (nick) return nick;
-  if (player.shortName?.trim()) return player.shortName.trim();
-  const parts = player.name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length <= 2) return parts.join(" ");
-  return `${parts[0]} ${parts[parts.length - 1]}`;
+  // Sempre primeiro + último (sem reticências / sem apelido longo truncado)
+  return firstLastName(player.name) || firstLastName(player.shortName) || firstLastName(player.nickname);
+}
+
+function staffPrintName(full: string): string {
+  return firstLastName(full);
 }
 
 function surname(name: string): string {
@@ -238,7 +249,7 @@ function pitchHtml(starters: GuiaLineupPlayer[]): string {
         const left = ((index + 0.5) / list.length) * 100;
         return `<div class="chip" style="top:${rowsTop[group]}%;left:${left}%;width:${width}%">
           <span class="chip-num">${player.jerseyNumber != null ? player.jerseyNumber : "—"}</span>
-          <span class="chip-name">${esc(surname(player.name))}</span>
+          <span class="chip-name">${esc(firstLastName(player.name) || surname(player.name))}</span>
         </div>`;
       });
     })
@@ -261,7 +272,7 @@ function lineupColumn(lineup: GuiaLineup): string {
     .map(
       ({ p, sub }) => `<tr class="${sub ? "sub" : ""}">
       <td class="num">${p.jerseyNumber != null ? p.jerseyNumber : "—"}</td>
-      <td class="left">${esc(p.shortName)}${sub ? ` <span class="tag">${p.enteredMinute != null ? `${p.enteredMinute}'` : "sub"}</span>` : ""}</td>
+      <td class="left">${esc(firstLastName(p.name) || p.shortName)}${sub ? ` <span class="tag">${p.enteredMinute != null ? `${p.enteredMinute}'` : "sub"}</span>` : ""}</td>
       <td>${p.minutes}</td>
       <td>${p.goals || ""}</td>
     </tr>`,
@@ -344,7 +355,9 @@ function standingsTable(rows: GuiaStandingRow[]): string {
 function styles(size: PrintPageSize): string {
   const pageSize = size === "Letter" ? "letter" : "A4";
   return `
-    @page { size: ${pageSize} portrait; margin: 0; }
+    @page { size: ${pageSize} portrait; margin: 16mm 14mm 18mm; }
+    @page cover { size: ${pageSize} portrait; margin: 0; }
+    @page content { size: ${pageSize} portrait; margin: 16mm 14mm 18mm; }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: #fff; }
     body {
@@ -355,8 +368,9 @@ function styles(size: PrintPageSize): string {
     }
     .sheet {
       position: relative;
-      width: 210mm;
-      padding: 10mm 11mm 12mm;
+      page: content;
+      width: 100%;
+      padding: 2mm 1mm 10mm;
       margin: 0 auto;
       background: #fff;
       page-break-after: always;
@@ -365,6 +379,8 @@ function styles(size: PrintPageSize): string {
       box-sizing: border-box;
     }
     .sheet.cover-sheet {
+      page: cover;
+      width: 210mm;
       height: 297mm;
       max-height: 297mm;
       min-height: 297mm;
@@ -413,7 +429,7 @@ function styles(size: PrintPageSize): string {
     .sec-head { border-bottom: 3px solid ${C.red}; padding-bottom: 2mm; margin-bottom: 4mm; }
     .sec-head h2 { margin: 0; font-size: 18pt; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; color: ${C.navy}; }
     .sec-head p { margin: 1mm 0 0; font-size: 8pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .12em; }
-    .sheet-tag { position: absolute; right: 11mm; top: 5mm; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
+    .sheet-tag { position: absolute; right: 1mm; top: 0; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
     .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
     .cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
     .panel { border: 1px solid ${C.line}; border-radius: 3mm; padding: 4mm 4.5mm; background: ${C.softer}; break-inside: avoid; }
@@ -442,7 +458,10 @@ function styles(size: PrintPageSize): string {
       border-radius: 2mm;
       overflow: hidden;
       background: #fff;
+      margin: 0 0 1mm;
     }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
     .agenda-day-head {
       padding: 1.6mm 2.5mm;
       background: ${C.navy};
@@ -504,24 +523,39 @@ function styles(size: PrintPageSize): string {
     ol.rank { list-style: none; margin: 0; padding: 0; counter-reset: rank; font-size: 8.5pt; }
     ol.rank li { display: flex; align-items: baseline; gap: 2mm; padding: 1.7mm 0; border-bottom: 1px dotted ${C.line}; }
     ol.rank li:last-child { border-bottom: none; }
-    .rank-name { flex: 1; font-weight: 600; }
+    .rank-name {
+      flex: 1;
+      font-weight: 600;
+      text-transform: uppercase;
+      overflow: visible;
+      white-space: normal;
+      line-height: 1.15;
+    }
     .rank-name b { display: inline-block; min-width: 5mm; color: ${C.red}; }
     .rank-detail { font-size: 7pt; color: ${C.muted}; text-transform: uppercase; }
     .rank-value { font-weight: 900; color: ${C.navy}; min-width: 10mm; text-align: right; }
 
     /* ---------- Elenco ---------- */
-    .group-band { margin: 0 0 2.5mm; padding: 1.4mm 2.5mm; background: ${C.navy}; color: #fff; font-size: 8pt; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; border-radius: 1.5mm; }
-    .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; }
-    .pcard { display: flex; gap: 2mm; border: 1px solid ${C.line}; border-radius: 2mm; overflow: hidden; background: #fff; break-inside: avoid; page-break-inside: avoid; height: 34mm; }
+    .group-band {
+      margin: 4mm 0 3mm; padding: 2mm 3mm; background: ${C.navy}; color: #fff;
+      font-size: 8.5pt; text-transform: uppercase; letter-spacing: .14em; font-weight: 700;
+      border-radius: 1.5mm; break-after: avoid; page-break-after: avoid;
+    }
+    .group-band:first-of-type { margin-top: 1mm; }
+    .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 3.5mm; margin-bottom: 2mm; }
+    .pcard { display: flex; gap: 2.5mm; border: 1px solid ${C.line}; border-radius: 2mm; overflow: hidden; background: #fff; break-inside: avoid; page-break-inside: avoid; min-height: 34mm; height: auto; }
     .pcard.suspended { border-color: #FECACA; }
-    .pcard-photo { position: relative; width: 22mm; flex: none; background: linear-gradient(160deg, ${C.navy} 0%, ${C.navyDeep} 100%); }
+    .pcard-photo { position: relative; width: 22mm; flex: none; min-height: 34mm; align-self: stretch; background: linear-gradient(160deg, ${C.navy} 0%, ${C.navyDeep} 100%); }
     .pcard-img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; }
     .photo-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12pt; }
     .pcard-pos { position: absolute; left: 0; bottom: 0; right: 0; padding: .7mm; font-size: 5.5pt; text-transform: uppercase; letter-spacing: .08em; text-align: center; background: ${C.red}; color: #fff; }
     .pcard-body { flex: 1; padding: 1.6mm 2mm 1.2mm; min-width: 0; display: flex; flex-direction: column; }
     .pcard-head { display: flex; align-items: center; gap: 2mm; margin-bottom: 1mm; }
     .pcard-num { font-size: 14pt; font-weight: 900; color: ${C.red}; line-height: 1; min-width: 7mm; text-align: center; }
-    .pcard-head strong { display: block; font-size: 8.5pt; text-transform: uppercase; color: ${C.navy}; line-height: 1.05; }
+    .pcard-head strong {
+      display: block; font-size: 8pt; text-transform: uppercase; color: ${C.navy}; line-height: 1.15;
+      overflow: visible; white-space: normal; word-break: break-word;
+    }
     .pcard-head span { font-size: 6pt; color: ${C.muted}; }
     table.pstats { width: 100%; border-collapse: collapse; font-size: 6pt; }
     table.pstats th, table.pstats td { border: 1px solid ${C.line}; padding: .6mm 1mm; text-align: center; }
@@ -553,34 +587,34 @@ function styles(size: PrintPageSize): string {
     }
     .vis-field-row {
       display: grid;
-      grid-template-columns: 42mm 1fr;
-      gap: 3mm;
-      align-items: stretch;
+      grid-template-columns: 52mm minmax(0, 1fr);
+      gap: 4mm;
+      align-items: start;
     }
     .vis-staff-side {
       display: flex;
       flex-direction: column;
-      gap: 1.5mm;
-      padding: 2mm;
+      gap: 2.2mm;
+      padding: 3.5mm 3mm;
       border: 1px solid ${C.line};
       border-radius: 2mm;
       background: ${C.softer};
       break-inside: avoid;
     }
     .vis-staff-side-title {
-      margin: 0 0 1mm;
+      margin: 0 0 2mm;
       font-size: 7.5pt;
       font-weight: 800;
       letter-spacing: .08em;
       text-transform: uppercase;
       color: ${C.navy};
       border-bottom: 2px solid ${C.red};
-      padding-bottom: 1mm;
+      padding-bottom: 1.5mm;
     }
     .vis-staff-side-row {
       display: flex;
-      gap: 1.5mm;
-      align-items: center;
+      gap: 1.8mm;
+      align-items: flex-start;
     }
     .vis-staff-side-photo {
       width: 8mm; height: 10.5mm; object-fit: cover; object-position: center 12%;
@@ -591,15 +625,17 @@ function styles(size: PrintPageSize): string {
       font-size: 6pt; font-weight: 800; color: ${C.navy};
     }
     .vis-staff-side-row strong {
-      display: block; font-size: 6.5pt; line-height: 1.1; color: ${C.ink}; text-transform: uppercase;
+      display: block; font-size: 6.2pt; line-height: 1.15; color: ${C.ink}; text-transform: uppercase;
+      overflow: visible; white-space: normal;
     }
     .vis-staff-side-row span {
-      display: block; font-size: 5.5pt; color: ${C.muted}; text-transform: uppercase;
+      display: block; font-size: 5.2pt; color: ${C.muted}; text-transform: uppercase; line-height: 1.15;
+      overflow: visible; white-space: normal;
     }
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
-      max-width: 118mm;
+      max-width: 130mm;
       margin: 0 auto;
       aspect-ratio: 68 / 105;
       border-radius: 3mm;
@@ -616,9 +652,15 @@ function styles(size: PrintPageSize): string {
     .vis-pitch-wrap .pl-box-bottom { left: 24%; right: 24%; bottom: 3.5%; height: 13%; border-bottom: 0; }
     .vis-pitch-wrap .pl-goal-top { left: 37%; right: 37%; top: 3.5%; height: 5.5%; border-top: 0; }
     .vis-pitch-wrap .pl-goal-bottom { left: 37%; right: 37%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
-    .vis-chip { position: absolute; transform: translate(-50%, -50%); width: 18mm; text-align: center; z-index: 2; }
-    .vis-photo-wrap { position: relative; width: 10mm; height: 13.5mm; margin: 0 auto 0.8mm; }
-    .vis-photo { width: 10mm; height: 13.5mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1.5px solid #fff; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); background: ${C.navy}; display: block; }
+    .vis-chip {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 26mm;
+      text-align: center;
+      z-index: 2;
+    }
+    .vis-photo-wrap { position: relative; width: 10.5mm; height: 14mm; margin: 0 auto 0.8mm; }
+    .vis-photo { width: 10.5mm; height: 14mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1.5px solid #fff; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); background: ${C.navy}; display: block; }
     .vis-photo.photo-fallback { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 8pt; }
     .vis-num {
       position: absolute; left: -1mm; bottom: -0.8mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
@@ -626,21 +668,25 @@ function styles(size: PrintPageSize): string {
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
     }
     .vis-name {
-      font-size: 6pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      font-size: 5.5pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9);
       text-transform: uppercase; line-height: 1.1;
-      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      max-width: 100%;
+      overflow: visible;
+      white-space: normal;
+      word-break: break-word;
+      hyphens: manual;
     }
     .vis-bench {
-      border: 1.5px solid #EA580C; border-radius: 2.5mm; padding: 2.5mm 3mm;
+      border: 1.5px solid #EA580C; border-radius: 2.5mm; padding: 3.5mm 3.5mm;
       background: linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%);
       break-inside: avoid;
     }
     .vis-bench h3 {
-      margin: 0 0 2mm; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em;
-      color: #C2410C; border-bottom: 2px solid #EA580C; padding-bottom: 1mm;
+      margin: 0 0 2.5mm; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em;
+      color: #C2410C; border-bottom: 2px solid #EA580C; padding-bottom: 1.5mm;
     }
-    .vis-bench-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5mm 3mm; }
-    .vis-bench-row { display: flex; gap: 1.5mm; align-items: center; font-size: 7.5pt; }
+    .vis-bench-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.5mm 3mm; }
+    .vis-bench-row { display: flex; gap: 1.5mm; align-items: flex-start; font-size: 7.5pt; }
     .vis-bench-photo {
       width: 7mm; height: 9.5mm; object-fit: cover; object-position: center 12%;
       border-radius: 1mm; border: 1px solid #FDBA74; background: ${C.soft}; flex: none;
@@ -652,18 +698,32 @@ function styles(size: PrintPageSize): string {
     .vis-bench-num {
       min-width: 5mm; height: 5mm; border-radius: 1mm; background: #EA580C; color: #fff;
       font-weight: 800; font-size: 6.5pt; display: inline-flex; align-items: center; justify-content: center;
+      flex: none;
     }
-    .vis-bench-row strong { display: block; font-size: 7pt; line-height: 1.1; color: ${C.ink}; text-transform: uppercase; }
-    .vis-bench-row span { display: block; font-size: 6pt; color: #9A3412; }
+    .vis-bench-row strong {
+      display: block; font-size: 6.5pt; line-height: 1.15; color: ${C.ink}; text-transform: uppercase;
+      overflow: visible; white-space: normal;
+    }
+    .vis-bench-row span { display: block; font-size: 5.5pt; color: #9A3412; }
     .discipline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 5mm; }
     .discipline-grid .panel.danger { border-color: #FECACA; background: #FEF2F2; }
     .discipline-grid .panel.warn { border-color: #FDE68A; background: #FFFBEB; }
     .discipline-grid .panel h3 { color: ${C.red}; }
     .discipline-grid .panel.warn h3 { color: #B45309; }
-    .chip-name { display: block; margin-top: .5mm; font-size: 4.9pt; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-name { display: block; margin-top: .5mm; font-size: 4.9pt; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.05; overflow: visible; white-space: normal; }
 
     .note { margin-top: 3mm; font-size: 6.5pt; color: ${C.muted}; font-style: italic; }
-    .page-foot { position: absolute; left: 11mm; right: 11mm; bottom: 5mm; display: flex; justify-content: space-between; font-size: 6.5pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .1em; border-top: 1px solid ${C.line}; padding-top: 1.5mm; }
+    .page-foot {
+      margin-top: 5mm;
+      display: flex;
+      justify-content: space-between;
+      font-size: 6.5pt;
+      color: ${C.muted};
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      border-top: 1px solid ${C.line};
+      padding-top: 1.5mm;
+    }
   `;
 }
 
@@ -908,7 +968,7 @@ export function buildGuiaPartidaPrintHtml(
             ? `<ul class="people">${(data.discipline?.suspended ?? [])
                 .map(
                   (p) =>
-                    `<li><b>${p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}${esc(p.shortName)}</b><span>${esc(p.reason)}</span></li>`,
+                    `<li><b>${p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}${esc(firstLastName(p.name) || p.shortName)}</b><span>${esc(p.reason)}</span></li>`,
                 )
                 .join("")}</ul>`
             : `<p class="empty">Nenhum suspenso no plantel relacionado.</p>`
@@ -921,7 +981,7 @@ export function buildGuiaPartidaPrintHtml(
             ? `<ul class="people">${(data.discipline?.withYellowCards ?? [])
                 .map(
                   (p) =>
-                    `<li><b>${p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}${esc(p.shortName)}</b><span>${esc(p.reason)}</span></li>`,
+                    `<li><b>${p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}${esc(firstLastName(p.name) || p.shortName)}</b><span>${esc(p.reason)}</span></li>`,
                 )
                 .join("")}</ul>`
             : `<p class="empty">Sem cartões no plantel relacionado.</p>`
@@ -1005,12 +1065,17 @@ export function buildGuiaPartidaPrintHtml(
       if (!p) return "";
       const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
       const nick = athletePrintName(p);
+      const nameParts = nick.split(/\s+/).filter(Boolean);
+      const nameHtml =
+        nameParts.length >= 2
+          ? `<div class="vis-name">${esc(nameParts[0])}<br/>${esc(nameParts.slice(1).join(" "))}</div>`
+          : `<div class="vis-name">${esc(nick)}</div>`;
       return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%">
         <div class="vis-photo-wrap">
           ${photo(p.photoUrl, p.name, "vis-photo")}
           <span class="vis-num">${esc(n)}</span>
         </div>
-        <div class="vis-name">${esc(nick)}</div>
+        ${nameHtml}
       </div>`;
     })
     .join("");
@@ -1034,8 +1099,7 @@ export function buildGuiaPartidaPrintHtml(
     })
     .map((s) => {
       const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
-      const short =
-        s.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(" ") || s.name;
+      const short = staffPrintName(s.name);
       return `<div class="vis-staff-side-row">
         ${photo(s.photoUrl, s.name, "vis-staff-side-photo")}
         <div><strong>${esc(short)}</strong><span>${esc(role)}</span></div>

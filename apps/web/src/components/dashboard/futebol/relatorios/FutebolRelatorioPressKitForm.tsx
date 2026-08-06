@@ -111,6 +111,18 @@ function padStarterSlots(ids: string[] | undefined): string[] {
   return Array.from({ length: 11 }, (_, i) => ids?.[i] ?? "");
 }
 
+/** Primeiro + último nome, sem reticências. */
+function firstLastName(full: string | null | undefined): string {
+  const cleaned = (full ?? "")
+    .replace(/\u2026/g, "")
+    .replace(/\.{2,}/g, "")
+    .trim();
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0]!.toLocaleUpperCase("pt-BR");
+  return `${parts[0]} ${parts[parts.length - 1]}`.toLocaleUpperCase("pt-BR");
+}
+
 function applyJerseyOverridesLocal(
   rows: RelatorioPessoaRow[],
   overrides: Record<string, number | null>,
@@ -904,40 +916,35 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                 </div>
 
-                <div className="mx-auto grid w-full max-w-3xl gap-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-stretch">
-                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-2 sm:order-1">
-                    <p className="mb-2 text-xs font-extrabold uppercase tracking-wide text-[#93c5fd]">
+                <div className="mx-auto grid w-full max-w-3xl gap-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-start">
+                  <aside className="order-2 rounded-xl border border-border bg-card/50 p-3 sm:order-1">
+                    <p className="mb-3 text-xs font-extrabold uppercase tracking-wide text-[#93c5fd]">
                       Comissão
                     </p>
                     {commissionStaff.length === 0 ? (
                       <p className="text-sm text-muted-foreground">Nenhum convocado</p>
                     ) : (
-                      <ul className="space-y-2">
-                        {commissionStaff.map((s) => {
-                          const short =
-                            s.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(" ") ||
-                            s.name;
-                          return (
-                            <li
-                              key={s.staffId ?? `${s.num}-${s.name}`}
-                              className="flex items-center gap-2"
-                            >
-                              <AthletePhoto3x4
-                                photoUrl={s.photoUrl}
-                                name={s.name}
-                                size="sm"
-                              />
-                              <div className="min-w-0">
-                                <p className="truncate text-xs font-semibold uppercase leading-tight">
-                                  {short}
-                                </p>
-                                <p className="truncate text-[10px] text-muted-foreground">
-                                  {s.role ? getStaffRoleLabel(s.role) : "Comissão"}
-                                </p>
-                              </div>
-                            </li>
-                          );
-                        })}
+                      <ul className="space-y-2.5">
+                        {commissionStaff.map((s) => (
+                          <li
+                            key={s.staffId ?? `${s.num}-${s.name}`}
+                            className="flex items-start gap-2"
+                          >
+                            <AthletePhoto3x4
+                              photoUrl={s.photoUrl}
+                              name={s.name}
+                              size="sm"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-semibold uppercase leading-snug break-words">
+                                {firstLastName(s.name)}
+                              </p>
+                              <p className="text-[10px] leading-snug text-muted-foreground break-words">
+                                {s.role ? getStaffRoleLabel(s.role) : "Comissão"}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
                       </ul>
                     )}
                   </aside>
@@ -951,6 +958,8 @@ export function FutebolRelatorioPressKitForm() {
                       const athlete = playerId
                         ? athletes.find((a) => a.playerId === playerId)
                         : undefined;
+                      const label = athlete ? firstLastName(athlete.name) : "";
+                      const labelParts = label.split(/\s+/).filter(Boolean);
                       return (
                         <div
                           key={slot.id}
@@ -979,7 +988,7 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="flex w-[84px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
+                              className="flex w-[96px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
@@ -1006,9 +1015,16 @@ export function FutebolRelatorioPressKitForm() {
                                   ×
                                 </button>
                               </div>
-                              <span className="max-w-full truncate text-center text-[11px] font-extrabold uppercase text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                                {athlete.nickname?.trim() ||
-                                  athlete.name.split(/\s+/).filter(Boolean)[0]}
+                              <span className="w-full text-center text-[10px] font-extrabold uppercase leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                                {labelParts.length >= 2 ? (
+                                  <>
+                                    {labelParts[0]}
+                                    <br />
+                                    {labelParts.slice(1).join(" ")}
+                                  </>
+                                ) : (
+                                  label
+                                )}
                               </span>
                             </div>
                           ) : (
@@ -1058,12 +1074,9 @@ export function FutebolRelatorioPressKitForm() {
                             {cadastroPositionAbbrev(a.position)}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">
-                              {a.nickname?.trim() || a.name}
+                            <p className="text-sm font-medium uppercase leading-snug break-words">
+                              {firstLastName(a.name)}
                             </p>
-                            {a.nickname?.trim() ? (
-                              <p className="truncate text-xs text-muted-foreground">{a.name}</p>
-                            ) : null}
                           </div>
                           <Button
                             type="button"
@@ -1117,12 +1130,9 @@ export function FutebolRelatorioPressKitForm() {
                           {cadastroPositionAbbrev(a.position)}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {a.nickname?.trim() || a.name}
+                          <p className="text-sm font-medium uppercase leading-snug break-words">
+                            {firstLastName(a.name)}
                           </p>
-                          {a.nickname?.trim() ? (
-                            <p className="truncate text-xs text-muted-foreground">{a.name}</p>
-                          ) : null}
                         </div>
                         <Button
                           type="button"
