@@ -904,22 +904,56 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
+                <div className="relative mx-auto w-full max-w-lg">
                   <div
-                    className="relative mx-auto aspect-[3/4] w-full max-w-xl overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner"
+                    className="relative aspect-[68/105] w-full overflow-hidden rounded-xl border-[3px] border-[#14532d] shadow-inner"
                     onDragOver={(e) => e.preventDefault()}
                   >
                     <PitchMarkings />
+                    {/* Área técnica — comissão “no gramado” */}
+                    <div className="absolute bottom-[8%] left-0 top-[8%] z-20 flex w-[18%] flex-col gap-1.5 overflow-y-auto border-r border-dashed border-white/40 bg-gradient-to-r from-black/80 via-black/45 to-transparent px-1 py-2">
+                      <p className="px-0.5 text-center text-[9px] font-extrabold uppercase tracking-wider text-amber-300">
+                        Área técnica
+                      </p>
+                      {commissionStaff.length === 0 ? (
+                        <p className="px-1 text-center text-[10px] text-white/70">—</p>
+                      ) : (
+                        commissionStaff.slice(0, 8).map((s) => {
+                          const short =
+                            s.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(" ") ||
+                            s.name;
+                          return (
+                            <div
+                              key={s.staffId ?? `${s.num}-${s.name}`}
+                              className="flex flex-col items-center gap-0.5 text-center"
+                            >
+                              <AthletePhoto3x4
+                                photoUrl={s.photoUrl}
+                                name={s.name}
+                                size="sm"
+                              />
+                              <span className="max-w-full truncate text-[9px] font-extrabold uppercase leading-tight text-white drop-shadow">
+                                {short}
+                              </span>
+                              <span className="max-w-full truncate text-[8px] font-bold uppercase leading-tight text-amber-200/90">
+                                {s.role ? getStaffRoleLabel(s.role) : "Comissão"}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                     {formationDef.slots.map((slot, slotIndex) => {
                       const playerId = starterPlayerIds[slotIndex] ?? "";
                       const athlete = playerId
                         ? athletes.find((a) => a.playerId === playerId)
                         : undefined;
+                      const left = 18 + (slot.left / 100) * 82;
                       return (
                         <div
                           key={slot.id}
                           className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                          style={{ top: `${slot.top}%`, left: `${slot.left}%` }}
+                          style={{ top: `${slot.top}%`, left: `${left}%` }}
                           onDragOver={(e) => e.preventDefault()}
                           onDrop={(e) => {
                             e.preventDefault();
@@ -943,7 +977,7 @@ export function FutebolRelatorioPressKitForm() {
                                 e.dataTransfer.setData("playerId", athlete.playerId!);
                                 e.dataTransfer.setData("slotIndex", String(slotIndex));
                               }}
-                              className="flex w-[92px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
+                              className="flex w-[84px] cursor-grab flex-col items-center gap-0.5 active:cursor-grabbing"
                             >
                               <div className="relative">
                                 <AthletePhoto3x4
@@ -983,36 +1017,6 @@ export function FutebolRelatorioPressKitForm() {
                       );
                     })}
                   </div>
-
-                  <aside className="rounded-xl border border-border bg-card/40 p-3">
-                    <p className="mb-2 text-sm font-semibold">Comissão técnica</p>
-                    {commissionStaff.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Nenhum convocado</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {commissionStaff.map((s) => (
-                          <li
-                            key={s.staffId ?? `${s.num}-${s.name}`}
-                            className="flex items-center gap-2"
-                          >
-                            <AthletePhoto3x4
-                              photoUrl={s.photoUrl}
-                              name={s.name}
-                              size="sm"
-                            />
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium leading-tight">
-                                {s.name}
-                              </p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {s.role ? getStaffRoleLabel(s.role) : "Comissão"}
-                              </p>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </aside>
                 </div>
 
                 <div className="space-y-2">
@@ -1072,9 +1076,9 @@ export function FutebolRelatorioPressKitForm() {
                     })}
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm font-semibold">
-                    Reservas ({reserves.length})
+                <div className="space-y-2 rounded-xl border border-orange-500/40 bg-orange-950/30 p-3">
+                  <p className="text-sm font-semibold text-orange-200">
+                    Reservas · banco ({reserves.length})
                   </p>
                   {reserves.map((a, ord) => {
                     const num = filledStarters + ord + 1;
@@ -1086,7 +1090,7 @@ export function FutebolRelatorioPressKitForm() {
                           setDragPlayerId(a.playerId!);
                           e.dataTransfer.setData("playerId", a.playerId!);
                         }}
-                        className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2"
+                        className="flex flex-wrap items-center gap-2 rounded-lg border border-orange-500/30 bg-orange-950/40 px-3 py-2"
                       >
                         <span className="w-6 shrink-0 text-center text-sm font-extrabold text-muted-foreground">
                           {num}

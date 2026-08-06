@@ -50,6 +50,40 @@ export function softNormalizeTeamNameKey(s: string): string {
   return t.replace(/[^a-z0-9]/g, '');
 }
 
+/**
+ * Identidade do adversário para retrospecto / H2H.
+ * Mantém SAF, Mineiro, Paranaense etc. — evita misturar vários "Atlético".
+ * Comparação deve ser igualdade exata (sem includes).
+ */
+export function opponentIdentityKey(s: string): string {
+  let t = s
+    .trim()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLocaleLowerCase('pt-BR');
+  t = t.replace(
+    /\b(esporte\s+clube|futebol\s+clube|sport\s+club|sociedade\s+esportiva)\b/g,
+    ' ',
+  );
+  t = t.replace(/\b(f\.?\s*c\.?|e\.?\s*c\.?)\b/g, ' ');
+  t = t.replace(/\b(clube|clube\s+de\s+regatas)\b/g, ' ');
+  t = t.replace(/\b(de|da|do|das|dos)\b/g, ' ');
+  return t.replace(/[^a-z0-9]/g, '');
+}
+
+/** True só se for o mesmo clube (nome completo / identidade). */
+export function isSameOpponentName(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = (a ?? '').trim();
+  const right = (b ?? '').trim();
+  if (!left || !right) return false;
+  const strictA = normalizeTeamNameKeyForMerge(left);
+  const strictB = normalizeTeamNameKeyForMerge(right);
+  if (strictA && strictB && strictA === strictB) return true;
+  const idA = opponentIdentityKey(left);
+  const idB = opponentIdentityKey(right);
+  return Boolean(idA && idB && idA === idB);
+}
+
 function isAllowedPublicMediaKey(key: string): boolean {
   const k = key.trim().toLowerCase();
   return k.startsWith('logos/') || k.startsWith('media/');

@@ -11,11 +11,12 @@ import {
   FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
 } from '../fmf-scraper/fmf-sync-tenants.config';
-import { softNormalizeTeamNameKey } from '../public/visiting-team-logo-merge.util';
+import { isSameOpponentName, softNormalizeTeamNameKey } from '../public/visiting-team-logo-merge.util';
 import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
 import type {
   GuiaAgendaDay,
   GuiaCampaignLine,
+  GuiaDisciplineRow,
   GuiaLineup,
   GuiaLineupPlayer,
   GuiaMatchLine,
@@ -199,6 +200,7 @@ export class GuiaPartidaService {
     const headToHead = this.buildHeadToHead(lines, travel.opponentName);
     const lastLineups = this.buildLastLineups(seasonReports, squad, clubName, aliases);
     const rankings = this.buildRankings(seasonReports, squad);
+    const discipline = this.buildDiscipline(squad);
     const agenda = await this.buildAgenda(tenantId, travel.categories, travel.matchDate);
     const nextMatches = await this.buildNextMatches(tenantId, travelId, matchDate);
     const standings = await this.buildStandings(
@@ -224,6 +226,7 @@ export class GuiaPartidaService {
       topScorers: rankings.topScorers,
       topMinutes: rankings.topMinutes,
       topCards: rankings.topCards,
+      discipline,
       agenda,
       nextMatches,
       standings,
@@ -326,12 +329,9 @@ export class GuiaPartidaService {
     lines: GuiaMatchLine[],
     opponentName: string | null,
   ): GuiaPartidaReportDto['headToHead'] {
-    const wanted = softNormalizeTeamNameKey(opponentName ?? '');
+    const wanted = opponentName?.trim() ?? '';
     const matches = wanted
-      ? lines.filter((line) => {
-          const key = softNormalizeTeamNameKey(line.opponent);
-          return key === wanted || key.includes(wanted) || wanted.includes(key);
-        })
+      ? lines.filter((line) => isSameOpponentName(line.opponent, wanted))
       : [];
 
     const summary = {
@@ -378,6 +378,10 @@ export class GuiaPartidaService {
               weight: true,
               position: true,
               jerseyNumber: true,
+              status: true,
+              statusDetails: true,
+              yellowCards: true,
+              redCards: true,
             },
           })
         : [];
@@ -451,6 +455,10 @@ export class GuiaPartidaService {
         weight: player?.weight ?? null,
         photoUrl: athlete.photoUrl ?? null,
         isStarter: athlete.playerId ? starterIds.has(athlete.playerId) : false,
+        status: player?.status ?? null,
+        statusDetails: player?.statusDetails ?? null,
+        cadastroYellowCards: player?.yellowCards ?? 0,
+        cadastroRedCards: player?.redCards ?? 0,
         season,
         byCompetition,
         career: athlete.playerId
@@ -474,6 +482,58 @@ export class GuiaPartidaService {
       if (an !== bn) return an - bn;
       return a.name.localeCompare(b.name, 'pt-BR');
     });
+  }
+
+  private buildDiscipline(
+    squad: GuiaSquadPlayer[],
+  ): GuiaPartidaReportDto['discipline'] {
+    const suspended: GuiaDisciplineRow[] = [];
+    const withYellowCards: GuiaDisciplineRow[] = [];
+
+    for (const p of squad) {
+      const status = (p.status ?? 'available').toLowerCase();
+      const yellow = Math.max(p.cadastroYellowCards, p.season.yellowCards);
+      const red = Math.max(p.cadastroRedCards, p.season.redCards);
+      if (status === 'suspended') {
+        let reason = p.statusDetails?.trim() || 'Suspenso';
+        if (!p.statusDetails?.trim()) {
+          if (red > 0) reason = 'Cartão vermelho';
+          else if (yellow >= 3) reason = 'Acúmulo de cartões amarelos';
+        }
+        suspended.push({
+          playerId: p.playerId,
+          name: p.name,
+          shortName: p.shortName,
+          jerseyNumber: p.jerseyNumber,
+          reason,
+          yellowCards: yellow,
+          redCards: red,
+        });
+      }
+      if (yellow > 0 || red > 0) {
+        withYellowCards.push({
+          playerId: p.playerId,
+          name: p.name,
+          shortName: p.shortName,
+          jerseyNumber: p.jerseyNumber,
+          reason:
+            red > 0
+              ? `${yellow}A · ${red}V`
+              : `${yellow} cartão${yellow === 1 ? '' : 's'} amarelo${yellow === 1 ? '' : 's'}`,
+          yellowCards: yellow,
+          redCards: red,
+        });
+      }
+    }
+
+    withYellowCards.sort(
+      (a, b) =>
+        b.redCards - a.redCards ||
+        b.yellowCards - a.yellowCards ||
+        a.name.localeCompare(b.name, 'pt-BR'),
+    );
+
+    return { suspended, withYellowCards };
   }
 
   private buildLastLineups(

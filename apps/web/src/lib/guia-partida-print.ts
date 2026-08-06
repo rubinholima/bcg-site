@@ -75,12 +75,6 @@ function formatBirth(iso: string | null | undefined): string {
   return `${d}/${m}/${y}`;
 }
 
-function chunk<T>(items: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
-}
-
 function sheet(inner: string, extraClass = ""): string {
   return `<section class="sheet ${extraClass}">${inner}</section>`;
 }
@@ -185,7 +179,11 @@ function playerCard(player: GuiaSquadPlayer): string {
     .join("");
 
   const nick = player.nickname?.trim() || null;
-  return `<article class="pcard">
+  const extras: string[] = [];
+  if (!player.isStarter) extras.push("bench");
+  if ((player.status ?? "").toLowerCase() === "suspended") extras.push("suspended");
+  const cardClass = ["pcard", ...extras].join(" ");
+  return `<article class="${cardClass}">
     <div class="pcard-photo">
       ${photo(player.photoUrl, player.name, "pcard-img")}
       <span class="pcard-pos">${esc(player.positionLabel)}</span>
@@ -352,14 +350,21 @@ function styles(size: PrintPageSize): string {
     .sheet {
       position: relative;
       width: 210mm;
-      height: 297mm;
-      max-height: 297mm;
+      min-height: 297mm;
       padding: 11mm 11mm 14mm;
       margin: 0 auto;
       background: #fff;
       page-break-after: always;
       break-after: page;
+      overflow: visible;
+      box-sizing: border-box;
+    }
+    .sheet.cover-sheet {
+      height: 297mm;
+      max-height: 297mm;
+      min-height: 297mm;
       overflow: hidden;
+      padding: 0;
     }
     .sheet:last-of-type { page-break-after: auto; break-after: auto; }
 
@@ -482,8 +487,10 @@ function styles(size: PrintPageSize): string {
 
     /* ---------- Elenco ---------- */
     .group-band { margin: 0 0 2.5mm; padding: 1.4mm 2.5mm; background: ${C.navy}; color: #fff; font-size: 8pt; text-transform: uppercase; letter-spacing: .14em; font-weight: 700; border-radius: 1.5mm; }
-    .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5mm; }
-    .pcard { display: flex; gap: 2mm; border: 1px solid ${C.line}; border-radius: 2mm; overflow: hidden; background: #fff; break-inside: avoid; height: 38mm; }
+    .squad-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm; }
+    .pcard { display: flex; gap: 2mm; border: 1px solid ${C.line}; border-radius: 2mm; overflow: hidden; background: #fff; break-inside: avoid; page-break-inside: avoid; height: 34mm; }
+    .pcard.bench { background: #FFF7ED; border-color: #FDBA74; }
+    .pcard.suspended { background: #FEF2F2; border-color: #FECACA; }
     .pcard-photo { position: relative; width: 22mm; flex: none; background: linear-gradient(160deg, ${C.navy} 0%, ${C.navyDeep} 100%); }
     .pcard-img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; }
     .photo-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 12pt; }
@@ -515,37 +522,115 @@ function styles(size: PrintPageSize): string {
     .pl-box-bottom { left: 50%; bottom: 0; width: 26mm; height: 8mm; margin-left: -13mm; border-bottom: none; }
     .chip { position: absolute; transform: translate(-50%, -50%); text-align: center; }
     .chip-num { display: block; width: 5.6mm; height: 5.6mm; margin: 0 auto; border-radius: 50%; background: #fff; color: ${C.navy}; font-size: 6pt; font-weight: 900; line-height: 5.6mm; border: 1px solid ${C.navy}; }
-    .vis-layout { display: grid; grid-template-columns: 58mm 1fr; gap: 4mm; align-items: start; }
-    .vis-staff h3 { margin: 0 0 2mm; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; color: ${C.red}; border-bottom: 2px solid ${C.red}; padding-bottom: 1mm; }
-    .vis-staff-row { display: flex; gap: 2mm; align-items: center; padding: 1.5mm 0; border-bottom: 1px solid ${C.line}; }
-    .vis-staff-row strong { display: block; font-size: 8pt; line-height: 1.15; color: ${C.ink}; }
-    .vis-staff-row span { display: block; font-size: 7pt; color: ${C.muted}; }
-    .vis-staff-photo { width: 9mm; height: 12mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1px solid ${C.line}; background: ${C.soft}; flex: none; }
-    .vis-staff-photo.photo-fallback { display: flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 800; color: ${C.navy}; }
-    .vis-pitch {
-      position: relative; width: 100%; height: 210mm; border-radius: 3mm; overflow: hidden;
+    .vis-layout { display: block; }
+    .vis-stage {
+      display: flex;
+      flex-direction: column;
+      gap: 3mm;
+      align-items: stretch;
+    }
+    .vis-pitch-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 128mm;
+      margin: 0 auto;
+      aspect-ratio: 68 / 105;
+      border-radius: 3mm;
+      overflow: hidden;
       border: 2.5px solid #14532d;
       background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
+      box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.2);
+    }
+    .vis-tech {
+      position: absolute;
+      left: 0;
+      top: 8%;
+      bottom: 8%;
+      width: 18%;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 1.2mm;
+      padding: 2mm 1mm;
+      background: linear-gradient(90deg, rgba(15,40,20,0.88) 0%, rgba(15,40,20,0.35) 70%, transparent 100%);
+      border-right: 1.5px dashed rgba(255,255,255,0.35);
+    }
+    .vis-tech-label {
+      font-size: 5.5pt; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+      color: #fde68a; text-shadow: 0 1px 2px rgba(0,0,0,.8); margin-bottom: 1mm;
+    }
+    .vis-tech-row {
+      display: flex; flex-direction: column; align-items: center; gap: 0.4mm;
+      text-align: center;
+    }
+    .vis-tech-photo {
+      width: 9mm; height: 12mm; object-fit: cover; object-position: center 12%;
+      border-radius: 1mm; border: 1.2px solid #fff; background: ${C.navy}; display: block;
+      box-shadow: 0 1mm 2mm rgba(0,0,0,.4);
+    }
+    .vis-tech-photo.photo-fallback {
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 800; font-size: 7pt;
+    }
+    .vis-tech-name {
+      font-size: 5pt; font-weight: 800; color: #fff; line-height: 1.05;
+      text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .vis-tech-role {
+      font-size: 4.5pt; font-weight: 700; color: #fde68a; line-height: 1.05;
+      text-transform: uppercase; text-shadow: 0 1px 2px rgba(0,0,0,.85);
     }
     .vis-pitch-mark { position: absolute; border: 2px solid rgba(255,255,255,0.55); pointer-events: none; }
-    .vis-pitch .pl-outer { inset: 3.5%; border-radius: 2mm; }
-    .vis-pitch .pl-half { left: 3.5%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
-    .vis-pitch .pl-circle { left: 50%; top: 50%; width: 22mm; height: 22mm; margin: -11mm 0 0 -11mm; border-radius: 50%; }
-    .vis-pitch .pl-box-top { left: 24%; right: 24%; top: 3.5%; height: 13%; border-top: 0; }
-    .vis-pitch .pl-box-bottom { left: 24%; right: 24%; bottom: 3.5%; height: 13%; border-bottom: 0; }
-    .vis-pitch .pl-goal-top { left: 37%; right: 37%; top: 3.5%; height: 5.5%; border-top: 0; }
-    .vis-pitch .pl-goal-bottom { left: 37%; right: 37%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
-    .vis-chip { position: absolute; transform: translate(-50%, -50%); width: 22mm; text-align: center; z-index: 2; }
-    .vis-photo-wrap { position: relative; width: 12mm; height: 16mm; margin: 0 auto 1mm; }
-    .vis-photo { width: 12mm; height: 16mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1.5px solid #fff; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); background: ${C.navy}; display: block; }
-    .vis-photo.photo-fallback { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 9pt; }
+    .vis-pitch-wrap .pl-outer { inset: 3.5%; left: 18%; border-radius: 2mm; }
+    .vis-pitch-wrap .pl-half { left: 18%; right: 3.5%; top: 50%; border-width: 0 0 2px 0; }
+    .vis-pitch-wrap .pl-circle { left: 59%; top: 50%; width: 16mm; height: 16mm; margin: -8mm 0 0 -8mm; border-radius: 50%; }
+    .vis-pitch-wrap .pl-box-top { left: 34%; right: 18%; top: 3.5%; height: 13%; border-top: 0; }
+    .vis-pitch-wrap .pl-box-bottom { left: 34%; right: 18%; bottom: 3.5%; height: 13%; border-bottom: 0; }
+    .vis-pitch-wrap .pl-goal-top { left: 44%; right: 28%; top: 3.5%; height: 5.5%; border-top: 0; }
+    .vis-pitch-wrap .pl-goal-bottom { left: 44%; right: 28%; bottom: 3.5%; height: 5.5%; border-bottom: 0; }
+    .vis-chip { position: absolute; transform: translate(-50%, -50%); width: 18mm; text-align: center; z-index: 2; }
+    .vis-photo-wrap { position: relative; width: 10mm; height: 13.5mm; margin: 0 auto 0.8mm; }
+    .vis-photo { width: 10mm; height: 13.5mm; object-fit: cover; object-position: center 12%; border-radius: 1mm; border: 1.5px solid #fff; box-shadow: 0 1mm 2mm rgba(0,0,0,.35); background: ${C.navy}; display: block; }
+    .vis-photo.photo-fallback { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 8pt; }
     .vis-num {
-      position: absolute; left: -1.2mm; bottom: -1mm; min-width: 5mm; height: 5mm; padding: 0 1mm;
-      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 7pt;
+      position: absolute; left: -1mm; bottom: -0.8mm; min-width: 4.5mm; height: 4.5mm; padding: 0 0.8mm;
+      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6.5pt;
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
     }
-    .vis-name { font-size: 7pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.1; }
-    .vis-slot { font-size: 6pt; font-weight: 700; color: #fef3c7; text-shadow: 0 1px 2px rgba(0,0,0,.85); }
+    .vis-name { font-size: 6pt; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.1; }
+    .vis-slot { font-size: 5pt; font-weight: 700; color: #fef3c7; text-shadow: 0 1px 2px rgba(0,0,0,.85); }
+    .vis-bench {
+      border: 1.5px solid #EA580C; border-radius: 2.5mm; padding: 2.5mm 3mm;
+      background: linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%);
+      break-inside: avoid;
+    }
+    .vis-bench h3 {
+      margin: 0 0 2mm; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em;
+      color: #C2410C; border-bottom: 2px solid #EA580C; padding-bottom: 1mm;
+    }
+    .vis-bench-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5mm 3mm; }
+    .vis-bench-row { display: flex; gap: 1.5mm; align-items: center; font-size: 7.5pt; }
+    .vis-bench-photo {
+      width: 7mm; height: 9.5mm; object-fit: cover; object-position: center 12%;
+      border-radius: 1mm; border: 1px solid #FDBA74; background: ${C.soft}; flex: none;
+    }
+    .vis-bench-photo.photo-fallback {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 6pt; font-weight: 800; color: #C2410C;
+    }
+    .vis-bench-num {
+      min-width: 5mm; height: 5mm; border-radius: 1mm; background: #EA580C; color: #fff;
+      font-weight: 800; font-size: 6.5pt; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .vis-bench-row strong { display: block; font-size: 7pt; line-height: 1.1; color: ${C.ink}; text-transform: uppercase; }
+    .vis-bench-row span { display: block; font-size: 6pt; color: #9A3412; }
+    .discipline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 5mm; }
+    .discipline-grid .panel.danger { border-color: #FECACA; background: #FEF2F2; }
+    .discipline-grid .panel.warn { border-color: #FDE68A; background: #FFFBEB; }
+    .discipline-grid .panel h3 { color: ${C.red}; }
+    .discipline-grid .panel.warn h3 { color: #B45309; }
     .chip-name { display: block; margin-top: .5mm; font-size: 4.9pt; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.9); text-transform: uppercase; line-height: 1.05; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .note { margin-top: 3mm; font-size: 6.5pt; color: ${C.muted}; font-style: italic; }
@@ -648,7 +733,7 @@ export function buildGuiaPartidaPrintHtml(
         <span>Assessoria de Imprensa · Boston City Group</span>
       </div>
     </div>`,
-    "cover",
+    "cover cover-sheet",
   );
 
   /* ---------------- A partida ---------------- */
@@ -726,20 +811,6 @@ export function buildGuiaPartidaPrintHtml(
     </div>
 
     <div class="panel" style="margin-top:6mm">
-      <h3>Comissão técnica</h3>
-      ${
-        data.staff.length > 0
-          ? `<ul class="people">${data.staff
-              .map(
-                (s) =>
-                  `<li><b>${esc(s.name)}</b><span>${esc(s.role ? getStaffRoleLabel(s.role) : "Comissão")}</span></li>`,
-              )
-              .join("")}</ul>`
-          : `<p class="empty">Comissão não informada na convocação.</p>`
-      }
-    </div>
-
-    <div class="panel" style="margin-top:6mm">
       <h3>Retrospecto contra ${esc(opponent)}</h3>
       ${
         data.headToHead.played > 0
@@ -750,7 +821,7 @@ export function buildGuiaPartidaPrintHtml(
               <div class="kpi alt"><strong>${data.headToHead.losses}</strong><span>Derrotas</span></div>
             </div>
             ${matchRows(data.headToHead.matches)}`
-          : `<p class="empty">Sem confrontos anteriores registrados.</p>`
+          : `<p class="empty">Sem confrontos anteriores com ${esc(opponent)} (nome completo).</p>`
       }
     </div>
     ${foot("A partida")}`,
@@ -799,25 +870,52 @@ export function buildGuiaPartidaPrintHtml(
       ${rankingBlock("Mais minutos", data.topMinutes, "'")}
       ${rankingBlock("Cartões", data.topCards)}
     </div>
+
+    <div class="discipline-grid">
+      <div class="panel danger">
+        <h3>Suspensos / não aptos</h3>
+        ${
+          (data.discipline?.suspended ?? []).length > 0
+            ? `<ul class="people">${(data.discipline?.suspended ?? [])
+                .map(
+                  (p) =>
+                    `<li><b>${p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}${esc(p.shortName)}</b><span>${esc(p.reason)}</span></li>`,
+                )
+                .join("")}</ul>`
+            : `<p class="empty">Nenhum suspenso no plantel relacionado.</p>`
+        }
+      </div>
+      <div class="panel warn">
+        <h3>Cartões amarelos</h3>
+        ${
+          (data.discipline?.withYellowCards ?? []).length > 0
+            ? `<ul class="people">${(data.discipline?.withYellowCards ?? [])
+                .map(
+                  (p) =>
+                    `<li><b>${p.jerseyNumber != null ? `${p.jerseyNumber} · ` : ""}${esc(p.shortName)}</b><span>${esc(p.reason)}</span></li>`,
+                )
+                .join("")}</ul>`
+            : `<p class="empty">Sem cartões no plantel relacionado.</p>`
+        }
+      </div>
+    </div>
     ${foot("Desempenho")}`,
   );
 
-  /* ---------------- Elenco ---------------- */
-  // 6 cards/folha com altura fixa evita página em branco (conteúdo estourava 297mm).
-  const squadChunks = chunk(data.squad, 6);
-  const squadSheets = squadChunks.map((page, index) => {
-    const blocks: string[] = [];
+  /* ---------------- Elenco (fluxo contínuo — browser pagina sem buraco) ---------------- */
+  const squadBlocks: string[] = [];
+  {
     let currentGroup: GuiaSquadPlayer["positionGroup"] | null = null;
     let buffer: GuiaSquadPlayer[] = [];
     const flush = () => {
       if (buffer.length === 0) return;
-      blocks.push(
+      squadBlocks.push(
         `<p class="group-band">${esc(POSITION_GROUP_LABEL[currentGroup ?? ""] ?? "Elenco")}</p>
          <div class="squad-grid">${buffer.map(playerCard).join("")}</div>`,
       );
       buffer = [];
     };
-    for (const player of page) {
+    for (const player of data.squad) {
       if (player.positionGroup !== currentGroup) {
         flush();
         currentGroup = player.positionGroup;
@@ -825,24 +923,16 @@ export function buildGuiaPartidaPrintHtml(
       buffer.push(player);
     }
     flush();
-    const isLast = index === squadChunks.length - 1;
-
-    return sheet(
+  }
+  const squadSheets = [
+    sheet(
       `<div class="sheet-tag">Elenco relacionado</div>
-      ${
-        index === 0
-          ? sectionTitle("Elenco", `${data.squad.length} atletas relacionados · ${travel.categoryLabel}`)
-          : sectionTitle("Elenco", "continuação")
-      }
-      ${blocks.join("")}
-      ${
-        isLast
-          ? `<p class="note">J = jogos · G = gols · MIN = minutos em campo. Números consolidados das partidas oficiais da temporada ${data.season}.</p>`
-          : ""
-      }
+      ${sectionTitle("Elenco", `${data.squad.length} atletas relacionados · ${travel.categoryLabel}`)}
+      ${squadBlocks.join("")}
+      <p class="note">J = jogos · G = gols · MIN = minutos. Reserva = fundo laranja. Suspenso = fundo vermelho claro. Temporada ${data.season}.</p>
       ${foot("Elenco")}`,
-    );
-  });
+    ),
+  ];
 
   /* ---------------- Escalações ---------------- */
   const lineupSheet =
@@ -878,6 +968,8 @@ export function buildGuiaPartidaPrintHtml(
   const squadById = new Map(
     data.squad.filter((p) => p.playerId).map((p) => [p.playerId!, p]),
   );
+  const starterIdSet = new Set(config.starterPlayerIds.filter(Boolean));
+  // Área de jogo começa em 18% (faixa da comissão à esquerda)
   const visualPlayers = formation.slots
     .map((slot, i) => {
       const slotId = config.starterPlayerIds[i];
@@ -885,7 +977,8 @@ export function buildGuiaPartidaPrintHtml(
       if (!p) return "";
       const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
       const nick = p.nickname?.trim() || p.shortName;
-      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%">
+      const left = 18 + (slot.left / 100) * 82;
+      return `<div class="vis-chip" style="top:${slot.top}%;left:${left}%">
         <div class="vis-photo-wrap">
           ${photo(p.photoUrl, p.name, "vis-photo")}
           <span class="vis-num">${esc(n)}</span>
@@ -907,29 +1000,47 @@ export function buildGuiaPartidaPrintHtml(
     if (label.includes("auxiliar")) return 1;
     return 10;
   };
-  const staffVisual = [...data.staff]
+  const staffOnPitch = [...data.staff]
     .sort((a, b) => {
       const d = staffRank(a) - staffRank(b);
       if (d !== 0) return d;
       return a.name.localeCompare(b.name, "pt-BR");
     })
+    .slice(0, 8)
     .map((s) => {
       const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
-      return `<div class="vis-staff-row">
-        ${photo(s.photoUrl, s.name, "vis-staff-photo")}
-        <div><strong>${esc(s.name)}</strong><span>${esc(role)}</span></div>
+      const short =
+        s.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).join(" ") || s.name;
+      return `<div class="vis-tech-row">
+        ${photo(s.photoUrl, s.name, "vis-tech-photo")}
+        <span class="vis-tech-name">${esc(short)}</span>
+        <span class="vis-tech-role">${esc(role)}</span>
+      </div>`;
+    })
+    .join("");
+  const benchPlayers = data.squad.filter(
+    (p) => p.playerId && !starterIdSet.has(p.playerId),
+  );
+  const benchHtml = benchPlayers
+    .map((p) => {
+      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
+      const nick = p.nickname?.trim() || p.shortName;
+      return `<div class="vis-bench-row">
+        ${photo(p.photoUrl, p.name, "vis-bench-photo")}
+        <span class="vis-bench-num">${esc(n)}</span>
+        <div><strong>${esc(nick)}</strong><span>${esc(p.positionLabel)}</span></div>
       </div>`;
     })
     .join("");
   const visualSheet = sheet(
     `<div class="sheet-tag">Escalação</div>
     ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
-    <div class="vis-layout">
-      <aside class="vis-staff">
-        <h3>Comissão técnica</h3>
-        ${staffVisual || `<p class="empty">—</p>`}
-      </aside>
-      <div class="vis-pitch">
+    <div class="vis-stage">
+      <div class="vis-pitch-wrap">
+        <div class="vis-tech">
+          <div class="vis-tech-label">Área técnica</div>
+          ${staffOnPitch || `<p class="empty" style="color:#fff;font-size:7pt">—</p>`}
+        </div>
         <div class="vis-pitch-mark pl-outer"></div>
         <div class="vis-pitch-mark pl-half"></div>
         <div class="vis-pitch-mark pl-circle"></div>
@@ -939,8 +1050,16 @@ export function buildGuiaPartidaPrintHtml(
         <div class="vis-pitch-mark pl-goal-bottom"></div>
         ${visualPlayers}
       </div>
+      <div class="vis-bench">
+        <h3>Reservas · banco</h3>
+        ${
+          benchHtml
+            ? `<div class="vis-bench-grid">${benchHtml}</div>`
+            : `<p class="empty">Sem reservas.</p>`
+        }
+      </div>
     </div>
-    <p class="note">O quadro não representa o esquema utilizado em campo, nem o posicionamento definitivo dos atletas.</p>
+    <p class="note">Comissão na área técnica (lateral do gramado). O quadro não representa o esquema utilizado em campo, nem o posicionamento definitivo dos atletas.</p>
     ${foot("Escalação visual")}`,
   );
 

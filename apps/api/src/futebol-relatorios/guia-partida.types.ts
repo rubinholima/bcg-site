@@ -44,6 +44,12 @@ export type GuiaSquadPlayer = {
   weight: number | null;
   photoUrl: string | null;
   isStarter: boolean;
+  /** available | injured | suspended | absent | … */
+  status: string | null;
+  statusDetails: string | null;
+  /** Cartões do cadastro (disciplina) */
+  cadastroYellowCards: number;
+  cadastroRedCards: number;
   season: GuiaStatLine;
   byCompetition: GuiaStatLine[];
   career: {
@@ -53,6 +59,16 @@ export type GuiaSquadPlayer = {
     yellowCards: number;
     redCards: number;
   };
+};
+
+export type GuiaDisciplineRow = {
+  playerId: string | null;
+  name: string;
+  shortName: string;
+  jerseyNumber: number | null;
+  reason: string;
+  yellowCards: number;
+  redCards: number;
 };
 
 export type GuiaMatchLine = {
@@ -167,6 +183,11 @@ export type GuiaPartidaReportDto = {
   topScorers: GuiaRankingRow[];
   topMinutes: GuiaRankingRow[];
   topCards: GuiaRankingRow[];
+  /** Suspensos e amarelados do plantel relacionado */
+  discipline: {
+    suspended: GuiaDisciplineRow[];
+    withYellowCards: GuiaDisciplineRow[];
+  };
   agenda: GuiaAgendaDay[];
   nextMatches: GuiaNextMatch[];
   standings: GuiaStandingRow[];

@@ -24,6 +24,7 @@ import {
 } from '../common/brazil-time.util';
 import {
   normalizeTeamNameKeyForMerge,
+  opponentIdentityKey,
   softNormalizeTeamNameKey,
 } from '../public/visiting-team-logo-merge.util';
 import type {
@@ -259,8 +260,14 @@ export class FutebolRelatoriosService {
         (r) => normalizeTeamNameKeyForMerge(r.name) === strictKey,
       );
       if (strict) return strict.logoUrl;
+      const idKey = opponentIdentityKey(wanted);
+      if (idKey) {
+        const byIdentity = withLogo.find((r) => opponentIdentityKey(r.name) === idKey);
+        if (byIdentity) return byIdentity.logoUrl;
+      }
+      // Soft só com igualdade exata (sem includes) — evita misturar Atléticos
       const softKey = softNormalizeTeamNameKey(wanted);
-      if (!softKey) return null;
+      if (!softKey || softKey.length < 10) return null;
       const soft = withLogo.find((r) => softNormalizeTeamNameKey(r.name) === softKey);
       return soft?.logoUrl ?? null;
     };
