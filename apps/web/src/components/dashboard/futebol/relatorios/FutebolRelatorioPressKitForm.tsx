@@ -44,6 +44,12 @@ import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import { getFormation, PRESS_KIT_FORMATIONS } from "@/lib/press-kit-formations";
 import {
+  assignStartersByCadastroPosition,
+  cadastroPositionLabel,
+  provisionalJerseyValue,
+  seedProvisionalJerseyOverrides,
+} from "@/lib/press-kit-lineup";
+import {
   PageSizeSelect,
   formatTravelLabel,
   useFutebolRelatorioTenants,
@@ -120,17 +126,6 @@ function AthletePhoto3x4({
       {(name || "?").slice(0, 1).toUpperCase()}
     </div>
   );
-}
-
-function jerseyInputValue(
-  athlete: RelatorioPessoaRow,
-  overrides: Record<string, number | null>,
-): string {
-  if (athlete.playerId && athlete.playerId in overrides) {
-    const v = overrides[athlete.playerId];
-    return v == null ? "" : String(v);
-  }
-  return athlete.jerseyNumber != null ? String(athlete.jerseyNumber) : "";
 }
 
 function PitchMarkings() {
@@ -459,6 +454,29 @@ export function FutebolRelatorioPressKitForm() {
     });
   };
 
+  const escalateByCadastroPosition = () => {
+    void (async () => {
+      let preferred: string[] = [];
+      if (travelId) {
+        try {
+          const { data } = await api.get<GuiaPartidaReportDto>(
+            `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
+          );
+          preferred = (data.lastLineups[0]?.starters ?? [])
+            .map((s) => s.playerId)
+            .filter((id): id is string => !!id);
+        } catch {
+          /* sem dados FMF — só cadastro */
+        }
+      }
+      const assigned = assignStartersByCadastroPosition(athletes, formation, preferred);
+      setStarterPlayerIds(padStarterSlots(assigned));
+      setJerseyOverrides((prev) =>
+        seedProvisionalJerseyOverrides(assigned, athletes, prev),
+      );
+    })();
+  };
+
   const setJerseyForPlayer = (playerId: string, raw: string) => {
     setJerseyOverrides((prev) => {
       const next = { ...prev };
@@ -728,18 +746,9 @@ export function FutebolRelatorioPressKitForm() {
                       variant="outline"
                       size="sm"
                       className="min-h-[44px]"
-                      onClick={() =>
-                        setStarterPlayerIds(
-                          padStarterSlots(
-                            athletes
-                              .map((a) => a.playerId)
-                              .filter((id): id is string => !!id)
-                              .slice(0, 11),
-                          ),
-                        )
-                      }
+                      onClick={escalateByCadastroPosition}
                     >
-                      Usar primeiros 11 da convocação
+                      Escalar por posição do cadastro
                     </Button>
                   </div>
                 </div>
@@ -827,7 +836,7 @@ export function FutebolRelatorioPressKitForm() {
                     .map((row, ord) => {
                       const a = athletes.find((x) => x.playerId === row.id);
                       if (!a) return null;
-                      const slotLabel = formationDef.slots[row.slotIndex]?.label ?? "—";
+                      const posLabel = cadastroPositionLabel(a.position);
                       return (
                         <div
                           key={`${row.id}-${row.slotIndex}`}
@@ -847,12 +856,12 @@ export function FutebolRelatorioPressKitForm() {
                               min={0}
                               max={99}
                               className="min-h-[40px] text-foreground"
-                              value={jerseyInputValue(a, jerseyOverrides)}
+                              value={provisionalJerseyValue(a, jerseyOverrides, ord + 1)}
                               onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
                             />
                           </div>
-                          <span className="w-14 shrink-0 rounded bg-[#00205B]/25 px-1 py-2 text-center text-xs font-bold uppercase text-[#93c5fd]">
-                            {slotLabel}
+                          <span className="min-w-[7.5rem] shrink-0 rounded bg-[#00205B]/30 px-2 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-[#93c5fd]">
+                            {posLabel}
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium">
@@ -906,12 +915,12 @@ export function FutebolRelatorioPressKitForm() {
                             min={0}
                             max={99}
                             className="min-h-[40px] text-foreground"
-                            value={jerseyInputValue(a, jerseyOverrides)}
+                            value={provisionalJerseyValue(a, jerseyOverrides, ord + 1)}
                             onChange={(e) => setJerseyForPlayer(a.playerId!, e.target.value)}
                           />
                         </div>
-                        <span className="w-14 shrink-0 rounded bg-zinc-800 px-1 py-2 text-center text-[10px] font-bold uppercase text-zinc-300">
-                          {a.position?.trim() || "—"}
+                        <span className="min-w-[7.5rem] shrink-0 rounded bg-amber-950/50 px-2 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-amber-300">
+                          {cadastroPositionLabel(a.position)}
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">

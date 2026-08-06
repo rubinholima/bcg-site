@@ -39,6 +39,7 @@ import type {
   RelatorioPessoaRow,
   RelatorioTravelMeta,
 } from './futebol-relatorios.types';
+import { assignStartersByCadastroPosition } from '../common/press-kit-lineup.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
   DEFAULT_PRESS_KIT_REFEREE_ROLES,
@@ -331,7 +332,13 @@ export class FutebolRelatoriosService {
           })
         : null,
     }));
-    const config = this.resolvePressKitConfig(travel.beatscodeMeta, athletes, travel.matchDate);
+    const config = await this.resolvePressKitConfig(
+      travel.beatscodeMeta,
+      athletes,
+      travel.matchDate,
+      travel.tenantId,
+      base.travel.categories,
+    );
     const byId = new Map(
       athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
     );
@@ -385,7 +392,13 @@ export class FutebolRelatoriosService {
   ): Promise<PressKitReportDto> {
     const travel = await this.loadTravel(travelId);
     const base = await this.getPassageiros(travelId);
-    const sanitized = this.sanitizePressKitConfig(raw, base.athletes, travel.matchDate);
+    const sanitized = await this.sanitizePressKitConfig(
+      raw,
+      base.athletes,
+      travel.matchDate,
+      travel.tenantId,
+      base.travel.categories,
+    );
 
     const meta =
       travel.beatscodeMeta &&
@@ -954,11 +967,13 @@ export class FutebolRelatoriosService {
     return isArchivedSportsSituation(situation) || isLoanedSportsSituation(situation);
   }
 
-  private resolvePressKitConfig(
+  private async resolvePressKitConfig(
     beatscodeMeta: unknown,
     athletes: RelatorioPessoaRow[],
     matchDate: Date,
-  ): PressKitConfigDto {
+    tenantId: string,
+    categories: string[],
+  ): Promise<PressKitConfigDto> {
     const meta =
       beatscodeMeta && typeof beatscodeMeta === 'object' && !Array.isArray(beatscodeMeta)
         ? (beatscodeMeta as Record<string, unknown>)
@@ -967,16 +982,95 @@ export class FutebolRelatoriosService {
       meta.pressKit && typeof meta.pressKit === 'object' && !Array.isArray(meta.pressKit)
         ? (meta.pressKit as Partial<PressKitConfigDto>)
         : {};
-    return this.sanitizePressKitConfig(raw, athletes, matchDate);
+    return this.sanitizePressKitConfig(
+      raw,
+      athletes,
+      matchDate,
+      tenantId,
+      categories,
+    );
   }
 
-  private sanitizePressKitConfig(
+  private async findLastLineupPreferredIds(
+    tenantId: string,
+    athleteIds: string[],
+    categories: string[],
+    matchDate: Date,
+  ): Promise<string[]> {
+    const athleteSet = new Set(athleteIds);
+    if (athleteSet.size === 0) return [];
+
+    const reports = await this.prisma.fmfMatchReport.findMany({
+      where: {
+        tenantId,
+        matchDate: { lt: matchDate },
+      },
+      orderBy: { matchDate: 'desc' },
+      take: 12,
+      select: {
+        category: true,
+        playerStats: {
+          where: { starter: true },
+          select: { playerId: true },
+        },
+      },
+    });
+
+    const catKeys = categories
+      .map((c) =>
+        c
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, ''),
+      )
+      .filter(Boolean);
+
+    const scored = reports.map((report) => {
+      const reportCat = (report.category ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+      const catMatch =
+        catKeys.length === 0 || catKeys.some((k) => k && reportCat.includes(k));
+      const ids = report.playerStats
+        .map((s) => s.playerId)
+        .filter((id): id is string => !!id && athleteSet.has(id));
+      return { ids, catMatch, count: ids.length };
+    });
+
+    const best =
+      scored.find((s) => s.catMatch && s.count >= 7) ??
+      scored.find((s) => s.count >= 7) ??
+      scored.find((s) => s.catMatch && s.count >= 1) ??
+      scored.find((s) => s.count >= 1);
+
+    return best?.ids ?? [];
+  }
+
+  private async sanitizePressKitConfig(
     raw: Partial<PressKitConfigDto> | null | undefined,
     athletes: RelatorioPessoaRow[],
     matchDate: Date,
-  ): PressKitConfigDto {
+    tenantId: string,
+    categories: string[],
+  ): Promise<PressKitConfigDto> {
     const athleteIds = athletes.map((a) => a.playerId).filter((id): id is string => !!id);
     const athleteSet = new Set(athleteIds);
+
+    const formationRaw =
+      typeof raw?.formation === 'string' && raw.formation.trim()
+        ? raw.formation.trim()
+        : '4-3-3';
+    const allowedFormations = new Set([
+      '4-3-3',
+      '4-4-2',
+      '4-2-3-1',
+      '3-5-2',
+      '3-4-3',
+    ]);
+    const formation = allowedFormations.has(formationRaw) ? formationRaw : '4-3-3';
 
     const rawStarterIds = Array.isArray(raw?.starterPlayerIds)
       ? raw!.starterPlayerIds
@@ -990,8 +1084,21 @@ export class FutebolRelatoriosService {
       seenStarters.add(id);
       return id;
     });
+
+    let autoAssigned = false;
     if (seenStarters.size === 0) {
-      starterPlayerIds = Array.from({ length: 11 }, (_, i) => athleteIds[i] ?? '');
+      const preferred = await this.findLastLineupPreferredIds(
+        tenantId,
+        athleteIds,
+        categories,
+        matchDate,
+      );
+      starterPlayerIds = assignStartersByCadastroPosition(
+        athletes,
+        formation,
+        preferred,
+      );
+      autoAssigned = true;
     }
 
     const mapNamed = (
@@ -1030,19 +1137,6 @@ export class FutebolRelatoriosService {
       return null;
     })();
 
-    const formationRaw =
-      typeof raw?.formation === 'string' && raw.formation.trim()
-        ? raw.formation.trim()
-        : '4-3-3';
-    const allowedFormations = new Set([
-      '4-3-3',
-      '4-4-2',
-      '4-2-3-1',
-      '3-5-2',
-      '3-4-3',
-    ]);
-    const formation = allowedFormations.has(formationRaw) ? formationRaw : '4-3-3';
-
     const jerseyOverrides: Record<string, number | null> = {};
     if (raw?.jerseyOverrides && typeof raw.jerseyOverrides === 'object') {
       for (const [playerId, value] of Object.entries(raw.jerseyOverrides)) {
@@ -1055,6 +1149,22 @@ export class FutebolRelatoriosService {
         if (Number.isFinite(n) && n >= 0 && n <= 99) {
           jerseyOverrides[playerId] = Math.trunc(n);
         }
+      }
+    }
+
+    if (autoAssigned) {
+      let ord = 0;
+      const byId = new Map(
+        athletes.filter((a) => a.playerId).map((a) => [a.playerId!, a]),
+      );
+      for (const id of starterPlayerIds) {
+        if (!id) continue;
+        ord += 1;
+        const a = byId.get(id);
+        if (!a) continue;
+        if (a.jerseyNumber != null) continue;
+        if (id in jerseyOverrides) continue;
+        jerseyOverrides[id] = ord;
       }
     }
 
