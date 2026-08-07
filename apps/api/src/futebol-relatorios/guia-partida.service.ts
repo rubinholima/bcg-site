@@ -5,16 +5,24 @@ import {
   getFootballPositionLabel,
   normalizeFootballPositionCode,
 } from '../common/football-positions.util';
-import { addDaysToDateKey } from '../common/brazil-time.util';
 import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
 import {
   FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
 } from '../fmf-scraper/fmf-sync-tenants.config';
+import {
+  extractFmfPhaseHint,
+  fmfPhaseLabelsMatch,
+  isFmfGroupStagePhase,
+  resolveCurrentFmfGroupPhase,
+} from '../fmf-scraper/fmf-proxjogos.parser';
 import { isSameOpponentName, softNormalizeTeamNameKey } from '../public/visiting-team-logo-merge.util';
-import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
+import {
+  computeStandingsFromMatches,
+  type FmfScraperStore,
+  type FmfStandingsRow,
+} from '../fmf-scraper/fmf-scraper.service';
 import type {
-  GuiaAgendaDay,
   GuiaCampaignLine,
   GuiaDisciplineRow,
   GuiaLineup,
@@ -201,11 +209,11 @@ export class GuiaPartidaService {
     const lastLineups = this.buildLastLineups(seasonReports, squad, clubName, aliases);
     const rankings = this.buildRankings(seasonReports, squad);
     const discipline = this.buildDiscipline(squad);
-    const agenda = await this.buildAgenda(tenantId, travel.categories, travel.matchDate);
     const nextMatches = await this.buildNextMatches(tenantId, travelId, matchDate);
     const standings = await this.buildStandings(
       travel.categories,
       travel.championshipName,
+      pressKit.config.phase,
       clubName,
       aliases,
     );
@@ -227,7 +235,8 @@ export class GuiaPartidaService {
       topMinutes: rankings.topMinutes,
       topCards: rankings.topCards,
       discipline,
-      agenda,
+      // Press Kit não expõe programação semanal (informação operacional do clube).
+      agenda: [],
       nextMatches,
       standings,
       hasOfficialData: seasonReports.length > 0,
@@ -653,50 +662,6 @@ export class GuiaPartidaService {
     return { topScorers, topMinutes, topCards };
   }
 
-  private async buildAgenda(
-    tenantId: string,
-    categories: string[],
-    matchDateKey: string,
-  ): Promise<GuiaAgendaDay[]> {
-    if (!matchDateKey) return [];
-    const from = addDaysToDateKey(matchDateKey, -3);
-    const to = addDaysToDateKey(matchDateKey, 3);
-    try {
-      const programacao = await this.relatorios.getProgramacaoSemanal({
-        tenantId,
-        from,
-        to,
-        categories: categories.join(','),
-      });
-      return programacao.days.map((day) => {
-        const items = Object.values(day.byCategory)
-          .flat()
-          .map((cell) => ({
-            time: cell.time,
-            title: cell.title,
-            typeLabel: cell.typeLabel,
-            location: cell.location,
-          }));
-        const seen = new Set<string>();
-        const unique = items.filter((item) => {
-          const key = `${item.time}|${item.title}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        });
-        return {
-          date: day.date,
-          weekdayLabel: day.weekdayLabel,
-          dateLabel: day.dateLabel,
-          isMatchDay: day.date === matchDateKey,
-          items: unique,
-        } satisfies GuiaAgendaDay;
-      });
-    } catch {
-      return [];
-    }
-  }
-
   private async buildNextMatches(
     tenantId: string,
     travelId: string,
@@ -732,9 +697,40 @@ export class GuiaPartidaService {
     }));
   }
 
+  private mapStandingRows(
+    rows: FmfStandingsRow[],
+    clubName: string,
+    aliases: string[],
+  ): GuiaStandingRow[] {
+    return [...rows]
+      .sort(
+        (a, b) =>
+          b.pontos - a.pontos ||
+          b.vitorias - a.vitorias ||
+          b.saldoGols - a.saldoGols ||
+          b.golsMarcados - a.golsMarcados,
+      )
+      .map((team, index) => ({
+        position: index + 1,
+        team: team.time,
+        points: team.pontos,
+        matches: team.jogos,
+        wins: team.vitorias,
+        draws: team.empates,
+        losses: team.derrotas,
+        goalsFor: team.golsMarcados,
+        goalsAgainst: team.golsSofridos,
+        goalDiff: team.saldoGols,
+        winRate:
+          team.jogos > 0 ? Math.round((team.pontos / (team.jogos * 3)) * 100) : 0,
+        isClub: isFmfTeamMatch(team.time, clubName, aliases),
+      }));
+  }
+
   private async buildStandings(
     categories: string[],
     championshipName: string | null,
+    configPhase: string | null,
     clubName: string,
     aliases: string[],
   ): Promise<GuiaStandingRow[]> {
@@ -758,30 +754,36 @@ export class GuiaPartidaService {
       snapshots.find((s) => s && catKeys.includes(categoryKey(s.fixtureCategory))) ??
       null;
 
-    if (!snapshot?.standings?.length) return [];
+    if (!snapshot) return [];
 
-    return [...snapshot.standings]
-      .sort(
-        (a, b) =>
-          b.pontos - a.pontos ||
-          b.vitorias - a.vitorias ||
-          b.saldoGols - a.saldoGols ||
-          b.golsMarcados - a.golsMarcados,
-      )
-      .map((team, index) => ({
-        position: index + 1,
-        team: team.time,
-        points: team.pontos,
-        matches: team.jogos,
-        wins: team.vitorias,
-        draws: team.empates,
-        losses: team.derrotas,
-        goalsFor: team.golsMarcados,
-        goalsAgainst: team.golsSofridos,
-        goalDiff: team.saldoGols,
-        winRate:
-          team.jogos > 0 ? Math.round((team.pontos / (team.jogos * 3)) * 100) : 0,
-        isClub: isFmfTeamMatch(team.time, clubName, aliases),
-      }));
+    const hinted =
+      extractFmfPhaseHint(configPhase, championshipName) ??
+      resolveCurrentFmfGroupPhase(snapshot.matches);
+
+    let phaseMatches = hinted
+      ? snapshot.matches.filter((m) => fmfPhaseLabelsMatch(m.phaseLabel, hinted))
+      : [];
+
+    // Hint livre (ex.: "1ª Fase") sem correspondência na FMF → fase atual dos jogos.
+    if (phaseMatches.length === 0) {
+      const current = resolveCurrentFmfGroupPhase(snapshot.matches);
+      phaseMatches = current
+        ? snapshot.matches.filter((m) => fmfPhaseLabelsMatch(m.phaseLabel, current))
+        : snapshot.matches.filter((m) => isFmfGroupStagePhase(m.phaseLabel));
+    }
+
+    const season = String(new Date().getFullYear());
+    const computed = computeStandingsFromMatches(phaseMatches, {
+      competicao: snapshot.name,
+      categoria: snapshot.fixtureCategory,
+      temporada: season,
+    });
+
+    if (computed.length > 0) {
+      return this.mapStandingRows(computed, clubName, aliases);
+    }
+
+    if (!snapshot.standings?.length) return [];
+    return this.mapStandingRows(snapshot.standings, clubName, aliases);
   }
 }

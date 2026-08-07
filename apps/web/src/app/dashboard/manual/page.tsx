@@ -398,14 +398,16 @@ export default function ManualPage() {
               <p>
                 Revista de pré-jogo em PDF (A4 retrato): capa, ficha do confronto, arbitragem, comissão,
                 retrospecto contra o adversário, números da temporada, elenco relacionado com estatísticas,
-                últimas escalações, artilharia, agenda da semana e classificação.
+                últimas escalações, artilharia e classificação da fase atual (ex.: Decagonal). Não inclui a
+                programação semanal do clube.
               </p>
               <p>
                 Fluxo: convocar os atletas na <strong>Convocação</strong> → preencher arbitragem, diretoria,
                 fase/horário e os 11 titulares no <strong>Press Kit</strong> → escolher clube e jogo,
                 visualizar e imprimir. Os números
                 vêm das partidas oficiais já importadas na temporada; o vínculo com o atleta usa o registro
-                CBF do cadastro.
+                CBF do cadastro. A classificação usa só a fase em disputa (pontos zerados entre fases), não o
+                somatório da competição inteira.
               </p>
               <p>
                 Menu: Depto Futebol → Logística → Relatórios → Press Kit / Imprensa.

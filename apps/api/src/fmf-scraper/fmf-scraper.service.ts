@@ -1,9 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { parseFmfOfficialStandingsHtml } from './fmf-classificacao.parser';
 import {
+  parseFmfOfficialStandingsByPhase,
+  parseFmfOfficialStandingsHtml,
+} from './fmf-classificacao.parser';
+import {
+  fmfPhaseLabelsMatch,
   isFmfGroupStagePhase,
   parseFmfProxJogosHtml,
+  resolveCurrentFmfGroupPhase,
   type FmfParsedMatch,
 } from './fmf-proxjogos.parser';
 import {
@@ -155,53 +160,38 @@ function resolveStandings(
   html: string,
   meta: { competicao: string; categoria: string; temporada: string },
 ): FmfStandingsRow[] {
-  const fmfOfficial = parseFmfOfficialStandingsHtml(html, meta);
-  const groupMatches = matches.filter((m) => isFmfGroupStagePhase(m.phaseLabel));
+  const currentPhase = resolveCurrentFmfGroupPhase(matches);
+  const byPhase = parseFmfOfficialStandingsByPhase(html, meta);
+  const officialForPhase =
+    currentPhase && byPhase.length > 0
+      ? (byPhase.find((p) => fmfPhaseLabelsMatch(p.phaseLabel, currentPhase))?.rows ??
+        null)
+      : null;
+  const fmfOfficial =
+    officialForPhase && officialForPhase.length > 0
+      ? officialForPhase
+      : byPhase.length > 0
+        ? (byPhase[byPhase.length - 1]!.rows)
+        : parseFmfOfficialStandingsHtml(html, meta);
+
+  const phaseMatches = currentPhase
+    ? matches.filter((m) => fmfPhaseLabelsMatch(m.phaseLabel, currentPhase))
+    : matches.filter((m) => isFmfGroupStagePhase(m.phaseLabel));
   const computed = computeStandingsFromMatches(
-    groupMatches.length > 0 ? groupMatches : matches,
+    phaseMatches.length > 0 ? phaseMatches : matches,
     meta,
   );
 
+  // Tabela oficial da fase atual (ex.: Decagonal) tem prioridade — pontos zerados entre fases.
+  if (fmfOfficial.length > 0) {
+    return fmfOfficial.map((r) => ({ ...r }));
+  }
+
   if (!hasFinishedMatches(matches)) {
-    return fmfOfficial.length > 0 ? fmfOfficial : computed;
+    return computed;
   }
 
-  if (fmfOfficial.length === 0) return computed;
-
-  const computedByKey = new Map(
-    computed.map((r) => [r.time.trim().toUpperCase(), r]),
-  );
-
-  const merged: FmfStandingsRow[] = fmfOfficial.map((fmf) => {
-    const key = fmf.time.trim().toUpperCase();
-    const c = computedByKey.get(key);
-    if (c) return { ...c, time: fmf.time };
-    return {
-      ...fmf,
-      pontos: 0,
-      jogos: 0,
-      vitorias: 0,
-      empates: 0,
-      derrotas: 0,
-      golsMarcados: 0,
-      golsSofridos: 0,
-      saldoGols: 0,
-    };
-  });
-
-  for (const c of computed) {
-    const key = c.time.trim().toUpperCase();
-    if (!merged.some((r) => r.time.trim().toUpperCase() === key)) merged.push(c);
-  }
-
-  merged.sort((a, b) => {
-    if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-    if (b.saldoGols !== a.saldoGols) return b.saldoGols - a.saldoGols;
-    if (b.golsMarcados !== a.golsMarcados) return b.golsMarcados - a.golsMarcados;
-    return a.time.localeCompare(b.time, 'pt-BR');
-  });
-
-  return merged;
+  return computed;
 }
 
 function matchStartMs(m: FmfParsedMatch): number {

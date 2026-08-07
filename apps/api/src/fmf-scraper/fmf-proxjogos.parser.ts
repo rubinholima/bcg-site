@@ -89,18 +89,89 @@ export type FmfParsedMatch = {
   externalMatchId: string | null;
 };
 
-/** Fase de pontos / grupos — usada na tabela; mata-mata fica de fora. */
-export function isFmfGroupStagePhase(phaseLabel: string | null | undefined): boolean {
-  if (!phaseLabel?.trim()) return true;
-  const p = phaseLabel
+/** Normaliza rótulo de fase para comparação (DECAGONAL FINAL, etc.). */
+export function normalizeFmfPhaseKey(phaseLabel: string | null | undefined): string {
+  return (phaseLabel ?? '')
     .trim()
     .toUpperCase()
     .normalize('NFD')
-    .replace(/\p{M}/gu, '');
-  if (/QUARTA|SEMI|FINAL|OITAVA|DISPUTA\s+DE\s+3|TERCEIRO\s+LUGAR|MATA|ELIMIN/.test(p)) {
+    .replace(/\p{M}/gu, '')
+    .replace(/[^A-Z0-9]+/g, '');
+}
+
+/**
+ * Fase de pontos / grupos — usada na tabela; mata-mata fica de fora.
+ * Decagonal/Pentagonal/Octogonal “Final” continuam pontos corridos (não são mata-mata).
+ */
+export function isFmfGroupStagePhase(phaseLabel: string | null | undefined): boolean {
+  if (!phaseLabel?.trim()) return true;
+  const p = normalizeFmfPhaseKey(phaseLabel);
+  if (
+    /DECAGONAL|PENTAGONAL|OCTOGONAL|HEXAGONAL|QUADRANGULAR|TRIANGULAR|CLASSIFICAT|GRUPO/.test(
+      p,
+    )
+  ) {
+    return true;
+  }
+  if (/QUARTA|SEMI|FINAL|OITAVA|DISPUTADE3|TERCEIROLUGAR|MATA|ELIMIN/.test(p)) {
     return false;
   }
   return true;
+}
+
+/** Compara rótulos de fase com tolerância (ex.: “Decagonal” ⊆ “DECAGONAL FINAL”). */
+export function fmfPhaseLabelsMatch(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  const ka = normalizeFmfPhaseKey(a);
+  const kb = normalizeFmfPhaseKey(b);
+  if (!ka || !kb) return false;
+  return ka === kb || ka.includes(kb) || kb.includes(ka);
+}
+
+/**
+ * Fase atual de pontos: prioriza a com jogo finalizado mais recente;
+ * se não houver, a com jogo agendado mais próximo.
+ */
+export function resolveCurrentFmfGroupPhase(
+  matches: Array<{ phaseLabel: string | null; status: string; matchDate: string | null }>,
+): string | null {
+  const group = matches.filter(
+    (m) => m.phaseLabel?.trim() && isFmfGroupStagePhase(m.phaseLabel),
+  );
+  const finished = group
+    .filter((m) => m.status === 'finished' && m.matchDate)
+    .sort((a, b) => (b.matchDate ?? '').localeCompare(a.matchDate ?? ''));
+  if (finished[0]?.phaseLabel) return finished[0].phaseLabel.trim();
+
+  const scheduled = group
+    .filter((m) => m.status === 'scheduled' && m.matchDate)
+    .sort((a, b) => (a.matchDate ?? '').localeCompare(b.matchDate ?? ''));
+  if (scheduled[0]?.phaseLabel) return scheduled[0].phaseLabel.trim();
+
+  return group.find((m) => m.phaseLabel?.trim())?.phaseLabel?.trim() ?? null;
+}
+
+/** Extrai hint de fase de textos livres (config, championshipName com “—”). */
+export function extractFmfPhaseHint(
+  ...sources: Array<string | null | undefined>
+): string | null {
+  for (const source of sources) {
+    if (!source?.trim()) continue;
+    const parts = source.split(/[—–|-]/).map((p) => p.trim()).filter(Boolean);
+    for (const part of parts) {
+      if (/^RODADA\b/i.test(part)) continue;
+      if (
+        /DECAGONAL|PENTAGONAL|OCTOGONAL|HEXAGONAL|QUADRANGULAR|TRIANGULAR|CLASSIFICAT|QUARTA|SEMI|FINAL|GRUPO|FASE/i.test(
+          part,
+        )
+      ) {
+        return part.replace(/\s*Rodada\s*\d+/i, '').trim() || part;
+      }
+    }
+  }
+  return null;
 }
 
 function buildPhaseLabelMap($: cheerio.CheerioAPI): Map<string, string> {

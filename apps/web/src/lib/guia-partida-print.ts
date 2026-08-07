@@ -6,7 +6,6 @@ import { getFormation, pitchChipTranslateY } from "@/lib/press-kit-formations";
 import { cadastroPositionAbbrev } from "@/lib/press-kit-lineup";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import type {
-  GuiaAgendaDay,
   GuiaCampaignLine,
   GuiaLineup,
   GuiaLineupPlayer,
@@ -293,36 +292,6 @@ function lineupColumn(lineup: GuiaLineup): string {
   </div>`;
 }
 
-function agendaTable(days: GuiaAgendaDay[]): string {
-  const withItems = days.filter((day) => day.items.length > 0 || day.isMatchDay);
-  if (withItems.length === 0) return `<p class="empty">Sem compromissos registrados na semana.</p>`;
-  return `<div class="agenda-wrap">
-    ${withItems
-      .map((day) => {
-        const rows =
-          day.items.length === 0
-            ? `<tr><td class="left muted" colspan="3">Sem atividades lançadas</td></tr>`
-            : day.items
-                .map(
-                  (item) => `<tr>
-            <td class="left">${esc(item.time || "—")}</td>
-            <td class="left">${esc(item.title)}<span class="muted"> · ${esc(item.typeLabel)}</span></td>
-            <td class="left">${esc(item.location ?? "—")}</td>
-          </tr>`,
-                )
-                .join("");
-        return `<div class="agenda-day${day.isMatchDay ? " is-match" : ""}">
-          <div class="agenda-day-head">${esc(day.weekdayLabel)} · ${esc(day.dateLabel)}${day.isMatchDay ? " · Dia de jogo" : ""}</div>
-          <table class="grid agenda">
-            <thead><tr><th class="left">Horário</th><th class="left">Atividade</th><th class="left">Local</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`;
-      })
-      .join("")}
-  </div>`;
-}
-
 function standingsTable(rows: GuiaStandingRow[]): string {
   if (rows.length === 0) return "";
   return `<table class="grid standings">
@@ -450,31 +419,8 @@ function styles(size: PrintPageSize): string {
     table.grid.tight th, table.grid.tight td { padding: 1.1mm 1.4mm; font-size: 7.5pt; }
     table.grid tr.sub td { background: ${C.softer}; color: ${C.muted}; }
     table.grid .tag { font-size: 6.5pt; color: ${C.red}; font-weight: 700; }
-    table.agenda th[scope="row"] span { display: block; font-weight: 400; font-size: 7.5pt; color: ${C.muted}; }
-    .agenda-wrap { display: flex; flex-direction: column; gap: 3.5mm; }
-    .agenda-day {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      border: 1px solid ${C.line};
-      border-radius: 2mm;
-      overflow: hidden;
-      background: #fff;
-      margin: 0 0 1mm;
-    }
     thead { display: table-header-group; }
     tr { break-inside: avoid; page-break-inside: avoid; }
-    .agenda-day-head {
-      padding: 1.6mm 2.5mm;
-      background: ${C.navy};
-      color: #fff;
-      font-size: 8pt;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-    .agenda-day.is-match .agenda-day-head { background: ${C.red}; }
-    .agenda-day table.agenda { margin: 0; border: 0; }
-    .agenda-day table.agenda th, .agenda-day table.agenda td { border-color: ${C.line}; }
     table.standings tr.club td { background: ${C.navy}; color: #fff; font-weight: 700; border-color: ${C.navy}; }
     table.standings tr.club .hi { color: ${C.gold}; }
 
@@ -1124,22 +1070,25 @@ export function buildGuiaPartidaPrintHtml(
         )
       : "";
 
-  /* ---------------- Agenda + classificação ---------------- */
-  const closingSheet = sheet(
-    `<div class="sheet-tag">Agenda</div>
-    ${sectionTitle("Semana do jogo", travel.categoryLabel)}
-    ${agendaTable(data.agenda)}
+  /* ---------------- Classificação + contato ---------------- */
+  const standingsSubtitle =
+    [config.phase, travel.championshipName].find((v) => v?.trim())?.trim() || null;
+  const closingSheet =
+    data.standings.length > 0 || config.contactLine
+      ? sheet(
+          `<div class="sheet-tag">Classificação</div>
     ${
       data.standings.length > 0
-        ? `<div style="margin-top:7mm">${sectionTitle("Classificação", travel.championshipName ?? null)}${standingsTable(data.standings)}</div>`
+        ? `${sectionTitle("Classificação", standingsSubtitle)}${standingsTable(data.standings)}`
         : ""
     }
     <div class="panel" style="margin-top:7mm">
       <h3>Contato para imprensa</h3>
       <p style="margin:0;font-size:9pt">${esc(config.contactLine || `Assessoria de Comunicação · ${club}`)}</p>
     </div>
-    ${foot("Agenda")}`,
-  );
+    ${foot("Classificação")}`,
+        )
+      : "";
 
   /* ---------------- Escalação visual (última página) ---------------- */
   const formation = getFormation(config.formation);
