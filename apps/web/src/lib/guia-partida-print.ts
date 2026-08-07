@@ -342,14 +342,18 @@ function styles(size: PrintPageSize): string {
       padding: 2mm 0 8mm;
       margin: 0;
       background: #fff;
-      /* Só page-break-after — break-after:page junto gerava folha em branco no Chrome */
-      page-break-after: always;
+      /* Cada seção (Números, Elenco, Escalações…) começa no topo da próxima folha */
+      page-break-before: always;
+      break-before: auto;
+      page-break-after: auto;
       break-after: auto;
       overflow: visible;
       box-sizing: border-box;
     }
     /* Capa — full-bleed (primeira folha); não alterar */
     .sheet.cover-sheet {
+      page-break-before: auto;
+      break-before: auto;
       width: 210mm;
       height: 297mm;
       max-height: 297mm;
@@ -357,7 +361,6 @@ function styles(size: PrintPageSize): string {
       overflow: hidden;
       padding: 0;
     }
-    .sheet:last-of-type { page-break-after: auto; break-after: auto; }
 
     /* ---------- Capa ---------- */
     .cover {
@@ -396,7 +399,15 @@ function styles(size: PrintPageSize): string {
     .cover-foot img { height: 12mm; object-fit: contain; }
 
     /* ---------- Seções ---------- */
-    .sec-head { border-bottom: 3px solid ${C.red}; padding-bottom: 2mm; margin-bottom: 4mm; }
+    .sec-head {
+      border-bottom: 3px solid ${C.red};
+      padding-bottom: 2mm;
+      margin-bottom: 4mm;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
     .sec-head h2 { margin: 0; font-size: 18pt; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; color: ${C.navy}; }
     .sec-head p { margin: 1mm 0 0; font-size: 8pt; color: ${C.muted}; text-transform: uppercase; letter-spacing: .12em; }
     .sheet-tag { position: absolute; right: 0; top: 0; font-size: 7pt; letter-spacing: .18em; text-transform: uppercase; color: ${C.muted}; }
