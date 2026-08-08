@@ -7,12 +7,16 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DashboardRolesGuard } from '../auth/roles.guard';
 import { FixtureCategoriesService } from './fixture-categories.service';
 import { CreateFixtureCategoryDto } from './dto/create-fixture-category.dto';
 import { UpdateFixtureCategoryDto } from './dto/update-fixture-category.dto';
 
 @Controller('fixture-categories')
+@UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class FixtureCategoriesController {
   constructor(private readonly service: FixtureCategoriesService) {}
 

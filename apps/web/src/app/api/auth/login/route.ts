@@ -86,7 +86,15 @@ export async function POST(request: NextRequest) {
 
   const username = body.username?.trim();
   const password = body.password ?? "";
-  const nextPath = body.next?.startsWith("/") ? body.next : "/dashboard";
+  /** Só path relativo interno — bloqueia //evil.com e protocol-relative */
+  const rawNext = body.next?.trim() || "";
+  const nextPath =
+    rawNext.startsWith("/") &&
+    !rawNext.startsWith("//") &&
+    !rawNext.includes("\\") &&
+    !/^\/[a-z]+:/i.test(rawNext)
+      ? rawNext
+      : "/dashboard";
 
   if (process.env.NODE_ENV === "development") {
     console.log("[auth/login] body keys:", Object.keys(body), "username:", !!username, "password:", !!password);

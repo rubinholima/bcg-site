@@ -153,13 +153,32 @@ export function ImprensaPressHub({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [photosData, uploadData] = await Promise.all([
-        safeFetchJson<PressPhoto[]>(`/api/public/tenants/${encodeURIComponent(slug)}/press/photos`, []),
-        safeFetchJson<{ token?: string } | null>(`/api/public/tenants/${encodeURIComponent(slug)}/press/upload-url`, null),
-      ]);
+      const photosData = await safeFetchJson<PressPhoto[]>(
+        `/api/public/tenants/${encodeURIComponent(slug)}/press/photos`,
+        [],
+      );
       if (cancelled) return;
       if (Array.isArray(photosData)) setPhotos(photosData);
-      if (uploadData?.token) setUploadPath(`/clube/upload/${uploadData.token}`);
+
+      const availability = await safeFetchJson<{ available?: boolean } | null>(
+        `/api/public/tenants/${encodeURIComponent(slug)}/press/upload-url`,
+        null,
+      );
+      if (cancelled) return;
+      if (availability?.available) {
+        try {
+          const res = await fetch(
+            `/api/public/tenants/${encodeURIComponent(slug)}/press/upload-url`,
+            { method: "POST", credentials: "include", cache: "no-store" },
+          );
+          if (res.ok) {
+            const data = (await res.json()) as { token?: string } | null;
+            if (data?.token) setUploadPath(`/clube/upload/${data.token}`);
+          }
+        } catch {
+          /* ignore */
+        }
+      }
       setLoadingPhotos(false);
     })();
     return () => {

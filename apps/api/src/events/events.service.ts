@@ -519,22 +519,22 @@ export class EventsService {
     };
   }
 
-  /** Público: retorna token de upload se existir ativo para o evento (para botão na página). */
-  async getUploadUrlBySlug(slug: string): Promise<{ token: string } | null> {
+  /** Público: só indica se há token ativo (não expõe o token). */
+  async getUploadAvailabilityBySlug(slug: string): Promise<{ available: boolean }> {
     const event = await this.prisma.event.findFirst({
       where: { slug: slug.trim(), status: 'published' },
+      select: { id: true },
     });
-    if (!event) return null;
+    if (!event) return { available: false };
     const now = new Date();
     const t = await this.prisma.eventUploadToken.findFirst({
       where: {
         eventId: event.id,
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       },
-      orderBy: { createdAt: 'desc' },
+      select: { id: true },
     });
-    if (!t) return null;
-    return { token: t.token };
+    return { available: !!t };
   }
 
   /** Público: fotos do evento pelo slug (para módulo na página). */

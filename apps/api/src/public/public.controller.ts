@@ -12,7 +12,9 @@ import {
   Res,
   BadGatewayException,
   Req,
+  UseGuards,
 } from '@nestjs/common';
+import { BostonTvInstallGuard } from '../auth/boston-tv-install.guard';
 import type { Request, Response } from 'express';
 import { Readable } from 'stream';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -127,10 +129,20 @@ export class PublicController {
     return this.tenantPressService.getPhotosBySlug(slug);
   }
 
-  /** Token de upload ativo — botão na página pública. */
+  /** Público: só indica se há token ativo (não expõe o token). */
   @Get('tenants/:slug/press/upload-url')
   async getClubPressUploadUrl(@Param('slug') slug: string) {
-    return this.tenantPressService.getUploadUrlBySlug(slug);
+    return this.tenantPressService.getUploadAvailabilityBySlug(slug);
+  }
+
+  /** Token de upload — exige sessão de imprensa válida (cookie). */
+  @Post('tenants/:slug/press/upload-url')
+  async getClubPressUploadUrlSecure(
+    @Param('slug') slug: string,
+    @Body() body: { sessionToken?: string },
+  ) {
+    const sessionToken = (body?.sessionToken ?? '').trim();
+    return this.tenantPressService.getUploadUrlBySlugSecure(slug, sessionToken);
   }
 
   /** Se a página de imprensa exige código de acesso. */
@@ -206,10 +218,10 @@ export class PublicController {
     return this.eventsService.uploadPhotoByToken(token, file.buffer, file.mimetype, caption);
   }
 
-  /** URL de upload para fotógrafos (se houver token ativo) — para botão na página pública. */
+  /** Público: só indica se há upload ativo (não expõe o token). */
   @Get('events/:slug/upload-url')
   async getEventUploadUrl(@Param('slug') slug: string) {
-    return this.eventsService.getUploadUrlBySlug(slug);
+    return this.eventsService.getUploadAvailabilityBySlug(slug);
   }
 
   /** Evento público pelo slug — para /eventos/[slug] (só published). */
@@ -323,32 +335,45 @@ export class PublicController {
   /**
    * GET /public/media?key=media/hero/xxx.jpg
    * Stream da imagem no S3 (usa credenciais AWS). Público, para hero/carrossel no site.
+   * Só logos/ e media/ — nunca legal/ nem staging (docs sensíveis).
    */
   @Get('media')
   async getMediaStream(@Query('key') key: string) {
     if (!key || typeof key !== 'string' || !key.trim()) {
       throw new BadRequestException('Query "key" é obrigatória.');
     }
-    const { body, contentType } = await this.s3.getObject(key.trim());
+    const safe = key
+      .trim()
+      .replace(/^\/+/, '')
+      .replace(/\\/g, '/')
+      .replace(/\.\./g, '');
+    const lower = safe.toLowerCase();
+    if (!lower.startsWith('logos/') && !lower.startsWith('media/')) {
+      throw new BadRequestException('Key de mídia pública inválida.');
+    }
+    const { body, contentType } = await this.s3.getObject(safe);
     return new StreamableFile(body, {
       type: contentType,
     });
   }
 
-  /** Boston TV — telas numeradas do Hall (instalação, sem tokens). */
+  /** Boston TV — telas numeradas do Hall (instalação). Exige secret. */
   @Get('boston-tv/hall/screens')
+  @UseGuards(BostonTvInstallGuard)
   listBostonTvHallScreens() {
     return this.bostonTvService.listHallInstallerScreens();
   }
 
-  /** Boston TV — playlists do Hall + Canal Hall (escolha na TV). */
+  /** Boston TV — playlists do Hall + Canal Hall (escolha na TV). Exige secret. */
   @Get('boston-tv/hall/playlists')
+  @UseGuards(BostonTvInstallGuard)
   listBostonTvHallPlaylists() {
     return this.bostonTvService.listHallPublicPlaylistsForInstall();
   }
 
-  /** Boston TV — vincula Canal Hall ou playlist individual na tela. */
+  /** Boston TV — vincula Canal Hall ou playlist individual na tela. Exige secret. */
   @Post('boston-tv/hall/:num/playlist')
+  @UseGuards(BostonTvInstallGuard)
   bindBostonTvHallScreenPlaylist(
     @Param('num') numStr: string,
     @Body() body: { hallSyncMode: string; playlistId?: string },
@@ -361,8 +386,9 @@ export class PublicController {
     );
   }
 
-  /** Boston TV — token do player pelo número da tela no Hall (ex.: 1 → USA). */
+  /** Boston TV — token do player pelo número da tela no Hall. Exige secret. */
   @Get('boston-tv/hall/:num/player-token')
+  @UseGuards(BostonTvInstallGuard)
   async resolveBostonTvHallPlayerToken(@Param('num') numStr: string) {
     const num = parseInt(numStr, 10);
     const playerToken = await this.bostonTvService.resolveHallScreenPlayerToken(num);

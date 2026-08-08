@@ -1,9 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DashboardRolesGuard } from '../auth/roles.guard';
 import { StadiumsService } from './stadiums.service';
 import { CreateStadiumDto } from './dto/create-stadium.dto';
 import { UpdateStadiumDto } from './dto/update-stadium.dto';
 
 @Controller('stadiums')
+@UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class StadiumsController {
   constructor(private readonly service: StadiumsService) {}
 

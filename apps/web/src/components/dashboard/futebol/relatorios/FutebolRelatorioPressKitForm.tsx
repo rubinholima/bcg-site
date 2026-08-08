@@ -132,21 +132,16 @@ function formatBirthShortUi(iso: string | null | undefined): string {
   return `${d}/${m}/${y}`;
 }
 
-/** Recortes só dos titulares — injetados só na última página (não altera capa/elenco). */
-async function buildStarterCutouts(
+/** Recortes de todos os convocados (titulares + reservas) — gramado e banco. */
+async function buildSquadCutouts(
   data: GuiaPartidaReportDto,
 ): Promise<Record<string, string>> {
-  const starterIds = data.config.starterPlayerIds.filter(Boolean);
-  const byId = new Map(
-    (data.squad ?? []).filter((p) => p.playerId).map((p) => [p.playerId!, p]),
-  );
+  const players = (data.squad ?? []).filter((p) => p.playerId && p.photoUrl);
   const out: Record<string, string> = {};
   await Promise.all(
-    starterIds.map(async (id) => {
-      const p = byId.get(id);
-      if (!p?.photoUrl) return;
+    players.map(async (p) => {
       const cut = await cutoutWhiteBackgroundUrlCached(p.photoUrl);
-      if (cut) out[id] = cut;
+      if (cut && p.playerId) out[p.playerId] = cut;
     }),
   );
   return out;
@@ -168,21 +163,25 @@ function AthletePhoto3x4({
   photoUrl,
   name,
   size = "md",
-  /** No gramado: remove fundo branco de estúdio (recorte) */
+  /** Remove fundo da foto (qualquer cor ligada à borda) */
+  useCutout = false,
+  /** @deprecated use useCutout */
   onPitch = false,
 }: {
   photoUrl?: string | null;
   name: string;
   size?: "sm" | "md" | "lg" | "xl";
+  useCutout?: boolean;
   onPitch?: boolean;
 }) {
+  const cutout = useCutout || onPitch;
   const [displaySrc, setDisplaySrc] = useState<string | null>(() =>
-    onPitch ? null : getPublicImageUrl(photoUrl) || null,
+    cutout ? null : getPublicImageUrl(photoUrl) || null,
   );
-  const [ready, setReady] = useState(!onPitch);
+  const [ready, setReady] = useState(!cutout);
 
   useEffect(() => {
-    if (!onPitch) {
+    if (!cutout) {
       setDisplaySrc(getPublicImageUrl(photoUrl) || null);
       setReady(true);
       return;
@@ -197,7 +196,7 @@ function AthletePhoto3x4({
     return () => {
       cancelled = true;
     };
-  }, [photoUrl, onPitch]);
+  }, [photoUrl, cutout]);
 
   const dim =
     size === "xl"
@@ -208,7 +207,7 @@ function AthletePhoto3x4({
           ? "h-12 w-9"
           : "h-14 w-[42px]";
 
-  if (!ready && onPitch) {
+  if (!ready && cutout) {
     return (
       <div
         className={`${dim} shrink-0 animate-pulse rounded-sm bg-black/30`}
@@ -223,7 +222,7 @@ function AthletePhoto3x4({
       <img
         src={displaySrc}
         alt=""
-        className={`${dim} shrink-0 bg-transparent object-cover object-[center_12%] ${onPitch ? "rounded-sm shadow-none" : "rounded-sm shadow-md"}`}
+        className={`${dim} shrink-0 bg-transparent object-cover object-[center_12%] ${cutout ? "rounded-sm shadow-none" : "rounded-sm shadow-md"}`}
       />
     );
   }
@@ -607,9 +606,9 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      const starterCutouts = await buildStarterCutouts(data);
+      const playerCutouts = await buildSquadCutouts(data);
       setPreviewHtml(
-        buildGuiaPartidaPrintHtml(data, pageSize, { starterCutouts }),
+        buildGuiaPartidaPrintHtml(data, pageSize, { playerCutouts }),
       );
       setPreviewLandscape(false);
       setPreviewOpen(true);
@@ -642,8 +641,8 @@ export function FutebolRelatorioPressKitForm() {
       const { data } = await api.get<GuiaPartidaReportDto>(
         `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
       );
-      const starterCutouts = await buildStarterCutouts(data);
-      printGuiaPartidaReport(data, pageSize, { starterCutouts });
+      const playerCutouts = await buildSquadCutouts(data);
+      printGuiaPartidaReport(data, pageSize, { playerCutouts });
     } catch {
       setFeedback({
         open: true,
@@ -1177,7 +1176,7 @@ export function FutebolRelatorioPressKitForm() {
                                   photoUrl={athlete.photoUrl}
                                   name={athlete.nickname || athlete.name}
                                   size="lg"
-                                  onPitch
+                                  useCutout
                                 />
                                 <span className="absolute -left-1 bottom-1.5 z-[1] flex h-6 min-w-6 items-center justify-center rounded-md bg-[#C8102E] px-1 text-xs font-extrabold text-white shadow">
                                   {provisionalJerseyValue(
@@ -1299,6 +1298,7 @@ export function FutebolRelatorioPressKitForm() {
                         <AthletePhoto3x4
                           photoUrl={a.photoUrl}
                           name={a.nickname || a.name}
+                          useCutout
                         />
                         <div className="w-20 space-y-1">
                           <Label className="text-[10px] text-muted-foreground">Camisa</Label>

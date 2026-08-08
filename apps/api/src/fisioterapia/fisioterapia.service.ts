@@ -210,7 +210,7 @@ export class FisioterapiaService implements OnModuleInit {
   }
 
   private assertTenant(allowed: string[] | null, tenantId: string) {
-    if (allowed && !allowed.includes(tenantId)) {
+    if (allowed !== null && !allowed.includes(tenantId)) {
       throw new BadRequestException('Sem acesso a este clube.');
     }
   }
@@ -229,7 +229,7 @@ export class FisioterapiaService implements OnModuleInit {
     if (filters.tenantId) {
       this.assertTenant(allowed, filters.tenantId);
       where.tenantId = filters.tenantId;
-    } else if (allowed) {
+    } else if (allowed !== null) {
       where.tenantId = { in: allowed };
     }
     if (filters.playerId) where.playerId = filters.playerId;
@@ -968,7 +968,7 @@ export class FisioterapiaService implements OnModuleInit {
     if (filters.tenantId) {
       this.assertTenant(allowed, filters.tenantId);
       where.tenantId = filters.tenantId;
-    } else if (allowed?.length) {
+    } else if (allowed !== null) {
       where.tenantId = { in: allowed };
     }
     if (filters.category) where.category = filters.category;
@@ -1114,7 +1114,7 @@ export class FisioterapiaService implements OnModuleInit {
     if (filters.tenantId) {
       this.assertTenant(allowed, filters.tenantId);
       sessionWhere.tenantId = filters.tenantId;
-    } else if (allowed?.length) {
+    } else if (allowed !== null) {
       sessionWhere.tenantId = { in: allowed };
     }
     if (filters.category) sessionWhere.category = filters.category;
@@ -1126,7 +1126,7 @@ export class FisioterapiaService implements OnModuleInit {
 
     const groupWhere: Prisma.PhysioGroupSessionWhereInput = {};
     if (filters.tenantId) groupWhere.tenantId = filters.tenantId;
-    else if (allowed?.length) groupWhere.tenantId = { in: allowed };
+    else if (allowed !== null) groupWhere.tenantId = { in: allowed };
     if (filters.category) groupWhere.category = filters.category;
     if (filters.from || filters.to) {
       groupWhere.sessionDate = {};

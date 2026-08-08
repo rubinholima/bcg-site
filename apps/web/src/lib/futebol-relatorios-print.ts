@@ -1772,3 +1772,8 @@ export function printMatchExternalReport(
   const title = audience === "referees" ? "Relatório para arbitragem" : "Relatório para adversário";
   printHtmlDocument(buildMatchExternalReportHtml(data, audience, size), title);
 }
+
+
+
+
+

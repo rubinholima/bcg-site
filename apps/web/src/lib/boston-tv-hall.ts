@@ -6,6 +6,14 @@ export interface HallInstallerScreen {
   locationHint: string | null;
 }
 
+const INSTALL_SECRET_HEADER = "X-Boston-Tv-Install-Secret";
+
+function hallInstallHeaders(): HeadersInit {
+  const secret = process.env.BOSTON_TV_INSTALL_SECRET?.trim();
+  if (!secret) return {};
+  return { [INSTALL_SECRET_HEADER]: secret };
+}
+
 /** Extrai o número da planilha a partir do nome "1 - USA". */
 export function parseHallScreenNum(name: string): number | null {
   const m = /^(\d+)\s*-/.exec(name.trim());
@@ -15,7 +23,10 @@ export function parseHallScreenNum(name: string): number | null {
 export async function fetchHallInstallerScreens(): Promise<HallInstallerScreen[]> {
   try {
     const base = getServerBackendBaseUrl().replace(/\/$/, "");
-    const res = await fetch(`${base}/public/boston-tv/hall/screens`, { cache: "no-store" });
+    const res = await fetch(`${base}/public/boston-tv/hall/screens`, {
+      cache: "no-store",
+      headers: hallInstallHeaders(),
+    });
     if (!res.ok) return [];
     return (await res.json()) as HallInstallerScreen[];
   } catch {
@@ -28,6 +39,7 @@ export async function fetchHallPlayerToken(num: number): Promise<string | null> 
     const base = getServerBackendBaseUrl().replace(/\/$/, "");
     const res = await fetch(`${base}/public/boston-tv/hall/${num}/player-token`, {
       cache: "no-store",
+      headers: hallInstallHeaders(),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { playerToken?: string };

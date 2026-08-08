@@ -5,6 +5,12 @@ import {
 import { getFormation, pitchChipTranslateY } from "@/lib/press-kit-formations";
 import { cadastroPositionAbbrev } from "@/lib/press-kit-lineup";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
+import {
+  pressKitDirectorRoleRank,
+  pressKitRefereeRoleRank,
+  pressKitStaffRoleRank,
+  sortByPressKitRoleRank,
+} from "@/lib/press-kit-role-order";
 import type {
   GuiaCampaignLine,
   GuiaLineup,
@@ -15,7 +21,6 @@ import type {
   GuiaSquadPlayer,
   GuiaStandingRow,
   PrintPageSize,
-  RelatorioPessoaRow,
 } from "@/lib/futebol-relatorios.types";
 
 /** Identidade visual do guia — vermelho e azul Boston City Group. */
@@ -585,6 +590,15 @@ function styles(size: PrintPageSize): string {
       border-bottom: 2px solid ${C.red};
       padding-bottom: 1mm;
     }
+    .vis-staff-divider {
+      height: 0;
+      border-top: 1px solid ${C.line};
+      margin: 2mm 0 1.5mm;
+    }
+    .vis-staff-side-title.dir {
+      margin-top: 0;
+      border-bottom-color: ${C.navy};
+    }
     .vis-staff-side-row {
       display: flex;
       gap: 1.5mm;
@@ -715,8 +729,8 @@ function styles(size: PrintPageSize): string {
     .vis-bench-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.8mm 2.5mm; }
     .vis-bench-row { display: flex; gap: 1.2mm; align-items: flex-start; font-size: 7pt; }
     .vis-bench-photo {
-      width: 6.5mm; height: 8.5mm; object-fit: cover; object-position: center 12%;
-      border-radius: 1mm; border: 1px solid #FDBA74; background: ${C.soft}; flex: none;
+      width: 6.5mm; height: 8.5mm; object-fit: contain; object-position: center bottom;
+      border-radius: 0; border: 0; background: transparent; flex: none;
     }
     .vis-bench-photo.photo-fallback {
       display: flex; align-items: center; justify-content: center;
@@ -761,7 +775,9 @@ function pageFoot(club: string, opponent: string, label: string): string {
 }
 
 export type GuiaPartidaPrintOptions = {
-  /** Recortes (data-URL) só dos titulares — usados apenas na última página (gramado). */
+  /** Recortes dos convocados (playerId → data URL) — gramado e reservas */
+  playerCutouts?: Record<string, string>;
+  /** @deprecated use playerCutouts */
   starterCutouts?: Record<string, string>;
 };
 
@@ -770,7 +786,7 @@ export function buildGuiaPartidaPrintHtml(
   size: PrintPageSize = "A4",
   options?: GuiaPartidaPrintOptions,
 ): string {
-  const starterCutouts = options?.starterCutouts ?? {};
+  const playerCutouts = options?.playerCutouts ?? options?.starterCutouts ?? {};
   const { travel, config } = data;
   const club = travel.tenant.tradeName?.trim() || travel.tenant.name;
   const opponent = travel.opponentName?.trim() || "Adversário";
@@ -862,8 +878,18 @@ export function buildGuiaPartidaPrintHtml(
   );
 
   /* ---------------- A partida ---------------- */
-  const refereesHtml = config.referees.filter((r) => r.name.trim());
-  const directorsHtml = config.directors.filter((d) => d.name.trim());
+  const refereesHtml = sortByPressKitRoleRank(
+    config.referees.filter((r) => r.name.trim()),
+    (r) => r.role,
+    pressKitRefereeRoleRank,
+    (r) => r.name,
+  );
+  const directorsHtml = sortByPressKitRoleRank(
+    config.directors.filter((d) => d.name.trim()),
+    (d) => d.role,
+    pressKitDirectorRoleRank,
+    (d) => d.name,
+  );
 
   const matchSheet = sheet(
     `<div class="sheet-tag">A partida</div>
@@ -1122,7 +1148,7 @@ export function buildGuiaPartidaPrintHtml(
       const birth = formatBirth(p.birthDate);
       const ty = pitchChipTranslateY(slot.top);
       const pitchPhoto =
-        (p.playerId && starterCutouts[p.playerId]) || p.photoUrl;
+        (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
       return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
         <div class="vis-photo-wrap">
           ${photo(pitchPhoto, p.name, "vis-photo")}
@@ -1134,30 +1160,32 @@ export function buildGuiaPartidaPrintHtml(
       </div>`;
     })
     .join("");
-  const staffRank = (m: RelatorioPessoaRow) => {
-    const raw = (m.role ?? "").toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
-    const label = getStaffRoleLabel(m.role ?? "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/\p{M}/gu, "");
-    if (raw === "tecnico" || (label.includes("tecnico") && !label.includes("auxiliar"))) {
-      return 0;
-    }
-    if (label.includes("auxiliar")) return 1;
-    return 10;
-  };
-  const staffBeside = [...data.staff]
-    .sort((a, b) => {
-      const d = staffRank(a) - staffRank(b);
-      if (d !== 0) return d;
-      return a.name.localeCompare(b.name, "pt-BR");
-    })
+  const staffBeside = sortByPressKitRoleRank(
+    data.staff,
+    (s) => s.role,
+    pressKitStaffRoleRank,
+    (s) => s.name,
+  )
     .map((s) => {
       const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
       const short = staffPrintName(s.name);
       return `<div class="vis-staff-side-row">
         ${photo(s.photoUrl, s.name, "vis-staff-side-photo")}
         <div><strong>${esc(short)}</strong><span>${esc(role)}</span></div>
+      </div>`;
+    })
+    .join("");
+  const directorsBeside = sortByPressKitRoleRank(
+    config.directors.filter((d) => d.name.trim()),
+    (d) => d.role,
+    pressKitDirectorRoleRank,
+    (d) => d.name,
+  )
+    .map((d) => {
+      const short = staffPrintName(d.name);
+      return `<div class="vis-staff-side-row">
+        ${photo(d.photoUrl, d.name, "vis-staff-side-photo")}
+        <div><strong>${esc(short)}</strong><span>${esc(d.role || "Diretoria")}</span></div>
       </div>`;
     })
     .join("");
@@ -1169,8 +1197,10 @@ export function buildGuiaPartidaPrintHtml(
     .map((p) => {
       const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
       const nick = athletePrintName(p);
+      const benchPhoto =
+        (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
       return `<div class="vis-bench-row">
-        ${photo(p.photoUrl, p.name, "vis-bench-photo")}
+        ${photo(benchPhoto, p.name, "vis-bench-photo")}
         <span class="vis-bench-num">${esc(n)}</span>
         <div><strong>${esc(nick)}</strong><span>${esc(p.positionLabel)}</span></div>
       </div>`;
@@ -1185,6 +1215,13 @@ export function buildGuiaPartidaPrintHtml(
         <aside class="vis-staff-side">
           <p class="vis-staff-side-title">Comissão</p>
           ${staffBeside || `<p class="empty">—</p>`}
+          ${
+            directorsBeside
+              ? `<div class="vis-staff-divider"></div>
+          <p class="vis-staff-side-title dir">Diretoria</p>
+          ${directorsBeside}`
+              : ""
+          }
         </aside>
         <div class="vis-pitch-wrap">
           <div class="vis-pitch-mark pl-half"></div>

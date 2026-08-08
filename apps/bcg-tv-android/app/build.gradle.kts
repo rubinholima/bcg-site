@@ -16,6 +16,12 @@ android {
         buildConfigField("String", "PLAYER_BASE_URL", "\"https://www.bostoncitygroup.biz/tv/\"")
         buildConfigField("String", "API_BASE_URL", "\"https://www.bostoncitygroup.biz/api/public/boston-tv/\"")
         buildConfigField("String", "STREAM_ORIGIN", "\"https://origin.bostoncitygroup.biz\"")
+        // Mesmo valor de BOSTON_TV_INSTALL_SECRET na API/Web (local.properties ou env no build).
+        val installSecret =
+            (project.findProperty("BOSTON_TV_INSTALL_SECRET") as String?)
+                ?: System.getenv("BOSTON_TV_INSTALL_SECRET")
+                ?: ""
+        buildConfigField("String", "INSTALL_SECRET", "\"${installSecret.replace("\"", "\\\"")}\"")
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }

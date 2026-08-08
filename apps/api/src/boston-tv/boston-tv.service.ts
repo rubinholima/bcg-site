@@ -572,7 +572,7 @@ export class BostonTvService {
     const where =
       tenantFilter && tenantFilter.length > 0
         ? { tenantId: tenantFilter }
-        : tenantIds?.length
+        : tenantIds !== null
           ? { tenantId: { in: tenantIds } }
           : {};
     return this.prisma.bostonTvPlaylist.findMany({
@@ -589,7 +589,7 @@ export class BostonTvService {
     const where =
       tenantFilter && tenantFilter.length > 0
         ? { tenantId: tenantFilter }
-        : tenantIds?.length
+        : tenantIds !== null
           ? { tenantId: { in: tenantIds } }
           : {};
     const rows = await this.prisma.bostonTvScreen.findMany({

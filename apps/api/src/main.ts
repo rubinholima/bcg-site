@@ -38,7 +38,49 @@ async function bootstrap() {
   app.useBodyParser('urlencoded', { limit: JSON_BODY_LIMIT, extended: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.enableCors({ origin: true }); // permite localhost:3000 (Next) e outros em dev
+
+  const corsOrigins = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const defaultDevOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ];
+  const allowedOrigins =
+    corsOrigins.length > 0
+      ? corsOrigins
+      : process.env.NODE_ENV === 'production'
+        ? [
+            'https://www.bostoncitygroup.biz',
+            'https://bostoncitygroup.biz',
+            'https://origin.bostoncitygroup.biz',
+          ]
+        : defaultDevOrigins;
+  app.enableCors({
+    origin: (origin, callback) => {
+      // same-origin / server-to-server (sem Origin) — Next BFF
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(null, false);
+    },
+    credentials: true,
+  });
+
+  // Headers básicos de endurecimento (sem quebrar assets/API JSON)
+  app.use((_req, res: Response, next: NextFunction) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+  });
+
   // Garante charset UTF-8 em respostas JSON
   app.use((_req, res: Response, next: NextFunction) => {
     const origJson = res.json.bind(res) as (body: unknown) => Response;
@@ -48,6 +90,10 @@ async function bootstrap() {
     };
     next();
   });
-  await app.listen(Number(process.env.PORT ?? 3001), '0.0.0.0');
+
+  const host =
+    process.env.API_BIND_HOST?.trim() ||
+    (process.env.NODE_ENV === 'production' ? '127.0.0.1' : '0.0.0.0');
+  await app.listen(Number(process.env.PORT ?? 3001), host);
 }
 void bootstrap();

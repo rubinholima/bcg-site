@@ -436,7 +436,31 @@ export class TenantPressService {
     return photos.map((p) => this.toPhotoDto(p));
   }
 
-  async getUploadUrlBySlug(slug: string): Promise<{ token: string } | null> {
+  async getUploadAvailabilityBySlug(slug: string): Promise<{ available: boolean }> {
+    const token = await this.findActiveUploadTokenBySlug(slug);
+    return { available: !!token };
+  }
+
+  /**
+   * Devolve o token de upload.
+   * Se a página exige código: só com sessão válida.
+   * Se não exige: libera o token (página aberta) — nunca via GET público.
+   */
+  async getUploadUrlBySlugSecure(
+    slug: string,
+    sessionToken: string,
+  ): Promise<{ token: string } | null> {
+    const requires = await this.pageRequiresAccessCode(slug);
+    if (requires) {
+      if (!sessionToken?.trim()) return null;
+      const ok = await this.checkPageAccessSession(slug, sessionToken);
+      if (!ok) return null;
+    }
+    const token = await this.findActiveUploadTokenBySlug(slug);
+    return token ? { token } : null;
+  }
+
+  private async findActiveUploadTokenBySlug(slug: string): Promise<string | null> {
     const tenant = await this.findTenantBySlug(slug);
     if (!tenant) return null;
     const now = new Date();
@@ -447,8 +471,7 @@ export class TenantPressService {
       },
       orderBy: { createdAt: 'desc' },
     });
-    if (!t) return null;
-    return { token: t.token };
+    return t?.token ?? null;
   }
 
   async getPhotosByGalleryToken(

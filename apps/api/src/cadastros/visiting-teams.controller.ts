@@ -1,9 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DashboardRolesGuard } from '../auth/roles.guard';
 import { VisitingTeamsService } from './visiting-teams.service';
 import { CreateVisitingTeamDto } from './dto/create-visiting-team.dto';
 import { UpdateVisitingTeamDto } from './dto/update-visiting-team.dto';
 
 @Controller('visiting-teams')
+@UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class VisitingTeamsController {
   constructor(private readonly service: VisitingTeamsService) {}
 

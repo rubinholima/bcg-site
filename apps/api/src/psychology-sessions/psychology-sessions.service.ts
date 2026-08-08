@@ -50,7 +50,7 @@ export class PsychologySessionsService {
     const where: Record<string, unknown> = {};
     if (params?.tenantId) {
       where.tenantId = params.tenantId;
-    } else if (allowedTenantIds?.length) {
+    } else if (allowedTenantIds !== null) {
       where.tenantId = { in: allowedTenantIds };
     }
     if (params?.sessionType) where.sessionType = params.sessionType;
@@ -73,7 +73,7 @@ export class PsychologySessionsService {
       include: { tenant: { select: { id: true, name: true, slug: true } } },
     });
     if (!row) throw new NotFoundException('Sessão não encontrada');
-    if (allowedTenantIds?.length && !allowedTenantIds.includes(row.tenantId)) {
+    if (allowedTenantIds !== null && !allowedTenantIds.includes(row.tenantId)) {
       throw new ForbiddenException('Acesso negado a esta empresa.');
     }
     return row;

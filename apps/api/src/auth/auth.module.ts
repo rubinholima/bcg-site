@@ -10,7 +10,25 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { JWT_ISSUER } from './credentials-auth.service';
 import { TenantAccessService } from './tenant-access.service';
 
-const jwtSecret = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
+function resolveJwtSecret(): string {
+  const fromEnv = process.env.JWT_SECRET?.trim();
+  const isProd =
+    process.env.NODE_ENV === 'production' ||
+    process.env.BCG_ENV === 'production';
+  if (isProd) {
+    if (!fromEnv || fromEnv === 'dev-secret-change-in-production') {
+      throw new Error(
+        'JWT_SECRET obrigatório em produção (valor forte; não use o fallback de desenvolvimento).',
+      );
+    }
+    if (fromEnv.length < 32) {
+      throw new Error('JWT_SECRET em produção deve ter pelo menos 32 caracteres.');
+    }
+  }
+  return fromEnv || 'dev-secret-change-in-production';
+}
+
+const jwtSecret = resolveJwtSecret();
 
 @Module({
   imports: [

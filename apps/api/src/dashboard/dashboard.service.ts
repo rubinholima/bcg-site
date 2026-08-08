@@ -100,12 +100,12 @@ export class DashboardService {
     };
   }
 
-  /** KPIs do painel company_admin — escopo por tenantIds (null = todas exceto BCG master). */
+  /** KPIs do painel company_admin — escopo por tenantIds (null = todas exceto BCG master; [] = nenhuma). */
   async getCompanyStats(tenantIds: string[] | null): Promise<CompanyDashboardStatsDto> {
     const tenantWhere =
-      tenantIds && tenantIds.length > 0
-        ? { id: { in: tenantIds } }
-        : { slug: { not: TENANT_COUNT_EXCLUDE_SLUG } };
+      tenantIds === null
+        ? { slug: { not: TENANT_COUNT_EXCLUDE_SLUG } }
+        : { id: { in: tenantIds } };
 
     const tenants = await this.prisma.tenant.findMany({
       where: tenantWhere,

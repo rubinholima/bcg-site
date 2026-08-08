@@ -49,7 +49,7 @@ export class PlayersService {
   ) {}
 
   private assertTenantAccess(allowedTenantIds: string[] | null | undefined, tenantId: string): void {
-    if (!allowedTenantIds?.length) return;
+    if (allowedTenantIds === null || allowedTenantIds === undefined) return;
     if (!allowedTenantIds.includes(tenantId)) {
       throw new ForbiddenException('Acesso negado a esta empresa.');
     }
@@ -60,7 +60,7 @@ export class PlayersService {
     allowedTenantIds: string[] | null | undefined,
     requestedTenantId?: string,
   ): void {
-    if (!allowedTenantIds?.length) {
+    if (allowedTenantIds === null || allowedTenantIds === undefined) {
       if (requestedTenantId) where.tenantId = requestedTenantId;
       return;
     }

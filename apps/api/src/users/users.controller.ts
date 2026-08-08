@@ -14,6 +14,8 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
+import { ModuleAccessGuard } from '../auth/module-access.guard';
+import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { UsersService, UserRole } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,7 +23,8 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, DashboardRolesGuard)
+@UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
+@RequireModule('usuarios')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,

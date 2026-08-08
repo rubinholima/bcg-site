@@ -89,7 +89,7 @@ export class TenantsService {
     try {
       const where: Prisma.TenantWhereInput = {
         slug: { not: TenantsService.GROUP_MASTER_SLUG },
-        ...(allowedTenantIds?.length ? { id: { in: allowedTenantIds } } : {}),
+        ...(allowedTenantIds !== null ? { id: { in: allowedTenantIds } } : {}),
       };
       const tenants = await this.prisma.tenant.findMany({
         where,
@@ -117,7 +117,7 @@ export class TenantsService {
       if (!row) {
         throw new NotFoundException(`Empresa com ID "${id}" não encontrada`);
       }
-      if (allowedTenantIds?.length && !allowedTenantIds.includes(row.id)) {
+      if (allowedTenantIds !== null && !allowedTenantIds.includes(row.id)) {
         throw new NotFoundException(`Empresa com ID "${id}" não encontrada`);
       }
       return mapTenant(row);
@@ -131,9 +131,9 @@ export class TenantsService {
   }
 
   async create(dto: CreateTenantDto, allowedTenantIds: string[] | null = null): Promise<TenantResponseDto> {
-    if (allowedTenantIds?.length) {
+    if (allowedTenantIds !== null) {
       throw new ForbiddenException(
-        'Utilizador com escopo por empresa não pode criar novas empresas. Peça a um super admin.',
+        'Usuário com escopo por empresa não pode criar novas empresas. Peça a um super admin.',
       );
     }
     try {

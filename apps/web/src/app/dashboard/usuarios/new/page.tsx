@@ -15,13 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import type { UserRole } from "@/types/user";
 import { selectableRolesForActor, roleLabel } from "@/lib/user-roles";
 import { usePlatformRoles } from "@/hooks/usePlatformRoles";
 import { isValidUsername, suggestUsernameFromName } from "@/lib/username";
-
-const DEFAULT_PASSWORD = "720425";
 
 export default function NovoUsuarioPage() {
   const router = useRouter();
@@ -33,6 +32,11 @@ export default function NovoUsuarioPage() {
   const [error, setError] = useState<string | null>(null);
   const [tenants, setTenants] = useState<{ id: string; name: string }[]>([]);
   const [usernameTouched, setUsernameTouched] = useState(false);
+  const [tempPasswordModal, setTempPasswordModal] = useState<{
+    open: boolean;
+    password: string;
+    username: string;
+  }>({ open: false, password: "", username: "" });
   const [formData, setFormData] = useState({
     email: "",
     username: "",
@@ -101,6 +105,17 @@ export default function NovoUsuarioPage() {
         const text = await res.text();
         throw new Error(text || "Erro ao criar usuário");
       }
+      const data = (await res.json()) as { temporaryPassword?: string; username?: string };
+      const temporaryPassword = data.temporaryPassword?.trim() ?? "";
+      if (temporaryPassword) {
+        setTempPasswordModal({
+          open: true,
+          password: temporaryPassword,
+          username: data.username || username,
+        });
+        setLoading(false);
+        return;
+      }
       router.push("/dashboard/usuarios?success=true");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar usuário");
@@ -113,10 +128,6 @@ export default function NovoUsuarioPage() {
       <Card>
         <CardHeader>
           <CardTitle>Dados do Usuário</CardTitle>
-          <CardDescription>
-            Senha padrão <span className="font-mono">{DEFAULT_PASSWORD}</span> — o usuário será
-            obrigado a trocar no primeiro login.
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -208,12 +219,12 @@ export default function NovoUsuarioPage() {
               </Select>
             </div>
 
-            {canManageTenantScope && tenants.length > 0 && (
+            {canManageTenantScope && tenants.length > 0 && formData.role !== "super_admin" && (
               <div className="space-y-3 rounded-lg border border-border p-4">
                 <div>
                   <Label>Empresas / clubes que este usuário pode ver</Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Nenhuma selecionada = vê todas as empresas. Marque uma ou mais para restringir.
+                    Sem empresas marcadas = sem acesso a dados por clube. Marque ao menos uma.
                   </p>
                 </div>
                 <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
@@ -258,6 +269,19 @@ export default function NovoUsuarioPage() {
           </form>
         </CardContent>
       </Card>
+
+      <FeedbackModal
+        open={tempPasswordModal.open}
+        onOpenChange={(open) => {
+          setTempPasswordModal((prev) => ({ ...prev, open }));
+          if (!open) {
+            router.push("/dashboard/usuarios?success=true");
+          }
+        }}
+        variant="success"
+        title="Usuário criado"
+        message={`Login: ${tempPasswordModal.username}\nSenha temporária: ${tempPasswordModal.password}\n\nAnote agora — ela não será mostrada de novo. O usuário troca no primeiro login.`}
+      />
     </div>
   );
 }

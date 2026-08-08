@@ -39,7 +39,7 @@ export class ConsultationsService {
   }
 
   private tenantScopeWhere(allowedTenantIds: string[] | null | undefined): { tenantId?: { in: string[] } } {
-    if (!allowedTenantIds?.length) return {};
+    if (allowedTenantIds === null || allowedTenantIds === undefined) return {};
     return { tenantId: { in: allowedTenantIds } };
   }
 
@@ -168,7 +168,7 @@ export class ConsultationsService {
           select: { tenantId: true },
         });
         if (!session) return false;
-        if (allowedTenantIds?.length && !allowedTenantIds.includes(session.tenantId)) {
+        if (allowedTenantIds !== null && !allowedTenantIds.includes(session.tenantId)) {
           throw new ForbiddenException('Acesso negado a esta empresa.');
         }
         await this.prisma.psychologySession.delete({ where: { id: sessionId } });
@@ -189,7 +189,7 @@ export class ConsultationsService {
       select: { onlineConsultations: true, tenantId: true },
     });
     if (!player) return false;
-    if (allowedTenantIds?.length && !allowedTenantIds.includes(player.tenantId)) {
+    if (allowedTenantIds !== null && !allowedTenantIds.includes(player.tenantId)) {
       throw new ForbiddenException('Acesso negado a esta empresa.');
     }
 
@@ -230,7 +230,7 @@ export class ConsultationsService {
           select: { tenantId: true },
         });
         if (!existing) return false;
-        if (allowedTenantIds?.length && !allowedTenantIds.includes(existing.tenantId)) {
+        if (allowedTenantIds !== null && !allowedTenantIds.includes(existing.tenantId)) {
           throw new ForbiddenException('Acesso negado a esta empresa.');
         }
         const row = await this.prisma.psychologySession.update({
@@ -265,7 +265,7 @@ export class ConsultationsService {
       select: { onlineConsultations: true, name: true, registrationProfile: true, tenantId: true },
     });
     if (!player) return false;
-    if (allowedTenantIds?.length && !allowedTenantIds.includes(player.tenantId)) {
+    if (allowedTenantIds !== null && !allowedTenantIds.includes(player.tenantId)) {
       throw new ForbiddenException('Acesso negado a esta empresa.');
     }
 

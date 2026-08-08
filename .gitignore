@@ -1,6 +1,7 @@
 node_modules
 .env
 .env.*
+apps/bcg-tv-android/local.properties
 dist
 .next
 coverage
@@ -10,3 +11,20 @@ apps/api/data/beatscode-*.json
 apps/api/data/beatscode-clothing/files/
 apps/api/data/beatscode-clothing/*.png
 apps/web/public/media/logistica-uniforms/
+
+# Lixo local / probes — nunca versionar
+backup_clean.sql
+*.apk
+temp_*.js
+temp_*.txt
+apps/api/scripts/probe-*.ts
+apps/api/scripts/probe-*.mjs
+apps/api/scripts/probe-*.cjs
+apps/api/scripts/discover-beatscode-*.ts
+apps/api/data/beatscode-*/
+apps/api/data/attach-dict-out.txt
+apps/api/data/beatscode-index-bundle.js
+apps/api/apps/
+scripts/extract-*.mjs
+scripts/find-term-context.mjs
+scripts/parse-beatscode-paths.mjs

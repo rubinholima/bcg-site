@@ -7,7 +7,8 @@ services:
       POSTGRES_PASSWORD: bcg_password
       POSTGRES_DB: bcg_platform
     ports:
-      - "5432:5432"
+      # Só localhost — evita Postgres aberto na rede local/LAN
+      - "127.0.0.1:5432:5432"
     volumes:
       - bcg_pgdata:/var/lib/postgresql/data
 

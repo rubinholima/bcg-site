@@ -1,9 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DashboardRolesGuard } from '../auth/roles.guard';
 import { TenantKindsService } from './tenant-kinds.service';
 import { CreateTenantKindDto } from './dto/create-tenant-kind.dto';
 import { UpdateTenantKindDto } from './dto/update-tenant-kind.dto';
 
 @Controller('tenant-kinds')
+@UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class TenantKindsController {
   constructor(private readonly tenantKindsService: TenantKindsService) {}
 

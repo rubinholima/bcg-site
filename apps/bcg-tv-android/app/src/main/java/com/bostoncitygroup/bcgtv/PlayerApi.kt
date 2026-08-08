@@ -59,6 +59,14 @@ object PlayerApi {
     private val base = BuildConfig.API_BASE_URL.trimEnd('/')
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
+    private fun Request.Builder.withInstallSecret(): Request.Builder {
+        val secret = BuildConfig.INSTALL_SECRET.trim()
+        if (secret.isNotEmpty()) {
+            header("X-Boston-Tv-Install-Secret", secret)
+        }
+        return this
+    }
+
     /** Identifica o APK nativo — API preserva ndi_stream (sem fallback HLS). */
     private fun apiGet(url: String): Request =
         Request.Builder()
@@ -66,6 +74,7 @@ object PlayerApi {
             .header("User-Agent", "BcgTvPlayer/${BuildConfig.VERSION_NAME} (Android)")
             .header("X-BcgTv-Client", "native")
             .header("Cache-Control", "no-store")
+            .withInstallSecret()
             .get()
             .build()
 
@@ -74,6 +83,7 @@ object PlayerApi {
             .url(url)
             .header("User-Agent", "BcgTvPlayer/${BuildConfig.VERSION_NAME} (Android)")
             .header("X-BcgTv-Client", "native")
+            .withInstallSecret()
             .post(body.toRequestBody(jsonType))
             .build()
 

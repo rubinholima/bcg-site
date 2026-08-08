@@ -183,21 +183,6 @@ export default async function EventoSlugPage({
   const headerBlock = blocks.find((b) => b.type === "header");
   const footerBlock = blocks.find((b) => b.type === "footer");
 
-  const base = getBackendOriginForServerFetch();
-  let uploadToken: string | null = null;
-  try {
-    const tokenRes = await fetch(
-      `${base}/public/events/${encodeURIComponent(event.slug)}/upload-url`,
-      { cache: "no-store" },
-    );
-    if (tokenRes.ok) {
-      const data = (await tokenRes.json()) as { token?: string };
-      uploadToken = data?.token ?? null;
-    }
-  } catch {
-    // ignora
-  }
-
   const bgColor = (theme.backgroundColor as string)?.trim() || "#0f0f12";
   const bgImage = (theme.backgroundImage as string)?.trim();
   const overlayOpacity = typeof theme.backgroundOverlayOpacity === "number"
@@ -248,7 +233,6 @@ export default async function EventoSlugPage({
             slug={event.slug}
             lang={lang}
             page={page}
-            initialUploadToken={uploadToken}
             fixturesContext="event"
             eventPageMeta={{
               name: event.name,

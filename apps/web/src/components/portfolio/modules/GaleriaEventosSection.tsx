@@ -48,24 +48,19 @@ export function GaleriaEventosSection({
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      fetch(`/api/public/events/${encodeURIComponent(slug)}/photos`).then(safeJson),
-      initialUploadToken ? Promise.resolve(null) : fetch(`/api/public/events/${encodeURIComponent(slug)}/upload-url`).then(safeJson),
-    ])
-      .then(([photosData, uploadData]) => {
-        if (!cancelled) {
-          if (Array.isArray(photosData)) setPhotos(photosData);
-          if (!initialUploadToken && uploadData) {
-            const token = uploadData?.token ?? uploadData?.uploadUrl?.split("/eventos/upload/")[1];
-            if (token) setUploadUrl(`/eventos/upload/${token}`);
-          }
-        }
+    // Token público por slug foi removido — só usa link privado (initialUploadToken / dashboard).
+    fetch(`/api/public/events/${encodeURIComponent(slug)}/photos`)
+      .then(safeJson)
+      .then((photosData) => {
+        if (!cancelled && Array.isArray(photosData)) setPhotos(photosData);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => { cancelled = true; };
-  }, [slug, initialUploadToken]);
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
 
   const title = blockTitle(block, lang) || (lang === "pt" ? "Galeria de fotos" : "Photo gallery");
   const bgColor = (block.config?.backgroundColor as string)?.trim() || "#0f0f12";

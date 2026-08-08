@@ -4,7 +4,7 @@ import { cadastroUpper } from '../common/cadastro-text';
 import { PrismaService } from '../prisma/prisma.service';
 import { RolesService } from '../roles/roles.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { DEFAULT_NEW_USER_PASSWORD } from './user-credentials.constants';
+import { generateTemporaryPassword } from './user-credentials.constants';
 import { ensureUniqueUsername, normalizeUsernameInput } from './user-username.util';
 
 export type UserRole = string;
@@ -97,7 +97,9 @@ export class UsersService {
     return this.mapUser(user);
   }
 
-  async create(dto: CreateUserDto): Promise<{ username: string; sub: string }> {
+  async create(
+    dto: CreateUserDto,
+  ): Promise<{ username: string; sub: string; temporaryPassword: string }> {
     const role = dto.role?.trim() || 'editor';
     await this.assertAssignableRole(role);
     const email = dto.email.trim().toLowerCase();
@@ -110,7 +112,8 @@ export class UsersService {
     if (usernameTaken) {
       throw new ConflictException('Já existe um usuário com este username');
     }
-    const passwordHash = await bcrypt.hash(DEFAULT_NEW_USER_PASSWORD, SALT_ROUNDS);
+    const temporaryPassword = generateTemporaryPassword(12);
+    const passwordHash = await bcrypt.hash(temporaryPassword, SALT_ROUNDS);
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -124,7 +127,7 @@ export class UsersService {
     if (dto.tenantIds !== undefined) {
       await this.replaceUserTenants(user.id, dto.tenantIds);
     }
-    return { username: user.username, sub: user.id };
+    return { username: user.username, sub: user.id, temporaryPassword };
   }
 
   async updateRole(username: string, role: UserRole): Promise<void> {

@@ -6,8 +6,26 @@ function isAllowedImageUrl(url: string): boolean {
   try {
     const u = new URL(url);
     if (u.protocol !== "https:" && u.protocol !== "http:") return false;
-    if (["localhost", "127.0.0.1"].includes(u.hostname)) return false;
-    if (/^10\.|^172\.(1[6-9]|2[0-9]|3[01])\.|^192\.168\./.test(u.hostname)) return false;
+    const host = u.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "0.0.0.0" ||
+      host === "::1" ||
+      host === "metadata" ||
+      host.endsWith(".internal") ||
+      host.endsWith(".local")
+    ) {
+      return false;
+    }
+    // Redes privadas + link-local + IMDS AWS
+    if (
+      /^10\.|^172\.(1[6-9]|2[0-9]|3[01])\.|^192\.168\.|^169\.254\.|^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\./.test(
+        host,
+      )
+    ) {
+      return false;
+    }
     return true;
   } catch {
     return false;

@@ -7,12 +7,16 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { DashboardRolesGuard } from '../auth/roles.guard';
 import { TechnicalStaffService } from './technical-staff.service';
 import { CreateTechnicalStaffDto } from './dto/create-technical-staff.dto';
 import { UpdateTechnicalStaffDto } from './dto/update-technical-staff.dto';
 
 @Controller('technical-staff')
+@UseGuards(JwtAuthGuard, DashboardRolesGuard)
 export class TechnicalStaffController {
   constructor(private readonly service: TechnicalStaffService) {}
 

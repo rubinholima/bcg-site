@@ -128,7 +128,7 @@ export class DiretoriaService {
 
   private tenantScopeWhere(allowedTenantIds: string[] | null): Prisma.TenantWhereInput {
     const w: Prisma.TenantWhereInput = { slug: { not: 'bcg' } };
-    if (allowedTenantIds?.length) w.id = { in: allowedTenantIds };
+    if (allowedTenantIds !== null) w.id = { in: allowedTenantIds };
     return w;
   }
 
@@ -234,13 +234,13 @@ export class DiretoriaService {
       this.prisma.player.count({
         where: {
           createdAt: { gte: startOfMonth },
-          ...(allowedTenantIds?.length ? { tenantId: { in: allowedTenantIds } } : {}),
+          ...(allowedTenantIds !== null ? { tenantId: { in: allowedTenantIds } } : {}),
         },
       }),
       this.prisma.socioMember.count({
         where: {
           joinedAt: { gte: startOfMonth },
-          ...(allowedTenantIds?.length ? { tenantId: { in: allowedTenantIds } } : {}),
+          ...(allowedTenantIds !== null ? { tenantId: { in: allowedTenantIds } } : {}),
         },
       }),
     ]);
@@ -376,9 +376,10 @@ export class DiretoriaService {
 
     const result = await Promise.all(
       months.map(async (m) => {
-        const tenantFilter = allowedTenantIds?.length
-          ? { tenantId: { in: allowedTenantIds } as const }
-          : {};
+        const tenantFilter =
+          allowedTenantIds !== null
+            ? { tenantId: { in: allowedTenantIds } as const }
+            : {};
         const [players, socios, orders] = await Promise.all([
           this.prisma.player.count({
             where: { createdAt: { gte: m.start, lte: m.end }, ...tenantFilter },

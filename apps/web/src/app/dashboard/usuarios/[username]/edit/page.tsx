@@ -249,9 +249,7 @@ export default function EditUsuarioPage() {
                 <div>
                   <Label>Empresas / clubes visíveis</Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    A lista é atualizada ao voltar para esta aba (ex.: depois de cadastrar uma empresa nova).
-                    Nenhuma selecionada = o usuário vê todas as empresas (comportamento padrão). Selecione
-                    uma ou mais para restringir (ex.: só Villa Nova).
+                    Sem empresas marcadas = sem acesso a dados por clube (exceto super admin).
                   </p>
                 </div>
                 <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
