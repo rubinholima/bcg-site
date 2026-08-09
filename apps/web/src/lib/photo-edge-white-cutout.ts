@@ -1,7 +1,6 @@
 /**
- * Remove fundo conectado às bordas da foto (flood-fill por cor).
- * Funciona com branco de estúdio e outros fundos (cinza, verde, azul…).
- * Preserva cores no meio da imagem que não tocam a borda.
+ * Remove fundo branco de estúdio conectado às bordas da foto (flood-fill).
+ * Preserva branco do uniforme / pele clara no meio da imagem.
  */
 
 import { getPublicImageUrl, mediaKeyFromStoredUrl } from "@/lib/media-url";
@@ -14,92 +13,110 @@ export function cutoutSourceUrl(photoUrl: string | null | undefined): string | n
   return getPublicImageUrl(photoUrl) || photoUrl.trim();
 }
 
-function colorDist(
-  r1: number,
-  g1: number,
-  b1: number,
-  r2: number,
-  g2: number,
-  b2: number,
-): number {
-  const dr = r1 - r2;
-  const dg = g1 - g2;
-  const db = b1 - b2;
-  return Math.sqrt(dr * dr + dg * dg + db * db);
+/** Branco / off-white de estúdio (baixa saturação + alto brilho). */
+function isStudioWhite(
+  data: Uint8ClampedArray,
+  pixelIndex: number,
+  minChannel: number,
+  maxSpread: number,
+): boolean {
+  const i = pixelIndex * 4;
+  const a = data[i + 3] ?? 0;
+  if (a < 12) return false;
+  const r = data[i] ?? 0;
+  const g = data[i + 1] ?? 0;
+  const b = data[i + 2] ?? 0;
+  if (r < minChannel || g < minChannel || b < minChannel) return false;
+  const spread = Math.max(r, g, b) - Math.min(r, g, b);
+  return spread <= maxSpread;
 }
 
-/** Mutates ImageData — deixa transparente o fundo ligado às bordas. */
+/** Pixels de pele / cabelo / short — vizinho opaco assim = sujeito, não auréola. */
+function hasSubjectNeighbor(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+  radius = 2,
+): boolean {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      const i = (ny * width + nx) * 4;
+      if ((data[i + 3] ?? 0) < 12) continue;
+      const r = data[i] ?? 0;
+      const g = data[i + 1] ?? 0;
+      const b = data[i + 2] ?? 0;
+      const avg = (r + g + b) / 3;
+      const spread = Math.max(r, g, b) - Math.min(r, g, b);
+      // tom de pele, cabelo escuro, short verde/azul, etc.
+      if (avg < 175 || spread > 55) return true;
+    }
+  }
+  return false;
+}
+
+/** Mutates ImageData — deixa transparente o branco ligado às bordas. */
 export function cutoutEdgeWhiteInImageData(imageData: ImageData): void {
   const { data, width, height } = imageData;
   const n = width * height;
   const visited = new Uint8Array(n);
-  type Seed = { p: number; sr: number; sg: number; sb: number };
-  const stack: Seed[] = [];
+  const stack: number[] = [];
 
   const at = (x: number, y: number) => y * width + x;
 
-  const pushSeed = (x: number, y: number) => {
+  /** Retrato 3×4: sujeito no centro — não remove branco da camisa no miolo. */
+  const inSubjectCore = (x: number, y: number) =>
+    x >= width * 0.14 &&
+    x <= width * 0.86 &&
+    y >= height * 0.08 &&
+    y <= height * 0.96;
+
+  const tryPush = (x: number, y: number, minCh: number, spread: number) => {
     if (x < 0 || y < 0 || x >= width || y >= height) return;
     const p = at(x, y);
-    const i = p * 4;
-    if ((data[i + 3] ?? 0) < 12) return;
-    stack.push({
-      p,
-      sr: data[i] ?? 0,
-      sg: data[i + 1] ?? 0,
-      sb: data[i + 2] ?? 0,
-    });
+    if (visited[p]) return;
+    if (!isStudioWhite(data, p, minCh, spread)) return;
+    stack.push(p);
   };
 
-  const flood = (tolerance: number) => {
+  const flood = (minCh: number, spread: number) => {
     stack.length = 0;
     visited.fill(0);
     for (let x = 0; x < width; x++) {
-      pushSeed(x, 0);
-      pushSeed(x, height - 1);
+      tryPush(x, 0, minCh, spread);
+      tryPush(x, height - 1, minCh, spread);
     }
     for (let y = 0; y < height; y++) {
-      pushSeed(0, y);
-      pushSeed(width - 1, y);
+      tryPush(0, y, minCh, spread);
+      tryPush(width - 1, y, minCh, spread);
     }
-
     while (stack.length) {
-      const cur = stack.pop()!;
-      const p = cur.p;
+      const p = stack.pop()!;
       if (visited[p]) continue;
-      const i = p * 4;
-      if ((data[i + 3] ?? 0) < 12) {
-        visited[p] = 1;
-        continue;
-      }
-      const r = data[i] ?? 0;
-      const g = data[i + 1] ?? 0;
-      const b = data[i + 2] ?? 0;
-      if (colorDist(r, g, b, cur.sr, cur.sg, cur.sb) > tolerance) continue;
       visited[p] = 1;
-      data[i + 3] = 0;
+      if (!isStudioWhite(data, p, minCh, spread)) continue;
       const x = p % width;
       const y = (p / width) | 0;
+      if (!inSubjectCore(x, y)) data[p * 4 + 3] = 0;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           if (dx === 0 && dy === 0) continue;
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-          const np = at(nx, ny);
-          if (visited[np]) continue;
-          stack.push({ p: np, sr: cur.sr, sg: cur.sg, sb: cur.sb });
+          tryPush(x + dx, y + dy, minCh, spread);
         }
       }
     }
   };
 
-  // Passo 1: fundo da borda (qualquer cor) com tolerância moderada
-  flood(38);
-  // Passo 2: gradiente / sombra do fundo ainda ligada ao furo
-  flood(52);
+  // Só fundo branco/off-white da borda — não remove verde/cinza do estúdio inteiro
+  flood(230, 24);
+  flood(212, 36);
 
-  // Remove auréola: pixels claros/semelhantes ao fundo colados em transparente
+  // Auréola: só branco quase puro colado no furo, longe de pele/cabelo/short
   const scrubFringe = () => {
     const kill: number[] = [];
     for (let y = 1; y < height - 1; y++) {
@@ -107,52 +124,31 @@ export function cutoutEdgeWhiteInImageData(imageData: ImageData): void {
         const p = at(x, y);
         const i = p * 4;
         if ((data[i + 3] ?? 0) === 0) continue;
-        let touchesHole = false;
-        let holeR = 0;
-        let holeG = 0;
-        let holeB = 0;
-        let holeSamples = 0;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const ni = at(x + dx, y + dy) * 4;
-            if ((data[ni + 3] ?? 0) < 12) {
-              touchesHole = true;
-            } else if (holeSamples < 4) {
-              // amostra vizinhos opacos próximos da borda do sujeito
-              holeR += data[ni] ?? 0;
-              holeG += data[ni + 1] ?? 0;
-              holeB += data[ni + 2] ?? 0;
-              holeSamples += 1;
-            }
-          }
-        }
-        if (!touchesHole) continue;
         const r = data[i] ?? 0;
         const g = data[i + 1] ?? 0;
         const b = data[i + 2] ?? 0;
         const avg = (r + g + b) / 3;
+        if (avg < 238) continue;
         const spread = Math.max(r, g, b) - Math.min(r, g, b);
-        // near-white fringe clássico
-        if (avg >= 185 && spread <= 48) {
-          kill.push(p);
-          continue;
-        }
-        // fringe colorido: bem diferente do sujeito vizinho e próximo de cinza/cor sólida
-        if (holeSamples > 0) {
-          const sr = holeR / holeSamples;
-          const sg = holeG / holeSamples;
-          const sb = holeB / holeSamples;
-          if (colorDist(r, g, b, sr, sg, sb) >= 55 && spread <= 55) {
-            kill.push(p);
+        if (spread > 28) continue;
+        if (inSubjectCore(x, y)) continue;
+        if (hasSubjectNeighbor(data, width, height, x, y)) continue;
+        let touchesHole = false;
+        for (let dy = -1; dy <= 1 && !touchesHole; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            if ((data[at(x + dx, y + dy) * 4 + 3] ?? 0) < 12) {
+              touchesHole = true;
+              break;
+            }
           }
         }
+        if (touchesHole) kill.push(p);
       }
     }
     for (const p of kill) data[p * 4 + 3] = 0;
   };
 
-  scrubFringe();
   scrubFringe();
 }
 
@@ -168,7 +164,7 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Retorna data URL PNG com fundo de borda removido.
+ * Retorna data URL PNG com fundo branco de borda removido.
  * Em falha (CORS etc.), devolve a URL original.
  */
 export async function cutoutWhiteBackgroundUrl(
@@ -198,7 +194,7 @@ export async function cutoutWhiteBackgroundUrl(
 }
 
 /** Cache em memória por URL de origem (sessão). Bump vN ao mudar o algoritmo. */
-const CUTOUT_CACHE_VER = "v4-any-bg";
+const CUTOUT_CACHE_VER = "v5-white-core";
 const cutoutCache = new Map<string, Promise<string | null>>();
 
 export function cutoutWhiteBackgroundUrlCached(

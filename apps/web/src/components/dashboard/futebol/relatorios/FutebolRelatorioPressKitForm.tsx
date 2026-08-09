@@ -163,7 +163,7 @@ function AthletePhoto3x4({
   photoUrl,
   name,
   size = "md",
-  /** Remove fundo da foto (qualquer cor ligada à borda) */
+  /** Remove fundo branco de estúdio ligado à borda */
   useCutout = false,
   /** @deprecated use useCutout */
   onPitch = false,
