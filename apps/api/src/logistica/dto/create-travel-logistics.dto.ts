@@ -137,12 +137,14 @@ export class CreateTravelLogisticsDto {
   @IsArray()
   expenseLines?: Array<{
     id?: string;
+    kind?: 'previsto' | 'adicional';
     expenseCategoryId?: string | null;
     serviceProductId?: string | null;
     supplierId?: string | null;
     paymentTypeId?: string | null;
     description?: string;
     amount?: number | null;
+    receiptUrl?: string | null;
   }>;
 
   @IsOptional()

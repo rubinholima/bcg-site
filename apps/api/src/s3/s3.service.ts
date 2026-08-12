@@ -885,6 +885,129 @@ export class S3Service {
   }
 
   /**
+   * Comprovantes de viagem (PDF ou imagem).
+   * Salva em media/logistica_comprovantes/{uuid}.{ext}
+   */
+  async uploadLogisticaComprovante(
+    buffer: Buffer,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; url: string }> {
+    const lower = filename.toLowerCase();
+    let ext = 'pdf';
+    let contentType = 'application/pdf';
+    if (lower.endsWith('.png')) {
+      ext = 'png';
+      contentType = 'image/png';
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      ext = 'jpg';
+      contentType = 'image/jpeg';
+    } else if (lower.endsWith('.webp')) {
+      ext = 'webp';
+      contentType = 'image/webp';
+    } else if (lower.endsWith('.pdf')) {
+      ext = 'pdf';
+      contentType = 'application/pdf';
+    } else if (mimeType?.startsWith('image/')) {
+      ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+      contentType = mimeType;
+    }
+
+    if (contentType.startsWith('image/')) {
+      const optimized = await this.normalizeImageUpload(buffer, contentType, 'document');
+      buffer = optimized.buffer;
+      contentType = optimized.contentType;
+      ext = optimized.ext;
+    }
+
+    const key = `${MEDIA_PREFIX}logistica_comprovantes/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar comprovante de viagem para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
+   * Anexos do módulo Treinadores (PDF, imagem ou vídeo).
+   * Salva em media/futebol_treinadores/{uuid}.{ext}
+   */
+  async uploadFutebolTreinadoresFile(
+    buffer: Buffer,
+    filename: string,
+    mimeType?: string,
+  ): Promise<{ key: string; url: string }> {
+    const lower = filename.toLowerCase();
+    let ext = 'pdf';
+    let contentType = 'application/pdf';
+    if (lower.endsWith('.png')) {
+      ext = 'png';
+      contentType = 'image/png';
+    } else if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) {
+      ext = 'jpg';
+      contentType = 'image/jpeg';
+    } else if (lower.endsWith('.webp')) {
+      ext = 'webp';
+      contentType = 'image/webp';
+    } else if (lower.endsWith('.pdf')) {
+      ext = 'pdf';
+      contentType = 'application/pdf';
+    } else if (lower.endsWith('.mp4')) {
+      ext = 'mp4';
+      contentType = 'video/mp4';
+    } else if (lower.endsWith('.webm')) {
+      ext = 'webm';
+      contentType = 'video/webm';
+    } else if (mimeType?.startsWith('image/')) {
+      ext = mimeType.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+      contentType = mimeType;
+    } else if (mimeType?.startsWith('video/')) {
+      ext = mimeType.split('/')[1] ?? 'mp4';
+      contentType = mimeType;
+    }
+
+    if (contentType.startsWith('image/')) {
+      const optimized = await this.normalizeImageUpload(buffer, contentType, 'document');
+      buffer = optimized.buffer;
+      contentType = optimized.contentType;
+      ext = optimized.ext;
+    }
+
+    const key = `${MEDIA_PREFIX}futebol_treinadores/${randomUUID()}.${ext}`;
+
+    try {
+      await this.client.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException(
+        `Falha ao enviar anexo de treinadores para S3: ${message}`,
+      );
+    }
+
+    return { key, url: this.getPublicUrl(key) };
+  }
+
+  /**
    * Material de apoio — psicologia (PDF, imagens, planilhas, apresentações).
    * Salva em media/psicologia_apoio/{uuid}.{ext}
    */

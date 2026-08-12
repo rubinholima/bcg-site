@@ -281,6 +281,65 @@ export class PurchaseWorkflowService {
     return updated;
   }
 
+  /** Compras pode ajustar o status operacionalmente (sem pular validações críticas de reprovação). */
+  async setStatusByCompras(
+    requisitionId: string,
+    status: string,
+    actor: { userId?: string; name: string },
+    reason?: string,
+  ) {
+    const req = await this.findRequisition(requisitionId);
+    const validStatuses = Object.values(REQUISITION_STATUS);
+    if (!validStatuses.includes(status as (typeof REQUISITION_STATUS)[keyof typeof REQUISITION_STATUS])) {
+      throw new BadRequestException('Status inválido.');
+    }
+    if (status === req.status) {
+      return req;
+    }
+    if (status === REQUISITION_STATUS.REPROVADA && !reason?.trim()) {
+      throw new BadRequestException('Informe o motivo da reprovação.');
+    }
+
+    const data: {
+      status: string;
+      rejectionReason?: string | null;
+      approvedTotal?: number | null;
+    } = { status };
+
+    if (status === REQUISITION_STATUS.REPROVADA) {
+      data.rejectionReason = reason!.trim();
+    } else if (req.status === REQUISITION_STATUS.REPROVADA) {
+      data.rejectionReason = null;
+    }
+
+    if (status === REQUISITION_STATUS.APROVADA && req.approvedTotal == null) {
+      data.approvedTotal =
+        req.selectedQuote?.totalAmount ?? req.totalEstimated ?? null;
+    }
+
+    const shouldLogDecision =
+      status === REQUISITION_STATUS.APROVADA || status === REQUISITION_STATUS.REPROVADA;
+
+    if (shouldLogDecision) {
+      await this.prisma.purchaseApproval.create({
+        data: {
+          requisitionId,
+          role: 'compras',
+          approverUserId: actor.userId ?? null,
+          approverName: cadastroUpperRequired(actor.name),
+          decision: status === REQUISITION_STATUS.APROVADA ? 'approved' : 'rejected',
+          notes: reason?.trim() || null,
+        },
+      });
+    }
+
+    return this.prisma.purchaseRequisition.update({
+      where: { id: requisitionId },
+      data,
+      include: requisitionInclude,
+    });
+  }
+
   async startQuotation(id: string) {
     const req = await this.findRequisition(id);
     if (req.status !== REQUISITION_STATUS.ENVIADA && req.status !== REQUISITION_STATUS.EM_COTACAO) {

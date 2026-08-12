@@ -11,5 +11,6 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
   imports: [AuthModule, ModulesModule, FutebolAgendaModule],
   controllers: [FutebolRelatoriosController],
   providers: [FutebolRelatoriosService, GuiaPartidaService, ModuleAccessGuard],
+  exports: [GuiaPartidaService, FutebolRelatoriosService],
 })
 export class FutebolRelatoriosModule {}

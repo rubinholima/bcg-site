@@ -10,14 +10,18 @@ export interface LogisticsTravelCadastros {
   supplierId?: string | null;
 }
 
+export type LogisticsExpenseKind = 'previsto' | 'adicional';
+
 export interface LogisticsExpenseLine {
   id: string;
+  kind: LogisticsExpenseKind;
   expenseCategoryId?: string | null;
   serviceProductId?: string | null;
   supplierId?: string | null;
   paymentTypeId?: string | null;
   description?: string;
   amount?: number | null;
+  receiptUrl?: string | null;
 }
 
 const CADASTRO_KEYS: (keyof LogisticsTravelCadastros)[] = [
@@ -59,6 +63,7 @@ export function parseLogisticsExpenseLines(beatscodeMeta: unknown): LogisticsExp
     .filter((row): row is Record<string, unknown> => !!row && typeof row === "object")
     .map((row, i) => ({
       id: typeof row.id === "string" && row.id ? row.id : `line-${i}`,
+      kind: row.kind === "adicional" ? "adicional" : "previsto",
       expenseCategoryId: pickId(row, "expenseCategoryId"),
       serviceProductId: pickId(row, "serviceProductId"),
       supplierId: pickId(row, "supplierId"),
@@ -70,6 +75,7 @@ export function parseLogisticsExpenseLines(beatscodeMeta: unknown): LogisticsExp
           : typeof row.amount === "string" && row.amount.trim()
             ? Number(row.amount.replace(",", "."))
             : null,
+      receiptUrl: pickId(row, "receiptUrl"),
     }));
 }
 

@@ -49,6 +49,7 @@ import { InfrastructureModule } from './infraestrutura/infrastructure.module';
 import { RolesModule } from './roles/roles.module';
 import { ComunicacaoModule } from './comunicacao/comunicacao.module';
 import { FutebolRelatoriosModule } from './futebol-relatorios/futebol-relatorios.module';
+import { FutebolTreinadoresModule } from './futebol-treinadores/futebol-treinadores.module';
 import { AgendaConfigModule } from './agenda-config/agenda-config.module';
 
 @Module({
@@ -101,6 +102,7 @@ import { AgendaConfigModule } from './agenda-config/agenda-config.module';
     InfrastructureModule,
     ComunicacaoModule,
     FutebolRelatoriosModule,
+    FutebolTreinadoresModule,
     AgendaConfigModule,
   ],
   controllers: [AppController],

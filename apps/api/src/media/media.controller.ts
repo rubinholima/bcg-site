@@ -114,6 +114,8 @@ export class MediaController {
     const isCompetitions = sizeLower === 'competitions' || sizeLower === 'competitions_logos';
     const isRhDocumentos = sizeLower === 'rh_documentos';
     const isImprensaDocs = sizeLower === 'imprensa_docs';
+    const isLogisticaComprovantes = sizeLower === 'logistica_comprovantes';
+    const isFutebolTreinadores = sizeLower === 'futebol_treinadores';
     const isHinoAudio = sizeLower === 'hino';
     const isBcgTv = sizeLower === 'bcg_tv';
     const audioMime = file.mimetype === 'audio/mp3' ? 'audio/mpeg' : file.mimetype;
@@ -150,6 +152,22 @@ export class MediaController {
       url = result.url;
     } else if (isCompetitions) {
       const result = await this.s3.uploadLogoCompetition(file.buffer, file.mimetype);
+      key = result.key;
+      url = result.url;
+    } else if (isLogisticaComprovantes) {
+      const result = await this.s3.uploadLogisticaComprovante(
+        file.buffer,
+        file.originalname || 'comprovante.pdf',
+        file.mimetype,
+      );
+      key = result.key;
+      url = result.url;
+    } else if (isFutebolTreinadores) {
+      const result = await this.s3.uploadFutebolTreinadoresFile(
+        file.buffer,
+        file.originalname || 'anexo.pdf',
+        file.mimetype,
+      );
       key = result.key;
       url = result.url;
     } else if (isRhDocumentos || isImprensaDocs) {

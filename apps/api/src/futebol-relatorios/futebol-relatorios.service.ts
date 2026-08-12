@@ -540,12 +540,12 @@ export class FutebolRelatoriosService {
     const tenantId = filters.tenantId?.trim();
     if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
 
-    const from = new Date(filters.from);
-    const to = new Date(filters.to);
-    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+    const fromKey = filters.from.trim().slice(0, 10);
+    const toKey = filters.to.trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fromKey) || !/^\d{4}-\d{2}-\d{2}$/.test(toKey)) {
       throw new BadRequestException('Período inválido');
     }
-    if (to < from) {
+    if (toKey < fromKey) {
       throw new BadRequestException('Data final deve ser posterior à inicial');
     }
 
@@ -581,14 +581,12 @@ export class FutebolRelatoriosService {
     }
 
     const items = await this.agenda.getCalendar({
-      from: from.toISOString(),
-      to: to.toISOString(),
+      from: fromKey,
+      to: toKey,
       tenantId,
     });
 
     const dayMap = new Map<string, ProgramacaoSemanalReportDto['days'][number]>();
-    const fromKey = filters.from.slice(0, 10);
-    const toKey = filters.to.slice(0, 10);
     let cursorKey = fromKey;
 
     while (cursorKey <= toKey) {
@@ -621,7 +619,9 @@ export class FutebolRelatoriosService {
       const targetCats =
         itemCats.length > 0
           ? itemCats.filter((c) => columns.includes(c))
-          : columns;
+          : item.category && columns.includes(item.category)
+            ? [item.category]
+            : [];
 
       if (targetCats.length === 0) continue;
 
@@ -646,7 +646,10 @@ export class FutebolRelatoriosService {
       }
     }
 
-    const periodLabel = `${formatBrDate(filters.from)} — ${formatBrDate(filters.to)}`;
+    const periodLabel =
+      fromKey === toKey
+        ? formatBrDate(fromKey)
+        : `${formatBrDate(fromKey)} — ${formatBrDate(toKey)}`;
 
     return {
       tenant: {
@@ -655,8 +658,8 @@ export class FutebolRelatoriosService {
         logoUrl: tenant.logoUrl,
       },
       period: {
-        from: filters.from.slice(0, 10),
-        to: filters.to.slice(0, 10),
+        from: fromKey,
+        to: toKey,
         label: periodLabel,
       },
       categories: columns,

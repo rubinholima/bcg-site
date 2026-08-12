@@ -228,6 +228,8 @@ const NEW_ROLE_DEFAULTS: Record<string, readonly string[]> = {
     'futebol/futebol_performance__futebol_performance_dash',
     'futebol_performance',
     'relatorios_futebol',
+    'futebol__futebol_treinadores',
+    'futebol_treinadores',
   ],
   preparador: [
     ...FUTEBOL_HUB,

@@ -702,6 +702,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: Users,
         moduleSlug: "futebol_comissao",
       },
+      {
+        slug: "futebol_treinadores",
+        label: "Treinadores",
+        href: "/dashboard/futebol/treinadores",
+        icon: ClipboardList,
+        moduleSlug: "futebol_treinadores",
+      },
     ],
   },
   {

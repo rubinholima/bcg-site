@@ -51,26 +51,48 @@ export function addDaysToDateKey(dateKey: string, days: number): string {
   return dateKeyInBrazil(d);
 }
 
-export function compareTimeLabels(a: string, b: string): number {
+/** YYYY-MM-DD como meio-dia em Brasília (evita UTC midnight virar dia anterior). */
+export function parseDateOnlyBrazil(dateKey: string): Date {
+  const key = dateKey.trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return new Date(NaN);
+  return new Date(`${key}T12:00:00-03:00`);
+}
+
+export function dayStartBrazil(dateKey: string): Date {
+  const key = dateKey.trim().slice(0, 10);
+  return new Date(`${key}T00:00:00-03:00`);
+}
+
+export function dayEndBrazil(dateKey: string): Date {
+  const key = dateKey.trim().slice(0, 10);
+  return new Date(`${key}T23:59:59.999-03:00`);
+}
+
+/** Período inclusivo por chaves YYYY-MM-DD (Brasília). */
+export function parsePeriodBrazil(fromKey: string, toKey: string): { from: Date; to: Date } {
+  return {
+    from: dayStartBrazil(fromKey),
+    to: dayEndBrazil(toKey),
+  };
+}
+
+function parseTimeLabelMinutes(t: string): number {
+  const normalized = t.trim().replace(/h$/i, '');
+  if (normalized === 'Dia inteiro') return -2;
   const periodOrder: Record<string, number> = {
-    'Dia inteiro': -1,
     MANHÃ: 8 * 60,
     TARDE: 13 * 60,
     NOITE: 19 * 60,
   };
-  if (a in periodOrder || b in periodOrder) {
-    const av = periodOrder[a];
-    const bv = periodOrder[b];
-    if (av != null && bv != null) return av - bv;
-    if (av != null) return -1;
-    if (bv != null) return 1;
-  }
-  if (a === 'Dia inteiro' && b === 'Dia inteiro') return 0;
-  if (a === 'Dia inteiro') return -1;
-  if (b === 'Dia inteiro') return 1;
-  const parse = (t: string) => {
-    const [h, m] = t.split(':').map((x) => parseInt(x, 10));
-    return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
-  };
-  return parse(a) - parse(b);
+  if (normalized in periodOrder) return periodOrder[normalized]!;
+  const m = normalized.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return 24 * 60;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+export function compareTimeLabels(a: string, b: string): number {
+  const av = parseTimeLabelMinutes(a);
+  const bv = parseTimeLabelMinutes(b);
+  if (av !== bv) return av - bv;
+  return a.localeCompare(b, 'pt-BR');
 }

@@ -13,10 +13,9 @@ export function compareAgendaEventsByPriority(
   a: { type: string; startAt: string },
   b: { type: string; startAt: string },
 ): number {
-  const pa = agendaEventSortPriority(a.type);
-  const pb = agendaEventSortPriority(b.type);
-  if (pa !== pb) return pa - pb;
-  return a.startAt.localeCompare(b.startAt);
+  const byTime = a.startAt.localeCompare(b.startAt);
+  if (byTime !== 0) return byTime;
+  return agendaEventSortPriority(a.type) - agendaEventSortPriority(b.type);
 }
 
 /**

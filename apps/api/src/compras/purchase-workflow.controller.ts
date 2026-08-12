@@ -108,6 +108,16 @@ export class PurchaseWorkflowController {
     return this.workflow.submitRequisition(id, req.user.sub);
   }
 
+  @Patch('requisitions/:id/status')
+  @RequireModule('adm_compras')
+  setStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string; reason?: string },
+    @Req() req: AuthedRequest,
+  ) {
+    return this.workflow.setStatusByCompras(id, body.status, requestActor(req.user), body.reason);
+  }
+
   @Post('requisitions/:id/start-quotation')
   @RequireModule('adm_compras')
   startQuotation(@Param('id') id: string) {

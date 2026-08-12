@@ -91,12 +91,6 @@ type ViewMode = "day" | "week" | "month";
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 
-function monthRange(year: number, month: number) {
-  const from = new Date(year, month, 1);
-  const to = new Date(year, month + 1, 0, 23, 59, 59);
-  return { from: from.toISOString(), to: to.toISOString() };
-}
-
 function dateKeyFromDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -112,21 +106,22 @@ function startOfWeek(d: Date): Date {
   return copy;
 }
 
+function monthRange(year: number, month: number) {
+  const from = new Date(year, month, 1);
+  const to = new Date(year, month + 1, 0);
+  return { from: dateKeyFromDate(from), to: dateKeyFromDate(to) };
+}
+
 function viewRange(focusDate: Date, mode: ViewMode) {
+  const focusKey = dateKeyFromDate(focusDate);
   if (mode === "day") {
-    const from = new Date(focusDate);
-    from.setHours(0, 0, 0, 0);
-    const to = new Date(focusDate);
-    to.setHours(23, 59, 59, 999);
-    return { from: from.toISOString(), to: to.toISOString() };
+    return { from: focusKey, to: focusKey };
   }
   if (mode === "week") {
     const start = startOfWeek(focusDate);
-    start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return { from: start.toISOString(), to: end.toISOString() };
+    return { from: dateKeyFromDate(start), to: dateKeyFromDate(end) };
   }
   return monthRange(focusDate.getFullYear(), focusDate.getMonth());
 }
@@ -152,7 +147,7 @@ function formatTime(iso: string, allDay: boolean, dayPeriod?: string | null): st
     return AGENDA_DAY_PERIOD_LABEL[dayPeriod];
   }
   if (allDay) return "Dia inteiro";
-  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return timeInBrazil(iso);
 }
 
 function formatDateLong(iso: string): string {

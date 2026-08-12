@@ -351,6 +351,22 @@ function baseStyles(size: PrintPageSize): string {
     }
     .schedule-table-single { font-size: 10px; }
     .schedule-table-single thead th:last-child { text-align: left; }
+    .schedule-table-grid thead th { font-size: 8.5px; padding: 6px 4px; }
+    .schedule-table-grid tbody td { min-width: 72px; }
+    .schedule-day-title {
+      margin: 0 0 10px;
+      padding: 8px 12px;
+      background: ${BCG.blueLight};
+      border-left: 4px solid ${BCG.red};
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: ${BCG.blue};
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      break-after: avoid;
+      page-break-after: avoid;
+    }
   `;
 }
 
@@ -641,23 +657,23 @@ export function buildProgramacaoPrintHtml(
   const clubName = data.tenant.name;
   const logoUrl = data.tenant.logoUrl;
   const badge = data.period.label;
-  const categories =
-    data.categories.length > 0 ? data.categories : ["—"];
+  const categories = data.categories.length > 0 ? data.categories : ["—"];
 
-  const pages = categories
+  const categoryHeaders = categories
     .map((cat) => {
       const catLabel =
-        cat === "—"
-          ? "Sem categoria"
-          : (data.categoryLabels[cat] ?? cat);
-      const rows = data.days
-        .map((day) => {
+        cat === "—" ? "Sem categoria" : (data.categoryLabels[cat] ?? cat);
+      return `<th>${escapeHtml(catLabel)}</th>`;
+    })
+    .join("");
+
+  const pages = data.days
+    .map((day) => {
+      const cells = categories
+        .map((cat) => {
           const acts = day.byCategory[cat] ?? [];
           if (acts.length === 0) {
-            return `<tr>
-              <td class="day-cell">${escapeHtml(day.weekdayLabel)}<br/><span style="font-weight:500;font-size:9px;color:#64748b">${escapeHtml(day.dateLabel)}</span></td>
-              <td><span class="act-meta">—</span></td>
-            </tr>`;
+            return `<td><span class="act-meta">—</span></td>`;
           }
           const html = acts
             .map(
@@ -668,10 +684,7 @@ export function buildProgramacaoPrintHtml(
               </div>`,
             )
             .join("");
-          return `<tr>
-            <td class="day-cell">${escapeHtml(day.weekdayLabel)}<br/><span style="font-weight:500;font-size:9px;color:#64748b">${escapeHtml(day.dateLabel)}</span></td>
-            <td>${html}</td>
-          </tr>`;
+          return `<td>${html}</td>`;
         })
         .join("");
 
@@ -692,22 +705,15 @@ export function buildProgramacaoPrintHtml(
               <label>Período</label>
               <span>${escapeHtml(data.period.label)}</span>
             </div>
-            <div class="meta-item full">
-              <label>Categoria</label>
-              <span>${escapeHtml(catLabel)}</span>
-            </div>
           </div>
         </div>
         <section class="section schedule-wrap" style="margin-top:14px">
-          <h3 class="schedule-category-title">${escapeHtml(catLabel)}</h3>
-          <table class="schedule-table schedule-table-single">
+          <h3 class="schedule-day-title">${escapeHtml(day.weekdayLabel)} · ${escapeHtml(day.dateLabel)}</h3>
+          <table class="schedule-table schedule-table-grid">
             <thead>
-              <tr>
-                <th>Dia</th>
-                <th>Programação</th>
-              </tr>
+              <tr>${categoryHeaders}</tr>
             </thead>
-            <tbody>${rows}</tbody>
+            <tbody><tr>${cells}</tr></tbody>
           </table>
         </section>
         <footer class="footer">

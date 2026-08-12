@@ -35,6 +35,7 @@ import {
 import { api } from "@/lib/api";
 import { cadastroEmail, cadastroUpper, formatRequesterDisplay } from "@/lib/cadastro-format";
 import { useAuth } from "@/context/AuthContext";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Tenant } from "@/types/tenant";
 import {
   PurchaseRequisitionWorkflowRow,
@@ -122,6 +123,8 @@ export function PurchaseRequisitionWorkflowPanel({
 
   // Assinatura
   const [signEmail, setSignEmail] = useState("");
+  const [statusDraft, setStatusDraft] = useState("rascunho");
+  const [statusReason, setStatusReason] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -162,6 +165,8 @@ export function PurchaseRequisitionWorkflowPanel({
       const { data } = await api.get<PurchaseRequisitionWorkflowRow>(`/compras/workflow/requisitions/${id}`);
       setSelected(data);
       setSignEmail(cadastroEmail(data.requesterEmail));
+      setStatusDraft(data.status);
+      setStatusReason("");
     } catch {
       alert("Erro ao carregar requisição");
     } finally {
@@ -175,11 +180,11 @@ export function PurchaseRequisitionWorkflowPanel({
     await load();
   };
 
-  const handleCreate = async () => {
+  const handleCreate = async (submitAfterSave = false) => {
     if (!formTenantId || !formItems.some((i) => i.description.trim())) return;
     setActionLoading(true);
     try {
-      await api.post("/requisicoes", {
+      const { data } = await api.post<{ id: string }>("/requisicoes", {
         tenantId: formTenantId,
         requestType,
         departmentName: formDepartment ? cadastroUpper(formDepartment) : undefined,
@@ -192,10 +197,37 @@ export function PurchaseRequisitionWorkflowPanel({
           isPatrimonial: formPatrimonial,
         })),
       });
+      if (submitAfterSave && data?.id) {
+        await api.post(`/compras/workflow/requisitions/${data.id}/submit`);
+      }
       setFormOpen(false);
       await load();
+      if (submitAfterSave) {
+        alert("Requisição enviada para a equipe de Compras.");
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Erro ao criar");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (forcedStatus?: string) => {
+    if (!selected) return;
+    const nextStatus = forcedStatus ?? statusDraft;
+    if (nextStatus === "reprovada" && !statusReason.trim()) {
+      alert("Informe o motivo da reprovação.");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await api.patch(`/compras/workflow/requisitions/${selected.id}/status`, {
+        status: nextStatus,
+        reason: statusReason.trim() || undefined,
+      });
+      await refreshSelected();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Erro ao atualizar status");
     } finally {
       setActionLoading(false);
     }
@@ -469,10 +501,96 @@ export function PurchaseRequisitionWorkflowPanel({
               </div>
 
               <DialogFooter className="flex-col sm:flex-row gap-2">
+                {mode === "compras" && (
+                  <div className="w-full space-y-3 rounded-lg border border-border/70 p-3 sm:col-span-2">
+                    <p className="text-sm font-medium">Status da requisição</p>
+                    <NativeSelect
+                      value={statusDraft}
+                      onChange={(e) => setStatusDraft(e.target.value)}
+                      disabled={actionLoading}
+                    >
+                      {Object.entries(REQUISITION_STATUS_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                    {statusDraft === "reprovada" ? (
+                      <Input
+                        value={statusReason}
+                        onChange={(e) => setStatusReason(e.target.value)}
+                        placeholder="Motivo da reprovação"
+                        disabled={actionLoading}
+                      />
+                    ) : null}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={actionLoading || statusDraft === selected.status}
+                        onClick={() => void handleStatusUpdate()}
+                      >
+                        Atualizar status
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={actionLoading}
+                        onClick={() => void handleStatusUpdate("aprovada")}
+                      >
+                        Aprovar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        disabled={actionLoading}
+                        onClick={() => {
+                          const reason = prompt("Motivo da reprovação:");
+                          if (!reason?.trim()) return;
+                          setStatusReason(reason.trim());
+                          void (async () => {
+                            setActionLoading(true);
+                            try {
+                              await api.patch(`/compras/workflow/requisitions/${selected.id}/status`, {
+                                status: "reprovada",
+                                reason: reason.trim(),
+                              });
+                              await refreshSelected();
+                            } catch (err) {
+                              alert(err instanceof Error ? err.message : "Erro ao reprovar");
+                            } finally {
+                              setActionLoading(false);
+                            }
+                          })();
+                        }}
+                      >
+                        Reprovar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={actionLoading}
+                        onClick={() => void handleStatusUpdate("em_compra")}
+                      >
+                        Marcar em compra
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {mode === "requester" && selected.status === "rascunho" && (
                   <Button type="button" disabled={actionLoading} onClick={() => runAction("submit")}>
                     <Send className="h-4 w-4 mr-1" />
                     Enviar para Compras
+                  </Button>
+                )}
+                {mode === "compras" && selected.status === "rascunho" && (
+                  <Button type="button" disabled={actionLoading} onClick={() => void handleStatusUpdate("enviada")}>
+                    <Send className="h-4 w-4 mr-1" />
+                    Receber na fila
                   </Button>
                 )}
                 {mode === "compras" && selected.status === "enviada" && (
@@ -591,9 +709,15 @@ export function PurchaseRequisitionWorkflowPanel({
             ))}
             <Button type="button" variant="outline" size="sm" onClick={() => setFormItems([...formItems, { description: "", quantity: 1, unit: "un" }])}>+ Item</Button>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button type="button" variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
-            <Button type="button" disabled={actionLoading} onClick={handleCreate}>Salvar rascunho</Button>
+            <Button type="button" variant="outline" disabled={actionLoading} onClick={() => void handleCreate(false)}>
+              Salvar rascunho
+            </Button>
+            <Button type="button" disabled={actionLoading} onClick={() => void handleCreate(true)}>
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Enviar para Compras
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

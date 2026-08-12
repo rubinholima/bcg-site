@@ -158,6 +158,8 @@ model Tenant {
   communicationConversations   CommunicationConversation[]
   communicationTags            CommunicationTag[]
   communicationTemplates       CommunicationTemplate[]
+  coachMatchReports            CoachMatchReport[]
+  coachTrainingSessions        CoachTrainingSession[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -270,6 +272,7 @@ model TravelLogistics {
   footballAgendaEntries FootballAgendaEntry[]
   /** Convocados / passageiros ligados ao cadastro (Player / TechnicalStaff) — base dos relatórios e da ficha do atleta */
   participants          TravelParticipant[]
+  coachMatchReport      CoachMatchReport?
 }
 
 /**
@@ -1081,6 +1084,8 @@ model Player {
   scoutingProspects    ScoutingProspect[]
   physioSessions       PhysioSession[]
   fmfMatchStats        FmfPlayerMatchStat[]
+  coachMatchPlayerRatings CoachMatchReportPlayerRating[]
+  coachTrainingPlayerEntries CoachTrainingPlayerEntry[]
   @@index([tenantId])
   @@index([tenantId, category])
   @@index([tenantId, cbfRegistration])
@@ -1234,6 +1239,8 @@ model TechnicalStaff {
   updatedAt         DateTime  @updatedAt
   scoutProfile         Scout?
   travelParticipations TravelParticipant[]
+  coachMatchReports    CoachMatchReport[]
+  coachTrainingSessions CoachTrainingSession[]
   @@index([tenantId])
   @@index([jobRoleId])
   @@index([tenantId, role])
@@ -2976,4 +2983,102 @@ model PhysioSession {
   @@index([playerId, status])
   @@index([regionId])
   @@index([startedAt])
+}
+
+// ─── Módulo Treinadores (Depto Futebol) ─────────────────────────────────────
+
+model CoachMatchReport {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  travelLogisticsId  String?  @unique
+  travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
+  category           String?
+  staffId            String?
+  staff              TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  authorUserId       String?
+  matchDate          DateTime?
+  opponentName       String?
+  teamReport         String?  @db.Text
+  generalNotes       String?  @db.Text
+  status             String   @default("rascunho") // rascunho | finalizado
+  playerRatings      CoachMatchReportPlayerRating[]
+  attachments        CoachMatchReportAttachment[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@index([tenantId, category])
+  @@index([tenantId, matchDate])
+  @@index([staffId])
+}
+
+model CoachMatchReportPlayerRating {
+  id               String   @id @default(cuid())
+  reportId         String
+  report           CoachMatchReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  playerId         String
+  player           Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  rating           Float?
+  individualReport String?  @db.Text
+  @@unique([reportId, playerId])
+  @@index([playerId])
+}
+
+model CoachMatchReportAttachment {
+  id       String @id @default(cuid())
+  reportId String
+  report   CoachMatchReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  label    String?
+  fileUrl  String
+  kind     String? // sumula | analista | scout | outro
+  @@index([reportId])
+}
+
+model CoachTrainingSession {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category    String?
+  staffId     String?
+  staff       TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  authorUserId String?
+  sessionDate String   // YYYY-MM-DD
+  startTime   String?  // HH:mm
+  endTime     String?
+  objectives  String?  @db.Text
+  notes       String?  @db.Text
+  status      String   @default("rascunho") // rascunho | finalizado
+  activities  CoachTrainingActivity[]
+  playerEntries CoachTrainingPlayerEntry[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([tenantId, category])
+  @@index([tenantId, sessionDate])
+  @@index([staffId])
+}
+
+model CoachTrainingActivity {
+  id              String @id @default(cuid())
+  sessionId       String
+  session         CoachTrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  kind            String // aquecimento | desenvolvimento | principal | encerramento
+  title           String
+  description     String? @db.Text
+  durationMinutes Int?
+  sortOrder       Int    @default(0)
+  mediaUrl        String?
+  @@index([sessionId, sortOrder])
+}
+
+model CoachTrainingPlayerEntry {
+  id                String @id @default(cuid())
+  sessionId         String
+  session           CoachTrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  playerId          String
+  player            Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  available         Boolean @default(true)
+  unavailableReason String?
+  rating            Float?
+  notes             String? @db.Text
+  @@unique([sessionId, playerId])
+  @@index([playerId])
 }

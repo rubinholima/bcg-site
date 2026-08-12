@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { normalizeTravelCategoriesInput } from '../futebol-agenda/travel-categories.util';
+import { parseDateOnlyBrazil } from '../common/brazil-time.util';
 import { CreateTravelLogisticsDto } from './dto/create-travel-logistics.dto';
 import { UpdateTravelLogisticsDto } from './dto/update-travel-logistics.dto';
 import {
@@ -70,13 +71,19 @@ function normalizeLogisticsCadastros(
 
 type ExpenseLineRaw = {
   id?: string;
+  kind?: 'previsto' | 'adicional';
   expenseCategoryId?: string | null;
   serviceProductId?: string | null;
   supplierId?: string | null;
   paymentTypeId?: string | null;
   description?: string;
   amount?: number | null;
+  receiptUrl?: string | null;
 };
+
+function normalizeExpenseKind(value: unknown): 'previsto' | 'adicional' {
+  return value === 'adicional' ? 'adicional' : 'previsto';
+}
 
 function normalizeExpenseLines(
   raw: ExpenseLineRaw[] | null | undefined,
@@ -90,6 +97,7 @@ function normalizeExpenseLines(
         typeof row.id === 'string' && row.id.trim()
           ? row.id.trim()
           : `line-${i}`,
+      kind: normalizeExpenseKind(row.kind),
       expenseCategoryId:
         typeof row.expenseCategoryId === 'string' && row.expenseCategoryId.trim()
           ? row.expenseCategoryId.trim()
@@ -111,6 +119,10 @@ function normalizeExpenseLines(
       amount:
         typeof row.amount === 'number' && Number.isFinite(row.amount)
           ? row.amount
+          : null,
+      receiptUrl:
+        typeof row.receiptUrl === 'string' && row.receiptUrl.trim()
+          ? row.receiptUrl.trim()
           : null,
     }));
 }
@@ -448,7 +460,7 @@ export class LogisticaService {
     const data: Parameters<typeof this.prisma.travelLogistics.create>[0]['data'] =
       {
         tenantId: dto.tenantId,
-        matchDate: new Date(dto.matchDate),
+        matchDate: parseDateOnlyBrazil(dto.matchDate),
         isHomeMatch: dto.isHomeMatch ?? false,
         externalId: dto.externalId?.trim() || null,
         status: dto.status ?? 'rascunho',
@@ -502,7 +514,7 @@ export class LogisticaService {
     const existing = await this.findOne(id);
     const data: Parameters<typeof this.prisma.travelLogistics.update>[0]['data'] =
       {};
-    if (dto.matchDate != null) data.matchDate = new Date(dto.matchDate);
+    if (dto.matchDate != null) data.matchDate = parseDateOnlyBrazil(dto.matchDate);
     if (dto.isHomeMatch !== undefined) data.isHomeMatch = dto.isHomeMatch;
     if (dto.estimatedDeparture != null)
       data.estimatedDeparture = new Date(dto.estimatedDeparture);

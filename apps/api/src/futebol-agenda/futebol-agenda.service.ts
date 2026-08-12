@@ -14,8 +14,14 @@ import {
   type FootballAgendaOverviewDto,
 } from './futebol-agenda.constants';
 import { findSpaceConflicts } from './football-agenda-conflicts';
-import { travelMatchesCategoryFilter, parseTravelCategories } from './travel-categories.util';
+import {
+  dateKeyInBrazil,
+  formatTimeBrazil,
+  parseDateOnlyBrazil,
+  parsePeriodBrazil,
+} from '../common/brazil-time.util';
 import { FootballActivitySpacesService } from './football-activity-spaces.service';
+import { travelMatchesCategoryFilter, parseTravelCategories } from './travel-categories.util';
 import { normalizeTeamNameKeyForMerge } from '../public/visiting-team-logo-merge.util';
 
 const entryInclude = {
@@ -70,19 +76,6 @@ function resolveIsOurTeamHome(
   return null;
 }
 
-function agendaSortPriority(type: string): number {
-  if (type === 'jogo' || type === 'viagem') return 0;
-  if (type === 'aniversario') return 90;
-  return 40;
-}
-
-function dateKeyFromDate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 function parseHomeMatchAgendaItems(raw: unknown): Array<{
   id: string;
   date: string | null;
@@ -108,30 +101,32 @@ function parseHomeMatchAgendaItems(raw: unknown): Array<{
     .filter((s) => s.label.length > 0);
 }
 
-/** Monta Date local a partir de YYYY-MM-DD + HH:mm (fallback meio-dia se sem hora). */
+/** Monta instante em Brasília a partir de YYYY-MM-DD + HH:mm (fallback meio-dia se sem hora). */
 function combineDateAndTime(
   dateKey: string,
   time: string | null | undefined,
 ): { start: Date; allDay: boolean } {
-  const [y, m, d] = dateKey.split('-').map(Number);
+  const key = dateKey.trim().slice(0, 10);
   const timeMatch = (time ?? '').match(/^(\d{1,2}):(\d{2})/);
   if (timeMatch) {
-    const hh = Number(timeMatch[1]);
-    const mm = Number(timeMatch[2]);
+    const hh = String(Number(timeMatch[1])).padStart(2, '0');
+    const mm = timeMatch[2];
     return {
-      start: new Date(y, m - 1, d, hh, mm, 0, 0),
+      start: new Date(`${key}T${hh}:${mm}:00-03:00`),
       allDay: false,
     };
   }
   return {
-    start: new Date(y, m - 1, d, 12, 0, 0, 0),
+    start: parseDateOnlyBrazil(key),
     allDay: true,
   };
 }
 
 function isDateKeyInRange(dateKey: string, from: Date, to: Date): boolean {
-  const { start } = combineDateAndTime(dateKey, '12:00');
-  return start.getTime() >= from.getTime() && start.getTime() <= to.getTime();
+  const key = dateKey.slice(0, 10);
+  const fromK = dateKeyInBrazil(from);
+  const toK = dateKeyInBrazil(to);
+  return key >= fromK && key <= toK;
 }
 
 function toEntryDto(row: {
@@ -235,8 +230,13 @@ export class FutebolAgendaService {
     types?: string;
     category?: string;
   }): Promise<FootballAgendaCalendarItemDto[]> {
-    const from = new Date(filters.from);
-    const to = new Date(filters.to);
+    const fromKey = filters.from.trim().slice(0, 10);
+    const toKey = filters.to.trim().slice(0, 10);
+    const range =
+      /^\d{4}-\d{2}-\d{2}$/.test(fromKey) && /^\d{4}-\d{2}-\d{2}$/.test(toKey)
+        ? parsePeriodBrazil(fromKey, toKey)
+        : { from: new Date(filters.from), to: new Date(filters.to) };
+    const { from, to } = range;
     if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
       throw new BadRequestException('Período inválido');
     }
@@ -343,8 +343,10 @@ export class FutebolAgendaService {
       const isHome = t.isHomeMatch === true;
       const calendarType = isHome ? 'jogo' : 'viagem';
       const matchAt = t.matchDate;
-      const matchInRange =
-        matchAt.getTime() >= from.getTime() && matchAt.getTime() <= to.getTime();
+      const matchDateKey = dateKeyInBrazil(matchAt);
+      const rangeFromKey = dateKeyInBrazil(from);
+      const rangeToKey = dateKeyInBrazil(to);
+      const matchInRange = matchDateKey >= rangeFromKey && matchDateKey <= rangeToKey;
       const travelCats = parseTravelCategories(t.categories);
       const location =
         [t.stadiumName, t.city, t.country].filter(Boolean).join(' · ') || null;
@@ -363,11 +365,8 @@ export class FutebolAgendaService {
             : t.championshipName ?? 'Viagem';
         const departureAt = t.estimatedDeparture;
         const start = departureAt ?? matchAt;
-        const hasClock =
-          start.getHours() !== 0 ||
-          start.getMinutes() !== 0 ||
-          start.getSeconds() !== 0 ||
-          Boolean(departureAt);
+        const matchTime = formatTimeBrazil(matchAt);
+        const hasClock = Boolean(departureAt) || (matchTime !== '12:00' && matchTime !== '00:00');
         items.push({
           id: `travel-${t.id}`,
           source: 'travel',
@@ -400,7 +399,6 @@ export class FutebolAgendaService {
         continue;
       }
 
-      const matchDateKey = dateKeyFromDate(matchAt);
       const agendaItems = parseHomeMatchAgendaItems(t.itinerary);
       for (const agenda of agendaItems) {
         const dateKey = agenda.date || matchDateKey;
@@ -494,12 +492,7 @@ export class FutebolAgendaService {
       });
     }
 
-    items.sort((a, b) => {
-      const pa = agendaSortPriority(a.type);
-      const pb = agendaSortPriority(b.type);
-      if (pa !== pb) return pa - pb;
-      return a.startAt.localeCompare(b.startAt);
-    });
+    items.sort((a, b) => a.startAt.localeCompare(b.startAt));
     return items;
   }
 

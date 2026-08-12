@@ -12,6 +12,8 @@ export const MEDIA_PLACEHOLDER_SIZES = {
   patrimonio: { label: "Patrimônio (foto do bem)", dimensions: "1200×800" },
   rh: { label: "RH / funcionários (fotos)", dimensions: "800×600" },
   rh_documentos: { label: "RH / documentos", dimensions: "PDF ou imagem" },
+  logistica_comprovantes: { label: "Logística / comprovantes de viagem", dimensions: "PDF ou imagem" },
+  futebol_treinadores: { label: "Treinadores / relatórios e treinos", dimensions: "PDF, imagem ou vídeo" },
   patrocinadores: { label: "Patrocinadores (logos)", dimensions: "400×400" },
   jogadores: { label: "Jogadores (fotos)", dimensions: "800×600" },
   jogadores_apoio: { label: "Imagens de apoio (jogadores)", dimensions: "800×600" },

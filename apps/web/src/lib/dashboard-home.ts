@@ -24,9 +24,10 @@ const HUB_HOME_RULES: HubHomeRule[] = [
   { route: "/dashboard/diretoria", roles: ["diretoria"], modules: ["diretoria"] },
   {
     route: "/dashboard/futebol",
-    roles: ["comissao", "analista"],
+    roles: ["comissao", "analista", "treinador"],
     modules: [
       "futebol_comissao",
+      "futebol_treinadores",
       "futebol_logistica",
       "futebol_analise",
       "futebol_analise_desempenho",

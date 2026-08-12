@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { dateKeyInBrazil } from "@/lib/brazil-time";
 import { namesMatch } from "@/lib/names-match";
 import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 import { isFootballKind } from "@/lib/home-data";
@@ -138,7 +139,7 @@ const STATUS_OPTIONS = [
 function toDateInput(v: string | Date | null | undefined): string {
   if (!v) return "";
   const d = typeof v === "string" ? new Date(v) : v;
-  return d.toISOString().slice(0, 10);
+  return dateKeyInBrazil(d);
 }
 
 function toDateTimeLocal(v: string | Date | null | undefined): string {

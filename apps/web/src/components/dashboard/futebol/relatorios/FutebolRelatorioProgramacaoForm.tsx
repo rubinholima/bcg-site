@@ -158,6 +158,42 @@ export function FutebolRelatorioProgramacaoForm() {
               <Input type="date" className="text-foreground" value={to} onChange={(e) => setTo(e.target.value)} />
             </div>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const key = toIsoDate(new Date());
+                setFrom(key);
+                setTo(key);
+              }}
+            >
+              Hoje
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const start = startOfWeekMonday(new Date());
+                const end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                setFrom(toIsoDate(start));
+                setTo(toIsoDate(end));
+              }}
+            >
+              Semana atual
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setTo(from)}
+            >
+              Só este dia
+            </Button>
+          </div>
           <div className="space-y-2">
             <Label>Categorias no relatório</Label>
             <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto rounded-lg border border-border p-3">
