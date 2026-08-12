@@ -570,6 +570,9 @@ function styles(size: PrintPageSize): string {
       align-items: start;
       width: 100%;
     }
+    .vis-field-row-solo {
+      grid-template-columns: 1fr;
+    }
     .vis-staff-side {
       display: flex;
       flex-direction: column;
@@ -624,7 +627,7 @@ function styles(size: PrintPageSize): string {
     .vis-pitch-wrap {
       position: relative;
       width: 100%;
-      max-width: 136mm;
+      max-width: 158mm;
       aspect-ratio: 78 / 100;
       border-radius: 3mm;
       overflow: hidden;
@@ -670,20 +673,20 @@ function styles(size: PrintPageSize): string {
     .vis-chip {
       position: absolute;
       transform: translate(-50%, -50%);
-      width: 24mm;
+      width: 30mm;
       text-align: center;
       z-index: 2;
     }
     .vis-photo-wrap {
       position: relative;
-      width: 12mm;
-      height: 16mm;
-      margin: 0 auto 0.4mm;
+      width: 15mm;
+      height: 19mm;
+      margin: 0 auto 0.5mm;
       background: transparent;
     }
     .vis-photo {
-      width: 12mm;
-      height: 16mm;
+      width: 15mm;
+      height: 19mm;
       object-fit: contain;
       object-position: center bottom;
       border-radius: 0;
@@ -697,23 +700,23 @@ function styles(size: PrintPageSize): string {
       mix-blend-mode: normal;
     }
     .vis-num {
-      position: absolute; left: -1mm; bottom: 1.2mm; min-width: 4.2mm; height: 4.2mm; padding: 0 0.7mm;
-      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 6pt;
+      position: absolute; left: -1mm; bottom: 1.2mm; min-width: 5.2mm; height: 5.2mm; padding: 0 0.8mm;
+      border-radius: 1mm; background: ${C.red}; color: #fff; font-weight: 800; font-size: 7.5pt;
       display: flex; align-items: center; justify-content: center; border: 1px solid #fff;
       mix-blend-mode: normal;
     }
     .vis-nick {
-      font-size: 6pt; font-weight: 800; color: #fde68a;
+      font-size: 7.5pt; font-weight: 800; color: #fde68a;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       text-transform: uppercase; line-height: 1.05;
     }
     .vis-pos {
-      font-size: 5.5pt; font-weight: 800; color: #fff;
+      font-size: 7pt; font-weight: 800; color: #fff;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       text-transform: uppercase; line-height: 1.05;
     }
     .vis-birth {
-      font-size: 5pt; font-weight: 700; color: #fff;
+      font-size: 6.5pt; font-weight: 700; color: #fff;
       text-shadow: 0 0 2px #000, 0 1px 2px rgba(0,0,0,.95);
       line-height: 1.05;
     }
@@ -727,7 +730,7 @@ function styles(size: PrintPageSize): string {
       color: #C2410C; border-bottom: 2px solid #EA580C; padding-bottom: 1mm;
     }
     .vis-bench-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.8mm 2.5mm; }
-    .vis-bench-row { display: flex; gap: 1.2mm; align-items: flex-start; font-size: 7pt; }
+    .vis-bench-row { display: flex; gap: 1.2mm; align-items: flex-start; font-size: 8pt; }
     .vis-bench-photo {
       width: 6.5mm; height: 8.5mm; object-fit: contain; object-position: center bottom;
       border-radius: 0; border: 0; background: transparent; flex: none;
@@ -742,10 +745,10 @@ function styles(size: PrintPageSize): string {
       flex: none;
     }
     .vis-bench-row strong {
-      display: block; font-size: 6pt; line-height: 1.12; color: ${C.ink}; text-transform: uppercase;
+      display: block; font-size: 7.5pt; line-height: 1.12; color: ${C.ink}; text-transform: uppercase;
       overflow: visible; white-space: normal;
     }
-    .vis-bench-row span { display: block; font-size: 5pt; color: #9A3412; }
+    .vis-bench-row span { display: block; font-size: 6.5pt; color: #9A3412; }
     .discipline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 5mm; }
     .discipline-grid .panel.danger { border-color: #FECACA; background: #FEF2F2; }
     .discipline-grid .panel.warn { border-color: #FDE68A; background: #FFFBEB; }
@@ -772,6 +775,172 @@ function styles(size: PrintPageSize): string {
 
 function pageFoot(club: string, opponent: string, label: string): string {
   return `<div class="page-foot"><span>${esc(club)} × ${esc(opponent)}</span><span>${esc(label)}</span></div>`;
+}
+
+type EscalacaoVisualBuildOptions = {
+  includeStaff?: boolean;
+  includeBench?: boolean;
+};
+
+function buildEscalacaoVisualInner(
+  data: GuiaPartidaReportDto,
+  playerCutouts: Record<string, string>,
+  options?: EscalacaoVisualBuildOptions,
+): string {
+  const { travel, config } = data;
+  const includeStaff = options?.includeStaff !== false;
+  const includeBench = options?.includeBench !== false;
+  const formation = getFormation(config.formation);
+  const squadById = new Map(
+    data.squad.filter((p) => p.playerId).map((p) => [p.playerId!, p]),
+  );
+  const visualPlayers = formation.slots
+    .map((slot, i) => {
+      const slotId = config.starterPlayerIds[i];
+      const p = slotId ? squadById.get(slotId) : undefined;
+      if (!p) return "";
+      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
+      const nickOnly = (
+        p.nickname?.trim() ||
+        firstLastName(p.name) ||
+        p.shortName ||
+        ""
+      ).toLocaleUpperCase("pt-BR");
+      const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
+      const birth = formatBirth(p.birthDate);
+      const ty = pitchChipTranslateY(slot.top);
+      const pitchPhoto =
+        (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
+      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
+        <div class="vis-photo-wrap">
+          ${photo(pitchPhoto, p.name, "vis-photo")}
+          <span class="vis-num">${esc(n)}</span>
+        </div>
+        <div class="vis-nick">${esc(nickOnly)}</div>
+        ${pos && pos !== "—" ? `<div class="vis-pos">${esc(pos)}</div>` : ""}
+        ${birth ? `<div class="vis-birth">${esc(birth)}</div>` : ""}
+      </div>`;
+    })
+    .join("");
+
+  const staffBeside = sortByPressKitRoleRank(
+    data.staff,
+    (s) => s.role,
+    pressKitStaffRoleRank,
+    (s) => s.name,
+  )
+    .map((s) => {
+      const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
+      const short = staffPrintName(s.name);
+      return `<div class="vis-staff-side-row">
+        ${photo(s.photoUrl, s.name, "vis-staff-side-photo")}
+        <div><strong>${esc(short)}</strong><span>${esc(role)}</span></div>
+      </div>`;
+    })
+    .join("");
+  const directorsBeside = sortByPressKitRoleRank(
+    config.directors.filter((d) => d.name.trim()),
+    (d) => d.role,
+    pressKitDirectorRoleRank,
+    (d) => d.name,
+  )
+    .map((d) => {
+      const short = staffPrintName(d.name);
+      return `<div class="vis-staff-side-row">
+        ${photo(d.photoUrl, d.name, "vis-staff-side-photo")}
+        <div><strong>${esc(short)}</strong><span>${esc(d.role || "Diretoria")}</span></div>
+      </div>`;
+    })
+    .join("");
+
+  const starterIdSet = new Set(config.starterPlayerIds.filter(Boolean));
+  const benchPlayers = data.squad.filter(
+    (p) => p.playerId && !starterIdSet.has(p.playerId),
+  );
+  const benchHtml = benchPlayers
+    .map((p) => {
+      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
+      const nick = athletePrintName(p);
+      const benchPhoto =
+        (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
+      return `<div class="vis-bench-row">
+        ${photo(benchPhoto, p.name, "vis-bench-photo")}
+        <span class="vis-bench-num">${esc(n)}</span>
+        <div><strong>${esc(nick)}</strong><span>${esc(p.positionLabel)}</span></div>
+      </div>`;
+    })
+    .join("");
+
+  const staffAside = includeStaff
+    ? `<aside class="vis-staff-side">
+          <p class="vis-staff-side-title">Comissão</p>
+          ${staffBeside || `<p class="empty">—</p>`}
+          ${
+            directorsBeside
+              ? `<div class="vis-staff-divider"></div>
+          <p class="vis-staff-side-title dir">Diretoria</p>
+          ${directorsBeside}`
+              : ""
+          }
+        </aside>`
+    : "";
+
+  const fieldRowClass = includeStaff ? "vis-field-row" : "vis-field-row vis-field-row-solo";
+
+  return `<div class="sheet-tag">Escalação</div>
+    ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
+    <div class="vis-stage">
+      <div class="${fieldRowClass}">
+        ${staffAside}
+        <div class="vis-pitch-wrap">
+          <div class="vis-pitch-mark pl-half"></div>
+          <div class="vis-pitch-mark pl-circle"></div>
+          <div class="vis-pitch-mark pl-box-top"></div>
+          <div class="vis-pitch-mark pl-goal-top"></div>
+          <div class="vis-pitch-mark pl-box-bottom"></div>
+          <div class="vis-pitch-mark pl-goal-bottom"></div>
+          <div class="vis-pitch-players">${visualPlayers}</div>
+        </div>
+      </div>
+      ${
+        includeBench
+          ? `<div class="vis-bench">
+        <h3>Reservas · banco</h3>
+        ${
+          benchHtml
+            ? `<div class="vis-bench-grid">${benchHtml}</div>`
+            : `<p class="empty">Sem reservas.</p>`
+        }
+      </div>`
+          : ""
+      }
+    </div>`;
+}
+
+function escalacaoCampoStyles(size: PrintPageSize): string {
+  const pageSize = size === "Letter" ? "letter" : "A4";
+  return `
+    @page { size: ${pageSize} landscape; margin: 10mm 12mm; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #fff; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: ${C.ink};
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .sheet { position: relative; width: 100%; padding: 0; margin: 0; page-break-before: auto; }
+    ${styles(size)}
+    .escalacao-campo .vis-field-row-solo { grid-template-columns: 1fr; }
+    .escalacao-campo .vis-pitch-wrap { max-width: none; width: 100%; }
+    .escalacao-campo .vis-chip { width: 34mm; }
+    .escalacao-campo .vis-photo-wrap { width: 17mm; height: 22mm; }
+    .escalacao-campo .vis-photo { width: 17mm; height: 22mm; }
+    .escalacao-campo .vis-nick { font-size: 8.5pt; }
+    .escalacao-campo .vis-pos { font-size: 8pt; }
+    .escalacao-campo .vis-birth { font-size: 7.5pt; }
+    .escalacao-campo .vis-num { min-width: 5.8mm; height: 5.8mm; font-size: 8.5pt; }
+  `;
 }
 
 export type GuiaPartidaPrintOptions = {
@@ -1128,121 +1297,8 @@ export function buildGuiaPartidaPrintHtml(
       : "";
 
   /* ---------------- Escalação visual (última página) ---------------- */
-  const formation = getFormation(config.formation);
-  const squadById = new Map(
-    data.squad.filter((p) => p.playerId).map((p) => [p.playerId!, p]),
-  );
-  const visualPlayers = formation.slots
-    .map((slot, i) => {
-      const slotId = config.starterPlayerIds[i];
-      const p = slotId ? squadById.get(slotId) : undefined;
-      if (!p) return "";
-      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-      const nickOnly = (
-        p.nickname?.trim() ||
-        firstLastName(p.name) ||
-        p.shortName ||
-        ""
-      ).toLocaleUpperCase("pt-BR");
-      const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
-      const birth = formatBirth(p.birthDate);
-      const ty = pitchChipTranslateY(slot.top);
-      const pitchPhoto =
-        (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
-      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
-        <div class="vis-photo-wrap">
-          ${photo(pitchPhoto, p.name, "vis-photo")}
-          <span class="vis-num">${esc(n)}</span>
-        </div>
-        <div class="vis-nick">${esc(nickOnly)}</div>
-        ${pos && pos !== "—" ? `<div class="vis-pos">${esc(pos)}</div>` : ""}
-        ${birth ? `<div class="vis-birth">${esc(birth)}</div>` : ""}
-      </div>`;
-    })
-    .join("");
-  const staffBeside = sortByPressKitRoleRank(
-    data.staff,
-    (s) => s.role,
-    pressKitStaffRoleRank,
-    (s) => s.name,
-  )
-    .map((s) => {
-      const role = s.role ? getStaffRoleLabel(s.role) : "Comissão";
-      const short = staffPrintName(s.name);
-      return `<div class="vis-staff-side-row">
-        ${photo(s.photoUrl, s.name, "vis-staff-side-photo")}
-        <div><strong>${esc(short)}</strong><span>${esc(role)}</span></div>
-      </div>`;
-    })
-    .join("");
-  const directorsBeside = sortByPressKitRoleRank(
-    config.directors.filter((d) => d.name.trim()),
-    (d) => d.role,
-    pressKitDirectorRoleRank,
-    (d) => d.name,
-  )
-    .map((d) => {
-      const short = staffPrintName(d.name);
-      return `<div class="vis-staff-side-row">
-        ${photo(d.photoUrl, d.name, "vis-staff-side-photo")}
-        <div><strong>${esc(short)}</strong><span>${esc(d.role || "Diretoria")}</span></div>
-      </div>`;
-    })
-    .join("");
-  const starterIdSet = new Set(config.starterPlayerIds.filter(Boolean));
-  const benchPlayers = data.squad.filter(
-    (p) => p.playerId && !starterIdSet.has(p.playerId),
-  );
-  const benchHtml = benchPlayers
-    .map((p) => {
-      const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
-      const nick = athletePrintName(p);
-      const benchPhoto =
-        (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
-      return `<div class="vis-bench-row">
-        ${photo(benchPhoto, p.name, "vis-bench-photo")}
-        <span class="vis-bench-num">${esc(n)}</span>
-        <div><strong>${esc(nick)}</strong><span>${esc(p.positionLabel)}</span></div>
-      </div>`;
-    })
-    .join("");
-
   const visualSheet = sheet(
-    `<div class="sheet-tag">Escalação</div>
-    ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
-    <div class="vis-stage">
-      <div class="vis-field-row">
-        <aside class="vis-staff-side">
-          <p class="vis-staff-side-title">Comissão</p>
-          ${staffBeside || `<p class="empty">—</p>`}
-          ${
-            directorsBeside
-              ? `<div class="vis-staff-divider"></div>
-          <p class="vis-staff-side-title dir">Diretoria</p>
-          ${directorsBeside}`
-              : ""
-          }
-        </aside>
-        <div class="vis-pitch-wrap">
-          <div class="vis-pitch-mark pl-half"></div>
-          <div class="vis-pitch-mark pl-circle"></div>
-          <div class="vis-pitch-mark pl-box-top"></div>
-          <div class="vis-pitch-mark pl-goal-top"></div>
-          <div class="vis-pitch-mark pl-box-bottom"></div>
-          <div class="vis-pitch-mark pl-goal-bottom"></div>
-          <div class="vis-pitch-players">${visualPlayers}</div>
-        </div>
-      </div>
-      <div class="vis-bench">
-        <h3>Reservas · banco</h3>
-        ${
-          benchHtml
-            ? `<div class="vis-bench-grid">${benchHtml}</div>`
-            : `<p class="empty">Sem reservas.</p>`
-        }
-      </div>
-    </div>
-    ${foot("Escalação visual")}`,
+    `${buildEscalacaoVisualInner(data, playerCutouts, { includeStaff: true, includeBench: true })}${foot("Escalação visual")}`,
   );
 
   const body = [cover, matchSheet, numbersSheet, ...squadSheets, lineupSheet, closingSheet, visualSheet]
@@ -1271,5 +1327,55 @@ export function printGuiaPartidaReport(
   printHtmlDocument(
     buildGuiaPartidaPrintHtml(data, size, options),
     "Impressão — Press Kit",
+  );
+}
+
+export function buildEscalacaoCampoPrintHtml(
+  data: GuiaPartidaReportDto,
+  size: PrintPageSize = "A4",
+  options?: GuiaPartidaPrintOptions,
+): string {
+  const playerCutouts = options?.playerCutouts ?? options?.starterCutouts ?? {};
+  const { travel, config } = data;
+  const club = travel.tenant.tradeName?.trim() || travel.tenant.name;
+  const opponent = travel.opponentName?.trim() || "Adversário";
+  const foot = (label: string) => pageFoot(club, opponent, label);
+  const inner = buildEscalacaoVisualInner(data, playerCutouts, {
+    includeStaff: false,
+    includeBench: true,
+  });
+  const matchDateLabel = travel.matchDate
+    ? travel.matchDate.split("-").reverse().join("/")
+    : "—";
+  const header = `<div class="match-hero" style="margin-bottom:4mm;padding:4mm 5mm">
+    <div class="side"><strong>${esc(club)}</strong><span>Clube</span></div>
+    <div class="vs">×</div>
+    <div class="side"><strong>${esc(opponent)}</strong><span>Adversário</span></div>
+  </div>
+  <p style="margin:0 0 4mm;font-size:9pt;color:${C.muted};text-transform:uppercase;letter-spacing:.12em">
+    ${esc([matchDateLabel, config.matchTime, travel.categoryLabel].filter(Boolean).join(" · "))}
+  </p>`;
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>${esc(`Escalação — ${club} x ${opponent}`)}</title>
+  <style>${escalacaoCampoStyles(size)}</style>
+</head>
+<body class="escalacao-campo">
+  ${sheet(`${header}${inner}${foot("Escalação")}`, "escalacao-sheet")}
+</body>
+</html>`;
+}
+
+export function printEscalacaoCampoReport(
+  data: GuiaPartidaReportDto,
+  size: PrintPageSize = "A4",
+  options?: GuiaPartidaPrintOptions,
+): void {
+  printHtmlDocument(
+    buildEscalacaoCampoPrintHtml(data, size, options),
+    "Impressão — Escalação (campo)",
   );
 }

@@ -22,6 +22,7 @@ import {
   dateKeyInBrazil,
   formatTimeBrazil,
 } from '../common/brazil-time.util';
+import { dedupeTravelLogisticsList } from '../logistica/travel-logistics-dedup.util';
 import {
   normalizeTeamNameKeyForMerge,
   opponentIdentityKey,
@@ -517,7 +518,8 @@ export class FutebolRelatoriosService {
   async listTravels(tenantId: string) {
     if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
     const todayKey = dateKeyInBrazil(new Date());
-    return this.prisma.travelLogistics.findMany({
+    return dedupeTravelLogisticsList(
+      await this.prisma.travelLogistics.findMany({
       where: {
         tenantId: tenantId.trim(),
         status: { not: 'cancelado' },
@@ -528,7 +530,8 @@ export class FutebolRelatoriosService {
         tenant: { select: { id: true, name: true, slug: true } },
         _count: { select: { participants: true } },
       },
-    });
+    }),
+    );
   }
 
   async getProgramacaoSemanal(filters: {

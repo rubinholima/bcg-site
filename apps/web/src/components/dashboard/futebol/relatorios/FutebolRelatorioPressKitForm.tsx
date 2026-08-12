@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, Loader2, Printer, Save, Shield, Users } from "lucide-react";
+import { Eye, LayoutGrid, Loader2, Printer, Save, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,9 @@ import {
   printMatchExternalReport,
 } from "@/lib/futebol-relatorios-print";
 import {
+  buildEscalacaoCampoPrintHtml,
   buildGuiaPartidaPrintHtml,
+  printEscalacaoCampoReport,
   printGuiaPartidaReport,
 } from "@/lib/guia-partida-print";
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
@@ -648,6 +650,43 @@ export function FutebolRelatorioPressKitForm() {
         open: true,
         title: "Erro",
         message: "Não foi possível imprimir o Press Kit completo.",
+        variant: "error",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleEscalacaoCampo = async (mode: "print" | "preview") => {
+    if (!reportData) {
+      setFeedback({
+        open: true,
+        title: "Seleção obrigatória",
+        message: "Selecione o jogo para gerar a escalação.",
+        variant: "warning",
+      });
+      return;
+    }
+    setBusy(true);
+    try {
+      const ok = await handleSave({ silent: true });
+      if (!ok) return;
+      const { data } = await api.get<GuiaPartidaReportDto>(
+        `/futebol-relatorios/guia-partida?travelId=${encodeURIComponent(travelId)}`,
+      );
+      const playerCutouts = await buildSquadCutouts(data);
+      if (mode === "preview") {
+        setPreviewHtml(buildEscalacaoCampoPrintHtml(data, pageSize, { playerCutouts }));
+        setPreviewLandscape(true);
+        setPreviewOpen(true);
+      } else {
+        printEscalacaoCampoReport(data, pageSize, { playerCutouts });
+      }
+    } catch {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: "Não foi possível gerar a escalação (campo).",
         variant: "error",
       });
     } finally {
@@ -1360,6 +1399,15 @@ export function FutebolRelatorioPressKitForm() {
             >
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
               Imprimir / PDF
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy || !reportData}
+              onClick={() => void handleEscalacaoCampo("print")}
+            >
+              {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LayoutGrid className="mr-2 h-4 w-4" />}
+              Escalação (campo)
             </Button>
             <Button
               type="button"

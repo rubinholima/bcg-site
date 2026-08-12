@@ -9,6 +9,7 @@ import {
   SetTravelParticipantsDto,
   TravelParticipantItemDto,
 } from './dto/set-travel-participants.dto';
+import { dedupeTravelLogisticsList } from './travel-logistics-dedup.util';
 
 const PARTICIPANT_INCLUDE = {
   player: {
@@ -221,14 +222,16 @@ export class LogisticaService {
           : new Date(`${toDate}T23:59:59.999-03:00`);
       }
     }
-    return this.prisma.travelLogistics.findMany({
+    return dedupeTravelLogisticsList(
+      await this.prisma.travelLogistics.findMany({
       where,
       orderBy: [{ matchDate: 'asc' }, { createdAt: 'desc' }],
       include: {
         tenant: { select: { id: true, name: true, slug: true } },
         _count: { select: { participants: true } },
       },
-    });
+    }),
+    );
   }
 
   async findOne(id: string) {
