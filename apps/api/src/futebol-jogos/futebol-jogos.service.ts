@@ -8,6 +8,10 @@ import { FutebolRelatoriosService } from '../futebol-relatorios/futebol-relatori
 import { travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
 import { dedupeTravelLogisticsList } from '../logistica/travel-logistics-dedup.util';
 import {
+  matchDatesEquivalent,
+  matchOpponentsEquivalent,
+} from '../common/match-game-opponent.util';
+import {
   FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
 } from '../fmf-scraper/fmf-sync-tenants.config';
@@ -93,6 +97,37 @@ function mapCoachReport(row: {
       individualReport: r.individualReport,
     })),
   };
+}
+
+function gameListKeepScore(g: FutebolGameListItem): number {
+  let score = 0;
+  if (g.hasSumula) score += 1000;
+  if (g.fmfMatchReportId) score += 500;
+  if (g.scoreLabel !== '—') score += 200;
+  if (g.hasCoachReport) score += 50;
+  if (g.competition?.trim()) score += 20;
+  if (g.stadiumName?.trim()) score += 5;
+  score += g.opponentName.length * 0.1;
+  return score;
+}
+
+function dedupeGameListItems(games: FutebolGameListItem[]): FutebolGameListItem[] {
+  const kept: FutebolGameListItem[] = [];
+  for (const game of games) {
+    const idx = kept.findIndex(
+      (existing) =>
+        matchOpponentsEquivalent(existing.opponentName, game.opponentName) &&
+        matchDatesEquivalent(existing.matchDate, game.matchDate),
+    );
+    if (idx < 0) {
+      kept.push(game);
+      continue;
+    }
+    if (gameListKeepScore(game) > gameListKeepScore(kept[idx])) {
+      kept[idx] = game;
+    }
+  }
+  return kept;
 }
 
 @Injectable()
@@ -259,7 +294,12 @@ export class FutebolJogosService {
         (t) =>
           t.matchDate >= now &&
           categoryMatches(t.category, t.categories, categoryFilter) &&
-          matchSeason(t.matchDate.toISOString(), season),
+          matchSeason(t.matchDate.toISOString(), season) &&
+          !completedGames.some(
+            (g) =>
+              matchDatesEquivalent(g.matchDate, t.matchDate) &&
+              matchOpponentsEquivalent(g.opponentName, t.opponentName),
+          ),
       )
       .map((t) => ({
         gameKey: `travel:${t.id}`,
@@ -306,8 +346,10 @@ export class FutebolJogosService {
         );
       });
 
-    let games = [...upcoming, ...completed].sort(
-      (a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime(),
+    let games = dedupeGameListItems(
+      [...upcoming, ...completed].sort(
+        (a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime(),
+      ),
     );
 
     if (statusFilter === 'upcoming') {

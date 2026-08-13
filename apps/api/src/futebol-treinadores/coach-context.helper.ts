@@ -13,6 +13,12 @@ import {
   type FmfStandingsRow,
 } from '../fmf-scraper/fmf-scraper.service';
 import { softNormalizeTeamNameKey } from '../public/visiting-team-logo-merge.util';
+import {
+  findGameMergeKeyInMap,
+  gameOpponentDateKey,
+  matchDatesEquivalent,
+  matchOpponentsEquivalent,
+} from '../common/match-game-opponent.util';
 
 export function categoryKey(value: string | null | undefined): string {
   return (value ?? '')
@@ -125,16 +131,20 @@ type StatOverrideRow = {
   setPiecesAgainst: number | null;
 };
 
-function normalizeOpponent(name: string | null | undefined): string {
-  return (name ?? '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '');
+function gameMergeKey(matchDate: Date, opponentName: string | null | undefined): string {
+  return gameOpponentDateKey(matchDate, opponentName);
 }
 
-function gameMergeKey(matchDate: Date, opponentName: string | null | undefined): string {
-  return `${dateKeyInBrazil(matchDate)}|${normalizeOpponent(opponentName)}`;
+function findMatchingTravel(
+  travels: TravelRow[],
+  matchDate: Date,
+  opponentName: string,
+): TravelRow | undefined {
+  return travels.find(
+    (t) =>
+      matchDatesEquivalent(t.matchDate, matchDate) &&
+      matchOpponentsEquivalent(t.opponentName, opponentName),
+  );
 }
 
 function isHomeSide(
@@ -247,9 +257,7 @@ export function buildCompletedGames(input: {
             ? 'E'
             : 'D';
 
-    const travel = travels.find(
-      (t) => gameMergeKey(t.matchDate, t.opponentName) === gameMergeKey(report.matchDate, opponent),
-    );
+    const travel = findMatchingTravel(travels, report.matchDate, opponent);
 
     const override = findOverride(overrides, report.id, travel?.id ?? null, report.matchDate, opponent);
     const stats = applyStats(override);
@@ -280,14 +288,23 @@ export function buildCompletedGames(input: {
       ...stats,
     };
 
-    byKey.set(gameMergeKey(report.matchDate, opponent), game);
+    const mergeKey =
+      findGameMergeKeyInMap(byKey, report.matchDate, opponent, (g) => g.opponentName) ??
+      gameMergeKey(report.matchDate, opponent);
+    byKey.set(mergeKey, game);
   }
 
   for (const travel of travels) {
     if (travel.matchDate >= now) continue;
-    const key = gameMergeKey(travel.matchDate, travel.opponentName);
-    if (byKey.has(key)) continue;
+    const existingKey = findGameMergeKeyInMap(
+      byKey,
+      travel.matchDate,
+      travel.opponentName,
+      (g) => g.opponentName,
+    );
+    if (existingKey) continue;
 
+    const key = gameMergeKey(travel.matchDate, travel.opponentName);
     const override = findOverride(overrides, null, travel.id, travel.matchDate, travel.opponentName ?? '');
     const stats = applyStats(override);
 

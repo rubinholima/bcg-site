@@ -1,4 +1,5 @@
 import { dateKeyInBrazil } from '../common/brazil-time.util';
+import { matchOpponentMergeKey } from '../common/match-game-opponent.util';
 
 type TravelDedupRow = {
   id: string;
@@ -12,11 +13,7 @@ type TravelDedupRow = {
 };
 
 export function normalizeTravelOpponent(name: string | null | undefined): string {
-  return (name ?? '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '');
+  return matchOpponentMergeKey(name);
 }
 
 function travelDedupKey(row: TravelDedupRow): string {
