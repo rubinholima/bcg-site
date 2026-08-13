@@ -29,7 +29,7 @@ function RelatoriosContent() {
 
   useEffect(() => {
     if (hub === "futebol") {
-      router.replace("/dashboard/futebol/logistica/relatorios");
+      router.replace("/dashboard/relatorios/futebol");
     }
   }, [hub, router]);
 

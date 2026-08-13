@@ -19,7 +19,7 @@ export function TreinadoresDashboard() {
   const [context, setContext] = useState<CoachContextResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const loadContext = () => {
     if (!tenantId) {
       setContext(null);
       return;
@@ -32,6 +32,10 @@ export function TreinadoresDashboard() {
       .then(({ data }) => setContext(data))
       .catch(() => setContext(null))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadContext();
   }, [tenantId, category]);
 
   return (
@@ -47,7 +51,13 @@ export function TreinadoresDashboard() {
       ) : tab === "treinos" ? (
         <TreinadoresTreinosTab tenantId={tenantId} category={category} context={context} />
       ) : (
-        <TreinadoresInformacoesTab loading={loading} context={context} />
+        <TreinadoresInformacoesTab
+          tenantId={tenantId}
+          category={category}
+          loading={loading}
+          context={context}
+          onRefresh={loadContext}
+        />
       )}
     </div>
   );

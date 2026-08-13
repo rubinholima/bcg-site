@@ -87,11 +87,19 @@ export function FutebolRelatorioProgramacaoForm() {
         `/futebol-relatorios/programacao-semanal?${params.toString()}`,
       );
       return data;
-    } catch {
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "response" in e
+          ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data
+              ?.message
+          : null;
+      const detail = Array.isArray(msg) ? msg.join(", ") : typeof msg === "string" ? msg : null;
       setFeedback({
         open: true,
         title: "Erro",
-        message: "Não foi possível carregar a programação da agenda.",
+        message: detail
+          ? `Não foi possível carregar a programação. ${detail}`
+          : "Não foi possível carregar a programação da agenda.",
         variant: "error",
       });
       return null;
@@ -151,11 +159,29 @@ export function FutebolRelatorioProgramacaoForm() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>De</Label>
-              <Input type="date" className="text-foreground" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <Input
+                type="date"
+                className="text-foreground"
+                value={from}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFrom(v);
+                  if (v && to && v > to) setTo(v);
+                }}
+              />
             </div>
             <div className="space-y-2">
               <Label>Até</Label>
-              <Input type="date" className="text-foreground" value={to} onChange={(e) => setTo(e.target.value)} />
+              <Input
+                type="date"
+                className="text-foreground"
+                value={to}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setTo(v);
+                  if (v && from && v < from) setFrom(v);
+                }}
+              />
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

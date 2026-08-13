@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from '../tenants/tenants.service';
 import {
@@ -15,6 +16,7 @@ import {
 } from './futebol-agenda.constants';
 import { findSpaceConflicts } from './football-agenda-conflicts';
 import {
+  compareAgendaCalendarItems,
   dateKeyInBrazil,
   formatTimeBrazil,
   parseDateOnlyBrazil,
@@ -23,12 +25,20 @@ import {
 import { FootballActivitySpacesService } from './football-activity-spaces.service';
 import { travelMatchesCategoryFilter, parseTravelCategories } from './travel-categories.util';
 import { normalizeTeamNameKeyForMerge } from '../public/visiting-team-logo-merge.util';
+import {
+  buildTravelMatchKey,
+  dedupeTravelLogisticsList,
+} from '../logistica/travel-logistics-dedup.util';
 
 const entryInclude = {
   tenant: { select: { name: true } },
   space: { select: { id: true, name: true } },
   participants: { select: { playerId: true } },
 } as const;
+
+type TravelWithTenant = Prisma.TravelLogisticsGetPayload<{
+  include: { tenant: { select: { id: true; name: true } } };
+}>;
 
 function resolveIsOurTeamHome(
   type: string,
@@ -127,6 +137,11 @@ function isDateKeyInRange(dateKey: string, from: Date, to: Date): boolean {
   const fromK = dateKeyInBrazil(from);
   const toK = dateKeyInBrazil(to);
   return key >= fromK && key <= toK;
+}
+
+function opponentFromJogoTitle(title: string): string | null {
+  const m = title.match(/^(?:Casa|Fora|Jogo em casa|Jogo fora)\s*[—–-]\s*(.+)$/i);
+  return m?.[1]?.trim() ?? null;
 }
 
 function toEntryDto(row: {
@@ -229,6 +244,7 @@ export class FutebolAgendaService {
     tenantId?: string;
     types?: string;
     category?: string;
+    excludeBirthdays?: boolean;
   }): Promise<FootballAgendaCalendarItemDto[]> {
     const fromKey = filters.from.trim().slice(0, 10);
     const toKey = filters.to.trim().slice(0, 10);
@@ -244,6 +260,7 @@ export class FutebolAgendaService {
     const typeFilter = filters.types
       ? filters.types.split(',').map((t) => t.trim()).filter(Boolean)
       : null;
+    const excludeBirthdays = filters.excludeBirthdays === true;
 
     const travelWhere: Record<string, unknown> = {
       status: { not: 'cancelado' },
@@ -271,8 +288,13 @@ export class FutebolAgendaService {
       typeFilter.includes('viagem');
     const includeTravel = includeTravelMatch || includeTravelAgendaItems;
     const includePalco = !typeFilter || typeFilter.includes('palco');
-    const entryTypeList =
+    let entryTypeList =
       typeFilter?.filter((t) => t !== 'viagem' && t !== 'palco') ?? null;
+    if (excludeBirthdays) {
+      if (entryTypeList?.length) {
+        entryTypeList = entryTypeList.filter((t) => t !== 'aniversario');
+      }
+    }
     const includeEntries =
       !typeFilter || (entryTypeList != null && entryTypeList.length > 0);
     const categoryFilter = filters.category?.trim() || null;
@@ -285,14 +307,6 @@ export class FutebolAgendaService {
       travelWhere.matchDate = { gte: travelFrom, lte: travelTo };
     }
 
-    type TravelWithTenant = Awaited<
-      ReturnType<
-        typeof this.prisma.travelLogistics.findMany<{
-          include: { tenant: { select: { id: true; name: true } } };
-        }>
-      >
-    >;
-
     const [travelsRaw, entries, bchBookings] = await Promise.all([
       includeTravel
         ? this.prisma.travelLogistics.findMany({
@@ -300,12 +314,16 @@ export class FutebolAgendaService {
             include: { tenant: { select: { id: true, name: true } } },
             orderBy: { matchDate: 'asc' },
           })
-        : Promise.resolve([] as TravelWithTenant),
+        : Promise.resolve([] as TravelWithTenant[]),
       includeEntries
         ? this.prisma.footballAgendaEntry.findMany({
             where: {
               ...entryWhere,
-              ...(entryTypeList?.length ? { type: { in: entryTypeList } } : {}),
+              ...(entryTypeList?.length
+                ? { type: { in: entryTypeList } }
+                : excludeBirthdays
+                  ? { type: { not: 'aniversario' } }
+                  : {}),
             },
             include: {
               tenant: { select: { id: true, name: true } },
@@ -328,7 +346,7 @@ export class FutebolAgendaService {
         : Promise.resolve([]),
     ]);
 
-    const travels = categoryFilter
+    const travelsRawDeduped = categoryFilter
       ? travelsRaw.filter((t) =>
           travelMatchesCategoryFilter(
             { category: t.category, categories: t.categories },
@@ -336,6 +354,13 @@ export class FutebolAgendaService {
           ),
         )
       : travelsRaw;
+
+    const travels = dedupeTravelLogisticsList(travelsRawDeduped);
+
+    const travelIdsInCalendar = new Set(travels.map((t) => t.id));
+    const travelMatchKeys = new Set(
+      travels.map((t) => buildTravelMatchKey(t.tenantId, t.matchDate, t.opponentName)),
+    );
 
     const items: FootballAgendaCalendarItemDto[] = [];
 
@@ -364,9 +389,11 @@ export class FutebolAgendaService {
             ? t.championshipName ?? 'Jogo em casa'
             : t.championshipName ?? 'Viagem';
         const departureAt = t.estimatedDeparture;
-        const start = departureAt ?? matchAt;
+        const start = matchAt;
         const matchTime = formatTimeBrazil(matchAt);
-        const hasClock = Boolean(departureAt) || (matchTime !== '12:00' && matchTime !== '00:00');
+        const hasClock =
+          Boolean(departureAt) ||
+          (matchTime !== '12:00' && matchTime !== '00:00');
         items.push({
           id: `travel-${t.id}`,
           source: 'travel',
@@ -438,6 +465,17 @@ export class FutebolAgendaService {
     }
 
     for (const e of entries) {
+      if (e.type === 'jogo') {
+        if (e.travelLogisticsId && travelIdsInCalendar.has(e.travelLogisticsId)) {
+          continue;
+        }
+        const opp = opponentFromJogoTitle(e.title);
+        const entryMatchKey = buildTravelMatchKey(e.tenantId, e.startAt, opp);
+        if (travelMatchKeys.has(entryMatchKey)) {
+          continue;
+        }
+      }
+
       const isOurTeamHome = resolveIsOurTeamHome(
         e.type,
         e.title,
@@ -492,7 +530,22 @@ export class FutebolAgendaService {
       });
     }
 
-    items.sort((a, b) => a.startAt.localeCompare(b.startAt));
+    items.sort((a, b) =>
+      compareAgendaCalendarItems(
+        {
+          type: a.type,
+          startAt: a.startAt,
+          allDay: a.allDay,
+          dayPeriod: a.dayPeriod,
+        },
+        {
+          type: b.type,
+          startAt: b.startAt,
+          allDay: b.allDay,
+          dayPeriod: b.dayPeriod,
+        },
+      ),
+    );
     return items;
   }
 
@@ -501,6 +554,7 @@ export class FutebolAgendaService {
     month: number;
     tenantId?: string;
     category?: string;
+    excludeBirthdays?: boolean;
   }): Promise<FootballAgendaOverviewDto> {
     const monthStart = new Date(filters.year, filters.month, 1);
     const monthEnd = new Date(filters.year, filters.month + 1, 0, 23, 59, 59);
@@ -513,6 +567,7 @@ export class FutebolAgendaService {
       to: monthEnd.toISOString(),
       tenantId: filters.tenantId,
       category: filters.category,
+      excludeBirthdays: filters.excludeBirthdays,
     });
 
     const byType: Record<string, number> = {};

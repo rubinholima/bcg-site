@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, ClipboardList, Loader2, MapPin, Users, Video } from "lucide-react";
+import { CalendarDays, ClipboardList, Loader2, Lock, MapPin, Users, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,7 +93,7 @@ export function PsychologySchedulingCard({
   onNewTimeChange: (v: string) => void;
   onNewNotesChange: (v: string) => void;
   onNewPsychologistChange: (v: string) => void;
-  onCreateMeet: (performerName?: string) => void;
+  onCreateMeet: (performerName?: string, options?: { isPrivate?: boolean }) => void;
   onScheduled: () => void;
   showFeedback: (title: string, message: string, variant: "info" | "success" | "warning" | "error") => void;
 }) {
@@ -120,6 +120,7 @@ export function PsychologySchedulingCard({
   const [noteDialogIdx, setNoteDialogIdx] = useState<number | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [estagiarios, setEstagiarios] = useState<HealthIntern[]>([]);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
     api
@@ -316,13 +317,17 @@ export function PsychologySchedulingCard({
         groupSummary: groupSummary.trim() || undefined,
         attendance: sessionType === "grupo" ? attendance : undefined,
         status: tab === "grupo" ? "completed" : "scheduled",
+        isPrivate,
+        syncAgenda: !isPrivate,
         ...extra,
       });
       showFeedback(
         "Agendado",
         sessionType === "grupo"
-          ? "Sessão em grupo registrada na agenda do clube e presença salva nas fichas."
-          : "Atendimento registrado na agenda unificada do clube.",
+          ? "Sessão em grupo registrada."
+          : isPrivate
+            ? "Atendimento privado registrado na Agenda Psicologia."
+            : "Atendimento registrado na agenda.",
         "success",
       );
       onScheduled();
@@ -415,6 +420,24 @@ export function PsychologySchedulingCard({
         compact
       />
 
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant={isPrivate ? "default" : "outline"}
+          size="sm"
+          className="min-h-[44px] gap-2"
+          onClick={() => setIsPrivate((v) => !v)}
+        >
+          <Lock className="h-4 w-4" />
+          Privado
+        </Button>
+        {isPrivate ? (
+          <span className="text-xs text-muted-foreground">
+            Não aparece na Agenda Geral — só aqui na Agenda Psicologia.
+          </span>
+        ) : null}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <Label className="text-xs text-muted-foreground">Data</Label>
@@ -491,7 +514,7 @@ export function PsychologySchedulingCard({
               {meetAvailable ? (
                 <Button
                   type="button"
-                  onClick={() => onCreateMeet(resolvePerformerName())}
+                  onClick={() => onCreateMeet(resolvePerformerName(), { isPrivate })}
                   disabled={meetCreating || !newDate}
                 >
                   {meetCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Video className="mr-2 h-4 w-4" />}

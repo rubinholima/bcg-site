@@ -721,13 +721,13 @@ function styles(size: PrintPageSize): string {
       line-height: 1.05;
     }
     .vis-bench {
-      border: 1.5px solid #EA580C; border-radius: 2mm; padding: 2.5mm 2.5mm;
-      background: linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%);
+      border: 1px solid #FDBA74; border-radius: 2mm; padding: 2.5mm 2.5mm;
+      background: linear-gradient(180deg, #FFFBF7 0%, #FFF4E8 100%);
       break-inside: avoid;
     }
     .vis-bench h3 {
       margin: 0 0 1.8mm; font-size: 8pt; text-transform: uppercase; letter-spacing: .08em;
-      color: #C2410C; border-bottom: 2px solid #EA580C; padding-bottom: 1mm;
+      color: #B45309; border-bottom: 1px solid #FDBA74; padding-bottom: 1mm;
     }
     .vis-bench-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.8mm 2.5mm; }
     .vis-bench-row { display: flex; gap: 1.2mm; align-items: flex-start; font-size: 8pt; }
@@ -737,10 +737,10 @@ function styles(size: PrintPageSize): string {
     }
     .vis-bench-photo.photo-fallback {
       display: flex; align-items: center; justify-content: center;
-      font-size: 5.5pt; font-weight: 800; color: #C2410C;
+      font-size: 5.5pt; font-weight: 800; color: #B45309;
     }
     .vis-bench-num {
-      min-width: 4.5mm; height: 4.5mm; border-radius: 1mm; background: #EA580C; color: #fff;
+      min-width: 4.5mm; height: 4.5mm; border-radius: 1mm; background: #FDBA74; color: #78350F;
       font-weight: 800; font-size: 6pt; display: inline-flex; align-items: center; justify-content: center;
       flex: none;
     }
@@ -748,7 +748,7 @@ function styles(size: PrintPageSize): string {
       display: block; font-size: 7.5pt; line-height: 1.12; color: ${C.ink}; text-transform: uppercase;
       overflow: visible; white-space: normal;
     }
-    .vis-bench-row span { display: block; font-size: 6.5pt; color: #9A3412; }
+    .vis-bench-row span { display: block; font-size: 6.5pt; color: #92400E; }
     .discipline-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 5mm; }
     .discipline-grid .panel.danger { border-color: #FECACA; background: #FEF2F2; }
     .discipline-grid .panel.warn { border-color: #FDE68A; background: #FFFBEB; }
@@ -780,7 +780,33 @@ function pageFoot(club: string, opponent: string, label: string): string {
 type EscalacaoVisualBuildOptions = {
   includeStaff?: boolean;
   includeBench?: boolean;
+  /** Gramado largo (ataque à direita) — ideal para impressão paisagem. */
+  horizontalPitch?: boolean;
+  /** Campo e reservas lado a lado numa única folha. */
+  sideBySide?: boolean;
+  /** Omite tag/título grandes (impressão só campo). */
+  minimalChrome?: boolean;
 };
+
+function pitchSlotCss(
+  slot: { top: number; left: number },
+  horizontalPitch: boolean,
+): { top: number; left: number; translateY: string } {
+  if (!horizontalPitch) {
+    return {
+      top: slot.top,
+      left: slot.left,
+      translateY: pitchChipTranslateY(slot.top),
+    };
+  }
+  const top = slot.left;
+  const left = 100 - slot.top;
+  return {
+    top,
+    left,
+    translateY: pitchChipTranslateY(top),
+  };
+}
 
 function buildEscalacaoVisualInner(
   data: GuiaPartidaReportDto,
@@ -790,6 +816,9 @@ function buildEscalacaoVisualInner(
   const { travel, config } = data;
   const includeStaff = options?.includeStaff !== false;
   const includeBench = options?.includeBench !== false;
+  const horizontalPitch = options?.horizontalPitch === true;
+  const sideBySide = options?.sideBySide === true;
+  const minimalChrome = options?.minimalChrome === true;
   const formation = getFormation(config.formation);
   const squadById = new Map(
     data.squad.filter((p) => p.playerId).map((p) => [p.playerId!, p]),
@@ -808,10 +837,10 @@ function buildEscalacaoVisualInner(
       ).toLocaleUpperCase("pt-BR");
       const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
       const birth = formatBirth(p.birthDate);
-      const ty = pitchChipTranslateY(slot.top);
+      const coords = pitchSlotCss(slot, horizontalPitch);
       const pitchPhoto =
         (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
-      return `<div class="vis-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
+      return `<div class="vis-chip" style="top:${coords.top}%;left:${coords.left}%;transform:translate(-50%,${coords.translateY})">
         <div class="vis-photo-wrap">
           ${photo(pitchPhoto, p.name, "vis-photo")}
           <span class="vis-num">${esc(n)}</span>
@@ -886,13 +915,19 @@ function buildEscalacaoVisualInner(
     : "";
 
   const fieldRowClass = includeStaff ? "vis-field-row" : "vis-field-row vis-field-row-solo";
+  const pitchClass = horizontalPitch ? "vis-pitch-wrap vis-pitch-horizontal" : "vis-pitch-wrap";
+  const stageClass = sideBySide ? "vis-stage vis-stage-row" : "vis-stage";
 
-  return `<div class="sheet-tag">Escalação</div>
-    ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}
-    <div class="vis-stage">
+  const chrome = minimalChrome
+    ? `<p class="vis-formation-label">${esc(formation.label)} · ${esc(travel.categoryLabel)}</p>`
+    : `<div class="sheet-tag">Escalação</div>
+    ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}`;
+
+  return `${chrome}
+    <div class="${stageClass}">
       <div class="${fieldRowClass}">
         ${staffAside}
-        <div class="vis-pitch-wrap">
+        <div class="${pitchClass}">
           <div class="vis-pitch-mark pl-half"></div>
           <div class="vis-pitch-mark pl-circle"></div>
           <div class="vis-pitch-mark pl-box-top"></div>
@@ -920,26 +955,101 @@ function buildEscalacaoVisualInner(
 function escalacaoCampoStyles(size: PrintPageSize): string {
   const pageSize = size === "Letter" ? "letter" : "A4";
   return `
-    @page { size: ${pageSize} landscape; margin: 10mm 12mm; }
+    @page { size: ${pageSize} landscape; margin: 8mm 10mm; }
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: #fff; }
+    html, body { margin: 0; padding: 0; background: #fff; height: auto; }
     body {
       font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
       color: ${C.ink};
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .sheet { position: relative; width: 100%; padding: 0; margin: 0; page-break-before: auto; }
+    .sheet { position: relative; width: 100%; padding: 0; margin: 0; page-break-before: avoid; break-inside: avoid; page-break-inside: avoid; page-break-after: avoid; }
+    .escalacao-sheet { max-height: 194mm; overflow: hidden; }
     ${styles(size)}
-    .escalacao-campo .vis-field-row-solo { grid-template-columns: 1fr; }
-    .escalacao-campo .vis-pitch-wrap { max-width: none; width: 100%; }
-    .escalacao-campo .vis-chip { width: 34mm; }
-    .escalacao-campo .vis-photo-wrap { width: 17mm; height: 22mm; }
-    .escalacao-campo .vis-photo { width: 17mm; height: 22mm; }
-    .escalacao-campo .vis-nick { font-size: 8.5pt; }
-    .escalacao-campo .vis-pos { font-size: 8pt; }
-    .escalacao-campo .vis-birth { font-size: 7.5pt; }
-    .escalacao-campo .vis-num { min-width: 5.8mm; height: 5.8mm; font-size: 8.5pt; }
+    .escalacao-campo .match-hero { margin-bottom: 2mm !important; padding: 2.5mm 4mm !important; }
+    .escalacao-campo .vis-formation-label {
+      margin: 0 0 2mm;
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: ${C.muted};
+    }
+    .escalacao-campo .vis-stage-row {
+      flex-direction: row;
+      align-items: stretch;
+      gap: 3mm;
+      max-height: 158mm;
+    }
+    .escalacao-campo .vis-field-row-solo {
+      grid-template-columns: 1fr;
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .escalacao-campo .vis-pitch-wrap {
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: none;
+      max-height: 156mm;
+      aspect-ratio: 100 / 62;
+      background: repeating-linear-gradient(180deg, #15803d 0 7.5%, #16a34a 7.5% 15%);
+    }
+    .escalacao-campo .vis-pitch-horizontal .pl-half {
+      left: 50%; right: auto; top: 0; bottom: 0; width: 0; height: auto;
+      border-width: 0 0 0 2px;
+    }
+    .escalacao-campo .vis-pitch-horizontal .pl-circle {
+      left: 50%; top: 50%;
+      width: 17%; height: 24%;
+      margin: 0;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+    }
+    .escalacao-campo .vis-pitch-horizontal .pl-box-top {
+      left: 0; right: auto; top: 16%; bottom: 16%; width: 15%; height: auto;
+      margin: 0; border-top: 0; border-left: 0;
+    }
+    .escalacao-campo .vis-pitch-horizontal .pl-box-bottom {
+      left: auto; right: 0; top: 16%; bottom: 16%; width: 15%; height: auto;
+      margin: 0; border-bottom: 0; border-right: 0;
+    }
+    .escalacao-campo .vis-pitch-horizontal .pl-goal-top {
+      left: 0; right: auto; top: 30%; bottom: 30%; width: 6.5%; height: auto;
+      margin: 0; border-top: 0; border-left: 0;
+    }
+    .escalacao-campo .vis-pitch-horizontal .pl-goal-bottom {
+      left: auto; right: 0; top: 30%; bottom: 30%; width: 6.5%; height: auto;
+      margin: 0; border-bottom: 0; border-right: 0;
+    }
+    .escalacao-campo .vis-pitch-players { inset: 0 5%; }
+    .escalacao-campo .vis-chip { width: 26mm; }
+    .escalacao-campo .vis-photo-wrap { width: 13mm; height: 17mm; }
+    .escalacao-campo .vis-photo { width: 13mm; height: 17mm; }
+    .escalacao-campo .vis-nick { font-size: 7.5pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
+    .escalacao-campo .vis-pos { font-size: 7pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
+    .escalacao-campo .vis-birth { font-size: 6.5pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
+    .escalacao-campo .vis-num { min-width: 5mm; height: 5mm; font-size: 7pt; }
+    .escalacao-campo .vis-bench {
+      flex: 0 0 82mm;
+      max-height: 156mm;
+      padding: 2mm;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .escalacao-campo .vis-bench h3 { font-size: 7pt; margin-bottom: 1.2mm; }
+    .escalacao-campo .vis-bench-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 1mm 1.5mm;
+      overflow: hidden;
+      flex: 1;
+    }
+    .escalacao-campo .vis-bench-row strong { font-size: 6.8pt; }
+    .escalacao-campo .vis-bench-row span { font-size: 6pt; }
+    .escalacao-campo .page-foot { margin-top: 2mm; padding-top: 1mm; }
   `;
 }
 
@@ -1343,16 +1453,19 @@ export function buildEscalacaoCampoPrintHtml(
   const inner = buildEscalacaoVisualInner(data, playerCutouts, {
     includeStaff: false,
     includeBench: true,
+    horizontalPitch: true,
+    sideBySide: true,
+    minimalChrome: true,
   });
   const matchDateLabel = travel.matchDate
     ? travel.matchDate.split("-").reverse().join("/")
     : "—";
-  const header = `<div class="match-hero" style="margin-bottom:4mm;padding:4mm 5mm">
+  const header = `<div class="match-hero" style="margin-bottom:2mm;padding:2.5mm 4mm">
     <div class="side"><strong>${esc(club)}</strong><span>Clube</span></div>
     <div class="vs">×</div>
     <div class="side"><strong>${esc(opponent)}</strong><span>Adversário</span></div>
   </div>
-  <p style="margin:0 0 4mm;font-size:9pt;color:${C.muted};text-transform:uppercase;letter-spacing:.12em">
+  <p style="margin:0 0 2mm;font-size:8pt;color:${C.muted};text-transform:uppercase;letter-spacing:.1em">
     ${esc([matchDateLabel, config.matchTime, travel.categoryLabel].filter(Boolean).join(" · "))}
   </p>`;
 

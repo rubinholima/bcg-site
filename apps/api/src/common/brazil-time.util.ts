@@ -96,3 +96,60 @@ export function compareTimeLabels(a: string, b: string): number {
   if (av !== bv) return av - bv;
   return a.localeCompare(b, 'pt-BR');
 }
+
+const AGENDA_PERIOD_SORT_TIME: Record<string, string> = {
+  manha: '08:00:00',
+  tarde: '13:00:00',
+  noite: '19:00:00',
+};
+
+/** ISO usado na ordenação — respeita manhã/tarde/noite e dia inteiro. */
+export function agendaEffectiveSortAt(
+  startAt: string,
+  opts?: { allDay?: boolean; dayPeriod?: string | null },
+): string {
+  const period = opts?.dayPeriod;
+  if (period === 'manha' || period === 'tarde' || period === 'noite') {
+    const dateKey = dateKeyInBrazil(startAt);
+    return `${dateKey}T${AGENDA_PERIOD_SORT_TIME[period]}-03:00`;
+  }
+  if (opts?.allDay) {
+    const dateKey = dateKeyInBrazil(startAt);
+    return `${dateKey}T11:58:00-03:00`;
+  }
+  return startAt;
+}
+
+function agendaTypeSortPriority(type: string): number {
+  if (type === 'jogo' || type === 'viagem') return 0;
+  if (type === 'aniversario') return 90;
+  return 40;
+}
+
+export function compareAgendaCalendarItems(
+  a: { type: string; startAt: string; allDay?: boolean; dayPeriod?: string | null },
+  b: { type: string; startAt: string; allDay?: boolean; dayPeriod?: string | null },
+): number {
+  const byTime = agendaEffectiveSortAt(a.startAt, a).localeCompare(
+    agendaEffectiveSortAt(b.startAt, b),
+  );
+  if (byTime !== 0) return byTime;
+  return agendaTypeSortPriority(a.type) - agendaTypeSortPriority(b.type);
+}
+
+/** Dia do calendário — jogos/viagens usam data do jogo (endAt), não embarque. */
+export function resolveAgendaCalendarDateKey(item: {
+  source: string;
+  type: string;
+  startAt: string;
+  endAt?: string | null;
+}): string {
+  if (
+    item.source === 'travel' &&
+    (item.type === 'jogo' || item.type === 'viagem') &&
+    item.endAt
+  ) {
+    return dateKeyInBrazil(item.endAt);
+  }
+  return dateKeyInBrazil(item.startAt);
+}

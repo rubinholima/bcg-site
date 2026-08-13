@@ -286,6 +286,9 @@ function resolveLinkActive(
   }
   if (href === "/dashboard/grupo") return !!pathname?.startsWith("/dashboard/grupo");
   if (href === "/dashboard/diretoria") return !!pathname?.startsWith("/dashboard/diretoria");
+  if (href === "/dashboard/futebol/jogos") {
+    return !!pathname?.startsWith("/dashboard/futebol/jogos");
+  }
   if (href === "/dashboard/futebol") return pathname === "/dashboard/futebol";
   if (href === "/dashboard/adm") return pathname === "/dashboard/adm";
   if (href === "/dashboard/saude") return pathname === "/dashboard/saude";

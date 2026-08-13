@@ -18,6 +18,9 @@ import type {
   ProgramacaoSemanalReportDto,
   RelatorioPessoaRow,
   RelatorioHospedeRow,
+  SumulaCartoesMatchPlayer,
+  SumulaCartoesMatchTeam,
+  SumulaCartoesReportDto,
 } from "@/lib/futebol-relatorios.types";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import { getFormation, pitchChipTranslateY } from "@/lib/press-kit-formations";
@@ -270,6 +273,11 @@ function baseStyles(size: PrintPageSize): string {
       vertical-align: middle;
     }
     tbody tr:nth-child(even) td { background: #f8fafc; }
+    .doc-id {
+      white-space: nowrap;
+      word-break: keep-all;
+      font-variant-numeric: tabular-nums;
+    }
     .num { width: 36px; text-align: center; font-weight: 700; color: ${BCG.red}; }
     .empty {
       text-align: center;
@@ -384,6 +392,23 @@ function logoHtml(logoUrl: string | null | undefined, clubName: string): string 
   return `<div class="logo-wrap"><div class="logo-fallback">${escapeHtml(initials || "BCG")}</div></div>`;
 }
 
+function formatDocId(value: string | null | undefined): string {
+  const v = value?.trim();
+  return v ? escapeHtml(v) : "—";
+}
+
+function formatCpfCell(cpf: string | null | undefined): string {
+  const formatted = formatCpfForDisplay(cpf);
+  if (!formatted) return "—";
+  return `<span class="doc-id">${escapeHtml(formatted)}</span>`;
+}
+
+function formatRgCell(rg: string | null | undefined): string {
+  const v = rg?.trim();
+  if (!v) return "—";
+  return `<span class="doc-id">${escapeHtml(v)}</span>`;
+}
+
 type PersonTableOpts = {
   showRole?: boolean;
   /** Só nome, apelido e nascimento (sem CPF/RG) — convocação / relacionados */
@@ -393,7 +418,7 @@ type PersonTableOpts = {
 function personTableRows(rows: RelatorioPessoaRow[], opts: PersonTableOpts = {}): string {
   const showRole = opts.showRole === true;
   const convocacao = opts.convocacao === true;
-  const colCount = 3 + (showRole ? 1 : 0) + (convocacao ? 1 : 3);
+  const colCount = 3 + (showRole ? 1 : 0) + (convocacao ? 1 : 4);
   if (rows.length === 0) {
     return `<tr><td colspan="${colCount}" class="empty">Nenhum registro</td></tr>`;
   }
@@ -405,8 +430,9 @@ function personTableRows(rows: RelatorioPessoaRow[], opts: PersonTableOpts = {})
         : "";
       const docsCells = convocacao
         ? ""
-        : `<td>${escapeHtml(formatCpfForDisplay(r.cpf) || "—")}</td>
-        <td>${escapeHtml(r.rg?.trim() || "—")}</td>`;
+        : `<td>${formatCpfCell(r.cpf)}</td>
+        <td>${formatRgCell(r.rg)}</td>
+        <td>${formatDocId(r.rgIssuer)}</td>`;
       return `<tr>
         <td class="num">${r.num}</td>
         <td class="left">${escapeHtml(r.name)}</td>
@@ -429,7 +455,9 @@ function personTable(
   const showRole = normalized.showRole === true;
   const convocacao = normalized.convocacao === true;
   const roleHead = showRole ? "<th>Função</th>" : "";
-  const docsHead = convocacao ? "" : "<th>CPF</th><th>RG</th>";
+  const docsHead = convocacao
+    ? ""
+    : "<th>CPF</th><th>RG</th><th>Órgão emissor</th>";
   return `
     <section class="section">
       <h2 class="section-title">${escapeHtml(title)}</h2>
@@ -609,8 +637,8 @@ export function buildHospedesPrintHtml(
           ${roomCell}
           <td class="left">${escapeHtml(r.name)}</td>
           <td class="left">${escapeHtml(r.nickname?.trim() || "—")}</td>
-          <td>${escapeHtml(formatCpfForDisplay(r.cpf) || "—")}</td>
-          <td>${escapeHtml(r.rg?.trim() || "—")}</td>
+          <td>${formatCpfCell(r.cpf)}</td>
+          <td>${formatRgCell(r.rg)}</td>
           <td>${escapeHtml(formatBrDate(r.birthDate))}</td>
         </tr>`;
       })
@@ -775,6 +803,129 @@ export function printPassageirosReport(
   size: PrintPageSize = "A4",
 ): void {
   printHtmlDocument(buildPassageirosPrintHtml(data, size), "Impressão — Passageiros");
+}
+
+function sumulaPlayerRows(players: SumulaCartoesMatchPlayer[]): string {
+  if (players.length === 0) {
+    return `<tr><td colspan="8" class="empty">Sem jogadores na súmula</td></tr>`;
+  }
+  return players
+    .map((p) => `<tr>
+        <td class="num">${p.jerseyNumber ?? "—"}</td>
+        <td class="left">${escapeHtml(p.name)}</td>
+        <td><span class="doc-id">${escapeHtml(p.cbfRegistration?.trim() || "—")}</span></td>
+        <td>${p.starter ? "Sim" : "Não"}</td>
+        <td>${p.played ? p.minutesPlayed : "—"}</td>
+        <td>${p.goals > 0 ? p.goals : "—"}</td>
+        <td>${p.yellowCards > 0 ? p.yellowCards : "—"}</td>
+        <td>${p.redCards > 0 ? p.redCards : "—"}</td>
+      </tr>`)
+    .join("");
+}
+
+function sumulaTeamTable(title: string, team: SumulaCartoesMatchTeam): string {
+  const score = team.score != null ? String(team.score) : "—";
+  return `
+    <section class="section">
+      <h2 class="section-title">${escapeHtml(title)} — ${escapeHtml(team.teamName)} (${escapeHtml(score)})</h2>
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Atleta</th>
+            <th>CBF</th>
+            <th>Titular</th>
+            <th>Min</th>
+            <th>Gols</th>
+            <th>A</th>
+            <th>V</th>
+          </tr>
+        </thead>
+        <tbody>${sumulaPlayerRows(team.players)}</tbody>
+      </table>
+    </section>
+  `;
+}
+
+function disciplineRows(rows: SumulaCartoesReportDto["discipline"]): string {
+  if (rows.length === 0) {
+    return `<tr><td colspan="6" class="empty">Nenhum cartão registrado no período</td></tr>`;
+  }
+  return rows
+    .map(
+      (r) => `<tr>
+        <td class="num">${r.num}</td>
+        <td class="left">${escapeHtml(r.name)}</td>
+        <td class="num">${r.jerseyNumber ?? "—"}</td>
+        <td>${escapeHtml(r.categoryLabel)}</td>
+        <td>${r.yellowCards > 0 ? r.yellowCards : "—"}</td>
+        <td>${r.redCards > 0 ? r.redCards : "—"}</td>
+      </tr>`,
+    )
+    .join("");
+}
+
+export function buildSumulaCartoesPrintHtml(
+  data: SumulaCartoesReportDto,
+  size: PrintPageSize = "A4",
+): string {
+  const badge = [String(data.filters.season), data.filters.categoryLabel].filter(Boolean).join(" · ");
+
+  const matchMeta = data.match
+    ? `
+    <div class="meta-grid">
+      <div class="meta-item"><label>Competição</label><span>${escapeHtml(data.match.competition)}</span></div>
+      <div class="meta-item"><label>Categoria</label><span>${escapeHtml(data.match.categoryLabel)}</span></div>
+      <div class="meta-item"><label>Data</label><span>${escapeHtml(formatBrDate(data.match.matchDate))}${data.match.kickoffTime ? ` · ${escapeHtml(data.match.kickoffTime)}` : ""}</span></div>
+      <div class="meta-item"><label>Placar</label><span>${escapeHtml(data.match.homeTeam)} ${data.match.homeScore ?? "—"} x ${data.match.awayScore ?? "—"} ${escapeHtml(data.match.awayTeam)}</span></div>
+      ${data.match.phase ? `<div class="meta-item"><label>Fase</label><span>${escapeHtml(data.match.phase)}</span></div>` : ""}
+      ${data.match.round != null ? `<div class="meta-item"><label>Rodada</label><span>${data.match.round}</span></div>` : ""}
+    </div>
+  `
+    : "";
+
+  const sumulaBody = data.match
+    ? `${matchMeta}${sumulaTeamTable("Mandante", data.match.home)}${sumulaTeamTable("Visitante", data.match.away)}`
+    : "";
+
+  const disciplineBody = `
+    <section class="section">
+      <h2 class="section-title">Cartões — ${escapeHtml(data.filters.categoryLabel)} · ${data.filters.season}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Atleta</th>
+            <th class="num">Cam.</th>
+            <th>Categoria</th>
+            <th>A</th>
+            <th>V</th>
+          </tr>
+        </thead>
+        <tbody>${disciplineRows(data.discipline)}</tbody>
+      </table>
+    </section>
+  `;
+
+  return documentShell(
+    `Súmula e Cartões — ${data.tenant.name}`,
+    data.tenant.name,
+    data.tenant.logoUrl,
+    "Súmula e Cartões",
+    badge,
+    data.match
+      ? ""
+      : `<div class="meta-grid"><div class="meta-item full"><label>Temporada</label><span>${data.filters.season} · ${escapeHtml(data.filters.categoryLabel)}</span></div></div>`,
+    `${sumulaBody}${disciplineBody}`,
+    size,
+  );
+}
+
+export function printSumulaCartoesReport(
+  data: SumulaCartoesReportDto,
+  size: PrintPageSize = "A4",
+): void {
+  printHtmlDocument(buildSumulaCartoesPrintHtml(data, size), "Impressão — Súmula e Cartões");
 }
 
 export function printHospedesReport(

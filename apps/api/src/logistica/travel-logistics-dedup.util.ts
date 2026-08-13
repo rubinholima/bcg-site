@@ -11,7 +11,7 @@ type TravelDedupRow = {
   _count?: { participants?: number };
 };
 
-function normalizeOpponent(name: string | null | undefined): string {
+export function normalizeTravelOpponent(name: string | null | undefined): string {
   return (name ?? '')
     .trim()
     .toLowerCase()
@@ -20,7 +20,16 @@ function normalizeOpponent(name: string | null | undefined): string {
 }
 
 function travelDedupKey(row: TravelDedupRow): string {
-  return `${row.tenantId}|${dateKeyInBrazil(row.matchDate)}|${normalizeOpponent(row.opponentName)}`;
+  return `${row.tenantId}|${dateKeyInBrazil(row.matchDate)}|${normalizeTravelOpponent(row.opponentName)}`;
+}
+
+export function buildTravelMatchKey(
+  tenantId: string,
+  matchDate: Date | string,
+  opponentName: string | null | undefined,
+): string {
+  const date = typeof matchDate === 'string' ? new Date(matchDate) : matchDate;
+  return `${tenantId}|${dateKeyInBrazil(date)}|${normalizeTravelOpponent(opponentName)}`;
 }
 
 function travelKeepScore(row: TravelDedupRow): number {

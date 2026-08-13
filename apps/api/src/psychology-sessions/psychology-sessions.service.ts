@@ -115,6 +115,7 @@ export class PsychologySessionsService {
         groupSummary: dto.groupSummary ?? null,
         attendance: attendance as object | undefined,
         durationSeconds: dto.durationSeconds ?? null,
+        isPrivate: dto.isPrivate === true,
         editLog:
           dto.sessionType === 'relatorio_semanal' && editor
             ? (this.appendEditLog(null, {
@@ -127,7 +128,7 @@ export class PsychologySessionsService {
     });
 
     let footballAgendaEntryId: string | null = null;
-    if (dto.syncAgenda !== false && dto.sessionType !== 'relatorio_semanal') {
+    if (!row.isPrivate && dto.syncAgenda !== false && dto.sessionType !== 'relatorio_semanal') {
       footballAgendaEntryId = await this.syncFootballAgenda(row);
     }
 
@@ -232,6 +233,7 @@ export class PsychologySessionsService {
             : (existing.attendance as object | undefined),
         durationSeconds:
           dto.durationSeconds !== undefined ? dto.durationSeconds : existing.durationSeconds,
+        isPrivate: dto.isPrivate !== undefined ? dto.isPrivate === true : existing.isPrivate,
         ...(nextEditLog ? { editLog: nextEditLog as object } : {}),
       },
     });

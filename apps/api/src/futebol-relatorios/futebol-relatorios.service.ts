@@ -21,6 +21,7 @@ import {
   compareTimeLabels,
   dateKeyInBrazil,
   formatTimeBrazil,
+  resolveAgendaCalendarDateKey,
 } from '../common/brazil-time.util';
 import { dedupeTravelLogisticsList } from '../logistica/travel-logistics-dedup.util';
 import {
@@ -40,8 +41,18 @@ import type {
   RelatorioHospedeRow,
   RelatorioPessoaRow,
   RelatorioTravelMeta,
+  SumulaCartoesDisciplineRowDto,
+  SumulaCartoesMatchDto,
+  SumulaCartoesMatchPlayerDto,
+  SumulaCartoesReportDto,
+  SumulaMatchListItemDto,
 } from './futebol-relatorios.types';
 import { assignStartersByCadastroPosition } from '../common/press-kit-lineup.util';
+import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
+import {
+  FMF_SYNC_TENANT_DEFAULTS,
+  isFmfSyncTenantSlug,
+} from '../fmf-scraper/fmf-sync-tenants.config';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
   DEFAULT_PRESS_KIT_REFEREE_ROLES,
@@ -68,10 +79,12 @@ type RoomAssignment = {
 };
 
 function parseRegistrationProfile(raw: unknown): {
-  personal?: { cpf?: string; rg?: string; nickname?: string };
+  personal?: { cpf?: string; rg?: string; rgIssuer?: string; nickname?: string };
 } {
   if (!raw || typeof raw !== 'object') return {};
-  return raw as { personal?: { cpf?: string; rg?: string; nickname?: string } };
+  return raw as {
+    personal?: { cpf?: string; rg?: string; rgIssuer?: string; nickname?: string };
+  };
 }
 
 function nicknameFromProfile(raw: unknown): string | null {
@@ -122,6 +135,7 @@ export class FutebolRelatoriosService {
 
     const participants = await this.prisma.travelParticipant.findMany({
       where: { travelLogisticsId: travelId },
+      include: { logisticsGuest: true },
       orderBy: [{ personType: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
@@ -607,10 +621,11 @@ export class FutebolRelatoriosService {
 
     for (const item of items) {
       if (item.source === 'bch_booking') continue;
-      const start = new Date(item.startAt);
-      const dateIso = dateKeyInBrazil(start);
+      const dateIso = resolveAgendaCalendarDateKey(item);
       const day = dayMap.get(dateIso);
       if (!day) continue;
+
+      const sortStart = new Date(item.startAt);
 
       const itemCats =
         item.categories && item.categories.length > 0
@@ -631,7 +646,7 @@ export class FutebolRelatoriosService {
       for (const targetCat of targetCats) {
         if (!day.byCategory[targetCat]) day.byCategory[targetCat] = [];
 
-        const time = formatTimeBrazil(start, item.allDay, item.dayPeriod);
+        const time = formatTimeBrazil(sortStart, item.allDay, item.dayPeriod);
 
         day.byCategory[targetCat].push({
           time,
@@ -794,6 +809,7 @@ export class FutebolRelatoriosService {
           nickname: nicknameFromProfile(p.registrationProfile),
           cpf: profile.personal?.cpf ?? null,
           rg: profile.personal?.rg ?? null,
+          rgIssuer: profile.personal?.rgIssuer?.trim() || null,
           birthDate: formatIsoDate(p.birthDate),
           playerId: p.id,
           jerseyNumber: p.jerseyNumber ?? null,
@@ -817,6 +833,7 @@ export class FutebolRelatoriosService {
           nickname: null,
           cpf: s.cpf,
           rg: s.rg,
+          rgIssuer: null,
           birthDate: formatIsoDate(s.birthDate),
           role: s.jobRole?.name?.trim() || s.role,
           staffId: s.id,
@@ -837,6 +854,13 @@ export class FutebolRelatoriosService {
       staffId: string | null;
       guestName: string | null;
       guestDocument: string | null;
+      logisticsGuest?: {
+        name: string;
+        cpf: string | null;
+        rg: string | null;
+        rgIssuer: string | null;
+        birthDate: Date | null;
+      } | null;
     }>,
   ) {
     const athletes: RelatorioPessoaRow[] = [];
@@ -878,6 +902,7 @@ export class FutebolRelatoriosService {
           nickname: nicknameFromProfile(p.registrationProfile),
           cpf: profile.personal?.cpf ?? null,
           rg: profile.personal?.rg ?? null,
+          rgIssuer: profile.personal?.rgIssuer?.trim() || null,
           birthDate: formatIsoDate(p.birthDate),
           playerId: p.id,
           jerseyNumber: p.jerseyNumber ?? null,
@@ -896,6 +921,7 @@ export class FutebolRelatoriosService {
           nickname: null,
           cpf: s.cpf,
           rg: s.rg,
+          rgIssuer: null,
           birthDate: formatIsoDate(s.birthDate),
           role: s.jobRole?.name?.trim() || s.role,
           staffId: s.id,
@@ -904,12 +930,26 @@ export class FutebolRelatoriosService {
         continue;
       }
       if (part.personType === 'guest') {
+        const g = part.logisticsGuest;
+        if (g) {
+          guests.push({
+            num: guests.length + 1,
+            name: g.name.trim() || '—',
+            nickname: null,
+            cpf: g.cpf,
+            rg: g.rg,
+            rgIssuer: g.rgIssuer?.trim() || null,
+            birthDate: formatIsoDate(g.birthDate),
+          });
+          continue;
+        }
         guests.push({
           num: guests.length + 1,
           name: (part.guestName ?? '—').trim() || '—',
           nickname: null,
           cpf: part.guestDocument ?? null,
           rg: null,
+          rgIssuer: null,
           birthDate: null,
         });
       }
@@ -951,6 +991,7 @@ export class FutebolRelatoriosService {
         nickname: nicknameFromProfile(p.registrationProfile),
         cpf: profile.personal?.cpf ?? null,
         rg: profile.personal?.rg ?? null,
+        rgIssuer: profile.personal?.rgIssuer?.trim() || null,
         birthDate: formatIsoDate(p.birthDate),
         playerId: p.id,
         jerseyNumber: p.jerseyNumber ?? null,
@@ -966,6 +1007,7 @@ export class FutebolRelatoriosService {
       nickname: null,
       cpf: s.cpf,
       rg: s.rg,
+      rgIssuer: null,
       birthDate: formatIsoDate(s.birthDate),
       role: s.jobRole?.name?.trim() || s.role,
       staffId: s.id,
@@ -1359,5 +1401,348 @@ export class FutebolRelatoriosService {
       birthDate: null,
       role: null,
     };
+  }
+
+  async listSumulaMatches(filters: {
+    tenantId: string;
+    category?: string;
+    season?: number;
+  }): Promise<SumulaMatchListItemDto[]> {
+    const tenantId = filters.tenantId?.trim();
+    if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
+
+    const season =
+      typeof filters.season === 'number' && filters.season >= 2000
+        ? filters.season
+        : new Date().getFullYear();
+    const category = filters.category?.trim() || null;
+
+    const rows = await this.prisma.fmfMatchReport.findMany({
+      where: {
+        tenantId,
+        season,
+        ...(category ? { category } : {}),
+      },
+      orderBy: [{ matchDate: 'desc' }, { kickoffTime: 'desc' }],
+      select: {
+        id: true,
+        matchDate: true,
+        homeTeam: true,
+        awayTeam: true,
+        homeScore: true,
+        awayScore: true,
+        competition: true,
+        category: true,
+        season: true,
+      },
+    });
+
+    return rows.map((row) => {
+      const dateKey = dateKeyInBrazil(row.matchDate);
+      const score =
+        row.homeScore != null && row.awayScore != null
+          ? `${row.homeScore} x ${row.awayScore}`
+          : '—';
+      return {
+        id: row.id,
+        matchDate: dateKey,
+        homeTeam: row.homeTeam,
+        awayTeam: row.awayTeam,
+        homeScore: row.homeScore,
+        awayScore: row.awayScore,
+        competition: row.competition,
+        category: row.category,
+        season: row.season,
+        label: `${formatBrDate(dateKey)} · ${row.homeTeam} ${score} ${row.awayTeam} · ${row.competition}`,
+      };
+    });
+  }
+
+  async getSumulaCartoesReport(filters: {
+    tenantId: string;
+    matchId?: string;
+    category?: string;
+    season?: number;
+  }): Promise<SumulaCartoesReportDto> {
+    const tenantId = filters.tenantId?.trim();
+    if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
+
+    const season =
+      typeof filters.season === 'number' && filters.season >= 2000
+        ? filters.season
+        : new Date().getFullYear();
+    const category = filters.category?.trim() || null;
+    const matchId = filters.matchId?.trim() || null;
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, logoUrl: true, slug: true, tradeName: true },
+    });
+    if (!tenant) throw new NotFoundException('Clube não encontrado');
+
+    const categoryLabels = await this.loadCategoryLabelsMap();
+    const categoryLabel = category
+      ? (categoryLabels[category] ?? category)
+      : 'Todas as categorias';
+
+    const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+
+    let match: SumulaCartoesMatchDto | null = null;
+    if (matchId) {
+      const row = await this.prisma.fmfMatchReport.findFirst({
+        where: { id: matchId, tenantId },
+        include: {
+          playerStats: {
+            include: { player: { select: { id: true, name: true, jerseyNumber: true } } },
+            orderBy: [{ starter: 'desc' }, { jerseyNumber: 'asc' }],
+          },
+        },
+      });
+      if (!row) throw new NotFoundException('Súmula não encontrada');
+      match = this.buildSumulaMatchDto(row, tenant.name, aliases, categoryLabels);
+    }
+
+    const discipline = await this.buildSumulaDisciplineRows({
+      tenantId,
+      season,
+      category,
+      categoryLabels,
+    });
+
+    return {
+      tenant: { id: tenant.id, name: tenant.name, logoUrl: tenant.logoUrl },
+      filters: { season, category, categoryLabel, matchId },
+      match,
+      discipline,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  private resolveTenantFmfAliases(
+    tenantName: string,
+    tenantSlug: string,
+    tradeName: string | null,
+  ): string[] {
+    const base = isFmfSyncTenantSlug(tenantSlug)
+      ? FMF_SYNC_TENANT_DEFAULTS[tenantSlug].fmfTeamNames
+      : [tenantName];
+    return [...base, ...(tradeName?.trim() ? [tradeName.trim()] : [])];
+  }
+
+  private async loadCategoryLabelsMap(): Promise<Record<string, string>> {
+    const fixtureCats = await this.prisma.fixtureCategory.findMany({
+      where: { active: true },
+      select: { value: true, labelPT: true },
+    });
+    const map: Record<string, string> = {};
+    for (const fc of fixtureCats) map[fc.value] = fc.labelPT;
+    return map;
+  }
+
+  private buildSumulaMatchDto(
+    row: {
+      id: string;
+      competition: string;
+      phase: string | null;
+      round: number | null;
+      category: string;
+      season: number;
+      matchDate: Date;
+      kickoffTime: string | null;
+      homeTeam: string;
+      awayTeam: string;
+      homeScore: number | null;
+      awayScore: number | null;
+      sourceUrl: string;
+      rawParsed: unknown;
+      playerStats: Array<{
+        playerId: string;
+        playerName: string;
+        cbfRegistration: string;
+        jerseyNumber: number | null;
+        starter: boolean;
+        played: boolean;
+        minutesPlayed: number;
+        goals: number;
+        yellowCards: number;
+        redCards: number;
+        player: { id: string; name: string; jerseyNumber: number | null } | null;
+      }>;
+    },
+    tenantName: string,
+    aliases: string[],
+    categoryLabels: Record<string, string>,
+  ): SumulaCartoesMatchDto {
+    const linkedByCbf = new Map(row.playerStats.map((s) => [s.cbfRegistration, s]));
+    const raw = row.rawParsed as {
+      stats?: Array<{
+        jerseyNumber: number;
+        sourceName: string;
+        cbfRegistration: string;
+        starter: boolean;
+        teamSide: 'home' | 'away';
+        played: boolean;
+        minutesPlayed: number;
+        goals: number;
+        yellowCards: number;
+        redCards: number;
+      }>;
+    } | null;
+
+    const buildTeam = (side: 'home' | 'away'): SumulaCartoesMatchDto['home'] => {
+      const teamName = side === 'home' ? row.homeTeam : row.awayTeam;
+      const score = side === 'home' ? row.homeScore : row.awayScore;
+      const rawPlayers = raw?.stats?.filter((p) => p.teamSide === side) ?? [];
+
+      let players: SumulaCartoesMatchPlayerDto[];
+      if (rawPlayers.length > 0) {
+        players = rawPlayers
+          .map((p) => {
+            const linked = linkedByCbf.get(p.cbfRegistration);
+            return {
+              jerseyNumber: p.jerseyNumber,
+              name: linked?.player?.name ?? linked?.playerName ?? p.sourceName,
+              cbfRegistration: p.cbfRegistration,
+              starter: p.starter,
+              played: p.played,
+              minutesPlayed: p.minutesPlayed,
+              goals: p.goals,
+              yellowCards: p.yellowCards,
+              redCards: p.redCards,
+              playerId: linked?.playerId ?? null,
+            };
+          })
+          .sort((a, b) => (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999));
+      } else {
+        const isHomeClub = isFmfTeamMatch(row.homeTeam, tenantName, aliases);
+        const ourSide: 'home' | 'away' = isHomeClub ? 'home' : 'away';
+        if (side !== ourSide) {
+          players = [];
+        } else {
+          players = row.playerStats.map((s) => ({
+            jerseyNumber: s.jerseyNumber ?? s.player?.jerseyNumber ?? null,
+            name: s.player?.name ?? s.playerName,
+            cbfRegistration: s.cbfRegistration,
+            starter: s.starter,
+            played: s.played,
+            minutesPlayed: s.minutesPlayed,
+            goals: s.goals,
+            yellowCards: s.yellowCards,
+            redCards: s.redCards,
+            playerId: s.playerId,
+          }));
+        }
+      }
+
+      return { teamName, score, players };
+    };
+
+    return {
+      id: row.id,
+      competition: row.competition,
+      phase: row.phase,
+      round: row.round,
+      category: row.category,
+      categoryLabel: categoryLabels[row.category] ?? row.category,
+      season: row.season,
+      matchDate: dateKeyInBrazil(row.matchDate),
+      kickoffTime: row.kickoffTime,
+      homeTeam: row.homeTeam,
+      awayTeam: row.awayTeam,
+      homeScore: row.homeScore,
+      awayScore: row.awayScore,
+      sourceUrl: row.sourceUrl,
+      home: buildTeam('home'),
+      away: buildTeam('away'),
+    };
+  }
+
+  private async buildSumulaDisciplineRows(input: {
+    tenantId: string;
+    season: number;
+    category: string | null;
+    categoryLabels: Record<string, string>;
+  }): Promise<SumulaCartoesDisciplineRowDto[]> {
+    const stats = await this.prisma.fmfPlayerMatchStat.findMany({
+      where: {
+        match: {
+          tenantId: input.tenantId,
+          season: input.season,
+          ...(input.category ? { category: input.category } : {}),
+        },
+        OR: [{ yellowCards: { gt: 0 } }, { redCards: { gt: 0 } }],
+      },
+      include: {
+        player: { select: { id: true, name: true, jerseyNumber: true, category: true } },
+        match: {
+          select: {
+            matchDate: true,
+            homeTeam: true,
+            awayTeam: true,
+            homeScore: true,
+            awayScore: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: [{ match: { matchDate: 'desc' } }],
+    });
+
+    const byPlayer = new Map<
+      string,
+      {
+        player: (typeof stats)[number]['player'];
+        yellowCards: number;
+        redCards: number;
+        matches: SumulaCartoesDisciplineRowDto['matches'];
+      }
+    >();
+
+    for (const stat of stats) {
+      if (!stat.player) continue;
+      const current = byPlayer.get(stat.player.id) ?? {
+        player: stat.player,
+        yellowCards: 0,
+        redCards: 0,
+        matches: [],
+      };
+      current.yellowCards += stat.yellowCards;
+      current.redCards += stat.redCards;
+      if (stat.yellowCards > 0 || stat.redCards > 0) {
+        const dateKey = dateKeyInBrazil(stat.match.matchDate);
+        const score =
+          stat.match.homeScore != null && stat.match.awayScore != null
+            ? `${stat.match.homeScore} x ${stat.match.awayScore}`
+            : '—';
+        current.matches.push({
+          matchDate: dateKey,
+          label: `${formatBrDate(dateKey)} · ${stat.match.homeTeam} ${score} ${stat.match.awayTeam}`,
+          yellowCards: stat.yellowCards,
+          redCards: stat.redCards,
+        });
+      }
+      byPlayer.set(stat.player.id, current);
+    }
+
+    return [...byPlayer.values()]
+      .sort(
+        (a, b) =>
+          b.redCards - a.redCards ||
+          b.yellowCards - a.yellowCards ||
+          a.player.name.localeCompare(b.player.name, 'pt-BR'),
+      )
+      .map((row, index) => ({
+        num: index + 1,
+        playerId: row.player.id,
+        name: row.player.name,
+        jerseyNumber: row.player.jerseyNumber,
+        category: row.player.category,
+        categoryLabel: row.player.category
+          ? (input.categoryLabels[row.player.category] ?? row.player.category)
+          : '—',
+        yellowCards: row.yellowCards,
+        redCards: row.redCards,
+        matches: row.matches,
+      }));
   }
 }

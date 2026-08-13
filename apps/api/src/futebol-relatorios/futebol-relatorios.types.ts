@@ -5,6 +5,8 @@ export type RelatorioPessoaRow = {
   nickname?: string | null;
   cpf: string | null;
   rg: string | null;
+  /** Órgão emissor do RG (cadastro do atleta / convidado) */
+  rgIssuer?: string | null;
   birthDate: string | null;
   role?: string | null;
   /** FK no cadastro — relatório da vida do atleta */
@@ -196,3 +198,88 @@ export const DEFAULT_PRESS_KIT_DIRECTOR_ROLES = [
   'Gestor de Futebol',
   'Supervisor de Futebol',
 ] as const;
+
+export type SumulaMatchListItemDto = {
+  id: string;
+  matchDate: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  competition: string;
+  category: string;
+  season: number;
+  label: string;
+};
+
+export type SumulaCartoesMatchPlayerDto = {
+  jerseyNumber: number | null;
+  name: string;
+  cbfRegistration: string | null;
+  starter: boolean;
+  played: boolean;
+  minutesPlayed: number;
+  goals: number;
+  yellowCards: number;
+  redCards: number;
+  playerId?: string | null;
+};
+
+export type SumulaCartoesMatchTeamDto = {
+  teamName: string;
+  score: number | null;
+  players: SumulaCartoesMatchPlayerDto[];
+};
+
+export type SumulaCartoesMatchDto = {
+  id: string;
+  competition: string;
+  phase: string | null;
+  round: number | null;
+  category: string;
+  categoryLabel: string;
+  season: number;
+  matchDate: string;
+  kickoffTime: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  sourceUrl: string;
+  home: SumulaCartoesMatchTeamDto;
+  away: SumulaCartoesMatchTeamDto;
+};
+
+export type SumulaCartoesDisciplineRowDto = {
+  num: number;
+  playerId: string;
+  name: string;
+  jerseyNumber: number | null;
+  category: string | null;
+  categoryLabel: string;
+  yellowCards: number;
+  redCards: number;
+  matches: Array<{
+    matchDate: string;
+    label: string;
+    yellowCards: number;
+    redCards: number;
+  }>;
+};
+
+export type SumulaCartoesReportDto = {
+  tenant: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+  };
+  filters: {
+    season: number;
+    category: string | null;
+    categoryLabel: string;
+    matchId: string | null;
+  };
+  match: SumulaCartoesMatchDto | null;
+  discipline: SumulaCartoesDisciplineRowDto[];
+  generatedAt: string;
+};

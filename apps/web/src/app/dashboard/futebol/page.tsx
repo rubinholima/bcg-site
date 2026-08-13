@@ -64,6 +64,13 @@ const LINKS = [
     moduleSlug: "tipos",
   },
   {
+    title: "Jogos",
+    description: "Partidas passadas e futuras — súmula, cartões e documentos.",
+    href: "/dashboard/futebol/jogos",
+    icon: Trophy,
+    moduleSlug: "futebol_jogos",
+  },
+  {
     title: "Logística — Agenda",
     description: "Calendário operacional: viagens, treinos, jogos e compromissos.",
     href: agendaHubUrl(AGENDA_VISAO.FUTEBOL),

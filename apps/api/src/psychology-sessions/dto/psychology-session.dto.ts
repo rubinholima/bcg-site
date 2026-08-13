@@ -1,4 +1,4 @@
-import { IsArray, IsIn, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 const SESSION_TYPES = ['presencial', 'grupo', 'relatorio_semanal'] as const;
@@ -132,6 +132,10 @@ export class CreatePsychologySessionDto {
 
   @IsOptional()
   syncAgenda?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isPrivate?: boolean;
 }
 
 export class UpdatePsychologySessionDto {
@@ -250,4 +254,8 @@ export class UpdatePsychologySessionDto {
   @IsOptional()
   @IsString()
   editComment?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isPrivate?: boolean;
 }

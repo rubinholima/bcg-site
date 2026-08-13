@@ -320,13 +320,20 @@ export function CaptacaoHub() {
 
   async function handleCreateScout(e: React.FormEvent) {
     e.preventDefault();
-    if (!effectiveTenantId) return;
+    if (!effectiveTenantId) {
+      setError("Selecione o clube antes de cadastrar o captador.");
+      return;
+    }
+    if (!scoutForm.name.trim()) {
+      setError("Informe o nome do captador.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       await api.post("/captacao/scouts", {
         tenantId: effectiveTenantId,
-        name: scoutForm.name,
+        name: scoutForm.name.trim(),
         email: scoutForm.email || undefined,
         phone: scoutForm.phone || undefined,
         regions: scoutForm.regions
@@ -353,8 +360,8 @@ export function CaptacaoHub() {
       });
       setTab("captadores");
       await loadAll();
-    } catch {
-      setError("Erro ao cadastrar captador.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao cadastrar captador.");
     } finally {
       setSaving(false);
     }

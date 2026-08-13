@@ -68,8 +68,16 @@ export class FutebolAgendaController {
     @Query('tenantId') tenantId?: string,
     @Query('types') types?: string,
     @Query('category') category?: string,
+    @Query('excludeBirthdays') excludeBirthdays?: string,
   ) {
-    return this.service.getCalendar({ from, to, tenantId, types, category });
+    return this.service.getCalendar({
+      from,
+      to,
+      tenantId,
+      types,
+      category,
+      excludeBirthdays: excludeBirthdays === '1' || excludeBirthdays === 'true',
+    });
   }
 
   @Get('overview')
@@ -78,12 +86,14 @@ export class FutebolAgendaController {
     @Query('month') month: string,
     @Query('tenantId') tenantId?: string,
     @Query('category') category?: string,
+    @Query('excludeBirthdays') excludeBirthdays?: string,
   ) {
     return this.service.getOverview({
       year: Number.parseInt(year, 10),
       month: Number.parseInt(month, 10),
       tenantId,
       category,
+      excludeBirthdays: excludeBirthdays === '1' || excludeBirthdays === 'true',
     });
   }
 

@@ -36,6 +36,7 @@ export interface PsychologySession {
   groupSummary?: string | null;
   attendance?: PsychologyAttendanceRow[] | null;
   footballAgendaEntryId?: string | null;
+  isPrivate?: boolean;
   durationSeconds?: number | null;
   tenant?: { id: string; name: string; slug: string };
 }

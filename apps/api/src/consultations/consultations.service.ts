@@ -19,6 +19,7 @@ export interface ConsultationItem {
   psychologist?: string;
   psychologistPhotoUrl?: string;
   durationSeconds?: number;
+  isPrivate?: boolean;
 }
 
 @Injectable()
@@ -45,7 +46,9 @@ export class ConsultationsService {
 
   async listAllConsultations(
     allowedTenantIds: string[] | null = null,
+    options?: { includePrivate?: boolean },
   ): Promise<Array<ConsultationItem & { id: string; tenantId: string }>> {
+    const includePrivate = options?.includePrivate === true;
     const tenantFilter = this.tenantScopeWhere(allowedTenantIds);
     const [players, psychList, sessions] = await Promise.all([
       this.prisma.player.findMany({
@@ -72,6 +75,8 @@ export class ConsultationsService {
         const c = list[i];
         const date = (c.date as string) ?? '';
         const status = (c.status as string) ?? 'scheduled';
+        const isPrivate = c.isPrivate === true;
+        if (isPrivate && !includePrivate) continue;
         const psychName = this.consultationPerformerName(undefined, undefined, c.psychologist as string);
         result.push({
           id: `${p.id}-${i}`,
@@ -91,12 +96,14 @@ export class ConsultationsService {
           psychologist: psychName ?? undefined,
           psychologistPhotoUrl: psychName ? psychPhotoByName.get(psychName.toLowerCase()) ?? undefined : undefined,
           durationSeconds: typeof c.durationSeconds === 'number' ? c.durationSeconds : undefined,
+          isPrivate,
         });
       }
     }
 
     for (const s of sessions) {
       if (s.sessionType === 'relatorio_semanal') continue;
+      if (s.isPrivate && !includePrivate) continue;
       const attendance = Array.isArray(s.attendance)
         ? (s.attendance as Array<{ playerName?: string }>)
         : [];
@@ -128,6 +135,7 @@ export class ConsultationsService {
           ? psychPhotoByName.get(psychName.toLowerCase()) ?? undefined
           : undefined,
         durationSeconds: s.durationSeconds ?? undefined,
+        isPrivate: s.isPrivate,
       });
     }
 

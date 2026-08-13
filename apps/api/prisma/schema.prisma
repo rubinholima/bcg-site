@@ -160,6 +160,9 @@ model Tenant {
   communicationTemplates       CommunicationTemplate[]
   coachMatchReports            CoachMatchReport[]
   coachTrainingSessions        CoachTrainingSession[]
+  coachMatchStatOverrides      CoachMatchStatOverride[]
+  footballMatchIncidents       FootballMatchIncident[]
+  footballMatchAttachments     FootballMatchAttachment[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -273,6 +276,8 @@ model TravelLogistics {
   /** Convocados / passageiros ligados ao cadastro (Player / TechnicalStaff) — base dos relatórios e da ficha do atleta */
   participants          TravelParticipant[]
   coachMatchReport      CoachMatchReport?
+  matchIncidents        FootballMatchIncident[]
+  matchAttachments      FootballMatchAttachment[]
 }
 
 /**
@@ -1114,9 +1119,15 @@ model FmfMatchReport {
   totalMinutes        Int?
   rawParsed           Json?
   unresolvedPlayers   Json?
+  /** Texto bruto da seção Ocorrências / Observações da súmula FMF. */
+  occurrencesText     String?  @db.Text
   importedAt          DateTime @default(now())
   updatedAt           DateTime @updatedAt
   playerStats         FmfPlayerMatchStat[]
+  coachMatchReport    CoachMatchReport?
+  coachStatOverride   CoachMatchStatOverride?
+  matchIncidents      FootballMatchIncident[]
+  matchAttachments    FootballMatchAttachment[]
 
   @@unique([tenantId, externalMatchId])
   @@index([tenantId, season, category])
@@ -1370,6 +1381,8 @@ model PsychologySession {
   groupSummary          String?  @db.Text
   attendance            Json?    // [{ playerId, playerName, present, individualNotes? }]
   footballAgendaEntryId String?
+  /// Quando true, não aparece na Agenda Geral (só na Agenda Psicologia)
+  isPrivate             Boolean  @default(false)
   durationSeconds       Int?
   /// [{ at, userId, userName, action, comment? }]
   editLog               Json?
@@ -2993,6 +3006,8 @@ model CoachMatchReport {
   tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   travelLogisticsId  String?  @unique
   travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: SetNull)
+  fmfMatchReportId   String?  @unique
+  fmfMatchReport     FmfMatchReport? @relation(fields: [fmfMatchReportId], references: [id], onDelete: SetNull)
   category           String?
   staffId            String?
   staff              TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
@@ -3031,6 +3046,49 @@ model CoachMatchReportAttachment {
   fileUrl  String
   kind     String? // sumula | analista | scout | outro
   @@index([reportId])
+}
+
+// ─── Jogos (Depto Futebol) — ocorrências e anexos por partida ───────────────
+
+model FootballMatchIncident {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fmfMatchReportId   String?
+  fmfMatchReport     FmfMatchReport? @relation(fields: [fmfMatchReportId], references: [id], onDelete: Cascade)
+  travelLogisticsId  String?
+  travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: Cascade)
+  source             String   @default("manual") // fmf | manual
+  kind               String   // atraso | briga | disciplina | observacao | acrescimo | outro
+  description        String   @db.Text
+  minute             Int?
+  period             String?  // 1T | 2T
+  externalKey        String?
+  authorUserId       String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@index([tenantId])
+  @@index([fmfMatchReportId])
+  @@index([travelLogisticsId])
+  @@unique([fmfMatchReportId, externalKey])
+}
+
+model FootballMatchAttachment {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  fmfMatchReportId   String?
+  fmfMatchReport     FmfMatchReport? @relation(fields: [fmfMatchReportId], references: [id], onDelete: Cascade)
+  travelLogisticsId  String?
+  travelLogistics    TravelLogistics? @relation(fields: [travelLogisticsId], references: [id], onDelete: Cascade)
+  label              String?
+  fileUrl            String
+  kind               String?  // sumula | correcao | documento | outro
+  authorUserId       String?
+  createdAt          DateTime @default(now())
+  @@index([tenantId])
+  @@index([fmfMatchReportId])
+  @@index([travelLogisticsId])
 }
 
 model CoachTrainingSession {
@@ -3081,4 +3139,25 @@ model CoachTrainingPlayerEntry {
   notes             String? @db.Text
   @@unique([sessionId, playerId])
   @@index([playerId])
+}
+
+/** Estatísticas complementares de jogo (posse, bolas paradas) — manual ou ajuste sobre dados oficiais. */
+model CoachMatchStatOverride {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category           String?
+  fmfMatchReportId   String?  @unique
+  fmfMatchReport     FmfMatchReport? @relation(fields: [fmfMatchReportId], references: [id], onDelete: Cascade)
+  travelLogisticsId  String?
+  matchDate          DateTime
+  opponentName       String?
+  possessionPct      Int?
+  setPiecesFor       Int?
+  setPiecesAgainst   Int?
+  notes              String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@index([tenantId, category])
+  @@index([tenantId, matchDate])
 }

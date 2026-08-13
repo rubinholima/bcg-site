@@ -36,6 +36,27 @@ export class FutebolTreinadoresController {
     return this.service.getContext(tenantId.trim(), category?.trim() || undefined);
   }
 
+  @Post('match-stats')
+  upsertMatchStats(@Body() body: Record<string, unknown>) {
+    const tenantId = typeof body.tenantId === 'string' ? body.tenantId.trim() : '';
+    const matchDate = typeof body.matchDate === 'string' ? body.matchDate.trim() : '';
+    if (!tenantId || !matchDate) {
+      throw new BadRequestException('tenantId e matchDate são obrigatórios');
+    }
+    return this.service.upsertMatchStatOverride({
+      tenantId,
+      category: typeof body.category === 'string' ? body.category : null,
+      fmfMatchReportId: typeof body.fmfMatchReportId === 'string' ? body.fmfMatchReportId : null,
+      travelLogisticsId: typeof body.travelLogisticsId === 'string' ? body.travelLogisticsId : null,
+      matchDate,
+      opponentName: typeof body.opponentName === 'string' ? body.opponentName : null,
+      possessionPct: typeof body.possessionPct === 'number' ? body.possessionPct : null,
+      setPiecesFor: typeof body.setPiecesFor === 'number' ? body.setPiecesFor : null,
+      setPiecesAgainst: typeof body.setPiecesAgainst === 'number' ? body.setPiecesAgainst : null,
+      notes: typeof body.notes === 'string' ? body.notes : null,
+    });
+  }
+
   @Get('match-reports')
   listMatchReports(
     @Query('tenantId') tenantId: string,
@@ -59,6 +80,7 @@ export class FutebolTreinadoresController {
       tenantId,
       travelLogisticsId:
         typeof body.travelLogisticsId === 'string' ? body.travelLogisticsId : null,
+      fmfMatchReportId: typeof body.fmfMatchReportId === 'string' ? body.fmfMatchReportId : null,
       category: typeof body.category === 'string' ? body.category : null,
       staffId: typeof body.staffId === 'string' ? body.staffId : null,
       authorUserId: req.user?.sub,

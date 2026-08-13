@@ -18,6 +18,14 @@ export interface FmfReportPlayerStat extends FmfReportRosterPlayer {
   redCards: number;
 }
 
+export interface FmfReportOccurrence {
+  kind: 'atraso' | 'briga' | 'disciplina' | 'observacao' | 'acrescimo' | 'outro';
+  description: string;
+  minute: number | null;
+  period: string | null;
+  externalKey: string;
+}
+
 export interface ParsedFmfMatchReport {
   competition: string;
   phase: string | null;
@@ -35,6 +43,8 @@ export interface ParsedFmfMatchReport {
   totalMinutes: number;
   roster: FmfReportRosterPlayer[];
   stats: FmfReportPlayerStat[];
+  occurrencesText: string | null;
+  occurrences: FmfReportOccurrence[];
 }
 
 function cleanLine(value: string): string {
@@ -132,6 +142,65 @@ function sideFromRow(row: string, homeTeam: string, awayTeam: string): 'home' | 
 
 function eventAbsoluteMinute(period: string, minute: number, firstHalfMinutes: number): number {
   return period.toUpperCase() === '2T' ? firstHalfMinutes + minute : minute;
+}
+
+function classifyOccurrenceKind(text: string): FmfReportOccurrence['kind'] {
+  const n = normalize(text);
+  if (/BRIGA|CONFUS|AGRESS|EMPURR|DISCUT|DESACATO|INVAD/.test(n)) return 'briga';
+  if (/ATRAS|DEMOR|ESPERA/.test(n)) return 'atraso';
+  if (/ACRESC/.test(n)) return 'acrescimo';
+  if (/CART|EXPULS|ADVERT|DISCIPLIN|CONDUT/.test(n)) return 'disciplina';
+  return 'observacao';
+}
+
+function parseOccurrencesSection(text: string): { occurrencesText: string | null; occurrences: FmfReportOccurrence[] } {
+  const marker = '\nOcorrências / Observações\n';
+  const from = text.indexOf(marker);
+  if (from < 0) return { occurrencesText: null, occurrences: [] };
+
+  let content = text.slice(from + marker.length).trim();
+  const cutMarkers = ['\nRelatório', '\nAssinatura', '\nDocumento gerado'];
+  for (const cut of cutMarkers) {
+    const idx = content.indexOf(cut);
+    if (idx >= 0) content = content.slice(0, idx).trim();
+  }
+  if (!content) return { occurrencesText: null, occurrences: [] };
+
+  const occurrences: FmfReportOccurrence[] = [];
+  let lineIndex = 0;
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = cleanLine(rawLine);
+    if (!line || /^NR\s*=/i.test(line)) continue;
+
+    let minute: number | null = null;
+    let period: string | null = null;
+    let description = line;
+
+    const timed = line.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s*[–-]?\s*(.+)$/i);
+    if (timed) {
+      minute = Number(timed[1]);
+      period = timed[2].toUpperCase();
+      description = cleanLine(timed[3]);
+    } else {
+      const minuteOnly = line.match(/^(\d{1,2})\s*(?:min|')\s*[–-]?\s*(.+)$/i);
+      if (minuteOnly) {
+        minute = Number(minuteOnly[1]);
+        description = cleanLine(minuteOnly[2]);
+      }
+    }
+
+    if (!description) continue;
+    occurrences.push({
+      kind: classifyOccurrenceKind(description),
+      description,
+      minute,
+      period,
+      externalKey: `fmf:line:${lineIndex}`,
+    });
+    lineIndex += 1;
+  }
+
+  return { occurrencesText: content, occurrences };
 }
 
 export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
@@ -253,6 +322,8 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     }
   }
 
+  const { occurrencesText, occurrences } = parseOccurrencesSection(text);
+
   return {
     competition,
     phase,
@@ -270,5 +341,7 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     totalMinutes,
     roster,
     stats: [...stats.values()],
+    occurrencesText,
+    occurrences,
   };
 }

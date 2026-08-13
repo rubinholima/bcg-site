@@ -83,6 +83,42 @@ export class FutebolRelatoriosController {
     return this.guiaPartida.getGuiaPartida(travelId.trim());
   }
 
+  @Get('sumulas')
+  listSumulas(
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('season') season?: string,
+  ) {
+    if (!tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
+    return this.service.listSumulaMatches({
+      tenantId: tenantId.trim(),
+      category: category?.trim() || undefined,
+      season: Number.isFinite(seasonNum) ? seasonNum : undefined,
+    });
+  }
+
+  @Get('sumula-cartoes')
+  getSumulaCartoes(
+    @Query('tenantId') tenantId?: string,
+    @Query('matchId') matchId?: string,
+    @Query('category') category?: string,
+    @Query('season') season?: string,
+  ) {
+    if (!tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
+    return this.service.getSumulaCartoesReport({
+      tenantId: tenantId.trim(),
+      matchId: matchId?.trim() || undefined,
+      category: category?.trim() || undefined,
+      season: Number.isFinite(seasonNum) ? seasonNum : undefined,
+    });
+  }
+
   @Get('programacao-semanal')
   getProgramacaoSemanal(
     @Query('tenantId') tenantId?: string,

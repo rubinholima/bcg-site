@@ -320,7 +320,7 @@ export default function ConsultasPage() {
       })()
     : "";
 
-  const handleCreateMeet = async (performerName?: string) => {
+  const handleCreateMeet = async (performerName?: string, options?: { isPrivate?: boolean }) => {
     if (!filterAtleta?.trim() || !newDate.trim()) {
       showFeedback(
         "Atenção",
@@ -366,6 +366,7 @@ export default function ConsultasPage() {
             link: data.meetLink,
             notes: newNotes.trim() || undefined,
             psychologist: professionalName,
+            isPrivate: options?.isPrivate === true,
           },
         ];
         await api.patch(`/players/${filterAtleta}`, { onlineConsultations: updated });

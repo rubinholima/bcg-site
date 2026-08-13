@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Controller,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -36,9 +37,14 @@ export class ConsultationsController {
   @Get()
   @UseGuards(ModuleAccessGuard)
   @RequireModule('saude')
-  async list(@Req() req: Request & { user: CognitoJwtPayload }) {
+  async list(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('includePrivate') includePrivate?: string,
+  ) {
     const allowed = await this.allowedTenants(req);
-    return this.service.listAllConsultations(allowed);
+    return this.service.listAllConsultations(allowed, {
+      includePrivate: includePrivate === '1' || includePrivate === 'true',
+    });
   }
 
   @Get('meet-available')

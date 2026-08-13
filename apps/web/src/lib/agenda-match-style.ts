@@ -1,5 +1,7 @@
 /** Estilos e ordenação da agenda de futebol — alto contraste no calendário. */
 
+import { dateKeyInBrazil } from "@/lib/brazil-time";
+
 export type AgendaMatchSide = "casa" | "fora" | null;
 
 /** Prioridade: jogos (casa/fora) → demais → aniversário por último. */
@@ -9,13 +11,54 @@ export function agendaEventSortPriority(type: string): number {
   return 40;
 }
 
+const AGENDA_PERIOD_SORT_TIME: Record<string, string> = {
+  manha: "08:00:00",
+  tarde: "13:00:00",
+  noite: "19:00:00",
+};
+
+function agendaEffectiveSortAt(
+  startAt: string,
+  opts?: { allDay?: boolean; dayPeriod?: string | null },
+): string {
+  const period = opts?.dayPeriod;
+  if (period === "manha" || period === "tarde" || period === "noite") {
+    const dateKey = startAt.slice(0, 10);
+    return `${dateKey}T${AGENDA_PERIOD_SORT_TIME[period]}-03:00`;
+  }
+  if (opts?.allDay) {
+    const dateKey = startAt.slice(0, 10);
+    return `${dateKey}T11:58:00-03:00`;
+  }
+  return startAt;
+}
+
 export function compareAgendaEventsByPriority(
-  a: { type: string; startAt: string },
-  b: { type: string; startAt: string },
+  a: { type: string; startAt: string; allDay?: boolean; dayPeriod?: string | null },
+  b: { type: string; startAt: string; allDay?: boolean; dayPeriod?: string | null },
 ): number {
-  const byTime = a.startAt.localeCompare(b.startAt);
+  const byTime = agendaEffectiveSortAt(a.startAt, a).localeCompare(
+    agendaEffectiveSortAt(b.startAt, b),
+  );
   if (byTime !== 0) return byTime;
   return agendaEventSortPriority(a.type) - agendaEventSortPriority(b.type);
+}
+
+/** Dia no calendário — jogos/viagens na data do jogo, não do embarque. */
+export function resolveAgendaCalendarDateKey(item: {
+  source: string;
+  type: string;
+  startAt: string;
+  endAt?: string | null;
+}): string {
+  if (
+    item.source === "travel" &&
+    (item.type === "jogo" || item.type === "viagem") &&
+    item.endAt
+  ) {
+    return dateKeyInBrazil(item.endAt);
+  }
+  return dateKeyInBrazil(item.startAt);
 }
 
 /**

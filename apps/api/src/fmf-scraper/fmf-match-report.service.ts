@@ -12,6 +12,7 @@ import {
   type FmfReportPlayerStat,
   type ParsedFmfMatchReport,
 } from './fmf-match-report.parser';
+import { syncFmfMatchIncidents } from '../futebol-jogos/football-match-records.sync';
 import { FmfScraperService } from './fmf-scraper.service';
 
 export interface FmfMatchReportCandidate {
@@ -418,6 +419,13 @@ export class FmfMatchReportService {
           ]
         : []),
     ]);
+
+    await syncFmfMatchIncidents(this.prisma, {
+      tenantId: tenant.id,
+      matchId: match.id,
+      occurrencesText: parsed.occurrencesText,
+      occurrences: parsed.occurrences,
+    });
 
     return { linked: linked.length, unresolved: unresolved.length };
   }

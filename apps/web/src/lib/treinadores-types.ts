@@ -11,6 +11,45 @@ export type CoachContextGame = {
   status: string;
 };
 
+export type CoachCompletedGame = {
+  gameKey: string;
+  fmfMatchReportId: string | null;
+  travelLogisticsId: string | null;
+  matchDate: string;
+  opponentName: string;
+  competition: string | null;
+  phase: string | null;
+  round: number | null;
+  isHome: boolean;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  scoreLabel: string;
+  result: "V" | "E" | "D" | null;
+  goalsFor: number | null;
+  goalsAgainst: number | null;
+  yellowCards: number;
+  redCards: number;
+  possessionPct: number | null;
+  setPiecesFor: number | null;
+  setPiecesAgainst: number | null;
+  statsSource: "official" | "manual" | null;
+  hasDetailedStats: boolean;
+};
+
+export type CoachLastRoundMatch = {
+  round: number | null;
+  phase: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  scoreLabel: string;
+  matchDate: string | null;
+  isClubMatch: boolean;
+};
+
 export type CoachContextPlayer = {
   id: string;
   name: string;
@@ -23,6 +62,12 @@ export type CoachContextResponse = {
   tenant: { id: string; name: string; slug: string };
   upcomingGames: CoachContextGame[];
   recentGames: CoachContextGame[];
+  completedGames: CoachCompletedGame[];
+  lastRound: {
+    round: number | null;
+    phase: string | null;
+    matches: CoachLastRoundMatch[];
+  };
   discipline: Array<{
     playerId: string;
     name: string;
@@ -36,6 +81,12 @@ export type CoachContextResponse = {
     jerseyNumber: number | null;
     reason: string;
     estimatedEndDate: string | null;
+  }>;
+  availableSquad: Array<{
+    id: string;
+    name: string;
+    jerseyNumber: number | null;
+    category: string | null;
   }>;
   standings: Array<{
     position: number;
@@ -58,6 +109,7 @@ export type CoachMatchReport = {
   id: string;
   tenantId: string;
   travelLogisticsId: string | null;
+  fmfMatchReportId: string | null;
   category: string | null;
   matchDate: string | null;
   opponentName: string | null;

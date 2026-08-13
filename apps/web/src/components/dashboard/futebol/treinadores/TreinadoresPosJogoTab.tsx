@@ -51,6 +51,8 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
   const [saving, setSaving] = useState(false);
   const [selectedId, setSelectedId] = useState<string>("");
   const [travelLogisticsId, setTravelLogisticsId] = useState("");
+  const [fmfMatchReportId, setFmfMatchReportId] = useState("");
+  const [selectedGameKey, setSelectedGameKey] = useState("");
   const [matchDate, setMatchDate] = useState("");
   const [opponentName, setOpponentName] = useState("");
   const [teamReport, setTeamReport] = useState("");
@@ -65,9 +67,18 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const games = useMemo(
-    () => [...(context?.recentGames ?? []), ...(context?.upcomingGames ?? [])],
-    [context],
+  const completedGames = useMemo(
+    () => context?.completedGames ?? [],
+    [context?.completedGames],
+  );
+
+  const gameOptions = useMemo(
+    () =>
+      completedGames.map((g) => ({
+        value: g.gameKey,
+        label: `${g.opponentName} · ${g.scoreLabel} · ${formatDateDayMonYear(new Date(g.matchDate))}`,
+      })),
+    [completedGames],
   );
 
   const loadReports = () => {
@@ -88,7 +99,9 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
 
   const resetForm = () => {
     setSelectedId("");
+    setSelectedGameKey("");
     setTravelLogisticsId("");
+    setFmfMatchReportId("");
     setMatchDate("");
     setOpponentName("");
     setTeamReport("");
@@ -106,6 +119,14 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
     api.get<CoachMatchReport>(`/futebol-treinadores/match-reports/${selectedId}`).then(({ data }) => {
       if (!data) return;
       setTravelLogisticsId(data.travelLogisticsId ?? "");
+      setFmfMatchReportId(data.fmfMatchReportId ?? "");
+      const gameKey =
+        data.fmfMatchReportId
+          ? `fmf:${data.fmfMatchReportId}`
+          : data.travelLogisticsId
+            ? `travel:${data.travelLogisticsId}`
+            : "";
+      setSelectedGameKey(gameKey);
       setMatchDate(data.matchDate ? data.matchDate.slice(0, 10) : "");
       setOpponentName(data.opponentName ?? "");
       setTeamReport(data.teamReport ?? "");
@@ -132,12 +153,19 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
     });
   }, [selectedId, context?.players]);
 
-  const handleGameChange = (travelId: string) => {
-    setTravelLogisticsId(travelId);
-    const game = games.find((g) => g.id === travelId);
+  const handleGameChange = (gameKey: string) => {
+    setSelectedGameKey(gameKey);
+    if (!gameKey) {
+      setTravelLogisticsId("");
+      setFmfMatchReportId("");
+      return;
+    }
+    const game = completedGames.find((g) => g.gameKey === gameKey);
     if (!game) return;
+    setTravelLogisticsId(game.travelLogisticsId ?? "");
+    setFmfMatchReportId(game.fmfMatchReportId ?? "");
     setMatchDate(game.matchDate.slice(0, 10));
-    setOpponentName(game.opponentName ?? "");
+    setOpponentName(game.opponentName);
   };
 
   const handleSave = async () => {
@@ -149,6 +177,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
         tenantId,
         category: category || null,
         travelLogisticsId: travelLogisticsId || null,
+        fmfMatchReportId: fmfMatchReportId || null,
         matchDate: matchDate || null,
         opponentName: opponentName || null,
         teamReport,
@@ -242,15 +271,12 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Jogo / viagem</Label>
+            <Label>Jogo</Label>
             <NativeSelectField
-              value={travelLogisticsId}
+              value={selectedGameKey}
               onChange={(e) => handleGameChange(e.target.value)}
-              placeholder="Selecione o jogo…"
-              options={games.map((g) => ({
-                value: g.id,
-                label: `${g.opponentName ?? "Jogo"} · ${formatDateDayMonYear(new Date(g.matchDate))}`,
-              }))}
+              placeholder={gameOptions.length === 0 ? "Nenhum jogo realizado — preencha manualmente" : "Selecione o jogo…"}
+              options={gameOptions}
             />
           </div>
 

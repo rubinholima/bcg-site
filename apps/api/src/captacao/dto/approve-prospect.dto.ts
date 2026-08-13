@@ -1,8 +1,13 @@
+import { IsOptional, IsString } from 'class-validator';
+
 export class ApproveProspectDto {
+  @IsOptional()
+  @IsString()
   notes?: string;
 }
 
 export class PromoteProspectDto {
-  /** Se informado, vincula a um jogador já existente em vez de criar */
+  @IsOptional()
+  @IsString()
   playerId?: string;
 }

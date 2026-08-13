@@ -25,7 +25,7 @@ export function agendaHubUrl(visao?: AgendaVisao | null): string {
       return "/dashboard/eventos/boston-city-hall/agenda";
     case AGENDA_VISAO.PSICOLOGIA:
     case AGENDA_VISAO.CONSULTAS:
-      return "/dashboard/consultas";
+      return "/dashboard/psicologia/agenda";
     case AGENDA_VISAO.MARKETING:
       return "/dashboard/marketing";
     default:

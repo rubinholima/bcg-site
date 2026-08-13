@@ -48,7 +48,7 @@ import type {
   FootballAgendaOverview,
 } from "@/types/futebol-agenda";
 import {
-  FOOTBALL_AGENDA_ENTRY_TYPES,
+  FOOTBALL_AGENDA_MANUAL_ENTRY_TYPES,
   FOOTBALL_AGENDA_TYPE_LABEL,
   TRAVEL_STATUS_LABEL,
 } from "@/types/futebol-agenda";
@@ -56,6 +56,7 @@ import { cn } from "@/lib/utils";
 import {
   agendaMatchSideLabel,
   compareAgendaEventsByPriority,
+  resolveAgendaCalendarDateKey,
   type AgendaMatchSide,
 } from "@/lib/agenda-match-style";
 import {
@@ -129,8 +130,8 @@ function viewRange(focusDate: Date, mode: ViewMode) {
 function sortAgendaItems(items: FootballAgendaCalendarItem[]) {
   return [...items].sort((a, b) =>
     compareAgendaEventsByPriority(
-      { type: a.type, startAt: a.startAt },
-      { type: b.type, startAt: b.startAt },
+      { type: a.type, startAt: a.startAt, allDay: a.allDay, dayPeriod: a.dayPeriod },
+      { type: b.type, startAt: b.startAt, allDay: b.allDay, dayPeriod: b.dayPeriod },
     ),
   );
 }
@@ -242,7 +243,9 @@ function TypeLegend({
       >
         Todos
       </button>
-      {Object.entries(FOOTBALL_AGENDA_TYPE_LABEL).map(([key, label]) => {
+      {Object.entries(FOOTBALL_AGENDA_TYPE_LABEL)
+        .filter(([key]) => key !== "aniversario")
+        .map(([key, label]) => {
         const active = typeFilter === key;
         const style = agendaSwatchStyle(
           colors,
@@ -350,13 +353,14 @@ export function FutebolAgendaOperacional() {
   const load = useCallback(async () => {
     setLoading(true);
     const { from, to } = viewRange(focusDate, viewMode);
-    const params = new URLSearchParams({ from, to });
+    const params = new URLSearchParams({ from, to, excludeBirthdays: "1" });
     if (tenantFilter) params.set("tenantId", tenantFilter);
     if (typeFilter !== "all") params.set("types", typeFilter);
     if (categoryFilter !== "all") params.set("category", categoryFilter);
     const overviewParams = new URLSearchParams({
       year: String(focusDate.getFullYear()),
       month: String(focusDate.getMonth()),
+      excludeBirthdays: "1",
     });
     if (tenantFilter) overviewParams.set("tenantId", tenantFilter);
     if (categoryFilter !== "all") overviewParams.set("category", categoryFilter);
@@ -393,7 +397,7 @@ export function FutebolAgendaOperacional() {
     api
       .get<FootballAgendaEntry>(`/futebol-agenda/entries/${entryIdFromUrl}`)
       .then(({ data }) => {
-        if (!data) return;
+        if (!data || data.type === "aniversario") return;
         openEditEntry(data);
       })
       .catch(() => {});
@@ -402,7 +406,7 @@ export function FutebolAgendaOperacional() {
   const byDay = useMemo(() => {
     const map = new Map<string, FootballAgendaCalendarItem[]>();
     for (const item of items) {
-      const key = dateKeyInBrazil(item.startAt);
+      const key = resolveAgendaCalendarDateKey(item);
       const list = map.get(key) ?? [];
       list.push(item);
       map.set(key, list);
@@ -881,7 +885,7 @@ export function FutebolAgendaOperacional() {
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="viagem">Viagens</SelectItem>
                 <SelectItem value="palco">Boston City Hall</SelectItem>
-                {FOOTBALL_AGENDA_ENTRY_TYPES.map((t) => (
+                {FOOTBALL_AGENDA_MANUAL_ENTRY_TYPES.map((t) => (
                   <SelectItem key={t} value={t}>
                     {FOOTBALL_AGENDA_TYPE_LABEL[t]}
                   </SelectItem>
@@ -1186,7 +1190,7 @@ export function FutebolAgendaOperacional() {
                   value={form.type}
                   onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
                 >
-                  {FOOTBALL_AGENDA_ENTRY_TYPES.map((t) => (
+                  {FOOTBALL_AGENDA_MANUAL_ENTRY_TYPES.map((t) => (
                     <option key={t} value={t}>
                       {FOOTBALL_AGENDA_TYPE_LABEL[t]}
                     </option>

@@ -7,6 +7,8 @@ export type RelatorioPessoaRow = {
   nickname?: string | null;
   cpf: string | null;
   rg: string | null;
+  /** Órgão emissor do RG (cadastro do atleta / convidado) */
+  rgIssuer?: string | null;
   birthDate: string | null;
   role?: string | null;
   /** FK no cadastro — relatório da vida do atleta */
@@ -196,7 +198,93 @@ export type FutebolReportKind =
   | "programacao"
   | "layout-relacionados"
   | "press-kit"
-  | "guia-partida";
+  | "guia-partida"
+  | "sumula-cartoes";
+
+export type SumulaMatchListItem = {
+  id: string;
+  matchDate: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  competition: string;
+  category: string;
+  season: number;
+  label: string;
+};
+
+export type SumulaCartoesMatchPlayer = {
+  jerseyNumber: number | null;
+  name: string;
+  cbfRegistration: string | null;
+  starter: boolean;
+  played: boolean;
+  minutesPlayed: number;
+  goals: number;
+  yellowCards: number;
+  redCards: number;
+  playerId?: string | null;
+};
+
+export type SumulaCartoesMatchTeam = {
+  teamName: string;
+  score: number | null;
+  players: SumulaCartoesMatchPlayer[];
+};
+
+export type SumulaCartoesMatch = {
+  id: string;
+  competition: string;
+  phase: string | null;
+  round: number | null;
+  category: string;
+  categoryLabel: string;
+  season: number;
+  matchDate: string;
+  kickoffTime: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  sourceUrl: string;
+  home: SumulaCartoesMatchTeam;
+  away: SumulaCartoesMatchTeam;
+};
+
+export type SumulaCartoesDisciplineRow = {
+  num: number;
+  playerId: string;
+  name: string;
+  jerseyNumber: number | null;
+  category: string | null;
+  categoryLabel: string;
+  yellowCards: number;
+  redCards: number;
+  matches: Array<{
+    matchDate: string;
+    label: string;
+    yellowCards: number;
+    redCards: number;
+  }>;
+};
+
+export type SumulaCartoesReportDto = {
+  tenant: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+  };
+  filters: {
+    season: number;
+    category: string | null;
+    categoryLabel: string;
+    matchId: string | null;
+  };
+  match: SumulaCartoesMatch | null;
+  discipline: SumulaCartoesDisciplineRow[];
+  generatedAt: string;
+};
 
 export type GuiaCampaignLine = {
   label: string;

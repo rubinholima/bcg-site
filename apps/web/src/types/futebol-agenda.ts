@@ -64,6 +64,11 @@ export const FOOTBALL_AGENDA_ENTRY_TYPES = [
   "outro",
 ] as const;
 
+/** Tipos que o usuário pode criar na agenda operacional do futebol (sem aniversário). */
+export const FOOTBALL_AGENDA_MANUAL_ENTRY_TYPES = FOOTBALL_AGENDA_ENTRY_TYPES.filter(
+  (t) => t !== "aniversario",
+);
+
 export const FOOTBALL_AGENDA_TYPE_LABEL: Record<string, string> = {
   viagem: "VIAGEM",
   treino: "TREINO",

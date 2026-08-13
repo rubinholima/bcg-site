@@ -513,6 +513,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         moduleSlug: "futebol_logistica",
       },
       {
+        slug: "futebol_jogos",
+        label: "Jogos",
+        href: "/dashboard/futebol/jogos",
+        icon: Trophy,
+        moduleSlug: "futebol_jogos",
+      },
+      {
         slug: "futebol_logistica",
         label: "Logística",
         icon: MapIcon,
@@ -709,6 +716,22 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: ClipboardList,
         moduleSlug: "futebol_treinadores",
       },
+      {
+        slug: "futebol_relatorios",
+        label: "Relatórios",
+        href: "/dashboard/relatorios/futebol",
+        icon: BarChart3,
+        moduleSlug: "relatorios_futebol",
+        children: [
+          {
+            slug: "futebol_rel_sumula_cartoes",
+            label: "Súmula e Cartões",
+            href: "/dashboard/relatorios/futebol/sumula-cartoes",
+            icon: FileText,
+            moduleSlug: "relatorios_futebol",
+          },
+        ],
+      },
     ],
   },
   {
@@ -835,6 +858,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         icon: ClipboardList,
         moduleSlug: "saude",
         children: [
+          {
+            slug: "psicologia_agenda",
+            label: "Agenda Psicologia",
+            href: "/dashboard/psicologia/agenda",
+            icon: Calendar,
+            moduleSlug: "saude",
+          },
           {
             slug: "psicologia_consultas",
             label: "Consultas",
