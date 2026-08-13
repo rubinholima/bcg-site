@@ -866,6 +866,74 @@ function disciplineRows(rows: SumulaCartoesReportDto["discipline"]): string {
     .join("");
 }
 
+function sumulaSeasonGridSection(data: SumulaCartoesReportDto): string {
+  const grid = data.seasonGrid;
+  if (!grid || grid.players.length === 0) {
+    return `<section class="section"><p class="empty">Selecione uma categoria para ver a sequência de cartões da temporada.</p></section>`;
+  }
+
+  const gridDto: CartoesSuspensaoReportDto = {
+    tenant: data.tenant,
+    filters: {
+      season: data.filters.season,
+      category: data.filters.category ?? "",
+      categoryLabel: data.filters.categoryLabel,
+      competition: null,
+      phase: null,
+    },
+    nextRound: grid.nextRound,
+    rounds: grid.rounds,
+    players: grid.players,
+    totals: grid.totals,
+    generatedAt: data.generatedAt,
+  };
+
+  const nextRoundMeta = grid.nextRound
+    ? `<div class="meta-item full"><label>Próxima rodada</label><span>${escapeHtml(grid.nextRound.label)} · ${escapeHtml(formatBrDate(grid.nextRound.matchDate))}</span></div>`
+    : "";
+
+  return `
+    <style>
+      .legend-grid { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 9px; margin: 8px 0 12px; }
+      .discipline-table { font-size: 8px; }
+      .discipline-table th, .discipline-table td { padding: 3px 4px; text-align: center; }
+      .discipline-table .left { text-align: left; min-width: 140px; }
+      .discipline-table .round-head { writing-mode: vertical-rl; transform: rotate(180deg); min-width: 22px; max-width: 28px; font-size: 7px; line-height: 1.1; }
+      .discipline-table .cell-code { font-weight: 700; }
+      .discipline-table .row-unavailable { background: #FEF3C7; color: #92400E; }
+      .discipline-table .row-unavailable td { border-color: #FCD34D; }
+      .discipline-table .totals-row { background: #F3F4F6; font-size: 8px; }
+      .discipline-table .muted { color: #6B7280; font-weight: 400; }
+      .summary-line { font-size: 10px; margin-top: 8px; }
+    </style>
+    <section class="section">
+      <h2 class="section-title">Cartões da temporada — ${escapeHtml(data.filters.categoryLabel)} · ${data.filters.season}</h2>
+      <div class="meta-grid">${nextRoundMeta}</div>
+      ${cartoesSuspensaoLegend()}
+      <table class="discipline-table">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Atleta</th>
+            <th>C.A</th>
+            <th>C.V</th>
+            ${cartoesSuspensaoRoundHeaders(grid.rounds)}
+          </tr>
+        </thead>
+        <tbody>
+          ${cartoesSuspensaoPlayerRows(gridDto)}
+          ${cartoesSuspensaoTotalsRow(gridDto)}
+        </tbody>
+      </table>
+      <p class="summary-line">
+        Média C.A/Jogo: <strong>${grid.totals.avgYellowPerMatch}</strong>
+        · Média C.V/Jogo: <strong>${grid.totals.avgRedPerMatch}</strong>
+        · Total de jogos: <strong>${grid.totals.matchCount}</strong>
+      </p>
+    </section>
+  `;
+}
+
 export function buildSumulaCartoesPrintHtml(
   data: SumulaCartoesReportDto,
   size: PrintPageSize = "A4",
@@ -889,24 +957,7 @@ export function buildSumulaCartoesPrintHtml(
     ? `${matchMeta}${sumulaTeamTable("Mandante", data.match.home)}${sumulaTeamTable("Visitante", data.match.away)}`
     : "";
 
-  const disciplineBody = `
-    <section class="section">
-      <h2 class="section-title">Cartões — ${escapeHtml(data.filters.categoryLabel)} · ${data.filters.season}</h2>
-      <table>
-        <thead>
-          <tr>
-            <th class="num">#</th>
-            <th>Atleta</th>
-            <th class="num">Cam.</th>
-            <th>Categoria</th>
-            <th>A</th>
-            <th>V</th>
-          </tr>
-        </thead>
-        <tbody>${disciplineRows(data.discipline)}</tbody>
-      </table>
-    </section>
-  `;
+  const disciplineBody = sumulaSeasonGridSection(data);
 
   return documentShell(
     `Súmula e Cartões — ${data.tenant.name}`,

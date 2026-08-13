@@ -4,24 +4,31 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Tv, Ticket, Home, Plane } from "lucide-react";
 import type { FixtureItem } from "@/lib/fixtures-shared";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { BRAZIL_TZ, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
 
 function formatTime(iso: string, lang: "pt" | "en"): string {
-  return new Date(iso).toLocaleTimeString(lang === "pt" ? "pt-BR" : "en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return timeInBrazil(iso);
 }
 
 function formatDayMonth(iso: string, lang: "pt" | "en"): { day: string; month: string; weekday: string } {
   const d = new Date(iso);
   return {
-    day: String(d.getDate()),
-    month: d
-      .toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB", { month: "short" })
+    day: new Intl.DateTimeFormat(lang === "pt" ? "pt-BR" : "en-GB", {
+      timeZone: BRAZIL_TZ,
+      day: "numeric",
+    }).format(d),
+    month: new Intl.DateTimeFormat(lang === "pt" ? "pt-BR" : "en-GB", {
+      timeZone: BRAZIL_TZ,
+      month: "short",
+    })
+      .format(d)
       .replace(/\./g, "")
       .toUpperCase(),
-    weekday: d
-      .toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB", { weekday: "short" })
+    weekday: new Intl.DateTimeFormat(lang === "pt" ? "pt-BR" : "en-GB", {
+      timeZone: BRAZIL_TZ,
+      weekday: "short",
+    })
+      .format(d)
       .replace(/\./g, "")
       .toUpperCase()
       .slice(0, 3),

@@ -159,6 +159,7 @@ export function JogosDetailView({ gameKey }: Props) {
       },
       match: detail.sumulaMatch,
       discipline: [],
+      seasonGrid: null,
       generatedAt: new Date().toISOString(),
     };
   }, [detail]);

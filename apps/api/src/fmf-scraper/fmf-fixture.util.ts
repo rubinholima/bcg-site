@@ -24,8 +24,7 @@ export function buildFmfTravelExternalId(presetKey: string, m: FmfParsedMatch): 
 export function fmfMatchToStartISO(m: FmfParsedMatch): string {
   if (!m.matchDate) return '';
   const t = (m.kickoffTime ?? '12:00:00').slice(0, 5);
-  const combined = `${m.matchDate}T${t}:00`;
-  const date = new Date(combined);
+  const date = new Date(`${m.matchDate}T${t}:00-03:00`);
   return Number.isNaN(date.getTime()) ? '' : date.toISOString();
 }
 

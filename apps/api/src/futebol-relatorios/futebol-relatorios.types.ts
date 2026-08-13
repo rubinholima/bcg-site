@@ -281,6 +281,12 @@ export type SumulaCartoesReportDto = {
   };
   match: SumulaCartoesMatchDto | null;
   discipline: SumulaCartoesDisciplineRowDto[];
+  seasonGrid: {
+    nextRound: CartoesSuspensaoReportDto['nextRound'];
+    rounds: CartoesSuspensaoRoundDto[];
+    players: CartoesSuspensaoPlayerDto[];
+    totals: CartoesSuspensaoReportDto['totals'];
+  } | null;
   generatedAt: string;
 };
 

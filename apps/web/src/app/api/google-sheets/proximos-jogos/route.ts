@@ -87,13 +87,13 @@ function normCol(name: string): string {
     .replace(/\p{Diacritic}/gu, "");
 }
 
-/** Converte data (YYYY-MM-DD) + hora (HH:MM ou HH:MM:SS) em startISO. */
+/** Converte data (YYYY-MM-DD) + hora (HH:MM ou HH:MM:SS) em startISO (Brasília). */
 function toStartISO(dateStr: string, timeStr: string): string {
   const d = (dateStr ?? "").trim();
   const t = (timeStr ?? "20:00").trim();
   if (!d) return "";
-  const combined = t ? `${d}T${t.length <= 5 ? t : t.slice(0, 5)}:00` : `${d}T20:00:00`;
-  const date = new Date(combined);
+  const hhmm = t ? (t.length <= 5 ? t : t.slice(0, 5)) : "20:00";
+  const date = new Date(`${d}T${hhmm}:00-03:00`);
   return Number.isNaN(date.getTime()) ? "" : date.toISOString();
 }
 

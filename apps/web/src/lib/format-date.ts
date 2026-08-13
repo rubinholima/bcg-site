@@ -25,16 +25,23 @@ function partsFromValue(value: string | Date): {
   minute?: number;
 } | null {
   if (typeof value === "string") {
-    const ymdHm = value.match(
-      /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/,
-    );
-    if (ymdHm) {
+    const dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnly) {
       return {
-        year: Number(ymdHm[1]),
-        month: Number(ymdHm[2]),
-        day: Number(ymdHm[3]),
-        hour: ymdHm[4] != null ? Number(ymdHm[4]) : undefined,
-        minute: ymdHm[5] != null ? Number(ymdHm[5]) : undefined,
+        year: Number(dateOnly[1]),
+        month: Number(dateOnly[2]),
+        day: Number(dateOnly[3]),
+      };
+    }
+    const localDateTime = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+    const hasTimezone = /[zZ]$|[+-]\d{2}:\d{2}$/.test(value.trim());
+    if (localDateTime && !hasTimezone) {
+      return {
+        year: Number(localDateTime[1]),
+        month: Number(localDateTime[2]),
+        day: Number(localDateTime[3]),
+        hour: Number(localDateTime[4]),
+        minute: Number(localDateTime[5]),
       };
     }
     const date = new Date(value);

@@ -1558,11 +1558,20 @@ export class FutebolRelatoriosService {
       categoryLabels,
     });
 
+    const seasonGrid = category
+      ? await this.buildSeasonDisciplineGridForCategory({
+          tenantId,
+          category,
+          season,
+        })
+      : null;
+
     return {
       tenant: { id: tenant.id, name: tenant.name, logoUrl: tenant.logoUrl },
       filters: { season, category, categoryLabel, matchId },
       match,
       discipline,
+      seasonGrid,
       generatedAt: new Date().toISOString(),
     };
   }
@@ -1712,12 +1721,38 @@ export class FutebolRelatoriosService {
     category: string | null;
     categoryLabels: Record<string, string>;
   }): Promise<SumulaCartoesDisciplineRowDto[]> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: input.tenantId },
+      select: { name: true, slug: true, tradeName: true },
+    });
+    if (!tenant) return [];
+
+    const clubName = tenant.tradeName?.trim() || tenant.name;
+    const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+
+    const travelsRaw = await this.prisma.travelLogistics.findMany({
+      where: { tenantId: input.tenantId, status: { not: 'cancelado' } },
+      select: {
+        id: true,
+        tenantId: true,
+        matchDate: true,
+        opponentName: true,
+        championshipName: true,
+        category: true,
+        categories: true,
+        isHomeMatch: true,
+        stadiumName: true,
+        city: true,
+        status: true,
+      },
+    });
+    const travels = dedupeTravelLogisticsList(travelsRaw);
+
     const stats = await this.prisma.fmfPlayerMatchStat.findMany({
       where: {
         match: {
           tenantId: input.tenantId,
           season: input.season,
-          ...(input.category ? { category: input.category } : {}),
         },
         OR: [{ yellowCards: { gt: 0 } }, { redCards: { gt: 0 } }],
       },
@@ -1749,6 +1784,12 @@ export class FutebolRelatoriosService {
 
     for (const stat of stats) {
       if (!stat.player) continue;
+      if (
+        input.category &&
+        !reportMatchesCategoryFilter(stat.match, input.category, travels, clubName, aliases)
+      ) {
+        continue;
+      }
       const current = byPlayer.get(stat.player.id) ?? {
         player: stat.player,
         yellowCards: 0,
@@ -1795,6 +1836,136 @@ export class FutebolRelatoriosService {
       }));
   }
 
+  private async buildSeasonDisciplineGridForCategory(input: {
+    tenantId: string;
+    category: string;
+    season: number;
+    nextMatchDate?: string | null;
+  }): Promise<{
+    nextRound: CartoesSuspensaoReportDto['nextRound'];
+    rounds: CartoesSuspensaoReportDto['rounds'];
+    players: CartoesSuspensaoReportDto['players'];
+    totals: CartoesSuspensaoReportDto['totals'];
+  }> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: input.tenantId },
+      select: { id: true, name: true, slug: true, tradeName: true },
+    });
+    if (!tenant) throw new NotFoundException('Clube não encontrado');
+
+    const clubName = tenant.tradeName?.trim() || tenant.name;
+    const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+
+    const travelsRaw = await this.prisma.travelLogistics.findMany({
+      where: { tenantId: input.tenantId, status: { not: 'cancelado' } },
+      select: {
+        id: true,
+        tenantId: true,
+        matchDate: true,
+        opponentName: true,
+        championshipName: true,
+        category: true,
+        categories: true,
+        isHomeMatch: true,
+        stadiumName: true,
+        city: true,
+        status: true,
+      },
+    });
+    const travels = dedupeTravelLogisticsList(travelsRaw);
+
+    const playersRaw = await this.prisma.player.findMany({
+      where: { tenantId: input.tenantId, category: input.category },
+      select: {
+        id: true,
+        name: true,
+        jerseyNumber: true,
+        position: true,
+        status: true,
+        statusDetails: true,
+        yellowCards: true,
+        redCards: true,
+        registrationProfile: true,
+      },
+      orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
+    });
+    const players = playersRaw.filter(isCurrentSquadPlayer);
+
+    const reportRows = await this.prisma.fmfMatchReport.findMany({
+      where: { tenantId: input.tenantId, season: input.season },
+      orderBy: [{ round: 'asc' }, { matchDate: 'asc' }],
+      include: {
+        playerStats: {
+          select: {
+            playerId: true,
+            jerseyNumber: true,
+            playerName: true,
+            played: true,
+            yellowCards: true,
+            redCards: true,
+          },
+        },
+      },
+    });
+
+    const matches = reportRows.filter(
+      (row) =>
+        reportMatchesCategoryFilter(row, input.category, travels, clubName, aliases) &&
+        (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
+          isFmfTeamMatch(row.awayTeam, clubName, aliases)) &&
+        row.homeScore != null &&
+        row.awayScore != null,
+    );
+
+    const upcomingTravel = travels
+      .filter((t) => t.matchDate >= new Date())
+      .sort((a, b) => a.matchDate.getTime() - b.matchDate.getTime())
+      .find((t) => {
+        const cats = parseTravelCategories(t.categories);
+        if (cats.length > 0) return cats.includes(input.category);
+        return t.category === input.category;
+      });
+
+    const nextMatchDate =
+      input.nextMatchDate?.trim() ||
+      upcomingTravel?.matchDate.toISOString().slice(0, 10) ||
+      null;
+
+    const grid = buildDisciplineGrid({
+      matches: matches.map((row) => ({
+        id: row.id,
+        round: row.round,
+        matchDate: row.matchDate,
+        homeTeam: row.homeTeam,
+        awayTeam: row.awayTeam,
+        homeScore: row.homeScore,
+        awayScore: row.awayScore,
+        occurrencesText: row.occurrencesText,
+        playerStats: row.playerStats,
+      })),
+      players,
+      clubName,
+      aliases,
+      nextMatchDate,
+    });
+
+    let nextRound = grid.nextRound;
+    if (!nextRound && upcomingTravel) {
+      nextRound = {
+        round: null,
+        matchDate: dateKeyInBrazil(upcomingTravel.matchDate),
+        label: `${clubName} x ${upcomingTravel.opponentName ?? 'Adversário'}`,
+      };
+    }
+
+    return {
+      nextRound,
+      rounds: grid.rounds,
+      players: grid.players,
+      totals: grid.totals,
+    };
+  }
+
   async getCartoesSuspensaoReport(filters: {
     tenantId: string;
     category: string;
@@ -1818,115 +1989,40 @@ export class FutebolRelatoriosService {
     });
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
-    const clubName = tenant.tradeName?.trim() || tenant.name;
-    const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
     const categoryLabels = await this.loadCategoryLabelsMap();
     const categoryLabel = categoryLabels[category] ?? category;
+
+    const seasonGrid = await this.buildSeasonDisciplineGridForCategory({
+      tenantId,
+      category,
+      season,
+      nextMatchDate: filters.nextMatchDate?.trim() || null,
+    });
 
     const travelsRaw = await this.prisma.travelLogistics.findMany({
       where: { tenantId, status: { not: 'cancelado' } },
       select: {
-        id: true,
-        tenantId: true,
         matchDate: true,
         opponentName: true,
         championshipName: true,
         category: true,
         categories: true,
-        isHomeMatch: true,
-        stadiumName: true,
-        city: true,
-        status: true,
       },
+      orderBy: { matchDate: 'asc' },
     });
-    const travels = dedupeTravelLogisticsList(travelsRaw);
-
-    const playersRaw = await this.prisma.player.findMany({
-      where: { tenantId, category },
-      select: {
-        id: true,
-        name: true,
-        jerseyNumber: true,
-        position: true,
-        status: true,
-        statusDetails: true,
-        yellowCards: true,
-        redCards: true,
-        registrationProfile: true,
-      },
-      orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
-    });
-    const players = playersRaw.filter(isCurrentSquadPlayer);
-
-    const reportRows = await this.prisma.fmfMatchReport.findMany({
-      where: { tenantId, season },
-      orderBy: [{ round: 'asc' }, { matchDate: 'asc' }],
-      include: {
-        playerStats: {
-          select: {
-            playerId: true,
-            jerseyNumber: true,
-            playerName: true,
-            played: true,
-            yellowCards: true,
-            redCards: true,
-          },
-        },
-      },
-    });
-
-    const matches = reportRows.filter(
-      (row) =>
-        reportMatchesCategoryFilter(row, category, travels, clubName, aliases) &&
-        (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
-          isFmfTeamMatch(row.awayTeam, clubName, aliases)) &&
-        row.homeScore != null &&
-        row.awayScore != null,
-    );
-
-    const upcomingTravel = travels
+    const upcomingTravel = travelsRaw
       .filter((t) => t.matchDate >= new Date())
-      .sort((a, b) => a.matchDate.getTime() - b.matchDate.getTime())
       .find((t) => {
         const cats = parseTravelCategories(t.categories);
         if (cats.length > 0) return cats.includes(category);
         return t.category === category;
       });
 
-    const nextMatchDate =
-      filters.nextMatchDate?.trim() ||
-      upcomingTravel?.matchDate.toISOString().slice(0, 10) ||
-      null;
-
-    const grid = buildDisciplineGrid({
-      matches: matches.map((row) => ({
-        id: row.id,
-        round: row.round,
-        matchDate: row.matchDate,
-        homeTeam: row.homeTeam,
-        awayTeam: row.awayTeam,
-        homeScore: row.homeScore,
-        awayScore: row.awayScore,
-        occurrencesText: row.occurrencesText,
-        playerStats: row.playerStats,
-      })),
-      players,
-      clubName,
-      aliases,
-      nextMatchDate,
+    const reportSample = await this.prisma.fmfMatchReport.findFirst({
+      where: { tenantId, season, category },
+      select: { competition: true, phase: true },
+      orderBy: { matchDate: 'desc' },
     });
-
-    const competition = matches[0]?.competition ?? upcomingTravel?.championshipName ?? null;
-    const phase = matches[0]?.phase ?? null;
-
-    let nextRound = grid.nextRound;
-    if (!nextRound && upcomingTravel) {
-      nextRound = {
-        round: null,
-        matchDate: dateKeyInBrazil(upcomingTravel.matchDate),
-        label: `${clubName} x ${upcomingTravel.opponentName ?? 'Adversário'}`,
-      };
-    }
 
     return {
       tenant: { id: tenant.id, name: tenant.name, logoUrl: tenant.logoUrl },
@@ -1934,13 +2030,13 @@ export class FutebolRelatoriosService {
         season,
         category,
         categoryLabel,
-        competition,
-        phase,
+        competition: reportSample?.competition ?? upcomingTravel?.championshipName ?? null,
+        phase: reportSample?.phase ?? null,
       },
-      nextRound,
-      rounds: grid.rounds,
-      players: grid.players,
-      totals: grid.totals,
+      nextRound: seasonGrid.nextRound,
+      rounds: seasonGrid.rounds,
+      players: seasonGrid.players,
+      totals: seasonGrid.totals,
       generatedAt: new Date().toISOString(),
     };
   }

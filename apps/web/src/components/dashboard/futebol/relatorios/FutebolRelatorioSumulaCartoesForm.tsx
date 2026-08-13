@@ -85,7 +85,7 @@ export function FutebolRelatorioSumulaCartoesForm() {
         if (cancelled) return;
         const list = Array.isArray(data) ? data : [];
         setMatches(list);
-        setMatchId((prev) => (prev && list.some((m) => m.id === prev) ? prev : list[0]?.id ?? ""));
+        setMatchId((prev) => (prev && list.some((m) => m.id === prev) ? prev : ""));
       })
       .catch(() => {
         if (!cancelled) {
@@ -207,7 +207,7 @@ export function FutebolRelatorioSumulaCartoesForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Categoria (cartões)</Label>
+              <Label>Categoria (cartões da temporada)</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger>
                   <SelectValue />

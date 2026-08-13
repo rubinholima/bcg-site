@@ -20,6 +20,7 @@ import { authFetch } from "@/lib/authFetch";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 import type { CompetitionFormat } from "@/lib/competition-formats";
 import { CompetitionFormatFixturesGuide } from "@/components/dashboard/CompetitionFormatFixturesGuide";
+import { combineDateTimeBrazil, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
 
 export interface ProximosJogosModuleEditorProps {
   block: HomeContentBlock;
@@ -371,10 +372,9 @@ export function ProximosJogosModuleEditor({
                 if (!iso?.trim()) return { date: "", time: "20:00" };
                 const d = new Date(iso);
                 if (Number.isNaN(d.getTime())) return { date: "", time: "20:00" };
-                const pad = (n: number) => String(n).padStart(2, "0");
                 return {
-                  date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-                  time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+                  date: dateKeyInBrazil(d),
+                  time: timeInBrazil(d),
                 };
               };
               const { date: dateVal, time: timeVal } = fromISO(f.startISO);
@@ -426,7 +426,10 @@ export function ProximosJogosModuleEditor({
                             const date = e.target.value;
                             const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
                             const current = fromISO((list[fi] as Record<string, string>).startISO);
-                            const iso = date && current.time ? new Date(`${date}T${current.time}`).toISOString() : "";
+                            const iso =
+                              date && current.time
+                                ? combineDateTimeBrazil(date, current.time, false)
+                                : "";
                             (list[fi] as Record<string, string>).startISO = iso;
                             updateBlockConfigValue("proximosJogosManualFixtures", list);
                           }}
@@ -454,7 +457,9 @@ export function ProximosJogosModuleEditor({
                           const list = [...((block.config?.proximosJogosManualFixtures as object[]) ?? [])];
                           const current = fromISO((list[fi] as Record<string, string>).startISO);
                           const date = current.date || new Date().toISOString().slice(0, 10);
-                          const iso = time ? new Date(`${date}T${time}`).toISOString() : (list[fi] as Record<string, string>).startISO || "";
+                          const iso = time
+                            ? combineDateTimeBrazil(date, time, false)
+                            : (list[fi] as Record<string, string>).startISO || "";
                           (list[fi] as Record<string, string>).startISO = iso;
                           updateBlockConfigValue("proximosJogosManualFixtures", list);
                         }}

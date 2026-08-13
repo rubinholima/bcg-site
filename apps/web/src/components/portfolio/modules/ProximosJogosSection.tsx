@@ -28,6 +28,7 @@ import {
 } from "@/components/portfolio/modules/ProximosJogosMobile";
 import { AutoScrollMarquee } from "@/components/portfolio/AutoScrollMarquee";
 import { fixturesMarqueeDurationSeconds } from "@/lib/fixtures-marquee";
+import { BRAZIL_TZ, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
 
 export interface FixtureItem {
   externalId: string;
@@ -64,27 +65,27 @@ function formatDate(iso: string, lang: "pt" | "en"): string {
   return `${dateStr} · ${timeStr}`;
 }
 
-/** Retorna apenas a data no formato YYYY-MM-DD para agrupar/calendário. */
+/** Retorna apenas a data no formato YYYY-MM-DD para agrupar/calendário (Brasília). */
 function dateKey(iso: string): string {
-  const d = new Date(iso);
-  return d.toISOString().slice(0, 10);
+  return dateKeyInBrazil(iso);
 }
 
-/** Data em destaque no card: "14 SÁB · 15:30" (dia + dia da semana + horário). */
+/** Data em destaque no card: "14 SÁB · 15:30" (dia + dia da semana + horário — Brasília). */
 function formatBigDate(iso: string, lang: "pt" | "en"): string {
   const d = new Date(iso);
-  const day = d.getDate();
-  const weekday = d.toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB", {
+  const day = new Intl.DateTimeFormat(lang === "pt" ? "pt-BR" : "en-GB", {
+    timeZone: BRAZIL_TZ,
+    day: "numeric",
+  }).format(d);
+  const weekday = new Intl.DateTimeFormat(lang === "pt" ? "pt-BR" : "en-GB", {
+    timeZone: BRAZIL_TZ,
     weekday: "short",
   })
+    .format(d)
     .replace(/\./g, "")
     .toUpperCase()
     .slice(0, 3);
-  const time = d.toLocaleTimeString(lang === "pt" ? "pt-BR" : "en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  return `${day} ${weekday} · ${time}`;
+  return `${day} ${weekday} · ${timeInBrazil(iso)}`;
 }
 
 /** Slug para pasta de logos externos: minúsculo, hífens, sem acentos. */

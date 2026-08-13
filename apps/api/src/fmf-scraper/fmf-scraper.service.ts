@@ -197,7 +197,7 @@ function resolveStandings(
 function matchStartMs(m: FmfParsedMatch): number {
   if (!m.matchDate) return 0;
   const t = m.kickoffTime?.slice(0, 5) ?? '00:00';
-  return Date.parse(`${m.matchDate}T${t}:00`);
+  return Date.parse(`${m.matchDate}T${t}:00-03:00`);
 }
 
 @Injectable()
