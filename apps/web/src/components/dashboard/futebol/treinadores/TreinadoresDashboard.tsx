@@ -47,7 +47,12 @@ export function TreinadoresDashboard() {
       {!tenantId ? (
         <p className="text-sm text-muted-foreground">Selecione um clube para continuar.</p>
       ) : tab === "pos-jogo" ? (
-        <TreinadoresPosJogoTab tenantId={tenantId} category={category} context={context} />
+        <TreinadoresPosJogoTab
+          tenantId={tenantId}
+          category={category}
+          contextLoading={loading}
+          context={context}
+        />
       ) : tab === "treinos" ? (
         <TreinadoresTreinosTab tenantId={tenantId} category={category} context={context} />
       ) : (

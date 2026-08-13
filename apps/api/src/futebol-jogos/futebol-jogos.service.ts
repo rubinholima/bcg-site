@@ -8,6 +8,7 @@ import { FutebolRelatoriosService } from '../futebol-relatorios/futebol-relatori
 import { travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
 import { dedupeTravelLogisticsList } from '../logistica/travel-logistics-dedup.util';
 import {
+  matchCategoriesEquivalent,
   matchDatesEquivalent,
   matchOpponentsEquivalent,
 } from '../common/match-game-opponent.util';
@@ -117,7 +118,8 @@ function dedupeGameListItems(games: FutebolGameListItem[]): FutebolGameListItem[
     const idx = kept.findIndex(
       (existing) =>
         matchOpponentsEquivalent(existing.opponentName, game.opponentName) &&
-        matchDatesEquivalent(existing.matchDate, game.matchDate),
+        matchDatesEquivalent(existing.matchDate, game.matchDate) &&
+        matchCategoriesEquivalent(existing.category, game.category),
     );
     if (idx < 0) {
       kept.push(game);
@@ -192,7 +194,9 @@ export class FutebolJogosService {
     const statOverrides = await this.prisma.coachMatchStatOverride.findMany({
       where: {
         tenantId,
-        ...(categoryFilter ? { category: categoryFilter } : {}),
+        ...(categoryFilter
+          ? { OR: [{ category: categoryFilter }, { category: null }] }
+          : {}),
       },
     });
 
@@ -246,7 +250,7 @@ export class FutebolJogosService {
       matchDate: g.matchDate,
       opponentName: g.opponentName,
       competition: g.competition,
-      category: travelMeta?.category ?? null,
+      category: g.category ?? travelMeta?.category ?? null,
       isHome: g.isHome,
       homeTeam: g.homeTeam,
       awayTeam: g.awayTeam,
@@ -298,7 +302,8 @@ export class FutebolJogosService {
           !completedGames.some(
             (g) =>
               matchDatesEquivalent(g.matchDate, t.matchDate) &&
-              matchOpponentsEquivalent(g.opponentName, t.opponentName),
+              matchOpponentsEquivalent(g.opponentName, t.opponentName) &&
+              matchCategoriesEquivalent(g.category, t.category),
           ),
       )
       .map((t) => ({
@@ -474,6 +479,7 @@ export class FutebolJogosService {
           gameKey: listItem.gameKey,
           fmfMatchReportId: listItem.fmfMatchReportId,
           travelLogisticsId: listItem.travelLogisticsId,
+          category: listItem.category,
           matchDate: listItem.matchDate,
           opponentName: listItem.opponentName,
           competition: listItem.competition,

@@ -28,6 +28,31 @@ export function gameOpponentDateKey(
   return `${dateKeyInBrazil(matchDate)}|${matchOpponentMergeKey(opponentName)}`;
 }
 
+/** Chave normalizada de categoria — nunca faz merge entre sub13 e sub14. */
+export function matchCategoryMergeKey(value: string | null | undefined): string {
+  const key = (value ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+  return key || '_';
+}
+
+export function matchCategoriesEquivalent(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  return matchCategoryMergeKey(a) === matchCategoryMergeKey(b);
+}
+
+export function gameOpponentDateCategoryKey(
+  matchDate: Date | string,
+  opponentName: string | null | undefined,
+  category: string | null | undefined,
+): string {
+  return `${gameOpponentDateKey(matchDate, opponentName)}|${matchCategoryMergeKey(category)}`;
+}
+
 /** Mesmo dia (Brasília) ou dia adjacente — cobre drift de timezone em viagens. */
 export function matchDatesEquivalent(a: Date | string, b: Date | string): boolean {
   const da = dateKeyInBrazil(a);
@@ -44,12 +69,20 @@ export function findGameMergeKeyInMap<T>(
   byKey: Map<string, T>,
   matchDate: Date | string,
   opponentName: string | null | undefined,
+  category: string | null | undefined,
   getOpponent: (item: T) => string,
+  getCategory?: (item: T) => string | null | undefined,
 ): string | null {
   for (const [key, item] of byKey) {
-    const [dateKey] = key.split('|');
+    const parts = key.split('|');
+    if (parts.length < 3) continue;
+    const dateKey = parts[0];
+    const keyCategory = parts[parts.length - 1];
     if (!matchDatesEquivalent(`${dateKey}T12:00:00-03:00`, matchDate)) continue;
-    if (matchOpponentsEquivalent(getOpponent(item), opponentName)) return key;
+    if (!matchOpponentsEquivalent(getOpponent(item), opponentName)) continue;
+    if (matchCategoryMergeKey(category) !== keyCategory) continue;
+    if (getCategory && !matchCategoriesEquivalent(getCategory(item), category)) continue;
+    return key;
   }
   return null;
 }

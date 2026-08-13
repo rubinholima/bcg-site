@@ -15,6 +15,7 @@ export type CoachCompletedGame = {
   gameKey: string;
   fmfMatchReportId: string | null;
   travelLogisticsId: string | null;
+  category: string | null;
   matchDate: string;
   opponentName: string;
   competition: string | null;

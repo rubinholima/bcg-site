@@ -1,5 +1,5 @@
 import { dateKeyInBrazil } from '../common/brazil-time.util';
-import { travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
+import { travelMatchesCategoryFilter, parseTravelCategories } from '../futebol-agenda/travel-categories.util';
 import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
 import {
   fmfPhaseLabelsMatch,
@@ -15,7 +15,7 @@ import {
 import { softNormalizeTeamNameKey } from '../public/visiting-team-logo-merge.util';
 import {
   findGameMergeKeyInMap,
-  gameOpponentDateKey,
+  gameOpponentDateCategoryKey,
   matchDatesEquivalent,
   matchOpponentsEquivalent,
 } from '../common/match-game-opponent.util';
@@ -33,6 +33,45 @@ export function fmfCategoryMatches(reportCategory: string | null | undefined, fi
   const wanted = categoryKey(filter);
   const got = categoryKey(reportCategory);
   return !!wanted && !!got && wanted === got;
+}
+
+function reportMatchesCategoryFilter(
+  report: FmfReportRow,
+  category: string,
+  allTravels: TravelRow[],
+  clubName: string,
+  aliases: string[],
+): boolean {
+  if (!category?.trim()) return true;
+  if (fmfCategoryMatches(report.category, category)) return true;
+
+  const isHome = isHomeSide(report.homeTeam, report.awayTeam, clubName, aliases);
+  const opponent = isHome ? report.awayTeam : report.homeTeam;
+  const travel = findMatchingTravel(allTravels, report.matchDate, opponent, report.category);
+  return travel != null && categoryMatchesTravel(travel, category);
+}
+
+export function resolveStoreCategory(
+  store: FmfScraperStore | null,
+  preferredCategory: string,
+  fallbackCategories: string[],
+): string {
+  if (preferredCategory?.trim()) return preferredCategory.trim();
+  if (!store?.categories) return '';
+
+  const snapshots = Object.values(store.categories).filter(
+    (s): s is NonNullable<typeof s> => !!s?.fixtureCategory,
+  );
+  if (snapshots.length === 0) return '';
+
+  for (const cat of fallbackCategories) {
+    const key = categoryKey(cat);
+    if (!key) continue;
+    const hit = snapshots.find((s) => categoryKey(s.fixtureCategory) === key);
+    if (hit) return hit.fixtureCategory;
+  }
+
+  return snapshots[0]?.fixtureCategory ?? '';
 }
 
 type TravelRow = {
@@ -72,6 +111,7 @@ export type CoachCompletedGame = {
   gameKey: string;
   fmfMatchReportId: string | null;
   travelLogisticsId: string | null;
+  category: string | null;
   matchDate: string;
   opponentName: string;
   competition: string | null;
@@ -131,19 +171,48 @@ type StatOverrideRow = {
   setPiecesAgainst: number | null;
 };
 
-function gameMergeKey(matchDate: Date, opponentName: string | null | undefined): string {
-  return gameOpponentDateKey(matchDate, opponentName);
+function gameMergeKey(
+  matchDate: Date,
+  opponentName: string | null | undefined,
+  category: string | null | undefined,
+): string {
+  return gameOpponentDateCategoryKey(matchDate, opponentName, category);
+}
+
+function resolveTravelCategory(travel: TravelRow): string | null {
+  const list = parseTravelCategories(travel.categories);
+  if (list.length === 1) return list[0]!;
+  if (list.length > 1) return list[0] ?? travel.category;
+  return travel.category;
+}
+
+function resolveGameCategory(
+  reportCategory: string | null | undefined,
+  travel: TravelRow | null | undefined,
+): string | null {
+  if (reportCategory?.trim()) return reportCategory.trim();
+  if (travel) return resolveTravelCategory(travel);
+  return null;
 }
 
 function findMatchingTravel(
   travels: TravelRow[],
   matchDate: Date,
   opponentName: string,
+  category: string | null | undefined,
 ): TravelRow | undefined {
-  return travels.find(
+  const matches = travels.filter(
     (t) =>
       matchDatesEquivalent(t.matchDate, matchDate) &&
       matchOpponentsEquivalent(t.opponentName, opponentName),
+  );
+  if (matches.length === 0) return undefined;
+  if (!category?.trim()) return matches[0];
+  const catKey = categoryKey(category);
+  return (
+    matches.find((t) => categoryKey(resolveTravelCategory(t)) === catKey) ??
+    matches.find((t) => categoryMatchesTravel(t, category)) ??
+    undefined
   );
 }
 
@@ -185,6 +254,7 @@ function findOverride(
   travelLogisticsId: string | null,
   matchDate: Date,
   opponentName: string,
+  category: string | null | undefined,
 ): StatOverrideRow | undefined {
   if (fmfMatchReportId) {
     const byFmf = overrides.find((o) => o.fmfMatchReportId === fmfMatchReportId);
@@ -194,9 +264,9 @@ function findOverride(
     const byTravel = overrides.find((o) => o.travelLogisticsId === travelLogisticsId);
     if (byTravel) return byTravel;
   }
-  const key = gameMergeKey(matchDate, opponentName);
+  const key = gameMergeKey(matchDate, opponentName, category);
   return overrides.find(
-    (o) => gameMergeKey(o.matchDate, o.opponentName) === key,
+    (o) => gameMergeKey(o.matchDate, o.opponentName, category) === key,
   );
 }
 
@@ -230,12 +300,15 @@ export function buildCompletedGames(input: {
   overrides: StatOverrideRow[];
 }): CoachCompletedGame[] {
   const { now, category, clubName, aliases, fmfReports, overrides } = input;
-  const travels = input.travels.filter((t) => categoryMatchesTravel(t, category));
+  const allTravels = input.travels;
+  const travels = category?.trim()
+    ? allTravels.filter((t) => categoryMatchesTravel(t, category))
+    : allTravels;
 
   const byKey = new Map<string, CoachCompletedGame>();
 
   for (const report of fmfReports) {
-    if (!fmfCategoryMatches(report.category, category)) continue;
+    if (!reportMatchesCategoryFilter(report, category, allTravels, clubName, aliases)) continue;
     if (report.matchDate >= now) continue;
     if (
       !isFmfTeamMatch(report.homeTeam, clubName, aliases) &&
@@ -257,15 +330,24 @@ export function buildCompletedGames(input: {
             ? 'E'
             : 'D';
 
-    const travel = findMatchingTravel(travels, report.matchDate, opponent);
+    const travel = findMatchingTravel(allTravels, report.matchDate, opponent, report.category);
+    const gameCategory = resolveGameCategory(report.category, travel);
 
-    const override = findOverride(overrides, report.id, travel?.id ?? null, report.matchDate, opponent);
+    const override = findOverride(
+      overrides,
+      report.id,
+      travel?.id ?? null,
+      report.matchDate,
+      opponent,
+      gameCategory,
+    );
     const stats = applyStats(override);
 
     const game: CoachCompletedGame = {
       gameKey: `fmf:${report.id}`,
       fmfMatchReportId: report.id,
       travelLogisticsId: travel?.id ?? null,
+      category: gameCategory,
       matchDate: report.matchDate.toISOString(),
       opponentName: opponent,
       competition: report.competition,
@@ -289,29 +371,46 @@ export function buildCompletedGames(input: {
     };
 
     const mergeKey =
-      findGameMergeKeyInMap(byKey, report.matchDate, opponent, (g) => g.opponentName) ??
-      gameMergeKey(report.matchDate, opponent);
+      findGameMergeKeyInMap(
+        byKey,
+        report.matchDate,
+        opponent,
+        gameCategory,
+        (g) => g.opponentName,
+        (g) => g.category,
+      ) ?? gameMergeKey(report.matchDate, opponent, gameCategory);
     byKey.set(mergeKey, game);
   }
 
   for (const travel of travels) {
     if (travel.matchDate >= now) continue;
+    const travelCategory = resolveTravelCategory(travel);
     const existingKey = findGameMergeKeyInMap(
       byKey,
       travel.matchDate,
       travel.opponentName,
+      travelCategory,
       (g) => g.opponentName,
+      (g) => g.category,
     );
     if (existingKey) continue;
 
-    const key = gameMergeKey(travel.matchDate, travel.opponentName);
-    const override = findOverride(overrides, null, travel.id, travel.matchDate, travel.opponentName ?? '');
+    const key = gameMergeKey(travel.matchDate, travel.opponentName, travelCategory);
+    const override = findOverride(
+      overrides,
+      null,
+      travel.id,
+      travel.matchDate,
+      travel.opponentName ?? '',
+      travelCategory,
+    );
     const stats = applyStats(override);
 
     byKey.set(key, {
       gameKey: `travel:${travel.id}`,
       fmfMatchReportId: null,
       travelLogisticsId: travel.id,
+      category: travelCategory,
       matchDate: travel.matchDate.toISOString(),
       opponentName: travel.opponentName ?? 'Adversário',
       competition: travel.championshipName,
@@ -344,6 +443,18 @@ function categoryMatchesTravel(travel: TravelRow, category: string): boolean {
   );
 }
 
+function findStoreSnapshot(store: FmfScraperStore | null, category: string) {
+  if (!store?.categories || !category?.trim()) return null;
+  const wanted = categoryKey(category);
+  if (!wanted) return null;
+  return (
+    Object.values(store.categories).find((s) => {
+      if (!s?.fixtureCategory) return false;
+      return categoryKey(s.fixtureCategory) === wanted;
+    }) ?? null
+  );
+}
+
 export function buildStandingsFromStore(
   store: FmfScraperStore | null,
   category: string,
@@ -351,11 +462,7 @@ export function buildStandingsFromStore(
   aliases: string[],
 ): CoachStandingRow[] {
   if (!store?.categories) return [];
-  const catKey = categoryKey(category);
-  const snapshot =
-    Object.values(store.categories).find(
-      (s) => s && categoryKey(s.fixtureCategory) === catKey,
-    ) ?? null;
+  const snapshot = findStoreSnapshot(store, category);
   if (!snapshot) return [];
 
   const currentPhase = resolveCurrentFmfGroupPhase(snapshot.matches);
@@ -389,11 +496,7 @@ export function buildLastRoundFromStore(
   aliases: string[],
 ): { round: number | null; phase: string | null; matches: CoachLastRoundMatch[] } {
   if (!store?.categories) return { round: null, phase: null, matches: [] };
-  const catKey = categoryKey(category);
-  const snapshot =
-    Object.values(store.categories).find(
-      (s) => s && categoryKey(s.fixtureCategory) === catKey,
-    ) ?? null;
+  const snapshot = findStoreSnapshot(store, category);
   if (!snapshot) return { round: null, phase: null, matches: [] };
 
   const currentPhase = resolveCurrentFmfGroupPhase(snapshot.matches);

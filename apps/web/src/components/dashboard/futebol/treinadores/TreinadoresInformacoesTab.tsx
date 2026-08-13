@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { gameDetailPath } from "@/lib/futebol-jogos.types";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import type { CoachContextResponse } from "@/lib/treinadores-types";
 import { TreinadoresMatchStatsEditor } from "./TreinadoresMatchStatsEditor";
@@ -124,6 +125,14 @@ export function TreinadoresInformacoesTab({
                       <div>
                         Bolas paradas: {g.setPiecesFor ?? "—"} a favor · {g.setPiecesAgainst ?? "—"} contra
                       </div>
+                      {g.fmfMatchReportId || g.travelLogisticsId ? (
+                        <Link
+                          href={`${gameDetailPath(g.gameKey)}?tenantId=${tenantId}`}
+                          className="text-primary hover:underline sm:col-span-2"
+                        >
+                          Ver detalhes do jogo
+                        </Link>
+                      ) : null}
                       {g.travelLogisticsId ? (
                         <Link
                           href={`/dashboard/futebol/logistica/${g.travelLogisticsId}/edit`}
@@ -166,6 +175,31 @@ export function TreinadoresInformacoesTab({
                 >
                   Ver viagem
                 </Link>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Adversários</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {context.opponents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum adversário listado.</p>
+          ) : (
+            context.opponents.map((o) => (
+              <div key={o.name} className="rounded-lg border border-border/60 p-3 text-sm">
+                <div className="font-medium">{o.name}</div>
+                {o.nextMatchDate ? (
+                  <div className="text-muted-foreground">
+                    Próximo jogo: {formatGameDate(o.nextMatchDate)}
+                  </div>
+                ) : null}
+                {o.championship ? (
+                  <div className="text-muted-foreground">{o.championship}</div>
+                ) : null}
               </div>
             ))
           )}

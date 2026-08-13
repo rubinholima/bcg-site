@@ -125,6 +125,7 @@ export class FutebolRelatoriosController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('categories') categories?: string,
+    @Query('excludeTypes') excludeTypes?: string,
   ) {
     if (!tenantId?.trim() || !from?.trim() || !to?.trim()) {
       throw new BadRequestException('tenantId, from e to são obrigatórios');
@@ -134,6 +135,7 @@ export class FutebolRelatoriosController {
       from: from.trim(),
       to: to.trim(),
       categories,
+      excludeTypes,
     });
   }
 }

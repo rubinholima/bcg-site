@@ -16,6 +16,7 @@ import {
   buildCompletedGames,
   buildLastRoundFromStore,
   buildStandingsFromStore,
+  resolveStoreCategory,
 } from './coach-context.helper';
 import {
   COACH_REPORT_STATUS,
@@ -85,7 +86,7 @@ export class FutebolTreinadoresService {
   async getContext(tenantId: string, category?: string) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { id: true, name: true, slug: true, tradeName: true },
+      select: { id: true, name: true, slug: true, tradeName: true, categories: true },
     });
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
@@ -176,7 +177,9 @@ export class FutebolTreinadoresService {
     const statOverrides = await this.prisma.coachMatchStatOverride.findMany({
       where: {
         tenantId,
-        ...(catFilter ? { category: catFilter } : {}),
+        ...(catFilter
+          ? { OR: [{ category: catFilter }, { category: null }] }
+          : {}),
       },
     });
 
@@ -191,8 +194,20 @@ export class FutebolTreinadoresService {
     });
 
     const store = await this.loadFmfStore();
-    let standings = buildStandingsFromStore(store, catFilter, clubName, aliases);
-    const lastRound = buildLastRoundFromStore(store, catFilter, clubName, aliases);
+    const fallbackCategories = [
+      ...new Set(
+        [
+          catFilter,
+          ...games.map((g) => g.category).filter((c): c is string => !!c?.trim()),
+          ...(Array.isArray(tenant.categories)
+            ? tenant.categories.filter((c): c is string => typeof c === 'string' && !!c.trim())
+            : []),
+        ].filter((c): c is string => !!c?.trim()),
+      ),
+    ];
+    const storeCategory = resolveStoreCategory(store, catFilter, fallbackCategories);
+    let standings = buildStandingsFromStore(store, storeCategory, clubName, aliases);
+    const lastRound = buildLastRoundFromStore(store, storeCategory, clubName, aliases);
 
     let opponents: Array<{ name: string; nextMatchDate?: string; championship?: string | null }> = [];
     const nextGame = games.find((g) => g.matchDate >= now) ?? games[games.length - 1];

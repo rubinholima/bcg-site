@@ -359,7 +359,7 @@ export class FutebolAgendaService {
 
     const travelIdsInCalendar = new Set(travels.map((t) => t.id));
     const travelMatchKeys = new Set(
-      travels.map((t) => buildTravelMatchKey(t.tenantId, t.matchDate, t.opponentName)),
+      travels.map((t) => buildTravelMatchKey(t.tenantId, t.matchDate, t.opponentName, t.category)),
     );
 
     const items: FootballAgendaCalendarItemDto[] = [];
@@ -470,7 +470,7 @@ export class FutebolAgendaService {
           continue;
         }
         const opp = opponentFromJogoTitle(e.title);
-        const entryMatchKey = buildTravelMatchKey(e.tenantId, e.startAt, opp);
+        const entryMatchKey = buildTravelMatchKey(e.tenantId, e.startAt, opp, e.category);
         if (travelMatchKeys.has(entryMatchKey)) {
           continue;
         }

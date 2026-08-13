@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,6 +30,20 @@ import {
   useFutebolRelatorioTenants,
 } from "./futebol-relatorio-shared";
 
+import { FOOTBALL_AGENDA_TYPE_LABEL } from "@/types/futebol-agenda";
+
+/** Tipos que podem ser ocultados na impressão da programação semanal. */
+const PROGRAMACAO_HIDE_TYPES = [
+  "aniversario",
+  "treino",
+  "reuniao",
+  "compromisso",
+  "preparacao",
+  "jogo",
+  "viagem",
+  "outro",
+] as const;
+
 export function FutebolRelatorioProgramacaoForm() {
   const { tenants } = useFutebolRelatorioTenants();
   const { categories: allFixtureCategories } = useFixtureCategories();
@@ -44,6 +58,7 @@ export function FutebolRelatorioProgramacaoForm() {
   const [from, setFrom] = useState(toIsoDate(weekStart));
   const [to, setTo] = useState(toIsoDate(weekEnd));
   const [progCategories, setProgCategories] = useState<string[]>([]);
+  const [hiddenTypes, setHiddenTypes] = useState<string[]>(["aniversario"]);
   const [pageSize, setPageSize] = useState<PrintPageSize>("A4");
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -83,6 +98,7 @@ export function FutebolRelatorioProgramacaoForm() {
     try {
       const params = new URLSearchParams({ tenantId, from, to });
       if (progCategories.length > 0) params.set("categories", progCategories.join(","));
+      if (hiddenTypes.length > 0) params.set("excludeTypes", hiddenTypes.join(","));
       const { data } = await api.get<ProgramacaoSemanalReportDto>(
         `/futebol-relatorios/programacao-semanal?${params.toString()}`,
       );
@@ -130,14 +146,17 @@ export function FutebolRelatorioProgramacaoForm() {
     );
   };
 
+  const toggleHiddenType = (value: string) => {
+    setHiddenTypes((prev) =>
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
+    );
+  };
+
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle>Programação Semanal</CardTitle>
-          <CardDescription>
-            Grade por dia e categoria com treinos, jogos e compromissos da agenda operacional.
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -221,7 +240,27 @@ export function FutebolRelatorioProgramacaoForm() {
             </Button>
           </div>
           <div className="space-y-2">
-            <Label>Categorias no relatório</Label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label>Categorias no relatório</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setProgCategories(categoryOptions.map((c) => c.value))}
+                >
+                  Todas
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setProgCategories([])}
+                >
+                  Ocultar todas
+                </Button>
+              </div>
+            </div>
             <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto rounded-lg border border-border p-3">
               {categoryOptions.map((cat) => {
                 const checked = progCategories.includes(cat.value);
@@ -237,6 +276,28 @@ export function FutebolRelatorioProgramacaoForm() {
                     }`}
                   >
                     {getCategoryLabel(cat.value, "pt", allFixtureCategories)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Ocultar na impressão</Label>
+            <div className="flex flex-wrap gap-2 rounded-lg border border-border p-3">
+              {PROGRAMACAO_HIDE_TYPES.map((type) => {
+                const hidden = hiddenTypes.includes(type);
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => toggleHiddenType(type)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      hidden
+                        ? "border border-zinc-500/40 bg-zinc-500/20 text-zinc-300 line-through"
+                        : "border border-transparent bg-muted text-muted-foreground hover:border-border"
+                    }`}
+                  >
+                    {FOOTBALL_AGENDA_TYPE_LABEL[type] ?? type}
                   </button>
                 );
               })}

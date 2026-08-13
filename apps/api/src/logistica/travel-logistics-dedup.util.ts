@@ -1,11 +1,12 @@
 import { dateKeyInBrazil } from '../common/brazil-time.util';
-import { matchOpponentMergeKey } from '../common/match-game-opponent.util';
+import { matchCategoryMergeKey, matchOpponentMergeKey } from '../common/match-game-opponent.util';
 
 type TravelDedupRow = {
   id: string;
   tenantId: string;
   matchDate: Date;
   opponentName: string | null;
+  category?: string | null;
   externalId?: string | null;
   status?: string | null;
   updatedAt?: Date;
@@ -17,16 +18,17 @@ export function normalizeTravelOpponent(name: string | null | undefined): string
 }
 
 function travelDedupKey(row: TravelDedupRow): string {
-  return `${row.tenantId}|${dateKeyInBrazil(row.matchDate)}|${normalizeTravelOpponent(row.opponentName)}`;
+  return `${row.tenantId}|${dateKeyInBrazil(row.matchDate)}|${normalizeTravelOpponent(row.opponentName)}|${matchCategoryMergeKey(row.category)}`;
 }
 
 export function buildTravelMatchKey(
   tenantId: string,
   matchDate: Date | string,
   opponentName: string | null | undefined,
+  category?: string | null,
 ): string {
   const date = typeof matchDate === 'string' ? new Date(matchDate) : matchDate;
-  return `${tenantId}|${dateKeyInBrazil(date)}|${normalizeTravelOpponent(opponentName)}`;
+  return `${tenantId}|${dateKeyInBrazil(date)}|${normalizeTravelOpponent(opponentName)}|${matchCategoryMergeKey(category)}`;
 }
 
 function travelKeepScore(row: TravelDedupRow): number {

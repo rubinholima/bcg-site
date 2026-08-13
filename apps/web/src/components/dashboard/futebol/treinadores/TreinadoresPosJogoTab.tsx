@@ -33,6 +33,7 @@ type AttachmentDraft = {
 interface Props {
   tenantId: string;
   category?: string;
+  contextLoading: boolean;
   context: CoachContextResponse | null;
 }
 
@@ -45,7 +46,7 @@ function emptyDraft(players: CoachContextResponse["players"]): PlayerRatingDraft
   }));
 }
 
-export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
+export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, context }: Props) {
   const [reports, setReports] = useState<CoachMatchReport[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -224,6 +225,12 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      {contextLoading ? (
+        <div className="lg:col-span-2 flex justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base">Relatórios</CardTitle>
@@ -441,6 +448,8 @@ export function TreinadoresPosJogoTab({ tenantId, category, context }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+        </>
+      )}
     </div>
   );
 }

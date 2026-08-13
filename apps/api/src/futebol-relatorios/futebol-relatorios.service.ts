@@ -553,6 +553,7 @@ export class FutebolRelatoriosService {
     from: string;
     to: string;
     categories?: string;
+    excludeTypes?: string;
   }): Promise<ProgramacaoSemanalReportDto> {
     const tenantId = filters.tenantId?.trim();
     if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
@@ -576,6 +577,13 @@ export class FutebolRelatoriosService {
       .split(',')
       .map((c) => c.trim())
       .filter(Boolean);
+
+    const excludeTypes = new Set(
+      (filters.excludeTypes ?? '')
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean),
+    );
 
     const fixtureCats = await this.prisma.fixtureCategory.findMany({
       where: { active: true },
@@ -621,6 +629,7 @@ export class FutebolRelatoriosService {
 
     for (const item of items) {
       if (item.source === 'bch_booking') continue;
+      if (excludeTypes.has(item.type)) continue;
       const dateIso = resolveAgendaCalendarDateKey(item);
       const day = dayMap.get(dateIso);
       if (!day) continue;
