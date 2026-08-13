@@ -176,7 +176,28 @@ function isLikelyDbId(segment: string): boolean {
   return /^c[a-z0-9]{20,}$/i.test(segment) || /^[0-9a-f-]{20,}$/i.test(segment);
 }
 
+function isGameKeySegment(segment: string): boolean {
+  try {
+    const decoded = decodeURIComponent(segment.trim());
+    const idx = decoded.indexOf(":");
+    if (idx <= 0) return false;
+    const prefix = decoded.slice(0, idx).toLowerCase();
+    const id = decoded.slice(idx + 1).trim();
+    return (prefix === "travel" || prefix === "fmf") && id.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function titleForGameDetailPath(pathname: string, lastSegment: string): string | null {
+  if (!pathname.includes("/futebol/jogos/")) return null;
+  if (!isGameKeySegment(lastSegment)) return null;
+  return "Detalhe do jogo";
+}
+
 function titleForDynamicSegment(pathname: string, lastSegment: string): string | null {
+  const gameTitle = titleForGameDetailPath(pathname, lastSegment);
+  if (gameTitle) return gameTitle;
   if (!isLikelyDbId(lastSegment)) return null;
   if (pathname.includes("/boston-tv/playlists/")) return "Editar playlist";
   if (pathname.includes("/playlists/")) return "Editar playlist";
@@ -213,19 +234,27 @@ export function resolveDashboardPageMeta(pathname: string): DashboardPageMeta | 
   let title = subTitle ?? baseTitle;
   if (isSubpath && !subTitle) {
     const last = cleanPath.split("/").pop()!;
+    const gameTitle = titleForGameDetailPath(cleanPath, last);
     const dynamicTitle = titleForDynamicSegment(cleanPath, last);
-    if (dynamicTitle) {
+    if (gameTitle) {
+      title = gameTitle;
+    } else if (dynamicTitle) {
       title = dynamicTitle;
     } else if (/^\[.*\]$/.test(last) || last === "edit" || last === "editar" || last === "delete") {
       title = baseTitle;
-    } else if (!SUBPATH_TITLE[last] && !isLikelyDbId(last)) {
+    } else if (!SUBPATH_TITLE[last] && !isLikelyDbId(last) && !isGameKeySegment(last)) {
       title = humanizeSegment(last);
     }
   }
 
+  const lastSegment = cleanPath.split("/").pop() ?? "";
   const backHref =
     override?.backHref ??
-    (match && isSubpath && match.href !== cleanPath ? match.href : undefined);
+    (titleForGameDetailPath(cleanPath, lastSegment)
+      ? "/dashboard/futebol/jogos"
+      : match && isSubpath && match.href !== cleanPath
+        ? match.href
+        : undefined);
 
   return {
     section: dept?.label ?? "Dashboard",
@@ -288,6 +317,8 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/medico\/equipe\/[^/]+\/edit$/,
   /^\/dashboard\/psicologia\/psicologos\/[^/]+\/edit$/,
   /^\/dashboard\/futebol\/logistica\/[^/]+\/(edit|delete)$/,
+  /^\/dashboard\/futebol\/jogos$/,
+  /^\/dashboard\/futebol\/jogos\/[^/]+$/,
 ];
 
 export function shouldShowAutoDashboardHeader(pathname: string): boolean {

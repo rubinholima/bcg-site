@@ -730,6 +730,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: FileText,
             moduleSlug: "relatorios_futebol",
           },
+          {
+            slug: "futebol_rel_cartoes_suspensao",
+            label: "Cartões e Suspensão",
+            href: "/dashboard/relatorios/futebol/cartoes-suspensao",
+            icon: FileText,
+            moduleSlug: "relatorios_futebol",
+          },
         ],
       },
     ],
