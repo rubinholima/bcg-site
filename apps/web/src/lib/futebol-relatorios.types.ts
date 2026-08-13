@@ -316,6 +316,11 @@ export type CartoesSuspensaoPlayerDto = {
   aptoForNextRound: boolean;
 };
 
+export type DisciplinePhasesDto = {
+  currentPhase: string | null;
+  phases: string[];
+};
+
 export type CartoesSuspensaoReportDto = {
   tenant: {
     id: string;

@@ -5,6 +5,7 @@ import {
   extractFmfPhaseHint,
   fmfPhaseLabelsMatch,
   isFmfGroupStagePhase,
+  normalizeFmfPhaseKey,
   resolveCurrentFmfGroupPhase,
   type FmfParsedMatch,
 } from '../fmf-scraper/fmf-proxjogos.parser';
@@ -497,6 +498,41 @@ export function resolveCurrentChampionshipPhaseForCategory(
   }
 
   return extractFmfPhaseHint(phaseHint) ?? null;
+}
+
+/** Fases distintas (FMF + súmulas), ordenadas pela data do primeiro jogo de cada fase. */
+export function collectChampionshipPhasesForCategory(
+  store: FmfScraperStore | null,
+  category: string,
+  reportRows: ChampionshipPhaseReportRow[] = [],
+): string[] {
+  const byKey = new Map<string, { label: string; sortDate: string }>();
+
+  const add = (label: string | null | undefined, matchDate?: Date | string | null) => {
+    if (!label?.trim()) return;
+    const key = normalizeFmfPhaseKey(label);
+    if (!key) return;
+    const dateKey = matchDate ? dateKeyInBrazil(matchDate) : '9999-99-99';
+    const existing = byKey.get(key);
+    if (!existing || dateKey < existing.sortDate) {
+      byKey.set(key, { label: label.trim(), sortDate: dateKey });
+    }
+  };
+
+  const snapshot = findStoreSnapshot(store, category);
+  for (const match of snapshot?.matches ?? []) {
+    add(match.phaseLabel, match.matchDate);
+  }
+  for (const row of reportRows) {
+    add(row.phase, row.matchDate);
+  }
+
+  return Array.from(byKey.values())
+    .sort(
+      (a, b) =>
+        a.sortDate.localeCompare(b.sortDate) || a.label.localeCompare(b.label, 'pt-BR'),
+    )
+    .map((entry) => entry.label);
 }
 
 export function filterRowsByChampionshipPhase<T extends { phase: string | null }>(

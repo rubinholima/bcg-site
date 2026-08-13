@@ -55,6 +55,7 @@ import {
   isFmfSyncTenantSlug,
 } from '../fmf-scraper/fmf-sync-tenants.config';
 import {
+  collectChampionshipPhasesForCategory,
   filterRowsByChampionshipPhase,
   reportMatchesCategoryFilter,
   resolveCurrentChampionshipPhaseForCategory,
@@ -1896,6 +1897,7 @@ export class FutebolRelatoriosService {
     category: string;
     season: number;
     nextMatchDate?: string | null;
+    phase?: string | null;
   }): Promise<{
     phase: string | null;
     nextRound: CartoesSuspensaoReportDto['nextRound'];
@@ -1988,12 +1990,13 @@ export class FutebolRelatoriosService {
       });
 
     const store = await this.loadFmfStore();
-    const currentPhase = resolveCurrentChampionshipPhaseForCategory(
+    const autoPhase = resolveCurrentChampionshipPhaseForCategory(
       store,
       input.category,
       categoryReports,
       upcomingTravel?.championshipName,
     );
+    const resolvedPhase = input.phase?.trim() || autoPhase;
 
     const matches = filterRowsByChampionshipPhase(
       categoryReports.filter(
@@ -2003,7 +2006,7 @@ export class FutebolRelatoriosService {
           row.homeScore != null &&
           row.awayScore != null,
       ),
-      currentPhase,
+      resolvedPhase,
     );
 
     const nextMatchDate =
@@ -2039,7 +2042,7 @@ export class FutebolRelatoriosService {
     }
 
     return {
-      phase: currentPhase,
+      phase: resolvedPhase,
       nextRound,
       rounds: grid.rounds,
       players: grid.players,
@@ -2047,11 +2050,94 @@ export class FutebolRelatoriosService {
     };
   }
 
+  async listDisciplinePhases(filters: {
+    tenantId: string;
+    category: string;
+    season?: number;
+  }): Promise<{ currentPhase: string | null; phases: string[] }> {
+    const tenantId = filters.tenantId?.trim();
+    if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
+
+    const category = filters.category?.trim();
+    if (!category) throw new BadRequestException('category é obrigatório');
+
+    const season =
+      typeof filters.season === 'number' && filters.season >= 2000
+        ? filters.season
+        : new Date().getFullYear();
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, slug: true, tradeName: true },
+    });
+    if (!tenant) throw new NotFoundException('Clube não encontrado');
+
+    const clubName = tenant.tradeName?.trim() || tenant.name;
+    const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+
+    const travelsRaw = await this.prisma.travelLogistics.findMany({
+      where: { tenantId, status: { not: 'cancelado' } },
+      select: {
+        id: true,
+        tenantId: true,
+        matchDate: true,
+        opponentName: true,
+        championshipName: true,
+        category: true,
+        categories: true,
+        isHomeMatch: true,
+        stadiumName: true,
+        city: true,
+        status: true,
+      },
+    });
+    const travels = dedupeTravelLogisticsList(travelsRaw);
+
+    const reportRows = await this.prisma.fmfMatchReport.findMany({
+      where: { tenantId, season },
+      select: {
+        phase: true,
+        matchDate: true,
+        homeScore: true,
+        awayScore: true,
+        category: true,
+        homeTeam: true,
+        awayTeam: true,
+      },
+      orderBy: [{ matchDate: 'asc' }],
+    });
+
+    const categoryReports = reportRows.filter((row) =>
+      reportMatchesCategoryFilter(row, category, travels, clubName, aliases),
+    );
+
+    const upcomingTravel = travels
+      .filter((t) => t.matchDate >= new Date())
+      .sort((a, b) => a.matchDate.getTime() - b.matchDate.getTime())
+      .find((t) => {
+        const cats = parseTravelCategories(t.categories);
+        if (cats.length > 0) return cats.includes(category);
+        return t.category === category;
+      });
+
+    const store = await this.loadFmfStore();
+    const currentPhase = resolveCurrentChampionshipPhaseForCategory(
+      store,
+      category,
+      categoryReports,
+      upcomingTravel?.championshipName,
+    );
+    const phases = collectChampionshipPhasesForCategory(store, category, categoryReports);
+
+    return { currentPhase, phases };
+  }
+
   async getCartoesSuspensaoReport(filters: {
     tenantId: string;
     category: string;
     season?: number;
     nextMatchDate?: string;
+    phase?: string;
   }): Promise<CartoesSuspensaoReportDto> {
     const tenantId = filters.tenantId?.trim();
     if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
@@ -2078,6 +2164,7 @@ export class FutebolRelatoriosService {
       category,
       season,
       nextMatchDate: filters.nextMatchDate?.trim() || null,
+      phase: filters.phase?.trim() || null,
     });
 
     const travelsRaw = await this.prisma.travelLogistics.findMany({

@@ -119,12 +119,33 @@ export class FutebolRelatoriosController {
     });
   }
 
+  @Get('discipline-phases')
+  listDisciplinePhases(
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('season') season?: string,
+  ) {
+    if (!tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    if (!category?.trim()) {
+      throw new BadRequestException('category é obrigatório');
+    }
+    const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
+    return this.service.listDisciplinePhases({
+      tenantId: tenantId.trim(),
+      category: category.trim(),
+      season: Number.isFinite(seasonNum) ? seasonNum : undefined,
+    });
+  }
+
   @Get('cartoes-suspensao')
   getCartoesSuspensao(
     @Query('tenantId') tenantId?: string,
     @Query('category') category?: string,
     @Query('season') season?: string,
     @Query('nextMatchDate') nextMatchDate?: string,
+    @Query('phase') phase?: string,
   ) {
     if (!tenantId?.trim()) {
       throw new BadRequestException('tenantId é obrigatório');
@@ -138,6 +159,7 @@ export class FutebolRelatoriosController {
       category: category.trim(),
       season: Number.isFinite(seasonNum) ? seasonNum : undefined,
       nextMatchDate: nextMatchDate?.trim() || undefined,
+      phase: phase?.trim() || undefined,
     });
   }
 

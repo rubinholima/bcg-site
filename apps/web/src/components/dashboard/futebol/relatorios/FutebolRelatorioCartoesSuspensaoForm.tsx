@@ -17,7 +17,11 @@ import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-mo
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { api } from "@/lib/api";
 import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
-import type { CartoesSuspensaoReportDto, PrintPageSize } from "@/lib/futebol-relatorios.types";
+import type {
+  CartoesSuspensaoReportDto,
+  DisciplinePhasesDto,
+  PrintPageSize,
+} from "@/lib/futebol-relatorios.types";
 import {
   buildCartoesSuspensaoPrintHtml,
   printCartoesSuspensaoReport,
@@ -33,6 +37,10 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
   const [tenantId, setTenantId] = useState("");
   const [season, setSeason] = useState(String(currentYear));
   const [category, setCategory] = useState("");
+  const [phase, setPhase] = useState("auto");
+  const [phaseOptions, setPhaseOptions] = useState<string[]>([]);
+  const [currentPhase, setCurrentPhase] = useState<string | null>(null);
+  const [loadingPhases, setLoadingPhases] = useState(false);
   const [pageSize, setPageSize] = useState<PrintPageSize>("A4");
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -60,6 +68,48 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
       setCategory(categoryOptions[0]!.value);
     }
   }, [category, categoryOptions]);
+
+  useEffect(() => {
+    if (!tenantId || !category) {
+      setPhaseOptions([]);
+      setCurrentPhase(null);
+      setPhase("auto");
+      return;
+    }
+    const seasonNum = Number(season);
+    if (!Number.isFinite(seasonNum) || seasonNum < 2000) return;
+
+    let cancelled = false;
+    setLoadingPhases(true);
+    const params = new URLSearchParams({
+      tenantId,
+      category,
+      season: String(seasonNum),
+    });
+
+    api
+      .get<DisciplinePhasesDto>(`/futebol-relatorios/discipline-phases?${params.toString()}`)
+      .then(({ data }) => {
+        if (cancelled) return;
+        setPhaseOptions(Array.isArray(data.phases) ? data.phases : []);
+        setCurrentPhase(data.currentPhase ?? null);
+        setPhase("auto");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPhaseOptions([]);
+          setCurrentPhase(null);
+          setPhase("auto");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPhases(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, season, category]);
 
   const fetchReport = async (): Promise<CartoesSuspensaoReportDto | null> => {
     if (!tenantId) {
@@ -96,6 +146,7 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
         category,
         season: String(seasonNum),
       });
+      if (phase !== "auto") params.set("phase", phase);
       const { data } = await api.get<CartoesSuspensaoReportDto>(
         `/futebol-relatorios/cartoes-suspensao?${params.toString()}`,
       );
@@ -189,6 +240,37 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Fase</Label>
+            <Select
+              value={phase}
+              onValueChange={setPhase}
+              disabled={!tenantId || !category || loadingPhases}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    loadingPhases
+                      ? "Carregando fases…"
+                      : phaseOptions.length === 0
+                        ? "Sem fases identificadas"
+                        : "Selecione a fase"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">
+                  Fase atual{currentPhase ? `: ${currentPhase}` : ""}
+                </SelectItem>
+                {phaseOptions.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
