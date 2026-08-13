@@ -466,6 +466,7 @@ export default function EditLogisticaPage() {
               ok: isHomeMatch ? hasHomeAgenda : hasTransport && hasOutbound,
               label: isHomeMatch ? "Agenda do jogo" : "Transporte + ida",
             },
+            { ok: hasHomeAgenda, label: "Agenda do jogo", hide: isHomeMatch },
             { ok: hasReturn, label: "Volta", hide: isHomeMatch },
             { ok: hasHotel, label: "Hotel + quartos", hide: isHomeMatch },
             {

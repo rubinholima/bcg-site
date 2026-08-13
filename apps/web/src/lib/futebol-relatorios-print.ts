@@ -1131,7 +1131,7 @@ export function buildLayoutRelacionadosPrintHtml(
   const homeAgenda =
     data.homeMatchAgenda.length > 0
       ? `<section class="section">
-          <h2 class="section-title">Agenda do jogo (casa)</h2>
+          <h2 class="section-title">${travel.isHomeMatch ? "Agenda do jogo" : "Agenda do jogo / concentração"}</h2>
           <table>
             <thead><tr><th class="num">#</th><th>Data</th><th>Horário</th><th>Atividade</th><th>Obs.</th></tr></thead>
             <tbody>
