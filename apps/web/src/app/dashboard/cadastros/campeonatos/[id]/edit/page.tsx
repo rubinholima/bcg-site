@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { StandingsFormulaEditor } from "@/components/dashboard/StandingsFormulaE
 import { api } from "@/lib/api";
 
 export default function EditCampeonatoPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -78,9 +79,10 @@ export default function EditCampeonatoPage() {
         standingsFormula: standingsFormula.trim() || undefined,
         standingsFormulaName: standingsFormulaName.trim() || undefined,
       });
-      router.push("/dashboard/cadastros/campeonatos?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar campeonato");
+    } finally {
       setLoading(false);
     }
   };
@@ -185,6 +187,7 @@ export default function EditCampeonatoPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import { usePlatformRoles } from "@/hooks/usePlatformRoles";
 import { isValidUsername } from "@/lib/username";
 
 export default function EditUsuarioPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const { isSuperAdmin, isCompanyAdmin } = useAuth();
   const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
@@ -139,9 +140,10 @@ export default function EditUsuarioPage() {
         const text = await res.text();
         throw new Error(text || "Erro ao atualizar usuário");
       }
-      router.push("/dashboard/usuarios?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar usuário");
+    } finally {
       setLoading(false);
     }
   };
@@ -294,6 +296,7 @@ export default function EditUsuarioPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

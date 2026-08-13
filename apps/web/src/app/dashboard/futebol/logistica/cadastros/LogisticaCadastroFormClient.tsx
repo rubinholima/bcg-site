@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation, useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,7 @@ function fkInitialValue(
 
 export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId }: Props) {
   const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [apiOptions, setApiOptions] = useState<Record<string, ApiOption[]>>({});
@@ -145,13 +147,21 @@ export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId 
 
     try {
       if (mode === "create") {
-        await api.post(`/logistica-cadastros/${resource.apiPath}`, body);
+        const { data } = await api.post<{ id: string }>(`/logistica-cadastros/${resource.apiPath}`, body);
+        if (data?.id) {
+          markSaveSuccessForNavigation();
+          const tenantQuery = tenantId ? `?tenantId=${tenantId}` : "";
+          router.replace(`${basePath}/${data.id}/edit${tenantQuery}`);
+          return;
+        }
       } else if (initial?.id) {
         await api.patch(`/logistica-cadastros/${resource.apiPath}/${initial.id}`, body);
+        notifySaved();
+        return;
       }
-      router.push(`${basePath}?success=true${tenantId ? `&tenantId=${tenantId}` : ""}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
       setLoading(false);
     }
   };
@@ -260,6 +270,7 @@ export function LogisticaCadastroFormClient({ resource, mode, initial, tenantId 
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

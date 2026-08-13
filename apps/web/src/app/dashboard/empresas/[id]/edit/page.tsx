@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ interface FormData {
 }
 
 export default function EditEmpresaPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const { categories: fixtureCategories } = useFixtureCategories();
   const params = useParams();
@@ -138,9 +139,10 @@ export default function EditEmpresaPage() {
         payload.omieAppSecret = omieAppSecret.trim();
       }
       await api.patch(`/tenants/${id}`, payload);
-      router.push("/dashboard/empresas?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar empresa");
+    } finally {
       setLoading(false);
     }
   };
@@ -569,6 +571,7 @@ export default function EditEmpresaPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

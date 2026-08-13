@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,14 @@ export default function NewTipoPage() {
     setError(null);
 
     try {
-      await api.post("/tenant-kinds", formData);
-      router.push("/dashboard/cadastros/tipos?success=true");
+      const { data } = await api.post<{ id: string }>("/tenant-kinds", formData);
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/cadastros/tipos/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar tipo");
+    } finally {
       setLoading(false);
     }
   };

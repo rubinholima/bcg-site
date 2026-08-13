@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -102,9 +103,13 @@ export default function NovoMedicoEquipePage() {
         notes: form.notes.trim() || undefined,
         tenantId: form.tenantId.trim() || undefined,
       });
-      router.push(`/dashboard/medico/equipe/${data?.id ?? ""}/edit?success=new`);
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/medico/equipe/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar");
+    } finally {
       setLoading(false);
     }
   };

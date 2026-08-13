@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { api } from "@/lib/api";
 import { UpdateTenantKindDto, TenantKind } from "@/types/tenant-kind";
 
 export default function EditTipoPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -43,9 +44,10 @@ export default function EditTipoPage() {
 
     try {
       await api.patch(`/tenant-kinds/${id}`, formData);
-      router.push("/dashboard/cadastros/tipos?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar tipo");
+    } finally {
       setLoading(false);
     }
   };
@@ -109,6 +111,7 @@ export default function EditTipoPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -120,9 +121,14 @@ export default function NovaSenhaPage() {
         const text = await res.text();
         throw new Error(text || "Erro ao criar item");
       }
-      router.push("/dashboard/senhas?success=true");
+      const item = (await res.json()) as { id?: string };
+      if (item?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/senhas/${item.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar item");
+    } finally {
       setLoading(false);
     }
   };

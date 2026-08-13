@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -139,9 +140,13 @@ export default function NewComissaoPage() {
         bio: bio.trim() || undefined,
         notes: notes.trim() || undefined,
       });
-      router.push(`/dashboard/futebol/comissao/${data?.id ?? ""}/edit?success=new`);
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/futebol/comissao/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar membro");
+    } finally {
       setLoading(false);
     }
   };

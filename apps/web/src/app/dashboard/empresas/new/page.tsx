@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,6 @@ export default function NovaEmpresaPage() {
   const [loading, setLoading] = useState(false);
   const [loadingTipos, setLoadingTipos] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [tipos, setTipos] = useState<TenantKind[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState("");
@@ -123,11 +123,14 @@ export default function NovaEmpresaPage() {
       } else if (logoUrl?.trim() && tenant?.id) {
         await api.patch(`/tenants/${tenant.id}`, { logoUrl: logoUrl.trim() });
       }
-      setSuccess(true);
-      await new Promise((r) => setTimeout(r, 800));
-      router.push("/dashboard/empresas?success=true");
+      if (tenant?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/empresas/${tenant.id}/edit`);
+        return;
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar empresa");
+    } finally {
       setLoading(false);
     }
   };
@@ -192,11 +195,6 @@ export default function NovaEmpresaPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {success && (
-              <div className="rounded-md bg-green-500/15 p-3 text-sm text-green-600 dark:text-green-500">
-                Empresa cadastrada com sucesso! Redirecionando...
-              </div>
-            )}
             {error && (
               <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
                 {error}

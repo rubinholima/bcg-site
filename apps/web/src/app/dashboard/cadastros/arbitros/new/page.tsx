@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { MatchRefereeForm } from "@/components/dashboard/cadastros/MatchRefereeForm";
 
@@ -17,7 +18,10 @@ export default function NovoArbitroPage() {
       <MatchRefereeForm
         mode="create"
         cancelHref="/dashboard/cadastros/arbitros"
-        onSaved={(id) => router.push(`/dashboard/cadastros/arbitros/${id}/edit`)}
+        onSaved={(id) => {
+          markSaveSuccessForNavigation();
+          router.replace(`/dashboard/cadastros/arbitros/${id}/edit`);
+        }}
       />
     </div>
   );

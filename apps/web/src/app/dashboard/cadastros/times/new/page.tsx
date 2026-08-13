@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,13 +50,17 @@ export default function NewTimePage() {
     setError(null);
 
     try {
-      await api.post("/visiting-teams", {
+      const { data } = await api.post<{ id: string }>("/visiting-teams", {
         name: name.trim(),
         logoUrl: logoUrl.trim() || undefined,
       });
-      router.push("/dashboard/cadastros/times?success=true");
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/cadastros/times/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar time");
+    } finally {
       setLoading(false);
     }
   };

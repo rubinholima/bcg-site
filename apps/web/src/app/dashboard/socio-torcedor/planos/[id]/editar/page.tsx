@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import { ArrowLeft, Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ interface Plan {
 }
 
 export default function SocioPlanosEditarPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const searchParams = useSearchParams();
   const id = params.id as string;
@@ -93,7 +94,7 @@ export default function SocioPlanosEditarPage() {
         priceMonthly: parseFloat(priceMonthly) || 0,
         perks: Object.keys(perks).length ? perks : undefined,
       });
-      router.push(`/dashboard/socio-torcedor/planos?tenantId=${encodeURIComponent(tenantId)}&success=true`);
+      notifySaved();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
@@ -205,6 +206,7 @@ export default function SocioPlanosEditarPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

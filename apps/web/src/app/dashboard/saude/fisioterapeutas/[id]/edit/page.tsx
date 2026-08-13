@@ -1,11 +1,12 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { FisioterapeutaForm } from "@/components/dashboard/fisioterapia/FisioterapeutaForm";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 
 export default function EditarFisioterapeutaPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams<{ id: string }>();
   const id = params.id;
 
@@ -18,8 +19,9 @@ export default function EditarFisioterapeutaPage() {
         mode="edit"
         staffId={id}
         cancelHref="/dashboard/saude/fisioterapeutas"
-        onSaved={() => router.push("/dashboard/saude/fisioterapeutas?success=true")}
+        onSaved={() => notifySaved()}
       />
+      <SaveSuccessModal />
     </div>
   );
 }

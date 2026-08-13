@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,15 +26,19 @@ export default function NewEstadioPage() {
     setError(null);
 
     try {
-      await api.post("/stadiums", {
+      const { data } = await api.post<{ id: string }>("/stadiums", {
         name: name.trim(),
         city: city.trim() || undefined,
         country: country.trim() || undefined,
         address: address.trim() || undefined,
       });
-      router.push("/dashboard/cadastros/estadios?success=true");
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/cadastros/estadios/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar estádio");
+    } finally {
       setLoading(false);
     }
   };

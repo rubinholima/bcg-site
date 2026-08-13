@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import { GraduationCap, Loader2 } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { HealthInternForm } from "@/components/dashboard/saude/HealthInternForm";
@@ -36,7 +37,10 @@ export default function NovoEstagiarioPage() {
       <HealthInternForm
         mode="create"
         cancelHref="/dashboard/saude/estagiarios"
-        onSaved={() => router.push("/dashboard/saude/estagiarios?success=true")}
+        onSaved={(id) => {
+          markSaveSuccessForNavigation();
+          router.replace(`/dashboard/saude/estagiarios/${id}/edit`);
+        }}
       />
     </div>
   );

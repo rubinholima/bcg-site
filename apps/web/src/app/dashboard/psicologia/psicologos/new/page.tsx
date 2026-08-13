@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ export default function NovoPsicologoPage() {
           setPendingPhotoFile(null);
         }
       }
-      await api.post("/psychologists", {
+      const { data } = await api.post<{ id: string }>("/psychologists", {
         name: form.name.trim(),
         email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
@@ -79,9 +80,13 @@ export default function NovoPsicologoPage() {
         calendarBlocked: form.calendarBlocked,
         staffRole: "psicologo",
       });
-      router.push("/dashboard/psicologia/psicologos?success=true");
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/psicologia/psicologos/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao cadastrar");
+    } finally {
       setLoading(false);
     }
   };

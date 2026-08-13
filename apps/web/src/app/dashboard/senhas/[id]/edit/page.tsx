@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft, Eye, EyeOff, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ type Tenant = { id: string; name: string; slug?: string };
 
 export default function EditarSenhaPage() {
   const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
   const { canAccessModule, loading: authLoading } = useAuth();
@@ -145,9 +147,10 @@ export default function EditarSenhaPage() {
         const text = await res.text();
         throw new Error(text || "Erro ao atualizar item");
       }
-      router.push("/dashboard/senhas?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar item");
+    } finally {
       setLoading(false);
     }
   };
@@ -317,6 +320,7 @@ export default function EditarSenhaPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { api } from "@/lib/api";
 import { invalidateFixtureCategoriesCache } from "@/hooks/useFixtureCategories";
 
 export default function EditCategoriaPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -54,7 +55,7 @@ export default function EditCategoriaPage() {
         active,
       });
       invalidateFixtureCategoriesCache();
-      router.push("/dashboard/cadastros/categorias?success=true");
+      notifySaved();
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err
@@ -130,6 +131,7 @@ export default function EditCategoriaPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

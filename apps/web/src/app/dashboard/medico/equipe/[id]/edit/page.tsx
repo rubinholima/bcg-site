@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ import type { MedicalStaff } from "@/types/medical-staff";
 import type { Tenant } from "@/types/tenant";
 
 export default function EditarMedicoEquipePage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = params?.id as string | undefined;
   const [staff, setStaff] = useState<MedicalStaff | null>(null);
@@ -99,9 +100,10 @@ export default function EditarMedicoEquipePage() {
         notes: staff.notes ?? undefined,
         tenantId: staff.tenantId ?? undefined,
       });
-      router.push("/dashboard/medico/equipe?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
       setSaving(false);
     }
   };
@@ -344,6 +346,7 @@ export default function EditarMedicoEquipePage() {
           </Link>
         </div>
       </form>
+      <SaveSuccessModal />
     </div>
   );
 }

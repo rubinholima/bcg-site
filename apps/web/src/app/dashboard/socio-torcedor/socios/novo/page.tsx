@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import { ArrowLeft, Users, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ export default function SocioSociosNovoPage() {
     if (!tenantId || !planId) return;
     setSaving(true);
     try {
-      await api.post("/socio/members", {
+      const { data } = await api.post<{ id: string }>("/socio/members", {
         tenantId,
         planId,
         name,
@@ -66,7 +67,10 @@ export default function SocioSociosNovoPage() {
         cpf: cpf.trim() || undefined,
         loyaltyTier,
       });
-      router.push(`/dashboard/socio-torcedor/socios?tenantId=${encodeURIComponent(tenantId)}&success=true`);
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/socio-torcedor/socios/${data.id}/editar?tenantId=${encodeURIComponent(tenantId)}`);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Erro ao cadastrar");
     } finally {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,18 +106,20 @@ export default function NovoUsuarioPage() {
         const text = await res.text();
         throw new Error(text || "Erro ao criar usuário");
       }
-      const data = (await res.json()) as { temporaryPassword?: string; username?: string };
+      const data = (await res.json()) as { temporaryPassword?: string; username?: string; id?: string };
       const temporaryPassword = data.temporaryPassword?.trim() ?? "";
+      const createdUsername = data.username || username;
       if (temporaryPassword) {
         setTempPasswordModal({
           open: true,
           password: temporaryPassword,
-          username: data.username || username,
+          username: createdUsername,
         });
         setLoading(false);
         return;
       }
-      router.push("/dashboard/usuarios?success=true");
+      markSaveSuccessForNavigation();
+      router.replace(`/dashboard/usuarios/${encodeURIComponent(createdUsername)}/edit`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar usuário");
       setLoading(false);
@@ -274,8 +277,9 @@ export default function NovoUsuarioPage() {
         open={tempPasswordModal.open}
         onOpenChange={(open) => {
           setTempPasswordModal((prev) => ({ ...prev, open }));
-          if (!open) {
-            router.push("/dashboard/usuarios?success=true");
+          if (!open && tempPasswordModal.username) {
+            markSaveSuccessForNavigation();
+            router.replace(`/dashboard/usuarios/${encodeURIComponent(tempPasswordModal.username)}/edit`);
           }
         }}
         variant="success"

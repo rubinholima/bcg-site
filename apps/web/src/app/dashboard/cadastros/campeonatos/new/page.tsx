@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,15 +53,19 @@ export default function NewCampeonatoPage() {
     setError(null);
 
     try {
-      await api.post("/championships", {
+      const { data } = await api.post<{ id: string }>("/championships", {
         name: name.trim(),
         logoUrl: logoUrl.trim() || undefined,
         standingsFormula: standingsFormula.trim() || undefined,
         standingsFormulaName: standingsFormulaName.trim() || undefined,
       });
-      router.push("/dashboard/cadastros/campeonatos?success=true");
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/cadastros/campeonatos/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar campeonato");
+    } finally {
       setLoading(false);
     }
   };

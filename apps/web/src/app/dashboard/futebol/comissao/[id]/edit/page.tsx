@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,7 @@ function formatDateInput(d: string | Date | null | undefined): string {
 }
 
 export default function EditComissaoPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const searchParams = useSearchParams();
   const id = params?.id as string;
@@ -209,9 +210,10 @@ export default function EditComissaoPage() {
         bio: bio.trim() || undefined,
         notes: notes.trim() || undefined,
       });
-      router.push("/dashboard/futebol/comissao?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
       setSaving(false);
     }
   };
@@ -516,6 +518,7 @@ export default function EditComissaoPage() {
           </Link>
         </div>
       </form>
+      <SaveSuccessModal />
     </div>
   );
 }

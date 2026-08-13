@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -327,9 +328,13 @@ export default function NewLogisticaPage() {
         notes: notes.trim() || undefined,
         status,
       });
-      router.push(`/dashboard/futebol/logistica/${data?.id ?? ""}/edit?success=new`);
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/futebol/logistica/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar planejamento");
+    } finally {
       setLoading(false);
     }
   };

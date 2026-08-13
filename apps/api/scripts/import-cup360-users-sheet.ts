@@ -6,11 +6,15 @@
  * Campos: NOME → name | USERNAME → username | EMAIL → email | ROLE → role (slug)
  *         CLUBE → tenant | SENHA INICIAL → password (mustChangePassword=true)
  *
+ * Comportamento padrão: cadastra só quem ainda não existe (e-mail ou username).
+ * Use --update-existing para sobrescrever dados/senha de quem já está cadastrado.
+ *
  * Uso:
  *   cd apps/api
- *   pnpm import:cup360-users                              # todas as abas
- *   pnpm import:cup360-users -- --tabs=FISIOTERAPIA,PERFORMANCE,SAUDE
- *   pnpm import:cup360-users -- --dry-run --tabs=FISIOTERAPIA,PERFORMANCE,SAUDE
+ *   pnpm import:cup360-users                              # todas as abas, só novos
+ *   pnpm import:cup360-users -- --tabs=FUTEBOL
+ *   pnpm import:cup360-users -- --dry-run --tabs=FUTEBOL
+ *   pnpm import:cup360-users -- --update-existing --tabs=FUTEBOL
  */
 
 import * as path from 'path';
@@ -28,6 +32,8 @@ const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 10;
 const DRY_RUN = process.argv.includes('--dry-run');
+/** Padrão: não alterar quem já está cadastrado. */
+const SKIP_EXISTING = !process.argv.includes('--update-existing');
 const SHEET_ID = '19slG84asLFQ376Ll7tH9tJst7aDpvjxEOjbVnz4tf4o';
 
 const ALL_SHEET_TABS = [
@@ -77,6 +83,9 @@ const ROLE_SLUG_MAP: Record<string, string> = {
   ENFERMEIRO_TEC: 'enfermeiro_tec',
   PSICOLOGO: 'psicologo',
   PSICOLOGA: 'psicologo',
+  ASSISTENTE: 'assistente',
+  PEDAGOGA: 'pedagoga',
+  CAPTADOR: 'captador',
 };
 
 const NEW_ROLES: { slug: string; label: string; sortOrder: number }[] = [
@@ -98,6 +107,9 @@ const NEW_ROLES: { slug: string; label: string; sortOrder: number }[] = [
   { slug: 'nutricionista', label: 'NUTRICIONISTA', sortOrder: 240 },
   { slug: 'enfermeiro', label: 'ENFERMEIRO', sortOrder: 250 },
   { slug: 'enfermeiro_tec', label: 'TÉCNICO ENFERMAGEM', sortOrder: 255 },
+  { slug: 'assistente', label: 'ASSISTENTE SOCIAL', sortOrder: 260 },
+  { slug: 'pedagoga', label: 'PEDAGOGA', sortOrder: 265 },
+  { slug: 'captador', label: 'CAPTADOR', sortOrder: 270 },
 ];
 
 function parseTabsArg(): SheetTab[] {
@@ -292,8 +304,14 @@ async function upsertUser(row: SheetRow, tenantId: string) {
   const byUsername = await prisma.user.findUnique({ where: { username } });
 
   if (DRY_RUN) {
+    const action =
+      byEmail || byUsername
+        ? SKIP_EXISTING
+          ? 'já existe (pularia)'
+          : 'atualizaria'
+        : 'criaria';
     console.log(
-      `  [dry-run] ${byEmail || byUsername ? 'atualizaria' : 'criaria'} [${row.sheet}] ${username} | ${email} | role=${roleSlug} | cargo=${row.cargo}`,
+      `  [dry-run] ${action} [${row.sheet}] ${username} | ${email} | role=${roleSlug} | cargo=${row.cargo}`,
     );
     return;
   }
@@ -303,6 +321,11 @@ async function upsertUser(row: SheetRow, tenantId: string) {
   }
 
   const existing = byEmail ?? byUsername;
+
+  if (existing && SKIP_EXISTING) {
+    console.log(`  ignorado (já cadastrado) [${row.sheet}]: ${username}`);
+    return;
+  }
 
   if (existing) {
     await prisma.user.update({
@@ -344,6 +367,11 @@ async function upsertUser(row: SheetRow, tenantId: string) {
 async function main() {
   const tabs = parseTabsArg();
   console.log(DRY_RUN ? '=== DRY RUN ===' : '=== IMPORTAÇÃO CUP360 USUÁRIOS ===');
+  console.log(
+    SKIP_EXISTING
+      ? 'Modo: só novos (padrão — quem já existe é ignorado)'
+      : 'Modo: --update-existing (atualiza quem já existe)',
+  );
   console.log(`Abas: ${tabs.join(', ')}`);
 
   const batches = await Promise.all(tabs.map(async (tab) => ({ tab, rows: await fetchSheetTab(tab) })));

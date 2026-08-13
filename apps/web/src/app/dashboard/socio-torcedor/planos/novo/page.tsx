@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import { ArrowLeft, Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +55,7 @@ export default function SocioPlanosNovoPage() {
       if (exclusiveContent) perks.exclusiveContent = true;
       if (welcomePack) perks.welcomePack = true;
       if (meetGreet) perks.meetGreet = true;
-      await api.post("/socio/plans", {
+      const { data } = await api.post<{ id: string }>("/socio/plans", {
         tenantId,
         name,
         slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
@@ -62,7 +63,10 @@ export default function SocioPlanosNovoPage() {
         priceMonthly: parseFloat(priceMonthly) || 0,
         perks: Object.keys(perks).length ? perks : undefined,
       });
-      router.push(`/dashboard/socio-torcedor/planos?tenantId=${encodeURIComponent(tenantId)}&success=true`);
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/socio-torcedor/planos/${data.id}/editar?tenantId=${encodeURIComponent(tenantId)}`);
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {

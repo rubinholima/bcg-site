@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { api } from "@/lib/api";
 
 export default function EditEstadioPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -51,9 +52,10 @@ export default function EditEstadioPage() {
         country: country.trim() || undefined,
         address: address.trim() || undefined,
       });
-      router.push("/dashboard/cadastros/estadios?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar estádio");
+    } finally {
       setLoading(false);
     }
   };
@@ -147,6 +149,7 @@ export default function EditEstadioPage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

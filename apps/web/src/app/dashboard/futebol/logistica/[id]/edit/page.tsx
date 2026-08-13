@@ -31,7 +31,7 @@ import {
 import { LogisticaTravelCadastrosFields } from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
 import { LogisticaItineraryFields } from "@/components/dashboard/futebol/logistica/LogisticaItineraryFields";
 import { LogisticaExpenseLinesFields } from "@/components/dashboard/futebol/logistica/LogisticaExpenseLinesFields";
-import { FeedbackModal } from "@/components/ui/feedback-modal";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import {
   EMPTY_LOGISTICS_TRAVEL_CADASTROS,
   parseLogisticsExpenseLines,
@@ -186,7 +186,7 @@ export default function EditLogisticaPage() {
   const [weatherForecast, setWeatherForecast] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("rascunho");
-  const [saveSuccessOpen, setSaveSuccessOpen] = useState(false);
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback("Planejamento atualizado. Você continua nesta tela.");
 
   useEffect(() => {
     if (!id) return;
@@ -380,7 +380,7 @@ export default function EditLogisticaPage() {
         notes: notes.trim() || undefined,
         status,
       });
-      setSaveSuccessOpen(true);
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
     } finally {
@@ -857,13 +857,7 @@ export default function EditLogisticaPage() {
         </Card>
       </form>
 
-      <FeedbackModal
-        open={saveSuccessOpen}
-        onOpenChange={setSaveSuccessOpen}
-        title="Salvo"
-        message="Planejamento atualizado. Você continua nesta tela."
-        variant="success"
-      />
+      <SaveSuccessModal />
     </div>
   );
 }

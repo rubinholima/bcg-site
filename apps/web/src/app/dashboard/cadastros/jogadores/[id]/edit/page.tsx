@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -218,7 +219,7 @@ function PlaylistImporter({ onImport }: { onImport: (urls: string[]) => void }) 
 }
 
 export default function EditJogadorPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const searchParams = useSearchParams();
   const { canAccessModule, user } = useAuth();
@@ -378,9 +379,10 @@ export default function EditJogadorPage() {
         publicFields: player.publicFields ?? undefined,
         registrationProfile: profile,
       });
-      router.push("/dashboard/cadastros/jogadores?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
       setLoading(false);
     }
   };
@@ -1059,6 +1061,7 @@ export default function EditJogadorPage() {
         </div>
       )}
 
+      <SaveSuccessModal />
     </div>
   );
 }

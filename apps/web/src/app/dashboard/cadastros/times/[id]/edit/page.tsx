@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { api } from "@/lib/api";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 
 export default function EditTimePage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = params.id as string;
   const [loading, setLoading] = useState(false);
@@ -71,9 +72,10 @@ export default function EditTimePage() {
         name: name.trim(),
         logoUrl: logoUrl.trim() || undefined,
       });
-      router.push("/dashboard/cadastros/times?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao atualizar time");
+    } finally {
       setLoading(false);
     }
   };
@@ -167,6 +169,7 @@ export default function EditTimePage() {
           </form>
         </CardContent>
       </Card>
+      <SaveSuccessModal />
     </div>
   );
 }

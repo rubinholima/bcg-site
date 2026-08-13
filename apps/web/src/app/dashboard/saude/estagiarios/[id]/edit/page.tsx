@@ -6,6 +6,7 @@ import { GraduationCap, Loader2 } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { HealthInternForm } from "@/components/dashboard/saude/HealthInternForm";
 import { useAuth } from "@/context/AuthContext";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 
 export default function EditarEstagiarioPage({
   params,
@@ -14,6 +15,7 @@ export default function EditarEstagiarioPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const { canAccessModule, loading: authLoading } = useAuth();
 
   useEffect(() => {
@@ -42,8 +44,9 @@ export default function EditarEstagiarioPage({
         mode="edit"
         internId={id}
         cancelHref="/dashboard/saude/estagiarios"
-        onSaved={() => router.push("/dashboard/saude/estagiarios?success=true")}
+        onSaved={() => notifySaved()}
       />
+      <SaveSuccessModal />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,14 +26,17 @@ export default function NewCategoriaPage() {
     setLoading(true);
     setError(null);
     try {
-      await api.post("/fixture-categories", {
+      const { data } = await api.post<{ id: string }>("/fixture-categories", {
         value: value.trim().toLowerCase(),
         labelPT: labelPT.trim(),
         labelEN: labelEN.trim(),
         sortOrder: Number.parseInt(sortOrder, 10) || 0,
       });
       invalidateFixtureCategoriesCache();
-      router.push("/dashboard/cadastros/categorias?success=true");
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/cadastros/categorias/${data.id}/edit`);
+      }
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "response" in err

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSaveSuccessFeedback } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Plus, Trash2, CalendarOff, Calendar, StickyNote, BarChart3, User, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ import type { AttendanceLogEntry, PerformanceSheet } from "@/types/psychologist"
 import type { Tenant } from "@/types/tenant";
 
 export default function EditarPsicologoPage() {
-  const router = useRouter();
+  const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
   const id = params?.id as string | undefined;
   const [psychologist, setPsychologist] = useState<Psychologist | null>(null);
@@ -178,9 +179,10 @@ export default function EditarPsicologoPage() {
         attendanceLog: attendanceLog.length > 0 ? attendanceLog : undefined,
         performanceSheet: Object.keys(performanceSheet).length > 0 ? { ...performanceSheet, updatedAt: new Date().toISOString() } : undefined,
       });
-      router.push("/dashboard/psicologia/psicologos?success=true");
+      notifySaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
       setSaving(false);
     }
   };
@@ -546,6 +548,7 @@ export default function EditarPsicologoPage() {
           </Link>
         </div>
       </form>
+      <SaveSuccessModal />
     </div>
   );
 }

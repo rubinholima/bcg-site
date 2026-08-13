@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { FisioterapeutaForm } from "@/components/dashboard/fisioterapia/FisioterapeutaForm";
 
@@ -15,7 +16,10 @@ export default function NovoFisioterapeutaPage() {
       <FisioterapeutaForm
         mode="create"
         cancelHref="/dashboard/saude/fisioterapeutas"
-        onSaved={(id) => router.push(`/dashboard/saude/fisioterapeutas/${id}/edit?success=new`)}
+        onSaved={(id) => {
+          markSaveSuccessForNavigation();
+          router.replace(`/dashboard/saude/fisioterapeutas/${id}/edit`);
+        }}
       />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -82,9 +83,13 @@ export default function NewJogadorPage() {
         birthDate: birthDate.trim() || undefined,
         photoUrl: finalPhotoUrl,
       });
-      router.push(`/dashboard/cadastros/jogadores/${data?.id ?? ""}/edit?success=new`);
+      if (data?.id) {
+        markSaveSuccessForNavigation();
+        router.replace(`/dashboard/cadastros/jogadores/${data.id}/edit`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar atleta");
+    } finally {
       setLoading(false);
     }
   };
