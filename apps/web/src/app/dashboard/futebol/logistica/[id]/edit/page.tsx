@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Circle, ClipboardCheck, Newspaper, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import {
 import { LogisticaTravelCadastrosFields } from "@/components/dashboard/futebol/logistica/LogisticaTravelCadastrosFields";
 import { LogisticaItineraryFields } from "@/components/dashboard/futebol/logistica/LogisticaItineraryFields";
 import { LogisticaExpenseLinesFields } from "@/components/dashboard/futebol/logistica/LogisticaExpenseLinesFields";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 import {
   EMPTY_LOGISTICS_TRAVEL_CADASTROS,
   parseLogisticsExpenseLines,
@@ -143,7 +144,6 @@ function toDateInput(v: string | Date | null | undefined): string {
 }
 
 export default function EditLogisticaPage() {
-  const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
   const [item, setItem] = useState<TravelLogisticsItem | null>(null);
@@ -186,6 +186,7 @@ export default function EditLogisticaPage() {
   const [weatherForecast, setWeatherForecast] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("rascunho");
+  const [saveSuccessOpen, setSaveSuccessOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -379,9 +380,10 @@ export default function EditLogisticaPage() {
         notes: notes.trim() || undefined,
         status,
       });
-      router.push("/dashboard/futebol/logistica?success=true");
+      setSaveSuccessOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar");
+    } finally {
       setSaving(false);
     }
   };
@@ -398,6 +400,12 @@ export default function EditLogisticaPage() {
     <div className="space-y-6">
       <div className="sticky top-0 z-20 -mx-4 -mt-0 mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-background/95 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-6 sm:px-6">
         <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" asChild>
+            <Link href="/dashboard/futebol/logistica">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Voltar à lista
+            </Link>
+          </Button>
           <Button type="submit" form="form-logistica-edit" disabled={saving}>
             {saving ? "Salvando..." : "Salvar"}
           </Button>
@@ -848,6 +856,14 @@ export default function EditLogisticaPage() {
           </CardContent>
         </Card>
       </form>
+
+      <FeedbackModal
+        open={saveSuccessOpen}
+        onOpenChange={setSaveSuccessOpen}
+        title="Salvo"
+        message="Planejamento atualizado. Você continua nesta tela."
+        variant="success"
+      />
     </div>
   );
 }
