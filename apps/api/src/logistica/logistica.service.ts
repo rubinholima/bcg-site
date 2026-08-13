@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { normalizeTravelCategoriesInput } from '../futebol-agenda/travel-categories.util';
-import { parseDateOnlyBrazil } from '../common/brazil-time.util';
+import { parseDateOnlyBrazil, parseDateTimeBrazil } from '../common/brazil-time.util';
 import { CreateTravelLogisticsDto } from './dto/create-travel-logistics.dto';
 import { UpdateTravelLogisticsDto } from './dto/update-travel-logistics.dto';
 import {
@@ -477,19 +477,13 @@ export class LogisticaService {
         distanceKm: dto.distanceKm ?? null,
         transportType: dto.transportType ?? null,
         transportDetails: dto.transportDetails ?? null,
-        estimatedDeparture: dto.estimatedDeparture
-          ? new Date(dto.estimatedDeparture)
-          : null,
-        estimatedArrival: dto.estimatedArrival
-          ? new Date(dto.estimatedArrival)
-          : null,
+        estimatedDeparture: parseDateTimeBrazil(dto.estimatedDeparture),
+        estimatedArrival: parseDateTimeBrazil(dto.estimatedArrival),
         hotelName: dto.hotelName ?? null,
         hotelAddress: dto.hotelAddress ?? null,
         accommodationRooms: dto.accommodationRooms ?? undefined,
         mealPlan: dto.mealPlan ?? undefined,
-        nutritionApprovedAt: dto.nutritionApprovedAt
-          ? new Date(dto.nutritionApprovedAt)
-          : null,
+        nutritionApprovedAt: parseDateTimeBrazil(dto.nutritionApprovedAt),
         nutritionApprovedBy: dto.nutritionApprovedBy ?? null,
         estimatedCostTotal: dto.estimatedCostTotal ?? null,
         estimatedCostBreakdown: dto.estimatedCostBreakdown ?? undefined,
@@ -520,11 +514,11 @@ export class LogisticaService {
     if (dto.matchDate != null) data.matchDate = parseDateOnlyBrazil(dto.matchDate);
     if (dto.isHomeMatch !== undefined) data.isHomeMatch = dto.isHomeMatch;
     if (dto.estimatedDeparture != null)
-      data.estimatedDeparture = new Date(dto.estimatedDeparture);
+      data.estimatedDeparture = parseDateTimeBrazil(dto.estimatedDeparture);
     if (dto.estimatedArrival != null)
-      data.estimatedArrival = new Date(dto.estimatedArrival);
+      data.estimatedArrival = parseDateTimeBrazil(dto.estimatedArrival);
     if (dto.nutritionApprovedAt != null)
-      data.nutritionApprovedAt = new Date(dto.nutritionApprovedAt);
+      data.nutritionApprovedAt = parseDateTimeBrazil(dto.nutritionApprovedAt);
     if (dto.categories !== undefined || dto.category !== undefined) {
       const catNorm = normalizeTravelCategoriesInput(dto.categories, dto.category);
       data.category = catNorm.category;

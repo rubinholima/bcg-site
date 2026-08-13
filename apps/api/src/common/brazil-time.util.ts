@@ -58,6 +58,45 @@ export function parseDateOnlyBrazil(dateKey: string): Date {
   return new Date(`${key}T12:00:00-03:00`);
 }
 
+/** datetime-local (sem fuso), ISO ou YYYY-MM-DD → Date em horário de São Paulo. */
+export function parseDateTimeBrazil(value: string | null | undefined): Date | null {
+  if (!value?.trim()) return null;
+  const trimmed = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const d = parseDateOnlyBrazil(trimmed);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const localIso = parseDateTimeLocalBrazil(trimmed);
+  if (localIso) return new Date(localIso);
+  const d = new Date(trimmed);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** datetime-local (sem fuso) ou ISO → ISO UTC (interpretando como São Paulo). */
+export function parseDateTimeLocalBrazil(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (/[zZ]$|[+-]\d{2}:\d{2}$/.test(trimmed)) {
+    const d = new Date(trimmed);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  const m = trimmed.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!m) return null;
+  const d = new Date(`${m[1]}T${m[2]}:${m[3]}:${m[4] ?? '00'}-03:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** ISO ou Date → valor para input datetime-local (sempre horário de São Paulo). */
+export function toDateTimeLocalBrazil(v: string | Date | null | undefined): string {
+  if (!v) return '';
+  const trimmed = typeof v === 'string' ? v.trim() : '';
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+  const date = typeof v === 'string' ? new Date(v) : v;
+  if (Number.isNaN(date.getTime())) return '';
+  const { year, month, day, hour, minute } = datePartsInTz(date, BRAZIL_TZ);
+  return `${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+}
+
 export function dayStartBrazil(dateKey: string): Date {
   const key = dateKey.trim().slice(0, 10);
   return new Date(`${key}T00:00:00-03:00`);

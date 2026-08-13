@@ -20,6 +20,7 @@ import {
   dateKeyInBrazil,
   formatTimeBrazil,
   parseDateOnlyBrazil,
+  parseDateTimeBrazil,
   parsePeriodBrazil,
 } from '../common/brazil-time.util';
 import { FootballActivitySpacesService } from './football-activity-spaces.service';
@@ -723,12 +724,12 @@ export class FutebolAgendaService {
     const status = dto.status ?? 'confirmado';
     this.assertEntryStatus(status);
 
-    const startAt = new Date(dto.startAt);
-    const endAt = dto.endAt ? new Date(dto.endAt) : null;
-    if (Number.isNaN(startAt.getTime())) {
+    const startAt = parseDateTimeBrazil(dto.startAt);
+    const endAt = dto.endAt ? parseDateTimeBrazil(dto.endAt) : null;
+    if (!startAt) {
       throw new BadRequestException('Data/hora inicial inválida');
     }
-    if (endAt && Number.isNaN(endAt.getTime())) {
+    if (dto.endAt && !endAt) {
       throw new BadRequestException('Data/hora final inválida');
     }
 
@@ -810,9 +811,14 @@ export class FutebolAgendaService {
     if (dto.type) this.assertEntryType(dto.type);
     if (dto.status) this.assertEntryStatus(dto.status);
 
-    const startAt = dto.startAt !== undefined ? new Date(dto.startAt) : existing.startAt;
+    const startAt =
+      dto.startAt !== undefined ? parseDateTimeBrazil(dto.startAt) ?? existing.startAt : existing.startAt;
     const endAt =
-      dto.endAt !== undefined ? (dto.endAt ? new Date(dto.endAt) : null) : existing.endAt;
+      dto.endAt !== undefined
+        ? dto.endAt
+          ? parseDateTimeBrazil(dto.endAt)
+          : null
+        : existing.endAt;
     const allDay = dto.allDay !== undefined ? dto.allDay : existing.allDay;
     const category = dto.category !== undefined ? dto.category.trim() || null : existing.category;
     const spaceId = dto.spaceId !== undefined ? dto.spaceId?.trim() || null : existing.spaceId;

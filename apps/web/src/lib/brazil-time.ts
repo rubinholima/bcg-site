@@ -39,3 +39,28 @@ export function combineDateTimeBrazil(date: string, time: string, allDay: boolea
   if (allDay) return new Date(`${date}T12:00:00-03:00`).toISOString();
   return new Date(`${date}T${time}:00-03:00`).toISOString();
 }
+
+/** ISO ou Date → valor para input datetime-local (sempre horário de São Paulo). */
+export function toDateTimeLocalBrazil(v: string | Date | null | undefined): string {
+  if (!v) return "";
+  const trimmed = typeof v === "string" ? v.trim() : "";
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) return trimmed;
+  const date = typeof v === "string" ? new Date(v) : v;
+  if (Number.isNaN(date.getTime())) return "";
+  const { year, month, day, hour, minute } = datePartsInTz(date, BRAZIL_TZ);
+  return `${year}-${month}-${day}T${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
+}
+
+/** datetime-local (sem fuso) ou ISO → ISO UTC (interpretando como São Paulo). */
+export function parseDateTimeLocalBrazil(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (/[zZ]$|[+-]\d{2}:\d{2}$/.test(trimmed)) {
+    const d = new Date(trimmed);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  const m = trimmed.match(/^(\d{4}-\d{2}-\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
+  if (!m) return null;
+  const d = new Date(`${m[1]}T${m[2]}:${m[3]}:${m[4] ?? "00"}-03:00`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}

@@ -1,5 +1,10 @@
 /** Tipos — itinerário / hotel / uniformes / período da agenda (espelho API). */
 
+import {
+  parseDateTimeLocalBrazil,
+  toDateTimeLocalBrazil,
+} from "@/lib/brazil-time";
+
 export type TravelBusType = "LD" | "DD";
 
 export type TravelItineraryStop = {
@@ -99,6 +104,17 @@ export const EMPTY_TRAVEL_UNIFORMS: TravelUniforms = {
   staffTravel: "",
 };
 
+function normalizeStoredDateTime(value: string | null | undefined): string {
+  if (!value?.trim()) return "";
+  return toDateTimeLocalBrazil(value);
+}
+
+function serializeStoredDateTime(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return parseDateTimeLocalBrazil(trimmed) ?? trimmed;
+}
+
 function asStopArray(raw: unknown): TravelItineraryStop[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -106,8 +122,8 @@ function asStopArray(raw: unknown): TravelItineraryStop[] {
     .map((s, i) => ({
       id: typeof s.id === "string" ? s.id : `s-${i}`,
       place: typeof s.place === "string" ? s.place : "",
-      arriveAt: typeof s.arriveAt === "string" ? s.arriveAt : "",
-      departAt: typeof s.departAt === "string" ? s.departAt : "",
+      arriveAt: typeof s.arriveAt === "string" ? normalizeStoredDateTime(s.arriveAt) : "",
+      departAt: typeof s.departAt === "string" ? normalizeStoredDateTime(s.departAt) : "",
       notes: typeof s.notes === "string" ? s.notes : "",
     }));
 }
@@ -139,8 +155,8 @@ export function parseTravelHotelStay(raw: unknown): TravelHotelStay {
   if (!raw || typeof raw !== "object") return { ...EMPTY_TRAVEL_HOTEL_STAY };
   const o = raw as Record<string, unknown>;
   return {
-    checkIn: typeof o.checkIn === "string" ? o.checkIn : "",
-    checkOut: typeof o.checkOut === "string" ? o.checkOut : "",
+    checkIn: typeof o.checkIn === "string" ? normalizeStoredDateTime(o.checkIn) : "",
+    checkOut: typeof o.checkOut === "string" ? normalizeStoredDateTime(o.checkOut) : "",
   };
 }
 
@@ -157,18 +173,23 @@ export function parseTravelUniforms(raw: unknown): TravelUniforms {
 
 /** Payload limpo para API (sem strings vazias desnecessárias). */
 export function serializeTravelItinerary(it: TravelItinerary): TravelItinerary {
+  const mapStop = (s: TravelItineraryStop): TravelItineraryStop => ({
+    ...s,
+    arriveAt: serializeStoredDateTime(s.arriveAt),
+    departAt: serializeStoredDateTime(s.departAt),
+  });
   return {
     busType: it.busType ?? null,
-    outbound: (it.outbound ?? []).filter((s) => s.place.trim()),
-    return: (it.return ?? []).filter((s) => s.place.trim()),
+    outbound: (it.outbound ?? []).filter((s) => s.place.trim()).map(mapStop),
+    return: (it.return ?? []).filter((s) => s.place.trim()).map(mapStop),
     homeMatchAgenda: (it.homeMatchAgenda ?? []).filter((s) => s.label.trim()),
   };
 }
 
 export function serializeTravelHotelStay(h: TravelHotelStay): TravelHotelStay {
   return {
-    checkIn: h.checkIn?.trim() || null,
-    checkOut: h.checkOut?.trim() || null,
+    checkIn: serializeStoredDateTime(h.checkIn),
+    checkOut: serializeStoredDateTime(h.checkOut),
   };
 }
 

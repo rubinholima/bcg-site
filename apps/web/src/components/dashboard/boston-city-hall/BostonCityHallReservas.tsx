@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { parseDateTimeLocalBrazil, toDateTimeLocalBrazil, BRAZIL_TZ } from "@/lib/brazil-time";
 import type { VenueBooking, VenueSpace } from "@/types/boston-city-hall";
 import { BOOKING_STATUSES, BOOKING_STATUS_LABEL } from "@/types/boston-city-hall";
 
@@ -55,15 +56,14 @@ const emptyForm = (): FormState => ({
 });
 
 function toLocalInput(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return toDateTimeLocalBrazil(iso);
 }
 
 function formatRange(start: string, end: string): string {
   const s = new Date(start);
   const e = new Date(end);
-  return `${s.toLocaleString("pt-BR")} — ${e.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+  const opts = { timeZone: BRAZIL_TZ } as const;
+  return `${s.toLocaleString("pt-BR", opts)} — ${e.toLocaleTimeString("pt-BR", { ...opts, hour: "2-digit", minute: "2-digit" })}`;
 }
 
 export function BostonCityHallReservas() {
@@ -145,8 +145,8 @@ export function BostonCityHallReservas() {
       spaceId: form.spaceId,
       title: form.title.trim(),
       eventType: form.eventType.trim() || undefined,
-      startAt: new Date(form.startAt).toISOString(),
-      endAt: new Date(form.endAt).toISOString(),
+      startAt: parseDateTimeLocalBrazil(form.startAt) ?? form.startAt,
+      endAt: parseDateTimeLocalBrazil(form.endAt) ?? form.endAt,
       status: form.status,
       contactName: form.contactName.trim() || undefined,
       contactEmail: form.contactEmail.trim() || undefined,

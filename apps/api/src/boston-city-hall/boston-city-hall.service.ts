@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseDateOnlyBrazil, parseDateTimeBrazil } from '../common/brazil-time.util';
 import {
   BCH_VENUE_SLUG,
   DEFAULT_VENUE_SPACES,
@@ -328,9 +329,9 @@ export class BostonCityHallService {
     const venueSlug = dto.venueSlug ?? BCH_VENUE_SLUG;
     const status = dto.status ?? 'hold';
     assertBookingStatus(status);
-    const startAt = new Date(dto.startAt);
-    const endAt = new Date(dto.endAt);
-    if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime()) || endAt <= startAt) {
+    const startAt = parseDateTimeBrazil(dto.startAt);
+    const endAt = parseDateTimeBrazil(dto.endAt);
+    if (!startAt || !endAt || endAt <= startAt) {
       throw new BadRequestException('Datas inválidas');
     }
 
@@ -384,8 +385,8 @@ export class BostonCityHallService {
     if (dto.spaceId !== undefined) data.spaceId = dto.spaceId;
     if (dto.title !== undefined) data.title = dto.title.trim();
     if (dto.eventType !== undefined) data.eventType = dto.eventType.trim() || null;
-    if (dto.startAt !== undefined) data.startAt = new Date(dto.startAt);
-    if (dto.endAt !== undefined) data.endAt = new Date(dto.endAt);
+    if (dto.startAt !== undefined) data.startAt = parseDateTimeBrazil(dto.startAt);
+    if (dto.endAt !== undefined) data.endAt = parseDateTimeBrazil(dto.endAt);
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.contactName !== undefined) data.contactName = dto.contactName.trim() || null;
     if (dto.contactEmail !== undefined) data.contactEmail = dto.contactEmail.trim() || null;
@@ -445,7 +446,7 @@ export class BostonCityHallService {
         companyName: dto.companyName?.trim() || null,
         eventType: dto.eventType?.trim() || null,
         guestCount: dto.guestCount ?? null,
-        preferredDate: dto.preferredDate ? new Date(dto.preferredDate) : null,
+        preferredDate: dto.preferredDate ? parseDateOnlyBrazil(dto.preferredDate) : null,
         message: dto.message?.trim() || null,
         stage,
         source: dto.source?.trim() || 'manual',
@@ -507,7 +508,7 @@ export class BostonCityHallService {
     if (dto.eventType !== undefined) data.eventType = dto.eventType.trim() || null;
     if (dto.guestCount !== undefined) data.guestCount = dto.guestCount;
     if (dto.preferredDate !== undefined) {
-      data.preferredDate = dto.preferredDate ? new Date(dto.preferredDate) : null;
+      data.preferredDate = dto.preferredDate ? parseDateOnlyBrazil(dto.preferredDate) : null;
     }
     if (dto.message !== undefined) data.message = dto.message.trim() || null;
     if (dto.stage !== undefined) data.stage = dto.stage;

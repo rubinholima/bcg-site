@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { parseDateTimeLocalBrazil } from "@/lib/brazil-time";
 import { namesMatch } from "@/lib/names-match";
 import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 import { isFootballKind } from "@/lib/home-data";
@@ -312,8 +313,8 @@ export default function NewLogisticaPage() {
         distanceKm: distanceKm.trim() ? Number(distanceKm) : undefined,
         transportType: transportType.trim() || undefined,
         transportDetails: transportDetails.trim() || undefined,
-        estimatedDeparture: estimatedDeparture.trim() || undefined,
-        estimatedArrival: estimatedArrival.trim() || undefined,
+        estimatedDeparture: parseDateTimeLocalBrazil(estimatedDeparture.trim()) ?? undefined,
+        estimatedArrival: parseDateTimeLocalBrazil(estimatedArrival.trim()) ?? undefined,
         hotelName: hotelName.trim() || undefined,
         hotelAddress: hotelAddress.trim() || undefined,
         logisticsCadastros,

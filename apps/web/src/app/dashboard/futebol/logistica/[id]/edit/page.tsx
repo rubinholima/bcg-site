@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { dateKeyInBrazil } from "@/lib/brazil-time";
+import { dateKeyInBrazil, parseDateTimeLocalBrazil, toDateTimeLocalBrazil } from "@/lib/brazil-time";
 import { namesMatch } from "@/lib/names-match";
 import { fetchVisitingTeamsMergedWithS3 } from "@/lib/visiting-teams-merge";
 import { isFootballKind } from "@/lib/home-data";
@@ -142,13 +142,6 @@ function toDateInput(v: string | Date | null | undefined): string {
   return dateKeyInBrazil(d);
 }
 
-function toDateTimeLocal(v: string | Date | null | undefined): string {
-  if (!v) return "";
-  const d = typeof v === "string" ? new Date(v) : v;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 export default function EditLogisticaPage() {
   const router = useRouter();
   const params = useParams();
@@ -212,8 +205,8 @@ export default function EditLogisticaPage() {
         setDistanceKm(data.distanceKm != null ? String(data.distanceKm) : "");
         setTransportType(data.transportType ?? "");
         setTransportDetails(data.transportDetails ?? "");
-        setEstimatedDeparture(toDateTimeLocal(data.estimatedDeparture));
-        setEstimatedArrival(toDateTimeLocal(data.estimatedArrival));
+        setEstimatedDeparture(toDateTimeLocalBrazil(data.estimatedDeparture));
+        setEstimatedArrival(toDateTimeLocalBrazil(data.estimatedArrival));
         setHotelName(data.hotelName ?? "");
         setHotelAddress(data.hotelAddress ?? "");
         setIsHomeMatch(data.isHomeMatch === true);
@@ -361,8 +354,8 @@ export default function EditLogisticaPage() {
         distanceKm: distanceKm.trim() ? Number(distanceKm) : undefined,
         transportType: transportType.trim() || undefined,
         transportDetails: transportDetails.trim() || undefined,
-        estimatedDeparture: estimatedDeparture.trim() || undefined,
-        estimatedArrival: estimatedArrival.trim() || undefined,
+        estimatedDeparture: parseDateTimeLocalBrazil(estimatedDeparture.trim()) ?? undefined,
+        estimatedArrival: parseDateTimeLocalBrazil(estimatedArrival.trim()) ?? undefined,
         hotelName: hotelName.trim() || undefined,
         hotelAddress: hotelAddress.trim() || undefined,
         isHomeMatch,
