@@ -119,6 +119,28 @@ export class FutebolRelatoriosController {
     });
   }
 
+  @Get('cartoes-suspensao')
+  getCartoesSuspensao(
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('season') season?: string,
+    @Query('nextMatchDate') nextMatchDate?: string,
+  ) {
+    if (!tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    if (!category?.trim()) {
+      throw new BadRequestException('category é obrigatório');
+    }
+    const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
+    return this.service.getCartoesSuspensaoReport({
+      tenantId: tenantId.trim(),
+      category: category.trim(),
+      season: Number.isFinite(seasonNum) ? seasonNum : undefined,
+      nextMatchDate: nextMatchDate?.trim() || undefined,
+    });
+  }
+
   @Get('programacao-semanal')
   getProgramacaoSemanal(
     @Query('tenantId') tenantId?: string,

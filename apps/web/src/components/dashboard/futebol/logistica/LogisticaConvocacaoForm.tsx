@@ -36,6 +36,7 @@ import {
   upcomingFixtures,
   type AgendaFixture,
 } from "@/lib/travel-fixture-utils";
+import type { CartoesSuspensaoReportDto } from "@/lib/futebol-relatorios.types";
 
 interface PlayerRow {
   id: string;
@@ -110,6 +111,9 @@ export function LogisticaConvocacaoForm() {
   const [saving, setSaving] = useState(false);
   const [convocationSaved, setConvocationSaved] = useState(false);
   const [onlyWithConvocation, setOnlyWithConvocation] = useState(false);
+  const [disciplineByPlayer, setDisciplineByPlayer] = useState<
+    Map<string, { apto: boolean; reason: string | null }>
+  >(new Map());
 
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -419,6 +423,46 @@ export function LogisticaConvocacaoForm() {
     void loadParticipants(travelId);
   }, [travelId, loadParticipants]);
 
+  useEffect(() => {
+    if (!tenantId || !selectedTravel) {
+      setDisciplineByPlayer(new Map());
+      return;
+    }
+    const category = travelCategories[0] ?? selectedTravel.category;
+    if (!category) {
+      setDisciplineByPlayer(new Map());
+      return;
+    }
+    const season = new Date(selectedTravel.matchDate).getFullYear();
+    const matchDate = String(selectedTravel.matchDate).slice(0, 10);
+    const params = new URLSearchParams({
+      tenantId,
+      category,
+      season: String(season),
+      nextMatchDate: matchDate,
+    });
+    let cancelled = false;
+    api
+      .get<CartoesSuspensaoReportDto>(`/futebol-relatorios/cartoes-suspensao?${params.toString()}`)
+      .then(({ data }) => {
+        if (cancelled) return;
+        const map = new Map<string, { apto: boolean; reason: string | null }>();
+        for (const row of data.players ?? []) {
+          map.set(row.playerId, {
+            apto: row.aptoForNextRound,
+            reason: row.unavailableReason,
+          });
+        }
+        setDisciplineByPlayer(map);
+      })
+      .catch(() => {
+        if (!cancelled) setDisciplineByPlayer(new Map());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, selectedTravel, travelCategories]);
+
   const filteredPlayers = useMemo(() => {
     const q = search.trim().toLowerCase();
     return players.filter((p) => {
@@ -443,6 +487,16 @@ export function LogisticaConvocacaoForm() {
   const filteredStaff = useMemo(() => staff, [staff]);
 
   const togglePlayer = (id: string) => {
+    const discipline = disciplineByPlayer.get(id);
+    if (discipline && !discipline.apto) {
+      setFeedback({
+        open: true,
+        title: "Atleta indisponível",
+        message: discipline.reason ?? "Indisponível por cartão ou suspensão.",
+        variant: "warning",
+      });
+      return;
+    }
     setSelectedPlayerIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -463,7 +517,11 @@ export function LogisticaConvocacaoForm() {
   const selectAllVisiblePlayers = () => {
     setSelectedPlayerIds((prev) => {
       const next = new Set(prev);
-      for (const p of filteredPlayers) next.add(p.id);
+      for (const p of filteredPlayers) {
+        const discipline = disciplineByPlayer.get(p.id);
+        if (discipline && !discipline.apto) continue;
+        next.add(p.id);
+      }
       return next;
     });
   };
@@ -811,15 +869,22 @@ export function LogisticaConvocacaoForm() {
                     const checked = selectedPlayerIds.has(p.id);
                     const nick = p.registrationProfile?.personal?.nickname?.trim();
                     const photo = getPublicImageUrl(p.photoUrl);
+                    const discipline = disciplineByPlayer.get(p.id);
+                    const unavailable = discipline != null && !discipline.apto;
                     return (
                       <li key={p.id}>
                         <label
-                          className={`flex min-h-[48px] cursor-pointer items-center gap-3 rounded-md px-2 py-2 transition-colors ${
-                            checked ? "bg-[#C8102E]/15" : "hover:bg-zinc-900"
+                          className={`flex min-h-[48px] items-center gap-3 rounded-md px-2 py-2 transition-colors ${
+                            unavailable
+                              ? "cursor-not-allowed border border-amber-500/40 bg-amber-500/10"
+                              : checked
+                                ? "cursor-pointer bg-[#C8102E]/15"
+                                : "cursor-pointer hover:bg-zinc-900"
                           }`}
                         >
                           <Checkbox
                             checked={checked}
+                            disabled={unavailable}
                             onCheckedChange={() => togglePlayer(p.id)}
                             aria-label={`Convocar ${p.name}`}
                           />
@@ -839,7 +904,11 @@ export function LogisticaConvocacaoForm() {
                             <span className="block truncate font-medium">
                               {nick || p.name}
                             </span>
-                            {nick ? (
+                            {unavailable ? (
+                              <span className="block truncate text-xs font-medium text-amber-400">
+                                {discipline?.reason ?? "Indisponível por cartão"}
+                              </span>
+                            ) : nick ? (
                               <span className="block truncate text-xs text-muted-foreground">
                                 {p.name}
                               </span>

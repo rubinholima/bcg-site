@@ -11,6 +11,11 @@ const REPORT_OPTIONS = [
     title: "Súmula e Cartões",
     icon: FileText,
   },
+  {
+    href: "/dashboard/relatorios/futebol/cartoes-suspensao",
+    title: "Cartões e Suspensão",
+    icon: FileText,
+  },
 ] as const;
 
 export default function FutebolRelatoriosHubPage() {

@@ -21,6 +21,7 @@ import type {
   SumulaCartoesMatchPlayer,
   SumulaCartoesMatchTeam,
   SumulaCartoesReportDto,
+  CartoesSuspensaoReportDto,
 } from "@/lib/futebol-relatorios.types";
 import { getStaffRoleLabel } from "@/lib/staff-roles";
 import { getFormation, pitchChipTranslateY } from "@/lib/press-kit-formations";
@@ -1930,7 +1931,153 @@ export function printMatchExternalReport(
   printHtmlDocument(buildMatchExternalReportHtml(data, audience, size), title);
 }
 
+function cartoesSuspensaoLegend(): string {
+  return `
+    <div class="legend-grid">
+      <span><strong>A</strong> Atuação</span>
+      <span><strong>AM</strong> Advertência manual</span>
+      <span><strong>V</strong> Expulsão</span>
+      <span><strong>VM</strong> Expulsão manual</span>
+      <span><strong>P</strong> Pendurado</span>
+      <span><strong>SA</strong> Suspensão automática</span>
+      <span><strong>ST</strong> Suspensão STJD/TDJ</span>
+    </div>
+  `;
+}
 
+function cartoesSuspensaoPlayerRows(data: CartoesSuspensaoReportDto): string {
+  if (data.players.length === 0) {
+    return `<tr><td colspan="${5 + data.rounds.length}" class="empty">Nenhum atleta no elenco atual</td></tr>`;
+  }
+  return data.players
+    .map((player) => {
+      const rowClass = player.unavailable ? "row-unavailable" : "";
+      const cells = player.roundCells
+        .map((code) => `<td class="cell-code">${code || "—"}</td>`)
+        .join("");
+      return `<tr class="${rowClass}">
+        <td class="num">${player.num}</td>
+        <td class="left">${escapeHtml(player.name)} <span class="muted">(${escapeHtml(player.positionLabel)})</span></td>
+        <td class="num">${player.yellowCardsTotal}</td>
+        <td class="num">${player.redCardsTotal}</td>
+        ${cells}
+      </tr>`;
+    })
+    .join("");
+}
+
+function cartoesSuspensaoRoundHeaders(rounds: CartoesSuspensaoReportDto["rounds"]): string {
+  return rounds
+    .map((round) => `<th class="round-head">${escapeHtml(round.shortLabel)}</th>`)
+    .join("");
+}
+
+function cartoesSuspensaoTotalsRow(data: CartoesSuspensaoReportDto): string {
+  const yellowCells = data.totals.yellowByRound
+    .map((n) => `<td class="num">${n}</td>`)
+    .join("");
+  const redCells = data.totals.redByRound
+    .map((n) => `<td class="num">${n}</td>`)
+    .join("");
+  return `
+    <tr class="totals-row">
+      <td colspan="2" class="left"><strong>Total C. Amarelos</strong></td>
+      <td class="num"><strong>${data.totals.yellowCards}</strong></td>
+      <td></td>
+      ${yellowCells}
+    </tr>
+    <tr class="totals-row">
+      <td colspan="2" class="left"><strong>Total C. Vermelhos</strong></td>
+      <td></td>
+      <td class="num"><strong>${data.totals.redCards}</strong></td>
+      ${redCells}
+    </tr>
+  `;
+}
+
+export function buildCartoesSuspensaoPrintHtml(
+  data: CartoesSuspensaoReportDto,
+  size: PrintPageSize = "A4",
+): string {
+  const badge = [
+    data.filters.categoryLabel,
+    String(data.filters.season),
+    data.filters.competition ?? "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const nextRoundMeta = data.nextRound
+    ? `<div class="meta-item full"><label>Próxima rodada</label><span>${escapeHtml(data.nextRound.label)} · ${escapeHtml(formatBrDate(data.nextRound.matchDate))}</span></div>`
+    : "";
+
+  const extraStyles = `
+    .legend-grid { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 9px; margin: 8px 0 12px; }
+    .discipline-table { font-size: 8px; }
+    .discipline-table th, .discipline-table td { padding: 3px 4px; text-align: center; }
+    .discipline-table .left { text-align: left; min-width: 140px; }
+    .discipline-table .round-head { writing-mode: vertical-rl; transform: rotate(180deg); min-width: 22px; max-width: 28px; font-size: 7px; line-height: 1.1; }
+    .discipline-table .cell-code { font-weight: 700; }
+    .discipline-table .row-unavailable { background: #FEF3C7; color: #92400E; }
+    .discipline-table .row-unavailable td { border-color: #FCD34D; }
+    .discipline-table .totals-row { background: #F3F4F6; font-size: 8px; }
+    .discipline-table .muted { color: #6B7280; font-weight: 400; }
+    .summary-line { font-size: 10px; margin-top: 8px; }
+  `;
+
+  const body = `
+    <style>${extraStyles}</style>
+    <div class="meta-grid">
+      ${nextRoundMeta}
+      <div class="meta-item"><label>Fase</label><span>${escapeHtml(data.filters.phase ?? "—")}</span></div>
+      <div class="meta-item"><label>Elenco</label><span>${data.players.length} atleta(s) atuais</span></div>
+    </div>
+    ${cartoesSuspensaoLegend()}
+    <section class="section">
+      <table class="discipline-table">
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Atleta</th>
+            <th>C.A</th>
+            <th>C.V</th>
+            ${cartoesSuspensaoRoundHeaders(data.rounds)}
+          </tr>
+        </thead>
+        <tbody>
+          ${cartoesSuspensaoPlayerRows(data)}
+          ${cartoesSuspensaoTotalsRow(data)}
+        </tbody>
+      </table>
+      <p class="summary-line">
+        Média C.A/Jogo: <strong>${data.totals.avgYellowPerMatch}</strong>
+        · Média C.V/Jogo: <strong>${data.totals.avgRedPerMatch}</strong>
+        · Total de jogos: <strong>${data.totals.matchCount}</strong>
+      </p>
+    </section>
+  `;
+
+  return documentShell(
+    `Cartões e Suspensão — ${data.tenant.name}`,
+    data.tenant.name,
+    data.tenant.logoUrl,
+    "Cartões e Suspensão",
+    badge,
+    "",
+    body,
+    size,
+  );
+}
+
+export function printCartoesSuspensaoReport(
+  data: CartoesSuspensaoReportDto,
+  size: PrintPageSize = "A4",
+): void {
+  printHtmlDocument(
+    buildCartoesSuspensaoPrintHtml(data, size),
+    "Impressão — Cartões e Suspensão",
+  );
+}
 
 
 

@@ -286,6 +286,62 @@ export type SumulaCartoesReportDto = {
   generatedAt: string;
 };
 
+export type CartoesSuspensaoRoundDto = {
+  matchId: string;
+  round: number | null;
+  matchDate: string;
+  shortLabel: string;
+  opponentName: string;
+  yellowCards: number;
+  redCards: number;
+};
+
+export type CartoesSuspensaoPlayerDto = {
+  num: number;
+  playerId: string;
+  name: string;
+  positionLabel: string;
+  jerseyNumber: number | null;
+  roundCells: Array<"A" | "AM" | "V" | "VM" | "P" | "SA" | "ST" | "">;
+  yellowCardsTotal: number;
+  redCardsTotal: number;
+  unavailable: boolean;
+  unavailableReason: string | null;
+  aptoForNextRound: boolean;
+};
+
+export type CartoesSuspensaoReportDto = {
+  tenant: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+  };
+  filters: {
+    season: number;
+    category: string;
+    categoryLabel: string;
+    competition: string | null;
+    phase: string | null;
+  };
+  nextRound: {
+    round: number | null;
+    matchDate: string;
+    label: string;
+  } | null;
+  rounds: CartoesSuspensaoRoundDto[];
+  players: CartoesSuspensaoPlayerDto[];
+  totals: {
+    yellowByRound: number[];
+    redByRound: number[];
+    yellowCards: number;
+    redCards: number;
+    matchCount: number;
+    avgYellowPerMatch: number;
+    avgRedPerMatch: number;
+  };
+  generatedAt: string;
+};
+
 export type GuiaCampaignLine = {
   label: string;
   matches: number;

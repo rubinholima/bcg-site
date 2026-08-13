@@ -35,8 +35,15 @@ export function fmfCategoryMatches(reportCategory: string | null | undefined, fi
   return !!wanted && !!got && wanted === got;
 }
 
-function reportMatchesCategoryFilter(
-  report: FmfReportRow,
+export type FmfReportCategoryFilterRow = {
+  category: string;
+  matchDate: Date;
+  homeTeam: string;
+  awayTeam: string;
+};
+
+export function reportMatchesCategoryFilter(
+  report: FmfReportCategoryFilterRow,
   category: string,
   allTravels: TravelRow[],
   clubName: string,
@@ -47,8 +54,13 @@ function reportMatchesCategoryFilter(
 
   const isHome = isHomeSide(report.homeTeam, report.awayTeam, clubName, aliases);
   const opponent = isHome ? report.awayTeam : report.homeTeam;
-  const travel = findMatchingTravel(allTravels, report.matchDate, opponent, report.category);
-  return travel != null && categoryMatchesTravel(travel, category);
+
+  return allTravels.some(
+    (t) =>
+      matchDatesEquivalent(t.matchDate, report.matchDate) &&
+      matchOpponentsEquivalent(t.opponentName, opponent) &&
+      categoryMatchesTravel(t, category),
+  );
 }
 
 export function resolveStoreCategory(
@@ -88,16 +100,12 @@ type TravelRow = {
   status: string;
 };
 
-type FmfReportRow = {
+type FmfReportRow = FmfReportCategoryFilterRow & {
   id: string;
   competition: string;
   phase: string | null;
   round: number | null;
-  category: string;
   season: number;
-  matchDate: Date;
-  homeTeam: string;
-  awayTeam: string;
   homeScore: number | null;
   awayScore: number | null;
   playerStats: Array<{
