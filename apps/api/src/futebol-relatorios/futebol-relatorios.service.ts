@@ -54,7 +54,12 @@ import {
   FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
 } from '../fmf-scraper/fmf-sync-tenants.config';
-import { reportMatchesCategoryFilter } from '../futebol-treinadores/coach-context.helper';
+import {
+  filterRowsByChampionshipPhase,
+  reportMatchesCategoryFilter,
+  resolveCurrentChampionshipPhaseForCategory,
+} from '../futebol-treinadores/coach-context.helper';
+import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
 import {
   buildDisciplineGrid,
   isCurrentSquadPlayer,
@@ -127,12 +132,22 @@ function capitalizeFirst(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+const FMF_STORE_KEY = 'fmf_scraper_data';
+
 @Injectable()
 export class FutebolRelatoriosService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly agenda: FutebolAgendaService,
   ) {}
+
+  private async loadFmfStore(): Promise<FmfScraperStore | null> {
+    const row = await this.prisma.integrationConfig.findUnique({
+      where: { key: FMF_STORE_KEY },
+    });
+    if (!row?.config || typeof row.config !== 'object') return null;
+    return row.config as unknown as FmfScraperStore;
+  }
 
   async getPassageiros(travelId: string): Promise<PassageirosReportDto> {
     const travel = await this.loadTravel(travelId);
@@ -1761,6 +1776,7 @@ export class FutebolRelatoriosService {
         match: {
           select: {
             matchDate: true,
+            phase: true,
             homeTeam: true,
             awayTeam: true,
             homeScore: true,
@@ -1782,11 +1798,50 @@ export class FutebolRelatoriosService {
       }
     >();
 
+    let currentPhase: string | null = null;
+    if (input.category) {
+      const filterCategory = input.category;
+      const phaseReports = await this.prisma.fmfMatchReport.findMany({
+        where: { tenantId: input.tenantId, season: input.season },
+        select: {
+          phase: true,
+          matchDate: true,
+          homeScore: true,
+          awayScore: true,
+          category: true,
+          homeTeam: true,
+          awayTeam: true,
+        },
+      });
+      const categoryReports = phaseReports.filter((row) =>
+        reportMatchesCategoryFilter(row, filterCategory, travels, clubName, aliases),
+      );
+      const store = await this.loadFmfStore();
+      const phaseHint = travels.find((t) => {
+        const cats = parseTravelCategories(t.categories);
+        if (cats.length > 0) return cats.includes(filterCategory);
+        return t.category === filterCategory;
+      })?.championshipName;
+      currentPhase = resolveCurrentChampionshipPhaseForCategory(
+        store,
+        filterCategory,
+        categoryReports,
+        phaseHint,
+      );
+    }
+
     for (const stat of stats) {
       if (!stat.player) continue;
       if (
         input.category &&
         !reportMatchesCategoryFilter(stat.match, input.category, travels, clubName, aliases)
+      ) {
+        continue;
+      }
+      if (
+        input.category &&
+        currentPhase &&
+        !filterRowsByChampionshipPhase([stat.match], currentPhase).length
       ) {
         continue;
       }
@@ -1842,6 +1897,7 @@ export class FutebolRelatoriosService {
     season: number;
     nextMatchDate?: string | null;
   }): Promise<{
+    phase: string | null;
     nextRound: CartoesSuspensaoReportDto['nextRound'];
     rounds: CartoesSuspensaoReportDto['rounds'];
     players: CartoesSuspensaoReportDto['players'];
@@ -1894,7 +1950,17 @@ export class FutebolRelatoriosService {
     const reportRows = await this.prisma.fmfMatchReport.findMany({
       where: { tenantId: input.tenantId, season: input.season },
       orderBy: [{ round: 'asc' }, { matchDate: 'asc' }],
-      include: {
+      select: {
+        id: true,
+        round: true,
+        matchDate: true,
+        homeTeam: true,
+        awayTeam: true,
+        homeScore: true,
+        awayScore: true,
+        phase: true,
+        category: true,
+        occurrencesText: true,
         playerStats: {
           select: {
             playerId: true,
@@ -1908,13 +1974,8 @@ export class FutebolRelatoriosService {
       },
     });
 
-    const matches = reportRows.filter(
-      (row) =>
-        reportMatchesCategoryFilter(row, input.category, travels, clubName, aliases) &&
-        (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
-          isFmfTeamMatch(row.awayTeam, clubName, aliases)) &&
-        row.homeScore != null &&
-        row.awayScore != null,
+    const categoryReports = reportRows.filter((row) =>
+      reportMatchesCategoryFilter(row, input.category, travels, clubName, aliases),
     );
 
     const upcomingTravel = travels
@@ -1925,6 +1986,25 @@ export class FutebolRelatoriosService {
         if (cats.length > 0) return cats.includes(input.category);
         return t.category === input.category;
       });
+
+    const store = await this.loadFmfStore();
+    const currentPhase = resolveCurrentChampionshipPhaseForCategory(
+      store,
+      input.category,
+      categoryReports,
+      upcomingTravel?.championshipName,
+    );
+
+    const matches = filterRowsByChampionshipPhase(
+      categoryReports.filter(
+        (row) =>
+          (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
+            isFmfTeamMatch(row.awayTeam, clubName, aliases)) &&
+          row.homeScore != null &&
+          row.awayScore != null,
+      ),
+      currentPhase,
+    );
 
     const nextMatchDate =
       input.nextMatchDate?.trim() ||
@@ -1959,6 +2039,7 @@ export class FutebolRelatoriosService {
     }
 
     return {
+      phase: currentPhase,
       nextRound,
       rounds: grid.rounds,
       players: grid.players,
@@ -2031,7 +2112,7 @@ export class FutebolRelatoriosService {
         category,
         categoryLabel,
         competition: reportSample?.competition ?? upcomingTravel?.championshipName ?? null,
-        phase: reportSample?.phase ?? null,
+        phase: seasonGrid.phase ?? reportSample?.phase ?? null,
       },
       nextRound: seasonGrid.nextRound,
       rounds: seasonGrid.rounds,

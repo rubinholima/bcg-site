@@ -2,6 +2,7 @@ import { dateKeyInBrazil } from '../common/brazil-time.util';
 import { travelMatchesCategoryFilter, parseTravelCategories } from '../futebol-agenda/travel-categories.util';
 import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
 import {
+  extractFmfPhaseHint,
   fmfPhaseLabelsMatch,
   isFmfGroupStagePhase,
   resolveCurrentFmfGroupPhase,
@@ -461,6 +462,49 @@ function findStoreSnapshot(store: FmfScraperStore | null, category: string) {
       return categoryKey(s.fixtureCategory) === wanted;
     }) ?? null
   );
+}
+
+export type ChampionshipPhaseReportRow = {
+  phase: string | null;
+  matchDate: Date;
+  homeScore: number | null;
+  awayScore: number | null;
+};
+
+/** Fase atual do campeonato (FMF + súmulas + hint da viagem). Cartões zeram entre fases. */
+export function resolveCurrentChampionshipPhaseForCategory(
+  store: FmfScraperStore | null,
+  category: string,
+  reportRows: ChampionshipPhaseReportRow[] = [],
+  phaseHint?: string | null,
+): string | null {
+  const snapshot = findStoreSnapshot(store, category);
+  if (snapshot?.matches?.length) {
+    const fromStore = resolveCurrentFmfGroupPhase(snapshot.matches);
+    if (fromStore) return fromStore;
+  }
+
+  if (reportRows.length > 0) {
+    const fromReports = resolveCurrentFmfGroupPhase(
+      reportRows.map((row) => ({
+        phaseLabel: row.phase,
+        status:
+          row.homeScore != null && row.awayScore != null ? 'finished' : 'scheduled',
+        matchDate: dateKeyInBrazil(row.matchDate),
+      })),
+    );
+    if (fromReports) return fromReports;
+  }
+
+  return extractFmfPhaseHint(phaseHint) ?? null;
+}
+
+export function filterRowsByChampionshipPhase<T extends { phase: string | null }>(
+  rows: T[],
+  currentPhase: string | null,
+): T[] {
+  if (!currentPhase?.trim()) return rows;
+  return rows.filter((row) => fmfPhaseLabelsMatch(row.phase, currentPhase));
 }
 
 export function buildStandingsFromStore(
