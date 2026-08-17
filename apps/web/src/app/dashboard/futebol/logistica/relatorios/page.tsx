@@ -6,7 +6,6 @@ import {
   ChevronRight,
   ClipboardList,
   Hotel,
-  Newspaper,
   Users,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +18,6 @@ const REPORT_OPTIONS = [
     icon: ClipboardList,
   },
   {
-    href: "/dashboard/futebol/logistica/relatorios/press-kit",
-    title: "Press Kit / Relatório Imprensa",
-    icon: Newspaper,
-  },
-  {
     href: "/dashboard/futebol/logistica/relatorios/passageiros",
     title: "Passageiros",
     icon: Users,
@@ -32,11 +26,6 @@ const REPORT_OPTIONS = [
     href: "/dashboard/futebol/logistica/relatorios/hospedes",
     title: "Hóspedes",
     icon: Hotel,
-  },
-  {
-    href: "/dashboard/futebol/logistica/relatorios/programacao-semanal",
-    title: "Programação semanal",
-    icon: CalendarRange,
   },
 ] as const;
 

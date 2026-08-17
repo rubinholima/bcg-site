@@ -32,9 +32,8 @@ import {
 
 import { FOOTBALL_AGENDA_TYPE_LABEL } from "@/types/futebol-agenda";
 
-/** Tipos que podem ser ocultados na impressão da programação semanal. */
+/** Tipos que podem ser ocultados na impressão da programação semanal (sem aniversário — só na agenda geral). */
 const PROGRAMACAO_HIDE_TYPES = [
-  "aniversario",
   "treino",
   "reuniao",
   "compromisso",
@@ -58,7 +57,7 @@ export function FutebolRelatorioProgramacaoForm() {
   const [from, setFrom] = useState(toIsoDate(weekStart));
   const [to, setTo] = useState(toIsoDate(weekEnd));
   const [progCategories, setProgCategories] = useState<string[]>([]);
-  const [hiddenTypes, setHiddenTypes] = useState<string[]>(["aniversario"]);
+  const [hiddenTypes, setHiddenTypes] = useState<string[]>([]);
   const [pageSize, setPageSize] = useState<PrintPageSize>("A4");
   const [busy, setBusy] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);

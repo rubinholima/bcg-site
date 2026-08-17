@@ -893,19 +893,7 @@ function sumulaSeasonGridSection(data: SumulaCartoesReportDto): string {
     : "";
 
   return `
-    <style>
-      .legend-grid { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 9px; margin: 8px 0 12px; }
-      .discipline-table { font-size: 8px; }
-      .discipline-table th, .discipline-table td { padding: 3px 4px; text-align: center; }
-      .discipline-table .left { text-align: left; min-width: 140px; }
-      .discipline-table .round-head { writing-mode: vertical-rl; transform: rotate(180deg); min-width: 22px; max-width: 28px; font-size: 7px; line-height: 1.1; }
-      .discipline-table .cell-code { font-weight: 700; }
-      .discipline-table .row-unavailable { background: #FEF3C7; color: #92400E; }
-      .discipline-table .row-unavailable td { border-color: #FCD34D; }
-      .discipline-table .totals-row { background: #F3F4F6; font-size: 8px; }
-      .discipline-table .muted { color: #6B7280; font-weight: 400; }
-      .summary-line { font-size: 10px; margin-top: 8px; }
-    </style>
+    <style>${cartoesSuspensaoDisciplineTableStyles()}</style>
     <section class="section">
       <h2 class="section-title">Cartões da temporada — ${escapeHtml(data.filters.categoryLabel)} · ${data.filters.season}</h2>
       <div class="meta-grid">${nextRoundMeta}</div>
@@ -918,6 +906,7 @@ function sumulaSeasonGridSection(data: SumulaCartoesReportDto): string {
             <th>C.A</th>
             <th>C.V</th>
             ${cartoesSuspensaoRoundHeaders(grid.rounds)}
+            ${cartoesSuspensaoNextRoundHeader(gridDto)}
           </tr>
         </thead>
         <tbody>
@@ -1325,6 +1314,8 @@ export function buildPressKitPrintHtml(
     if (!p) return "";
     const n = p.jerseyNumber != null ? String(p.jerseyNumber) : "—";
     const photo = playerPhotoHtml(p.photoUrl, p.name);
+    const isCaptain =
+      Boolean(config.captainPlayerId) && p.playerId === config.captainPlayerId;
     const nickOnly = (
       p.nickname?.trim() ||
       shortAthleteName(p.name)
@@ -1335,7 +1326,7 @@ export function buildPressKitPrintHtml(
     return `<div class="player-chip" style="top:${slot.top}%;left:${slot.left}%;transform:translate(-50%,${ty})">
       <div class="chip-photo-wrap">
         ${photo}
-        <span class="chip-num">${escapeHtml(n)}</span>
+        <span class="chip-num">${escapeHtml(n)}${isCaptain ? `<b class="chip-cap">C</b>` : ""}</span>
       </div>
       <div class="chip-nick">${escapeHtml(nickOnly)}</div>
       ${pos && pos !== "—" ? `<div class="chip-pos">${escapeHtml(pos)}</div>` : ""}
@@ -1989,16 +1980,51 @@ function cartoesSuspensaoLegend(): string {
       <span><strong>AM</strong> Advertência manual</span>
       <span><strong>V</strong> Expulsão</span>
       <span><strong>VM</strong> Expulsão manual</span>
-      <span><strong>P</strong> Pendurado</span>
+      <span><strong>P</strong> Pendurado (rodada / próximo jogo)</span>
       <span><strong>SA</strong> Suspensão automática</span>
       <span><strong>ST</strong> Suspensão STJD/TDJ</span>
+      <span><strong>S</strong> Suspenso no próximo jogo</span>
     </div>
   `;
 }
 
+function cartoesSuspensaoDisciplineTableStyles(): string {
+  return `
+    .legend-grid { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 9px; margin: 8px 0 12px; }
+    .discipline-table { font-size: 8px; }
+    .discipline-table th, .discipline-table td { padding: 3px 4px; text-align: center; }
+    .discipline-table .left { text-align: left; min-width: 140px; }
+    .discipline-table .round-head { writing-mode: vertical-rl; transform: rotate(180deg); min-width: 22px; max-width: 28px; font-size: 7px; line-height: 1.1; }
+    .discipline-table .next-round-head { background: #EFF6FF; color: #1D4ED8; font-weight: 700; }
+    .discipline-table .cell-code { font-weight: 700; }
+    .discipline-table .cell-next-p { background: #DBEAFE; color: #1D4ED8; }
+    .discipline-table .cell-next-s { background: #E5E7EB; color: #374151; }
+    .discipline-table .row-unavailable { background: #FEF3C7; color: #92400E; }
+    .discipline-table .row-unavailable td { border-color: #FCD34D; }
+    .discipline-table .totals-row { background: #F3F4F6; font-size: 8px; }
+    .discipline-table .muted { color: #6B7280; font-weight: 400; }
+    .summary-line { font-size: 10px; margin-top: 8px; }
+  `;
+}
+
+function cartoesSuspensaoNextRoundHeader(data: CartoesSuspensaoReportDto): string {
+  const label = data.nextRound?.label?.trim() || "Próx. jogo";
+  return `<th class="round-head next-round-head" title="Próximo jogo">${escapeHtml(label)}</th>`;
+}
+
+function cartoesSuspensaoNextRoundCell(code: CartoesSuspensaoReportDto["players"][number]["nextRoundCell"]): string {
+  if (!code) return `<td class="cell-code">—</td>`;
+  const cls = code === "P" ? "cell-next-p" : "cell-next-s";
+  return `<td class="cell-code ${cls}">${code}</td>`;
+}
+
+function cartoesSuspensaoColumnCount(roundCount: number): number {
+  return 5 + roundCount + 1;
+}
+
 function cartoesSuspensaoPlayerRows(data: CartoesSuspensaoReportDto): string {
   if (data.players.length === 0) {
-    return `<tr><td colspan="${5 + data.rounds.length}" class="empty">Nenhum atleta no elenco atual</td></tr>`;
+    return `<tr><td colspan="${cartoesSuspensaoColumnCount(data.rounds.length)}" class="empty">Nenhum atleta no elenco atual</td></tr>`;
   }
   return data.players
     .map((player) => {
@@ -2012,6 +2038,7 @@ function cartoesSuspensaoPlayerRows(data: CartoesSuspensaoReportDto): string {
         <td class="num">${player.yellowCardsTotal}</td>
         <td class="num">${player.redCardsTotal}</td>
         ${cells}
+        ${cartoesSuspensaoNextRoundCell(player.nextRoundCell ?? "")}
       </tr>`;
     })
     .join("");
@@ -2036,12 +2063,14 @@ function cartoesSuspensaoTotalsRow(data: CartoesSuspensaoReportDto): string {
       <td class="num"><strong>${data.totals.yellowCards}</strong></td>
       <td></td>
       ${yellowCells}
+      <td></td>
     </tr>
     <tr class="totals-row">
       <td colspan="2" class="left"><strong>Total C. Vermelhos</strong></td>
       <td></td>
       <td class="num"><strong>${data.totals.redCards}</strong></td>
       ${redCells}
+      <td></td>
     </tr>
   `;
 }
@@ -2062,19 +2091,7 @@ export function buildCartoesSuspensaoPrintHtml(
     ? `<div class="meta-item full"><label>Próxima rodada</label><span>${escapeHtml(data.nextRound.label)} · ${escapeHtml(formatBrDate(data.nextRound.matchDate))}</span></div>`
     : "";
 
-  const extraStyles = `
-    .legend-grid { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 9px; margin: 8px 0 12px; }
-    .discipline-table { font-size: 8px; }
-    .discipline-table th, .discipline-table td { padding: 3px 4px; text-align: center; }
-    .discipline-table .left { text-align: left; min-width: 140px; }
-    .discipline-table .round-head { writing-mode: vertical-rl; transform: rotate(180deg); min-width: 22px; max-width: 28px; font-size: 7px; line-height: 1.1; }
-    .discipline-table .cell-code { font-weight: 700; }
-    .discipline-table .row-unavailable { background: #FEF3C7; color: #92400E; }
-    .discipline-table .row-unavailable td { border-color: #FCD34D; }
-    .discipline-table .totals-row { background: #F3F4F6; font-size: 8px; }
-    .discipline-table .muted { color: #6B7280; font-weight: 400; }
-    .summary-line { font-size: 10px; margin-top: 8px; }
-  `;
+  const extraStyles = cartoesSuspensaoDisciplineTableStyles();
 
   const body = `
     <style>${extraStyles}</style>
@@ -2093,6 +2110,7 @@ export function buildCartoesSuspensaoPrintHtml(
             <th>C.A</th>
             <th>C.V</th>
             ${cartoesSuspensaoRoundHeaders(data.rounds)}
+            ${cartoesSuspensaoNextRoundHeader(data)}
           </tr>
         </thead>
         <tbody>

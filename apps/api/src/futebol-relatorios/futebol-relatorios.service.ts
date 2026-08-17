@@ -50,6 +50,23 @@ import type {
 } from './futebol-relatorios.types';
 import { assignStartersByCadastroPosition } from '../common/press-kit-lineup.util';
 import { isFmfTeamMatch } from '../fmf-scraper/fmf-team-match.util';
+
+const PRESS_KIT_STAFF_ROLE_SLUGS = new Set([
+  'tecnico',
+  'auxiliar_tecnico',
+  'treinador_goleiros',
+  'preparador_fisico',
+  'medico',
+  'fisioterapeuta',
+  'fisiologista',
+  'psicologo',
+  'nutricionista',
+  'analista_desempenho',
+  'scout',
+  'massagista',
+  'enfermeiro',
+  'outro',
+]);
 import {
   FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
@@ -419,7 +436,7 @@ export class FutebolRelatoriosService {
     return {
       travel: base.travel,
       athletes: athletesWithJersey,
-      staff: base.staff,
+      staff: this.applyStaffRoleOverrides(base.staff, config.staffRoleOverrides),
       starters: startersWithJersey,
       substitutes: substitutesWithJersey,
       config,
@@ -606,6 +623,7 @@ export class FutebolRelatoriosService {
         .map((t) => t.trim())
         .filter(Boolean),
     );
+    excludeTypes.add('aniversario');
 
     const fixtureCats = await this.prisma.fixtureCategory.findMany({
       where: { active: true },
@@ -631,6 +649,7 @@ export class FutebolRelatoriosService {
       from: fromKey,
       to: toKey,
       tenantId,
+      excludeBirthdays: true,
     });
 
     const dayMap = new Map<string, ProgramacaoSemanalReportDto['days'][number]>();
@@ -866,7 +885,7 @@ export class FutebolRelatoriosService {
           rg: s.rg,
           rgIssuer: null,
           birthDate: formatIsoDate(s.birthDate),
-          role: s.jobRole?.name?.trim() || s.role,
+          role: s.role?.trim() || s.jobRole?.name?.trim() || null,
           staffId: s.id,
           photoUrl: s.photoUrl ?? null,
         });
@@ -954,7 +973,7 @@ export class FutebolRelatoriosService {
           rg: s.rg,
           rgIssuer: null,
           birthDate: formatIsoDate(s.birthDate),
-          role: s.jobRole?.name?.trim() || s.role,
+          role: s.role?.trim() || s.jobRole?.name?.trim() || null,
           staffId: s.id,
           photoUrl: s.photoUrl ?? null,
         });
@@ -1040,7 +1059,7 @@ export class FutebolRelatoriosService {
       rg: s.rg,
       rgIssuer: null,
       birthDate: formatIsoDate(s.birthDate),
-      role: s.jobRole?.name?.trim() || s.role,
+      role: s.role?.trim() || s.jobRole?.name?.trim() || null,
       staffId: s.id,
       photoUrl: s.photoUrl ?? null,
     }));
@@ -1134,6 +1153,21 @@ export class FutebolRelatoriosService {
       scored.find((s) => s.count >= 1);
 
     return best?.ids ?? [];
+  }
+
+  private applyStaffRoleOverrides(
+    staff: RelatorioPessoaRow[],
+    overrides: Record<string, string> | undefined,
+  ): RelatorioPessoaRow[] {
+    if (!overrides || Object.keys(overrides).length === 0) return staff;
+    return staff.map((s) => {
+      if (!s.staffId) return s;
+      const role = overrides[s.staffId];
+      if (role && PRESS_KIT_STAFF_ROLE_SLUGS.has(role)) {
+        return { ...s, role };
+      }
+      return s;
+    });
   }
 
   private async sanitizePressKitConfig(
@@ -1290,6 +1324,26 @@ export class FutebolRelatoriosService {
       mapNamed(raw?.referees, DEFAULT_PRESS_KIT_REFEREE_ROLES),
     );
 
+    const staffRoleOverrides: Record<string, string> = {};
+    if (raw?.staffRoleOverrides && typeof raw.staffRoleOverrides === 'object') {
+      for (const [staffId, roleVal] of Object.entries(raw.staffRoleOverrides)) {
+        if (
+          typeof staffId === 'string' &&
+          staffId.trim() &&
+          typeof roleVal === 'string' &&
+          PRESS_KIT_STAFF_ROLE_SLUGS.has(roleVal)
+        ) {
+          staffRoleOverrides[staffId.trim()] = roleVal;
+        }
+      }
+    }
+
+    let captainPlayerId: string | null = null;
+    if (typeof raw?.captainPlayerId === 'string' && raw.captainPlayerId.trim()) {
+      const cap = raw.captainPlayerId.trim();
+      if (starterPlayerIds.includes(cap)) captainPlayerId = cap;
+    }
+
     return {
       phase:
         typeof raw?.phase === 'string' && raw.phase.trim() ? raw.phase.trim() : null,
@@ -1300,6 +1354,8 @@ export class FutebolRelatoriosService {
       referees,
       directors: mapNamed(raw?.directors, DEFAULT_PRESS_KIT_DIRECTOR_ROLES),
       starterPlayerIds,
+      captainPlayerId,
+      staffRoleOverrides,
       formation,
       jerseyOverrides,
       contactLine:

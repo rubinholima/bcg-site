@@ -1,5 +1,5 @@
 import { getFootballPositionLabel } from '../common/football-positions.util';
-import { getPlayerMatchAvailability } from '../common/player-match-availability.util';
+import { getPlayerMatchAvailability, buildPlayerMatchAvailabilityInput } from '../common/player-match-availability.util';
 import {
   isArchivedSportsSituation,
   isLoanedSportsSituation,
@@ -18,6 +18,8 @@ export type DisciplineMatchColumn = {
   redCards: number;
 };
 
+export type NextRoundDisciplineCode = 'P' | 'S' | '';
+
 export type DisciplinePlayerRow = {
   num: number;
   playerId: string;
@@ -25,6 +27,8 @@ export type DisciplinePlayerRow = {
   positionLabel: string;
   jerseyNumber: number | null;
   roundCells: DisciplineCellCode[];
+  /** Status disciplinar para o próximo jogo: P = pendurado, S = suspenso. */
+  nextRoundCell: NextRoundDisciplineCode;
   yellowCardsTotal: number;
   redCardsTotal: number;
   unavailable: boolean;
@@ -174,6 +178,12 @@ function findOccurrenceForPlayer(
   return null;
 }
 
+function resolveNextRoundCell(state: PlayerRoundState): NextRoundDisciplineCode {
+  if (state.stjdRoundsLeft > 0 || state.suspensionRoundsLeft > 0) return 'S';
+  if (state.pendurado) return 'P';
+  return '';
+}
+
 function initPlayerState(player: PlayerInput): PlayerRoundState {
   const status = (player.status ?? 'available').toLowerCase();
   const details = player.statusDetails?.trim() || null;
@@ -296,12 +306,9 @@ export function buildDisciplineGrid(input: {
     .map((player, index) => {
       const state = states.get(player.id)!;
       const cells = roundCells.get(player.id) ?? [];
-      const cadastroAvail = getPlayerMatchAvailability({
-        status: player.status,
-        statusDetails: player.statusDetails,
-        yellowCards: player.yellowCards,
-        redCards: player.redCards,
-      });
+      const cadastroAvail = getPlayerMatchAvailability(
+        buildPlayerMatchAvailabilityInput(player),
+      );
 
       let unavailableReason: string | null = null;
       if (state.stjdRoundsLeft > 0) {
@@ -331,6 +338,7 @@ export function buildDisciplineGrid(input: {
         positionLabel: getFootballPositionLabel(player.position) || '—',
         jerseyNumber: player.jerseyNumber,
         roundCells: cells,
+        nextRoundCell: resolveNextRoundCell(state),
         yellowCardsTotal: yellowTotals.get(player.id) ?? 0,
         redCardsTotal: redTotals.get(player.id) ?? 0,
         unavailable,

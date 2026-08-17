@@ -196,4 +196,17 @@ export class FutebolAgendaController {
     await this.service.deleteEntry(id);
     return { ok: true };
   }
+
+  @Post('entries/:id/ensure-travel')
+  ensureTravelForEntry(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      opponentName?: string;
+      isHomeMatch?: boolean;
+      championshipName?: string;
+    },
+  ) {
+    return this.service.ensureTravelForEntry(id, body);
+  }
 }

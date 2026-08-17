@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { gameDetailPath } from "@/lib/futebol-jogos.types";
 import { getCategoryLabel } from "@/lib/fixture-categories";
@@ -69,6 +69,31 @@ export function TreinadoresInformacoesTab({
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <div className="flex flex-wrap gap-2 lg:col-span-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/dashboard/futebol/jogos?tenantId=${tenantId}${category ? `&category=${encodeURIComponent(category)}` : ""}`}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Jogos
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link
+            href={`/dashboard/relatorios/futebol/cartoes-suspensao?tenantId=${tenantId}${category ? `&category=${encodeURIComponent(category)}` : ""}`}
+          >
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Cartões e Suspensão
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link
+            href={`/dashboard/futebol/treinadores?tenantId=${tenantId}${category ? `&category=${encodeURIComponent(category)}` : ""}&tab=relatorio-equipe`}
+          >
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Relatório da equipe
+          </Link>
+        </Button>
+      </div>
+
       <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="text-base">Jogos realizados</CardTitle>

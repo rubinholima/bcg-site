@@ -9,6 +9,7 @@ import { TreinadoresFilters } from "./TreinadoresFilters";
 import { TreinadoresInformacoesTab } from "./TreinadoresInformacoesTab";
 import { TreinadoresPosJogoTab } from "./TreinadoresPosJogoTab";
 import { TreinadoresTreinosTab } from "./TreinadoresTreinosTab";
+import { CoachTeamReportPanel } from "./CoachTeamReportPanel";
 
 export function TreinadoresDashboard() {
   const searchParams = useSearchParams();
@@ -55,6 +56,13 @@ export function TreinadoresDashboard() {
         />
       ) : tab === "treinos" ? (
         <TreinadoresTreinosTab tenantId={tenantId} category={category} context={context} />
+      ) : tab === "relatorio-equipe" ? (
+        <CoachTeamReportPanel
+          tenantId={tenantId}
+          category={category}
+          contextLoading={loading}
+          context={context}
+        />
       ) : (
         <TreinadoresInformacoesTab
           tenantId={tenantId}

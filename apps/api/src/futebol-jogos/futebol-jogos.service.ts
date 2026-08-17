@@ -34,6 +34,10 @@ import {
   normalizeAttachmentKind,
   normalizeIncidentKind,
 } from './futebol-jogos.constants';
+import {
+  CoachMatchStatsService,
+  type UpsertMatchStatOverrideInput,
+} from '../coach-match-stats/coach-match-stats.service';
 
 function categoryMatches(
   travelCategory: string | null | undefined,
@@ -137,6 +141,7 @@ export class FutebolJogosService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly relatorios: FutebolRelatoriosService,
+    private readonly matchStats: CoachMatchStatsService,
   ) {}
 
   private async tenantAliases(tenantId: string, name: string): Promise<string[]> {
@@ -299,12 +304,7 @@ export class FutebolJogosService {
           t.matchDate >= now &&
           categoryMatches(t.category, t.categories, categoryFilter) &&
           matchSeason(t.matchDate.toISOString(), season) &&
-          !completedGames.some(
-            (g) =>
-              matchDatesEquivalent(g.matchDate, t.matchDate) &&
-              matchOpponentsEquivalent(g.opponentName, t.opponentName) &&
-              matchCategoriesEquivalent(g.category, t.category),
-          ),
+          !completedGames.some((g) => g.travelLogisticsId === t.id),
       )
       .map((t) => ({
         gameKey: `travel:${t.id}`,
@@ -592,6 +592,18 @@ export class FutebolJogosService {
       totalMinutes: fmfRow?.totalMinutes ?? null,
       occurrencesText: fmfRow?.occurrencesText ?? null,
       statOverrideNotes: statOverride?.notes ?? null,
+      matchStatOverride: statOverride
+        ? {
+            goalsFor: statOverride.goalsFor,
+            goalsAgainst: statOverride.goalsAgainst,
+            yellowCards: statOverride.yellowCards,
+            redCards: statOverride.redCards,
+            possessionPct: statOverride.possessionPct,
+            setPiecesFor: statOverride.setPiecesFor,
+            setPiecesAgainst: statOverride.setPiecesAgainst,
+            notes: statOverride.notes,
+          }
+        : null,
       coachReport: coachReportRow ? mapCoachReport(coachReportRow) : null,
       sumulaMatch,
       disciplineForMatch,
@@ -924,5 +936,34 @@ export class FutebolJogosService {
     if (!row) throw new NotFoundException('Anexo não encontrado');
     await this.prisma.footballMatchAttachment.delete({ where: { id: row.id } });
     return { ok: true };
+  }
+
+  async upsertMatchStatsForGame(
+    tenantId: string,
+    gameKeyRaw: string,
+    input: Omit<
+      UpsertMatchStatOverrideInput,
+      'tenantId' | 'fmfMatchReportId' | 'travelLogisticsId' | 'matchDate' | 'opponentName' | 'category'
+    > &
+      Partial<Pick<UpsertMatchStatOverrideInput, 'matchDate' | 'opponentName' | 'category'>>,
+  ) {
+    const detail = await this.getGameDetail(tenantId, gameKeyRaw);
+    const game = detail.game;
+    return this.matchStats.upsert({
+      tenantId,
+      category: input.category ?? game.category,
+      fmfMatchReportId: game.fmfMatchReportId,
+      travelLogisticsId: game.travelLogisticsId,
+      matchDate: input.matchDate ?? game.matchDate.slice(0, 10),
+      opponentName: input.opponentName ?? game.opponentName,
+      goalsFor: input.goalsFor,
+      goalsAgainst: input.goalsAgainst,
+      yellowCards: input.yellowCards,
+      redCards: input.redCards,
+      possessionPct: input.possessionPct,
+      setPiecesFor: input.setPiecesFor,
+      setPiecesAgainst: input.setPiecesAgainst,
+      notes: input.notes,
+    });
   }
 }

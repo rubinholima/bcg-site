@@ -159,6 +159,10 @@ export type PressKitConfigDto = {
   referees: PressKitNamedRole[];
   directors: PressKitNamedRole[];
   starterPlayerIds: string[];
+  /** Atleta capitão (titular). */
+  captainPlayerId: string | null;
+  /** Função da comissão neste jogo — chave = staffId. */
+  staffRoleOverrides: Record<string, string>;
   formation: string | null;
   jerseyOverrides: Record<string, number | null>;
   contactLine: string | null;
@@ -309,6 +313,8 @@ export type CartoesSuspensaoPlayerDto = {
   positionLabel: string;
   jerseyNumber: number | null;
   roundCells: Array<"A" | "AM" | "V" | "VM" | "P" | "SA" | "ST" | "">;
+  /** Próximo jogo: P = pendurado, S = suspenso. */
+  nextRoundCell: "P" | "S" | "";
   yellowCardsTotal: number;
   redCardsTotal: number;
   unavailable: boolean;

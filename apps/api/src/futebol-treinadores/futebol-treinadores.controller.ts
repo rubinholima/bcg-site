@@ -14,7 +14,7 @@ import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
 import { DashboardRolesGuard } from '../auth/roles.guard';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
-import { RequireModule } from '../auth/require-module.decorator';
+import { RequireModule, TeamReportReadAccess } from '../auth/require-module.decorator';
 import { FutebolTreinadoresService } from './futebol-treinadores.service';
 
 type AuthedRequest = Request & { user: CognitoJwtPayload };
@@ -26,6 +26,7 @@ export class FutebolTreinadoresController {
   constructor(private readonly service: FutebolTreinadoresService) {}
 
   @Get('context')
+  @TeamReportReadAccess()
   getContext(
     @Query('tenantId') tenantId: string,
     @Query('category') category?: string,
@@ -43,16 +44,23 @@ export class FutebolTreinadoresController {
     if (!tenantId || !matchDate) {
       throw new BadRequestException('tenantId e matchDate são obrigatórios');
     }
+    const num = (key: string) =>
+      typeof body[key] === 'number' ? (body[key] as number) : null;
     return this.service.upsertMatchStatOverride({
       tenantId,
       category: typeof body.category === 'string' ? body.category : null,
       fmfMatchReportId: typeof body.fmfMatchReportId === 'string' ? body.fmfMatchReportId : null,
-      travelLogisticsId: typeof body.travelLogisticsId === 'string' ? body.travelLogisticsId : null,
+      travelLogisticsId:
+        typeof body.travelLogisticsId === 'string' ? body.travelLogisticsId : null,
       matchDate,
       opponentName: typeof body.opponentName === 'string' ? body.opponentName : null,
-      possessionPct: typeof body.possessionPct === 'number' ? body.possessionPct : null,
-      setPiecesFor: typeof body.setPiecesFor === 'number' ? body.setPiecesFor : null,
-      setPiecesAgainst: typeof body.setPiecesAgainst === 'number' ? body.setPiecesAgainst : null,
+      goalsFor: num('goalsFor'),
+      goalsAgainst: num('goalsAgainst'),
+      yellowCards: num('yellowCards'),
+      redCards: num('redCards'),
+      possessionPct: num('possessionPct'),
+      setPiecesFor: num('setPiecesFor'),
+      setPiecesAgainst: num('setPiecesAgainst'),
       notes: typeof body.notes === 'string' ? body.notes : null,
     });
   }
@@ -171,5 +179,80 @@ export class FutebolTreinadoresController {
   @Delete('training-sessions/:id')
   deleteTrainingSession(@Param('id') id: string) {
     return this.service.deleteTrainingSession(id);
+  }
+
+  @Get('team-reports/summary')
+  @TeamReportReadAccess()
+  getTeamReportSummary(
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+  ) {
+    if (!tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    return this.service.getTeamReportSummary(tenantId.trim(), category?.trim() || undefined);
+  }
+
+  @Get('team-reports')
+  @TeamReportReadAccess()
+  listTeamReports(
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+    @Query('periodType') periodType?: string,
+    @Query('status') status?: string,
+  ) {
+    if (!tenantId?.trim()) return [];
+    return this.service.listTeamReports(
+      tenantId.trim(),
+      category?.trim() || undefined,
+      periodType?.trim() || undefined,
+      status?.trim() || undefined,
+    );
+  }
+
+  @Get('team-reports/:id')
+  @TeamReportReadAccess()
+  getTeamReport(@Param('id') id: string) {
+    return this.service.getTeamReport(id);
+  }
+
+  @Post('team-reports')
+  upsertTeamReport(@Req() req: AuthedRequest, @Body() body: Record<string, unknown>) {
+    const tenantId = typeof body.tenantId === 'string' ? body.tenantId.trim() : '';
+    const periodType = typeof body.periodType === 'string' ? body.periodType.trim() : '';
+    if (!tenantId || !periodType) {
+      throw new BadRequestException('tenantId e periodType são obrigatórios');
+    }
+    return this.service.upsertTeamReport({
+      id: typeof body.id === 'string' ? body.id : undefined,
+      tenantId,
+      category: typeof body.category === 'string' ? body.category : null,
+      periodType,
+      periodStart: typeof body.periodStart === 'string' ? body.periodStart : null,
+      periodEnd: typeof body.periodEnd === 'string' ? body.periodEnd : null,
+      generalDescription:
+        typeof body.generalDescription === 'string' ? body.generalDescription : null,
+      weakPoints: typeof body.weakPoints === 'string' ? body.weakPoints : null,
+      status: typeof body.status === 'string' ? body.status : undefined,
+      staffId: typeof body.staffId === 'string' ? body.staffId : null,
+      authorUserId: req.user?.sub,
+      playerActions: Array.isArray(body.playerActions)
+        ? (body.playerActions as Array<{
+            playerId: string;
+            actionType: string;
+            reason?: string | null;
+          }>)
+        : undefined,
+    });
+  }
+
+  @Post('team-reports/:id/submit')
+  submitTeamReport(@Param('id') id: string) {
+    return this.service.submitTeamReport(id);
+  }
+
+  @Delete('team-reports/:id')
+  deleteTeamReport(@Param('id') id: string) {
+    return this.service.deleteTeamReport(id);
   }
 }

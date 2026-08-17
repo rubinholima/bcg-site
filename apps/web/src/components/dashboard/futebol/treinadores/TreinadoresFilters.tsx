@@ -98,6 +98,7 @@ export function TreinadoresFilters() {
               <SelectContent>
                 <SelectItem value="informacoes">Informações</SelectItem>
                 <SelectItem value="pos-jogo">Relatório pós-jogo</SelectItem>
+                <SelectItem value="relatorio-equipe">Relatório da equipe</SelectItem>
                 <SelectItem value="treinos">Planejamento de treinos</SelectItem>
               </SelectContent>
             </Select>

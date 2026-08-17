@@ -159,6 +159,7 @@ model Tenant {
   communicationTags            CommunicationTag[]
   communicationTemplates       CommunicationTemplate[]
   coachMatchReports            CoachMatchReport[]
+  coachTeamReports             CoachTeamReport[]
   coachTrainingSessions        CoachTrainingSession[]
   coachMatchStatOverrides      CoachMatchStatOverride[]
   footballMatchIncidents       FootballMatchIncident[]
@@ -1090,6 +1091,7 @@ model Player {
   physioSessions       PhysioSession[]
   fmfMatchStats        FmfPlayerMatchStat[]
   coachMatchPlayerRatings CoachMatchReportPlayerRating[]
+  coachTeamReportPlayerActions CoachTeamReportPlayerAction[]
   coachTrainingPlayerEntries CoachTrainingPlayerEntry[]
   @@index([tenantId])
   @@index([tenantId, category])
@@ -1251,6 +1253,7 @@ model TechnicalStaff {
   scoutProfile         Scout?
   travelParticipations TravelParticipant[]
   coachMatchReports    CoachMatchReport[]
+  coachTeamReports     CoachTeamReport[]
   coachTrainingSessions CoachTrainingSession[]
   @@index([tenantId])
   @@index([jobRoleId])
@@ -3048,6 +3051,42 @@ model CoachMatchReportAttachment {
   @@index([reportId])
 }
 
+model CoachTeamReport {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category           String?
+  periodType         String   // geral | mensal | trimestral
+  periodStart        DateTime?
+  periodEnd          DateTime?
+  generalDescription String?  @db.Text
+  weakPoints         String?  @db.Text
+  status             String   @default("rascunho") // rascunho | enviado
+  authorUserId       String?
+  staffId            String?
+  staff              TechnicalStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  sentAt             DateTime?
+  playerActions      CoachTeamReportPlayerAction[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@index([tenantId, category])
+  @@index([tenantId, periodType])
+  @@index([tenantId, status])
+  @@index([staffId])
+}
+
+model CoachTeamReportPlayerAction {
+  id         String   @id @default(cuid())
+  reportId   String
+  report     CoachTeamReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  playerId   String
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  actionType String   // dispensa | promocao
+  reason     String?  @db.Text
+  @@unique([reportId, playerId])
+  @@index([playerId])
+}
+
 // ─── Jogos (Depto Futebol) — ocorrências e anexos por partida ───────────────
 
 model FootballMatchIncident {
@@ -3149,9 +3188,13 @@ model CoachMatchStatOverride {
   category           String?
   fmfMatchReportId   String?  @unique
   fmfMatchReport     FmfMatchReport? @relation(fields: [fmfMatchReportId], references: [id], onDelete: Cascade)
-  travelLogisticsId  String?
+  travelLogisticsId  String?  @unique
   matchDate          DateTime
   opponentName       String?
+  goalsFor           Int?
+  goalsAgainst       Int?
+  yellowCards        Int?
+  redCards           Int?
   possessionPct      Int?
   setPiecesFor       Int?
   setPiecesAgainst   Int?

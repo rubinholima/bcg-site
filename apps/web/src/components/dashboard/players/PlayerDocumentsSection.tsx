@@ -90,6 +90,7 @@ export function PlayerDocumentsSection({
   const [search, setSearch] = useState("");
   const [uploadName, setUploadName] = useState("");
   const [uploadType, setUploadType] = useState<string>("rg");
+  const [uploadCustomType, setUploadCustomType] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -139,6 +140,13 @@ export function PlayerDocumentsSection({
       setUploadError("Informe o nome do documento.");
       return;
     }
+    if (uploadType === "outro" && !uploadCustomType.trim()) {
+      setUploadError("Informe o tipo do documento.");
+      return;
+    }
+
+    const documentType =
+      uploadType === "outro" ? uploadCustomType.trim().toLowerCase().replace(/\s+/g, "_") : uploadType;
 
     setUploading(true);
     setUploadError(null);
@@ -146,7 +154,7 @@ export function PlayerDocumentsSection({
       const formData = new FormData();
       formData.append("file", uploadFile);
       formData.append("name", uploadName.trim());
-      formData.append("documentType", uploadType);
+      formData.append("documentType", documentType);
 
       const { data } = await api.postForm<PlayerRegistrationDocument>(
         `/players/${playerId}/registration-documents`,
@@ -156,6 +164,7 @@ export function PlayerDocumentsSection({
       updateDocuments([data, ...documents]);
       setUploadName("");
       setUploadType("rg");
+      setUploadCustomType("");
       setUploadFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
@@ -208,6 +217,16 @@ export function PlayerDocumentsSection({
                 </SelectContent>
               </Select>
             </div>
+            {uploadType === "outro" ? (
+              <div className="space-y-2 sm:col-span-2">
+                <Label>Tipo (texto livre)</Label>
+                <Input
+                  value={uploadCustomType}
+                  onChange={(e) => setUploadCustomType(e.target.value)}
+                  placeholder="Ex: Autorização dos pais"
+                />
+              </div>
+            ) : null}
             <div className="space-y-2">
               <Label>Arquivo</Label>
               <Input
@@ -290,7 +309,7 @@ export function PlayerDocumentsSection({
                         {group.items.map((doc) => {
                           const canView = Boolean(doc.fileUrl?.trim());
                           const isPending = isDocumentPendingFile(doc);
-                          const displayName = formatDocumentDisplayName(doc);
+                          const displayName = doc.name?.trim() || formatDocumentDisplayName(doc);
                           return (
                             <TableRow key={doc.id}>
                               <TableCell className="whitespace-nowrap">

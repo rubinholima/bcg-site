@@ -86,6 +86,10 @@ export type PressKitConfigDto = {
   directors: PressKitNamedRole[];
   /** Ordem dos titulares no gramado (máx. 11) — índice = slot da formação */
   starterPlayerIds: string[];
+  /** Capitão da equipe (playerId entre titulares) */
+  captainPlayerId: string | null;
+  /** Função da comissão neste jogo (staffId → slug, ex.: auxiliar_tecnico) */
+  staffRoleOverrides: Record<string, string>;
   /** Esquema tático (ex.: 4-3-3, 4-4-2) */
   formation: string | null;
   /** Camisa editada só neste jogo (playerId → número) */
@@ -307,6 +311,8 @@ export type CartoesSuspensaoPlayerDto = {
   positionLabel: string;
   jerseyNumber: number | null;
   roundCells: Array<'A' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | ''>;
+  /** Próximo jogo: P = pendurado, S = suspenso. */
+  nextRoundCell: 'P' | 'S' | '';
   yellowCardsTotal: number;
   redCardsTotal: number;
   unavailable: boolean;

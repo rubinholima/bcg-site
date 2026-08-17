@@ -176,6 +176,10 @@ type StatOverrideRow = {
   travelLogisticsId: string | null;
   matchDate: Date;
   opponentName: string | null;
+  goalsFor: number | null;
+  goalsAgainst: number | null;
+  yellowCards: number | null;
+  redCards: number | null;
   possessionPct: number | null;
   setPiecesFor: number | null;
   setPiecesAgainst: number | null;
@@ -290,13 +294,84 @@ function applyStats(
     override != null &&
     (override.possessionPct != null ||
       override.setPiecesFor != null ||
-      override.setPiecesAgainst != null);
+      override.setPiecesAgainst != null ||
+      override.goalsFor != null ||
+      override.goalsAgainst != null ||
+      override.yellowCards != null ||
+      override.redCards != null);
   return {
     possessionPct: override?.possessionPct ?? null,
     setPiecesFor: override?.setPiecesFor ?? null,
     setPiecesAgainst: override?.setPiecesAgainst ?? null,
     statsSource: hasManual ? 'manual' : null,
     hasDetailedStats: hasManual,
+  };
+}
+
+function resolveMatchScore(input: {
+  isHome: boolean;
+  override: StatOverrideRow | undefined;
+  officialGoalsFor: number | null;
+  officialGoalsAgainst: number | null;
+  officialYellowCards: number;
+  officialRedCards: number;
+}): Pick<
+  CoachCompletedGame,
+  | 'homeScore'
+  | 'awayScore'
+  | 'goalsFor'
+  | 'goalsAgainst'
+  | 'scoreLabel'
+  | 'result'
+  | 'yellowCards'
+  | 'redCards'
+> {
+  let goalsFor = input.officialGoalsFor;
+  let goalsAgainst = input.officialGoalsAgainst;
+  if (input.override?.goalsFor != null && input.override?.goalsAgainst != null) {
+    goalsFor = input.override.goalsFor;
+    goalsAgainst = input.override.goalsAgainst;
+  }
+
+  let yellowCards = input.officialYellowCards;
+  let redCards = input.officialRedCards;
+  if (input.override?.yellowCards != null) yellowCards = input.override.yellowCards;
+  if (input.override?.redCards != null) redCards = input.override.redCards;
+
+  const homeScore =
+    goalsFor == null || goalsAgainst == null
+      ? null
+      : input.isHome
+        ? goalsFor
+        : goalsAgainst;
+  const awayScore =
+    goalsFor == null || goalsAgainst == null
+      ? null
+      : input.isHome
+        ? goalsAgainst
+        : goalsFor;
+
+  const result =
+    goalsFor == null || goalsAgainst == null
+      ? null
+      : goalsFor > goalsAgainst
+        ? 'V'
+        : goalsFor === goalsAgainst
+          ? 'E'
+          : 'D';
+
+  const scoreLabel =
+    homeScore == null || awayScore == null ? '—' : `${homeScore} x ${awayScore}`;
+
+  return {
+    homeScore,
+    awayScore,
+    goalsFor,
+    goalsAgainst,
+    scoreLabel,
+    result,
+    yellowCards,
+    redCards,
   };
 }
 
@@ -331,14 +406,6 @@ export function buildCompletedGames(input: {
     const opponent = isHome ? report.awayTeam : report.homeTeam;
     const ourGoals = isHome ? report.homeScore : report.awayScore;
     const theirGoals = isHome ? report.awayScore : report.homeScore;
-    const result =
-      ourGoals == null || theirGoals == null
-        ? null
-        : ourGoals > theirGoals
-          ? 'V'
-          : ourGoals === theirGoals
-            ? 'E'
-            : 'D';
 
     const travel = findMatchingTravel(allTravels, report.matchDate, opponent, report.category);
     const gameCategory = resolveGameCategory(report.category, travel);
@@ -352,6 +419,14 @@ export function buildCompletedGames(input: {
       gameCategory,
     );
     const stats = applyStats(override);
+    const score = resolveMatchScore({
+      isHome,
+      override,
+      officialGoalsFor: ourGoals,
+      officialGoalsAgainst: theirGoals,
+      officialYellowCards: report.playerStats.reduce((s, p) => s + (p.yellowCards ?? 0), 0),
+      officialRedCards: report.playerStats.reduce((s, p) => s + (p.redCards ?? 0), 0),
+    });
 
     const game: CoachCompletedGame = {
       gameKey: `fmf:${report.id}`,
@@ -366,17 +441,7 @@ export function buildCompletedGames(input: {
       isHome,
       homeTeam: report.homeTeam,
       awayTeam: report.awayTeam,
-      homeScore: report.homeScore,
-      awayScore: report.awayScore,
-      scoreLabel:
-        report.homeScore == null || report.awayScore == null
-          ? '—'
-          : `${report.homeScore} x ${report.awayScore}`,
-      result,
-      goalsFor: ourGoals,
-      goalsAgainst: theirGoals,
-      yellowCards: report.playerStats.reduce((s, p) => s + (p.yellowCards ?? 0), 0),
-      redCards: report.playerStats.reduce((s, p) => s + (p.redCards ?? 0), 0),
+      ...score,
       ...stats,
     };
 
@@ -393,8 +458,19 @@ export function buildCompletedGames(input: {
   }
 
   for (const travel of travels) {
-    if (travel.matchDate >= now) continue;
     const travelCategory = resolveTravelCategory(travel);
+    const override = findOverride(
+      overrides,
+      null,
+      travel.id,
+      travel.matchDate,
+      travel.opponentName ?? '',
+      travelCategory,
+    );
+    const hasManualScore =
+      override?.goalsFor != null && override?.goalsAgainst != null;
+    if (travel.matchDate >= now && !hasManualScore) continue;
+
     const existingKey = findGameMergeKeyInMap(
       byKey,
       travel.matchDate,
@@ -406,15 +482,16 @@ export function buildCompletedGames(input: {
     if (existingKey) continue;
 
     const key = gameMergeKey(travel.matchDate, travel.opponentName, travelCategory);
-    const override = findOverride(
-      overrides,
-      null,
-      travel.id,
-      travel.matchDate,
-      travel.opponentName ?? '',
-      travelCategory,
-    );
     const stats = applyStats(override);
+    const isHome = travel.isHomeMatch ?? true;
+    const score = resolveMatchScore({
+      isHome,
+      override,
+      officialGoalsFor: null,
+      officialGoalsAgainst: null,
+      officialYellowCards: 0,
+      officialRedCards: 0,
+    });
 
     byKey.set(key, {
       gameKey: `travel:${travel.id}`,
@@ -426,17 +503,10 @@ export function buildCompletedGames(input: {
       competition: travel.championshipName,
       phase: null,
       round: null,
-      isHome: travel.isHomeMatch ?? true,
-      homeTeam: travel.isHomeMatch ? clubName : (travel.opponentName ?? 'Adversário'),
-      awayTeam: travel.isHomeMatch ? (travel.opponentName ?? 'Adversário') : clubName,
-      homeScore: null,
-      awayScore: null,
-      scoreLabel: '—',
-      result: null,
-      goalsFor: null,
-      goalsAgainst: null,
-      yellowCards: 0,
-      redCards: 0,
+      isHome,
+      homeTeam: isHome ? clubName : (travel.opponentName ?? 'Adversário'),
+      awayTeam: isHome ? (travel.opponentName ?? 'Adversário') : clubName,
+      ...score,
       ...stats,
     });
   }

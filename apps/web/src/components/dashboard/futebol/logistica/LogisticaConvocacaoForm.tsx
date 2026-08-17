@@ -28,11 +28,15 @@ import {
   type FutebolRelatorioTravel,
 } from "@/components/dashboard/futebol/relatorios/futebol-relatorio-shared";
 import {
+  buildFriendlyTravelPayload,
+} from "@/lib/friendly-match-utils";
+import {
   formatFixtureOptionLabel,
   mergeTravelsIntoFixturesForConvocation,
   parseTravelRecordFixtureId,
   resolveFixtureOpponentName,
   sortTravelsForConvocation,
+  travelRecordFixtureId,
   upcomingFixtures,
   type AgendaFixture,
 } from "@/lib/travel-fixture-utils";
@@ -95,6 +99,11 @@ export function LogisticaConvocacaoForm() {
   const [loadingFixtures, setLoadingFixtures] = useState(false);
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [creatingFromFixture, setCreatingFromFixture] = useState(false);
+  const [creatingFriendly, setCreatingFriendly] = useState(false);
+  const [friendlyMatchDate, setFriendlyMatchDate] = useState("");
+  const [friendlyOpponent, setFriendlyOpponent] = useState("");
+  const [friendlyCategory, setFriendlyCategory] = useState("");
+  const [friendlyIsHome, setFriendlyIsHome] = useState(true);
 
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -151,7 +160,9 @@ export function LogisticaConvocacaoForm() {
       return;
     }
     setLoadingTravels(true);
-    const fromDate = dateKeyInBrazil(new Date());
+    const from = new Date();
+    from.setDate(from.getDate() - 90);
+    const fromDate = dateKeyInBrazil(from);
     api
       .get<FutebolRelatorioTravel[]>(
         `/logistica?tenantId=${encodeURIComponent(tenantId)}&fromDate=${encodeURIComponent(fromDate)}`,
@@ -192,25 +203,26 @@ export function LogisticaConvocacaoForm() {
 
   useEffect(() => {
     const club = selectedTenant?.name ?? "Nosso Clube";
-    // Convocação / preparação: só jogos futuros (passados ficam em outra aba depois).
     setFixtures(
       mergeTravelsIntoFixturesForConvocation(
         upcomingFixtures(rawFixtures),
         travels,
         club,
-        0,
+        90,
       ),
     );
   }, [rawFixtures, travels, selectedTenant?.name]);
 
   const travelsForSelect = useMemo(() => {
-    const today = dateKeyInBrazil(new Date());
-    const upcoming = travels.filter((t) => dateKeyInBrazil(t.matchDate) >= today);
-    if (travelId && !upcoming.some((t) => t.id === travelId)) {
+    const from = new Date();
+    from.setDate(from.getDate() - 90);
+    const fromKey = dateKeyInBrazil(from);
+    const inWindow = travels.filter((t) => dateKeyInBrazil(t.matchDate) >= fromKey);
+    if (travelId && !inWindow.some((t) => t.id === travelId)) {
       const current = travels.find((t) => t.id === travelId);
-      if (current) return sortTravelsForConvocation([current, ...upcoming]);
+      if (current) return sortTravelsForConvocation([current, ...inWindow]);
     }
-    return upcoming;
+    return sortTravelsForConvocation(inWindow);
   }, [travels, travelId]);
 
   const findTravelForFixture = useCallback(
@@ -284,6 +296,51 @@ export function LogisticaConvocacaoForm() {
       });
     } finally {
       setCreatingFromFixture(false);
+    }
+  };
+
+  const handleCreateFriendly = async () => {
+    if (!tenantId) return;
+    const opponentName = friendlyOpponent.trim();
+    if (!friendlyMatchDate || !opponentName) {
+      setFeedback({
+        open: true,
+        title: "Campos obrigatórios",
+        message: "Informe data e adversário do amistoso.",
+        variant: "error",
+      });
+      return;
+    }
+
+    setCreatingFriendly(true);
+    try {
+      const payload = buildFriendlyTravelPayload({
+        tenantId,
+        matchDate: friendlyMatchDate,
+        opponentName,
+        category: friendlyCategory || undefined,
+        isHomeMatch: friendlyIsHome,
+      });
+      const { data } = await api.post<FutebolRelatorioTravel>("/logistica", payload);
+      const created = data as FutebolRelatorioTravel;
+      setTravels((prev) => sortTravelsForConvocation([...prev, created]));
+      setTravelId(created.id);
+      setSelectedFixtureId(travelRecordFixtureId(created.id));
+      setFeedback({
+        open: true,
+        title: "Amistoso cadastrado",
+        message: "Registro criado. Marque os convocados e salve.",
+        variant: "success",
+      });
+    } catch {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: "Não foi possível cadastrar o amistoso.",
+        variant: "error",
+      });
+    } finally {
+      setCreatingFriendly(false);
     }
   };
 
@@ -679,6 +736,74 @@ export function LogisticaConvocacaoForm() {
               </Select>
             </div>
           </div>
+
+          {tenantId ? (
+            <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+              <Label>Cadastrar amistoso</Label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="friendly-date">Data</Label>
+                  <Input
+                    id="friendly-date"
+                    type="date"
+                    value={friendlyMatchDate}
+                    onChange={(e) => setFriendlyMatchDate(e.target.value)}
+                    className="text-foreground"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="friendly-category">Categoria</Label>
+                  <Select
+                    value={friendlyCategory || "none"}
+                    onValueChange={(v) => setFriendlyCategory(v === "none" ? "" : v)}
+                  >
+                    <SelectTrigger id="friendly-category" className="min-h-[44px]">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Selecione…</SelectItem>
+                      {categoryOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="friendly-opponent">Adversário</Label>
+                  <Input
+                    id="friendly-opponent"
+                    value={friendlyOpponent}
+                    onChange={(e) => setFriendlyOpponent(e.target.value)}
+                    placeholder="Nome do adversário"
+                  />
+                </div>
+                <label className="flex min-h-[44px] items-center gap-2 text-sm sm:col-span-2">
+                  <Checkbox
+                    checked={friendlyIsHome}
+                    onCheckedChange={(v) => setFriendlyIsHome(v === true)}
+                  />
+                  Jogo em casa
+                </label>
+              </div>
+              <Button
+                type="button"
+                className="min-h-[44px] w-full sm:w-auto"
+                disabled={creatingFriendly || !friendlyMatchDate || !friendlyOpponent.trim()}
+                onClick={() => void handleCreateFriendly()}
+              >
+                {creatingFriendly ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Cadastrando…
+                  </>
+                ) : (
+                  "Cadastrar e convocar"
+                )}
+              </Button>
+            </div>
+          ) : null}
 
           {tenantId ? (
             <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">

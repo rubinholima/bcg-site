@@ -112,6 +112,27 @@ export class FutebolJogosController {
     });
   }
 
+  @Post(':gameKey/match-stats')
+  upsertMatchStats(
+    @Param('gameKey') gameKey: string,
+    @Query('tenantId') tenantId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    const num = (key: string) =>
+      typeof body[key] === 'number' ? (body[key] as number) : null;
+    return this.service.upsertMatchStatsForGame(tenantId.trim(), gameKey, {
+      goalsFor: num('goalsFor'),
+      goalsAgainst: num('goalsAgainst'),
+      yellowCards: num('yellowCards'),
+      redCards: num('redCards'),
+      possessionPct: num('possessionPct'),
+      setPiecesFor: num('setPiecesFor'),
+      setPiecesAgainst: num('setPiecesAgainst'),
+      notes: typeof body.notes === 'string' ? body.notes : null,
+    });
+  }
+
   @Get(':gameKey')
   getGameDetail(
     @Param('gameKey') gameKey: string,

@@ -20,10 +20,18 @@ import {
 } from './coach-context.helper';
 import {
   COACH_REPORT_STATUS,
+  COACH_TEAM_PLAYER_ACTION,
+  COACH_TEAM_REPORT_PERIOD,
+  COACH_TEAM_REPORT_STATUS,
   COACH_TRAINING_ACTIVITY_KINDS,
   coachMatchReportInclude,
+  coachTeamReportInclude,
   coachTrainingSessionInclude,
 } from './futebol-treinadores.constants';
+import {
+  CoachMatchStatsService,
+  type UpsertMatchStatOverrideInput,
+} from '../coach-match-stats/coach-match-stats.service';
 
 const FMF_STORE_KEY = 'fmf_scraper_data';
 
@@ -32,20 +40,6 @@ function clampRating(value: unknown): number | null {
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n)) return null;
   return Math.min(5, Math.max(0, Math.round(n * 10) / 10));
-}
-
-function clampPct(value: unknown): number | null {
-  if (value == null || value === '') return null;
-  const n = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(n)) return null;
-  return Math.min(100, Math.max(0, Math.round(n)));
-}
-
-function clampCount(value: unknown): number | null {
-  if (value == null || value === '') return null;
-  const n = typeof value === 'number' ? value : Number(value);
-  if (!Number.isFinite(n)) return null;
-  return Math.max(0, Math.round(n));
 }
 
 function categoryMatches(
@@ -62,6 +56,7 @@ export class FutebolTreinadoresService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly guiaPartida: GuiaPartidaService,
+    private readonly matchStats: CoachMatchStatsService,
   ) {}
 
   private async tenantAliases(tenantId: string, name: string): Promise<string[]> {
@@ -282,68 +277,8 @@ export class FutebolTreinadoresService {
     };
   }
 
-  async upsertMatchStatOverride(input: {
-    tenantId: string;
-    category?: string | null;
-    fmfMatchReportId?: string | null;
-    travelLogisticsId?: string | null;
-    matchDate: string;
-    opponentName?: string | null;
-    possessionPct?: number | null;
-    setPiecesFor?: number | null;
-    setPiecesAgainst?: number | null;
-    notes?: string | null;
-  }) {
-    if (!input.tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
-    if (!/^\d{4}-\d{2}-\d{2}/.test(input.matchDate)) {
-      throw new BadRequestException('Data do jogo inválida');
-    }
-
-    const matchDate = new Date(input.matchDate.slice(0, 10) + 'T12:00:00-03:00');
-    const data = {
-      tenantId: input.tenantId.trim(),
-      category: input.category?.trim() || null,
-      fmfMatchReportId: input.fmfMatchReportId?.trim() || null,
-      travelLogisticsId: input.travelLogisticsId?.trim() || null,
-      matchDate,
-      opponentName: input.opponentName?.trim() || null,
-      possessionPct: clampPct(input.possessionPct),
-      setPiecesFor: clampCount(input.setPiecesFor),
-      setPiecesAgainst: clampCount(input.setPiecesAgainst),
-      notes: input.notes?.trim() || null,
-    };
-
-    if (data.fmfMatchReportId) {
-      const existing = await this.prisma.coachMatchStatOverride.findUnique({
-        where: { fmfMatchReportId: data.fmfMatchReportId },
-      });
-      if (existing) {
-        return this.prisma.coachMatchStatOverride.update({
-          where: { id: existing.id },
-          data,
-        });
-      }
-      return this.prisma.coachMatchStatOverride.create({ data });
-    }
-
-    const siblings = await this.prisma.coachMatchStatOverride.findMany({
-      where: {
-        tenantId: data.tenantId,
-        category: data.category,
-        travelLogisticsId: data.travelLogisticsId,
-        matchDate: data.matchDate,
-      },
-      take: 1,
-    });
-
-    if (siblings[0]) {
-      return this.prisma.coachMatchStatOverride.update({
-        where: { id: siblings[0].id },
-        data,
-      });
-    }
-
-    return this.prisma.coachMatchStatOverride.create({ data });
+  async upsertMatchStatOverride(input: UpsertMatchStatOverrideInput) {
+    return this.matchStats.upsert(input);
   }
 
   async listMatchReports(tenantId: string, category?: string) {
@@ -597,5 +532,199 @@ export class FutebolTreinadoresService {
     await this.getTrainingSession(id);
     await this.prisma.coachTrainingSession.delete({ where: { id } });
     return { ok: true };
+  }
+
+  async listTeamReports(
+    tenantId: string,
+    category?: string,
+    periodType?: string,
+    status?: string,
+  ) {
+    const period =
+      periodType &&
+      COACH_TEAM_REPORT_PERIOD.includes(periodType as (typeof COACH_TEAM_REPORT_PERIOD)[number])
+        ? periodType
+        : undefined;
+    const statusFilter =
+      status &&
+      COACH_TEAM_REPORT_STATUS.includes(status as (typeof COACH_TEAM_REPORT_STATUS)[number])
+        ? status
+        : undefined;
+
+    return this.prisma.coachTeamReport.findMany({
+      where: {
+        tenantId,
+        ...(category ? { category } : {}),
+        ...(period ? { periodType: period } : {}),
+        ...(statusFilter ? { status: statusFilter } : {}),
+      },
+      orderBy: [{ periodStart: 'desc' }, { createdAt: 'desc' }],
+      include: coachTeamReportInclude,
+    });
+  }
+
+  async getTeamReport(id: string) {
+    const row = await this.prisma.coachTeamReport.findUnique({
+      where: { id },
+      include: coachTeamReportInclude,
+    });
+    if (!row) throw new NotFoundException('Relatório da equipe não encontrado');
+    return row;
+  }
+
+  async upsertTeamReport(input: {
+    id?: string;
+    tenantId: string;
+    category?: string | null;
+    periodType: string;
+    periodStart?: string | null;
+    periodEnd?: string | null;
+    generalDescription?: string | null;
+    weakPoints?: string | null;
+    status?: string;
+    staffId?: string | null;
+    authorUserId?: string;
+    playerActions?: Array<{
+      playerId: string;
+      actionType: string;
+      reason?: string | null;
+    }>;
+  }) {
+    if (
+      !COACH_TEAM_REPORT_PERIOD.includes(
+        input.periodType as (typeof COACH_TEAM_REPORT_PERIOD)[number],
+      )
+    ) {
+      throw new BadRequestException('Tipo de período inválido');
+    }
+
+    const status =
+      input.status &&
+      COACH_TEAM_REPORT_STATUS.includes(input.status as (typeof COACH_TEAM_REPORT_STATUS)[number])
+        ? input.status
+        : 'rascunho';
+
+    let sentAt: Date | null = null;
+    if (status === 'enviado') {
+      if (input.id) {
+        const existing = await this.prisma.coachTeamReport.findUnique({
+          where: { id: input.id },
+          select: { sentAt: true },
+        });
+        sentAt = existing?.sentAt ?? new Date();
+      } else {
+        sentAt = new Date();
+      }
+    }
+
+    const parseDate = (value?: string | null) => {
+      if (!value?.trim()) return null;
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? null : d;
+    };
+
+    const playerIds = new Set<string>();
+    for (const action of input.playerActions ?? []) {
+      if (playerIds.has(action.playerId)) {
+        throw new BadRequestException('Cada atleta só pode ter uma indicação por relatório');
+      }
+      playerIds.add(action.playerId);
+      if (
+        !COACH_TEAM_PLAYER_ACTION.includes(
+          action.actionType as (typeof COACH_TEAM_PLAYER_ACTION)[number],
+        )
+      ) {
+        throw new BadRequestException('Tipo de indicação inválido');
+      }
+    }
+
+    const data = {
+      tenantId: input.tenantId,
+      category: input.category ?? null,
+      periodType: input.periodType,
+      periodStart: parseDate(input.periodStart),
+      periodEnd: parseDate(input.periodEnd),
+      generalDescription: input.generalDescription?.trim() || null,
+      weakPoints: input.weakPoints?.trim() || null,
+      status,
+      staffId: input.staffId ?? null,
+      authorUserId: input.authorUserId ?? null,
+      sentAt,
+    };
+
+    const report = input.id
+      ? await this.prisma.coachTeamReport.update({
+          where: { id: input.id },
+          data,
+        })
+      : await this.prisma.coachTeamReport.create({ data });
+
+    if (input.playerActions) {
+      await this.prisma.coachTeamReportPlayerAction.deleteMany({ where: { reportId: report.id } });
+      if (input.playerActions.length > 0) {
+        await this.prisma.coachTeamReportPlayerAction.createMany({
+          data: input.playerActions.map((a) => ({
+            reportId: report.id,
+            playerId: a.playerId,
+            actionType: a.actionType,
+            reason: a.reason?.trim() || null,
+          })),
+        });
+      }
+    }
+
+    return this.getTeamReport(report.id);
+  }
+
+  async submitTeamReport(id: string) {
+    await this.getTeamReport(id);
+    return this.prisma.coachTeamReport.update({
+      where: { id },
+      data: { status: 'enviado', sentAt: new Date() },
+      include: coachTeamReportInclude,
+    });
+  }
+
+  async deleteTeamReport(id: string) {
+    await this.getTeamReport(id);
+    await this.prisma.coachTeamReport.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  async getTeamReportSummary(tenantId: string, category?: string) {
+    const where = {
+      tenantId,
+      ...(category ? { category } : {}),
+    };
+    const [total, enviados, rascunhos, latestEnviado, actions] = await Promise.all([
+      this.prisma.coachTeamReport.count({ where }),
+      this.prisma.coachTeamReport.count({ where: { ...where, status: 'enviado' } }),
+      this.prisma.coachTeamReport.count({ where: { ...where, status: 'rascunho' } }),
+      this.prisma.coachTeamReport.findFirst({
+        where: { ...where, status: 'enviado' },
+        orderBy: [{ sentAt: 'desc' }, { updatedAt: 'desc' }],
+        select: { id: true, periodType: true, sentAt: true, periodStart: true, periodEnd: true },
+      }),
+      this.prisma.coachTeamReportPlayerAction.groupBy({
+        by: ['actionType'],
+        where: {
+          report: { ...where, status: 'enviado' },
+        },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const actionCounts = Object.fromEntries(
+      actions.map((a) => [a.actionType, a._count._all]),
+    ) as Record<string, number>;
+
+    return {
+      total,
+      enviados,
+      rascunhos,
+      latestEnviado,
+      dispensasIndicadas: actionCounts.dispensa ?? 0,
+      promocoesIndicadas: actionCounts.promocao ?? 0,
+    };
   }
 }

@@ -30,6 +30,11 @@ import {
   buildTravelMatchKey,
   dedupeTravelLogisticsList,
 } from '../logistica/travel-logistics-dedup.util';
+import {
+  FRIENDLY_CHAMPIONSHIP_NAME,
+  inferIsHomeFromJogoTitle,
+  parseOpponentFromJogoTitle,
+} from './friendly-match.util';
 
 const entryInclude = {
   tenant: { select: { name: true } },
@@ -982,5 +987,74 @@ export class FutebolAgendaService {
     const existing = await this.prisma.footballAgendaEntry.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Compromisso não encontrado');
     await this.prisma.footballAgendaEntry.delete({ where: { id } });
+  }
+
+  async ensureTravelForEntry(
+    entryId: string,
+    dto?: {
+      opponentName?: string;
+      isHomeMatch?: boolean;
+      championshipName?: string;
+    },
+  ): Promise<{ entry: FootballAgendaEntryDto; travelId: string; created: boolean }> {
+    const existing = await this.prisma.footballAgendaEntry.findUnique({
+      where: { id: entryId },
+      include: entryInclude,
+    });
+    if (!existing) throw new NotFoundException('Compromisso não encontrado');
+    if (existing.type !== 'jogo') {
+      throw new BadRequestException('Operação disponível apenas para compromissos do tipo jogo.');
+    }
+
+    if (existing.travelLogisticsId) {
+      const linked = await this.prisma.travelLogistics.findFirst({
+        where: { id: existing.travelLogisticsId, tenantId: existing.tenantId },
+      });
+      if (linked) {
+        return {
+          entry: toEntryDto(existing),
+          travelId: linked.id,
+          created: false,
+        };
+      }
+    }
+
+    const opponentName =
+      dto?.opponentName?.trim() || parseOpponentFromJogoTitle(existing.title);
+    if (!opponentName) {
+      throw new BadRequestException('Informe o adversário para operar o jogo.');
+    }
+
+    const isHomeMatch =
+      dto?.isHomeMatch ?? inferIsHomeFromJogoTitle(existing.title) ?? true;
+    const championshipName =
+      dto?.championshipName?.trim() || FRIENDLY_CHAMPIONSHIP_NAME;
+    const matchDate =
+      parseDateOnlyBrazil(dateKeyInBrazil(existing.startAt)) ?? existing.startAt;
+
+    const travel = await this.prisma.travelLogistics.create({
+      data: {
+        tenantId: existing.tenantId,
+        matchDate,
+        opponentName,
+        stadiumName: existing.location,
+        category: existing.category,
+        isHomeMatch,
+        championshipName,
+        status: 'planejamento',
+        externalId: existing.externalId,
+      },
+    });
+
+    await this.prisma.footballAgendaEntry.update({
+      where: { id: entryId },
+      data: { travelLogisticsId: travel.id, agendaLocked: true },
+    });
+
+    return {
+      entry: await this.findEntry(entryId),
+      travelId: travel.id,
+      created: true,
+    };
   }
 }

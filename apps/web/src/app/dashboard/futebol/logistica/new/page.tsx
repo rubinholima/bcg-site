@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { markSaveSuccessForNavigation } from "@/hooks/use-save-success-feedback";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -55,6 +55,7 @@ import {
   type TravelItinerary,
   type TravelUniforms,
 } from "@/lib/travel-itinerary.types";
+import { FRIENDLY_CHAMPIONSHIP_NAME } from "@/lib/friendly-match-utils";
 
 interface Tenant {
   id: string;
@@ -106,6 +107,7 @@ const STATUS_OPTIONS = [
 
 export default function NewLogisticaPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [championships, setChampionships] = useState<Championship[]>([]);
   const [stadiums, setStadiums] = useState<Stadium[]>([]);
@@ -114,7 +116,7 @@ export default function NewLogisticaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [dataSource, setDataSource] = useState<"fixture" | "manual">("fixture");
+  const [dataSource, setDataSource] = useState<"fixture" | "manual" | "amistoso">("fixture");
   const [tenantId, setTenantId] = useState("");
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [category, setCategory] = useState("");
@@ -214,6 +216,17 @@ export default function NewLogisticaPage() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [refreshLogisticaCadastros]);
 
+  useEffect(() => {
+    const tipo = searchParams.get("tipo")?.trim();
+    const presetTenant = searchParams.get("tenantId")?.trim();
+    if (presetTenant) setTenantId(presetTenant);
+    if (tipo === "amistoso") {
+      setDataSource("amistoso");
+      setChampionshipName(FRIENDLY_CHAMPIONSHIP_NAME);
+      setStatus("planejamento");
+    }
+  }, [searchParams]);
+
   const selectedTenant = tenants.find((t) => t.id === tenantId);
 
   const opponentValueForSelect =
@@ -310,7 +323,10 @@ export default function NewLogisticaPage() {
         stadiumName: stadiumName.trim() || undefined,
         city: city.trim() || undefined,
         country: country.trim() || undefined,
-        championshipName: championshipName.trim() || undefined,
+        championshipName:
+          dataSource === "amistoso"
+            ? FRIENDLY_CHAMPIONSHIP_NAME
+            : championshipName.trim() || undefined,
         distanceKm: distanceKm.trim() ? Number(distanceKm) : undefined,
         transportType: transportType.trim() || undefined,
         transportDetails: transportDetails.trim() || undefined,
@@ -398,12 +414,23 @@ export default function NewLogisticaPage() {
               )}
               <div className="space-y-2">
                 <Label>Fonte dos dados</Label>
-                <Select value={dataSource} onValueChange={(v: "fixture" | "manual") => { setDataSource(v); setSelectedFixtureId(""); }}>
+                <Select
+                  value={dataSource}
+                  onValueChange={(v: "fixture" | "manual" | "amistoso") => {
+                    setDataSource(v);
+                    setSelectedFixtureId("");
+                    if (v === "amistoso") {
+                      setChampionshipName(FRIENDLY_CHAMPIONSHIP_NAME);
+                      setStatus("planejamento");
+                    }
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="fixture">Próximos jogos (casa e fora)</SelectItem>
+                    <SelectItem value="amistoso">Amistoso</SelectItem>
                     <SelectItem value="manual">Preencher manualmente</SelectItem>
                   </SelectContent>
                 </Select>

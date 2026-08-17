@@ -7,19 +7,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { NativeSelectField } from "@/components/ui/native-select";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
-import type { CoachContextResponse, CoachMatchReport } from "@/lib/treinadores-types";
+import type { CoachContextPlayer, CoachContextResponse, CoachMatchReport } from "@/lib/treinadores-types";
 import { COACH_ATTACHMENT_KINDS } from "@/lib/treinadores-types";
 import { TreinadoresMediaPicker } from "./TreinadoresMediaPicker";
 
 type PlayerRatingDraft = {
   playerId: string;
   name: string;
+  jerseyNumber: number | null;
   rating: string;
   individualReport: string;
 };
@@ -37,10 +46,20 @@ interface Props {
   context: CoachContextResponse | null;
 }
 
-function emptyDraft(players: CoachContextResponse["players"]): PlayerRatingDraft[] {
-  return players.map((p) => ({
+function sortPlayersByJersey(players: CoachContextPlayer[]) {
+  return [...players].sort((a, b) => {
+    const ja = a.jerseyNumber ?? 9999;
+    const jb = b.jerseyNumber ?? 9999;
+    if (ja !== jb) return ja - jb;
+    return a.name.localeCompare(b.name, "pt-BR");
+  });
+}
+
+function emptyDraft(players: CoachContextPlayer[]): PlayerRatingDraft[] {
+  return sortPlayersByJersey(players).map((p) => ({
     playerId: p.id,
     name: getPlayerListDisplayName(p),
+    jerseyNumber: p.jerseyNumber,
     rating: "",
     individualReport: "",
   }));
@@ -314,37 +333,57 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
           </div>
 
           <div className="space-y-3">
-            <Label>Notas e relatório individual (0 a 5)</Label>
-            {playerRatings.map((p, idx) => (
-              <div key={p.playerId} className="rounded-lg border border-border/60 p-3 space-y-2">
-                <div className="font-medium text-sm">{p.name}</div>
-                <div className="grid gap-3 sm:grid-cols-[120px_minmax(0,1fr)]">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={5}
-                    step={0.5}
-                    placeholder="Nota"
-                    value={p.rating}
-                    onChange={(e) => {
-                      const next = [...playerRatings];
-                      next[idx] = { ...p, rating: e.target.value };
-                      setPlayerRatings(next);
-                    }}
-                  />
-                  <Textarea
-                    rows={2}
-                    placeholder="Relatório individual"
-                    value={p.individualReport}
-                    onChange={(e) => {
-                      const next = [...playerRatings];
-                      next[idx] = { ...p, individualReport: e.target.value };
-                      setPlayerRatings(next);
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
+            <Label>Notas por atleta (0 a 5)</Label>
+            <div className="overflow-x-auto rounded-lg border border-border/60">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-14 text-center">#</TableHead>
+                    <TableHead>Atleta</TableHead>
+                    <TableHead className="w-24 text-center">Nota</TableHead>
+                    <TableHead className="min-w-[180px]">Obs.</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {playerRatings.map((p, idx) => (
+                    <TableRow key={p.playerId}>
+                      <TableCell className="text-center font-medium tabular-nums">
+                        {p.jerseyNumber ?? "—"}
+                      </TableCell>
+                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={5}
+                          step={0.5}
+                          placeholder="—"
+                          className="h-9 text-center"
+                          value={p.rating}
+                          onChange={(e) => {
+                            const next = [...playerRatings];
+                            next[idx] = { ...p, rating: e.target.value };
+                            setPlayerRatings(next);
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          placeholder="Observação"
+                          className="h-9"
+                          value={p.individualReport}
+                          onChange={(e) => {
+                            const next = [...playerRatings];
+                            next[idx] = { ...p, individualReport: e.target.value };
+                            setPlayerRatings(next);
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           <div className="space-y-3">

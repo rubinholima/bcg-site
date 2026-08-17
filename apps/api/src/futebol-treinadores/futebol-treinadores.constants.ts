@@ -23,6 +23,28 @@ export const COACH_REPORT_ATTACHMENT_KINDS = [
 
 export const COACH_REPORT_STATUS = ['rascunho', 'finalizado'] as const;
 
+export const COACH_TEAM_REPORT_PERIOD = ['geral', 'mensal', 'trimestral'] as const;
+
+export const COACH_TEAM_REPORT_STATUS = ['rascunho', 'enviado'] as const;
+
+export const COACH_TEAM_PLAYER_ACTION = ['dispensa', 'promocao'] as const;
+
+export const coachTeamReportInclude = {
+  playerActions: {
+    include: {
+      player: {
+        select: {
+          id: true,
+          name: true,
+          jerseyNumber: true,
+          category: true,
+        },
+      },
+    },
+  },
+  staff: { select: { id: true, name: true, role: true } },
+} as const;
+
 export const coachMatchReportInclude = {
   playerRatings: {
     include: {

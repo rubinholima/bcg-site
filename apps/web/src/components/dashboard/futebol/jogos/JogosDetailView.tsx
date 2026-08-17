@@ -32,6 +32,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { JogosOcorrenciasPanel } from "./JogosOcorrenciasPanel";
 import { JogosAnexosPanel } from "./JogosAnexosPanel";
+import { GameOperateLinks } from "@/components/dashboard/futebol/GameOperateLinks";
+import { GameMatchDataEditor } from "@/components/dashboard/futebol/GameMatchDataEditor";
 
 interface Props {
   gameKey: string;
@@ -251,13 +253,25 @@ export function JogosDetailView({ gameKey }: Props) {
               Imprimir súmula
             </Button>
           ) : null}
-          {game.travelLogisticsId ? (
-            <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
-              <Link href={`/dashboard/futebol/logistica/${game.travelLogisticsId}/edit`}>Viagem</Link>
-            </Button>
-          ) : null}
+          <GameMatchDataEditor
+            tenantId={tenantId}
+            category={game.category ?? undefined}
+            game={game}
+            override={detail.matchStatOverride}
+            saveVia="jogos"
+            triggerSize="default"
+            onSaved={loadDetail}
+          />
         </div>
       </div>
+
+      {game.travelLogisticsId ? (
+        <GameOperateLinks
+          tenantId={detail.tenant.id}
+          travelId={game.travelLogisticsId}
+          size="default"
+        />
+      ) : null}
 
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2">
@@ -300,14 +314,25 @@ export function JogosDetailView({ gameKey }: Props) {
         {activeTab === "resumo" ? (
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
                 <CardTitle className="text-base">Partida</CardTitle>
+                {!game.hasSumula ? (
+                  <span className="text-xs text-muted-foreground">Placar manual disponível</span>
+                ) : null}
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div>
                   {game.homeTeam} x {game.awayTeam}
                 </div>
-                <div>Placar: {game.scoreLabel}</div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>Placar: {game.scoreLabel}</span>
+                  {resultBadge(game.result)}
+                  {game.statsSource === "manual" ? (
+                    <span className="rounded border border-amber-500/40 px-1.5 py-0.5 text-[10px] uppercase text-amber-400">
+                      Ajustado
+                    </span>
+                  ) : null}
+                </div>
                 <div>
                   Cartões: {game.yellowCards} amarelo(s) · {game.redCards} vermelho(s)
                 </div>

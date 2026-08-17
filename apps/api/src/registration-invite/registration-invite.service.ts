@@ -641,6 +641,10 @@ export class RegistrationInviteService {
       profile.documents = [...existing, ...documents];
     }
 
+    const sports = mergeJson<Record<string, unknown>>(profile.sports, {});
+    sports.documentationApprovedAt = new Date().toISOString();
+    profile.sports = sports;
+
     await this.prisma.player.update({
       where: { id: playerId },
       data: {

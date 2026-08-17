@@ -27,6 +27,30 @@ export function getStaffRoleLabel(value: string): string {
   return STAFF_ROLES.find((r) => r.value === value)?.label ?? value;
 }
 
+/** Converte cargo cadastrado (slug ou texto RH) para slug canônico da comissão. */
+export function normalizeStaffRoleSlug(value: string | null | undefined): string {
+  const raw = (value ?? "").trim();
+  if (!raw) return "outro";
+  const byValue = STAFF_ROLES.find((r) => r.value === raw);
+  if (byValue) return byValue.value;
+  const norm = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "");
+  for (const r of STAFF_ROLES) {
+    const label = r.label
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{M}/gu, "");
+    if (norm === label || norm.includes(label) || label.includes(norm)) return r.value;
+  }
+  if (norm.includes("auxiliar")) return "auxiliar_tecnico";
+  if (norm.includes("goleir")) return "treinador_goleiros";
+  if (norm.includes("preparador") || norm.includes("fisico")) return "preparador_fisico";
+  if (norm.includes("tecnico") || norm.includes("treinador")) return "tecnico";
+  return "outro";
+}
+
 export function getContractTypeLabel(value: string): string {
   return CONTRACT_TYPES.find((c) => c.value === value)?.label ?? value;
 }

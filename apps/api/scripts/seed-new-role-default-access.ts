@@ -227,6 +227,8 @@ const NEW_ROLE_DEFAULTS: Record<string, readonly string[]> = {
     ...FUTEBOL_ANALISE,
     'futebol/futebol_performance__futebol_performance_dash',
     'futebol_performance',
+    'futebol__futebol_jogos',
+    'futebol_jogos',
     'relatorios_futebol',
     'futebol__futebol_treinadores',
     'futebol_treinadores',

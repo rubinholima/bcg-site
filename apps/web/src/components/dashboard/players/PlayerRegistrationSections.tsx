@@ -40,6 +40,8 @@ import {
   type PlayerAddressBlock,
   type PlayerRegistrationProfile,
 } from "@/lib/player-registration-profile";
+import { normalizeCityName } from "@/lib/brazil-location-utils";
+import { BRAZIL_BANK_SUGGESTIONS, normalizeBankName } from "@/lib/brazil-banks";
 import { ExpandableSection, FormGrid, RequiredMark, SectionDivider } from "./ExpandableSection";
 import { PlayerDocumentsSection } from "./PlayerDocumentsSection";
 import { PlayerContractsSection } from "./PlayerContractsSection";
@@ -572,6 +574,12 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
                     onChange={(e) =>
                       onProfileChange(patchAddress(profile, block, { city: e.target.value || undefined }))
                     }
+                    onBlur={(e) => {
+                      const normalized = normalizeCityName(e.target.value);
+                      if (normalized && normalized !== (data.city ?? "")) {
+                        onProfileChange(patchAddress(profile, block, { city: normalized }));
+                      }
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
@@ -729,6 +737,11 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
       </ExpandableSection>
 
       <ExpandableSection title="Dados extras" description="PIX, plano de saúde, escolaridade e conta bancária">
+        <datalist id="player-bank-suggestions">
+          {BRAZIL_BANK_SUGGESTIONS.map((bank) => (
+            <option key={bank} value={bank} />
+          ))}
+        </datalist>
         <SectionDivider title="PIX" />
         <FormGrid cols={3}>
           <div className="space-y-2">
@@ -752,8 +765,15 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           <div className="space-y-2">
             <Label>Banco</Label>
             <Input
+              list="player-bank-suggestions"
               value={extras.pixBank ?? ""}
               onChange={(e) => onProfileChange(patchProfile(profile, "extras", { pixBank: e.target.value || undefined }))}
+              onBlur={(e) => {
+                const normalized = normalizeBankName(e.target.value);
+                if (normalized && normalized !== (extras.pixBank ?? "")) {
+                  onProfileChange(patchProfile(profile, "extras", { pixBank: normalized }));
+                }
+              }}
             />
           </div>
           <div className="space-y-2">
@@ -818,8 +838,17 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
           <div className="space-y-2">
             <Label>Banco</Label>
             <Input
+              list="player-bank-suggestions"
               value={extras.bankName ?? ""}
-              onChange={(e) => onProfileChange(patchProfile(profile, "extras", { bankName: e.target.value || undefined }))}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "extras", { bankName: e.target.value || undefined }))
+              }
+              onBlur={(e) => {
+                const normalized = normalizeBankName(e.target.value);
+                if (normalized && normalized !== (extras.bankName ?? "")) {
+                  onProfileChange(patchProfile(profile, "extras", { bankName: normalized }));
+                }
+              }}
             />
           </div>
           <div className="space-y-2">
@@ -916,6 +945,25 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               onChange={(e) => onProfileChange(patchProfile(profile, "sports", { cbf: e.target.value || undefined }))}
             />
           </div>
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <Checkbox
+              id="documentation-approved"
+              checked={Boolean(sports.documentationApprovedAt)}
+              onCheckedChange={(checked) =>
+                onProfileChange(
+                  patchProfile(profile, "sports", {
+                    documentationApprovedAt:
+                      checked === true
+                        ? sports.documentationApprovedAt ?? new Date().toISOString()
+                        : undefined,
+                  }),
+                )
+              }
+            />
+            <Label htmlFor="documentation-approved" className="cursor-pointer font-normal leading-snug">
+              Documentação confirmada (RH)
+            </Label>
+          </div>
           <div className="space-y-2">
             <Label>Registro fed. local</Label>
             <Input
@@ -980,6 +1028,12 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               onChange={(e) =>
                 onProfileChange(patchProfile(profile, "sports", { footballSchoolCity: e.target.value || undefined }))
               }
+              onBlur={(e) => {
+                const normalized = normalizeCityName(e.target.value);
+                if (normalized && normalized !== (sports.footballSchoolCity ?? "")) {
+                  onProfileChange(patchProfile(profile, "sports", { footballSchoolCity: normalized }));
+                }
+              }}
             />
           </div>
           <div className="space-y-2">
@@ -998,6 +1052,12 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               onChange={(e) =>
                 onProfileChange(patchProfile(profile, "sports", { previousClubCity: e.target.value || undefined }))
               }
+              onBlur={(e) => {
+                const normalized = normalizeCityName(e.target.value);
+                if (normalized && normalized !== (sports.previousClubCity ?? "")) {
+                  onProfileChange(patchProfile(profile, "sports", { previousClubCity: normalized }));
+                }
+              }}
             />
           </div>
         </FormGrid>

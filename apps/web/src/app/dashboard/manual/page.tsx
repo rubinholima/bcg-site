@@ -355,6 +355,39 @@ export default function ManualPage() {
                 canto inferior da tela.
               </p>
               <p>
+                <strong>Aptidão para jogo:</strong> na lista e na ficha, o atleta só aparece como{" "}
+                <strong>Apto</strong> quando a documentação foi confirmada pelo RH{" "}
+                <em>e</em> o registro CBF/BID está preenchido no cadastro esportivo. Antes disso, o
+                status é <strong>No BID</strong> (documentação pendente ou aguardando registro). Lesão,
+                suspensão, ausência ou fora do elenco continuam como <strong>Não apto</strong>.
+              </p>
+              <p>
+                <strong>Documentação confirmada:</strong> marque na aba Esportivo após conferir os
+                documentos, ou use a aprovação em ADM → RH (convite de cadastro). Convites aprovados
+                marcam a confirmação automaticamente.
+              </p>
+              <p>
+                <strong>Endereço — cidade:</strong> ao sair do campo, o sistema padroniza capitalização
+                (ex.: <em>são paulo</em> → <em>São Paulo</em>) para facilitar filtros e relatórios.
+              </p>
+              <p>
+                <strong>Documentos:</strong> informe o <strong>nome</strong> do arquivo e escolha o{" "}
+                <strong>tipo</strong>; o nome não muda ao trocar o tipo. Use{" "}
+                <em>Outros (tipo livre)</em> para tipos que não estão na lista.
+              </p>
+              <p>
+                <strong>Conta bancária / PIX:</strong> nomes como Nubank, NU ou Nu Pagamentos são
+                padronizados ao salvar (ex.: <em>Nubank</em>). Use a sugestão da lista quando possível.
+              </p>
+              <p>
+                <strong>Ajuda de custos, salário e multa:</strong> valores contratuais e cláusulas
+                (salário base, ajuda de custos, multas rescisórias) ficam no <strong>Jurídico</strong>{" "}
+                (contratos do atleta) e, quando há vínculo CLT, em <strong>ADM → RH</strong> (vínculo
+                empregatício e salário). O cadastro do atleta guarda PIX e dados bancários para
+                pagamentos operacionais; alterações salariais seguem o fluxo jurídico/RH, não a ficha
+                esportiva.
+              </p>
+              <p>
                 <strong>Foto / avatar:</strong> PNG, JPG, WebP ou SVG — até 10 MB. Recomendado 800×600 px. O sistema
                 otimiza automaticamente (WebP, tamanho máximo por pasta).
               </p>

@@ -34,8 +34,8 @@ import {
   normalizeSportsSituation,
   isArchivedSportsSituation,
   isLoanedSportsSituation,
-  normalizeRegistrationProfileSituation,
 } from '../common/sports-situation.util';
+import { normalizeRegistrationProfile } from '../common/registration-profile-normalize.util';
 
 @Injectable()
 export class PlayersService {
@@ -1117,7 +1117,7 @@ export class PlayersService {
       analysisMetrics: j(d.analysisMetrics),
       images: j(d.images),
       publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
-      registrationProfile: j(normalizeRegistrationProfileSituation(d.registrationProfile)),
+      registrationProfile: j(normalizeRegistrationProfile(d.registrationProfile)),
     };
   }
 
@@ -1190,7 +1190,7 @@ export class PlayersService {
         publicFields: d.publicFields != null ? (d.publicFields as object) : Prisma.JsonNull,
       }),
       ...(d.registrationProfile !== undefined && {
-        registrationProfile: jsonOrNull(normalizeRegistrationProfileSituation(d.registrationProfile)),
+        registrationProfile: jsonOrNull(normalizeRegistrationProfile(d.registrationProfile)),
         cbfRegistration: this.cbfRegistrationFromProfile(d.registrationProfile),
       }),
     };

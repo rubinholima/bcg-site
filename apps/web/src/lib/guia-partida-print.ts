@@ -780,10 +780,14 @@ function pageFoot(club: string, opponent: string, label: string): string {
 type EscalacaoVisualBuildOptions = {
   includeStaff?: boolean;
   includeBench?: boolean;
+  /** Árbitros ao lado do gramado (campograma). */
+  includeReferees?: boolean;
   /** Gramado largo (ataque à direita) — ideal para impressão paisagem. */
   horizontalPitch?: boolean;
   /** Campo e reservas lado a lado numa única folha. */
   sideBySide?: boolean;
+  /** Layout campograma: comissão | gramado | arbitragem numa linha. */
+  campogramaMode?: boolean;
   /** Omite tag/título grandes (impressão só campo). */
   minimalChrome?: boolean;
 };
@@ -799,12 +803,13 @@ function pitchSlotCss(
       translateY: pitchChipTranslateY(slot.top),
     };
   }
+  /* GK à esquerda, ataque à direita — coordenadas pensadas para gramado horizontal */
+  const left = Math.min(94, Math.max(6, 100 - slot.top));
   const top = slot.left;
-  const left = 100 - slot.top;
   return {
     top,
     left,
-    translateY: pitchChipTranslateY(top),
+    translateY: "-50%",
   };
 }
 
@@ -816,8 +821,10 @@ function buildEscalacaoVisualInner(
   const { travel, config } = data;
   const includeStaff = options?.includeStaff !== false;
   const includeBench = options?.includeBench !== false;
+  const includeReferees = options?.includeReferees === true;
   const horizontalPitch = options?.horizontalPitch === true;
   const sideBySide = options?.sideBySide === true;
+  const campogramaMode = options?.campogramaMode === true;
   const minimalChrome = options?.minimalChrome === true;
   const formation = getFormation(config.formation);
   const squadById = new Map(
@@ -838,12 +845,14 @@ function buildEscalacaoVisualInner(
       const pos = cadastroPositionAbbrev(p.position || p.positionLabel);
       const birth = formatBirth(p.birthDate);
       const coords = pitchSlotCss(slot, horizontalPitch);
+      const isCaptain =
+        Boolean(config.captainPlayerId) && p.playerId === config.captainPlayerId;
       const pitchPhoto =
         (p.playerId && playerCutouts[p.playerId]) || p.photoUrl;
       return `<div class="vis-chip" style="top:${coords.top}%;left:${coords.left}%;transform:translate(-50%,${coords.translateY})">
         <div class="vis-photo-wrap">
           ${photo(pitchPhoto, p.name, "vis-photo")}
-          <span class="vis-num">${esc(n)}</span>
+          <span class="vis-num">${esc(n)}${isCaptain ? `<b class="vis-cap">C</b>` : ""}</span>
         </div>
         <div class="vis-nick">${esc(nickOnly)}</div>
         ${pos && pos !== "—" ? `<div class="vis-pos">${esc(pos)}</div>` : ""}
@@ -851,6 +860,34 @@ function buildEscalacaoVisualInner(
       </div>`;
     })
     .join("");
+
+  const refsBeside = sortByPressKitRoleRank(
+    config.referees.filter((r) => r.name.trim()),
+    (r) => r.role,
+    (role) => {
+      const n = (role ?? "").toLowerCase();
+      if (n.includes("árbitro") && !n.includes("assistente") && !n.includes("quarto")) return 0;
+      if (n.includes("assistente")) return 1;
+      if (n.includes("quarto")) return 2;
+      return 3;
+    },
+    (r) => r.name,
+  )
+    .map((r) => {
+      const short = staffPrintName(r.name);
+      return `<div class="vis-staff-side-row">
+        ${photo(r.photoUrl, r.name, "vis-staff-side-photo")}
+        <div><strong>${esc(short)}</strong><span>${esc(r.role || "Arbitragem")}</span></div>
+      </div>`;
+    })
+    .join("");
+
+  const refsAside = includeReferees
+    ? `<aside class="vis-staff-side vis-ref-side">
+          <p class="vis-staff-side-title">Arbitragem</p>
+          ${refsBeside || `<p class="empty">—</p>`}
+        </aside>`
+    : "";
 
   const staffBeside = sortByPressKitRoleRank(
     data.staff,
@@ -914,7 +951,11 @@ function buildEscalacaoVisualInner(
         </aside>`
     : "";
 
-  const fieldRowClass = includeStaff ? "vis-field-row" : "vis-field-row vis-field-row-solo";
+  const fieldRowClass = campogramaMode
+    ? "campo-layout"
+    : includeStaff
+      ? "vis-field-row"
+      : "vis-field-row vis-field-row-solo";
   const pitchClass = horizontalPitch ? "vis-pitch-wrap vis-pitch-horizontal" : "vis-pitch-wrap";
   const stageClass = sideBySide ? "vis-stage vis-stage-row" : "vis-stage";
 
@@ -923,11 +964,7 @@ function buildEscalacaoVisualInner(
     : `<div class="sheet-tag">Escalação</div>
     ${sectionTitle("Escalação visual", `${formation.label} · ${travel.categoryLabel}`)}`;
 
-  return `${chrome}
-    <div class="${stageClass}">
-      <div class="${fieldRowClass}">
-        ${staffAside}
-        <div class="${pitchClass}">
+  const pitchBlock = `<div class="${pitchClass}">
           <div class="vis-pitch-mark pl-half"></div>
           <div class="vis-pitch-mark pl-circle"></div>
           <div class="vis-pitch-mark pl-box-top"></div>
@@ -935,7 +972,16 @@ function buildEscalacaoVisualInner(
           <div class="vis-pitch-mark pl-box-bottom"></div>
           <div class="vis-pitch-mark pl-goal-bottom"></div>
           <div class="vis-pitch-players">${visualPlayers}</div>
-        </div>
+        </div>`;
+
+  const fieldInner = campogramaMode
+    ? `${staffAside}<div class="campo-pitch-col">${pitchBlock}</div>${refsAside}`
+    : `${staffAside}${pitchBlock}`;
+
+  return `${chrome}
+    <div class="${stageClass}">
+      <div class="${fieldRowClass}">
+        ${fieldInner}
       </div>
       ${
         includeBench
@@ -977,10 +1023,29 @@ function escalacaoCampoStyles(size: PrintPageSize): string {
       color: ${C.muted};
     }
     .escalacao-campo .vis-stage-row {
-      flex-direction: row;
+      flex-direction: column;
       align-items: stretch;
+      gap: 2mm;
+      max-height: none;
+    }
+    .escalacao-campo .campo-layout {
+      display: grid;
+      grid-template-columns: 36mm minmax(0, 1fr) 36mm;
       gap: 3mm;
-      max-height: 158mm;
+      align-items: stretch;
+      width: 100%;
+      min-height: 132mm;
+      max-height: 148mm;
+    }
+    .escalacao-campo .campo-pitch-col {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      min-height: 0;
+    }
+    .escalacao-campo .vis-ref-side .vis-staff-side-title {
+      border-bottom-color: #64748b;
     }
     .escalacao-campo .vis-field-row-solo {
       grid-template-columns: 1fr;
@@ -992,10 +1057,12 @@ function escalacaoCampoStyles(size: PrintPageSize): string {
     .escalacao-campo .vis-pitch-wrap {
       flex: 1 1 auto;
       width: 100%;
+      height: 100%;
       max-width: none;
-      max-height: 156mm;
-      aspect-ratio: 100 / 62;
-      background: repeating-linear-gradient(180deg, #15803d 0 7.5%, #16a34a 7.5% 15%);
+      max-height: 146mm;
+      min-height: 118mm;
+      aspect-ratio: 105 / 68;
+      background: repeating-linear-gradient(90deg, #15803d 0 11.1%, #16a34a 11.1% 22.2%);
     }
     .escalacao-campo .vis-pitch-horizontal .pl-half {
       left: 50%; right: auto; top: 0; bottom: 0; width: 0; height: auto;
@@ -1003,38 +1070,49 @@ function escalacaoCampoStyles(size: PrintPageSize): string {
     }
     .escalacao-campo .vis-pitch-horizontal .pl-circle {
       left: 50%; top: 50%;
-      width: 17%; height: 24%;
+      width: 22%; height: 32%;
       margin: 0;
       transform: translate(-50%, -50%);
       border-radius: 50%;
     }
     .escalacao-campo .vis-pitch-horizontal .pl-box-top {
-      left: 0; right: auto; top: 16%; bottom: 16%; width: 15%; height: auto;
+      left: 0; right: auto; top: 18%; bottom: 18%; width: 16%; height: auto;
       margin: 0; border-top: 0; border-left: 0;
     }
     .escalacao-campo .vis-pitch-horizontal .pl-box-bottom {
-      left: auto; right: 0; top: 16%; bottom: 16%; width: 15%; height: auto;
+      left: auto; right: 0; top: 18%; bottom: 18%; width: 16%; height: auto;
       margin: 0; border-bottom: 0; border-right: 0;
     }
     .escalacao-campo .vis-pitch-horizontal .pl-goal-top {
-      left: 0; right: auto; top: 30%; bottom: 30%; width: 6.5%; height: auto;
+      left: 0; right: auto; top: 32%; bottom: 32%; width: 7%; height: auto;
       margin: 0; border-top: 0; border-left: 0;
     }
     .escalacao-campo .vis-pitch-horizontal .pl-goal-bottom {
-      left: auto; right: 0; top: 30%; bottom: 30%; width: 6.5%; height: auto;
+      left: auto; right: 0; top: 32%; bottom: 32%; width: 7%; height: auto;
       margin: 0; border-bottom: 0; border-right: 0;
     }
-    .escalacao-campo .vis-pitch-players { inset: 0 5%; }
-    .escalacao-campo .vis-chip { width: 26mm; }
-    .escalacao-campo .vis-photo-wrap { width: 13mm; height: 17mm; }
-    .escalacao-campo .vis-photo { width: 13mm; height: 17mm; }
-    .escalacao-campo .vis-nick { font-size: 7.5pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
-    .escalacao-campo .vis-pos { font-size: 7pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
-    .escalacao-campo .vis-birth { font-size: 6.5pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
+    .escalacao-campo .vis-pitch-players { inset: 0 4%; }
+    .escalacao-campo .vis-chip { width: 22mm; }
+    .escalacao-campo .vis-photo-wrap { width: 14mm; height: 18mm; }
+    .escalacao-campo .vis-photo { width: 14mm; height: 18mm; }
+    .escalacao-campo .vis-cap {
+      margin-left: 0.4mm;
+      font-size: 6pt;
+      font-weight: 900;
+      color: #fde68a;
+    }
+    .escalacao-campo .vis-nick { font-size: 7pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
+    .escalacao-campo .vis-pos { font-size: 6.5pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
+    .escalacao-campo .vis-birth { font-size: 6pt; text-shadow: 0 0 3px #000, 0 1px 3px rgba(0,0,0,.95); }
     .escalacao-campo .vis-num { min-width: 5mm; height: 5mm; font-size: 7pt; }
+    .escalacao-campo .vis-staff-side {
+      max-height: 146mm;
+      overflow: hidden;
+    }
     .escalacao-campo .vis-bench {
-      flex: 0 0 82mm;
-      max-height: 156mm;
+      flex: 0 0 auto;
+      max-height: 38mm;
+      width: 100%;
       padding: 2mm;
       display: flex;
       flex-direction: column;
@@ -1451,10 +1529,12 @@ export function buildEscalacaoCampoPrintHtml(
   const opponent = travel.opponentName?.trim() || "Adversário";
   const foot = (label: string) => pageFoot(club, opponent, label);
   const inner = buildEscalacaoVisualInner(data, playerCutouts, {
-    includeStaff: false,
+    includeStaff: true,
+    includeReferees: true,
     includeBench: true,
     horizontalPitch: true,
     sideBySide: true,
+    campogramaMode: true,
     minimalChrome: true,
   });
   const matchDateLabel = travel.matchDate

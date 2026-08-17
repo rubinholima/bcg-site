@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, FileText } from "lucide-react";
+import { CalendarRange, ChevronRight, ClipboardList, FileText, Hotel, Newspaper, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RelatorioFutebolDeptShell } from "@/components/dashboard/futebol/relatorios/RelatorioFutebolDeptShell";
 
@@ -15,6 +15,21 @@ const REPORT_OPTIONS = [
     href: "/dashboard/relatorios/futebol/cartoes-suspensao",
     title: "Cartões e Suspensão",
     icon: FileText,
+  },
+  {
+    href: "/dashboard/relatorios/futebol/press-kit",
+    title: "Press Kit / Imprensa",
+    icon: Newspaper,
+  },
+  {
+    href: "/dashboard/relatorios/futebol/programacao-semanal",
+    title: "Programação semanal",
+    icon: CalendarRange,
+  },
+  {
+    href: "/dashboard/relatorios/futebol/relatorios-equipe",
+    title: "Relatório da equipe",
+    icon: ClipboardList,
   },
 ] as const;
 

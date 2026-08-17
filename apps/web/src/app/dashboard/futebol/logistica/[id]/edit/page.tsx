@@ -422,7 +422,7 @@ export default function EditLogisticaPage() {
             </Link>
           </Button>
           <Button type="button" variant="outline" asChild>
-            <Link href={`/dashboard/futebol/logistica/relatorios/press-kit?travelId=${id}&tenantId=${item.tenantId}`}>
+            <Link href={`/dashboard/relatorios/futebol/press-kit?travelId=${id}&tenantId=${item.tenantId}`}>
               <Newspaper className="mr-2 h-4 w-4" />
               Press Kit
             </Link>

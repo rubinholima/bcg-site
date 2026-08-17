@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Eye, Loader2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,13 +31,14 @@ import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { PageSizeSelect, useFutebolRelatorioTenants } from "./futebol-relatorio-shared";
 
 export function FutebolRelatorioCartoesSuspensaoForm() {
+  const searchParams = useSearchParams();
   const { tenants } = useFutebolRelatorioTenants();
   const { categories: allFixtureCategories } = useFixtureCategories();
   const currentYear = new Date().getFullYear();
 
-  const [tenantId, setTenantId] = useState("");
+  const [tenantId, setTenantId] = useState(searchParams.get("tenantId") ?? "");
   const [season, setSeason] = useState(String(currentYear));
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "");
   const [phase, setPhase] = useState("auto");
   const [phaseOptions, setPhaseOptions] = useState<string[]>([]);
   const [currentPhase, setCurrentPhase] = useState<string | null>(null);

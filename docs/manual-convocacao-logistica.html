@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Manual — Convocação e Logística de Jogos | Boston City Group</title>
+  <style>
+    @page { size: A4; margin: 16mm 14mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      line-height: 1.45;
+      font-size: 11pt;
+    }
+    .cover {
+      min-height: 240mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px;
+      border: 2px solid #00205B;
+      border-radius: 16px;
+      background: linear-gradient(160deg, #E8EEF7 0%, #ffffff 45%, #FCE8EC 100%);
+      page-break-after: always;
+    }
+    .badge {
+      display: inline-block;
+      background: #C8102E;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-size: 28pt;
+      line-height: 1.15;
+      color: #00205B;
+      margin: 0 0 12px;
+    }
+    .subtitle { font-size: 13pt; color: #334155; margin: 0 0 28px; max-width: 520px; }
+    .meta { font-size: 10pt; color: #64748b; }
+    .meta strong { color: #00205B; }
+    h2 {
+      color: #C8102E;
+      font-size: 15pt;
+      margin: 0 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #C8102E;
+      page-break-after: avoid;
+    }
+    h3 {
+      color: #00205B;
+      font-size: 12pt;
+      margin: 16px 0 6px;
+      page-break-after: avoid;
+    }
+    p, li { margin: 0 0 8px; }
+    ul, ol { margin: 0 0 12px; padding-left: 20px; }
+    .section { margin-bottom: 18px; page-break-inside: avoid; }
+    .card {
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #00205B;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      margin: 10px 0 14px;
+    }
+    .card.warn {
+      border-left-color: #C8102E;
+      background: #fff7f8;
+    }
+    .card.ok {
+      border-left-color: #15803d;
+      background: #f0fdf4;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 10px;
+      margin: 10px 0;
+      page-break-inside: avoid;
+    }
+    .n {
+      width: 32px; height: 32px; border-radius: 999px;
+      background: #00205B; color: #fff;
+      font-weight: 800; font-size: 12pt;
+      display: flex; align-items: center; justify-content: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px;
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 7px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #00205B; color: #fff; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .path {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 9.5pt;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .footer {
+      margin-top: 24px;
+      padding-top: 10px;
+      border-top: 1px solid #cbd5e1;
+      font-size: 9pt;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+    }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media print {
+      .cover { min-height: auto; height: 250mm; }
+    }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <div class="badge">Departamento de Futebol · Logística</div>
+    <h1>Manual prático<br/>Convocação de jogos</h1>
+    <p class="subtitle">
+      Como marcar atletas e comissão, completar o planejamento (casa ou fora)
+      e gerar Layout Relacionados, Press Kit e demais relatórios no sistema BCG.
+    </p>
+    <p class="meta">
+      <strong>Boston City Group</strong><br/>
+      Sistema: bostoncitygroup.biz<br/>
+      Atualizado: agosto 2026
+    </p>
+  </section>
+
+  <section class="section">
+    <h2>1. O que é a Convocação</h2>
+    <p>
+      A <strong>Convocação</strong> é a lista oficial de quem vai ao jogo:
+      atletas, comissão técnica e (em jogos fora) pessoas autorizadas.
+    </p>
+    <div class="card">
+      <strong>Onde abrir:</strong>
+      menu lateral → <strong>Futebol</strong> → <strong>Logística</strong> → <strong>Convocação</strong><br/>
+      Caminho: <span class="path">/dashboard/futebol/logistica/convocacao</span>
+    </div>
+    <p>Depois de salvar a convocação, o sistema usa essa lista para:</p>
+    <ul>
+      <li><strong>Layout Relacionados</strong> — convocados + uniformes + programação</li>
+      <li><strong>Press Kit / Relatório de Imprensa</strong> — gramado visual, suplentes, arbitragem</li>
+      <li><strong>Passageiros</strong> e <strong>Hóspedes</strong> — só em jogos <em>fora</em></li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>2. Passo a passo — Convocar</h2>
+
+    <div class="step">
+      <div class="n">1</div>
+      <div>
+        <h3 style="margin-top:0">Entre no sistema</h3>
+        <p>Acesse <strong>bostoncitygroup.biz</strong>, faça login e abra
+        <strong>Futebol → Logística → Convocação</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">2</div>
+      <div>
+        <h3 style="margin-top:0">Escolha o clube</h3>
+        <p>Selecione o clube (ex.: Boston City FC – Brasil).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">3</div>
+      <div>
+        <h3 style="margin-top:0">Escolha o jogo</h3>
+        <p>Há duas formas:</p>
+        <ul>
+          <li><strong>Jogo da agenda</strong> — escolha o confronto na lista da agenda.
+            Se ainda não existir planejamento, o sistema cria um mínimo automaticamente.</li>
+          <li><strong>Registro existente</strong> — selecione um planejamento já criado
+            (opcional: filtre “Só com convocação”).</li>
+        </ul>
+        <div class="card ok">
+          A lista mostra jogos a partir de <strong>hoje</strong>. Veja se está
+          marcado <strong>Casa</strong> ou <strong>Fora</strong> — isso muda o que aparece depois.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">4</div>
+      <div>
+        <h3 style="margin-top:0">Marque os atletas</h3>
+        <ul>
+          <li>Use o filtro de <strong>categoria</strong> e a busca por nome/camisa.</li>
+          <li>Marque os atletas convocados (checkboxes).</li>
+          <li>Confira o contador no topo (ex.: “18 atleta(s)”).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">5</div>
+      <div>
+        <h3 style="margin-top:0">Marque a comissão técnica</h3>
+        <p>Selecione técnico, auxiliares, preparadores, massagista etc.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">6</div>
+      <div>
+        <h3 style="margin-top:0">Pessoas autorizadas (só fora)</h3>
+        <p>
+          Em jogo <strong>fora</strong>, você pode incluir pessoas autorizadas
+          (cadastradas em Logística → Cadastros → Pessoas autorizadas).
+        </p>
+        <div class="card warn">
+          Em jogo <strong>em casa</strong> essa seção não aparece — e não há relatório de passageiros.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="n">7</div>
+      <div>
+        <h3 style="margin-top:0">Salvar convocação</h3>
+        <p>Clique em <strong>Salvar convocação</strong>. Aguarde a confirmação
+        “Convocação salva / registrada”.</p>
+        <p>Se precisar alterar, marque/desmarque e salve de novo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>3. Casa × Fora — o que muda</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Jogo em casa</th>
+          <th>Jogo fora (viagem)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Atletas + comissão</td>
+          <td>Sim</td>
+          <td>Sim</td>
+        </tr>
+        <tr>
+          <td>Pessoas autorizadas</td>
+          <td>Não</td>
+          <td>Sim</td>
+        </tr>
+        <tr>
+          <td>Planejamento</td>
+          <td>Agenda do jogo + uniformes de jogo</td>
+          <td>Ônibus, ida/volta, hotel, quartos, uniformes viagem</td>
+        </tr>
+        <tr>
+          <td>Relatório Passageiros / Hóspedes</td>
+          <td>Não</td>
+          <td>Sim</td>
+        </tr>
+        <tr>
+          <td>Layout Relacionados</td>
+          <td>Sim (programação do jogo)</td>
+          <td>Sim (programação da viagem)</td>
+        </tr>
+        <tr>
+          <td>Press Kit / Imprensa</td>
+          <td>Sim</td>
+          <td>Sim</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>4. Completar o planejamento</h2>
+    <p>
+      Depois de convocar, abra o planejamento:
+      <strong>Editar planejamento</strong> (casa) ou <strong>Editar viagem</strong> (fora).
+    </p>
+    <div class="two">
+      <div class="card">
+        <strong>Em casa</strong>
+        <ul>
+          <li>Agenda do jogo (horários e atividades)</li>
+          <li>Uniformes de jogo (atletas e comissão)</li>
+          <li>Checklist na tela de edição</li>
+        </ul>
+      </div>
+      <div class="card">
+        <strong>Fora</strong>
+        <ul>
+          <li>Transporte / tipo de ônibus</li>
+          <li>Programação de ida e volta</li>
+          <li>Hotel, check-in/out e quartos</li>
+          <li>Uniformes de jogo e de viagem</li>
+        </ul>
+      </div>
+    </div>
+    <p>Clique em <strong>Salvar</strong> no topo da tela de edição.</p>
+  </section>
+
+  <section class="section">
+    <h2>5. Relatórios (imprimir / PDF)</h2>
+    <p>Menu: <strong>Logística → Relatórios</strong> — ou pelos botões na edição do planejamento.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Relatório</th>
+          <th>Para quê</th>
+          <th>Quando usar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Layout Relacionados</strong></td>
+          <td>Lista de convocados, uniformes e programação em um documento</td>
+          <td>Sempre — casa ou fora</td>
+        </tr>
+        <tr>
+          <td><strong>Press Kit / Relatório Imprensa</strong></td>
+          <td>Gramado visual (titulares), suplentes, arbitragem, comissão, diretoria</td>
+          <td>Entregar à imprensa / staff do jogo</td>
+        </tr>
+        <tr>
+          <td><strong>Passageiros</strong></td>
+          <td>Quem viaja (documentos)</td>
+          <td>Só fora</td>
+        </tr>
+        <tr>
+          <td><strong>Hóspedes</strong></td>
+          <td>Quartos e ocupantes</td>
+          <td>Só fora (com hotel/quartos preenchidos)</td>
+        </tr>
+        <tr>
+          <td><strong>Programação semanal</strong></td>
+          <td>Agenda da semana por categoria</td>
+          <td>Planejamento semanal</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Como imprimir qualquer relatório</h3>
+    <ol>
+      <li>Escolha o clube e o jogo</li>
+      <li>Clique em <strong>Visualizar</strong> para conferir</li>
+      <li>Clique em <strong>Imprimir / PDF</strong> (salvar como PDF no navegador, se quiser)</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>6. Press Kit — colocar jogadores no gramado</h2>
+    <ol>
+      <li>Abra <strong>Relatórios → Press Kit / Relatório Imprensa</strong></li>
+      <li>Selecione o jogo (precisa ter convocação salva)</li>
+      <li>Marque até <strong>11 titulares</strong> e use as setas para ordenar (formação visual 4-3-3)</li>
+      <li>Preencha fase/rodada, horário, arbitragem e diretoria</li>
+      <li><strong>Salvar press kit</strong> → <strong>Imprimir / PDF</strong></li>
+    </ol>
+    <div class="card warn">
+      O gramado do Press Kit é <strong>visual para imprensa</strong>.
+      O próprio documento avisa: não representa o esquema tático nem o posicionamento real em campo.
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>7. Checklist rápido do dia do jogo</h2>
+    <ol>
+      <li>☐ Convocação salva (atletas + comissão)</li>
+      <li>☐ Planejamento preenchido (agenda em casa <em>ou</em> viagem fora)</li>
+      <li>☐ Uniformes definidos</li>
+      <li>☐ Layout Relacionados impresso / PDF</li>
+      <li>☐ Press Kit preenchido e impresso (se for usar imprensa)</li>
+      <li>☐ Fora: Passageiros e Hóspedes conferidos</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>8. Dúvidas frequentes</h2>
+    <h3>Não acho o jogo na lista</h3>
+    <p>Confirme o clube, a data (só a partir de hoje) e se o jogo está na Agenda Futebol.
+    Você também pode abrir um registro já criado em “registro existente”.</p>
+
+    <h3>Salvei a convocação e sumiu alguém</h3>
+    <p>Abra de novo o mesmo jogo — a seleção volta do que foi salvo.
+    Se alguém não aparece na lista para marcar, confira o cadastro do atleta/comissão e a categoria.</p>
+
+    <h3>Em casa aparece “Editar viagem”?</h3>
+    <p>Não deveria. Em casa o texto é <strong>Editar planejamento</strong>.
+    Em fora continua <strong>Editar viagem</strong>.</p>
+
+    <h3>Preciso de login / permissão</h3>
+    <p>É necessário usuário com acesso ao módulo de Logística / Futebol.
+    Se o menu não aparecer, peça liberação ao administrador do sistema.</p>
+  </section>
+
+  <div class="footer">
+    <span>Boston City Group · Manual interno — Convocação e Logística</span>
+    <span>Agosto 2026</span>
+  </div>
+</body>
+</html>

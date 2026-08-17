@@ -53,7 +53,7 @@ import {
   printGuiaPartidaReport,
 } from "@/lib/guia-partida-print";
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
-import { getStaffRoleLabel } from "@/lib/staff-roles";
+import { getStaffRoleLabel, normalizeStaffRoleSlug, STAFF_ROLES } from "@/lib/staff-roles";
 import { getFormation, PRESS_KIT_FORMATIONS, pitchChipTranslateY } from "@/lib/press-kit-formations";
 import {
   assignStartersByCadastroPosition,
@@ -109,6 +109,15 @@ function staffRhCargo(s: StaffDirectoryRow): string {
   // role antigo (slug) ou já nome do cargo RH
   if (raw.includes(" ") || /[A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(raw)) return raw;
   return getStaffRoleLabel(raw);
+}
+
+function resolveStaffRoleSlug(
+  staffId: string | null | undefined,
+  role: string | null | undefined,
+  overrides: Record<string, string>,
+): string {
+  if (staffId && overrides[staffId]) return overrides[staffId];
+  return normalizeStaffRoleSlug(role);
 }
 
 function padStarterSlots(ids: string[] | undefined): string[] {
@@ -284,6 +293,8 @@ export function FutebolRelatorioPressKitForm() {
   const [starterPlayerIds, setStarterPlayerIds] = useState<string[]>(() => padStarterSlots([]));
   const [formation, setFormation] = useState("4-3-3");
   const [jerseyOverrides, setJerseyOverrides] = useState<Record<string, number | null>>({});
+  const [captainPlayerId, setCaptainPlayerId] = useState("");
+  const [staffRoleOverrides, setStaffRoleOverrides] = useState<Record<string, string>>({});
   const [dragPlayerId, setDragPlayerId] = useState<string | null>(null);
   const [staffDirectory, setStaffDirectory] = useState<StaffDirectoryRow[]>([]);
   const [refereeDirectory, setRefereeDirectory] = useState<MatchReferee[]>([]);
@@ -390,6 +401,8 @@ export function FutebolRelatorioPressKitForm() {
         setStarterPlayerIds(starters);
         setFormation(data.config.formation?.trim() || "4-3-3");
         setJerseyOverrides(seeded);
+        setCaptainPlayerId(data.config.captainPlayerId ?? "");
+        setStaffRoleOverrides(data.config.staffRoleOverrides ?? {});
         setSavedSnapshot(
           JSON.stringify({
             phase: data.config.phase ?? "",
@@ -404,6 +417,8 @@ export function FutebolRelatorioPressKitForm() {
             starterPlayerIds: starters,
             formation: data.config.formation?.trim() || "4-3-3",
             jerseyOverrides: seeded,
+            captainPlayerId: data.config.captainPlayerId ?? "",
+            staffRoleOverrides: data.config.staffRoleOverrides ?? {},
           }),
         );
       })
@@ -433,6 +448,8 @@ export function FutebolRelatorioPressKitForm() {
     referees,
     directors,
     starterPlayerIds: padStarterSlots(starterPlayerIds),
+    captainPlayerId: captainPlayerId.trim() || null,
+    staffRoleOverrides,
     formation,
     jerseyOverrides,
     contactLine: contactLine.trim() || null,
@@ -450,6 +467,8 @@ export function FutebolRelatorioPressKitForm() {
         starterPlayerIds: padStarterSlots(starterPlayerIds),
         formation,
         jerseyOverrides,
+        captainPlayerId,
+        staffRoleOverrides,
       }),
     [
       phase,
@@ -460,6 +479,8 @@ export function FutebolRelatorioPressKitForm() {
       starterPlayerIds,
       formation,
       jerseyOverrides,
+      captainPlayerId,
+      staffRoleOverrides,
     ],
   );
   const isDirty = Boolean(savedSnapshot) && currentSnapshot !== savedSnapshot;
@@ -506,6 +527,11 @@ export function FutebolRelatorioPressKitForm() {
     return {
       ...base,
       athletes,
+      staff: base.staff.map((s) => {
+        if (!s.staffId) return s;
+        const role = cfg.staffRoleOverrides[s.staffId];
+        return role ? { ...s, role } : s;
+      }),
       config: { ...cfg, jerseyOverrides: seeded },
       starters,
       substitutes,
@@ -540,6 +566,8 @@ export function FutebolRelatorioPressKitForm() {
       setStarterPlayerIds(starters);
       setFormation(data.config.formation?.trim() || "4-3-3");
       setJerseyOverrides(nextJerseys);
+      setCaptainPlayerId(data.config.captainPlayerId ?? "");
+      setStaffRoleOverrides(data.config.staffRoleOverrides ?? {});
       setSavedSnapshot(
         JSON.stringify({
           phase: data.config.phase ?? "",
@@ -550,6 +578,8 @@ export function FutebolRelatorioPressKitForm() {
           starterPlayerIds: starters,
           formation: data.config.formation?.trim() || "4-3-3",
           jerseyOverrides: nextJerseys,
+          captainPlayerId: data.config.captainPlayerId ?? "",
+          staffRoleOverrides: data.config.staffRoleOverrides ?? {},
         }),
       );
     };
@@ -807,15 +837,22 @@ export function FutebolRelatorioPressKitForm() {
   const formationDef = getFormation(formation);
   const filledStarters = starterPlayerIds.filter(Boolean).length;
   const reserves = athletes.filter((a) => a.playerId && !starterSet.has(a.playerId));
-  const categoryCoach =
-    (reportData?.staff ?? []).find((s) => isHeadCoachRole(s.role)) ?? null;
   const commissionStaff = useMemo(() => {
     return [...(reportData?.staff ?? [])].sort((a, b) => {
-      const d = staffDisplayRank(a.role) - staffDisplayRank(b.role);
+      const d =
+        staffDisplayRank(resolveStaffRoleSlug(a.staffId, a.role, staffRoleOverrides)) -
+        staffDisplayRank(resolveStaffRoleSlug(b.staffId, b.role, staffRoleOverrides));
       if (d !== 0) return d;
       return a.name.localeCompare(b.name, "pt-BR");
     });
-  }, [reportData?.staff]);
+  }, [reportData?.staff, staffRoleOverrides]);
+  const categoryCoach = useMemo(
+    () =>
+      commissionStaff.find(
+        (s) => resolveStaffRoleSlug(s.staffId, s.role, staffRoleOverrides) === "tecnico",
+      ) ?? null,
+    [commissionStaff, staffRoleOverrides],
+  );
   const directorPeople = useMemo(() => {
     const byId = new Map<string, StaffDirectoryRow>();
     for (const s of staffDirectory) {
@@ -1098,6 +1135,27 @@ export function FutebolRelatorioPressKitForm() {
                   </div>
                   <div className="flex flex-wrap items-end gap-2">
                     <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Capitão</Label>
+                      <NativeSelect
+                        className="min-h-[44px] min-w-[160px]"
+                        value={captainPlayerId}
+                        onChange={(e) => setCaptainPlayerId(e.target.value)}
+                      >
+                        <option value="">Selecione…</option>
+                        {starterPlayerIds
+                          .filter(Boolean)
+                          .map((id) => athletes.find((a) => a.playerId === id))
+                          .filter((a): a is NonNullable<typeof a> => !!a)
+                          .map((a) => (
+                            <option key={a.playerId!} value={a.playerId!}>
+                              #
+                              {provisionalJerseyValue(a, jerseyOverrides, starterPlayerIds.indexOf(a.playerId!) + 1)}{" "}
+                              {firstLastName(a.name)}
+                            </option>
+                          ))}
+                      </NativeSelect>
+                    </div>
+                    <div className="space-y-1">
                       <Label className="text-xs text-muted-foreground">Esquema tático</Label>
                       <NativeSelect
                         className="min-h-[44px] min-w-[140px]"
@@ -1147,9 +1205,23 @@ export function FutebolRelatorioPressKitForm() {
                               <p className="text-xs font-semibold uppercase leading-snug break-words">
                                 {firstLastName(s.name)}
                               </p>
-                              <p className="text-[10px] leading-snug text-muted-foreground break-words">
-                                {s.role ? getStaffRoleLabel(s.role) : "Comissão"}
-                              </p>
+                              <NativeSelect
+                                className="mt-1 min-h-[36px] text-[10px]"
+                                value={resolveStaffRoleSlug(s.staffId, s.role, staffRoleOverrides)}
+                                onChange={(e) => {
+                                  if (!s.staffId) return;
+                                  setStaffRoleOverrides((prev) => ({
+                                    ...prev,
+                                    [s.staffId!]: e.target.value,
+                                  }));
+                                }}
+                              >
+                                {STAFF_ROLES.map((r) => (
+                                  <option key={r.value} value={r.value}>
+                                    {r.label}
+                                  </option>
+                                ))}
+                              </NativeSelect>
                             </div>
                           </li>
                         ))}
@@ -1223,6 +1295,9 @@ export function FutebolRelatorioPressKitForm() {
                                     jerseyOverrides,
                                     slotIndex + 1,
                                   ) || "—"}
+                                  {captainPlayerId === athlete.playerId ? (
+                                    <span className="ml-0.5 text-[10px] text-amber-200">C</span>
+                                  ) : null}
                                 </span>
                                 <button
                                   type="button"

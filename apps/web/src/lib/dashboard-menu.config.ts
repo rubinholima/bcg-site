@@ -92,7 +92,7 @@ export const ACCESS_GROUP_LABELS: Record<string, string> = {
   fornecedores: "Fornecedores (cadastro único)",
 };
 
-/** Relatórios Futebol — agora em Logística (mantido para redirects/atalhos). */
+/** Relatórios de logística (passageiros, hóspedes, layout). Press kit e programação ficam em Relatórios do Depto Futebol. */
 export function hubRelatorioFutebol(): MenuItemConfig {
   const slug = "futebol_logistica";
   return {
@@ -110,13 +110,6 @@ export function hubRelatorioFutebol(): MenuItemConfig {
         moduleSlug: slug,
       },
       {
-        slug: "rel_futebol_press_kit",
-        label: "Press Kit / Imprensa",
-        href: "/dashboard/futebol/logistica/relatorios/press-kit",
-        icon: Newspaper,
-        moduleSlug: slug,
-      },
-      {
         slug: "rel_futebol_passageiros",
         label: "Passageiros",
         href: "/dashboard/futebol/logistica/relatorios/passageiros",
@@ -128,13 +121,6 @@ export function hubRelatorioFutebol(): MenuItemConfig {
         label: "Hóspedes",
         href: "/dashboard/futebol/logistica/relatorios/hospedes",
         icon: Hotel,
-        moduleSlug: slug,
-      },
-      {
-        slug: "rel_futebol_programacao",
-        label: "Programação semanal",
-        href: "/dashboard/futebol/logistica/relatorios/programacao-semanal",
-        icon: CalendarRange,
         moduleSlug: slug,
       },
     ],
@@ -585,13 +571,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
                 moduleSlug: "futebol_logistica",
               },
               {
-                slug: "futebol_logistica_rel_press_kit",
-                label: "Press Kit / Imprensa",
-                href: "/dashboard/futebol/logistica/relatorios/press-kit",
-                icon: Newspaper,
-                moduleSlug: "futebol_logistica",
-              },
-              {
                 slug: "futebol_logistica_rel_passageiros",
                 label: "Passageiros",
                 href: "/dashboard/futebol/logistica/relatorios/passageiros",
@@ -603,13 +582,6 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
                 label: "Hóspedes",
                 href: "/dashboard/futebol/logistica/relatorios/hospedes",
                 icon: Hotel,
-                moduleSlug: "futebol_logistica",
-              },
-              {
-                slug: "futebol_logistica_rel_programacao",
-                label: "Programação semanal",
-                href: "/dashboard/futebol/logistica/relatorios/programacao-semanal",
-                icon: CalendarRange,
                 moduleSlug: "futebol_logistica",
               },
             ],
@@ -735,6 +707,27 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Cartões e Suspensão",
             href: "/dashboard/relatorios/futebol/cartoes-suspensao",
             icon: FileText,
+            moduleSlug: "relatorios_futebol",
+          },
+          {
+            slug: "futebol_rel_press_kit",
+            label: "Press Kit / Imprensa",
+            href: "/dashboard/relatorios/futebol/press-kit",
+            icon: Newspaper,
+            moduleSlug: "relatorios_futebol",
+          },
+          {
+            slug: "futebol_rel_programacao",
+            label: "Programação semanal",
+            href: "/dashboard/relatorios/futebol/programacao-semanal",
+            icon: CalendarRange,
+            moduleSlug: "relatorios_futebol",
+          },
+          {
+            slug: "futebol_rel_equipe",
+            label: "Relatório da equipe",
+            href: "/dashboard/relatorios/futebol/relatorios-equipe",
+            icon: ClipboardList,
             moduleSlug: "relatorios_futebol",
           },
         ],

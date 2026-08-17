@@ -5,11 +5,15 @@ export type PlayerMatchAvailabilityInput = {
   statusDetails?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
+  cbfRegistration?: string | null;
+  documentationApprovedAt?: string | null;
 };
+
+export type PlayerMatchAvailabilityLabel = 'Apto' | 'No BID' | 'Não apto';
 
 export type PlayerMatchAvailability = {
   apto: boolean;
-  label: 'Apto' | 'Não apto';
+  label: PlayerMatchAvailabilityLabel;
   shortReason: string | null;
 };
 
@@ -21,6 +25,10 @@ const STATUS_LABELS: Record<string, string> = {
   on_bench: 'No banco',
   not_in_squad: 'Fora do elenco',
 };
+
+function noBid(shortReason: string): PlayerMatchAvailability {
+  return { apto: false, label: 'No BID', shortReason };
+}
 
 export function getPlayerMatchAvailability(
   input: PlayerMatchAvailabilityInput,
@@ -46,9 +54,20 @@ export function getPlayerMatchAvailability(
   if (status === 'absent') {
     return { apto: false, label: 'Não apto', shortReason: details || 'Ausente' };
   }
+
+  const docApproved = Boolean(input.documentationApprovedAt?.trim());
+  const cbf = input.cbfRegistration?.trim();
+
   if (status === 'available' || status === 'on_bench') {
+    if (!docApproved) {
+      return noBid('Documentação pendente');
+    }
+    if (!cbf) {
+      return noBid('Aguardando registro no BID');
+    }
     return { apto: true, label: 'Apto', shortReason: null };
   }
+
   const lbl = STATUS_LABELS[status] ?? status;
   return { apto: false, label: 'Não apto', shortReason: lbl };
 }
@@ -58,11 +77,20 @@ export function buildPlayerMatchAvailabilityInput(player: {
   statusDetails?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
+  registrationProfile?: unknown;
 }): PlayerMatchAvailabilityInput {
+  const profile =
+    player.registrationProfile && typeof player.registrationProfile === 'object'
+      ? (player.registrationProfile as {
+          sports?: { cbf?: string; documentationApprovedAt?: string };
+        })
+      : null;
   return {
     status: player.status,
     statusDetails: player.statusDetails,
     yellowCards: player.yellowCards,
     redCards: player.redCards,
+    cbfRegistration: profile?.sports?.cbf,
+    documentationApprovedAt: profile?.sports?.documentationApprovedAt,
   };
 }

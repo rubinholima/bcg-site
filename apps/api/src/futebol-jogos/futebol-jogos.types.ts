@@ -71,6 +71,17 @@ export type FutebolGameCoachReport = {
   }>;
 };
 
+export type FutebolMatchStatOverrideDto = {
+  goalsFor: number | null;
+  goalsAgainst: number | null;
+  yellowCards: number | null;
+  redCards: number | null;
+  possessionPct: number | null;
+  setPiecesFor: number | null;
+  setPiecesAgainst: number | null;
+  notes: string | null;
+};
+
 export type FutebolGameDetailDto = {
   tenant: { id: string; name: string; slug: string };
   game: FutebolGameListItem & CoachCompletedGame;
@@ -81,6 +92,7 @@ export type FutebolGameDetailDto = {
   totalMinutes: number | null;
   occurrencesText: string | null;
   statOverrideNotes: string | null;
+  matchStatOverride: FutebolMatchStatOverrideDto | null;
   coachReport: FutebolGameCoachReport | null;
   sumulaMatch: SumulaCartoesMatchDto | null;
   disciplineForMatch: Array<{

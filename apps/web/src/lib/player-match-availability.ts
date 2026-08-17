@@ -6,25 +6,37 @@ export type PlayerMatchAvailabilityInput = {
   statusUntil?: string | null;
   yellowCards?: number | null;
   redCards?: number | null;
-  /** Registro CBF — apenas informativo; aptidão segue o campo status do atleta. */
+  /** Registro CBF / BID no cadastro esportivo. */
   cbfRegistration?: string | null;
-  /** Quando true, exibe aviso de CBF/BID pendente mesmo estando apto. */
-  bidRegistrationPending?: boolean;
+  /** ISO — documentação confirmada pelo RH (ou fluxo de convite aprovado). */
+  documentationApprovedAt?: string | null;
 };
 
+export type PlayerMatchAvailabilityLabel = "Apto" | "No BID" | "Não apto";
+
 export type PlayerMatchAvailability = {
+  /** false = não convocável (inclui No BID). */
   apto: boolean;
-  label: "Apto" | "Não apto";
-  /** Motivo completo quando não apto. */
+  label: PlayerMatchAvailabilityLabel;
+  /** Motivo completo quando não apto ou No BID. */
   reason: string | null;
   /** Versão curta para cabeçalho / lista. */
   shortReason: string | null;
-  /** Aviso opcional (ex.: CBF não preenchido) sem bloquear aptidão. */
-  warning: string | null;
+  warning: null;
 };
 
 function statusLabel(value: string): string {
   return STATUS_OPTIONS.find((o) => o.value === value)?.label ?? value;
+}
+
+function noBid(shortReason: string, reason?: string): PlayerMatchAvailability {
+  return {
+    apto: false,
+    label: "No BID",
+    reason: reason ?? shortReason,
+    shortReason,
+    warning: null,
+  };
 }
 
 /** Aptidão para jogo — independente de situação no clube (ativo/desligado/emprestado). */
@@ -82,19 +94,22 @@ export function getPlayerMatchAvailability(
     };
   }
 
+  const docApproved = Boolean(input.documentationApprovedAt?.trim());
   const cbf = input.cbfRegistration?.trim();
-  const bidWarning =
-    input.bidRegistrationPending && !cbf
-      ? "Registro CBF não cadastrado no sistema"
-      : null;
 
   if (status === "on_bench" || status === "available") {
+    if (!docApproved) {
+      return noBid("Documentação pendente", "Documentação pendente de confirmação pelo RH");
+    }
+    if (!cbf) {
+      return noBid("Aguardando registro no BID", "Registro CBF/BID não cadastrado");
+    }
     return {
       apto: true,
       label: "Apto",
       reason: null,
       shortReason: null,
-      warning: bidWarning,
+      warning: null,
     };
   }
 
@@ -118,7 +133,9 @@ export function buildPlayerMatchAvailabilityInput(player: {
 }): PlayerMatchAvailabilityInput {
   const profile =
     player.registrationProfile && typeof player.registrationProfile === "object"
-      ? (player.registrationProfile as { sports?: { cbf?: string } })
+      ? (player.registrationProfile as {
+          sports?: { cbf?: string; documentationApprovedAt?: string };
+        })
       : null;
   return {
     status: player.status,
@@ -127,5 +144,6 @@ export function buildPlayerMatchAvailabilityInput(player: {
     yellowCards: player.yellowCards,
     redCards: player.redCards,
     cbfRegistration: profile?.sports?.cbf,
+    documentationApprovedAt: profile?.sports?.documentationApprovedAt,
   };
 }

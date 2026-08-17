@@ -185,3 +185,53 @@ export const COACH_ATTACHMENT_KINDS = [
   { value: "scout", label: "Scout" },
   { value: "outro", label: "Outro" },
 ] as const;
+
+export const COACH_TEAM_PERIOD_TYPES = [
+  { value: "geral", label: "Geral" },
+  { value: "mensal", label: "Mensal" },
+  { value: "trimestral", label: "Trimestral" },
+] as const;
+
+export type CoachTeamReportPeriod = (typeof COACH_TEAM_PERIOD_TYPES)[number]["value"];
+
+export type CoachTeamReport = {
+  id: string;
+  tenantId: string;
+  category: string | null;
+  periodType: CoachTeamReportPeriod;
+  periodStart: string | null;
+  periodEnd: string | null;
+  generalDescription: string | null;
+  weakPoints: string | null;
+  status: "rascunho" | "enviado";
+  sentAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  playerActions: Array<{
+    id: string;
+    playerId: string;
+    actionType: "dispensa" | "promocao";
+    reason: string | null;
+    player?: {
+      id: string;
+      name: string;
+      jerseyNumber: number | null;
+      category: string | null;
+    };
+  }>;
+};
+
+export type CoachTeamReportSummary = {
+  total: number;
+  enviados: number;
+  rascunhos: number;
+  latestEnviado: {
+    id: string;
+    periodType: string;
+    sentAt: string | null;
+    periodStart: string | null;
+    periodEnd: string | null;
+  } | null;
+  dispensasIndicadas: number;
+  promocoesIndicadas: number;
+};

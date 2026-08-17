@@ -11,6 +11,8 @@ interface RelatorioFutebolDeptShellProps {
   children: ReactNode;
   backHref?: string;
   backLabel?: string;
+  /** Módulos que podem acessar. Padrão: relatorios_futebol */
+  accessModules?: string[];
 }
 
 export function RelatorioFutebolDeptShell({
@@ -18,11 +20,15 @@ export function RelatorioFutebolDeptShell({
   children,
   backHref = "/dashboard/futebol",
   backLabel = "Depto de Futebol",
+  accessModules = ["relatorios_futebol"],
 }: RelatorioFutebolDeptShellProps) {
   const router = useRouter();
-  const { canAccessModule, loading } = useAuth();
+  const { canAccessModule, isCompanyAdmin, isSuperAdmin, loading } = useAuth();
 
-  const canAccess = canAccessModule("relatorios_futebol");
+  const canAccess =
+    isSuperAdmin ||
+    isCompanyAdmin ||
+    accessModules.some((slug) => canAccessModule(slug));
 
   useEffect(() => {
     if (!loading && !canAccess) {

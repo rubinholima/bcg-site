@@ -10,6 +10,16 @@ type PlayerMatchAvailabilityBadgeProps = {
   className?: string;
 };
 
+function badgeClasses(label: PlayerMatchAvailability["label"]): string {
+  if (label === "Apto") {
+    return "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30";
+  }
+  if (label === "No BID") {
+    return "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30";
+  }
+  return "bg-red-500/15 text-red-400 ring-1 ring-red-500/30";
+}
+
 export function PlayerMatchAvailabilityBadge({
   availability,
   showReason = true,
@@ -20,9 +30,7 @@ export function PlayerMatchAvailabilityBadge({
       <span
         className={cn(
           "inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-          availability.apto
-            ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30"
-            : "bg-red-500/15 text-red-400 ring-1 ring-red-500/30",
+          badgeClasses(availability.label),
         )}
       >
         {availability.label}
@@ -30,11 +38,6 @@ export function PlayerMatchAvailabilityBadge({
       {showReason && availability.shortReason ? (
         <p className="mt-1 text-[11px] leading-snug text-muted-foreground line-clamp-2">
           {availability.shortReason}
-        </p>
-      ) : null}
-      {showReason && availability.warning ? (
-        <p className="mt-0.5 text-[11px] leading-snug text-amber-500/90 line-clamp-2">
-          {availability.warning}
         </p>
       ) : null}
     </div>
@@ -53,15 +56,27 @@ const BALL_SIZES = {
   lg: "h-11 w-11 text-lg ring-2",
 } as const;
 
-/** Bola verde (apto) ou vermelha (não apto) — cabeçalho do atleta. */
+function ballClasses(label: PlayerMatchAvailability["label"]): string {
+  if (label === "Apto") return "bg-emerald-500/20 text-emerald-300 ring-emerald-500";
+  if (label === "No BID") return "bg-amber-500/20 text-amber-300 ring-amber-500";
+  return "bg-red-500/20 text-red-300 ring-red-500";
+}
+
+function ballTitle(availability: PlayerMatchAvailability): string {
+  if (availability.label === "Apto") return "Apto para jogo";
+  if (availability.label === "No BID") {
+    return availability.reason ?? "No BID — documentação ou registro pendente";
+  }
+  return availability.reason ?? "Não apto para jogo";
+}
+
+/** Bola verde (apto), âmbar (No BID) ou vermelha (não apto) — cabeçalho do atleta. */
 export function PlayerMatchAvailabilityBall({
   availability,
   size = "md",
   className,
 }: PlayerMatchAvailabilityBallProps) {
-  const title = availability.apto
-    ? "Apto para jogo"
-    : availability.reason ?? "Não apto para jogo";
+  const title = ballTitle(availability);
 
   return (
     <span
@@ -70,9 +85,7 @@ export function PlayerMatchAvailabilityBall({
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full shadow-sm",
         BALL_SIZES[size],
-        availability.apto
-          ? "bg-emerald-500/20 text-emerald-300 ring-emerald-500"
-          : "bg-red-500/20 text-red-300 ring-red-500",
+        ballClasses(availability.label),
         className,
       )}
     >
@@ -86,6 +99,18 @@ type PlayerMatchAvailabilityHeaderProps = {
   className?: string;
 };
 
+function headerTextClasses(label: PlayerMatchAvailability["label"]): string {
+  if (label === "Apto") return "text-emerald-400";
+  if (label === "No BID") return "text-amber-400";
+  return "text-red-400";
+}
+
+function headerTitle(label: PlayerMatchAvailability["label"]): string {
+  if (label === "Apto") return "Apto para jogo";
+  if (label === "No BID") return "No BID";
+  return "Não apto para jogo";
+}
+
 /** Linha compacta ao lado do nome — bola + texto quando não apto. */
 export function PlayerMatchAvailabilityHeader({
   availability,
@@ -98,12 +123,12 @@ export function PlayerMatchAvailabilityHeader({
         <p
           className={cn(
             "text-xs font-semibold uppercase tracking-wide",
-            availability.apto ? "text-emerald-400" : "text-red-400",
+            headerTextClasses(availability.label),
           )}
         >
-          {availability.apto ? "Apto para jogo" : "Não apto para jogo"}
+          {headerTitle(availability.label)}
         </p>
-        {!availability.apto && availability.reason ? (
+        {availability.label !== "Apto" && availability.reason ? (
           <p className="text-xs text-muted-foreground line-clamp-2">{availability.reason}</p>
         ) : null}
       </div>

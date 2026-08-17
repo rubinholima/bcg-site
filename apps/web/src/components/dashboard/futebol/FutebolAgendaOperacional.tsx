@@ -80,6 +80,13 @@ import {
   type AgendaDayPeriod,
 } from "@/lib/travel-itinerary.types";
 import { NativeSelect } from "@/components/ui/native-select";
+import { GameOperateLinks } from "@/components/dashboard/futebol/GameOperateLinks";
+import {
+  FRIENDLY_CHAMPIONSHIP_NAME,
+  buildJogoAgendaTitle,
+  inferIsHomeFromJogoTitle,
+  parseOpponentFromJogoTitle,
+} from "@/lib/friendly-match-utils";
 
 interface Tenant {
   id: string;
@@ -175,6 +182,10 @@ type EntryForm = {
   category: string;
   type: string;
   title: string;
+  opponentName: string;
+  isHomeMatch: boolean;
+  isFriendly: boolean;
+  travelLogisticsId: string;
   startAt: string;
   startTime: string;
   endAt: string;
@@ -194,6 +205,10 @@ const emptyForm = (): EntryForm => ({
   category: "",
   type: "treino",
   title: "",
+  opponentName: "",
+  isHomeMatch: true,
+  isFriendly: true,
+  travelLogisticsId: "",
   startAt: "",
   startTime: "09:00",
   endAt: "",
@@ -290,6 +305,7 @@ export function FutebolAgendaOperacional() {
   const [form, setForm] = useState<EntryForm>(emptyForm);
   const [spaces, setSpaces] = useState<ActivitySpace[]>([]);
   const [saving, setSaving] = useState(false);
+  const [ensuringTravel, setEnsuringTravel] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agendaColors, setAgendaColors] = useState<Record<AgendaColorKey, AgendaColorSwatch>>(
     () => ({ ...DEFAULT_AGENDA_COLORS }),
@@ -369,7 +385,11 @@ export function FutebolAgendaOperacional() {
         api.get<FootballAgendaCalendarItem[]>(`/futebol-agenda/calendar?${params}`),
         api.get<FootballAgendaOverview>(`/futebol-agenda/overview?${overviewParams}`),
       ]);
-      setItems(Array.isArray(calRes.data) ? calRes.data : []);
+      setItems(
+        Array.isArray(calRes.data)
+          ? calRes.data.filter((item) => item.type !== "aniversario")
+          : [],
+      );
       setOverview(ovRes.data ?? null);
     } catch {
       setItems([]);
@@ -554,12 +574,17 @@ export function FutebolAgendaOperacional() {
   const openEditEntry = (entry: FootballAgendaEntry) => {
     const startKey = dateKeyInBrazil(entry.startAt);
     const endKey = entry.endAt ? dateKeyInBrazil(entry.endAt) : startKey;
+    const isJogo = entry.type === "jogo";
     setEditingId(entry.id);
     setForm({
       tenantId: entry.tenantId,
       category: entry.category ?? "",
       type: entry.type,
       title: entry.title,
+      opponentName: isJogo ? parseOpponentFromJogoTitle(entry.title) : "",
+      isHomeMatch: isJogo ? (inferIsHomeFromJogoTitle(entry.title) ?? true) : true,
+      isFriendly: true,
+      travelLogisticsId: entry.travelLogisticsId ?? "",
       startAt: startKey,
       startTime: entry.allDay ? "09:00" : timeInBrazil(entry.startAt),
       endAt: endKey,
@@ -711,9 +736,46 @@ export function FutebolAgendaOperacional() {
     );
   };
 
+  const ensureTravelForFormEntry = async (entryId: string) => {
+    const opponentName = form.opponentName.trim();
+    if (!opponentName) {
+      setError("Informe o adversário para operar o jogo.");
+      return null;
+    }
+    setEnsuringTravel(true);
+    setError(null);
+    try {
+      const { data } = await api.post<{
+        travelId: string;
+        entry: FootballAgendaEntry;
+      }>(`/futebol-agenda/entries/${encodeURIComponent(entryId)}/ensure-travel`, {
+        opponentName,
+        isHomeMatch: form.isHomeMatch,
+        championshipName: form.isFriendly ? FRIENDLY_CHAMPIONSHIP_NAME : undefined,
+      });
+      setForm((f) => ({ ...f, travelLogisticsId: data.travelId }));
+      return data.travelId;
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "response" in e
+          ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
+          : null;
+      if (Array.isArray(msg)) setError(msg.join(", "));
+      else if (typeof msg === "string") setError(msg);
+      else setError("Não foi possível preparar o jogo para convocação.");
+      return null;
+    } finally {
+      setEnsuringTravel(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.tenantId || !form.title.trim() || !form.startAt) {
       setError("Clube, título e data são obrigatórios.");
+      return;
+    }
+    if (form.type === "jogo" && !form.opponentName.trim()) {
+      setError("Informe o adversário do jogo.");
       return;
     }
     setSaving(true);
@@ -739,14 +801,24 @@ export function FutebolAgendaOperacional() {
       status: form.status,
     };
     try {
+      let entryId = editingId;
       if (editingId) {
         await api.patch(`/futebol-agenda/entries/${editingId}`, payload);
       } else {
-        await api.post("/futebol-agenda/entries", payload);
+        const { data } = await api.post<FootballAgendaEntry>("/futebol-agenda/entries", payload);
+        entryId = data.id;
+        setEditingId(data.id);
       }
-      setDialogOpen(false);
+
+      if (form.type === "jogo" && entryId) {
+        await ensureTravelForFormEntry(entryId);
+      }
+
       await load();
       if (form.startAt) setSelectedDay(form.startAt);
+      if (form.type !== "jogo") {
+        setDialogOpen(false);
+      }
     } catch (e: unknown) {
       const msg =
         e && typeof e === "object" && "response" in e
@@ -1188,7 +1260,14 @@ export function FutebolAgendaOperacional() {
                   id="agenda-type"
                   className={modalSelectClassName}
                   value={form.type}
-                  onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
+                  onChange={(e) => {
+                    const type = e.target.value;
+                    setForm((f) => ({
+                      ...f,
+                      type,
+                      isFriendly: type === "jogo" ? true : f.isFriendly,
+                    }));
+                  }}
                 >
                   {FOOTBALL_AGENDA_MANUAL_ENTRY_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -1224,6 +1303,77 @@ export function FutebolAgendaOperacional() {
                 }
               />
             </div>
+            {form.type === "jogo" ? (
+              <div className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-1.5 sm:col-span-2">
+                    <Label htmlFor="agenda-opponent">Adversário *</Label>
+                    <Input
+                      id="agenda-opponent"
+                      value={form.opponentName}
+                      className="uppercase"
+                      onChange={(e) => {
+                        const opponentName = e.target.value.toLocaleUpperCase("pt-BR");
+                        setForm((f) => ({
+                          ...f,
+                          opponentName,
+                          title: opponentName.trim()
+                            ? buildJogoAgendaTitle(opponentName, f.isHomeMatch)
+                            : f.title,
+                        }));
+                      }}
+                    />
+                  </div>
+                  <label className="flex min-h-[44px] items-center gap-2 text-sm sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-border accent-[#C8102E]"
+                      checked={form.isHomeMatch}
+                      onChange={(e) => {
+                        const isHomeMatch = e.target.checked;
+                        setForm((f) => ({
+                          ...f,
+                          isHomeMatch,
+                          title: f.opponentName.trim()
+                            ? buildJogoAgendaTitle(f.opponentName, isHomeMatch)
+                            : f.title,
+                        }));
+                      }}
+                    />
+                    Jogo em casa
+                  </label>
+                  <label className="flex min-h-[44px] items-center gap-2 text-sm sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-border accent-[#C8102E]"
+                      checked={form.isFriendly}
+                      onChange={(e) => setForm((f) => ({ ...f, isFriendly: e.target.checked }))}
+                    />
+                    Amistoso
+                  </label>
+                </div>
+                {form.travelLogisticsId && form.tenantId ? (
+                  <div className="space-y-2 border-t border-zinc-800 pt-3">
+                    <p className="text-xs font-medium text-muted-foreground">Operar jogo</p>
+                    <GameOperateLinks tenantId={form.tenantId} travelId={form.travelLogisticsId} />
+                  </div>
+                ) : editingId ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px] w-full"
+                    disabled={ensuringTravel || saving || !form.opponentName.trim()}
+                    onClick={() => void ensureTravelForFormEntry(editingId)}
+                  >
+                    {ensuringTravel ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Preparar convocação e planejamento"
+                    )}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -1363,7 +1513,7 @@ export function FutebolAgendaOperacional() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} disabled={saving} className="min-h-[44px]">
+            <Button onClick={handleSave} disabled={saving || ensuringTravel} className="min-h-[44px]">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
             </Button>
           </DialogFooter>
