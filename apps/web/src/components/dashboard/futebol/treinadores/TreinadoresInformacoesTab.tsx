@@ -40,6 +40,7 @@ interface Props {
   tenantId: string;
   category?: string;
   loading: boolean;
+  loadError?: string | null;
   context: CoachContextResponse | null;
   onRefresh: () => void;
 }
@@ -48,6 +49,7 @@ export function TreinadoresInformacoesTab({
   tenantId,
   category,
   loading,
+  loadError = null,
   context,
   onRefresh,
 }: Props) {
@@ -62,7 +64,18 @@ export function TreinadoresInformacoesTab({
   }
 
   if (!context) {
-    return <p className="text-sm text-muted-foreground">Selecione um clube para ver as informações.</p>;
+    return (
+      <Card className="border-border/60 bg-card/40">
+        <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+          <p className="max-w-md text-sm text-foreground/90">
+            {loadError ?? "Não foi possível carregar as informações do clube selecionado."}
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={onRefresh}>
+            Tentar novamente
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   const completedGames = context.completedGames ?? [];

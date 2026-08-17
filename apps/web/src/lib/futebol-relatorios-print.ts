@@ -1994,8 +1994,30 @@ function cartoesSuspensaoDisciplineTableStyles(): string {
     .discipline-table { font-size: 8px; }
     .discipline-table th, .discipline-table td { padding: 3px 4px; text-align: center; }
     .discipline-table .left { text-align: left; min-width: 140px; }
-    .discipline-table .round-head { writing-mode: vertical-rl; transform: rotate(180deg); min-width: 22px; max-width: 28px; font-size: 7px; line-height: 1.1; }
-    .discipline-table .next-round-head { background: #EFF6FF; color: #1D4ED8; font-weight: 700; }
+    .discipline-table .round-head {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      min-width: 22px;
+      max-width: 28px;
+      font-size: 7px;
+      line-height: 1.1;
+      padding: 4px 2px;
+      vertical-align: bottom;
+    }
+    .discipline-table .next-round-head {
+      writing-mode: horizontal-tb;
+      transform: none;
+      min-width: 44px;
+      max-width: 64px;
+      white-space: normal;
+      vertical-align: bottom;
+      padding: 4px 3px;
+      background: #EFF6FF;
+      color: #1D4ED8;
+      font-weight: 700;
+      font-size: 7px;
+      line-height: 1.15;
+    }
     .discipline-table .cell-code { font-weight: 700; }
     .discipline-table .cell-next-p { background: #DBEAFE; color: #1D4ED8; }
     .discipline-table .cell-next-s { background: #E5E7EB; color: #374151; }
@@ -2009,7 +2031,7 @@ function cartoesSuspensaoDisciplineTableStyles(): string {
 
 function cartoesSuspensaoNextRoundHeader(data: CartoesSuspensaoReportDto): string {
   const label = data.nextRound?.label?.trim() || "Próx. jogo";
-  return `<th class="round-head next-round-head" title="Próximo jogo">${escapeHtml(label)}</th>`;
+  return `<th class="next-round-head" title="Próximo jogo">${escapeHtml(label)}</th>`;
 }
 
 function cartoesSuspensaoNextRoundCell(code: CartoesSuspensaoReportDto["players"][number]["nextRoundCell"]): string {

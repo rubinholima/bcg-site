@@ -50,6 +50,12 @@ export function TreinadoresFilters() {
     router.push(`${BASE}?${params.toString()}`);
   };
 
+  useEffect(() => {
+    if (tenants.length === 1 && !tenantId) {
+      pushParams({ tenantId: tenants[0]!.id, category: null });
+    }
+  }, [tenants, tenantId, searchParams, router]);
+
   return (
     <Card>
       <CardContent className="pt-6">

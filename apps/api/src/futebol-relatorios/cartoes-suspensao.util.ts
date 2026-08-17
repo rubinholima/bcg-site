@@ -289,6 +289,14 @@ export function buildDisciplineGrid(input: {
       }
 
       cells[roundIndex] = code;
+
+      if (
+        state.stjdRoundsLeft === 0 &&
+        state.suspensionRoundsLeft === 0 &&
+        state.yellowAccum >= 2
+      ) {
+        state.pendurado = true;
+      }
     }
   });
 
@@ -315,8 +323,6 @@ export function buildDisciplineGrid(input: {
         unavailableReason = state.stjdReason ?? 'Suspensão STJD/TDJ';
       } else if (state.suspensionRoundsLeft > 0) {
         unavailableReason = 'Suspensão automática (cartão vermelho ou 3º amarelo)';
-      } else if (state.pendurado) {
-        unavailableReason = 'Pendurado — 2 cartões amarelos acumulados';
       } else if (!cadastroAvail.apto) {
         unavailableReason = cadastroAvail.shortReason;
       }
@@ -325,10 +331,8 @@ export function buildDisciplineGrid(input: {
       const unavailable =
         state.stjdRoundsLeft > 0 ||
         state.suspensionRoundsLeft > 0 ||
-        state.pendurado ||
         lastCell === 'SA' ||
         lastCell === 'ST' ||
-        lastCell === 'P' ||
         !cadastroAvail.apto;
 
       return {
