@@ -165,13 +165,41 @@ export class FutebolTreinadoresService {
       },
     });
 
-    const inTreatment = activePhysio.map((s) => ({
-      playerId: s.playerId,
-      name: getPlayerListDisplayName(s.player),
-      jerseyNumber: s.player.jerseyNumber,
-      reason: s.diagnosisLabel || 'Em tratamento',
-      estimatedEndDate: s.estimatedEndDate?.toISOString() ?? null,
-    }));
+    const activeNursingExempt = await this.prisma.nursingSession.findMany({
+      where: {
+        tenantId,
+        status: 'active',
+        exemptFromTraining: true,
+        ...(catFilter ? { category: catFilter } : {}),
+      },
+      select: {
+        playerId: true,
+        player: { select: { name: true, jerseyNumber: true, registrationProfile: true } },
+        estimatedEndDate: true,
+        sessionDiagnoses: {
+          orderBy: { sortOrder: 'asc' },
+          take: 1,
+          select: { diagnosisLabel: true },
+        },
+      },
+    });
+
+    const inTreatment = [
+      ...activePhysio.map((s) => ({
+        playerId: s.playerId,
+        name: getPlayerListDisplayName(s.player),
+        jerseyNumber: s.player.jerseyNumber,
+        reason: s.diagnosisLabel || 'Em tratamento',
+        estimatedEndDate: s.estimatedEndDate?.toISOString() ?? null,
+      })),
+      ...activeNursingExempt.map((s) => ({
+        playerId: s.playerId,
+        name: getPlayerListDisplayName(s.player),
+        jerseyNumber: s.player.jerseyNumber,
+        reason: s.sessionDiagnoses[0]?.diagnosisLabel || 'Enfermaria',
+        estimatedEndDate: s.estimatedEndDate?.toISOString() ?? null,
+      })),
+    ];
 
     const treatmentIds = new Set(inTreatment.map((t) => t.playerId));
 

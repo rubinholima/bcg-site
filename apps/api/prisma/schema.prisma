@@ -3172,6 +3172,8 @@ model NursingSession {
   nurseName        String?
   estimatedDays    Int?
   estimatedEndDate DateTime?
+  /// true = isento do treino; false = participa; null = não informado
+  exemptFromTraining Boolean?
   treatmentNotes   String?  @db.Text
   /// [{ label, fileUrl, kind: exame|pedido|outro }]
   attachments      Json?

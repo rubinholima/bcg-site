@@ -2,6 +2,7 @@ export const SOCIAL_PEDAGOGY_TRIGGER_OPTIONS = [
   { value: 'horario_treino', label: 'Mudança de horário de treino' },
   { value: 'convocacao', label: 'Convocação (jogo/viagem)' },
   { value: 'inicio_letivo', label: 'Início do período letivo' },
+  { value: 'novo_atleta_apto', label: 'Novo atleta apto (BID)' },
   { value: 'manual', label: 'Manual' },
 ] as const;
 
@@ -144,6 +145,21 @@ export interface RosterValidationRow {
   category: string | null;
   schoolName: string | null;
   validation: ContactValidation;
+}
+
+export interface SocialPedagogyAptoNotification {
+  caseId: string;
+  playerId: string;
+  playerName: string;
+  jerseyNumber: number | null;
+  category: string | null;
+  status: string;
+  createdAt: string;
+}
+
+export interface SocialPedagogyAptoNotificationsResponse {
+  count: number;
+  items: SocialPedagogyAptoNotification[];
 }
 
 export function triggerLabel(value: string): string {

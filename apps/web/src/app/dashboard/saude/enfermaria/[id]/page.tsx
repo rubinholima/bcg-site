@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
+import { formatNursingExemptFromTraining } from "@/lib/enfermaria-labels";
 
 const ATTACHMENT_KIND_LABEL: Record<string, string> = {
   exame: "Exame",
@@ -217,6 +218,12 @@ export default function EnfermariaSessionDetailPage() {
                 ? `${session.estimatedDays} dias`
                 : "—"}
           </p>
+          {session.status === "active" ? (
+            <p>
+              <span className="text-muted-foreground">Treino:</span>{" "}
+              {formatNursingExemptFromTraining(session.exemptFromTraining)}
+            </p>
+          ) : null}
           {session.attachments && session.attachments.length > 0 ? (
             <div>
               <p className="text-muted-foreground">Anexos:</p>

@@ -4,6 +4,7 @@ import {
   NURSING_STATUS_LABEL,
   type NursingReportsDashboard,
 } from "@/lib/enfermaria-relatorios-types";
+import { formatNursingExemptFromTraining } from "@/lib/enfermaria-labels";
 
 function esc(value: string | null | undefined) {
   return (value ?? "")
@@ -32,6 +33,7 @@ export function buildEnfermariaPrintHtml(
         <td>${esc(NURSING_STATUS_LABEL[s.status] ?? s.status)}</td>
         <td>${esc(s.diagnoses.join(" · ") || "—")}</td>
         <td>${esc(s.treatments.join(" · ") || "—")}</td>
+        <td>${esc(formatNursingExemptFromTraining(s.exemptFromTraining))}</td>
         <td>${esc(s.nurseName ?? "—")}</td>
       </tr>`,
     )
@@ -69,10 +71,10 @@ export function buildEnfermariaPrintHtml(
     <thead>
       <tr>
         <th>Data</th><th>Atleta</th><th>Categoria</th><th>Status</th>
-        <th>Diagnósticos</th><th>Medicamentos</th><th>Enfermeiro</th>
+        <th>Diagnósticos</th><th>Medicamentos</th><th>Treino</th><th>Enfermeiro</th>
       </tr>
     </thead>
-    <tbody>${rows || "<tr><td colspan='7'>Nenhum atendimento no filtro.</td></tr>"}</tbody>
+    <tbody>${rows || "<tr><td colspan='8'>Nenhum atendimento no filtro.</td></tr>"}</tbody>
   </table>
 </body>
 </html>`;

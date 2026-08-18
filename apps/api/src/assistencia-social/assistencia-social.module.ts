@@ -13,6 +13,7 @@ import { SocialPedagogyDocumentsController } from './social-pedagogy-documents.c
 import { SocialPedagogyDocumentsService } from './social-pedagogy-documents.service';
 import { SocialPedagogyReportsController } from './social-pedagogy-reports.controller';
 import { SocialPedagogyReportsService } from './social-pedagogy-reports.service';
+import { SocialPedagogyNotificationsController } from './social-pedagogy-notifications.controller';
 
 @Module({
   imports: [AuthModule, ModulesModule, FutebolAgendaModule],
@@ -22,6 +23,7 @@ import { SocialPedagogyReportsService } from './social-pedagogy-reports.service'
     PlayerSchoolEnrollmentsController,
     SocialPedagogyDocumentsController,
     SocialPedagogyReportsController,
+    SocialPedagogyNotificationsController,
   ],
   providers: [
     SocialPedagogyCasesService,

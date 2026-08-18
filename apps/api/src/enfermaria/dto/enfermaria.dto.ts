@@ -52,6 +52,7 @@ export class CreateNursingSessionDto {
   @IsOptional() @IsString() nurseName?: string;
   @IsOptional() @IsInt() @Min(1) estimatedDays?: number;
   @IsOptional() @IsString() estimatedEndDate?: string;
+  @IsOptional() @IsBoolean() exemptFromTraining?: boolean;
   @IsOptional() @IsString() treatmentNotes?: string;
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => NursingAttachmentDto) attachments?: NursingAttachmentDto[];
   @IsOptional() @IsArray() @ValidateNested({ each: true }) @Type(() => NursingSessionDiagnosisItemDto) diagnoses?: NursingSessionDiagnosisItemDto[];

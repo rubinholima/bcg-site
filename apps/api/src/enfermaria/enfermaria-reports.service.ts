@@ -126,6 +126,7 @@ export class EnfermariaReportsService {
         symptoms: s.symptoms,
         estimatedDays: s.estimatedDays,
         estimatedEndDate: s.estimatedEndDate?.toISOString() ?? null,
+        exemptFromTraining: s.exemptFromTraining,
         diagnoses: s.sessionDiagnoses
           .map((d) => d.diagnosisLabel ?? d.diagnosis?.name)
           .filter(Boolean),

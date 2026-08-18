@@ -9,6 +9,16 @@ import {
   parseRegistrationProfile,
   validatePlayerContacts,
 } from './social-pedagogy.util';
+import {
+  buildPlayerMatchAvailabilityInput,
+  getPlayerMatchAvailability,
+  type PlayerMatchAvailabilityInput,
+} from '../common/player-match-availability.util';
+import {
+  isArchivedSportsSituation,
+  isLoanedSportsSituation,
+  normalizeSportsSituation,
+} from '../common/sports-situation.util';
 
 @Injectable()
 export class SocialPedagogyCasesService {
@@ -111,15 +121,18 @@ export class SocialPedagogyCasesService {
       time: item.startTime ? String(item.startTime) : item.time ? String(item.time) : null,
     }));
 
-    const schoolNotificationText = buildDefaultSchoolNotification({
-      tenantName: player.tenant?.name ?? 'Clube',
-      playerName: player.name,
-      schoolName,
-      grade: enrollment?.grade ?? profile.extras?.schoolGrade ?? null,
-      periodLabel: enrollment?.period ?? null,
-      events,
-      guardianName: primaryGuardian,
-    });
+    const schoolNotificationText =
+      dto.triggerType === 'novo_atleta_apto'
+        ? `Novo atleta apto — ${player.name}\n\nDocumentação confirmada e registro no BID concluído. Iniciar coleta de dados escolares, matrícula, responsáveis e arquivamento de documentos pedagógicos.`
+        : buildDefaultSchoolNotification({
+            tenantName: player.tenant?.name ?? 'Clube',
+            playerName: player.name,
+            schoolName,
+            grade: enrollment?.grade ?? profile.extras?.schoolGrade ?? null,
+            periodLabel: enrollment?.period ?? null,
+            events,
+            guardianName: primaryGuardian,
+          });
 
     return this.prisma.socialPedagogyCase.create({
       data: {
@@ -200,5 +213,83 @@ export class SocialPedagogyCasesService {
   async remove(id: string) {
     await this.findOne(id);
     await this.prisma.socialPedagogyCase.delete({ where: { id } });
+  }
+
+  async listAptoNotifications(tenantId: string) {
+    const rows = await this.prisma.socialPedagogyCase.findMany({
+      where: {
+        tenantId,
+        triggerType: 'novo_atleta_apto',
+        status: { not: 'concluido' },
+      },
+      orderBy: [{ createdAt: 'desc' }],
+      include: {
+        player: {
+          select: { id: true, name: true, jerseyNumber: true, category: true },
+        },
+      },
+    });
+    return {
+      count: rows.length,
+      items: rows.map((row) => ({
+        caseId: row.id,
+        playerId: row.playerId,
+        playerName: row.player.name,
+        jerseyNumber: row.player.jerseyNumber,
+        category: row.player.category,
+        status: row.status,
+        createdAt: row.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  async tryCreateAptoPlayerCase(
+    playerId: string,
+    previousInput?: PlayerMatchAvailabilityInput,
+    userId?: string,
+  ) {
+    const player = await this.prisma.player.findUnique({
+      where: { id: playerId },
+      include: { tenant: { select: { id: true, name: true } } },
+    });
+    if (!player) return null;
+
+    const profile = parseRegistrationProfile(player.registrationProfile);
+    const situation = normalizeSportsSituation(
+      (profile as { sports?: { situation?: string } }).sports?.situation,
+    );
+    if (isArchivedSportsSituation(situation) || isLoanedSportsSituation(situation)) {
+      return null;
+    }
+
+    const currentInput = buildPlayerMatchAvailabilityInput(player);
+    const current = getPlayerMatchAvailability(currentInput);
+    if (!current.apto) return null;
+
+    const previous = previousInput
+      ? getPlayerMatchAvailability(previousInput)
+      : { apto: false, label: 'Não apto' as const, shortReason: null };
+    if (previous.apto) return null;
+
+    const existing = await this.prisma.socialPedagogyCase.findFirst({
+      where: { playerId, triggerType: 'novo_atleta_apto' },
+    });
+    if (existing) return null;
+
+    try {
+      return await this.create(
+        {
+          tenantId: player.tenantId,
+          playerId,
+          triggerType: 'novo_atleta_apto',
+          triggerLabel: 'Novo atleta apto (BID)',
+          notes:
+            'Atleta apto e registrado no BID. Iniciar matrícula escolar, contatos e documentação pedagógica.',
+        },
+        userId,
+      );
+    } catch {
+      return null;
+    }
   }
 }

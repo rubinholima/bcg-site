@@ -532,8 +532,10 @@ export default function ManualPage() {
 
           <Section id="assistencia-social" title="Assistência Social / Pedagogia">
             <p>
-              <strong>Gatilhos:</strong> mudança de horário de treino, convocação para jogo/viagem ou início
-              de período letivo. Abra um <strong>caso</strong> por atleta (aba Casos).
+              <strong>Gatilhos:</strong> mudança de horário de treino, convocação para jogo/viagem, início
+              de período letivo ou <strong>novo atleta apto (BID)</strong> — este último abre caso
+              automaticamente quando a documentação e o registro CBF estão confirmados. Abra um{" "}
+              <strong>caso</strong> manualmente na aba Casos quando necessário.
             </p>
             <p>
               <strong>Fluxo:</strong> coleta de dados (validação de endereço, responsáveis e escola) → cruzamento

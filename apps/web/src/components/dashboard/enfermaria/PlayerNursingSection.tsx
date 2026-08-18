@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { NursingSession } from "@/types/enfermaria";
 import { cn } from "@/lib/utils";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { formatNursingExemptFromTraining } from "@/lib/enfermaria-labels";
 
 function formatDiagnoses(s: NursingSession) {
   return (s.sessionDiagnoses ?? [])
@@ -103,6 +104,11 @@ export function PlayerNursingSection({
                     </p>
                     {s.nurseName ? (
                       <p className="text-xs text-muted-foreground">Enfermeiro: {s.nurseName}</p>
+                    ) : null}
+                    {s.status === "active" && s.exemptFromTraining != null ? (
+                      <p className="text-xs text-muted-foreground">
+                        {formatNursingExemptFromTraining(s.exemptFromTraining)}
+                      </p>
                     ) : null}
                   </div>
                   <span className="text-[11px] font-semibold uppercase text-muted-foreground">

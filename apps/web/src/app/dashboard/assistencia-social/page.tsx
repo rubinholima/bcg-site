@@ -17,6 +17,7 @@ import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { AssistenciaSocialCasesPanel } from "@/components/dashboard/assistencia-social/AssistenciaSocialCasesPanel";
 import { AssistenciaSocialRosterPanel } from "@/components/dashboard/assistencia-social/AssistenciaSocialRosterPanel";
+import { AssistenciaSocialAptoNotifications } from "@/components/dashboard/assistencia-social/AssistenciaSocialAptoNotifications";
 
 type TabId = "casos" | "elenco" | "documentos";
 
@@ -106,6 +107,10 @@ export default function AssistenciaSocialPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {effectiveTenantId ? (
+            <AssistenciaSocialAptoNotifications tenantId={effectiveTenantId} />
+          ) : null}
 
           <div className="flex gap-2 border-b flex-wrap">
             {TABS.map((tab) => (

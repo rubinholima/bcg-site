@@ -26,6 +26,7 @@ export interface NursingReportsDashboard {
     symptoms: string | null;
     estimatedDays: number | null;
     estimatedEndDate: string | null;
+    exemptFromTraining: boolean | null;
     diagnoses: string[];
     treatments: string[];
   }>;

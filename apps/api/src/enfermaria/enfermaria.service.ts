@@ -310,6 +310,7 @@ export class EnfermariaService implements OnModuleInit {
         nurseName,
         estimatedDays: dto.estimatedDays ?? null,
         estimatedEndDate: dto.estimatedEndDate ? new Date(dto.estimatedEndDate) : null,
+        exemptFromTraining: dto.exemptFromTraining ?? null,
         treatmentNotes: dto.treatmentNotes?.trim() || null,
         attachments: dto.attachments ? (dto.attachments as unknown as Prisma.InputJsonValue) : undefined,
         createdByUserId: userId ?? null,
@@ -382,6 +383,10 @@ export class EnfermariaService implements OnModuleInit {
         estimatedEndDate: dto.estimatedEndDate
           ? new Date(dto.estimatedEndDate)
           : existing.estimatedEndDate,
+        exemptFromTraining:
+          dto.exemptFromTraining !== undefined
+            ? dto.exemptFromTraining
+            : existing.exemptFromTraining,
         treatmentNotes: dto.treatmentNotes?.trim() ?? existing.treatmentNotes,
         attachments: dto.attachments
           ? (dto.attachments as unknown as Prisma.InputJsonValue)

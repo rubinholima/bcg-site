@@ -27,6 +27,7 @@ import { syncLinkedIdentityByPlayerId } from '../rh/employee-player-link';
 import { FootballAgendaBirthdaysService } from '../futebol-agenda/football-agenda-birthdays.service';
 import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
 import { validatePlayerContacts, parseRegistrationProfile } from '../assistencia-social/social-pedagogy.util';
+import { SocialPedagogyCasesService } from '../assistencia-social/social-pedagogy-cases.service';
 import {
   buildPlayerMatchAvailabilityInput,
   getPlayerMatchAvailability,
@@ -47,6 +48,7 @@ export class PlayersService {
     private readonly s3: S3Service,
     private readonly agendaBirthdays: FootballAgendaBirthdaysService,
     private readonly agenda: FutebolAgendaService,
+    private readonly socialPedagogyCases: SocialPedagogyCasesService,
   ) {}
 
   private assertTenantAccess(allowedTenantIds: string[] | null | undefined, tenantId: string): void {
@@ -855,6 +857,9 @@ export class PlayersService {
     if (player.birthDate) {
       await this.agendaBirthdays.syncPlayerBirthdays(player.id).catch(() => undefined);
     }
+    await this.socialPedagogyCases
+      .tryCreateAptoPlayerCase(player.id)
+      .catch(() => undefined);
     return player;
   }
 
@@ -862,6 +867,8 @@ export class PlayersService {
     const current = await this.prisma.player.findUnique({ where: { id } });
     if (!current) throw new NotFoundException('Jogador não encontrado');
     this.assertTenantAccess(allowedTenantIds, current.tenantId);
+
+    const previousAvailabilityInput = buildPlayerMatchAvailabilityInput(current);
 
     if (dto.registrationProfile !== undefined) {
       this.assertRegistrationIdentifiers(dto.registrationProfile);
@@ -932,6 +939,9 @@ export class PlayersService {
     }
 
     await this.syncBodyMetricsFromSources(id);
+    await this.socialPedagogyCases
+      .tryCreateAptoPlayerCase(id, previousAvailabilityInput)
+      .catch(() => undefined);
     return this.findOne(id, allowedTenantIds);
   }
 

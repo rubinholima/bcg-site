@@ -13,6 +13,7 @@ import type { NursingSession } from "@/types/enfermaria";
 import { cn } from "@/lib/utils";
 import { isFootballKind } from "@/lib/home-data";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { formatNursingExemptFromTraining } from "@/lib/enfermaria-labels";
 
 type Tenant = { id: string; name: string; categories?: string[] | null; kind?: { name?: string } };
 
@@ -164,6 +165,11 @@ export default function EnfermariaPage() {
                     </p>
                     {s.nurseName ? (
                       <p className="text-xs text-muted-foreground">Enfermeiro: {s.nurseName}</p>
+                    ) : null}
+                    {s.status === "active" && s.exemptFromTraining != null ? (
+                      <p className="text-xs text-muted-foreground">
+                        {formatNursingExemptFromTraining(s.exemptFromTraining)}
+                      </p>
                     ) : null}
                   </div>
                   <span

@@ -24,6 +24,7 @@ import { MatchRefereesController } from './match-referees.controller';
 import { MatchRefereesService } from './match-referees.service';
 import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { FutebolAgendaModule } from '../futebol-agenda/futebol-agenda.module';
+import { AssistenciaSocialModule } from '../assistencia-social/assistencia-social.module';
 import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
 
 @Module({
@@ -58,6 +59,7 @@ import { FmfScraperModule } from '../fmf-scraper/fmf-scraper.module';
     ContractsModule,
     FutebolAgendaModule,
     FmfScraperModule,
+    AssistenciaSocialModule,
   ],
   exports: [
     ChampionshipsService,

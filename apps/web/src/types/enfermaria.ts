@@ -68,6 +68,7 @@ export interface NursingSession {
   nurseName: string | null;
   estimatedDays: number | null;
   estimatedEndDate: string | null;
+  exemptFromTraining: boolean | null;
   treatmentNotes: string | null;
   attachments: NursingAttachment[] | null;
   status: NursingSessionStatus;
@@ -108,6 +109,7 @@ export interface CreateNursingSessionPayload {
   nurseName?: string;
   estimatedDays?: number;
   estimatedEndDate?: string;
+  exemptFromTraining?: boolean | null;
   treatmentNotes?: string;
   attachments?: NursingAttachment[];
   diagnoses?: NursingSessionDiagnosisInput[];

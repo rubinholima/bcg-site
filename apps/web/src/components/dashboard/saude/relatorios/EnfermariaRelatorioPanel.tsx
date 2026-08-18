@@ -33,6 +33,7 @@ import {
   NURSING_STATUS_LABEL,
   type NursingReportsDashboard,
 } from "@/lib/enfermaria-relatorios-types";
+import { formatNursingExemptFromTraining } from "@/lib/enfermaria-labels";
 import { useAdmRelatorioTenants } from "@/components/dashboard/adm/relatorios/adm-relatorio-shared";
 import { getCategoryLabel } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
@@ -252,13 +253,14 @@ export function EnfermariaRelatorioPanel() {
                     <TableHead>Status</TableHead>
                     <TableHead>Diagnósticos</TableHead>
                     <TableHead>Medicamentos</TableHead>
+                    <TableHead>Treino</TableHead>
                     <TableHead>Enfermeiro</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {report.sessions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground">
                         Nenhum atendimento no filtro.
                       </TableCell>
                     </TableRow>
@@ -271,6 +273,7 @@ export function EnfermariaRelatorioPanel() {
                         <TableCell>{NURSING_STATUS_LABEL[s.status] ?? s.status}</TableCell>
                         <TableCell>{s.diagnoses.join(" · ") || "—"}</TableCell>
                         <TableCell>{s.treatments.join(" · ") || "—"}</TableCell>
+                        <TableCell>{formatNursingExemptFromTraining(s.exemptFromTraining)}</TableCell>
                         <TableCell>{s.nurseName ?? "—"}</TableCell>
                       </TableRow>
                     ))

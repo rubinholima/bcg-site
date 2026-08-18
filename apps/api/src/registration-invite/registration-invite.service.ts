@@ -17,6 +17,8 @@ import {
 import { EmployeeAddressDto } from '../rh/dto/employee-address.dto';
 import { SubmitEmployeeRegistrationDto } from './dto/submit-employee-registration.dto';
 import { SubmitPlayerRegistrationDto } from './dto/submit-player-registration.dto';
+import { SocialPedagogyCasesService } from '../assistencia-social/social-pedagogy-cases.service';
+import { buildPlayerMatchAvailabilityInput } from '../common/player-match-availability.util';
 
 const DEFAULT_EXPIRES_DAYS = 30;
 
@@ -103,6 +105,7 @@ export class RegistrationInviteService {
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
     private readonly s3: S3Service,
+    private readonly socialPedagogyCases: SocialPedagogyCasesService,
   ) {}
 
   async createForPlayer(
@@ -614,9 +617,10 @@ export class RegistrationInviteService {
   ) {
     const player = await this.prisma.player.findUnique({
       where: { id: playerId },
-      select: { registrationProfile: true },
     });
     if (!player) throw new NotFoundException('Atleta não encontrado');
+
+    const previousAvailabilityInput = buildPlayerMatchAvailabilityInput(player);
 
     const profile = mergeJson<Record<string, unknown>>(player.registrationProfile, {});
     if (dto.personal) {
@@ -658,6 +662,10 @@ export class RegistrationInviteService {
         registrationProfile: profile as Prisma.InputJsonValue,
       },
     });
+
+    await this.socialPedagogyCases
+      .tryCreateAptoPlayerCase(playerId, previousAvailabilityInput)
+      .catch(() => undefined);
   }
 
   private async applyEmployeePayload(

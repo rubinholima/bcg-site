@@ -44,6 +44,7 @@ import {
   triggerLabel,
   type SocialPedagogyCaseRow,
 } from "@/lib/assistencia-social-types";
+import { cn } from "@/lib/utils";
 
 interface PlayerOption {
   id: string;
@@ -243,7 +244,10 @@ export function AssistenciaSocialCasesPanel({ tenantId, players }: Props) {
                 rows.map((row) => {
                   const issues = row.contactValidation?.issues ?? [];
                   return (
-                    <TableRow key={row.id}>
+                    <TableRow
+                      key={row.id}
+                      className={cn(row.triggerType === "novo_atleta_apto" && "bg-amber-500/5")}
+                    >
                       <TableCell className="font-medium">
                         {row.player?.name ?? "—"}
                         {row.player?.jerseyNumber != null ? ` #${row.player.jerseyNumber}` : ""}

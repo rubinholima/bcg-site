@@ -57,6 +57,7 @@ export function NursingSessionForm({
   const [treatmentNotes, setTreatmentNotes] = useState("");
   const [estimatedDays, setEstimatedDays] = useState("");
   const [estimatedEndDate, setEstimatedEndDate] = useState("");
+  const [exemptFromTraining, setExemptFromTraining] = useState<"" | "yes" | "no">("");
   const [nurseStaffId, setNurseStaffId] = useState("");
   const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
   const [attachmentName, setAttachmentName] = useState("");
@@ -112,6 +113,13 @@ export function NursingSessionForm({
         setEstimatedDays(data.estimatedDays != null ? String(data.estimatedDays) : "");
         setEstimatedEndDate(
           data.estimatedEndDate ? String(data.estimatedEndDate).slice(0, 10) : "",
+        );
+        setExemptFromTraining(
+          data.exemptFromTraining === true
+            ? "yes"
+            : data.exemptFromTraining === false
+              ? "no"
+              : "",
         );
         setNurseStaffId(data.nurseStaffId ?? "");
         if (!data.nurseStaffId && data.nurseName) setPendingStaffName(data.nurseName);
@@ -341,6 +349,12 @@ export function NursingSessionForm({
         fileUrl,
         kind,
       }));
+      const exemptPayload =
+        exemptFromTraining === "yes"
+          ? true
+          : exemptFromTraining === "no"
+            ? false
+            : null;
 
       if (isEdit && sessionId) {
         const payload: UpdateNursingSessionPayload = {
@@ -353,6 +367,7 @@ export function NursingSessionForm({
           nurseName: selectedStaff?.name || undefined,
           estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
           estimatedEndDate: estimatedEndDate || undefined,
+          exemptFromTraining: exemptPayload,
           treatmentNotes: treatmentNotes || undefined,
           attachments: attachmentsPayload.length ? attachmentsPayload : [],
           diagnoses: diagnosesPayload,
@@ -373,6 +388,7 @@ export function NursingSessionForm({
         nurseName: selectedStaff?.name || undefined,
         estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
         estimatedEndDate: estimatedEndDate || undefined,
+        exemptFromTraining: exemptPayload,
         treatmentNotes: treatmentNotes || undefined,
         attachments: attachmentsPayload.length ? attachmentsPayload : undefined,
         diagnoses: diagnosesPayload,
@@ -632,6 +648,18 @@ export function NursingSessionForm({
             onChange={(e) => setEstimatedEndDate(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="grid gap-1.5">
+        <Label>Isento do treino?</Label>
+        <NativeSelect
+          value={exemptFromTraining}
+          onChange={(e) => setExemptFromTraining(e.target.value as "" | "yes" | "no")}
+        >
+          <option value="">Selecione…</option>
+          <option value="yes">Sim — isento do treino</option>
+          <option value="no">Não — participa do treino</option>
+        </NativeSelect>
       </div>
 
       <div className="grid gap-1.5 rounded-lg border border-border/70 p-3">

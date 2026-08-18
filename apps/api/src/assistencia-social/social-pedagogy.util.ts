@@ -4,6 +4,7 @@ export const SOCIAL_PEDAGOGY_TRIGGER_TYPES = [
   'horario_treino',
   'convocacao',
   'inicio_letivo',
+  'novo_atleta_apto',
   'manual',
 ] as const;
 
@@ -88,6 +89,7 @@ export function triggerTypeLabel(type: string): string {
     horario_treino: 'Mudança de horário de treino',
     convocacao: 'Convocação (jogo/viagem)',
     inicio_letivo: 'Início do período letivo',
+    novo_atleta_apto: 'Novo atleta apto (BID)',
     manual: 'Manual',
   };
   return map[type] ?? type;
