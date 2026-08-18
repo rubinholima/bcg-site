@@ -28,7 +28,10 @@ const sessionInclude = {
   },
   sessionTreatments: {
     orderBy: { sortOrder: 'asc' as const },
-    include: { treatment: true, product: { select: { id: true, name: true, sku: true, unit: true } } },
+    include: {
+      treatment: true,
+      product: { select: { id: true, name: true, sku: true, unit: true } },
+    },
   },
   player: {
     select: {
@@ -54,7 +57,10 @@ export class EnfermariaService implements OnModuleInit {
     try {
       await this.ensureCatalog();
     } catch (e) {
-      console.warn('[enfermaria] ensureCatalog falhou (migration pendente?)', e);
+      console.warn(
+        '[enfermaria] ensureCatalog falhou (migration pendente?)',
+        e,
+      );
     }
   }
 
@@ -99,10 +105,16 @@ export class EnfermariaService implements OnModuleInit {
 
   async createDiagnosis(dto: CreateNursingDiagnosisDto, userId?: string) {
     const name = dto.name.trim();
-    if (!name) throw new BadRequestException('Nome do diagnóstico é obrigatório.');
+    if (!name)
+      throw new BadRequestException('Nome do diagnóstico é obrigatório.');
     try {
       return await this.prisma.nursingDiagnosis.create({
-        data: { name, isSystem: false, active: true, createdByUserId: userId ?? null },
+        data: {
+          name,
+          isSystem: false,
+          active: true,
+          createdByUserId: userId ?? null,
+        },
       });
     } catch {
       throw new BadRequestException('Diagnóstico já cadastrado.');
@@ -115,7 +127,15 @@ export class EnfermariaService implements OnModuleInit {
         where: { active: true },
         orderBy: { name: 'asc' },
         include: {
-          product: { select: { id: true, name: true, sku: true, unit: true, currentStock: true } },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              unit: true,
+              currentStock: true,
+            },
+          },
         },
       }),
     );
@@ -123,10 +143,14 @@ export class EnfermariaService implements OnModuleInit {
 
   async createTreatment(dto: CreateNursingTreatmentDto, userId?: string) {
     const name = dto.name.trim();
-    if (!name) throw new BadRequestException('Nome do tratamento é obrigatório.');
+    if (!name)
+      throw new BadRequestException('Nome do tratamento é obrigatório.');
     if (dto.productId) {
-      const product = await this.prisma.product.findUnique({ where: { id: dto.productId } });
-      if (!product) throw new BadRequestException('Produto de estoque inválido.');
+      const product = await this.prisma.product.findUnique({
+        where: { id: dto.productId },
+      });
+      if (!product)
+        throw new BadRequestException('Produto de estoque inválido.');
     }
     return this.prisma.nursingTreatment.create({
       data: {
@@ -139,12 +163,24 @@ export class EnfermariaService implements OnModuleInit {
         createdByUserId: userId ?? null,
       },
       include: {
-        product: { select: { id: true, name: true, sku: true, unit: true, currentStock: true } },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            unit: true,
+            currentStock: true,
+          },
+        },
       },
     });
   }
 
-  async listProducts(tenantId: string, search?: string, allowed: string[] | null = null) {
+  async listProducts(
+    tenantId: string,
+    search?: string,
+    allowed: string[] | null = null,
+  ) {
     this.assertTenant(allowed, tenantId);
     const where: Prisma.ProductWhereInput = { tenantId };
     if (search?.trim()) {
@@ -169,7 +205,13 @@ export class EnfermariaService implements OnModuleInit {
   }
 
   async listSessions(
-    filters: { tenantId?: string; playerId?: string; status?: string; from?: string; to?: string },
+    filters: {
+      tenantId?: string;
+      playerId?: string;
+      status?: string;
+      from?: string;
+      to?: string;
+    },
     allowed: string[] | null,
   ) {
     const where: Prisma.NursingSessionWhereInput = {};
@@ -180,10 +222,12 @@ export class EnfermariaService implements OnModuleInit {
       where.tenantId = { in: allowed };
     }
     if (filters.playerId) where.playerId = filters.playerId;
-    if (filters.status && filters.status !== 'all') where.status = filters.status;
+    if (filters.status && filters.status !== 'all')
+      where.status = filters.status;
     if (filters.from || filters.to) {
       where.attendedAt = {};
-      if (filters.from) where.attendedAt.gte = new Date(`${filters.from}T00:00:00`);
+      if (filters.from)
+        where.attendedAt.gte = new Date(`${filters.from}T00:00:00`);
       if (filters.to) where.attendedAt.lte = new Date(`${filters.to}T23:59:59`);
     }
     return this.prisma.nursingSession.findMany({
@@ -205,16 +249,23 @@ export class EnfermariaService implements OnModuleInit {
   }
 
   private async resolveDiagnosisItems(items: NursingSessionDiagnosisItemDto[]) {
-    const resolved: Array<{ diagnosisId: string | null; diagnosisLabel: string }> = [];
+    const resolved: Array<{
+      diagnosisId: string | null;
+      diagnosisLabel: string;
+    }> = [];
     for (const item of items) {
       let label = item.diagnosisLabel?.trim() || null;
       let id = item.diagnosisId ?? null;
       if (id) {
-        const d = await this.prisma.nursingDiagnosis.findUnique({ where: { id } });
+        const d = await this.prisma.nursingDiagnosis.findUnique({
+          where: { id },
+        });
         if (!d) throw new BadRequestException('Diagnóstico inválido.');
         label = d.name;
       } else if (label) {
-        const existing = await this.prisma.nursingDiagnosis.findUnique({ where: { name: label } });
+        const existing = await this.prisma.nursingDiagnosis.findUnique({
+          where: { name: label },
+        });
         if (existing) id = existing.id;
       }
       if (!label) continue;
@@ -234,10 +285,12 @@ export class EnfermariaService implements OnModuleInit {
     }> = [];
     for (const item of items) {
       let label = item.treatmentLabel?.trim() || null;
-      let treatmentId = item.treatmentId ?? null;
+      const treatmentId = item.treatmentId ?? null;
       let productId = item.productId ?? null;
       if (treatmentId) {
-        const t = await this.prisma.nursingTreatment.findUnique({ where: { id: treatmentId } });
+        const t = await this.prisma.nursingTreatment.findUnique({
+          where: { id: treatmentId },
+        });
         if (!t) throw new BadRequestException('Tratamento inválido.');
         label = t.name;
         if (!productId && t.productId) productId = t.productId;
@@ -259,13 +312,29 @@ export class EnfermariaService implements OnModuleInit {
     sessionId: string,
     tenantId: string,
     playerName: string,
-    treatments: Array<{ id: string; productId: string | null; quantityUsed: number | null; deductStock: boolean; treatmentLabel: string }>,
+    treatments: Array<{
+      id: string;
+      productId: string | null;
+      quantityUsed: number | null;
+      deductStock: boolean;
+      treatmentLabel: string;
+    }>,
   ) {
     for (const row of treatments) {
-      if (!row.deductStock || !row.productId || !row.quantityUsed || row.quantityUsed <= 0) continue;
-      const product = await this.prisma.product.findUnique({ where: { id: row.productId } });
+      if (
+        !row.deductStock ||
+        !row.productId ||
+        !row.quantityUsed ||
+        row.quantityUsed <= 0
+      )
+        continue;
+      const product = await this.prisma.product.findUnique({
+        where: { id: row.productId },
+      });
       if (!product || product.tenantId !== tenantId) {
-        throw new BadRequestException(`Produto inválido para baixa: ${row.treatmentLabel}`);
+        throw new BadRequestException(
+          `Produto inválido para baixa: ${row.treatmentLabel}`,
+        );
       }
       const qty = -Math.ceil(row.quantityUsed);
       const movement = await this.stockMovements.create({
@@ -283,9 +352,15 @@ export class EnfermariaService implements OnModuleInit {
     }
   }
 
-  async createSession(dto: CreateNursingSessionDto, allowed: string[] | null, userId?: string) {
+  async createSession(
+    dto: CreateNursingSessionDto,
+    allowed: string[] | null,
+    userId?: string,
+  ) {
     this.assertTenant(allowed, dto.tenantId);
-    const player = await this.prisma.player.findUnique({ where: { id: dto.playerId } });
+    const player = await this.prisma.player.findUnique({
+      where: { id: dto.playerId },
+    });
     if (!player || player.tenantId !== dto.tenantId) {
       throw new BadRequestException('Atleta inválido para este clube.');
     }
@@ -295,7 +370,9 @@ export class EnfermariaService implements OnModuleInit {
 
     let nurseName = dto.nurseName?.trim() || null;
     if (dto.nurseStaffId) {
-      const nurse = await this.prisma.medicalStaff.findUnique({ where: { id: dto.nurseStaffId } });
+      const nurse = await this.prisma.medicalStaff.findUnique({
+        where: { id: dto.nurseStaffId },
+      });
       if (nurse) nurseName = nurse.name;
     }
 
@@ -309,10 +386,14 @@ export class EnfermariaService implements OnModuleInit {
         nurseStaffId: dto.nurseStaffId ?? null,
         nurseName,
         estimatedDays: dto.estimatedDays ?? null,
-        estimatedEndDate: dto.estimatedEndDate ? new Date(dto.estimatedEndDate) : null,
+        estimatedEndDate: dto.estimatedEndDate
+          ? new Date(dto.estimatedEndDate)
+          : null,
         exemptFromTraining: dto.exemptFromTraining ?? null,
         treatmentNotes: dto.treatmentNotes?.trim() || null,
-        attachments: dto.attachments ? (dto.attachments as unknown as Prisma.InputJsonValue) : undefined,
+        attachments: dto.attachments
+          ? (dto.attachments as unknown as Prisma.InputJsonValue)
+          : undefined,
         createdByUserId: userId ?? null,
         sessionDiagnoses: {
           create: diagnoses.map((d, i) => ({
@@ -352,24 +433,44 @@ export class EnfermariaService implements OnModuleInit {
     return this.findSession(session.id, allowed);
   }
 
-  async updateSession(id: string, dto: UpdateNursingSessionDto, allowed: string[] | null) {
+  async updateSession(
+    id: string,
+    dto: UpdateNursingSessionDto,
+    allowed: string[] | null,
+  ) {
     const existing = await this.findSession(id, allowed);
-    const attendedAt = dto.attendedAt ? new Date(dto.attendedAt) : existing.attendedAt;
+    const attendedAt = dto.attendedAt
+      ? new Date(dto.attendedAt)
+      : existing.attendedAt;
 
     let nurseName = dto.nurseName?.trim() ?? existing.nurseName;
     const nurseStaffId = dto.nurseStaffId ?? existing.nurseStaffId;
     if (dto.nurseStaffId) {
-      const nurse = await this.prisma.medicalStaff.findUnique({ where: { id: dto.nurseStaffId } });
+      const nurse = await this.prisma.medicalStaff.findUnique({
+        where: { id: dto.nurseStaffId },
+      });
       if (nurse) nurseName = nurse.name;
     }
 
-    await this.prisma.nursingSessionDiagnosis.deleteMany({ where: { sessionId: id } });
-    await this.prisma.nursingSessionTreatment.deleteMany({ where: { sessionId: id } });
+    await this.prisma.nursingSessionDiagnosis.deleteMany({
+      where: { sessionId: id },
+    });
+    await this.prisma.nursingSessionTreatment.deleteMany({
+      where: { sessionId: id },
+    });
 
     const diagnoses = await this.resolveDiagnosisItems(dto.diagnoses ?? []);
     const treatments = await this.resolveTreatmentItems(dto.treatments ?? []);
 
-    const player = await this.prisma.player.findUnique({ where: { id: dto.playerId ?? existing.playerId } });
+    const player = await this.prisma.player.findUnique({
+      where: { id: dto.playerId ?? existing.playerId },
+    });
+
+    const exemptFromTraining =
+      dto.exemptFromTraining !== undefined
+        ? dto.exemptFromTraining
+        : ((existing as unknown as { exemptFromTraining: boolean | null })
+            .exemptFromTraining ?? null);
 
     await this.prisma.nursingSession.update({
       where: { id },
@@ -383,14 +484,11 @@ export class EnfermariaService implements OnModuleInit {
         estimatedEndDate: dto.estimatedEndDate
           ? new Date(dto.estimatedEndDate)
           : existing.estimatedEndDate,
-        exemptFromTraining:
-          dto.exemptFromTraining !== undefined
-            ? dto.exemptFromTraining
-            : existing.exemptFromTraining,
+        exemptFromTraining,
         treatmentNotes: dto.treatmentNotes?.trim() ?? existing.treatmentNotes,
         attachments: dto.attachments
           ? (dto.attachments as unknown as Prisma.InputJsonValue)
-          : existing.attachments ?? undefined,
+          : (existing.attachments ?? undefined),
         status: dto.status ?? existing.status,
         endedAt: dto.status === 'completed' ? new Date() : existing.endedAt,
         sessionDiagnoses: {
