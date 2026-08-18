@@ -63,6 +63,7 @@ export function PlayerSocialPedagogySection({ playerId }: Props) {
   const [gPrimary, setGPrimary] = useState(false);
 
   const [schoolName, setSchoolName] = useState("");
+  const [simadeNumber, setSimadeNumber] = useState("");
   const [grade, setGrade] = useState("");
   const [period, setPeriod] = useState("");
   const [coordinatorName, setCoordinatorName] = useState("");
@@ -71,6 +72,8 @@ export function PlayerSocialPedagogySection({ playerId }: Props) {
   const [docType, setDocType] = useState("matricula");
   const [docName, setDocName] = useState("");
   const [docUrl, setDocUrl] = useState("");
+  const [simadeDrafts, setSimadeDrafts] = useState<Record<string, string>>({});
+  const [simadeSavingId, setSimadeSavingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!playerId) return;
@@ -131,6 +134,7 @@ export function PlayerSocialPedagogySection({ playerId }: Props) {
       await api.post("/assistencia-social/school-enrollments", {
         playerId,
         schoolName: schoolName.trim(),
+        simadeNumber: simadeNumber.trim() || undefined,
         grade: grade.trim() || undefined,
         period: period.trim() || undefined,
         coordinatorName: coordinatorName.trim() || undefined,
@@ -138,11 +142,28 @@ export function PlayerSocialPedagogySection({ playerId }: Props) {
         status: "ativo",
       });
       setSchoolOpen(false);
+      setSchoolName("");
+      setSimadeNumber("");
       await load();
     } catch (err) {
       setFeedback({ open: true, title: "Erro", message: err instanceof Error ? err.message : "Erro ao salvar." });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveSimade = async (enrollmentId: string) => {
+    const value = (simadeDrafts[enrollmentId] ?? "").trim();
+    setSimadeSavingId(enrollmentId);
+    try {
+      await api.patch(`/assistencia-social/school-enrollments/${enrollmentId}`, {
+        simadeNumber: value || null,
+      });
+      await load();
+    } catch (err) {
+      setFeedback({ open: true, title: "Erro", message: err instanceof Error ? err.message : "Erro ao salvar SIMADE." });
+    } finally {
+      setSimadeSavingId(null);
     }
   };
 
@@ -240,13 +261,13 @@ export function PlayerSocialPedagogySection({ playerId }: Props) {
 
       <Card className="rounded-2xl border-border/80">
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
-          <CardTitle className="text-base">Escola</CardTitle>
+          <CardTitle className="text-base">Acompanhamento escolar</CardTitle>
           <Button type="button" size="sm" variant="secondary" onClick={() => setSchoolOpen(true)}>
             <Plus className="h-4 w-4 mr-1" />
             Matrícula
           </Button>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+        <CardContent className="space-y-3 text-sm">
           {ctx.enrollments.length === 0 && !ctx.profileSchool.schoolName ? (
             <p className="text-muted-foreground">Escola não informada.</p>
           ) : null}
@@ -257,15 +278,48 @@ export function PlayerSocialPedagogySection({ playerId }: Props) {
               <span className="text-muted-foreground text-xs"> (cadastro base)</span>
             </p>
           ) : null}
-          {ctx.enrollments.map((e: PlayerSchoolEnrollmentRow) => (
-            <div key={e.id} className="rounded-lg border border-border/60 p-3">
-              <p className="font-medium">{e.schoolName}</p>
-              <p className="text-muted-foreground text-xs">
-                {e.grade ?? "—"} · {e.status}
-                {e.coordinatorName ? ` · ${e.coordinatorName}` : ""}
-              </p>
-            </div>
-          ))}
+          {ctx.enrollments.map((e: PlayerSchoolEnrollmentRow) => {
+            const simadeValue = simadeDrafts[e.id] ?? e.simadeNumber ?? "";
+            return (
+              <div key={e.id} className="rounded-lg border border-border/60 p-3 space-y-2">
+                <p className="font-medium">{e.schoolName}</p>
+                <p className="text-muted-foreground text-xs">
+                  {e.grade ?? "—"} · {e.status}
+                  {e.coordinatorName ? ` · ${e.coordinatorName}` : ""}
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="grid flex-1 gap-1">
+                    <Label htmlFor={`simade-${e.id}`} className="text-xs">
+                      Nº SIMADE (matrícula escolar)
+                    </Label>
+                    <Input
+                      id={`simade-${e.id}`}
+                      value={simadeValue}
+                      onChange={(ev) =>
+                        setSimadeDrafts((prev) => ({ ...prev, [e.id]: ev.target.value }))
+                      }
+                      placeholder="Número SIMADE"
+                      className="text-foreground"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    className="shrink-0"
+                    disabled={simadeSavingId === e.id || simadeValue === (e.simadeNumber ?? "")}
+                    onClick={() => void handleSaveSimade(e.id)}
+                  >
+                    {simadeSavingId === e.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Salvar SIMADE"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -353,6 +407,15 @@ export function PlayerSocialPedagogySection({ playerId }: Props) {
           <DialogHeader><DialogTitle>Matrícula escolar</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="grid gap-1"><Label>Escola</Label><Input value={schoolName} onChange={(e) => setSchoolName(e.target.value)} /></div>
+            <div className="grid gap-1">
+              <Label>Nº SIMADE</Label>
+              <Input
+                value={simadeNumber}
+                onChange={(e) => setSimadeNumber(e.target.value)}
+                placeholder="Matrícula escolar (SIMADE)"
+                className="text-foreground"
+              />
+            </div>
             <div className="grid gap-1"><Label>Série / ano</Label><Input value={grade} onChange={(e) => setGrade(e.target.value)} /></div>
             <div className="grid gap-1"><Label>Turno</Label><Input value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="Manhã, tarde…" /></div>
             <div className="grid gap-1"><Label>Coordenação — nome</Label><Input value={coordinatorName} onChange={(e) => setCoordinatorName(e.target.value)} /></div>

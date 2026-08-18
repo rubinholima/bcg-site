@@ -231,7 +231,7 @@ export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "enfermaria", label: "Enfermaria", icon: HeartPulse, moduleSlug: "saude" },
   { id: "fisiologia", label: "Fisiologia", icon: Heart, moduleSlug: "futebol_fisiologia" },
   { id: "nutricao", label: "Nutrição", icon: UtensilsCrossed, moduleSlug: "adm_nutricao" },
-  { id: "assistencia_social", label: "Assist. Social", icon: GraduationCap, moduleSlug: "futebol_assistencia_social" },
+  { id: "assistencia_social", label: "Escola / Pedagogia", icon: GraduationCap, moduleSlug: "futebol_assistencia_social" },
   { id: "treinos", label: "Treinos", icon: Dumbbell, moduleSlug: "futebol_treinadores" },
   { id: "status", label: "Status", icon: Activity, moduleSlug: "diretoria" },
   { id: "mapa", label: "Mapa", icon: MapIcon, moduleSlug: null },
@@ -1416,6 +1416,7 @@ export function getMenuAccessCatalog(): MenuAccessCatalogEntry[] {
 }
 
 const API_ONLY_MODULE_SLUGS: Array<{ slug: string; name: string }> = [
+  { slug: "futebol_assistencia_social", name: "Assistência Social / Pedagogia (base)" },
   { slug: "agenda", name: "Agenda (hub)" },
   { slug: "vault_manage", name: "Senhas / Vault (gerenciar)" },
   { slug: "vault_reveal", name: "Senhas / Vault (revelar/copiar)" },

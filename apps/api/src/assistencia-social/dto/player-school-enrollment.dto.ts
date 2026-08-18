@@ -39,6 +39,10 @@ export class CreatePlayerSchoolEnrollmentDto {
   @IsOptional()
   schoolYear?: string;
 
+  @IsString()
+  @IsOptional()
+  simadeNumber?: string;
+
   @IsIn(['ativo', 'transferido', 'concluido'])
   @IsOptional()
   status?: string;
@@ -92,6 +96,10 @@ export class UpdatePlayerSchoolEnrollmentDto {
   @IsString()
   @IsOptional()
   schoolYear?: string;
+
+  @IsString()
+  @IsOptional()
+  simadeNumber?: string;
 
   @IsIn(['ativo', 'transferido', 'concluido'])
   @IsOptional()

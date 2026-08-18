@@ -62,6 +62,7 @@ export interface PlayerSchoolEnrollmentRow {
   coordinatorEmail: string | null;
   coordinatorPhone: string | null;
   schoolYear: string | null;
+  simadeNumber: string | null;
   status: string;
   startDate: string | null;
   endDate: string | null;

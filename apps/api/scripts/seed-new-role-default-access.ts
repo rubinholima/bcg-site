@@ -209,6 +209,15 @@ const MARKETING_FULL = [
   'relatorios_marketing',
 ];
 
+const ASSISTENCIA_SOCIAL = [
+  'dashboard__dashboard',
+  'dashboard',
+  'futebol_assistencia_social',
+  'assistencia_social__assistencia_social_visao',
+  'player_tab__assistencia_social',
+  'futebol/futebol_cadastros__cad_jogadores',
+];
+
 /** Apenas estes perfis — nunca alterar gerente, analista, comissao, etc. */
 const NEW_ROLE_DEFAULTS: Record<string, readonly string[]> = {
   supervisor: [
@@ -273,6 +282,8 @@ const NEW_ROLE_DEFAULTS: Record<string, readonly string[]> = {
   nutricionista: [...PERF_NUTRICIONISTA],
   enfermeiro: [...SAUDE_ENFERMEIRO],
   enfermeiro_tec: [...SAUDE_ENFERMEIRO],
+  assistente: [...ASSISTENCIA_SOCIAL],
+  pedagoga: [...ASSISTENCIA_SOCIAL],
 };
 
 async function applyRoleDefaults(roleSlug: string, slugs: readonly string[]) {

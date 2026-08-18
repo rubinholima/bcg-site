@@ -195,7 +195,23 @@ export class ModulesService {
       }
     }
     await this.migrateLegacyGroupOmiePermissions();
+    await this.backfillMissingModuleRoles(managed);
     return { created, updated };
+  }
+
+  /** Garante linha ModuleRole para todo par (módulo × perfil da matriz) — evita células órfãs. */
+  private async backfillMissingModuleRoles(managedRoles: string[]): Promise<void> {
+    if (managedRoles.length === 0) return;
+    const modules = await this.prisma.module.findMany({ select: { id: true } });
+    for (const role of managedRoles) {
+      for (const mod of modules) {
+        await this.prisma.moduleRole.upsert({
+          where: { moduleId_role: { moduleId: mod.id, role } },
+          create: { moduleId: mod.id, role, canAccess: false },
+          update: {},
+        });
+      }
+    }
   }
 
   private async migrateLegacyGroupOmiePermissions(): Promise<void> {

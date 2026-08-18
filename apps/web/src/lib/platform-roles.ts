@@ -45,6 +45,9 @@ export const FALLBACK_ROLE_LABELS: Record<string, string> = {
   financeiro: "FINANCEIRO",
   ceo: "CEO",
   marketing: "MARKETING",
+  assistente: "ASSISTENTE SOCIAL",
+  pedagoga: "PEDAGOGA",
+  captador: "CAPTADOR",
 };
 
 export function roleLabelsFromCatalog(roles: PlatformRole[]): Record<string, string> {

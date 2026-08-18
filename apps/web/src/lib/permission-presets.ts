@@ -150,6 +150,26 @@ export const PERMISSION_PRESETS: readonly PermissionPreset[] = [
     ],
   },
   {
+    id: "assistencia-social-pedagogia",
+    title: "Assistência Social / Pedagogia (escola)",
+    description:
+      "Dash da área, aba Escola/Pedagogia na ficha do atleta e cadastro de jogadores — perfis pedagoga e assistente social.",
+    grants: [
+      { role: "pedagoga", slug: "futebol_assistencia_social" },
+      { role: "pedagoga", slug: "assistencia_social__assistencia_social_visao" },
+      { role: "pedagoga", slug: "player_tab__assistencia_social" },
+      { role: "pedagoga", slug: "futebol/futebol_cadastros__cad_jogadores" },
+      { role: "pedagoga", slug: "dashboard__dashboard" },
+      { role: "assistente", slug: "futebol_assistencia_social" },
+      { role: "assistente", slug: "assistencia_social__assistencia_social_visao" },
+      { role: "assistente", slug: "player_tab__assistencia_social" },
+      { role: "assistente", slug: "futebol/futebol_cadastros__cad_jogadores" },
+      { role: "assistente", slug: "dashboard__dashboard" },
+      { role: "company_admin", slug: "futebol_assistencia_social" },
+      { role: "editor", slug: "futebol_assistencia_social" },
+    ],
+  },
+  {
     id: "adm-financeiro-operacoes",
     title: "Administrativo & financeiro (estoque / compras)",
     description: "Financeiro, compras, estoque, RH, patrimônio e nutrição.",
