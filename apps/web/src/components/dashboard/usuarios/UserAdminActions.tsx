@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Ban, KeyRound, ShieldCheck } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Ban, Check, KeyRound, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/dialog";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { authFetch } from "@/lib/authFetch";
-import { validateCognitoPassword } from "@/lib/passwordPolicy";
+import { getPasswordRequirementChecks, validateCognitoPassword } from "@/lib/passwordPolicy";
+import { cn } from "@/lib/utils";
 
 function parseApiError(text: string): string {
   const trimmed = text.trim();
@@ -38,6 +39,30 @@ function parseApiError(text: string): string {
     /* texto puro */
   }
   return trimmed.length > 200 ? "Erro na operação." : trimmed;
+}
+
+function PasswordRequirementsList({ password }: { password: string }) {
+  const checks = useMemo(() => getPasswordRequirementChecks(password), [password]);
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">Requisitos da senha</p>
+      <ul className="space-y-1">
+        {checks.map((c) => (
+          <li
+            key={c.id}
+            className={cn(
+              "flex items-start gap-2 text-xs leading-snug",
+              c.met ? "text-emerald-500" : "text-muted-foreground",
+            )}
+          >
+            <Check className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", !c.met && "opacity-30")} />
+            <span>{c.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 type UserAdminActionsProps = {
@@ -61,6 +86,7 @@ export function UserAdminActions({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -104,23 +130,17 @@ export function UserAdminActions({
   };
 
   const handlePasswordSubmit = async () => {
+    setPasswordError(null);
     if (newPassword !== confirmPassword) {
-      setFeedback({
-        open: true,
-        title: "Senhas diferentes",
-        message: "A confirmação deve ser igual à nova senha.",
-        variant: "error",
-      });
+      setPasswordError("A confirmação deve ser igual à nova senha.");
       return;
     }
     const validation = validateCognitoPassword(newPassword);
     if (!validation.valid) {
-      setFeedback({
-        open: true,
-        title: "Senha inválida",
-        message: validation.message ?? "A senha não atende aos requisitos.",
-        variant: "error",
-      });
+      const missing = validation.unmet?.length
+        ? validation.unmet.join(" · ")
+        : "Verifique os requisitos abaixo.";
+      setPasswordError(`Senha inválida: ${missing}`);
       return;
     }
     setBusy(true);
@@ -136,6 +156,7 @@ export function UserAdminActions({
       setNewPassword("");
       setConfirmPassword("");
       setMustChangePassword(false);
+      setPasswordError(null);
       setPasswordDialogOpen(false);
       setFeedback({
         open: true,
@@ -218,36 +239,57 @@ export function UserAdminActions({
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nova senha — {username}</DialogTitle>
+      <Dialog
+        open={passwordDialogOpen}
+        onOpenChange={(open) => {
+          setPasswordDialogOpen(open);
+          if (!open) {
+            setPasswordError(null);
+            setNewPassword("");
+            setConfirmPassword("");
+            setMustChangePassword(false);
+          }
+        }}
+      >
+        <DialogContent
+          className="w-[min(28rem,calc(100vw-1.5rem))]"
+          contentClassName="overflow-visible gap-3 py-5 px-5 sm:px-6"
+        >
+          <DialogHeader className="space-y-1 pr-8">
+            <DialogTitle className="text-base sm:text-lg">Nova senha — {username}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
+          <div className="space-y-3">
+            <div className="space-y-1.5">
               <Label htmlFor={`new-password-${username}`}>Nova senha</Label>
               <Input
                 id={`new-password-${username}`}
                 type="password"
                 autoComplete="new-password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setPasswordError(null);
+                }}
                 disabled={busy}
                 className="text-foreground"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <Label htmlFor={`confirm-password-${username}`}>Confirmar senha</Label>
               <Input
                 id={`confirm-password-${username}`}
                 type="password"
                 autoComplete="new-password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setPasswordError(null);
+                }}
                 disabled={busy}
                 className="text-foreground"
               />
             </div>
+            <PasswordRequirementsList password={newPassword} />
             <label className="flex cursor-pointer items-center gap-2 text-sm">
               <Checkbox
                 checked={mustChangePassword}
@@ -256,8 +298,13 @@ export function UserAdminActions({
               />
               <span>Exigir troca no próximo login</span>
             </label>
+            {passwordError ? (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {passwordError}
+              </p>
+            ) : null}
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2 pt-1 sm:justify-end">
             <Button
               type="button"
               variant="outline"
