@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { reportLogoUrlForPrint } from "@/lib/futebol-relatorios-print";
 import { Tenant } from "@/types/tenant";
 import { AssistenciaSocialCasesPanel } from "@/components/dashboard/assistencia-social/AssistenciaSocialCasesPanel";
 import { AssistenciaSocialRosterPanel } from "@/components/dashboard/assistencia-social/AssistenciaSocialRosterPanel";
@@ -80,8 +81,10 @@ export default function AssistenciaSocialPage() {
   }
 
   const effectiveTenantId = tenantId || (tenants[0]?.id ?? "");
-  const tenantName = tenants.find((t) => t.id === effectiveTenantId)?.name;
-  const tenantCategories = tenants.find((t) => t.id === effectiveTenantId)?.categories ?? null;
+  const selectedTenant = tenants.find((t) => t.id === effectiveTenantId);
+  const tenantName = selectedTenant?.name;
+  const tenantCategories = selectedTenant?.categories ?? null;
+  const tenantLogoUrl = reportLogoUrlForPrint(selectedTenant?.logoUrl, !effectiveTenantId);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -135,6 +138,7 @@ export default function AssistenciaSocialPage() {
             <AssistenciaSocialRosterPanel
               tenantId={effectiveTenantId}
               tenantName={tenantName}
+              tenantLogoUrl={tenantLogoUrl}
               tenantCategories={tenantCategories}
             />
           )}
