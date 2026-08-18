@@ -1,6 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  isArchivedSportsSituation,
+  isLoanedSportsSituation,
+  normalizeSportsSituation,
+} from '../common/sports-situation.util';
 import { parseRegistrationProfile, validatePlayerContacts } from './social-pedagogy.util';
+
+function normalizeCategory(value: string | null | undefined): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
+function isActiveRosterPlayer(registrationProfile: unknown): boolean {
+  const profile = parseRegistrationProfile(registrationProfile) as {
+    sports?: { situation?: string };
+  };
+  const situation = normalizeSportsSituation(profile.sports?.situation);
+  return !isArchivedSportsSituation(situation) && !isLoanedSportsSituation(situation);
+}
 
 @Injectable()
 export class SocialPedagogyReportsService {
@@ -13,11 +30,10 @@ export class SocialPedagogyReportsService {
     });
     if (!tenant) throw new NotFoundException('Tenant não encontrado');
 
+    const categoryNorm = category?.trim() ? normalizeCategory(category) : '';
+
     const players = await this.prisma.player.findMany({
-      where: {
-        tenantId,
-        ...(category ? { category } : {}),
-      },
+      where: { tenantId },
       select: {
         id: true,
         name: true,
@@ -33,10 +49,25 @@ export class SocialPedagogyReportsService {
       orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
     });
 
-    const playerIds = players.map((p) => p.id);
-    const guardians = await this.prisma.playerGuardian.findMany({
-      where: { playerId: { in: playerIds } },
-    });
+    const activePlayers = players.filter((p) => isActiveRosterPlayer(p.registrationProfile));
+    const filteredPlayers = categoryNorm
+      ? activePlayers.filter((p) => normalizeCategory(p.category) === categoryNorm)
+      : activePlayers;
+
+    const playerIds = filteredPlayers.map((p) => p.id);
+
+    const [guardians, enrollments] = await Promise.all([
+      playerIds.length
+        ? this.prisma.playerGuardian.findMany({ where: { playerId: { in: playerIds } } })
+        : Promise.resolve([]),
+      playerIds.length
+        ? this.prisma.playerSchoolEnrollment.findMany({
+            where: { playerId: { in: playerIds }, status: 'ativo' },
+            orderBy: [{ updatedAt: 'desc' }],
+          })
+        : Promise.resolve([]),
+    ]);
+
     const guardiansByPlayer = new Map<string, typeof guardians>();
     for (const g of guardians) {
       const list = guardiansByPlayer.get(g.playerId) ?? [];
@@ -44,21 +75,30 @@ export class SocialPedagogyReportsService {
       guardiansByPlayer.set(g.playerId, list);
     }
 
-    const rows = players.map((player) => {
+    const schoolByPlayer = new Map<string, string>();
+    for (const e of enrollments) {
+      if (!schoolByPlayer.has(e.playerId) && e.schoolName?.trim()) {
+        schoolByPlayer.set(e.playerId, e.schoolName.trim());
+      }
+    }
+
+    const rows = filteredPlayers.map((player) => {
       const gs = guardiansByPlayer.get(player.id) ?? [];
       const validation = validatePlayerContacts(player, gs);
       const profile = parseRegistrationProfile(player.registrationProfile);
+      const schoolName =
+        schoolByPlayer.get(player.id) ?? profile.extras?.schoolName?.trim() ?? null;
       return {
         playerId: player.id,
         name: player.name,
         jerseyNumber: player.jerseyNumber,
         category: player.category,
-        schoolName: profile.extras?.schoolName ?? null,
+        schoolName,
         validation,
       };
     });
 
-    return { tenant, category: category ?? null, rows };
+    return { tenant, category: category?.trim() || null, rows };
   }
 
   async notificationReport(caseId: string) {

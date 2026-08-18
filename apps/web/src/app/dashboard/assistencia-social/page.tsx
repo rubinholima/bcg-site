@@ -75,16 +75,21 @@ export default function AssistenciaSocialPage() {
     loadPlayers();
   }, [tenantId, loadPlayers]);
 
+  useEffect(() => {
+    if (tenants.length === 1 && !tenantId) {
+      setTenantId(tenants[0].id);
+    }
+  }, [tenants, tenantId]);
+
   if (!canAccessModule("futebol_assistencia_social") && !authLoading) {
     router.replace("/403");
     return null;
   }
 
-  const effectiveTenantId = tenantId || (tenants[0]?.id ?? "");
-  const selectedTenant = tenants.find((t) => t.id === effectiveTenantId);
+  const selectedTenant = tenants.find((t) => t.id === tenantId);
   const tenantName = selectedTenant?.name;
   const tenantCategories = selectedTenant?.categories ?? null;
-  const tenantLogoUrl = reportLogoUrlForPrint(selectedTenant?.logoUrl, !effectiveTenantId);
+  const tenantLogoUrl = reportLogoUrlForPrint(selectedTenant?.logoUrl, !tenantId);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -98,12 +103,11 @@ export default function AssistenciaSocialPage() {
         <CardContent className="space-y-4">
           <div className="grid gap-2 min-w-[200px] max-w-xs">
             <label className="text-sm font-medium text-muted-foreground">Clube/Empresa</label>
-            <Select value={tenantId || "__all__"} onValueChange={(v) => setTenantId(v === "__all__" ? "" : v)}>
+            <Select value={tenantId || undefined} onValueChange={setTenantId}>
               <SelectTrigger>
-                <SelectValue placeholder="Todos" />
+                <SelectValue placeholder="Selecione o clube…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">Todos</SelectItem>
                 {tenants.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
@@ -113,9 +117,7 @@ export default function AssistenciaSocialPage() {
             </Select>
           </div>
 
-          {effectiveTenantId ? (
-            <AssistenciaSocialAptoNotifications tenantId={effectiveTenantId} />
-          ) : null}
+          {tenantId ? <AssistenciaSocialAptoNotifications tenantId={tenantId} /> : null}
 
           <div className="flex gap-2 border-b flex-wrap">
             {TABS.map((tab) => (
@@ -132,18 +134,26 @@ export default function AssistenciaSocialPage() {
           </div>
 
           {activeTab === "casos" && (
-            <AssistenciaSocialCasesPanel tenantId={effectiveTenantId} players={players} />
+            <AssistenciaSocialCasesPanel
+              tenantId={tenantId}
+              tenantCategories={tenantCategories}
+              players={players}
+            />
           )}
           {activeTab === "elenco" && (
             <AssistenciaSocialRosterPanel
-              tenantId={effectiveTenantId}
+              tenantId={tenantId}
               tenantName={tenantName}
               tenantLogoUrl={tenantLogoUrl}
               tenantCategories={tenantCategories}
             />
           )}
           {activeTab === "documentos" && (
-            <AssistenciaSocialDocumentsPanel tenantId={effectiveTenantId} players={players} />
+            <AssistenciaSocialDocumentsPanel
+              tenantId={tenantId}
+              tenantCategories={tenantCategories}
+              players={players}
+            />
           )}
         </CardContent>
       </Card>

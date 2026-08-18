@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Loader2, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,9 @@ import {
 import { NativeSelectField } from "@/components/ui/native-select";
 import { MediaPicker } from "@/components/dashboard/MediaPicker";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
+import { getCategoryLabel } from "@/lib/fixture-categories";
+import { filterPlayersByCategory } from "@/lib/assistencia-social-validation";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPublicImageUrl } from "@/lib/media-url";
@@ -52,18 +55,22 @@ interface PlayerOption {
 
 interface Props {
   tenantId: string;
+  tenantCategories?: string[] | null;
   players: PlayerOption[];
 }
 
-export function AssistenciaSocialDocumentsPanel({ tenantId, players }: Props) {
+export function AssistenciaSocialDocumentsPanel({ tenantId, tenantCategories, players }: Props) {
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(tenantCategories);
   const [rows, setRows] = useState<SocialPedagogyDocumentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterPlayerId, setFilterPlayerId] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
   const [filterType, setFilterType] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [playerId, setPlayerId] = useState("");
+  const [docCategory, setDocCategory] = useState("");
   const [docType, setDocType] = useState("matricula");
   const [docName, setDocName] = useState("");
   const [docUrl, setDocUrl] = useState("");
@@ -94,6 +101,44 @@ export function AssistenciaSocialDocumentsPanel({ tenantId, players }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setFilterCategory("");
+    setFilterPlayerId("");
+    setDocCategory("");
+    setPlayerId("");
+  }, [tenantId]);
+
+  const filteredListPlayers = useMemo(
+    () =>
+      [...filterPlayersByCategory(players, filterCategory)].sort((a, b) =>
+        a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }),
+      ),
+    [players, filterCategory],
+  );
+
+  const playersForUpload = useMemo(
+    () =>
+      [...filterPlayersByCategory(players, docCategory)].sort((a, b) =>
+        a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }),
+      ),
+    [players, docCategory],
+  );
+
+  const playerLabel = (p: PlayerOption) => {
+    const cat = p.category ? getCategoryLabel(p.category, "pt", categoriesForDropdown) : null;
+    const base = p.jerseyNumber != null ? `${p.jerseyNumber} · ${p.name}` : p.name;
+    return cat ? `${base} · ${cat}` : base;
+  };
+
+  const openUploadDialog = () => {
+    setDocCategory("");
+    setPlayerId("");
+    setDocType("matricula");
+    setDocName("");
+    setDocUrl("");
+    setDialogOpen(true);
+  };
 
   const handleAdd = async () => {
     if (!playerId || !docName.trim() || !docUrl.trim()) return;
@@ -137,14 +182,31 @@ export function AssistenciaSocialDocumentsPanel({ tenantId, players }: Props) {
   };
 
   if (!tenantId) {
-    return <p className="text-sm text-muted-foreground py-4">Selecione um clube/empresa.</p>;
+    return (
+      <p className="text-sm text-muted-foreground py-4">
+        Selecione o clube/empresa acima para ver e anexar documentos.
+      </p>
+    );
   }
-
-  const playerOptions = [...players].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
   return (
     <>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap mb-4">
+        <div className="grid gap-1 min-w-[160px] flex-1 sm:max-w-[200px]">
+          <Label className="text-xs text-muted-foreground">Categoria</Label>
+          <NativeSelectField
+            value={filterCategory}
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setFilterPlayerId("");
+            }}
+            placeholder="Todas"
+            options={[
+              { value: "", label: "Todas" },
+              ...categoriesForDropdown.map((c) => ({ value: c.value, label: c.labelPT })),
+            ]}
+          />
+        </div>
         <div className="grid gap-1 min-w-[200px] flex-1 sm:max-w-xs">
           <Label className="text-xs text-muted-foreground">Atleta</Label>
           <NativeSelectField
@@ -153,9 +215,9 @@ export function AssistenciaSocialDocumentsPanel({ tenantId, players }: Props) {
             placeholder="Todos"
             options={[
               { value: "", label: "Todos" },
-              ...playerOptions.map((p) => ({
+              ...filteredListPlayers.map((p) => ({
                 value: p.id,
-                label: p.jerseyNumber != null ? `${p.jerseyNumber} · ${p.name}` : p.name,
+                label: playerLabel(p),
               })),
             ]}
           />
@@ -172,7 +234,7 @@ export function AssistenciaSocialDocumentsPanel({ tenantId, players }: Props) {
             ]}
           />
         </div>
-        <Button type="button" onClick={() => setDialogOpen(true)} disabled={players.length === 0}>
+        <Button type="button" onClick={openUploadDialog} disabled={players.length === 0}>
           <Plus className="h-4 w-4 mr-1" />
           Anexar documento
         </Button>
@@ -249,14 +311,29 @@ export function AssistenciaSocialDocumentsPanel({ tenantId, players }: Props) {
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid gap-1">
+              <Label>Categoria</Label>
+              <NativeSelectField
+                value={docCategory}
+                onChange={(e) => {
+                  setDocCategory(e.target.value);
+                  setPlayerId("");
+                }}
+                placeholder="Todas"
+                options={[
+                  { value: "", label: "Todas" },
+                  ...categoriesForDropdown.map((c) => ({ value: c.value, label: c.labelPT })),
+                ]}
+              />
+            </div>
+            <div className="grid gap-1">
               <Label>Atleta</Label>
               <NativeSelectField
                 value={playerId}
                 onChange={(e) => setPlayerId(e.target.value)}
                 placeholder="Selecione…"
-                options={playerOptions.map((p) => ({
+                options={playersForUpload.map((p) => ({
                   value: p.id,
-                  label: p.jerseyNumber != null ? `${p.jerseyNumber} · ${p.name}` : p.name,
+                  label: playerLabel(p),
                 }))}
               />
             </div>

@@ -38,9 +38,7 @@ export function AssistenciaSocialRosterPanel({
   tenantLogoUrl,
   tenantCategories,
 }: Props) {
-  const { categories: categoriesForDropdown } = useCategoriesForTenant(tenantCategories, {
-    requireTenantSelection: true,
-  });
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(tenantCategories);
   const [category, setCategory] = useState("");
   const [onlyPending, setOnlyPending] = useState(true);
   const [rows, setRows] = useState<RosterValidationRow[]>([]);
@@ -71,6 +69,10 @@ export function AssistenciaSocialRosterPanel({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setCategory("");
+  }, [tenantId]);
 
   useEffect(() => {
     setRows([]);
@@ -105,7 +107,11 @@ export function AssistenciaSocialRosterPanel({
   };
 
   if (!tenantId) {
-    return <p className="text-sm text-muted-foreground py-4">Selecione um clube/empresa.</p>;
+    return (
+      <p className="text-sm text-muted-foreground py-4">
+        Selecione o clube/empresa acima para validar o elenco.
+      </p>
+    );
   }
 
   return (
@@ -146,6 +152,9 @@ export function AssistenciaSocialRosterPanel({
 
       {loaded && rows.length > 0 ? (
         <div className="flex flex-wrap gap-2 mb-4 text-sm">
+          {tenantName ? (
+            <span className="rounded-full border border-border px-3 py-1">{tenantName}</span>
+          ) : null}
           <span className="rounded-full border border-border px-3 py-1">{stats.total} atletas</span>
           <span className="rounded-full border border-green-700/40 bg-green-950/30 text-green-100 px-3 py-1">
             {stats.ok} OK
@@ -159,7 +168,9 @@ export function AssistenciaSocialRosterPanel({
       {loaded && visibleRows.length === 0 ? (
         <p className="text-sm text-muted-foreground py-4">
           {rows.length === 0
-            ? "Nenhum atleta encontrado nesta categoria."
+            ? category
+              ? `Nenhum atleta ativo nesta categoria (${categoryLabel}).`
+              : "Nenhum atleta ativo neste clube."
             : "Nenhuma pendência — todos os atletas estão OK."}
         </p>
       ) : null}

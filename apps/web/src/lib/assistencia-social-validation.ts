@@ -21,6 +21,19 @@ export function playerEditUrl(playerId: string, tab: "dados" | "assistencia_soci
   return `/dashboard/cadastros/jogadores/${playerId}/edit?tab=${tab}`;
 }
 
+export function normalizePlayerCategory(value: string | null | undefined): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
+export function filterPlayersByCategory<T extends { category?: string | null }>(
+  players: T[],
+  category: string,
+): T[] {
+  if (!category.trim()) return players;
+  const norm = normalizePlayerCategory(category);
+  return players.filter((p) => normalizePlayerCategory(p.category) === norm);
+}
+
 export function primaryFixTab(issues: string[]): "dados" | "assistencia_social" {
   if (issues.length === 0) return "assistencia_social";
   return getValidationFixTarget(issues[0]).tab;

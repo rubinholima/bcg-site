@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, Plus, Printer, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,9 @@ import { NativeSelectField } from "@/components/ui/native-select";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { filterPlayersByCategory } from "@/lib/assistencia-social-validation";
 import { printSchoolNotification, type NotificationReport } from "@/lib/assistencia-social-print";
 import {
   SOCIAL_PEDAGOGY_TRIGGER_OPTIONS,
@@ -55,15 +57,18 @@ interface PlayerOption {
 
 interface Props {
   tenantId: string;
+  tenantCategories?: string[] | null;
   players: PlayerOption[];
 }
 
-export function AssistenciaSocialCasesPanel({ tenantId, players }: Props) {
+export function AssistenciaSocialCasesPanel({ tenantId, tenantCategories, players }: Props) {
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(tenantCategories);
   const [rows, setRows] = useState<SocialPedagogyCaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [playerId, setPlayerId] = useState("");
+  const [caseCategory, setCaseCategory] = useState("");
   const [triggerType, setTriggerType] = useState("manual");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
@@ -98,6 +103,29 @@ export function AssistenciaSocialCasesPanel({ tenantId, players }: Props) {
     load();
   }, [load]);
 
+  useEffect(() => {
+    setCaseCategory("");
+    setPlayerId("");
+  }, [tenantId]);
+
+  const playersForCase = useMemo(
+    () =>
+      [...filterPlayersByCategory(players, caseCategory)].sort((a, b) =>
+        a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }),
+      ),
+    [players, caseCategory],
+  );
+
+  const openCreateDialog = () => {
+    setCaseCategory("");
+    setPlayerId("");
+    setTriggerType("manual");
+    setPeriodStart("");
+    setPeriodEnd("");
+    setNotes("");
+    setDialogOpen(true);
+  };
+
   const handleCreate = async () => {
     if (!playerId) {
       setFeedback({ open: true, title: "Atenção", message: "Selecione o atleta." });
@@ -115,6 +143,7 @@ export function AssistenciaSocialCasesPanel({ tenantId, players }: Props) {
       });
       setDialogOpen(false);
       setPlayerId("");
+      setCaseCategory("");
       setNotes("");
       await load();
       setFeedback({ open: true, title: "Caso aberto", message: "Fluxo iniciado com validação e agenda." });
@@ -195,7 +224,11 @@ export function AssistenciaSocialCasesPanel({ tenantId, players }: Props) {
   };
 
   if (!tenantId) {
-    return <p className="text-sm text-muted-foreground py-4">Selecione um clube/empresa.</p>;
+    return (
+      <p className="text-sm text-muted-foreground py-4">
+        Selecione o clube/empresa acima para ver e abrir casos.
+      </p>
+    );
   }
 
   return (
@@ -210,7 +243,7 @@ export function AssistenciaSocialCasesPanel({ tenantId, players }: Props) {
             options={[{ value: "", label: "Todos" }, ...SOCIAL_PEDAGOGY_STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label }))]}
           />
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button type="button" onClick={openCreateDialog} disabled={players.length === 0}>
           <Plus className="h-4 w-4 mr-2" />
           Novo caso
         </Button>
@@ -309,16 +342,42 @@ export function AssistenciaSocialCasesPanel({ tenantId, players }: Props) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-1">
+              <Label>Categoria</Label>
+              <NativeSelectField
+                value={caseCategory}
+                onChange={(e) => {
+                  setCaseCategory(e.target.value);
+                  setPlayerId("");
+                }}
+                placeholder="Todas"
+                options={[
+                  { value: "", label: "Todas" },
+                  ...categoriesForDropdown.map((c) => ({ value: c.value, label: c.labelPT })),
+                ]}
+              />
+            </div>
+            <div className="grid gap-1">
               <Label>Atleta</Label>
               <NativeSelectField
                 value={playerId}
                 onChange={(e) => setPlayerId(e.target.value)}
                 placeholder="Selecione…"
-                options={players.map((p) => ({
+                options={playersForCase.map((p) => ({
                   value: p.id,
-                  label: `${p.name}${p.jerseyNumber != null ? ` #${p.jerseyNumber}` : ""}`,
+                  label: `${p.name}${p.jerseyNumber != null ? ` #${p.jerseyNumber}` : ""}${
+                    p.category
+                      ? ` · ${getCategoryLabel(p.category, "pt", categoriesForDropdown)}`
+                      : ""
+                  }`,
                 }))}
               />
+              {playersForCase.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  {players.length === 0
+                    ? "Nenhum atleta ativo neste clube."
+                    : "Nenhum atleta nesta categoria."}
+                </p>
+              ) : null}
             </div>
             <div className="grid gap-1">
               <Label>Gatilho</Label>
