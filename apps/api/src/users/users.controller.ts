@@ -10,6 +10,7 @@ import {
   UseGuards,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { JwtAuthGuard, CognitoJwtPayload } from '../auth/jwt-auth.guard';
@@ -21,6 +22,9 @@ import { UsersService, UserRole } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { SetUserBlockedDto } from './dto/set-user-blocked.dto';
+import { AdminSetPasswordDto } from './dto/admin-set-password.dto';
+import { validatePlatformPassword } from '../auth/password-policy.util';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, DashboardRolesGuard, ModuleAccessGuard)
@@ -110,6 +114,15 @@ export class UsersController {
       }
       await this.tenantAccess.assertActorCanAssignTenants(req.user.sub, actorRole, dto.tenantIds);
     }
+    if (dto.password !== undefined && dto.password.length > 0) {
+      if (actorRole !== 'super_admin') {
+        throw new ForbiddenException('Apenas super admin pode alterar a senha de outro usuário.');
+      }
+      const policyError = validatePlatformPassword(dto.password);
+      if (policyError) {
+        throw new BadRequestException(policyError);
+      }
+    }
     await this.usersService.update(decoded, {
       name: dto.name,
       email: dto.email,
@@ -133,6 +146,56 @@ export class UsersController {
       throw new ForbiddenException('Company admin não pode remover um usuário super admin.');
     }
     await this.usersService.remove(decoded);
+    return { ok: true };
+  }
+
+  @Patch(':username/block')
+  async setBlocked(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('username') username: string,
+    @Body() dto: SetUserBlockedDto,
+  ) {
+    const actorRole = (req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user') as string;
+    if (actorRole !== 'super_admin') {
+      throw new ForbiddenException('Apenas super admin pode bloquear ou desbloquear usuários.');
+    }
+    const decoded = decodeURIComponent(username);
+    const target = await this.usersService.findOne(decoded);
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    const actor = await this.usersService.findOneById(req.user.sub);
+    if (dto.blocked && actor?.username === target.username) {
+      throw new BadRequestException('Você não pode bloquear a própria conta.');
+    }
+    await this.usersService.setBlocked(decoded, dto.blocked);
+    return { ok: true, blocked: dto.blocked };
+  }
+
+  @Patch(':username/password')
+  async adminSetPassword(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('username') username: string,
+    @Body() dto: AdminSetPasswordDto,
+  ) {
+    const actorRole = (req.user.role ?? req.user['cognito:groups']?.[0] ?? 'user') as string;
+    if (actorRole !== 'super_admin') {
+      throw new ForbiddenException('Apenas super admin pode alterar a senha de outro usuário.');
+    }
+    const decoded = decodeURIComponent(username);
+    const target = await this.usersService.findOne(decoded);
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+    const policyError = validatePlatformPassword(dto.password);
+    if (policyError) {
+      throw new BadRequestException(policyError);
+    }
+    await this.usersService.adminSetPassword(
+      decoded,
+      dto.password,
+      dto.mustChangePassword ?? false,
+    );
     return { ok: true };
   }
 }

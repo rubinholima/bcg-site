@@ -8,6 +8,7 @@ export interface UserListItem {
   name: string | null;
   role: UserRole;
   enabled: boolean;
+  blocked?: boolean;
   mustChangePassword?: boolean;
   tenantIds?: string[];
   tenants?: { id: string; name: string }[];

@@ -17,6 +17,7 @@ export interface UserListItem {
   name: string | null;
   role: UserRole;
   enabled: boolean;
+  blocked: boolean;
   mustChangePassword: boolean;
   /** Empresas/clubes atribuídos (escopo). Vazio = sem linhas em UserTenant (ver todas, exceto super_admin). */
   tenantIds?: string[];
@@ -51,6 +52,7 @@ export class UsersService {
     role: string | null;
     passwordHash: string | null;
     mustChangePassword: boolean;
+    blocked: boolean;
     createdAt: Date;
     updatedAt: Date;
     userTenants: { tenantId: string; tenant: { id: string; name: string } }[];
@@ -62,7 +64,8 @@ export class UsersService {
       email: u.email,
       name: u.name,
       role: (u.role as UserRole) ?? 'editor',
-      enabled: Boolean(u.passwordHash || u.cognitoSub),
+      enabled: Boolean(u.passwordHash || u.cognitoSub) && !u.blocked,
+      blocked: u.blocked,
       mustChangePassword: u.mustChangePassword,
       tenantIds: u.userTenants.map((t) => t.tenantId),
       tenants: u.userTenants.map((t) => ({ id: t.tenant.id, name: t.tenant.name })),
@@ -91,6 +94,15 @@ export class UsersService {
     const login = normalizeUsernameInput(decodeURIComponent(username));
     const user = await this.prisma.user.findUnique({
       where: { username: login },
+      include: this.userInclude(),
+    });
+    if (!user) return null;
+    return this.mapUser(user);
+  }
+
+  async findOneById(id: string): Promise<UserListItem | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
       include: this.userInclude(),
     });
     if (!user) return null;
@@ -219,6 +231,31 @@ export class UsersService {
   async remove(username: string): Promise<void> {
     const user = await this.findByUsername(username);
     await this.prisma.user.delete({ where: { id: user.id } });
+  }
+
+  async setBlocked(username: string, blocked: boolean): Promise<void> {
+    const user = await this.findByUsername(username);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { blocked, updatedAt: new Date() },
+    });
+  }
+
+  async adminSetPassword(
+    username: string,
+    password: string,
+    mustChangePassword = false,
+  ): Promise<void> {
+    const user = await this.findByUsername(username);
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        mustChangePassword,
+        updatedAt: new Date(),
+      },
+    });
   }
 
   private async findByUsername(username: string) {

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { UserAdminActions } from "@/components/dashboard/usuarios/UserAdminActions";
 import type { UserListItem, UserRole } from "@/types/user";
 import { selectableRolesForActor, roleLabel } from "@/lib/user-roles";
 import { usePlatformRoles } from "@/hooks/usePlatformRoles";
@@ -26,7 +27,7 @@ import { isValidUsername } from "@/lib/username";
 export default function EditUsuarioPage() {
   const { notifySaved, SaveSuccessModal } = useSaveSuccessFeedback();
   const params = useParams();
-  const { isSuperAdmin, isCompanyAdmin } = useAuth();
+  const { isSuperAdmin, isCompanyAdmin, user: currentUser } = useAuth();
   const canManageTenantScope = isSuperAdmin || isCompanyAdmin;
   const { roles: roleCatalog } = usePlatformRoles();
   const roleSelectOptions = selectableRolesForActor(isSuperAdmin, roleCatalog);
@@ -42,6 +43,7 @@ export default function EditUsuarioPage() {
     name: "",
     role: "user" as UserRole,
     tenantIds: [] as string[],
+    blocked: false,
   });
 
   const loadTenants = useCallback(async () => {
@@ -95,6 +97,7 @@ export default function EditUsuarioPage() {
           name: data.name ?? "",
           role: data.role ?? "user",
           tenantIds: data.tenantIds ?? [],
+          blocked: Boolean(data.blocked),
         });
         if (isCompanyAdmin && data.role === "super_admin") {
           setCannotEdit(true);
@@ -296,6 +299,30 @@ export default function EditUsuarioPage() {
           </form>
         </CardContent>
       </Card>
+      {isSuperAdmin ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Administração</CardTitle>
+            <CardDescription>
+              Bloqueio de acesso e redefinição de senha para{" "}
+              <span className="font-mono">{formData.username || username}</span>.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <UserAdminActions
+              username={formData.username || username}
+              blocked={formData.blocked}
+              isSelf={currentUser?.username === (formData.username || username)}
+              onUpdated={(patch) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  ...(patch.blocked !== undefined ? { blocked: patch.blocked } : {}),
+                }))
+              }
+            />
+          </CardContent>
+        </Card>
+      ) : null}
       <SaveSuccessModal />
     </div>
   );

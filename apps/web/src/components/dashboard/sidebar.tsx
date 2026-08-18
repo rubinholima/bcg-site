@@ -141,6 +141,15 @@ function isJuridicoPath(pathname: string | null, relHub: string | null): boolean
   return !!pathname?.startsWith("/dashboard/juridico");
 }
 
+function isAssistenciaSocialPath(pathname: string | null, relHub: string | null): boolean {
+  if (relHub === "assistencia_social") return true;
+  if (!pathname) return false;
+  return (
+    pathname.startsWith("/dashboard/assistencia-social") ||
+    pathname.startsWith("/dashboard/futebol/assistencia-social")
+  );
+}
+
 function isEventosPath(pathname: string | null, relHub: string | null): boolean {
   if (relHub === "eventos") return true;
   return !!pathname?.startsWith("/dashboard/eventos");
@@ -222,6 +231,7 @@ function getActiveGroupSlug(pathname: string | null, relHub: string | null): str
   if (isAgendaSectionPath(pathname)) return "agenda";
   if (isSaudePath(pathname, relHub)) return "saude";
   if (isFutebolOperacaoPath(pathname, relHub)) return "futebol";
+  if (isAssistenciaSocialPath(pathname, relHub)) return "assistencia_social";
   if (isJuridicoPath(pathname, relHub)) return "juridico";
   if (isEventosPath(pathname, relHub)) return "eventos";
   if (isMarketingPath(pathname, relHub)) return "marketing";
@@ -251,6 +261,7 @@ function getPathnameHub(pathname: string | null, relHub: string | null): string 
   if (isAgendaSectionPath(pathname)) return "agenda";
   if (isSaudePath(pathname, null)) return "saude";
   if (isFutebolOperacaoPath(pathname, null)) return "futebol";
+  if (isAssistenciaSocialPath(pathname, null)) return "assistencia_social";
   if (isJuridicoPath(pathname, null)) return "juridico";
   if (isEventosPath(pathname, null)) return "eventos";
   if (isMarketingPath(pathname, null)) return "marketing";
@@ -442,6 +453,9 @@ function SidebarNav() {
   const [saudeOpen, setSaudeOpen] = useState(() => isSaudePath(pathname, relHub));
   const [futebolOpen, setFutebolOpen] = useState(() => isFutebolOperacaoPath(pathname, relHub));
   const [juridicoOpen, setJuridicoOpen] = useState(() => isJuridicoPath(pathname, relHub));
+  const [assistenciaSocialOpen, setAssistenciaSocialOpen] = useState(() =>
+    isAssistenciaSocialPath(pathname, relHub),
+  );
   const [eventosOpen, setEventosOpen] = useState(() => isEventosPath(pathname, relHub));
   const [admOpen, setAdmOpen] = useState(() => isAdmPath(pathname, relHub));
   const [requisicoesOpen, setRequisicoesOpen] = useState(() => isRequisicoesPath(pathname));
@@ -492,6 +506,7 @@ function SidebarNav() {
     setGrupoMasterOpen(slug === "grupo_master");
     setSaudeOpen(slug === "saude");
     setFutebolOpen(slug === "futebol");
+    setAssistenciaSocialOpen(slug === "assistencia_social");
     setJuridicoOpen(slug === "juridico");
     setEventosOpen(slug === "eventos");
     setAdmOpen(slug === "adm");
@@ -720,6 +735,8 @@ function SidebarNav() {
                       ? saudeOpen
                       : item.slug === "futebol"
                         ? futebolOpen
+                        : item.slug === "assistencia_social"
+                          ? assistenciaSocialOpen
                         : item.slug === "juridico"
                           ? juridicoOpen
                           : item.slug === "eventos"

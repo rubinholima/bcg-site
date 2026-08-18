@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, UserCircle, Pencil, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserAdminActions } from "@/components/dashboard/usuarios/UserAdminActions";
 import {
   DashboardDeptHeader,
   DashboardDeptSearch,
@@ -83,7 +84,7 @@ function EmpresasAcessoCell({ u }: { u: UserListItem }) {
 export default function UsuariosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isSuperAdmin, isCompanyAdmin } = useAuth();
+  const { isSuperAdmin, isCompanyAdmin, user: currentUser } = useAuth();
   const { roles: roleCatalog } = usePlatformRoles();
   const roleOptionsForSelect = selectableRolesForActor(isSuperAdmin, roleCatalog);
   const [users, setUsers] = useState<UserListItem[]>([]);
@@ -284,6 +285,7 @@ export default function UsuariosPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead className="min-w-[12rem]">Empresas (acesso)</TableHead>
                   <TableHead>Role</TableHead>
+                  {isSuperAdmin ? <TableHead>Status</TableHead> : null}
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -322,12 +324,40 @@ export default function UsuariosPage() {
                         </Select>
                       )}
                     </TableCell>
+                    {isSuperAdmin ? (
+                      <TableCell>
+                        {u.blocked ? (
+                          <span className="inline-flex rounded-md border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                            Bloqueado
+                          </span>
+                        ) : (
+                          <span className="inline-flex rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">
+                            Ativo
+                          </span>
+                        )}
+                      </TableCell>
+                    ) : null}
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         {updating === u.username ? (
                           <span className="text-muted-foreground text-sm">
                             Salvando...
                           </span>
+                        ) : null}
+                        {isSuperAdmin ? (
+                          <UserAdminActions
+                            username={u.username}
+                            blocked={Boolean(u.blocked)}
+                            isSelf={currentUser?.username === u.username}
+                            compact
+                            onUpdated={(patch) =>
+                              setUsers((prev) =>
+                                prev.map((row) =>
+                                  row.username === u.username ? { ...row, ...patch } : row,
+                                ),
+                              )
+                            }
+                          />
                         ) : null}
                         {!(isCompanyAdmin && u.role === "super_admin") ? (
                           <>

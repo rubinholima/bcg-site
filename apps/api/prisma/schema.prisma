@@ -17,6 +17,8 @@ model User {
   passwordHash String?  // login próprio (bcrypt); null = só Cognito
   /// true = redireciona para troca de senha no primeiro acesso após login.
   mustChangePassword Boolean @default(false)
+  /// true = login e API bloqueados até desbloqueio por super admin.
+  blocked      Boolean  @default(false)
   role         String?  @default("editor") // super_admin | company_admin | editor | gerente | administrativo | …
   /// Quando true, módulos vêm de UserModuleAccess (não da matriz do perfil).
   customModuleAccess Boolean @default(false)

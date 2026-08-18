@@ -67,6 +67,9 @@ export class MeController {
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
+    if (user.blocked) {
+      throw new UnauthorizedException('Usuário bloqueado. Contate o administrador.');
+    }
     const roleFromDb = (user.role as MeRole) ?? role;
     role = roleFromDb;
     const tenantIds = await this.tenantAccess.getAllowedTenantIds(user.id, role);

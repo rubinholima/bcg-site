@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -37,6 +37,7 @@ export class CredentialsAuthService {
       where: { username: login },
     });
     if (!user?.passwordHash) return null;
+    if (user.blocked) return null;
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return null;
     return {
@@ -57,6 +58,11 @@ export class CredentialsAuthService {
     mustChangePassword: boolean;
     user: AuthUserResult;
   }> {
+    const login = normalizeUsernameInput(username);
+    const dbUser = await this.prisma.user.findUnique({ where: { username: login } });
+    if (dbUser?.blocked) {
+      throw new ForbiddenException('Usuário bloqueado. Contate o administrador.');
+    }
     const user = await this.validateUser(username, password);
     if (!user) {
       throw new UnauthorizedException('Usuário ou senha inválidos');
