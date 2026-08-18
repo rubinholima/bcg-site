@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Printer, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,16 +19,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
+import {
+  printTrainingPeriodReport,
+  printTrainingSessionReport,
+} from "@/lib/treinadores-treinos-print";
 import type {
+  CoachAgendaTreinoOption,
   CoachContextResponse,
   CoachTrainingActivity,
+  CoachTrainingPeriodReport,
+  CoachTrainingPlanTemplate,
   CoachTrainingSession,
+  CoachTrainingSessionReport,
 } from "@/lib/treinadores-types";
-import { COACH_ACTIVITY_KINDS } from "@/lib/treinadores-types";
+import { COACH_ACTIVITY_KINDS, COACH_TRAINING_ATTACHMENT_KINDS } from "@/lib/treinadores-types";
+import { CoachTrainingPlanLibrary } from "./CoachTrainingPlanLibrary";
 import { TreinadoresMediaPicker } from "./TreinadoresMediaPicker";
+
+type AttachmentDraft = {
+  label: string;
+  fileUrl: string;
+  kind: string;
+};
 
 type PlayerEntryDraft = {
   playerId: string;
@@ -50,6 +72,10 @@ function emptyActivities(): CoachTrainingActivity[] {
   return [{ kind: "aquecimento", title: "", description: "", durationMinutes: null, mediaUrl: "" }];
 }
 
+function emptyAttachments(): AttachmentDraft[] {
+  return [{ label: "", fileUrl: "", kind: "plano_treino" }];
+}
+
 function emptyPlayerEntries(players: CoachContextResponse["players"]): PlayerEntryDraft[] {
   return players.map((p) => ({
     playerId: p.id,
@@ -62,10 +88,19 @@ function emptyPlayerEntries(players: CoachContextResponse["players"]): PlayerEnt
   }));
 }
 
+function defaultPeriodRange() {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - 30);
+  const fmt = (d: Date) => d.toISOString().slice(0, 10);
+  return { from: fmt(from), to: fmt(to) };
+}
+
 export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
   const [sessions, setSessions] = useState<CoachTrainingSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const [sessionDate, setSessionDate] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -73,8 +108,16 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
   const [objectives, setObjectives] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("rascunho");
+  const [agendaEntryId, setAgendaEntryId] = useState("");
+  const [planTemplateId, setPlanTemplateId] = useState("");
+  const [agendaOptions, setAgendaOptions] = useState<CoachAgendaTreinoOption[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentDraft[]>(emptyAttachments());
   const [activities, setActivities] = useState<CoachTrainingActivity[]>(emptyActivities());
+  const [showActivities, setShowActivities] = useState(false);
   const [playerEntries, setPlayerEntries] = useState<PlayerEntryDraft[]>([]);
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const [periodFrom, setPeriodFrom] = useState(() => defaultPeriodRange().from);
+  const [periodTo, setPeriodTo] = useState(() => defaultPeriodRange().to);
   const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
     open: false,
     title: "",
@@ -98,6 +141,19 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
     loadSessions();
   }, [tenantId, category]);
 
+  useEffect(() => {
+    if (!tenantId || !sessionDate) {
+      setAgendaOptions([]);
+      return;
+    }
+    const params = new URLSearchParams({ tenantId, sessionDate });
+    if (category) params.set("category", category);
+    api
+      .get<CoachAgendaTreinoOption[]>(`/futebol-treinadores/agenda-treinos?${params}`)
+      .then(({ data }) => setAgendaOptions(Array.isArray(data) ? data : []))
+      .catch(() => setAgendaOptions([]));
+  }, [tenantId, category, sessionDate]);
+
   const resetForm = () => {
     setSelectedId("");
     setSessionDate("");
@@ -106,7 +162,11 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
     setObjectives("");
     setNotes("");
     setStatus("rascunho");
+    setAgendaEntryId("");
+    setPlanTemplateId("");
+    setAttachments(emptyAttachments());
     setActivities(emptyActivities());
+    setShowActivities(false);
     setPlayerEntries(emptyPlayerEntries(context?.players ?? []));
   };
 
@@ -123,6 +183,18 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
       setObjectives(data.objectives ?? "");
       setNotes(data.notes ?? "");
       setStatus(data.status ?? "rascunho");
+      setAgendaEntryId(data.agendaEntryId ?? data.agendaEntry?.id ?? "");
+      setPlanTemplateId(data.planTemplateId ?? data.planTemplate?.id ?? "");
+      setAttachments(
+        (data.attachments ?? []).length > 0
+          ? data.attachments.map((a) => ({
+              label: a.label ?? "",
+              fileUrl: a.fileUrl,
+              kind: a.kind ?? "plano_treino",
+            }))
+          : emptyAttachments(),
+      );
+      setShowActivities((data.activities ?? []).some((a) => a.title?.trim()));
       setActivities(
         data.activities.length > 0
           ? data.activities.map((a) => ({
@@ -150,6 +222,23 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
     });
   }, [selectedId, context?.players]);
 
+  const applyTemplate = (template: CoachTrainingPlanTemplate) => {
+    setPlanTemplateId(template.id);
+    setAttachments((prev) => {
+      const exists = prev.some((a) => a.fileUrl === template.fileUrl);
+      if (exists) return prev;
+      const filled = prev.filter((a) => a.fileUrl.trim());
+      return [
+        ...filled,
+        {
+          label: template.title,
+          fileUrl: template.fileUrl,
+          kind: "plano_treino",
+        },
+      ];
+    });
+  };
+
   const handleSave = async () => {
     if (!tenantId || !sessionDate) {
       setFeedback({ open: true, title: "Atenção", message: "Informe a data do treino." });
@@ -167,16 +256,21 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
         objectives,
         notes,
         status,
-        activities: activities
-          .filter((a) => a.title.trim())
-          .map((a, i) => ({
-            kind: a.kind,
-            title: a.title.trim(),
-            description: a.description || null,
-            durationMinutes: a.durationMinutes ?? null,
-            sortOrder: i,
-            mediaUrl: a.mediaUrl || null,
-          })),
+        agendaEntryId: agendaEntryId || null,
+        planTemplateId: planTemplateId || null,
+        attachments: attachments.filter((a) => a.fileUrl.trim()),
+        activities: showActivities
+          ? activities
+              .filter((a) => a.title.trim())
+              .map((a, i) => ({
+                kind: a.kind,
+                title: a.title.trim(),
+                description: a.description || null,
+                durationMinutes: a.durationMinutes ?? null,
+                sortOrder: i,
+                mediaUrl: a.mediaUrl || null,
+              }))
+          : [],
         playerEntries: playerEntries.map((p) => ({
           playerId: p.playerId,
           available: p.available,
@@ -188,7 +282,7 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
       const { data } = await api.post<CoachTrainingSession>("/futebol-treinadores/training-sessions", payload);
       if (data?.id) setSelectedId(data.id);
       loadSessions();
-      setFeedback({ open: true, title: "Salvo", message: "Planejamento de treino salvo." });
+      setFeedback({ open: true, title: "Salvo", message: "Treino salvo." });
     } catch (e) {
       setFeedback({
         open: true,
@@ -197,6 +291,47 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePrintSession = async () => {
+    if (!selectedId) return;
+    setPrinting(true);
+    try {
+      const { data } = await api.get<CoachTrainingSessionReport>(
+        `/futebol-treinadores/training-sessions/${selectedId}/report`,
+      );
+      printTrainingSessionReport(data);
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível gerar o relatório.",
+      });
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const handlePrintPeriod = async () => {
+    if (!tenantId || !periodFrom || !periodTo) return;
+    setPrinting(true);
+    try {
+      const params = new URLSearchParams({ tenantId, from: periodFrom, to: periodTo });
+      if (category) params.set("category", category);
+      const { data } = await api.get<CoachTrainingPeriodReport>(
+        `/futebol-treinadores/training-sessions/report/period?${params}`,
+      );
+      printTrainingPeriodReport(data);
+      setPeriodOpen(false);
+    } catch (e) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: e instanceof Error ? e.message : "Não foi possível gerar o relatório.",
+      });
+    } finally {
+      setPrinting(false);
     }
   };
 
@@ -218,53 +353,71 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle className="text-base">Treinos</CardTitle>
-          <Button type="button" size="sm" variant="outline" onClick={resetForm}>
-            <Plus className="mr-1 h-4 w-4" />
-            Novo
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {loading ? (
-            <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
-          ) : sessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhum treino cadastrado.</p>
-          ) : (
-            sessions.map((s) => (
-              <div
-                key={s.id}
-                className={`rounded-lg border p-3 text-sm ${selectedId === s.id ? "border-primary bg-primary/5" : "border-border/60"}`}
-              >
-                <button type="button" className="w-full text-left" onClick={() => setSelectedId(s.id)}>
-                  <div className="font-medium">{formatDateDayMonYear(new Date(`${s.sessionDate}T12:00:00`))}</div>
-                  <div className="text-muted-foreground">
-                    {s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : s.status}
-                  </div>
-                </button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="mt-2 h-8 text-destructive"
-                  onClick={() => setDeleteId(s.id)}
+    <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="space-y-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+            <CardTitle className="text-base">Treinos</CardTitle>
+            <Button type="button" size="sm" variant="outline" onClick={resetForm}>
+              <Plus className="mr-1 h-4 w-4" />
+              Novo
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {loading ? (
+              <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
+            ) : sessions.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum treino cadastrado.</p>
+            ) : (
+              sessions.map((s) => (
+                <div
+                  key={s.id}
+                  className={`rounded-lg border p-3 text-sm ${selectedId === s.id ? "border-primary bg-primary/5" : "border-border/60"}`}
                 >
-                  <Trash2 className="mr-1 h-4 w-4" />
-                  Excluir
-                </Button>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+                  <button type="button" className="w-full text-left" onClick={() => setSelectedId(s.id)}>
+                    <div className="font-medium">
+                      {formatDateDayMonYear(new Date(`${s.sessionDate}T12:00:00`))}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : s.status}
+                    </div>
+                  </button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2 h-8 text-destructive"
+                    onClick={() => setDeleteId(s.id)}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Excluir
+                  </Button>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
+        <CoachTrainingPlanLibrary tenantId={tenantId} category={category} onApplyTemplate={applyTemplate} />
+      </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Planejamento do treino</CardTitle>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="text-base">Registro do treino</CardTitle>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setPeriodOpen(true)}>
+              <Printer className="mr-1 h-4 w-4" />
+              Relatório do período
+            </Button>
+            {selectedId ? (
+              <Button type="button" size="sm" variant="outline" onClick={handlePrintSession} disabled={printing}>
+                {printing ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Printer className="mr-1 h-4 w-4" />}
+                Imprimir treino
+              </Button>
+            ) : null}
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label>Data</Label>
@@ -295,107 +448,93 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Objetivos</Label>
-            <Textarea rows={3} value={objectives} onChange={(e) => setObjectives(e.target.value)} />
-          </div>
+          {sessionDate ? (
+            <div className="space-y-2">
+              <Label>Vínculo com agenda</Label>
+              <NativeSelectField
+                value={agendaEntryId}
+                onChange={(e) => setAgendaEntryId(e.target.value)}
+                placeholder="Sem vínculo"
+                options={agendaOptions.map((a) => ({
+                  value: a.id,
+                  label: a.title,
+                }))}
+              />
+            </div>
+          ) : null}
 
-          <div className="space-y-3">
+          <div className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
             <div className="flex items-center justify-between gap-2">
-              <Label>Atividades</Label>
+              <Label>Planos anexados (PDF ou vídeo)</Label>
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() =>
-                  setActivities((prev) => [...prev, { kind: "principal", title: "", description: "", durationMinutes: null, mediaUrl: "" }])
-                }
+                onClick={() => setAttachments((prev) => [...prev, { label: "", fileUrl: "", kind: "plano_treino" }])}
               >
                 <Plus className="mr-1 h-4 w-4" />
-                Atividade
+                Anexo
               </Button>
             </div>
-            {activities.map((a, idx) => (
-              <div key={idx} className="rounded-lg border border-border/60 p-3 space-y-3">
+            {attachments.map((a, idx) => (
+              <div key={idx} className="rounded-lg border border-border/60 bg-card/40 p-3 space-y-3">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label className="text-xs">Tipo</Label>
                     <NativeSelectField
                       value={a.kind}
                       onChange={(e) => {
-                        const next = [...activities];
+                        const next = [...attachments];
                         next[idx] = { ...a, kind: e.target.value };
-                        setActivities(next);
+                        setAttachments(next);
                       }}
-                      options={COACH_ACTIVITY_KINDS.map((k) => ({ value: k.value, label: k.label }))}
+                      options={COACH_TRAINING_ATTACHMENT_KINDS.map((k) => ({ value: k.value, label: k.label }))}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs">Duração (min)</Label>
+                    <Label className="text-xs">Descrição</Label>
                     <Input
-                      type="number"
-                      min={0}
-                      value={a.durationMinutes ?? ""}
+                      value={a.label}
                       onChange={(e) => {
-                        const next = [...activities];
-                        next[idx] = {
-                          ...a,
-                          durationMinutes: e.target.value === "" ? null : Number(e.target.value),
-                        };
-                        setActivities(next);
+                        const next = [...attachments];
+                        next[idx] = { ...a, label: e.target.value };
+                        setAttachments(next);
                       }}
+                      placeholder="Ex.: Periodização semana 12"
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Título</Label>
-                  <Input
-                    value={a.title}
-                    onChange={(e) => {
-                      const next = [...activities];
-                      next[idx] = { ...a, title: e.target.value };
-                      setActivities(next);
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Descrição</Label>
-                  <Textarea
-                    rows={2}
-                    value={a.description ?? ""}
-                    onChange={(e) => {
-                      const next = [...activities];
-                      next[idx] = { ...a, description: e.target.value };
-                      setActivities(next);
-                    }}
-                  />
-                </div>
                 <TreinadoresMediaPicker
-                  label="Vídeo ou foto da atividade"
-                  value={a.mediaUrl ?? ""}
+                  label="Arquivo"
+                  value={a.fileUrl}
                   onChange={(url) => {
-                    const next = [...activities];
-                    next[idx] = { ...a, mediaUrl: url };
-                    setActivities(next);
+                    const next = [...attachments];
+                    next[idx] = { ...a, fileUrl: url };
+                    setAttachments(next);
                   }}
                 />
-                {activities.length > 1 ? (
+                {attachments.length > 1 ? (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     className="text-destructive"
-                    onClick={() => setActivities((prev) => prev.filter((_, i) => i !== idx))}
+                    onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
                   >
-                    Remover atividade
+                    Remover anexo
                   </Button>
                 ) : null}
               </div>
             ))}
           </div>
 
+          <div className="space-y-2">
+            <Label>Objetivos</Label>
+            <Textarea rows={2} value={objectives} onChange={(e) => setObjectives(e.target.value)} />
+          </div>
+
           <div className="space-y-3">
-            <Label>Elenco e avaliação (0 a 5)</Label>
+            <Label>Avaliação do elenco (0 a 5)</Label>
             {playerEntries.map((p, idx) => (
               <div key={p.playerId} className="rounded-lg border border-border/60 p-3 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -469,6 +608,114 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
             ))}
           </div>
 
+          <div className="rounded-xl border border-border/60">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+              onClick={() => setShowActivities((v) => !v)}
+            >
+              <span className="text-sm font-medium">Montar atividades no sistema (opcional)</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${showActivities ? "rotate-180" : ""}`} />
+            </button>
+            {showActivities ? (
+              <div className="space-y-3 border-t border-border/60 p-4">
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setActivities((prev) => [
+                        ...prev,
+                        { kind: "principal", title: "", description: "", durationMinutes: null, mediaUrl: "" },
+                      ])
+                    }
+                  >
+                    <Plus className="mr-1 h-4 w-4" />
+                    Atividade
+                  </Button>
+                </div>
+                {activities.map((a, idx) => (
+                  <div key={idx} className="rounded-lg border border-border/60 p-3 space-y-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Tipo</Label>
+                        <NativeSelectField
+                          value={a.kind}
+                          onChange={(e) => {
+                            const next = [...activities];
+                            next[idx] = { ...a, kind: e.target.value };
+                            setActivities(next);
+                          }}
+                          options={COACH_ACTIVITY_KINDS.map((k) => ({ value: k.value, label: k.label }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Duração (min)</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={a.durationMinutes ?? ""}
+                          onChange={(e) => {
+                            const next = [...activities];
+                            next[idx] = {
+                              ...a,
+                              durationMinutes: e.target.value === "" ? null : Number(e.target.value),
+                            };
+                            setActivities(next);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Título</Label>
+                      <Input
+                        value={a.title}
+                        onChange={(e) => {
+                          const next = [...activities];
+                          next[idx] = { ...a, title: e.target.value };
+                          setActivities(next);
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Descrição</Label>
+                      <Textarea
+                        rows={2}
+                        value={a.description ?? ""}
+                        onChange={(e) => {
+                          const next = [...activities];
+                          next[idx] = { ...a, description: e.target.value };
+                          setActivities(next);
+                        }}
+                      />
+                    </div>
+                    <TreinadoresMediaPicker
+                      label="Vídeo ou foto da atividade"
+                      value={a.mediaUrl ?? ""}
+                      onChange={(url) => {
+                        const next = [...activities];
+                        next[idx] = { ...a, mediaUrl: url };
+                        setActivities(next);
+                      }}
+                    />
+                    {activities.length > 1 ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={() => setActivities((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        Remover atividade
+                      </Button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
           <div className="space-y-2">
             <Label>Observações gerais</Label>
             <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -492,6 +739,43 @@ export function TreinadoresTreinosTab({ tenantId, category, context }: Props) {
           </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={periodOpen} onOpenChange={setPeriodOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Relatório do período</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>De</Label>
+              <Input
+                type="date"
+                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={periodFrom}
+                onChange={(e) => setPeriodFrom(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Até</Label>
+              <Input
+                type="date"
+                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                value={periodTo}
+                onChange={(e) => setPeriodTo(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPeriodOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handlePrintPeriod} disabled={printing}>
+              {printing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+              Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FeedbackModal
         open={feedback.open}

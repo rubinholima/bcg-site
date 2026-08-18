@@ -173,12 +173,94 @@ export class FutebolTreinadoresController {
             notes?: string | null;
           }>)
         : undefined,
+      agendaEntryId: typeof body.agendaEntryId === 'string' ? body.agendaEntryId : null,
+      planTemplateId: typeof body.planTemplateId === 'string' ? body.planTemplateId : null,
+      attachments: Array.isArray(body.attachments)
+        ? (body.attachments as Array<{
+            id?: string;
+            label?: string | null;
+            fileUrl: string;
+            kind?: string | null;
+          }>)
+        : undefined,
     });
   }
 
   @Delete('training-sessions/:id')
   deleteTrainingSession(@Param('id') id: string) {
     return this.service.deleteTrainingSession(id);
+  }
+
+  @Get('training-plan-templates')
+  listPlanTemplates(
+    @Query('tenantId') tenantId: string,
+    @Query('category') category?: string,
+  ) {
+    if (!tenantId?.trim()) return [];
+    return this.service.listPlanTemplates(tenantId.trim(), category?.trim() || undefined);
+  }
+
+  @Post('training-plan-templates')
+  upsertPlanTemplate(@Req() req: AuthedRequest, @Body() body: Record<string, unknown>) {
+    const tenantId = typeof body.tenantId === 'string' ? body.tenantId.trim() : '';
+    const title = typeof body.title === 'string' ? body.title : '';
+    const fileUrl = typeof body.fileUrl === 'string' ? body.fileUrl : '';
+    if (!tenantId || !title.trim() || !fileUrl.trim()) {
+      throw new BadRequestException('tenantId, title e fileUrl são obrigatórios');
+    }
+    return this.service.upsertPlanTemplate({
+      id: typeof body.id === 'string' ? body.id : undefined,
+      tenantId,
+      category: typeof body.category === 'string' ? body.category : null,
+      title,
+      fileUrl,
+      notes: typeof body.notes === 'string' ? body.notes : null,
+      authorUserId: req.user?.sub,
+    });
+  }
+
+  @Delete('training-plan-templates/:id')
+  deletePlanTemplate(
+    @Param('id') id: string,
+    @Query('tenantId') tenantId: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    return this.service.deletePlanTemplate(id, tenantId.trim());
+  }
+
+  @Get('agenda-treinos')
+  listAgendaTreinos(
+    @Query('tenantId') tenantId: string,
+    @Query('sessionDate') sessionDate: string,
+    @Query('category') category?: string,
+  ) {
+    if (!tenantId?.trim() || !sessionDate?.trim()) return [];
+    return this.service.listAgendaTreinosForLink(
+      tenantId.trim(),
+      sessionDate.trim(),
+      category?.trim() || undefined,
+    );
+  }
+
+  @Get('training-sessions/:id/report')
+  getTrainingSessionReport(@Param('id') id: string) {
+    return this.service.getTrainingSessionReport(id);
+  }
+
+  @Get('training-sessions/report/period')
+  getTrainingPeriodReport(
+    @Query('tenantId') tenantId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('category') category?: string,
+  ) {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+    return this.service.getTrainingPeriodReport(
+      tenantId.trim(),
+      from?.trim(),
+      to?.trim(),
+      category?.trim() || undefined,
+    );
   }
 
   @Get('team-reports/summary')

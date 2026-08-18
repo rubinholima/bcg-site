@@ -161,6 +161,7 @@ model Tenant {
   coachMatchReports            CoachMatchReport[]
   coachTeamReports             CoachTeamReport[]
   coachTrainingSessions        CoachTrainingSession[]
+  coachTrainingPlanTemplates   CoachTrainingPlanTemplate[]
   coachMatchStatOverrides      CoachMatchStatOverride[]
   footballMatchIncidents       FootballMatchIncident[]
   footballMatchAttachments     FootballMatchAttachment[]
@@ -652,6 +653,7 @@ model FootballAgendaEntry {
   spaceId           String?
   space             FootballActivitySpace? @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   participants      FootballAgendaEntryParticipant[]
+  coachTrainingSessions CoachTrainingSession[]
   /// beatscode-schedule-* ou beatscode-match-* — reimport idempotente
   externalId        String?
   beatscodeMeta     Json?
@@ -3144,13 +3146,45 @@ model CoachTrainingSession {
   objectives  String?  @db.Text
   notes       String?  @db.Text
   status      String   @default("rascunho") // rascunho | finalizado
+  agendaEntryId String?
+  agendaEntry   FootballAgendaEntry? @relation(fields: [agendaEntryId], references: [id], onDelete: SetNull)
+  planTemplateId String?
+  planTemplate   CoachTrainingPlanTemplate? @relation(fields: [planTemplateId], references: [id], onDelete: SetNull)
   activities  CoachTrainingActivity[]
   playerEntries CoachTrainingPlayerEntry[]
+  attachments CoachTrainingSessionAttachment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   @@index([tenantId, category])
   @@index([tenantId, sessionDate])
   @@index([staffId])
+  @@index([agendaEntryId])
+  @@index([planTemplateId])
+}
+
+model CoachTrainingPlanTemplate {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category     String?
+  title        String
+  fileUrl      String
+  notes        String?  @db.Text
+  authorUserId String?
+  sessions     CoachTrainingSession[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([tenantId, category])
+}
+
+model CoachTrainingSessionAttachment {
+  id        String @id @default(cuid())
+  sessionId String
+  session   CoachTrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  label     String?
+  fileUrl   String
+  kind      String? // plano_treino | video_referencia | outro
+  @@index([sessionId])
 }
 
 model CoachTrainingActivity {

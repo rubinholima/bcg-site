@@ -146,6 +146,33 @@ export type CoachTrainingActivity = {
   mediaUrl?: string | null;
 };
 
+export type CoachTrainingAttachment = {
+  id?: string;
+  label: string | null;
+  fileUrl: string;
+  kind: string | null;
+};
+
+export type CoachTrainingPlanTemplate = {
+  id: string;
+  tenantId: string;
+  category: string | null;
+  title: string;
+  fileUrl: string;
+  notes: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type CoachAgendaTreinoOption = {
+  id: string;
+  title: string;
+  startAt: string;
+  endAt: string | null;
+  location: string | null;
+  category: string | null;
+};
+
 export type CoachTrainingSession = {
   id: string;
   tenantId: string;
@@ -156,6 +183,11 @@ export type CoachTrainingSession = {
   objectives: string | null;
   notes: string | null;
   status: string;
+  agendaEntryId?: string | null;
+  planTemplateId?: string | null;
+  agendaEntry?: CoachAgendaTreinoOption | null;
+  planTemplate?: Pick<CoachTrainingPlanTemplate, "id" | "title" | "fileUrl" | "category"> | null;
+  attachments: CoachTrainingAttachment[];
   activities: CoachTrainingActivity[];
   playerEntries: Array<{
     playerId: string;
@@ -185,6 +217,102 @@ export const COACH_ATTACHMENT_KINDS = [
   { value: "scout", label: "Scout" },
   { value: "outro", label: "Outro" },
 ] as const;
+
+export const COACH_TRAINING_ATTACHMENT_KINDS = [
+  { value: "plano_treino", label: "Plano de treino (PDF)" },
+  { value: "video_referencia", label: "Vídeo de referência" },
+  { value: "outro", label: "Outro" },
+] as const;
+
+export type CoachTrainingSessionReport = {
+  session: {
+    id: string;
+    sessionDate: string;
+    startTime: string | null;
+    endTime: string | null;
+    category: string | null;
+    objectives: string | null;
+    notes: string | null;
+    status: string;
+    staffName: string | null;
+    agendaTitle: string | null;
+    agendaLocation: string | null;
+    planTemplateTitle: string | null;
+  };
+  attachments: CoachTrainingAttachment[];
+  activities: CoachTrainingActivity[];
+  players: Array<{
+    playerId: string;
+    name: string;
+    jerseyNumber: number | null;
+    category: string | null;
+    available: boolean;
+    unavailableReason: string | null;
+    rating: number | null;
+    notes: string | null;
+  }>;
+  summary: {
+    totalPlayers: number;
+    availableCount: number;
+    unavailableCount: number;
+    ratedCount: number;
+    averageRating: number | null;
+  };
+};
+
+export type CoachTrainingPeriodReport = {
+  from: string;
+  to: string;
+  category: string | null;
+  sessions: Array<{
+    id: string;
+    sessionDate: string;
+    status: string;
+    availableCount: number;
+    averageRating: number | null;
+    attachmentCount: number;
+  }>;
+  summary: {
+    sessionCount: number;
+    finalizedCount: number;
+    averageTeamRating: number | null;
+    averageAttendancePct: number | null;
+  };
+  players: Array<{
+    playerId: string;
+    name: string;
+    jerseyNumber: number | null;
+    category: string | null;
+    sessionsTotal: number;
+    sessionsAvailable: number;
+    sessionsUnavailable: number;
+    averageRating: number | null;
+    lastRating: number | null;
+    lastNotes: string | null;
+  }>;
+  highlights: {
+    lowRating: CoachTrainingPeriodReport["players"];
+    frequentAbsences: CoachTrainingPeriodReport["players"];
+  };
+};
+
+export type PlayerTrainingHistoryItem = {
+  sessionId: string;
+  sessionDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  category: string | null;
+  status: string;
+  objectives: string | null;
+  staffName: string | null;
+  agendaTitle: string | null;
+  planTemplateTitle: string | null;
+  attachments: CoachTrainingAttachment[];
+  available: boolean;
+  unavailableReason: string | null;
+  rating: number | null;
+  notes: string | null;
+};
 
 export const COACH_TEAM_PERIOD_TYPES = [
   { value: "geral", label: "Geral" },

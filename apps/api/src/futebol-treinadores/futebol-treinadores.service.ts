@@ -24,11 +24,17 @@ import {
   resolveStoreCategory,
 } from './coach-context.helper';
 import {
+  buildTrainingPeriodReport,
+  buildTrainingSessionReport,
+  defaultPeriodRange,
+} from './coach-training-reports.util';
+import {
   COACH_REPORT_STATUS,
   COACH_TEAM_PLAYER_ACTION,
   COACH_TEAM_REPORT_PERIOD,
   COACH_TEAM_REPORT_STATUS,
   COACH_TRAINING_ACTIVITY_KINDS,
+  COACH_TRAINING_ATTACHMENT_KINDS,
   coachMatchReportInclude,
   coachTeamReportInclude,
   coachTrainingSessionInclude,
@@ -449,6 +455,14 @@ export class FutebolTreinadoresService {
     objectives?: string | null;
     notes?: string | null;
     status?: string;
+    agendaEntryId?: string | null;
+    planTemplateId?: string | null;
+    attachments?: Array<{
+      id?: string;
+      label?: string | null;
+      fileUrl: string;
+      kind?: string | null;
+    }>;
     activities?: Array<{
       id?: string;
       kind: string;
@@ -475,6 +489,22 @@ export class FutebolTreinadoresService {
         ? input.status
         : 'rascunho';
 
+    if (input.agendaEntryId) {
+      const agenda = await this.prisma.footballAgendaEntry.findFirst({
+        where: { id: input.agendaEntryId, tenantId: input.tenantId },
+        select: { id: true },
+      });
+      if (!agenda) throw new BadRequestException('Compromisso da agenda inválido');
+    }
+
+    if (input.planTemplateId) {
+      const template = await this.prisma.coachTrainingPlanTemplate.findFirst({
+        where: { id: input.planTemplateId, tenantId: input.tenantId },
+        select: { id: true },
+      });
+      if (!template) throw new BadRequestException('Plano da biblioteca inválido');
+    }
+
     const data = {
       tenantId: input.tenantId,
       category: input.category ?? null,
@@ -486,6 +516,8 @@ export class FutebolTreinadoresService {
       objectives: input.objectives?.trim() || null,
       notes: input.notes?.trim() || null,
       status,
+      agendaEntryId: input.agendaEntryId ?? null,
+      planTemplateId: input.planTemplateId ?? null,
     };
 
     const session = input.id
@@ -534,6 +566,27 @@ export class FutebolTreinadoresService {
       }
     }
 
+    if (input.attachments) {
+      await this.prisma.coachTrainingSessionAttachment.deleteMany({ where: { sessionId: session.id } });
+      const rows = input.attachments.filter((a) => a.fileUrl?.trim());
+      if (rows.length > 0) {
+        await this.prisma.coachTrainingSessionAttachment.createMany({
+          data: rows.map((a) => ({
+            sessionId: session.id,
+            label: a.label?.trim() || null,
+            fileUrl: a.fileUrl.trim(),
+            kind:
+              a.kind &&
+              COACH_TRAINING_ATTACHMENT_KINDS.includes(
+                a.kind as (typeof COACH_TRAINING_ATTACHMENT_KINDS)[number],
+              )
+                ? a.kind
+                : 'plano_treino',
+          })),
+        });
+      }
+    }
+
     return this.getTrainingSession(session.id);
   }
 
@@ -541,6 +594,117 @@ export class FutebolTreinadoresService {
     await this.getTrainingSession(id);
     await this.prisma.coachTrainingSession.delete({ where: { id } });
     return { ok: true };
+  }
+
+  async listPlanTemplates(tenantId: string, category?: string) {
+    return this.prisma.coachTrainingPlanTemplate.findMany({
+      where: {
+        tenantId,
+        ...(category ? { OR: [{ category }, { category: null }] } : {}),
+      },
+      orderBy: [{ title: 'asc' }, { updatedAt: 'desc' }],
+    });
+  }
+
+  async upsertPlanTemplate(input: {
+    id?: string;
+    tenantId: string;
+    category?: string | null;
+    title: string;
+    fileUrl: string;
+    notes?: string | null;
+    authorUserId?: string;
+  }) {
+    const title = input.title?.trim();
+    const fileUrl = input.fileUrl?.trim();
+    if (!title) throw new BadRequestException('Título do plano é obrigatório');
+    if (!fileUrl) throw new BadRequestException('Arquivo do plano é obrigatório');
+
+    const data = {
+      tenantId: input.tenantId,
+      category: input.category ?? null,
+      title,
+      fileUrl,
+      notes: input.notes?.trim() || null,
+      authorUserId: input.authorUserId ?? null,
+    };
+
+    if (input.id) {
+      const existing = await this.prisma.coachTrainingPlanTemplate.findFirst({
+        where: { id: input.id, tenantId: input.tenantId },
+      });
+      if (!existing) throw new NotFoundException('Plano não encontrado');
+      return this.prisma.coachTrainingPlanTemplate.update({
+        where: { id: input.id },
+        data,
+      });
+    }
+
+    return this.prisma.coachTrainingPlanTemplate.create({ data });
+  }
+
+  async deletePlanTemplate(id: string, tenantId: string) {
+    const row = await this.prisma.coachTrainingPlanTemplate.findFirst({
+      where: { id, tenantId },
+    });
+    if (!row) throw new NotFoundException('Plano não encontrado');
+    await this.prisma.coachTrainingPlanTemplate.delete({ where: { id } });
+    return { ok: true };
+  }
+
+  async listAgendaTreinosForLink(tenantId: string, sessionDate: string, category?: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(sessionDate)) return [];
+    const start = new Date(`${sessionDate}T00:00:00.000Z`);
+    const end = new Date(`${sessionDate}T23:59:59.999Z`);
+    return this.prisma.footballAgendaEntry.findMany({
+      where: {
+        tenantId,
+        type: 'treino',
+        status: { not: 'cancelado' },
+        startAt: { gte: start, lte: end },
+        ...(category ? { category } : {}),
+      },
+      orderBy: { startAt: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        startAt: true,
+        endAt: true,
+        location: true,
+        category: true,
+      },
+    });
+  }
+
+  async getTrainingSessionReport(sessionId: string) {
+    const session = await this.getTrainingSession(sessionId);
+    return buildTrainingSessionReport(session);
+  }
+
+  async getTrainingPeriodReport(
+    tenantId: string,
+    from?: string,
+    to?: string,
+    category?: string,
+  ) {
+    const defaults = defaultPeriodRange();
+    const fromDate = from?.trim() || defaults.from;
+    const toDate = to?.trim() || defaults.to;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fromDate) || !/^\d{4}-\d{2}-\d{2}$/.test(toDate)) {
+      throw new BadRequestException('Período inválido');
+    }
+
+    const sessions = await this.prisma.coachTrainingSession.findMany({
+      where: {
+        tenantId,
+        sessionDate: { gte: fromDate, lte: toDate },
+        ...(category ? { category } : {}),
+      },
+      orderBy: [{ sessionDate: 'desc' }, { createdAt: 'desc' }],
+      include: coachTrainingSessionInclude,
+    });
+
+    return buildTrainingPeriodReport(sessions, fromDate, toDate, category ?? null);
   }
 
   async listTeamReports(

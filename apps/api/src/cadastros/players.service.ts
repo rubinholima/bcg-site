@@ -240,6 +240,44 @@ export class PlayersService {
     });
   }
 
+  /** Treinos registrados em Futebol → Treinadores com avaliação do atleta. */
+  async findTrainingHistory(playerId: string, allowedTenantIds: string[] | null = null) {
+    await this.findOne(playerId, allowedTenantIds);
+    const entries = await this.prisma.coachTrainingPlayerEntry.findMany({
+      where: { playerId },
+      orderBy: [{ session: { sessionDate: 'desc' } }, { session: { createdAt: 'desc' } }],
+      take: 50,
+      include: {
+        session: {
+          include: {
+            attachments: true,
+            staff: { select: { id: true, name: true, role: true } },
+            agendaEntry: { select: { id: true, title: true, location: true } },
+            planTemplate: { select: { id: true, title: true, fileUrl: true } },
+          },
+        },
+      },
+    });
+
+    return entries.map((e) => ({
+      sessionId: e.session.id,
+      sessionDate: e.session.sessionDate,
+      startTime: e.session.startTime,
+      endTime: e.session.endTime,
+      category: e.session.category,
+      status: e.session.status,
+      objectives: e.session.objectives,
+      staffName: e.session.staff?.name ?? null,
+      agendaTitle: e.session.agendaEntry?.title ?? null,
+      planTemplateTitle: e.session.planTemplate?.title ?? null,
+      attachments: e.session.attachments,
+      available: e.available,
+      unavailableReason: e.unavailableReason,
+      rating: e.rating,
+      notes: e.notes,
+    }));
+  }
+
   private playerInAccommodationRooms(rooms: unknown, playerId: string): boolean {
     if (!Array.isArray(rooms)) return false;
     for (const room of rooms) {

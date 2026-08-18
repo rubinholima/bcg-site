@@ -225,6 +225,7 @@ export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "dados", label: "Dados", icon: UserCircle, moduleSlug: null },
   { id: "psicologica", label: "Psicológica", icon: Brain, moduleSlug: "saude" },
   { id: "fisioterapia", label: "Fisioterapia", icon: Activity, moduleSlug: "saude" },
+  { id: "treinos", label: "Treinos", icon: Dumbbell, moduleSlug: "futebol_treinadores" },
   { id: "status", label: "Status", icon: Activity, moduleSlug: "diretoria" },
   { id: "mapa", label: "Mapa", icon: MapIcon, moduleSlug: null },
   { id: "momentos", label: "Momentos", icon: Youtube, moduleSlug: null },

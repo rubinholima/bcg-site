@@ -22,6 +22,7 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "futebol-logistica-convocacao", label: "→ Logística e convocação", indent: true },
   { id: "futebol-press-kit", label: "→ Press Kit", indent: true },
   { id: "futebol-captacao", label: "→ Captação", indent: true },
+  { id: "futebol-treinadores-treinos", label: "→ Treinadores — treinos", indent: true },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
   { id: "comunicacao", label: "Communication Center" },
@@ -494,6 +495,19 @@ export default function ManualPage() {
                 <li>Prospect ≠ atleta: cadastro oficial só após supervisor</li>
                 <li>Contratos no Jurídico depois do cadastro no clube</li>
               </ul>
+            </SubSection>
+
+            <SubSection id="futebol-treinadores-treinos" title="Treinadores — treinos">
+              <p>
+                Anexe o <strong>PDF do plano</strong> (biblioteca reutilizável ou upload do dia), registre{" "}
+                <strong>notas e observações</strong> por atleta e imprima resumo do treino ou relatório do
+                período. Histórico na ficha do atleta (aba Treinos).
+              </p>
+              <p>
+                <strong>Biblioteca:</strong> salve planos usados com frequência e aplique com &quot;Usar no
+                treino&quot;. <strong>Agenda:</strong> vincule o registro ao compromisso de treino do dia, se
+                existir na agenda do clube.
+              </p>
             </SubSection>
           </Section>
 

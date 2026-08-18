@@ -37,6 +37,7 @@ import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { PLAYER_TABS } from "@/lib/dashboard-menu.config";
 import { BostonTvDashboardTabs } from "@/components/boston-tv/BostonTvDashboardTabs";
 import { PlayerRegistrationSections } from "@/components/dashboard/players/PlayerRegistrationSections";
+import { PlayerTrainingHistoryTab } from "@/components/dashboard/players/PlayerTrainingHistoryTab";
 import {
   FIELD_POSITION_DEFAULTS,
   type FootballPositionCode,
@@ -562,6 +563,17 @@ export default function EditJogadorPage() {
 
       {activeTab === "fisioterapia" && player && (
         <PlayerPhysioSection playerId={player.id} tenantId={player.tenantId} />
+      )}
+
+      {activeTab === "treinos" && player && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Treinos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PlayerTrainingHistoryTab playerId={player.id} />
+          </CardContent>
+        </Card>
       )}
 
       {/* Tab: Status */}
