@@ -17,6 +17,7 @@ import {
   isFmfSyncTenantSlug,
 } from '../fmf-scraper/fmf-sync-tenants.config';
 import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
+import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
 import {
   buildCompletedGames,
   buildLastRoundFromStore,
@@ -157,7 +158,7 @@ export class FutebolTreinadoresService {
       },
       select: {
         playerId: true,
-        player: { select: { name: true, jerseyNumber: true } },
+        player: { select: { name: true, jerseyNumber: true, registrationProfile: true } },
         disposition: true,
         diagnosisLabel: true,
         estimatedEndDate: true,
@@ -166,7 +167,7 @@ export class FutebolTreinadoresService {
 
     const inTreatment = activePhysio.map((s) => ({
       playerId: s.playerId,
-      name: s.player.name,
+      name: getPlayerListDisplayName(s.player),
       jerseyNumber: s.player.jerseyNumber,
       reason: s.diagnosisLabel || 'Em tratamento',
       estimatedEndDate: s.estimatedEndDate?.toISOString() ?? null,
@@ -245,7 +246,7 @@ export class FutebolTreinadoresService {
       .filter((p) => (p.yellowCards ?? 0) > 0 || (p.redCards ?? 0) > 0)
       .map((p) => ({
         playerId: p.id,
-        name: p.name,
+        name: getPlayerListDisplayName(p),
         jerseyNumber: p.jerseyNumber,
         yellowCards: p.yellowCards ?? 0,
         redCards: p.redCards ?? 0,
@@ -255,7 +256,7 @@ export class FutebolTreinadoresService {
       .filter((p) => !treatmentIds.has(p.id))
       .map((p) => ({
         id: p.id,
-        name: p.name,
+        name: getPlayerListDisplayName(p),
         jerseyNumber: p.jerseyNumber,
         category: p.category,
       }));
@@ -284,10 +285,11 @@ export class FutebolTreinadoresService {
       opponents,
       players: players.map((p) => ({
         id: p.id,
-        name: p.name,
+        name: getPlayerListDisplayName(p),
         jerseyNumber: p.jerseyNumber,
         category: p.category,
         inTreatment: treatmentIds.has(p.id),
+        registrationProfile: p.registrationProfile,
       })),
     };
   }

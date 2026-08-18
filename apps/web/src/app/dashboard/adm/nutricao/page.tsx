@@ -17,9 +17,12 @@ import {
   Calendar,
   Scale,
   Pill,
+  FileText,
+  Printer,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -64,8 +67,12 @@ import {
   SupplementGuideFormDialog,
   type SupplementGuideRow,
 } from "./components/SupplementGuideFormDialog";
+import { NutritionMenuItemsDialog } from "@/components/dashboard/nutricao/NutritionMenuItemsDialog";
+import { NutritionAnamnesesListPanel } from "@/components/dashboard/nutricao/NutritionAnamnesesListPanel";
+import { NutricaoRelatoriosPanel } from "@/components/dashboard/nutricao/NutricaoRelatoriosPanel";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
 
-type TabId = "tipos" | "menus" | "calendario" | "avaliacoes" | "suplementacao";
+type TabId = "tipos" | "menus" | "calendario" | "avaliacoes" | "suplementacao" | "anamneses" | "relatorios";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "tipos", label: "Tipos de refeição", icon: Coffee },
@@ -73,6 +80,8 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "calendario", label: "Calendário", icon: Calendar },
   { id: "avaliacoes", label: "Avaliações", icon: Scale },
   { id: "suplementacao", label: "Suplementação", icon: Pill },
+  { id: "anamneses", label: "Anamneses", icon: FileText },
+  { id: "relatorios", label: "Relatórios", icon: Printer },
 ];
 
 interface PlayerOption {
@@ -113,6 +122,12 @@ export default function AdmNutricaoPage() {
   const [assessmentEdit, setAssessmentEdit] = useState<NutritionAssessmentRow | null>(null);
   const [supplementDialogOpen, setSupplementDialogOpen] = useState(false);
   const [supplementEdit, setSupplementEdit] = useState<SupplementGuideRow | null>(null);
+  const [menuItemsMenu, setMenuItemsMenu] = useState<NutritionMenuRow | null>(null);
+  const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   const [deleteKind, setDeleteKind] = useState<
     "mealType" | "menu" | "calendar" | "assessment" | "supplement" | null
@@ -262,6 +277,7 @@ export default function AdmNutricaoPage() {
     else if (activeTab === "calendario") loadCalendar().finally(() => setLoading(false));
     else if (activeTab === "avaliacoes") loadAssessments().finally(() => setLoading(false));
     else if (activeTab === "suplementacao") loadSupplementGuides().finally(() => setLoading(false));
+    else setLoading(false);
   }, [activeTab, tenantId, canAccessModule, loadCategories, loadMealTypes, loadMenus, loadCalendar, loadAssessments, loadSupplementGuides]);
 
   useEffect(() => {
@@ -291,7 +307,11 @@ export default function AdmNutricaoPage() {
       setDeleteId(null);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "Erro ao excluir");
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Erro ao excluir",
+      });
     } finally {
       setDeleting(false);
     }
@@ -303,6 +323,7 @@ export default function AdmNutricaoPage() {
   }
 
   const effectiveTenantId = tenantId || (tenants[0]?.id ?? "");
+  const tenantName = tenants.find((t) => t.id === effectiveTenantId)?.name;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -320,9 +341,6 @@ export default function AdmNutricaoPage() {
               <UtensilsCrossed className="h-8 w-8 text-muted-foreground" />
               <div>
                 <CardTitle>Nutrição</CardTitle>
-                <CardDescription>
-                  Tipos de refeição, cardápios, calendário alimentar por categoria (Sub-17, Principal, etc.), avaliações e guias de suplementação. As categorias são as mesmas do cadastro/futebol.
-                </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -450,6 +468,9 @@ export default function AdmNutricaoPage() {
                             <TableCell>{m.tenant.name}</TableCell>
                             <TableCell>
                               <div className="flex gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" title="Itens do cardápio" onClick={() => setMenuItemsMenu(m)}>
+                                  <List className="h-4 w-4" />
+                                </Button>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setMenuEdit(m); setMenuDialogOpen(true); }}>
                                   <Pencil className="h-4 w-4" />
                                 </Button>
@@ -633,6 +654,22 @@ export default function AdmNutricaoPage() {
                 )}
               </>
             )}
+
+            {activeTab === "anamneses" && (
+              <NutritionAnamnesesListPanel
+                tenantId={effectiveTenantId}
+                players={players}
+                tenantName={tenantName}
+              />
+            )}
+
+            {activeTab === "relatorios" && (
+              <NutricaoRelatoriosPanel
+                tenantId={effectiveTenantId}
+                categories={categories}
+                players={players}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
@@ -684,6 +721,13 @@ export default function AdmNutricaoPage() {
         onSuccess={reloadAll}
       />
 
+      <NutritionMenuItemsDialog
+        open={!!menuItemsMenu}
+        onOpenChange={(open) => !open && setMenuItemsMenu(null)}
+        menu={menuItemsMenu}
+        mealTypes={mealTypes}
+      />
+
       <AlertDialog open={!!deleteKind} onOpenChange={(open) => !open && setDeleteKind(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -700,6 +744,13 @@ export default function AdmNutricaoPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((f) => ({ ...f, open }))}
+        title={feedback.title}
+        message={feedback.message}
+      />
     </div>
   );
 }

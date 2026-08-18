@@ -54,6 +54,7 @@ export const MODULE_DISPLAY_NAMES: Record<string, string> = {
   adm_rh: "RH",
   adm_patrimonio: "Patrim\u00F4nio",
   adm_nutricao: "Nutri\u00E7\u00E3o",
+  futebol_assistencia_social: "Assist\u00EAncia Social / Pedagogia",
   futebol_comissao: "Comiss\u00E3o t\u00E9cnica",
   futebol_treinadores: "Treinadores",
   futebol_fisiologia: "Fisiologia",

@@ -45,6 +45,10 @@ import {
 import { RhEmployeeLinkCard } from "@/components/dashboard/rh/RhEmployeeLinkCard";
 import { PlayerPsychologyClinicalSection } from "@/components/dashboard/psychology/PlayerPsychologyClinicalSection";
 import { PlayerPhysioSection } from "@/components/dashboard/fisioterapia/PlayerPhysioSection";
+import { PlayerNursingSection } from "@/components/dashboard/enfermaria/PlayerNursingSection";
+import { PlayerNutritionSection } from "@/components/dashboard/nutricao/PlayerNutritionSection";
+import { PlayerPhysiologySection } from "@/components/dashboard/fisiologia/PlayerPhysiologySection";
+import { PlayerSocialPedagogySection } from "@/components/dashboard/assistencia-social/PlayerSocialPedagogySection";
 import { PlayerFmfStatsSection } from "@/components/dashboard/players/PlayerFmfStatsSection";
 import type { PsychologicalAssessmentEntry } from "@/components/dashboard/player-module-types";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
@@ -563,6 +567,31 @@ export default function EditJogadorPage() {
 
       {activeTab === "fisioterapia" && player && (
         <PlayerPhysioSection playerId={player.id} tenantId={player.tenantId} />
+      )}
+
+      {activeTab === "enfermaria" && player && (
+        <PlayerNursingSection playerId={player.id} tenantId={player.tenantId} />
+      )}
+
+      {activeTab === "nutricao" && player && (
+        <PlayerNutritionSection
+          playerId={player.id}
+          tenantId={player.tenantId}
+          playerName={player.name}
+          playerCategory={player.category}
+        />
+      )}
+
+      {activeTab === "fisiologia" && player && (
+        <PlayerPhysiologySection
+          playerId={player.id}
+          playerName={player.name}
+          playerCategory={player.category}
+        />
+      )}
+
+      {activeTab === "assistencia_social" && player && (
+        <PlayerSocialPedagogySection playerId={player.id} />
       )}
 
       {activeTab === "treinos" && player && (

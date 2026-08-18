@@ -84,6 +84,33 @@ export class PlayersController {
     return this.service.findTrainingHistory(id, allowed);
   }
 
+  @Get(':id/nutrition-history')
+  async findNutritionHistory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findNutritionHistory(id, allowed);
+  }
+
+  @Get(':id/nutrition-context')
+  async findNutritionContext(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findNutritionContext(id, allowed);
+  }
+
+  @Get(':id/social-pedagogy-context')
+  async findSocialPedagogyContext(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findSocialPedagogyContext(id, allowed);
+  }
+
   @Get(':id/agenda')
   async findAgenda(
     @Req() req: Request & { user: CognitoJwtPayload },

@@ -57,6 +57,7 @@ export type CoachContextPlayer = {
   jerseyNumber: number | null;
   category: string | null;
   inTreatment: boolean;
+  registrationProfile?: unknown;
 };
 
 export type CoachContextResponse = {
@@ -345,6 +346,7 @@ export type CoachTeamReport = {
       name: string;
       jerseyNumber: number | null;
       category: string | null;
+      registrationProfile?: unknown;
     };
   }>;
 };

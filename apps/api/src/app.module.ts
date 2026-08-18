@@ -44,12 +44,15 @@ import { BeatscodeImportModule } from './beatscode-import/beatscode-import.modul
 import { CaptacaoModule } from './captacao/captacao.module';
 import { PsychologySessionsModule } from './psychology-sessions/psychology-sessions.module';
 import { FisioterapiaModule } from './fisioterapia/fisioterapia.module';
+import { FisiologiaModule } from './fisiologia/fisiologia.module';
+import { EnfermariaModule } from './enfermaria/enfermaria.module';
 import { PsychologySupportMaterialsModule } from './psychology-support-materials/psychology-support-materials.module';
 import { InfrastructureModule } from './infraestrutura/infrastructure.module';
 import { RolesModule } from './roles/roles.module';
 import { ComunicacaoModule } from './comunicacao/comunicacao.module';
 import { FutebolRelatoriosModule } from './futebol-relatorios/futebol-relatorios.module';
 import { FutebolTreinadoresModule } from './futebol-treinadores/futebol-treinadores.module';
+import { AssistenciaSocialModule } from './assistencia-social/assistencia-social.module';
 import { FutebolJogosModule } from './futebol-jogos/futebol-jogos.module';
 import { AgendaConfigModule } from './agenda-config/agenda-config.module';
 
@@ -99,11 +102,14 @@ import { AgendaConfigModule } from './agenda-config/agenda-config.module';
     CaptacaoModule,
     PsychologySessionsModule,
     FisioterapiaModule,
+    FisiologiaModule,
+    EnfermariaModule,
     PsychologySupportMaterialsModule,
     InfrastructureModule,
     ComunicacaoModule,
     FutebolRelatoriosModule,
     FutebolTreinadoresModule,
+    AssistenciaSocialModule,
     FutebolJogosModule,
     AgendaConfigModule,
   ],

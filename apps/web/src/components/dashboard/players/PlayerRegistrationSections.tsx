@@ -834,6 +834,52 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
             />
           </div>
         </FormGrid>
+        <SectionDivider title="Escolaridade" />
+        <FormGrid cols={4}>
+          <div className="space-y-2">
+            <Label>Escolaridade</Label>
+            <Input
+              value={extras.educationLevel ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "extras", { educationLevel: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Escola</Label>
+            <Input
+              value={extras.schoolName ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "extras", { schoolName: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Série / ano</Label>
+            <Input
+              value={extras.schoolGrade ?? ""}
+              onChange={(e) =>
+                onProfileChange(patchProfile(profile, "extras", { schoolGrade: e.target.value || undefined }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Turno</Label>
+            <Input
+              value={(extras.schoolPeriod ?? []).join(", ")}
+              onChange={(e) =>
+                onProfileChange(
+                  patchProfile(profile, "extras", {
+                    schoolPeriod: e.target.value
+                      ? e.target.value.split(",").map((s) => s.trim()).filter(Boolean)
+                      : undefined,
+                  }),
+                )
+              }
+              placeholder="Manhã, tarde…"
+            />
+          </div>
+        </FormGrid>
         <SectionDivider title="Conta bancária" />
         <FormGrid cols={4}>
           <div className="space-y-2">

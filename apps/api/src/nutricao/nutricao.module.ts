@@ -15,6 +15,10 @@ import { NutritionAssessmentsController } from './nutrition-assessments.controll
 import { NutritionAssessmentsService } from './nutrition-assessments.service';
 import { SupplementGuidesController } from './supplement-guides.controller';
 import { SupplementGuidesService } from './supplement-guides.service';
+import { NutritionAnamnesesController } from './nutrition-anamneses.controller';
+import { NutritionAnamnesesService } from './nutrition-anamneses.service';
+import { NutritionReportsController } from './nutrition-reports.controller';
+import { NutritionReportsService } from './nutrition-reports.service';
 import { CadastrosModule } from '../cadastros/cadastros.module';
 
 @Module({
@@ -26,6 +30,8 @@ import { CadastrosModule } from '../cadastros/cadastros.module';
     NutritionCalendarController,
     NutritionAssessmentsController,
     SupplementGuidesController,
+    NutritionAnamnesesController,
+    NutritionReportsController,
   ],
   providers: [
     NutritionCategoriesService,
@@ -35,6 +41,8 @@ import { CadastrosModule } from '../cadastros/cadastros.module';
     NutritionCalendarService,
     NutritionAssessmentsService,
     SupplementGuidesService,
+    NutritionAnamnesesService,
+    NutritionReportsService,
     ModuleAccessGuard,
   ],
   exports: [
@@ -45,6 +53,8 @@ import { CadastrosModule } from '../cadastros/cadastros.module';
     NutritionCalendarService,
     NutritionAssessmentsService,
     SupplementGuidesService,
+    NutritionAnamnesesService,
+    NutritionReportsService,
   ],
 })
 export class NutricaoModule {}

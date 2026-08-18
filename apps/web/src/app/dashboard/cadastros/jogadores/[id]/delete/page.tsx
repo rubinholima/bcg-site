@@ -12,6 +12,11 @@ interface DeleteImpact {
   counts?: {
     legalDocuments: number;
     nutritionAssessments: number;
+    nutritionAnamneses: number;
+    playerGuardians: number;
+    schoolEnrollments: number;
+    socialPedagogyCases: number;
+    socialPedagogyDocuments: number;
     assignedAssets: number;
     supplementGuides: number;
     medicalHistoryEntries: number;
@@ -21,6 +26,11 @@ interface DeleteImpact {
   };
   legalDocuments?: number;
   nutritionAssessments?: number;
+  nutritionAnamneses?: number;
+  playerGuardians?: number;
+  schoolEnrollments?: number;
+  socialPedagogyCases?: number;
+  socialPedagogyDocuments?: number;
   assignedAssets?: number;
   supplementGuides?: number;
   medicalHistoryEntries?: number;
@@ -35,6 +45,11 @@ function impactItems(impact: DeleteImpact): { label: string; count: number }[] {
   const items: { label: string; count: number }[] = [];
   const ld = c.legalDocuments ?? (c as Record<string, number>).legalDocuments ?? 0;
   const na = c.nutritionAssessments ?? (c as Record<string, number>).nutritionAssessments ?? 0;
+  const nan = c.nutritionAnamneses ?? (c as Record<string, number>).nutritionAnamneses ?? 0;
+  const pg = c.playerGuardians ?? (c as Record<string, number>).playerGuardians ?? 0;
+  const se = c.schoolEnrollments ?? (c as Record<string, number>).schoolEnrollments ?? 0;
+  const spc = c.socialPedagogyCases ?? (c as Record<string, number>).socialPedagogyCases ?? 0;
+  const spd = c.socialPedagogyDocuments ?? (c as Record<string, number>).socialPedagogyDocuments ?? 0;
   const aa = c.assignedAssets ?? (c as Record<string, number>).assignedAssets ?? 0;
   const sg = c.supplementGuides ?? (c as Record<string, number>).supplementGuides ?? 0;
   const mh = c.medicalHistoryEntries ?? (c as Record<string, number>).medicalHistoryEntries ?? (c as Record<string, number>).medicalHistory ?? 0;
@@ -43,6 +58,11 @@ function impactItems(impact: DeleteImpact): { label: string; count: number }[] {
   const ev = c.evaluations ?? (c as Record<string, number>).evaluations ?? 0;
   if (ld > 0) items.push({ label: "Documentos jurídicos", count: ld });
   if (na > 0) items.push({ label: "Avaliações nutrição", count: na });
+  if (nan > 0) items.push({ label: "Anamneses nutrição", count: nan });
+  if (pg > 0) items.push({ label: "Responsáveis (assist. social)", count: pg });
+  if (se > 0) items.push({ label: "Matrículas escolares", count: se });
+  if (spc > 0) items.push({ label: "Casos assist. social", count: spc });
+  if (spd > 0) items.push({ label: "Documentos escolares", count: spd });
   if (aa > 0) items.push({ label: "Patrimônio atribuído", count: aa });
   if (sg > 0) items.push({ label: "Guias de suplementação", count: sg });
   if (mh > 0) items.push({ label: "Histórico médico", count: mh });

@@ -8,6 +8,7 @@ import {
   UserCircle,
   GraduationCap,
   FolderOpen,
+  HeartPulse,
 } from "lucide-react";
 import { HubDashboardPage } from "@/components/dashboard/HubDashboardPage";
 import { SaudeHubInsights } from "@/components/dashboard/hub/SaudeHubInsights";
@@ -81,6 +82,13 @@ const LINKS = [
     description: "Tratamentos e evolução fisioterapêutica.",
     href: "/dashboard/saude/fisioterapia",
     icon: Activity,
+    moduleSlug: "saude",
+  },
+  {
+    title: "Enfermaria",
+    description: "Atendimentos de enfermagem e medicamentos.",
+    href: "/dashboard/saude/enfermaria",
+    icon: HeartPulse,
     moduleSlug: "saude",
   },
 ] as const;

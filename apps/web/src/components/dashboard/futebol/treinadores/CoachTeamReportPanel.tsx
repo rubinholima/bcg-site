@@ -195,7 +195,12 @@ export function CoachTeamReportPanel({
       setPlayerActions(
         data.playerActions.map((a) => ({
           playerId: a.playerId,
-          name: a.player?.name ?? "",
+          name: a.player
+            ? getPlayerListDisplayName({
+                name: a.player.name,
+                registrationProfile: a.player.registrationProfile,
+              })
+            : "",
           jerseyNumber: a.player?.jerseyNumber ?? null,
           actionType: a.actionType,
           reason: a.reason ?? "",

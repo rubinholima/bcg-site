@@ -123,6 +123,7 @@ model Tenant {
   nutritionMenus         NutritionMenu[]
   nutritionCalendarEntries NutritionCalendarEntry[]
   supplementGuides       SupplementGuide[]
+  socialPedagogyCases    SocialPedagogyCase[]
   socioPlans            SocioPlan[]
   socioMembers          SocioMember[]
   marketingPosts        MarketingPost[]
@@ -165,6 +166,10 @@ model Tenant {
   coachMatchStatOverrides      CoachMatchStatOverride[]
   footballMatchIncidents       FootballMatchIncident[]
   footballMatchAttachments     FootballMatchAttachment[]
+  physiologyAssessments        PhysiologyAssessment[]
+  physiologyHydrations         PhysiologyHydration[]
+  physiologyLoadSessions       PhysiologyLoadSession[]
+  nursingSessions              NursingSession[]
 }
 
 /// Contas a pagar / receber internas (ADM Financeiro). Omie permanece só para relatórios gerenciais.
@@ -1084,7 +1089,12 @@ model Player {
   legalDocuments  LegalDocument[]
   assignedAssets  Asset[]  // uniformes/kit atribuídos ao jogador
   nutritionAssessments NutritionAssessment[]
+  nutritionAnamneses   NutritionAnamnesis[]
   supplementGuides     SupplementGuide[]  // guias de suplementação específicos do jogador
+  guardians            PlayerGuardian[]
+  schoolEnrollments    PlayerSchoolEnrollment[]
+  socialPedagogyCases  SocialPedagogyCase[]
+  socialPedagogyDocuments SocialPedagogyDocument[]
   rhEmployee           Employee?
   registrationInvites  RegistrationInvite[]
   agendaParticipations FootballAgendaEntryParticipant[]
@@ -1095,6 +1105,10 @@ model Player {
   coachMatchPlayerRatings CoachMatchReportPlayerRating[]
   coachTeamReportPlayerActions CoachTeamReportPlayerAction[]
   coachTrainingPlayerEntries CoachTrainingPlayerEntry[]
+  physiologyAssessments      PhysiologyAssessment[]
+  physiologyHydrations       PhysiologyHydration[]
+  physiologyLoadEntries      PhysiologyLoadEntry[]
+  nursingSessions            NursingSession[]
   @@index([tenantId])
   @@index([tenantId, category])
   @@index([tenantId, cbfRegistration])
@@ -1479,6 +1493,8 @@ model Product {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   stockMovements StockMovement[]
+  nursingTreatments NursingTreatment[]
+  nursingSessionTreatments NursingSessionTreatment[]
   @@index([tenantId])
   @@index([tenantId, currentStock])
   @@index([tenantId, inventoryKind])
@@ -2233,6 +2249,19 @@ model NutritionAssessment {
   @@index([assessedAt])
 }
 
+model NutritionAnamnesis {
+  id         String   @id @default(cuid())
+  playerId   String
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  assessedAt DateTime
+  data       Json     // campos da anamnese nutricional (ver nutricao-anamnesis.ts)
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([playerId])
+  @@index([assessedAt])
+}
+
 model SupplementGuide {
   id         String   @id @default(cuid())
   tenantId   String
@@ -2249,6 +2278,98 @@ model SupplementGuide {
   @@index([tenantId])
   @@index([categoryId])
   @@index([playerId])
+}
+
+// ========== Assistência Social / Pedagogia (futebol) ==========
+
+model PlayerGuardian {
+  id           String   @id @default(cuid())
+  playerId     String
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  name         String
+  relationship String   // pai | mae | tutor | responsavel | outro
+  phone        String?
+  email        String?
+  cpf          String?
+  address      Json?
+  isPrimary    Boolean  @default(false)
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([playerId])
+}
+
+model PlayerSchoolEnrollment {
+  id                String    @id @default(cuid())
+  playerId          String
+  player            Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  schoolName        String
+  grade             String?
+  period            String?   // manha | tarde | integral | noturno
+  shift             String?
+  city              String?
+  coordinatorName   String?
+  coordinatorEmail  String?
+  coordinatorPhone  String?
+  schoolYear        String?
+  status            String    @default("ativo") // ativo | transferido | concluido
+  startDate         DateTime?
+  endDate           DateTime?
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  @@index([playerId])
+  @@index([status])
+}
+
+model SocialPedagogyCase {
+  id                        String    @id @default(cuid())
+  tenantId                  String
+  tenant                    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId                  String
+  player                    Player    @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  triggerType               String    // horario_treino | convocacao | inicio_letivo | manual
+  triggerLabel              String?
+  triggerRefType            String?   // travel | agenda_entry | none
+  triggerRefId              String?
+  status                    String    @default("coleta") // coleta | agenda | comunicacao | documentos | concluido
+  periodStart               DateTime?
+  periodEnd                 DateTime?
+  contactValidation         Json?
+  agendaSnapshot            Json?
+  schoolNotificationText    String?   @db.Text
+  schoolNotificationSentAt  DateTime?
+  schoolNotificationChannel String?
+  schoolResponseNotes       String?   @db.Text
+  notes                     String?   @db.Text
+  createdByUserId           String?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  documents                 SocialPedagogyDocument[]
+  @@index([tenantId])
+  @@index([playerId])
+  @@index([status])
+  @@index([triggerType])
+}
+
+model SocialPedagogyDocument {
+  id           String   @id @default(cuid())
+  playerId     String
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  caseId       String?
+  case         SocialPedagogyCase? @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  documentType String   // matricula | boletim | frequencia | dispensa | comprovante | parecer | outro
+  name         String
+  fileUrl      String
+  schoolYear   String?
+  period       String?
+  receivedAt   DateTime?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([playerId])
+  @@index([caseId])
+  @@index([documentType])
 }
 
 // ========== Sócio Torcedor (por clube) ==========
@@ -3001,6 +3122,212 @@ model PhysioSession {
   @@index([playerId, status])
   @@index([regionId])
   @@index([startedAt])
+}
+
+// ─── Módulo Enfermaria (Depto Saúde) ────────────────────────────────────────
+
+/// Diagnóstico clínico de enfermagem (seed + cadastro dinâmico)
+model NursingDiagnosis {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  isSystem         Boolean  @default(false)
+  active           Boolean  @default(true)
+  createdByUserId  String?
+  createdAt        DateTime @default(now())
+  sessionDiagnoses NursingSessionDiagnosis[]
+  @@index([active])
+}
+
+/// Tratamento / medicamento de enfermagem (pode vincular produto do estoque)
+model NursingTreatment {
+  id                String   @id @default(cuid())
+  name              String
+  /// medicamento | procedimento | curativo
+  kind              String   @default("medicamento")
+  productId         String?
+  product           Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  defaultUnit       String?
+  isSystem          Boolean  @default(false)
+  active            Boolean  @default(true)
+  createdByUserId   String?
+  createdAt         DateTime @default(now())
+  sessionTreatments NursingSessionTreatment[]
+  @@index([active])
+  @@index([productId])
+}
+
+/// Atendimento de enfermaria do atleta
+model NursingSession {
+  id               String   @id @default(cuid())
+  tenantId         String
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId         String
+  player           Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category         String?
+  attendedAt       DateTime @default(now())
+  symptoms         String?  @db.Text
+  nurseStaffId     String?
+  nurseName        String?
+  estimatedDays    Int?
+  estimatedEndDate DateTime?
+  treatmentNotes   String?  @db.Text
+  /// [{ label, fileUrl, kind: exame|pedido|outro }]
+  attachments      Json?
+  status           String   @default("active") // active | completed | cancelled
+  endedAt          DateTime?
+  createdByUserId  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  sessionDiagnoses NursingSessionDiagnosis[]
+  sessionTreatments NursingSessionTreatment[]
+  @@index([tenantId, status])
+  @@index([playerId, status])
+  @@index([attendedAt])
+}
+
+model NursingSessionDiagnosis {
+  id             String   @id @default(cuid())
+  sessionId      String
+  session        NursingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  diagnosisId    String?
+  diagnosis      NursingDiagnosis? @relation(fields: [diagnosisId], references: [id], onDelete: SetNull)
+  diagnosisLabel String?
+  sortOrder      Int      @default(0)
+  @@index([sessionId])
+}
+
+model NursingSessionTreatment {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         NursingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  treatmentId     String?
+  treatment       NursingTreatment? @relation(fields: [treatmentId], references: [id], onDelete: SetNull)
+  treatmentLabel  String?
+  productId       String?
+  product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  quantityUsed    Float?
+  stockMovementId String?
+  deductStock     Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  notes           String?  @db.Text
+  @@index([sessionId])
+  @@index([productId])
+}
+
+// ─── Módulo Fisiologia (Depto Futebol / Performance) ────────────────────────
+
+/// Avaliação física individual do atleta (composição, testes, protocolos)
+model PhysiologyAssessment {
+  id                String   @id @default(cuid())
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId          String
+  player            Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  category          String?
+  /// entrada | rotina
+  assessmentType    String   @default("rotina")
+  assessedAt        DateTime
+  /// fisiologista | nutricionista | preparador_fisico
+  evaluatorRole     String?
+  evaluatorName     String?
+  evaluatorStaffId  String?
+  ageYears          Int?
+  ageMonths         Int?
+  weight            Float?
+  height            Float?
+  bmi               Float?
+  /// { se, tr, pe, ax, si, ab, cx } — dobras cutâneas (mm)
+  skinfolds         Json?
+  protocol          String?
+  bodyFatPercent    Float?
+  leanMassKg        Float?
+  bodyMassKg        Float?
+  /// acima | abaixo | ideal
+  compositionStatus String?
+  vo2max            Float?
+  cmjCm             Float?
+  illinoisSec       Float?
+  tTestSec          Float?
+  sprint10m         Float?
+  sprint20m         Float?
+  yoyoDistance      Float?
+  rastPower         Float?
+  mobilityNotes     String?  @db.Text
+  physicalTests     Json?
+  notes             String?  @db.Text
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@index([tenantId, category])
+  @@index([playerId, assessedAt])
+  @@index([assessedAt])
+}
+
+/// Controle de hidratação (peso pré/pós treino ou jogo)
+model PhysiologyHydration {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  playerId     String
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  recordedAt   DateTime
+  /// treino | jogo
+  contextType  String
+  weightBefore Float?
+  weightAfter  Float?
+  /// hidratado | desidratado | severo
+  status       String?
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([tenantId, recordedAt])
+  @@index([playerId, recordedAt])
+}
+
+/// Sessão de carga (treino ou jogo) por categoria — elenco + GPS
+model PhysiologyLoadSession {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category     String
+  sessionDate  String   // YYYY-MM-DD
+  /// treino | jogo
+  sessionType  String
+  period       String?
+  trainingType String?
+  staffId      String?
+  staffName    String?
+  notes        String?  @db.Text
+  entries      PhysiologyLoadEntry[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  @@index([tenantId, sessionDate])
+  @@index([tenantId, category, sessionDate])
+}
+
+/// Carga individual por atleta na sessão (GPS, RPE, distâncias)
+model PhysiologyLoadEntry {
+  id                     String   @id @default(cuid())
+  sessionId              String
+  session                PhysiologyLoadSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  playerId               String
+  player                 Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  present                Boolean  @default(true)
+  rpe                    Int?
+  actualLoad             Float?
+  trainingMinutes        Int?
+  gameMinutes            Int?
+  maxDistanceM           Float?
+  maxSpeedKmh            Float?
+  sprintCount            Int?
+  highIntensityDistanceM Float?
+  lowIntensityDistanceM  Float?
+  sprintDistanceM        Float?
+  gpsImportLabel         String?
+  gpsData                Json?
+  notes                  String?  @db.Text
+  @@unique([sessionId, playerId])
+  @@index([playerId])
+  @@index([sessionId])
 }
 
 // ─── Módulo Treinadores (Depto Futebol) ─────────────────────────────────────

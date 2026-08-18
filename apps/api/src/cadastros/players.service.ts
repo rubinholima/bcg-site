@@ -26,6 +26,7 @@ import {
 import { syncLinkedIdentityByPlayerId } from '../rh/employee-player-link';
 import { FootballAgendaBirthdaysService } from '../futebol-agenda/football-agenda-birthdays.service';
 import { FutebolAgendaService } from '../futebol-agenda/futebol-agenda.service';
+import { validatePlayerContacts, parseRegistrationProfile } from '../assistencia-social/social-pedagogy.util';
 import {
   buildPlayerMatchAvailabilityInput,
   getPlayerMatchAvailability,
@@ -276,6 +277,177 @@ export class PlayersService {
       rating: e.rating,
       notes: e.notes,
     }));
+  }
+
+  async findNutritionHistory(playerId: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(playerId, allowedTenantIds);
+    const [anamneses, assessments, supplements] = await Promise.all([
+      this.prisma.nutritionAnamnesis.findMany({
+        where: { playerId },
+        orderBy: [{ assessedAt: 'desc' }],
+        take: 20,
+      }),
+      this.prisma.nutritionAssessment.findMany({
+        where: { playerId },
+        orderBy: [{ assessedAt: 'desc' }],
+        take: 10,
+      }),
+      this.prisma.supplementGuide.findMany({
+        where: {
+          tenantId: player.tenantId,
+          OR: [{ playerId }, { playerId: null, categoryId: null }],
+        },
+        orderBy: [{ name: 'asc' }],
+        include: {
+          category: { select: { id: true, name: true, code: true } },
+        },
+      }),
+    ]);
+
+    const categoryGuides = player.category
+      ? await this.prisma.supplementGuide.findMany({
+          where: {
+            tenantId: player.tenantId,
+            playerId: null,
+            category: { code: player.category },
+          },
+          include: { category: { select: { id: true, name: true, code: true } } },
+        })
+      : [];
+
+    const guideIds = new Set<string>();
+    const mergedSupplements = [...supplements, ...categoryGuides].filter((g) => {
+      if (guideIds.has(g.id)) return false;
+      guideIds.add(g.id);
+      return true;
+    });
+
+    return {
+      anamneses,
+      assessments,
+      supplements: mergedSupplements,
+    };
+  }
+
+  async findNutritionContext(playerId: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(playerId, allowedTenantIds);
+
+    const physioSessions = await this.prisma.physioSession.findMany({
+      where: { playerId },
+      orderBy: [{ startedAt: 'desc' }],
+      take: 5,
+      select: {
+        id: true,
+        startedAt: true,
+        status: true,
+        diagnosisLabel: true,
+        symptoms: true,
+        evolutionNotes: true,
+      },
+    });
+
+    const psychEntries = Array.isArray(player.psychologicalAssessment)
+      ? (player.psychologicalAssessment as Array<{ kind?: string; data?: Record<string, unknown> }>)
+      : [];
+    const psychFoodNotes = psychEntries
+      .map((entry) => {
+        const val = entry?.data?.preocupacaoAlimentacao;
+        return typeof val === 'string' && val.trim() ? val.trim() : null;
+      })
+      .filter(Boolean) as string[];
+
+    let medicalAllergies: string[] = [];
+    const med = player.medicalHistory as
+      | { profile?: { allergies?: string }; records?: Array<{ title?: string; notes?: string }> }
+      | null
+      | undefined;
+    if (med?.profile?.allergies?.trim()) {
+      medicalAllergies.push(med.profile.allergies.trim());
+    }
+    if (Array.isArray(med?.records)) {
+      for (const rec of med.records) {
+        const text = `${rec.title ?? ''} ${rec.notes ?? ''}`.toLowerCase();
+        if (text.includes('alerg') || text.includes('intoler')) {
+          medicalAllergies.push([rec.title, rec.notes].filter(Boolean).join(' — '));
+        }
+      }
+    }
+
+    const history = await this.findNutritionHistory(playerId, allowedTenantIds);
+
+    return {
+      player: {
+        id: player.id,
+        name: player.name,
+        category: player.category,
+        weight: player.weight,
+        height: player.height,
+        bmi: player.bmi,
+        bodyFatPercent: player.bodyFatPercent,
+      },
+      ...history,
+      healthLinks: {
+        physioSessions,
+        psychFoodNotes,
+        medicalAllergies,
+      },
+    };
+  }
+
+  async findSocialPedagogyContext(playerId: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(playerId, allowedTenantIds);
+    const profile = parseRegistrationProfile(player.registrationProfile);
+
+    const [guardians, enrollments, cases, documents, openCasesCount] = await Promise.all([
+      this.prisma.playerGuardian.findMany({
+        where: { playerId },
+        orderBy: [{ isPrimary: 'desc' }, { name: 'asc' }],
+      }),
+      this.prisma.playerSchoolEnrollment.findMany({
+        where: { playerId },
+        orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
+      }),
+      this.prisma.socialPedagogyCase.findMany({
+        where: { playerId },
+        orderBy: [{ updatedAt: 'desc' }],
+        take: 10,
+        include: { documents: true },
+      }),
+      this.prisma.socialPedagogyDocument.findMany({
+        where: { playerId },
+        orderBy: [{ receivedAt: 'desc' }],
+        take: 20,
+      }),
+      this.prisma.socialPedagogyCase.count({
+        where: { playerId, status: { not: 'concluido' } },
+      }),
+    ]);
+
+    const contactValidation = validatePlayerContacts(player, guardians);
+
+    return {
+      player: {
+        id: player.id,
+        name: player.name,
+        category: player.category,
+        contactPhone: player.contactPhone,
+        contactEmail: player.contactEmail,
+        emergencyContactName: player.emergencyContactName,
+        emergencyContactPhone: player.emergencyContactPhone,
+        emergencyContactEmail: player.emergencyContactEmail,
+      },
+      profileSchool: {
+        schoolName: profile.extras?.schoolName ?? null,
+        schoolGrade: profile.extras?.schoolGrade ?? null,
+        educationLevel: profile.extras?.educationLevel ?? null,
+      },
+      contactValidation,
+      guardians,
+      enrollments,
+      cases,
+      documents,
+      openCasesCount,
+    };
   }
 
   private playerInAccommodationRooms(rooms: unknown, playerId: string): boolean {
@@ -817,11 +989,26 @@ export class PlayersService {
   async getDeleteImpact(id: string, allowedTenantIds: string[] | null = null) {
     const player = await this.findOne(id, allowedTenantIds);
 
-    const [legalDocuments, nutritionAssessments, assignedAssets, supplementGuides] = await Promise.all([
+    const [
+      legalDocuments,
+      nutritionAssessments,
+      nutritionAnamneses,
+      assignedAssets,
+      supplementGuides,
+      playerGuardians,
+      schoolEnrollments,
+      socialPedagogyCases,
+      socialPedagogyDocuments,
+    ] = await Promise.all([
       this.prisma.legalDocument.count({ where: { playerId: id } }),
       this.prisma.nutritionAssessment.count({ where: { playerId: id } }),
+      this.prisma.nutritionAnamnesis.count({ where: { playerId: id } }),
       this.prisma.asset.count({ where: { assignedPlayerId: id } }),
       this.prisma.supplementGuide.count({ where: { playerId: id } }),
+      this.prisma.playerGuardian.count({ where: { playerId: id } }),
+      this.prisma.playerSchoolEnrollment.count({ where: { playerId: id } }),
+      this.prisma.socialPedagogyCase.count({ where: { playerId: id } }),
+      this.prisma.socialPedagogyDocument.count({ where: { playerId: id } }),
     ]);
 
     const medicalHistoryEntries = Array.isArray(player.medicalHistory) ? player.medicalHistory.length : 0;
@@ -832,8 +1019,13 @@ export class PlayersService {
     const total =
       legalDocuments +
       nutritionAssessments +
+      nutritionAnamneses +
       assignedAssets +
       supplementGuides +
+      playerGuardians +
+      schoolEnrollments +
+      socialPedagogyCases +
+      socialPedagogyDocuments +
       medicalHistoryEntries +
       psychologicalAssessments +
       onlineConsultations +
@@ -842,8 +1034,13 @@ export class PlayersService {
     return {
       legalDocuments,
       nutritionAssessments,
+      nutritionAnamneses,
       assignedAssets,
       supplementGuides,
+      playerGuardians,
+      schoolEnrollments,
+      socialPedagogyCases,
+      socialPedagogyDocuments,
       medicalHistoryEntries,
       psychologicalAssessments,
       onlineConsultations,

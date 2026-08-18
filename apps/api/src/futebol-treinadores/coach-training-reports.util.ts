@@ -1,3 +1,4 @@
+import { getPlayerListDisplayName } from '../common/player-list-display-name.util';
 import { dateKeyInBrazil } from '../common/brazil-time.util';
 
 type SessionRow = {
@@ -23,6 +24,7 @@ type SessionRow = {
       name: string;
       jerseyNumber: number | null;
       category: string | null;
+      registrationProfile?: unknown;
     };
   }>;
   agendaEntry: {
@@ -121,7 +123,7 @@ export function buildTrainingSessionReport(session: SessionRow): CoachTrainingSe
   const players = session.playerEntries
     .map((e) => ({
       playerId: e.playerId,
-      name: e.player.name,
+      name: getPlayerListDisplayName(e.player),
       jerseyNumber: e.player.jerseyNumber,
       category: e.player.category,
       available: e.available,
@@ -190,7 +192,7 @@ export function buildTrainingPeriodReport(
         notesByDate: Array<{ date: string; notes: string }>;
       } = existing ?? {
         playerId: entry.playerId,
-        name: entry.player.name,
+        name: getPlayerListDisplayName(entry.player),
         jerseyNumber: entry.player.jerseyNumber,
         category: entry.player.category,
         sessionsTotal: 0,

@@ -1,16 +1,10 @@
-/** Apelido → primeiro nome → nome completo, sempre em maiúsculas (listas de atletas). */
+/** Apelido → nome completo, sempre em maiúsculas (listas de atletas). */
 export function getPlayerListDisplayName(player: {
   name: string;
   registrationProfile?: unknown;
 }): string {
   const nickname = extractPlayerNickname(player.registrationProfile);
-  let label: string;
-  if (nickname) {
-    label = nickname;
-  } else {
-    const parts = player.name.trim().split(/\s+/).filter(Boolean);
-    label = parts[0] || player.name.trim() || '—';
-  }
+  const label = nickname || player.name.trim() || '—';
   return label.toLocaleUpperCase('pt-BR');
 }
 

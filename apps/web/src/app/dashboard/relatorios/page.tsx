@@ -31,6 +31,9 @@ function RelatoriosContent() {
     if (hub === "futebol") {
       router.replace("/dashboard/relatorios/futebol");
     }
+    if (hub === "adm") {
+      router.replace("/dashboard/relatorios/adm");
+    }
   }, [hub, router]);
 
   if (loading) {
@@ -53,7 +56,7 @@ function RelatoriosContent() {
 
   const hubLabel = hub ? HUB_LABELS[hub] ?? hub : null;
 
-  if (hub === "futebol") {
+  if (hub === "futebol" || hub === "adm") {
     return (
       <div className="flex items-center justify-center py-12">
         <p className="text-muted-foreground">Redirecionando…</p>

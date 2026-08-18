@@ -79,6 +79,9 @@ import {
   Clock,
   CreditCard,
   Briefcase,
+  Droplets,
+  Printer,
+  HeartPulse,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -225,6 +228,10 @@ export const PLAYER_TABS: PlayerTabConfig[] = [
   { id: "dados", label: "Dados", icon: UserCircle, moduleSlug: null },
   { id: "psicologica", label: "Psicológica", icon: Brain, moduleSlug: "saude" },
   { id: "fisioterapia", label: "Fisioterapia", icon: Activity, moduleSlug: "saude" },
+  { id: "enfermaria", label: "Enfermaria", icon: HeartPulse, moduleSlug: "saude" },
+  { id: "fisiologia", label: "Fisiologia", icon: Heart, moduleSlug: "futebol_fisiologia" },
+  { id: "nutricao", label: "Nutrição", icon: UtensilsCrossed, moduleSlug: "adm_nutricao" },
+  { id: "assistencia_social", label: "Assist. Social", icon: GraduationCap, moduleSlug: "futebol_assistencia_social" },
   { id: "treinos", label: "Treinos", icon: Dumbbell, moduleSlug: "futebol_treinadores" },
   { id: "status", label: "Status", icon: Activity, moduleSlug: "diretoria" },
   { id: "mapa", label: "Mapa", icon: MapIcon, moduleSlug: null },
@@ -637,6 +644,43 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             href: "/dashboard/futebol/fisiologia",
             icon: Heart,
             moduleSlug: "futebol_fisiologia",
+            children: [
+              {
+                slug: "futebol_fisiologia_dash",
+                label: DEPT_HUB_MENU_LABEL,
+                href: "/dashboard/futebol/fisiologia",
+                icon: LayoutDashboard,
+                moduleSlug: "futebol_fisiologia",
+              },
+              {
+                slug: "futebol_fisiologia_avaliacoes",
+                label: "Avaliações",
+                href: "/dashboard/futebol/fisiologia/avaliacoes",
+                icon: Activity,
+                moduleSlug: "futebol_fisiologia",
+              },
+              {
+                slug: "futebol_fisiologia_hidratacao",
+                label: "Hidratação",
+                href: "/dashboard/futebol/fisiologia/hidratacao",
+                icon: Droplets,
+                moduleSlug: "futebol_fisiologia",
+              },
+              {
+                slug: "futebol_fisiologia_carga",
+                label: "Carga",
+                href: "/dashboard/futebol/fisiologia/carga",
+                icon: Gauge,
+                moduleSlug: "futebol_fisiologia",
+              },
+              {
+                slug: "futebol_fisiologia_relatorios",
+                label: "Relatórios",
+                href: "/dashboard/futebol/fisiologia/relatorios",
+                icon: Printer,
+                moduleSlug: "futebol_fisiologia",
+              },
+            ],
           },
           {
             slug: "futebol_preparacao_fisica",
@@ -779,7 +823,22 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
       { slug: "adm_estoque", label: "Estoque", href: "/dashboard/adm/estoque", icon: Package, moduleSlug: "adm_estoque" },
       { slug: "adm_rh", label: "RH", href: "/dashboard/adm/rh", icon: Users, moduleSlug: "adm_rh" },
       { slug: "adm_patrimonio", label: "Patrimônio", href: "/dashboard/adm/patrimonio", icon: Warehouse, moduleSlug: "adm_patrimonio" },
-      hubRelatorio("adm"),
+      {
+        slug: "adm_relatorios",
+        label: "Relatórios",
+        href: "/dashboard/relatorios/adm",
+        icon: BarChart3,
+        moduleSlug: "relatorios_adm",
+        children: [
+          {
+            slug: "adm_rel_estoque_compras",
+            label: "Estoque e Compras",
+            href: "/dashboard/relatorios/adm/estoque-compras",
+            icon: Package,
+            moduleSlug: "relatorios_adm",
+          },
+        ],
+      },
     ],
   },
   {
@@ -948,7 +1007,37 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
           },
         ],
       },
+      {
+        slug: "saude_enfermaria",
+        label: "Enfermaria",
+        icon: HeartPulse,
+        moduleSlug: "saude",
+        children: [
+          {
+            slug: "saude_enfermaria_atendimentos",
+            label: "Atendimentos",
+            href: "/dashboard/saude/enfermaria",
+            icon: HeartPulse,
+            moduleSlug: "saude",
+          },
+        ],
+      },
       hubRelatorio("saude"),
+    ],
+  },
+  {
+    slug: "assistencia_social",
+    label: "Depto Assist. Social",
+    icon: GraduationCap,
+    moduleSlug: "futebol_assistencia_social",
+    children: [
+      {
+        slug: "assistencia_social_visao",
+        label: DEPT_HUB_MENU_LABEL,
+        href: "/dashboard/assistencia-social",
+        icon: LayoutDashboard,
+        moduleSlug: "futebol_assistencia_social",
+      },
     ],
   },
   {

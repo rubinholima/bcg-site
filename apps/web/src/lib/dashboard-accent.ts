@@ -92,7 +92,7 @@ export function getDashboardAccentStyles(accent: DashboardAccent = "violet") {
 
 export function resolveDashboardAccent(pathname: string): DashboardAccent {
   const path = pathname.split("?")[0]!;
-  if (path.startsWith("/dashboard/adm")) return "emerald";
+  if (path.startsWith("/dashboard/adm") || path.startsWith("/dashboard/relatorios/adm")) return "emerald";
   if (path.startsWith("/dashboard/futebol")) return "sky";
   if (path.startsWith("/dashboard/marketing")) return "amber";
   if (path.startsWith("/dashboard/juridico")) return "rose";

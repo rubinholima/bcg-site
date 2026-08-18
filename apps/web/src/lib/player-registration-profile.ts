@@ -172,6 +172,10 @@ export const PLAYER_DOCUMENT_TYPE_OPTIONS = [
   { value: "visto", label: "Visto" },
   { value: "certificado_medico", label: "Certificado médico" },
   { value: "termo_responsabilidade", label: "Termo de responsabilidade" },
+  { value: "comprovante_matricula", label: "Comprovante de matrícula" },
+  { value: "boletim_escolar", label: "Boletim escolar" },
+  { value: "frequencia_escolar", label: "Frequência escolar" },
+  { value: "dispensa_escolar", label: "Dispensa escolar" },
   { value: "contrato", label: "Contrato" },
   { value: "outro", label: "Outros (tipo livre)" },
 ] as const;

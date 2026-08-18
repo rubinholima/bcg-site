@@ -23,6 +23,8 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "futebol-press-kit", label: "→ Press Kit", indent: true },
   { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "futebol-treinadores-treinos", label: "→ Treinadores — treinos", indent: true },
+  { id: "futebol-nutricao", label: "→ Nutricionista", indent: true },
+  { id: "assistencia-social", label: "Assist. Social / Pedagogia", indent: false },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
   { id: "comunicacao", label: "Communication Center" },
@@ -509,6 +511,40 @@ export default function ManualPage() {
                 existir na agenda do clube.
               </p>
             </SubSection>
+
+            <SubSection id="futebol-nutricao" title="Nutricionista">
+              <p>
+                <strong>Cardápios:</strong> cadastre o modelo (nome, categoria, contexto) e os{" "}
+                <strong>itens por refeição</strong> (botão lista no cardápio). O <strong>calendário</strong>{" "}
+                define qual cardápio vale em cada dia/categoria.
+              </p>
+              <p>
+                <strong>Relatórios:</strong> imprima cardápio para a cozinha (dia, semana ou mês) e lista de{" "}
+                suplementação (time, categoria ou atleta) — semanal ou mensal, para quadro e distribuição.
+              </p>
+              <p>
+                <strong>Anamnese:</strong> aba <strong>Anamneses</strong> ou ficha do atleta (aba Nutrição).
+                Campos clínicos + referências cruzadas de médico, psicologia e fisioterapia quando existirem
+                no cadastro.
+              </p>
+            </SubSection>
+          </Section>
+
+          <Section id="assistencia-social" title="Assistência Social / Pedagogia">
+            <p>
+              <strong>Gatilhos:</strong> mudança de horário de treino, convocação para jogo/viagem ou início
+              de período letivo. Abra um <strong>caso</strong> por atleta (aba Casos).
+            </p>
+            <p>
+              <strong>Fluxo:</strong> coleta de dados (validação de endereço, responsáveis e escola) → cruzamento
+              com a agenda do clube → texto de dispensa/notificação para a escola (impressão) → arquivamento de
+              matrícula, boletim e frequência no histórico do atleta.
+            </p>
+            <p>
+              <strong>Validação elenco:</strong> filtre por categoria e veja quem está com cadastro incompleto
+              antes de emitir documentos. Na ficha do atleta (aba Assist. Social): responsáveis, matrícula escolar,
+              casos e documentos.
+            </p>
           </Section>
 
           <Section id="socio" title="Sócio Torcedor">
