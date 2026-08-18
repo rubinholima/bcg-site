@@ -42,6 +42,7 @@ import {
 } from "@/lib/player-registration-profile";
 import { normalizeCityName } from "@/lib/brazil-location-utils";
 import { BRAZIL_BANK_SUGGESTIONS, normalizeBankName } from "@/lib/brazil-banks";
+import { formatDateDayMonYear } from "@/lib/format-date";
 import { ExpandableSection, FormGrid, RequiredMark, SectionDivider } from "./ExpandableSection";
 import { PlayerDocumentsSection } from "./PlayerDocumentsSection";
 import { PlayerContractsSection } from "./PlayerContractsSection";
@@ -885,6 +886,35 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
 
       {activeRegTab === "esportivo" && (
         <div className="space-y-4 rounded-xl border border-border/60 bg-card/30 p-4 sm:p-5">
+      <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3.5">
+        <div className="flex min-h-11 items-start gap-3">
+          <Checkbox
+            id="documentation-approved"
+            className="mt-0.5 h-5 w-5 shrink-0 border-amber-400/80 bg-background data-[state=checked]:border-amber-500 data-[state=checked]:bg-amber-500 data-[state=checked]:text-zinc-950"
+            checked={Boolean(sports.documentationApprovedAt)}
+            onCheckedChange={(checked) =>
+              onProfileChange(
+                patchProfile(profile, "sports", {
+                  documentationApprovedAt:
+                    checked === true
+                      ? sports.documentationApprovedAt ?? new Date().toISOString()
+                      : undefined,
+                }),
+              )
+            }
+          />
+          <div className="min-w-0 space-y-1">
+            <Label htmlFor="documentation-approved" className="cursor-pointer text-sm font-medium text-foreground">
+              Documentação confirmada (RH)
+            </Label>
+            {sports.documentationApprovedAt ? (
+              <p className="text-xs text-muted-foreground">
+                Confirmada em {formatDateDayMonYear(new Date(sports.documentationApprovedAt))}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
       <ExpandableSection title="Dados esportivos" description="Categoria, posição, registros e trajetória" defaultOpen>
         <FormGrid cols={6}>
           <div className="space-y-2">
@@ -944,25 +974,6 @@ export function PlayerRegistrationSections(props: PlayerRegistrationSectionsProp
               value={sports.cbf ?? ""}
               onChange={(e) => onProfileChange(patchProfile(profile, "sports", { cbf: e.target.value || undefined }))}
             />
-          </div>
-          <div className="flex items-center gap-2 sm:col-span-2">
-            <Checkbox
-              id="documentation-approved"
-              checked={Boolean(sports.documentationApprovedAt)}
-              onCheckedChange={(checked) =>
-                onProfileChange(
-                  patchProfile(profile, "sports", {
-                    documentationApprovedAt:
-                      checked === true
-                        ? sports.documentationApprovedAt ?? new Date().toISOString()
-                        : undefined,
-                  }),
-                )
-              }
-            />
-            <Label htmlFor="documentation-approved" className="cursor-pointer font-normal leading-snug">
-              Documentação confirmada (RH)
-            </Label>
           </div>
           <div className="space-y-2">
             <Label>Registro fed. local</Label>
