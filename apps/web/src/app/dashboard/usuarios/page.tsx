@@ -60,23 +60,34 @@ function filterUsers(
 function EmpresasAcessoCell({ u }: { u: UserListItem }) {
   const tenants = u.tenants ?? [];
   if (tenants.length > 0) {
+    const label = tenants.map((t) => t.name).join(", ");
     return (
-      <div className="flex max-w-[min(100vw-8rem,28rem)] flex-wrap gap-1">
-        {tenants.map((t) => (
-          <span
-            key={t.id}
-            className="inline-flex max-w-full truncate rounded-md border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-foreground"
-            title={t.name}
-          >
-            {t.name}
-          </span>
-        ))}
-      </div>
+      <span
+        className="block truncate text-xs text-foreground"
+        title={label}
+      >
+        {label}
+      </span>
     );
   }
   return (
-    <span className="text-sm text-muted-foreground" title="Sem empresas marcadas no cadastro = acesso a todas">
-      Todas as empresas
+    <span className="text-xs text-muted-foreground" title="Sem empresas marcadas = acesso a todas">
+      Todas
+    </span>
+  );
+}
+
+function UserStatusBadge({ blocked }: { blocked?: boolean }) {
+  if (blocked) {
+    return (
+      <span className="inline-flex shrink-0 rounded border border-destructive/40 bg-destructive/10 px-1.5 py-0 text-[10px] font-medium uppercase tracking-wide text-destructive">
+        Bloq.
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex shrink-0 rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0 text-[10px] font-medium uppercase tracking-wide text-emerald-500">
+      Ativo
     </span>
   );
 }
@@ -230,11 +241,7 @@ export default function UsuariosPage() {
           <CardDescription>
             {loading
               ? "Carregando..."
-              : users.length === 0
-                ? "Nenhum usuário no pool."
-                : filteredUsers.length === users.length
-                  ? `${users.length} usuário(s). A coluna Empresas mostra o acesso por clube; altere o role no select.`
-                  : `${filteredUsers.length} de ${users.length} usuário(s)`}
+              : `${filteredUsers.length} de ${users.length} usuário(s)`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -276,113 +283,123 @@ export default function UsuariosPage() {
               ) : null}
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-md border border-border">
-              <Table className="min-w-[720px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead className="min-w-[12rem]">Empresas (acesso)</TableHead>
-                  <TableHead>Role</TableHead>
-                  {isSuperAdmin ? <TableHead>Status</TableHead> : null}
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((u) => (
-                  <TableRow key={u.username}>
-                    <TableCell className="font-mono text-sm font-medium">{u.username}</TableCell>
-                    <TableCell className="text-muted-foreground">{u.email}</TableCell>
-                    <TableCell>{u.name ?? "—"}</TableCell>
-                    <TableCell className="align-top py-3">
-                      <EmpresasAcessoCell u={u} />
-                    </TableCell>
-                    <TableCell>
-                      {!isSuperAdmin && u.role === "super_admin" ? (
-                        <span className="text-sm text-muted-foreground">
-                          {roleLabel("super_admin", roleCatalog)}
+            <div className="rounded-md border border-border">
+              <Table className="w-full table-fixed" containerClassName="overflow-visible">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[22%] px-2">Usuário</TableHead>
+                    <TableHead className="w-[18%] px-2">Nome</TableHead>
+                    <TableHead className="w-[20%] px-2">Empresas</TableHead>
+                    <TableHead className="w-[16%] px-2">Role</TableHead>
+                    <TableHead className="w-[24%] px-2 text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((u) => (
+                    <TableRow key={u.username}>
+                      <TableCell className="align-top px-2 py-2.5">
+                        <div className="flex min-w-0 items-start gap-1.5">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-mono text-sm font-medium" title={u.username}>
+                              {u.username}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground" title={u.email}>
+                              {u.email}
+                            </p>
+                          </div>
+                          {isSuperAdmin ? <UserStatusBadge blocked={u.blocked} /> : null}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top px-2 py-2.5">
+                        <span className="line-clamp-2 text-sm leading-snug" title={u.name ?? undefined}>
+                          {u.name ?? "—"}
                         </span>
-                      ) : (
-                        <Select
-                          value={u.role}
-                          onValueChange={(value) =>
-                            handleRoleChange(u.username, value as UserRole)
-                          }
-                          disabled={updating === u.username}
-                        >
-                          <SelectTrigger className="w-[140px] uppercase">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {roleOptionsForSelect.map((r) => (
-                              <SelectItem key={r} value={r}>
-                                {roleLabel(r, roleCatalog)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </TableCell>
-                    {isSuperAdmin ? (
-                      <TableCell>
-                        {u.blocked ? (
-                          <span className="inline-flex rounded-md border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-                            Bloqueado
+                      </TableCell>
+                      <TableCell className="align-top px-2 py-2.5">
+                        <EmpresasAcessoCell u={u} />
+                      </TableCell>
+                      <TableCell className="align-top px-2 py-2.5">
+                        {!isSuperAdmin && u.role === "super_admin" ? (
+                          <span className="text-xs text-muted-foreground">
+                            {roleLabel("super_admin", roleCatalog)}
                           </span>
                         ) : (
-                          <span className="inline-flex rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">
-                            Ativo
-                          </span>
+                          <Select
+                            value={u.role}
+                            onValueChange={(value) =>
+                              handleRoleChange(u.username, value as UserRole)
+                            }
+                            disabled={updating === u.username}
+                          >
+                            <SelectTrigger className="h-9 w-full max-w-full truncate px-2 text-xs uppercase">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roleOptionsForSelect.map((r) => (
+                                <SelectItem key={r} value={r}>
+                                  {roleLabel(r, roleCatalog)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         )}
                       </TableCell>
-                    ) : null}
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {updating === u.username ? (
-                          <span className="text-muted-foreground text-sm">
-                            Salvando...
-                          </span>
-                        ) : null}
-                        {isSuperAdmin ? (
-                          <UserAdminActions
-                            username={u.username}
-                            blocked={Boolean(u.blocked)}
-                            isSelf={currentUser?.username === u.username}
-                            compact
-                            onUpdated={(patch) =>
-                              setUsers((prev) =>
-                                prev.map((row) =>
-                                  row.username === u.username ? { ...row, ...patch } : row,
-                                ),
-                              )
-                            }
-                          />
-                        ) : null}
-                        {!(isCompanyAdmin && u.role === "super_admin") ? (
-                          <>
-                            <Link
-                              href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/edit`}
-                            >
-                              <Button variant="ghost" size="icon">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Link
-                              href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/delete`}
-                            >
-                              <Button variant="ghost" size="icon">
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </Link>
-                          </>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <TableCell className="align-top px-2 py-2.5 text-right">
+                        <div className="flex flex-wrap items-center justify-end gap-0.5">
+                          {updating === u.username ? (
+                            <span className="w-full text-right text-xs text-muted-foreground">
+                              Salvando…
+                            </span>
+                          ) : null}
+                          {isSuperAdmin ? (
+                            <UserAdminActions
+                              username={u.username}
+                              blocked={Boolean(u.blocked)}
+                              isSelf={currentUser?.username === u.username}
+                              compact
+                              onUpdated={(patch) =>
+                                setUsers((prev) =>
+                                  prev.map((row) =>
+                                    row.username === u.username ? { ...row, ...patch } : row,
+                                  ),
+                                )
+                              }
+                            />
+                          ) : null}
+                          {!(isCompanyAdmin && u.role === "super_admin") ? (
+                            <>
+                              <Link
+                                href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/edit`}
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-9 w-9 shrink-0"
+                                  title="Editar"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              <Link
+                                href={`/dashboard/usuarios/${encodeURIComponent(u.username)}/delete`}
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-9 w-9 shrink-0"
+                                  title="Excluir"
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </Link>
+                            </>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

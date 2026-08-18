@@ -186,7 +186,7 @@ export function UserAdminActions({
             type="button"
             variant={blocked ? "outline" : "destructive"}
             size={compact ? "icon" : "default"}
-            className={compact ? "min-h-[44px] min-w-[44px]" : "min-h-[44px]"}
+            className={compact ? "h-9 w-9 shrink-0" : "min-h-[44px]"}
             onClick={() => setBlockDialogOpen(true)}
             disabled={busy}
             title={blocked ? "Desbloquear usuário" : "Bloquear usuário"}
@@ -208,7 +208,7 @@ export function UserAdminActions({
           type="button"
           variant="outline"
           size={compact ? "icon" : "default"}
-          className={compact ? "min-h-[44px] min-w-[44px]" : "min-h-[44px]"}
+          className={compact ? "h-9 w-9 shrink-0" : "min-h-[44px]"}
           onClick={() => setPasswordDialogOpen(true)}
           disabled={busy}
           title="Alterar senha"
