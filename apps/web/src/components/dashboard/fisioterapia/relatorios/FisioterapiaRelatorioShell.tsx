@@ -16,7 +16,7 @@ interface FisioterapiaRelatorioShellProps {
 export function FisioterapiaRelatorioShell({
   title,
   children,
-  backHref = "/dashboard/saude/fisioterapia/relatorios",
+  backHref = "/dashboard/relatorios/saude",
   backLabel = "Relatórios",
 }: FisioterapiaRelatorioShellProps) {
   const router = useRouter();

@@ -92,8 +92,8 @@ export default function FisioterapiaCargaFisioReportPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between print:hidden">
         <div>
-          <Link href="/dashboard/saude/fisioterapia" className="mb-2 inline-block text-sm text-muted-foreground hover:text-foreground">
-            ← Atendimentos
+          <Link href="/dashboard/relatorios/saude" className="mb-2 inline-block text-sm text-muted-foreground hover:text-foreground">
+            ← Relatórios
           </Link>
           <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
             <Users className="h-8 w-8" />

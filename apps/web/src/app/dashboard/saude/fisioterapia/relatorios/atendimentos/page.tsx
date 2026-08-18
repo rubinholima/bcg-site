@@ -131,8 +131,8 @@ export default function FisioterapiaAtendimentosReportPage() {
     <div className="space-y-6 print:space-y-4">
       <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <Link href="/dashboard/saude/fisioterapia" className="mb-2 inline-block text-sm text-muted-foreground hover:text-foreground">
-            ← Atendimentos
+          <Link href="/dashboard/relatorios/saude" className="mb-2 inline-block text-sm text-muted-foreground hover:text-foreground">
+            ← Relatórios
           </Link>
           <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
             <BarChart3 className="h-8 w-8" />

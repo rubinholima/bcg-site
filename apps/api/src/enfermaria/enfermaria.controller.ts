@@ -17,6 +17,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { TenantAccessService } from '../auth/tenant-access.service';
 import { EnfermariaService } from './enfermaria.service';
+import { EnfermariaReportsService } from './enfermaria-reports.service';
 import {
   CreateNursingDiagnosisDto,
   CreateNursingSessionDto,
@@ -29,6 +30,7 @@ import {
 export class EnfermariaController {
   constructor(
     private readonly service: EnfermariaService,
+    private readonly reports: EnfermariaReportsService,
     private readonly tenantAccess: TenantAccessService,
   ) {}
 
@@ -80,6 +82,23 @@ export class EnfermariaController {
     @Query('search') search?: string,
   ) {
     return this.service.listProducts(tenantId, search, await this.allowedTenants(req));
+  }
+
+  @Get('reports/dashboard')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async reportsDashboard(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId?: string,
+    @Query('category') category?: string,
+    @Query('status') status?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.reports.getReportsDashboard(
+      { tenantId, category, status, from, to },
+      await this.allowedTenants(req),
+    );
   }
 
   @Get('sessions')
