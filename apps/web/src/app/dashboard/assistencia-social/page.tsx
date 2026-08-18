@@ -17,6 +17,7 @@ import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import { AssistenciaSocialCasesPanel } from "@/components/dashboard/assistencia-social/AssistenciaSocialCasesPanel";
 import { AssistenciaSocialRosterPanel } from "@/components/dashboard/assistencia-social/AssistenciaSocialRosterPanel";
+import { AssistenciaSocialDocumentsPanel } from "@/components/dashboard/assistencia-social/AssistenciaSocialDocumentsPanel";
 import { AssistenciaSocialAptoNotifications } from "@/components/dashboard/assistencia-social/AssistenciaSocialAptoNotifications";
 
 type TabId = "casos" | "elenco" | "documentos";
@@ -80,6 +81,7 @@ export default function AssistenciaSocialPage() {
 
   const effectiveTenantId = tenantId || (tenants[0]?.id ?? "");
   const tenantName = tenants.find((t) => t.id === effectiveTenantId)?.name;
+  const tenantCategories = tenants.find((t) => t.id === effectiveTenantId)?.categories ?? null;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -130,12 +132,14 @@ export default function AssistenciaSocialPage() {
             <AssistenciaSocialCasesPanel tenantId={effectiveTenantId} players={players} />
           )}
           {activeTab === "elenco" && (
-            <AssistenciaSocialRosterPanel tenantId={effectiveTenantId} tenantName={tenantName} />
+            <AssistenciaSocialRosterPanel
+              tenantId={effectiveTenantId}
+              tenantName={tenantName}
+              tenantCategories={tenantCategories}
+            />
           )}
           {activeTab === "documentos" && (
-            <p className="text-sm text-muted-foreground py-4">
-              Documentos escolares ficam na ficha de cada atleta (aba Assistência Social) e vinculados aos casos.
-            </p>
+            <AssistenciaSocialDocumentsPanel tenantId={effectiveTenantId} players={players} />
           )}
         </CardContent>
       </Card>

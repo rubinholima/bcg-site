@@ -14,18 +14,21 @@ import {
 } from "@/components/ui/table";
 import { NativeSelectField } from "@/components/ui/native-select";
 import { FeedbackModal } from "@/components/ui/feedback-modal";
+import { useCategoriesForTenant } from "@/hooks/useFixtureCategories";
 import { api } from "@/lib/api";
-import { getCategoryLabel } from "@/lib/fixture-categories";
-import { FIXTURE_CATEGORIES } from "@/lib/fixture-categories";
 import { printRosterValidation } from "@/lib/assistencia-social-print";
 import type { RosterValidationRow } from "@/lib/assistencia-social-types";
 
 interface Props {
   tenantId: string;
   tenantName?: string;
+  tenantCategories?: string[] | null;
 }
 
-export function AssistenciaSocialRosterPanel({ tenantId, tenantName }: Props) {
+export function AssistenciaSocialRosterPanel({ tenantId, tenantName, tenantCategories }: Props) {
+  const { categories: categoriesForDropdown } = useCategoriesForTenant(tenantCategories, {
+    requireTenantSelection: true,
+  });
   const [category, setCategory] = useState("");
   const [rows, setRows] = useState<RosterValidationRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,7 +75,7 @@ export function AssistenciaSocialRosterPanel({ tenantId, tenantName }: Props) {
             placeholder="Todas"
             options={[
               { value: "", label: "Todas" },
-              ...FIXTURE_CATEGORIES.map((c) => ({ value: c.value, label: getCategoryLabel(c.value, "pt") })),
+              ...categoriesForDropdown.map((c) => ({ value: c.value, label: c.labelPT })),
             ]}
           />
         </div>
@@ -105,7 +108,7 @@ export function AssistenciaSocialRosterPanel({ tenantId, tenantName }: Props) {
                 <TableRow key={row.playerId}>
                   <TableCell>{row.jerseyNumber ?? "—"}</TableCell>
                   <TableCell className="font-medium">{row.name}</TableCell>
-                  <TableCell>{row.category ? getCategoryLabel(row.category, "pt") : "—"}</TableCell>
+                  <TableCell>{row.category ? (categoriesForDropdown.find((c) => c.value === row.category)?.labelPT ?? row.category) : "—"}</TableCell>
                   <TableCell>{row.schoolName ?? "—"}</TableCell>
                   <TableCell>{row.validation.ok ? "OK" : row.validation.issues.join("; ")}</TableCell>
                 </TableRow>
