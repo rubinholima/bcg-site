@@ -45,19 +45,19 @@ function PasswordRequirementsList({ password }: { password: string }) {
   const checks = useMemo(() => getPasswordRequirementChecks(password), [password]);
 
   return (
-    <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-      <p className="mb-2 text-xs font-medium text-muted-foreground">Requisitos da senha</p>
-      <ul className="space-y-1">
+    <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+      <p className="mb-1.5 text-xs font-medium text-muted-foreground">Requisitos da senha</p>
+      <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-x-3">
         {checks.map((c) => (
           <li
             key={c.id}
             className={cn(
-              "flex items-start gap-2 text-xs leading-snug",
+              "flex min-w-0 items-start gap-1.5 text-[11px] leading-snug sm:text-xs",
               c.met ? "text-emerald-500" : "text-muted-foreground",
             )}
           >
-            <Check className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", !c.met && "opacity-30")} />
-            <span>{c.label}</span>
+            <Check className={cn("mt-0.5 h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5", !c.met && "opacity-30")} />
+            <span className="min-w-0 break-words">{c.label}</span>
           </li>
         ))}
       </ul>
@@ -251,16 +251,18 @@ export function UserAdminActions({
           }
         }}
       >
-        <DialogContent
-          className="w-[min(28rem,calc(100vw-1.5rem))]"
-          contentClassName="overflow-visible gap-3 py-5 px-5 sm:px-6"
-        >
-          <DialogHeader className="space-y-1 pr-8">
-            <DialogTitle className="text-base sm:text-lg">Nova senha — {username}</DialogTitle>
+        <DialogContent fitContent className="w-[min(26rem,calc(100vw-1.25rem))]">
+          <DialogHeader className="space-y-0 pr-8 text-left">
+            <DialogTitle className="break-all text-base leading-snug">
+              Nova senha — {username}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor={`new-password-${username}`}>Nova senha</Label>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+            <div className="space-y-1 sm:col-span-1">
+              <Label htmlFor={`new-password-${username}`} className="text-sm">
+                Nova senha
+              </Label>
               <Input
                 id={`new-password-${username}`}
                 type="password"
@@ -271,11 +273,13 @@ export function UserAdminActions({
                   setPasswordError(null);
                 }}
                 disabled={busy}
-                className="text-foreground"
+                className="h-9 text-foreground"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`confirm-password-${username}`}>Confirmar senha</Label>
+            <div className="space-y-1 sm:col-span-1">
+              <Label htmlFor={`confirm-password-${username}`} className="text-sm">
+                Confirmar senha
+              </Label>
               <Input
                 id={`confirm-password-${username}`}
                 type="password"
@@ -286,34 +290,44 @@ export function UserAdminActions({
                   setPasswordError(null);
                 }}
                 disabled={busy}
-                className="text-foreground"
+                className="h-9 text-foreground"
               />
             </div>
-            <PasswordRequirementsList password={newPassword} />
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <Checkbox
-                checked={mustChangePassword}
-                onCheckedChange={(v) => setMustChangePassword(v === true)}
-                disabled={busy}
-              />
-              <span>Exigir troca no próximo login</span>
-            </label>
-            {passwordError ? (
-              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {passwordError}
-              </p>
-            ) : null}
           </div>
-          <DialogFooter className="gap-2 pt-1 sm:justify-end">
+
+          <PasswordRequirementsList password={newPassword} />
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <Checkbox
+              checked={mustChangePassword}
+              onCheckedChange={(v) => setMustChangePassword(v === true)}
+              disabled={busy}
+            />
+            <span>Exigir troca no próximo login</span>
+          </label>
+
+          {passwordError ? (
+            <p className="break-words rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {passwordError}
+            </p>
+          ) : null}
+
+          <DialogFooter className="mt-1 gap-2 sm:justify-end">
             <Button
               type="button"
               variant="outline"
+              className="min-h-[44px]"
               onClick={() => setPasswordDialogOpen(false)}
               disabled={busy}
             >
               Cancelar
             </Button>
-            <Button type="button" onClick={() => void handlePasswordSubmit()} disabled={busy}>
+            <Button
+              type="button"
+              className="min-h-[44px]"
+              onClick={() => void handlePasswordSubmit()}
+              disabled={busy}
+            >
               {busy ? "Salvando…" : "Salvar senha"}
             </Button>
           </DialogFooter>

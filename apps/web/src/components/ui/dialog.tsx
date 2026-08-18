@@ -62,10 +62,12 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
   showCloseButton?: boolean;
   /** Classes do wrapper interno (padrão: grid + padding). Use para layouts full-height. */
   contentClassName?: string;
+  /** Modal compacto: sem max-height fixo nem scroll interno (formulários curtos). */
+  fitContent?: boolean;
 }
 
 const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
-  ({ className, children, showCloseButton = true, contentClassName, ...props }, ref) => {
+  ({ className, children, showCloseButton = true, contentClassName, fitContent = false, ...props }, ref) => {
     const { open: controlledOpen, onOpenChange } = React.useContext(DialogContext);
     const dialogRef = React.useRef<HTMLDialogElement>(null);
     const [mounted, setMounted] = React.useState(false);
@@ -103,14 +105,20 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           ref={dialogRef}
           onCancel={handleCancel}
           className={cn(
-            "bcg-modal z-50 w-[min(28rem,calc(100vw-1.5rem))] max-h-[calc(100vh-1.5rem)] rounded-xl bg-card p-0 outline-none",
+            "bcg-modal z-50 w-[min(28rem,calc(100vw-1.5rem))] rounded-xl bg-card p-0 outline-none",
+            fitContent
+              ? "bcg-modal-fit h-auto max-h-none overflow-x-hidden overflow-y-visible"
+              : "max-h-[calc(100vh-1.5rem)]",
             className,
           )}
         >
           <div
             ref={ref}
             className={cn(
-              "relative grid min-w-0 gap-4 overflow-y-auto p-6 text-foreground",
+              "relative min-w-0 text-foreground",
+              fitContent
+                ? "flex flex-col gap-3 overflow-visible p-5 sm:p-6"
+                : "grid gap-4 overflow-y-auto p-6",
               contentClassName,
             )}
             {...props}

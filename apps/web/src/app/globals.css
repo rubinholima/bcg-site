@@ -715,6 +715,17 @@ dialog.bcg-modal[open] {
   transform: translate(-50%, -50%);
 }
 
+/* Formulários compactos — sem scroll interno; conteúdo inteiro visível */
+dialog.bcg-modal.bcg-modal-fit {
+  max-height: none;
+  overflow: visible;
+}
+
+dialog.bcg-modal.bcg-modal-fit > div {
+  overflow: visible;
+  max-height: none;
+}
+
 dialog.bcg-modal::backdrop {
   background: rgba(0, 0, 0, 0.6);
 }
