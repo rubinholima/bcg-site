@@ -3,6 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import {
+  isArchivedSportsSituation,
+  isLoanedSportsSituation,
+  normalizeSportsSituation,
+} from '../common/sports-situation.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { GuiaPartidaService } from '../futebol-relatorios/guia-partida.service';
 import { travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
@@ -114,14 +119,11 @@ export class FutebolTreinadoresService {
     const travels = dedupeTravelLogisticsList(travelsRaw) as typeof travelsRaw;
     const games = travels.filter((t) => categoryMatches(t.category, t.categories, catFilter));
 
-    const playerWhere: Record<string, unknown> = {
-      tenantId,
-      archivedAt: null,
-    };
-    if (catFilter) playerWhere.category = catFilter;
-
-    const players = await this.prisma.player.findMany({
-      where: playerWhere,
+    const playersRaw = await this.prisma.player.findMany({
+      where: {
+        tenantId,
+        ...(catFilter ? { category: catFilter } : {}),
+      },
       select: {
         id: true,
         name: true,
@@ -129,8 +131,15 @@ export class FutebolTreinadoresService {
         yellowCards: true,
         redCards: true,
         category: true,
+        registrationProfile: true,
       },
       orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
+    });
+
+    const players = playersRaw.filter((p) => {
+      const profile = p.registrationProfile as { sports?: { situation?: string } } | null;
+      const situation = normalizeSportsSituation(profile?.sports?.situation);
+      return !isArchivedSportsSituation(situation) && !isLoanedSportsSituation(situation);
     });
 
     const activePhysio = await this.prisma.physioSession.findMany({
