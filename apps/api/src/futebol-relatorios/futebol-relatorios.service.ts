@@ -2062,10 +2062,13 @@ export class FutebolRelatoriosService {
           (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
             isFmfTeamMatch(row.awayTeam, clubName, aliases)) &&
           row.homeScore != null &&
-          row.awayScore != null &&
-          !isFriendlyDisciplineMatch(row, travels, clubName, aliases),
+          row.awayScore != null,
       ),
       resolvedPhase,
+    );
+
+    const friendlyMatchIds = new Set(
+      matches.filter((row) => isFriendlyDisciplineMatch(row)).map((row) => row.id),
     );
 
     const nextMatchDate =
@@ -2089,6 +2092,7 @@ export class FutebolRelatoriosService {
       clubName,
       aliases,
       nextMatchDate,
+      friendlyMatchIds,
     });
 
     let nextRound = grid.nextRound;

@@ -1,8 +1,4 @@
 import { getFootballPositionLabel } from '../common/football-positions.util';
-import {
-  matchDatesEquivalent,
-  matchOpponentsEquivalent,
-} from '../common/match-game-opponent.util';
 import { getPlayerMatchAvailability, buildPlayerMatchAvailabilityInput } from '../common/player-match-availability.util';
 import {
   isArchivedSportsSituation,
@@ -194,37 +190,39 @@ export function disciplineCellDisplay(code: DisciplineCellCode): string {
   return code === 'A' ? '' : code;
 }
 
-export function isFriendlyDisciplineMatch(
-  row: {
-    competition: string;
-    matchDate: Date;
-    homeTeam: string;
-    awayTeam: string;
-  },
-  travels: Array<{
-    matchDate: Date;
-    opponentName: string | null;
-    championshipName: string | null;
-  }>,
-  clubName: string,
-  aliases: string[],
-): boolean {
+/** Amistoso: exibe na planilha, mas não entra no cálculo de pendurado/suspensão. */
+export function isFriendlyDisciplineMatch(row: { competition: string }): boolean {
   const competition = row.competition?.trim() ?? '';
   if (/amistoso/i.test(competition)) return true;
-  if (competition.toLocaleLowerCase('pt-BR') === FRIENDLY_CHAMPIONSHIP_NAME.toLocaleLowerCase('pt-BR')) {
-    return true;
-  }
+  return (
+    competition.toLocaleLowerCase('pt-BR') ===
+    FRIENDLY_CHAMPIONSHIP_NAME.toLocaleLowerCase('pt-BR')
+  );
+}
 
-  const isHome = isClubTeam(row.homeTeam, clubName, aliases);
-  const opponent = isHome ? row.awayTeam : row.homeTeam;
-  return travels.some((travel) => {
-    const champ = travel.championshipName?.trim() ?? '';
-    if (!/amistoso/i.test(champ)) return false;
-    return (
-      matchDatesEquivalent(travel.matchDate, row.matchDate) &&
-      matchOpponentsEquivalent(travel.opponentName, opponent)
+function resolveFriendlyDisplayCode(
+  match: MatchInput,
+  player: PlayerInput,
+  stat: MatchInput['playerStats'][number],
+): DisciplineCellCode {
+  if (stat.redCards > 0) {
+    const occ = findOccurrenceForPlayer(
+      match.occurrencesText,
+      player.name,
+      stat.jerseyNumber ?? player.jerseyNumber,
     );
-  });
+    return occ && occurrenceIsManual(occ) ? 'VM' : 'V';
+  }
+  if (stat.yellowCards > 0) {
+    const occ = findOccurrenceForPlayer(
+      match.occurrencesText,
+      player.name,
+      stat.jerseyNumber ?? player.jerseyNumber,
+    );
+    if (occ && occurrenceIsManual(occ)) return 'AM';
+  }
+  if (stat.played) return 'A';
+  return '';
 }
 
 function findPlayerStatForMatch(
@@ -283,6 +281,8 @@ export function buildDisciplineGrid(input: {
   clubName: string;
   aliases: string[];
   nextMatchDate?: string | null;
+  /** Jogos amistosos — aparecem na planilha, mas não alteram pendurado/suspensão. */
+  friendlyMatchIds?: ReadonlySet<string>;
 }): DisciplineGridResult {
   const sortedMatches = [...input.matches].sort(
     (a, b) => a.matchDate.getTime() - b.matchDate.getTime() || (a.round ?? 0) - (b.round ?? 0),
@@ -316,10 +316,21 @@ export function buildDisciplineGrid(input: {
   const redTotals = new Map(input.players.map((p) => [p.id, 0]));
 
   sortedMatches.forEach((match, roundIndex) => {
+    const isFriendly = input.friendlyMatchIds?.has(match.id) ?? false;
+
     for (const player of input.players) {
       const state = states.get(player.id)!;
       const cells = roundCells.get(player.id)!;
       let code: DisciplineCellCode = '';
+
+      if (isFriendly) {
+        const stat = findPlayerStatForMatch(match.playerStats, player);
+        if (stat) {
+          code = resolveFriendlyDisplayCode(match, player, stat);
+        }
+        cells[roundIndex] = code;
+        continue;
+      }
 
       if (state.stjdRoundsLeft > 0) {
         code = 'ST';
