@@ -1,7 +1,7 @@
 -- Relatórios Saúde: módulo hub + acesso clínico (fisioterapia, enfermagem, etc.)
 
-INSERT INTO "Module" ("id", "slug", "name", "sortOrder", "functionalArea", "impliesSlug", "updatedAt")
-SELECT 'mod-relatorios-saude', 'relatorios_saude', 'Relatórios — Depto Saúde', 9990, 'saude', NULL, CURRENT_TIMESTAMP
+INSERT INTO "Module" ("id", "slug", "name", "sortOrder", "functionalArea", "impliesSlug")
+SELECT 'mod-relatorios-saude', 'relatorios_saude', 'Relatórios — Depto Saúde', 9990, 'saude', NULL
 WHERE NOT EXISTS (SELECT 1 FROM "Module" WHERE "slug" = 'relatorios_saude');
 
 -- ModuleRole faltante para todos os perfis da matriz
