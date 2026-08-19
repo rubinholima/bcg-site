@@ -185,7 +185,10 @@ export function canAccessMenuLeaf(
   canAccessModule: (slug: string) => boolean,
 ): boolean {
   const accessSlug = resolveMenuAccessSlug(item, pathPrefix);
-  return canAccessModule(accessSlug) || canAccessModule(item.moduleSlug);
+  if (canAccessModule(accessSlug) || canAccessModule(item.moduleSlug)) return true;
+  // Relatórios Saúde: perfis clínicos (fisioterapia, enfermagem…) têm `saude`, não só `relatorios_saude`.
+  if (item.moduleSlug === "relatorios_saude" && canAccessModule("saude")) return true;
+  return false;
 }
 
 /** Verifica acesso a item do menu (folha ou ramo com filho liberado). */
@@ -213,7 +216,10 @@ export function canAccessHubRelatorios(
   hub: string,
   canAccessModule: (slug: string) => boolean,
 ): boolean {
-  return canAccessModule(`relatorios_${hub}`);
+  const slug = `relatorios_${hub}`;
+  if (canAccessModule(slug)) return true;
+  if (hub === "saude" && canAccessModule("saude")) return true;
+  return false;
 }
 
 export interface PlayerTabConfig {
@@ -975,6 +981,35 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             icon: Users,
             moduleSlug: "saude",
           },
+          {
+            slug: "saude_fisioterapia_relatorios",
+            label: "Relatórios",
+            icon: BarChart3,
+            moduleSlug: "saude",
+            children: [
+              {
+                slug: "saude_fisioterapia_rel_atendimentos",
+                label: "Atendimentos",
+                href: "/dashboard/saude/fisioterapia/relatorios/atendimentos",
+                icon: BarChart3,
+                moduleSlug: "saude",
+              },
+              {
+                slug: "saude_fisioterapia_rel_lesionados",
+                label: "Lesionados ativos",
+                href: "/dashboard/saude/fisioterapia/relatorios/lesionados-ativos",
+                icon: ClipboardList,
+                moduleSlug: "saude",
+              },
+              {
+                slug: "saude_fisioterapia_rel_carga",
+                label: "Carga por fisio",
+                href: "/dashboard/saude/fisioterapia/relatorios/carga-fisio",
+                icon: Activity,
+                moduleSlug: "saude",
+              },
+            ],
+          },
         ],
       },
       {
@@ -1416,6 +1451,7 @@ export function getMenuAccessCatalog(): MenuAccessCatalogEntry[] {
 }
 
 const API_ONLY_MODULE_SLUGS: Array<{ slug: string; name: string }> = [
+  { slug: "relatorios_saude", name: "Relatórios — Depto Saúde (hub)" },
   { slug: "futebol_assistencia_social", name: "Assistência Social / Pedagogia (base)" },
   { slug: "agenda", name: "Agenda (hub)" },
   { slug: "vault_manage", name: "Senhas / Vault (gerenciar)" },

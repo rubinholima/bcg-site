@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function FisioterapiaRelatoriosIndexPage() {
-  redirect("/dashboard/relatorios/saude");
+  redirect("/dashboard/saude/fisioterapia/relatorios/atendimentos");
 }
