@@ -185,11 +185,6 @@ function resolveNextRoundCell(state: PlayerRoundState): NextRoundDisciplineCode 
   return '';
 }
 
-/** Célula vazia na planilha quando o atleta só atuou (sem cartão/suspensão). */
-export function disciplineCellDisplay(code: DisciplineCellCode): string {
-  return code === 'A' ? '' : code;
-}
-
 /** Amistoso: exibe na planilha, mas não entra no cálculo de pendurado/suspensão. */
 export function isFriendlyDisciplineMatch(row: { competition: string }): boolean {
   const competition = row.competition?.trim() ?? '';
@@ -198,31 +193,6 @@ export function isFriendlyDisciplineMatch(row: { competition: string }): boolean
     competition.toLocaleLowerCase('pt-BR') ===
     FRIENDLY_CHAMPIONSHIP_NAME.toLocaleLowerCase('pt-BR')
   );
-}
-
-function resolveFriendlyDisplayCode(
-  match: MatchInput,
-  player: PlayerInput,
-  stat: MatchInput['playerStats'][number],
-): DisciplineCellCode {
-  if (stat.redCards > 0) {
-    const occ = findOccurrenceForPlayer(
-      match.occurrencesText,
-      player.name,
-      stat.jerseyNumber ?? player.jerseyNumber,
-    );
-    return occ && occurrenceIsManual(occ) ? 'VM' : 'V';
-  }
-  if (stat.yellowCards > 0) {
-    const occ = findOccurrenceForPlayer(
-      match.occurrencesText,
-      player.name,
-      stat.jerseyNumber ?? player.jerseyNumber,
-    );
-    if (occ && occurrenceIsManual(occ)) return 'AM';
-  }
-  if (stat.played) return 'A';
-  return '';
 }
 
 function findPlayerStatForMatch(
@@ -252,6 +222,36 @@ function findPlayerStatForMatch(
     return byJersey.find((s) => normalizeName(s.playerName).includes(lastName));
   }
   return undefined;
+}
+
+/** Mesma regra visual de célula da planilha original — sem alterar estado disciplinar. */
+function resolveDisciplineCellCode(
+  match: MatchInput,
+  player: PlayerInput,
+  stat: MatchInput['playerStats'][number] | undefined,
+  pendingCode: DisciplineCellCode,
+): DisciplineCellCode {
+  let code = pendingCode;
+  if (code !== '' || !stat?.played) return code;
+
+  code = 'A';
+  if (stat.yellowCards > 0) {
+    const occ = findOccurrenceForPlayer(
+      match.occurrencesText,
+      player.name,
+      stat.jerseyNumber ?? player.jerseyNumber,
+    );
+    if (occ && occurrenceIsManual(occ)) code = 'AM';
+  }
+  if (stat.redCards > 0) {
+    const occ = findOccurrenceForPlayer(
+      match.occurrencesText,
+      player.name,
+      stat.jerseyNumber ?? player.jerseyNumber,
+    );
+    code = occ && occurrenceIsManual(occ) ? 'VM' : 'V';
+  }
+  return code;
 }
 
 function initPlayerState(player: PlayerInput): PlayerRoundState {
@@ -324,11 +324,13 @@ export function buildDisciplineGrid(input: {
       let code: DisciplineCellCode = '';
 
       if (isFriendly) {
+        let pending: DisciplineCellCode = '';
+        if (state.stjdRoundsLeft > 0) pending = 'ST';
+        else if (state.suspensionRoundsLeft > 0) pending = 'SA';
+        else if (state.pendurado) pending = 'P';
+
         const stat = findPlayerStatForMatch(match.playerStats, player);
-        if (stat) {
-          code = resolveFriendlyDisplayCode(match, player, stat);
-        }
-        cells[roundIndex] = code;
+        cells[roundIndex] = resolveDisciplineCellCode(match, player, stat, pending);
         continue;
       }
 
@@ -345,11 +347,8 @@ export function buildDisciplineGrid(input: {
       }
 
       const stat = findPlayerStatForMatch(match.playerStats, player);
-      if (stat && code !== 'SA' && code !== 'ST') {
-        if (code === '' && stat.played) {
-          code = 'A';
-        }
-
+      if (code === '' && stat && (stat.played || stat.redCards > 0)) {
+        if (stat.played) code = 'A';
         if (stat.yellowCards > 0) {
           yellowTotals.set(player.id, (yellowTotals.get(player.id) ?? 0) + stat.yellowCards);
           state.yellowAccum += stat.yellowCards;
@@ -360,7 +359,6 @@ export function buildDisciplineGrid(input: {
           );
           if (occ && occurrenceIsManual(occ)) code = 'AM';
         }
-
         if (stat.redCards > 0) {
           redTotals.set(player.id, (redTotals.get(player.id) ?? 0) + stat.redCards);
           const occ = findOccurrenceForPlayer(
