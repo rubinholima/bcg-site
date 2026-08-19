@@ -7,7 +7,7 @@ import {
 import { FRIENDLY_CHAMPIONSHIP_NAME } from '../futebol-agenda/friendly-match.util';
 
 /** Códigos por rodada — espelham o relatório operacional do clube (Mineiro). */
-export type DisciplineCellCode = 'A' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | '';
+export type DisciplineCellCode = 'AT' | 'AV' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | '';
 
 export type DisciplineMatchColumn = {
   matchId: string;
@@ -234,14 +234,14 @@ function resolveDisciplineCellCode(
   let code = pendingCode;
   if (code !== '' || !stat?.played) return code;
 
-  code = 'A';
+  code = 'AT';
   if (stat.yellowCards > 0) {
     const occ = findOccurrenceForPlayer(
       match.occurrencesText,
       player.name,
       stat.jerseyNumber ?? player.jerseyNumber,
     );
-    if (occ && occurrenceIsManual(occ)) code = 'AM';
+    code = occ && occurrenceIsManual(occ) ? 'AM' : 'AV';
   }
   if (stat.redCards > 0) {
     const occ = findOccurrenceForPlayer(
@@ -348,7 +348,7 @@ export function buildDisciplineGrid(input: {
 
       const stat = findPlayerStatForMatch(match.playerStats, player);
       if (code === '' && stat && (stat.played || stat.redCards > 0)) {
-        if (stat.played) code = 'A';
+        if (stat.played) code = 'AT';
         if (stat.yellowCards > 0) {
           yellowTotals.set(player.id, (yellowTotals.get(player.id) ?? 0) + stat.yellowCards);
           state.yellowAccum += stat.yellowCards;
@@ -357,7 +357,7 @@ export function buildDisciplineGrid(input: {
             player.name,
             stat.jerseyNumber ?? player.jerseyNumber,
           );
-          if (occ && occurrenceIsManual(occ)) code = 'AM';
+          code = occ && occurrenceIsManual(occ) ? 'AM' : 'AV';
         }
         if (stat.redCards > 0) {
           redTotals.set(player.id, (redTotals.get(player.id) ?? 0) + stat.redCards);

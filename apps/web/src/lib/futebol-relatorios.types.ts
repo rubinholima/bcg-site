@@ -312,7 +312,7 @@ export type CartoesSuspensaoPlayerDto = {
   name: string;
   positionLabel: string;
   jerseyNumber: number | null;
-  roundCells: Array<"A" | "AM" | "V" | "VM" | "P" | "SA" | "ST" | "">;
+  roundCells: Array<"AT" | "AV" | "AM" | "V" | "VM" | "P" | "SA" | "ST" | "">;
   /** Próximo jogo: P = pendurado, S = suspenso. */
   nextRoundCell: "P" | "S" | "";
   yellowCardsTotal: number;

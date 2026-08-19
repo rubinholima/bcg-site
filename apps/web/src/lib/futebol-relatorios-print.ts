@@ -1973,18 +1973,24 @@ export function printMatchExternalReport(
   printHtmlDocument(buildMatchExternalReportHtml(data, audience, size), title);
 }
 
-function disciplineCellDisplay(code: string): string {
-  // A = atuação (não amarelo) — oculto na célula para não parecer 4 cartões.
-  return code === "A" ? "" : code;
+function cartoesSuspensaoDisciplineCell(code: string): string {
+  if (!code) return `<td class="cell-code">—</td>`;
+  const label = code === "A" ? "AT" : code;
+  let cls = "cell-code";
+  if (label === "AV" || label === "AM") cls += " cell-disc-yellow";
+  else if (label === "V" || label === "VM") cls += " cell-disc-red";
+  else if (label === "AT") cls += " cell-disc-at";
+  return `<td class="${cls}">${escapeHtml(label)}</td>`;
 }
 
 function cartoesSuspensaoLegend(): string {
   return `
     <div class="legend-grid">
-      <span>Célula em branco = atuou sem cartão/suspensão</span>
-      <span><strong>AM</strong> Advertência manual</span>
-      <span><strong>V</strong> Expulsão</span>
-      <span><strong>VM</strong> Expulsão manual</span>
+      <span><strong class="legend-at">AT</strong> Atuação</span>
+      <span><strong class="legend-yellow">AV</strong> Advertência (amarelo)</span>
+      <span><strong class="legend-yellow">AM</strong> Advertência manual</span>
+      <span><strong class="legend-red">V</strong> Expulsão</span>
+      <span><strong class="legend-red">VM</strong> Expulsão manual</span>
       <span><strong>P</strong> Pendurado (rodada / próximo jogo)</span>
       <span><strong>SA</strong> Suspensão automática</span>
       <span><strong>ST</strong> Suspensão STJD/TDJ</span>
@@ -2024,6 +2030,12 @@ function cartoesSuspensaoDisciplineTableStyles(): string {
       line-height: 1.15;
     }
     .discipline-table .cell-code { font-weight: 700; }
+    .discipline-table .cell-disc-yellow { background: #FDE047; color: #713F12; }
+    .discipline-table .cell-disc-red { background: #F87171; color: #7F1D1D; }
+    .discipline-table .cell-disc-at { background: #F3F4F6; color: #374151; font-weight: 600; }
+    .legend-grid .legend-yellow { background: #FDE047; color: #713F12; padding: 0 4px; border-radius: 2px; }
+    .legend-grid .legend-red { background: #F87171; color: #7F1D1D; padding: 0 4px; border-radius: 2px; }
+    .legend-grid .legend-at { background: #F3F4F6; color: #374151; padding: 0 4px; border-radius: 2px; }
     .discipline-table .cell-next-p { background: #DBEAFE; color: #1D4ED8; }
     .discipline-table .cell-next-s { background: #E5E7EB; color: #374151; }
     .discipline-table .row-unavailable { background: #FEF3C7; color: #92400E; }
@@ -2056,12 +2068,7 @@ function cartoesSuspensaoPlayerRows(data: CartoesSuspensaoReportDto): string {
   return data.players
     .map((player) => {
       const rowClass = player.unavailable ? "row-unavailable" : "";
-      const cells = player.roundCells
-        .map((code) => {
-          const display = disciplineCellDisplay(code);
-          return `<td class="cell-code">${display || "—"}</td>`;
-        })
-        .join("");
+      const cells = player.roundCells.map((code) => cartoesSuspensaoDisciplineCell(code)).join("");
       return `<tr class="${rowClass}">
         <td class="num">${player.num}</td>
         <td class="left">${escapeHtml(player.name)} <span class="muted">(${escapeHtml(player.positionLabel)})</span></td>
