@@ -1973,10 +1973,15 @@ export function printMatchExternalReport(
   printHtmlDocument(buildMatchExternalReportHtml(data, audience, size), title);
 }
 
+function disciplineCellDisplay(code: string): string {
+  // A = atuação (não amarelo) — oculto na célula para não parecer 4 cartões.
+  return code === "A" ? "" : code;
+}
+
 function cartoesSuspensaoLegend(): string {
   return `
     <div class="legend-grid">
-      <span><strong>A</strong> Atuação</span>
+      <span>Célula em branco = atuou sem cartão/suspensão</span>
       <span><strong>AM</strong> Advertência manual</span>
       <span><strong>V</strong> Expulsão</span>
       <span><strong>VM</strong> Expulsão manual</span>
@@ -2052,7 +2057,10 @@ function cartoesSuspensaoPlayerRows(data: CartoesSuspensaoReportDto): string {
     .map((player) => {
       const rowClass = player.unavailable ? "row-unavailable" : "";
       const cells = player.roundCells
-        .map((code) => `<td class="cell-code">${code || "—"}</td>`)
+        .map((code) => {
+          const display = disciplineCellDisplay(code);
+          return `<td class="cell-code">${display || "—"}</td>`;
+        })
         .join("");
       return `<tr class="${rowClass}">
         <td class="num">${player.num}</td>
