@@ -81,6 +81,7 @@ import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
 import {
   buildDisciplineGrid,
   isCurrentSquadPlayer,
+  isFriendlyDisciplineMatch,
 } from './cartoes-suspensao.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
@@ -2018,6 +2019,7 @@ export class FutebolRelatoriosService {
         awayScore: true,
         phase: true,
         category: true,
+        competition: true,
         occurrencesText: true,
         playerStats: {
           select: {
@@ -2060,7 +2062,8 @@ export class FutebolRelatoriosService {
           (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
             isFmfTeamMatch(row.awayTeam, clubName, aliases)) &&
           row.homeScore != null &&
-          row.awayScore != null,
+          row.awayScore != null &&
+          !isFriendlyDisciplineMatch(row, travels, clubName, aliases),
       ),
       resolvedPhase,
     );

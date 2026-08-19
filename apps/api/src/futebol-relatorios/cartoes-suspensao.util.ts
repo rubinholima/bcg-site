@@ -1,9 +1,14 @@
 import { getFootballPositionLabel } from '../common/football-positions.util';
+import {
+  matchDatesEquivalent,
+  matchOpponentsEquivalent,
+} from '../common/match-game-opponent.util';
 import { getPlayerMatchAvailability, buildPlayerMatchAvailabilityInput } from '../common/player-match-availability.util';
 import {
   isArchivedSportsSituation,
   isLoanedSportsSituation,
 } from '../common/sports-situation.util';
+import { FRIENDLY_CHAMPIONSHIP_NAME } from '../futebol-agenda/friendly-match.util';
 
 /** Códigos por rodada — espelham o relatório operacional do clube (Mineiro). */
 export type DisciplineCellCode = 'A' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | '';
@@ -184,6 +189,73 @@ function resolveNextRoundCell(state: PlayerRoundState): NextRoundDisciplineCode 
   return '';
 }
 
+/** Célula vazia na planilha quando o atleta só atuou (sem cartão/suspensão). */
+export function disciplineCellDisplay(code: DisciplineCellCode): string {
+  return code === 'A' ? '' : code;
+}
+
+export function isFriendlyDisciplineMatch(
+  row: {
+    competition: string;
+    matchDate: Date;
+    homeTeam: string;
+    awayTeam: string;
+  },
+  travels: Array<{
+    matchDate: Date;
+    opponentName: string | null;
+    championshipName: string | null;
+  }>,
+  clubName: string,
+  aliases: string[],
+): boolean {
+  const competition = row.competition?.trim() ?? '';
+  if (/amistoso/i.test(competition)) return true;
+  if (competition.toLocaleLowerCase('pt-BR') === FRIENDLY_CHAMPIONSHIP_NAME.toLocaleLowerCase('pt-BR')) {
+    return true;
+  }
+
+  const isHome = isClubTeam(row.homeTeam, clubName, aliases);
+  const opponent = isHome ? row.awayTeam : row.homeTeam;
+  return travels.some((travel) => {
+    const champ = travel.championshipName?.trim() ?? '';
+    if (!/amistoso/i.test(champ)) return false;
+    return (
+      matchDatesEquivalent(travel.matchDate, row.matchDate) &&
+      matchOpponentsEquivalent(travel.opponentName, opponent)
+    );
+  });
+}
+
+function findPlayerStatForMatch(
+  stats: MatchInput['playerStats'],
+  player: PlayerInput,
+): MatchInput['playerStats'][number] | undefined {
+  const byId = stats.find((s) => s.playerId === player.id);
+  if (byId) return byId;
+
+  const playerNameNorm = normalizeName(player.name);
+  const byExactName = stats.find((s) => normalizeName(s.playerName) === playerNameNorm);
+  if (byExactName) return byExactName;
+
+  const nameParts = playerNameNorm.split(' ').filter((p) => p.length > 2);
+  const lastName = nameParts[nameParts.length - 1] ?? '';
+  if (lastName) {
+    const byLastName = stats.filter((s) => normalizeName(s.playerName).includes(lastName));
+    if (byLastName.length === 1) return byLastName[0];
+  }
+
+  if (player.jerseyNumber == null) return undefined;
+
+  const byJersey = stats.filter((s) => s.jerseyNumber === player.jerseyNumber);
+  if (byJersey.length === 1) return byJersey[0];
+
+  if (lastName) {
+    return byJersey.find((s) => normalizeName(s.playerName).includes(lastName));
+  }
+  return undefined;
+}
+
 function initPlayerState(player: PlayerInput): PlayerRoundState {
   const status = (player.status ?? 'available').toLowerCase();
   const details = player.statusDetails?.trim() || null;
@@ -261,18 +333,30 @@ export function buildDisciplineGrid(input: {
         state.pendurado = false;
       }
 
-      const stat = match.playerStats.find((s) => s.playerId === player.id);
-      if (code === '' && stat?.played) {
-        code = 'A';
+      const stat = findPlayerStatForMatch(match.playerStats, player);
+      if (stat && code !== 'SA' && code !== 'ST') {
+        if (code === '' && stat.played) {
+          code = 'A';
+        }
+
         if (stat.yellowCards > 0) {
           yellowTotals.set(player.id, (yellowTotals.get(player.id) ?? 0) + stat.yellowCards);
           state.yellowAccum += stat.yellowCards;
-          const occ = findOccurrenceForPlayer(match.occurrencesText, player.name, stat.jerseyNumber);
+          const occ = findOccurrenceForPlayer(
+            match.occurrencesText,
+            player.name,
+            stat.jerseyNumber ?? player.jerseyNumber,
+          );
           if (occ && occurrenceIsManual(occ)) code = 'AM';
         }
+
         if (stat.redCards > 0) {
           redTotals.set(player.id, (redTotals.get(player.id) ?? 0) + stat.redCards);
-          const occ = findOccurrenceForPlayer(match.occurrencesText, player.name, stat.jerseyNumber);
+          const occ = findOccurrenceForPlayer(
+            match.occurrencesText,
+            player.name,
+            stat.jerseyNumber ?? player.jerseyNumber,
+          );
           code = occ && occurrenceIsManual(occ) ? 'VM' : 'V';
           state.suspensionRoundsLeft = 1;
           state.yellowAccum = 0;
@@ -327,13 +411,9 @@ export function buildDisciplineGrid(input: {
         unavailableReason = cadastroAvail.shortReason;
       }
 
-      const lastCell = cells[cells.length - 1];
-      const unavailable =
-        state.stjdRoundsLeft > 0 ||
-        state.suspensionRoundsLeft > 0 ||
-        lastCell === 'SA' ||
-        lastCell === 'ST' ||
-        !cadastroAvail.apto;
+      const disciplineSuspended =
+        state.stjdRoundsLeft > 0 || state.suspensionRoundsLeft > 0;
+      const unavailable = disciplineSuspended || !cadastroAvail.apto;
 
       return {
         num: index + 1,
