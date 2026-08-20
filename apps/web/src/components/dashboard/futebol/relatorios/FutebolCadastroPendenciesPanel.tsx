@@ -137,6 +137,28 @@ export function FutebolCadastroPendenciesPanel({
     void loadReport(tenantId);
   }, [tenantId, loadReport]);
 
+  // Voltou do cadastro / outra aba: religa e limpa pendências resolvidas sem clique manual.
+  useEffect(() => {
+    if (!tenantId) return;
+
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        void loadReport(tenantId);
+      }
+    };
+
+    const onFocus = () => {
+      void loadReport(tenantId);
+    };
+
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [tenantId, loadReport]);
+
   const summary = useMemo(() => {
     if (!report) return null;
     return `${report.totals.pendingGroups} atleta(s) · ${report.totals.affectedMatches} jogo(s)`;

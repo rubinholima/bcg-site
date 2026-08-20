@@ -443,10 +443,9 @@ export default function ManualPage() {
                 nas súmulas importadas (não altera o PDF da FMF).
               </p>
               <p>
-                Se só corrigiu o <strong>CBF no cadastro</strong>, volte nas Pendências e clique em{" "}
-                <strong>Atualizar lista</strong> — o sistema religa sozinho e a pendência some. Só
-                &quot;Corrigir cadastro&quot; sem voltar/atualizar deixa o item na lista até o próximo
-                reload.
+                Se só corrigiu o <strong>CBF no cadastro</strong>, ao voltar para Pendências a lista
+                atualiza sozinha (religa e remove quem já resolveu). Também pode usar{" "}
+                <strong>Atualizar lista</strong> se precisar forçar.
               </p>
               <p>
                 Depois: <strong>Ferramentas → FMF Scraper → Reconciliar importadas</strong> (se
