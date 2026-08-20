@@ -1,16 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  Database,
-  Loader2,
-  UserPen,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, UserPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -19,17 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
-import { NativeSelect } from "@/components/ui/native-select";
-import { useAuth } from "@/context/AuthContext";
-import { authFetch } from "@/lib/authFetch";
+import { NativeSelectField } from "@/components/ui/native-select";
+import { api } from "@/lib/api";
 import { resolveCadastroPendencyActions } from "@/lib/fmf-cadastro-pendencies";
 import type { FmfCadastroPendenciesReport } from "@/lib/fmf-cadastro-pendencies.types";
-
-type SyncCandidate = {
-  tenantId: string;
-  tenantName: string;
-};
+import { useFutebolRelatorioTenants } from "./futebol-relatorio-shared";
 
 function formatDateTime(iso: string | undefined): string {
   if (!iso) return "—";
@@ -40,109 +29,83 @@ function formatDateTime(iso: string | undefined): string {
   }
 }
 
-export default function FmfCadastroPendenciesPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const { canAccessModule, loading: authLoading } = useAuth();
-  const canView = canAccessModule("fmf_scraper");
+type FutebolCadastroPendenciesPanelProps = {
+  initialTenantId?: string;
+};
 
-  const [candidates, setCandidates] = useState<SyncCandidate[]>([]);
-  const [tenantId, setTenantId] = useState(() => searchParams.get("tenantId") ?? "");
+export function FutebolCadastroPendenciesPanel({
+  initialTenantId = "",
+}: FutebolCadastroPendenciesPanelProps) {
+  const { tenants, loading: loadingTenants } = useFutebolRelatorioTenants();
+  const [tenantId, setTenantId] = useState(initialTenantId);
   const [report, setReport] = useState<FmfCadastroPendenciesReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadCandidates = useCallback(async () => {
-    try {
-      const res = await authFetch("/api/fmf-scraper/sync/candidates");
-      const data = await res.json().catch(() => []);
-      if (!res.ok) throw new Error();
-      const list = Array.isArray(data) ? data : [];
-      setCandidates(list);
-      setTenantId((prev) => prev || list[0]?.tenantId || "");
-    } catch {
-      setError("Erro ao carregar clubes.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  useEffect(() => {
+    if (initialTenantId) setTenantId(initialTenantId);
+  }, [initialTenantId]);
 
-  const loadReport = useCallback(async (selectedTenantId: string) => {
-    if (!selectedTenantId) {
+  useEffect(() => {
+    if (tenants.length === 1 && !tenantId) {
+      setTenantId(tenants[0]!.id);
+    }
+  }, [tenantId, tenants]);
+
+  useEffect(() => {
+    if (!tenantId) {
       setReport(null);
       return;
     }
+
+    let cancelled = false;
     setLoadingReport(true);
     setError(null);
-    try {
-      const res = await authFetch(
-        `/api/fmf-scraper/match-reports/cadastro-pendencies?tenantId=${encodeURIComponent(selectedTenantId)}`,
-      );
-      const data = await res.json().catch(() => null);
-      if (!res.ok) {
-        setError(typeof data?.message === "string" ? data.message : "Erro ao carregar pendências.");
+
+    api
+      .get<FmfCadastroPendenciesReport>(
+        `/futebol-relatorios/fmf-cadastro-pendencies?tenantId=${encodeURIComponent(tenantId)}`,
+      )
+      .then(({ data }) => {
+        if (cancelled) return;
+        setReport(data);
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        const msg =
+          e && typeof e === "object" && "response" in e
+            ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data
+                ?.message
+            : null;
+        const detail = Array.isArray(msg) ? msg.join(", ") : typeof msg === "string" ? msg : null;
+        setError(detail ?? "Erro ao carregar pendências de cadastro.");
         setReport(null);
-        return;
-      }
-      setReport(data as FmfCadastroPendenciesReport);
-    } catch {
-      setError("Erro ao carregar pendências de cadastro.");
-      setReport(null);
-    } finally {
-      setLoadingReport(false);
-    }
-  }, []);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingReport(false);
+      });
 
-  useEffect(() => {
-    if (!authLoading && !canView) {
-      router.replace("/403");
-      return;
-    }
-    if (canView) void loadCandidates();
-  }, [authLoading, canView, loadCandidates, router]);
-
-  useEffect(() => {
-    const fromUrl = searchParams.get("tenantId");
-    if (fromUrl) setTenantId(fromUrl);
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (tenantId) void loadReport(tenantId);
-  }, [loadReport, tenantId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
 
   const summary = useMemo(() => {
     if (!report) return null;
     return `${report.totals.pendingGroups} atleta(s) · ${report.totals.affectedMatches} jogo(s)`;
   }, [report]);
 
-  if (authLoading || loading) {
+  if (loadingTenants) {
     return (
-      <div className="flex items-center justify-center py-16 text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Carregando…
+      <div className="flex min-h-28 items-center justify-center text-muted-foreground">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Carregando clubes…
       </div>
     );
   }
 
-  if (!canView) return null;
-
   return (
-    <>
-      <DashboardDeptHeader
-        section="Ferramentas"
-        sectionIcon={Database}
-        title="Pendências de cadastro — FMF"
-        aside={
-          <Button variant="outline" asChild className="min-h-11">
-            <Link href="/dashboard/ferramentas/fmf-scraper">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Importação FMF
-            </Link>
-          </Button>
-        }
-      />
-
+    <div className="space-y-4">
       {error ? (
         <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
@@ -150,22 +113,21 @@ export default function FmfCadastroPendenciesPage() {
       ) : null}
 
       <Card>
-        <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader>
           <CardTitle className="text-base">Atletas para ajuste</CardTitle>
-          <NativeSelect
-            value={tenantId}
-            onChange={(event) => setTenantId(event.target.value)}
-            className="min-h-11 min-w-56"
-          >
-            <option value="">Selecione o clube</option>
-            {candidates.map((candidate) => (
-              <option key={candidate.tenantId} value={candidate.tenantId}>
-                {candidate.tenantName}
-              </option>
-            ))}
-          </NativeSelect>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Clube</Label>
+            <NativeSelectField
+              value={tenantId}
+              onChange={(event) => setTenantId(event.target.value)}
+              placeholder="Selecione o clube"
+              className="min-h-11 max-w-md"
+              options={tenants.map((tenant) => ({ value: tenant.id, label: tenant.name }))}
+            />
+          </div>
+
           {loadingReport ? (
             <div className="flex min-h-28 items-center justify-center text-muted-foreground">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -264,6 +226,6 @@ export default function FmfCadastroPendenciesPage() {
           ) : null}
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

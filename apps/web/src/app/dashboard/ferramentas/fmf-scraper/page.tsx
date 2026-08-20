@@ -540,7 +540,7 @@ export default function FmfScraperPage() {
             {reportTenantId && cadastroPendingCount > 0 ? (
               <Button type="button" variant="outline" className="min-h-11" asChild>
                 <Link
-                  href={`/dashboard/ferramentas/fmf-scraper/pendencias-cadastro?tenantId=${encodeURIComponent(reportTenantId)}`}
+                  href={`/dashboard/relatorios/futebol/pendencias-cadastro?tenantId=${encodeURIComponent(reportTenantId)}`}
                 >
                   <UserPen className="mr-2 h-4 w-4" />
                   Pendências de cadastro ({cadastroPendingCount})

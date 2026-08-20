@@ -82,6 +82,7 @@ import {
   Droplets,
   Printer,
   HeartPulse,
+  UserPen,
 } from "lucide-react";
 import { DASHBOARD_LABELS, DEPT_HUB_MENU_LABEL } from "./dashboard-labels";
 import { BCH_LOGO_STATIC } from "./boston-city-hall";
@@ -758,6 +759,13 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
             label: "Cartões e Suspensão",
             href: "/dashboard/relatorios/futebol/cartoes-suspensao",
             icon: FileText,
+            moduleSlug: "relatorios_futebol",
+          },
+          {
+            slug: "futebol_rel_pendencias_cadastro",
+            label: "Pendências de cadastro (FMF)",
+            href: "/dashboard/relatorios/futebol/pendencias-cadastro",
+            icon: UserPen,
             moduleSlug: "relatorios_futebol",
           },
           {

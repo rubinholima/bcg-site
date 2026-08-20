@@ -13,6 +13,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { FutebolRelatoriosService } from './futebol-relatorios.service';
 import { GuiaPartidaService } from './guia-partida.service';
+import { FmfMatchReportService } from '../fmf-scraper/fmf-match-report.service';
 import type { PressKitConfigDto } from './futebol-relatorios.types';
 
 @Controller('futebol-relatorios')
@@ -22,6 +23,7 @@ export class FutebolRelatoriosController {
   constructor(
     private readonly service: FutebolRelatoriosService,
     private readonly guiaPartida: GuiaPartidaService,
+    private readonly fmfMatchReports: FmfMatchReportService,
   ) {}
 
   @Get('viagens')
@@ -137,6 +139,14 @@ export class FutebolRelatoriosController {
       category: category.trim(),
       season: Number.isFinite(seasonNum) ? seasonNum : undefined,
     });
+  }
+
+  @Get('fmf-cadastro-pendencies')
+  listFmfCadastroPendencies(@Query('tenantId') tenantId?: string) {
+    if (!tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    return this.fmfMatchReports.listCadastroPendencies(tenantId.trim());
   }
 
   @Get('cartoes-suspensao')

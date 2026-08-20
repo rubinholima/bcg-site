@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarRange, ChevronRight, ClipboardList, FileText, Hotel, Newspaper, Users } from "lucide-react";
+import { CalendarRange, ChevronRight, ClipboardList, FileText, Hotel, Newspaper, UserPen, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RelatorioFutebolDeptShell } from "@/components/dashboard/futebol/relatorios/RelatorioFutebolDeptShell";
 
@@ -15,6 +15,11 @@ const REPORT_OPTIONS = [
     href: "/dashboard/relatorios/futebol/cartoes-suspensao",
     title: "Cartões e Suspensão",
     icon: FileText,
+  },
+  {
+    href: "/dashboard/relatorios/futebol/pendencias-cadastro",
+    title: "Pendências de cadastro (FMF)",
+    icon: UserPen,
   },
   {
     href: "/dashboard/relatorios/futebol/press-kit",
