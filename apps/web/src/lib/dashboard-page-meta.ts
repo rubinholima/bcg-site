@@ -291,6 +291,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/futebol\/logistica\/agenda$/,
   /^\/dashboard\/futebol\/logistica\/convocacao$/,
   /^\/dashboard\/futebol\/logistica\/relatorios(\/|$)/,
+  /^\/dashboard\/relatorios(\/|$)/,
   /^\/dashboard\/futebol\/(performance|captacao|try-outs|preparacao-fisica)$/,
   /^\/dashboard\/futebol\/analise-desempenho(\/|$)/,
 
