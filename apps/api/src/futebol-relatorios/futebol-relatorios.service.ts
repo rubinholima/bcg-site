@@ -70,6 +70,7 @@ const PRESS_KIT_STAFF_ROLE_SLUGS = new Set([
 import {
   FMF_SYNC_TENANT_DEFAULTS,
   isFmfSyncTenantSlug,
+  parseTenantCategoryKeys,
 } from '../fmf-scraper/fmf-sync-tenants.config';
 import {
   collectChampionshipPhasesForCategory,
@@ -78,6 +79,10 @@ import {
   resolveCurrentChampionshipPhaseForCategory,
 } from '../futebol-treinadores/coach-context.helper';
 import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
+import {
+  competitionLabelForTenantCategory,
+  inferCategoryFromCompetitionLabel,
+} from '../fmf-scraper/fmf-scraper.presets';
 import {
   buildDisciplineGrid,
   collectDisciplineParticipantIds,
@@ -2048,7 +2053,9 @@ export class FutebolRelatoriosService {
           isFmfTeamMatch(row.awayTeam, clubName, aliases)),
     );
 
-    const referenceCategory = inferReferenceCategoryFromReports(competitionReports);
+    const referenceCategory =
+      inferReferenceCategoryFromReports(competitionReports) ??
+      inferCategoryFromCompetitionLabel(input.competition);
 
     const linkPlayersRaw = await this.prisma.player.findMany({
       where: { tenantId: input.tenantId },
@@ -2231,12 +2238,13 @@ export class FutebolRelatoriosService {
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { id: true, name: true, slug: true, tradeName: true },
+      select: { id: true, name: true, slug: true, tradeName: true, categories: true },
     });
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
     const clubName = tenant.tradeName?.trim() || tenant.name;
     const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+    const tenantCategories = parseTenantCategoryKeys(tenant.categories);
 
     const reportRows = await this.prisma.fmfMatchReport.findMany({
       where: { tenantId, season },
@@ -2266,12 +2274,51 @@ export class FutebolRelatoriosService {
       const current = grouped.get(key);
       if (current) {
         current.matchCount += 1;
+        if (!current.referenceCategory?.trim() && row.category?.trim()) {
+          current.referenceCategory = row.category.trim();
+        }
         continue;
       }
       grouped.set(key, {
         competition,
-        referenceCategory: row.category,
+        referenceCategory:
+          row.category?.trim() ||
+          inferCategoryFromCompetitionLabel(competition) ||
+          '',
         matchCount: 1,
+      });
+    }
+
+    // Garante todas as categorias do clube no seletor (mesmo sem súmula importada).
+    for (const category of tenantCategories) {
+      const alreadyListed = [...grouped.values()].some(
+        (item) =>
+          item.referenceCategory === category ||
+          inferCategoryFromCompetitionLabel(item.competition) === category,
+      );
+      if (alreadyListed) {
+        for (const item of grouped.values()) {
+          if (
+            !item.referenceCategory &&
+            inferCategoryFromCompetitionLabel(item.competition) === category
+          ) {
+            item.referenceCategory = category;
+          }
+        }
+        continue;
+      }
+
+      const competition = competitionLabelForTenantCategory(category, season);
+      const key = normalizeCompetitionKey(competition);
+      if (grouped.has(key)) {
+        const existing = grouped.get(key)!;
+        if (!existing.referenceCategory) existing.referenceCategory = category;
+        continue;
+      }
+      grouped.set(key, {
+        competition,
+        referenceCategory: category,
+        matchCount: 0,
       });
     }
 
@@ -2338,9 +2385,8 @@ export class FutebolRelatoriosService {
     const resolved = inferPrimaryCompetitionFromReports(categoryReports);
     if (resolved) return resolved;
 
-    throw new BadRequestException(
-      'Nenhuma competição encontrada para os filtros informados.',
-    );
+    // Sem súmula ainda: usa rótulo do preset FMF / categoria do clube.
+    return competitionLabelForTenantCategory(category, input.season);
   }
 
   async listDisciplinePhases(filters: {
@@ -2413,7 +2459,9 @@ export class FutebolRelatoriosService {
           isFmfTeamMatch(row.awayTeam, clubName, aliases)),
     );
 
-    const referenceCategory = inferReferenceCategoryFromReports(competitionReports);
+    const referenceCategory =
+      inferReferenceCategoryFromReports(competitionReports) ??
+      inferCategoryFromCompetitionLabel(competition);
 
     const upcomingTravel = travels
       .filter((t) => t.matchDate >= new Date())
