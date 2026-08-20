@@ -443,6 +443,12 @@ export default function ManualPage() {
                 nas súmulas importadas (não altera o PDF da FMF).
               </p>
               <p>
+                Se só corrigiu o <strong>CBF no cadastro</strong>, volte nas Pendências e clique em{" "}
+                <strong>Atualizar lista</strong> — o sistema religa sozinho e a pendência some. Só
+                &quot;Corrigir cadastro&quot; sem voltar/atualizar deixa o item na lista até o próximo
+                reload.
+              </p>
+              <p>
                 Depois: <strong>Ferramentas → FMF Scraper → Reconciliar importadas</strong> (se
                 necessário) e gere de novo <strong>Cartões e Suspensão</strong> pela competição correta
                 (ex.: Campeonato Mineiro Sub-20). Subida (Sub-17 jogando Sub-20) só aparece na planilha

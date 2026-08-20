@@ -13,6 +13,7 @@ import {
   type ParsedFmfMatchReport,
 } from './fmf-match-report.parser';
 import {
+  buildPlayersByCbf,
   buildPlayersByNormalizedName,
   findUniquePlayerByContainedName,
   findUniquePlayerByNameTokens,
@@ -294,6 +295,9 @@ export class FmfMatchReportService {
     });
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
+    // Cadastro corrigido (CBF/nome) → religa e tira da lista sem precisar reimportar o PDF.
+    await this.resolveUnresolvedFromCurrentCadastro(tenant.id);
+
     const storeCandidates = await this.listCandidates(tenantId, { allowRefresh: false });
     const reportUrlById = new Map(storeCandidates.map((row) => [row.externalMatchId, row.reportUrl]));
 
@@ -545,6 +549,165 @@ export class FmfMatchReportService {
     await this.refreshPlayerCareerTotals(tenantId);
 
     return { linkedMatches, playerId: player.id, playerName: player.name };
+  }
+
+  /**
+   * Depois de corrigir CBF/nome no cadastro, tenta religar pendências já importadas
+   * e remove do JSON unresolved — sem baixar o PDF de novo.
+   */
+  private async resolveUnresolvedFromCurrentCadastro(tenantId: string): Promise<number> {
+    const players = await this.prisma.player.findMany({
+      where: { tenantId },
+      select: {
+        id: true,
+        name: true,
+        cbfRegistration: true,
+        registrationProfile: true,
+      },
+    });
+    if (players.length === 0) return 0;
+
+    const playersByCbf = buildPlayersByCbf(players);
+    const playersByName = buildPlayersByNormalizedName(players);
+
+    const reports = await this.prisma.fmfMatchReport.findMany({
+      where: { tenantId },
+      select: { id: true, unresolvedPlayers: true },
+    });
+
+    let linkedMatches = 0;
+    const cbfBackfills: Array<{ id: string; cbfRegistration: string }> = [];
+
+    for (const report of reports) {
+      if (!Array.isArray(report.unresolvedPlayers) || report.unresolvedPlayers.length === 0) {
+        continue;
+      }
+
+      const remaining: Prisma.JsonValue[] = [];
+      let changed = false;
+
+      for (const raw of report.unresolvedPlayers) {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+          remaining.push(raw as Prisma.JsonValue);
+          continue;
+        }
+        const row = raw as Prisma.JsonObject;
+        const cbfRegistration =
+          typeof row.cbfRegistration === 'string' ? digits(row.cbfRegistration) : '';
+        const sourceName = typeof row.sourceName === 'string' ? row.sourceName.trim() : '';
+        if (!sourceName && !cbfRegistration) {
+          remaining.push(raw as Prisma.JsonValue);
+          continue;
+        }
+
+        const resolved = resolvePlayerForFmfStat(
+          { cbfRegistration, sourceName },
+          playersByCbf,
+          playersByName,
+          players,
+        );
+
+        if (!resolved.ok) {
+          remaining.push(raw as Prisma.JsonValue);
+          continue;
+        }
+
+        await this.upsertStatFromUnresolvedRow(report.id, resolved.playerId, row);
+        changed = true;
+
+        if (cbfRegistration) {
+          const player = players.find((p) => p.id === resolved.playerId);
+          if (player && !digits(player.cbfRegistration)) {
+            cbfBackfills.push({ id: player.id, cbfRegistration });
+            player.cbfRegistration = cbfRegistration;
+          }
+        }
+      }
+
+      if (changed) {
+        await this.prisma.fmfMatchReport.update({
+          where: { id: report.id },
+          data: { unresolvedPlayers: remaining as Prisma.InputJsonValue },
+        });
+        linkedMatches += 1;
+      }
+    }
+
+    if (cbfBackfills.length > 0) {
+      const unique = new Map(cbfBackfills.map((item) => [item.id, item]));
+      await this.prisma.$transaction(
+        [...unique.values()].map((item) =>
+          this.prisma.player.update({
+            where: { id: item.id },
+            data: { cbfRegistration: item.cbfRegistration },
+          }),
+        ),
+      );
+    }
+
+    if (linkedMatches > 0) {
+      await this.refreshPlayerCareerTotals(tenantId);
+    }
+
+    return linkedMatches;
+  }
+
+  private async upsertStatFromUnresolvedRow(
+    matchId: string,
+    playerId: string,
+    row: Prisma.JsonObject,
+  ): Promise<void> {
+    const yellowCards = typeof row.yellowCards === 'number' ? row.yellowCards : 0;
+    const redCards = typeof row.redCards === 'number' ? row.redCards : 0;
+    const played = row.played === true;
+    const sourceName = typeof row.sourceName === 'string' ? row.sourceName : '';
+    const cbfRegistration =
+      typeof row.cbfRegistration === 'string' ? digits(row.cbfRegistration) : '';
+    const jerseyNumber = typeof row.jerseyNumber === 'number' ? row.jerseyNumber : null;
+
+    const existing = await this.prisma.fmfPlayerMatchStat.findUnique({
+      where: { matchId_playerId: { matchId, playerId } },
+    });
+
+    if (existing) {
+      await this.prisma.fmfPlayerMatchStat.update({
+        where: { id: existing.id },
+        data: {
+          cbfRegistration: cbfRegistration || existing.cbfRegistration,
+          playerName: sourceName || existing.playerName,
+          jerseyNumber: jerseyNumber ?? existing.jerseyNumber,
+          played: existing.played || played,
+          yellowCards: Math.max(existing.yellowCards, yellowCards),
+          redCards: Math.max(existing.redCards, redCards),
+          minutesPlayed: Math.max(
+            existing.minutesPlayed,
+            typeof row.minutesPlayed === 'number' ? row.minutesPlayed : 0,
+          ),
+        },
+      });
+      return;
+    }
+
+    await this.prisma.fmfPlayerMatchStat.create({
+      data: {
+        matchId,
+        playerId,
+        cbfRegistration: cbfRegistration || '0',
+        playerName: sourceName || '—',
+        jerseyNumber,
+        starter: row.starter === true,
+        listed: true,
+        played,
+        enteredMinute: typeof row.enteredMinute === 'number' ? row.enteredMinute : null,
+        exitedMinute: typeof row.exitedMinute === 'number' ? row.exitedMinute : null,
+        minutesPlayed: typeof row.minutesPlayed === 'number' ? row.minutesPlayed : 0,
+        goals: typeof row.goals === 'number' ? row.goals : 0,
+        ownGoals: typeof row.ownGoals === 'number' ? row.ownGoals : 0,
+        penaltyGoals: typeof row.penaltyGoals === 'number' ? row.penaltyGoals : 0,
+        yellowCards,
+        redCards,
+      },
+    });
   }
 
   async getPlayerStats(playerId: string) {

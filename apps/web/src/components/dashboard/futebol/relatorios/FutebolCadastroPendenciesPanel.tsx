@@ -267,15 +267,31 @@ export function FutebolCadastroPendenciesPanel({
                 Atualizado em {formatDateTime(report.generatedAt)}
               </p>
 
-              <div className="space-y-2">
-                <Label htmlFor="pendencias-search">Buscar</Label>
-                <Input
-                  id="pendencias-search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Nome ou CBF…"
-                  className="min-h-11 max-w-md text-foreground"
-                />
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="pendencias-search">Buscar</Label>
+                  <Input
+                    id="pendencias-search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Nome ou CBF…"
+                    className="min-h-11 max-w-md text-foreground"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11"
+                  disabled={loadingReport}
+                  onClick={() => {
+                    if (tenantId) void loadReport(tenantId);
+                  }}
+                >
+                  {loadingReport ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Atualizar lista
+                </Button>
               </div>
 
               {filteredItems.length === 0 ? (
