@@ -40,8 +40,25 @@ describe('resolvePlayerForFmfStat', () => {
       { cbfRegistration: '999999', sourceName: 'Samuel Fernandes' },
       emptyCbf,
       playersByName,
+      players,
     );
     expect(result).toEqual({ ok: true, playerId: 'p2', linkedBy: 'name' });
+  });
+
+  it('vincula subida por nome da súmula quando único no cadastro', () => {
+    const sub17 = [
+      { id: 'jv', name: 'João Victor Machado', cbfRegistration: '' },
+      { id: 'p2', name: 'Samuel Fernandes', cbfRegistration: '222222' },
+    ];
+    const emptyCbf = new Map<string, typeof sub17>();
+    const byName = buildPlayersByNormalizedName(sub17);
+    const result = resolvePlayerForFmfStat(
+      { cbfRegistration: '888888', sourceName: 'JOAO VICTOR MACHADO' },
+      emptyCbf,
+      byName,
+      sub17,
+    );
+    expect(result).toEqual({ ok: true, playerId: 'jv', linkedBy: 'name' });
   });
 
   it('não vincula por nome parcial ou ambíguo', () => {

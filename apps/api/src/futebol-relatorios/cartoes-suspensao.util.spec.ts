@@ -1,6 +1,7 @@
 import {
   buildDisciplineGrid,
   collectDisciplineParticipantIds,
+  enrichDisciplineStatsFromUnresolved,
   findPlayerStatForMatch,
   mergeDisciplinePlayerList,
   reportMatchesCompetitionFilter,
@@ -176,6 +177,28 @@ describe('mergeDisciplinePlayerList', () => {
       { playerStats: [{ playerId: 'a' }, { playerId: '' }, { playerId: 'b' }] },
     ]);
     expect(ids.sort()).toEqual(['a', 'b']);
+  });
+});
+
+describe('enrichDisciplineStatsFromUnresolved', () => {
+  it('inclui cartões de atleta pendente na importação', () => {
+    const enriched = enrichDisciplineStatsFromUnresolved(
+      [],
+      [
+        {
+          cbfRegistration: '123',
+          sourceName: 'João Victor Machado',
+          jerseyNumber: 22,
+          played: true,
+          yellowCards: 1,
+          redCards: 0,
+        },
+      ],
+      () => 'joao-victor',
+    );
+    expect(enriched).toHaveLength(1);
+    expect(enriched[0]?.playerId).toBe('joao-victor');
+    expect(enriched[0]?.yellowCards).toBe(1);
   });
 });
 

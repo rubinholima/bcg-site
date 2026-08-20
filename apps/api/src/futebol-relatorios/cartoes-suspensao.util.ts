@@ -270,6 +270,67 @@ export function collectDisciplineParticipantIds(
   return [...ids];
 }
 
+type DisciplineStatRow = {
+  playerId: string;
+  jerseyNumber: number | null;
+  playerName: string;
+  played: boolean;
+  yellowCards: number;
+  redCards: number;
+};
+
+function readUnresolvedDisciplineStat(raw: unknown): {
+  cbfRegistration: string;
+  sourceName: string;
+  jerseyNumber: number | null;
+  played: boolean;
+  yellowCards: number;
+  redCards: number;
+} | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const row = raw as Record<string, unknown>;
+  const sourceName = typeof row.sourceName === 'string' ? row.sourceName.trim() : '';
+  if (!sourceName) return null;
+  return {
+    cbfRegistration: typeof row.cbfRegistration === 'string' ? row.cbfRegistration : '',
+    sourceName,
+    jerseyNumber: typeof row.jerseyNumber === 'number' ? row.jerseyNumber : null,
+    played: row.played === true,
+    yellowCards: typeof row.yellowCards === 'number' ? row.yellowCards : 0,
+    redCards: typeof row.redCards === 'number' ? row.redCards : 0,
+  };
+}
+
+/** Inclui atletas pendentes na importação (subidas) quando o vínculo é resolvível. */
+export function enrichDisciplineStatsFromUnresolved(
+  linkedStats: DisciplineStatRow[],
+  unresolvedRaw: unknown,
+  resolvePlayerId: (stat: { cbfRegistration: string; sourceName: string }) => string | null,
+): DisciplineStatRow[] {
+  if (!Array.isArray(unresolvedRaw) || unresolvedRaw.length === 0) return linkedStats;
+
+  const linkedIds = new Set(linkedStats.map((stat) => stat.playerId));
+  const extra: DisciplineStatRow[] = [];
+
+  for (const raw of unresolvedRaw) {
+    const unresolved = readUnresolvedDisciplineStat(raw);
+    if (!unresolved) continue;
+    const playerId = resolvePlayerId(unresolved);
+    if (!playerId || linkedIds.has(playerId)) continue;
+    linkedIds.add(playerId);
+    extra.push({
+      playerId,
+      jerseyNumber: unresolved.jerseyNumber,
+      playerName: unresolved.sourceName,
+      played: unresolved.played,
+      yellowCards: unresolved.yellowCards,
+      redCards: unresolved.redCards,
+    });
+  }
+
+  return extra.length > 0 ? [...linkedStats, ...extra] : linkedStats;
+}
+
 /** Elenco da categoria + atletas convocados/jogadores que atuaram em jogos desta categoria (subida). */
 export function mergeDisciplinePlayerList<T extends { id: string; jerseyNumber: number | null; name: string }>(
   rosterPlayers: T[],

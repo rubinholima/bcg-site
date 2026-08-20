@@ -540,7 +540,7 @@ export class FmfMatchReportService {
     const linked: Array<{ stat: FmfReportPlayerStat; playerId: string }> = [];
     const unresolved: Array<FmfReportPlayerStat & { reason: string }> = [];
     for (const stat of ourStats) {
-      const resolved = resolvePlayerForFmfStat(stat, playersByCbf, playersByName);
+      const resolved = resolvePlayerForFmfStat(stat, playersByCbf, playersByName, players);
       if (resolved.ok) {
         linked.push({ stat, playerId: resolved.playerId });
       } else {

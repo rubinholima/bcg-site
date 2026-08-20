@@ -24,20 +24,80 @@ export function buildPlayersByNormalizedName<T extends FmfLinkablePlayer>(
   return map;
 }
 
+function digits(value: unknown): string {
+  return typeof value === 'string' || typeof value === 'number'
+    ? String(value).replace(/\D/g, '')
+    : '';
+}
+
+function cbfFromRegistrationProfile(value: unknown): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+  const sports = (value as { sports?: unknown }).sports;
+  if (!sports || typeof sports !== 'object' || Array.isArray(sports)) return '';
+  return digits((sports as { cbf?: unknown }).cbf);
+}
+
+export function buildPlayersByCbf<
+  T extends FmfLinkablePlayer & {
+    cbfRegistration?: string | null;
+    registrationProfile?: unknown;
+  },
+>(players: T[]): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const player of players) {
+    const cbf = digits(player.cbfRegistration) || cbfFromRegistrationProfile(player.registrationProfile);
+    if (!cbf) continue;
+    map.set(cbf, [...(map.get(cbf) ?? []), player]);
+  }
+  return map;
+}
+
 export type FmfStatLinkInput = {
   cbfRegistration: string;
   sourceName: string;
 };
 
 export type FmfStatLinkResult =
-  | { ok: true; playerId: string; linkedBy: 'cbf' | 'name' }
+  | { ok: true; playerId: string; linkedBy: 'cbf' | 'name' | 'name_tokens' }
   | { ok: false; reason: string };
+
+function nameTokenSet(value: string): Set<string> {
+  return new Set(
+    normalizeFmfPlayerName(value)
+      .split(' ')
+      .filter((t) => t.length > 2),
+  );
+}
+
+function countSharedNameTokens(a: string, b: string): number {
+  const left = nameTokenSet(a);
+  let count = 0;
+  for (const token of nameTokenSet(b)) {
+    if (left.has(token)) count += 1;
+  }
+  return count;
+}
+
+/** Nome da súmula vs cadastro — exige 2+ tokens iguais e match único. */
+export function findUniquePlayerByNameTokens<T extends FmfLinkablePlayer>(
+  sourceName: string,
+  allPlayers: T[],
+): T | null {
+  const sourceSize = nameTokenSet(sourceName).size;
+  if (sourceSize === 0) return null;
+  const minShared = Math.min(2, sourceSize);
+  const matches = allPlayers.filter(
+    (player) => countSharedNameTokens(sourceName, player.name) >= minShared,
+  );
+  return matches.length === 1 ? matches[0]! : null;
+}
 
 /** Vincula stat da súmula ao cadastro — sem heurística por camisa ou sobrenome. */
 export function resolvePlayerForFmfStat<T extends FmfLinkablePlayer>(
   stat: FmfStatLinkInput,
   playersByCbf: Map<string, T[]>,
   playersByName: Map<string, T[]>,
+  allPlayers?: T[],
 ): FmfStatLinkResult {
   const cbfMatches = playersByCbf.get(stat.cbfRegistration) ?? [];
   if (cbfMatches.length === 1) {
@@ -55,6 +115,13 @@ export function resolvePlayerForFmfStat<T extends FmfLinkablePlayer>(
     }
     if (nameMatches.length > 1) {
       return { ok: false, reason: 'Nome duplicado no cadastro (sem CBF único)' };
+    }
+  }
+
+  if (allPlayers?.length) {
+    const byTokens = findUniquePlayerByNameTokens(stat.sourceName, allPlayers);
+    if (byTokens) {
+      return { ok: true, playerId: byTokens.id, linkedBy: 'name_tokens' };
     }
   }
 

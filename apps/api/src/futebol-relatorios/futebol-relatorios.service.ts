@@ -81,6 +81,7 @@ import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
 import {
   buildDisciplineGrid,
   collectDisciplineParticipantIds,
+  enrichDisciplineStatsFromUnresolved,
   inferPrimaryCompetitionFromReports,
   inferReferenceCategoryFromReports,
   isCurrentSquadPlayer,
@@ -89,6 +90,11 @@ import {
   normalizeCompetitionKey,
   reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
+import {
+  buildPlayersByCbf,
+  buildPlayersByNormalizedName,
+  resolvePlayerForFmfStat,
+} from '../fmf-scraper/fmf-player-link.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
   DEFAULT_PRESS_KIT_REFEREE_ROLES,
@@ -2021,6 +2027,7 @@ export class FutebolRelatoriosService {
         competition: true,
         occurrencesText: true,
         sourceUrl: true,
+        unresolvedPlayers: true,
         playerStats: {
           select: {
             playerId: true,
@@ -2042,6 +2049,27 @@ export class FutebolRelatoriosService {
     );
 
     const referenceCategory = inferReferenceCategoryFromReports(competitionReports);
+
+    const linkPlayersRaw = await this.prisma.player.findMany({
+      where: { tenantId: input.tenantId },
+      select: {
+        id: true,
+        name: true,
+        cbfRegistration: true,
+        registrationProfile: true,
+      },
+    });
+    const playersByCbf = buildPlayersByCbf(linkPlayersRaw);
+    const playersByName = buildPlayersByNormalizedName(linkPlayersRaw);
+    const resolveDisciplinePlayerId = (stat: { cbfRegistration: string; sourceName: string }) => {
+      const resolved = resolvePlayerForFmfStat(
+        stat,
+        playersByCbf,
+        playersByName,
+        linkPlayersRaw,
+      );
+      return resolved.ok ? resolved.playerId : null;
+    };
 
     const playersRaw = referenceCategory
       ? await this.prisma.player.findMany({
@@ -2103,7 +2131,16 @@ export class FutebolRelatoriosService {
       matches.filter((row) => isFriendlyDisciplineMatch(row)).map((row) => row.id),
     );
 
-    const participantIds = collectDisciplineParticipantIds(matches);
+    const disciplineMatches = matches.map((row) => ({
+      ...row,
+      playerStats: enrichDisciplineStatsFromUnresolved(
+        row.playerStats,
+        row.unresolvedPlayers,
+        resolveDisciplinePlayerId,
+      ),
+    }));
+
+    const participantIds = collectDisciplineParticipantIds(disciplineMatches);
     const rosterIds = new Set(players.map((player) => player.id));
     const guestIds = participantIds.filter((id) => !rosterIds.has(id));
     let disciplinePlayers = players;
@@ -2133,7 +2170,7 @@ export class FutebolRelatoriosService {
       null;
 
     const grid = buildDisciplineGrid({
-      matches: matches.map((row) => ({
+      matches: disciplineMatches.map((row) => ({
         id: row.id,
         round: row.round,
         matchDate: row.matchDate,
