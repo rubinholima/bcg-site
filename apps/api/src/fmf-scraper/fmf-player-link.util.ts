@@ -130,11 +130,20 @@ export function resolvePlayerForFmfStat<T extends FmfLinkablePlayer>(
   playersByName: Map<string, T[]>,
   allPlayers?: T[],
 ): FmfStatLinkResult {
-  const cbfMatches = playersByCbf.get(stat.cbfRegistration) ?? [];
+  const cbfKey = digits(stat.cbfRegistration);
+  const cbfMatches = cbfKey ? (playersByCbf.get(cbfKey) ?? []) : [];
   if (cbfMatches.length === 1) {
     return { ok: true, playerId: cbfMatches[0]!.id, linkedBy: 'cbf' };
   }
   if (cbfMatches.length > 1) {
+    const byContained = findUniquePlayerByContainedName(stat.sourceName, cbfMatches);
+    if (byContained) {
+      return { ok: true, playerId: byContained.id, linkedBy: 'cbf' };
+    }
+    const byTokens = findUniquePlayerByNameTokens(stat.sourceName, cbfMatches);
+    if (byTokens) {
+      return { ok: true, playerId: byTokens.id, linkedBy: 'cbf' };
+    }
     return { ok: false, reason: 'Registro CBF duplicado no cadastro' };
   }
 

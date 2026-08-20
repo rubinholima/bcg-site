@@ -98,6 +98,46 @@ function splitTimedRows(value: string): string[] {
   return rows;
 }
 
+/**
+ * PDF FMF: "Nº Apelido Nome Completo CBF" vira uma linha só.
+ * Preferimos o nome completo; se apelido = nome (comum), remove a duplicata.
+ */
+export function extractFmfRosterFullName(middleRaw: string): string {
+  const middle = cleanLine(middleRaw).replace(/\s+\(C\)$/i, '');
+  if (!middle) return '';
+  const tokens = middle.split(/\s+/).filter(Boolean);
+  if (tokens.length <= 1) return middle;
+
+  // Apelido e nome idênticos (comum na FMF): "A B C A B C" → "A B C"
+  if (tokens.length % 2 === 0) {
+    const half = tokens.length / 2;
+    const left = tokens.slice(0, half).join(' ');
+    const right = tokens.slice(half).join(' ');
+    if (normalize(left) === normalize(right)) return right;
+  }
+
+  // Apelido curto + nome completo: "Lucas Canella Lucas Azevedo Canella"
+  let best: string | null = null;
+  for (let i = 1; i < tokens.length; i += 1) {
+    const leftTokens = tokens.slice(0, i);
+    const rightTokens = tokens.slice(i);
+    if (rightTokens.length < leftTokens.length) continue;
+    if (normalize(leftTokens[0]!) !== normalize(rightTokens[0]!)) continue;
+
+    const rightSet = new Set(normalize(rightTokens.join(' ')).split(' ').filter(Boolean));
+    const leftCovered = normalize(leftTokens.join(' '))
+      .split(' ')
+      .filter(Boolean)
+      .every((token) => rightSet.has(token));
+    if (!leftCovered) continue;
+
+    const candidate = rightTokens.join(' ');
+    if (!best || candidate.length >= best.length) best = candidate;
+  }
+
+  return best ?? middle;
+}
+
 function parseRoster(text: string): FmfReportRosterPlayer[] {
   const content = section(text, 'Relação de Jogadores', 'Árbitro Principal');
   if (!content) return [];
@@ -117,12 +157,12 @@ function parseRoster(text: string): FmfReportRosterPlayer[] {
       continue;
     }
     if (group < 0) continue;
-    const match = line.match(/^(\d{1,3})\s+(.+?)\s+(\d{5,10})$/);
+    const match = line.match(/^(\d{1,3})\s+(.+)\s+(\d{5,10})$/);
     if (!match) continue;
     const teamSide = group === 0 || group === 2 ? 'home' : 'away';
     groups[group].push({
       jerseyNumber: Number(match[1]),
-      sourceName: cleanLine(match[2]).replace(/\s+\(C\)$/i, ''),
+      sourceName: extractFmfRosterFullName(match[2]),
       cbfRegistration: match[3],
       starter: group < 2,
       teamSide,

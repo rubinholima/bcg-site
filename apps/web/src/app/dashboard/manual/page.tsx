@@ -20,6 +20,7 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "futebol", label: "Depto Futebol" },
   { id: "futebol-cadastro-atletas", label: "→ Cadastro de atletas", indent: true },
   { id: "futebol-logistica-convocacao", label: "→ Logística e convocação", indent: true },
+  { id: "futebol-pendencias-fmf", label: "→ Pendências FMF / súmula", indent: true },
   { id: "futebol-press-kit", label: "→ Press Kit", indent: true },
   { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "futebol-treinadores-treinos", label: "→ Treinadores — treinos", indent: true },
@@ -427,6 +428,25 @@ export default function ManualPage() {
               <p>
                 Menu: Depto Futebol → Logística → Convocação / Relatórios. Atalho também na edição da
                 viagem.
+              </p>
+            </SubSection>
+
+            <SubSection id="futebol-pendencias-fmf" title="Pendências FMF e vínculo na súmula">
+              <p>
+                A súmula oficial da FMF não é editável. Depois da importação, a plataforma guarda a{" "}
+                <strong>cópia importada</strong> (elenco, cartões, vínculo com o cadastro).
+              </p>
+              <p>
+                Se um atleta aparece na súmula PDF e não entra no relatório de cartões: vá em{" "}
+                <strong>Relatórios → Pendências de cadastro (FMF)</strong>, busque pelo nome ou CBF,
+                escolha o atleta do cadastro e clique em <strong>Vincular</strong>. Isso grava o vínculo
+                nas súmulas importadas (não altera o PDF da FMF).
+              </p>
+              <p>
+                Depois: <strong>Ferramentas → FMF Scraper → Reconciliar importadas</strong> (se
+                necessário) e gere de novo <strong>Cartões e Suspensão</strong> pela competição correta
+                (ex.: Campeonato Mineiro Sub-20). Subida (Sub-17 jogando Sub-20) só aparece na planilha
+                da competição em que atuou.
               </p>
             </SubSection>
 

@@ -24,12 +24,17 @@ describe('resolvePlayerForFmfStat', () => {
     expect(result).toEqual({ ok: true, playerId: 'p1', linkedBy: 'cbf' });
   });
 
-  it('marca duplicado de CBF como não resolvido', () => {
-    const dupMap = new Map([['111111', players]]);
+  it('marca duplicado de CBF como não resolvido quando nomes não desambiguam', () => {
+    const dupPlayers = [
+      { id: 'p1', name: 'João Pedro Pimentel', cbfRegistration: '111111' },
+      { id: 'p3', name: 'João Pedro Silva', cbfRegistration: '111111' },
+    ];
+    const dupMap = new Map([['111111', dupPlayers]]);
     const result = resolvePlayerForFmfStat(
       { cbfRegistration: '111111', sourceName: 'João Pedro' },
       dupMap,
-      playersByName,
+      buildPlayersByNormalizedName(dupPlayers),
+      dupPlayers,
     );
     expect(result).toEqual({ ok: false, reason: 'Registro CBF duplicado no cadastro' });
   });
@@ -114,5 +119,24 @@ describe('resolvePlayerForFmfStat', () => {
       ok: false,
       reason: 'Registro CBF não encontrado no cadastro do atleta',
     });
+  });
+
+  it('desambigua CBF duplicado pelo nome da súmula', () => {
+    const roster = [
+      { id: 'jv', name: 'João Victor Machado', cbfRegistration: '776375' },
+      { id: 'outro', name: 'Outro Atleta', cbfRegistration: '776375' },
+    ];
+    const byCbf = new Map([['776375', roster]]);
+    const byName = buildPlayersByNormalizedName(roster);
+    const result = resolvePlayerForFmfStat(
+      {
+        cbfRegistration: '776375',
+        sourceName: 'Joao Victor Machado De Oliveira',
+      },
+      byCbf,
+      byName,
+      roster,
+    );
+    expect(result).toEqual({ ok: true, playerId: 'jv', linkedBy: 'cbf' });
   });
 });

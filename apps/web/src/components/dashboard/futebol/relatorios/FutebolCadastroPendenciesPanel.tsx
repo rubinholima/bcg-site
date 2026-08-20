@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { Loader2, UserPen } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, Link2, UserPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,7 +19,10 @@ import {
 import { NativeSelectField } from "@/components/ui/native-select";
 import { api } from "@/lib/api";
 import { resolveCadastroPendencyActions } from "@/lib/fmf-cadastro-pendencies";
-import type { FmfCadastroPendenciesReport } from "@/lib/fmf-cadastro-pendencies.types";
+import type {
+  FmfCadastroPendenciesReport,
+  FmfCadastroPendencyItem,
+} from "@/lib/fmf-cadastro-pendencies.types";
 import { useFutebolRelatorioTenants } from "./futebol-relatorio-shared";
 
 function formatDateTime(iso: string | undefined): string {
@@ -39,10 +43,7 @@ function normalizeSearch(value: string): string {
     .toLowerCase();
 }
 
-function itemMatchesSearch(
-  item: FmfCadastroPendenciesReport["items"][number],
-  query: string,
-): boolean {
+function itemMatchesSearch(item: FmfCadastroPendencyItem, query: string): boolean {
   if (!query) return true;
   const haystack = [
     item.sourceName,
@@ -57,6 +58,18 @@ function itemMatchesSearch(
   return normalizeSearch(haystack).includes(query);
 }
 
+function apiErrorMessage(e: unknown, fallback: string): string {
+  const msg =
+    e && typeof e === "object" && "response" in e
+      ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data?.message
+      : null;
+  if (Array.isArray(msg)) return msg.join(", ");
+  if (typeof msg === "string" && msg.trim()) return msg;
+  return fallback;
+}
+
+type PlayerOption = { id: string; name: string; category: string | null };
+
 type FutebolCadastroPendenciesPanelProps = {
   initialTenantId?: string;
 };
@@ -70,6 +83,16 @@ export function FutebolCadastroPendenciesPanel({
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [linkPlayerByKey, setLinkPlayerByKey] = useState<Record<string, string>>({});
+  const [linkingKey, setLinkingKey] = useState<string | null>(null);
+  const [playerSearchByKey, setPlayerSearchByKey] = useState<Record<string, string>>({});
+  const [playerOptionsByKey, setPlayerOptionsByKey] = useState<Record<string, PlayerOption[]>>({});
+  const [feedback, setFeedback] = useState<{
+    open: boolean;
+    variant: FeedbackVariant;
+    title: string;
+    message: string;
+  }>({ open: false, variant: "info", title: "", message: "" });
 
   useEffect(() => {
     if (initialTenantId) setTenantId(initialTenantId);
@@ -81,43 +104,38 @@ export function FutebolCadastroPendenciesPanel({
     }
   }, [tenantId, tenants]);
 
+  const loadReport = useCallback(async (id: string) => {
+    setLoadingReport(true);
+    setError(null);
+    try {
+      const { data } = await api.get<FmfCadastroPendenciesReport>(
+        `/futebol-relatorios/fmf-cadastro-pendencies?tenantId=${encodeURIComponent(id)}`,
+      );
+      setReport(data);
+      setLinkPlayerByKey((prev) => {
+        const next = { ...prev };
+        for (const item of data.items) {
+          if (!next[item.key] && item.candidatePlayers.length === 1) {
+            next[item.key] = item.candidatePlayers[0]!.id;
+          }
+        }
+        return next;
+      });
+    } catch (e: unknown) {
+      setError(apiErrorMessage(e, "Erro ao carregar pendências de cadastro."));
+      setReport(null);
+    } finally {
+      setLoadingReport(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!tenantId) {
       setReport(null);
       return;
     }
-
-    let cancelled = false;
-    setLoadingReport(true);
-    setError(null);
-
-    api
-      .get<FmfCadastroPendenciesReport>(
-        `/futebol-relatorios/fmf-cadastro-pendencies?tenantId=${encodeURIComponent(tenantId)}`,
-      )
-      .then(({ data }) => {
-        if (cancelled) return;
-        setReport(data);
-      })
-      .catch((e: unknown) => {
-        if (cancelled) return;
-        const msg =
-          e && typeof e === "object" && "response" in e
-            ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data
-                ?.message
-            : null;
-        const detail = Array.isArray(msg) ? msg.join(", ") : typeof msg === "string" ? msg : null;
-        setError(detail ?? "Erro ao carregar pendências de cadastro.");
-        setReport(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingReport(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [tenantId]);
+    void loadReport(tenantId);
+  }, [tenantId, loadReport]);
 
   const summary = useMemo(() => {
     if (!report) return null;
@@ -130,6 +148,72 @@ export function FutebolCadastroPendenciesPanel({
     if (!report) return [];
     return report.items.filter((item) => itemMatchesSearch(item, searchQuery));
   }, [report, searchQuery]);
+
+  const searchPlayers = async (itemKey: string, term: string) => {
+    if (!tenantId || term.trim().length < 2) {
+      setPlayerOptionsByKey((prev) => ({ ...prev, [itemKey]: [] }));
+      return;
+    }
+    try {
+      const params = new URLSearchParams({
+        tenantId,
+        search: term.trim(),
+      });
+      const { data } = await api.get<PlayerOption[]>(`/players?${params.toString()}`);
+      const list = Array.isArray(data) ? data : [];
+      setPlayerOptionsByKey((prev) => ({
+        ...prev,
+        [itemKey]: list.slice(0, 20).map((row) => ({
+          id: row.id,
+          name: row.name,
+          category: row.category ?? null,
+        })),
+      }));
+    } catch {
+      setPlayerOptionsByKey((prev) => ({ ...prev, [itemKey]: [] }));
+    }
+  };
+
+  const handleLink = async (item: FmfCadastroPendencyItem) => {
+    const playerId = linkPlayerByKey[item.key]?.trim();
+    if (!tenantId || !playerId) {
+      setFeedback({
+        open: true,
+        variant: "error",
+        title: "Selecione o atleta",
+        message: "Escolha o atleta do cadastro para vincular à súmula.",
+      });
+      return;
+    }
+    setLinkingKey(item.key);
+    try {
+      const { data } = await api.post<{ linkedMatches: number; playerName: string }>(
+        "/futebol-relatorios/fmf-cadastro-pendencies/link",
+        {
+          tenantId,
+          playerId,
+          cbfRegistration: item.cbfRegistration || undefined,
+          sourceName: item.sourceName,
+        },
+      );
+      setFeedback({
+        open: true,
+        variant: "success",
+        title: "Vínculo feito",
+        message: `${data.playerName} vinculado em ${data.linkedMatches} súmula(s). Gere o relatório de cartões de novo.`,
+      });
+      await loadReport(tenantId);
+    } catch (e: unknown) {
+      setFeedback({
+        open: true,
+        variant: "error",
+        title: "Não foi possível vincular",
+        message: apiErrorMessage(e, "Erro ao vincular atleta à súmula."),
+      });
+    } finally {
+      setLinkingKey(null);
+    }
+  };
 
   if (loadingTenants) {
     return (
@@ -199,87 +283,158 @@ export function FutebolCadastroPendenciesPanel({
                   Nenhum resultado para &quot;{search.trim()}&quot;.
                 </p>
               ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Atleta (FMF)</TableHead>
-                      <TableHead>CBF</TableHead>
-                      <TableHead>Motivo</TableHead>
-                      <TableHead>Jogos</TableHead>
-                      <TableHead className="text-right">Corrigir</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredItems.map((item) => {
-                      const actions = resolveCadastroPendencyActions(report.tenantId, item);
-                      return (
-                        <TableRow key={item.key}>
-                          <TableCell>
-                            <div className="font-medium">{item.sourceName || "—"}</div>
-                            <div className="mt-1 text-xs text-muted-foreground">{item.fixHint}</div>
-                          </TableCell>
-                          <TableCell>{item.cbfRegistration || "—"}</TableCell>
-                          <TableCell className="max-w-56 text-sm text-amber-300">{item.reason}</TableCell>
-                          <TableCell>
-                            <div className="text-sm">{item.matchCount}</div>
-                            <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
-                              {item.matches.slice(0, 2).map((match) => (
-                                <li key={match.externalMatchId}>
-                                  <span className="uppercase">{match.category}</span>
-                                  {" · "}
-                                  {match.label}
-                                  {match.reportUrl ? (
-                                    <>
-                                      {" · "}
-                                      <a
-                                        href={match.reportUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-primary hover:underline"
-                                      >
-                                        Súmula
-                                      </a>
-                                    </>
-                                  ) : null}
-                                </li>
-                              ))}
-                              {item.matches.length > 2 ? (
-                                <li>+ {item.matches.length - 2} jogo(s)</li>
-                              ) : null}
-                            </ul>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                              {actions.map((action) => (
-                                <Button
-                                  key={`${item.key}-${action.href}`}
-                                  size="sm"
-                                  variant={action.variant ?? "outline"}
-                                  className="min-h-11 justify-start sm:justify-center"
-                                  asChild
-                                >
-                                  <Link href={action.href}>
-                                    {action.variant === "default" ? (
-                                      <UserPen className="mr-2 h-4 w-4" />
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Atleta (FMF)</TableHead>
+                        <TableHead>CBF</TableHead>
+                        <TableHead>Motivo</TableHead>
+                        <TableHead>Jogos</TableHead>
+                        <TableHead>Vincular à súmula</TableHead>
+                        <TableHead className="text-right">Cadastro</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredItems.map((item) => {
+                        const actions = resolveCadastroPendencyActions(report.tenantId, item);
+                        const candidateOptions = item.candidatePlayers.map((player) => ({
+                          value: player.id,
+                          label: `${player.name}${player.category ? ` (${player.category})` : ""}`,
+                        }));
+                        const searched = playerOptionsByKey[item.key] ?? [];
+                        const searchOptions = searched
+                          .filter((p) => !item.candidatePlayers.some((c) => c.id === p.id))
+                          .map((player) => ({
+                            value: player.id,
+                            label: `${player.name}${player.category ? ` (${player.category})` : ""}`,
+                          }));
+                        const options = [
+                          { value: "", label: "Selecione o atleta…" },
+                          ...candidateOptions,
+                          ...searchOptions,
+                        ];
+
+                        return (
+                          <TableRow key={item.key}>
+                            <TableCell>
+                              <div className="font-medium">{item.sourceName || "—"}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">{item.fixHint}</div>
+                            </TableCell>
+                            <TableCell>{item.cbfRegistration || "—"}</TableCell>
+                            <TableCell className="max-w-56 text-sm text-amber-300">
+                              {item.reason}
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">{item.matchCount}</div>
+                              <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                                {item.matches.slice(0, 2).map((match) => (
+                                  <li key={match.externalMatchId}>
+                                    <span className="uppercase">{match.category}</span>
+                                    {" · "}
+                                    {match.label}
+                                    {match.reportUrl ? (
+                                      <>
+                                        {" · "}
+                                        <a
+                                          href={match.reportUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-primary hover:underline"
+                                        >
+                                          Súmula
+                                        </a>
+                                      </>
                                     ) : null}
-                                    {action.label}
-                                  </Link>
+                                  </li>
+                                ))}
+                                {item.matches.length > 2 ? (
+                                  <li>+ {item.matches.length - 2} jogo(s)</li>
+                                ) : null}
+                              </ul>
+                            </TableCell>
+                            <TableCell className="min-w-[220px]">
+                              <div className="space-y-2">
+                                {item.candidatePlayers.length === 0 ? (
+                                  <Input
+                                    value={playerSearchByKey[item.key] ?? ""}
+                                    onChange={(event) => {
+                                      const value = event.target.value;
+                                      setPlayerSearchByKey((prev) => ({
+                                        ...prev,
+                                        [item.key]: value,
+                                      }));
+                                      void searchPlayers(item.key, value);
+                                    }}
+                                    placeholder="Buscar atleta…"
+                                    className="min-h-11 text-foreground"
+                                  />
+                                ) : null}
+                                <NativeSelectField
+                                  value={linkPlayerByKey[item.key] ?? ""}
+                                  onChange={(event) =>
+                                    setLinkPlayerByKey((prev) => ({
+                                      ...prev,
+                                      [item.key]: event.target.value,
+                                    }))
+                                  }
+                                  options={options}
+                                  className="min-h-11"
+                                />
+                                <Button
+                                  size="sm"
+                                  className="min-h-11 w-full"
+                                  disabled={linkingKey === item.key}
+                                  onClick={() => void handleLink(item)}
+                                >
+                                  {linkingKey === item.key ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Link2 className="mr-2 h-4 w-4" />
+                                  )}
+                                  Vincular
                                 </Button>
-                              ))}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                                {actions.map((action) => (
+                                  <Button
+                                    key={`${item.key}-${action.href}`}
+                                    size="sm"
+                                    variant={action.variant ?? "outline"}
+                                    className="min-h-11 justify-start sm:justify-center"
+                                    asChild
+                                  >
+                                    <Link href={action.href}>
+                                      {action.variant === "default" ? (
+                                        <UserPen className="mr-2 h-4 w-4" />
+                                      ) : null}
+                                      {action.label}
+                                    </Link>
+                                  </Button>
+                                ))}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </>
           ) : null}
         </CardContent>
       </Card>
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((prev) => ({ ...prev, open }))}
+        variant={feedback.variant}
+        title={feedback.title}
+        message={feedback.message}
+      />
     </div>
   );
 }

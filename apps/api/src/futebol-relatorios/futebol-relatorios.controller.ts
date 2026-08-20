@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Post,
   Put,
   Query,
   UseGuards,
@@ -164,6 +165,33 @@ export class FutebolRelatoriosController {
       throw new BadRequestException('tenantId é obrigatório');
     }
     return this.fmfMatchReports.listCadastroPendencies(tenantId.trim());
+  }
+
+  @Post('fmf-cadastro-pendencies/link')
+  linkFmfCadastroPendency(
+    @Body()
+    body: {
+      tenantId?: string;
+      playerId?: string;
+      cbfRegistration?: string;
+      sourceName?: string;
+    },
+  ) {
+    if (!body?.tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    if (!body?.playerId?.trim()) {
+      throw new BadRequestException('playerId é obrigatório');
+    }
+    if (!body?.sourceName?.trim() && !body?.cbfRegistration?.trim()) {
+      throw new BadRequestException('sourceName ou cbfRegistration é obrigatório');
+    }
+    return this.fmfMatchReports.linkUnresolvedToPlayer({
+      tenantId: body.tenantId.trim(),
+      playerId: body.playerId.trim(),
+      cbfRegistration: body.cbfRegistration?.trim(),
+      sourceName: body.sourceName?.trim() ?? '',
+    });
   }
 
   @Get('cartoes-suspensao')

@@ -411,6 +411,142 @@ export class FmfMatchReportService {
     };
   }
 
+  /**
+   * Vincula manualmente atleta da súmula (pendente) a um Player do cadastro.
+   * Atualiza todas as súmulas do clube com a mesma pendência (CBF/nome).
+   */
+  async linkUnresolvedToPlayer(input: {
+    tenantId: string;
+    playerId: string;
+    cbfRegistration?: string;
+    sourceName: string;
+  }): Promise<{ linkedMatches: number; playerId: string; playerName: string }> {
+    const tenantId = input.tenantId?.trim();
+    const playerId = input.playerId?.trim();
+    const sourceName = input.sourceName?.trim();
+    const cbf = digits(input.cbfRegistration);
+    if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
+    if (!playerId) throw new BadRequestException('playerId é obrigatório');
+    if (!sourceName && !cbf) {
+      throw new BadRequestException('Informe o nome da súmula ou o CBF');
+    }
+
+    const player = await this.prisma.player.findFirst({
+      where: { id: playerId, tenantId },
+      select: { id: true, name: true, cbfRegistration: true },
+    });
+    if (!player) throw new NotFoundException('Atleta não encontrado neste clube');
+
+    const reports = await this.prisma.fmfMatchReport.findMany({
+      where: { tenantId },
+      select: {
+        id: true,
+        unresolvedPlayers: true,
+      },
+    });
+
+    const nameKey = normalizeFmfPlayerName(sourceName);
+    let linkedMatches = 0;
+
+    for (const report of reports) {
+      if (!Array.isArray(report.unresolvedPlayers) || report.unresolvedPlayers.length === 0) {
+        continue;
+      }
+
+      const remaining: Prisma.JsonValue[] = [];
+      const toLink: Array<FmfReportPlayerStat & { reason?: string }> = [];
+
+      for (const raw of report.unresolvedPlayers) {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+          remaining.push(raw as Prisma.JsonValue);
+          continue;
+        }
+        const row = raw as Prisma.JsonObject;
+        const rowCbf =
+          typeof row.cbfRegistration === 'string' ? digits(row.cbfRegistration) : '';
+        const rowName = typeof row.sourceName === 'string' ? row.sourceName.trim() : '';
+        const sameCbf = cbf.length > 0 && rowCbf === cbf;
+        const sameName =
+          nameKey.length > 0 && normalizeFmfPlayerName(rowName) === nameKey;
+        if (!sameCbf && !sameName) {
+          remaining.push(raw as Prisma.JsonValue);
+          continue;
+        }
+        toLink.push(row as unknown as FmfReportPlayerStat & { reason?: string });
+      }
+
+      if (toLink.length === 0) continue;
+
+      for (const stat of toLink) {
+        const existing = await this.prisma.fmfPlayerMatchStat.findUnique({
+          where: { matchId_playerId: { matchId: report.id, playerId } },
+        });
+        const yellowCards = typeof stat.yellowCards === 'number' ? stat.yellowCards : 0;
+        const redCards = typeof stat.redCards === 'number' ? stat.redCards : 0;
+        const played = stat.played === true;
+        if (existing) {
+          await this.prisma.fmfPlayerMatchStat.update({
+            where: { id: existing.id },
+            data: {
+              cbfRegistration: digits(stat.cbfRegistration) || existing.cbfRegistration,
+              playerName: stat.sourceName || existing.playerName,
+              jerseyNumber:
+                typeof stat.jerseyNumber === 'number' ? stat.jerseyNumber : existing.jerseyNumber,
+              played: existing.played || played,
+              yellowCards: Math.max(existing.yellowCards, yellowCards),
+              redCards: Math.max(existing.redCards, redCards),
+              minutesPlayed: Math.max(existing.minutesPlayed, Number(stat.minutesPlayed) || 0),
+            },
+          });
+        } else {
+          await this.prisma.fmfPlayerMatchStat.create({
+            data: {
+              matchId: report.id,
+              playerId,
+              cbfRegistration: digits(stat.cbfRegistration) || cbf || '0',
+              playerName: typeof stat.sourceName === 'string' ? stat.sourceName : sourceName,
+              jerseyNumber: typeof stat.jerseyNumber === 'number' ? stat.jerseyNumber : null,
+              starter: stat.starter === true,
+              listed: true,
+              played,
+              enteredMinute: typeof stat.enteredMinute === 'number' ? stat.enteredMinute : null,
+              exitedMinute: typeof stat.exitedMinute === 'number' ? stat.exitedMinute : null,
+              minutesPlayed: typeof stat.minutesPlayed === 'number' ? stat.minutesPlayed : 0,
+              goals: typeof stat.goals === 'number' ? stat.goals : 0,
+              ownGoals: typeof stat.ownGoals === 'number' ? stat.ownGoals : 0,
+              penaltyGoals: typeof stat.penaltyGoals === 'number' ? stat.penaltyGoals : 0,
+              yellowCards,
+              redCards,
+            },
+          });
+        }
+      }
+
+      await this.prisma.fmfMatchReport.update({
+        where: { id: report.id },
+        data: { unresolvedPlayers: remaining as Prisma.InputJsonValue },
+      });
+      linkedMatches += 1;
+    }
+
+    if (linkedMatches === 0) {
+      throw new NotFoundException(
+        'Nenhuma pendência encontrada nas súmulas com esse nome/CBF. Rode Reconciliar e tente de novo.',
+      );
+    }
+
+    if (cbf && !digits(player.cbfRegistration)) {
+      await this.prisma.player.update({
+        where: { id: playerId },
+        data: { cbfRegistration: cbf },
+      });
+    }
+
+    await this.refreshPlayerCareerTotals(tenantId);
+
+    return { linkedMatches, playerId: player.id, playerName: player.name };
+  }
+
   async getPlayerStats(playerId: string) {
     const player = await this.prisma.player.findUnique({
       where: { id: playerId },
