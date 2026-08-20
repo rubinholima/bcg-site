@@ -33,6 +33,11 @@ import {
   getPlayerMatchAvailability,
 } from '../common/player-match-availability.util';
 import {
+  isSubidaEvent,
+  primaryEventCategory,
+  resolveTravelEventCategories,
+} from '../common/category-subida.util';
+import {
   normalizeSportsSituation,
   isArchivedSportsSituation,
   isLoanedSportsSituation,
@@ -236,11 +241,147 @@ export class PlayersService {
       this.playerInAccommodationRooms(t.accommodationRooms, playerId),
     );
 
-    return [...linked, ...legacy].sort((a, b) => {
-      const da = new Date(a.matchDate).getTime();
-      const db = new Date(b.matchDate).getTime();
-      return db - da;
-    });
+    return [...linked, ...legacy]
+      .sort((a, b) => {
+        const da = new Date(a.matchDate).getTime();
+        const db = new Date(b.matchDate).getTime();
+        return db - da;
+      })
+      .map((travel) => {
+        const eventCategories = resolveTravelEventCategories(travel);
+        return {
+          ...travel,
+          eventCategories,
+          isSubida: isSubidaEvent(player.category, eventCategories),
+        };
+      });
+  }
+
+  /** Atuações/convocações em categoria diferente do cadastro (subida). */
+  async findSubidaHistory(playerId: string, allowedTenantIds: string[] | null = null) {
+    const player = await this.findOne(playerId, allowedTenantIds);
+    const squadCategory = player.category?.trim() || null;
+
+    const [fmfStats, travels] = await Promise.all([
+      this.prisma.fmfPlayerMatchStat.findMany({
+        where: {
+          playerId,
+          OR: [{ played: true }, { listed: true }],
+        },
+        orderBy: [{ match: { matchDate: 'desc' } }, { match: { round: 'desc' } }],
+        select: {
+          id: true,
+          played: true,
+          minutesPlayed: true,
+          match: {
+            select: {
+              id: true,
+              category: true,
+              matchDate: true,
+              competition: true,
+              homeTeam: true,
+              awayTeam: true,
+              sourceUrl: true,
+              tenantId: true,
+            },
+          },
+        },
+      }),
+      this.prisma.travelLogistics.findMany({
+        where: {
+          tenantId: player.tenantId,
+          status: { notIn: ['rascunho', 'cancelado'] },
+          participants: { some: { playerId } },
+        },
+        orderBy: [{ matchDate: 'desc' }, { createdAt: 'desc' }],
+        select: {
+          id: true,
+          category: true,
+          categories: true,
+          matchDate: true,
+          opponentName: true,
+          championshipName: true,
+        },
+      }),
+    ]);
+
+    const fmfEvents = fmfStats
+      .filter((row) => isSubidaEvent(squadCategory, row.match.category))
+      .map((row) => {
+        const eventCategory = row.match.category.trim();
+        const date = row.match.matchDate.toISOString().slice(0, 10);
+        return {
+          id: `fmf:${row.id}`,
+          source: 'fmf_match' as const,
+          date,
+          eventCategory,
+          eventCategories: [eventCategory],
+          squadCategory,
+          opponent: null as string | null,
+          competition: row.match.competition,
+          played: row.played,
+          minutesPlayed: row.minutesPlayed,
+          travelId: null as string | null,
+          fmfMatchId: row.match.id,
+          link: row.match.sourceUrl || null,
+          dedupeKey: `${date}|${eventCategory}`,
+        };
+      });
+
+    const fmfKeys = new Set(fmfEvents.map((event) => event.dedupeKey));
+
+    const travelEvents = travels
+      .map((travel) => {
+        const eventCategories = resolveTravelEventCategories(travel);
+        if (!isSubidaEvent(squadCategory, eventCategories)) return null;
+        const eventCategory = primaryEventCategory(eventCategories);
+        const date = travel.matchDate.toISOString().slice(0, 10);
+        const dedupeKey = `${date}|${eventCategory}`;
+        if (fmfKeys.has(dedupeKey)) return null;
+        return {
+          id: `travel:${travel.id}`,
+          source: 'convocation' as const,
+          date,
+          eventCategory,
+          eventCategories,
+          squadCategory,
+          opponent: travel.opponentName,
+          competition: travel.championshipName,
+          played: null as boolean | null,
+          minutesPlayed: null as number | null,
+          travelId: travel.id,
+          fmfMatchId: null as string | null,
+          link: `/dashboard/futebol/logistica/${travel.id}/edit`,
+          dedupeKey,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row != null);
+
+    const events = [...fmfEvents, ...travelEvents]
+      .map(({ dedupeKey: _dedupeKey, ...event }) => event)
+      .sort((a, b) => b.date.localeCompare(a.date) || a.source.localeCompare(b.source));
+
+    const byEventCategory = new Map<string, number>();
+    for (const event of events) {
+      byEventCategory.set(event.eventCategory, (byEventCategory.get(event.eventCategory) ?? 0) + 1);
+    }
+
+    return {
+      player: {
+        id: player.id,
+        name: player.name,
+        category: squadCategory,
+      },
+      summary: {
+        totalEvents: events.length,
+        convocations: events.filter((event) => event.source === 'convocation').length,
+        fmfMatches: events.filter((event) => event.source === 'fmf_match').length,
+        byEventCategory: [...byEventCategory.entries()]
+          .map(([category, count]) => ({ category, count }))
+          .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category, 'pt-BR')),
+      },
+      events,
+    };
   }
 
   /** Treinos registrados em Futebol → Treinadores com avaliação do atleta. */

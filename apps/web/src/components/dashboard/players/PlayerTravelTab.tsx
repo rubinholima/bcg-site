@@ -741,6 +741,9 @@ export function PlayerTravelTab({
                               {getCategoryLabel(item.category, "pt")}
                             </p>
                           ) : null}
+                          {item.isSubida ? (
+                            <p className="text-xs font-medium text-sky-400">Subida</p>
+                          ) : null}
                         </div>
                       </TableCell>
                       <TableCell>{formatTravelDestination(item.city, item.country)}</TableCell>

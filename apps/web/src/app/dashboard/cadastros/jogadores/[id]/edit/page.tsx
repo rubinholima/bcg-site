@@ -50,6 +50,7 @@ import { PlayerNutritionSection } from "@/components/dashboard/nutricao/PlayerNu
 import { PlayerPhysiologySection } from "@/components/dashboard/fisiologia/PlayerPhysiologySection";
 import { PlayerSocialPedagogySection } from "@/components/dashboard/assistencia-social/PlayerSocialPedagogySection";
 import { PlayerFmfStatsSection } from "@/components/dashboard/players/PlayerFmfStatsSection";
+import { PlayerSubidaHistorySection } from "@/components/dashboard/players/PlayerSubidaHistorySection";
 import type { PsychologicalAssessmentEntry } from "@/components/dashboard/player-module-types";
 import { RegistrationInviteCard } from "@/components/dashboard/RegistrationInviteCard";
 import {
@@ -957,7 +958,12 @@ export default function EditJogadorPage() {
         </Card>
       )}
 
-      {activeTab === "estatisticas" && <PlayerFmfStatsSection playerId={player.id} />}
+      {activeTab === "estatisticas" && (
+        <div className="space-y-6">
+          <PlayerSubidaHistorySection playerId={player.id} />
+          <PlayerFmfStatsSection playerId={player.id} />
+        </div>
+      )}
 
       {/* Tab: Análise de desempenho — relatório sintético (somente leitura) baseado no depto de análise */}
       {activeTab === "desempenho" && (() => {

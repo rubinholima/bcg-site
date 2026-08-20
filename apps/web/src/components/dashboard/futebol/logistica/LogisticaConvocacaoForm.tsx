@@ -21,6 +21,7 @@ import { api } from "@/lib/api";
 import { getPublicImageUrl } from "@/lib/media-url";
 import { dateKeyInBrazil } from "@/lib/brazil-time";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
+import { isSubidaEvent } from "@/lib/category-subida";
 import { parseTravelCategoriesFromApi } from "@/lib/travel-categories-utils";
 import {
   formatTravelLabel,
@@ -996,6 +997,7 @@ export function LogisticaConvocacaoForm() {
                     const photo = getPublicImageUrl(p.photoUrl);
                     const discipline = disciplineByPlayer.get(p.id);
                     const unavailable = discipline != null && !discipline.apto;
+                    const playedUp = isSubidaEvent(p.category, travelCategories);
                     return (
                       <li key={p.id}>
                         <label
@@ -1028,6 +1030,11 @@ export function LogisticaConvocacaoForm() {
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-medium">
                               {nick || p.name}
+                              {playedUp && p.category ? (
+                                <span className="ml-2 inline-flex rounded bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-400">
+                                  Subida · {categoryLabel(p.category)}
+                                </span>
+                              ) : null}
                             </span>
                             {unavailable ? (
                               <span className="block truncate text-xs font-medium text-amber-400">

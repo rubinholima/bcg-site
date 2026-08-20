@@ -75,6 +75,15 @@ export class PlayersController {
     return this.service.findTravelHistory(id, allowed);
   }
 
+  @Get(':id/subida-history')
+  async findSubidaHistory(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('id') id: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.findSubidaHistory(id, allowed);
+  }
+
   @Get(':id/training-history')
   async findTrainingHistory(
     @Req() req: Request & { user: CognitoJwtPayload },

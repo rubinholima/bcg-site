@@ -18,6 +18,9 @@ export interface PlayerTravelHistoryItem {
   estimatedArrival?: string | null;
   hotelName?: string | null;
   status: string;
+  /** Convocação/jogo em categoria diferente do cadastro do atleta. */
+  isSubida?: boolean;
+  eventCategories?: string[];
 }
 
 export const TRANSPORT_LABELS: Record<string, string> = {
