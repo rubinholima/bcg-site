@@ -262,8 +262,12 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
   const findRoster = (
     side: 'home' | 'away',
     jerseyNumber: number,
-  ): FmfReportPlayerStat | undefined =>
-    [...stats.values()].find((player) => player.teamSide === side && player.jerseyNumber === jerseyNumber);
+  ): FmfReportPlayerStat | undefined => {
+    const matches = [...stats.values()].filter(
+      (player) => player.teamSide === side && player.jerseyNumber === jerseyNumber,
+    );
+    return matches.length === 1 ? matches[0] : undefined;
+  };
 
   for (const row of splitTimedRows(section(text, '\nGols\n', '\nCartões Amarelos\n'))) {
     const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\s+(NR|PN|GC|FT)\b/i);

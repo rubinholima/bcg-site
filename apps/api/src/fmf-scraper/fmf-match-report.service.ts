@@ -12,6 +12,10 @@ import {
   type FmfReportPlayerStat,
   type ParsedFmfMatchReport,
 } from './fmf-match-report.parser';
+import {
+  buildPlayersByNormalizedName,
+  resolvePlayerForFmfStat,
+} from './fmf-player-link.util';
 import { syncFmfMatchIncidents } from '../futebol-jogos/football-match-records.sync';
 import { FmfScraperService } from './fmf-scraper.service';
 
@@ -364,20 +368,17 @@ export class FmfMatchReportService {
       );
     }
 
+    const playersByName = buildPlayersByNormalizedName(players);
+
     const ourStats = parsed.stats.filter((item) => item.teamSide === ourSide);
     const linked: Array<{ stat: FmfReportPlayerStat; playerId: string }> = [];
     const unresolved: Array<FmfReportPlayerStat & { reason: string }> = [];
     for (const stat of ourStats) {
-      const matches = playersByCbf.get(stat.cbfRegistration) ?? [];
-      if (matches.length === 1) linked.push({ stat, playerId: matches[0].id });
-      else {
-        unresolved.push({
-          ...stat,
-          reason:
-            matches.length === 0
-              ? 'Registro CBF não encontrado no cadastro do atleta'
-              : 'Registro CBF duplicado no cadastro',
-        });
+      const resolved = resolvePlayerForFmfStat(stat, playersByCbf, playersByName);
+      if (resolved.ok) {
+        linked.push({ stat, playerId: resolved.playerId });
+      } else {
+        unresolved.push({ ...stat, reason: resolved.reason });
       }
     }
 

@@ -195,33 +195,12 @@ export function isFriendlyDisciplineMatch(row: { competition: string }): boolean
   );
 }
 
-function findPlayerStatForMatch(
+/** Só usa playerId — evita cartão fantasma por camisa/sobrenome repetido entre categorias. */
+export function findPlayerStatForMatch(
   stats: MatchInput['playerStats'],
   player: PlayerInput,
 ): MatchInput['playerStats'][number] | undefined {
-  const byId = stats.find((s) => s.playerId === player.id);
-  if (byId) return byId;
-
-  const playerNameNorm = normalizeName(player.name);
-  const byExactName = stats.find((s) => normalizeName(s.playerName) === playerNameNorm);
-  if (byExactName) return byExactName;
-
-  const nameParts = playerNameNorm.split(' ').filter((p) => p.length > 2);
-  const lastName = nameParts[nameParts.length - 1] ?? '';
-  if (lastName) {
-    const byLastName = stats.filter((s) => normalizeName(s.playerName).includes(lastName));
-    if (byLastName.length === 1) return byLastName[0];
-  }
-
-  if (player.jerseyNumber == null) return undefined;
-
-  const byJersey = stats.filter((s) => s.jerseyNumber === player.jerseyNumber);
-  if (byJersey.length === 1) return byJersey[0];
-
-  if (lastName) {
-    return byJersey.find((s) => normalizeName(s.playerName).includes(lastName));
-  }
-  return undefined;
+  return stats.find((s) => s.playerId === player.id);
 }
 
 /** Mesma regra visual de célula da planilha original — sem alterar estado disciplinar. */
