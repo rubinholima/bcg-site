@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Save, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,11 @@ import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categ
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { isFootballKind } from "@/lib/home-data";
 import type { PhysiologyLoadEntryRow } from "@/lib/fisiologia-types";
+import {
+  parseGpsImportText,
+  parseGpsXlsxFile,
+  type GpsImportRowPatch,
+} from "@/lib/fisiologia-gps-import";
 
 type Tenant = {
   id: string;
@@ -34,62 +39,6 @@ interface RosterPlayer {
 }
 
 type EntryDraft = PhysiologyLoadEntryRow & { playerName: string };
-
-const GPS_FIELD_ALIASES: Record<string, keyof EntryDraft> = {
-  nome: "playerName",
-  atleta: "playerName",
-  player: "playerName",
-  jogador: "playerName",
-  maxdistance: "maxDistanceM",
-  distanciamax: "maxDistanceM",
-  distancia: "maxDistanceM",
-  maxspeed: "maxSpeedKmh",
-  velocidademax: "maxSpeedKmh",
-  velocidade: "maxSpeedKmh",
-  sprintcount: "sprintCount",
-  sprints: "sprintCount",
-  highintensitydistance: "highIntensityDistanceM",
-  distanciaalta: "highIntensityDistanceM",
-  distanciaaltainten: "highIntensityDistanceM",
-  lowintensitydistance: "lowIntensityDistanceM",
-  distanciabaixa: "lowIntensityDistanceM",
-  sprintdistance: "sprintDistanceM",
-  distanciasprint: "sprintDistanceM",
-  rpe: "rpe",
-  pse: "rpe",
-  trainingminutes: "trainingMinutes",
-  minutos: "trainingMinutes",
-  gameminutes: "gameMinutes",
-};
-
-function normalizeKey(key: string): string {
-  return key
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
-}
-
-function parseNum(value: string | undefined): number | null {
-  if (!value?.trim()) return null;
-  const n = Number(value.replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-}
-
-function parseCsvLine(line: string): string[] {
-  if (line.includes("\t")) return line.split("\t").map((c) => c.trim());
-  return line.split(/[,;]/).map((c) => c.trim());
-}
-
-function matchPlayerName(name: string, roster: RosterPlayer[]): RosterPlayer | null {
-  const norm = name.trim().toLowerCase();
-  if (!norm) return null;
-  const exact = roster.find((p) => p.name.trim().toLowerCase() === norm);
-  if (exact) return exact;
-  const partial = roster.find((p) => p.name.trim().toLowerCase().includes(norm) || norm.includes(p.name.trim().toLowerCase()));
-  return partial ?? null;
-}
 
 function emptyEntry(player: RosterPlayer): EntryDraft {
   return {
@@ -109,8 +58,86 @@ function emptyEntry(player: RosterPlayer): EntryDraft {
   };
 }
 
+function applyGpsPatch(entry: EntryDraft, patch: GpsImportRowPatch): EntryDraft {
+  return {
+    ...entry,
+    present: patch.present ?? entry.present,
+    gpsImportLabel: patch.gpsImportLabel ?? entry.gpsImportLabel,
+    rpe: patch.rpe !== undefined ? (patch.rpe as number | null) : entry.rpe,
+    trainingMinutes:
+      patch.trainingMinutes !== undefined
+        ? (patch.trainingMinutes as number | null)
+        : entry.trainingMinutes,
+    gameMinutes:
+      patch.gameMinutes !== undefined ? (patch.gameMinutes as number | null) : entry.gameMinutes,
+    maxDistanceM:
+      patch.maxDistanceM !== undefined ? (patch.maxDistanceM as number | null) : entry.maxDistanceM,
+    maxSpeedKmh:
+      patch.maxSpeedKmh !== undefined ? (patch.maxSpeedKmh as number | null) : entry.maxSpeedKmh,
+    sprintCount:
+      patch.sprintCount !== undefined ? (patch.sprintCount as number | null) : entry.sprintCount,
+    highIntensityDistanceM:
+      patch.highIntensityDistanceM !== undefined
+        ? (patch.highIntensityDistanceM as number | null)
+        : entry.highIntensityDistanceM,
+    lowIntensityDistanceM:
+      patch.lowIntensityDistanceM !== undefined
+        ? (patch.lowIntensityDistanceM as number | null)
+        : entry.lowIntensityDistanceM,
+    sprintDistanceM:
+      patch.sprintDistanceM !== undefined
+        ? (patch.sprintDistanceM as number | null)
+        : entry.sprintDistanceM,
+  };
+}
+
+function sanitizeEntryForSave(entry: EntryDraft) {
+  const asInt = (value: number | null | undefined) =>
+    value != null && Number.isFinite(value) ? Math.round(value) : undefined;
+  const asNum = (value: number | null | undefined) =>
+    value != null && Number.isFinite(value) ? value : undefined;
+  const rpe = asInt(entry.rpe);
+
+  return {
+    playerId: entry.playerId,
+    present: entry.present,
+    rpe: rpe != null && rpe >= 1 && rpe <= 10 ? rpe : undefined,
+    trainingMinutes: asInt(entry.trainingMinutes),
+    gameMinutes: asInt(entry.gameMinutes),
+    maxDistanceM: asNum(entry.maxDistanceM),
+    maxSpeedKmh: asNum(entry.maxSpeedKmh),
+    sprintCount: asInt(entry.sprintCount),
+    highIntensityDistanceM: asNum(entry.highIntensityDistanceM),
+    lowIntensityDistanceM: asNum(entry.lowIntensityDistanceM),
+    sprintDistanceM: asNum(entry.sprintDistanceM),
+    gpsImportLabel: entry.gpsImportLabel ?? undefined,
+    notes: entry.notes ?? undefined,
+  };
+}
+
+function buildImportMessage(result: {
+  matched: number;
+  withGpsData: number;
+  unmatched: string[];
+}): string {
+  if (result.matched === 0) {
+    return "Nenhum atleta reconhecido na planilha. Confira categoria e nomes.";
+  }
+  const parts = [
+    `${result.matched} atleta(s) reconhecido(s)`,
+    `${result.withGpsData} com dados GPS preenchidos`,
+  ];
+  if (result.unmatched.length > 0) {
+    const sample = result.unmatched.slice(0, 4).join(", ");
+    const extra = result.unmatched.length > 4 ? ` (+${result.unmatched.length - 4})` : "";
+    parts.push(`Sem vínculo: ${sample}${extra}`);
+  }
+  return parts.join(" · ");
+}
+
 export function FisiologiaCargaPanel() {
   const { categories: allCats } = useFixtureCategories();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [tenantId, setTenantId] = useState("");
   const [category, setCategory] = useState("");
@@ -123,8 +150,10 @@ export function FisiologiaCargaPanel() {
   const [roster, setRoster] = useState<RosterPlayer[]>([]);
   const [entries, setEntries] = useState<EntryDraft[]>([]);
   const [loadingRoster, setLoadingRoster] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [csvText, setCsvText] = useState("");
+  const [importFileName, setImportFileName] = useState("");
   const [feedback, setFeedback] = useState({ open: false, title: "", message: "" });
 
   useEffect(() => {
@@ -173,53 +202,71 @@ export function FisiologiaCargaPanel() {
     setEntries((prev) => prev.map((e) => (e.playerId === playerId ? { ...e, ...patch } : e)));
   };
 
-  const handleImportCsv = () => {
-    if (!csvText.trim()) {
-      setFeedback({ open: true, title: "Atenção", message: "Cole os dados CSV antes de importar." });
-      return;
+  const applyImportResult = (result: Awaited<ReturnType<typeof parseGpsImportText>>) => {
+    if (result.sessionHints.sessionDate) {
+      setSessionDate(result.sessionHints.sessionDate);
     }
-    const lines = csvText.trim().split(/\r?\n/).filter(Boolean);
-    if (lines.length < 2) {
-      setFeedback({ open: true, title: "Atenção", message: "CSV precisa de cabeçalho e ao menos uma linha." });
-      return;
+    if (result.sessionHints.trainingType && !trainingType.trim()) {
+      setTrainingType(result.sessionHints.trainingType);
     }
-    const headers = parseCsvLine(lines[0]!).map(normalizeKey);
-    let matched = 0;
-    const next = [...entries];
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseCsvLine(lines[i]!);
-      const row: Record<string, string> = {};
-      headers.forEach((h, idx) => {
-        row[h] = cols[idx] ?? "";
-      });
-      const nameKey = ["nome", "atleta", "player", "jogador"].find((k) => row[k]);
-      const playerName = nameKey ? row[nameKey] : cols[0] ?? "";
-      const player = matchPlayerName(playerName, roster);
-      if (!player) continue;
-      matched += 1;
-      const idx = next.findIndex((e) => e.playerId === player.id);
-      if (idx < 0) continue;
-      const patch: Partial<EntryDraft> = { present: true, gpsImportLabel: playerName };
-      for (const [header, field] of Object.entries(GPS_FIELD_ALIASES)) {
-        if (field === "playerName") continue;
-        const val = row[header];
-        if (val == null || !val.trim()) continue;
-        if (field === "rpe" || field === "sprintCount" || field === "trainingMinutes" || field === "gameMinutes") {
-          const n = parseNum(val);
-          if (n != null) (patch as Record<string, number | null>)[field] = Math.round(n);
-        } else {
-          const n = parseNum(val);
-          if (n != null) (patch as Record<string, number | null>)[field] = n;
-        }
-      }
-      next[idx] = { ...next[idx]!, ...patch };
-    }
-    setEntries(next);
+
+    setEntries((prev) =>
+      prev.map((entry) => {
+        const patch = result.patches.get(entry.playerId);
+        return patch ? applyGpsPatch(entry, patch) : entry;
+      }),
+    );
+
     setFeedback({
       open: true,
       title: "Importação",
-      message: matched > 0 ? `${matched} atleta(s) atualizado(s) a partir do CSV.` : "Nenhum atleta reconhecido no CSV.",
+      message: buildImportMessage(result),
     });
+  };
+
+  const handleImportCsv = () => {
+    if (!csvText.trim()) {
+      setFeedback({ open: true, title: "Atenção", message: "Cole os dados ou envie o arquivo XLSX da HUD." });
+      return;
+    }
+    if (roster.length === 0) {
+      setFeedback({ open: true, title: "Atenção", message: "Carregue o elenco da categoria antes de importar." });
+      return;
+    }
+    const result = parseGpsImportText(csvText, roster);
+    applyImportResult(result);
+  };
+
+  const handleImportFile = async (file: File | null) => {
+    if (!file) return;
+    if (roster.length === 0) {
+      setFeedback({ open: true, title: "Atenção", message: "Carregue o elenco da categoria antes de importar." });
+      return;
+    }
+
+    setImporting(true);
+    setImportFileName(file.name);
+    try {
+      const lower = file.name.toLowerCase();
+      if (lower.endsWith(".xlsx") || lower.endsWith(".xls")) {
+        const result = await parseGpsXlsxFile(file, roster);
+        applyImportResult(result);
+        return;
+      }
+
+      const text = await file.text();
+      setCsvText(text);
+      const result = parseGpsImportText(text, roster);
+      applyImportResult(result);
+    } catch (err) {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Não foi possível ler o arquivo.",
+      });
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handleSave = async () => {
@@ -242,24 +289,11 @@ export function FisiologiaCargaPanel() {
         trainingType: trainingType.trim() || undefined,
         staffName: staffName.trim() || undefined,
         notes: notes.trim() || undefined,
-        entries: entries.map((e) => ({
-          playerId: e.playerId,
-          present: e.present,
-          rpe: e.rpe ?? undefined,
-          trainingMinutes: e.trainingMinutes ?? undefined,
-          gameMinutes: e.gameMinutes ?? undefined,
-          maxDistanceM: e.maxDistanceM ?? undefined,
-          maxSpeedKmh: e.maxSpeedKmh ?? undefined,
-          sprintCount: e.sprintCount ?? undefined,
-          highIntensityDistanceM: e.highIntensityDistanceM ?? undefined,
-          lowIntensityDistanceM: e.lowIntensityDistanceM ?? undefined,
-          sprintDistanceM: e.sprintDistanceM ?? undefined,
-          gpsImportLabel: e.gpsImportLabel ?? undefined,
-          notes: e.notes ?? undefined,
-        })),
+        entries: entries.map(sanitizeEntryForSave),
       });
       setFeedback({ open: true, title: "Salvo", message: "Sessão de carga registrada." });
       setCsvText("");
+      setImportFileName("");
     } catch (err) {
       setFeedback({
         open: true,
@@ -347,17 +381,42 @@ export function FisiologiaCargaPanel() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Upload className="h-4 w-4 text-sky-500" />
-                  Importar CSV / planilha GPS
+                  Importar HUD / GPS
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.txt"
+                    className="hidden"
+                    onChange={(e) => {
+                      void handleImportFile(e.target.files?.[0] ?? null);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px]"
+                    disabled={importing}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {importing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                    Enviar XLSX da HUD
+                  </Button>
+                  {importFileName ? (
+                    <span className="text-xs text-muted-foreground truncate">{importFileName}</span>
+                  ) : null}
+                </div>
                 <textarea
                   className="flex min-h-[88px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground font-mono"
                   value={csvText}
                   onChange={(e) => setCsvText(e.target.value)}
-                  placeholder="nome,maxDistance,maxSpeed,sprintCount…"
+                  placeholder="Ou cole aqui a aba Summary (HUD) — Player, Distance(m), MAX Speed(km/h)…"
                 />
-                <Button type="button" variant="outline" onClick={handleImportCsv}>
+                <Button type="button" variant="outline" className="min-h-[44px]" onClick={handleImportCsv} disabled={importing}>
                   Aplicar importação
                 </Button>
               </CardContent>
