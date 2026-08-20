@@ -214,6 +214,7 @@ export type SumulaMatchListItemDto = {
   category: string;
   season: number;
   label: string;
+  sourceUrl: string | null;
 };
 
 export type SumulaCartoesMatchPlayerDto = {
@@ -302,6 +303,7 @@ export type CartoesSuspensaoRoundDto = {
   opponentName: string;
   yellowCards: number;
   redCards: number;
+  sourceUrl?: string | null;
 };
 
 export type CartoesSuspensaoPlayerDto = {

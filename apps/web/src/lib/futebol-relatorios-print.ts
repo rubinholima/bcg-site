@@ -46,6 +46,34 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
+function officialSumulaLinksPrintSection(
+  rounds: Array<{ shortLabel: string; sourceUrl?: string | null }>,
+): string {
+  const seen = new Set<string>();
+  const links: Array<{ label: string; url: string }> = [];
+  for (const round of rounds) {
+    const url = round.sourceUrl?.trim();
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    links.push({ label: round.shortLabel, url });
+  }
+  if (links.length === 0) return "";
+
+  return `
+    <section class="section">
+      <h3>Súmulas oficiais (FMF)</h3>
+      <ul class="official-sumula-links">
+        ${links
+          .map(
+            (link) =>
+              `<li><a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.label)}</a></li>`,
+          )
+          .join("")}
+      </ul>
+    </section>
+  `;
+}
+
 /** Logo estática do grupo — usada em relatórios com filtro "Todos os clubes". */
 export const BCG_GROUP_LOGO_PATH = "/bcg-logo.png";
 
@@ -938,6 +966,7 @@ export function buildSumulaCartoesPrintHtml(
       <div class="meta-item"><label>Placar</label><span>${escapeHtml(data.match.homeTeam)} ${data.match.homeScore ?? "—"} x ${data.match.awayScore ?? "—"} ${escapeHtml(data.match.awayTeam)}</span></div>
       ${data.match.phase ? `<div class="meta-item"><label>Fase</label><span>${escapeHtml(data.match.phase)}</span></div>` : ""}
       ${data.match.round != null ? `<div class="meta-item"><label>Rodada</label><span>${data.match.round}</span></div>` : ""}
+      ${data.match.sourceUrl?.trim() ? `<div class="meta-item full"><label>Súmula oficial</label><span><a href="${escapeHtml(data.match.sourceUrl.trim())}" target="_blank" rel="noopener noreferrer">Abrir PDF na FMF</a></span></div>` : ""}
     </div>
   `
     : "";
@@ -947,6 +976,10 @@ export function buildSumulaCartoesPrintHtml(
     : "";
 
   const disciplineBody = sumulaSeasonGridSection(data);
+  const officialLinks =
+    data.seasonGrid?.rounds?.length
+      ? officialSumulaLinksPrintSection(data.seasonGrid.rounds)
+      : "";
 
   return documentShell(
     `Súmula e Cartões — ${data.tenant.name}`,
@@ -957,7 +990,7 @@ export function buildSumulaCartoesPrintHtml(
     data.match
       ? ""
       : `<div class="meta-grid"><div class="meta-item full"><label>Temporada</label><span>${data.filters.season} · ${escapeHtml(data.filters.categoryLabel)}</span></div></div>`,
-    `${sumulaBody}${disciplineBody}`,
+    `${sumulaBody}${disciplineBody}${officialLinks}`,
     size,
   );
 }
@@ -2165,6 +2198,7 @@ export function buildCartoesSuspensaoPrintHtml(
         · Total de jogos: <strong>${data.totals.matchCount}</strong>
       </p>
     </section>
+    ${officialSumulaLinksPrintSection(data.rounds)}
   `;
 
   return documentShell(

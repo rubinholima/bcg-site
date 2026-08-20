@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  ExternalLink,
   FileText,
   Loader2,
   MapPin,
@@ -23,6 +22,7 @@ import {
 import { api } from "@/lib/api";
 import { formatDateDayMonYear } from "@/lib/format-date";
 import { getCategoryLabel } from "@/lib/fixture-categories";
+import { OfficialFmfSumulaLink } from "@/components/dashboard/futebol/OfficialFmfSumulaLink";
 import { printSumulaCartoesReport } from "@/lib/futebol-relatorios-print";
 import type { SumulaCartoesReportDto } from "@/lib/futebol-relatorios.types";
 import {
@@ -239,14 +239,7 @@ export function JogosDetailView({ gameKey }: Props) {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          {detail.sourceUrl ? (
-            <Button variant="outline" size="sm" className="min-h-[44px]" asChild>
-              <a href={detail.sourceUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                PDF oficial
-              </a>
-            </Button>
-          ) : null}
+          <OfficialFmfSumulaLink url={detail.sourceUrl} />
           {printPayload ? (
             <Button variant="outline" size="sm" className="min-h-[44px]" onClick={handlePrintSumula}>
               <Printer className="mr-2 h-4 w-4" />
@@ -405,6 +398,7 @@ export function JogosDetailView({ gameKey }: Props) {
 
         {activeTab === "sumula" && detail.sumulaMatch ? (
             <div className="space-y-6">
+              <OfficialFmfSumulaLink url={detail.sumulaMatch.sourceUrl} />
               <SumulaRosterTable
                 title="Mandante"
                 teamName={detail.sumulaMatch.home.teamName}

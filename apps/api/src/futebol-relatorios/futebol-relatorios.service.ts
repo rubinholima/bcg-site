@@ -1552,6 +1552,7 @@ export class FutebolRelatoriosService {
         season: true,
         phase: true,
         round: true,
+        sourceUrl: true,
       },
     });
 
@@ -1578,6 +1579,7 @@ export class FutebolRelatoriosService {
         category: row.category,
         season: row.season,
         label: `${formatBrDate(dateKey)} · ${row.homeTeam} ${score} ${row.awayTeam} · ${row.competition}`,
+        sourceUrl: row.sourceUrl?.trim() || null,
       };
     });
   }
@@ -2024,6 +2026,7 @@ export class FutebolRelatoriosService {
         category: true,
         competition: true,
         occurrencesText: true,
+        sourceUrl: true,
         playerStats: {
           select: {
             playerId: true,
@@ -2132,10 +2135,17 @@ export class FutebolRelatoriosService {
       };
     }
 
+    const sourceUrlByMatchId = new Map(
+      matches.map((row) => [row.id, row.sourceUrl?.trim() || null] as const),
+    );
+
     return {
       phase: resolvedPhase,
       nextRound,
-      rounds: grid.rounds,
+      rounds: grid.rounds.map((round) => ({
+        ...round,
+        sourceUrl: sourceUrlByMatchId.get(round.matchId) ?? null,
+      })),
       players: grid.players,
       totals: grid.totals,
     };

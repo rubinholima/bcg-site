@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Eye, Loader2, Printer } from "lucide-react";
+import { OfficialFmfSumulaLink } from "@/components/dashboard/futebol/OfficialFmfSumulaLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,15 @@ export function FutebolRelatorioSumulaCartoesForm() {
       cancelled = true;
     };
   }, [tenantId, season, category]);
+
+  const selectedMatch = useMemo(
+    () => matches.find((m) => m.id === matchId) ?? null,
+    [matches, matchId],
+  );
+  const officialSumulaUrl =
+    reportData?.match?.sourceUrl?.trim() ||
+    selectedMatch?.sourceUrl?.trim() ||
+    null;
 
   const fetchReport = async (): Promise<SumulaCartoesReportDto | null> => {
     if (!tenantId) {
@@ -256,6 +266,7 @@ export function FutebolRelatorioSumulaCartoesForm() {
           <PageSizeSelect value={pageSize} onChange={setPageSize} />
 
           <div className="flex flex-wrap gap-2 pt-1">
+            <OfficialFmfSumulaLink url={officialSumulaUrl} />
             <Button type="button" variant="outline" disabled={busy} onClick={() => void handlePreview()}>
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
               Visualizar
