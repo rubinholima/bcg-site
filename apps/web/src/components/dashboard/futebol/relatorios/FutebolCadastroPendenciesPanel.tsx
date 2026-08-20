@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, UserPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -29,6 +30,33 @@ function formatDateTime(iso: string | undefined): string {
   }
 }
 
+function normalizeSearch(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function itemMatchesSearch(
+  item: FmfCadastroPendenciesReport["items"][number],
+  query: string,
+): boolean {
+  if (!query) return true;
+  const haystack = [
+    item.sourceName,
+    item.cbfRegistration,
+    item.reason,
+    item.fixHint,
+    ...item.candidatePlayers.map((player) => player.name),
+    ...item.candidatePlayers.map((player) => player.cbfRegistration ?? ""),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return normalizeSearch(haystack).includes(query);
+}
+
 type FutebolCadastroPendenciesPanelProps = {
   initialTenantId?: string;
 };
@@ -41,6 +69,7 @@ export function FutebolCadastroPendenciesPanel({
   const [report, setReport] = useState<FmfCadastroPendenciesReport | null>(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (initialTenantId) setTenantId(initialTenantId);
@@ -95,6 +124,13 @@ export function FutebolCadastroPendenciesPanel({
     return `${report.totals.pendingGroups} atleta(s) · ${report.totals.affectedMatches} jogo(s)`;
   }, [report]);
 
+  const searchQuery = useMemo(() => normalizeSearch(search), [search]);
+
+  const filteredItems = useMemo(() => {
+    if (!report) return [];
+    return report.items.filter((item) => itemMatchesSearch(item, searchQuery));
+  }, [report, searchQuery]);
+
   if (loadingTenants) {
     return (
       <div className="flex min-h-28 items-center justify-center text-muted-foreground">
@@ -146,6 +182,23 @@ export function FutebolCadastroPendenciesPanel({
                 {" · "}
                 Atualizado em {formatDateTime(report.generatedAt)}
               </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="pendencias-search">Buscar</Label>
+                <Input
+                  id="pendencias-search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Nome ou CBF…"
+                  className="min-h-11 max-w-md text-foreground"
+                />
+              </div>
+
+              {filteredItems.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  Nenhum resultado para &quot;{search.trim()}&quot;.
+                </p>
+              ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -158,7 +211,7 @@ export function FutebolCadastroPendenciesPanel({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {report.items.map((item) => {
+                    {filteredItems.map((item) => {
                       const actions = resolveCadastroPendencyActions(report.tenantId, item);
                       return (
                         <TableRow key={item.key}>
@@ -222,6 +275,7 @@ export function FutebolCadastroPendenciesPanel({
                   </TableBody>
                 </Table>
               </div>
+              )}
             </>
           ) : null}
         </CardContent>
