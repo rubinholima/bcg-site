@@ -138,36 +138,107 @@ export function extractFmfRosterFullName(middleRaw: string): string {
   return best ?? middle;
 }
 
+function parseRosterPlayerLine(line: string): {
+  jerseyNumber: number;
+  sourceName: string;
+  cbfRegistration: string;
+} | null {
+  const match = line.match(/^(\d{1,3})\s+(.+)\s+(\d{5,10})$/);
+  if (!match) return null;
+  return {
+    jerseyNumber: Number(match[1]),
+    sourceName: extractFmfRosterFullName(match[2]),
+    cbfRegistration: match[3],
+  };
+}
+
+/**
+ * PDF às vezes quebra o nome no meio:
+ * "4 Joao Victor Machado"
+ * "De Oliveira Joao Victor Machado De Oliveira 776375"
+ */
+export function joinWrappedFmfRosterLines(lines: string[]): string[] {
+  const out: string[] = [];
+  let pending = '';
+
+  for (const raw of lines) {
+    const line = cleanLine(raw);
+    if (!line) continue;
+
+    if (pending) {
+      const combined = `${pending} ${line}`;
+      if (parseRosterPlayerLine(combined)) {
+        out.push(combined);
+        pending = '';
+        continue;
+      }
+      // Continua juntando (quebra em 3+ linhas é raro, mas possível).
+      pending = combined;
+      continue;
+    }
+
+    if (parseRosterPlayerLine(line)) {
+      out.push(line);
+      continue;
+    }
+
+    // Linha começa com camisa mas ainda sem CBF no fim → esperar continuação.
+    if (/^\d{1,3}\s+\S/.test(line) && !/\d{5,10}$/.test(line)) {
+      pending = line;
+    }
+  }
+
+  if (pending && parseRosterPlayerLine(pending)) {
+    out.push(pending);
+  }
+
+  return out;
+}
+
 function parseRoster(text: string): FmfReportRosterPlayer[] {
   const content = section(text, 'Relação de Jogadores', 'Árbitro Principal');
   if (!content) return [];
 
   const groups: FmfReportRosterPlayer[][] = [[], [], [], []];
   let group = -1;
+  let buffer: string[] = [];
+
+  const flushBuffer = () => {
+    if (group < 0 || buffer.length === 0) {
+      buffer = [];
+      return;
+    }
+    const teamSide = group === 0 || group === 2 ? 'home' : 'away';
+    for (const line of joinWrappedFmfRosterLines(buffer)) {
+      const parsed = parseRosterPlayerLine(line);
+      if (!parsed) continue;
+      groups[group].push({
+        ...parsed,
+        starter: group < 2,
+        teamSide,
+      });
+    }
+    buffer = [];
+  };
 
   for (const rawLine of content.split(/\r?\n/)) {
     const line = cleanLine(rawLine);
     if (!line) continue;
     if (/^Nº\s+Apelido\s+Nome Completo\s+CBF$/i.test(line)) {
+      flushBuffer();
       group = group < 0 ? 0 : 1;
       continue;
     }
     if (/^Substitutos$/i.test(line)) {
+      flushBuffer();
       group = group < 2 ? 2 : 3;
       continue;
     }
     if (group < 0) continue;
-    const match = line.match(/^(\d{1,3})\s+(.+)\s+(\d{5,10})$/);
-    if (!match) continue;
-    const teamSide = group === 0 || group === 2 ? 'home' : 'away';
-    groups[group].push({
-      jerseyNumber: Number(match[1]),
-      sourceName: extractFmfRosterFullName(match[2]),
-      cbfRegistration: match[3],
-      starter: group < 2,
-      teamSide,
-    });
+    buffer.push(line);
   }
+  flushBuffer();
+
   return groups.flat();
 }
 
