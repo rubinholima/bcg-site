@@ -321,6 +321,39 @@ export default function FmfScraperPage() {
     }
   };
 
+  const handleReconcileReports = async () => {
+    if (!reportTenantId) return;
+    setReportImporting("reconcile");
+    setReportMessage(null);
+    setError(null);
+    try {
+      const res = await authFetch("/api/fmf-scraper/match-reports/reconcile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId: reportTenantId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(
+          typeof data.message === "string"
+            ? data.message
+            : "Falha ao reconciliar súmulas.",
+        );
+        return;
+      }
+      setReportMessage(
+        `${data.reports ?? 0} súmula(s) reprocessada(s) · ${data.linked ?? 0} vínculo(s) · ${data.unresolved ?? 0} pendência(s).`,
+      );
+      await loadMatchReports(reportTenantId);
+    } catch {
+      setError("Erro ao reconciliar súmulas da FMF.");
+    } finally {
+      setReportImporting(null);
+    }
+  };
+
+  const importedReportCount = matchReports.filter((report) => report.imported).length;
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -493,6 +526,24 @@ export default function FmfScraperPage() {
                 </option>
               ))}
             </NativeSelect>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleReconcileReports()}
+              disabled={
+                !reportTenantId ||
+                reportLoading ||
+                !!reportImporting ||
+                importedReportCount === 0
+              }
+            >
+              {reportImporting === "reconcile" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Reconciliar importadas
+            </Button>
             <Button
               type="button"
               onClick={() => handleImportReports()}
