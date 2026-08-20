@@ -186,4 +186,9 @@ export class FmfScraperController {
   reconcileMatchReports(@Body() body: { tenantId: string }) {
     return this.matchReports.reconcile(body.tenantId);
   }
+
+  @Get('match-reports/cadastro-pendencies')
+  listCadastroPendencies(@Query('tenantId') tenantId: string) {
+    return this.matchReports.listCadastroPendencies(tenantId);
+  }
 }

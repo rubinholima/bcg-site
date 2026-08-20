@@ -14,6 +14,7 @@ import {
 } from './fmf-match-report.parser';
 import {
   buildPlayersByNormalizedName,
+  normalizeFmfPlayerName,
   resolvePlayerForFmfStat,
 } from './fmf-player-link.util';
 import { syncFmfMatchIncidents } from '../futebol-jogos/football-match-records.sync';
@@ -41,6 +42,45 @@ export interface FmfMatchReportCandidate {
     sourceName: string;
     reason: string;
   }>;
+}
+
+export interface FmfCadastroPendencyMatchRef {
+  externalMatchId: string;
+  matchDate: string | null;
+  category: string;
+  label: string;
+  reportUrl: string | null;
+}
+
+export interface FmfCadastroPendencyPlayerRef {
+  id: string;
+  name: string;
+  category: string | null;
+  cbfRegistration: string | null;
+  hasCbfInProfile: boolean;
+}
+
+export interface FmfCadastroPendencyItem {
+  key: string;
+  cbfRegistration: string;
+  sourceName: string;
+  reason: string;
+  fixHint: string;
+  matchCount: number;
+  matches: FmfCadastroPendencyMatchRef[];
+  candidatePlayers: FmfCadastroPendencyPlayerRef[];
+}
+
+export interface FmfCadastroPendenciesReport {
+  tenantId: string;
+  tenantName: string;
+  generatedAt: string;
+  items: FmfCadastroPendencyItem[];
+  totals: {
+    pendingGroups: number;
+    pendingReferences: number;
+    affectedMatches: number;
+  };
 }
 
 interface ImportOptions {
@@ -241,6 +281,132 @@ export class FmfMatchReportService {
     }
     await this.refreshPlayerCareerTotals(tenantId);
     return { tenantId, reports: reports.length, linked, unresolved };
+  }
+
+  async listCadastroPendencies(tenantId: string): Promise<FmfCadastroPendenciesReport> {
+    if (!tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório');
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId.trim() },
+      select: { id: true, name: true },
+    });
+    if (!tenant) throw new NotFoundException('Clube não encontrado');
+
+    const storeCandidates = await this.listCandidates(tenantId, { allowRefresh: false });
+    const reportUrlById = new Map(storeCandidates.map((row) => [row.externalMatchId, row.reportUrl]));
+
+    const reports = await this.prisma.fmfMatchReport.findMany({
+      where: { tenantId: tenant.id },
+      select: {
+        externalMatchId: true,
+        matchDate: true,
+        category: true,
+        homeTeam: true,
+        awayTeam: true,
+        homeScore: true,
+        awayScore: true,
+        competition: true,
+        sourceUrl: true,
+        unresolvedPlayers: true,
+      },
+      orderBy: { matchDate: 'desc' },
+    });
+
+    type AggRow = {
+      cbfRegistration: string;
+      sourceName: string;
+      reason: string;
+      matches: Map<string, FmfCadastroPendencyMatchRef>;
+    };
+    const grouped = new Map<string, AggRow>();
+
+    for (const report of reports) {
+      if (!Array.isArray(report.unresolvedPlayers) || report.unresolvedPlayers.length === 0) continue;
+
+      const dateKey = report.matchDate.toISOString().slice(0, 10);
+      const score =
+        report.homeScore != null && report.awayScore != null
+          ? `${report.homeScore} x ${report.awayScore}`
+          : '—';
+      const matchRef: FmfCadastroPendencyMatchRef = {
+        externalMatchId: report.externalMatchId,
+        matchDate: dateKey,
+        category: report.category,
+        label: `${this.formatBrDate(dateKey)} · ${report.homeTeam} ${score} ${report.awayTeam}`,
+        reportUrl: report.sourceUrl?.trim() || reportUrlById.get(report.externalMatchId) || null,
+      };
+
+      for (const raw of report.unresolvedPlayers) {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+        const row = raw as Prisma.JsonObject;
+        const cbfRegistration =
+          typeof row.cbfRegistration === 'string' ? digits(row.cbfRegistration) : '';
+        const sourceName = typeof row.sourceName === 'string' ? row.sourceName.trim() : '';
+        const reason =
+          typeof row.reason === 'string' && row.reason.trim()
+            ? row.reason.trim()
+            : 'Vínculo pendente';
+        const key = `${cbfRegistration}|${normalizeFmfPlayerName(sourceName)}|${reason}`;
+        const current = grouped.get(key) ?? {
+          cbfRegistration,
+          sourceName,
+          reason,
+          matches: new Map<string, FmfCadastroPendencyMatchRef>(),
+        };
+        current.matches.set(report.externalMatchId, matchRef);
+        grouped.set(key, current);
+      }
+    }
+
+    const players = await this.prisma.player.findMany({
+      where: { tenantId: tenant.id },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        cbfRegistration: true,
+        registrationProfile: true,
+      },
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    });
+
+    const items: FmfCadastroPendencyItem[] = [];
+    for (const [key, group] of grouped) {
+      const matches = [...group.matches.values()].sort((a, b) =>
+        (b.matchDate ?? '').localeCompare(a.matchDate ?? ''),
+      );
+      const candidatePlayers = this.resolveCadastroPendencyCandidates(group, players);
+      items.push({
+        key,
+        cbfRegistration: group.cbfRegistration,
+        sourceName: group.sourceName,
+        reason: group.reason,
+        fixHint: this.buildCadastroPendencyFixHint(group.reason, candidatePlayers.length),
+        matchCount: matches.length,
+        matches,
+        candidatePlayers,
+      });
+    }
+
+    items.sort((a, b) => {
+      if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+      return a.sourceName.localeCompare(b.sourceName, 'pt-BR');
+    });
+
+    const affectedMatches = new Set(items.flatMap((item) => item.matches.map((m) => m.externalMatchId)))
+      .size;
+
+    return {
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      generatedAt: new Date().toISOString(),
+      items,
+      totals: {
+        pendingGroups: items.length,
+        pendingReferences: items.reduce((sum, item) => sum + item.matchCount, 0),
+        affectedMatches,
+      },
+    };
   }
 
   async getPlayerStats(playerId: string) {
@@ -469,6 +635,81 @@ export class FmfMatchReportService {
     } finally {
       await parser.destroy();
     }
+  }
+
+  private formatBrDate(iso: string | null | undefined): string {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    if (!y || !m || !d) return iso;
+    return `${d}/${m}/${y}`;
+  }
+
+  private buildCadastroPendencyFixHint(reason: string, candidateCount: number): string {
+    if (reason === 'Registro CBF duplicado no cadastro') {
+      return 'Corrija o CBF duplicado nas fichas indicadas.';
+    }
+    if (reason === 'Nome duplicado no cadastro (sem CBF único)') {
+      return 'Defina o CBF correto na ficha do atleta certo.';
+    }
+    if (candidateCount === 1) {
+      return 'Informe ou confira o registro CBF na ficha do atleta.';
+    }
+    if (candidateCount > 1) {
+      return 'Escolha a ficha correta e ajuste o registro CBF.';
+    }
+    return 'Cadastre o atleta ou vincule o registro CBF na ficha.';
+  }
+
+  private resolveCadastroPendencyCandidates(
+    group: { cbfRegistration: string; sourceName: string; reason: string },
+    players: Array<{
+      id: string;
+      name: string;
+      category: string | null;
+      cbfRegistration: string | null;
+      registrationProfile: unknown;
+    }>,
+  ): FmfCadastroPendencyPlayerRef[] {
+    const toRef = (player: (typeof players)[number]): FmfCadastroPendencyPlayerRef => {
+      const profileCbf = cbfFromProfile(player.registrationProfile);
+      return {
+        id: player.id,
+        name: player.name,
+        category: player.category,
+        cbfRegistration: player.cbfRegistration?.trim() || profileCbf || null,
+        hasCbfInProfile: !!profileCbf,
+      };
+    };
+
+    const cbf = digits(group.cbfRegistration);
+    const byCbf = players.filter((player) => {
+      if (!cbf) return false;
+      const reg = digits(player.cbfRegistration) || cbfFromProfile(player.registrationProfile);
+      return reg === cbf;
+    });
+    if (group.reason === 'Registro CBF duplicado no cadastro' || byCbf.length > 1) {
+      return byCbf.map(toRef);
+    }
+    if (byCbf.length === 1) return [toRef(byCbf[0]!)];
+
+    const nameKey = normalizeFmfPlayerName(group.sourceName);
+    const byName = nameKey
+      ? players.filter((player) => normalizeFmfPlayerName(player.name) === nameKey)
+      : [];
+    if (group.reason === 'Nome duplicado no cadastro (sem CBF único)' || byName.length > 1) {
+      return byName.map(toRef);
+    }
+    if (byName.length === 1) return [toRef(byName[0]!)];
+
+    if (nameKey.length >= 4) {
+      const partial = players.filter((player) => {
+        const playerKey = normalizeFmfPlayerName(player.name);
+        return playerKey.includes(nameKey) || nameKey.includes(playerKey);
+      });
+      if (partial.length > 0 && partial.length <= 5) return partial.map(toRef);
+    }
+
+    return [];
   }
 
   private async getTenant(tenantId: string): Promise<TenantInfo> {

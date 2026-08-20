@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -10,6 +11,7 @@ import {
   Link2,
   Loader2,
   RefreshCw,
+  UserPen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -353,6 +355,15 @@ export default function FmfScraperPage() {
   };
 
   const importedReportCount = matchReports.filter((report) => report.imported).length;
+  const cadastroPendingCount = useMemo(() => {
+    const keys = new Set<string>();
+    for (const report of matchReports) {
+      for (const player of report.unresolvedPlayers) {
+        keys.add(`${player.cbfRegistration}|${player.sourceName}|${player.reason}`);
+      }
+    }
+    return keys.size;
+  }, [matchReports]);
 
   if (authLoading || loading) {
     return (
@@ -526,6 +537,21 @@ export default function FmfScraperPage() {
                 </option>
               ))}
             </NativeSelect>
+            {reportTenantId && cadastroPendingCount > 0 ? (
+              <Button type="button" variant="outline" className="min-h-11" asChild>
+                <Link
+                  href={`/dashboard/ferramentas/fmf-scraper/pendencias-cadastro?tenantId=${encodeURIComponent(reportTenantId)}`}
+                >
+                  <UserPen className="mr-2 h-4 w-4" />
+                  Pendências de cadastro ({cadastroPendingCount})
+                </Link>
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" className="min-h-11" disabled>
+                <UserPen className="mr-2 h-4 w-4" />
+                Pendências de cadastro
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
