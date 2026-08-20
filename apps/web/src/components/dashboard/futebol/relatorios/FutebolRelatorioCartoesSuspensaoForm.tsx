@@ -17,9 +17,10 @@ import {
 import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { api } from "@/lib/api";
-import { filterCategoriesForTenant, getCategoryLabel } from "@/lib/fixture-categories";
+import { getCategoryLabel } from "@/lib/fixture-categories";
 import type {
   CartoesSuspensaoReportDto,
+  DisciplineCompetitionOptionDto,
   DisciplinePhasesDto,
   PrintPageSize,
 } from "@/lib/futebol-relatorios.types";
@@ -30,6 +31,8 @@ import {
 import { PrintPreviewDialog } from "@/components/ui/print-preview-dialog";
 import { PageSizeSelect, useFutebolRelatorioTenants } from "./futebol-relatorio-shared";
 
+const MANUAL_COMPETITION = "__manual__";
+
 export function FutebolRelatorioCartoesSuspensaoForm() {
   const searchParams = useSearchParams();
   const { tenants } = useFutebolRelatorioTenants();
@@ -38,7 +41,10 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
 
   const [tenantId, setTenantId] = useState(searchParams.get("tenantId") ?? "");
   const [season, setSeason] = useState(String(currentYear));
-  const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [competition, setCompetition] = useState(searchParams.get("competition") ?? "");
+  const [manualCompetition, setManualCompetition] = useState("");
+  const [competitionOptions, setCompetitionOptions] = useState<DisciplineCompetitionOptionDto[]>([]);
+  const [loadingCompetitions, setLoadingCompetitions] = useState(false);
   const [phase, setPhase] = useState("auto");
   const [phaseOptions, setPhaseOptions] = useState<string[]>([]);
   const [currentPhase, setCurrentPhase] = useState<string | null>(null);
@@ -55,24 +61,83 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
     variant: FeedbackVariant;
   }>({ open: false, title: "", message: "", variant: "info" });
 
+  const urlCategoryHint = searchParams.get("category") ?? "";
+
   useEffect(() => {
     if (tenants.length === 1) setTenantId(tenants[0]!.id);
   }, [tenants]);
 
-  const tenant = tenants.find((t) => t.id === tenantId);
-  const categoryOptions = useMemo(() => {
-    if (!tenant) return allFixtureCategories;
-    return filterCategoriesForTenant(allFixtureCategories, tenant.categories);
-  }, [allFixtureCategories, tenant]);
+  const resolvedCompetition = useMemo(() => {
+    if (competition === MANUAL_COMPETITION) return manualCompetition.trim();
+    return competition.trim();
+  }, [competition, manualCompetition]);
 
   useEffect(() => {
-    if (!category && categoryOptions.length > 0) {
-      setCategory(categoryOptions[0]!.value);
+    if (!tenantId) {
+      setCompetitionOptions([]);
+      setCompetition("");
+      return;
     }
-  }, [category, categoryOptions]);
+    const seasonNum = Number(season);
+    if (!Number.isFinite(seasonNum) || seasonNum < 2000) return;
+
+    let cancelled = false;
+    setLoadingCompetitions(true);
+    const params = new URLSearchParams({
+      tenantId,
+      season: String(seasonNum),
+    });
+
+    api
+      .get<DisciplineCompetitionOptionDto[]>(
+        `/futebol-relatorios/discipline-competitions?${params.toString()}`,
+      )
+      .then(({ data }) => {
+        if (cancelled) return;
+        const options = Array.isArray(data) ? data : [];
+        setCompetitionOptions(options);
+
+        if (competition === MANUAL_COMPETITION) return;
+
+        const urlCompetition = searchParams.get("competition")?.trim();
+        if (urlCompetition && options.some((o) => o.competition === urlCompetition)) {
+          setCompetition(urlCompetition);
+          return;
+        }
+
+        const byCategory = urlCategoryHint
+          ? options.find((o) => o.referenceCategory === urlCategoryHint)
+          : undefined;
+        if (byCategory) {
+          setCompetition(byCategory.competition);
+          return;
+        }
+
+        if (options.length > 0) {
+          setCompetition((prev) =>
+            prev && options.some((o) => o.competition === prev) ? prev : options[0]!.competition,
+          );
+        } else {
+          setCompetition("");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCompetitionOptions([]);
+          setCompetition("");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingCompetitions(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, season, urlCategoryHint, searchParams]);
 
   useEffect(() => {
-    if (!tenantId || !category) {
+    if (!tenantId || !resolvedCompetition) {
       setPhaseOptions([]);
       setCurrentPhase(null);
       setPhase("auto");
@@ -85,7 +150,7 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
     setLoadingPhases(true);
     const params = new URLSearchParams({
       tenantId,
-      category,
+      competition: resolvedCompetition,
       season: String(seasonNum),
     });
 
@@ -111,7 +176,7 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
     return () => {
       cancelled = true;
     };
-  }, [tenantId, season, category]);
+  }, [tenantId, season, resolvedCompetition]);
 
   const fetchReport = async (): Promise<CartoesSuspensaoReportDto | null> => {
     if (!tenantId) {
@@ -123,11 +188,11 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
       });
       return null;
     }
-    if (!category) {
+    if (!resolvedCompetition) {
       setFeedback({
         open: true,
-        title: "Categoria obrigatória",
-        message: "Selecione a categoria do elenco.",
+        title: "Competição obrigatória",
+        message: "Selecione a competição ou informe o nome manualmente.",
         variant: "warning",
       });
       return null;
@@ -145,7 +210,7 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
     try {
       const params = new URLSearchParams({
         tenantId,
-        category,
+        competition: resolvedCompetition,
         season: String(seasonNum),
       });
       if (phase !== "auto") params.set("phase", phase);
@@ -190,6 +255,8 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
     setBusy(false);
   };
 
+  const selectedOption = competitionOptions.find((o) => o.competition === competition);
+
   return (
     <>
       <Card>
@@ -227,29 +294,64 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Categoria</Label>
-              <Select value={category || "none"} onValueChange={(v) => setCategory(v === "none" ? "" : v)}>
+              <Label>Competição</Label>
+              <Select
+                value={competition || "none"}
+                onValueChange={(v) => {
+                  if (v === "none") {
+                    setCompetition("");
+                    return;
+                  }
+                  setCompetition(v);
+                }}
+                disabled={!tenantId || loadingCompetitions}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione…" />
+                  <SelectValue
+                    placeholder={
+                      loadingCompetitions ? "Carregando competições…" : "Selecione a competição"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Selecione…</SelectItem>
-                  {categoryOptions.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {getCategoryLabel(cat.value, "pt", allFixtureCategories)}
+                  {competitionOptions.map((item) => (
+                    <SelectItem key={item.competition} value={item.competition}>
+                      {item.competition}
+                      {item.matchCount > 0 ? ` (${item.matchCount} jogos)` : ""}
                     </SelectItem>
                   ))}
+                  <SelectItem value={MANUAL_COMPETITION}>Outra (informar manualmente)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          {competition === MANUAL_COMPETITION ? (
+            <div className="space-y-2">
+              <Label>Nome da competição</Label>
+              <Input
+                className="text-foreground"
+                value={manualCompetition}
+                onChange={(e) => setManualCompetition(e.target.value)}
+                placeholder="Ex.: Campeonato Mineiro Sub-20"
+              />
+            </div>
+          ) : null}
+
+          {selectedOption ? (
+            <p className="text-sm text-muted-foreground">
+              Categoria de referência:{" "}
+              {getCategoryLabel(selectedOption.referenceCategory, "pt", allFixtureCategories)}
+            </p>
+          ) : null}
 
           <div className="space-y-2">
             <Label>Fase</Label>
             <Select
               value={phase}
               onValueChange={setPhase}
-              disabled={!tenantId || !category || loadingPhases}
+              disabled={!tenantId || !resolvedCompetition || loadingPhases}
             >
               <SelectTrigger>
                 <SelectValue

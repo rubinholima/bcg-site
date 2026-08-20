@@ -334,9 +334,11 @@ export type CartoesSuspensaoReportDto = {
   };
   filters: {
     season: number;
+    /** Competição da planilha (ex.: Campeonato Mineiro Sub-20). */
+    competition: string;
+    /** Categoria de referência dos jogos FMF (rótulo de subida). */
     category: string;
     categoryLabel: string;
-    competition: string | null;
     phase: string | null;
   };
   nextRound: {

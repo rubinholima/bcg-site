@@ -3,6 +3,7 @@ import {
   collectDisciplineParticipantIds,
   findPlayerStatForMatch,
   mergeDisciplinePlayerList,
+  reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
 
 describe('findPlayerStatForMatch', () => {
@@ -175,5 +176,95 @@ describe('mergeDisciplinePlayerList', () => {
       { playerStats: [{ playerId: 'a' }, { playerId: '' }, { playerId: 'b' }] },
     ]);
     expect(ids.sort()).toEqual(['a', 'b']);
+  });
+});
+
+describe('reportMatchesCompetitionFilter', () => {
+  it('separa mineiro e brasileiro sub-20', () => {
+    expect(
+      reportMatchesCompetitionFilter(
+        { competition: 'Campeonato Mineiro Sub-20' },
+        'Campeonato Mineiro Sub-20',
+      ),
+    ).toBe(true);
+    expect(
+      reportMatchesCompetitionFilter(
+        { competition: 'Campeonato Brasileiro Sub-20' },
+        'Campeonato Mineiro Sub-20',
+      ),
+    ).toBe(false);
+  });
+});
+
+describe('pendurado por competição', () => {
+  it('marca P na próxima rodada após 2 amarelos', () => {
+    const matchDate = new Date('2026-08-10T12:00:00Z');
+    const matchDate2 = new Date('2026-08-17T12:00:00Z');
+    const grid = buildDisciplineGrid({
+      clubName: 'Boston City',
+      aliases: [],
+      disciplineCategory: 'sub20',
+      nextMatchDate: '2026-08-24',
+      matches: [
+        {
+          id: 'm1',
+          round: 1,
+          matchDate,
+          homeTeam: 'Boston City',
+          awayTeam: 'NAC',
+          homeScore: 1,
+          awayScore: 0,
+          occurrencesText: null,
+          playerStats: [
+            {
+              playerId: 'kayo',
+              jerseyNumber: 11,
+              playerName: 'Kayo Fonseca',
+              played: true,
+              yellowCards: 1,
+              redCards: 0,
+            },
+          ],
+        },
+        {
+          id: 'm2',
+          round: 2,
+          matchDate: matchDate2,
+          homeTeam: 'Boston City',
+          awayTeam: 'Cruzeiro',
+          homeScore: 0,
+          awayScore: 0,
+          occurrencesText: null,
+          playerStats: [
+            {
+              playerId: 'kayo',
+              jerseyNumber: 11,
+              playerName: 'Kayo Fonseca',
+              played: true,
+              yellowCards: 1,
+              redCards: 0,
+            },
+          ],
+        },
+      ],
+      players: [
+        {
+          id: 'kayo',
+          name: 'Kayo Fonseca',
+          jerseyNumber: 11,
+          position: 'MEI',
+          category: 'sub20',
+          status: 'available',
+          statusDetails: null,
+          yellowCards: null,
+          redCards: null,
+          registrationProfile: null,
+        },
+      ],
+    });
+
+    const kayo = grid.players.find((p) => p.playerId === 'kayo');
+    expect(kayo?.yellowCardsTotal).toBe(2);
+    expect(kayo?.nextRoundCell).toBe('P');
   });
 });

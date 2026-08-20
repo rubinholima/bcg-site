@@ -200,6 +200,63 @@ export function isFriendlyDisciplineMatch(row: { competition: string }): boolean
   );
 }
 
+export function normalizeCompetitionKey(competition: string): string {
+  return competition.trim().toLocaleLowerCase('pt-BR');
+}
+
+/** Disciplina por competição (ex.: Mineiro Sub-20 ≠ Brasileiro Sub-20). */
+export function reportMatchesCompetitionFilter(
+  report: { competition: string },
+  competition: string,
+): boolean {
+  const wanted = competition?.trim();
+  if (!wanted) return true;
+  return normalizeCompetitionKey(report.competition) === normalizeCompetitionKey(wanted);
+}
+
+export function inferReferenceCategoryFromReports(
+  reports: Array<{ category: string }>,
+): string | null {
+  const counts = new Map<string, number>();
+  for (const row of reports) {
+    const category = row.category?.trim();
+    if (!category) continue;
+    counts.set(category, (counts.get(category) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const [category, count] of counts) {
+    if (count > bestCount) {
+      best = category;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+export function inferPrimaryCompetitionFromReports(
+  reports: Array<{ competition: string }>,
+): string | null {
+  const counts = new Map<string, { label: string; count: number }>();
+  for (const row of reports) {
+    const label = row.competition?.trim();
+    if (!label) continue;
+    const key = normalizeCompetitionKey(label);
+    const current = counts.get(key);
+    if (current) current.count += 1;
+    else counts.set(key, { label, count: 1 });
+  }
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const { label, count } of counts.values()) {
+    if (count > bestCount) {
+      best = label;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
 export function collectDisciplineParticipantIds(
   matches: Array<{ playerStats: Array<{ playerId: string | null | undefined }> }>,
 ): string[] {

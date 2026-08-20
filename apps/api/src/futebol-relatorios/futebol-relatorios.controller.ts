@@ -121,22 +121,39 @@ export class FutebolRelatoriosController {
     });
   }
 
+  @Get('discipline-competitions')
+  listDisciplineCompetitions(
+    @Query('tenantId') tenantId?: string,
+    @Query('season') season?: string,
+  ) {
+    if (!tenantId?.trim()) {
+      throw new BadRequestException('tenantId é obrigatório');
+    }
+    const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
+    return this.service.listDisciplineCompetitions({
+      tenantId: tenantId.trim(),
+      season: Number.isFinite(seasonNum) ? seasonNum : undefined,
+    });
+  }
+
   @Get('discipline-phases')
   listDisciplinePhases(
     @Query('tenantId') tenantId?: string,
+    @Query('competition') competition?: string,
     @Query('category') category?: string,
     @Query('season') season?: string,
   ) {
     if (!tenantId?.trim()) {
       throw new BadRequestException('tenantId é obrigatório');
     }
-    if (!category?.trim()) {
-      throw new BadRequestException('category é obrigatório');
+    if (!competition?.trim() && !category?.trim()) {
+      throw new BadRequestException('competition ou category é obrigatório');
     }
     const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
     return this.service.listDisciplinePhases({
       tenantId: tenantId.trim(),
-      category: category.trim(),
+      competition: competition?.trim() || undefined,
+      category: category?.trim() || undefined,
       season: Number.isFinite(seasonNum) ? seasonNum : undefined,
     });
   }
@@ -152,6 +169,7 @@ export class FutebolRelatoriosController {
   @Get('cartoes-suspensao')
   getCartoesSuspensao(
     @Query('tenantId') tenantId?: string,
+    @Query('competition') competition?: string,
     @Query('category') category?: string,
     @Query('season') season?: string,
     @Query('nextMatchDate') nextMatchDate?: string,
@@ -160,13 +178,14 @@ export class FutebolRelatoriosController {
     if (!tenantId?.trim()) {
       throw new BadRequestException('tenantId é obrigatório');
     }
-    if (!category?.trim()) {
-      throw new BadRequestException('category é obrigatório');
+    if (!competition?.trim() && !category?.trim()) {
+      throw new BadRequestException('competition ou category é obrigatório');
     }
     const seasonNum = season?.trim() ? Number(season.trim()) : undefined;
     return this.service.getCartoesSuspensaoReport({
       tenantId: tenantId.trim(),
-      category: category.trim(),
+      competition: competition?.trim() || undefined,
+      category: category?.trim() || undefined,
       season: Number.isFinite(seasonNum) ? seasonNum : undefined,
       nextMatchDate: nextMatchDate?.trim() || undefined,
       phase: phase?.trim() || undefined,

@@ -495,10 +495,15 @@ export function LogisticaConvocacaoForm() {
     const matchDate = String(selectedTravel.matchDate).slice(0, 10);
     const params = new URLSearchParams({
       tenantId,
-      category,
       season: String(season),
       nextMatchDate: matchDate,
     });
+    const travelCompetition = selectedTravel.championshipName?.trim();
+    if (travelCompetition) {
+      params.set("competition", travelCompetition);
+    } else if (category) {
+      params.set("category", category);
+    }
     let cancelled = false;
     api
       .get<CartoesSuspensaoReportDto>(`/futebol-relatorios/cartoes-suspensao?${params.toString()}`)

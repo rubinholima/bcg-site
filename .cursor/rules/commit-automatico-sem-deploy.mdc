@@ -1,0 +1,29 @@
+---
+description: Commit automático ao concluir alterações; deploy só quando o usuário pedir
+alwaysApply: true
+---
+
+# Commit automático — deploy só com pedido explícito
+
+## Commit
+
+- **Ao concluir** alterações de código (feature, fix, refactor) solicitadas ou feitas na sessão, **criar commit automaticamente** — não esperar o usuário pedir "commit".
+- Mensagem clara em **pt-BR**, focada no porquê.
+- **Não** incluir no commit: `.env`, credenciais, `backup_clean.sql`, scripts temporários de probe (Beatscode, etc.), arquivos claramente locais/de debug.
+- **Não** fazer push automaticamente — só se o usuário pedir push, deploy ou encerrar o dia (regras específicas desses fluxos prevalecem).
+
+## Deploy — PROIBIDO sem pedido
+
+- **Nunca** executar deploy (`pnpm build` + push + `git push production`) **a menos que o usuário peça explicitamente**: "deploy", "subir produção", "fazer deploy", etc.
+- Concluir implementação + commit **não** implica deploy.
+- Ao terminar uma tarefa: informar hash do commit e que produção **não** foi atualizada; aguardar pedido de deploy.
+
+## Resumo
+
+| Ação | Quando |
+|------|--------|
+| Commit | Automático ao concluir alterações relevantes |
+| Push origin | Só se pedido ou encerrar o dia |
+| Deploy produção | **Somente** pedido explícito do usuário |
+
+Esta regra **prevalece** sobre qualquer instrução genérica de "deploy após alteração de código".

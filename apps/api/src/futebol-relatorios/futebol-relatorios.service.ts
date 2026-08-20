@@ -81,9 +81,13 @@ import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
 import {
   buildDisciplineGrid,
   collectDisciplineParticipantIds,
+  inferPrimaryCompetitionFromReports,
+  inferReferenceCategoryFromReports,
   isCurrentSquadPlayer,
   isFriendlyDisciplineMatch,
   mergeDisciplinePlayerList,
+  normalizeCompetitionKey,
+  reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
@@ -1636,11 +1640,18 @@ export class FutebolRelatoriosService {
     });
 
     const seasonGrid = category
-      ? await this.buildSeasonDisciplineGridForCategory({
-          tenantId,
-          category,
-          season,
-        })
+      ? await (async () => {
+          const competition = await this.resolveDisciplineCompetition({
+            tenantId,
+            season,
+            category,
+          });
+          return this.buildSeasonDisciplineGridForCompetition({
+            tenantId,
+            competition,
+            season,
+          });
+        })()
       : null;
 
     return {
@@ -1953,14 +1964,15 @@ export class FutebolRelatoriosService {
       }));
   }
 
-  private async buildSeasonDisciplineGridForCategory(input: {
+  private async buildSeasonDisciplineGridForCompetition(input: {
     tenantId: string;
-    category: string;
+    competition: string;
     season: number;
     nextMatchDate?: string | null;
     phase?: string | null;
   }): Promise<{
     phase: string | null;
+    referenceCategory: string | null;
     nextRound: CartoesSuspensaoReportDto['nextRound'];
     rounds: CartoesSuspensaoReportDto['rounds'];
     players: CartoesSuspensaoReportDto['players'];
@@ -1993,24 +2005,6 @@ export class FutebolRelatoriosService {
     });
     const travels = dedupeTravelLogisticsList(travelsRaw);
 
-    const playersRaw = await this.prisma.player.findMany({
-      where: { tenantId: input.tenantId, category: input.category },
-      select: {
-        id: true,
-        name: true,
-        jerseyNumber: true,
-        position: true,
-        category: true,
-        status: true,
-        statusDetails: true,
-        yellowCards: true,
-        redCards: true,
-        registrationProfile: true,
-      },
-      orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
-    });
-    const players = playersRaw.filter(isCurrentSquadPlayer);
-
     const reportRows = await this.prisma.fmfMatchReport.findMany({
       where: { tenantId: input.tenantId, season: input.season },
       orderBy: [{ round: 'asc' }, { matchDate: 'asc' }],
@@ -2040,35 +2034,67 @@ export class FutebolRelatoriosService {
       },
     });
 
-    const categoryReports = reportRows.filter((row) =>
-      reportMatchesCategoryFilter(row, input.category, travels, clubName, aliases),
+    const competitionReports = reportRows.filter(
+      (row) =>
+        reportMatchesCompetitionFilter(row, input.competition) &&
+        (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
+          isFmfTeamMatch(row.awayTeam, clubName, aliases)),
     );
+
+    const referenceCategory = inferReferenceCategoryFromReports(competitionReports);
+
+    const playersRaw = referenceCategory
+      ? await this.prisma.player.findMany({
+          where: { tenantId: input.tenantId, category: referenceCategory },
+          select: {
+            id: true,
+            name: true,
+            jerseyNumber: true,
+            position: true,
+            category: true,
+            status: true,
+            statusDetails: true,
+            yellowCards: true,
+            redCards: true,
+            registrationProfile: true,
+          },
+          orderBy: [{ jerseyNumber: 'asc' }, { name: 'asc' }],
+        })
+      : [];
+    const players = playersRaw.filter(isCurrentSquadPlayer);
 
     const upcomingTravel = travels
       .filter((t) => t.matchDate >= new Date())
       .sort((a, b) => a.matchDate.getTime() - b.matchDate.getTime())
       .find((t) => {
-        const cats = parseTravelCategories(t.categories);
-        if (cats.length > 0) return cats.includes(input.category);
-        return t.category === input.category;
+        const travelCompetition = t.championshipName?.trim();
+        if (
+          travelCompetition &&
+          normalizeCompetitionKey(travelCompetition) ===
+            normalizeCompetitionKey(input.competition)
+        ) {
+          return true;
+        }
+        if (referenceCategory) {
+          const cats = parseTravelCategories(t.categories);
+          if (cats.length > 0) return cats.includes(referenceCategory);
+          return t.category === referenceCategory;
+        }
+        return false;
       });
 
     const store = await this.loadFmfStore();
     const autoPhase = resolveCurrentChampionshipPhaseForCategory(
       store,
-      input.category,
-      categoryReports,
+      referenceCategory ?? '',
+      competitionReports,
       upcomingTravel?.championshipName,
     );
     const resolvedPhase = input.phase?.trim() || autoPhase;
 
     const matches = filterRowsByChampionshipPhase(
-      categoryReports.filter(
-        (row) =>
-          (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
-            isFmfTeamMatch(row.awayTeam, clubName, aliases)) &&
-          row.homeScore != null &&
-          row.awayScore != null,
+      competitionReports.filter(
+        (row) => row.homeScore != null && row.awayScore != null,
       ),
       resolvedPhase,
     );
@@ -2121,7 +2147,7 @@ export class FutebolRelatoriosService {
       players: disciplinePlayers,
       clubName,
       aliases,
-      disciplineCategory: input.category,
+      disciplineCategory: referenceCategory ?? '',
       nextMatchDate,
       friendlyMatchIds,
     });
@@ -2141,6 +2167,7 @@ export class FutebolRelatoriosService {
 
     return {
       phase: resolvedPhase,
+      referenceCategory,
       nextRound,
       rounds: grid.rounds.map((round) => ({
         ...round,
@@ -2151,21 +2178,154 @@ export class FutebolRelatoriosService {
     };
   }
 
-  async listDisciplinePhases(filters: {
+  async listDisciplineCompetitions(filters: {
     tenantId: string;
-    category: string;
     season?: number;
-  }): Promise<{ currentPhase: string | null; phases: string[] }> {
+  }): Promise<
+    Array<{ competition: string; referenceCategory: string; matchCount: number }>
+  > {
     const tenantId = filters.tenantId?.trim();
     if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
-
-    const category = filters.category?.trim();
-    if (!category) throw new BadRequestException('category é obrigatório');
 
     const season =
       typeof filters.season === 'number' && filters.season >= 2000
         ? filters.season
         : new Date().getFullYear();
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { id: true, name: true, slug: true, tradeName: true },
+    });
+    if (!tenant) throw new NotFoundException('Clube não encontrado');
+
+    const clubName = tenant.tradeName?.trim() || tenant.name;
+    const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+
+    const reportRows = await this.prisma.fmfMatchReport.findMany({
+      where: { tenantId, season },
+      select: {
+        competition: true,
+        category: true,
+        homeTeam: true,
+        awayTeam: true,
+      },
+    });
+
+    const grouped = new Map<
+      string,
+      { competition: string; referenceCategory: string; matchCount: number }
+    >();
+
+    for (const row of reportRows) {
+      if (
+        !isFmfTeamMatch(row.homeTeam, clubName, aliases) &&
+        !isFmfTeamMatch(row.awayTeam, clubName, aliases)
+      ) {
+        continue;
+      }
+      const competition = row.competition?.trim();
+      if (!competition) continue;
+      const key = normalizeCompetitionKey(competition);
+      const current = grouped.get(key);
+      if (current) {
+        current.matchCount += 1;
+        continue;
+      }
+      grouped.set(key, {
+        competition,
+        referenceCategory: row.category,
+        matchCount: 1,
+      });
+    }
+
+    return [...grouped.values()].sort((a, b) =>
+      a.competition.localeCompare(b.competition, 'pt-BR'),
+    );
+  }
+
+  private async resolveDisciplineCompetition(input: {
+    tenantId: string;
+    season: number;
+    competition?: string | null;
+    category?: string | null;
+  }): Promise<string> {
+    const competition = input.competition?.trim();
+    if (competition) return competition;
+
+    const category = input.category?.trim();
+    if (!category) {
+      throw new BadRequestException('competition é obrigatório');
+    }
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: input.tenantId },
+      select: { id: true, name: true, slug: true, tradeName: true },
+    });
+    if (!tenant) throw new NotFoundException('Clube não encontrado');
+
+    const clubName = tenant.tradeName?.trim() || tenant.name;
+    const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+
+    const travelsRaw = await this.prisma.travelLogistics.findMany({
+      where: { tenantId: input.tenantId, status: { not: 'cancelado' } },
+      select: {
+        matchDate: true,
+        opponentName: true,
+        championshipName: true,
+        category: true,
+        categories: true,
+        isHomeMatch: true,
+        stadiumName: true,
+        city: true,
+        status: true,
+        id: true,
+        tenantId: true,
+      },
+    });
+    const travels = dedupeTravelLogisticsList(travelsRaw);
+
+    const reportRows = await this.prisma.fmfMatchReport.findMany({
+      where: { tenantId: input.tenantId, season: input.season },
+      select: {
+        competition: true,
+        category: true,
+        matchDate: true,
+        homeTeam: true,
+        awayTeam: true,
+      },
+    });
+
+    const categoryReports = reportRows.filter((row) =>
+      reportMatchesCategoryFilter(row, category, travels, clubName, aliases),
+    );
+    const resolved = inferPrimaryCompetitionFromReports(categoryReports);
+    if (resolved) return resolved;
+
+    throw new BadRequestException(
+      'Nenhuma competição encontrada para os filtros informados.',
+    );
+  }
+
+  async listDisciplinePhases(filters: {
+    tenantId: string;
+    competition?: string;
+    category?: string;
+    season?: number;
+  }): Promise<{ currentPhase: string | null; phases: string[] }> {
+    const tenantId = filters.tenantId?.trim();
+    if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
+
+    const season =
+      typeof filters.season === 'number' && filters.season >= 2000
+        ? filters.season
+        : new Date().getFullYear();
+
+    const competition = await this.resolveDisciplineCompetition({
+      tenantId,
+      season,
+      competition: filters.competition,
+      category: filters.category,
+    });
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -2202,40 +2362,61 @@ export class FutebolRelatoriosService {
         homeScore: true,
         awayScore: true,
         category: true,
+        competition: true,
         homeTeam: true,
         awayTeam: true,
       },
       orderBy: [{ matchDate: 'asc' }],
     });
 
-    const categoryReports = reportRows.filter((row) =>
-      reportMatchesCategoryFilter(row, category, travels, clubName, aliases),
+    const competitionReports = reportRows.filter(
+      (row) =>
+        reportMatchesCompetitionFilter(row, competition) &&
+        (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
+          isFmfTeamMatch(row.awayTeam, clubName, aliases)),
     );
+
+    const referenceCategory = inferReferenceCategoryFromReports(competitionReports);
 
     const upcomingTravel = travels
       .filter((t) => t.matchDate >= new Date())
       .sort((a, b) => a.matchDate.getTime() - b.matchDate.getTime())
       .find((t) => {
-        const cats = parseTravelCategories(t.categories);
-        if (cats.length > 0) return cats.includes(category);
-        return t.category === category;
+        const travelCompetition = t.championshipName?.trim();
+        if (
+          travelCompetition &&
+          normalizeCompetitionKey(travelCompetition) === normalizeCompetitionKey(competition)
+        ) {
+          return true;
+        }
+        if (referenceCategory) {
+          const cats = parseTravelCategories(t.categories);
+          if (cats.length > 0) return cats.includes(referenceCategory);
+          return t.category === referenceCategory;
+        }
+        return false;
       });
 
     const store = await this.loadFmfStore();
     const currentPhase = resolveCurrentChampionshipPhaseForCategory(
       store,
-      category,
-      categoryReports,
+      referenceCategory ?? '',
+      competitionReports,
       upcomingTravel?.championshipName,
     );
-    const phases = collectChampionshipPhasesForCategory(store, category, categoryReports);
+    const phases = collectChampionshipPhasesForCategory(
+      store,
+      referenceCategory ?? '',
+      competitionReports,
+    );
 
     return { currentPhase, phases };
   }
 
   async getCartoesSuspensaoReport(filters: {
     tenantId: string;
-    category: string;
+    competition?: string;
+    category?: string;
     season?: number;
     nextMatchDate?: string;
     phase?: string;
@@ -2243,13 +2424,17 @@ export class FutebolRelatoriosService {
     const tenantId = filters.tenantId?.trim();
     if (!tenantId) throw new BadRequestException('tenantId é obrigatório');
 
-    const category = filters.category?.trim();
-    if (!category) throw new BadRequestException('category é obrigatório');
-
     const season =
       typeof filters.season === 'number' && filters.season >= 2000
         ? filters.season
         : new Date().getFullYear();
+
+    const competition = await this.resolveDisciplineCompetition({
+      tenantId,
+      season,
+      competition: filters.competition,
+      category: filters.category,
+    });
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
@@ -2258,49 +2443,28 @@ export class FutebolRelatoriosService {
     if (!tenant) throw new NotFoundException('Clube não encontrado');
 
     const categoryLabels = await this.loadCategoryLabelsMap();
-    const categoryLabel = categoryLabels[category] ?? category;
 
-    const seasonGrid = await this.buildSeasonDisciplineGridForCategory({
+    const seasonGrid = await this.buildSeasonDisciplineGridForCompetition({
       tenantId,
-      category,
+      competition,
       season,
       nextMatchDate: filters.nextMatchDate?.trim() || null,
       phase: filters.phase?.trim() || null,
     });
 
-    const travelsRaw = await this.prisma.travelLogistics.findMany({
-      where: { tenantId, status: { not: 'cancelado' } },
-      select: {
-        matchDate: true,
-        opponentName: true,
-        championshipName: true,
-        category: true,
-        categories: true,
-      },
-      orderBy: { matchDate: 'asc' },
-    });
-    const upcomingTravel = travelsRaw
-      .filter((t) => t.matchDate >= new Date())
-      .find((t) => {
-        const cats = parseTravelCategories(t.categories);
-        if (cats.length > 0) return cats.includes(category);
-        return t.category === category;
-      });
-
-    const reportSample = await this.prisma.fmfMatchReport.findFirst({
-      where: { tenantId, season, category },
-      select: { competition: true, phase: true },
-      orderBy: { matchDate: 'desc' },
-    });
+    const referenceCategory = seasonGrid.referenceCategory;
+    const categoryLabel = referenceCategory
+      ? (categoryLabels[referenceCategory] ?? referenceCategory)
+      : '—';
 
     return {
       tenant: { id: tenant.id, name: tenant.name, logoUrl: tenant.logoUrl },
       filters: {
         season,
-        category,
+        competition,
+        category: referenceCategory ?? '',
         categoryLabel,
-        competition: reportSample?.competition ?? upcomingTravel?.championshipName ?? null,
-        phase: seasonGrid.phase ?? reportSample?.phase ?? null,
+        phase: seasonGrid.phase,
       },
       nextRound: seasonGrid.nextRound,
       rounds: seasonGrid.rounds,

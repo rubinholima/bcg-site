@@ -333,6 +333,12 @@ export type DisciplinePhasesDto = {
   phases: string[];
 };
 
+export type DisciplineCompetitionOptionDto = {
+  competition: string;
+  referenceCategory: string;
+  matchCount: number;
+};
+
 export type CartoesSuspensaoReportDto = {
   tenant: {
     id: string;
@@ -341,9 +347,9 @@ export type CartoesSuspensaoReportDto = {
   };
   filters: {
     season: number;
+    competition: string;
     category: string;
     categoryLabel: string;
-    competition: string | null;
     phase: string | null;
   };
   nextRound: {

@@ -904,9 +904,9 @@ function sumulaSeasonGridSection(data: SumulaCartoesReportDto): string {
     tenant: data.tenant,
     filters: {
       season: data.filters.season,
+      competition: data.filters.categoryLabel,
       category: data.filters.category ?? "",
       categoryLabel: data.filters.categoryLabel,
-      competition: null,
       phase: null,
     },
     nextRound: grid.nextRound,
@@ -2154,9 +2154,9 @@ export function buildCartoesSuspensaoPrintHtml(
   size: PrintPageSize = "A4",
 ): string {
   const badge = [
-    data.filters.categoryLabel,
+    data.filters.competition,
     String(data.filters.season),
-    data.filters.competition ?? "",
+    data.filters.phase ?? "",
   ]
     .filter(Boolean)
     .join(" · ");
