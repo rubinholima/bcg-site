@@ -25,6 +25,7 @@ const NAV: Array<{ id: string; label: string; indent?: boolean }> = [
   { id: "futebol-captacao", label: "→ Captação", indent: true },
   { id: "futebol-treinadores-treinos", label: "→ Treinadores — treinos", indent: true },
   { id: "futebol-nutricao", label: "→ Nutricionista", indent: true },
+  { id: "futebol-fisiologia", label: "→ Fisiologia / Performance", indent: true },
   { id: "assistencia-social", label: "Assist. Social / Pedagogia", indent: false },
   { id: "socio", label: "Sócio Torcedor" },
   { id: "marketing", label: "Marketing" },
@@ -551,6 +552,19 @@ export default function ManualPage() {
                 <strong>Anamnese:</strong> aba <strong>Anamneses</strong> ou ficha do atleta (aba Nutrição).
                 Campos clínicos + referências cruzadas de médico, psicologia e fisioterapia quando existirem
                 no cadastro.
+              </p>
+            </SubSection>
+
+            <SubSection id="futebol-fisiologia" title="Fisiologia / Performance">
+              <p>
+                Menu: <strong>Depto Futebol → Performance → Fisiologia</strong> (avaliações, hidratação,
+                carga e relatórios). Avaliações ficam ligadas ao cadastro do atleta.
+              </p>
+              <p>
+                <strong>Protocolos de dobras (mm, com décimos):</strong> Jackson &amp; Pollock 7;
+                Jackson &amp; Pollock 3 (PE+AB+CX); Faulkner 4 (TR+SE+SI+AB); Guedes 3 masculino
+                (TR+SI+AB); Sloan &amp; Weir; Glick &amp; Kelly; ou % manual. O formulário mostra só os
+                pontos do protocolo escolhido e calcula % gordura, massa magra e status.
               </p>
             </SubSection>
           </Section>

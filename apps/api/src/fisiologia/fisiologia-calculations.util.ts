@@ -1,4 +1,4 @@
-/** Cálculos de fisiologia — alinhados à planilha operacional do clube. */
+/** Cálculos de fisiologia — alinhados às planilhas operacionais do clube. */
 
 export type SkinfoldSites = {
   se?: number | null;
@@ -10,12 +10,40 @@ export type SkinfoldSites = {
   cx?: number | null;
 };
 
-export const PHYSIOLOGY_PROTOCOLS = [
+export type PhysiologyProtocolValue =
+  | 'jackson_pollock_7'
+  | 'jackson_pollock_3'
+  | 'faulkner_4'
+  | 'guedes_3'
+  | 'sloan_weir'
+  | 'glick_kelly'
+  | 'manual';
+
+export const PHYSIOLOGY_PROTOCOLS: Array<{
+  value: PhysiologyProtocolValue;
+  label: string;
+}> = [
   { value: 'jackson_pollock_7', label: 'Jackson & Pollock — 7 dobras' },
+  { value: 'jackson_pollock_3', label: 'Jackson & Pollock — 3 dobras (PE+AB+CX)' },
+  { value: 'faulkner_4', label: 'Faulkner — 4 dobras (TR+SE+SI+AB)' },
+  { value: 'guedes_3', label: 'Guedes — 3 dobras masculino (TR+SI+AB)' },
   { value: 'sloan_weir', label: 'Sloan & Weir — 3 dobras (TR+SI+AB)' },
   { value: 'glick_kelly', label: 'Glick & Kelly — 3 dobras (TR+SI+CX)' },
   { value: 'manual', label: 'Manual (% informado)' },
-] as const;
+];
+
+/** Sites exigidos por protocolo (SE = subescapular = SB nas planilhas Faulkner). */
+export const PROTOCOL_SKINFOLD_KEYS: Record<
+  Exclude<PhysiologyProtocolValue, 'manual'>,
+  Array<keyof SkinfoldSites>
+> = {
+  jackson_pollock_7: ['se', 'tr', 'pe', 'ax', 'si', 'ab', 'cx'],
+  jackson_pollock_3: ['pe', 'ab', 'cx'],
+  faulkner_4: ['tr', 'se', 'si', 'ab'],
+  guedes_3: ['tr', 'si', 'ab'],
+  sloan_weir: ['tr', 'si', 'ab'],
+  glick_kelly: ['tr', 'si', 'cx'],
+};
 
 export const COMPOSITION_STATUS_LABELS: Record<string, string> = {
   acima: 'Acima do ideal',
@@ -75,9 +103,27 @@ function sumSkinfolds(s: SkinfoldSites, keys: Array<keyof SkinfoldSites>): numbe
   return sum;
 }
 
+export function skinfoldKeysForProtocol(protocol?: string | null): Array<keyof SkinfoldSites> {
+  if (!protocol || protocol === 'manual') return [];
+  return PROTOCOL_SKINFOLD_KEYS[protocol as Exclude<PhysiologyProtocolValue, 'manual'>] ?? [
+    'se',
+    'tr',
+    'pe',
+    'ax',
+    'si',
+    'ab',
+    'cx',
+  ];
+}
+
 /** Densidade corporal → % gordura (Siri). */
 function bodyFatFromDensity(density: number): number {
+  if (!Number.isFinite(density) || density <= 0) return NaN;
   return Math.round((((4.95 / density) - 4.5) * 100) * 10) / 10;
+}
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
 }
 
 export function computeBodyFatPercent(input: {
@@ -87,30 +133,59 @@ export function computeBodyFatPercent(input: {
   manualPercent?: number | null;
 }): number | null {
   if (input.protocol === 'manual' && input.manualPercent != null && input.manualPercent >= 0) {
-    return Math.round(input.manualPercent * 10) / 10;
+    return round1(input.manualPercent);
   }
   const s = input.skinfolds ?? {};
   const age = input.ageYears ?? 18;
+  const protocol = input.protocol ?? 'jackson_pollock_7';
 
-  if (input.protocol === 'sloan_weir') {
-    const sum3 = sumSkinfolds(s, ['tr', 'si', 'ab']);
+  // Faulkner 1968 — 4 dobras (TR + SB/SE + SI + AB). %G direto (sem densidade).
+  if (protocol === 'faulkner_4') {
+    const sum4 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.faulkner_4);
+    if (sum4 == null) return null;
+    return round1(sum4 * 0.153 + 5.783);
+  }
+
+  // Guedes 1985 — masculino 3 dobras (TR + SI + AB) + Siri.
+  if (protocol === 'guedes_3') {
+    const sum3 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.guedes_3);
+    if (sum3 == null || sum3 <= 0) return null;
+    const density = 1.17136 - 0.06706 * Math.log10(sum3);
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
+  }
+
+  // Jackson & Pollock 3 — masculino (PE/PT + AB + CX) + Siri.
+  if (protocol === 'jackson_pollock_3') {
+    const x1 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.jackson_pollock_3);
+    if (x1 == null) return null;
+    const density = 1.10938 - 0.0008267 * x1 + 0.0000016 * x1 * x1 - 0.0002574 * age;
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
+  }
+
+  if (protocol === 'sloan_weir') {
+    const sum3 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.sloan_weir);
     if (sum3 == null) return null;
     const density = 1.10938 - 0.0008267 * sum3 + 0.0000016 * sum3 * sum3 - 0.0002574 * age;
-    return bodyFatFromDensity(density);
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
   }
 
-  if (input.protocol === 'glick_kelly') {
-    const sum3 = sumSkinfolds(s, ['tr', 'si', 'cx']);
+  if (protocol === 'glick_kelly') {
+    const sum3 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.glick_kelly);
     if (sum3 == null) return null;
     const density = 1.093 - 0.0008267 * sum3 + 0.0000016 * sum3 * sum3 - 0.0002574 * age;
-    return bodyFatFromDensity(density);
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
   }
 
-  // Jackson & Pollock 7 (SE, TR, PE, AX, SI, AB, CX)
-  const sum7 = sumSkinfolds(s, ['se', 'tr', 'pe', 'ax', 'si', 'ab', 'cx']);
+  // Jackson & Pollock 7 — masculino (SE, TR, PE, AX, SI, AB, CX) + Siri.
+  const sum7 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.jackson_pollock_7);
   if (sum7 == null) return null;
   const density = 1.112 - 0.00043499 * sum7 + 0.00000055 * sum7 * sum7 - 0.00028826 * age;
-  return bodyFatFromDensity(density);
+  const pct = bodyFatFromDensity(density);
+  return Number.isFinite(pct) ? pct : null;
 }
 
 export function computeLeanMassKg(
@@ -119,7 +194,7 @@ export function computeLeanMassKg(
 ): number | null {
   if (weightKg == null || bodyFatPercent == null || weightKg <= 0) return null;
   const fatKg = (weightKg * bodyFatPercent) / 100;
-  return Math.round((weightKg - fatKg) * 10) / 10;
+  return round1(weightKg - fatKg);
 }
 
 /** Faixas simplificadas por faixa etária (ajustável na planilha). */

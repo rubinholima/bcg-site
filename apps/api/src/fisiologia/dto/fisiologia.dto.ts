@@ -13,14 +13,15 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/** Dobras em mm — aceita décimos (ex.: 12.5). */
 export class SkinfoldsDto {
-  @IsOptional() @IsNumber() se?: number;
-  @IsOptional() @IsNumber() tr?: number;
-  @IsOptional() @IsNumber() pe?: number;
-  @IsOptional() @IsNumber() ax?: number;
-  @IsOptional() @IsNumber() si?: number;
-  @IsOptional() @IsNumber() ab?: number;
-  @IsOptional() @IsNumber() cx?: number;
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) se?: number;
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) tr?: number;
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) pe?: number;
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) ax?: number;
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) si?: number;
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) ab?: number;
+  @IsOptional() @Type(() => Number) @IsNumber({ maxDecimalPlaces: 2 }) cx?: number;
 }
 
 export class CreatePhysiologyAssessmentDto {

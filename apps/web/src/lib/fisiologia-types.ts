@@ -11,6 +11,9 @@ export const EVALUATOR_ROLES = [
 
 export const PHYSIOLOGY_PROTOCOLS = [
   { value: 'jackson_pollock_7', label: 'Jackson & Pollock — 7 dobras' },
+  { value: 'jackson_pollock_3', label: 'Jackson & Pollock — 3 dobras (PE+AB+CX)' },
+  { value: 'faulkner_4', label: 'Faulkner — 4 dobras (TR+SE+SI+AB)' },
+  { value: 'guedes_3', label: 'Guedes — 3 dobras masculino (TR+SI+AB)' },
   { value: 'sloan_weir', label: 'Sloan & Weir — 3 dobras (TR+SI+AB)' },
   { value: 'glick_kelly', label: 'Glick & Kelly — 3 dobras (TR+SI+CX)' },
   { value: 'manual', label: 'Manual (% informado)' },

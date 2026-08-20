@@ -22,6 +22,7 @@ import {
   computeCompositionStatus,
   computeLeanMassKg,
   COMPOSITION_STATUS_LABELS,
+  skinfoldKeysForProtocol,
 } from "@/lib/fisiologia-calculations";
 import {
   ASSESSMENT_TYPES,
@@ -51,14 +52,16 @@ interface Props {
 }
 
 const SKINFOLD_FIELDS: Array<{ key: keyof SkinfoldSites; label: string }> = [
-  { key: "se", label: "SE (subescapular)" },
+  { key: "se", label: "SE / SB (subescapular)" },
   { key: "tr", label: "TR (tríceps)" },
-  { key: "pe", label: "PE (peitoral)" },
-  { key: "ax", label: "AX (axilar)" },
+  { key: "pe", label: "PE / PT (peitoral)" },
+  { key: "ax", label: "AX / AM (axilar)" },
   { key: "si", label: "SI (supra-ilíaca)" },
   { key: "ab", label: "AB (abdominal)" },
   { key: "cx", label: "CX (coxa)" },
 ];
+
+type SkinfoldInputMap = Record<keyof SkinfoldSites, string>;
 
 function parseNum(value: string): number | null {
   if (!value.trim()) return null;
@@ -66,8 +69,35 @@ function parseNum(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function emptySkinfolds(): SkinfoldSites {
-  return { se: null, tr: null, pe: null, ax: null, si: null, ab: null, cx: null };
+/** Mantém a digitação (12, / 12.) sem forçar inteiro no meio da edição. */
+function isPartialDecimalInput(value: string): boolean {
+  return /^\d*[.,]?\d*$/.test(value.trim()) && value.trim().length > 0;
+}
+
+function emptySkinfoldInputs(): SkinfoldInputMap {
+  return { se: "", tr: "", pe: "", ax: "", si: "", ab: "", cx: "" };
+}
+
+function skinfoldsFromInputs(inputs: SkinfoldInputMap): SkinfoldSites {
+  return {
+    se: parseNum(inputs.se),
+    tr: parseNum(inputs.tr),
+    pe: parseNum(inputs.pe),
+    ax: parseNum(inputs.ax),
+    si: parseNum(inputs.si),
+    ab: parseNum(inputs.ab),
+    cx: parseNum(inputs.cx),
+  };
+}
+
+function inputsFromSkinfolds(sites: SkinfoldSites | null | undefined): SkinfoldInputMap {
+  const empty = emptySkinfoldInputs();
+  if (!sites) return empty;
+  for (const key of Object.keys(empty) as Array<keyof SkinfoldSites>) {
+    const v = sites[key];
+    if (v != null && Number.isFinite(v)) empty[key] = String(v).replace(".", ",");
+  }
+  return empty;
 }
 
 export function PhysiologyAssessmentFormDialog({
@@ -88,7 +118,7 @@ export function PhysiologyAssessmentFormDialog({
   const [height, setHeight] = useState("");
   const [protocol, setProtocol] = useState("jackson_pollock_7");
   const [manualBodyFat, setManualBodyFat] = useState("");
-  const [skinfolds, setSkinfolds] = useState<SkinfoldSites>(emptySkinfolds());
+  const [skinfoldInputs, setSkinfoldInputs] = useState<SkinfoldInputMap>(emptySkinfoldInputs());
   const [vo2max, setVo2max] = useState("");
   const [cmjCm, setCmjCm] = useState("");
   const [illinoisSec, setIllinoisSec] = useState("");
@@ -106,6 +136,13 @@ export function PhysiologyAssessmentFormDialog({
     [players, playerId],
   );
 
+  const skinfolds = useMemo(() => skinfoldsFromInputs(skinfoldInputs), [skinfoldInputs]);
+
+  const visibleSkinfoldFields = useMemo(() => {
+    const keys = new Set(skinfoldKeysForProtocol(protocol));
+    return SKINFOLD_FIELDS.filter((f) => keys.has(f.key));
+  }, [protocol]);
+
   useEffect(() => {
     if (!open) return;
     if (edit) {
@@ -118,7 +155,7 @@ export function PhysiologyAssessmentFormDialog({
       setHeight(edit.height != null ? String(edit.height) : "");
       setProtocol(edit.protocol ?? "jackson_pollock_7");
       setManualBodyFat(edit.bodyFatPercent != null ? String(edit.bodyFatPercent) : "");
-      setSkinfolds({ ...emptySkinfolds(), ...(edit.skinfolds ?? {}) });
+      setSkinfoldInputs(inputsFromSkinfolds(edit.skinfolds));
       setVo2max(edit.vo2max != null ? String(edit.vo2max) : "");
       setCmjCm(edit.cmjCm != null ? String(edit.cmjCm) : "");
       setIllinoisSec(edit.illinoisSec != null ? String(edit.illinoisSec) : "");
@@ -139,7 +176,7 @@ export function PhysiologyAssessmentFormDialog({
       setHeight("");
       setProtocol("jackson_pollock_7");
       setManualBodyFat("");
-      setSkinfolds(emptySkinfolds());
+      setSkinfoldInputs(emptySkinfoldInputs());
       setVo2max("");
       setCmjCm("");
       setIllinoisSec("");
@@ -173,7 +210,8 @@ export function PhysiologyAssessmentFormDialog({
   }, [weight, height, assessedAt, selectedPlayer, manualBodyFat, protocol, skinfolds]);
 
   const setSkinfold = (key: keyof SkinfoldSites, value: string) => {
-    setSkinfolds((prev) => ({ ...prev, [key]: parseNum(value) }));
+    if (value !== "" && !isPartialDecimalInput(value)) return;
+    setSkinfoldInputs((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async () => {
@@ -188,6 +226,11 @@ export function PhysiologyAssessmentFormDialog({
     setSaving(true);
     try {
       const w = parseNum(weight);
+      const keys = skinfoldKeysForProtocol(protocol);
+      const skinfoldsPayload =
+        protocol === "manual"
+          ? undefined
+          : Object.fromEntries(keys.map((k) => [k, skinfolds[k] ?? null])) as SkinfoldSites;
       const payload = {
         playerId,
         category: selectedPlayer?.category ?? undefined,
@@ -198,7 +241,7 @@ export function PhysiologyAssessmentFormDialog({
         weight: w ?? undefined,
         height: parseNum(height) ?? undefined,
         bmi: computed.bmi ?? undefined,
-        skinfolds: protocol === "manual" ? undefined : skinfolds,
+        skinfolds: skinfoldsPayload,
         protocol,
         bodyFatPercent: computed.bodyFatPercent ?? undefined,
         leanMassKg: computed.leanMassKg ?? undefined,
@@ -333,13 +376,14 @@ export function PhysiologyAssessmentFormDialog({
               </div>
               {protocol !== "manual" ? (
                 <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-                  {SKINFOLD_FIELDS.map((f) => (
+                  {visibleSkinfoldFields.map((f) => (
                     <div key={f.key} className="grid gap-1">
-                      <Label className="text-xs text-muted-foreground">{f.label}</Label>
+                      <Label className="text-xs text-muted-foreground">{f.label} (mm)</Label>
                       <Input
                         className="text-foreground"
                         inputMode="decimal"
-                        value={skinfolds[f.key] != null ? String(skinfolds[f.key]) : ""}
+                        placeholder="12,5"
+                        value={skinfoldInputs[f.key]}
                         onChange={(e) => setSkinfold(f.key, e.target.value)}
                       />
                     </div>

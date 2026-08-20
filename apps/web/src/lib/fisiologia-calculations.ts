@@ -1,6 +1,9 @@
-/** Cálculos de fisiologia — espelho da API (planilha operacional). */
+/** Cálculos de fisiologia — espelho da API (planilhas operacionais). */
 
-import type { SkinfoldSites } from '@/lib/fisiologia-types';
+import {
+  PHYSIOLOGY_PROTOCOLS,
+  type SkinfoldSites,
+} from '@/lib/fisiologia-types';
 
 export const COMPOSITION_STATUS_LABELS: Record<string, string> = {
   acima: 'Acima do ideal',
@@ -13,6 +16,20 @@ export const HYDRATION_STATUS_LABELS: Record<string, string> = {
   desidratado: 'Desidratado',
   severo: 'Severamente desidratado',
 };
+
+const PROTOCOL_SKINFOLD_KEYS: Record<string, Array<keyof SkinfoldSites>> = {
+  jackson_pollock_7: ['se', 'tr', 'pe', 'ax', 'si', 'ab', 'cx'],
+  jackson_pollock_3: ['pe', 'ab', 'cx'],
+  faulkner_4: ['tr', 'se', 'si', 'ab'],
+  guedes_3: ['tr', 'si', 'ab'],
+  sloan_weir: ['tr', 'si', 'ab'],
+  glick_kelly: ['tr', 'si', 'cx'],
+};
+
+export function skinfoldKeysForProtocol(protocol?: string | null): Array<keyof SkinfoldSites> {
+  if (!protocol || protocol === 'manual') return [];
+  return PROTOCOL_SKINFOLD_KEYS[protocol] ?? PROTOCOL_SKINFOLD_KEYS.jackson_pollock_7!;
+}
 
 export function computeBmi(weightKg: number | null | undefined, heightCm: number | null | undefined): number | null {
   if (weightKg == null || heightCm == null || weightKg <= 0 || heightCm <= 0) return null;
@@ -60,7 +77,12 @@ function sumSkinfolds(s: SkinfoldSites, keys: Array<keyof SkinfoldSites>): numbe
 }
 
 function bodyFatFromDensity(density: number): number {
+  if (!Number.isFinite(density) || density <= 0) return NaN;
   return Math.round((((4.95 / density) - 4.5) * 100) * 10) / 10;
+}
+
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
 }
 
 export function computeBodyFatPercent(input: {
@@ -70,23 +92,55 @@ export function computeBodyFatPercent(input: {
   manualPercent?: number | null;
 }): number | null {
   if (input.protocol === 'manual' && input.manualPercent != null && input.manualPercent >= 0) {
-    return Math.round(input.manualPercent * 10) / 10;
+    return round1(input.manualPercent);
   }
   const s = input.skinfolds ?? {};
   const age = input.ageYears ?? 18;
-  if (input.protocol === 'sloan_weir') {
-    const sum3 = sumSkinfolds(s, ['tr', 'si', 'ab']);
-    if (sum3 == null) return null;
-    return bodyFatFromDensity(1.10938 - 0.0008267 * sum3 + 0.0000016 * sum3 * sum3 - 0.0002574 * age);
+  const protocol = input.protocol ?? 'jackson_pollock_7';
+
+  if (protocol === 'faulkner_4') {
+    const sum4 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.faulkner_4!);
+    if (sum4 == null) return null;
+    return round1(sum4 * 0.153 + 5.783);
   }
-  if (input.protocol === 'glick_kelly') {
-    const sum3 = sumSkinfolds(s, ['tr', 'si', 'cx']);
-    if (sum3 == null) return null;
-    return bodyFatFromDensity(1.093 - 0.0008267 * sum3 + 0.0000016 * sum3 * sum3 - 0.0002574 * age);
+
+  if (protocol === 'guedes_3') {
+    const sum3 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.guedes_3!);
+    if (sum3 == null || sum3 <= 0) return null;
+    const density = 1.17136 - 0.06706 * Math.log10(sum3);
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
   }
-  const sum7 = sumSkinfolds(s, ['se', 'tr', 'pe', 'ax', 'si', 'ab', 'cx']);
+
+  if (protocol === 'jackson_pollock_3') {
+    const x1 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.jackson_pollock_3!);
+    if (x1 == null) return null;
+    const density = 1.10938 - 0.0008267 * x1 + 0.0000016 * x1 * x1 - 0.0002574 * age;
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
+  }
+
+  if (protocol === 'sloan_weir') {
+    const sum3 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.sloan_weir!);
+    if (sum3 == null) return null;
+    const density = 1.10938 - 0.0008267 * sum3 + 0.0000016 * sum3 * sum3 - 0.0002574 * age;
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
+  }
+
+  if (protocol === 'glick_kelly') {
+    const sum3 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.glick_kelly!);
+    if (sum3 == null) return null;
+    const density = 1.093 - 0.0008267 * sum3 + 0.0000016 * sum3 * sum3 - 0.0002574 * age;
+    const pct = bodyFatFromDensity(density);
+    return Number.isFinite(pct) ? pct : null;
+  }
+
+  const sum7 = sumSkinfolds(s, PROTOCOL_SKINFOLD_KEYS.jackson_pollock_7!);
   if (sum7 == null) return null;
-  return bodyFatFromDensity(1.112 - 0.00043499 * sum7 + 0.00000055 * sum7 * sum7 - 0.00028826 * age);
+  const density = 1.112 - 0.00043499 * sum7 + 0.00000055 * sum7 * sum7 - 0.00028826 * age;
+  const pct = bodyFatFromDensity(density);
+  return Number.isFinite(pct) ? pct : null;
 }
 
 export function computeLeanMassKg(
@@ -94,7 +148,7 @@ export function computeLeanMassKg(
   bodyFatPercent: number | null | undefined,
 ): number | null {
   if (weightKg == null || bodyFatPercent == null || weightKg <= 0) return null;
-  return Math.round((weightKg - (weightKg * bodyFatPercent) / 100) * 10) / 10;
+  return round1(weightKg - (weightKg * bodyFatPercent) / 100);
 }
 
 export function computeCompositionStatus(
@@ -122,11 +176,5 @@ export function computeHydrationStatus(
 }
 
 export function protocolLabel(protocol: string | null | undefined): string {
-  const map: Record<string, string> = {
-    jackson_pollock_7: 'Jackson & Pollock — 7 dobras',
-    sloan_weir: 'Sloan & Weir — 3 dobras (TR+SI+AB)',
-    glick_kelly: 'Glick & Kelly — 3 dobras (TR+SI+CX)',
-    manual: 'Manual (% informado)',
-  };
-  return map[protocol ?? ''] ?? protocol ?? '—';
+  return PHYSIOLOGY_PROTOCOLS.find((p) => p.value === protocol)?.label ?? protocol ?? '—';
 }
