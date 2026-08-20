@@ -320,6 +320,10 @@ export type CartoesSuspensaoPlayerDto = {
   unavailable: boolean;
   unavailableReason: string | null;
   aptoForNextRound: boolean;
+  /** Categoria do cadastro quando atleta subiu/desceu em relação à planilha. */
+  squadCategory: string | null;
+  squadCategoryLabel?: string | null;
+  playedUp: boolean;
 };
 
 export type DisciplinePhasesDto = {

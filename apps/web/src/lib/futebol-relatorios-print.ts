@@ -2069,9 +2069,13 @@ function cartoesSuspensaoPlayerRows(data: CartoesSuspensaoReportDto): string {
     .map((player) => {
       const rowClass = player.unavailable ? "row-unavailable" : "";
       const cells = player.roundCells.map((code) => cartoesSuspensaoDisciplineCell(code)).join("");
+      const squadNote =
+        player.playedUp && player.squadCategoryLabel
+          ? ` <span class="muted">[${escapeHtml(player.squadCategoryLabel)}]</span>`
+          : "";
       return `<tr class="${rowClass}">
         <td class="num">${player.num}</td>
-        <td class="left">${escapeHtml(player.name)} <span class="muted">(${escapeHtml(player.positionLabel)})</span></td>
+        <td class="left">${escapeHtml(player.name)}${squadNote} <span class="muted">(${escapeHtml(player.positionLabel)})</span></td>
         <td class="num">${player.yellowCardsTotal}</td>
         <td class="num">${player.redCardsTotal}</td>
         ${cells}

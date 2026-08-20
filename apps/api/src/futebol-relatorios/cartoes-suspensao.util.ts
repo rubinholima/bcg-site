@@ -35,6 +35,9 @@ export type DisciplinePlayerRow = {
   unavailable: boolean;
   unavailableReason: string | null;
   aptoForNextRound: boolean;
+  /** Categoria do cadastro quando diferente da planilha (subida). */
+  squadCategory: string | null;
+  playedUp: boolean;
 };
 
 export type DisciplineGridResult = {
@@ -85,6 +88,8 @@ type PlayerInput = {
   yellowCards: number | null;
   redCards: number | null;
   registrationProfile: unknown;
+  /** Categoria do cadastro (elenco). */
+  category?: string | null;
 };
 
 type PlayerRoundState = {
@@ -195,6 +200,41 @@ export function isFriendlyDisciplineMatch(row: { competition: string }): boolean
   );
 }
 
+export function collectDisciplineParticipantIds(
+  matches: Array<{ playerStats: Array<{ playerId: string | null | undefined }> }>,
+): string[] {
+  const ids = new Set<string>();
+  for (const match of matches) {
+    for (const stat of match.playerStats) {
+      const id = stat.playerId?.trim();
+      if (id) ids.add(id);
+    }
+  }
+  return [...ids];
+}
+
+/** Elenco da categoria + atletas convocados/jogadores que atuaram em jogos desta categoria (subida). */
+export function mergeDisciplinePlayerList<T extends { id: string; jerseyNumber: number | null; name: string }>(
+  rosterPlayers: T[],
+  participantIds: string[],
+  guestPlayers: T[],
+): T[] {
+  const rosterIds = new Set(rosterPlayers.map((player) => player.id));
+  const guestById = new Map(guestPlayers.map((player) => [player.id, player]));
+  const merged = new Map<string, T>();
+  for (const player of rosterPlayers) merged.set(player.id, player);
+  for (const id of participantIds) {
+    if (rosterIds.has(id)) continue;
+    const guest = guestById.get(id);
+    if (guest) merged.set(id, guest);
+  }
+  return [...merged.values()].sort(
+    (a, b) =>
+      (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) ||
+      a.name.localeCompare(b.name, 'pt-BR'),
+  );
+}
+
 /** Só usa playerId — evita cartão fantasma por camisa/sobrenome repetido entre categorias. */
 export function findPlayerStatForMatch(
   stats: MatchInput['playerStats'],
@@ -259,6 +299,7 @@ export function buildDisciplineGrid(input: {
   players: PlayerInput[];
   clubName: string;
   aliases: string[];
+  disciplineCategory: string;
   nextMatchDate?: string | null;
   /** Jogos amistosos — aparecem na planilha, mas não alteram pendurado/suspensão. */
   friendlyMatchIds?: ReadonlySet<string>;
@@ -402,6 +443,10 @@ export function buildDisciplineGrid(input: {
       const disciplineSuspended =
         state.stjdRoundsLeft > 0 || state.suspensionRoundsLeft > 0;
       const unavailable = disciplineSuspended || !cadastroAvail.apto;
+      const squadCategory = player.category?.trim() || null;
+      const playedUp =
+        squadCategory != null &&
+        squadCategory !== input.disciplineCategory.trim();
 
       return {
         num: index + 1,
@@ -416,6 +461,8 @@ export function buildDisciplineGrid(input: {
         unavailable,
         unavailableReason,
         aptoForNextRound: !unavailable,
+        squadCategory,
+        playedUp,
       };
     })
     .sort(

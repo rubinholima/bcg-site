@@ -80,8 +80,10 @@ import {
 import type { FmfScraperStore } from '../fmf-scraper/fmf-scraper.service';
 import {
   buildDisciplineGrid,
+  collectDisciplineParticipantIds,
   isCurrentSquadPlayer,
   isFriendlyDisciplineMatch,
+  mergeDisciplinePlayerList,
 } from './cartoes-suspensao.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
@@ -1996,6 +1998,7 @@ export class FutebolRelatoriosService {
         name: true,
         jerseyNumber: true,
         position: true,
+        category: true,
         status: true,
         statusDetails: true,
         yellowCards: true,
@@ -2071,6 +2074,30 @@ export class FutebolRelatoriosService {
       matches.filter((row) => isFriendlyDisciplineMatch(row)).map((row) => row.id),
     );
 
+    const participantIds = collectDisciplineParticipantIds(matches);
+    const rosterIds = new Set(players.map((player) => player.id));
+    const guestIds = participantIds.filter((id) => !rosterIds.has(id));
+    let disciplinePlayers = players;
+    if (guestIds.length > 0) {
+      const guestRaw = await this.prisma.player.findMany({
+        where: { tenantId: input.tenantId, id: { in: guestIds } },
+        select: {
+          id: true,
+          name: true,
+          jerseyNumber: true,
+          position: true,
+          category: true,
+          status: true,
+          statusDetails: true,
+          yellowCards: true,
+          redCards: true,
+          registrationProfile: true,
+        },
+      });
+      const guests = guestRaw.filter(isCurrentSquadPlayer);
+      disciplinePlayers = mergeDisciplinePlayerList(players, participantIds, guests);
+    }
+
     const nextMatchDate =
       input.nextMatchDate?.trim() ||
       upcomingTravel?.matchDate.toISOString().slice(0, 10) ||
@@ -2088,9 +2115,10 @@ export class FutebolRelatoriosService {
         occurrencesText: row.occurrencesText,
         playerStats: row.playerStats,
       })),
-      players,
+      players: disciplinePlayers,
       clubName,
       aliases,
+      disciplineCategory: input.category,
       nextMatchDate,
       friendlyMatchIds,
     });
@@ -2266,7 +2294,12 @@ export class FutebolRelatoriosService {
       },
       nextRound: seasonGrid.nextRound,
       rounds: seasonGrid.rounds,
-      players: seasonGrid.players,
+      players: seasonGrid.players.map((player) => ({
+        ...player,
+        squadCategoryLabel: player.squadCategory
+          ? (categoryLabels[player.squadCategory] ?? player.squadCategory)
+          : null,
+      })),
       totals: seasonGrid.totals,
       generatedAt: new Date().toISOString(),
     };
