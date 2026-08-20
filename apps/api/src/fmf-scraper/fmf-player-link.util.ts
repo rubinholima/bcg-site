@@ -58,8 +58,10 @@ export type FmfStatLinkInput = {
 };
 
 export type FmfStatLinkResult =
-  | { ok: true; playerId: string; linkedBy: 'cbf' | 'name' | 'name_tokens' }
+  | { ok: true; playerId: string; linkedBy: 'cbf' | 'name' | 'name_contained' | 'name_tokens' }
   | { ok: false; reason: string };
+
+const MIN_CONTAINED_NAME_LENGTH = 12;
 
 function nameTokenSet(value: string): Set<string> {
   return new Set(
@@ -78,7 +80,27 @@ function countSharedNameTokens(a: string, b: string): number {
   return count;
 }
 
-/** Nome da súmula vs cadastro — exige 2+ tokens iguais e match único. */
+/**
+ * Súmula costuma trazer nome completo (ex.: "Joao Victor Machado De Oliveira")
+ * e o cadastro só o nome principal ("João Victor Machado") — acento já removido.
+ */
+export function findUniquePlayerByContainedName<T extends FmfLinkablePlayer>(
+  sourceName: string,
+  allPlayers: T[],
+): T | null {
+  const sourceKey = normalizeFmfPlayerName(sourceName);
+  if (sourceKey.length < MIN_CONTAINED_NAME_LENGTH) return null;
+
+  const matches = allPlayers.filter((player) => {
+    const playerKey = normalizeFmfPlayerName(player.name);
+    if (playerKey.length < MIN_CONTAINED_NAME_LENGTH) return false;
+    return sourceKey.includes(playerKey) || playerKey.includes(sourceKey);
+  });
+
+  return matches.length === 1 ? matches[0]! : null;
+}
+
+/** Nome da súmula vs cadastro — 2+ tokens iguais; desempate pelo maior overlap. */
 export function findUniquePlayerByNameTokens<T extends FmfLinkablePlayer>(
   sourceName: string,
   allPlayers: T[],
@@ -86,10 +108,19 @@ export function findUniquePlayerByNameTokens<T extends FmfLinkablePlayer>(
   const sourceSize = nameTokenSet(sourceName).size;
   if (sourceSize === 0) return null;
   const minShared = Math.min(2, sourceSize);
-  const matches = allPlayers.filter(
-    (player) => countSharedNameTokens(sourceName, player.name) >= minShared,
-  );
-  return matches.length === 1 ? matches[0]! : null;
+
+  const scored = allPlayers
+    .map((player) => ({
+      player,
+      score: countSharedNameTokens(sourceName, player.name),
+    }))
+    .filter((row) => row.score >= minShared)
+    .sort((a, b) => b.score - a.score || a.player.name.localeCompare(b.player.name, 'pt-BR'));
+
+  if (scored.length === 0) return null;
+  if (scored.length === 1) return scored[0]!.player;
+  if (scored[0]!.score > scored[1]!.score) return scored[0]!.player;
+  return null;
 }
 
 /** Vincula stat da súmula ao cadastro — sem heurística por camisa ou sobrenome. */
@@ -119,6 +150,11 @@ export function resolvePlayerForFmfStat<T extends FmfLinkablePlayer>(
   }
 
   if (allPlayers?.length) {
+    const byContained = findUniquePlayerByContainedName(stat.sourceName, allPlayers);
+    if (byContained) {
+      return { ok: true, playerId: byContained.id, linkedBy: 'name_contained' };
+    }
+
     const byTokens = findUniquePlayerByNameTokens(stat.sourceName, allPlayers);
     if (byTokens) {
       return { ok: true, playerId: byTokens.id, linkedBy: 'name_tokens' };

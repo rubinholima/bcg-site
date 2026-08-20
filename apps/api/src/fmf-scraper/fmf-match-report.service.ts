@@ -14,6 +14,8 @@ import {
 } from './fmf-match-report.parser';
 import {
   buildPlayersByNormalizedName,
+  findUniquePlayerByContainedName,
+  findUniquePlayerByNameTokens,
   normalizeFmfPlayerName,
   resolvePlayerForFmfStat,
 } from './fmf-player-link.util';
@@ -539,13 +541,33 @@ export class FmfMatchReportService {
     const ourStats = parsed.stats.filter((item) => item.teamSide === ourSide);
     const linked: Array<{ stat: FmfReportPlayerStat; playerId: string }> = [];
     const unresolved: Array<FmfReportPlayerStat & { reason: string }> = [];
+    const cbfFromSumulaBackfills: Array<{ id: string; cbfRegistration: string }> = [];
     for (const stat of ourStats) {
       const resolved = resolvePlayerForFmfStat(stat, playersByCbf, playersByName, players);
       if (resolved.ok) {
         linked.push({ stat, playerId: resolved.playerId });
+        if (resolved.linkedBy !== 'cbf' && stat.cbfRegistration) {
+          const player = players.find((row) => row.id === resolved.playerId);
+          if (player && !digits(player.cbfRegistration)) {
+            cbfFromSumulaBackfills.push({
+              id: player.id,
+              cbfRegistration: digits(stat.cbfRegistration),
+            });
+          }
+        }
       } else {
         unresolved.push({ ...stat, reason: resolved.reason });
       }
+    }
+    if (cbfFromSumulaBackfills.length > 0) {
+      await this.prisma.$transaction(
+        cbfFromSumulaBackfills.map((item) =>
+          this.prisma.player.update({
+            where: { id: item.id },
+            data: { cbfRegistration: item.cbfRegistration },
+          }),
+        ),
+      );
     }
 
     const match = await this.prisma.fmfMatchReport.upsert({
@@ -700,6 +722,12 @@ export class FmfMatchReportService {
       return byName.map(toRef);
     }
     if (byName.length === 1) return [toRef(byName[0]!)];
+
+    const byContained = findUniquePlayerByContainedName(group.sourceName, players);
+    if (byContained) return [toRef(byContained)];
+
+    const byTokens = findUniquePlayerByNameTokens(group.sourceName, players);
+    if (byTokens) return [toRef(byTokens)];
 
     if (nameKey.length >= 4) {
       const partial = players.filter((player) => {

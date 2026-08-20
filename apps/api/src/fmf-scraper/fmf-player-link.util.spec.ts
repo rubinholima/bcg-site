@@ -61,6 +61,44 @@ describe('resolvePlayerForFmfStat', () => {
     expect(result).toEqual({ ok: true, playerId: 'jv', linkedBy: 'name' });
   });
 
+  it('vincula nome completo da súmula com sobrenome extra (sem acento)', () => {
+    const sub17 = [
+      { id: 'jv', name: 'João Victor Machado', cbfRegistration: '' },
+      { id: 'p2', name: 'Samuel Fernandes', cbfRegistration: '222222' },
+    ];
+    const emptyCbf = new Map<string, typeof sub17>();
+    const byName = buildPlayersByNormalizedName(sub17);
+    const result = resolvePlayerForFmfStat(
+      {
+        cbfRegistration: '776375',
+        sourceName: 'Joao Victor Machado De Oliveira',
+      },
+      emptyCbf,
+      byName,
+      sub17,
+    );
+    expect(result).toEqual({ ok: true, playerId: 'jv', linkedBy: 'name_contained' });
+  });
+
+  it('desempata dois João Victor pelo maior overlap de tokens', () => {
+    const roster = [
+      { id: 'jv', name: 'João Victor Machado', cbfRegistration: '' },
+      { id: 'jg', name: 'João Victor Gonçalves', cbfRegistration: '' },
+    ];
+    const emptyCbf = new Map<string, typeof roster>();
+    const byName = buildPlayersByNormalizedName(roster);
+    const result = resolvePlayerForFmfStat(
+      {
+        cbfRegistration: '776375',
+        sourceName: 'Joao Victor Machado De Oliveira',
+      },
+      emptyCbf,
+      byName,
+      roster,
+    );
+    expect(result).toEqual({ ok: true, playerId: 'jv', linkedBy: 'name_contained' });
+  });
+
   it('não vincula por nome parcial ou ambíguo', () => {
     const emptyCbf = new Map<string, typeof players>();
     const ambiguous = buildPlayersByNormalizedName([

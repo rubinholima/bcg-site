@@ -200,6 +200,34 @@ describe('enrichDisciplineStatsFromUnresolved', () => {
     expect(enriched[0]?.playerId).toBe('joao-victor');
     expect(enriched[0]?.yellowCards).toBe(1);
   });
+
+  it('completa cartões quando vínculo parcial já existe na partida', () => {
+    const enriched = enrichDisciplineStatsFromUnresolved(
+      [
+        {
+          playerId: 'joao-victor',
+          jerseyNumber: 4,
+          playerName: 'Joao Victor',
+          played: true,
+          yellowCards: 0,
+          redCards: 0,
+        },
+      ],
+      [
+        {
+          cbfRegistration: '776375',
+          sourceName: 'Joao Victor Machado De Oliveira',
+          jerseyNumber: 4,
+          played: true,
+          yellowCards: 1,
+          redCards: 0,
+        },
+      ],
+      () => 'joao-victor',
+    );
+    expect(enriched).toHaveLength(1);
+    expect(enriched[0]?.yellowCards).toBe(1);
+  });
 });
 
 describe('reportMatchesCompetitionFilter', () => {

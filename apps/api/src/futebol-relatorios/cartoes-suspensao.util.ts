@@ -309,15 +309,28 @@ export function enrichDisciplineStatsFromUnresolved(
 ): DisciplineStatRow[] {
   if (!Array.isArray(unresolvedRaw) || unresolvedRaw.length === 0) return linkedStats;
 
-  const linkedIds = new Set(linkedStats.map((stat) => stat.playerId));
+  const merged = [...linkedStats];
   const extra: DisciplineStatRow[] = [];
 
   for (const raw of unresolvedRaw) {
     const unresolved = readUnresolvedDisciplineStat(raw);
     if (!unresolved) continue;
     const playerId = resolvePlayerId(unresolved);
-    if (!playerId || linkedIds.has(playerId)) continue;
-    linkedIds.add(playerId);
+    if (!playerId) continue;
+
+    const existingIndex = merged.findIndex((stat) => stat.playerId === playerId);
+    if (existingIndex >= 0) {
+      const existing = merged[existingIndex]!;
+      merged[existingIndex] = {
+        ...existing,
+        played: existing.played || unresolved.played,
+        yellowCards: Math.max(existing.yellowCards, unresolved.yellowCards),
+        redCards: Math.max(existing.redCards, unresolved.redCards),
+        jerseyNumber: existing.jerseyNumber ?? unresolved.jerseyNumber,
+      };
+      continue;
+    }
+
     extra.push({
       playerId,
       jerseyNumber: unresolved.jerseyNumber,
@@ -328,7 +341,7 @@ export function enrichDisciplineStatsFromUnresolved(
     });
   }
 
-  return extra.length > 0 ? [...linkedStats, ...extra] : linkedStats;
+  return extra.length > 0 ? [...merged, ...extra] : merged;
 }
 
 /** Elenco da categoria + atletas convocados/jogadores que atuaram em jogos desta categoria (subida). */
