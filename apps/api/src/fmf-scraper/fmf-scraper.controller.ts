@@ -165,8 +165,12 @@ export class FmfScraperController {
   }
 
   @Get('match-reports/candidates')
-  listMatchReportCandidates(@Query('tenantId') tenantId: string) {
-    return this.matchReports.listCandidates(tenantId);
+  listMatchReportCandidates(
+    @Query('tenantId') tenantId: string,
+    @Query('refresh') refresh?: string,
+  ) {
+    const allowRefresh = refresh === '1' || refresh === 'true';
+    return this.matchReports.listCandidates(tenantId, { allowRefresh });
   }
 
   @Post('match-reports/import')

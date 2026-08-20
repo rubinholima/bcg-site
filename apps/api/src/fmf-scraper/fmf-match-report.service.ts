@@ -132,7 +132,7 @@ export class FmfMatchReportService {
   ): Promise<FmfMatchReportCandidate[]> {
     const tenant = await this.getTenant(tenantId);
     let store = await this.scraper.getStatus();
-    if (options.allowRefresh !== false && !storeHasReportLinks(store)) {
+    if (options.allowRefresh === true && !storeHasReportLinks(store)) {
       // Snapshot salvo antes do link da súmula existir no parser: refaz uma vez.
       try {
         await this.scraper.runImport({ all: true });

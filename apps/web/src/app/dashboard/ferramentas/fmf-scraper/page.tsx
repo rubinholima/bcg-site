@@ -149,6 +149,18 @@ function formatMatchDate(d: string | null, t: string | null): string {
   return time ? `${d.split("-").reverse().join("/")} ${time}` : d.split("-").reverse().join("/");
 }
 
+async function readApiErrorMessage(res: Response, fallback: string): Promise<string> {
+  const data = await res.json().catch(() => ({}));
+  const raw =
+    (typeof data.message === "string" && data.message) ||
+    (typeof data.error === "string" && data.error) ||
+    fallback;
+  if (/fetch failed|failed to fetch|econnrefused|etimedout/i.test(raw)) {
+    return "Não foi possível falar com a API. Confirme se ela está no ar (porta 3001) e tente de novo em alguns segundos.";
+  }
+  return raw;
+}
+
 export default function FmfScraperPage() {
   const router = useRouter();
   const { canAccessModule, loading: authLoading } = useAuth();
@@ -203,8 +215,11 @@ export default function FmfScraperPage() {
       const res = await authFetch(
         `/api/fmf-scraper/match-reports/candidates?tenantId=${encodeURIComponent(tenantId)}`,
       );
-      const data = await res.json().catch(() => []);
-      if (!res.ok) throw new Error();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(await readApiErrorMessage(res, "Erro ao carregar súmulas da FMF."));
+        return;
+      }
       setMatchReports(Array.isArray(data) ? data : []);
     } catch {
       setError("Erro ao carregar súmulas da FMF.");
@@ -242,7 +257,7 @@ export default function FmfScraperPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha na importação.");
+        setError(await readApiErrorMessage(res, "Falha na importação."));
         return;
       }
       if (data.store) setStatus({ ...data.store, busy: false });
@@ -266,7 +281,7 @@ export default function FmfScraperPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof data.message === "string" ? data.message : data.error ?? "Falha ao aplicar no site.");
+        setError(await readApiErrorMessage(res, "Falha ao aplicar no site."));
         return;
       }
       setLastSync({ syncedAt: data.syncedAt, tenants: data.tenants ?? [] });
@@ -305,11 +320,7 @@ export default function FmfScraperPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(
-          typeof data.message === "string"
-            ? data.message
-            : "Falha ao importar súmulas.",
-        );
+        setError(await readApiErrorMessage(res, "Falha ao importar súmulas."));
         return;
       }
       setReportMessage(
@@ -336,11 +347,7 @@ export default function FmfScraperPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(
-          typeof data.message === "string"
-            ? data.message
-            : "Falha ao reconciliar súmulas.",
-        );
+        setError(await readApiErrorMessage(res, "Falha ao reconciliar súmulas."));
         return;
       }
       setReportMessage(

@@ -120,10 +120,12 @@ export async function forwardRequest(
     }
   }
 
-  // Monta URL do backend
+  // Monta URL do backend (sempre origem interna no servidor — evita loop via CloudFront)
   const searchParams = request.nextUrl.searchParams.toString();
   const search = searchParams ? `?${searchParams}` : undefined;
-  const backendUrl = buildBackendUrl(backendPath, search);
+  const cleanPath = backendPath.startsWith("/") ? backendPath : `/${backendPath}`;
+  const origin = getBackendOriginForServerFetch();
+  const backendUrl = `${origin}${cleanPath}${search ?? ""}`;
 
   // Prepara headers
   const headers: Record<string, string> = { ...extraHeaders };
