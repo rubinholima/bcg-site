@@ -36,7 +36,7 @@ export const FMF_SCRAPER_PRESETS: Record<FmfScraperPresetKey, FmfScraperPreset> 
     slug: 'mineiro-sub13-1-2026',
     name: 'Mineiro Sub-13 1ª divisão 2026',
     fixtureCategory: 'sub13',
-    competitionLabelTemplate: 'SUB 13 - 1ª DIVISÃO {year}',
+    competitionLabelTemplate: 'SUB 13 - 1ª DIVISÃO - {year}',
   },
   sub14: {
     key: 'sub14',
@@ -44,7 +44,7 @@ export const FMF_SCRAPER_PRESETS: Record<FmfScraperPresetKey, FmfScraperPreset> 
     slug: 'mineiro-sub14-1-2026',
     name: 'Mineiro Sub-14 1ª divisão 2026',
     fixtureCategory: 'sub14',
-    competitionLabelTemplate: 'SUB 14 - 1ª DIVISÃO {year}',
+    competitionLabelTemplate: 'SUB 14 - 1ª DIVISÃO - {year}',
   },
   sub15: {
     key: 'sub15',

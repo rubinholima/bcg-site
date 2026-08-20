@@ -99,24 +99,43 @@ export function FutebolRelatorioCartoesSuspensaoForm() {
 
         if (competition === MANUAL_COMPETITION) return;
 
+        const isFriendlyOption = (o: DisciplineCompetitionOptionDto) =>
+          /amistoso/i.test(o.competition);
+
+        const pickBest = (pool: DisciplineCompetitionOptionDto[]) => {
+          const official = pool.filter((o) => !isFriendlyOption(o));
+          const ranked = (official.length > 0 ? official : pool).slice().sort((a, b) => {
+            if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+            return a.competition.localeCompare(b.competition, "pt-BR");
+          });
+          return ranked[0] ?? null;
+        };
+
         const urlCompetition = searchParams.get("competition")?.trim();
         if (urlCompetition && options.some((o) => o.competition === urlCompetition)) {
           setCompetition(urlCompetition);
           return;
         }
 
-        const byCategory = urlCategoryHint
-          ? options.find((o) => o.referenceCategory === urlCategoryHint)
-          : undefined;
-        if (byCategory) {
-          setCompetition(byCategory.competition);
-          return;
+        if (urlCategoryHint) {
+          const byCategory = pickBest(
+            options.filter((o) => o.referenceCategory === urlCategoryHint),
+          );
+          if (byCategory) {
+            setCompetition(byCategory.competition);
+            return;
+          }
         }
 
         if (options.length > 0) {
-          setCompetition((prev) =>
-            prev && options.some((o) => o.competition === prev) ? prev : options[0]!.competition,
-          );
+          setCompetition((prev) => {
+            if (prev) {
+              const current = options.find((o) => o.competition === prev);
+              if (current && !isFriendlyOption(current)) return prev;
+              if (current && pickBest(options)?.competition === prev) return prev;
+            }
+            return pickBest(options)?.competition ?? "";
+          });
         } else {
           setCompetition("");
         }

@@ -3,7 +3,9 @@ import {
   collectDisciplineParticipantIds,
   enrichDisciplineStatsFromUnresolved,
   findPlayerStatForMatch,
+  inferPrimaryCompetitionFromReports,
   mergeDisciplinePlayerList,
+  normalizeCompetitionKey,
   reportMatchesCompetitionFilter,
 } from './cartoes-suspensao.util';
 
@@ -317,5 +319,33 @@ describe('pendurado por competição', () => {
     const kayo = grid.players.find((p) => p.playerId === 'kayo');
     expect(kayo?.yellowCardsTotal).toBe(2);
     expect(kayo?.nextRoundCell).toBe('P');
+  });
+});
+
+describe('normalizeCompetitionKey / primary competition', () => {
+  it('une variações de hífen no rótulo FMF Sub-14', () => {
+    expect(normalizeCompetitionKey('SUB 14 - 1ª DIVISÃO 2026')).toBe(
+      normalizeCompetitionKey('SUB 14 - 1ª DIVISÃO - 2026'),
+    );
+  });
+
+  it('bate Sub-20 com e sem acento/hífen', () => {
+    expect(
+      reportMatchesCompetitionFilter(
+        { competition: 'SUB 20 - 1ª DIVISÃO - 2026' },
+        'SUB 20 - 1a DIVISAO - 2026',
+      ),
+    ).toBe(true);
+  });
+
+  it('ignora amistoso ao escolher competição primária', () => {
+    const primary = inferPrimaryCompetitionFromReports([
+      { competition: 'Amistoso' },
+      { competition: 'Amistoso' },
+      { competition: 'Amistoso' },
+      { competition: 'SUB 15 - 1ª DIVISÃO - 2026' },
+      { competition: 'SUB 15 - 1ª DIVISÃO - 2026' },
+    ]);
+    expect(primary).toBe('SUB 15 - 1ª DIVISÃO - 2026');
   });
 });

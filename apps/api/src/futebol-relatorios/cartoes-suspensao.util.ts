@@ -193,6 +193,7 @@ function resolveNextRoundCell(state: PlayerRoundState): NextRoundDisciplineCode 
 /** Amistoso: exibe na planilha, mas não entra no cálculo de pendurado/suspensão. */
 export function isFriendlyDisciplineMatch(row: { competition: string }): boolean {
   const competition = row.competition?.trim() ?? '';
+  if (!competition) return false;
   if (/amistoso/i.test(competition)) return true;
   return (
     competition.toLocaleLowerCase('pt-BR') ===
@@ -200,8 +201,20 @@ export function isFriendlyDisciplineMatch(row: { competition: string }): boolean
   );
 }
 
+/**
+ * Chave estável para comparar nomes FMF/viagem/súmula.
+ * Une variações de hífen/acento ("SUB 14 - 1ª DIVISÃO 2026" ≈ "SUB 14 - 1ª DIVISÃO - 2026").
+ */
 export function normalizeCompetitionKey(competition: string): string {
-  return competition.trim().toLocaleLowerCase('pt-BR');
+  return competition
+    .trim()
+    .toLocaleLowerCase('pt-BR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/1[aª]/gi, '1a')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 /** Disciplina por competição (ex.: Mineiro Sub-20 ≠ Brasileiro Sub-20). */
@@ -234,6 +247,7 @@ export function inferReferenceCategoryFromReports(
   return best;
 }
 
+/** Competição oficial mais frequente (ignora amistosos). */
 export function inferPrimaryCompetitionFromReports(
   reports: Array<{ competition: string }>,
 ): string | null {
@@ -241,6 +255,7 @@ export function inferPrimaryCompetitionFromReports(
   for (const row of reports) {
     const label = row.competition?.trim();
     if (!label) continue;
+    if (isFriendlyDisciplineMatch({ competition: label })) continue;
     const key = normalizeCompetitionKey(label);
     const current = counts.get(key);
     if (current) current.count += 1;

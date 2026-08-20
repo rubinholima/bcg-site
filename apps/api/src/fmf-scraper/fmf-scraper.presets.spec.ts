@@ -11,7 +11,7 @@ describe('fmf-scraper.presets', () => {
     expect(preset?.key).toBe('sub13');
     expect(preset?.fmfD).toBe(40);
     expect(fmfCompetitionLabelForPreset('sub13', 2026)).toBe(
-      'SUB 13 - 1ª DIVISÃO 2026',
+      'SUB 13 - 1ª DIVISÃO - 2026',
     );
   });
 

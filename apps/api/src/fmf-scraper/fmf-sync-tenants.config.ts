@@ -22,7 +22,11 @@ export function isFmfSyncTenantSlug(slug: string): slug is FmfSyncTenantSlug {
 
 export function parseTenantCategoryKeys(categories: unknown): string[] {
   if (!Array.isArray(categories)) return [];
-  return categories
-    .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
-    .map((c) => c.trim());
+  return [
+    ...new Set(
+      categories
+        .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
+        .map((c) => c.trim().toLowerCase()),
+    ),
+  ];
 }

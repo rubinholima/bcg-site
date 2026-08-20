@@ -2046,16 +2046,40 @@ export class FutebolRelatoriosService {
       },
     });
 
-    const competitionReports = reportRows.filter(
+    let competitionReports = reportRows.filter(
       (row) =>
         reportMatchesCompetitionFilter(row, input.competition) &&
         (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
           isFmfTeamMatch(row.awayTeam, clubName, aliases)),
     );
 
+    // Viagem FMF às vezes grava "Mineiro Sub-15…" enquanto a súmula traz "SUB 15 - 1ª DIVISÃO…".
+    if (
+      competitionReports.length === 0 &&
+      !isFriendlyDisciplineMatch({ competition: input.competition })
+    ) {
+      const catHint =
+        inferCategoryFromCompetitionLabel(input.competition) ?? null;
+      if (catHint) {
+        competitionReports = reportRows.filter((row) => {
+          if (
+            !isFmfTeamMatch(row.homeTeam, clubName, aliases) &&
+            !isFmfTeamMatch(row.awayTeam, clubName, aliases)
+          ) {
+            return false;
+          }
+          if (isFriendlyDisciplineMatch(row)) return false;
+          const rowCat =
+            row.category?.trim() ||
+            inferCategoryFromCompetitionLabel(row.competition);
+          return rowCat === catHint;
+        });
+      }
+    }
+
     const referenceCategory =
-      inferReferenceCategoryFromReports(competitionReports) ??
-      inferCategoryFromCompetitionLabel(input.competition);
+      inferCategoryFromCompetitionLabel(input.competition) ??
+      inferReferenceCategoryFromReports(competitionReports);
 
     const linkPlayersRaw = await this.prisma.player.findMany({
       where: { tenantId: input.tenantId },
@@ -2275,35 +2299,42 @@ export class FutebolRelatoriosService {
       if (current) {
         current.matchCount += 1;
         if (!current.referenceCategory?.trim() && row.category?.trim()) {
-          current.referenceCategory = row.category.trim();
+          current.referenceCategory = row.category.trim().toLowerCase();
         }
         continue;
       }
       grouped.set(key, {
         competition,
-        referenceCategory:
+        referenceCategory: (
           row.category?.trim() ||
           inferCategoryFromCompetitionLabel(competition) ||
-          '',
+          ''
+        ).toLowerCase(),
         matchCount: 1,
       });
     }
 
-    // Garante todas as categorias do clube no seletor (mesmo sem súmula importada).
-    for (const category of tenantCategories) {
-      const alreadyListed = [...grouped.values()].some(
+    // Categorias a garantir no seletor: clube + oficiais já importadas.
+    const categoriesToEnsure = new Set<string>(tenantCategories);
+    for (const item of grouped.values()) {
+      if (isFriendlyDisciplineMatch(item)) continue;
+      const cat =
+        item.referenceCategory ||
+        inferCategoryFromCompetitionLabel(item.competition) ||
+        '';
+      if (cat) categoriesToEnsure.add(cat.toLowerCase());
+    }
+
+    for (const category of categoriesToEnsure) {
+      const officialExisting = [...grouped.values()].find(
         (item) =>
-          item.referenceCategory === category ||
-          inferCategoryFromCompetitionLabel(item.competition) === category,
+          !isFriendlyDisciplineMatch(item) &&
+          (item.referenceCategory === category ||
+            inferCategoryFromCompetitionLabel(item.competition) === category),
       );
-      if (alreadyListed) {
-        for (const item of grouped.values()) {
-          if (
-            !item.referenceCategory &&
-            inferCategoryFromCompetitionLabel(item.competition) === category
-          ) {
-            item.referenceCategory = category;
-          }
+      if (officialExisting) {
+        if (!officialExisting.referenceCategory) {
+          officialExisting.referenceCategory = category;
         }
         continue;
       }
@@ -2322,9 +2353,13 @@ export class FutebolRelatoriosService {
       });
     }
 
-    return [...grouped.values()].sort((a, b) =>
-      a.competition.localeCompare(b.competition, 'pt-BR'),
-    );
+    return [...grouped.values()].sort((a, b) => {
+      const aFriendly = isFriendlyDisciplineMatch(a) ? 1 : 0;
+      const bFriendly = isFriendlyDisciplineMatch(b) ? 1 : 0;
+      if (aFriendly !== bFriendly) return aFriendly - bFriendly;
+      if (b.matchCount !== a.matchCount) return b.matchCount - a.matchCount;
+      return a.competition.localeCompare(b.competition, 'pt-BR');
+    });
   }
 
   private async resolveDisciplineCompetition(input: {
@@ -2452,16 +2487,38 @@ export class FutebolRelatoriosService {
       orderBy: [{ matchDate: 'asc' }],
     });
 
-    const competitionReports = reportRows.filter(
+    let competitionReports = reportRows.filter(
       (row) =>
         reportMatchesCompetitionFilter(row, competition) &&
         (isFmfTeamMatch(row.homeTeam, clubName, aliases) ||
           isFmfTeamMatch(row.awayTeam, clubName, aliases)),
     );
 
+    if (
+      competitionReports.length === 0 &&
+      !isFriendlyDisciplineMatch({ competition })
+    ) {
+      const catHint = inferCategoryFromCompetitionLabel(competition);
+      if (catHint) {
+        competitionReports = reportRows.filter((row) => {
+          if (
+            !isFmfTeamMatch(row.homeTeam, clubName, aliases) &&
+            !isFmfTeamMatch(row.awayTeam, clubName, aliases)
+          ) {
+            return false;
+          }
+          if (isFriendlyDisciplineMatch(row)) return false;
+          const rowCat =
+            row.category?.trim() ||
+            inferCategoryFromCompetitionLabel(row.competition);
+          return rowCat === catHint;
+        });
+      }
+    }
+
     const referenceCategory =
-      inferReferenceCategoryFromReports(competitionReports) ??
-      inferCategoryFromCompetitionLabel(competition);
+      inferCategoryFromCompetitionLabel(competition) ??
+      inferReferenceCategoryFromReports(competitionReports);
 
     const upcomingTravel = travels
       .filter((t) => t.matchDate >= new Date())
