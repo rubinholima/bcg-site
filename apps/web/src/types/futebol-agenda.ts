@@ -54,6 +54,14 @@ export type FootballAgendaOverview = {
   byType: Record<string, number>;
 };
 
+export type FootballAgendaRepeatDayResult = {
+  created: number;
+  skipped: number;
+  sourceCount: number;
+  targetDays: number;
+  conflicts: string[];
+};
+
 export const FOOTBALL_AGENDA_ENTRY_TYPES = [
   "treino",
   "reuniao",

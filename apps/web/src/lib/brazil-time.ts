@@ -40,6 +40,12 @@ export function combineDateTimeBrazil(date: string, time: string, allDay: boolea
   return new Date(`${date}T${time}:00-03:00`).toISOString();
 }
 
+export function addDaysToDateKey(dateKey: string, days: number): string {
+  const d = new Date(`${dateKey.slice(0, 10)}T12:00:00-03:00`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return dateKeyInBrazil(d);
+}
+
 /** ISO ou Date → valor para input datetime-local (sempre horário de São Paulo). */
 export function toDateTimeLocalBrazil(v: string | Date | null | undefined): string {
   if (!v) return "";

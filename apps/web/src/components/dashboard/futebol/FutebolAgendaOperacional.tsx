@@ -10,6 +10,7 @@ import {
   MapPin,
   Palette,
   Plus,
+  Repeat,
   Trash2,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FeedbackModal, type FeedbackVariant } from "@/components/ui/feedback-modal";
 import {
   Select,
   SelectContent,
@@ -46,6 +48,7 @@ import type {
   FootballAgendaCalendarItem,
   FootballAgendaEntry,
   FootballAgendaOverview,
+  FootballAgendaRepeatDayResult,
 } from "@/types/futebol-agenda";
 import {
   FOOTBALL_AGENDA_MANUAL_ENTRY_TYPES,
@@ -71,7 +74,7 @@ import {
   resolveSquadCategoryColor,
   type SquadCategoryColor,
 } from "@/lib/agenda-squad-category-colors";
-import { combineDateTimeBrazil, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
+import { combineDateTimeBrazil, addDaysToDateKey, dateKeyInBrazil, timeInBrazil } from "@/lib/brazil-time";
 import {
   AGENDA_DAY_PERIOD_HOURS,
   AGENDA_DAY_PERIOD_LABEL,
@@ -314,6 +317,17 @@ export function FutebolAgendaOperacional() {
     loadSquadCategoryColors(),
   );
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [repeatOpen, setRepeatOpen] = useState(false);
+  const [repeatSaving, setRepeatSaving] = useState(false);
+  const [repeatSourceDate, setRepeatSourceDate] = useState("");
+  const [repeatUntilDate, setRepeatUntilDate] = useState("");
+  const [repeatWeekdays, setRepeatWeekdays] = useState<Set<number>>(() => new Set());
+  const [repeatFeedback, setRepeatFeedback] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: FeedbackVariant;
+  }>({ open: false, title: "", message: "", variant: "info" });
 
   const refreshColors = useCallback(() => {
     setAgendaColors(loadAgendaColors());
@@ -456,6 +470,122 @@ export function FutebolAgendaOperacional() {
       : selectedDay
         ? byDay.get(selectedDay) ?? []
         : [],
+  );
+
+
+  const toggleRepeatWeekday = (day: number) => {
+    setRepeatWeekdays((prev) => {
+      const next = new Set(prev);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  };
+
+  const openRepeatDialog = (dateKey: string) => {
+    if (!tenantFilter) {
+      setRepeatFeedback({
+        open: true,
+        title: "Clube obrigatório",
+        message: "Selecione o clube no filtro antes de replicar a programação.",
+        variant: "warning",
+      });
+      return;
+    }
+    const count = (byDay.get(dateKey) ?? []).filter(
+      (item) =>
+        item.source === "entry" && item.type !== "jogo" && item.type !== "aniversario",
+    ).length;
+    if (count === 0) {
+      setRepeatFeedback({
+        open: true,
+        title: "Nada para replicar",
+        message:
+          "Este dia não tem compromissos cadastrados replicáveis (jogos e aniversários não entram).",
+        variant: "warning",
+      });
+      return;
+    }
+    setRepeatSourceDate(dateKey);
+    setRepeatUntilDate(addDaysToDateKey(dateKey, 13));
+    setRepeatWeekdays(new Set());
+    setRepeatOpen(true);
+  };
+
+  const handleRepeatSave = async () => {
+    if (!tenantFilter || !repeatSourceDate || !repeatUntilDate) return;
+    if (repeatWeekdays.size === 0) {
+      setRepeatFeedback({
+        open: true,
+        title: "Dias obrigatórios",
+        message: "Marque os dias da semana em que a programação deve se repetir.",
+        variant: "warning",
+      });
+      return;
+    }
+    setRepeatSaving(true);
+    try {
+      const { data } = await api.post<FootballAgendaRepeatDayResult>(
+        "/futebol-agenda/entries/repeat-day",
+        {
+          tenantId: tenantFilter,
+          sourceDate: repeatSourceDate,
+          untilDate: repeatUntilDate,
+          weekdays: [...repeatWeekdays].sort((a, b) => a - b),
+          category: categoryFilter !== "all" ? categoryFilter : undefined,
+          skipExisting: true,
+        },
+      );
+      setRepeatOpen(false);
+      await load();
+      const conflictNote =
+        data.conflicts.length > 0
+          ? ` ${data.conflicts.length} item(ns) ignorado(s) por conflito de horário.`
+          : "";
+      setRepeatFeedback({
+        open: true,
+        title: "Programação replicada",
+        message: `${data.created} compromisso(s) criado(s) em ${data.targetDays} dia(s).${conflictNote}`,
+        variant: data.created > 0 ? "success" : "warning",
+      });
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === "object" && "response" in e
+          ? (e as { response?: { data?: { message?: string | string[] } } }).response?.data
+              ?.message
+          : null;
+      const detail = Array.isArray(msg) ? msg.join(", ") : typeof msg === "string" ? msg : null;
+      setRepeatFeedback({
+        open: true,
+        title: "Erro",
+        message: detail ?? "Não foi possível replicar a programação.",
+        variant: "error",
+      });
+    } finally {
+      setRepeatSaving(false);
+    }
+  };
+
+  const repeatableCountForDay = useCallback(
+    (dateKey: string) =>
+      (byDay.get(dateKey) ?? []).filter(
+        (item) =>
+          item.source === "entry" && item.type !== "jogo" && item.type !== "aniversario",
+      ).length,
+    [byDay],
+  );
+
+  const renderRepeatButton = (dateKey: string, size: "sm" | "default" = "sm") => (
+    <Button
+      variant="outline"
+      size={size}
+      className={size === "sm" ? "min-h-[40px]" : "min-h-[44px]"}
+      onClick={() => openRepeatDialog(dateKey)}
+      disabled={repeatableCountForDay(dateKey) === 0}
+    >
+      <Repeat className="mr-1 h-3.5 w-3.5" />
+      Replicar programação
+    </Button>
   );
 
   const navigatePrev = () => {
@@ -999,7 +1129,16 @@ export function FutebolAgendaOperacional() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2">{selectedItems.map(renderAgendaItem)}</div>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {renderRepeatButton(focusDayKey)}
+                    <Button variant="outline" onClick={() => openNewEntry(focusDayKey)}>
+                      <Plus className="mr-1 h-3.5 w-3.5" />
+                      Adicionar compromisso
+                    </Button>
+                  </div>
+                  <div className="space-y-2">{selectedItems.map(renderAgendaItem)}</div>
+                </div>
               )}
               <TypeLegend
                 typeFilter={typeFilter}
@@ -1156,6 +1295,7 @@ export function FutebolAgendaOperacional() {
                             >
                               Abrir dia
                             </Button>
+                            {renderRepeatButton(selectedDay)}
                             <Button
                               variant="outline"
                               size="sm"
@@ -1206,10 +1346,12 @@ export function FutebolAgendaOperacional() {
                     {!selectedDay ? null : selectedItems.length === 0 ? (
                       <div className="space-y-3">
                         <p className="text-sm text-muted-foreground">Nada agendado neste dia.</p>
-                        <Button variant="outline" size="sm" onClick={() => openNewEntry(selectedDay)}>
-                          <Plus className="mr-1 h-3.5 w-3.5" />
-                          Adicionar
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="outline" size="sm" onClick={() => openNewEntry(selectedDay)}>
+                            <Plus className="mr-1 h-3.5 w-3.5" />
+                            Adicionar
+                          </Button>
+                        </div>
                       </div>
                     ) : (
                       selectedItems.map(renderAgendaItem)
@@ -1519,6 +1661,82 @@ export function FutebolAgendaOperacional() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={repeatOpen} onOpenChange={setRepeatOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Replicar programação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-1">
+                <Label className="text-xs text-muted-foreground">Dia base</Label>
+                <Input
+                  className="text-foreground"
+                  type="date"
+                  value={repeatSourceDate}
+                  onChange={(e) => setRepeatSourceDate(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label className="text-xs text-muted-foreground">Repetir até</Label>
+                <Input
+                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                  type="date"
+                  value={repeatUntilDate}
+                  onChange={(e) => setRepeatUntilDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Repetir nos dias</Label>
+              <div className="flex flex-wrap gap-2">
+                {WEEKDAY_LABELS.map((label, idx) => {
+                  const active = repeatWeekdays.has(idx);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => toggleRepeatWeekday(idx)}
+                      className={cn(
+                        "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {repeatSourceDate ? (
+              <p className="text-sm text-muted-foreground">
+                {repeatableCountForDay(repeatSourceDate)} compromisso(s) base ·{" "}
+                {repeatWeekdays.size} dia(s) da semana selecionado(s)
+              </p>
+            ) : null}
+          </div>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button variant="outline" onClick={() => setRepeatOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleRepeatSave} disabled={repeatSaving} className="min-h-[44px]">
+              {repeatSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Replicar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <FeedbackModal
+        open={repeatFeedback.open}
+        onOpenChange={(open) => setRepeatFeedback((f) => ({ ...f, open }))}
+        title={repeatFeedback.title}
+        message={repeatFeedback.message}
+        variant={repeatFeedback.variant}
+      />
 
       <AgendaColorsDialog
         open={paletteOpen}

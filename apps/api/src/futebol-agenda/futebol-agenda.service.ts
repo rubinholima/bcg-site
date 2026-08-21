@@ -16,6 +16,8 @@ import {
 } from './futebol-agenda.constants';
 import { findSpaceConflicts } from './football-agenda-conflicts';
 import {
+  BRAZIL_TZ,
+  addDaysToDateKey,
   compareAgendaCalendarItems,
   dateKeyInBrazil,
   formatTimeBrazil,
@@ -987,6 +989,216 @@ export class FutebolAgendaService {
     const existing = await this.prisma.footballAgendaEntry.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Compromisso não encontrado');
     await this.prisma.footballAgendaEntry.delete({ where: { id } });
+  }
+
+  /** 0=Dom … 6=Sáb — alinhado ao calendário da UI. */
+  private weekdayBrazil(dateKey: string): number {
+    const d = parseDateOnlyBrazil(dateKey.slice(0, 10));
+    if (Number.isNaN(d.getTime())) return 0;
+    const wd = new Intl.DateTimeFormat('en-US', {
+      timeZone: BRAZIL_TZ,
+      weekday: 'short',
+    }).format(d);
+    const map: Record<string, number> = {
+      Sun: 0,
+      Mon: 1,
+      Tue: 2,
+      Wed: 3,
+      Thu: 4,
+      Fri: 5,
+      Sat: 6,
+    };
+    return map[wd] ?? d.getUTCDay();
+  }
+
+  private shiftEntryTimes(
+    entry: {
+      startAt: Date;
+      endAt: Date | null;
+      allDay: boolean;
+      dayPeriod: string | null;
+    },
+    targetDateKey: string,
+  ): { startAt: Date; endAt: Date | null } {
+    const key = targetDateKey.slice(0, 10);
+    if (entry.allDay || entry.dayPeriod) {
+      const startAt = parseDateOnlyBrazil(key);
+      if (!entry.endAt) return { startAt, endAt: null };
+      const sourceStartKey = dateKeyInBrazil(entry.startAt);
+      const sourceEndKey = dateKeyInBrazil(entry.endAt);
+      const startMs = parseDateOnlyBrazil(sourceStartKey).getTime();
+      const endMs = parseDateOnlyBrazil(sourceEndKey).getTime();
+      const daySpan = Math.round((endMs - startMs) / (24 * 60 * 60 * 1000));
+      const endAt =
+        daySpan > 0 ? parseDateOnlyBrazil(addDaysToDateKey(key, daySpan)) : startAt;
+      return { startAt, endAt };
+    }
+
+    const timeMatch = formatTimeBrazil(entry.startAt, false, null).match(/(\d{1,2}):(\d{2})/);
+    const time = timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : null;
+    const { start: startAt } = combineDateAndTime(key, time);
+    let endAt: Date | null = null;
+    if (entry.endAt) {
+      endAt = new Date(startAt.getTime() + (entry.endAt.getTime() - entry.startAt.getTime()));
+    }
+    return { startAt, endAt };
+  }
+
+  /**
+   * Replica a programação de um dia nos demais dias da semana selecionados,
+   * até a data limite (ex.: treinos de segunda repetidos ter–qui).
+   */
+  async repeatDayProgramming(dto: {
+    tenantId: string;
+    sourceDate: string;
+    weekdays: number[];
+    untilDate: string;
+    category?: string;
+    skipExisting?: boolean;
+    allowConflict?: boolean;
+  }): Promise<{
+    created: number;
+    skipped: number;
+    sourceCount: number;
+    targetDays: number;
+    conflicts: string[];
+  }> {
+    await this.ensureClubTenant(dto.tenantId);
+    await this.spaces.ensureDefaults(dto.tenantId);
+
+    const sourceDate = dto.sourceDate.trim().slice(0, 10);
+    const untilDate = dto.untilDate.trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(sourceDate)) {
+      throw new BadRequestException('Data base inválida');
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(untilDate)) {
+      throw new BadRequestException('Data limite inválida');
+    }
+    if (untilDate < sourceDate) {
+      throw new BadRequestException('A data limite deve ser igual ou posterior à data base.');
+    }
+
+    const weekdays = [...new Set(dto.weekdays.filter((d) => d >= 0 && d <= 6))];
+    if (weekdays.length === 0) {
+      throw new BadRequestException('Selecione ao menos um dia da semana.');
+    }
+
+    const categoryFilter = dto.category?.trim() || null;
+    const rangeStart = parseDateOnlyBrazil(sourceDate);
+    const rangeEnd = parseDateOnlyBrazil(untilDate);
+    rangeEnd.setUTCHours(23, 59, 59, 999);
+
+    const sourceEntries = await this.prisma.footballAgendaEntry.findMany({
+      where: {
+        tenantId: dto.tenantId,
+        status: { not: 'cancelado' },
+        type: { notIn: ['jogo', 'aniversario'] },
+        startAt: { gte: rangeStart, lte: new Date(`${sourceDate}T23:59:59-03:00`) },
+        ...(categoryFilter ? { category: categoryFilter } : {}),
+      },
+      include: entryInclude,
+      orderBy: [{ startAt: 'asc' }, { title: 'asc' }],
+    });
+
+    const sources = sourceEntries.filter(
+      (row) => dateKeyInBrazil(row.startAt) === sourceDate,
+    );
+    if (sources.length === 0) {
+      throw new BadRequestException(
+        'Nenhum compromisso replicável neste dia (treinos, reuniões, etc.). Jogos e aniversários não entram.',
+      );
+    }
+
+    const targetDateKeys: string[] = [];
+    let cursor = sourceDate;
+    while (cursor <= untilDate) {
+      if (cursor !== sourceDate && weekdays.includes(this.weekdayBrazil(cursor))) {
+        targetDateKeys.push(cursor);
+      }
+      cursor = addDaysToDateKey(cursor, 1);
+    }
+    if (targetDateKeys.length === 0) {
+      throw new BadRequestException(
+        'Nenhum dia alvo no período. Ajuste os dias da semana ou a data limite.',
+      );
+    }
+
+    let created = 0;
+    let skipped = 0;
+    const conflicts: string[] = [];
+
+    for (const targetDateKey of targetDateKeys) {
+      for (const source of sources) {
+        const externalId = `repeat:${source.id}:${targetDateKey}`;
+        if (dto.skipExisting !== false) {
+          const exists = await this.prisma.footballAgendaEntry.findFirst({
+            where: { tenantId: dto.tenantId, externalId },
+            select: { id: true },
+          });
+          if (exists) {
+            skipped += 1;
+            continue;
+          }
+        }
+
+        const { startAt, endAt } = this.shiftEntryTimes(source, targetDateKey);
+
+        try {
+          await this.assertNoSpaceConflict({
+            tenantId: dto.tenantId,
+            spaceId: source.spaceId,
+            category: source.category,
+            type: source.type,
+            startAt,
+            endAt,
+            allDay: source.allDay,
+            allowConflict: dto.allowConflict,
+          });
+        } catch (e) {
+          const msg =
+            e instanceof BadRequestException
+              ? (e.getResponse() as { message?: string | string[] }).message
+              : null;
+          const detail = Array.isArray(msg) ? msg.join(', ') : typeof msg === 'string' ? msg : 'Conflito';
+          conflicts.push(`${targetDateKey} · ${source.title}: ${detail}`);
+          skipped += 1;
+          continue;
+        }
+
+        const row = await this.prisma.footballAgendaEntry.create({
+          data: {
+            tenantId: dto.tenantId,
+            category: source.category,
+            type: source.type,
+            title: source.title,
+            startAt,
+            endAt,
+            allDay: source.allDay,
+            dayPeriod: source.dayPeriod,
+            location: source.location,
+            spaceId: source.spaceId,
+            description: source.description,
+            status: source.status,
+            agendaLocked: true,
+            externalId,
+          },
+        });
+
+        const playerIds = source.participants?.map((p) => p.playerId) ?? [];
+        if (playerIds.length > 0) {
+          await this.syncParticipants(row.id, playerIds);
+        }
+        created += 1;
+      }
+    }
+
+    return {
+      created,
+      skipped,
+      sourceCount: sources.length,
+      targetDays: targetDateKeys.length,
+      conflicts,
+    };
   }
 
   async ensureTravelForEntry(

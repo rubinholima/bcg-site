@@ -144,6 +144,22 @@ export class FutebolAgendaController {
     return this.service.findEntry(id);
   }
 
+  @Post('entries/repeat-day')
+  repeatDayProgramming(
+    @Body()
+    body: {
+      tenantId: string;
+      sourceDate: string;
+      weekdays: number[];
+      untilDate: string;
+      category?: string;
+      skipExisting?: boolean;
+      allowConflict?: boolean;
+    },
+  ) {
+    return this.service.repeatDayProgramming(body);
+  }
+
   @Post('entries')
   createEntry(
     @Body()
