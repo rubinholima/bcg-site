@@ -33,6 +33,73 @@
 
 # 📅 POR DIA — ENCERRAMENTOS
 
+# 📅 20 DE AGOSTO DE 2026 — ENCERRAMENTO
+
+## **O QUE FOI FEITO (sessão completa)**
+
+### 1. Cartões e suspensão — categorias FMF (Sub-13, Sub-14, Sub-15/17)
+
+- **Problema:** Sub-20 ok; Sub-13 não aparecia; Sub-14 lista errada; Sub-15/17 defaultavam em “Amistoso” e faltavam cartões.
+- **Causas:** seletor listava Amistoso cobrindo categoria oficial; UI defaultava 1ª opção alfabética; match de competição string exata; `alreadyListed` bloqueava oficial quando só havia amistoso; elenco às vezes vinha da `category` majoritária errada nas súmulas.
+- **Correção:** soft-match de competição; amistoso excluído do primary/alreadyListed; preset Sub-13; templates sub13/sub14 com ` - {year}`; frontend default preferindo oficial (não amistoso).
+- **Deploy:** `da737a5` (origin + production).
+
+### 2. Fisiologia / Performance — protocolos de dobras cutâneas
+
+- Novos protocolos: **Faulkner (4 dobras)**, **Guedes (3)**, **Pollock 3 e Pollock 7**.
+- Decimais nas dobras (ex.: 12,5) — API + formulário com estado string.
+- Espelho API/web + manual (`futebol-fisiologia`).
+- **Commit:** `6354601` (incluído no deploy anterior à agenda; produção já tinha antes de `da737a5`).
+
+### 3. Agenda do Futebol — replicar programação (recorrência)
+
+- Pedido: repetir programação do dia em outros dias da semana sem recadastrar manualmente (ex.: seg → ter–qui).
+- **API:** `POST /futebol-agenda/entries/repeat-day` — copia treinos/reuniões/preparação/etc.; **não** copia jogos (viagem) nem aniversários; idempotente via `externalId`; conflito de espaço → pula item.
+- **UI:** botão **Replicar programação** (visão Dia + painel do dia no Mês/Semana); modal com dia base, “repetir até”, checkboxes Dom–Sáb; exige clube selecionado no filtro.
+- **Commit:** `9f89ca8` · **Deploy:** origin + production (PM2 online, health OK).
+
+### 4. Processo / regras (combinado com o usuário)
+
+- **Commit automático** ao concluir qualquer solicitação (não esperar pedido).
+- **Deploy / push production** só quando o usuário pedir explicitamente.
+
+## **ONDE ESTAMOS (abrir novo chat amanhã)**
+
+| Item | Estado |
+|------|--------|
+| **Branch** | `develop` |
+| **HEAD / produção** | `9f89ca8` |
+| **GitHub + Lightsail** | alinhados no mesmo commit |
+| **Working tree** | limpa (só scripts debug locais untracked — **não** commitar) |
+| **Pendências abertas** | nenhuma feature em andamento; validar em produção: cartões por categoria, dobras fisiologia, replicar agenda |
+| **Próximo passo sugerido** | testar **Replicar programação** na agenda real (clube + dia base + dias da semana); feedback do time de logística |
+
+## **COMMITS DO DIA (ordem cronológica)**
+
+| Commit | Descrição |
+|--------|-----------|
+| `b439ff1` | fix(fmf): lista todas as categorias do clube no seletor de cartoes |
+| `6354601` | feat(fisiologia): protocolos Faulkner, Guedes e Pollock 3 com decimais nas dobras |
+| `da737a5` | fix(fmf): corrige seletor e filtro de cartoes nas categorias base |
+| `9f89ca8` | feat(agenda-futebol): replicar programacao do dia em dias da semana selecionados |
+
+## **ARQUIVOS PRINCIPAIS**
+
+- `apps/api/src/futebol-relatorios/futebol-relatorios.service.ts`, `cartoes-suspensao.util.ts`
+- `apps/api/src/fmf-scraper/fmf-scraper.presets.ts`, `fmf-sync-tenants.config.ts`
+- `apps/web/src/components/dashboard/futebol/relatorios/FutebolRelatorioCartoesSuspensaoForm.tsx`
+- `apps/api/src/fisiologia/fisiologia-calculations.util.ts`, `apps/web/src/lib/fisiologia-*`, `PhysiologyAssessmentFormDialog.tsx`
+- `apps/api/src/futebol-agenda/futebol-agenda.service.ts`, `futebol-agenda.controller.ts`
+- `apps/web/src/components/dashboard/futebol/FutebolAgendaOperacional.tsx`
+
+## **NÃO COMMITADO (lixo local / debug)**
+
+- `apps/api/scripts/check-beatscode-*`, `debug-*.cjs`, `debug-*.mjs`, `dump-fmf-pdf-text.cjs`, etc.
+
+**Branch:** `develop` · **HEAD:** `9f89ca8` · **Push encerramento:** `origin develop` · **Sync Beatscode:** não rodado
+
+---
+
 # 📅 6 DE AGOSTO DE 2026 — ENCERRAMENTO (noite)
 
 ## **O QUE FOI FEITO (sessão noite — Press Kit impressão)**
