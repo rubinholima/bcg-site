@@ -876,6 +876,74 @@ function sumulaTeamTable(title: string, team: SumulaCartoesMatchTeam): string {
   `;
 }
 
+function staffDisciplineRows(rows: SumulaCartoesReportDto["staffDiscipline"]): string {
+  if (rows.length === 0) {
+    return `<tr><td colspan="5" class="empty">Nenhum cartão da comissão registrado no período</td></tr>`;
+  }
+  return rows
+    .map(
+      (r) => `<tr>
+        <td class="num">${r.num}</td>
+        <td class="left">${escapeHtml(r.name)}</td>
+        <td class="left">${escapeHtml(r.roleLabel ?? "—")}</td>
+        <td>${r.yellowCards > 0 ? r.yellowCards : "—"}</td>
+        <td>${r.redCards > 0 ? r.redCards : "—"}</td>
+      </tr>`,
+    )
+    .join("");
+}
+
+function sumulaStaffCardsSection(match: NonNullable<SumulaCartoesReportDto["match"]>): string {
+  if (match.staffCards.length === 0) return "";
+  const rows = match.staffCards
+    .map(
+      (c) => `<tr>
+        <td class="left">${escapeHtml(c.name)}</td>
+        <td class="left">${escapeHtml(c.roleLabel ?? "—")}</td>
+        <td>${c.yellowCards > 0 ? c.yellowCards : "—"}</td>
+        <td>${c.redCards > 0 ? c.redCards : "—"}</td>
+      </tr>`,
+    )
+    .join("");
+  return `
+    <section class="section">
+      <h2 class="section-title">Comissão técnica — cartões do jogo</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Função</th>
+            <th>A</th>
+            <th>V</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </section>
+  `;
+}
+
+function sumulaStaffDisciplineSection(data: SumulaCartoesReportDto): string {
+  if (data.staffDiscipline.length === 0) return "";
+  return `
+    <section class="section">
+      <h2 class="section-title">Comissão técnica — cartões da temporada</h2>
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Nome</th>
+            <th>Função</th>
+            <th>C.A</th>
+            <th>C.V</th>
+          </tr>
+        </thead>
+        <tbody>${staffDisciplineRows(data.staffDiscipline)}</tbody>
+      </table>
+    </section>
+  `;
+}
+
 function disciplineRows(rows: SumulaCartoesReportDto["discipline"]): string {
   if (rows.length === 0) {
     return `<tr><td colspan="6" class="empty">Nenhum cartão registrado no período</td></tr>`;
@@ -972,10 +1040,10 @@ export function buildSumulaCartoesPrintHtml(
     : "";
 
   const sumulaBody = data.match
-    ? `${matchMeta}${sumulaTeamTable("Mandante", data.match.home)}${sumulaTeamTable("Visitante", data.match.away)}`
+    ? `${matchMeta}${sumulaTeamTable("Mandante", data.match.home)}${sumulaTeamTable("Visitante", data.match.away)}${sumulaStaffCardsSection(data.match)}`
     : "";
 
-  const disciplineBody = sumulaSeasonGridSection(data);
+  const disciplineBody = `${sumulaSeasonGridSection(data)}${sumulaStaffDisciplineSection(data)}`;
   const officialLinks =
     data.seasonGrid?.rounds?.length
       ? officialSumulaLinksPrintSection(data.seasonGrid.rounds)

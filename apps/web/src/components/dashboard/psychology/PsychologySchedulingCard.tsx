@@ -36,10 +36,12 @@ import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import type { Psychologist } from "@/types/psychologist";
 import type { HealthIntern } from "@/types/health-intern";
 import type { PsychologyAttendanceRow, PsychologySessionType } from "@/types/psychology-session";
+import {
+  parsePsychologyPersonKey,
+  type PsychologyCarePerson,
+} from "@/lib/psychology-care-person";
 
 type SchedulingTab = "online" | PsychologySessionType | "relatorio_semanal";
-
-type PlayerOption = { id: string; name: string; tenantId?: string; category?: string | null };
 
 type TenantOption = { id: string; name?: string; categories?: string[] | null };
 
@@ -60,7 +62,7 @@ export function PsychologySchedulingCard({
   filterCategoria,
   tenants,
   selectedPlayerName,
-  players,
+  carePersons,
   psychologists,
   meetAvailable,
   meetCreating,
@@ -81,7 +83,7 @@ export function PsychologySchedulingCard({
   filterCategoria: string;
   tenants: TenantOption[];
   selectedPlayerName: string;
-  players: PlayerOption[];
+  carePersons: PsychologyCarePerson[];
   psychologists: Psychologist[];
   meetAvailable: boolean | null;
   meetCreating: boolean;
@@ -130,7 +132,8 @@ export function PsychologySchedulingCard({
   }, []);
 
   const psychologos = psychologists.filter((p) => (p.staffRole ?? "psicologo") === "psicologo");
-  const tenantId = filterClube || players.find((p) => p.id === filterAtleta)?.tenantId || "";
+  const tenantId = filterClube || carePersons.find((p) => p.key === filterAtleta)?.tenantId || "";
+  const selectedPerson = carePersons.find((p) => p.key === filterAtleta) ?? null;
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const { categories: allFixtureCategories } = useFixtureCategories();
   const clubCategories = useMemo(() => {
@@ -140,14 +143,14 @@ export function PsychologySchedulingCard({
     );
     if (selectedTenant?.categories?.length) return fromTenant;
     const inRoster = new Set(
-      players
-        .filter((p) => p.tenantId === tenantId)
+      carePersons
+        .filter((p) => p.tenantId === tenantId && p.personType === "player")
         .map((p) => p.category)
         .filter((v): v is string => Boolean(v)),
     );
     if (inRoster.size === 0) return fromTenant;
     return allFixtureCategories.filter((c) => inRoster.has(c.value));
-  }, [allFixtureCategories, selectedTenant?.categories, players, tenantId]);
+  }, [allFixtureCategories, selectedTenant?.categories, carePersons, tenantId]);
 
   const [spacesError, setSpacesError] = useState<string | null>(null);
 
@@ -288,7 +291,7 @@ export function PsychologySchedulingCard({
       return;
     }
     if (sessionType === "presencial" && !filterAtleta) {
-      showFeedback("Atenção", "Selecione o atleta para atendimento presencial.", "warning");
+      showFeedback("Atenção", "Selecione a pessoa para atendimento presencial.", "warning");
       return;
     }
     if (sessionType === "grupo" && !effectiveCategory) {
@@ -303,13 +306,18 @@ export function PsychologySchedulingCard({
     }
     setSaving(true);
     try {
+      const parsed = filterAtleta ? parsePsychologyPersonKey(filterAtleta) : null;
       await api.post("/psychology-sessions", {
         tenantId,
         sessionType,
         date: newDate,
         time: newTime,
         category: sessionType === "grupo" ? effectiveCategory : undefined,
-        playerId: sessionType === "presencial" ? filterAtleta : undefined,
+        playerId: parsed?.personType === "player" ? parsed.personId : undefined,
+        personType: parsed?.personType,
+        employeeId: parsed?.personType === "employee" ? parsed.personId : undefined,
+        staffId: parsed?.personType === "staff" ? parsed.personId : undefined,
+        personClassification: selectedPerson?.classification,
         psychologistId: psychologistId || undefined,
         estagiarioId: estagiarioId || undefined,
         location: location.trim() || undefined,

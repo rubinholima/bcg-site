@@ -5,6 +5,8 @@ import { getPlayerListDisplayName } from '../common/player-list-display-name.uti
 
 export interface ConsultationItem {
   playerId: string;
+  personType?: 'player' | 'employee' | 'staff';
+  personKey?: string;
   playerName: string;
   playerPhotoUrl?: string;
   tenantName?: string;
@@ -50,8 +52,16 @@ export class ConsultationsService {
   ): Promise<Array<ConsultationItem & { id: string; tenantId: string }>> {
     const includePrivate = options?.includePrivate === true;
     const tenantFilter = this.tenantScopeWhere(allowedTenantIds);
-    const [players, psychList, sessions] = await Promise.all([
+    const [players, employees, staffMembers, psychList, sessions] = await Promise.all([
       this.prisma.player.findMany({
+        where: tenantFilter,
+        include: { tenant: { select: { name: true, logoUrl: true } } },
+      }),
+      this.prisma.employee.findMany({
+        where: tenantFilter,
+        include: { tenant: { select: { name: true, logoUrl: true } } },
+      }),
+      this.prisma.technicalStaff.findMany({
         where: tenantFilter,
         include: { tenant: { select: { name: true, logoUrl: true } } },
       }),
@@ -67,39 +77,97 @@ export class ConsultationsService {
 
     const result: Array<ConsultationItem & { id: string; tenantId: string }> = [];
 
-    for (const p of players) {
-      const raw = p.onlineConsultations;
-      const list = Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : [];
-      if (list.length === 0) continue;
-      for (let i = 0; i < list.length; i++) {
-        const c = list[i];
-        const date = (c.date as string) ?? '';
-        const status = (c.status as string) ?? 'scheduled';
-        const isPrivate = c.isPrivate === true;
-        if (isPrivate && !includePrivate) continue;
-        const psychName = this.consultationPerformerName(undefined, undefined, c.psychologist as string);
-        result.push({
-          id: `${p.id}-${i}`,
-          playerId: p.id,
-          tenantId: p.tenantId,
-          playerName: getPlayerListDisplayName(p),
-          playerPhotoUrl: (p.photoUrl as string) ?? undefined,
-          tenantName: p.tenant?.name,
-          tenantLogoUrl: p.tenant?.logoUrl ?? undefined,
-          category: (p.category as string) ?? undefined,
-          date,
-          time: (c.time as string) ?? undefined,
-          type: (c.type as string) ?? 'meet',
-          link: (c.link as string) ?? undefined,
-          notes: (c.notes as string) ?? undefined,
-          status,
-          psychologist: psychName ?? undefined,
-          psychologistPhotoUrl: psychName ? psychPhotoByName.get(psychName.toLowerCase()) ?? undefined : undefined,
-          durationSeconds: typeof c.durationSeconds === 'number' ? c.durationSeconds : undefined,
-          isPrivate,
-        });
+    const pushOnlineConsultations = (
+      rows: Array<{
+        id: string;
+        tenantId: string;
+        name: string;
+        photoUrl?: string | null;
+        tenant?: { name: string; logoUrl: string | null } | null;
+        onlineConsultations: unknown;
+        personType: 'player' | 'employee' | 'staff';
+        category?: string;
+      }>,
+    ) => {
+      for (const row of rows) {
+        const list = Array.isArray(row.onlineConsultations)
+          ? (row.onlineConsultations as Array<Record<string, unknown>>)
+          : [];
+        if (list.length === 0) continue;
+        const personKey = `${row.personType}:${row.id}`;
+        for (let i = 0; i < list.length; i++) {
+          const c = list[i]!;
+          const date = (c.date as string) ?? '';
+          const status = (c.status as string) ?? 'scheduled';
+          const isPrivate = c.isPrivate === true;
+          if (isPrivate && !includePrivate) continue;
+          const psychName = this.consultationPerformerName(undefined, undefined, c.psychologist as string);
+          const id =
+            row.personType === 'player'
+              ? `${row.id}-${i}`
+              : `${row.personType}:${row.id}-${i}`;
+          result.push({
+            id,
+            playerId: row.personType === 'player' ? row.id : '',
+            personType: row.personType,
+            personKey,
+            tenantId: row.tenantId,
+            playerName: row.name,
+            playerPhotoUrl: row.photoUrl ?? undefined,
+            tenantName: row.tenant?.name,
+            tenantLogoUrl: row.tenant?.logoUrl ?? undefined,
+            category: row.category,
+            date,
+            time: (c.time as string) ?? undefined,
+            type: (c.type as string) ?? 'meet',
+            link: (c.link as string) ?? undefined,
+            notes: (c.notes as string) ?? undefined,
+            status,
+            psychologist: psychName ?? undefined,
+            psychologistPhotoUrl: psychName
+              ? psychPhotoByName.get(psychName.toLowerCase()) ?? undefined
+              : undefined,
+            durationSeconds: typeof c.durationSeconds === 'number' ? c.durationSeconds : undefined,
+            isPrivate,
+          });
+        }
       }
-    }
+    };
+
+    pushOnlineConsultations(
+      players.map((p) => ({
+        id: p.id,
+        tenantId: p.tenantId,
+        name: getPlayerListDisplayName(p),
+        photoUrl: p.photoUrl,
+        tenant: p.tenant,
+        onlineConsultations: p.onlineConsultations,
+        personType: 'player' as const,
+        category: (p.category as string) ?? undefined,
+      })),
+    );
+    pushOnlineConsultations(
+      employees.map((e) => ({
+        id: e.id,
+        tenantId: e.tenantId,
+        name: e.name,
+        photoUrl: e.photoUrl,
+        tenant: e.tenant,
+        onlineConsultations: e.onlineConsultations,
+        personType: 'employee' as const,
+      })),
+    );
+    pushOnlineConsultations(
+      staffMembers.map((s) => ({
+        id: s.id,
+        tenantId: s.tenantId,
+        name: s.name,
+        photoUrl: s.photoUrl,
+        tenant: s.tenant,
+        onlineConsultations: s.onlineConsultations,
+        personType: 'staff' as const,
+      })),
+    );
 
     for (const s of sessions) {
       if (s.sessionType === 'relatorio_semanal') continue;
@@ -108,19 +176,32 @@ export class ConsultationsService {
         ? (s.attendance as Array<{ playerName?: string }>)
         : [];
       const psychName = this.consultationPerformerName(s.psychologistName, s.estagiarioName);
+      const personType = (s.personType ?? 'player') as 'player' | 'employee' | 'staff';
+      let sessionPersonName = 'Presencial';
+      if (s.sessionType === 'grupo') {
+        sessionPersonName = `${s.category ?? s.categoriesLabel ?? 'Grupo'} (${attendance.length} atletas)`;
+      } else if (personType === 'employee' && s.employeeId) {
+        sessionPersonName = employees.find((e) => e.id === s.employeeId)?.name ?? 'Funcionário';
+      } else if (personType === 'staff' && s.staffId) {
+        sessionPersonName = staffMembers.find((m) => m.id === s.staffId)?.name ?? 'Comissão';
+      } else if (s.playerId) {
+        const p = players.find((pl) => pl.id === s.playerId);
+        sessionPersonName = p ? getPlayerListDisplayName(p) : 'Atleta';
+      }
       result.push({
         id: `session-${s.id}`,
         playerId: s.playerId ?? '',
+        personType,
+        personKey:
+          personType === 'player' && s.playerId
+            ? `player:${s.playerId}`
+            : personType === 'employee' && s.employeeId
+              ? `employee:${s.employeeId}`
+              : personType === 'staff' && s.staffId
+                ? `staff:${s.staffId}`
+                : undefined,
         tenantId: s.tenantId,
-        playerName:
-          s.sessionType === 'grupo'
-            ? `${s.category ?? s.categoriesLabel ?? 'Grupo'} (${attendance.length} atletas)`
-            : s.playerId
-              ? (() => {
-                  const p = players.find((pl) => pl.id === s.playerId);
-                  return p ? getPlayerListDisplayName(p) : 'Atleta';
-                })()
-              : 'Presencial',
+        playerName: sessionPersonName,
         tenantName: s.tenant?.name,
         tenantLogoUrl: s.tenant?.logoUrl ?? undefined,
         category: s.category ?? undefined,
@@ -186,31 +267,70 @@ export class ConsultationsService {
         return false;
       }
     }
+    const typedMatch = consultationId.match(/^(employee|staff):(.+)-(\d+)$/);
+    if (typedMatch) {
+      const personType = typedMatch[1] as 'employee' | 'staff';
+      const personId = typedMatch[2]!;
+      const index = parseInt(typedMatch[3]!, 10);
+      return this.removeOnlineConsultationAt(personType, personId, index, allowedTenantIds);
+    }
+
     const match = consultationId.match(/^(.+)-(\d+)$/);
     if (!match) return false;
-    const [, playerId, indexStr] = match;
+    const [, personId, indexStr] = match;
     const index = parseInt(indexStr, 10);
-    if (!playerId || isNaN(index) || index < 0) return false;
+    if (!personId || isNaN(index) || index < 0) return false;
+    return this.removeOnlineConsultationAt('player', personId, index, allowedTenantIds);
+  }
 
-    const player = await this.prisma.player.findUnique({
-      where: { id: playerId },
-      select: { onlineConsultations: true, tenantId: true },
-    });
-    if (!player) return false;
-    if (allowedTenantIds !== null && !allowedTenantIds.includes(player.tenantId)) {
+  private async removeOnlineConsultationAt(
+    personType: 'player' | 'employee' | 'staff',
+    personId: string,
+    index: number,
+    allowedTenantIds: string[] | null,
+  ): Promise<boolean> {
+    const row =
+      personType === 'player'
+        ? await this.prisma.player.findUnique({
+            where: { id: personId },
+            select: { onlineConsultations: true, tenantId: true },
+          })
+        : personType === 'employee'
+          ? await this.prisma.employee.findUnique({
+              where: { id: personId },
+              select: { onlineConsultations: true, tenantId: true },
+            })
+          : await this.prisma.technicalStaff.findUnique({
+              where: { id: personId },
+              select: { onlineConsultations: true, tenantId: true },
+            });
+    if (!row) return false;
+    if (allowedTenantIds !== null && !allowedTenantIds.includes(row.tenantId)) {
       throw new ForbiddenException('Acesso negado a esta empresa.');
     }
 
-    const list = Array.isArray(player.onlineConsultations)
-      ? (player.onlineConsultations as Record<string, unknown>[])
+    const list = Array.isArray(row.onlineConsultations)
+      ? (row.onlineConsultations as Record<string, unknown>[])
       : [];
     if (index >= list.length) return false;
 
     const next = list.filter((_, i) => i !== index);
-    await this.prisma.player.update({
-      where: { id: playerId },
-      data: { onlineConsultations: next as object },
-    });
+    if (personType === 'player') {
+      await this.prisma.player.update({
+        where: { id: personId },
+        data: { onlineConsultations: next as object },
+      });
+    } else if (personType === 'employee') {
+      await this.prisma.employee.update({
+        where: { id: personId },
+        data: { onlineConsultations: next as object },
+      });
+    } else {
+      await this.prisma.technicalStaff.update({
+        where: { id: personId },
+        data: { onlineConsultations: next as object },
+      });
+    }
     return true;
   }
 

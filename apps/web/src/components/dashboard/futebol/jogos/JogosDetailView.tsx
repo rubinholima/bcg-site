@@ -161,6 +161,7 @@ export function JogosDetailView({ gameKey }: Props) {
       },
       match: detail.sumulaMatch,
       discipline: [],
+      staffDiscipline: [],
       seasonGrid: null,
       generatedAt: new Date().toISOString(),
     };
@@ -466,6 +467,11 @@ export function JogosDetailView({ gameKey }: Props) {
                 <span className="rounded border border-border px-2 py-0.5 text-xs capitalize">
                   {detail.coachReport.status}
                 </span>
+                {detail.coachReport.teamRatingAverage != null ? (
+                  <span className="rounded border border-border px-2 py-0.5 text-xs tabular-nums">
+                    Média da equipe: {detail.coachReport.teamRatingAverage.toFixed(1)}
+                  </span>
+                ) : null}
                 {canEditCoach ? (
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/dashboard/futebol/treinadores?tenantId=${tenantId}&tab=pos-jogo`}>
@@ -474,7 +480,85 @@ export function JogosDetailView({ gameKey }: Props) {
                   </Button>
                 ) : null}
               </div>
-              {detail.coachReport.teamReport ? (
+              {detail.coachReport.matchSummary ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Resumo do jogo</CardTitle>
+                  </CardHeader>
+                  <CardContent className="whitespace-pre-wrap text-sm">
+                    {detail.coachReport.matchSummary}
+                  </CardContent>
+                </Card>
+              ) : null}
+              {detail.coachReport.aspectsToImprove ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Aspectos a melhorar</CardTitle>
+                  </CardHeader>
+                  <CardContent className="whitespace-pre-wrap text-sm">
+                    {detail.coachReport.aspectsToImprove}
+                  </CardContent>
+                </Card>
+              ) : null}
+              {detail.coachReport.goodActions ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Boas ações</CardTitle>
+                  </CardHeader>
+                  <CardContent className="whitespace-pre-wrap text-sm">
+                    {detail.coachReport.goodActions}
+                  </CardContent>
+                </Card>
+              ) : null}
+              {detail.coachReport.playerRatings.some((r) => r.isMatchBest) ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Melhor(es) do jogo</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    {detail.coachReport.playerRatings
+                      .filter((r) => r.isMatchBest)
+                      .map((r) => (
+                        <div key={r.playerId} className="font-medium">
+                          {r.jerseyNumber != null ? `#${r.jerseyNumber} ` : ""}
+                          {r.name}
+                          {r.rating != null ? ` · Nota ${r.rating}` : ""}
+                        </div>
+                      ))}
+                  </CardContent>
+                </Card>
+              ) : null}
+              {detail.coachReport.opponentBestJersey != null ||
+              detail.coachReport.opponentBestPosition ||
+              detail.coachReport.opponentBestNotes ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Melhor jogador adversário</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1">
+                      {detail.coachReport.opponentBestJersey != null ? (
+                        <span>
+                          <span className="text-muted-foreground">Camisa:</span>{" "}
+                          #{detail.coachReport.opponentBestJersey}
+                        </span>
+                      ) : null}
+                      {detail.coachReport.opponentBestPosition ? (
+                        <span>
+                          <span className="text-muted-foreground">Posição:</span>{" "}
+                          {detail.coachReport.opponentBestPosition}
+                        </span>
+                      ) : null}
+                    </div>
+                    {detail.coachReport.opponentBestNotes ? (
+                      <p className="whitespace-pre-wrap text-muted-foreground">
+                        {detail.coachReport.opponentBestNotes}
+                      </p>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              ) : null}
+              {!detail.coachReport.matchSummary && detail.coachReport.teamReport ? (
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Relatório da equipe</CardTitle>
@@ -503,11 +587,19 @@ export function JogosDetailView({ gameKey }: Props) {
                     {detail.coachReport.playerRatings
                       .filter((r) => r.rating != null || r.individualReport)
                       .map((r) => (
-                        <div key={r.playerId} className="rounded-lg border border-border/60 p-3 text-sm">
+                        <div
+                          key={r.playerId}
+                          className={`rounded-lg border border-border/60 p-3 text-sm ${r.isMatchBest ? "border-primary/40 bg-primary/5" : ""}`}
+                        >
                           <div className="font-medium">
                             {r.jerseyNumber != null ? `#${r.jerseyNumber} ` : ""}
                             {r.name}
                             {r.rating != null ? ` · Nota ${r.rating}` : ""}
+                            {r.isMatchBest ? (
+                              <span className="ml-2 text-xs font-semibold uppercase text-primary">
+                                Melhor do jogo
+                              </span>
+                            ) : null}
                           </div>
                           {r.individualReport ? (
                             <p className="mt-1 whitespace-pre-wrap text-muted-foreground">

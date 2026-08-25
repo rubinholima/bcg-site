@@ -49,6 +49,7 @@ export class PlayersController {
     @Query('availability') availability?: string,
     @Query('archived') archived?: string,
     @Query('loaned') loaned?: string,
+    @Query('forPsychology') forPsychology?: string,
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.findAll(
@@ -61,6 +62,7 @@ export class PlayersController {
         availability,
         archived: archived === '1' || archived === 'true',
         loaned: loaned === '1' || loaned === 'true',
+        forPsychology: forPsychology === '1' || forPsychology === 'true',
       },
       allowed,
     );

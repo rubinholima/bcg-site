@@ -44,6 +44,10 @@ import {
   CoachMatchStatsService,
   type UpsertMatchStatOverrideInput,
 } from '../coach-match-stats/coach-match-stats.service';
+import {
+  computeMatchBestFlags,
+  enrichCoachMatchReport,
+} from './coach-match-report.util';
 
 const FMF_STORE_KEY = 'fmf_scraper_data';
 
@@ -343,7 +347,7 @@ export class FutebolTreinadoresService {
       include: coachMatchReportInclude,
     });
     if (!row) throw new NotFoundException('Relatório não encontrado');
-    return row;
+    return enrichCoachMatchReport(row);
   }
 
   async upsertMatchReport(input: {
@@ -357,6 +361,12 @@ export class FutebolTreinadoresService {
     matchDate?: string | null;
     opponentName?: string | null;
     teamReport?: string | null;
+    matchSummary?: string | null;
+    aspectsToImprove?: string | null;
+    goodActions?: string | null;
+    opponentBestJersey?: number | null;
+    opponentBestPosition?: string | null;
+    opponentBestNotes?: string | null;
     generalNotes?: string | null;
     status?: string;
     playerRatings?: Array<{
@@ -394,6 +404,9 @@ export class FutebolTreinadoresService {
       if (!fmfReport) throw new BadRequestException('Jogo inválido');
     }
 
+    const matchSummary =
+      input.matchSummary?.trim() || input.teamReport?.trim() || null;
+
     const data = {
       tenantId: input.tenantId,
       travelLogisticsId: input.travelLogisticsId ?? null,
@@ -403,7 +416,16 @@ export class FutebolTreinadoresService {
       authorUserId: input.authorUserId ?? null,
       matchDate: input.matchDate ? new Date(input.matchDate) : travel?.matchDate ?? fmfReport?.matchDate ?? null,
       opponentName: input.opponentName ?? travel?.opponentName ?? null,
-      teamReport: input.teamReport?.trim() || null,
+      teamReport: matchSummary,
+      matchSummary,
+      aspectsToImprove: input.aspectsToImprove?.trim() || null,
+      goodActions: input.goodActions?.trim() || null,
+      opponentBestJersey:
+        input.opponentBestJersey != null && Number.isFinite(input.opponentBestJersey)
+          ? Math.trunc(input.opponentBestJersey)
+          : null,
+      opponentBestPosition: input.opponentBestPosition?.trim() || null,
+      opponentBestNotes: input.opponentBestNotes?.trim() || null,
       generalNotes: input.generalNotes?.trim() || null,
       status,
     };
@@ -422,12 +444,19 @@ export class FutebolTreinadoresService {
     if (input.playerRatings) {
       await this.prisma.coachMatchReportPlayerRating.deleteMany({ where: { reportId: report.id } });
       if (input.playerRatings.length > 0) {
+        const normalized = input.playerRatings.map((r) => ({
+          playerId: r.playerId,
+          rating: clampRating(r.rating),
+          individualReport: r.individualReport?.trim() || null,
+        }));
+        const bestFlags = computeMatchBestFlags(normalized);
         await this.prisma.coachMatchReportPlayerRating.createMany({
-          data: input.playerRatings.map((r) => ({
+          data: normalized.map((r, i) => ({
             reportId: report.id,
             playerId: r.playerId,
-            rating: clampRating(r.rating),
-            individualReport: r.individualReport?.trim() || null,
+            rating: r.rating,
+            individualReport: r.individualReport,
+            isMatchBest: bestFlags[i] ?? false,
           })),
         });
       }

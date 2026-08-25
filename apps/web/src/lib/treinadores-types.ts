@@ -116,12 +116,21 @@ export type CoachMatchReport = {
   matchDate: string | null;
   opponentName: string | null;
   teamReport: string | null;
+  matchSummary: string | null;
+  aspectsToImprove: string | null;
+  goodActions: string | null;
+  opponentBestJersey: number | null;
+  opponentBestPosition: string | null;
+  opponentBestNotes: string | null;
   generalNotes: string | null;
   status: string;
+  teamRatingAverage?: number | null;
+  matchBestPlayerIds?: string[];
   playerRatings: Array<{
     playerId: string;
     rating: number | null;
     individualReport: string | null;
+    isMatchBest?: boolean;
     player?: {
       id: string;
       name: string;

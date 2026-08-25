@@ -53,6 +53,53 @@ export class PsychologySessionsController {
     return this.service.list({ tenantId, from, to, sessionType, category }, allowed);
   }
 
+  @Get('care-persons')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async listCarePersons(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Query('tenantId') tenantId: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    this.tenantAccess.assertCanAccessTenant(allowed, tenantId);
+    return this.service.listCarePersons(tenantId, allowed);
+  }
+
+  @Get('care-persons/:personType/:personId/clinical')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async getCarePersonClinical(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('personType') personType: string,
+    @Param('personId') personId: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.getCarePersonClinical(
+      personType as 'player' | 'employee' | 'staff',
+      personId,
+      allowed,
+    );
+  }
+
+  @Patch('care-persons/:personType/:personId/clinical')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async updateCarePersonClinical(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('personType') personType: string,
+    @Param('personId') personId: string,
+    @Body()
+    body: { psychologicalAssessment?: unknown; onlineConsultations?: unknown },
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.updateCarePersonClinical(
+      personType as 'player' | 'employee' | 'staff',
+      personId,
+      body,
+      allowed,
+    );
+  }
+
   @Get('category-roster')
   @UseGuards(ModuleAccessGuard)
   @RequireModule('saude')

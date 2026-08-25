@@ -50,6 +50,7 @@ export default function PsicologiaListPage() {
     if (tenantId) params.set("tenantId", tenantId);
     if (category) params.set("category", category);
     if (search) params.set("search", search);
+    params.set("forPsychology", "1");
     setLoading(true);
     api
       .get<Player[]>(`/players?${params.toString()}`)

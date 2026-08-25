@@ -16,6 +16,10 @@ export interface PsychologySession {
   endTime?: string | null;
   category?: string | null;
   playerId?: string | null;
+  personType?: string | null;
+  employeeId?: string | null;
+  staffId?: string | null;
+  personClassification?: string | null;
   psychologistId?: string | null;
   estagiarioId?: string | null;
   psychologistName?: string | null;

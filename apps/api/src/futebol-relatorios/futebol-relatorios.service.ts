@@ -45,6 +45,7 @@ import type {
   SumulaCartoesDisciplineRowDto,
   SumulaCartoesMatchDto,
   SumulaCartoesMatchPlayerDto,
+  SumulaCartoesStaffDisciplineRowDto,
   SumulaCartoesReportDto,
   SumulaMatchListItemDto,
   CartoesSuspensaoReportDto,
@@ -101,6 +102,10 @@ import {
   buildPlayersByNormalizedName,
   resolvePlayerForFmfStat,
 } from '../fmf-scraper/fmf-player-link.util';
+import {
+  aggregateStaffDisciplineRows,
+  parseStaffCardsFromOccurrences,
+} from './fmf-staff-cards.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
   DEFAULT_PRESS_KIT_REFEREE_ROLES,
@@ -1629,6 +1634,7 @@ export class FutebolRelatoriosService {
       : 'Todas as categorias';
 
     const aliases = this.resolveTenantFmfAliases(tenant.name, tenant.slug, tenant.tradeName);
+    const staffCandidates = await this.loadTechnicalStaffForDiscipline(tenantId, category);
 
     let match: SumulaCartoesMatchDto | null = null;
     if (matchId) {
@@ -1642,7 +1648,7 @@ export class FutebolRelatoriosService {
         },
       });
       if (!row) throw new NotFoundException('Súmula não encontrada');
-      match = this.buildSumulaMatchDto(row, tenant.name, aliases, categoryLabels);
+      match = this.buildSumulaMatchDto(row, tenant.name, aliases, categoryLabels, staffCandidates);
     }
 
     const discipline = await this.buildSumulaDisciplineRows({
@@ -1650,6 +1656,15 @@ export class FutebolRelatoriosService {
       season,
       category,
       categoryLabels,
+    });
+
+    const staffDiscipline = await this.buildSumulaStaffDisciplineRows({
+      tenantId,
+      season,
+      category,
+      staffCandidates,
+      clubName: tenant.tradeName?.trim() || tenant.name,
+      aliases,
     });
 
     const seasonGrid = category
@@ -1672,9 +1687,122 @@ export class FutebolRelatoriosService {
       filters: { season, category, categoryLabel, matchId },
       match,
       discipline,
+      staffDiscipline,
       seasonGrid,
       generatedAt: new Date().toISOString(),
     };
+  }
+
+  private async loadTechnicalStaffForDiscipline(
+    tenantId: string,
+    category: string | null,
+  ): Promise<Array<{ id: string; name: string; role: string }>> {
+    const rows = await this.prisma.technicalStaff.findMany({
+      where: { tenantId },
+      select: { id: true, name: true, role: true, categories: true },
+      orderBy: [{ role: 'asc' }, { name: 'asc' }],
+    });
+    return rows
+      .filter((member) => {
+        if (!category) return true;
+        const cats = member.categories as string[] | null;
+        if (!cats || !Array.isArray(cats) || cats.length === 0) return true;
+        return cats.includes(category);
+      })
+      .map(({ id, name, role }) => ({ id, name, role }));
+  }
+
+  private async buildSumulaStaffDisciplineRows(input: {
+    tenantId: string;
+    season: number;
+    category: string | null;
+    staffCandidates: Array<{ id: string; name: string; role: string }>;
+    clubName: string;
+    aliases: string[];
+  }): Promise<SumulaCartoesStaffDisciplineRowDto[]> {
+    if (input.staffCandidates.length === 0) return [];
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: input.tenantId },
+      select: { name: true, slug: true, tradeName: true },
+    });
+    if (!tenant) return [];
+
+    const travelsRaw = await this.prisma.travelLogistics.findMany({
+      where: { tenantId: input.tenantId, status: { not: 'cancelado' } },
+      select: {
+        id: true,
+        tenantId: true,
+        matchDate: true,
+        opponentName: true,
+        championshipName: true,
+        category: true,
+        categories: true,
+        isHomeMatch: true,
+        stadiumName: true,
+        city: true,
+        status: true,
+      },
+    });
+    const travels = dedupeTravelLogisticsList(travelsRaw);
+
+    const reports = await this.prisma.fmfMatchReport.findMany({
+      where: {
+        tenantId: input.tenantId,
+        season: input.season,
+        occurrencesText: { not: null },
+      },
+      select: {
+        matchDate: true,
+        homeTeam: true,
+        awayTeam: true,
+        homeScore: true,
+        awayScore: true,
+        category: true,
+        occurrencesText: true,
+      },
+      orderBy: [{ matchDate: 'asc' }],
+    });
+
+    const parsedRows: Array<
+      ReturnType<typeof parseStaffCardsFromOccurrences>[number] & {
+        matchDate: string;
+        matchLabel: string;
+      }
+    > = [];
+
+    for (const row of reports) {
+      if (
+        input.category &&
+        !reportMatchesCategoryFilter(row, input.category, travels, input.clubName, input.aliases)
+      ) {
+        continue;
+      }
+      const dateKey = dateKeyInBrazil(row.matchDate);
+      const score =
+        row.homeScore != null && row.awayScore != null
+          ? `${row.homeScore} x ${row.awayScore}`
+          : '—';
+      const matchLabel = `${formatBrDate(dateKey)} · ${row.homeTeam} ${score} ${row.awayTeam}`;
+      for (const card of parseStaffCardsFromOccurrences(row.occurrencesText, input.staffCandidates)) {
+        parsedRows.push({ ...card, matchDate: dateKey, matchLabel });
+      }
+    }
+
+    return aggregateStaffDisciplineRows(parsedRows).map((row, index) => ({
+      num: index + 1,
+      staffId: row.staffId,
+      name: row.name,
+      roleLabel: row.roleLabel,
+      yellowCards: row.yellowCards,
+      redCards: row.redCards,
+      matches: row.matches.map((match) => ({
+        matchDate: match.matchDate,
+        label: match.label,
+        yellowCards: match.yellowCards,
+        redCards: match.redCards,
+      })),
+    }));
   }
 
   private resolveTenantFmfAliases(
@@ -1713,6 +1841,7 @@ export class FutebolRelatoriosService {
       homeScore: number | null;
       awayScore: number | null;
       sourceUrl: string;
+      occurrencesText: string | null;
       rawParsed: unknown;
       playerStats: Array<{
         playerId: string;
@@ -1731,6 +1860,7 @@ export class FutebolRelatoriosService {
     tenantName: string,
     aliases: string[],
     categoryLabels: Record<string, string>,
+    staff: Array<{ id: string; name: string; role: string }>,
   ): SumulaCartoesMatchDto {
     const linkedByCbf = new Map(row.playerStats.map((s) => [s.cbfRegistration, s]));
     const raw = row.rawParsed as {
@@ -1813,6 +1943,14 @@ export class FutebolRelatoriosService {
       sourceUrl: row.sourceUrl,
       home: buildTeam('home'),
       away: buildTeam('away'),
+      staffCards: parseStaffCardsFromOccurrences(row.occurrencesText, staff).map((card) => ({
+        staffId: card.staffId,
+        name: card.name,
+        roleLabel: card.roleLabel,
+        yellowCards: card.yellowCards,
+        redCards: card.redCards,
+        excerpt: card.excerpt,
+      })),
     };
   }
 

@@ -90,6 +90,7 @@ export class PlayersService {
       availability?: string;
       archived?: boolean;
       loaned?: boolean;
+      forPsychology?: boolean;
     },
     allowedTenantIds: string[] | null = null,
   ) {
@@ -144,6 +145,8 @@ export class PlayersService {
       players = players.filter((p) => this.isArchivedPlayer(p.registrationProfile));
     } else if (filters?.loaned) {
       players = players.filter((p) => this.isLoanedPlayer(p.registrationProfile));
+    } else if (filters?.forPsychology) {
+      players = players.filter((p) => !this.isArchivedPlayer(p.registrationProfile));
     } else if (filters?.situation?.trim()) {
       const wanted = filters.situation.trim();
       players = players.filter((p) => this.getPlayerSituation(p.registrationProfile) === wanted);

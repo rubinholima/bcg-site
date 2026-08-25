@@ -95,6 +95,18 @@ export class FutebolTreinadoresController {
       matchDate: typeof body.matchDate === 'string' ? body.matchDate : null,
       opponentName: typeof body.opponentName === 'string' ? body.opponentName : null,
       teamReport: typeof body.teamReport === 'string' ? body.teamReport : null,
+      matchSummary: typeof body.matchSummary === 'string' ? body.matchSummary : null,
+      aspectsToImprove: typeof body.aspectsToImprove === 'string' ? body.aspectsToImprove : null,
+      goodActions: typeof body.goodActions === 'string' ? body.goodActions : null,
+      opponentBestJersey:
+        typeof body.opponentBestJersey === 'number'
+          ? body.opponentBestJersey
+          : typeof body.opponentBestJersey === 'string' && body.opponentBestJersey.trim()
+            ? Number(body.opponentBestJersey)
+            : null,
+      opponentBestPosition:
+        typeof body.opponentBestPosition === 'string' ? body.opponentBestPosition : null,
+      opponentBestNotes: typeof body.opponentBestNotes === 'string' ? body.opponentBestNotes : null,
       generalNotes: typeof body.generalNotes === 'string' ? body.generalNotes : null,
       status: typeof body.status === 'string' ? body.status : undefined,
       playerRatings: Array.isArray(body.playerRatings)

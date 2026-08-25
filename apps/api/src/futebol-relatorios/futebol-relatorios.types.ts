@@ -253,6 +253,31 @@ export type SumulaCartoesMatchDto = {
   sourceUrl: string;
   home: SumulaCartoesMatchTeamDto;
   away: SumulaCartoesMatchTeamDto;
+  staffCards: SumulaCartoesStaffCardDto[];
+};
+
+export type SumulaCartoesStaffCardDto = {
+  staffId: string | null;
+  name: string;
+  roleLabel: string | null;
+  yellowCards: number;
+  redCards: number;
+  excerpt: string;
+};
+
+export type SumulaCartoesStaffDisciplineRowDto = {
+  num: number;
+  staffId: string | null;
+  name: string;
+  roleLabel: string | null;
+  yellowCards: number;
+  redCards: number;
+  matches: Array<{
+    matchDate: string;
+    label: string;
+    yellowCards: number;
+    redCards: number;
+  }>;
 };
 
 export type SumulaCartoesDisciplineRowDto = {
@@ -286,6 +311,7 @@ export type SumulaCartoesReportDto = {
   };
   match: SumulaCartoesMatchDto | null;
   discipline: SumulaCartoesDisciplineRowDto[];
+  staffDiscipline: SumulaCartoesStaffDisciplineRowDto[];
   seasonGrid: {
     nextRound: CartoesSuspensaoReportDto['nextRound'];
     rounds: CartoesSuspensaoRoundDto[];

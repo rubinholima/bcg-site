@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { computeTeamRatingAverage } from '../futebol-treinadores/coach-match-report.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { FutebolRelatoriosService } from '../futebol-relatorios/futebol-relatorios.service';
 import { travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
@@ -72,35 +73,52 @@ function mapCoachReport(row: {
   matchDate: Date | null;
   opponentName: string | null;
   teamReport: string | null;
+  matchSummary: string | null;
+  aspectsToImprove: string | null;
+  goodActions: string | null;
+  opponentBestJersey: number | null;
+  opponentBestPosition: string | null;
+  opponentBestNotes: string | null;
   generalNotes: string | null;
   attachments: Array<{ id: string; label: string | null; fileUrl: string; kind: string | null }>;
   playerRatings: Array<{
     playerId: string;
     rating: number | null;
     individualReport: string | null;
+    isMatchBest: boolean;
     player: { name: string; jerseyNumber: number | null };
   }>;
 }) {
+  const playerRatings = row.playerRatings.map((r) => ({
+    playerId: r.playerId,
+    name: r.player.name,
+    jerseyNumber: r.player.jerseyNumber,
+    rating: r.rating,
+    individualReport: r.individualReport,
+    isMatchBest: r.isMatchBest,
+  }));
+
   return {
     id: row.id,
     status: row.status,
     matchDate: row.matchDate?.toISOString() ?? null,
     opponentName: row.opponentName,
     teamReport: row.teamReport,
+    matchSummary: row.matchSummary ?? row.teamReport,
+    aspectsToImprove: row.aspectsToImprove,
+    goodActions: row.goodActions,
+    opponentBestJersey: row.opponentBestJersey,
+    opponentBestPosition: row.opponentBestPosition,
+    opponentBestNotes: row.opponentBestNotes,
     generalNotes: row.generalNotes,
+    teamRatingAverage: computeTeamRatingAverage(playerRatings),
     attachments: row.attachments.map((a) => ({
       id: a.id,
       label: a.label,
       fileUrl: a.fileUrl,
       kind: a.kind,
     })),
-    playerRatings: row.playerRatings.map((r) => ({
-      playerId: r.playerId,
-      name: r.player.name,
-      jerseyNumber: r.player.jerseyNumber,
-      rating: r.rating,
-      individualReport: r.individualReport,
-    })),
+    playerRatings,
   };
 }
 

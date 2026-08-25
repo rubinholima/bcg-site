@@ -23,6 +23,10 @@ import { formatDateDayMonYear } from "@/lib/format-date";
 import { getPlayerListDisplayName } from "@/lib/player-display-name";
 import type { CoachContextPlayer, CoachContextResponse, CoachMatchReport } from "@/lib/treinadores-types";
 import { COACH_ATTACHMENT_KINDS } from "@/lib/treinadores-types";
+import {
+  computeMatchBestPlayerIds,
+  computeTeamRatingAverageFromStrings,
+} from "@/lib/coach-match-report-stats";
 import { TreinadoresMediaPicker } from "./TreinadoresMediaPicker";
 
 type PlayerRatingDraft = {
@@ -75,7 +79,12 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
   const [selectedGameKey, setSelectedGameKey] = useState("");
   const [matchDate, setMatchDate] = useState("");
   const [opponentName, setOpponentName] = useState("");
-  const [teamReport, setTeamReport] = useState("");
+  const [matchSummary, setMatchSummary] = useState("");
+  const [aspectsToImprove, setAspectsToImprove] = useState("");
+  const [goodActions, setGoodActions] = useState("");
+  const [opponentBestJersey, setOpponentBestJersey] = useState("");
+  const [opponentBestPosition, setOpponentBestPosition] = useState("");
+  const [opponentBestNotes, setOpponentBestNotes] = useState("");
   const [generalNotes, setGeneralNotes] = useState("");
   const [status, setStatus] = useState("rascunho");
   const [playerRatings, setPlayerRatings] = useState<PlayerRatingDraft[]>([]);
@@ -101,6 +110,21 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
     [completedGames],
   );
 
+  const teamRatingAverage = useMemo(
+    () => computeTeamRatingAverageFromStrings(playerRatings),
+    [playerRatings],
+  );
+
+  const matchBestPlayerIds = useMemo(
+    () => computeMatchBestPlayerIds(playerRatings),
+    [playerRatings],
+  );
+
+  const matchBestPlayers = useMemo(
+    () => playerRatings.filter((p) => matchBestPlayerIds.includes(p.playerId)),
+    [playerRatings, matchBestPlayerIds],
+  );
+
   const loadReports = () => {
     if (!tenantId) return;
     setLoading(true);
@@ -124,7 +148,12 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
     setFmfMatchReportId("");
     setMatchDate("");
     setOpponentName("");
-    setTeamReport("");
+    setMatchSummary("");
+    setAspectsToImprove("");
+    setGoodActions("");
+    setOpponentBestJersey("");
+    setOpponentBestPosition("");
+    setOpponentBestNotes("");
     setGeneralNotes("");
     setStatus("rascunho");
     setPlayerRatings(emptyDraft(context?.players ?? []));
@@ -149,7 +178,14 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
       setSelectedGameKey(gameKey);
       setMatchDate(data.matchDate ? data.matchDate.slice(0, 10) : "");
       setOpponentName(data.opponentName ?? "");
-      setTeamReport(data.teamReport ?? "");
+      setMatchSummary(data.matchSummary ?? data.teamReport ?? "");
+      setAspectsToImprove(data.aspectsToImprove ?? "");
+      setGoodActions(data.goodActions ?? "");
+      setOpponentBestJersey(
+        data.opponentBestJersey != null ? String(data.opponentBestJersey) : "",
+      );
+      setOpponentBestPosition(data.opponentBestPosition ?? "");
+      setOpponentBestNotes(data.opponentBestNotes ?? "");
       setGeneralNotes(data.generalNotes ?? "");
       setStatus(data.status ?? "rascunho");
       const byId = new Map(data.playerRatings.map((r) => [r.playerId, r]));
@@ -200,7 +236,12 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
         fmfMatchReportId: fmfMatchReportId || null,
         matchDate: matchDate || null,
         opponentName: opponentName || null,
-        teamReport,
+        matchSummary,
+        aspectsToImprove,
+        goodActions,
+        opponentBestJersey: opponentBestJersey === "" ? null : Number(opponentBestJersey),
+        opponentBestPosition: opponentBestPosition || null,
+        opponentBestNotes: opponentBestNotes || null,
         generalNotes,
         status,
         playerRatings: playerRatings.map((p) => ({
@@ -323,8 +364,77 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
           </div>
 
           <div className="space-y-2">
-            <Label>Relatório geral da equipe</Label>
-            <Textarea rows={4} value={teamReport} onChange={(e) => setTeamReport(e.target.value)} />
+            <Label>Resumo do jogo</Label>
+            <Textarea rows={4} value={matchSummary} onChange={(e) => setMatchSummary(e.target.value)} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Aspectos a melhorar</Label>
+            <Textarea rows={3} value={aspectsToImprove} onChange={(e) => setAspectsToImprove(e.target.value)} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Boas ações</Label>
+            <Textarea rows={3} value={goodActions} onChange={(e) => setGoodActions(e.target.value)} />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-border/60 p-4 space-y-1">
+              <p className="text-xs text-muted-foreground">Nota geral da equipe (média)</p>
+              <p className="text-2xl font-semibold tabular-nums">
+                {teamRatingAverage != null ? teamRatingAverage.toFixed(1) : "—"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border/60 p-4 space-y-2">
+              <p className="text-xs text-muted-foreground">Melhor(es) do jogo</p>
+              {matchBestPlayers.length > 0 ? (
+                <ul className="space-y-1 text-sm">
+                  {matchBestPlayers.map((p) => (
+                    <li key={p.playerId} className="font-medium">
+                      {p.jerseyNumber != null ? `#${p.jerseyNumber} ` : ""}
+                      {p.name}
+                      {p.rating !== "" ? ` · ${p.rating}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">Preencha as notas dos atletas.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3 rounded-lg border border-border/60 p-4">
+            <Label>Melhor jogador adversário</Label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-xs">Camisa</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={99}
+                  placeholder="—"
+                  value={opponentBestJersey}
+                  onChange={(e) => setOpponentBestJersey(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Posição</Label>
+                <Input
+                  placeholder="Ex.: volante, zagueiro…"
+                  value={opponentBestPosition}
+                  onChange={(e) => setOpponentBestPosition(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs">Características que favoreceram</Label>
+              <Textarea
+                rows={3}
+                placeholder="Descreva o que se destacou no adversário…"
+                value={opponentBestNotes}
+                onChange={(e) => setOpponentBestNotes(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -346,11 +456,21 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
                 </TableHeader>
                 <TableBody>
                   {playerRatings.map((p, idx) => (
-                    <TableRow key={p.playerId}>
+                    <TableRow
+                      key={p.playerId}
+                      className={matchBestPlayerIds.includes(p.playerId) ? "bg-primary/5" : undefined}
+                    >
                       <TableCell className="text-center font-medium tabular-nums">
                         {p.jerseyNumber ?? "—"}
                       </TableCell>
-                      <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {p.name}
+                        {matchBestPlayerIds.includes(p.playerId) ? (
+                          <span className="ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                            Melhor
+                          </span>
+                        ) : null}
+                      </TableCell>
                       <TableCell>
                         <Input
                           type="number"

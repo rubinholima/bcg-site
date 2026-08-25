@@ -1266,6 +1266,8 @@ model TechnicalStaff {
   contractEnd       DateTime?
   bio               String?   @db.Text
   notes             String?   @db.Text
+  psychologicalAssessment Json? // histórico clínico psicológico (comissão)
+  onlineConsultations Json?    // consultas online Meet
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   scoutProfile         Scout?
@@ -1382,6 +1384,12 @@ model PsychologySession {
   endTime               String?
   category              String?
   playerId              String?
+  /// player | employee | staff — destinatário do atendimento presencial
+  personType            String?  @default("player")
+  employeeId            String?
+  staffId               String?
+  /// elenco | emprestado | funcionario
+  personClassification  String?
   psychologistId        String?
   estagiarioId          String?
   psychologistName      String?
@@ -1741,6 +1749,8 @@ model Employee {
   dismissalMedicalExamDate     DateTime?
   dismissalMedicalExamFileUrl  String?
   hasMinorChildren             Boolean  @default(false)
+  psychologicalAssessment Json?
+  onlineConsultations Json?
   /** Cadastro operacional Futebol (atleta/comissão) — evita duplicidade de pessoa */
   playerId   String?  @unique
   player     Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
@@ -3352,6 +3362,12 @@ model CoachMatchReport {
   matchDate          DateTime?
   opponentName       String?
   teamReport         String?  @db.Text
+  matchSummary       String?  @db.Text
+  aspectsToImprove   String?  @db.Text
+  goodActions        String?  @db.Text
+  opponentBestJersey   Int?
+  opponentBestPosition String?
+  opponentBestNotes    String?  @db.Text
   generalNotes       String?  @db.Text
   status             String   @default("rascunho") // rascunho | finalizado
   playerRatings      CoachMatchReportPlayerRating[]
@@ -3371,6 +3387,7 @@ model CoachMatchReportPlayerRating {
   player           Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   rating           Float?
   individualReport String?  @db.Text
+  isMatchBest      Boolean  @default(false)
   @@unique([reportId, playerId])
   @@index([playerId])
 }

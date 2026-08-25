@@ -48,7 +48,14 @@ import { formatDateDayMonYear, formatDateTimeDayMonYear, formatMonthYear } from 
 import { FIXTURE_CATEGORIES, filterCategoriesForTenant } from "@/lib/fixture-categories";
 import { useFixtureCategories } from "@/hooks/useFixtureCategories";
 import { getConsultationModality, playerPsychologyProfileHref } from "@/lib/consultation-display";
-import { getPlayerListDisplayName } from "@/lib/player-display-name";
+import {
+  appendCarePersonOnlineConsultation,
+  fetchCarePersonClinical,
+  parsePsychologyPersonKey,
+  psychologyPersonProfileHref,
+  psychologyPersonSelectLabel,
+  type PsychologyCarePerson,
+} from "@/lib/psychology-care-person";
 import type { Psychologist } from "@/types/psychologist";
 import type { PsychologySession } from "@/types/psychology-session";
 import { PSYCH_SESSION_TYPE_LABEL } from "@/types/psychology-session";
@@ -67,6 +74,7 @@ type AgendaEvent = {
   tenantId: string;
   tenantName?: string;
   playerId?: string;
+  personKey?: string;
   category?: string;
   status: string;
   location?: string | null;
@@ -144,17 +152,23 @@ function viewRange(focusDate: Date, mode: ViewMode) {
   return monthRange(focusDate.getFullYear(), focusDate.getMonth());
 }
 
-function sessionToEvent(session: PsychologySession, players: PlayerOption[]): AgendaEvent {
-  const player = session.playerId ? players.find((p) => p.id === session.playerId) : undefined;
+function sessionToEvent(session: PsychologySession, carePersons: PsychologyCarePerson[]): AgendaEvent {
+  const personKey =
+    session.personType === "employee" && session.employeeId
+      ? `employee:${session.employeeId}`
+      : session.personType === "staff" && session.staffId
+        ? `staff:${session.staffId}`
+        : session.playerId
+          ? `player:${session.playerId}`
+          : undefined;
+  const person = personKey ? carePersons.find((p) => p.key === personKey) : undefined;
   const attendance = Array.isArray(session.attendance) ? session.attendance : [];
   const title =
     session.sessionType === "grupo"
       ? `Grupo — ${session.category ?? session.categoriesLabel ?? "categoria"}`
       : session.sessionType === "relatorio_semanal"
         ? "Relatório semanal"
-        : player
-          ? getPlayerListDisplayName(player)
-          : "Atendimento presencial";
+        : person?.name ?? "Atendimento presencial";
   return {
     id: `session-${session.id}`,
     source: "session",
@@ -167,6 +181,7 @@ function sessionToEvent(session: PsychologySession, players: PlayerOption[]): Ag
     tenantId: session.tenantId,
     tenantName: session.tenant?.name,
     playerId: session.playerId ?? undefined,
+    personKey,
     category: session.category ?? undefined,
     status: session.status,
     location: session.location,
@@ -188,7 +203,7 @@ export function PsicologiaAgendaOperacional() {
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<TenantOption[]>([]);
-  const [players, setPlayers] = useState<PlayerOption[]>([]);
+  const [carePersons, setCarePersons] = useState<PsychologyCarePerson[]>([]);
   const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
   const [filterClube, setFilterClube] = useState("");
   const [filterAtleta, setFilterAtleta] = useState("");
@@ -234,7 +249,7 @@ export function PsicologiaAgendaOperacional() {
       ]);
       const sessions = Array.isArray(sessionsRes.data) ? sessionsRes.data : [];
       const consults = Array.isArray(consultRes.data) ? consultRes.data : [];
-      const mappedSessions = sessions.map((s) => sessionToEvent(s, players));
+      const mappedSessions = sessions.map((s) => sessionToEvent(s, carePersons));
       const onlineEvents: AgendaEvent[] = consults
         .filter((c) => {
           const type = String(c.type ?? "");
@@ -255,6 +270,7 @@ export function PsicologiaAgendaOperacional() {
           tenantId: String(c.tenantId ?? ""),
           tenantName: c.tenantName ? String(c.tenantName) : undefined,
           playerId: c.playerId ? String(c.playerId) : undefined,
+          personKey: c.personKey ? String(c.personKey) : undefined,
           category: c.category ? String(c.category) : undefined,
           status: String(c.status ?? "scheduled"),
           notes: c.notes ? String(c.notes) : undefined,
@@ -264,7 +280,14 @@ export function PsicologiaAgendaOperacional() {
         }));
       const merged = [...mappedSessions, ...onlineEvents].filter((ev) => {
         if (filterClube && ev.tenantId !== filterClube) return false;
-        if (filterAtleta && ev.playerId !== filterAtleta) return false;
+        if (filterAtleta) {
+          const matches =
+            ev.personKey === filterAtleta ||
+            (filterAtleta.startsWith("player:") &&
+              ev.playerId === filterAtleta.slice("player:".length)) ||
+            ev.playerId === filterAtleta;
+          if (!matches) return false;
+        }
         if (filterCategoria && (ev.category ?? "") !== filterCategoria) return false;
         if (filterPsychologist) {
           const psych = ev.psychologist ?? ev.subtitle ?? "";
@@ -293,16 +316,13 @@ export function PsicologiaAgendaOperacional() {
     filterCategoria,
     filterPsychologist,
     showPrivateOnly,
-    players,
+    carePersons,
     psychologists,
   ]);
 
   useEffect(() => {
     api.get<TenantOption[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
-    });
-    api.get<PlayerOption[]>("/players").then(({ data }) => {
-      setPlayers(Array.isArray(data) ? data : []);
     });
     api.get<Psychologist[]>("/psychologists").then(({ data }) => {
       setPsychologists(Array.isArray(data) ? data : []);
@@ -314,6 +334,19 @@ export function PsicologiaAgendaOperacional() {
   }, []);
 
   useEffect(() => {
+    if (!filterClube) {
+      setCarePersons([]);
+      return;
+    }
+    api
+      .get<PsychologyCarePerson[]>(
+        `/psychology-sessions/care-persons?tenantId=${encodeURIComponent(filterClube)}`,
+      )
+      .then(({ data }) => setCarePersons(Array.isArray(data) ? data : []))
+      .catch(() => setCarePersons([]));
+  }, [filterClube, refreshTrigger]);
+
+  useEffect(() => {
     if (tenants.length === 1 && !filterClube) setFilterClube(tenants[0].id);
   }, [tenants, filterClube]);
 
@@ -321,16 +354,15 @@ export function PsicologiaAgendaOperacional() {
     void loadEvents();
   }, [loadEvents, refreshTrigger]);
 
-  const playersByClube = filterClube ? players.filter((p) => p.tenantId === filterClube) : players;
+  const carePersonsByClube = filterClube
+    ? carePersons.filter((p) => p.tenantId === filterClube)
+    : carePersons;
   const selectedTenantForFilter = tenants.find((t) => t.id === filterClube);
   const categoriesForFilter = filterClube
     ? filterCategoriesForTenant(allFixtureCategories, selectedTenantForFilter?.categories)
     : FIXTURE_CATEGORIES;
   const selectedPlayerName = filterAtleta
-    ? (() => {
-        const p = players.find((pl) => pl.id === filterAtleta);
-        return p ? getPlayerListDisplayName(p) : "";
-      })()
+    ? (carePersons.find((p) => p.key === filterAtleta)?.name ?? "")
     : "";
 
   const eventsByDate = useMemo(() => {
@@ -399,38 +431,29 @@ export function PsicologiaAgendaOperacional() {
 
   const handleCreateMeet = async (performerName?: string, options?: { isPrivate?: boolean }) => {
     if (!filterAtleta?.trim() || !newDate.trim()) {
-      showFeedback("Atenção", "Selecione um atleta e informe a data.", "warning");
+      showFeedback("Atenção", "Selecione a pessoa e informe a data.", "warning");
       return;
     }
-    const player = players.find((p) => p.id === filterAtleta);
-    if (!player) return;
+    const person = carePersons.find((p) => p.key === filterAtleta);
+    if (!person) return;
     setMeetCreating(true);
     try {
       const { data } = await api.post<{ meetLink: string }>("/consultations/create-meet", {
-        summary: `Consulta: ${player.name}`,
+        summary: `Consulta: ${person.name}`,
         description: newNotes.trim() || undefined,
         startDate: newDate,
         startTime: newTime,
       });
       if (!data?.meetLink) return;
-      const { data: playerData } = await api.get<{ onlineConsultations?: unknown[] }>(
-        `/players/${filterAtleta}`,
-      );
-      const current = (playerData?.onlineConsultations ?? []) as Array<Record<string, unknown>>;
-      await api.patch(`/players/${filterAtleta}`, {
-        onlineConsultations: [
-          ...current,
-          {
-            type: "meet",
-            status: "scheduled",
-            date: newDate,
-            time: newTime,
-            link: data.meetLink,
-            notes: newNotes.trim() || undefined,
-            psychologist: performerName?.trim() || newPsychologist.trim() || undefined,
-            isPrivate: options?.isPrivate === true,
-          },
-        ],
+      await appendCarePersonOnlineConsultation(filterAtleta, {
+        type: "meet",
+        status: "scheduled",
+        date: newDate,
+        time: newTime,
+        link: data.meetLink,
+        notes: newNotes.trim() || undefined,
+        psychologist: performerName?.trim() || newPsychologist.trim() || undefined,
+        isPrivate: options?.isPrivate === true,
       });
       setNewDate("");
       setNewTime("09:00");
@@ -572,7 +595,7 @@ export function PsicologiaAgendaOperacional() {
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-xs text-muted-foreground">Atleta</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Pessoa</label>
               <Select
                 value={filterAtleta || "all"}
                 onValueChange={(v) => setFilterAtleta(v === "all" ? "" : v)}
@@ -582,9 +605,9 @@ export function PsicologiaAgendaOperacional() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  {playersByClube.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {getPlayerListDisplayName(p)}
+                  {carePersonsByClube.map((p) => (
+                    <SelectItem key={p.key} value={p.key}>
+                      {psychologyPersonSelectLabel(p)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -805,7 +828,7 @@ export function PsicologiaAgendaOperacional() {
             filterCategoria={filterCategoria}
             tenants={tenants}
             selectedPlayerName={selectedPlayerName}
-            players={players}
+            carePersons={carePersonsByClube}
             psychologists={psychologists}
             meetAvailable={meetAvailable}
             meetCreating={meetCreating}
@@ -877,10 +900,22 @@ export function PsicologiaAgendaOperacional() {
                 ) : null}
               </div>
               <DialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap">
-                {detailEvent.playerId ? (
+                {detailEvent.personKey || detailEvent.playerId ? (
                   <Button variant="outline" className="min-h-[44px]" asChild>
-                    <Link href={playerPsychologyProfileHref(detailEvent.playerId, "consultas")}>
-                      Ficha do atleta
+                    <Link
+                      href={
+                        detailEvent.personKey
+                          ? psychologyPersonProfileHref(
+                              {
+                                personType: detailEvent.personKey.split(":")[0] as "player" | "employee" | "staff",
+                                personId: detailEvent.personKey.split(":").slice(1).join(":"),
+                              },
+                              "consultas",
+                            )
+                          : playerPsychologyProfileHref(detailEvent.playerId!, "consultas")
+                      }
+                    >
+                      Ver ficha
                     </Link>
                   </Button>
                 ) : null}

@@ -389,18 +389,105 @@ export function findPlayerStatForMatch(
   return stats.find((s) => s.playerId === player.id);
 }
 
-/** Mesma regra visual de célula da planilha original — sem alterar estado disciplinar. */
-function resolveDisciplineCellCode(
+/** Ordem operacional: suspenso → pendurado → com cartão → demais. */
+export function disciplinePlayerSortRank(row: DisciplinePlayerRow): number {
+  if (row.nextRoundCell === 'S') return 0;
+  if (row.nextRoundCell === 'P') return 1;
+  if (row.yellowCardsTotal > 0 || row.redCardsTotal > 0) return 2;
+  return 3;
+}
+
+export function compareDisciplinePlayers(
+  a: DisciplinePlayerRow,
+  b: DisciplinePlayerRow,
+): number {
+  const rankDiff = disciplinePlayerSortRank(a) - disciplinePlayerSortRank(b);
+  if (rankDiff !== 0) return rankDiff;
+  return (
+    (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) ||
+    a.name.localeCompare(b.name, 'pt-BR')
+  );
+}
+
+function isExpulsionStat(stat: MatchInput['playerStats'][number]): boolean {
+  return stat.redCards > 0 || (stat.played && stat.yellowCards >= 2);
+}
+
+/**
+ * Processa cartões do jogo — roda mesmo quando o atleta entra pendurado (P) ou cumpre suspensão (SA).
+ * Vermelho / 2º amarelo na partida suspende, mas não zera acúmulo de amarelos da competição.
+ */
+function applyMatchDisciplineCards(input: {
+  match: MatchInput;
+  player: PlayerInput;
+  stat: MatchInput['playerStats'][number];
+  state: PlayerRoundState;
+  yellowTotals: Map<string, number>;
+  redTotals: Map<string, number>;
+}): DisciplineCellCode {
+  const { match, player, stat, state, yellowTotals, redTotals } = input;
+  let code: DisciplineCellCode = stat.played ? 'AT' : '';
+
+  if (isExpulsionStat(stat)) {
+    if (stat.yellowCards > 0 && stat.played) {
+      yellowTotals.set(player.id, (yellowTotals.get(player.id) ?? 0) + stat.yellowCards);
+      state.yellowAccum += stat.yellowCards;
+    }
+    if (stat.redCards > 0) {
+      redTotals.set(player.id, (redTotals.get(player.id) ?? 0) + stat.redCards);
+    }
+    const occ = findOccurrenceForPlayer(
+      match.occurrencesText,
+      player.name,
+      stat.jerseyNumber ?? player.jerseyNumber,
+    );
+    const manual = Boolean(occ && occurrenceIsManual(occ));
+    code =
+      stat.redCards > 0
+        ? manual
+          ? 'VM'
+          : 'V'
+        : stat.yellowCards > 0
+          ? manual
+            ? 'AM'
+            : 'AV'
+          : 'V';
+    state.suspensionRoundsLeft = 1;
+    state.pendurado = false;
+    return code;
+  }
+
+  if (stat.yellowCards > 0 && stat.played) {
+    yellowTotals.set(player.id, (yellowTotals.get(player.id) ?? 0) + stat.yellowCards);
+    state.yellowAccum += stat.yellowCards;
+    const occ = findOccurrenceForPlayer(
+      match.occurrencesText,
+      player.name,
+      stat.jerseyNumber ?? player.jerseyNumber,
+    );
+    code = occ && occurrenceIsManual(occ) ? 'AM' : 'AV';
+    if (state.yellowAccum >= 3) {
+      state.suspensionRoundsLeft = 1;
+      state.yellowAccum = 0;
+      state.pendurado = false;
+    } else if (state.yellowAccum >= 2) {
+      state.pendurado = true;
+    }
+  }
+
+  return code;
+}
+
+/** Amistoso: só exibição visual — não altera estado disciplinar. */
+function resolveFriendlyDisciplineCellCode(
   match: MatchInput,
   player: PlayerInput,
   stat: MatchInput['playerStats'][number] | undefined,
   pendingCode: DisciplineCellCode,
 ): DisciplineCellCode {
-  let code = pendingCode;
-  if (code !== '' || !stat?.played) return code;
-
-  code = 'AT';
-  if (stat.yellowCards > 0) {
+  if (!stat || (!stat.played && stat.redCards <= 0)) return pendingCode;
+  let code: DisciplineCellCode = stat.played ? 'AT' : pendingCode;
+  if (stat.yellowCards > 0 && stat.played) {
     const occ = findOccurrenceForPlayer(
       match.occurrencesText,
       player.name,
@@ -408,7 +495,7 @@ function resolveDisciplineCellCode(
     );
     code = occ && occurrenceIsManual(occ) ? 'AM' : 'AV';
   }
-  if (stat.redCards > 0) {
+  if (stat.redCards > 0 || (stat.played && stat.yellowCards >= 2)) {
     const occ = findOccurrenceForPlayer(
       match.occurrencesText,
       player.name,
@@ -487,7 +574,6 @@ export function buildDisciplineGrid(input: {
     for (const player of input.players) {
       const state = states.get(player.id)!;
       const cells = roundCells.get(player.id)!;
-      let code: DisciplineCellCode = '';
 
       if (isFriendly) {
         let pending: DisciplineCellCode = '';
@@ -496,55 +582,35 @@ export function buildDisciplineGrid(input: {
         else if (state.pendurado) pending = 'P';
 
         const stat = findPlayerStatForMatch(match.playerStats, player);
-        cells[roundIndex] = resolveDisciplineCellCode(match, player, stat, pending);
+        cells[roundIndex] = resolveFriendlyDisciplineCellCode(match, player, stat, pending);
         continue;
       }
 
+      let pendingCode: DisciplineCellCode = '';
       if (state.stjdRoundsLeft > 0) {
-        code = 'ST';
+        pendingCode = 'ST';
         state.stjdRoundsLeft -= 1;
       } else if (state.suspensionRoundsLeft > 0) {
-        code = 'SA';
+        pendingCode = 'SA';
         state.suspensionRoundsLeft -= 1;
         state.pendurado = false;
       } else if (state.pendurado) {
-        code = 'P';
+        pendingCode = 'P';
         state.pendurado = false;
       }
 
       const stat = findPlayerStatForMatch(match.playerStats, player);
-      if (code === '' && stat && (stat.played || stat.redCards > 0)) {
-        if (stat.played) code = 'AT';
-        if (stat.yellowCards > 0) {
-          yellowTotals.set(player.id, (yellowTotals.get(player.id) ?? 0) + stat.yellowCards);
-          state.yellowAccum += stat.yellowCards;
-          const occ = findOccurrenceForPlayer(
-            match.occurrencesText,
-            player.name,
-            stat.jerseyNumber ?? player.jerseyNumber,
-          );
-          code = occ && occurrenceIsManual(occ) ? 'AM' : 'AV';
-        }
-        if (stat.redCards > 0) {
-          redTotals.set(player.id, (redTotals.get(player.id) ?? 0) + stat.redCards);
-          const occ = findOccurrenceForPlayer(
-            match.occurrencesText,
-            player.name,
-            stat.jerseyNumber ?? player.jerseyNumber,
-          );
-          code = occ && occurrenceIsManual(occ) ? 'VM' : 'V';
-          state.suspensionRoundsLeft = 1;
-          state.yellowAccum = 0;
-          state.pendurado = false;
-        } else if (stat.yellowCards > 0) {
-          if (state.yellowAccum >= 3) {
-            state.suspensionRoundsLeft = 1;
-            state.yellowAccum = 0;
-            state.pendurado = false;
-          } else if (state.yellowAccum >= 2) {
-            state.pendurado = true;
-          }
-        }
+      let code: DisciplineCellCode = pendingCode;
+      if (stat && (stat.played || stat.redCards > 0)) {
+        const actionCode = applyMatchDisciplineCards({
+          match,
+          player,
+          stat,
+          state,
+          yellowTotals,
+          redTotals,
+        });
+        if (actionCode) code = actionCode;
       }
 
       cells[roundIndex] = code;
@@ -611,11 +677,7 @@ export function buildDisciplineGrid(input: {
         playedUp,
       };
     })
-    .sort(
-      (a, b) =>
-        (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999) ||
-        a.name.localeCompare(b.name, 'pt-BR'),
-    )
+    .sort(compareDisciplinePlayers)
     .map((row, index) => ({ ...row, num: index + 1 }));
 
   return {

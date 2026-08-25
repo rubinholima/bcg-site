@@ -49,6 +49,24 @@ export class CreatePsychologySessionDto {
 
   @IsOptional()
   @IsString()
+  @IsIn(['player', 'employee', 'staff'])
+  personType?: string;
+
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['elenco', 'emprestado', 'funcionario'])
+  personClassification?: string;
+
+  @IsOptional()
+  @IsString()
   psychologistId?: string;
 
   @IsOptional()
@@ -167,6 +185,24 @@ export class UpdatePsychologySessionDto {
   @IsOptional()
   @IsString()
   playerId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['player', 'employee', 'staff'])
+  personType?: string;
+
+  @IsOptional()
+  @IsString()
+  employeeId?: string;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['elenco', 'emprestado', 'funcionario'])
+  personClassification?: string;
 
   @IsOptional()
   @IsString()

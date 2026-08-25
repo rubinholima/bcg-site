@@ -37,7 +37,13 @@ import {
   playerPsychologyProfileHref,
   isUpcomingConsultation,
 } from "@/lib/consultation-display";
-import { getPlayerListDisplayName } from "@/lib/player-display-name";
+import {
+  appendCarePersonOnlineConsultation,
+  fetchCarePersonClinical,
+  parsePsychologyPersonKey,
+  psychologyPersonSelectLabel,
+  type PsychologyCarePerson,
+} from "@/lib/psychology-care-person";
 
 interface PlayerOption {
   id: string;
@@ -57,6 +63,7 @@ interface TenantOption {
 interface ConsultationItem {
   id: string;
   playerId: string;
+  personKey?: string;
   tenantId: string;
   playerName: string;
   tenantName?: string;
@@ -206,7 +213,7 @@ export default function ConsultasPage() {
   const [consultations, setConsultations] = useState<ConsultationItem[]>([]);
   const [consultationsLoading, setConsultationsLoading] = useState(true);
   const [tenants, setTenants] = useState<TenantOption[]>([]);
-  const [players, setPlayers] = useState<PlayerOption[]>([]);
+  const [carePersons, setCarePersons] = useState<PsychologyCarePerson[]>([]);
   const [meetAvailable, setMeetAvailable] = useState<boolean | null>(null);
   const [meetCreating, setMeetCreating] = useState(false);
   const [newDate, setNewDate] = useState("");
@@ -251,9 +258,6 @@ export default function ConsultasPage() {
     api.get<TenantOption[]>("/tenants?clubsOnly=1").then(({ data }) => {
       setTenants(Array.isArray(data) ? data : []);
     });
-    api.get<PlayerOption[]>("/players").then(({ data }) => {
-      setPlayers(Array.isArray(data) ? data : []);
-    });
     api.get<Psychologist[]>("/psychologists").then(({ data }) => {
       setPsychologists(Array.isArray(data) ? data : []);
     }).catch(() => setPsychologists([]));
@@ -270,14 +274,26 @@ export default function ConsultasPage() {
   }, [tenants, filterClube]);
 
   useEffect(() => {
+    if (!filterClube) {
+      setCarePersons([]);
+      return;
+    }
+    api
+      .get<PsychologyCarePerson[]>(
+        `/psychology-sessions/care-persons?tenantId=${encodeURIComponent(filterClube)}`,
+      )
+      .then(({ data }) => setCarePersons(Array.isArray(data) ? data : []))
+      .catch(() => setCarePersons([]));
+  }, [filterClube, calendarRefreshTrigger]);
+
+  useEffect(() => {
     if (!filterAtleta) {
       setPsychList([]);
       return;
     }
     setPsychLoading(true);
-    api
-      .get<{ psychologicalAssessment?: unknown[] | null }>(`/players/${filterAtleta}`)
-      .then(({ data }) => {
+    fetchCarePersonClinical(filterAtleta)
+      .then((data) => {
         const raw = data?.psychologicalAssessment;
         setPsychList(Array.isArray(raw) ? (raw as PsychologicalAssessmentEntry[]) : []);
       })
@@ -285,9 +301,9 @@ export default function ConsultasPage() {
       .finally(() => setPsychLoading(false));
   }, [filterAtleta]);
 
-  const playersByClube = filterClube
-    ? players.filter((p) => p.tenantId === filterClube)
-    : players;
+  const carePersonsByClube = filterClube
+    ? carePersons.filter((p) => p.tenantId === filterClube)
+    : carePersons;
   /** Só clubes no dropdown (kind name clube, futebol, club) */
   const clubesOnly = tenants.filter((t) => {
     const k = (t.kind?.name ?? "").toLowerCase();
@@ -295,7 +311,7 @@ export default function ConsultasPage() {
   });
   const tenantsForClubeDropdown = clubesOnly.length > 0 ? clubesOnly : tenants;
   const categoriesInUse = Array.from(
-    new Set(playersByClube.map((p) => p.category).filter(Boolean)),
+    new Set(carePersonsByClube.map((p) => p.category).filter(Boolean)),
   ) as string[];
   const { categories: allFixtureCategories } = useFixtureCategories();
   const selectedTenantForFilter = tenants.find((t) => t.id === filterClube);
@@ -306,7 +322,13 @@ export default function ConsultasPage() {
     : FIXTURE_CATEGORIES.filter((c) => categoriesInUse.includes(c.value));
   const historicoAtleta = filterAtleta
     ? consultations
-        .filter((c) => c.playerId === filterAtleta && isUpcomingConsultation(c))
+        .filter(
+          (c) =>
+            (c.personKey === filterAtleta ||
+              c.playerId === filterAtleta ||
+              c.playerId === filterAtleta.replace(/^player:/, "")) &&
+            isUpcomingConsultation(c),
+        )
         .sort((a, b) => {
           const da = (a.date ?? "") + (a.time ?? "");
           const db = (b.date ?? "") + (b.time ?? "");
@@ -314,29 +336,26 @@ export default function ConsultasPage() {
         })
     : [];
   const selectedPlayerName = filterAtleta
-    ? (() => {
-        const p = players.find((pl) => pl.id === filterAtleta);
-        return p ? getPlayerListDisplayName(p) : "";
-      })()
+    ? (carePersons.find((p) => p.key === filterAtleta)?.name ?? "")
     : "";
 
   const handleCreateMeet = async (performerName?: string, options?: { isPrivate?: boolean }) => {
     if (!filterAtleta?.trim() || !newDate.trim()) {
       showFeedback(
         "Atenção",
-        "Selecione um atleta no filtro acima e informe a data.",
+        "Selecione a pessoa no filtro acima e informe a data.",
         "warning"
       );
       return;
     }
-    const player = players.find((p) => p.id === filterAtleta);
-    if (!player) return;
+    const person = carePersons.find((p) => p.key === filterAtleta);
+    if (!person) return;
     setMeetCreating(true);
     try {
       const { data } = await api.post<{ meetLink: string; createdWithMeet?: boolean }>(
         "/consultations/create-meet",
         {
-          summary: `Consulta: ${player.name}`,
+          summary: `Consulta: ${person.name}`,
           description: newNotes.trim() || undefined,
           startDate: newDate,
           startTime: newTime,
@@ -344,32 +363,17 @@ export default function ConsultasPage() {
         }
       );
       if (data?.meetLink) {
-        const { data: playerData } = await api.get<{ onlineConsultations?: unknown[] }>(
-          `/players/${filterAtleta}`
-        );
-        const current = (playerData?.onlineConsultations ?? []) as Array<{
-          type?: string;
-          status?: string;
-          date?: string;
-          time?: string;
-          link?: string;
-          notes?: string;
-        }>;
         const professionalName = performerName?.trim() || newPsychologist.trim() || undefined;
-        const updated = [
-          ...current,
-          {
-            type: "meet",
-            status: "scheduled",
-            date: newDate,
-            time: newTime,
-            link: data.meetLink,
-            notes: newNotes.trim() || undefined,
-            psychologist: professionalName,
-            isPrivate: options?.isPrivate === true,
-          },
-        ];
-        await api.patch(`/players/${filterAtleta}`, { onlineConsultations: updated });
+        await appendCarePersonOnlineConsultation(filterAtleta, {
+          type: "meet",
+          status: "scheduled",
+          date: newDate,
+          time: newTime,
+          link: data.meetLink,
+          notes: newNotes.trim() || undefined,
+          psychologist: professionalName,
+          isPrivate: options?.isPrivate === true,
+        });
         setCalendarRefreshTrigger((t) => t + 1);
         const linkToSend = data.meetLink;
         const dateToSend = newDate;
@@ -379,14 +383,14 @@ export default function ConsultasPage() {
         setNewTime("09:00");
         setNewNotes("");
         setNewPsychologist("");
-        // Enviar link por e-mail para o atleta (se tiver contactEmail cadastrado e SMTP configurado)
+        if (person.personType === "player") {
         try {
           const { data: notifyResult } = await api.post<{
             emailSent?: boolean;
             noContact?: boolean;
             emailError?: string;
           }>("/consultations/notify-player", {
-            playerId: filterAtleta,
+            playerId: person.personId,
             link: linkToSend,
             date: dateToSend,
             time: timeToSend,
@@ -414,6 +418,9 @@ export default function ConsultasPage() {
         } catch {
           // Não bloqueia o fluxo; consulta já foi salva
         }
+        } else {
+          showFeedback("Consulta agendada", "Consulta online registrada na agenda.", "success");
+        }
         if (!data.createdWithMeet) {
           showFeedback(
             "Evento criado",
@@ -435,9 +442,14 @@ export default function ConsultasPage() {
 
   const savePsych = useCallback(async () => {
     if (!filterAtleta?.trim()) return;
+    const parsed = parsePsychologyPersonKey(filterAtleta);
+    if (!parsed) return;
     setPsychSaving(true);
     try {
-      await api.patch(`/players/${filterAtleta}`, { psychologicalAssessment: psychList });
+      await api.patch(
+        `/psychology-sessions/care-persons/${parsed.personType}/${parsed.personId}/clinical`,
+        { psychologicalAssessment: psychList },
+      );
     } catch (e: unknown) {
       showFeedback(
         "Erro",
@@ -466,24 +478,37 @@ export default function ConsultasPage() {
     setPsychList((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
-  /** Atualiza status e/ou notas de uma consulta (id = playerId-index). Persiste em onlineConsultations. */
+  /** Atualiza status e/ou notas de uma consulta online. */
   const updateConsultationStatusAndNotes = useCallback(
     async (consultationId: string, payload: { status?: string; notes?: string }) => {
-      const match = consultationId.match(/^(.+)-(\d+)$/);
-      if (!match) return;
-      const [, playerId, indexStr] = match;
-      const index = parseInt(indexStr ?? "", 10);
-      if (!playerId || isNaN(index) || index < 0) return;
-      const { data } = await api.get<{ onlineConsultations?: Array<Record<string, unknown>> }>(
-        `/players/${playerId}`
-      );
-      const list = Array.isArray(data?.onlineConsultations) ? [...data.onlineConsultations] : [];
+      const typedMatch = consultationId.match(/^(employee|staff):(.+)-(\d+)$/);
+      let personType: "player" | "employee" | "staff" = "player";
+      let personId = "";
+      let index = -1;
+      if (typedMatch) {
+        personType = typedMatch[1] as "employee" | "staff";
+        personId = typedMatch[2]!;
+        index = parseInt(typedMatch[3]!, 10);
+      } else {
+        const match = consultationId.match(/^(.+)-(\d+)$/);
+        if (!match) return;
+        personId = match[1]!;
+        index = parseInt(match[2] ?? "", 10);
+      }
+      if (!personId || isNaN(index) || index < 0) return;
+      const clinical = await fetchCarePersonClinical(`${personType}:${personId}`);
+      const list = Array.isArray(clinical.onlineConsultations)
+        ? [...(clinical.onlineConsultations as Array<Record<string, unknown>>)]
+        : [];
       if (index >= list.length) return;
-      const entry = { ...list[index] };
+      const entry = { ...list[index]! };
       if (payload.status !== undefined) entry.status = payload.status;
       if (payload.notes !== undefined) entry.notes = payload.notes;
       list[index] = entry;
-      await api.patch(`/players/${playerId}`, { onlineConsultations: list });
+      await api.patch(
+        `/psychology-sessions/care-persons/${personType}/${personId}/clinical`,
+        { onlineConsultations: list },
+      );
       setCalendarRefreshTrigger((t) => t + 1);
       fetchConsultations();
     },
@@ -534,20 +559,19 @@ export default function ConsultasPage() {
               </Select>
             </div>
             <div className="min-w-0">
-              <label className="mb-1 block text-xs text-muted-foreground">Atleta</label>
+              <label className="mb-1 block text-xs text-muted-foreground">Pessoa</label>
               <Select
                 value={filterAtleta || "all"}
                 onValueChange={(v) => setFilterAtleta(v === "all" ? "" : v)}
               >
                 <SelectTrigger className="w-full text-foreground">
-                  <SelectValue placeholder="Todos os atletas" />
+                  <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os atletas</SelectItem>
-                  {playersByClube.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {getPlayerListDisplayName(p)}
-                      {p.category ? ` (${FIXTURE_CATEGORIES.find((c) => c.value === p.category)?.labelPT ?? p.category})` : ""}
+                  <SelectItem value="all">Todas</SelectItem>
+                  {carePersonsByClube.map((p) => (
+                    <SelectItem key={p.key} value={p.key}>
+                      {psychologyPersonSelectLabel(p)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -609,7 +633,7 @@ export default function ConsultasPage() {
             filterCategoria={filterCategoria}
             tenants={tenants}
             selectedPlayerName={selectedPlayerName}
-            players={players}
+            carePersons={carePersonsByClube}
             psychologists={psychologists}
             meetAvailable={meetAvailable}
             meetCreating={meetCreating}
