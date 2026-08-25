@@ -99,7 +99,7 @@ export function TreinadoresInformacoesTab({
         </Button>
         <Button asChild variant="outline" size="sm">
           <Link
-            href={`/dashboard/futebol/treinadores?tenantId=${tenantId}${category ? `&category=${encodeURIComponent(category)}` : ""}&tab=relatorio-equipe`}
+            href={`/dashboard/futebol/treinadores/relatorio-equipe?tenantId=${tenantId}${category ? `&category=${encodeURIComponent(category)}` : ""}`}
           >
             <ExternalLink className="mr-2 h-4 w-4" />
             Relatório da equipe

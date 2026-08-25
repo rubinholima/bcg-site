@@ -1,21 +1,26 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import type { CoachContextResponse } from "@/lib/treinadores-types";
-import { TreinadoresFilters } from "./TreinadoresFilters";
-import { TreinadoresInformacoesTab } from "./TreinadoresInformacoesTab";
-import { TreinadoresPosJogoTab } from "./TreinadoresPosJogoTab";
-import { TreinadoresTreinosTab } from "./TreinadoresTreinosTab";
-import { CoachTeamReportPanel } from "./CoachTeamReportPanel";
 
-export function TreinadoresDashboard() {
+interface Props {
+  children: (props: {
+    tenantId: string;
+    category?: string;
+    context: CoachContextResponse | null;
+    contextLoading: boolean;
+    loadError: string | null;
+    refreshContext: () => void;
+  }) => ReactNode;
+}
+
+export function TreinadoresContextPanel({ children }: Props) {
   const searchParams = useSearchParams();
   const tenantId = searchParams.get("tenantId") ?? "";
   const category = searchParams.get("category") ?? undefined;
-  const tab = searchParams.get("tab") ?? "informacoes";
 
   const [context, setContext] = useState<CoachContextResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,40 +63,20 @@ export function TreinadoresDashboard() {
     };
   }, [fetchContext]);
 
-  return (
-    <div className="space-y-6">
-      <Suspense fallback={null}>
-        <TreinadoresFilters />
-      </Suspense>
+  if (!tenantId) {
+    return <p className="text-sm text-muted-foreground">Selecione um clube para continuar.</p>;
+  }
 
-      {!tenantId ? (
-        <p className="text-sm text-muted-foreground">Selecione um clube para continuar.</p>
-      ) : tab === "pos-jogo" ? (
-        <TreinadoresPosJogoTab
-          tenantId={tenantId}
-          category={category}
-          contextLoading={loading}
-          context={context}
-        />
-      ) : tab === "treinos" ? (
-        <TreinadoresTreinosTab tenantId={tenantId} category={category} context={context} />
-      ) : tab === "relatorio-equipe" ? (
-        <CoachTeamReportPanel
-          tenantId={tenantId}
-          category={category}
-          contextLoading={loading}
-          context={context}
-        />
-      ) : (
-        <TreinadoresInformacoesTab
-          tenantId={tenantId}
-          category={category}
-          loading={loading}
-          loadError={loadError}
-          context={context}
-          onRefresh={() => void fetchContext()}
-        />
-      )}
-    </div>
+  return (
+    <>
+      {children({
+        tenantId,
+        category,
+        context,
+        contextLoading: loading,
+        loadError,
+        refreshContext: () => void fetchContext(),
+      })}
+    </>
   );
 }

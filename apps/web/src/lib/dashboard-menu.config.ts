@@ -739,6 +739,43 @@ export const DASHBOARD_MENU: MenuItemConfig[] = [
         href: "/dashboard/futebol/treinadores",
         icon: ClipboardList,
         moduleSlug: "futebol_treinadores",
+        children: [
+          {
+            slug: "futebol_treinadores_dash",
+            label: DEPT_HUB_MENU_LABEL,
+            href: "/dashboard/futebol/treinadores",
+            icon: LayoutDashboard,
+            moduleSlug: "futebol_treinadores",
+          },
+          {
+            slug: "futebol_treinadores_informacoes",
+            label: "Informações",
+            href: "/dashboard/futebol/treinadores/informacoes",
+            icon: ClipboardList,
+            moduleSlug: "futebol_treinadores",
+          },
+          {
+            slug: "futebol_treinadores_pos_jogo",
+            label: "Relatório pós-jogo",
+            href: "/dashboard/futebol/treinadores/pos-jogo",
+            icon: FileText,
+            moduleSlug: "futebol_treinadores",
+          },
+          {
+            slug: "futebol_treinadores_relatorio_equipe",
+            label: "Relatório da equipe",
+            href: "/dashboard/futebol/treinadores/relatorio-equipe",
+            icon: Users,
+            moduleSlug: "futebol_treinadores",
+          },
+          {
+            slug: "futebol_treinadores_treinos",
+            label: "Planejamento de treinos",
+            href: "/dashboard/futebol/treinadores/treinos",
+            icon: Dumbbell,
+            moduleSlug: "futebol_treinadores",
+          },
+        ],
       },
       {
         slug: "futebol_relatorios",

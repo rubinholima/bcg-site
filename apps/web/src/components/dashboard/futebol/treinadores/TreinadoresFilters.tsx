@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Select,
@@ -21,16 +21,14 @@ interface Tenant {
   categories?: string[] | null;
 }
 
-const BASE = "/dashboard/futebol/treinadores";
-
 export function TreinadoresFilters() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [tenants, setTenants] = useState<Tenant[]>([]);
 
   const tenantId = searchParams.get("tenantId") ?? "";
   const category = searchParams.get("category") ?? "";
-  const tab = searchParams.get("tab") ?? "informacoes";
 
   const selectedTenant = tenants.find((t) => t.id === tenantId);
   const { categories: categoriesForDropdown } = useCategoriesForTenant(selectedTenant?.categories);
@@ -47,14 +45,15 @@ export function TreinadoresFilters() {
       if (value) params.set(key, value);
       else params.delete(key);
     }
-    router.push(`${BASE}?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
   };
 
   useEffect(() => {
     if (tenants.length === 1 && !tenantId) {
       pushParams({ tenantId: tenants[0]!.id, category: null });
     }
-  }, [tenants, tenantId, searchParams, router]);
+  }, [tenants, tenantId]);
 
   return (
     <Card>
@@ -92,20 +91,6 @@ export function TreinadoresFilters() {
                     {c.labelPT}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="min-w-[180px] flex-1 space-y-2">
-            <Label className="text-sm text-muted-foreground">Área</Label>
-            <Select value={tab} onValueChange={(v) => pushParams({ tab: v })}>
-              <SelectTrigger className="text-foreground">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="informacoes">Informações</SelectItem>
-                <SelectItem value="pos-jogo">Relatório pós-jogo</SelectItem>
-                <SelectItem value="relatorio-equipe">Relatório da equipe</SelectItem>
-                <SelectItem value="treinos">Planejamento de treinos</SelectItem>
               </SelectContent>
             </Select>
           </div>

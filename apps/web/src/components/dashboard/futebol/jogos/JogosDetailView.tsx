@@ -387,7 +387,7 @@ export function JogosDetailView({ gameKey }: Props) {
                   <span className="rounded border border-border px-2 py-0.5 text-xs">Relatório do treinador</span>
                 ) : canEditCoach ? (
                   <Button variant="link" className="h-auto p-0 text-primary" asChild>
-                    <Link href={`/dashboard/futebol/treinadores?tenantId=${tenantId}&tab=pos-jogo`}>
+                    <Link href={`/dashboard/futebol/treinadores/pos-jogo?tenantId=${tenantId}`}>
                       Cadastrar relatório pós-jogo
                     </Link>
                   </Button>
@@ -474,7 +474,7 @@ export function JogosDetailView({ gameKey }: Props) {
                 ) : null}
                 {canEditCoach ? (
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/futebol/treinadores?tenantId=${tenantId}&tab=pos-jogo`}>
+                    <Link href={`/dashboard/futebol/treinadores/pos-jogo?tenantId=${tenantId}`}>
                       Editar em Treinadores
                     </Link>
                   </Button>

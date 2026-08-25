@@ -2,6 +2,7 @@
 
 import {
   Calendar,
+  ClipboardList,
   Map,
   Users,
   UserCircle,
@@ -90,6 +91,13 @@ const LINKS = [
     href: "/dashboard/futebol/comissao",
     icon: Users,
     moduleSlug: "futebol_comissao",
+  },
+  {
+    title: "Treinadores",
+    description: "Informações, pós-jogo, relatório da equipe e treinos.",
+    href: "/dashboard/futebol/treinadores",
+    icon: ClipboardList,
+    moduleSlug: "futebol_treinadores",
   },
   {
     title: "Análise e desempenho",
