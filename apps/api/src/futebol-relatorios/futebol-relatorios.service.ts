@@ -23,6 +23,7 @@ import {
   formatTimeBrazil,
   resolveAgendaCalendarDateKey,
 } from '../common/brazil-time.util';
+import { isContractExpirationAgendaItem } from '../futebol-agenda/football-agenda-contract-expiration.util';
 import { dedupeTravelLogisticsList } from '../logistica/travel-logistics-dedup.util';
 import {
   normalizeTeamNameKeyForMerge,
@@ -689,6 +690,7 @@ export class FutebolRelatoriosService {
     for (const item of items) {
       if (item.source === 'bch_booking') continue;
       if (excludeTypes.has(item.type)) continue;
+      if (isContractExpirationAgendaItem(item)) continue;
       const dateIso = resolveAgendaCalendarDateKey(item);
       const day = dayMap.get(dateIso);
       if (!day) continue;
