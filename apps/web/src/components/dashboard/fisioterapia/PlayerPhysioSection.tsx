@@ -176,6 +176,7 @@ export function PlayerPhysioSection({
                     </div>
                     <span className="text-[11px] font-semibold uppercase text-muted-foreground">
                       {s.status === "active" ? "Ativo" : s.status === "completed" ? "Alta" : "Canc."}
+                      {s.status === "active" && s.needsTransition ? " · Transição" : ""}
                     </span>
                   </div>
                 </Link>

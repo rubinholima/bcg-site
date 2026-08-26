@@ -19,6 +19,7 @@ import {
   CreatePhysioPlayerEvaluationBatchDto,
   CreatePhysioPlayerEvaluationDto,
   CreatePhysioSessionDto,
+  CreatePhysioTransitionEntryDto,
   CreatePhysioTreatmentDto,
   PhysioEvaluationTestDto,
   PhysioSessionDiagnosisItemDto,
@@ -28,7 +29,11 @@ import {
   UpdatePhysioGroupSessionDto,
   UpdatePhysioPlayerEvaluationDto,
   UpdatePhysioSessionDto,
+  UpdatePhysioTransitionEntryDto,
 } from './dto/fisioterapia.dto';
+import {
+  computeDurationMinutes,
+} from './physio-transition.constants';
 import {
   isArchivedSportsSituation,
   isLoanedSportsSituation,
@@ -65,6 +70,9 @@ const sessionInclude = {
   sessionTreatments: {
     orderBy: { sortOrder: 'asc' as const },
     include: { treatment: true },
+  },
+  transitionEntries: {
+    orderBy: [{ sessionDate: 'desc' as const }, { createdAt: 'desc' as const }],
   },
   player: {
     select: {
@@ -611,6 +619,7 @@ export class FisioterapiaService implements OnModuleInit {
         estimatedDays: dto.estimatedDays ?? null,
         estimatedEndDate,
         status: 'active',
+        needsTransition: dto.needsTransition === true,
         staffId: dto.staffId || null,
         staffName: dto.staffName?.trim() || null,
         attachments: dto.attachments
@@ -762,12 +771,23 @@ export class FisioterapiaService implements OnModuleInit {
     }
 
     const nextStatus = dto.status ?? current.status;
+    const nextDisposition = dto.disposition !== undefined ? dto.disposition : current.disposition;
+    const completing =
+      nextStatus === 'completed' ||
+      nextStatus === 'cancelled' ||
+      (nextDisposition === 'alta' && nextStatus !== 'cancelled');
     const endedAt =
-      nextStatus === 'completed' || nextStatus === 'cancelled'
+      completing
         ? current.endedAt ?? new Date()
         : nextStatus === 'active'
           ? null
           : current.endedAt;
+    const transitionCompletedAt =
+      completing && current.needsTransition
+        ? current.transitionCompletedAt ?? new Date()
+        : dto.needsTransition === false
+          ? null
+          : current.transitionCompletedAt;
 
     if (regions !== undefined) {
       await this.prisma.physioSessionRegion.deleteMany({ where: { sessionId: id } });
@@ -832,6 +852,8 @@ export class FisioterapiaService implements OnModuleInit {
         status: dto.status,
         disposition: dto.disposition,
         endedAt,
+        needsTransition: dto.needsTransition,
+        transitionCompletedAt,
         staffId: dto.staffId,
         staffName: dto.staffName,
         attachments:
@@ -1475,6 +1497,132 @@ export class FisioterapiaService implements OnModuleInit {
   async deleteGameAttendance(id: string, allowed: string[] | null) {
     await this.findGameAttendance(id, allowed);
     await this.prisma.physioGameAttendance.delete({ where: { id } });
+  }
+
+  private normalizeTime(value: string, field: string): string {
+    const match = value.trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) {
+      throw new BadRequestException(`${field} inválido. Use HH:mm.`);
+    }
+    const h = Number(match[1]);
+    const m = Number(match[2]);
+    if (h > 23 || m > 59) {
+      throw new BadRequestException(`${field} inválido.`);
+    }
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  async listTransitionEntries(sessionId: string, allowed: string[] | null) {
+    const session = await this.findSession(sessionId, allowed);
+    return this.prisma.physioTransitionEntry.findMany({
+      where: { sessionId: session.id },
+      orderBy: [{ sessionDate: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  async createTransitionEntry(
+    sessionId: string,
+    dto: CreatePhysioTransitionEntryDto,
+    allowed: string[] | null,
+    userId?: string,
+  ) {
+    const session = await this.findSession(sessionId, allowed);
+    if (!session.needsTransition) {
+      throw new BadRequestException('Este atendimento não está marcado para transição.');
+    }
+    if (session.status === 'completed' || session.disposition === 'alta') {
+      throw new BadRequestException('Atendimento já encerrado com alta.');
+    }
+    const sessionDate = this.normalizePhysioDateKey(dto.sessionDate);
+    const startTime = this.normalizeTime(dto.startTime, 'Hora de início');
+    const endTime = this.normalizeTime(dto.endTime, 'Hora de fim');
+    const durationMinutes = computeDurationMinutes(startTime, endTime);
+    if (durationMinutes <= 0) {
+      throw new BadRequestException('A hora de fim deve ser posterior à hora de início.');
+    }
+    if (dto.workType === 'outro' && !dto.workTypeLabel?.trim()) {
+      throw new BadRequestException('Descreva o tipo de trabalho.');
+    }
+
+    const entry = await this.prisma.physioTransitionEntry.create({
+      data: {
+        sessionId: session.id,
+        sessionDate,
+        workType: dto.workType.trim(),
+        workTypeLabel: dto.workTypeLabel?.trim() || null,
+        startTime,
+        endTime,
+        durationMinutes,
+        objective: dto.objective?.trim() || null,
+        activities: dto.activities?.trim() || null,
+        stillFeelsPain: dto.stillFeelsPain === true,
+        evolutionScore: dto.evolutionScore ?? null,
+        staffId: dto.staffId?.trim() || null,
+        staffName: dto.staffName?.trim() || null,
+        createdByUserId: userId ?? null,
+      },
+    });
+
+    if (!session.transitionStartedAt) {
+      await this.prisma.physioSession.update({
+        where: { id: session.id },
+        data: { transitionStartedAt: new Date(`${sessionDate}T12:00:00-03:00`) },
+      });
+    }
+
+    return entry;
+  }
+
+  async updateTransitionEntry(
+    sessionId: string,
+    entryId: string,
+    dto: UpdatePhysioTransitionEntryDto,
+    allowed: string[] | null,
+  ) {
+    await this.findSession(sessionId, allowed);
+    const current = await this.prisma.physioTransitionEntry.findUnique({ where: { id: entryId } });
+    if (!current || current.sessionId !== sessionId) {
+      throw new NotFoundException('Registro de transição não encontrado.');
+    }
+    const startTime = dto.startTime != null ? this.normalizeTime(dto.startTime, 'Hora de início') : current.startTime;
+    const endTime = dto.endTime != null ? this.normalizeTime(dto.endTime, 'Hora de fim') : current.endTime;
+    const durationMinutes = computeDurationMinutes(startTime, endTime);
+    if (durationMinutes <= 0) {
+      throw new BadRequestException('A hora de fim deve ser posterior à hora de início.');
+    }
+    const workType = dto.workType ?? current.workType;
+    const workTypeLabel =
+      dto.workTypeLabel !== undefined ? dto.workTypeLabel?.trim() || null : current.workTypeLabel;
+    if (workType === 'outro' && !workTypeLabel) {
+      throw new BadRequestException('Descreva o tipo de trabalho.');
+    }
+
+    return this.prisma.physioTransitionEntry.update({
+      where: { id: entryId },
+      data: {
+        ...(dto.sessionDate != null && { sessionDate: this.normalizePhysioDateKey(dto.sessionDate) }),
+        ...(dto.workType != null && { workType: dto.workType.trim() }),
+        ...(dto.workTypeLabel !== undefined && { workTypeLabel }),
+        startTime,
+        endTime,
+        durationMinutes,
+        ...(dto.objective !== undefined && { objective: dto.objective?.trim() || null }),
+        ...(dto.activities !== undefined && { activities: dto.activities?.trim() || null }),
+        ...(dto.stillFeelsPain !== undefined && { stillFeelsPain: dto.stillFeelsPain }),
+        ...(dto.evolutionScore !== undefined && { evolutionScore: dto.evolutionScore }),
+        ...(dto.staffId !== undefined && { staffId: dto.staffId?.trim() || null }),
+        ...(dto.staffName !== undefined && { staffName: dto.staffName?.trim() || null }),
+      },
+    });
+  }
+
+  async deleteTransitionEntry(sessionId: string, entryId: string, allowed: string[] | null) {
+    await this.findSession(sessionId, allowed);
+    const current = await this.prisma.physioTransitionEntry.findUnique({ where: { id: entryId } });
+    if (!current || current.sessionId !== sessionId) {
+      throw new NotFoundException('Registro de transição não encontrado.');
+    }
+    await this.prisma.physioTransitionEntry.delete({ where: { id: entryId } });
   }
 
   private mapEvaluationTests(tests: PhysioEvaluationTestDto[]) {

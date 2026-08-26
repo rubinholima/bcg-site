@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsInt,
   IsNumber,
@@ -279,6 +280,10 @@ export class CreatePhysioSessionDto {
   staffName?: string;
 
   @IsOptional()
+  @IsBoolean()
+  needsTransition?: boolean;
+
+  @IsOptional()
   @IsArray()
   attachments?: PhysioAttachmentDto[];
 }
@@ -382,8 +387,105 @@ export class UpdatePhysioSessionDto {
   staffName?: string;
 
   @IsOptional()
+  @IsBoolean()
+  needsTransition?: boolean;
+
+  @IsOptional()
   @IsArray()
   attachments?: PhysioAttachmentDto[];
+}
+
+export class CreatePhysioTransitionEntryDto {
+  @IsString()
+  sessionDate!: string;
+
+  @IsString()
+  workType!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  workTypeLabel?: string;
+
+  @IsString()
+  startTime!: string;
+
+  @IsString()
+  endTime!: string;
+
+  @IsOptional()
+  @IsString()
+  objective?: string;
+
+  @IsOptional()
+  @IsString()
+  activities?: string;
+
+  @IsBoolean()
+  stillFeelsPain!: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  evolutionScore?: number;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string;
+
+  @IsOptional()
+  @IsString()
+  staffName?: string;
+}
+
+export class UpdatePhysioTransitionEntryDto {
+  @IsOptional()
+  @IsString()
+  sessionDate?: string;
+
+  @IsOptional()
+  @IsString()
+  workType?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  workTypeLabel?: string | null;
+
+  @IsOptional()
+  @IsString()
+  startTime?: string;
+
+  @IsOptional()
+  @IsString()
+  endTime?: string;
+
+  @IsOptional()
+  @IsString()
+  objective?: string | null;
+
+  @IsOptional()
+  @IsString()
+  activities?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  stillFeelsPain?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  evolutionScore?: number | null;
+
+  @IsOptional()
+  @IsString()
+  staffId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  staffName?: string | null;
 }
 
 export class SetPhysioDispositionDto {

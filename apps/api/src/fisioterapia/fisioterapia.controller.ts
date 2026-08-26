@@ -25,12 +25,14 @@ import {
   CreatePhysioPlayerEvaluationBatchDto,
   CreatePhysioPlayerEvaluationDto,
   CreatePhysioSessionDto,
+  CreatePhysioTransitionEntryDto,
   CreatePhysioTreatmentDto,
   SetPhysioDispositionDto,
   UpdatePhysioGameAttendanceDto,
   UpdatePhysioGroupSessionDto,
   UpdatePhysioPlayerEvaluationDto,
   UpdatePhysioSessionDto,
+  UpdatePhysioTransitionEntryDto,
 } from './dto/fisioterapia.dto';
 
 @Controller('fisioterapia')
@@ -172,6 +174,54 @@ export class FisioterapiaController {
   ) {
     const allowed = await this.allowedTenants(req);
     return this.service.setDisposition(id, dto.disposition, allowed);
+  }
+
+  @Get('sessions/:sessionId/transitions')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async listTransitions(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('sessionId') sessionId: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.listTransitionEntries(sessionId, allowed);
+  }
+
+  @Post('sessions/:sessionId/transitions')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async createTransition(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('sessionId') sessionId: string,
+    @Body() dto: CreatePhysioTransitionEntryDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.createTransitionEntry(sessionId, dto, allowed, req.user.sub);
+  }
+
+  @Patch('sessions/:sessionId/transitions/:entryId')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async updateTransition(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('sessionId') sessionId: string,
+    @Param('entryId') entryId: string,
+    @Body() dto: UpdatePhysioTransitionEntryDto,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.updateTransitionEntry(sessionId, entryId, dto, allowed);
+  }
+
+  @Delete('sessions/:sessionId/transitions/:entryId')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('saude')
+  async removeTransition(
+    @Req() req: Request & { user: CognitoJwtPayload },
+    @Param('sessionId') sessionId: string,
+    @Param('entryId') entryId: string,
+  ) {
+    const allowed = await this.allowedTenants(req);
+    return this.service.deleteTransitionEntry(sessionId, entryId, allowed);
   }
 
   @Delete('sessions/:id')

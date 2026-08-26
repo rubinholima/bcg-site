@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhysioBodyMap } from "@/components/dashboard/fisioterapia/PhysioBodyMap";
+import { PhysioTransitionPanel } from "@/components/dashboard/fisioterapia/PhysioTransitionPanel";
 import type { PhysioDisposition, PhysioEvolutionNote, PhysioSession } from "@/types/fisioterapia";
 import {
   PHYSIO_DISPOSITION_LABEL,
@@ -89,6 +90,14 @@ export default function FisioterapiaSessionDetailPage() {
 
   const setDisposition = async (disposition: PhysioDisposition) => {
     if (!id) return;
+    if (disposition === "alta" && session?.needsTransition && (session.transitionEntries?.length ?? 0) === 0) {
+      setFeedback({
+        open: true,
+        title: "Transição pendente",
+        message: "Registre ao menos uma sessão de transição antes da alta, ou desmarque “Precisa de transição”.",
+      });
+      return;
+    }
     setSaving(true);
     try {
       await api.post(`/fisioterapia/sessions/${id}/disposition`, { disposition });
@@ -100,6 +109,23 @@ export default function FisioterapiaSessionDetailPage() {
       });
     } catch {
       setFeedback({ open: true, title: "Erro", message: "Não foi possível registrar o desfecho." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleNeedsTransition = async (checked: boolean) => {
+    if (!id) return;
+    setSaving(true);
+    try {
+      await api.patch(`/fisioterapia/sessions/${id}`, { needsTransition: checked });
+      await load();
+    } catch {
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: "Não foi possível atualizar a transição.",
+      });
     } finally {
       setSaving(false);
     }
@@ -243,7 +269,7 @@ export default function FisioterapiaSessionDetailPage() {
                   onClick={() => void setDisposition("alta")}
                 >
                   <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Alta — problema resolvido
+                  {session.needsTransition ? "Alta — tratamento e transição" : "Alta — problema resolvido"}
                 </Button>
                 <Button
                   variant="outline"
@@ -319,6 +345,23 @@ export default function FisioterapiaSessionDetailPage() {
               <p>
                 <span className="text-muted-foreground">Fisio:</span> {session.staffName ?? "—"}
               </p>
+              {session.status === "active" ? (
+                <label className="flex min-h-[44px] items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-border"
+                    checked={session.needsTransition === true}
+                    disabled={saving}
+                    onChange={(e) => void toggleNeedsTransition(e.target.checked)}
+                  />
+                  <span>Precisa de transição</span>
+                </label>
+              ) : session.needsTransition ? (
+                <p>
+                  <span className="text-muted-foreground">Transição:</span>{" "}
+                  {session.transitionCompletedAt ? "Concluída com alta" : "Sim"}
+                </p>
+              ) : null}
               {session.attachments && session.attachments.length > 0 ? (
                 <div>
                   <p className="text-muted-foreground">Anexos:</p>
@@ -342,6 +385,10 @@ export default function FisioterapiaSessionDetailPage() {
               ) : null}
             </CardContent>
           </Card>
+
+          {session.needsTransition ? (
+            <PhysioTransitionPanel session={session} onUpdated={() => void load()} />
+          ) : null}
 
           <Card>
             <CardHeader className="pb-2">

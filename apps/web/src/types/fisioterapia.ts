@@ -111,6 +111,9 @@ export interface PhysioSession {
   disposition?: PhysioDisposition | null;
   staffId: string | null;
   staffName: string | null;
+  needsTransition?: boolean;
+  transitionStartedAt?: string | null;
+  transitionCompletedAt?: string | null;
   attachments: PhysioAttachment[] | null;
   evolutionNotes: PhysioEvolutionNote[] | null;
   region?: PhysioBodyRegion;
@@ -119,6 +122,7 @@ export interface PhysioSession {
   sessionRegions?: PhysioSessionRegion[];
   sessionDiagnoses?: PhysioSessionDiagnosis[];
   sessionTreatments?: PhysioSessionTreatment[];
+  transitionEntries?: PhysioTransitionEntry[];
   player?: {
     id: string;
     name: string;
@@ -172,6 +176,7 @@ export interface CreatePhysioSessionPayload {
   estimatedEndDate?: string;
   staffId?: string;
   staffName?: string;
+  needsTransition?: boolean;
   attachments?: PhysioAttachment[];
 }
 
@@ -196,6 +201,7 @@ export interface UpdatePhysioSessionPayload {
   estimatedEndDate?: string | null;
   staffId?: string;
   staffName?: string;
+  needsTransition?: boolean;
   attachments?: PhysioAttachment[];
   status?: PhysioSessionStatus;
 }
@@ -358,4 +364,37 @@ export interface CreatePhysioPlayerEvaluationBatchPayload {
   staffId?: string;
   staffName?: string;
   tests: PhysioEvaluationTest[];
+}
+
+export interface PhysioTransitionEntry {
+  id: string;
+  sessionId: string;
+  sessionDate: string;
+  workType: string;
+  workTypeLabel: string | null;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  objective: string | null;
+  activities: string | null;
+  stillFeelsPain: boolean;
+  evolutionScore: number | null;
+  staffId: string | null;
+  staffName: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePhysioTransitionEntryPayload {
+  sessionDate: string;
+  workType: string;
+  workTypeLabel?: string;
+  startTime: string;
+  endTime: string;
+  objective?: string;
+  activities?: string;
+  stillFeelsPain: boolean;
+  evolutionScore?: number;
+  staffId?: string;
+  staffName?: string;
 }

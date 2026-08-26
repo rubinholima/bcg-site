@@ -73,6 +73,7 @@ export function PhysioSessionForm({
   const [symptoms, setSymptoms] = useState("");
   const [painScore, setPainScore] = useState("5");
   const [treatmentNotes, setTreatmentNotes] = useState("");
+  const [needsTransition, setNeedsTransition] = useState(false);
   const [estimatedDays, setEstimatedDays] = useState("");
   const [estimatedEndDate, setEstimatedEndDate] = useState("");
   const [staffId, setStaffId] = useState("");
@@ -133,6 +134,7 @@ export function PhysioSessionForm({
         setSymptoms(data.symptoms ?? "");
         setPainScore(data.painScore != null ? String(data.painScore) : "");
         setTreatmentNotes(data.treatmentNotes ?? "");
+        setNeedsTransition(data.needsTransition === true);
         setEstimatedDays(data.estimatedDays != null ? String(data.estimatedDays) : "");
         setEstimatedEndDate(
           data.estimatedEndDate ? String(data.estimatedEndDate).slice(0, 10) : "",
@@ -449,6 +451,7 @@ export function PhysioSessionForm({
           treatmentNotes: treatmentNotes || undefined,
           estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
           estimatedEndDate: estimatedEndDate || null,
+          needsTransition,
           staffId: staffId || undefined,
           staffName: selectedStaff?.name || undefined,
           attachments: attachments.length ? attachments : [],
@@ -477,6 +480,7 @@ export function PhysioSessionForm({
         treatmentNotes: treatmentNotes || undefined,
         estimatedDays: estimatedDays ? Number(estimatedDays) : undefined,
         estimatedEndDate: estimatedEndDate || undefined,
+        needsTransition,
         staffId: staffId || undefined,
         staffName: selectedStaff?.name || undefined,
         attachments: attachments.length ? attachments : undefined,
@@ -784,6 +788,16 @@ export function PhysioSessionForm({
             onChange={(e) => setTreatmentNotes(e.target.value)}
           />
         </div>
+
+        <label className="flex min-h-[44px] items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-border"
+            checked={needsTransition}
+            onChange={(e) => setNeedsTransition(e.target.checked)}
+          />
+          Precisa de transição (fisiologia + preparação + fisio)
+        </label>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">

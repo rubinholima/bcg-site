@@ -3213,6 +3213,10 @@ model PhysioSession {
   status           String   @default("active") // active | completed | cancelled
   /// Desfecho do atendimento: alta | em_tratamento | nao_apto
   disposition      String?
+  /// Atleta segue programa de transição (fisiologia + preparação + fisio)
+  needsTransition    Boolean  @default(false)
+  transitionStartedAt DateTime?
+  transitionCompletedAt DateTime?
   staffId          String?
   staffName        String?
   attachments      Json?
@@ -3223,10 +3227,34 @@ model PhysioSession {
   sessionRegions   PhysioSessionRegion[]
   sessionDiagnoses PhysioSessionDiagnosis[]
   sessionTreatments PhysioSessionTreatment[]
+  transitionEntries PhysioTransitionEntry[]
   @@index([tenantId, status])
   @@index([playerId, status])
   @@index([regionId])
   @@index([startedAt])
+}
+
+/// Sessão de transição do retorno ao jogo (vinculada ao atendimento)
+model PhysioTransitionEntry {
+  id               String   @id @default(cuid())
+  sessionId        String
+  session          PhysioSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionDate      String   // YYYY-MM-DD
+  workType         String
+  workTypeLabel    String?
+  startTime        String   // HH:mm
+  endTime          String   // HH:mm
+  durationMinutes  Int
+  objective        String?  @db.Text
+  activities       String?  @db.Text
+  stillFeelsPain   Boolean  @default(false)
+  evolutionScore   Int?     // 0–10
+  staffId          String?
+  staffName        String?
+  createdByUserId  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@index([sessionId, sessionDate])
 }
 
 // ─── Módulo Enfermaria (Depto Saúde) ────────────────────────────────────────
