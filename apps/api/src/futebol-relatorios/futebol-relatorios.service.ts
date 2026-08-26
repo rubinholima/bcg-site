@@ -105,8 +105,11 @@ import {
 } from '../fmf-scraper/fmf-player-link.util';
 import {
   aggregateStaffDisciplineRows,
-  parseStaffCardsFromOccurrences,
+  extractStaffCardEventsFromRawParsed,
+  parseStaffCardsForMatch,
 } from './fmf-staff-cards.util';
+import type { FmfStaffCardEventInput } from './fmf-staff-cards.util';
+import { fetchStaffCardEventsFromSumulaUrl } from './fmf-sumula-staff-cards.util';
 import { staffRoleLabel } from '../psychology-sessions/psychology-care-person.util';
 import {
   DEFAULT_PRESS_KIT_DIRECTOR_ROLES,
@@ -1650,7 +1653,17 @@ export class FutebolRelatoriosService {
         },
       });
       if (!row) throw new NotFoundException('Súmula não encontrada');
-      match = this.buildSumulaMatchDto(row, tenant.name, aliases, categoryLabels, staffCandidates);
+      const enrichedRow = await this.enrichDisciplineMatchesStaffCards([row], staffCandidates);
+      const matchRow = enrichedRow[0] ?? row;
+      const staffCardsResolved = await this.resolveStaffCardsForFmfRow(matchRow, staffCandidates);
+      match = this.buildSumulaMatchDto(
+        matchRow,
+        tenant.name,
+        aliases,
+        categoryLabels,
+        staffCandidates,
+        staffCardsResolved,
+      );
     }
 
     const discipline = await this.buildSumulaDisciplineRows({
@@ -1752,7 +1765,6 @@ export class FutebolRelatoriosService {
       where: {
         tenantId: input.tenantId,
         season: input.season,
-        occurrencesText: { not: null },
       },
       select: {
         matchDate: true,
@@ -1762,12 +1774,14 @@ export class FutebolRelatoriosService {
         awayScore: true,
         category: true,
         occurrencesText: true,
+        rawParsed: true,
+        sourceUrl: true,
       },
       orderBy: [{ matchDate: 'asc' }],
     });
 
     const parsedRows: Array<
-      ReturnType<typeof parseStaffCardsFromOccurrences>[number] & {
+      ReturnType<typeof parseStaffCardsForMatch>[number] & {
         matchDate: string;
         matchLabel: string;
       }
@@ -1786,7 +1800,8 @@ export class FutebolRelatoriosService {
           ? `${row.homeScore} x ${row.awayScore}`
           : '—';
       const matchLabel = `${formatBrDate(dateKey)} · ${row.homeTeam} ${score} ${row.awayTeam}`;
-      for (const card of parseStaffCardsFromOccurrences(row.occurrencesText, input.staffCandidates)) {
+      const cards = await this.resolveStaffCardsForFmfRow(row, input.staffCandidates);
+      for (const card of cards) {
         parsedRows.push({ ...card, matchDate: dateKey, matchLabel });
       }
     }
@@ -1805,6 +1820,68 @@ export class FutebolRelatoriosService {
         redCards: match.redCards,
       })),
     }));
+  }
+
+  private async resolveStaffCardsForFmfRow(
+    row: {
+      occurrencesText: string | null;
+      rawParsed: unknown;
+      sourceUrl?: string | null;
+      staffCardEvents?: FmfStaffCardEventInput[] | null;
+    },
+    staffCandidates: Array<{ id: string; name: string; role: string }>,
+  ) {
+    let cards = parseStaffCardsForMatch(
+      {
+        occurrencesText: row.occurrencesText,
+        rawParsed: row.rawParsed,
+        staffCardEvents: row.staffCardEvents,
+      },
+      staffCandidates,
+    );
+    if (cards.length === 0 && row.sourceUrl?.trim()) {
+      const fromPdf = await fetchStaffCardEventsFromSumulaUrl(row.sourceUrl);
+      if (fromPdf.length > 0) {
+        cards = parseStaffCardsForMatch(
+          {
+            occurrencesText: row.occurrencesText,
+            staffCardEvents: fromPdf,
+          },
+          staffCandidates,
+        );
+      }
+    }
+    return cards;
+  }
+
+  private async enrichDisciplineMatchesStaffCards<
+    T extends {
+      occurrencesText: string | null;
+      rawParsed?: unknown;
+      sourceUrl?: string | null;
+      staffCardEvents?: FmfStaffCardEventInput[] | null;
+    },
+  >(
+    matches: T[],
+    staffCandidates: Array<{ id: string; name: string; role: string }>,
+  ): Promise<T[]> {
+    return Promise.all(
+      matches.map(async (match) => {
+        if (
+          extractStaffCardEventsFromRawParsed(match.rawParsed).length > 0 ||
+          match.staffCardEvents?.length
+        ) {
+          return match;
+        }
+        const cards = parseStaffCardsForMatch(
+          { occurrencesText: match.occurrencesText, rawParsed: match.rawParsed },
+          staffCandidates,
+        );
+        if (cards.length > 0 || !match.sourceUrl?.trim()) return match;
+        const fromPdf = await fetchStaffCardEventsFromSumulaUrl(match.sourceUrl);
+        return fromPdf.length > 0 ? { ...match, staffCardEvents: fromPdf } : match;
+      }),
+    );
   }
 
   private resolveTenantFmfAliases(
@@ -1845,6 +1922,7 @@ export class FutebolRelatoriosService {
       sourceUrl: string;
       occurrencesText: string | null;
       rawParsed: unknown;
+      staffCardEvents?: FmfStaffCardEventInput[] | null;
       playerStats: Array<{
         playerId: string;
         playerName: string;
@@ -1863,6 +1941,7 @@ export class FutebolRelatoriosService {
     aliases: string[],
     categoryLabels: Record<string, string>,
     staff: Array<{ id: string; name: string; role: string }>,
+    staffCardsResolved?: ReturnType<typeof parseStaffCardsForMatch>,
   ): SumulaCartoesMatchDto {
     const linkedByCbf = new Map(row.playerStats.map((s) => [s.cbfRegistration, s]));
     const raw = row.rawParsed as {
@@ -1945,7 +2024,7 @@ export class FutebolRelatoriosService {
       sourceUrl: row.sourceUrl,
       home: buildTeam('home'),
       away: buildTeam('away'),
-      staffCards: parseStaffCardsFromOccurrences(row.occurrencesText, staff).map((card) => ({
+      staffCards: (staffCardsResolved ?? []).map((card) => ({
         staffId: card.staffId,
         name: card.name,
         roleLabel: card.roleLabel,
@@ -2175,6 +2254,7 @@ export class FutebolRelatoriosService {
         category: true,
         competition: true,
         occurrencesText: true,
+        rawParsed: true,
         sourceUrl: true,
         unresolvedPlayers: true,
         playerStats: {
@@ -2354,6 +2434,7 @@ export class FutebolRelatoriosService {
         homeScore: row.homeScore,
         awayScore: row.awayScore,
         occurrencesText: row.occurrencesText,
+        rawParsed: row.rawParsed,
         playerStats: row.playerStats,
       })),
       players: disciplinePlayers,
@@ -2368,8 +2449,12 @@ export class FutebolRelatoriosService {
       input.tenantId,
       referenceCategory,
     );
+    const disciplineMatchesWithStaffCards = await this.enrichDisciplineMatchesStaffCards(
+      disciplineMatches,
+      staffCandidates,
+    );
     const staffGrid = buildStaffDisciplineGrid({
-      matches: disciplineMatches.map((row) => ({
+      matches: disciplineMatchesWithStaffCards.map((row) => ({
         id: row.id,
         round: row.round,
         matchDate: row.matchDate,
@@ -2378,6 +2463,8 @@ export class FutebolRelatoriosService {
         homeScore: row.homeScore,
         awayScore: row.awayScore,
         occurrencesText: row.occurrencesText,
+        rawParsed: row.rawParsed,
+        staffCardEvents: row.staffCardEvents,
         playerStats: row.playerStats,
       })),
       staff: staffCandidates.map((member) => ({

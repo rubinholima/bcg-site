@@ -26,6 +26,14 @@ export interface FmfReportOccurrence {
   externalKey: string;
 }
 
+/** Cartão da comissão técnica na seção Cartões Amarelos/Vermelhos da súmula FMF. */
+export interface FmfStaffCardEvent {
+  kind: 'yellow' | 'red';
+  roleLabel: string;
+  name: string;
+  excerpt: string;
+}
+
 export interface ParsedFmfMatchReport {
   competition: string;
   phase: string | null;
@@ -43,6 +51,7 @@ export interface ParsedFmfMatchReport {
   totalMinutes: number;
   roster: FmfReportRosterPlayer[];
   stats: FmfReportPlayerStat[];
+  staffCardEvents: FmfStaffCardEvent[];
   occurrencesText: string | null;
   occurrences: FmfReportOccurrence[];
 }
@@ -255,6 +264,54 @@ function eventAbsoluteMinute(period: string, minute: number, firstHalfMinutes: n
   return period.toUpperCase() === '2T' ? firstHalfMinutes + minute : minute;
 }
 
+const STAFF_CARD_ROLE_PREFIXES: Array<{ pattern: RegExp; label: string }> = [
+  { pattern: /^auxiliar\s+t[eé]cnico\s+/i, label: 'Auxiliar técnico' },
+  { pattern: /^treinador\s+de\s+goleiros?\s+/i, label: 'Treinador de goleiros' },
+  { pattern: /^preparador\s+f[ií]sico\s+/i, label: 'Preparador físico' },
+  { pattern: /^analista(?:\s+de\s+desempenho)?\s+/i, label: 'Analista de desempenho' },
+  { pattern: /^m[eé]dico\s+/i, label: 'Médico' },
+  { pattern: /^massagista\s+/i, label: 'Massagista' },
+  { pattern: /^fisioterapeuta\s+/i, label: 'Fisioterapeuta' },
+  { pattern: /^fisiologista\s+/i, label: 'Fisiologista' },
+  { pattern: /^t[eé]cnico\s+/i, label: 'Técnico' },
+];
+
+function parseStaffCardNameFromTail(tail: string): { roleLabel: string; name: string } | null {
+  for (const { pattern, label } of STAFF_CARD_ROLE_PREFIXES) {
+    const match = tail.match(pattern);
+    if (!match) continue;
+    let namePart = tail.slice(match[0].length).trim();
+    const dashIdx = namePart.search(/\s+-\s+/);
+    if (dashIdx >= 0) namePart = namePart.slice(0, dashIdx).trim();
+    if (namePart.length < 3) continue;
+    return { roleLabel: label, name: namePart };
+  }
+  return null;
+}
+
+/** Linhas `HH:MM 1T|2T Técnico Nome…` (sem nº de camisa) na seção de cartões. */
+export function parseStaffCardEventsFromTimedRows(
+  rows: string[],
+  kind: 'yellow' | 'red',
+): FmfStaffCardEvent[] {
+  const out: FmfStaffCardEvent[] = [];
+  for (const row of rows) {
+    const timed = row.match(/^(\d{1,2}:\d{2})\s+(1T|2T)\s+(.+)$/i);
+    if (!timed) continue;
+    const rest = timed[3].trim();
+    if (/^\d+\b/.test(rest)) continue;
+    const parsed = parseStaffCardNameFromTail(rest);
+    if (!parsed) continue;
+    out.push({
+      kind,
+      roleLabel: parsed.roleLabel,
+      name: parsed.name,
+      excerpt: row.slice(0, 240),
+    });
+  }
+  return out;
+}
+
 function classifyOccurrenceKind(text: string): FmfReportOccurrence['kind'] {
   const n = normalize(text);
   if (/BRIGA|CONFUS|AGRESS|EMPURR|DISCUT|DESACATO|INVAD/.test(n)) return 'briga';
@@ -395,7 +452,8 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     }
   }
 
-  for (const row of splitTimedRows(section(text, '\nCartões Amarelos\n', '\nCartões Vermelhos\n'))) {
+  const yellowCardRows = splitTimedRows(section(text, '\nCartões Amarelos\n', '\nCartões Vermelhos\n'));
+  for (const row of yellowCardRows) {
     const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\b/i);
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
@@ -403,13 +461,19 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     if (player) player.yellowCards += 1;
   }
 
-  for (const row of splitTimedRows(section(text, '\nCartões Vermelhos\n', '\nOcorrências / Observações\n'))) {
+  const redCardRows = splitTimedRows(section(text, '\nCartões Vermelhos\n', '\nOcorrências / Observações\n'));
+  for (const row of redCardRows) {
     const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(\d+)\b/i);
     if (!match) continue;
     const side = sideFromRow(row, homeTeam, awayTeam);
     const player = side ? findRoster(side, Number(match[3])) : undefined;
     if (player) player.redCards += 1;
   }
+
+  const staffCardEvents: FmfStaffCardEvent[] = [
+    ...parseStaffCardEventsFromTimedRows(yellowCardRows, 'yellow'),
+    ...parseStaffCardEventsFromTimedRows(redCardRows, 'red'),
+  ];
 
   for (const row of splitTimedRows(section(text, '\nSubstituições\n', '\nANT = Antes do Início'))) {
     const match = row.match(/^(\d{1,2}):\d{2}\s+(1T|2T)\s+(.+)$/i);
@@ -456,6 +520,7 @@ export function parseFmfMatchReportText(textRaw: string): ParsedFmfMatchReport {
     totalMinutes,
     roster,
     stats: [...stats.values()],
+    staffCardEvents,
     occurrencesText,
     occurrences,
   };

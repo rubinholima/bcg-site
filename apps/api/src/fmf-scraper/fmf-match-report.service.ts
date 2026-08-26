@@ -944,6 +944,7 @@ export class FmfMatchReportService {
       totalMinutes: parsed.totalMinutes,
       rawParsed: parsed as unknown as Prisma.InputJsonValue,
       unresolvedPlayers: unresolved as unknown as Prisma.InputJsonValue,
+      occurrencesText: parsed.occurrencesText,
       importedAt: new Date(),
     };
   }

@@ -5,7 +5,8 @@ import {
   isLoanedSportsSituation,
 } from '../common/sports-situation.util';
 import { FRIENDLY_CHAMPIONSHIP_NAME } from '../futebol-agenda/friendly-match.util';
-import { parseStaffCardsFromOccurrences } from './fmf-staff-cards.util';
+import { parseStaffCardsForMatch } from './fmf-staff-cards.util';
+import type { FmfStaffCardEventInput } from './fmf-staff-cards.util';
 
 /** Códigos por rodada — espelham o relatório operacional do clube (Mineiro). */
 export type DisciplineCellCode = 'AT' | 'AV' | 'AM' | 'V' | 'VM' | 'P' | 'SA' | 'ST' | '';
@@ -89,6 +90,8 @@ type MatchInput = {
   homeScore: number | null;
   awayScore: number | null;
   occurrencesText: string | null;
+  staffCardEvents?: FmfStaffCardEventInput[] | null;
+  rawParsed?: unknown;
   playerStats: Array<{
     playerId: string;
     jerseyNumber: number | null;
@@ -740,11 +743,15 @@ function staffDisciplineKey(staffId: string | null, name: string): string {
 }
 
 function staffCardsForMatch(
-  text: string | null | undefined,
+  match: Pick<MatchInput, 'occurrencesText' | 'staffCardEvents' | 'rawParsed'>,
   staff: StaffDisciplineInput[],
 ): Map<string, StaffMatchCards> {
-  const parsed = parseStaffCardsFromOccurrences(
-    text,
+  const parsed = parseStaffCardsForMatch(
+    {
+      occurrencesText: match.occurrencesText,
+      staffCardEvents: match.staffCardEvents,
+      rawParsed: match.rawParsed,
+    },
     staff.map((member) => ({ id: member.id, name: member.name, role: member.roleLabel })),
   );
   const map = new Map<string, StaffMatchCards>();
@@ -860,7 +867,14 @@ export function mergeDisciplineStaffList(
     role: member.roleLabel,
   }));
   for (const match of matches) {
-    for (const card of parseStaffCardsFromOccurrences(match.occurrencesText, candidates)) {
+    for (const card of parseStaffCardsForMatch(
+      {
+        occurrencesText: match.occurrencesText,
+        staffCardEvents: match.staffCardEvents,
+        rawParsed: match.rawParsed,
+      },
+      candidates,
+    )) {
       const key = staffDisciplineKey(card.staffId, card.name);
       if (byKey.has(key)) continue;
       byKey.set(key, {
@@ -879,7 +893,7 @@ export function collectDisciplineStaffParticipantKeys(
 ): string[] {
   const keys = new Set<string>();
   for (const match of matches) {
-    for (const [key] of staffCardsForMatch(match.occurrencesText, staff)) {
+    for (const [key] of staffCardsForMatch(match, staff)) {
       keys.add(key);
     }
   }
@@ -927,7 +941,7 @@ export function buildStaffDisciplineGrid(input: {
 
   sortedMatches.forEach((match, roundIndex) => {
     const isFriendly = input.friendlyMatchIds?.has(match.id) ?? false;
-    const cardsByStaff = staffCardsForMatch(match.occurrencesText, disciplineStaff);
+    const cardsByStaff = staffCardsForMatch(match, disciplineStaff);
 
     for (const cards of cardsByStaff.values()) {
       yellowByRound[roundIndex] += cards.yellowCards;

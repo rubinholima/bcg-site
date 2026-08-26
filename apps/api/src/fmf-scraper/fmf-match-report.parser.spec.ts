@@ -2,6 +2,7 @@ import {
   extractFmfRosterFullName,
   joinWrappedFmfRosterLines,
   parseFmfMatchReportText,
+  parseStaffCardEventsFromTimedRows,
 } from './fmf-match-report.parser';
 
 describe('extractFmfRosterFullName', () => {
@@ -120,5 +121,19 @@ ANT = Antes do Início
     expect(joao?.teamSide).toBe('away');
     expect(joao?.sourceName).toBe('Joao Victor Machado De Oliveira');
     expect(joao?.yellowCards).toBe(1);
+  });
+
+  it('extrai cartão amarelo do técnico na seção Cartões Amarelos', () => {
+    const events = parseStaffCardEventsFromTimedRows(
+      [
+        '20:00 2T Técnico Adriano Dos Santos Almeida - discordar das decisões da arbitragem com palavras ou ações; NACIONAL',
+        '42:00 2T 4 Joao Victor Machado De Oliveira - falta temerária; BOSTON',
+      ],
+      'yellow',
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]?.roleLabel).toBe('Técnico');
+    expect(events[0]?.name).toBe('Adriano Dos Santos Almeida');
+    expect(events[0]?.kind).toBe('yellow');
   });
 });

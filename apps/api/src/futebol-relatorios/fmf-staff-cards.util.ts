@@ -7,6 +7,13 @@ export type StaffCardOccurrence = {
   excerpt: string;
 };
 
+export type FmfStaffCardEventInput = {
+  kind: 'yellow' | 'red';
+  roleLabel: string;
+  name: string;
+  excerpt: string;
+};
+
 type StaffCandidate = {
   id: string;
   name: string;
@@ -107,6 +114,62 @@ export function parseStaffCardsFromOccurrences(
   }
 
   return out;
+}
+
+/** Lê eventos de cartão da comissão gravados no rawParsed da súmula FMF. */
+export function extractStaffCardEventsFromRawParsed(rawParsed: unknown): FmfStaffCardEventInput[] {
+  if (!rawParsed || typeof rawParsed !== 'object') return [];
+  const events = (rawParsed as { staffCardEvents?: unknown }).staffCardEvents;
+  if (!Array.isArray(events)) return [];
+  return events.filter(
+    (ev): ev is FmfStaffCardEventInput =>
+      !!ev &&
+      typeof ev === 'object' &&
+      (ev as FmfStaffCardEventInput).kind !== undefined &&
+      typeof (ev as FmfStaffCardEventInput).name === 'string',
+  );
+}
+
+function staffCardEventsToOccurrences(
+  events: FmfStaffCardEventInput[],
+  staff: StaffCandidate[],
+): StaffCardOccurrence[] {
+  return events.map((ev) => {
+    const lookupLine = `${ev.roleLabel} ${ev.name}`;
+    const member = matchStaffOnLine(lookupLine, staff) ?? matchStaffOnLine(ev.name, staff);
+    return {
+      staffId: member?.id ?? null,
+      name: member?.name ?? ev.name,
+      roleLabel: member ? staffRoleLabel(member.role) : ev.roleLabel,
+      yellowCards: ev.kind === 'yellow' ? 1 : 0,
+      redCards: ev.kind === 'red' ? 1 : 0,
+      excerpt: ev.excerpt,
+    };
+  });
+}
+
+/**
+ * Cartões da comissão — seção Cartões Amarelos/Vermelhos (padrão FMF) + Ocorrências/Observações.
+ */
+export function parseStaffCardsForMatch(
+  input: {
+    occurrencesText?: string | null;
+    staffCardEvents?: FmfStaffCardEventInput[] | null;
+    rawParsed?: unknown;
+  },
+  staff: StaffCandidate[],
+): StaffCardOccurrence[] {
+  if (staff.length === 0) return [];
+
+  const fromEvents =
+    input.staffCardEvents && input.staffCardEvents.length > 0
+      ? input.staffCardEvents
+      : extractStaffCardEventsFromRawParsed(input.rawParsed);
+
+  return [
+    ...staffCardEventsToOccurrences(fromEvents, staff),
+    ...parseStaffCardsFromOccurrences(input.occurrencesText, staff),
+  ];
 }
 
 export function aggregateStaffDisciplineRows(
