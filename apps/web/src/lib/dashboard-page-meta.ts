@@ -294,6 +294,7 @@ export const DASHBOARD_AUTO_HEADER_EXCLUDE: RegExp[] = [
   /^\/dashboard\/relatorios(\/|$)/,
   /^\/dashboard\/futebol\/(performance|captacao|try-outs|preparacao-fisica)$/,
   /^\/dashboard\/futebol\/analise-desempenho(\/|$)/,
+  /^\/dashboard\/futebol\/treinadores(\/|$)/,
 
   // Páginas com título inline (`<h1>`) no componente
   /^\/dashboard\/futebol\/logistica$/,

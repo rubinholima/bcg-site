@@ -1,19 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronRight, ClipboardList, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClipboardList, Loader2 } from "lucide-react";
 import { DashboardDeptHeader } from "@/components/dashboard/DashboardDeptHeader";
 import { useAuth } from "@/context/AuthContext";
+import { TreinadoresContextPanel } from "./TreinadoresContextPanel";
 import { TreinadoresFilters } from "./TreinadoresFilters";
-import {
-  TREINADORES_BASE,
-  TREINADORES_SECTIONS,
-  treinadoresLegacyTabRedirect,
-  treinadoresSectionFromPath,
-} from "./treinadores-nav";
+import { TreinadoresHubInsights } from "./TreinadoresHubInsights";
+import { treinadoresLegacyTabRedirect, treinadoresSectionFromPath } from "./treinadores-nav";
 
 interface TreinadoresShellProps {
   title: string;
@@ -63,39 +58,26 @@ export function TreinadoresShell({
         section="Depto de Futebol · Treinadores"
         sectionIcon={ClipboardList}
         title={title}
-        backHref={section === "dash" ? "/dashboard/futebol" : TREINADORES_BASE}
-        backLabel={section === "dash" ? "Depto de Futebol" : "Treinadores"}
+        backHref={section === "dash" ? "/dashboard/futebol" : undefined}
+        backLabel={section === "dash" ? "Depto de Futebol" : undefined}
       />
 
+      {showFilters ? <TreinadoresFilters /> : null}
+
       {section === "dash" ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {TREINADORES_SECTIONS.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link key={item.href} href={item.href} className="group block h-full">
-                <Card className="h-full border-border/60 transition-colors hover:border-primary/40 hover:bg-primary/5">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <Icon className="h-5 w-5 text-primary" />
-                      {item.label}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <span className="inline-flex items-center text-sm font-medium text-primary">
-                      Abrir
-                      <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </span>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+        <TreinadoresContextPanel>
+          {({ tenantId, category, context, contextLoading, loadError }) => (
+            <TreinadoresHubInsights
+              tenantId={tenantId}
+              category={category}
+              context={context}
+              contextLoading={contextLoading}
+              loadError={loadError}
+            />
+          )}
+        </TreinadoresContextPanel>
       ) : (
-        <>
-          {showFilters ? <TreinadoresFilters /> : null}
-          {children}
-        </>
+        children
       )}
     </div>
   );
