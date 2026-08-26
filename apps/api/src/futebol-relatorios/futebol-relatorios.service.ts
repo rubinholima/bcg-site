@@ -1864,7 +1864,7 @@ export class FutebolRelatoriosService {
   >(
     matches: T[],
     staffCandidates: Array<{ id: string; name: string; role: string }>,
-  ): Promise<T[]> {
+  ): Promise<Array<T & { staffCardEvents?: FmfStaffCardEventInput[] | null }>> {
     return Promise.all(
       matches.map(async (match) => {
         if (
