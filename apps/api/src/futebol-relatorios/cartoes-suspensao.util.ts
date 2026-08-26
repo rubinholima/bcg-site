@@ -834,9 +834,16 @@ function resolveFriendlyStaffDisciplineCellCode(
 }
 
 function compareDisciplineStaff(a: DisciplineStaffRow, b: DisciplineStaffRow): number {
-  const rankDiff = disciplinePlayerSortRank(a as DisciplinePlayerRow) - disciplinePlayerSortRank(b as DisciplinePlayerRow);
+  const rankDiff = disciplineStaffSortRank(a) - disciplineStaffSortRank(b);
   if (rankDiff !== 0) return rankDiff;
   return a.name.localeCompare(b.name, 'pt-BR');
+}
+
+function disciplineStaffSortRank(row: DisciplineStaffRow): number {
+  if (row.nextRoundCell === 'S') return 0;
+  if (row.nextRoundCell === 'P') return 1;
+  if (row.yellowCardsTotal > 0 || row.redCardsTotal > 0) return 2;
+  return 3;
 }
 
 export function mergeDisciplineStaffList(

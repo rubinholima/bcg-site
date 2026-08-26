@@ -528,33 +528,43 @@ export function JogosDetailView({ gameKey }: Props) {
                   </CardContent>
                 </Card>
               ) : null}
-              {detail.coachReport.opponentBestJersey != null ||
+              {(detail.coachReport.opponentBestPlayers?.length ?? 0) > 0 ||
+              detail.coachReport.opponentBestJersey != null ||
               detail.coachReport.opponentBestPosition ||
               detail.coachReport.opponentBestNotes ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Melhor jogador adversário</CardTitle>
+                    <CardTitle className="text-base">Melhor(es) jogador(es) adversário</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex flex-wrap gap-x-4 gap-y-1">
-                      {detail.coachReport.opponentBestJersey != null ? (
-                        <span>
-                          <span className="text-muted-foreground">Camisa:</span>{" "}
-                          #{detail.coachReport.opponentBestJersey}
-                        </span>
-                      ) : null}
-                      {detail.coachReport.opponentBestPosition ? (
-                        <span>
-                          <span className="text-muted-foreground">Posição:</span>{" "}
-                          {detail.coachReport.opponentBestPosition}
-                        </span>
-                      ) : null}
-                    </div>
-                    {detail.coachReport.opponentBestNotes ? (
-                      <p className="whitespace-pre-wrap text-muted-foreground">
-                        {detail.coachReport.opponentBestNotes}
-                      </p>
-                    ) : null}
+                  <CardContent className="space-y-4 text-sm">
+                    {(detail.coachReport.opponentBestPlayers?.length
+                      ? detail.coachReport.opponentBestPlayers
+                      : [
+                          {
+                            jerseyNumber: detail.coachReport.opponentBestJersey,
+                            position: detail.coachReport.opponentBestPosition,
+                            notes: detail.coachReport.opponentBestNotes,
+                          },
+                        ]
+                    ).map((row, idx) => (
+                      <div key={row.id ?? idx} className="space-y-2 rounded-lg border border-border/60 p-3">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1">
+                          {row.jerseyNumber != null ? (
+                            <span>
+                              <span className="text-muted-foreground">Camisa:</span> #{row.jerseyNumber}
+                            </span>
+                          ) : null}
+                          {row.position ? (
+                            <span>
+                              <span className="text-muted-foreground">Posição:</span> {row.position}
+                            </span>
+                          ) : null}
+                        </div>
+                        {row.notes ? (
+                          <p className="whitespace-pre-wrap text-muted-foreground">{row.notes}</p>
+                        ) : null}
+                      </div>
+                    ))}
                   </CardContent>
                 </Card>
               ) : null}

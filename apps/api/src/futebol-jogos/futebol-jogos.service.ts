@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { computeTeamRatingAverage } from '../futebol-treinadores/coach-match-report.util';
+import { computeTeamRatingAverage, resolveOpponentBestPlayers } from '../futebol-treinadores/coach-match-report.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { FutebolRelatoriosService } from '../futebol-relatorios/futebol-relatorios.service';
 import { travelMatchesCategoryFilter } from '../futebol-agenda/travel-categories.util';
@@ -79,6 +79,13 @@ function mapCoachReport(row: {
   opponentBestJersey: number | null;
   opponentBestPosition: string | null;
   opponentBestNotes: string | null;
+  opponentHighlights?: Array<{
+    id: string;
+    jerseyNumber: number | null;
+    position: string | null;
+    notes: string | null;
+    sortOrder: number;
+  }>;
   generalNotes: string | null;
   attachments: Array<{ id: string; label: string | null; fileUrl: string; kind: string | null }>;
   playerRatings: Array<{
@@ -110,6 +117,7 @@ function mapCoachReport(row: {
     opponentBestJersey: row.opponentBestJersey,
     opponentBestPosition: row.opponentBestPosition,
     opponentBestNotes: row.opponentBestNotes,
+    opponentBestPlayers: resolveOpponentBestPlayers(row),
     generalNotes: row.generalNotes,
     teamRatingAverage: computeTeamRatingAverage(playerRatings),
     attachments: row.attachments.map((a) => ({

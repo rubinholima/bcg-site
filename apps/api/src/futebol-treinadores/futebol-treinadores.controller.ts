@@ -107,6 +107,18 @@ export class FutebolTreinadoresController {
       opponentBestPosition:
         typeof body.opponentBestPosition === 'string' ? body.opponentBestPosition : null,
       opponentBestNotes: typeof body.opponentBestNotes === 'string' ? body.opponentBestNotes : null,
+      opponentBestPlayers: Array.isArray(body.opponentBestPlayers)
+        ? (body.opponentBestPlayers as Array<Record<string, unknown>>).map((row) => ({
+            jerseyNumber:
+              typeof row.jerseyNumber === 'number'
+                ? row.jerseyNumber
+                : typeof row.jerseyNumber === 'string' && row.jerseyNumber.trim()
+                  ? Number(row.jerseyNumber)
+                  : null,
+            position: typeof row.position === 'string' ? row.position : null,
+            notes: typeof row.notes === 'string' ? row.notes : null,
+          }))
+        : undefined,
       generalNotes: typeof body.generalNotes === 'string' ? body.generalNotes : null,
       status: typeof body.status === 'string' ? body.status : undefined,
       playerRatings: Array.isArray(body.playerRatings)

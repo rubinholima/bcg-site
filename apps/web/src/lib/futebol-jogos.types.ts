@@ -61,6 +61,13 @@ export type FutebolGameCoachReport = {
   opponentBestJersey: number | null;
   opponentBestPosition: string | null;
   opponentBestNotes: string | null;
+  opponentBestPlayers?: Array<{
+    id?: string;
+    jerseyNumber: number | null;
+    position: string | null;
+    notes: string | null;
+    sortOrder?: number;
+  }>;
   generalNotes: string | null;
   teamRatingAverage: number | null;
   attachments: Array<{

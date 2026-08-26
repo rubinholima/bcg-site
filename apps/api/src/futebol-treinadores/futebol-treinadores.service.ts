@@ -47,6 +47,7 @@ import {
 import {
   computeMatchBestFlags,
   enrichCoachMatchReport,
+  normalizeOpponentBestPlayersInput,
 } from './coach-match-report.util';
 
 const FMF_STORE_KEY = 'fmf_scraper_data';
@@ -367,6 +368,11 @@ export class FutebolTreinadoresService {
     opponentBestJersey?: number | null;
     opponentBestPosition?: string | null;
     opponentBestNotes?: string | null;
+    opponentBestPlayers?: Array<{
+      jerseyNumber?: number | null;
+      position?: string | null;
+      notes?: string | null;
+    }>;
     generalNotes?: string | null;
     status?: string;
     playerRatings?: Array<{
@@ -407,6 +413,9 @@ export class FutebolTreinadoresService {
     const matchSummary =
       input.matchSummary?.trim() || input.teamReport?.trim() || null;
 
+    const opponentRows = normalizeOpponentBestPlayersInput(input);
+    const firstOpponent = opponentRows[0];
+
     const data = {
       tenantId: input.tenantId,
       travelLogisticsId: input.travelLogisticsId ?? null,
@@ -420,12 +429,9 @@ export class FutebolTreinadoresService {
       matchSummary,
       aspectsToImprove: input.aspectsToImprove?.trim() || null,
       goodActions: input.goodActions?.trim() || null,
-      opponentBestJersey:
-        input.opponentBestJersey != null && Number.isFinite(input.opponentBestJersey)
-          ? Math.trunc(input.opponentBestJersey)
-          : null,
-      opponentBestPosition: input.opponentBestPosition?.trim() || null,
-      opponentBestNotes: input.opponentBestNotes?.trim() || null,
+      opponentBestJersey: firstOpponent?.jerseyNumber ?? null,
+      opponentBestPosition: firstOpponent?.position ?? null,
+      opponentBestNotes: firstOpponent?.notes ?? null,
       generalNotes: input.generalNotes?.trim() || null,
       status,
     };
@@ -471,6 +477,28 @@ export class FutebolTreinadoresService {
             label: a.label?.trim() || null,
             fileUrl: a.fileUrl.trim(),
             kind: a.kind?.trim() || null,
+          })),
+        });
+      }
+    }
+
+    if (
+      input.opponentBestPlayers !== undefined ||
+      input.opponentBestJersey !== undefined ||
+      input.opponentBestPosition !== undefined ||
+      input.opponentBestNotes !== undefined
+    ) {
+      await this.prisma.coachMatchReportOpponentPlayer.deleteMany({
+        where: { reportId: report.id },
+      });
+      if (opponentRows.length > 0) {
+        await this.prisma.coachMatchReportOpponentPlayer.createMany({
+          data: opponentRows.map((row) => ({
+            reportId: report.id,
+            sortOrder: row.sortOrder,
+            jerseyNumber: row.jerseyNumber,
+            position: row.position,
+            notes: row.notes,
           })),
         });
       }

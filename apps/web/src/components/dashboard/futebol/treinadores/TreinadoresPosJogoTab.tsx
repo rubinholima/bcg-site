@@ -43,6 +43,50 @@ type AttachmentDraft = {
   kind: string;
 };
 
+type OpponentPlayerDraft = {
+  key: string;
+  jerseyNumber: string;
+  position: string;
+  notes: string;
+};
+
+function newOpponentPlayerDraft(): OpponentPlayerDraft {
+  return {
+    key: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    jerseyNumber: "",
+    position: "",
+    notes: "",
+  };
+}
+
+function emptyOpponentPlayers(): OpponentPlayerDraft[] {
+  return [newOpponentPlayerDraft()];
+}
+
+function opponentPlayersFromReport(data: CoachMatchReport): OpponentPlayerDraft[] {
+  const rows =
+    data.opponentBestPlayers && data.opponentBestPlayers.length > 0
+      ? data.opponentBestPlayers
+      : data.opponentBestJersey != null || data.opponentBestPosition || data.opponentBestNotes
+        ? [
+            {
+              jerseyNumber: data.opponentBestJersey,
+              position: data.opponentBestPosition,
+              notes: data.opponentBestNotes,
+            },
+          ]
+        : [];
+
+  if (rows.length === 0) return emptyOpponentPlayers();
+
+  return rows.map((row) => ({
+    key: row.id ?? newOpponentPlayerDraft().key,
+    jerseyNumber: row.jerseyNumber != null ? String(row.jerseyNumber) : "",
+    position: row.position ?? "",
+    notes: row.notes ?? "",
+  }));
+}
+
 interface Props {
   tenantId: string;
   category?: string;
@@ -82,9 +126,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
   const [matchSummary, setMatchSummary] = useState("");
   const [aspectsToImprove, setAspectsToImprove] = useState("");
   const [goodActions, setGoodActions] = useState("");
-  const [opponentBestJersey, setOpponentBestJersey] = useState("");
-  const [opponentBestPosition, setOpponentBestPosition] = useState("");
-  const [opponentBestNotes, setOpponentBestNotes] = useState("");
+  const [opponentPlayers, setOpponentPlayers] = useState<OpponentPlayerDraft[]>(emptyOpponentPlayers);
   const [generalNotes, setGeneralNotes] = useState("");
   const [status, setStatus] = useState("rascunho");
   const [playerRatings, setPlayerRatings] = useState<PlayerRatingDraft[]>([]);
@@ -151,9 +193,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
     setMatchSummary("");
     setAspectsToImprove("");
     setGoodActions("");
-    setOpponentBestJersey("");
-    setOpponentBestPosition("");
-    setOpponentBestNotes("");
+    setOpponentPlayers(emptyOpponentPlayers());
     setGeneralNotes("");
     setStatus("rascunho");
     setPlayerRatings(emptyDraft(context?.players ?? []));
@@ -181,11 +221,7 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
       setMatchSummary(data.matchSummary ?? data.teamReport ?? "");
       setAspectsToImprove(data.aspectsToImprove ?? "");
       setGoodActions(data.goodActions ?? "");
-      setOpponentBestJersey(
-        data.opponentBestJersey != null ? String(data.opponentBestJersey) : "",
-      );
-      setOpponentBestPosition(data.opponentBestPosition ?? "");
-      setOpponentBestNotes(data.opponentBestNotes ?? "");
+      setOpponentPlayers(opponentPlayersFromReport(data));
       setGeneralNotes(data.generalNotes ?? "");
       setStatus(data.status ?? "rascunho");
       const byId = new Map(data.playerRatings.map((r) => [r.playerId, r]));
@@ -239,9 +275,18 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
         matchSummary,
         aspectsToImprove,
         goodActions,
-        opponentBestJersey: opponentBestJersey === "" ? null : Number(opponentBestJersey),
-        opponentBestPosition: opponentBestPosition || null,
-        opponentBestNotes: opponentBestNotes || null,
+        opponentBestPlayers: opponentPlayers
+          .map((row) => ({
+            jerseyNumber: row.jerseyNumber === "" ? null : Number(row.jerseyNumber),
+            position: row.position || null,
+            notes: row.notes || null,
+          }))
+          .filter(
+            (row) =>
+              (row.jerseyNumber != null && Number.isFinite(row.jerseyNumber)) ||
+              row.position ||
+              row.notes,
+          ),
         generalNotes,
         status,
         playerRatings: playerRatings.map((p) => ({
@@ -404,36 +449,83 @@ export function TreinadoresPosJogoTab({ tenantId, category, contextLoading, cont
           </div>
 
           <div className="space-y-3 rounded-lg border border-border/60 p-4">
-            <Label>Melhor jogador adversário</Label>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label className="text-xs">Camisa</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={99}
-                  placeholder="—"
-                  value={opponentBestJersey}
-                  onChange={(e) => setOpponentBestJersey(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Posição</Label>
-                <Input
-                  placeholder="Ex.: volante, zagueiro…"
-                  value={opponentBestPosition}
-                  onChange={(e) => setOpponentBestPosition(e.target.value)}
-                />
-              </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label>Melhor(es) jogador(es) adversário</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setOpponentPlayers((rows) => [...rows, newOpponentPlayerDraft()])}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label className="text-xs">Características que favoreceram</Label>
-              <Textarea
-                rows={3}
-                placeholder="Descreva o que se destacou no adversário…"
-                value={opponentBestNotes}
-                onChange={(e) => setOpponentBestNotes(e.target.value)}
-              />
+            <div className="space-y-4">
+              {opponentPlayers.map((row, idx) => (
+                <div key={row.key} className="space-y-3 rounded-lg border border-border/50 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Adversário {idx + 1}
+                    </p>
+                    {opponentPlayers.length > 1 ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-destructive hover:text-destructive"
+                        onClick={() =>
+                          setOpponentPlayers((rows) => rows.filter((item) => item.key !== row.key))
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Camisa</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={99}
+                        placeholder="—"
+                        value={row.jerseyNumber}
+                        onChange={(e) => {
+                          const next = [...opponentPlayers];
+                          next[idx] = { ...row, jerseyNumber: e.target.value };
+                          setOpponentPlayers(next);
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Posição</Label>
+                      <Input
+                        placeholder="Ex.: volante, zagueiro…"
+                        value={row.position}
+                        onChange={(e) => {
+                          const next = [...opponentPlayers];
+                          next[idx] = { ...row, position: e.target.value };
+                          setOpponentPlayers(next);
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Características que favoreceram</Label>
+                    <Textarea
+                      rows={3}
+                      placeholder="Descreva o que se destacou no adversário…"
+                      value={row.notes}
+                      onChange={(e) => {
+                        const next = [...opponentPlayers];
+                        next[idx] = { ...row, notes: e.target.value };
+                        setOpponentPlayers(next);
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

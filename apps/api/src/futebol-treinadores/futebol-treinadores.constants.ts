@@ -77,6 +77,7 @@ export const coachMatchReportInclude = {
     },
   },
   attachments: true,
+  opponentHighlights: { orderBy: { sortOrder: 'asc' as const } },
   travelLogistics: {
     select: {
       id: true,

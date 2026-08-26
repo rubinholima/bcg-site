@@ -3371,6 +3371,7 @@ model CoachMatchReport {
   generalNotes       String?  @db.Text
   status             String   @default("rascunho") // rascunho | finalizado
   playerRatings      CoachMatchReportPlayerRating[]
+  opponentHighlights CoachMatchReportOpponentPlayer[]
   attachments        CoachMatchReportAttachment[]
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -3390,6 +3391,17 @@ model CoachMatchReportPlayerRating {
   isMatchBest      Boolean  @default(false)
   @@unique([reportId, playerId])
   @@index([playerId])
+}
+
+model CoachMatchReportOpponentPlayer {
+  id           String           @id @default(cuid())
+  reportId     String
+  report       CoachMatchReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  sortOrder    Int              @default(0)
+  jerseyNumber Int?
+  position     String?
+  notes        String?          @db.Text
+  @@index([reportId])
 }
 
 model CoachMatchReportAttachment {
