@@ -59,6 +59,7 @@ import {
   NutritionCalendarFormDialog,
   type NutritionCalendarEntryRow,
 } from "./components/NutritionCalendarFormDialog";
+import { NutritionCalendarRepeatDialog } from "./components/NutritionCalendarRepeatDialog";
 import {
   NutritionAssessmentFormDialog,
   type NutritionAssessmentRow,
@@ -117,6 +118,7 @@ export default function AdmNutricaoPage() {
   const [menuDialogOpen, setMenuDialogOpen] = useState(false);
   const [menuEdit, setMenuEdit] = useState<NutritionMenuRow | null>(null);
   const [calendarDialogOpen, setCalendarDialogOpen] = useState(false);
+  const [calendarRepeatDialogOpen, setCalendarRepeatDialogOpen] = useState(false);
   const [calendarEdit, setCalendarEdit] = useState<NutritionCalendarEntryRow | null>(null);
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
   const [assessmentEdit, setAssessmentEdit] = useState<NutritionAssessmentRow | null>(null);
@@ -490,8 +492,21 @@ export default function AdmNutricaoPage() {
 
             {activeTab === "calendario" && (
               <>
-                <div className="flex justify-end">
-                  <Button onClick={() => { setCalendarEdit(null); setCalendarDialogOpen(true); }} disabled={!effectiveTenantId}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCalendarRepeatDialogOpen(true)}
+                    disabled={!effectiveTenantId}
+                    className="min-h-[44px]"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Repetir cardápio
+                  </Button>
+                  <Button
+                    onClick={() => { setCalendarEdit(null); setCalendarDialogOpen(true); }}
+                    disabled={!effectiveTenantId}
+                    className="min-h-[44px]"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Definir cardápio do dia
                   </Button>
@@ -700,6 +715,13 @@ export default function AdmNutricaoPage() {
         tenantId={effectiveTenantId}
         ensureCategoriesForTenant={ensureCategoriesForTenant}
         edit={calendarEdit}
+        onSuccess={reloadAll}
+      />
+      <NutritionCalendarRepeatDialog
+        open={calendarRepeatDialogOpen}
+        onOpenChange={setCalendarRepeatDialogOpen}
+        tenantId={effectiveTenantId}
+        categories={categories}
         onSuccess={reloadAll}
       />
       <NutritionAssessmentFormDialog

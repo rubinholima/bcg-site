@@ -12,11 +12,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FeedbackModal } from "@/components/ui/feedback-modal";
+import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { Tenant } from "@/types/tenant";
 import type { NutritionCategoryRow } from "./NutritionCategoryFormDialog";
 import { FIXTURE_CATEGORIES, getCategoryLabel } from "@/lib/fixture-categories";
 import type { NutritionMenuRow } from "./NutritionMenuFormDialog";
+
+const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 
 export interface NutritionCalendarEntryRow {
   id: string;
@@ -55,14 +59,21 @@ export function NutritionCalendarFormDialog({
   const [saving, setSaving] = useState(false);
   const [tId, setTId] = useState("");
   const [date, setDate] = useState("");
+  const [applyToAllCategories, setApplyToAllCategories] = useState(false);
   const [categoryId, setCategoryId] = useState("");
   const [menuId, setMenuId] = useState("");
   const [dayContext, setDayContext] = useState<string>("__none__");
   const [notes, setNotes] = useState("");
+  const [repeatWeekdays, setRepeatWeekdays] = useState<Set<number>>(() => new Set());
+  const [repeatUntilDate, setRepeatUntilDate] = useState("");
+  const [feedback, setFeedback] = useState<{ open: boolean; title: string; message: string }>({
+    open: false,
+    title: "",
+    message: "",
+  });
 
   const tenantCategories = categories.filter((c) => c.tenant.id === (tId || tenantId));
   const tenantMenus = menus.filter((m) => m.tenant.id === (tId || tenantId));
-  /** Opções de categoria na mesma ordem do menu Cadastros > Futebol > Categorias */
   const categoryOptions = FIXTURE_CATEGORIES.map((cat) => {
     const c = tenantCategories.find((tc) => tc.code === cat.value);
     return c ? { value: c.id, label: getCategoryLabel(cat.value, "pt") } : null;
@@ -73,20 +84,26 @@ export function NutritionCalendarFormDialog({
     if (edit) {
       setTId(tenantId);
       setDate(edit.date.slice(0, 10));
+      setApplyToAllCategories(false);
       setCategoryId(edit.categoryId);
       setMenuId(edit.menuId);
       setDayContext(edit.dayContext ?? "__none__");
       setNotes(edit.notes ?? "");
+      setRepeatWeekdays(new Set());
+      setRepeatUntilDate("");
     } else {
       setTId(tenantId);
       setDate("");
+      setApplyToAllCategories(false);
       const firstId = categoryOptions[0]?.value ?? "";
       setCategoryId(firstId);
       setMenuId("");
       setDayContext("__none__");
       setNotes("");
+      setRepeatWeekdays(new Set());
+      setRepeatUntilDate("");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- categoryOptions order is stable from FIXTURE_CATEGORIES
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, edit, tenantId]);
 
   useEffect(() => {
@@ -97,135 +114,236 @@ export function NutritionCalendarFormDialog({
     if (forTenant.length === 0) void ensureCategoriesForTenant(tid);
   }, [open, ensureCategoriesForTenant, edit, tId, tenantId, categories]);
 
+  const toggleWeekday = (idx: number) => {
+    setRepeatWeekdays((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tId?.trim() || !date || !categoryId?.trim() || !menuId?.trim()) return;
+    if (!tId?.trim() || !date || !menuId?.trim()) return;
+    if (!applyToAllCategories && !categoryId?.trim()) return;
+    if (repeatWeekdays.size > 0 && !repeatUntilDate) {
+      setFeedback({
+        open: true,
+        title: "Recorrência",
+        message: "Informe a data limite para repetir o cardápio nos dias selecionados.",
+      });
+      return;
+    }
+
     setSaving(true);
     try {
-      const payload = {
-        tenantId: tId,
-        categoryId,
-        date: `${date}T12:00:00.000Z`,
-        menuId,
-        dayContext: dayContext === "__none__" ? undefined : dayContext,
-        notes: notes.trim() || undefined,
-      };
       if (edit) {
         await api.patch(`/nutricao/nutrition-calendar/${edit.id}`, {
           menuId,
           dayContext: dayContext === "__none__" ? null : dayContext,
           notes: notes.trim() || null,
         });
-      } else {
-        await api.post("/nutricao/nutrition-calendar", payload);
+        onSuccess();
+        onOpenChange(false);
+        return;
       }
+
+      const payload: Record<string, unknown> = {
+        tenantId: tId,
+        date: `${date}T12:00:00.000Z`,
+        menuId,
+        applyToAllCategories,
+        dayContext: dayContext === "__none__" ? undefined : dayContext,
+        notes: notes.trim() || undefined,
+      };
+      if (!applyToAllCategories) payload.categoryId = categoryId;
+      if (repeatWeekdays.size > 0 && repeatUntilDate) {
+        payload.repeatWeekdays = [...repeatWeekdays].sort((a, b) => a - b);
+        payload.repeatUntilDate = `${repeatUntilDate}T12:00:00.000Z`;
+      }
+
+      const { data } = await api.post<{ created?: number; targetDays?: number; categories?: number }>(
+        "/nutricao/nutrition-calendar",
+        payload,
+      );
+
       onSuccess();
       onOpenChange(false);
+      if (data?.created && data.created > 1) {
+        setFeedback({
+          open: true,
+          title: "Calendário atualizado",
+          message: `${data.created} entrada(s) em ${data.targetDays ?? 1} dia(s) · ${data.categories ?? 1} categoria(s).`,
+        });
+      }
     } catch (err) {
-      console.error(err);
-      alert(err instanceof Error ? err.message : "Erro ao salvar");
+      setFeedback({
+        open: true,
+        title: "Erro",
+        message: err instanceof Error ? err.message : "Erro ao salvar",
+      });
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>{edit ? "Editar dia do calendário" : "Definir cardápio do dia"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Clube/Empresa *</Label>
-              <select
-                required
-                disabled={!!edit}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                value={tId}
-                onChange={(e) => setTId(e.target.value)}
-              >
-                <option value="">Selecione</option>
-                {tenants.map((t) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+          <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>{edit ? "Editar dia do calendário" : "Definir cardápio do dia"}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Clube/Empresa *</Label>
+                <select
+                  required
+                  disabled={!!edit}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={tId}
+                  onChange={(e) => setTId(e.target.value)}
+                >
+                  <option value="">Selecione</option>
+                  {tenants.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="ncal-date">Data *</Label>
+                <Input
+                  id="ncal-date"
+                  type="date"
+                  required
+                  disabled={!!edit}
+                  className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
+              {!edit ? (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-border"
+                    checked={applyToAllCategories}
+                    onChange={(e) => setApplyToAllCategories(e.target.checked)}
+                  />
+                  Todas as categorias
+                </label>
+              ) : null}
+              {!applyToAllCategories || edit ? (
+                <div className="grid gap-2">
+                  <Label>Categoria *</Label>
+                  <select
+                    required={!applyToAllCategories}
+                    disabled={!!edit || applyToAllCategories}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground disabled:opacity-60"
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    {categoryOptions.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  O cardápio será aplicado às {tenantCategories.length} categorias do clube.
+                </p>
+              )}
+              <div className="grid gap-2">
+                <Label>Cardápio *</Label>
+                <select
+                  required
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={menuId}
+                  onChange={(e) => setMenuId(e.target.value)}
+                >
+                  <option value="">Selecione o cardápio</option>
+                  {tenantMenus.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} {m.dayContext ? `(${m.dayContext})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Contexto do dia</Label>
+                <select
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                  value={dayContext}
+                  onChange={(e) => setDayContext(e.target.value)}
+                >
+                  <option value="__none__">—</option>
+                  <option value="treino">Treino</option>
+                  <option value="jogo">Jogo</option>
+                  <option value="folga">Folga</option>
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="ncal-notes">Observações</Label>
+                <Input id="ncal-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+              </div>
+              {!edit ? (
+                <div className="space-y-3 rounded-lg border border-border/60 p-3">
+                  <Label>Repetir nos dias da semana (opcional)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {WEEKDAY_LABELS.map((label, idx) => {
+                      const active = repeatWeekdays.has(idx);
+                      return (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => toggleWeekday(idx)}
+                          className={cn(
+                            "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors",
+                            active
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {repeatWeekdays.size > 0 ? (
+                    <div className="grid gap-2">
+                      <Label htmlFor="ncal-repeat-until">Repetir até *</Label>
+                      <Input
+                        id="ncal-repeat-until"
+                        type="date"
+                        className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
+                        value={repeatUntilDate}
+                        onChange={(e) => setRepeatUntilDate(e.target.value)}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ncal-date">Data *</Label>
-              <Input
-                id="ncal-date"
-                type="date"
-                required
-                disabled={!!edit}
-                className="text-foreground [&::-webkit-datetime-edit]:text-foreground"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Categoria *</Label>
-              <select
-                required
-                disabled={!!edit}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-              >
-                <option value="">Selecione</option>
-                {categoryOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Cardápio *</Label>
-              <select
-                required
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                value={menuId}
-                onChange={(e) => setMenuId(e.target.value)}
-              >
-                <option value="">Selecione o cardápio</option>
-                {tenantMenus.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} {m.dayContext ? `(${m.dayContext})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label>Contexto do dia</Label>
-              <select
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
-                value={dayContext}
-                onChange={(e) => setDayContext(e.target.value)}
-              >
-                <option value="__none__">—</option>
-                <option value="treino">Treino</option>
-                <option value="jogo">Jogo</option>
-                <option value="folga">Folga</option>
-              </select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="ncal-notes">Observações</Label>
-              <Input
-                id="ncal-notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {edit ? "Salvar" : "Criar"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {edit ? "Salvar" : "Criar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <FeedbackModal
+        open={feedback.open}
+        onOpenChange={(open) => setFeedback((f) => ({ ...f, open }))}
+        title={feedback.title}
+        message={feedback.message}
+      />
+    </>
   );
 }

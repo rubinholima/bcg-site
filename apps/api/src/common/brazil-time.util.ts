@@ -51,6 +51,26 @@ export function addDaysToDateKey(dateKey: string, days: number): string {
   return dateKeyInBrazil(d);
 }
 
+/** 0=Dom … 6=Sáb — alinhado ao calendário da UI. */
+export function weekdayBrazil(dateKey: string): number {
+  const d = parseDateOnlyBrazil(dateKey.slice(0, 10));
+  if (Number.isNaN(d.getTime())) return 0;
+  const wd = new Intl.DateTimeFormat('en-US', {
+    timeZone: BRAZIL_TZ,
+    weekday: 'short',
+  }).format(d);
+  const map: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+  return map[wd] ?? 0;
+}
+
 /** YYYY-MM-DD como meio-dia em Brasília (evita UTC midnight virar dia anterior). */
 export function parseDateOnlyBrazil(dateKey: string): Date {
   const key = dateKey.trim().slice(0, 10);

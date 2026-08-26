@@ -5,6 +5,7 @@ import { ModuleAccessGuard } from '../auth/module-access.guard';
 import { RequireModule } from '../auth/require-module.decorator';
 import { NutritionCalendarService } from './nutrition-calendar.service';
 import { CreateNutritionCalendarEntryDto } from './dto/create-nutrition-calendar-entry.dto';
+import { RepeatNutritionCalendarDto } from './dto/repeat-nutrition-calendar.dto';
 import { UpdateNutritionCalendarEntryDto } from './dto/update-nutrition-calendar-entry.dto';
 
 @Controller('nutricao/nutrition-calendar')
@@ -22,6 +23,13 @@ export class NutritionCalendarController {
     @Query('endDate') endDate?: string,
   ) {
     return this.service.findForTenant(tenantId, categoryId, startDate, endDate);
+  }
+
+  @Post('repeat-week')
+  @UseGuards(ModuleAccessGuard)
+  @RequireModule('adm_nutricao')
+  repeatWeek(@Body() dto: RepeatNutritionCalendarDto) {
+    return this.service.repeatFromSourceDay(dto);
   }
 
   @Get(':id')
